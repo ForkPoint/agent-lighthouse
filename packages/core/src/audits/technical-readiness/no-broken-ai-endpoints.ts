@@ -120,7 +120,30 @@ export class NoBrokenAiEndpointsAudit extends Audit {
     const results = await Promise.all(
       urls.map(async (url) => {
         try {
-          const result = await ctx.fetch({ url, method: 'HEAD' });
+          let result = await ctx.fetch({ url, method: 'HEAD' });
+          if (result.status >= 400) {
+            result = await ctx.fetch({ url, method: 'GET' });
+          }
+          if (result.status >= 400 && (url.includes('/mcp') || url.includes('/api/'))) {
+            const postResult = await ctx.fetch({
+              url,
+              method: 'POST',
+              body: JSON.stringify({
+                jsonrpc: '2.0',
+                id: 1,
+                method: 'initialize',
+                params: {
+                  protocolVersion: '2024-11-05',
+                  capabilities: {},
+                  clientInfo: { name: 'agent-lighthouse', version: '1.0.0' },
+                },
+              }),
+              contentType: 'application/json',
+            });
+            if (postResult.status >= 200 && postResult.status < 400) {
+              result = postResult;
+            }
+          }
           return { url, status: result.status };
         } catch {
           return { url, status: 0 };
