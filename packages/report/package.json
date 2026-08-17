@@ -1,6 +1,6 @@
 {
   "name": "@forkpoint/agent-lighthouse-report",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "Standalone HTML, Markdown, and view-model reporting engine for Agent Lighthouse AI-agent readiness audits",
   "author": "ForkPoint",
   "license": "GPL-3.0-only",
