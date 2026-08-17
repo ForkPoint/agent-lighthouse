@@ -1,5 +1,11 @@
 # @forkpoint/agent-lighthouse-core
 
+## 0.2.3
+
+### Patch Changes
+
+- c845f40: Use package metadata for generated report and MCP version labels, and avoid stale static docs version badges.
+
 ## 0.2.2
 
 ### Patch Changes
