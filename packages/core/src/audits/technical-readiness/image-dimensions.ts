@@ -38,13 +38,25 @@ export class ImageDimensionsAudit extends Audit {
       );
     }
 
-    const images = extractImages(page.$);
+    const rawImages = extractImages(page.$);
 
-    if (images.length === 0) {
+    if (rawImages.length === 0) {
       return this.pass(
         'No images found on the homepage.',
         'All <img> tags have width and height attributes',
         'No <img> tags found',
+        page.url,
+      );
+    }
+
+    // Exclude inline data URI spacers/placeholders which do not cause network-delayed CLS
+    const images = rawImages.filter((img) => !img.src?.startsWith('data:image/'));
+
+    if (images.length === 0) {
+      return this.pass(
+        'No external image resources found on the page.',
+        'All <img> tags have width and height attributes',
+        'No external images (only data URIs)',
         page.url,
       );
     }
