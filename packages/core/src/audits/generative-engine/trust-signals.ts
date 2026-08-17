@@ -11,6 +11,10 @@ const TRUST_PATTERNS = [
   /\bas\s+seen\s+(in|on)\b/i,
   /\bpartner(s|ed|ship)?\b/i,
   /\bcertif(ied|icate|ication)\b/i,
+  /\b(money[-\s]back\s+guarantee|satisfaction\s+guarantee|guaranteed)\b/i,
+  /\b(reviews|customer\s+rating|verified\s+(buyer|customer|review)|happy\s+customers)\b/i,
+  /\b(sustainable|organic|fair\s+trade|b\s+corp|handcrafted|handmade)\b/i,
+  /\b(secure\s+checkout|free\s+returns|free\s+shipping)\b/i,
 ];
 
 export class TrustSignalsAudit extends Audit {

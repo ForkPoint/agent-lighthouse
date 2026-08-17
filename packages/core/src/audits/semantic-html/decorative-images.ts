@@ -36,7 +36,11 @@ export class DecorativeImagesAudit extends Audit {
         // An image with empty alt is considered decorative
         if (img.alt === '') {
           decorativeCount++;
-          if (img.role === 'presentation') {
+          if (
+            img.role === 'presentation' ||
+            img.role === 'none' ||
+            img.ariaHidden === 'true'
+          ) {
             correctlyMarked++;
           }
         }

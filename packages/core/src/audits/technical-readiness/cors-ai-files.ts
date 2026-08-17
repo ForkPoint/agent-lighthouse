@@ -27,9 +27,24 @@ export class CorsAiFilesAudit extends Audit {
   async audit(ctx: CheckContext): Promise<AuditResult> {
     const page = ctx.pages?.[0];
     const aiPaths = ['/llms.txt', '/.well-known/ai-catalog.json'];
+    const hasRootFiles = ctx.rootFiles && Object.keys(ctx.rootFiles).length > 0;
+    const existingAiPaths = hasRootFiles
+      ? aiPaths.filter((p) => ctx.rootFiles[p]?.status === 200)
+      : aiPaths;
+
+    if (hasRootFiles && existingAiPaths.length === 0) {
+      return this.warn(
+        'No AI files (/llms.txt, /.well-known/ai-catalog.json) found to check CORS headers.',
+        'OPTIONS requests to /llms.txt and /.well-known/ai-catalog.json return Access-Control-Allow-Origin',
+        'No applicable AI files found',
+        undefined,
+        page?.url,
+      );
+    }
+
     const corsResults: Array<{ path: string; hasCors: boolean }> = [];
 
-    for (const path of aiPaths) {
+    for (const path of existingAiPaths) {
       try {
         const result = await ctx.fetch({
           url: `${ctx.baseUrl}${path}`,

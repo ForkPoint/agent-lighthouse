@@ -230,6 +230,10 @@ export async function runScan(
     '/about/',
     '/about-us/',
     '/about',
+    '/pages/about',
+    '/pages/about-us',
+    '/pages/our-story',
+    '/our-story',
   ];
 
   logger.debug({ count: rootFilePaths.length }, '[orchestrator] Phase 1: Fetching root files');

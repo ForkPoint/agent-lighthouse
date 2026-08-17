@@ -318,6 +318,7 @@ export function extractImages($: CheerioAPI): Array<{
   height?: string;
   loading?: string;
   role?: string;
+  ariaHidden?: string;
 }> {
   const images: Array<{
     src: string;
@@ -327,6 +328,7 @@ export function extractImages($: CheerioAPI): Array<{
     height?: string;
     loading?: string;
     role?: string;
+    ariaHidden?: string;
   }> = [];
   $('img').each((_, el) => {
     const alt = $(el).attr('alt');
@@ -340,6 +342,7 @@ export function extractImages($: CheerioAPI): Array<{
       height: $(el).attr('height') ?? undefined,
       loading: $(el).attr('loading') ?? undefined,
       role: $(el).attr('role') ?? undefined,
+      ariaHidden: $(el).attr('aria-hidden') ?? undefined,
     });
   });
   return images;

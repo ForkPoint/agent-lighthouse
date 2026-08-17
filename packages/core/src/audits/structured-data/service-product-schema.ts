@@ -16,10 +16,6 @@ function allSchemas(ctx: CheckContext): object[] {
   return ctx.pages.flatMap((p) => flattenJsonLd(p.structuredData ?? p.jsonLd));
 }
 
-function hasProps(obj: Record<string, unknown>, keys: string[]): string[] {
-  return keys.filter((k) => !obj[k]);
-}
-
 export class ServiceProductSchemaAudit extends Audit {
   static override meta: AuditMeta = {
     id: '3.8',
@@ -78,14 +74,26 @@ export class ServiceProductSchemaAudit extends Audit {
       );
     }
 
-    const requiredProps = ['name', 'description', 'provider'];
+    // For Product schema: brand, manufacturer, offers, or provider satisfies the creator/provider requirement.
+    // For Service schema: provider is required.
     const first = serviceProducts[0] as Record<string, unknown>;
-    const missing = hasProps(first, requiredProps);
+    const isProduct = matchesAnyType(first, ['Product']);
+    const hasName = Boolean(first['name']);
+    const hasDescription = Boolean(first['description']);
+    const hasProviderOrBrand = isProduct
+      ? Boolean(first['brand'] || first['manufacturer'] || first['provider'] || first['offers'])
+      : Boolean(first['provider']);
+
+    const missing: string[] = [];
+    if (!hasName) missing.push('name');
+    if (!hasDescription) missing.push('description');
+    if (!hasProviderOrBrand) missing.push(isProduct ? 'brand/offers' : 'provider');
+
     const valid = missing.length === 0;
 
     if (valid) {
       return this.pass(
-        `Service/Product schema found with name, description, and provider.`,
+        `Service/Product schema found with name, description, and ${isProduct ? 'brand/offers' : 'provider'}.`,
         'Service or Product schema with name, description, and provider.',
         `Complete Service/Product schema (${serviceProducts.length} total)`,
       );

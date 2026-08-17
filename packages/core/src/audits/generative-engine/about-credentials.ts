@@ -37,11 +37,44 @@ export class AboutCredentialsAudit extends Audit {
   };
 
   async audit(ctx: CheckContext): Promise<AuditResult> {
-    const aboutPaths = ['/about/', '/about-us/', '/about'];
-    let aboutResult = ctx.rootFiles['/about/'] ?? ctx.rootFiles['/about-us/'];
+    const aboutPaths = [
+      '/about/',
+      '/about-us/',
+      '/about',
+      '/pages/about',
+      '/pages/about-us',
+      '/pages/our-story',
+      '/our-story',
+    ];
 
-    if (!aboutResult || aboutResult.status !== 200) {
-      // Try fetching if not in rootFiles
+    let aboutResult: import('../../fetcher').FetchResult | undefined = undefined;
+
+    // Check root files first
+    for (const path of aboutPaths) {
+      const file = ctx.rootFiles[path];
+      if (file && file.status === 200 && file.body) {
+        aboutResult = file;
+        break;
+      }
+    }
+
+    // Check scanned pages
+    if (!aboutResult && ctx.pages) {
+      const matchingPage = ctx.pages.find((p) => {
+        const urlLower = p.url.toLowerCase();
+        return (
+          urlLower.includes('/about') ||
+          urlLower.includes('/our-story') ||
+          urlLower.includes('/who-we-are')
+        );
+      });
+      if (matchingPage?.fetchResult?.status === 200 && matchingPage.fetchResult.body) {
+        aboutResult = matchingPage.fetchResult;
+      }
+    }
+
+    // Try fetching if not in rootFiles
+    if (!aboutResult) {
       for (const path of aboutPaths) {
         try {
           const result = await ctx.fetch({

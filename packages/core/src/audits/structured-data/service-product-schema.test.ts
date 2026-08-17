@@ -74,12 +74,19 @@ describe('ServiceProductSchemaAudit', () => {
   });
 
   it('warns when Service/Product is missing required props', () => {
-    const ctx = mockCheckContext([
+    const ctxService = mockCheckContext([
+      page(ld({ '@context': 'https://schema.org', '@type': 'Service', name: 'Consulting' })),
+    ]);
+    const resultService = audit.audit(ctxService);
+    expect(resultService.status).toBe('warn');
+    expect(resultService.message).toContain('missing: description, provider');
+
+    const ctxProduct = mockCheckContext([
       page(ld({ '@context': 'https://schema.org', '@type': 'Product', name: 'Widget' })),
     ]);
-    const result = audit.audit(ctx);
-    expect(result.status).toBe('warn');
-    expect(result.message).toContain('missing: description, provider');
+    const resultProduct = audit.audit(ctxProduct);
+    expect(resultProduct.status).toBe('warn');
+    expect(resultProduct.message).toContain('missing: description, brand/offers');
   });
 
   it('detects a Service with array @type (Array.isArray branch in matchesAnyType)', () => {
