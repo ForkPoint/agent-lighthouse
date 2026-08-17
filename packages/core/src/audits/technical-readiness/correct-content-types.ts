@@ -29,23 +29,23 @@ export class CorrectContentTypesAudit extends Audit {
 
     const expectations: Array<{
       path: string;
-      expectedType: string;
+      expectedTypes: string[];
       label: string;
     }> = [
-      { path: '/llms.txt', expectedType: 'text/plain', label: 'llms.txt' },
+      { path: '/llms.txt', expectedTypes: ['text/plain', 'text/markdown'], label: 'llms.txt' },
       {
         path: '/.well-known/ai-catalog.json',
-        expectedType: 'application/json',
+        expectedTypes: ['application/json', 'text/json'],
         label: 'ai-catalog.json',
       },
       {
         path: '/openapi.json',
-        expectedType: 'application/json',
+        expectedTypes: ['application/json', 'text/json', 'application/yaml', 'text/yaml'],
         label: 'openapi.json',
       },
       {
         path: '/sitemap.xml',
-        expectedType: 'application/xml',
+        expectedTypes: ['application/xml', 'text/xml'],
         label: 'sitemap.xml',
       },
     ];
@@ -54,16 +54,16 @@ export class CorrectContentTypesAudit extends Audit {
     const incorrect: Array<{ label: string; expected: string; actual: string }> = [];
     let checked = 0;
 
-    for (const { path, expectedType, label } of expectations) {
+    for (const { path, expectedTypes, label } of expectations) {
       const file = ctx.rootFiles[path];
       if (!file || file.status !== 200) continue;
       checked++;
 
       const ct = file.contentType.toLowerCase().split(';')[0].trim();
-      if (ct.includes(expectedType)) {
+      if (expectedTypes.some((et) => ct.includes(et))) {
         correct.push(label);
       } else {
-        incorrect.push({ label, expected: expectedType, actual: ct });
+        incorrect.push({ label, expected: expectedTypes[0]!, actual: ct });
       }
     }
 

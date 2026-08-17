@@ -61,8 +61,68 @@ Content-Type: application/json
   };
 
   async audit(ctx: CheckContext): Promise<AuditResult> {
+    let targetEndpointUrl: string | undefined;
+
+    // 1. Standard MCP Discovery (/.well-known/mcp/servers.json)
     const result = ctx.rootFiles['/.well-known/mcp/servers.json'];
-    if (!result || result.status !== 200 || !result.body) {
+    if (result && result.status === 200 && result.body) {
+      const parsed = tryParseJson(result.body);
+      if (!isObject(parsed) || !Array.isArray(parsed['servers'])) {
+        return this.fail(
+          'servers.json has no servers array.',
+          'MCP server URL responds to JSON-RPC initialize request',
+          'No servers array',
+          {
+            priority: 'high',
+            description: McpEndpointAudit.meta.description,
+            code: McpEndpointAudit.meta.guidance?.code,
+          },
+        );
+      }
+      const servers = parsed['servers'] as unknown[];
+      const serverUrl = servers.find((s) => isObject(s) && typeof s['url'] === 'string' && s['url']);
+      if (!serverUrl || !isObject(serverUrl)) {
+        return this.fail(
+          'No server URL found in servers.json.',
+          'MCP server URL responds to JSON-RPC initialize request',
+          'No server URL',
+          {
+            priority: 'high',
+            description: McpEndpointAudit.meta.description,
+            code: McpEndpointAudit.meta.guidance?.code,
+          },
+        );
+      }
+      targetEndpointUrl = (serverUrl as Record<string, unknown>)['url'] as string;
+    }
+
+    // 2. Universal Commerce Protocol (UCP / MCP) Discovery (/.well-known/ucp)
+    if (!targetEndpointUrl) {
+      const ucpResult = ctx.rootFiles['/.well-known/ucp'];
+      if (ucpResult && ucpResult.status === 200 && ucpResult.body) {
+        const ucpParsed = tryParseJson(ucpResult.body);
+        if (isObject(ucpParsed)) {
+          const ucpObj = (ucpParsed['ucp'] ?? ucpParsed) as Record<string, unknown>;
+          const services = (ucpParsed['services'] || ucpObj['services']) as Record<string, unknown> | undefined;
+          if (services) {
+            for (const key of Object.keys(services)) {
+              const svcList = services[key];
+              if (Array.isArray(svcList)) {
+                for (const svc of svcList) {
+                  if (isObject(svc) && svc['transport'] === 'mcp' && typeof svc['endpoint'] === 'string') {
+                    targetEndpointUrl = svc['endpoint'] as string;
+                    break;
+                  }
+                }
+              }
+              if (targetEndpointUrl) break;
+            }
+          }
+        }
+      }
+    }
+
+    if (!targetEndpointUrl) {
       return this.fail(
         'No MCP servers.json found.',
         'MCP server URL responds to JSON-RPC initialize request',
@@ -70,41 +130,12 @@ Content-Type: application/json
         {
           priority: 'high',
           description: McpEndpointAudit.meta.description,
-          code: `// Expected request:\nPOST /mcp\nContent-Type: application/json\n\n{\n  "jsonrpc": "2.0",\n  "id": 1,\n  "method": "initialize",\n  "params": {\n    "protocolVersion": "2024-11-05",\n    "capabilities": {},\n    "clientInfo": { "name": "test", "version": "1.0.0" }\n  }\n}\n\n// Expected response:\n{\n  "jsonrpc": "2.0",\n  "id": 1,\n  "result": {\n    "protocolVersion": "2024-11-05",\n    "serverInfo": { "name": "your-server", "version": "1.0.0" },\n    "capabilities": { "tools": {} }\n  }\n}`,
+          code: McpEndpointAudit.meta.guidance?.code,
         },
       );
     }
 
-    const parsed = tryParseJson(result.body);
-    if (!isObject(parsed) || !Array.isArray(parsed['servers'])) {
-      return this.fail(
-        'servers.json has no servers array.',
-        'MCP server URL responds to JSON-RPC initialize request',
-        'No servers array',
-        {
-          priority: 'high',
-          description: McpEndpointAudit.meta.description,
-          code: `// Expected request:\nPOST /mcp\nContent-Type: application/json\n\n{\n  "jsonrpc": "2.0",\n  "id": 1,\n  "method": "initialize",\n  "params": {\n    "protocolVersion": "2024-11-05",\n    "capabilities": {},\n    "clientInfo": { "name": "test", "version": "1.0.0" }\n  }\n}\n\n// Expected response:\n{\n  "jsonrpc": "2.0",\n  "id": 1,\n  "result": {\n    "protocolVersion": "2024-11-05",\n    "serverInfo": { "name": "your-server", "version": "1.0.0" },\n    "capabilities": { "tools": {} }\n  }\n}`,
-        },
-      );
-    }
-
-    const servers = parsed['servers'] as unknown[];
-    const serverUrl = servers.find((s) => isObject(s) && typeof s['url'] === 'string' && s['url']);
-    if (!serverUrl || !isObject(serverUrl)) {
-      return this.fail(
-        'No server URL found in servers.json.',
-        'MCP server URL responds to JSON-RPC initialize request',
-        'No server URL',
-        {
-          priority: 'high',
-          description: McpEndpointAudit.meta.description,
-          code: `// Expected request:\nPOST /mcp\nContent-Type: application/json\n\n{\n  "jsonrpc": "2.0",\n  "id": 1,\n  "method": "initialize",\n  "params": {\n    "protocolVersion": "2024-11-05",\n    "capabilities": {},\n    "clientInfo": { "name": "test", "version": "1.0.0" }\n  }\n}\n\n// Expected response:\n{\n  "jsonrpc": "2.0",\n  "id": 1,\n  "result": {\n    "protocolVersion": "2024-11-05",\n    "serverInfo": { "name": "your-server", "version": "1.0.0" },\n    "capabilities": { "tools": {} }\n  }\n}`,
-        },
-      );
-    }
-
-    const url = (serverUrl as Record<string, unknown>)['url'] as string;
+    const url = targetEndpointUrl;
 
     try {
       const jsonRpcBody = JSON.stringify({

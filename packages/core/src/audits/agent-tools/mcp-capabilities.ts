@@ -51,58 +51,58 @@ export class McpCapabilitiesAudit extends Audit {
 
   audit(ctx: CheckContext): AuditResult {
     const result = ctx.rootFiles['/.well-known/mcp/servers.json'];
-    if (!result || result.status !== 200 || !result.body) {
-      return this.fail(
-        'No MCP servers.json found.',
-        'servers.json or MCP response declares tools, resources, or prompts',
-        'No servers.json',
-        {
-          priority: 'medium',
-          description: McpCapabilitiesAudit.meta.description,
-          code: `{\n  "servers": [\n    {\n      "name": "Your Site MCP",\n      "url": "https://yoursite.com/mcp",\n      "capabilities": {\n        "tools": true,\n        "resources": true,\n        "prompts": false\n      }\n    }\n  ]\n}`,
-        },
-      );
-    }
+    const ucpResult = ctx.rootFiles['/.well-known/ucp'];
 
-    const parsed = tryParseJson(result.body);
-    if (!isObject(parsed) || !Array.isArray(parsed['servers'])) {
-      return this.fail(
-        'servers.json has no servers array.',
-        'servers.json or MCP response declares tools, resources, or prompts',
-        'No servers array',
-        {
-          priority: 'medium',
-          description: McpCapabilitiesAudit.meta.description,
-          code: `{\n  "servers": [\n    {\n      "name": "Your Site MCP",\n      "url": "https://yoursite.com/mcp",\n      "capabilities": {\n        "tools": true,\n        "resources": true,\n        "prompts": false\n      }\n    }\n  ]\n}`,
-        },
-      );
-    }
-
-    const servers = parsed['servers'] as unknown[];
-    const capabilityKeys = ['tools', 'resources', 'prompts'];
-    const foundCapabilities: string[] = [];
-
-    for (const server of servers) {
-      if (!isObject(server)) continue;
-      for (const key of capabilityKeys) {
-        if (server[key] !== undefined && server[key] !== false) {
-          foundCapabilities.push(key);
-        }
+    if (result && result.status === 200 && result.body) {
+      const parsed = tryParseJson(result.body);
+      if (!isObject(parsed) || !Array.isArray(parsed['servers'])) {
+        return this.fail(
+          'servers.json has no servers array.',
+          'servers.json or MCP response declares tools, resources, or prompts',
+          'No servers array',
+          {
+            priority: 'medium',
+            description: McpCapabilitiesAudit.meta.description,
+            code: McpCapabilitiesAudit.meta.guidance?.code,
+          },
+        );
       }
-      // Also check nested capabilities object
-      const caps = server['capabilities'];
-      if (isObject(caps)) {
+
+      const servers = parsed['servers'] as unknown[];
+      const capabilityKeys = ['tools', 'resources', 'prompts'];
+      const foundCapabilities: string[] = [];
+
+      for (const server of servers) {
+        if (!isObject(server)) continue;
         for (const key of capabilityKeys) {
-          if (caps[key] !== undefined && caps[key] !== false && !foundCapabilities.includes(key)) {
+          if (server[key] !== undefined && server[key] !== false) {
             foundCapabilities.push(key);
           }
         }
+        const caps = server['capabilities'];
+        if (isObject(caps)) {
+          for (const key of capabilityKeys) {
+            if (caps[key] !== undefined && caps[key] !== false && !foundCapabilities.includes(key)) {
+              foundCapabilities.push(key);
+            }
+          }
+        }
       }
-    }
 
-    const unique = [...new Set(foundCapabilities)];
+      if (foundCapabilities.length === 0) {
+        return this.fail(
+          'No MCP capabilities (tools, resources, prompts) declared in servers.json.',
+          'servers.json or MCP response declares tools, resources, or prompts',
+          'No capabilities declared',
+          {
+            priority: 'medium',
+            description: McpCapabilitiesAudit.meta.description,
+            code: McpCapabilitiesAudit.meta.guidance?.code,
+          },
+        );
+      }
 
-    if (unique.length > 0) {
+      const unique = [...new Set(foundCapabilities)];
       return this.pass(
         `MCP server(s) advertise capabilities: ${unique.join(', ')}.`,
         'servers.json or MCP response declares tools, resources, or prompts',
@@ -110,14 +110,33 @@ export class McpCapabilitiesAudit extends Audit {
       );
     }
 
+    if (ucpResult && ucpResult.status === 200 && ucpResult.body) {
+      const ucpParsed = tryParseJson(ucpResult.body);
+      if (isObject(ucpParsed)) {
+        const ucpObj = (ucpParsed['ucp'] ?? ucpParsed) as Record<string, unknown>;
+        const capabilities = (ucpParsed['capabilities'] || ucpObj['capabilities']) as Record<string, unknown> | undefined;
+        if (capabilities && isObject(capabilities)) {
+          const capNames = Object.keys(capabilities).map((cap) => cap.split('.').pop() || cap);
+          if (capNames.length > 0) {
+            const unique = [...new Set(capNames)];
+            return this.pass(
+              `Universal Commerce Protocol (UCP/MCP) advertises capabilities: ${unique.join(', ')}.`,
+              'servers.json or MCP response declares tools, resources, or prompts',
+              unique.join(', '),
+            );
+          }
+        }
+      }
+    }
+
     return this.fail(
-      'No MCP capabilities (tools, resources, prompts) declared in servers.json.',
+      'No MCP servers.json found.',
       'servers.json or MCP response declares tools, resources, or prompts',
-      'No capabilities declared',
+      'No servers.json',
       {
         priority: 'medium',
         description: McpCapabilitiesAudit.meta.description,
-        code: `{\n  "servers": [\n    {\n      "name": "Your Site MCP",\n      "url": "https://yoursite.com/mcp",\n      "capabilities": {\n        "tools": true,\n        "resources": true,\n        "prompts": false\n      }\n    }\n  ]\n}`,
+        code: McpCapabilitiesAudit.meta.guidance?.code,
       },
     );
   }

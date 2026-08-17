@@ -51,51 +51,71 @@ export class McpDiscoveryAudit extends Audit {
   };
 
   audit(ctx: CheckContext): AuditResult {
+    // 1. Standard MCP Discovery (/.well-known/mcp/servers.json)
     const result = ctx.rootFiles['/.well-known/mcp/servers.json'];
-    if (!result || result.status !== 200 || !result.body) {
-      return this.fail(
-        '/.well-known/mcp/servers.json not found or not accessible.',
+    if (result && result.status === 200 && result.body) {
+      const parsed = tryParseJson(result.body);
+      if (!isObject(parsed)) {
+        return this.fail(
+          'mcp/servers.json is not valid JSON.',
+          '/.well-known/mcp/servers.json returns 200 with valid JSON containing servers array',
+          'Invalid JSON',
+          {
+            priority: 'medium',
+            description: McpDiscoveryAudit.meta.description,
+            code: McpDiscoveryAudit.meta.guidance?.code,
+          },
+        );
+      }
+
+      if (!Array.isArray(parsed['servers'])) {
+        return this.fail(
+          'mcp/servers.json does not contain a servers array.',
+          '/.well-known/mcp/servers.json returns 200 with valid JSON containing servers array',
+          'No servers array',
+          {
+            priority: 'medium',
+            description: McpDiscoveryAudit.meta.description,
+            code: McpDiscoveryAudit.meta.guidance?.code,
+          },
+        );
+      }
+
+      const count = (parsed['servers'] as unknown[]).length;
+      return this.pass(
+        `MCP servers.json found with ${count} server(s).`,
         '/.well-known/mcp/servers.json returns 200 with valid JSON containing servers array',
-        result ? `HTTP ${result.status}` : 'Not fetched',
-        {
-          priority: 'medium',
-          description: McpDiscoveryAudit.meta.description,
-          code: `// /.well-known/mcp/servers.json\n{\n  "servers": [\n    {\n      "name": "Your Site MCP",\n      "description": "Search content and submit inquiries",\n      "url": "https://yoursite.com/mcp",\n      "transport": "streamable-http",\n      "capabilities": {\n        "tools": true,\n        "resources": true\n      }\n    }\n  ]\n}`,
-        },
+        `Valid JSON with ${count} server(s)`,
       );
     }
 
-    const parsed = tryParseJson(result.body);
-    if (!isObject(parsed)) {
-      return this.fail(
-        'mcp/servers.json is not valid JSON.',
-        '/.well-known/mcp/servers.json returns 200 with valid JSON containing servers array',
-        'Invalid JSON',
-        {
-          priority: 'medium',
-          description: McpDiscoveryAudit.meta.description,
-          code: `// /.well-known/mcp/servers.json\n{\n  "servers": [\n    {\n      "name": "Your Site MCP",\n      "description": "Search content and submit inquiries",\n      "url": "https://yoursite.com/mcp",\n      "transport": "streamable-http",\n      "capabilities": {\n        "tools": true,\n        "resources": true\n      }\n    }\n  ]\n}`,
-        },
-      );
+    // 2. Universal Commerce Protocol (UCP / MCP) Discovery (/.well-known/ucp)
+    const ucpResult = ctx.rootFiles['/.well-known/ucp'];
+    if (ucpResult && ucpResult.status === 200 && ucpResult.body) {
+      const ucpParsed = tryParseJson(ucpResult.body);
+      if (isObject(ucpParsed)) {
+        const ucpObj = (ucpParsed['ucp'] ?? ucpParsed) as Record<string, unknown>;
+        const services = (ucpParsed['services'] || ucpObj['services']) as Record<string, unknown> | undefined;
+        const capabilities = (ucpParsed['capabilities'] || ucpObj['capabilities']) as Record<string, unknown> | undefined;
+        const svcCount = services ? Object.keys(services).length : 0;
+        const capCount = capabilities ? Object.keys(capabilities).length : 0;
+        return this.pass(
+          `Universal Commerce Protocol (UCP/MCP) discovery profile found with ${svcCount} services and ${capCount} capabilities.`,
+          '/.well-known/mcp/servers.json or /.well-known/ucp returns 200 with valid agent protocol JSON',
+          `UCP/MCP Profile (v${ucpObj['version'] ?? 'stable'}, ${capCount} capabilities)`,
+        );
+      }
     }
 
-    if (!Array.isArray(parsed['servers'])) {
-      return this.fail(
-        'mcp/servers.json does not contain a servers array.',
-        '/.well-known/mcp/servers.json returns 200 with valid JSON containing servers array',
-        'No servers array',
-        {
-          priority: 'medium',
-          description: McpDiscoveryAudit.meta.description,
-          code: `// /.well-known/mcp/servers.json\n{\n  "servers": [\n    {\n      "name": "Your Site MCP",\n      "description": "Search content and submit inquiries",\n      "url": "https://yoursite.com/mcp",\n      "transport": "streamable-http",\n      "capabilities": {\n        "tools": true,\n        "resources": true\n      }\n    }\n  ]\n}`,
-        },
-      );
-    }
-
-    return this.pass(
-      `MCP servers.json found with ${(parsed['servers'] as unknown[]).length} server(s).`,
+    return this.fail(
+      '/.well-known/mcp/servers.json not found or not accessible.',
       '/.well-known/mcp/servers.json returns 200 with valid JSON containing servers array',
-      `Valid JSON with ${(parsed['servers'] as unknown[]).length} server(s)`,
+      result ? `HTTP ${result.status}` : 'Not fetched',
+      {
+        priority: 'medium',
+        description: McpDiscoveryAudit.meta.description,
+        code: McpDiscoveryAudit.meta.guidance?.code,
+      },
     );
   }
 }
