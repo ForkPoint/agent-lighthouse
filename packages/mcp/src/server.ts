@@ -10,7 +10,7 @@ import { buildReportView } from '@forkpoint/agent-lighthouse-report';
 const server = new Server(
   {
     name: 'agent-lighthouse-mcp',
-    version: '0.1.0',
+    version: '0.2.1',
   },
   {
     capabilities: {

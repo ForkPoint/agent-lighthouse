@@ -18,6 +18,8 @@
   </p>
 </div>
 
+![Agent Lighthouse generated report preview](docs/assets/report-preview.svg)
+
 ---
 
 ## ⚡ Quickstart
@@ -101,7 +103,7 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
 ```
 
-The action generates terminal, HTML, JSON, and Markdown reports. Set `comment-on-pr: true` with `github-token` to post the Markdown summary on pull requests.
+The action generates terminal, HTML, JSON, and Markdown reports. Set `comment-on-pr: true` with `github-token` to post the Markdown summary on pull requests. See the [marketplace setup guide](docs/ACTION_MARKETPLACE.md) for release-ready examples.
 
 ---
 
@@ -151,6 +153,20 @@ Generated reports are standalone files, so teams can attach them to pull request
 ```
 
 If you run Agent Lighthouse on a public site, share the result through the [site score template](https://github.com/ForkPoint/agent-lighthouse/issues/new?template=site-score.yml). Good examples help other developers learn what agent-ready sites look like.
+
+More launch material lives in:
+
+- [Promotion kit](docs/PROMOTION.md)
+- [Benchmark report](docs/BENCHMARK.md)
+- [Badge generator notes](docs/BADGE.md)
+- [Launch post drafts](docs/launch-posts/)
+- [Outreach templates](docs/outreach/)
+- [Terminal demo transcript](docs/assets/terminal-demo.txt)
+- [Docs homepage screenshot](docs/assets/docs-home-screenshot.png)
+- [Generated report screenshot](docs/assets/report-screenshot.png)
+- [Badge generator screenshot](docs/assets/badge-generator-screenshot.png)
+- [Report preview asset](docs/assets/report-preview.svg)
+- [MCP setup screenshot asset](docs/assets/mcp-setup.svg)
 
 ---
 

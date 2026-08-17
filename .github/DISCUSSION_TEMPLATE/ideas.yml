@@ -1,0 +1,16 @@
+title: "[idea] "
+labels:
+  - enhancement
+body:
+  - type: textarea
+    id: idea
+    attributes:
+      label: Idea
+      description: Describe an audit, integration, benchmark, or promotion opportunity.
+    validations:
+      required: true
+  - type: textarea
+    id: context
+    attributes:
+      label: Context
+      description: Links, examples, specs, or user workflows.

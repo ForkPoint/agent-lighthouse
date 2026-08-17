@@ -1,0 +1,20 @@
+title: "[showcase] "
+labels:
+  - showcase
+body:
+  - type: markdown
+    attributes:
+      value: Share a public Agent Lighthouse report, before/after score, or integration.
+  - type: input
+    id: url
+    attributes:
+      label: Site or project URL
+  - type: input
+    id: score
+    attributes:
+      label: Score
+      placeholder: "87/100"
+  - type: textarea
+    id: notes
+    attributes:
+      label: What changed?

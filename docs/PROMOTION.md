@@ -34,6 +34,30 @@ Agent Lighthouse is an open-source CLI, SDK, GitHub Action, and MCP server that 
 - Ask users to share public site scores through the issue template.
 - Reply quickly to every launch comment with technical details, not marketing language.
 
+## Asset Library
+
+- Terminal demo transcript: [`docs/assets/terminal-demo.txt`](assets/terminal-demo.txt)
+- Docs homepage screenshot: [`docs/assets/docs-home-screenshot.png`](assets/docs-home-screenshot.png)
+- Generated report screenshot: [`docs/assets/report-screenshot.png`](assets/report-screenshot.png)
+- Badge generator screenshot: [`docs/assets/badge-generator-screenshot.png`](assets/badge-generator-screenshot.png)
+- Generated report preview: [`docs/assets/report-preview.svg`](assets/report-preview.svg)
+- MCP setup visual: [`docs/assets/mcp-setup.svg`](assets/mcp-setup.svg)
+- GitHub Pages social preview: [`packages/website/og-image.svg`](../packages/website/og-image.svg)
+- Docs page: https://forkpoint.github.io/agent-lighthouse/
+- npm package: https://www.npmjs.com/package/@forkpoint/agent-lighthouse
+
+## Ready Drafts
+
+- Hacker News: [`docs/launch-posts/hacker-news.md`](launch-posts/hacker-news.md)
+- Product Hunt: [`docs/launch-posts/product-hunt.md`](launch-posts/product-hunt.md)
+- Reddit/community: [`docs/launch-posts/reddit.md`](launch-posts/reddit.md)
+- Dev.to tutorial: [`docs/launch-posts/devto.md`](launch-posts/devto.md)
+- Outreach templates: [`docs/outreach/`](outreach/)
+- Awesome list snippets: [`docs/AWESOME_LIST_SUBMISSIONS.md`](AWESOME_LIST_SUBMISSIONS.md)
+- GitHub Action setup: [`docs/ACTION_MARKETPLACE.md`](ACTION_MARKETPLACE.md)
+- Badge generator notes: [`docs/BADGE.md`](BADGE.md)
+- Benchmark story: [`docs/BENCHMARK.md`](BENCHMARK.md)
+
 ## Show HN Draft
 
 Title:

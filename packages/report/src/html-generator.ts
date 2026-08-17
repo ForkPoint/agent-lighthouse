@@ -172,7 +172,7 @@ export function generateHtmlReport(report: ScanReport): string {
           <div>
             <div class="flex items-center gap-2">
               <h1 class="text-2xl sm:text-3xl font-black tracking-tight text-white">Agent Lighthouse</h1>
-              <span class="text-[10px] font-bold bg-indigo-500/10 text-indigo-400 border border-indigo-500/30 px-2.5 py-0.5 rounded-full">v0.1.0</span>
+              <span class="text-[10px] font-bold bg-indigo-500/10 text-indigo-400 border border-indigo-500/30 px-2.5 py-0.5 rounded-full">v0.2.1</span>
             </div>
             <p class="text-sm text-slate-400 mt-1.5">
               Audit for <a href="${escapeHtml(report.url)}" target="_blank" rel="noopener" class="text-indigo-400 hover:underline font-mono font-medium">${escapeHtml(report.url)}</a>

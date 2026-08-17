@@ -1,0 +1,19 @@
+$ npx @forkpoint/agent-lighthouse https://example.com --view
+
+Agent Lighthouse v0.2.1
+The Open-Source Lighthouse for the Agentic Web
+
+Auditing https://example.com using Full preset ...
+
+OVERALL AGENT READINESS: 53/100 (NEEDS WORK)
+Target: https://example.com | Pages: 1 | Duration: 1.7s
+
+Reports:
+  - reports/agent-lighthouse-report.html
+  - reports/agent-lighthouse-report.json
+  - reports/agent-lighthouse-report.md
+
+Next fixes:
+  - Add /llms.txt and link it from <head>
+  - Add Schema.org Organization or WebPage JSON-LD
+  - Add OpenAPI/WebMCP discovery if agents should take actions

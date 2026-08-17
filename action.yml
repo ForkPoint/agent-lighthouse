@@ -3,7 +3,7 @@ description: "Audit websites for AI-agent readiness, LLM crawler access, MCP dis
 author: "ForkPoint"
 branding:
   icon: "zap"
-  color: "indigo"
+  color: "purple"
 
 inputs:
   url:

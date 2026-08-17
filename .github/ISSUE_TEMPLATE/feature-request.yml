@@ -1,0 +1,39 @@
+name: Feature request
+description: Suggest a new audit, integration, output format, or workflow.
+title: "[feature]: "
+labels:
+  - enhancement
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: What user or agent-readiness problem should this solve?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposal
+      description: Describe the audit, integration, or behavior you want.
+    validations:
+      required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - CLI
+        - Core audits
+        - Report output
+        - GitHub Action
+        - MCP server
+        - Documentation
+        - Other
+    validations:
+      required: true
+  - type: textarea
+    id: examples
+    attributes:
+      label: Examples or references
+      description: Add URLs, specs, screenshots, or comparable tools.

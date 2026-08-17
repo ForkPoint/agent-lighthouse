@@ -5,6 +5,17 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Agent Lighthouse Documentation — The Open-Source Lighthouse for the Agentic Web</title>
   <meta name="description" content="Official Developer Documentation and Interactive Audit Directory for Agent Lighthouse — Audit, score, and optimize websites for AI agents, LLMs, WebMCP, and machine-readable commerce protocols.">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Agent Lighthouse — Lighthouse, but for AI agents">
+  <meta property="og:description" content="Audit whether ChatGPT, Claude, Perplexity, MCP clients, AI crawlers, and agentic browsers can discover, parse, cite, and act on your website.">
+  <meta property="og:url" content="https://forkpoint.github.io/agent-lighthouse/">
+  <meta property="og:image" content="https://forkpoint.github.io/agent-lighthouse/og-image.svg">
+  <meta property="og:image:alt" content="Agent Lighthouse report preview for AI-agent readiness audits">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Agent Lighthouse — Lighthouse, but for AI agents">
+  <meta name="twitter:description" content="199 AI-agent readiness checks for llms.txt, robots, Schema.org, OpenAPI, WebMCP, MCP, AEO/GEO, and accessibility.">
+  <meta name="twitter:image" content="https://forkpoint.github.io/agent-lighthouse/og-image.svg">
+  <meta name="twitter:image:alt" content="Agent Lighthouse report preview for AI-agent readiness audits">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🗼</text></svg>">
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
@@ -56,7 +67,7 @@
         <a href="#" class="font-extrabold text-lg tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-white via-slate-200 to-indigo-300">
           Agent Lighthouse
         </a>
-        <span class="text-[10px] font-bold uppercase tracking-wider bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 px-2 py-0.5 rounded-full">v0.2.0</span>
+        <span class="text-[10px] font-bold uppercase tracking-wider bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 px-2 py-0.5 rounded-full">v0.2.1</span>
       </div>
 
       <!-- Center Nav Links -->
@@ -72,7 +83,7 @@
       <div class="flex items-center gap-3">
         <a href="https://www.npmjs.com/package/@forkpoint/agent-lighthouse" target="_blank" rel="noopener" class="hidden sm:inline-flex items-center gap-1.5 text-xs font-semibold text-red-400 bg-red-500/10 border border-red-500/20 px-2.5 py-1 rounded-lg hover:bg-red-500/20 transition-colors">
           <span>npm</span>
-          <span>v0.2.0</span>
+          <span>v0.2.1</span>
         </a>
         <a href="https://github.com/ForkPoint/agent-lighthouse" target="_blank" rel="noopener" class="flex items-center gap-2 bg-slate-800 hover:bg-slate-700 text-white px-3.5 py-1.5 rounded-lg border border-slate-700 transition-colors text-sm font-medium">
           <svg class="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
@@ -175,6 +186,9 @@
             <ul class="space-y-2 border-l border-slate-800 pl-3">
               <li><a href="#viewer" class="text-emerald-400 font-semibold hover:text-emerald-300 transition-colors block py-0.5">Live Report Inspector</a></li>
               <li><a href="#benchmark" class="text-slate-400 hover:text-white transition-colors block py-0.5">100-Store Benchmark Data</a></li>
+              <li><a href="#showcase" class="text-slate-400 hover:text-white transition-colors block py-0.5">Score Showcase</a></li>
+              <li><a href="#badge-generator" class="text-slate-400 hover:text-white transition-colors block py-0.5">Badge Generator</a></li>
+              <li><a href="#launch-kit" class="text-slate-400 hover:text-white transition-colors block py-0.5">Launch Kit</a></li>
             </ul>
           </div>
         </div>
@@ -585,13 +599,143 @@ jobs:
             <p class="text-slate-400 text-sm mt-1">Key takeaways from our empirical audit of 100 top e-commerce storefronts.</p>
           </div>
 
-          <div class="bg-slate-900/60 border border-slate-800 rounded-2xl p-6 space-y-4 text-sm text-slate-300 leading-relaxed">
-            <ul class="space-y-3 list-disc pl-5">
-              <li><strong>The Agentic Gap:</strong> Out of 100 top stores audited, <strong>0%</strong> currently provide an OpenAPI spec, WebMCP manifest, or MCP server for AI shopping agents.</li>
-              <li><strong>LLMs.txt Adoption:</strong> Only <strong>4%</strong> of stores have deployed <code class="code-font text-indigo-300">/llms.txt</code> or <code class="code-font text-indigo-300">/llms-full.txt</code>.</li>
-              <li><strong>Average Industry Score:</strong> The average readiness score is <strong>53.6 / 100</strong> (<em>Needs Work</em>), showing that while stores have basic SEO and Product schema, they are unprepared for autonomous shopping agents.</li>
-              <li><strong>Fastest Boost:</strong> Adding <code class="code-font text-indigo-300">/llms.txt</code>, <code class="code-font text-indigo-300">/.well-known/ai-catalog.json</code>, and standardizing icon button accessible names immediately raises a store's score from <strong>~50 to 85+</strong>.</li>
-            </ul>
+          <div class="grid grid-cols-1 sm:grid-cols-4 gap-3">
+            <div class="bg-slate-900/70 border border-slate-800 rounded-xl p-4">
+              <div class="text-3xl font-black text-red-400">0%</div>
+              <div class="text-xs text-slate-400 mt-1">OpenAPI, WebMCP, or MCP action surfaces</div>
+            </div>
+            <div class="bg-slate-900/70 border border-slate-800 rounded-xl p-4">
+              <div class="text-3xl font-black text-amber-400">4%</div>
+              <div class="text-xs text-slate-400 mt-1">Stores with <code class="code-font">llms.txt</code> or full-text AI files</div>
+            </div>
+            <div class="bg-slate-900/70 border border-slate-800 rounded-xl p-4">
+              <div class="text-3xl font-black text-indigo-400">53.6</div>
+              <div class="text-xs text-slate-400 mt-1">Average readiness score out of 100</div>
+            </div>
+            <div class="bg-slate-900/70 border border-slate-800 rounded-xl p-4">
+              <div class="text-3xl font-black text-emerald-400">85+</div>
+              <div class="text-xs text-slate-400 mt-1">Common score after fast foundational fixes</div>
+            </div>
+          </div>
+
+          <div class="bg-slate-900/60 border border-slate-800 rounded-2xl p-6 space-y-5 text-sm text-slate-300 leading-relaxed">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+              <div class="space-y-3">
+                <h3 class="text-sm font-bold text-white">Benchmark Story</h3>
+                <ul class="space-y-3 list-disc pl-5">
+                  <li><strong>The agentic gap:</strong> top storefronts have basic SEO, but rarely expose machine-readable action surfaces.</li>
+                  <li><strong>Discovery gap:</strong> only a small minority expose <code class="code-font text-indigo-300">/llms.txt</code> or <code class="code-font text-indigo-300">/llms-full.txt</code>.</li>
+                  <li><strong>Fastest boost:</strong> add <code class="code-font text-indigo-300">/llms.txt</code>, an AI catalog, and accessible icon button names.</li>
+                </ul>
+              </div>
+              <div class="space-y-3">
+                <h3 class="text-sm font-bold text-white">Post-ready Angle</h3>
+                <p>Most commerce sites are built for human browsers and classic crawlers. Agent Lighthouse measures the layer needed for autonomous shopping agents: discovery files, crawler permissions, structured facts, and safe action paths.</p>
+                <a href="https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/BENCHMARK.md" target="_blank" rel="noopener" class="inline-flex text-xs font-semibold text-indigo-400 hover:text-indigo-300">Read benchmark notes &rarr;</a>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- 11. Score Showcase -->
+        <section id="showcase" class="scroll-mt-24 space-y-6">
+          <div class="border-b border-slate-800 pb-4">
+            <h2 class="text-2xl font-bold text-white tracking-tight flex items-center gap-2.5">
+              <span>🏅</span>
+              <span>Public Score Showcase</span>
+            </h2>
+            <p class="text-slate-400 text-sm mt-1">Shareable examples for launch posts, client before/after reports, and community submissions.</p>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div class="bg-slate-900 border border-slate-800 rounded-xl p-5 space-y-3">
+              <div class="text-xs text-slate-400 code-font">docs platform</div>
+              <div class="text-4xl font-black text-emerald-400">90+</div>
+              <div class="text-sm font-semibold text-white">Strong discovery files</div>
+              <p class="text-xs text-slate-400">Good <code class="code-font">llms.txt</code>, semantic structure, and crawler access make docs easier for AI coding agents to cite.</p>
+            </div>
+            <div class="bg-slate-900 border border-slate-800 rounded-xl p-5 space-y-3">
+              <div class="text-xs text-slate-400 code-font">storefront</div>
+              <div class="text-4xl font-black text-amber-400">50-70</div>
+              <div class="text-sm font-semibold text-white">Classic SEO, weak agent actions</div>
+              <p class="text-xs text-slate-400">Product schema is common, but OpenAPI, WebMCP, and clean machine-readable checkout paths are usually missing.</p>
+            </div>
+            <div class="bg-slate-900 border border-slate-800 rounded-xl p-5 space-y-3">
+              <div class="text-xs text-slate-400 code-font">before / after</div>
+              <div class="text-4xl font-black text-indigo-400">+30</div>
+              <div class="text-sm font-semibold text-white">Fast lift from foundations</div>
+              <p class="text-xs text-slate-400">Adding AI discovery files, crawler policy clarity, and accessible controls creates a visible score jump.</p>
+            </div>
+          </div>
+
+          <div class="bg-slate-900/60 border border-slate-800 rounded-xl p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+              <div class="text-sm font-bold text-white">Have a public result?</div>
+              <p class="text-xs text-slate-400 mt-1">Submit a score and remediation notes so other teams can learn from real examples.</p>
+            </div>
+            <a href="https://github.com/ForkPoint/agent-lighthouse/issues/new?template=site-score.yml" target="_blank" rel="noopener" class="inline-flex justify-center bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold px-4 py-2 rounded-lg transition-colors">Share a Site Score</a>
+          </div>
+        </section>
+
+        <!-- 12. Badge Generator -->
+        <section id="badge-generator" class="scroll-mt-24 space-y-6">
+          <div class="border-b border-slate-800 pb-4">
+            <h2 class="text-2xl font-bold text-white tracking-tight flex items-center gap-2.5">
+              <span>🏷️</span>
+              <span>Badge Generator</span>
+            </h2>
+            <p class="text-slate-400 text-sm mt-1">Create a README badge for public site scores and before/after launch posts.</p>
+          </div>
+
+          <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-5">
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <label class="space-y-2">
+                <span class="text-xs font-semibold text-slate-300">Score</span>
+                <input id="badge-score" type="number" min="0" max="100" value="87" oninput="updateBadgeGenerator()" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-indigo-500">
+              </label>
+              <label class="space-y-2 sm:col-span-2">
+                <span class="text-xs font-semibold text-slate-300">Target URL</span>
+                <input id="badge-url" type="url" value="https://example.com" oninput="updateBadgeGenerator()" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-indigo-500">
+              </label>
+            </div>
+
+            <div class="bg-slate-950 border border-slate-800 rounded-xl p-4 space-y-3">
+              <div class="flex items-center justify-between gap-4">
+                <div id="badge-preview" class="text-sm"></div>
+                <button onclick="copyToClipboard('badge-markdown', this)" class="bg-slate-800 hover:bg-slate-700 text-slate-300 px-3 py-1.5 rounded text-xs font-medium transition-colors">Copy</button>
+              </div>
+              <pre id="badge-markdown" class="code-font text-xs text-indigo-300 overflow-x-auto whitespace-pre-wrap"></pre>
+            </div>
+          </div>
+        </section>
+
+        <!-- 13. Launch Kit -->
+        <section id="launch-kit" class="scroll-mt-24 space-y-6">
+          <div class="border-b border-slate-800 pb-4">
+            <h2 class="text-2xl font-bold text-white tracking-tight flex items-center gap-2.5">
+              <span>📣</span>
+              <span>Launch Kit</span>
+            </h2>
+            <p class="text-slate-400 text-sm mt-1">Ready-to-use copy and assets for Show HN, Product Hunt, Reddit, Dev.to, and outreach.</p>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <a href="https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/launch-posts/hacker-news.md" target="_blank" rel="noopener" class="bg-slate-900 border border-slate-800 rounded-xl p-5 hover:border-indigo-500/60 transition-colors">
+              <div class="text-sm font-bold text-white">Show HN Draft</div>
+              <p class="text-xs text-slate-400 mt-2">Builder-focused title and comment with a direct command users can try.</p>
+            </a>
+            <a href="https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/launch-posts/product-hunt.md" target="_blank" rel="noopener" class="bg-slate-900 border border-slate-800 rounded-xl p-5 hover:border-indigo-500/60 transition-colors">
+              <div class="text-sm font-bold text-white">Product Hunt Copy</div>
+              <p class="text-xs text-slate-400 mt-2">Name, tagline, description, and maker comment.</p>
+            </a>
+            <a href="https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/launch-posts/reddit.md" target="_blank" rel="noopener" class="bg-slate-900 border border-slate-800 rounded-xl p-5 hover:border-indigo-500/60 transition-colors">
+              <div class="text-sm font-bold text-white">Reddit Drafts</div>
+              <p class="text-xs text-slate-400 mt-2">Value-first community drafts with affiliation disclosure.</p>
+            </a>
+            <a href="https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/outreach/seo-agencies.md" target="_blank" rel="noopener" class="bg-slate-900 border border-slate-800 rounded-xl p-5 hover:border-indigo-500/60 transition-colors">
+              <div class="text-sm font-bold text-white">Outreach Templates</div>
+              <p class="text-xs text-slate-400 mt-2">Email and DM copy for SEO agencies, DevRel, and ecommerce platforms.</p>
+            </a>
           </div>
         </section>
 
@@ -605,7 +749,7 @@ jobs:
       <div class="flex items-center justify-center gap-2">
         <span>🗼 Agent Lighthouse</span>
         <span>•</span>
-        <span>Open-Source under MIT License</span>
+        <span>Open-Source under GPL-3.0-only</span>
         <span>•</span>
         <a href="https://github.com/ForkPoint/agent-lighthouse" target="_blank" rel="noopener" class="text-indigo-400 hover:underline">ForkPoint on GitHub</a>
       </div>
@@ -5321,7 +5465,7 @@ jobs:
       }
 
       container.innerHTML = audits.map((a, idx) => `
-        <div class="bg-slate-900/50 hover:bg-slate-900/90 border border-slate-800/80 hover:border-indigo-500/50 rounded-xl p-4 sm:p-5 transition-all space-y-2">
+        <div class="audit-card bg-slate-900/50 hover:bg-slate-900/90 border border-slate-800/80 hover:border-indigo-500/50 rounded-xl p-4 sm:p-5 transition-all space-y-2">
           <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
             <div class="flex items-center gap-2.5">
               <span class="code-font text-xs font-bold text-indigo-400 bg-indigo-500/10 border border-indigo-500/20 px-2 py-0.5 rounded">${a.id}</span>
@@ -5516,6 +5660,31 @@ jobs:
       });
     }
 
+    function getBadgeColor(score) {
+      if (score >= 90) return '22c55e';
+      if (score >= 70) return '4f46e5';
+      if (score >= 50) return 'f59e0b';
+      return 'ef4444';
+    }
+
+    function updateBadgeGenerator() {
+      const scoreInput = document.getElementById('badge-score');
+      const urlInput = document.getElementById('badge-url');
+      const preview = document.getElementById('badge-preview');
+      const markdown = document.getElementById('badge-markdown');
+      if (!scoreInput || !urlInput || !preview || !markdown) return;
+
+      const rawScore = Number(scoreInput.value || 0);
+      const score = Math.max(0, Math.min(100, Math.round(rawScore)));
+      const targetUrl = urlInput.value.trim() || 'https://example.com';
+      const color = getBadgeColor(score);
+      const badgeUrl = `https://img.shields.io/badge/Agent%20Lighthouse-${score}%2F100-${color}`;
+      const md = `[![Agent Lighthouse](${badgeUrl})](https://github.com/ForkPoint/agent-lighthouse)`;
+
+      preview.innerHTML = `<img alt="Agent Lighthouse ${score}/100 badge" src="${badgeUrl}">`;
+      markdown.innerText = md + `\n<!-- Target scanned: ${escapeHtml(targetUrl)} -->`;
+    }
+
     function escapeHtml(str) {
       if (!str) return '';
       return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
@@ -5528,6 +5697,7 @@ jobs:
 
     // Initialize on page load
     loadAudits();
+    updateBadgeGenerator();
   </script>
 </body>
 </html>

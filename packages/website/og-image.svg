@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630" role="img" aria-labelledby="title desc">
+  <title id="title">Agent Lighthouse</title>
+  <desc id="desc">Lighthouse-style audits for AI-agent readiness.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" x2="1" y1="0" y2="1">
+      <stop stop-color="#020617"/>
+      <stop offset="0.58" stop-color="#0f172a"/>
+      <stop offset="1" stop-color="#064e3b"/>
+    </linearGradient>
+    <linearGradient id="text" x1="0" x2="1">
+      <stop stop-color="#818cf8"/>
+      <stop offset="0.48" stop-color="#38bdf8"/>
+      <stop offset="1" stop-color="#34d399"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="630" fill="url(#bg)"/>
+  <circle cx="1030" cy="90" r="220" fill="#4f46e5" opacity="0.16"/>
+  <circle cx="1040" cy="560" r="260" fill="#10b981" opacity="0.12"/>
+  <rect x="72" y="76" width="1056" height="478" rx="36" fill="#0f172a" stroke="#334155"/>
+  <text x="116" y="154" font-family="Inter, Arial, sans-serif" font-size="34" font-weight="900" fill="#f8fafc">Agent Lighthouse</text>
+  <text x="116" y="240" font-family="Inter, Arial, sans-serif" font-size="74" font-weight="900" fill="url(#text)">Lighthouse, but for AI agents.</text>
+  <text x="116" y="310" font-family="Inter, Arial, sans-serif" font-size="29" fill="#cbd5e1">Audit whether ChatGPT, Claude, Perplexity, MCP clients,</text>
+  <text x="116" y="350" font-family="Inter, Arial, sans-serif" font-size="29" fill="#cbd5e1">AI crawlers, and agentic browsers can use your website.</text>
+  <rect x="116" y="408" width="650" height="62" rx="14" fill="#020617" stroke="#334155"/>
+  <text x="144" y="448" font-family="JetBrains Mono, Menlo, monospace" font-size="22" fill="#34d399">$</text>
+  <text x="178" y="448" font-family="JetBrains Mono, Menlo, monospace" font-size="22" fill="#e2e8f0">npx @forkpoint/agent-lighthouse site.com</text>
+  <text x="116" y="516" font-family="Inter, Arial, sans-serif" font-size="24" fill="#94a3b8">199 checks: llms.txt, robots, Schema.org, OpenAPI, WebMCP, AEO/GEO, accessibility</text>
+</svg>

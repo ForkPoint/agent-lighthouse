@@ -1,0 +1,54 @@
+name: Noisy audit report
+description: Report a false positive, false negative, or unclear remediation.
+title: "[audit noise]: "
+labels:
+  - bug
+body:
+  - type: input
+    id: audit-id
+    attributes:
+      label: Audit ID
+      placeholder: "3.8"
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Agent Lighthouse version
+      placeholder: "0.2.1"
+    validations:
+      required: true
+  - type: input
+    id: url
+    attributes:
+      label: URL or reproduction
+      placeholder: https://example.com
+  - type: dropdown
+    id: issue-type
+    attributes:
+      label: Issue type
+      options:
+        - False positive
+        - False negative
+        - Confusing message
+        - Bad remediation
+        - Other
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected result
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual result
+    validations:
+      required: true
+  - type: textarea
+    id: report
+    attributes:
+      label: Report excerpt
+      description: Paste the relevant JSON/Markdown excerpt if possible.

@@ -1,0 +1,52 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630" role="img" aria-labelledby="title desc">
+  <title id="title">Agent Lighthouse report preview</title>
+  <desc id="desc">A dark report preview showing Agent Lighthouse score cards, category checks, and command-line usage.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" x2="1" y1="0" y2="1">
+      <stop stop-color="#020617"/>
+      <stop offset="0.55" stop-color="#111827"/>
+      <stop offset="1" stop-color="#064e3b"/>
+    </linearGradient>
+    <linearGradient id="accent" x1="0" x2="1">
+      <stop stop-color="#818cf8"/>
+      <stop offset="0.55" stop-color="#38bdf8"/>
+      <stop offset="1" stop-color="#34d399"/>
+    </linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="20" stdDeviation="25" flood-color="#000" flood-opacity="0.45"/>
+    </filter>
+  </defs>
+  <rect width="1200" height="630" fill="url(#bg)"/>
+  <rect x="44" y="44" width="1112" height="542" rx="28" fill="#0f172a" stroke="#334155" filter="url(#shadow)"/>
+  <g transform="translate(88 88)">
+    <text x="0" y="0" font-family="Inter, Arial, sans-serif" font-size="34" font-weight="800" fill="#f8fafc">Agent Lighthouse</text>
+    <text x="0" y="42" font-family="Inter, Arial, sans-serif" font-size="21" fill="#cbd5e1">Lighthouse, but for AI agents.</text>
+    <rect x="0" y="78" width="680" height="58" rx="12" fill="#020617" stroke="#334155"/>
+    <text x="26" y="115" font-family="JetBrains Mono, Menlo, monospace" font-size="20" fill="#34d399">$</text>
+    <text x="58" y="115" font-family="JetBrains Mono, Menlo, monospace" font-size="20" fill="#e2e8f0">npx @forkpoint/agent-lighthouse site.com --view</text>
+  </g>
+  <g transform="translate(88 255)">
+    <rect x="0" y="0" width="250" height="220" rx="18" fill="#020617" stroke="#334155"/>
+    <text x="28" y="50" font-family="Inter, Arial, sans-serif" font-size="16" font-weight="700" fill="#94a3b8">OVERALL READINESS</text>
+    <text x="28" y="122" font-family="Inter, Arial, sans-serif" font-size="66" font-weight="900" fill="#34d399">87</text>
+    <text x="132" y="122" font-family="Inter, Arial, sans-serif" font-size="28" font-weight="700" fill="#94a3b8">/100</text>
+    <rect x="28" y="154" width="160" height="16" rx="8" fill="#1e293b"/>
+    <rect x="28" y="154" width="139" height="16" rx="8" fill="url(#accent)"/>
+    <text x="28" y="195" font-family="Inter, Arial, sans-serif" font-size="15" fill="#cbd5e1">Agent-ready with fixes</text>
+  </g>
+  <g transform="translate(374 255)">
+    <rect x="0" y="0" width="738" height="220" rx="18" fill="#020617" stroke="#334155"/>
+    <g font-family="Inter, Arial, sans-serif" font-size="18">
+      <text x="28" y="45" font-weight="800" fill="#f8fafc">Top audit categories</text>
+      <text x="28" y="90" fill="#cbd5e1">llms.txt + sitemap discovery</text>
+      <text x="610" y="90" fill="#34d399" font-weight="800">94</text>
+      <rect x="28" y="108" width="640" height="10" rx="5" fill="#1e293b"/><rect x="28" y="108" width="602" height="10" rx="5" fill="#34d399"/>
+      <text x="28" y="148" fill="#cbd5e1">Schema.org / OpenAPI / WebMCP</text>
+      <text x="610" y="148" fill="#f59e0b" font-weight="800">68</text>
+      <rect x="28" y="166" width="640" height="10" rx="5" fill="#1e293b"/><rect x="28" y="166" width="435" height="10" rx="5" fill="#f59e0b"/>
+      <text x="28" y="206" fill="#cbd5e1">Semantic HTML + accessibility</text>
+      <text x="610" y="206" fill="#818cf8" font-weight="800">82</text>
+    </g>
+  </g>
+  <text x="88" y="540" font-family="Inter, Arial, sans-serif" font-size="18" fill="#94a3b8">199 checks for ChatGPT, Claude, Perplexity, MCP clients, AI crawlers, and agentic browsers</text>
+</svg>

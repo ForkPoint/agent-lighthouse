@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="560" viewBox="0 0 1000 560" role="img" aria-labelledby="title desc">
+  <title id="title">MCP setup preview</title>
+  <desc id="desc">A dark editor screenshot-style mockup showing Agent Lighthouse MCP server configuration.</desc>
+  <rect width="1000" height="560" fill="#020617"/>
+  <rect x="48" y="44" width="904" height="472" rx="24" fill="#0f172a" stroke="#334155"/>
+  <rect x="48" y="44" width="904" height="54" rx="24" fill="#111827"/>
+  <circle cx="84" cy="71" r="8" fill="#ef4444"/><circle cx="112" cy="71" r="8" fill="#f59e0b"/><circle cx="140" cy="71" r="8" fill="#22c55e"/>
+  <text x="180" y="79" font-family="Inter, Arial, sans-serif" font-size="17" fill="#cbd5e1">claude_desktop_config.json</text>
+  <text x="86" y="145" font-family="JetBrains Mono, Menlo, monospace" font-size="22" fill="#94a3b8">{</text>
+  <text x="126" y="185" font-family="JetBrains Mono, Menlo, monospace" font-size="22" fill="#38bdf8">"mcpServers"</text>
+  <text x="300" y="185" font-family="JetBrains Mono, Menlo, monospace" font-size="22" fill="#94a3b8">: {</text>
+  <text x="166" y="225" font-family="JetBrains Mono, Menlo, monospace" font-size="22" fill="#38bdf8">"agent-lighthouse"</text>
+  <text x="404" y="225" font-family="JetBrains Mono, Menlo, monospace" font-size="22" fill="#94a3b8">: {</text>
+  <text x="206" y="265" font-family="JetBrains Mono, Menlo, monospace" font-size="22" fill="#38bdf8">"command"</text>
+  <text x="342" y="265" font-family="JetBrains Mono, Menlo, monospace" font-size="22" fill="#94a3b8">: </text>
+  <text x="368" y="265" font-family="JetBrains Mono, Menlo, monospace" font-size="22" fill="#34d399">"npx"</text>
+  <text x="206" y="305" font-family="JetBrains Mono, Menlo, monospace" font-size="22" fill="#38bdf8">"args"</text>
+  <text x="288" y="305" font-family="JetBrains Mono, Menlo, monospace" font-size="22" fill="#94a3b8">: [</text>
+  <text x="326" y="305" font-family="JetBrains Mono, Menlo, monospace" font-size="22" fill="#34d399">"-y"</text>
+  <text x="382" y="305" font-family="JetBrains Mono, Menlo, monospace" font-size="22" fill="#94a3b8">, </text>
+  <text x="408" y="305" font-family="JetBrains Mono, Menlo, monospace" font-size="22" fill="#34d399">"@forkpoint/agent-lighthouse-mcp"</text>
+  <text x="810" y="305" font-family="JetBrains Mono, Menlo, monospace" font-size="22" fill="#94a3b8">]</text>
+  <text x="166" y="345" font-family="JetBrains Mono, Menlo, monospace" font-size="22" fill="#94a3b8">}</text>
+  <text x="126" y="385" font-family="JetBrains Mono, Menlo, monospace" font-size="22" fill="#94a3b8">}</text>
+  <text x="86" y="425" font-family="JetBrains Mono, Menlo, monospace" font-size="22" fill="#94a3b8">}</text>
+  <text x="86" y="476" font-family="Inter, Arial, sans-serif" font-size="20" fill="#e2e8f0">Ask Claude or Cursor to audit a staging URL with the Agent Lighthouse MCP server.</text>
+</svg>
