@@ -1,6 +1,6 @@
 {
   "name": "@forkpoint/agent-lighthouse",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "The Open-Source Lighthouse for the Agentic Web",
   "author": "ForkPoint",
   "license": "GPL-3.0-only",
