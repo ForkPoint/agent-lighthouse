@@ -1,0 +1,11 @@
+export { FaqSectionsAudit } from './faq-sections';
+export { QuestionHeadingsAudit } from './question-headings';
+export { FirstParagraphAnswersAudit } from './first-paragraph-answers';
+export { DirectDefinitionsAudit } from './direct-definitions';
+export { ComparisonTablesAudit } from './comparison-tables';
+export { NumberedStepsAudit } from './numbered-steps';
+export { SpecificNumbersAudit } from './specific-numbers';
+export { DatesOnContentAudit } from './dates-on-content';
+export { ContentWithoutClickthroughAudit } from './content-without-clickthrough';
+export { LastUpdatedIndicatorAudit } from './last-updated-indicator';
+export { MetaDescriptionAeoAudit } from './meta-description-aeo';

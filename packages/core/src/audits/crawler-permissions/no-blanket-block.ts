@@ -1,0 +1,70 @@
+import type { AuditMeta, AuditResult } from "../../types";
+import { Audit } from "../../audit";
+import type { CheckContext } from '../../check-context';
+import { parseRobotsTxt, isBlanketBlocked } from './_robots-txt-helpers';
+
+export class NoBlanketBlockAudit extends Audit {
+  static override meta: AuditMeta = {
+    id: '2.22',
+    category: 'crawler-permissions',
+    title: 'No blanket AI block',
+    failureTitle: 'No blanket AI block',
+    description:
+      'A blanket Disallow: / under User-agent: * blocks every crawler, including all AI agents. Your site becomes invisible to AI search engines, ChatGPT Browse, Perplexity, and others.',
+    scoreDisplayMode: 'ternary',
+    weight: 1.0,
+    defaultPriority: 'critical',
+    guidance: {
+      impact:
+        'A blanket Disallow: / under User-agent: * blocks every crawler, including all AI agents. Your site becomes completely invisible to AI search engines, ChatGPT Browse, Perplexity, Claude, and all other AI-powered discovery tools.',
+      fix: 'Replace the blanket Disallow: / with targeted path blocks for sensitive areas only. Allow the root path and block only private directories like /api/ and /admin/.',
+      code: 'User-agent: *\nAllow: /\nDisallow: /api/\nDisallow: /admin/\nDisallow: /internal/',
+      effort: 'trivial',
+      docsUrl: 'https://developers.google.com/search/docs/crawling-indexing/robots/intro',
+      tags: ['robots-txt', 'critical', 'crawler-permissions'],
+    },
+  };
+
+  audit(ctx: CheckContext): AuditResult {
+    const robotsFile = ctx.rootFiles['/robots.txt'];
+
+    if (!robotsFile || robotsFile.status !== 200 || !robotsFile.body) {
+      return this.warn(
+        'No robots.txt found — cannot verify crawler permissions.',
+        'User-agent: * does not Disallow: / entirely',
+        'No robots.txt found',
+        {
+          priority: 'medium',
+          description:
+            'Without a robots.txt file, there is no way to verify whether crawler permissions are correctly configured. Create a robots.txt file with explicit rules for AI crawlers.',
+          code: 'User-agent: *\nAllow: /',
+        },
+      );
+    }
+
+    const groups = parseRobotsTxt(robotsFile.body);
+    const wildcardGroups = groups.filter((g) => g.userAgent === '*');
+    const wildcardRules = wildcardGroups.flatMap((g) => g.rules);
+    const blocked = isBlanketBlocked(wildcardRules);
+
+    if (blocked) {
+      return this.fail(
+        'User-agent: * has Disallow: / — this blocks all crawlers including AI agents.',
+        'User-agent: * does not Disallow: / entirely',
+        'User-agent: * contains Disallow: /',
+        {
+          priority: 'critical',
+          description:
+            'A blanket Disallow: / under User-agent: * blocks every crawler, including all AI agents. Your site becomes invisible to AI search engines, ChatGPT Browse, Perplexity, and others. Replace it with targeted path blocks for sensitive areas only.',
+          code: 'User-agent: *\nAllow: /\nDisallow: /api/\nDisallow: /admin/\nDisallow: /internal/',
+        },
+      );
+    }
+
+    return this.pass(
+      'No blanket Disallow: / found for User-agent: *.',
+      'User-agent: * does not Disallow: / entirely',
+      'Wildcard user-agent does not block all paths',
+    );
+  }
+}

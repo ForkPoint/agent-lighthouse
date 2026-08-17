@@ -1,0 +1,70 @@
+{
+  "name": "@forkpoint/agent-lighthouse-core",
+  "version": "0.1.0",
+  "description": "Core scanner engine, gatherers, audits, and scoring algorithms for Agent Lighthouse",
+  "author": "ForkPoint",
+  "license": "GPL-3.0-only",
+  "homepage": "https://github.com/ForkPoint/agent-lighthouse#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ForkPoint/agent-lighthouse.git",
+    "directory": "packages/core"
+  },
+  "bugs": {
+    "url": "https://github.com/ForkPoint/agent-lighthouse/issues"
+  },
+  "keywords": [
+    "forkpoint",
+    "agent-lighthouse",
+    "lighthouse",
+    "ai-agents",
+    "agentic-web",
+    "webmcp",
+    "mcp",
+    "openapi",
+    "structured-data",
+    "schema-org",
+    "aeo",
+    "geo",
+    "seo",
+    "audit",
+    "ecommerce"
+  ],
+  "sideEffects": false,
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "build": "tsup",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "cheerio": "^1.0.0",
+    "domhandler": "^5.0.3",
+    "jsdom": "^29.1.1",
+    "undici": "^6.21.1",
+    "zod": "^3.24.1"
+  },
+  "devDependencies": {
+    "@types/domhandler": "^2.4.5",
+    "@types/jsdom": "^28.0.3",
+    "@types/node": "^22.10.5",
+    "tsup": "^8.3.5",
+    "typescript": "^5.7.3",
+    "vitest": "^2.1.8"
+  }
+}

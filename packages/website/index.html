@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Agent Lighthouse — The Open-Source Lighthouse for the Agentic Web</title>
+  <meta name="description" content="Audit, score, and optimize websites and storefronts for autonomous AI agents, LLMs, WebMCP, and machine-readable commerce protocols.">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🗼</text></svg>">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#eef2ff',
+              100: '#e0e7ff',
+              500: '#6366f1',
+              600: '#4f46e5',
+              700: '#4338ca',
+            }
+          },
+          fontFamily: {
+            sans: ['Inter', 'system-ui', 'sans-serif'],
+            mono: ['JetBrains Mono', 'Menlo', 'monospace'],
+          }
+        }
+      }
+    }
+  </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    body { font-family: 'Inter', system-ui, sans-serif; }
+    .code-font { font-family: 'JetBrains Mono', monospace; }
+    .glow-indigo { box-shadow: 0 0 50px -10px rgba(99, 102, 241, 0.3); }
+    .glow-emerald { box-shadow: 0 0 40px -10px rgba(16, 185, 129, 0.25); }
+    .gauge-svg text { font-family: 'Inter', sans-serif; font-weight: 800; }
+  </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col selection:bg-indigo-500 selection:text-white antialiased">
+
+  <!-- Navbar -->
+  <nav class="border-b border-slate-800/80 bg-slate-950/80 backdrop-blur-md sticky top-0 z-50">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <span class="text-2xl">🗼</span>
+        <span class="font-extrabold text-lg tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-white via-slate-200 to-indigo-300">
+          Agent Lighthouse
+        </span>
+        <span class="text-[10px] font-bold uppercase tracking-wider bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 px-2 py-0.5 rounded-full">v0.1.0</span>
+      </div>
+
+      <div class="flex items-center gap-6 text-sm font-medium text-slate-300">
+        <a href="#features" class="hover:text-white transition-colors">Pillars</a>
+        <a href="#categories" class="hover:text-white transition-colors">Audits</a>
+        <a href="#viewer" class="hover:text-white transition-colors">Report Viewer</a>
+        <a href="https://github.com/ForkPoint/agent-lighthouse" target="_blank" rel="noopener" class="flex items-center gap-2 bg-slate-800 hover:bg-slate-700 text-white px-3.5 py-1.5 rounded-lg border border-slate-700 transition-colors">
+          <svg class="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
+          <span>GitHub</span>
+        </a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Hero Section -->
+  <header class="relative pt-20 pb-24 overflow-hidden border-b border-slate-800/80">
+    <div class="absolute inset-0 bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(120,119,198,0.15),rgba(255,255,255,0))]"></div>
+    <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-10">
+      
+      <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-indigo-500/30 bg-indigo-500/10 text-indigo-400 text-xs font-semibold mb-8">
+        <span>✨ The Open-Source Standard for Agentic Readiness</span>
+      </div>
+
+      <h1 class="text-4xl sm:text-6xl lg:text-7xl font-black tracking-tight text-white leading-tight">
+        The <span class="bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 via-sky-300 to-emerald-400">Lighthouse</span> for the Agentic Web
+      </h1>
+
+      <p class="mt-6 text-lg sm:text-xl text-slate-400 max-w-3xl mx-auto leading-relaxed">
+        Audit, score, and optimize websites and storefronts for autonomous AI agents, LLMs, WebMCP, OpenAPI discovery, and machine-readable commerce protocols.
+      </p>
+
+      <!-- Terminal Command Snippet -->
+      <div class="mt-10 max-w-xl mx-auto">
+        <div class="bg-slate-900 border border-slate-800 rounded-xl p-3 shadow-2xl flex items-center justify-between code-font text-sm text-slate-300">
+          <div class="flex items-center gap-3 overflow-x-auto">
+            <span class="text-emerald-400 font-bold">$</span>
+            <span>npx @forkpoint/agent-lighthouse https://yourstore.com</span>
+          </div>
+          <button onclick="copyCommand()" id="copy-btn" class="ml-4 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white px-3 py-1.5 rounded-md text-xs font-sans font-medium border border-slate-700 transition-colors shrink-0">
+            Copy
+          </button>
+        </div>
+      </div>
+
+      <!-- Live Interactive Demo Score Gauge -->
+      <div class="mt-16 bg-slate-900/60 border border-slate-800 rounded-2xl p-6 sm:p-8 max-w-4xl mx-auto backdrop-blur-md shadow-2xl">
+        <div class="flex flex-col sm:flex-row items-center justify-between gap-6 pb-6 border-b border-slate-800">
+          <div class="text-left">
+            <div class="text-xs uppercase tracking-wider text-slate-400 font-semibold">Live Audit Demonstration</div>
+            <div class="text-xl font-bold text-white mt-1">Sample Storefront: <span class="text-indigo-400 font-mono text-base">https://acme-store.com</span></div>
+          </div>
+          <div class="flex items-center gap-4">
+            <div class="text-right hidden sm:block">
+              <div class="text-sm font-bold text-emerald-400">OPTIMAL TIER</div>
+              <div class="text-xs text-slate-400">171 Audits Evaluated</div>
+            </div>
+            <div class="relative flex items-center justify-center">
+              <svg width="84" height="84" viewBox="0 0 84 84">
+                <circle cx="42" cy="42" r="36" stroke="#1e293b" stroke-width="7" fill="none" />
+                <circle cx="42" cy="42" r="36" stroke="#10b981" stroke-width="7" stroke-dasharray="226.19" stroke-dashoffset="27.14" stroke-linecap="round" fill="none" transform="rotate(-90 42 42)" />
+                <text x="42" y="48" text-anchor="middle" font-size="22px" font-weight="bold" fill="#10b981">88</text>
+              </svg>
+            </div>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-6 text-left">
+          <div class="bg-slate-950/60 border border-slate-800/80 rounded-xl p-4">
+            <div class="text-xs text-slate-400 font-medium">1. Agentic Readiness</div>
+            <div class="text-lg font-bold text-emerald-400 mt-1">92 / 100</div>
+            <div class="text-xs text-slate-500 mt-1">WebMCP, OpenAPI, Bot Rules</div>
+          </div>
+          <div class="bg-slate-950/60 border border-slate-800/80 rounded-xl p-4">
+            <div class="text-xs text-slate-400 font-medium">2. AI Search Optimization</div>
+            <div class="text-lg font-bold text-indigo-400 mt-1">85 / 100</div>
+            <div class="text-xs text-slate-500 mt-1">AEO, GEO, Step Structures</div>
+          </div>
+          <div class="bg-slate-950/60 border border-slate-800/80 rounded-xl p-4">
+            <div class="text-xs text-slate-400 font-medium">3. Technical Foundation</div>
+            <div class="text-lg font-bold text-emerald-400 mt-1">95 / 100</div>
+            <div class="text-xs text-slate-500 mt-1">Schema.org, Product Feeds</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </header>
+
+  <!-- 3 Pillars Section -->
+  <section id="features" class="py-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="text-center max-w-3xl mx-auto mb-16">
+      <h2 class="text-3xl sm:text-4xl font-extrabold text-white">The Three Pillars of Agentic Readiness</h2>
+      <p class="mt-4 text-slate-400">Everything autonomous shopping agents, reasoning LLMs, and answer engines need to navigate and purchase on your site.</p>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+      <div class="bg-slate-900/50 border border-slate-800 rounded-2xl p-6 hover:border-slate-700 transition-colors">
+        <div class="text-3xl mb-4">🤖</div>
+        <h3 class="text-xl font-bold text-white">Agent Tools & Execution</h3>
+        <p class="text-sm text-slate-400 mt-2 leading-relaxed">
+          Verifies that autonomous agents can invoke actions directly via WebMCP manifests, OpenAPI specs, and <code class="code-font text-xs bg-slate-800 px-1 py-0.5 rounded text-slate-300">agents.json</code> without brittle DOM scraping.
+        </p>
+      </div>
+
+      <div class="bg-slate-900/50 border border-slate-800 rounded-2xl p-6 hover:border-slate-700 transition-colors">
+        <div class="text-3xl mb-4">🏷️</div>
+        <h3 class="text-xl font-bold text-white">Structured Data & Products</h3>
+        <p class="text-sm text-slate-400 mt-2 leading-relaxed">
+          Inspects Schema.org Product, Offer, SKU, GTIN, and stock verification so AI shoppers can quote prices and verify availability with 100% confidence.
+        </p>
+      </div>
+
+      <div class="bg-slate-900/50 border border-slate-800 rounded-2xl p-6 hover:border-slate-700 transition-colors">
+        <div class="text-3xl mb-4">🚦</div>
+        <h3 class="text-xl font-bold text-white">Crawler Permissions & AEO</h3>
+        <p class="text-sm text-slate-400 mt-2 leading-relaxed">
+          Audits <code class="code-font text-xs bg-slate-800 px-1 py-0.5 rounded text-slate-300">robots.txt</code>, <code class="code-font text-xs bg-slate-800 px-1 py-0.5 rounded text-slate-300">llms.txt</code>, and bot-detection heuristics to ensure Perplexity, ChatGPT, and Claude bots are never blocked.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Interactive Report Drag & Drop Viewer -->
+  <section id="viewer" class="py-20 border-t border-slate-800 bg-slate-900/30">
+    <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+      <h2 class="text-3xl sm:text-4xl font-extrabold text-white">Interactive Report Viewer</h2>
+      <p class="mt-4 text-slate-400 max-w-2xl mx-auto">Drop an <code class="code-font text-xs bg-slate-800 px-1.5 py-0.5 rounded text-slate-300">agent-lighthouse-report.json</code> file below to view its visual dashboard.</p>
+
+      <div id="drop-zone" class="mt-8 border-2 border-dashed border-slate-700 hover:border-indigo-500 rounded-2xl p-10 bg-slate-950/60 cursor-pointer transition-colors" onclick="document.getElementById('file-input').click()">
+        <input type="file" id="file-input" accept=".json" class="hidden" onchange="handleFile(this.files)">
+        <div class="text-4xl mb-3">📄</div>
+        <div class="text-sm font-semibold text-slate-200">Click to upload or drag and drop report JSON</div>
+        <div class="text-xs text-slate-500 mt-1">Generated by <code class="code-font text-slate-400">npx @forkpoint/agent-lighthouse --output=json</code></div>
+      </div>
+
+      <div id="viewer-container" class="mt-10 hidden text-left bg-slate-900 border border-slate-800 rounded-2xl p-6 sm:p-8">
+        <!-- Injected dynamically when report is loaded -->
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="mt-auto border-t border-slate-800 py-10 bg-slate-950">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-500">
+      <p>© 2026 ForkPoint. Open source under GPL-3.0 License.</p>
+      <div class="flex items-center gap-6">
+        <a href="https://github.com/ForkPoint/agent-lighthouse" target="_blank" rel="noopener" class="hover:text-slate-400">GitHub</a>
+        <a href="https://www.npmjs.com/package/@forkpoint/agent-lighthouse" target="_blank" rel="noopener" class="hover:text-slate-400">npm Package</a>
+        <a href="https://www.npmjs.com/~forkpoint" target="_blank" rel="noopener" class="hover:text-slate-400">ForkPoint npm Org</a>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    function copyCommand() {
+      navigator.clipboard.writeText('npx @forkpoint/agent-lighthouse https://yourstore.com');
+      const btn = document.getElementById('copy-btn');
+      btn.innerText = 'Copied! ✓';
+      btn.classList.add('text-emerald-400', 'border-emerald-500/50');
+      setTimeout(() => {
+        btn.innerText = 'Copy';
+        btn.classList.remove('text-emerald-400', 'border-emerald-500/50');
+      }, 2000);
+    }
+
+    function handleFile(files) {
+      if (!files || files.length === 0) return;
+      const file = files[0];
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        try {
+          const report = JSON.parse(e.target.result);
+          renderReport(report);
+        } catch (err) {
+          alert('Invalid JSON report file: ' + err.message);
+        }
+      };
+      reader.readAsText(file);
+    }
+
+    function renderReport(report) {
+      const container = document.getElementById('viewer-container');
+      container.classList.remove('hidden');
+      container.innerHTML = `
+        <div class="flex items-center justify-between border-b border-slate-800 pb-4 mb-6">
+          <div>
+            <h3 class="text-2xl font-bold text-white">${report.domain || report.url}</h3>
+            <p class="text-xs text-slate-400 mt-0.5">Scanned: ${new Date(report.scannedAt || Date.now()).toLocaleString()}</p>
+          </div>
+          <div class="text-2xl font-extrabold ${report.overallScore >= 90 ? 'text-emerald-400' : report.overallScore >= 70 ? 'text-indigo-400' : 'text-amber-400'}">
+            ${report.overallScore}/100
+          </div>
+        </div>
+        <div class="space-y-4">
+          <p class="text-sm text-slate-300 leading-relaxed">${report.summary || 'Scan completed successfully.'}</p>
+        </div>
+      `;
+      container.scrollIntoView({ behavior: 'smooth' });
+    }
+  </script>
+</body>
+</html>

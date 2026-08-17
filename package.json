@@ -1,0 +1,30 @@
+{
+  "name": "agent-lighthouse-monorepo",
+  "version": "0.0.0",
+  "private": true,
+  "description": "The Open-Source Lighthouse for the Agentic Web",
+  "author": "ForkPoint",
+  "license": "GPL-3.0-only",
+  "scripts": {
+    "build": "pnpm -r run build",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "pnpm -r run typecheck",
+    "lint": "oxlint .",
+    "format": "prettier --write \"**/*.{ts,tsx,js,json,md}\"",
+    "format:check": "prettier --check \"**/*.{ts,tsx,js,json,md}\"",
+    "changeset": "changeset",
+    "version-packages": "changeset version",
+    "release": "pnpm build && changeset publish"
+  },
+  "devDependencies": {
+    "@changesets/cli": "^2.27.12",
+    "@types/node": "^22.10.5",
+    "oxlint": "^0.15.10",
+    "prettier": "^3.4.2",
+    "tsup": "^8.3.5",
+    "typescript": "^5.7.3",
+    "vitest": "^2.1.8"
+  },
+  "packageManager": "pnpm@9.15.4"
+}

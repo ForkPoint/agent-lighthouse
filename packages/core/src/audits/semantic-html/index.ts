@@ -1,0 +1,17 @@
+export { SingleH1Audit } from './single-h1';
+export { SequentialHeadingsAudit } from './sequential-headings';
+export { MainElementAudit } from './main-element';
+export { ArticleElementAudit } from './article-element';
+export { HeaderFooterAudit } from './header-footer';
+export { AsideElementAudit } from './aside-element';
+export { SectionHeadingsAudit } from './section-headings';
+export { SemanticListsAudit } from './semantic-lists';
+export { DataTablesAudit } from './data-tables';
+export { CodeLanguageAudit } from './code-language';
+export { TimeElementAudit } from './time-element';
+export { AddressElementAudit } from './address-element';
+export { DefinitionElementsAudit } from './definition-elements';
+export { ContentDepthAudit } from './content-depth';
+export { ImageAltTextAudit } from './image-alt-text';
+export { DecorativeImagesAudit } from './decorative-images';
+export { FigureFigcaptionAudit } from './figure-figcaption';

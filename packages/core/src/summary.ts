@@ -1,0 +1,49 @@
+import type { ScanReport } from './types';
+import { SCORE_TIER_LABELS } from './constants';
+
+/**
+ * Generates a pragmatic, rule-based summary for a scan report.
+ * Provides immediate business context without LLM latency.
+ */
+export function generateScanSummary(report: Partial<ScanReport>): string {
+  const {
+    domain,
+    overallScore = 0,
+    scoreTier,
+    categories = [],
+    recommendations = [],
+    readinessVitals = { commerce: 0, content: 0, botAccessibility: 0, technical: 0 },
+  } = report;
+
+  const tierLabel = scoreTier ? SCORE_TIER_LABELS[scoreTier] : 'N/A';
+  const criticalCount = recommendations.filter((r) => r.priority === 'critical').length;
+  const highCount = recommendations.filter((r) => r.priority === 'high').length;
+
+  const passCount = categories.reduce((sum, cat) => sum + cat.passCount, 0);
+  const totalChecks = categories.reduce(
+    (sum, cat) => sum + cat.passCount + cat.warnCount + cat.failCount,
+    0,
+  );
+
+  // Find strongest and weakest categories
+  const sortedCategories = [...categories].sort((a, b) => b.score - a.score);
+  const strongest = sortedCategories.length > 0 ? sortedCategories[0] : undefined;
+  const weakest =
+    sortedCategories.length > 1 ? sortedCategories[sortedCategories.length - 1] : undefined;
+
+  const v = readinessVitals;
+  const summary = [
+    `Scan Report for ${domain}: Overall Readiness ${overallScore}% (${tierLabel}).`,
+    `Readiness Vitals: Commerce ${v.commerce}%, Content ${v.content}%, AI Bot Accessibility ${v.botAccessibility}%, Technical Readiness ${v.technical}%.`,
+    `Audit Statistics: ${passCount} of ${totalChecks} checks passed.`,
+    `Key Issues: ${criticalCount} critical, ${highCount} high priority findings.`,
+    strongest ? `Top Strength: ${strongest.name} (${strongest.score}%).` : null,
+    weakest && strongest && weakest.id !== strongest.id
+      ? `Primary Improvement Area: ${weakest.name} (${weakest.score}%).`
+      : null,
+  ]
+    .filter(Boolean)
+    .join(' ');
+
+  return summary;
+}

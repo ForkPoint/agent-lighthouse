@@ -1,0 +1,15 @@
+export { NamedAuthorAudit } from './named-author';
+export { AuthorSameAsAudit } from './author-same-as';
+export { AuthorPageAudit } from './author-page';
+export { AboutCredentialsAudit } from './about-credentials';
+export { ExternalCitationsAudit } from './external-citations';
+export { BrandNameAudit } from './brand-name';
+export { TrustSignalsAudit } from './trust-signals';
+export { ReviewSignalsAudit } from './review-signals';
+export { PublicationDateAudit } from './publication-date';
+export { LastModifiedSchemaAudit } from './last-modified-schema';
+export { InternalCrossLinkingAudit } from './internal-cross-linking';
+export { PaginationLinksAudit } from './pagination-links';
+export { UniqueDataAudit } from './unique-data';
+export { BlockquoteUsageAudit } from './blockquote-usage';
+export { DescriptiveUrlsAudit } from './descriptive-urls';

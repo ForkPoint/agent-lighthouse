@@ -1,0 +1,18 @@
+{
+  "$schema": "https://unpkg.com/@changesets/config/schema.json",
+  "changelog": "@changesets/cli/changelog",
+  "commit": false,
+  "fixed": [
+    [
+      "@forkpoint/agent-lighthouse",
+      "@forkpoint/agent-lighthouse-core",
+      "@forkpoint/agent-lighthouse-report",
+      "@forkpoint/agent-lighthouse-mcp"
+    ]
+  ],
+  "linked": [],
+  "access": "public",
+  "baseBranch": "main",
+  "updateInternalDependencies": "patch",
+  "ignore": []
+}

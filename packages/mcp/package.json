@@ -1,0 +1,59 @@
+{
+  "name": "@forkpoint/agent-lighthouse-mcp",
+  "version": "0.1.0",
+  "description": "Model Context Protocol (MCP) server for Agent Lighthouse",
+  "author": "ForkPoint",
+  "license": "GPL-3.0-only",
+  "homepage": "https://github.com/ForkPoint/agent-lighthouse#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ForkPoint/agent-lighthouse.git",
+    "directory": "packages/mcp"
+  },
+  "bugs": {
+    "url": "https://github.com/ForkPoint/agent-lighthouse/issues"
+  },
+  "keywords": [
+    "forkpoint",
+    "agent-lighthouse",
+    "lighthouse",
+    "mcp",
+    "model-context-protocol",
+    "ai-agents",
+    "claude",
+    "cursor"
+  ],
+  "bin": {
+    "agent-lighthouse-mcp": "./dist/server.js"
+  },
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "build": "tsup",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@forkpoint/agent-lighthouse-core": "workspace:*",
+    "@forkpoint/agent-lighthouse-report": "workspace:*",
+    "@modelcontextprotocol/sdk": "^1.5.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.5",
+    "tsup": "^8.3.5",
+    "typescript": "^5.7.3"
+  }
+}
