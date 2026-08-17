@@ -24,18 +24,36 @@ export class UniqueMetaAudit extends Audit {
   };
 
   audit(ctx: CheckContext): AuditResult {
-    if (ctx.pages.length < 2) {
+    // Group pages by canonical URL so variant query parameters (e.g. ?variant=123) are not counted as duplicate distinct pages
+    const canonicalGroups = new Map<string, (typeof ctx.pages)[0]>();
+    for (const page of ctx.pages) {
+      let canon = (page.meta?.['canonical'] || page.url).trim();
+      try {
+        const u = new URL(canon);
+        u.search = '';
+        u.hash = '';
+        canon = u.href;
+      } catch {
+        // ignore
+      }
+      if (!canonicalGroups.has(canon)) {
+        canonicalGroups.set(canon, page);
+      }
+    }
+
+    const uniquePages = Array.from(canonicalGroups.values());
+    if (uniquePages.length < 2) {
       return this.pass(
-        'Only one page scanned; uniqueness check not applicable.',
+        'Only one distinct canonical page scanned; uniqueness check not applicable.',
         'Each page has a unique title + description combination',
-        '1 page scanned',
+        '1 distinct page scanned',
       );
     }
 
     const seen = new Map<string, string>();
     const duplicates: string[] = [];
 
-    for (const page of ctx.pages) {
+    for (const page of uniquePages) {
       /* v8 ignore next */
       const title = (page.meta?.['title'] ?? page.$?.('title').text() ?? '').trim();
       const desc = (page.meta?.['description'] ?? '').trim();
@@ -50,9 +68,9 @@ export class UniqueMetaAudit extends Audit {
 
     if (duplicates.length === 0) {
       return this.pass(
-        `All ${ctx.pages.length} pages have unique title + description.`,
+        `All ${uniquePages.length} distinct pages have unique title + description.`,
         'Each page has a unique title + description combination',
-        `${ctx.pages.length} unique combinations`,
+        `${uniquePages.length} unique combinations`,
       );
     }
 

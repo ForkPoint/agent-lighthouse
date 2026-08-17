@@ -49,8 +49,11 @@ export class ImageDimensionsAudit extends Audit {
       );
     }
 
-    // Exclude inline data URI spacers/placeholders which do not cause network-delayed CLS
-    const images = rawImages.filter((img) => !img.src?.startsWith('data:image/'));
+    // Exclude inline data URI spacers and dummy anchors which do not cause network-delayed CLS
+    const images = rawImages.filter((img) => {
+      const src = img.src?.trim();
+      return src !== '#' && !src?.startsWith('data:image/');
+    });
 
     if (images.length === 0) {
       return this.pass(
