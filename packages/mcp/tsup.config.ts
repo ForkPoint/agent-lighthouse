@@ -1,5 +1,7 @@
 import { defineConfig } from 'tsup';
 
+const packageVersion = process.env.npm_package_version ?? 'unknown';
+
 export default defineConfig({
   entry: {
     index: 'src/index.ts',
@@ -11,6 +13,9 @@ export default defineConfig({
       return { js: '#!/usr/bin/env node' };
     }
     return {};
+  },
+  define: {
+    __PACKAGE_VERSION__: JSON.stringify(packageVersion),
   },
   dts: true,
   clean: true,

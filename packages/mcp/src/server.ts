@@ -7,10 +7,14 @@ import {
 import { runScan } from '@forkpoint/agent-lighthouse-core';
 import { buildReportView } from '@forkpoint/agent-lighthouse-report';
 
+declare const __PACKAGE_VERSION__: string;
+
+const MCP_SERVER_VERSION = typeof __PACKAGE_VERSION__ === 'string' ? __PACKAGE_VERSION__ : 'unknown';
+
 const server = new Server(
   {
     name: 'agent-lighthouse-mcp',
-    version: '0.2.1',
+    version: MCP_SERVER_VERSION,
   },
   {
     capabilities: {
