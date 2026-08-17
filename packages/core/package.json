@@ -1,6 +1,6 @@
 {
   "name": "@forkpoint/agent-lighthouse-core",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Core scanner engine, gatherers, audits, and scoring algorithms for Agent Lighthouse",
   "author": "ForkPoint",
   "license": "GPL-3.0-only",
