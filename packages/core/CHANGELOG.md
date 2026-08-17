@@ -1,5 +1,11 @@
 # @forkpoint/agent-lighthouse-core
 
+## 0.2.2
+
+### Patch Changes
+
+- 229c08b: Add launch, showcase, and badge assets, and refresh generated report and MCP version labels.
+
 ## 0.2.1
 
 ### Patch Changes
