@@ -626,7 +626,6 @@ jobs:
   <!-- Client-Side Scripts & Embedded Audit Database -->
   <script>
     let allAudits = window.EMBEDDED_AUDITS || [];
-  <script>
   window.EMBEDDED_AUDITS = [
   {
     "id": "1.1",
@@ -1745,7 +1744,7 @@ jobs:
     "guidance": {
       "impact": "Without any JSON-LD structured data, AI agents like ChatGPT and Perplexity treat your site as unstructured text with no machine-readable identity. Your brand, products, and services become invisible to AI-powered discovery, search, and recommendation systems.",
       "fix": "Add at least one JSON-LD script block in your homepage <head>. Start with Organization and WebSite schemas to establish your site identity for AI agents.",
-      "code": "<script type=\"application/ld+json\">\n{\n  \"@context\": \"https://schema.org\",\n  \"@type\": \"Organization\",\n  \"name\": \"Your Company\",\n  \"url\": \"https://yoursite.com\",\n  \"logo\": \"https://yoursite.com/logo.png\"\n}\n</script>",
+      "code": "<script type=\"application/ld+json\">\n{\n  \"@context\": \"https://schema.org\",\n  \"@type\": \"Organization\",\n  \"name\": \"Your Company\",\n  \"url\": \"https://yoursite.com\",\n  \"logo\": \"https://yoursite.com/logo.png\"\n}\n<\/script>",
       "effort": "easy",
       "docsUrl": "https://developers.google.com/search/docs/appearance/structured-data/intro-structured-data",
       "tags": [
@@ -1768,7 +1767,7 @@ jobs:
     "guidance": {
       "impact": "JSON-LD blocks missing @context or @type are silently ignored by every schema consumer, including Google, ChatGPT plugins, and RAG pipelines. Even if you have structured data on the page, invalid blocks provide zero value to AI agents.",
       "fix": "Ensure every JSON-LD block includes \"@context\": \"https://schema.org\" and a valid @type property. If using @graph, each item inside must also have @type.",
-      "code": "<script type=\"application/ld+json\">\n{\n  \"@context\": \"https://schema.org\",\n  \"@type\": \"WebPage\",\n  \"name\": \"Page Title\",\n  \"description\": \"Page description\"\n}\n</script>",
+      "code": "<script type=\"application/ld+json\">\n{\n  \"@context\": \"https://schema.org\",\n  \"@type\": \"WebPage\",\n  \"name\": \"Page Title\",\n  \"description\": \"Page description\"\n}\n<\/script>",
       "effort": "trivial",
       "docsUrl": "https://json-ld.org/spec/latest/json-ld/",
       "tags": [
@@ -3054,7 +3053,7 @@ jobs:
     "guidance": {
       "impact": "Without a search endpoint, AI agents must crawl every page to find specific content. When a user asks \"find pricing info on Example.com,\" the agent has no efficient way to locate it, resulting in slow or failed responses.",
       "fix": "Add a Schema.org SearchAction to your homepage JSON-LD, or expose a GET search endpoint in your OpenAPI spec. Ensure the endpoint returns results for a test query.",
-      "code": "<!-- Schema.org SearchAction in JSON-LD -->\n<script type=\"application/ld+json\">\n{\n  \"@context\": \"https://schema.org\",\n  \"@type\": \"WebSite\",\n  \"url\": \"https://yoursite.com\",\n  \"potentialAction\": {\n    \"@type\": \"SearchAction\",\n    \"target\": {\n      \"@type\": \"EntryPoint\",\n      \"urlTemplate\": \"https://yoursite.com/search?q={search_term_string}\"\n    },\n    \"query-input\": \"required name=search_term_string\"\n  }\n}\n</script>",
+      "code": "<!-- Schema.org SearchAction in JSON-LD -->\n<script type=\"application/ld+json\">\n{\n  \"@context\": \"https://schema.org\",\n  \"@type\": \"WebSite\",\n  \"url\": \"https://yoursite.com\",\n  \"potentialAction\": {\n    \"@type\": \"SearchAction\",\n    \"target\": {\n      \"@type\": \"EntryPoint\",\n      \"urlTemplate\": \"https://yoursite.com/search?q={search_term_string}\"\n    },\n    \"query-input\": \"required name=search_term_string\"\n  }\n}\n<\/script>",
       "effort": "moderate",
       "docsUrl": "https://schema.org/SearchAction",
       "tags": [
@@ -4499,7 +4498,7 @@ jobs:
     "guidance": {
       "impact": "Synchronous scripts in <head> block HTML parsing and delay content delivery. Since AI crawlers do not execute JavaScript, these scripts add pure latency with zero benefit — the crawler waits for scripts to download but never runs them. This wastes crawl budget and slows TTFB, reducing the number of pages AI agents can index.",
       "fix": "Add the defer or async attribute to all <script> tags in <head>, or convert them to type=\"module\". Move non-critical scripts to the end of <body> if they cannot be deferred.",
-      "code": "<!-- Before (blocking): -->\n<script src=\"app.js\"></script>\n\n<!-- After (non-blocking): -->\n<script src=\"app.js\" defer></script>",
+      "code": "<!-- Before (blocking): -->\n<script src=\"app.js\"><\/script>\n\n<!-- After (non-blocking): -->\n<script src=\"app.js\" defer><\/script>",
       "effort": "easy",
       "docsUrl": "https://web.dev/articles/render-blocking-resources",
       "tags": [
@@ -5065,7 +5064,7 @@ jobs:
     "guidance": {
       "impact": "AI engines build entity graphs by matching Organization schema names to in-content mentions. If your brand name only appears in schema but not body text, agents cannot associate your content with your entity, weakening brand recognition in AI responses.",
       "fix": "Mention your brand name naturally in the body text of your pages. Ensure it matches the name in your Organization JSON-LD schema exactly.",
-      "code": "<p>At YourBrand, we build tools that help developers ship faster.</p>\n\n<!-- Ensure JSON-LD matches: -->\n<script type=\"application/ld+json\">\n{\"@context\":\"https://schema.org\",\"@type\":\"Organization\",\"name\":\"YourBrand\"}\n</script>",
+      "code": "<p>At YourBrand, we build tools that help developers ship faster.</p>\n\n<!-- Ensure JSON-LD matches: -->\n<script type=\"application/ld+json\">\n{\"@context\":\"https://schema.org\",\"@type\":\"Organization\",\"name\":\"YourBrand\"}\n<\/script>",
       "effort": "trivial",
       "tags": [
         "brand",
@@ -5290,7 +5289,6 @@ jobs:
     }
   }
 ];
-</script>
     let activeCategory = 'all';
 
     // Fetch or load audits-data.json
