@@ -1,15 +1,35 @@
-import { runScan, loadConfigFile, getPreset, type PresetName } from '@forkpoint/agent-lighthouse-core';
-import { buildReportView, generateHtmlReport, generateMarkdownSummary } from '@forkpoint/agent-lighthouse-report';
-import { writeFileSync, mkdirSync } from 'node:fs';
-import { resolve } from 'node:path';
-import { exec } from 'node:child_process';
+import {
+  runScan,
+  loadConfigFile,
+  getPreset,
+  type PresetName,
+} from "@forkpoint/agent-lighthouse-core";
+import {
+  buildReportView,
+  generateHtmlReport,
+  generateMarkdownSummary,
+} from "@forkpoint/agent-lighthouse-report";
+import { writeFileSync, mkdirSync, readFileSync } from "node:fs";
+import { resolve } from "node:path";
+import { exec } from "node:child_process";
 
 const args = process.argv.slice(2);
 const command = args[0];
 
+function getPackageVersion() {
+  try {
+    const pkg = JSON.parse(
+      readFileSync(resolve(__dirname, "../package.json"), "utf8"),
+    ) as { version?: string };
+    return pkg.version || "unknown";
+  } catch {
+    return "unknown";
+  }
+}
+
 function printBanner() {
   console.log(`
-\x1b[1m\x1b[36m🗼 Agent Lighthouse\x1b[0m \x1b[90mv0.1.0\x1b[0m
+\x1b[1m\x1b[36m🗼 Agent Lighthouse\x1b[0m \x1b[90mv${getPackageVersion()}\x1b[0m
 \x1b[90mThe Open-Source Lighthouse for the Agentic Web\x1b[0m
 `);
 }
@@ -43,11 +63,11 @@ Examples:
 
 function openInBrowser(filePath: string) {
   const cmd =
-    process.platform === 'darwin'
+    process.platform === "darwin"
       ? `open "${filePath}"`
-      : process.platform === 'win32'
-      ? `start "" "${filePath}"`
-      : `xdg-open "${filePath}"`;
+      : process.platform === "win32"
+        ? `start "" "${filePath}"`
+        : `xdg-open "${filePath}"`;
   exec(cmd, () => {});
 }
 
@@ -61,23 +81,31 @@ function getArgValue(shortFlag: string, longFlag: string): string | undefined {
     }
   }
   const shortIdx = shortFlag ? args.indexOf(shortFlag) : -1;
-  if (shortIdx !== -1 && args[shortIdx + 1] && !args[shortIdx + 1].startsWith('-')) {
+  if (
+    shortIdx !== -1 &&
+    args[shortIdx + 1] &&
+    !args[shortIdx + 1].startsWith("-")
+  ) {
     return args[shortIdx + 1];
   }
   const longIdx = longFlag ? args.indexOf(longFlag) : -1;
-  if (longIdx !== -1 && args[longIdx + 1] && !args[longIdx + 1].startsWith('-')) {
+  if (
+    longIdx !== -1 &&
+    args[longIdx + 1] &&
+    !args[longIdx + 1].startsWith("-")
+  ) {
     return args[longIdx + 1];
   }
   return undefined;
 }
 
 async function audit(targetUrl?: string) {
-  const customConfigPath = getArgValue('-c', '--config');
+  const customConfigPath = getArgValue("-c", "--config");
   const fileConfig = loadConfigFile(customConfigPath);
 
   const url = targetUrl || fileConfig.url;
   if (!url) {
-    console.error('\x1b[31mError:\x1b[0m No target URL specified.');
+    console.error("\x1b[31mError:\x1b[0m No target URL specified.");
     usage();
   }
 
@@ -88,75 +116,100 @@ async function audit(targetUrl?: string) {
     process.exit(1);
   }
 
-  const isSilent = args.includes('--silent');
-  const shouldView = args.includes('-v') || args.includes('--view');
-  const debugAudit = getArgValue('', '--debug-audit');
+  const isSilent = args.includes("--silent");
+  const shouldView = args.includes("-v") || args.includes("--view");
+  const debugAudit = getArgValue("", "--debug-audit");
 
-  const presetName = (getArgValue('-p', '--preset') || fileConfig.preset || 'full') as PresetName;
+  const presetName = (getArgValue("-p", "--preset") ||
+    fileConfig.preset ||
+    "full") as PresetName;
   const preset = getPreset(presetName);
 
-  const minScoreArg = getArgValue('', '--min-score');
-  const minScore = minScoreArg ? Number(minScoreArg) : fileConfig.minScore ?? 0;
+  const minScoreArg = getArgValue("", "--min-score");
+  const minScore = minScoreArg
+    ? Number(minScoreArg)
+    : (fileConfig.minScore ?? 0);
 
-  const outputDir = getArgValue('-d', '--output-dir') || fileConfig.outputDir || './reports';
+  const outputDir =
+    getArgValue("-d", "--output-dir") || fileConfig.outputDir || "./reports";
 
-  const outputFormatArg = getArgValue('-o', '--output');
+  const outputFormatArg = getArgValue("-o", "--output");
   const outputFormats = outputFormatArg
-    ? outputFormatArg.split(',').map((s) => s.trim())
-    : fileConfig.output ?? ['terminal', 'html', 'json'];
+    ? outputFormatArg.split(",").map((s) => s.trim())
+    : (fileConfig.output ?? ["terminal", "html", "json"]);
 
   if (!isSilent) {
     printBanner();
-    console.log(`Auditing \x1b[1m${url}\x1b[0m using \x1b[36m${preset.name}\x1b[0m preset ...\n`);
+    console.log(
+      `Auditing \x1b[1m${url}\x1b[0m using \x1b[36m${preset.name}\x1b[0m preset ...\n`,
+    );
   }
 
   const report = await runScan(url, (pct, phase) => {
     if (!isSilent) {
-      process.stdout.write(`\r  \x1b[36m[${pct.toString().padStart(3)}%]\x1b[0m ${phase}`);
+      process.stdout.write(
+        `\r  \x1b[36m[${pct.toString().padStart(3)}%]\x1b[0m ${phase}`,
+      );
     }
   });
 
   if (!isSilent) {
-    process.stdout.write('\r' + ' '.repeat(80) + '\r');
+    process.stdout.write("\r" + " ".repeat(80) + "\r");
   }
 
   const view = buildReportView(report);
 
   // Terminal Output
-  if (outputFormats.includes('terminal') && !isSilent) {
-    console.log(`\x1b[1m────────────────────────────────────────────────────────────────────────\x1b[0m`);
+  if (outputFormats.includes("terminal") && !isSilent) {
     console.log(
-      `\x1b[1mOVERALL AGENT READINESS:\x1b[0m \x1b[1m${view.overallScore}/100\x1b[0m (${view.scoreTier.toUpperCase()})`
+      `\x1b[1m────────────────────────────────────────────────────────────────────────\x1b[0m`,
     );
     console.log(
-      `Target: ${report.url} | Preset: ${preset.name} | Pages: ${view.pagesScanned.length} | Duration: ${(view.durationMs / 1000).toFixed(1)}s`
+      `\x1b[1mOVERALL AGENT READINESS:\x1b[0m \x1b[1m${view.overallScore}/100\x1b[0m (${view.scoreTier.toUpperCase()})`,
     );
-    console.log(`\x1b[1m────────────────────────────────────────────────────────────────────────\x1b[0m\n`);
+    console.log(
+      `Target: ${report.url} | Preset: ${preset.name} | Pages: ${view.pagesScanned.length} | Duration: ${(view.durationMs / 1000).toFixed(1)}s`,
+    );
+    console.log(
+      `\x1b[1m────────────────────────────────────────────────────────────────────────\x1b[0m\n`,
+    );
 
     if (report.wafProtection?.isBlocked) {
-      console.log(`  \x1b[41m\x1b[37m\x1b[1m 🛡️  BOT PROTECTION WALL DETECTED: ${report.wafProtection.name.toUpperCase()} \x1b[0m`);
-      console.log(`  \x1b[31m⚠️  Diagnosis: ${report.wafProtection.reason}\x1b[0m`);
-      console.log(`  \x1b[90mThis storefront is actively dropping or challenging automated crawler connections.\x1b[0m`);
-      console.log(`  \x1b[90mAI agents (GPTBot, Claude, Perplexity) cannot index or interact with this catalog.\x1b[0m\n`);
+      console.log(
+        `  \x1b[41m\x1b[37m\x1b[1m 🛡️  BOT PROTECTION WALL DETECTED: ${report.wafProtection.name.toUpperCase()} \x1b[0m`,
+      );
+      console.log(
+        `  \x1b[31m⚠️  Diagnosis: ${report.wafProtection.reason}\x1b[0m`,
+      );
+      console.log(
+        `  \x1b[90mThis storefront is actively dropping or challenging automated crawler connections.\x1b[0m`,
+      );
+      console.log(
+        `  \x1b[90mAI agents (GPTBot, Claude, Perplexity) cannot index or interact with this catalog.\x1b[0m\n`,
+      );
     }
 
     console.log(`\x1b[1m📊 CATEGORIES:\x1b[0m`);
     for (const group of view.groups) {
-      console.log(`\n  \x1b[1m${group.label}\x1b[0m \x1b[90m—\x1b[0m ${group.score}/100`);
+      console.log(
+        `\n  \x1b[1m${group.label}\x1b[0m \x1b[90m—\x1b[0m ${group.score}/100`,
+      );
       for (const cat of group.categories) {
         const c = cat.counts;
         const scoreColor =
           cat.score >= 90
-            ? '\x1b[32m'
+            ? "\x1b[32m"
             : cat.score >= 70
-            ? '\x1b[34m'
-            : cat.score >= 50
-            ? '\x1b[33m'
-            : '\x1b[31m';
+              ? "\x1b[34m"
+              : cat.score >= 50
+                ? "\x1b[33m"
+                : "\x1b[31m";
         console.log(
           `    ${scoreColor}•\x1b[0m ${cat.name.padEnd(36)} : ${scoreColor}${cat.score
             .toString()
-            .padStart(3)}/100\x1b[0m  \x1b[90m(${c.pass}✓ ${c.warn}! ${c.fail}✗)\x1b[0m`
+            .padStart(
+              3,
+            )}/100\x1b[0m  \x1b[90m(${c.pass}✓ ${c.warn}! ${c.fail}✗)\x1b[0m`,
         );
       }
     }
@@ -166,49 +219,69 @@ async function audit(targetUrl?: string) {
   // Audit Debugger Output
   if (debugAudit) {
     const allChecks = view.groups.flatMap((g) =>
-      g.categories.flatMap((c) => [...c.checks, ...c.notApplicable])
+      g.categories.flatMap((c) => [...c.checks, ...c.notApplicable]),
     );
     const targetChecks =
-      debugAudit === 'fails'
-        ? allChecks.filter((c) => c.status === 'fail' || c.status === 'warn')
+      debugAudit === "fails"
+        ? allChecks.filter((c) => c.status === "fail" || c.status === "warn")
         : allChecks.filter(
-            (c) => c.id === debugAudit || c.title.toLowerCase().includes(debugAudit.toLowerCase())
+            (c) =>
+              c.id === debugAudit ||
+              c.title.toLowerCase().includes(debugAudit.toLowerCase()),
           );
 
     if (targetChecks.length === 0) {
-      console.log(`\x1b[33m[debugger] No audits found matching: ${debugAudit}\x1b[0m\n`);
+      console.log(
+        `\x1b[33m[debugger] No audits found matching: ${debugAudit}\x1b[0m\n`,
+      );
     } else {
-      console.log(`\x1b[1m🔍 AUDIT DEBUGGER DIAGNOSTICS (${targetChecks.length} checks):\x1b[0m`);
-      console.log(`\x1b[1m────────────────────────────────────────────────────────────────────────\x1b[0m`);
+      console.log(
+        `\x1b[1m🔍 AUDIT DEBUGGER DIAGNOSTICS (${targetChecks.length} checks):\x1b[0m`,
+      );
+      console.log(
+        `\x1b[1m────────────────────────────────────────────────────────────────────────\x1b[0m`,
+      );
 
       for (const check of targetChecks) {
         const statusBadge =
-          check.status === 'pass'
-            ? '\x1b[32m[PASS]\x1b[0m'
-            : check.status === 'warn'
-            ? '\x1b[33m[WARN]\x1b[0m'
-            : check.status === 'fail'
-            ? '\x1b[31m[FAIL]\x1b[0m'
-            : '\x1b[90m[N/A]\x1b[0m';
+          check.status === "pass"
+            ? "\x1b[32m[PASS]\x1b[0m"
+            : check.status === "warn"
+              ? "\x1b[33m[WARN]\x1b[0m"
+              : check.status === "fail"
+                ? "\x1b[31m[FAIL]\x1b[0m"
+                : "\x1b[90m[N/A]\x1b[0m";
 
-        console.log(`\n${statusBadge} \x1b[1m[${check.id}] ${check.title}\x1b[0m (Score: ${check.score})`);
-        if (check.pageUrl) console.log(`  \x1b[90mPage:\x1b[0m        ${check.pageUrl}`);
-        if (check.displayValue) console.log(`  \x1b[90mFound:\x1b[0m       ${check.displayValue}`);
-        if (check.details?.expected) console.log(`  \x1b[90mExpected:\x1b[0m    ${check.details.expected}`);
-        if (check.explanation) console.log(`  \x1b[90mExplanation:\x1b[0m ${check.explanation}`);
-        if (check.impact) console.log(`  \x1b[90mImpact:\x1b[0m      ${check.impact}`);
-        if (check.fix) console.log(`  \x1b[90mFix:\x1b[0m         ${check.fix}`);
+        console.log(
+          `\n${statusBadge} \x1b[1m[${check.id}] ${check.title}\x1b[0m (Score: ${check.score})`,
+        );
+        if (check.pageUrl)
+          console.log(`  \x1b[90mPage:\x1b[0m        ${check.pageUrl}`);
+        if (check.displayValue)
+          console.log(`  \x1b[90mFound:\x1b[0m       ${check.displayValue}`);
+        if (check.details?.expected)
+          console.log(
+            `  \x1b[90mExpected:\x1b[0m    ${check.details.expected}`,
+          );
+        if (check.explanation)
+          console.log(`  \x1b[90mExplanation:\x1b[0m ${check.explanation}`);
+        if (check.impact)
+          console.log(`  \x1b[90mImpact:\x1b[0m      ${check.impact}`);
+        if (check.fix)
+          console.log(`  \x1b[90mFix:\x1b[0m         ${check.fix}`);
         if (check.details?.code) {
           console.log(`  \x1b[90mCode Example:\x1b[0m`);
           console.log(
             check.details.code
-              .split('\n')
+              .split("\n")
               .map((line: string) => `    \x1b[36m${line}\x1b[0m`)
-              .join('\n')
+              .join("\n"),
           );
         }
       }
-      console.log(`\x1b[1m────────────────────────────────────────────────────────────────────────\x1b[0m\n`);
+      console.log(
+        `\x1b[1m────────────────────────────────────────────────────────────────────────\x1b[0m\n`,
+      );
     }
   }
 
@@ -216,24 +289,26 @@ async function audit(targetUrl?: string) {
   mkdirSync(resolve(outputDir), { recursive: true });
 
   // JSON Report
-  if (outputFormats.includes('json')) {
-    const jsonPath = resolve(outputDir, 'agent-lighthouse-report.json');
+  if (outputFormats.includes("json")) {
+    const jsonPath = resolve(outputDir, "agent-lighthouse-report.json");
     writeFileSync(jsonPath, JSON.stringify(report, null, 2));
-    if (!isSilent) console.log(`  \x1b[90m• JSON Report:\x1b[0m    ${jsonPath}`);
+    if (!isSilent)
+      console.log(`  \x1b[90m• JSON Report:\x1b[0m    ${jsonPath}`);
   }
 
   // HTML Report
-  let htmlPath = '';
-  if (outputFormats.includes('html')) {
-    htmlPath = resolve(outputDir, 'agent-lighthouse-report.html');
+  let htmlPath = "";
+  if (outputFormats.includes("html")) {
+    htmlPath = resolve(outputDir, "agent-lighthouse-report.html");
     const htmlContent = generateHtmlReport(report);
     writeFileSync(htmlPath, htmlContent);
-    if (!isSilent) console.log(`  \x1b[90m• HTML Report:\x1b[0m    ${htmlPath}`);
+    if (!isSilent)
+      console.log(`  \x1b[90m• HTML Report:\x1b[0m    ${htmlPath}`);
   }
 
   // Markdown Summary
-  if (outputFormats.includes('md') || outputFormats.includes('markdown')) {
-    const mdPath = resolve(outputDir, 'agent-lighthouse-report.md');
+  if (outputFormats.includes("md") || outputFormats.includes("markdown")) {
+    const mdPath = resolve(outputDir, "agent-lighthouse-report.md");
     const mdContent = generateMarkdownSummary(report);
     writeFileSync(mdPath, mdContent);
     if (!isSilent) console.log(`  \x1b[90m• Markdown Report:\x1b[0m ${mdPath}`);
@@ -246,7 +321,7 @@ async function audit(targetUrl?: string) {
   // Overall Score Assertion
   if (minScore > 0 && view.overallScore < minScore) {
     console.error(
-      `\n\x1b[31m✖ CI Assertion Failed:\x1b[0m Overall score ${view.overallScore} is below minimum threshold ${minScore}`
+      `\n\x1b[31m✖ CI Assertion Failed:\x1b[0m Overall score ${view.overallScore} is below minimum threshold ${minScore}`,
     );
     process.exit(1);
   }
@@ -254,8 +329,8 @@ async function audit(targetUrl?: string) {
   // Per-category Assertions
   const categoryAssertions = fileConfig.assertCategories ?? {};
   for (let i = 0; i < args.length; i++) {
-    if (args[i] === '--assert-category' && args[i + 1]) {
-      const [catId, min] = args[i + 1].split(':');
+    if (args[i] === "--assert-category" && args[i + 1]) {
+      const [catId, min] = args[i + 1].split(":");
       if (catId && min) categoryAssertions[catId] = Number(min);
     }
   }
@@ -263,11 +338,14 @@ async function audit(targetUrl?: string) {
   for (const [catId, threshold] of Object.entries(categoryAssertions)) {
     const matchedCategory = view.groups
       .flatMap((g) => g.categories)
-      .find((c) => c.id === catId || c.name.toLowerCase().includes(catId.toLowerCase()));
+      .find(
+        (c) =>
+          c.id === catId || c.name.toLowerCase().includes(catId.toLowerCase()),
+      );
 
     if (matchedCategory && matchedCategory.score < threshold) {
       console.error(
-        `\n\x1b[31m✖ Category Assertion Failed:\x1b[0m Category '${matchedCategory.name}' scored ${matchedCategory.score} (threshold: ${threshold})`
+        `\n\x1b[31m✖ Category Assertion Failed:\x1b[0m Category '${matchedCategory.name}' scored ${matchedCategory.score} (threshold: ${threshold})`,
       );
       process.exit(1);
     }
@@ -275,14 +353,14 @@ async function audit(targetUrl?: string) {
 }
 
 async function main() {
-  if (!command || command === '-h' || command === '--help') {
+  if (!command || command === "-h" || command === "--help") {
     usage();
   }
 
-  if (command === 'audit') {
+  if (command === "audit") {
     const url = args[1];
     await audit(url);
-  } else if (!command.startsWith('-')) {
+  } else if (!command.startsWith("-")) {
     await audit(command);
   } else {
     await audit();
@@ -290,6 +368,6 @@ async function main() {
 }
 
 main().catch((err) => {
-  console.error('\x1b[31mFatal error:\x1b[0m', err.message ?? err);
+  console.error("\x1b[31mFatal error:\x1b[0m", err.message ?? err);
   process.exit(1);
 });

@@ -1,10 +1,10 @@
 {
   "name": "@forkpoint/agent-lighthouse",
   "version": "0.2.0",
-  "description": "The Open-Source Lighthouse for the Agentic Web",
+  "description": "Lighthouse-style CLI for auditing websites for AI agents, LLM crawlers, MCP clients, llms.txt, WebMCP, OpenAPI, and Schema.org readiness",
   "author": "ForkPoint",
   "license": "GPL-3.0-only",
-  "homepage": "https://github.com/ForkPoint/agent-lighthouse#readme",
+  "homepage": "https://forkpoint.github.io/agent-lighthouse/",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/ForkPoint/agent-lighthouse.git",
@@ -25,6 +25,12 @@
     "mcp",
     "openapi",
     "schema-org",
+    "llms-txt",
+    "robots-txt",
+    "ai-seo",
+    "crawler",
+    "github-actions",
+    "agent-readiness",
     "aeo",
     "geo",
     "seo"

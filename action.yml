@@ -1,47 +1,47 @@
-name: 'Agent Lighthouse Audit'
-description: 'Audit, score, and optimize websites for AI agents, LLMs, and WebMCP in CI'
-author: 'ForkPoint'
+name: "Agent Lighthouse Audit"
+description: "Audit websites for AI-agent readiness, LLM crawler access, MCP discovery, WebMCP, and Schema.org signals in CI"
+author: "ForkPoint"
 branding:
-  icon: 'zap'
-  color: 'indigo'
+  icon: "zap"
+  color: "indigo"
 
 inputs:
   url:
-    description: 'Target website or storefront URL to audit'
+    description: "Target website or storefront URL to audit"
     required: true
   preset:
-    description: 'Audit preset profile (ecommerce, saas, content, quick, full)'
+    description: "Audit preset profile (ecommerce, saas, content, quick, full)"
     required: false
-    default: 'full'
+    default: "full"
   min-score:
-    description: 'Minimum overall score (0-100) required to pass CI'
+    description: "Minimum overall score (0-100) required to pass CI"
     required: false
-    default: '0'
+    default: "0"
   assert-category:
-    description: 'Per-category assertions (e.g. structured-data:85)'
+    description: "Per-category assertions (e.g. structured-data:85)"
     required: false
-    default: ''
+    default: ""
   comment-on-pr:
-    description: 'Post markdown summary as a pull request comment'
+    description: "Post markdown summary as a pull request comment"
     required: false
-    default: 'true'
+    default: "true"
   github-token:
-    description: 'GitHub token for posting PR comments (e.g. ${{ secrets.GITHUB_TOKEN }})'
+    description: "GitHub token for posting PR comments (e.g. ${{ secrets.GITHUB_TOKEN }})"
     required: false
-    default: ''
+    default: ""
   output-dir:
-    description: 'Output directory for reports'
+    description: "Output directory for reports"
     required: false
-    default: './reports'
+    default: "./reports"
 
 runs:
-  using: 'composite'
+  using: "composite"
   steps:
     - name: Run Agent Lighthouse Audit
       shell: bash
       run: |
         CMD="npx -y @forkpoint/agent-lighthouse ${{ inputs.url }} --preset=${{ inputs.preset }} --output=terminal,html,json,md --output-dir=${{ inputs.output-dir }}"
-        
+
         if [ "${{ inputs.min-score }}" != "0" ]; then
           CMD="$CMD --min-score=${{ inputs.min-score }}"
         fi
@@ -62,7 +62,7 @@ runs:
           const fs = require('fs');
           const path = require('path');
           const reportPath = path.resolve('${{ inputs.output-dir }}', 'agent-lighthouse-report.md');
-          
+
           if (fs.existsSync(reportPath)) {
             const body = fs.readFileSync(reportPath, 'utf8');
             await github.rest.issues.createComment({

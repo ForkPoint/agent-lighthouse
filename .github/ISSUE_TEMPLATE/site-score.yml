@@ -1,0 +1,60 @@
+name: Site score submission
+description: Share an Agent Lighthouse score from a public site.
+title: "[site score]: example.com"
+labels:
+  - site-score
+  - showcase
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for sharing a public Agent Lighthouse result. Please include enough detail for others to learn from the score.
+  - type: input
+    id: url
+    attributes:
+      label: Site URL
+      description: Public URL that was scanned.
+      placeholder: https://example.com
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Agent Lighthouse version
+      placeholder: 0.2.0
+    validations:
+      required: true
+  - type: input
+    id: score
+    attributes:
+      label: Overall score
+      description: Overall Agent Lighthouse score from the report.
+      placeholder: 87/100
+    validations:
+      required: true
+  - type: textarea
+    id: wins
+    attributes:
+      label: What passed?
+      description: List the strongest checks or categories.
+      placeholder: llms.txt present, Schema.org Product complete, AI crawlers allowed...
+  - type: textarea
+    id: fixes
+    attributes:
+      label: What needs work?
+      description: List the biggest recommended fixes.
+      placeholder: Add OpenAPI discovery, improve button names, add review schema...
+  - type: dropdown
+    id: showcase
+    attributes:
+      label: May we reference this score in docs or showcase material?
+      options:
+        - Yes
+        - No
+    validations:
+      required: true
+  - type: textarea
+    id: notes
+    attributes:
+      label: Notes
+      description: Optional context, screenshots, or report excerpts.

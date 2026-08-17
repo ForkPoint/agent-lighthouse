@@ -1,0 +1,8 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Documentation
+    url: https://forkpoint.github.io/agent-lighthouse/
+    about: Read the CLI, SDK, MCP, and CI documentation.
+  - name: npm package
+    url: https://www.npmjs.com/package/@forkpoint/agent-lighthouse
+    about: Install or inspect the published CLI package.

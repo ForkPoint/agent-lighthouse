@@ -1,10 +1,10 @@
 {
   "name": "@forkpoint/agent-lighthouse-mcp",
   "version": "0.2.0",
-  "description": "Model Context Protocol (MCP) server for Agent Lighthouse",
+  "description": "Model Context Protocol (MCP) server that lets Claude, Cursor, and agentic IDEs audit website AI-agent readiness with Agent Lighthouse",
   "author": "ForkPoint",
   "license": "GPL-3.0-only",
-  "homepage": "https://github.com/ForkPoint/agent-lighthouse#readme",
+  "homepage": "https://forkpoint.github.io/agent-lighthouse/",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/ForkPoint/agent-lighthouse.git",
@@ -21,7 +21,10 @@
     "model-context-protocol",
     "ai-agents",
     "claude",
-    "cursor"
+    "cursor",
+    "agent-readiness",
+    "llms-txt",
+    "webmcp"
   ],
   "bin": {
     "agent-lighthouse-mcp": "./dist/server.js"
