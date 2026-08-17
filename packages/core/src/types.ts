@@ -1,3 +1,6 @@
+import type { WafProtection } from './waf-detector';
+export type { WafProtection };
+
 // ── Page Types ────────────────────────────────────────────────
 
 export type PageType = 'homepage' | 'category' | 'product' | 'content';
@@ -167,6 +170,7 @@ export interface ScanReport {
   readinessScore?: number;
   readinessVitals?: ReadinessVitals;
   productFields?: ProductFieldVerification;
+  wafProtection?: WafProtection;
 }
 
 export interface ReadinessVitals {
@@ -175,3 +179,5 @@ export interface ReadinessVitals {
   botAccessibility: number;
   technical: number;
 }
+
+

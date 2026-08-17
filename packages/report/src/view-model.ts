@@ -81,6 +81,7 @@ export interface ReportView {
   coverage: CoverageView;
   pagesScanned: Array<{ url: string; pageType: string }>;
   durationMs: number;
+  wafProtection?: import('@forkpoint/agent-lighthouse-core').WafProtection;
 }
 
 export interface BuildReportViewOptions {
@@ -219,5 +220,6 @@ export function buildReportView(report: ScanReport, opts: BuildReportViewOptions
     coverage,
     pagesScanned: report.pagesScanned ?? [],
     durationMs: report.durationMs ?? 0,
+    wafProtection: report.wafProtection,
   };
 }

@@ -133,6 +133,13 @@ async function audit(targetUrl?: string) {
     );
     console.log(`\x1b[1m────────────────────────────────────────────────────────────────────────\x1b[0m\n`);
 
+    if (report.wafProtection?.isBlocked) {
+      console.log(`  \x1b[41m\x1b[37m\x1b[1m 🛡️  BOT PROTECTION WALL DETECTED: ${report.wafProtection.name.toUpperCase()} \x1b[0m`);
+      console.log(`  \x1b[31m⚠️  Diagnosis: ${report.wafProtection.reason}\x1b[0m`);
+      console.log(`  \x1b[90mThis storefront is actively dropping or challenging automated crawler connections.\x1b[0m`);
+      console.log(`  \x1b[90mAI agents (GPTBot, Claude, Perplexity) cannot index or interact with this catalog.\x1b[0m\n`);
+    }
+
     console.log(`\x1b[1m📊 CATEGORIES:\x1b[0m`);
     for (const group of view.groups) {
       console.log(`\n  \x1b[1m${group.label}\x1b[0m \x1b[90m—\x1b[0m ${group.score}/100`);

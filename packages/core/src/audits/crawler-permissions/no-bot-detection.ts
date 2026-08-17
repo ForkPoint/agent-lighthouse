@@ -34,6 +34,21 @@ export class NoBotDetectionAudit extends Audit {
   };
 
   audit(ctx: CheckContext): AuditResult {
+    // If active WAF protection or aggressive connection dropping was detected
+    if (ctx.wafProtection?.isBlocked) {
+      return this.fail(
+        `Bot-defense firewall detected blocking AI crawler connections: ${ctx.wafProtection.name} (${ctx.wafProtection.reason}).`,
+        'No JavaScript-based bot challenges that would block legitimate AI agents',
+        `Blocked by ${ctx.wafProtection.name}`,
+        {
+          priority: 'critical',
+          description:
+            'A Web Application Firewall (WAF) or bot defense system is actively dropping, resetting, or challenging crawler HTTP connections. Legitimate AI search crawlers (GPTBot, Claude, Perplexity) cannot access or index your store content unless allowlisted.',
+          code: '// Example: Allowlist AI crawler user-agents in your WAF settings\n// Akamai / Cloudflare / DataDome WAF Custom Rules:\n// Allow User-Agent matching "GPTBot" OR "ChatGPT-User" OR "Claude-User" OR "PerplexityBot"',
+        },
+      );
+    }
+
     if (!ctx.pages || ctx.pages.length === 0) {
       return this.warn(
         'No pages were scanned to check for bot-detection scripts.',

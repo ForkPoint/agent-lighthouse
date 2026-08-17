@@ -39,4 +39,6 @@ export * from './schemas';
 export * from './url-utils';
 export * from './presets';
 export * from './config-loader';
+export { detectWafProtection } from './waf-detector';
 export { logger } from './logger';
+

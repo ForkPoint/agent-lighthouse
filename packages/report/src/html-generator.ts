@@ -214,6 +214,23 @@ export function generateHtmlReport(report: ScanReport): string {
       </div>
     </header>
 
+    ${view.wafProtection?.isBlocked ? `
+    <!-- WAF / Bot Wall Alert Banner -->
+    <div class="bg-red-950/70 border-2 border-red-500/80 rounded-2xl p-5 mb-8 text-red-100 flex items-start gap-4 shadow-xl">
+      <div class="text-3xl">🛡️</div>
+      <div>
+        <div class="flex items-center gap-2">
+          <h3 class="text-base font-bold text-red-200">Bot Defense Wall Detected (${escapeHtml(view.wafProtection.name)})</h3>
+          <span class="text-[10px] uppercase font-bold tracking-wider bg-red-500/20 text-red-300 px-2 py-0.5 rounded border border-red-500/40">Access Blocked</span>
+        </div>
+        <p class="text-xs text-red-300/90 mt-1.5 leading-relaxed font-medium">
+          <strong>Diagnosis:</strong> ${escapeHtml(view.wafProtection.reason)}.<br>
+          This website is actively dropping, challenging, or blocking automated crawler requests. AI search agents (like ChatGPT, Claude, and Perplexity) cannot access or index pages on this storefront unless allowlisted in your firewall/CDN settings.
+        </p>
+      </div>
+    </div>
+    ` : ''}
+
     <!-- Filter Tabs -->
     <div class="flex items-center gap-2 mb-8 overflow-x-auto pb-2">
       <button onclick="filterStatus('all')" class="filter-btn active bg-slate-800 text-white hover:bg-slate-700 px-4 py-1.5 rounded-lg text-xs font-semibold transition-colors">

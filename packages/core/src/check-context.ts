@@ -38,6 +38,7 @@ export interface CheckContext {
   domain: string;
   baseUrl: string;
   fetch: (options: FetchOptions) => Promise<FetchResult>;
+  wafProtection?: import('./waf-detector').WafProtection;
 }
 
 export type CheckFn = (ctx: CheckContext) => CheckResult | Promise<CheckResult>;

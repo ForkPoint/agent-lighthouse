@@ -20,6 +20,7 @@ import { runA11yForHtml } from './audits/accessibility/runner';
 import { A11Y_RULES } from './audits/accessibility';
 import { extractProductFieldVerification } from './product-fields';
 import { generateScanSummary } from './summary';
+import { detectWafProtection } from './waf-detector';
 
 import type { FetchResult } from './fetcher';
 
@@ -328,12 +329,15 @@ export async function runScan(
   await progress(60, 'Running audits');
   logger.debug('[orchestrator] Phase 3: Running audits');
 
+  const wafProtection = detectWafProtection(url, homepageResult, rootFiles, pages.length);
+
   const ctx: CheckContext = {
     rootFiles,
     pages,
     domain,
     baseUrl,
     fetch: (options) => fetcher.fetch({ ...options, signal }),
+    wafProtection: wafProtection ?? undefined,
   };
 
   const {
@@ -407,6 +411,7 @@ export async function runScan(
     durationMs,
     readinessScore,
     readinessVitals,
+    wafProtection: wafProtection ?? undefined,
     // Field-level verification is only trustworthy when the user explicitly
     // supplied the product page. Without a product override we don't guess from
     // auto-discovered pages — leave it unset so the report marks it skipped.
