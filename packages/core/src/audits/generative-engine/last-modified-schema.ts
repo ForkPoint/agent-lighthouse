@@ -85,7 +85,7 @@ export class LastModifiedSchemaAudit extends Audit {
     }
 
     for (const p of ctx.pages) {
-      const articles = findJsonLdByType(p.jsonLd, [
+      const articles = findJsonLdByType(p.structuredData ?? p.jsonLd, [
         'Article',
         'BlogPosting',
         'NewsArticle',

@@ -69,8 +69,9 @@ export class ProductDetailsAudit extends Audit {
     const first = products[0] as Record<string, unknown>;
     const missing: string[] = [];
 
-    // 1. Brand
-    if (!first['brand']) missing.push('brand');
+    // 1. Brand or Manufacturer
+    const hasBrand = !!first['brand'] || !!first['manufacturer'];
+    if (!hasBrand) missing.push('brand');
 
     // 2. Category
     if (!first['category']) missing.push('category');
@@ -79,7 +80,7 @@ export class ProductDetailsAudit extends Audit {
     let hasAvailability = !!first['availability'];
     if (!hasAvailability && first['offers']) {
       const offers = Array.isArray(first['offers']) ? first['offers'] : [first['offers']];
-      hasAvailability = offers.some((o: Record<string, unknown>) => o.availability);
+      hasAvailability = offers.some((o: Record<string, unknown>) => o && o.availability);
     }
     if (!hasAvailability) missing.push('availability');
 

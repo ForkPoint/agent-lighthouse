@@ -78,6 +78,20 @@ export class ProductIdentifiersAudit extends Audit {
     const identifiers = ['gtin', 'gtin8', 'gtin12', 'gtin13', 'gtin14', 'mpn', 'sku', 'productID'];
     const found = identifiers.filter((id) => first[id]);
 
+    if (first['offers']) {
+      const offers = Array.isArray(first['offers']) ? first['offers'] : [first['offers']];
+      for (const offer of offers) {
+        if (offer && typeof offer === 'object') {
+          const offerObj = offer as Record<string, unknown>;
+          for (const id of identifiers) {
+            if (offerObj[id] && !found.includes(id)) {
+              found.push(id);
+            }
+          }
+        }
+      }
+    }
+
     if (found.length > 0) {
       return this.pass(
         `Found product identifiers: ${found.join(', ')}.`,

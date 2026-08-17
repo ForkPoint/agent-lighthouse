@@ -45,9 +45,19 @@ export class NoOrphanPagesAudit extends Audit {
     const sitemapResult = getSitemapResult(ctx);
     if (sitemapResult) {
       const $ = cheerio.load(sitemapResult.body, { xmlMode: true });
-      $('url > loc').each((_, el) => {
+      $('url > loc, sitemap > loc, loc').each((_, el) => {
         const loc = $(el).text().trim();
-        if (loc) sitemapUrls.add(loc);
+        if (loc) {
+          sitemapUrls.add(loc);
+          try {
+            const u = new URL(loc);
+            u.search = '';
+            u.hash = '';
+            sitemapUrls.add(u.href);
+          } catch {
+            // ignore
+          }
+        }
       });
     }
 
@@ -58,7 +68,11 @@ export class NoOrphanPagesAudit extends Audit {
       const links = extractMarkdownLinks(llmsResult.body);
       for (const link of links) {
         try {
-          llmsUrls.add(new URL(link.url, ctx.baseUrl).href);
+          const parsed = new URL(link.url, ctx.baseUrl);
+          llmsUrls.add(parsed.href);
+          parsed.search = '';
+          parsed.hash = '';
+          llmsUrls.add(parsed.href);
         } catch {
           // skip invalid URLs
         }
@@ -82,11 +96,55 @@ export class NoOrphanPagesAudit extends Audit {
     const orphans: string[] = [];
     for (const page of ctx.pages) {
       const pageUrl = page.url;
-      // Normalize for comparison: try with and without trailing slash
-      const variants = [pageUrl, pageUrl.replace(/\/$/, ''), pageUrl + '/'];
+      let cleanUrl = pageUrl;
+      try {
+        const u = new URL(pageUrl);
+        u.search = '';
+        u.hash = '';
+        cleanUrl = u.href;
+      } catch {
+        // keep pageUrl
+      }
+
+      // Normalize for comparison: try raw, clean, canonical with/without trailing slash
+      const variants = [
+        pageUrl,
+        pageUrl.replace(/\/$/, ''),
+        pageUrl + '/',
+        cleanUrl,
+        cleanUrl.replace(/\/$/, ''),
+        cleanUrl + '/',
+      ];
+
+      const canonical = page.meta['canonical'] || page.meta['og:url'];
+      if (canonical) {
+        variants.push(canonical, canonical.replace(/\/$/, ''), canonical + '/');
+      }
+
       const inSitemap = variants.some((v) => sitemapUrls.has(v));
       const inLlms = variants.some((v) => llmsUrls.has(v));
-      if (!inSitemap && !inLlms) {
+
+      // Check if covered by a sub-sitemap pattern in a sitemapindex
+      let inSitemapIndexPattern = false;
+      if (sitemapResult && (sitemapResult.body.includes('<sitemapindex') || sitemapResult.body.includes('<sitemap>'))) {
+        try {
+          const path = new URL(pageUrl).pathname.toLowerCase();
+          if (
+            (path.startsWith('/products') && sitemapResult.body.includes('sitemap_products')) ||
+            (path.startsWith('/collections') && sitemapResult.body.includes('sitemap_collections')) ||
+            (path.startsWith('/pages') && sitemapResult.body.includes('sitemap_pages')) ||
+            (path.startsWith('/blogs') && sitemapResult.body.includes('sitemap_blogs')) ||
+            (path.startsWith('/posts') && sitemapResult.body.includes('sitemap_posts')) ||
+            (path.startsWith('/docs') && sitemapResult.body.includes('sitemap_docs'))
+          ) {
+            inSitemapIndexPattern = true;
+          }
+        } catch {
+          // ignore
+        }
+      }
+
+      if (!inSitemap && !inLlms && !inSitemapIndexPattern) {
         orphans.push(pageUrl);
       }
     }

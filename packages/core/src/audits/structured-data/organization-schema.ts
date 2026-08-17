@@ -3,10 +3,25 @@ import { Audit } from "../../audit";
 import type { CheckContext } from '../../check-context';
 import { flattenJsonLd } from '../../parser';
 
-function matchesType(schema: Record<string, unknown>, type: string): boolean {
+const ORG_TYPES = [
+  'Organization',
+  'Corporation',
+  'LocalBusiness',
+  'Store',
+  'OnlineStore',
+  'OnlineBusiness',
+  'EducationalOrganization',
+  'GovernmentOrganization',
+  'NGO',
+  'NewsMediaOrganization',
+  'MedicalOrganization',
+  'SportsOrganization',
+];
+
+function matchesOrgType(schema: Record<string, unknown>): boolean {
   const t = schema['@type'];
-  if (typeof t === 'string') return t === type;
-  if (Array.isArray(t)) return t.includes(type);
+  if (typeof t === 'string') return ORG_TYPES.includes(t) || t.endsWith('Organization') || t.endsWith('Store') || t.endsWith('Business');
+  if (Array.isArray(t)) return t.some((item) => typeof item === 'string' && (ORG_TYPES.includes(item) || item.endsWith('Organization') || item.endsWith('Store') || item.endsWith('Business')));
   return false;
 }
 
@@ -54,7 +69,7 @@ export class OrganizationSchemaAudit extends Audit {
   audit(ctx: CheckContext): AuditResult {
     const schemas = allSchemas(ctx);
     const orgSchemas = schemas.filter((s) =>
-      matchesType(s as Record<string, unknown>, 'Organization'),
+      matchesOrgType(s as Record<string, unknown>),
     );
 
     if (orgSchemas.length === 0) {

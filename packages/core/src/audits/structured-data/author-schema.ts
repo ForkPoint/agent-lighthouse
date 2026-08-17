@@ -64,15 +64,22 @@ export class AuthorSchemaAudit extends Audit {
       matchesType(s as Record<string, unknown>, 'Person'),
     );
 
-    // Also check author properties on Article schemas
-    const authorFromArticles = schemas
-      .filter((s) =>
-        matchesAnyType(s as Record<string, unknown>, ['Article', 'NewsArticle', 'BlogPosting']),
-      )
-      .map((s) => (s as Record<string, unknown>)['author'])
-      .filter(
-        (a): a is Record<string, unknown> => !!a && typeof a === 'object' && !Array.isArray(a),
-      );
+    // Also check author properties on Article schemas (support single objects and arrays)
+    const authorFromArticles: Record<string, unknown>[] = [];
+    for (const s of schemas) {
+      if (matchesAnyType(s as Record<string, unknown>, ['Article', 'NewsArticle', 'BlogPosting'])) {
+        const author = (s as Record<string, unknown>)['author'];
+        if (Array.isArray(author)) {
+          for (const a of author) {
+            if (a && typeof a === 'object' && !Array.isArray(a)) {
+              authorFromArticles.push(a as Record<string, unknown>);
+            }
+          }
+        } else if (author && typeof author === 'object') {
+          authorFromArticles.push(author as Record<string, unknown>);
+        }
+      }
+    }
 
     const allPersons = [
       ...personSchemas.map((s) => s as Record<string, unknown>),

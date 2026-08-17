@@ -40,7 +40,7 @@ function findStructuredDate(p: PageContext): { value: string; source: string } |
     /* v8 ignore next -- time[datetime] selector guarantees the attribute exists; the ?? fallback is unreachable */
     return { value: timeWithAttr.attr('datetime') ?? timeWithAttr.text().trim(), source: '<time datetime>' };
   }
-  const jsonDate = findJsonLdDate(p.jsonLd);
+  const jsonDate = findJsonLdDate(p.structuredData ?? p.jsonLd);
   if (jsonDate) return { value: jsonDate, source: 'JSON-LD' };
   const metaDate =
     p.meta['article:published_time'] ??

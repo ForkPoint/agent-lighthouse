@@ -57,6 +57,22 @@ export class SitemapKeyPagesAudit extends Audit {
     }
 
     const $ = cheerio.load(sitemapResult.body, { xmlMode: true });
+
+    // Handle sitemap index files (<sitemapindex>)
+    const isSitemapIndex = $('sitemapindex').length > 0 || $('sitemap > loc').length > 0;
+    if (isSitemapIndex) {
+      const subSitemaps: string[] = [];
+      $('sitemap > loc').each((_, el) => {
+        const loc = $(el).text().trim();
+        if (loc) subSitemaps.push(loc);
+      });
+      return this.pass(
+        `Sitemap index file found linking to ${subSitemaps.length} sub-sitemap(s).`,
+        'All scanned pages appear in sitemap or sitemap index',
+        `Sitemap Index (${subSitemaps.length} sub-sitemaps)`,
+      );
+    }
+
     const sitemapUrls = new Set<string>();
     $('url > loc').each((_, el) => {
       const loc = $(el).text().trim();

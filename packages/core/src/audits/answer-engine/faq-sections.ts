@@ -10,7 +10,7 @@ const FAQ_TEXT =
 
 /** True when the page carries FAQPage JSON-LD (robust to nesting/@graph). */
 function hasFaqJsonLd(p: PageContext): boolean {
-  for (const node of flattenJsonLd(p.jsonLd)) {
+  for (const node of flattenJsonLd(p.structuredData ?? p.jsonLd)) {
     const t = (node as Record<string, unknown>)['@type'];
     if (typeof t === 'string' && /faqpage/i.test(t)) return true;
     if (Array.isArray(t) && t.some((x) => typeof x === 'string' && /faqpage/i.test(x))) return true;
