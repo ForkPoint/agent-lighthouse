@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>API Authentication & Endpoints — CloudStack Docs</title>
+  <meta name="description" content="Complete documentation for CloudStack REST and MCP APIs. Includes OpenAPI specifications and llms.txt endpoints.">
+  <link rel="canonical" href="https://docs.cloudstack.dev/api/authentication">
+  <link rel="alternate" type="text/markdown" href="https://docs.cloudstack.dev/api/authentication.md">
+  <link rel="openapi" href="https://docs.cloudstack.dev/openapi.json">
+  <link rel="mcp-discovery" href="https://docs.cloudstack.dev/.well-known/mcp.json">
+  <link rel="llms-txt" href="https://docs.cloudstack.dev/llms.txt">
+  
+  <meta property="og:title" content="API Authentication & Endpoints — CloudStack Docs">
+  <meta property="og:description" content="Complete documentation for CloudStack REST and MCP APIs.">
+  <meta property="og:type" content="article">
+  <meta property="og:url" content="https://docs.cloudstack.dev/api/authentication">
+  <meta name="twitter:card" content="summary">
+  
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "TechArticle",
+    "headline": "API Authentication & Endpoints",
+    "description": "How to authenticate with Bearer tokens and configure WebMCP servers.",
+    "author": {
+      "@type": "Organization",
+      "name": "CloudStack Security Team",
+      "url": "https://docs.cloudstack.dev"
+    },
+    "datePublished": "2026-01-15T00:00:00Z",
+    "dateModified": "2026-08-10T12:00:00Z"
+  }
+  </script>
+</head>
+<body>
+  <header>
+    <a href="#main" class="skip-nav">Skip to main</a>
+    <nav aria-label="Documentation Navigation">
+      <a href="/">Overview</a>
+      <a href="/api/authentication">Authentication</a>
+      <a href="/api/endpoints">Endpoints</a>
+      <a href="/llms.txt">llms.txt</a>
+    </nav>
+  </header>
+
+  <main id="main">
+    <article>
+      <h1>API Authentication & Endpoints</h1>
+      <p>CloudStack provides secure token-based authentication for both human developers and autonomous AI agents.</p>
+
+      <h2>What is CloudStack API Authentication?</h2>
+      <p>Authentication is the verification process used by CloudStack to confirm the identity of an API client using asymmetric cryptographic keys or scoped Bearer tokens.</p>
+
+      <h2>Step-by-Step Integration Guide</h2>
+      <ol>
+        <li>Generate an API secret key in your dashboard under Settings &gt; API Keys.</li>
+        <li>Pass the token in the <code>Authorization: Bearer &lt;TOKEN&gt;</code> header on every HTTP request.</li>
+        <li>For Model Context Protocol (MCP) integrations, configure your client using <code>.well-known/mcp.json</code>.</li>
+      </ol>
+
+      <pre><code class="language-bash">curl -X GET https://api.cloudstack.dev/v1/clusters \
+  -H "Authorization: Bearer cs_live_abcdef123456" \
+  -H "Accept: application/json"</code></pre>
+    </article>
+  </main>
+
+  <footer>
+    <p>&copy; 2026 CloudStack Inc.</p>
+    <a href="/privacy">Privacy</a>
+    <a href="/terms">Terms</a>
+  </footer>
+</body>
+</html>

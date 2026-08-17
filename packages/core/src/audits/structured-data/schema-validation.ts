@@ -43,6 +43,11 @@ export class SchemaValidationAudit extends Audit {
       for (const b of flattenJsonLd(p.structuredData ?? p.jsonLd)) {
         const obj = b as Record<string, unknown>;
         if ('@graph' in obj) continue;
+        // Pure node references (e.g. `{ "@id": "..." }`) are references, not entity blocks
+        const keys = Object.keys(obj);
+        if (!obj['@type'] && keys.every((k) => k === '@id' || k === '@context')) {
+          continue;
+        }
         flat.push({ obj, pageUrl: p.url });
       }
     }

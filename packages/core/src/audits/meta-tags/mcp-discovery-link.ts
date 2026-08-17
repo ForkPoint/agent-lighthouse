@@ -26,14 +26,14 @@ export class McpDiscoveryLinkAudit extends Audit {
 
   audit(ctx: CheckContext): AuditResult {
     const page = ctx.pages[0];
-    /* v8 ignore start */
     const link = page?.headLinks?.find(
       (l) =>
-        l.rel === 'alternate' &&
-        l.type === 'application/json' &&
-        (l.title ?? '').toLowerCase().includes('mcp'),
+        (l.rel === 'alternate' &&
+          l.type === 'application/json' &&
+          (l.title ?? '').toLowerCase().includes('mcp')) ||
+        l.rel === 'mcp-discovery' ||
+        (l.rel === 'alternate' && (l.href ?? '').toLowerCase().includes('mcp.json')),
     );
-    /* v8 ignore stop */
 
     if (link) {
       return this.pass(

@@ -23,6 +23,7 @@ function usage(): never {
 Options:
   -p, --preset <name>          Audit preset (ecommerce, saas, content, quick, full) [default: full]
   -c, --config <path>          Path to configuration file (e.g. agent-lighthouse.config.json)
+  --debug-audit <id|fails>     Print deep diagnostic breakdown for specific audit ID (e.g. 3.2) or all fails
   --categories <list>          Comma-separated list of categories to audit
   -o, --output <formats>       Output formats (comma-separated: terminal, html, json, md) [default: terminal,html,json]
   -d, --output-dir <path>      Output directory for generated reports [default: ./reports]
@@ -34,7 +35,7 @@ Options:
 Examples:
   npx @forkpoint/agent-lighthouse https://yourstore.com
   npx @forkpoint/agent-lighthouse https://yourstore.com --preset ecommerce
-  npx @forkpoint/agent-lighthouse https://docs.yourdomain.com --preset saas --view
+  npx @forkpoint/agent-lighthouse https://yourstore.com --debug-audit 3.2
   npx @forkpoint/agent-lighthouse https://staging.yourstore.com --min-score 85
 `);
   process.exit(1);
@@ -51,11 +52,19 @@ function openInBrowser(filePath: string) {
 }
 
 function getArgValue(shortFlag: string, longFlag: string): string | undefined {
-  const shortIdx = args.indexOf(shortFlag);
+  for (const arg of args) {
+    if (shortFlag && arg.startsWith(`${shortFlag}=`)) {
+      return arg.slice(shortFlag.length + 1);
+    }
+    if (longFlag && arg.startsWith(`${longFlag}=`)) {
+      return arg.slice(longFlag.length + 1);
+    }
+  }
+  const shortIdx = shortFlag ? args.indexOf(shortFlag) : -1;
   if (shortIdx !== -1 && args[shortIdx + 1] && !args[shortIdx + 1].startsWith('-')) {
     return args[shortIdx + 1];
   }
-  const longIdx = args.indexOf(longFlag);
+  const longIdx = longFlag ? args.indexOf(longFlag) : -1;
   if (longIdx !== -1 && args[longIdx + 1] && !args[longIdx + 1].startsWith('-')) {
     return args[longIdx + 1];
   }
@@ -81,6 +90,7 @@ async function audit(targetUrl?: string) {
 
   const isSilent = args.includes('--silent');
   const shouldView = args.includes('-v') || args.includes('--view');
+  const debugAudit = getArgValue('', '--debug-audit');
 
   const presetName = (getArgValue('-p', '--preset') || fileConfig.preset || 'full') as PresetName;
   const preset = getPreset(presetName);
@@ -144,6 +154,55 @@ async function audit(targetUrl?: string) {
       }
     }
     console.log();
+  }
+
+  // Audit Debugger Output
+  if (debugAudit) {
+    const allChecks = view.groups.flatMap((g) =>
+      g.categories.flatMap((c) => [...c.checks, ...c.notApplicable])
+    );
+    const targetChecks =
+      debugAudit === 'fails'
+        ? allChecks.filter((c) => c.status === 'fail' || c.status === 'warn')
+        : allChecks.filter(
+            (c) => c.id === debugAudit || c.title.toLowerCase().includes(debugAudit.toLowerCase())
+          );
+
+    if (targetChecks.length === 0) {
+      console.log(`\x1b[33m[debugger] No audits found matching: ${debugAudit}\x1b[0m\n`);
+    } else {
+      console.log(`\x1b[1m🔍 AUDIT DEBUGGER DIAGNOSTICS (${targetChecks.length} checks):\x1b[0m`);
+      console.log(`\x1b[1m────────────────────────────────────────────────────────────────────────\x1b[0m`);
+
+      for (const check of targetChecks) {
+        const statusBadge =
+          check.status === 'pass'
+            ? '\x1b[32m[PASS]\x1b[0m'
+            : check.status === 'warn'
+            ? '\x1b[33m[WARN]\x1b[0m'
+            : check.status === 'fail'
+            ? '\x1b[31m[FAIL]\x1b[0m'
+            : '\x1b[90m[N/A]\x1b[0m';
+
+        console.log(`\n${statusBadge} \x1b[1m[${check.id}] ${check.title}\x1b[0m (Score: ${check.score})`);
+        if (check.pageUrl) console.log(`  \x1b[90mPage:\x1b[0m        ${check.pageUrl}`);
+        if (check.displayValue) console.log(`  \x1b[90mFound:\x1b[0m       ${check.displayValue}`);
+        if (check.details?.expected) console.log(`  \x1b[90mExpected:\x1b[0m    ${check.details.expected}`);
+        if (check.explanation) console.log(`  \x1b[90mExplanation:\x1b[0m ${check.explanation}`);
+        if (check.impact) console.log(`  \x1b[90mImpact:\x1b[0m      ${check.impact}`);
+        if (check.fix) console.log(`  \x1b[90mFix:\x1b[0m         ${check.fix}`);
+        if (check.details?.code) {
+          console.log(`  \x1b[90mCode Example:\x1b[0m`);
+          console.log(
+            check.details.code
+              .split('\n')
+              .map((line: string) => `    \x1b[36m${line}\x1b[0m`)
+              .join('\n')
+          );
+        }
+      }
+      console.log(`\x1b[1m────────────────────────────────────────────────────────────────────────\x1b[0m\n`);
+    }
   }
 
   // Ensure output directory exists
