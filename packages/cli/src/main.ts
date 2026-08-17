@@ -1,4 +1,4 @@
-import { runScan } from '@forkpoint/agent-lighthouse-core';
+import { runScan, loadConfigFile, getPreset, type PresetName } from '@forkpoint/agent-lighthouse-core';
 import { buildReportView, generateHtmlReport, generateMarkdownSummary } from '@forkpoint/agent-lighthouse-report';
 import { writeFileSync, mkdirSync } from 'node:fs';
 import { resolve } from 'node:path';
@@ -21,26 +21,57 @@ function usage(): never {
   agent-lighthouse audit <url> [options]
 
 Options:
+  -p, --preset <name>          Audit preset (ecommerce, saas, content, quick, full) [default: full]
+  -c, --config <path>          Path to configuration file (e.g. agent-lighthouse.config.json)
+  --categories <list>          Comma-separated list of categories to audit
   -o, --output <formats>       Output formats (comma-separated: terminal, html, json, md) [default: terminal,html,json]
   -d, --output-dir <path>      Output directory for generated reports [default: ./reports]
   -v, --view                   Automatically open the generated HTML report in your browser
   --min-score <number>         Minimum score (0-100) required to pass CI assertions
+  --assert-category <id:min>   Per-category assertions (e.g. --assert-category structured-data:90)
   --silent                     Suppress progress output
 
 Examples:
-  npx agent-lighthouse https://example.com
-  npx agent-lighthouse https://example.com --view
-  npx agent-lighthouse https://staging.example.com --min-score 85
+  npx @forkpoint/agent-lighthouse https://yourstore.com
+  npx @forkpoint/agent-lighthouse https://yourstore.com --preset ecommerce
+  npx @forkpoint/agent-lighthouse https://docs.yourdomain.com --preset saas --view
+  npx @forkpoint/agent-lighthouse https://staging.yourstore.com --min-score 85
 `);
   process.exit(1);
 }
 
 function openInBrowser(filePath: string) {
-  const cmd = process.platform === 'darwin' ? `open "${filePath}"` : process.platform === 'win32' ? `start "" "${filePath}"` : `xdg-open "${filePath}"`;
+  const cmd =
+    process.platform === 'darwin'
+      ? `open "${filePath}"`
+      : process.platform === 'win32'
+      ? `start "" "${filePath}"`
+      : `xdg-open "${filePath}"`;
   exec(cmd, () => {});
 }
 
-async function audit(url: string) {
+function getArgValue(shortFlag: string, longFlag: string): string | undefined {
+  const shortIdx = args.indexOf(shortFlag);
+  if (shortIdx !== -1 && args[shortIdx + 1] && !args[shortIdx + 1].startsWith('-')) {
+    return args[shortIdx + 1];
+  }
+  const longIdx = args.indexOf(longFlag);
+  if (longIdx !== -1 && args[longIdx + 1] && !args[longIdx + 1].startsWith('-')) {
+    return args[longIdx + 1];
+  }
+  return undefined;
+}
+
+async function audit(targetUrl?: string) {
+  const customConfigPath = getArgValue('-c', '--config');
+  const fileConfig = loadConfigFile(customConfigPath);
+
+  const url = targetUrl || fileConfig.url;
+  if (!url) {
+    console.error('\x1b[31mError:\x1b[0m No target URL specified.');
+    usage();
+  }
+
   try {
     new URL(url);
   } catch {
@@ -50,21 +81,23 @@ async function audit(url: string) {
 
   const isSilent = args.includes('--silent');
   const shouldView = args.includes('-v') || args.includes('--view');
-  
-  const minScoreArgIdx = args.indexOf('--min-score');
-  const minScore = minScoreArgIdx !== -1 && args[minScoreArgIdx + 1] ? Number(args[minScoreArgIdx + 1]) : 0;
 
-  const outputDirIdx = args.indexOf('-d') !== -1 ? args.indexOf('-d') : args.indexOf('--output-dir');
-  const outputDir = outputDirIdx !== -1 && args[outputDirIdx + 1] ? args[outputDirIdx + 1] : './reports';
+  const presetName = (getArgValue('-p', '--preset') || fileConfig.preset || 'full') as PresetName;
+  const preset = getPreset(presetName);
 
-  const outputFormatIdx = args.indexOf('-o') !== -1 ? args.indexOf('-o') : args.indexOf('--output');
-  const outputFormats = outputFormatIdx !== -1 && args[outputFormatIdx + 1]
-    ? args[outputFormatIdx + 1].split(',').map(s => s.trim())
-    : ['terminal', 'html', 'json'];
+  const minScoreArg = getArgValue('', '--min-score');
+  const minScore = minScoreArg ? Number(minScoreArg) : fileConfig.minScore ?? 0;
+
+  const outputDir = getArgValue('-d', '--output-dir') || fileConfig.outputDir || './reports';
+
+  const outputFormatArg = getArgValue('-o', '--output');
+  const outputFormats = outputFormatArg
+    ? outputFormatArg.split(',').map((s) => s.trim())
+    : fileConfig.output ?? ['terminal', 'html', 'json'];
 
   if (!isSilent) {
     printBanner();
-    console.log(`Auditing \x1b[1m${url}\x1b[0m ...\n`);
+    console.log(`Auditing \x1b[1m${url}\x1b[0m using \x1b[36m${preset.name}\x1b[0m preset ...\n`);
   }
 
   const report = await runScan(url, (pct, phase) => {
@@ -82,8 +115,12 @@ async function audit(url: string) {
   // Terminal Output
   if (outputFormats.includes('terminal') && !isSilent) {
     console.log(`\x1b[1m────────────────────────────────────────────────────────────────────────\x1b[0m`);
-    console.log(`\x1b[1mOVERALL AGENT READINESS:\x1b[0m \x1b[1m${view.overallScore}/100\x1b[0m (${view.scoreTier.toUpperCase()})`);
-    console.log(`Target: ${report.url} | Pages Scanned: ${view.pagesScanned.length} | Duration: ${(view.durationMs / 1000).toFixed(1)}s`);
+    console.log(
+      `\x1b[1mOVERALL AGENT READINESS:\x1b[0m \x1b[1m${view.overallScore}/100\x1b[0m (${view.scoreTier.toUpperCase()})`
+    );
+    console.log(
+      `Target: ${report.url} | Preset: ${preset.name} | Pages: ${view.pagesScanned.length} | Duration: ${(view.durationMs / 1000).toFixed(1)}s`
+    );
     console.log(`\x1b[1m────────────────────────────────────────────────────────────────────────\x1b[0m\n`);
 
     console.log(`\x1b[1m📊 CATEGORIES:\x1b[0m`);
@@ -91,9 +128,18 @@ async function audit(url: string) {
       console.log(`\n  \x1b[1m${group.label}\x1b[0m \x1b[90m—\x1b[0m ${group.score}/100`);
       for (const cat of group.categories) {
         const c = cat.counts;
-        const scoreColor = cat.score >= 90 ? '\x1b[32m' : cat.score >= 70 ? '\x1b[34m' : cat.score >= 50 ? '\x1b[33m' : '\x1b[31m';
+        const scoreColor =
+          cat.score >= 90
+            ? '\x1b[32m'
+            : cat.score >= 70
+            ? '\x1b[34m'
+            : cat.score >= 50
+            ? '\x1b[33m'
+            : '\x1b[31m';
         console.log(
-          `    ${scoreColor}•\x1b[0m ${cat.name.padEnd(36)} : ${scoreColor}${cat.score.toString().padStart(3)}/100\x1b[0m  \x1b[90m(${c.pass}✓ ${c.warn}! ${c.fail}✗)\x1b[0m`
+          `    ${scoreColor}•\x1b[0m ${cat.name.padEnd(36)} : ${scoreColor}${cat.score
+            .toString()
+            .padStart(3)}/100\x1b[0m  \x1b[90m(${c.pass}✓ ${c.warn}! ${c.fail}✗)\x1b[0m`
         );
       }
     }
@@ -131,10 +177,34 @@ async function audit(url: string) {
     openInBrowser(htmlPath);
   }
 
-  // CI Assertions
+  // Overall Score Assertion
   if (minScore > 0 && view.overallScore < minScore) {
-    console.error(`\n\x1b[31m✖ CI Assertion Failed:\x1b[0m Score ${view.overallScore} is below minimum threshold ${minScore}`);
+    console.error(
+      `\n\x1b[31m✖ CI Assertion Failed:\x1b[0m Overall score ${view.overallScore} is below minimum threshold ${minScore}`
+    );
     process.exit(1);
+  }
+
+  // Per-category Assertions
+  const categoryAssertions = fileConfig.assertCategories ?? {};
+  for (let i = 0; i < args.length; i++) {
+    if (args[i] === '--assert-category' && args[i + 1]) {
+      const [catId, min] = args[i + 1].split(':');
+      if (catId && min) categoryAssertions[catId] = Number(min);
+    }
+  }
+
+  for (const [catId, threshold] of Object.entries(categoryAssertions)) {
+    const matchedCategory = view.groups
+      .flatMap((g) => g.categories)
+      .find((c) => c.id === catId || c.name.toLowerCase().includes(catId.toLowerCase()));
+
+    if (matchedCategory && matchedCategory.score < threshold) {
+      console.error(
+        `\n\x1b[31m✖ Category Assertion Failed:\x1b[0m Category '${matchedCategory.name}' scored ${matchedCategory.score} (threshold: ${threshold})`
+      );
+      process.exit(1);
+    }
   }
 }
 
@@ -145,12 +215,11 @@ async function main() {
 
   if (command === 'audit') {
     const url = args[1];
-    if (!url) usage();
     await audit(url);
   } else if (!command.startsWith('-')) {
     await audit(command);
   } else {
-    usage();
+    await audit();
   }
 }
 

@@ -1,0 +1,74 @@
+name: 'Agent Lighthouse Audit'
+description: 'Audit, score, and optimize websites for AI agents, LLMs, and WebMCP in CI'
+author: 'ForkPoint'
+branding:
+  icon: 'zap'
+  color: 'indigo'
+
+inputs:
+  url:
+    description: 'Target website or storefront URL to audit'
+    required: true
+  preset:
+    description: 'Audit preset profile (ecommerce, saas, content, quick, full)'
+    required: false
+    default: 'full'
+  min-score:
+    description: 'Minimum overall score (0-100) required to pass CI'
+    required: false
+    default: '0'
+  assert-category:
+    description: 'Per-category assertions (e.g. structured-data:85)'
+    required: false
+    default: ''
+  comment-on-pr:
+    description: 'Post markdown summary as a pull request comment'
+    required: false
+    default: 'true'
+  github-token:
+    description: 'GitHub token for posting PR comments (e.g. ${{ secrets.GITHUB_TOKEN }})'
+    required: false
+    default: ''
+  output-dir:
+    description: 'Output directory for reports'
+    required: false
+    default: './reports'
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Run Agent Lighthouse Audit
+      shell: bash
+      run: |
+        CMD="npx -y @forkpoint/agent-lighthouse ${{ inputs.url }} --preset=${{ inputs.preset }} --output=terminal,html,json,md --output-dir=${{ inputs.output-dir }}"
+        
+        if [ "${{ inputs.min-score }}" != "0" ]; then
+          CMD="$CMD --min-score=${{ inputs.min-score }}"
+        fi
+
+        if [ -n "${{ inputs.assert-category }}" ]; then
+          CMD="$CMD --assert-category=${{ inputs.assert-category }}"
+        fi
+
+        echo "Executing: $CMD"
+        eval $CMD
+
+    - name: Comment on Pull Request
+      if: inputs.comment-on-pr == 'true' && inputs.github-token != '' && github.event_name == 'pull_request'
+      uses: actions/github-script@v7
+      with:
+        github-token: ${{ inputs.github-token }}
+        script: |
+          const fs = require('fs');
+          const path = require('path');
+          const reportPath = path.resolve('${{ inputs.output-dir }}', 'agent-lighthouse-report.md');
+          
+          if (fs.existsSync(reportPath)) {
+            const body = fs.readFileSync(reportPath, 'utf8');
+            await github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: body
+            });
+          }
