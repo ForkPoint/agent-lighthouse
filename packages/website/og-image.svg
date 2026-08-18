@@ -24,5 +24,5 @@
   <rect x="116" y="408" width="650" height="62" rx="14" fill="#020617" stroke="#334155"/>
   <text x="144" y="448" font-family="JetBrains Mono, Menlo, monospace" font-size="22" fill="#34d399">$</text>
   <text x="178" y="448" font-family="JetBrains Mono, Menlo, monospace" font-size="22" fill="#e2e8f0">npx @forkpoint/agent-lighthouse site.com</text>
-  <text x="116" y="516" font-family="Inter, Arial, sans-serif" font-size="24" fill="#94a3b8">199 checks: llms.txt, robots, Schema.org, OpenAPI, WebMCP, AEO/GEO, accessibility</text>
+  <text x="116" y="516" font-family="Inter, Arial, sans-serif" font-size="24" fill="#94a3b8">207 checks: llms.txt, robots, Schema.org, OpenAPI, WebMCP, AEO/GEO, accessibility</text>
 </svg>

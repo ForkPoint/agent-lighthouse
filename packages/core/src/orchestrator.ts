@@ -218,6 +218,7 @@ export async function runScan(
     '/.well-known/ai-plugin.json',
     '/.well-known/webmcp',
     '/.well-known/security.txt',
+    '/.well-known/tdmrep.json',
     '/navigation.json',
     '/privacy-policy/',
     '/privacy/',
@@ -449,7 +450,7 @@ function calculateReadinessVitals(checks: Array<{ id: string; category: string; 
   };
 
   return {
-    commerce: getScore(['3.8', '3.14', '3.21', '3.22', '3.23']),
+    commerce: getScore(['3.8', '3.14', '3.21', '3.22', '3.23', '3.24']),
     content: getScore([
       '1.1',
       '1.2',

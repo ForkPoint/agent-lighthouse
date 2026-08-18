@@ -15,7 +15,7 @@ Lighthouse-style audits for AI-agent readiness
 Description:
 
 ```text
-Run 199 checks to see whether AI agents, LLM crawlers, MCP clients, and agentic browsers can discover, parse, cite, and act on your website. Includes CLI, SDK, GitHub Action, MCP server, and standalone HTML reports.
+Run 207 checks to see whether AI agents, LLM crawlers, MCP clients, and agentic browsers can discover, parse, cite, and act on your website. Includes CLI, SDK, GitHub Action, MCP server, and standalone HTML reports.
 ```
 
 Maker Comment:
