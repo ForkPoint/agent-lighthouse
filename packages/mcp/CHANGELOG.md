@@ -1,5 +1,14 @@
 # @forkpoint/agent-lighthouse-mcp
 
+## 0.2.4
+
+### Patch Changes
+
+- 23ad2b8: Relicense the project and published packages from GPL-3.0-only to Apache-2.0.
+- Updated dependencies [23ad2b8]
+  - @forkpoint/agent-lighthouse-core@0.2.4
+  - @forkpoint/agent-lighthouse-report@0.2.4
+
 ## 0.2.3
 
 ### Patch Changes
