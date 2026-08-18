@@ -17,3 +17,4 @@ export { ActionSchemaAudit } from './action-schema';
 export { ProductIdentifiersAudit } from './product-identifiers';
 export { ProductDetailsAudit } from './product-details';
 export { ProductReviewsAudit } from './product-reviews';
+export { ProductTransactionCertaintyAudit } from './product-transaction-certainty';

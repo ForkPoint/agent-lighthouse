@@ -13,7 +13,7 @@ Hi {{name}},
 
 I am working on Agent Lighthouse, an open-source scanner for storefronts that want to be discoverable and usable by AI shopping agents.
 
-It checks 199 signals across llms.txt, AI crawler access, Product/Offer/Review schema, OpenAPI/WebMCP action surfaces, semantic HTML, accessible forms/buttons, and technical readiness.
+It checks 207 signals across llms.txt, AI crawler access, Product/Offer/Review schema, OpenAPI/WebMCP action surfaces, semantic HTML, accessible forms/buttons, and technical readiness.
 
 CLI:
 npx @forkpoint/agent-lighthouse https://store.example.com --preset ecommerce --view

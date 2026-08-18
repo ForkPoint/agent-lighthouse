@@ -13,7 +13,7 @@
   <meta property="og:image:alt" content="Agent Lighthouse report preview for AI-agent readiness audits">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="Agent Lighthouse — Lighthouse, but for AI agents">
-  <meta name="twitter:description" content="199 AI-agent readiness checks for llms.txt, robots, Schema.org, OpenAPI, WebMCP, MCP, AEO/GEO, and accessibility.">
+  <meta name="twitter:description" content="207 AI-agent readiness checks for llms.txt, robots, Schema.org, OpenAPI, WebMCP, MCP, AEO/GEO, and accessibility.">
   <meta name="twitter:image" content="https://forkpoint.github.io/agent-lighthouse/og-image.svg">
   <meta name="twitter:image:alt" content="Agent Lighthouse report preview for AI-agent readiness audits">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🗼</text></svg>">
@@ -73,7 +73,7 @@
       <!-- Center Nav Links -->
       <div class="hidden md:flex items-center gap-6 text-sm font-medium text-slate-300">
         <a href="#quickstart" class="hover:text-white transition-colors">Quickstart</a>
-        <a href="#audits" class="hover:text-white transition-colors">Audit Directory (199)</a>
+        <a href="#audits" class="hover:text-white transition-colors">Audit Directory (207)</a>
         <a href="#cli" class="hover:text-white transition-colors">CLI & Config</a>
         <a href="#sdk" class="hover:text-white transition-colors">Node.js SDK</a>
         <a href="#mcp" class="hover:text-white transition-colors">MCP Server</a>
@@ -126,7 +126,7 @@
       <!-- Quick Metrics Grid -->
       <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-12 max-w-4xl mx-auto text-left">
         <div class="bg-slate-900/60 border border-slate-800 p-4 rounded-xl backdrop-blur-sm">
-          <div class="text-2xl font-extrabold text-white">199</div>
+          <div class="text-2xl font-extrabold text-white">207</div>
           <div class="text-xs text-slate-400 mt-0.5">Specialized Audits</div>
         </div>
         <div class="bg-slate-900/60 border border-slate-800 p-4 rounded-xl backdrop-blur-sm">
@@ -165,7 +165,7 @@
           <div>
             <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">Interactive Directory</h3>
             <ul class="space-y-2 border-l border-slate-800 pl-3">
-              <li><a href="#audits" class="text-indigo-400 font-semibold hover:text-indigo-300 transition-colors block py-0.5">Audit Explorer (199)</a></li>
+              <li><a href="#audits" class="text-indigo-400 font-semibold hover:text-indigo-300 transition-colors block py-0.5">Audit Explorer (207)</a></li>
               <li><a href="#categories-ref" class="text-slate-400 hover:text-white transition-colors block py-0.5">Categories Taxonomy</a></li>
             </ul>
           </div>
@@ -258,7 +258,7 @@
               </div>
               <div class="p-4 bg-slate-950/80 border border-slate-800 rounded-xl">
                 <div class="text-emerald-400 font-bold text-sm">3. Pure Audits</div>
-                <div class="text-xs text-slate-400 mt-1">199 pure deterministic rules (10 categories)</div>
+                <div class="text-xs text-slate-400 mt-1">207 pure deterministic rules (10 categories)</div>
               </div>
               <div class="p-4 bg-slate-950/80 border border-slate-800 rounded-xl">
                 <div class="text-amber-400 font-bold text-sm">4. Scoring & Vitals</div>
@@ -332,10 +332,10 @@
                 <span>🔍</span>
                 <span>Interactive Audit Directory</span>
               </h2>
-              <p class="text-slate-400 text-sm mt-1">Explore all 199 audits with evaluation rules, guidance, and remediation code snippets.</p>
+              <p class="text-slate-400 text-sm mt-1">Explore all 207 audits with evaluation rules, guidance, and remediation code snippets.</p>
             </div>
             <div class="text-xs font-semibold bg-slate-900 border border-slate-800 px-3 py-1.5 rounded-lg text-slate-300">
-              <span id="audit-count-badge" class="text-indigo-400 font-bold">199</span> audits available
+              <span id="audit-count-badge" class="text-indigo-400 font-bold">207</span> audits available
             </div>
           </div>
 
@@ -349,7 +349,7 @@
 
             <!-- Category Filter Buttons -->
             <div class="flex flex-wrap gap-1.5" id="category-filter-pills">
-              <button onclick="setCategoryFilter('all')" class="cat-pill active text-xs font-medium px-3 py-1.5 rounded-lg bg-indigo-600 text-white transition-colors" data-cat="all">All (199)</button>
+              <button onclick="setCategoryFilter('all')" class="cat-pill active text-xs font-medium px-3 py-1.5 rounded-lg bg-indigo-600 text-white transition-colors" data-cat="all">All (207)</button>
               <button onclick="setCategoryFilter('content-discoverability')" class="cat-pill text-xs font-medium px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 transition-colors" data-cat="content-discoverability">Content Discoverability</button>
               <button onclick="setCategoryFilter('crawler-permissions')" class="cat-pill text-xs font-medium px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 transition-colors" data-cat="crawler-permissions">AI Crawler Permissions</button>
               <button onclick="setCategoryFilter('structured-data')" class="cat-pill text-xs font-medium px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 transition-colors" data-cat="structured-data">Structured Data</button>
@@ -506,7 +506,7 @@ console.log(markdown);</code></pre>
           <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div class="bg-slate-900/60 border border-slate-800 p-4 rounded-xl">
               <div class="code-font text-xs font-bold text-indigo-400">audit_website</div>
-              <div class="text-xs text-slate-400 mt-1">Full 199-audit scan with scores, failed audits & remediation fixes.</div>
+              <div class="text-xs text-slate-400 mt-1">Full 207-audit scan with scores, failed audits & remediation fixes.</div>
             </div>
             <div class="bg-slate-900/60 border border-slate-800 p-4 rounded-xl">
               <div class="code-font text-xs font-bold text-emerald-400">inspect_product_schema</div>

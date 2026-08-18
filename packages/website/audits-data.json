@@ -1104,6 +1104,53 @@
     }
   },
   {
+    "id": "2.27",
+    "category": "crawler-permissions",
+    "categoryTitle": "AI Crawler Permissions",
+    "title": "TDM-Rep data mining rights declared",
+    "failureTitle": "TDM-Rep data mining rights declared",
+    "description": "The TDM-Rep (Text and Data Mining Reservation) protocol is the emerging machine-readable standard for declaring whether your content may be used for text and data mining, anchored in EU DSM Directive Article 4. Without an explicit declaration — either a <meta name=\"tdm-reservation\"> tag or a /.well-known/tdmrep.json policy file — AI crawlers and licensing agents cannot tell whether you reserve your mining rights, leaving your content in a legal gray zone where well-behaved agents guess and the rest assume permission. Declaring your terms explicitly puts you in control of how AI systems may use your content.",
+    "scoreDisplayMode": "ternary",
+    "weight": 0.7,
+    "priority": "medium",
+    "guidance": {
+      "impact": "Without an explicit TDM declaration, AI crawlers and content-licensing agents have no machine-readable signal about your data mining terms. Rights-respecting agents may skip your content to be safe, while others assume permission — you lose control either way, and you forfeit the EU DSM Article 4 opt-out protection that requires a machine-readable reservation.",
+      "fix": "Declare your text and data mining policy explicitly. Add <meta name=\"tdm-reservation\" content=\"1\"> to reserve mining rights (or \"0\" to permit mining) on every page, and optionally point to a full policy with <meta name=\"tdm-policy\" content=\"https://yoursite.com/tdm-policy\">. For a site-wide declaration, publish a JSON policy at /.well-known/tdmrep.json instead.",
+      "code": "<!-- Reserve mining rights on every page -->\n<meta name=\"tdm-reservation\" content=\"1\" />\n<meta name=\"tdm-policy\" content=\"https://yoursite.com/tdm-policy\" />\n\n<!-- Or site-wide at /.well-known/tdmrep.json -->\n{\n  \"tdm-reservation\": 1,\n  \"tdm-policy\": \"https://yoursite.com/tdm-policy\"\n}",
+      "effort": "trivial",
+      "docsUrl": "https://www.w3.org/community/reports/tdmrep/CG-FINAL-tdmrep-20240510/",
+      "tags": [
+        "tdm-rep",
+        "licensing",
+        "crawler-permissions",
+        "compliance"
+      ]
+    }
+  },
+  {
+    "id": "2.28",
+    "category": "crawler-permissions",
+    "categoryTitle": "AI Crawler Permissions",
+    "title": "AI crawler vs conversational agent separation",
+    "failureTitle": "No separation between training crawlers and live agents",
+    "description": "Not all AI bots are the same. Training crawlers like GPTBot, CCBot, and Google-Extended scrape your content to build datasets, while conversational and retrieval agents like ChatGPT-User, Claude-User, and OAI-SearchBot fetch pages live to answer real user questions and can send referral traffic back to you. Many sites want to block the former while welcoming the latter — but a single catch-all User-agent: * cannot express that distinction. Granular robots.txt governance names both categories explicitly so each gets the access policy you actually intend.",
+    "scoreDisplayMode": "ternary",
+    "weight": 0.8,
+    "priority": "medium",
+    "guidance": {
+      "impact": "Without separate rules for training crawlers and live conversational agents, you cannot block dataset scraping while still appearing in ChatGPT, Claude, and Perplexity answers. A blanket policy either locks you out of AI-powered discovery entirely or leaves your content open to bulk training crawls you never agreed to.",
+      "fix": "Add explicit User-agent groups in robots.txt for both categories: name training crawlers (GPTBot, CCBot, Google-Extended, anthropic-ai) with the policy you want, and separately name live agents (ChatGPT-User, Claude-User, OAI-SearchBot) — typically with Allow: / so your site stays visible in AI answers.",
+      "code": "# Block dataset-training crawlers\nUser-agent: GPTBot\nDisallow: /\n\nUser-agent: CCBot\nDisallow: /\n\n# Welcome live conversational agents\nUser-agent: ChatGPT-User\nAllow: /\n\nUser-agent: Claude-User\nAllow: /\n\nUser-agent: *\nAllow: /",
+      "effort": "easy",
+      "docsUrl": "https://platform.openai.com/docs/bots",
+      "tags": [
+        "robots-txt",
+        "crawler-permissions",
+        "ai-governance"
+      ]
+    }
+  },
+  {
     "id": "3.1",
     "category": "structured-data",
     "categoryTitle": "Structured Data & Schema Markup",
@@ -1611,6 +1658,34 @@
         "ecommerce",
         "reviews",
         "ratings"
+      ]
+    }
+  },
+  {
+    "id": "3.24",
+    "category": "structured-data",
+    "categoryTitle": "Structured Data & Schema Markup",
+    "title": "Product transactional certainty",
+    "failureTitle": "Product transactional certainty",
+    "description": "AI shopping assistants need more than a product name and price to make an authoritative recommendation: they must know whether the item is in stock, how long the quoted price is valid, and what the return policy is before they commit a user to a purchase. A Product schema that only carries name and price forces agents to guess at availability, quote potentially stale prices, and stay silent on returns — all of which erode transactional certainty in agentic commerce flows. Complete your Offer with availability, priceValidUntil, and a valid price + priceCurrency pair, and attach hasMerchantReturnPolicy to the Product or Offer.",
+    "scoreDisplayMode": "ternary",
+    "weight": 1,
+    "priority": "high",
+    "applicablePageTypes": [
+      "product"
+    ],
+    "guidance": {
+      "impact": "Without availability, priceValidUntil, a valid price/currency pair, and a return policy in your Product schema, AI shopping assistants cannot make an authoritative recommendation. Agents either skip your product or answer with guessed availability, stale prices, and unknown return terms — costing you conversions in agent-driven purchases.",
+      "fix": "Complete the Offer block in your Product JSON-LD with availability (a schema.org ItemAvailability value), priceValidUntil (ISO date), and a valid price + priceCurrency pair. Add hasMerchantReturnPolicy to the Product or Offer. Also ensure unique identifiers (GTIN/MPN/SKU) are present — see the Product identifiers audit — so agents can match the exact item.",
+      "code": "{\n  \"@context\": \"https://schema.org\",\n  \"@type\": \"Product\",\n  \"name\": \"Product Name\",\n  \"offers\": {\n    \"@type\": \"Offer\",\n    \"price\": \"99.00\",\n    \"priceCurrency\": \"USD\",\n    \"availability\": \"https://schema.org/InStock\",\n    \"priceValidUntil\": \"2026-12-31\",\n    \"hasMerchantReturnPolicy\": {\n      \"@type\": \"MerchantReturnPolicy\",\n      \"applicableCountry\": \"US\",\n      \"returnPolicyCategory\": \"https://schema.org/MerchantReturnFiniteReturnWindow\",\n      \"merchantReturnDays\": 30\n    }\n  }\n}",
+      "effort": "moderate",
+      "docsUrl": "https://schema.org/Offer",
+      "tags": [
+        "json-ld",
+        "schema",
+        "product",
+        "ecommerce",
+        "agentic-commerce"
       ]
     }
   },
@@ -2650,6 +2725,55 @@
     }
   },
   {
+    "id": "5.26",
+    "category": "agent-tools",
+    "categoryTitle": "AI Agent Tools & Action Surfaces",
+    "title": "OpenAPI description quality for tool-calling",
+    "failureTitle": "OpenAPI descriptions too thin for tool-calling",
+    "description": "When an AI agent converts your OpenAPI spec into callable tools, the description fields become the prompt the LLM uses to decide when and how to call each function. A one-word description like \"search\" tells the model nothing about what the endpoint does, what the parameter means, or what values are valid — so the agent guesses, calls the wrong tool, or fills parameters with hallucinated values. Every operation and every parameter needs a verbose description (more than 15 characters) that explains purpose, expected input, and behavior.",
+    "scoreDisplayMode": "ternary",
+    "weight": 0.9,
+    "priority": "high",
+    "guidance": {
+      "impact": "LLM tool-calling treats your OpenAPI descriptions as the function-calling prompt. Missing or terse descriptions force the model to guess what each endpoint does and what each parameter accepts, producing wrong tool selection, malformed arguments, and failed API calls that erode user trust in agent-driven workflows on your site.",
+      "fix": "Write a verbose description (>15 characters) for every operation and every parameter in your OpenAPI spec. Explain what the operation does, when an agent should use it, and what each parameter means including format and example values.",
+      "code": "\"/search\": {\n  \"get\": {\n    \"operationId\": \"searchProducts\",\n    \"description\": \"Search the product catalog by keyword. Returns matching products with name, price, and availability. Use this when the user asks to find or browse products.\",\n    \"parameters\": [{\n      \"name\": \"q\",\n      \"in\": \"query\",\n      \"description\": \"Full-text search query, e.g. 'red running shoes'. Matched against product name and description.\",\n      \"schema\": { \"type\": \"string\" }\n    }],\n    \"responses\": { \"200\": { \"description\": \"List of matching products\" } }\n  }\n}",
+      "effort": "moderate",
+      "docsUrl": "https://swagger.io/specification/#operation-object",
+      "tags": [
+        "openapi",
+        "descriptions",
+        "tool-calling",
+        "llm",
+        "api"
+      ]
+    }
+  },
+  {
+    "id": "5.27",
+    "category": "agent-tools",
+    "categoryTitle": "AI Agent Tools & Action Surfaces",
+    "title": "Form backend actionability",
+    "failureTitle": "Form backend actionability",
+    "description": "Autonomous agents fill forms by reading the DOM directly — they cannot see placeholders rendered visually or guess what a custom div-based widget expects. Fields without a native element, an explicit label (label[for], wrapping label, aria-label, or aria-labelledby), or a standard autocomplete attribute for identity data (email, phone, name, address) force agents to guess, producing failed or incorrect submissions. Keep every fillable field a native input/select/textarea with an explicit label and standard autocomplete tokens.",
+    "scoreDisplayMode": "ternary",
+    "weight": 1,
+    "priority": "high",
+    "guidance": {
+      "impact": "AI agents do not render your page visually. Unlabeled fields, div-based fake inputs, and missing autocomplete attributes mean agents cannot tell which field is the email address or the name, so submissions fail silently or land in the wrong fields — lost leads, broken signups, and abandoned checkouts.",
+      "fix": "Use native input/select/textarea elements (never divs with role=\"textbox\" or contenteditable), associate every field with a <label for=\"id\">, wrapping <label>, aria-label, or aria-labelledby, and add standard autocomplete tokens (email, tel, name, street-address, postal-code, country-name) to identity fields.",
+      "code": "<form action=\"/api/contact\" method=\"POST\">\n  <label for=\"full-name\">Full name</label>\n  <input id=\"full-name\" name=\"name\" type=\"text\" autocomplete=\"name\" required />\n\n  <label for=\"email\">Email</label>\n  <input id=\"email\" name=\"email\" type=\"email\" autocomplete=\"email\" required />\n\n  <label for=\"phone\">Phone</label>\n  <input id=\"phone\" name=\"phone\" type=\"tel\" autocomplete=\"tel\" />\n\n  <button type=\"submit\">Send</button>\n</form>",
+      "effort": "easy",
+      "docsUrl": "https://html.spec.whatwg.org/multipage/form-control-infrastructure.html#autofill",
+      "tags": [
+        "forms",
+        "labels",
+        "autocomplete",
+        "agent-fillable"
+      ]
+    }
+  },
+  {
     "id": "6.1",
     "category": "semantic-html",
     "categoryTitle": "Semantic HTML & Content Structure",
@@ -3073,6 +3197,77 @@
         "captions",
         "semantic",
         "html"
+      ]
+    }
+  },
+  {
+    "id": "6.18",
+    "category": "semantic-html",
+    "categoryTitle": "Semantic HTML & Content Structure",
+    "title": "SVGs not bloating agent context",
+    "failureTitle": "Large inline SVGs bloating agent context",
+    "description": "When an LLM converts your HTML to Markdown or reads raw markup, every inline SVG is inlined as thousands of path-data tokens. Decorative icon sprites, charts, and complex illustrations can silently consume tens of thousands of tokens of agent context per page — \"SVG context poisoning\" — crowding out the actual content the agent should read. SVGs marked aria-hidden=\"true\" or role=\"presentation\" are stripped by most accessibility-tree extractors and do not count. Keep visible SVGs small, move decorative ones behind aria-hidden, and prefer raster images or CSS for complex graphics.",
+    "scoreDisplayMode": "ternary",
+    "weight": 0.6,
+    "priority": "medium",
+    "guidance": {
+      "impact": "Large inline SVGs are inlined verbatim as path-data tokens when an LLM converts your page to Markdown. A single 10KB icon or chart can consume thousands of tokens of agent context per page load, inflating agent cost and pushing real content out of the context window — reducing the quality of what agents extract and say about your site.",
+      "fix": "Mark decorative SVGs with aria-hidden=\"true\" so agent pipelines strip them. For visible graphics, simplify path data with SVGO, extract complex SVGs to external files referenced via <img>, or replace them with raster images when they exceed a few kilobytes.",
+      "code": "<svg aria-hidden=\"true\" focusable=\"false\" ...>...</svg>",
+      "effort": "easy",
+      "docsUrl": "https://github.com/svg/svgo",
+      "tags": [
+        "svg",
+        "context-window",
+        "tokens",
+        "performance"
+      ]
+    }
+  },
+  {
+    "id": "6.19",
+    "category": "semantic-html",
+    "categoryTitle": "Semantic HTML & Content Structure",
+    "title": "Lean token-to-content ratio",
+    "failureTitle": "Lean token-to-content ratio",
+    "description": "AI agents pay for every token of raw HTML they download, but only the visible text carries meaning. This audit compares the character weight of the raw HTML against the extracted main-content text to produce a \"context bloat score\": the share of the page that is actual content rather than markup, scripts, and styles. The ratio is evaluated on the homepage (the first crawled page), which is the entry point agents most often fetch. A ratio under 5% means an agent parses 20 tokens of noise for every token of content; under 15% still wastes most of the context window on boilerplate. Unlike content depth (which measures text volume), this measures how efficiently that text is packaged.",
+    "scoreDisplayMode": "ternary",
+    "weight": 0.8,
+    "priority": "high",
+    "guidance": {
+      "impact": "When less than 15% of your HTML is actual content, AI agents burn most of their context window and token budget on markup noise: inline scripts, CSS, SVG sprites, tracking tags, and deeply nested divs. The useful text that remains gets weaker attention from the model, and pages with extreme bloat may be truncated before the real content is even read.",
+      "fix": "Move inline scripts and styles to external cached files, remove unused framework boilerplate and hidden DOM subtrees, flatten excessive wrapper divs, and serve content in semantic HTML rather than JSON blobs that need client-side hydration. Aim for at least 15% of the raw HTML weight to be visible content text.",
+      "code": "<!-- Before: content buried in markup noise -->\n<div class=\"w1\"><div class=\"w2\"><div class=\"w3\">\n  <script>/* 50KB of hydration data */</script>\n  <p>Buy our product</p>\n</div></div></div>\n\n<!-- After: lean, content-first markup -->\n<main>\n  <h1>Our product</h1>\n  <p>Buy our product. It solves your problem by...</p>\n</main>\n<script src=\"/app.js\" defer></script>",
+      "effort": "moderate",
+      "tags": [
+        "tokens",
+        "performance",
+        "content",
+        "context-window"
+      ]
+    }
+  },
+  {
+    "id": "6.20",
+    "category": "semantic-html",
+    "categoryTitle": "Semantic HTML & Content Structure",
+    "title": "No fake headings",
+    "failureTitle": "Fake headings detected",
+    "description": "AI agents chunk and outline page content by reading real <h1>–<h6> tags. When a page styles a <div>, <span>, <p>, or <b> to look like a heading (large text, bold weight, \"heading\" classes) instead of using a semantic heading element, that text is invisible to the agent's document outline — sections cannot be navigated, summarized, or cited correctly. This audit is distinct from the sequential-heading check (6.2): 6.2 verifies that real headings appear in the right order, while this audit catches content that impersonates headings without using heading tags at all. Replace styled generic elements with the appropriate <h1>–<h6> level.",
+    "scoreDisplayMode": "ternary",
+    "weight": 0.7,
+    "priority": "medium",
+    "guidance": {
+      "impact": "AI agents build content outlines exclusively from <h1>–<h6> elements. Text that only looks like a heading is treated as ordinary body copy, so agents miss your section structure entirely — summaries flatten into a wall of text, section-level citations become impossible, and chunking for retrieval splits content at arbitrary points instead of at your intended section boundaries.",
+      "fix": "Replace generic elements styled to look like headings with real heading tags. Pick the level that reflects the content's position in the outline (h2 for major sections under the h1, h3 for subsections, and so on), and move the visual styling to CSS targeting those heading elements instead of utility classes on divs and spans.",
+      "code": "<!-- Before: looks like a heading, invisible to agents -->\n<div class=\"text-2xl font-bold\">Pricing Plans</div>\n\n<!-- After: semantic and styleable -->\n<h2 class=\"text-2xl font-bold\">Pricing Plans</h2>",
+      "effort": "easy",
+      "docsUrl": "https://developer.mozilla.org/en-US/docs/Web/HTML/Element/Heading_Elements",
+      "tags": [
+        "headings",
+        "semantic",
+        "chunking",
+        "structure"
       ]
     }
   },

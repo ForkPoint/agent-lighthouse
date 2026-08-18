@@ -24,3 +24,5 @@ export { SensitivePathsAudit } from './sensitive-paths';
 export { CrawlDelayAudit } from './crawl-delay';
 export { MetaRobotsNotBlockingAudit } from './meta-robots-not-blocking';
 export { NoBotDetectionAudit } from './no-bot-detection';
+export { TdmRepAudit } from './tdm-rep';
+export { AgentGovernanceAudit } from './agent-governance';

@@ -15,3 +15,6 @@ export { ContentDepthAudit } from './content-depth';
 export { ImageAltTextAudit } from './image-alt-text';
 export { DecorativeImagesAudit } from './decorative-images';
 export { FigureFigcaptionAudit } from './figure-figcaption';
+export { SvgBloatAudit } from './svg-bloat';
+export { TokenRatioAudit } from './token-ratio';
+export { FakeHeadingsAudit } from './fake-headings';

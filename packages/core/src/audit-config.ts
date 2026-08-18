@@ -36,7 +36,7 @@ function reg(AuditClass: typeof Audit): AuditRegistration {
 
 // ── Imports ─────────────────────────────────────────────────────
 
-// Content Discoverability (22)
+// Content Discoverability (23)
 import {
   LlmsTxtExistsAudit,
   LlmsTxtBlockquoteAudit,
@@ -63,7 +63,7 @@ import {
   CommerceLinksAudit,
 } from './audits/content-discoverability';
 
-// Crawler Permissions (26)
+// Crawler Permissions (28)
 import {
   GptbotAudit,
   GoogleExtendedAudit,
@@ -91,9 +91,11 @@ import {
   CrawlDelayAudit,
   MetaRobotsNotBlockingAudit,
   NoBotDetectionAudit,
+  TdmRepAudit,
+  AgentGovernanceAudit,
 } from './audits/crawler-permissions';
 
-// Structured Data (16)
+// Structured Data (20)
 import {
   JsonLdPresentAudit,
   SchemaValidationAudit,
@@ -114,6 +116,7 @@ import {
   ProductIdentifiersAudit,
   ProductDetailsAudit,
   ProductReviewsAudit,
+  ProductTransactionCertaintyAudit,
 } from './audits/structured-data';
 
 // Meta Tags (20)
@@ -140,7 +143,7 @@ import {
   MetaRobotsAudit,
 } from './audits/meta-tags';
 
-// Agent Tools (25)
+// Agent Tools (27)
 import {
   OpenApiExistsAudit,
   OpenApiEndpointsAudit,
@@ -167,9 +170,11 @@ import {
   WebmcpToolNamingAudit,
   WebmcpToolAnnotationsAudit,
   WebmcpActionCoverageAudit,
+  OpenApiDescriptionQualityAudit,
+  FormActionabilityAudit,
 } from './audits/agent-tools';
 
-// Semantic HTML (17)
+// Semantic HTML (20)
 import {
   SingleH1Audit,
   SequentialHeadingsAudit,
@@ -188,9 +193,12 @@ import {
   ImageAltTextAudit,
   DecorativeImagesAudit,
   FigureFigcaptionAudit,
+  SvgBloatAudit,
+  TokenRatioAudit,
+  FakeHeadingsAudit,
 } from './audits/semantic-html';
 
-// Accessibility — hand-rolled markup audits + engine-backed tree audits (23)
+// Accessibility — hand-rolled markup audits + engine-backed tree audits (22)
 import {
   SkipNavAudit,
   AriaLandmarksAudit,
@@ -216,7 +224,7 @@ import {
   A11yPresentationConflictAudit,
 } from './audits/accessibility';
 
-// Technical Readiness (20)
+// Technical Readiness (21)
 import {
   HttpsEnabledAudit,
   HstsHeaderAudit,
@@ -343,6 +351,8 @@ export const defaultConfig: ScanConfig = {
       reg(CrawlDelayAudit),
       reg(MetaRobotsNotBlockingAudit),
       reg(NoBotDetectionAudit),
+      reg(TdmRepAudit),
+      reg(AgentGovernanceAudit),
     ],
     'structured-data': [
       reg(JsonLdPresentAudit),
@@ -364,6 +374,7 @@ export const defaultConfig: ScanConfig = {
       reg(ProductIdentifiersAudit),
       reg(ProductDetailsAudit),
       reg(ProductReviewsAudit),
+      reg(ProductTransactionCertaintyAudit),
     ],
     'meta-tags': [
       reg(MetaDescriptionAudit),
@@ -413,6 +424,8 @@ export const defaultConfig: ScanConfig = {
       reg(WebmcpToolNamingAudit),
       reg(WebmcpToolAnnotationsAudit),
       reg(WebmcpActionCoverageAudit),
+      reg(OpenApiDescriptionQualityAudit),
+      reg(FormActionabilityAudit),
     ],
     'semantic-html': [
       reg(SingleH1Audit),
@@ -432,6 +445,9 @@ export const defaultConfig: ScanConfig = {
       reg(ImageAltTextAudit),
       reg(DecorativeImagesAudit),
       reg(FigureFigcaptionAudit),
+      reg(SvgBloatAudit),
+      reg(TokenRatioAudit),
+      reg(FakeHeadingsAudit),
     ],
     accessibility: [
       reg(SkipNavAudit),

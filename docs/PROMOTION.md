@@ -23,7 +23,7 @@ Agent Lighthouse audits whether ChatGPT, Claude, Perplexity, MCP clients, AI cra
 
 ## Short Description
 
-Agent Lighthouse is an open-source CLI, SDK, GitHub Action, and MCP server that runs 199 checks for AI-agent readiness: `llms.txt`, robots.txt crawler access, Schema.org, OpenAPI, WebMCP, AEO/GEO content structure, semantic HTML, accessibility, and technical readiness.
+Agent Lighthouse is an open-source CLI, SDK, GitHub Action, and MCP server that runs 207 checks for AI-agent readiness: `llms.txt`, robots.txt crawler access, Schema.org, OpenAPI, WebMCP, AEO/GEO content structure, semantic HTML, accessibility, and technical readiness.
 
 ## Launch Checklist
 
@@ -71,7 +71,7 @@ Comment:
 ```text
 Hi HN, we built Agent Lighthouse: a Lighthouse-style CLI for checking whether AI agents and LLM crawlers can understand and act on a website.
 
-It runs 199 checks across llms.txt, robots.txt policies for GPTBot/ClaudeBot/PerplexityBot, Schema.org, OpenAPI, WebMCP, AEO/GEO structure, semantic HTML, accessibility, and technical readiness.
+It runs 207 checks across llms.txt, robots.txt policies for GPTBot/ClaudeBot/PerplexityBot, Schema.org, OpenAPI, WebMCP, AEO/GEO structure, semantic HTML, accessibility, and technical readiness.
 
 Try it with:
 
@@ -99,7 +99,7 @@ Lighthouse-style audits for AI-agent readiness
 Description:
 
 ```text
-Run 199 checks to see whether AI agents, LLM crawlers, MCP clients, and agentic browsers can discover, parse, cite, and act on your website. Includes CLI, SDK, GitHub Action, MCP server, and standalone HTML reports.
+Run 207 checks to see whether AI agents, LLM crawlers, MCP clients, and agentic browsers can discover, parse, cite, and act on your website. Includes CLI, SDK, GitHub Action, MCP server, and standalone HTML reports.
 ```
 
 Maker comment:
@@ -139,7 +139,7 @@ https://github.com/ForkPoint/agent-lighthouse
 Benchmark angle:
 
 ```text
-We are benchmarking how agent-ready public websites are across 199 checks: llms.txt, AI crawler access, Schema.org, OpenAPI/WebMCP, semantic HTML, accessibility, and technical readiness.
+We are benchmarking how agent-ready public websites are across 207 checks: llms.txt, AI crawler access, Schema.org, OpenAPI/WebMCP, semantic HTML, accessibility, and technical readiness.
 
 Tool is open source:
 https://github.com/ForkPoint/agent-lighthouse

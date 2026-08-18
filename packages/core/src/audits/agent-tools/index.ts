@@ -23,3 +23,5 @@ export { WebmcpInputQualityAudit } from './webmcp-input-quality';
 export { WebmcpToolNamingAudit } from './webmcp-tool-naming';
 export { WebmcpToolAnnotationsAudit } from './webmcp-tool-annotations';
 export { WebmcpActionCoverageAudit } from './webmcp-action-coverage';
+export { OpenApiDescriptionQualityAudit } from './openapi-description-quality';
+export { FormActionabilityAudit } from './form-actionability';
