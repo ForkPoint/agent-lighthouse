@@ -24,4 +24,4 @@ The engine runs deterministic audits for `llms.txt`, AI crawler access, Schema.o
 
 ## License
 
-GPL-3.0-only
+Apache-2.0

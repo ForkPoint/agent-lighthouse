@@ -3,7 +3,7 @@
   "version": "0.2.3",
   "description": "Lighthouse-style CLI for auditing websites for AI agents, LLM crawlers, MCP clients, llms.txt, WebMCP, OpenAPI, and Schema.org readiness",
   "author": "ForkPoint",
-  "license": "GPL-3.0-only",
+  "license": "Apache-2.0",
   "homepage": "https://forkpoint.github.io/agent-lighthouse/",
   "repository": {
     "type": "git",

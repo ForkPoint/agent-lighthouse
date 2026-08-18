@@ -30,4 +30,4 @@ console.log(view.overallScore, html.length, markdown.length);
 
 ## License
 
-GPL-3.0-only
+Apache-2.0

@@ -29,4 +29,4 @@ The MCP server wraps Agent Lighthouse scans so an assistant can check `llms.txt`
 
 ## License
 
-GPL-3.0-only
+Apache-2.0

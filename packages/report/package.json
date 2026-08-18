@@ -3,7 +3,7 @@
   "version": "0.2.3",
   "description": "Standalone HTML, Markdown, and view-model reporting engine for Agent Lighthouse AI-agent readiness audits",
   "author": "ForkPoint",
-  "license": "GPL-3.0-only",
+  "license": "Apache-2.0",
   "homepage": "https://forkpoint.github.io/agent-lighthouse/",
   "repository": {
     "type": "git",

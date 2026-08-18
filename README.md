@@ -7,7 +7,7 @@
     <a href="https://www.npmjs.com/package/@forkpoint/agent-lighthouse"><img alt="npm downloads" src="https://img.shields.io/npm/dm/@forkpoint/agent-lighthouse.svg"></a>
     <a href="https://github.com/ForkPoint/agent-lighthouse/actions/workflows/ci.yml"><img alt="CI" src="https://github.com/ForkPoint/agent-lighthouse/actions/workflows/ci.yml/badge.svg"></a>
     <a href="https://forkpoint.github.io/agent-lighthouse/"><img alt="Docs" src="https://img.shields.io/badge/docs-GitHub%20Pages-4f46e5"></a>
-    <a href="./LICENSE"><img alt="License: GPL-3.0-only" src="https://img.shields.io/badge/license-GPL--3.0--only-blue"></a>
+    <a href="./LICENSE"><img alt="License: Apache-2.0" src="https://img.shields.io/badge/license-Apache--2.0-blue"></a>
   </p>
   <p>
     <a href="https://forkpoint.github.io/agent-lighthouse/">Documentation</a>
@@ -191,4 +191,4 @@ pnpm test
 
 ## 📄 License
 
-GPL-3.0-only © [ForkPoint](https://github.com/ForkPoint)
+Apache-2.0 © [ForkPoint](https://github.com/ForkPoint)

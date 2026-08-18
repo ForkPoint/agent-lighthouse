@@ -3,7 +3,7 @@
   "version": "0.2.3",
   "description": "Core TypeScript engine for auditing websites for AI-agent readiness, LLM crawler access, MCP discovery, structured data, and agentic web signals",
   "author": "ForkPoint",
-  "license": "GPL-3.0-only",
+  "license": "Apache-2.0",
   "homepage": "https://forkpoint.github.io/agent-lighthouse/",
   "repository": {
     "type": "git",

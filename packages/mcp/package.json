@@ -3,7 +3,7 @@
   "version": "0.2.3",
   "description": "Model Context Protocol (MCP) server that lets Claude, Cursor, and agentic IDEs audit website AI-agent readiness with Agent Lighthouse",
   "author": "ForkPoint",
-  "license": "GPL-3.0-only",
+  "license": "Apache-2.0",
   "homepage": "https://forkpoint.github.io/agent-lighthouse/",
   "repository": {
     "type": "git",
