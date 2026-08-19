@@ -17,7 +17,7 @@ import type { CheckContext, PageContext } from './check-context';
 import { defaultConfig } from './audit-config';
 import { planAudits, runAudits } from './audit-runner';
 import { ProgressTracker } from './progress';
-import type { PhaseId, ScanEvent } from './progress';
+import type { ScanEvent } from './progress';
 import { runA11yForHtml } from './audits/accessibility/runner';
 import { A11Y_RULES } from './audits/accessibility';
 import { extractProductFieldVerification } from './product-fields';
@@ -26,63 +26,10 @@ import { detectWafProtection } from './waf-detector';
 
 import type { FetchResult } from './fetcher';
 
-/**
- * @deprecated Use `ScanOptions.onEvent` with structured `ScanEvent`s instead.
- * The positional `(pct, phase)` form will be removed in the next major release.
- */
-export type ProgressCallback = (pct: number, phase: string) => void | Promise<void>;
-
 export interface ScanOptions {
   onEvent?: (event: ScanEvent) => void;
   pages?: PageOverride[] | null;
   signal?: AbortSignal;
-}
-
-// Map structured scan events onto the deprecated (pct, phase-label) callback so
-// existing positional callers keep working until the next major release.
-let legacyDeprecationWarned = false;
-
-function legacyProgressAdapter(onProgress: ProgressCallback): (event: ScanEvent) => void {
-  if (!legacyDeprecationWarned) {
-    legacyDeprecationWarned = true;
-    logger.warn(
-      'runScan(url, onProgress, ...) is deprecated; use runScan(url, { onEvent }) with structured ScanEvents. Removal in next major.',
-    );
-  }
-  const phaseLabels: Record<PhaseId, string> = {
-    'fetch-root': 'Fetching root files',
-    'fetch-pages': 'Fetching pages',
-    analyze: 'Analyzing pages',
-    audits: 'Running audits',
-    report: 'Building report',
-  };
-  return (event) => {
-    const pct = Math.round(event.fraction * 100);
-    switch (event.type) {
-      case 'phase:start':
-        void onProgress(
-          pct,
-          event.phase === 'analyze'
-            ? `Analyzing ${event.totalUnits} pages`
-            : phaseLabels[event.phase],
-        );
-        break;
-      case 'unit:done':
-        if (event.phase === 'audits') {
-          void onProgress(pct, `Running audits (${event.completed}/${event.total})`);
-        }
-        break;
-      case 'phase:done':
-        if (event.phase === 'fetch-root') void onProgress(pct, 'Root files fetched');
-        else if (event.phase === 'analyze') void onProgress(pct, 'Page analysis complete');
-        break;
-      case 'scan:done':
-        void onProgress(100, 'Complete');
-        break;
-      default:
-        break;
-    }
-  };
 }
 
 // Cap how many pages get the jsdom-based a11y pass. Accessibility issues are
@@ -216,37 +163,10 @@ function discoverPages(
 
 // ── Main Scan ──────────────────────────────────────────────────
 
-export function runScan(url: string, options?: ScanOptions): Promise<ScanReport>;
-/**
- * @deprecated Positional progress callback form. Use `runScan(url, { onEvent, pages, signal })`.
- * Will be removed in the next major release.
- */
-export function runScan(
-  url: string,
-  onProgress: ProgressCallback,
-  pageOverrides?: PageOverride[] | null,
-  signal?: AbortSignal,
-): Promise<ScanReport>;
-export async function runScan(
-  url: string,
-  optionsOrProgress?: ScanOptions | ProgressCallback,
-  legacyPages?: PageOverride[] | null,
-  legacySignal?: AbortSignal,
-): Promise<ScanReport> {
-  // Normalize the two call shapes: an options bag, or the legacy positional
-  // (onProgress, pageOverrides, signal) form.
-  let onEvent: ((event: ScanEvent) => void) | undefined;
-  let pageOverrides: PageOverride[] | null | undefined;
-  let signal: AbortSignal | undefined;
-  if (typeof optionsOrProgress === 'function') {
-    onEvent = legacyProgressAdapter(optionsOrProgress);
-    pageOverrides = legacyPages;
-    signal = legacySignal;
-  } else {
-    onEvent = optionsOrProgress?.onEvent;
-    pageOverrides = optionsOrProgress?.pages;
-    signal = optionsOrProgress?.signal;
-  }
+export async function runScan(url: string, options?: ScanOptions): Promise<ScanReport> {
+  const onEvent = options?.onEvent;
+  const pageOverrides = options?.pages;
+  const signal = options?.signal;
 
   const tracker = new ProgressTracker((event) => onEvent?.(event));
   const start = performance.now();

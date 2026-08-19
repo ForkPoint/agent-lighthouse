@@ -179,29 +179,4 @@ describe('runAudits', () => {
     expect(out.checks).toHaveLength(25);
     expect(out.categories[0].score).toBe(100);
   });
-
-  it('still supports the deprecated (completed, total) progress callback', async () => {
-    const regs: AuditRegistration[] = [];
-    for (let i = 0; i < 3; i++) {
-      regs.push(makeReg(meta({ id: `l${i}`, category: 'leg' }), () => result('pass', 1)));
-    }
-    const config: ScanConfig = {
-      categories: [{ id: 'leg', name: 'Leg', weight: 1 }],
-      audits: { leg: regs },
-    };
-
-    const calls: Array<[number, number]> = [];
-    // Intentionally exercising the deprecated legacy callback form.
-    await runAudits(ctxWith(['homepage']), config, (completed: number, total: number) => {
-      calls.push([completed, total]);
-    });
-
-    expect(calls).toHaveLength(3);
-    expect(calls.at(-1)).toEqual([3, 3]);
-    let prev = 0;
-    for (const [completed] of calls) {
-      expect(completed).toBeGreaterThan(prev);
-      prev = completed;
-    }
-  });
 });

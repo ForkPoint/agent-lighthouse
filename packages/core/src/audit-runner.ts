@@ -45,12 +45,6 @@ export interface AuditPlan {
 }
 
 /**
- * @deprecated Use the `(event: AuditProgressEvent) => void` callback form.
- * The legacy `(completed, total)` form will be removed in the next major release.
- */
-export type AuditProgressFn = (completed: number, total: number) => void;
-
-/**
  * Split a scan config into the audits that will actually execute and the
  * page-type-skipped `na` stubs. Exported so the orchestrator can size the
  * audits progress phase before running it.
@@ -91,42 +85,14 @@ export function planAudits(ctx: CheckContext, config: ScanConfig): AuditPlan {
  * Returns check results grouped into categories with weighted scores.
  * Pass a precomputed `plan` (from {@link planAudits}) to avoid recomputing it.
  */
-export function runAudits(
+export async function runAudits(
   ctx: CheckContext,
   config: ScanConfig,
   onEvent?: (event: AuditProgressEvent) => void,
   plan?: AuditPlan,
-): Promise<AuditRunResult>;
-/**
- * @deprecated Legacy `(completed, total)` progress callback form — now fired per
- * settled audit instead of per batch. Use the `AuditProgressEvent` form.
- */
-export function runAudits(
-  ctx: CheckContext,
-  config: ScanConfig,
-  onProgress: AuditProgressFn,
-  plan?: AuditPlan,
-): Promise<AuditRunResult>;
-export async function runAudits(
-  ctx: CheckContext,
-  config: ScanConfig,
-  onProgress?: ((event: AuditProgressEvent) => void) | AuditProgressFn,
-  plan?: AuditPlan,
 ): Promise<AuditRunResult> {
   const { runnable, skipped } = plan ?? planAudits(ctx, config);
   const allChecks: CheckResult[] = [...skipped];
-
-  // Normalize the two callback shapes. The legacy form declares two parameters
-  // (completed, total); the event form declares one.
-  let onEvent: ((event: AuditProgressEvent) => void) | undefined;
-  if (onProgress && onProgress.length >= 2) {
-    const legacy = onProgress as AuditProgressFn;
-    let completed = 0;
-    const total = runnable.length;
-    onEvent = () => legacy((completed += 1), total);
-  } else {
-    onEvent = onProgress as ((event: AuditProgressEvent) => void) | undefined;
-  }
 
   // Run in batches of 20 (same concurrency as before)
   const batchSize = 20;

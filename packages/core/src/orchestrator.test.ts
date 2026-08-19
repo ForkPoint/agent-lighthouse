@@ -83,8 +83,6 @@ const CATEGORY_HTML = `<html><head>
 
 const CONTENT_HTML = `<html><body><main><h1>Hello</h1><p>Some content here.</p></main></body></html>`;
 
-const noop = async () => {};
-
 beforeEach(() => {
   h.map.clear();
 });
@@ -128,8 +126,8 @@ describe('runScan — discovery', () => {
     set('https://example.com/p/123', PRODUCT_HTML);
     // blog/post-1 is selected but returns 404 → dropped from the page set.
 
-    const onProgress = vi.fn(noop);
-    const report = await runScan(url, onProgress);
+    const onEvent = vi.fn();
+    const report = await runScan(url, { onEvent });
 
     expect(report.url).toBe(url);
     expect(report.domain).toBe('example.com');
@@ -154,7 +152,7 @@ describe('runScan — discovery', () => {
     });
     // No product override → field verification deliberately skipped.
     expect(report.productFields).toBeUndefined();
-    expect(onProgress).toHaveBeenCalledWith(100, 'Complete');
+    expect(onEvent).toHaveBeenCalledWith(expect.objectContaining({ type: 'scan:done', fraction: 1 }));
   });
 });
 
@@ -170,7 +168,7 @@ describe('runScan — credential hygiene', () => {
     set(credUrl, '<html><body><a href="https://example.com/about-page">A</a></body></html>');
     set('https://example.com/about-page', CONTENT_HTML);
 
-    const report = await runScan(credUrl, noop);
+    const report = await runScan(credUrl);
 
     expect(report.url).toBe('https://example.com/');
     expect(report.domain).toBe('example.com');
@@ -206,7 +204,7 @@ describe('runScan — page overrides', () => {
       { url: 'https://example.com/products/special/', pageType: 'content' }, // dup key → skipped
     ];
 
-    const report = await runScan(url, noop, overrides);
+    const report = await runScan(url, { pages: overrides });
 
     const special = report.pagesScanned.find((p) => p.url === 'https://example.com/products/special');
     expect(special).toBeDefined();
@@ -231,7 +229,7 @@ describe('runScan — homepage unreachable', () => {
     const url = 'https://example.com/';
     // No entries set → homepage and every root file resolve to 404.
 
-    const report = await runScan(url, noop);
+    const report = await runScan(url);
 
     expect(report.pagesScanned).toEqual([]);
     expect(report.productFields).toBeUndefined();
@@ -257,7 +255,7 @@ describe('runScan — no root files', () => {
     set('https://example.com/docs', CONTENT_HTML);
     set('https://example.com/about-page', CONTENT_HTML);
 
-    const report = await runScan(url, noop);
+    const report = await runScan(url);
 
     // homepage + docs + about-page.
     expect(report.pagesScanned).toHaveLength(3);
@@ -281,7 +279,7 @@ describe('runScan — sitemap-index fallback', () => {
     );
     set('https://example.com/news/x', CONTENT_HTML);
 
-    const report = await runScan(url, noop);
+    const report = await runScan(url);
 
     expect(report.pagesScanned.some((p) => p.url === 'https://example.com/news/x')).toBe(true);
     expect(report.pagesScanned.some((p) => p.url === url)).toBe(true);
@@ -317,7 +315,7 @@ describe('runScan — limited discovery slots', () => {
       { url: 'https://example.com/o4', pageType: 'content' },
     ];
 
-    const report = await runScan(url, noop, overrides);
+    const report = await runScan(url, { pages: overrides });
 
     // MAX_PAGES_PER_SCAN(6) - homepage(1) - overrides(4) = 1 discovered slot.
     const overrideUrls = overrides.map((o) => o.url);
@@ -376,7 +374,7 @@ describe('runScan — report assembly fallbacks', () => {
     };
     vi.mocked(runAudits).mockResolvedValueOnce(crafted);
 
-    const report = await runScan(url, noop);
+    const report = await runScan(url);
 
     // Both fails surface as recommendations (sorted via the priority fallback).
     expect(report.recommendations).toHaveLength(2);
@@ -389,7 +387,7 @@ describe('runScan — report assembly fallbacks', () => {
 });
 
 // ---------------------------------------------------------------------------
-// Progress events (options-bag API + legacy positional callback)
+// Progress events (options-bag API)
 // ---------------------------------------------------------------------------
 
 describe('runScan — progress events', () => {
@@ -444,31 +442,6 @@ describe('runScan — progress events', () => {
       expect(e.fraction).toBeGreaterThanOrEqual(prev);
       expect(e.elapsedMs).toBeGreaterThanOrEqual(0);
       prev = e.fraction;
-    }
-  });
-
-  it('maps events onto the legacy (pct, phase) callback, monotonic ending at 100', async () => {
-    const { logger } = await import('./logger.js');
-    const prevLevel = logger.level;
-    logger.level = 'silent'; // suppress the expected deprecation warning
-    const calls: Array<[number, string]> = [];
-    try {
-      await runScan(url, (pct, phase) => {
-        calls.push([pct, phase]);
-      });
-    } finally {
-      logger.level = prevLevel;
-    }
-
-    expect(calls.length).toBeGreaterThan(0);
-    expect(calls[0]).toEqual([0, 'Fetching root files']);
-    expect(calls.at(-1)).toEqual([100, 'Complete']);
-    expect(calls.some(([, phase]) => /^Running audits \(\d+\/\d+\)$/.test(phase))).toBe(true);
-
-    let prev = -1;
-    for (const [pct] of calls) {
-      expect(pct).toBeGreaterThanOrEqual(prev);
-      prev = pct;
     }
   });
 });
