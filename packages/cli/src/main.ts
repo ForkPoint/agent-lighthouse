@@ -57,7 +57,8 @@ Options:
   --progress-json              Stream scan progress as NDJSON (one ScanEvent per line) to stderr
                                and suppress the interactive progress display. Stderr is used so
                                NDJSON never interleaves with the terminal report on stdout;
-                               scanner log output is silenced to keep the stream clean.
+                               all scanner logs (including error logs) are silenced to keep the
+                               stream clean — audit errors still appear in the report itself.
 
 Examples:
   npx @forkpoint/agent-lighthouse https://yourstore.com

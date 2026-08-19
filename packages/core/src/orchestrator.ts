@@ -449,16 +449,22 @@ export async function runScan(
     wafProtection: wafProtection ?? undefined,
   };
 
-  tracker.phaseStart('audits', planAudits(ctx, defaultConfig).runnable.length);
+  const auditPlan = planAudits(ctx, defaultConfig);
+  tracker.phaseStart('audits', auditPlan.runnable.length);
 
   const {
     checks: allChecks,
     categories,
     overallScore,
-  } = await runAudits(ctx, defaultConfig, (event) => {
-    if (event.type === 'unit:done') tracker.unitDone(event.label);
-    else tracker.unitFail(event.label, event.error);
-  });
+  } = await runAudits(
+    ctx,
+    defaultConfig,
+    (event) => {
+      if (event.type === 'unit:done') tracker.unitDone(event.label);
+      else tracker.unitFail(event.label, event.error);
+    },
+    auditPlan,
+  );
   tracker.phaseDone();
 
   logger.debug('[orchestrator] Phase 3 complete: Audits finished');

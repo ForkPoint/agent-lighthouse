@@ -58,9 +58,14 @@ export class ProgressTracker {
     }
     // Mid-phase total corrections (setPhaseTotal) and float noise must never
     // move the fraction backwards, and a finished scan must report exactly 1.
-    f = Math.min(1, Math.max(f, this.lastFraction));
-    this.lastFraction = f;
-    return f;
+    return Math.min(1, Math.max(f, this.lastFraction));
+  }
+
+  /** Stamp an event with the current fraction/elapsed and advance the floor. */
+  private stamp(): { fraction: number; elapsedMs: number } {
+    const fraction = this.fraction;
+    this.lastFraction = Math.max(this.lastFraction, fraction);
+    return { fraction, elapsedMs: this.elapsedMs() };
   }
 
   private elapsedMs(): number {
@@ -68,7 +73,7 @@ export class ProgressTracker {
   }
 
   scanStart(url: string): void {
-    this.onEvent({ type: 'scan:start', url, fraction: this.fraction, elapsedMs: this.elapsedMs() });
+    this.onEvent({ type: 'scan:start', url, ...this.stamp() });
   }
 
   phaseStart(phase: PhaseId, totalUnits: number): void {
@@ -80,8 +85,7 @@ export class ProgressTracker {
       type: 'phase:start',
       phase,
       totalUnits: this.totalUnits,
-      fraction: this.fraction,
-      elapsedMs: this.elapsedMs(),
+      ...this.stamp(),
     });
   }
 
@@ -100,8 +104,7 @@ export class ProgressTracker {
       completed: this.completedUnits,
       total: this.totalUnits,
       label,
-      fraction: this.fraction,
-      elapsedMs: this.elapsedMs(),
+      ...this.stamp(),
     });
   }
 
@@ -115,8 +118,7 @@ export class ProgressTracker {
       phase,
       label,
       error,
-      fraction: this.fraction,
-      elapsedMs: this.elapsedMs(),
+      ...this.stamp(),
     });
   }
 
@@ -132,13 +134,11 @@ export class ProgressTracker {
       type: 'phase:done',
       phase,
       durationMs,
-      fraction: this.fraction,
-      elapsedMs: this.elapsedMs(),
+      ...this.stamp(),
     });
   }
 
   scanDone(score: number): void {
-    const elapsedMs = this.elapsedMs();
-    this.onEvent({ type: 'scan:done', durationMs: elapsedMs, score, fraction: this.fraction, elapsedMs });
+    this.onEvent({ type: 'scan:done', durationMs: this.elapsedMs(), score, ...this.stamp() });
   }
 }

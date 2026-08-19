@@ -9,7 +9,7 @@ export { Audit } from './audit';
 export { runAudits, planAudits } from './audit-runner';
 export { defaultConfig } from './audit-config';
 export type { ScanConfig, CategoryConfig, AuditRegistration } from './audit-config';
-export type { AuditProgressEvent, AuditPlan, AuditRunResult } from './audit-runner';
+export type { AuditProgressEvent, AuditProgressFn, AuditPlan, AuditRunResult } from './audit-runner';
 export {
   parseHtml,
   extractJsonLd,

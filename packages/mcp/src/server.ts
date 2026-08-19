@@ -60,7 +60,9 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
     const onEvent = createProgressNotifier(
       request.params._meta?.progressToken,
       (params) => {
-        void server.notification({ method: 'notifications/progress', params });
+        // Fire-and-forget, but swallow rejections (e.g. client disconnected
+        // mid-scan) so they never surface as unhandled.
+        void server.notification({ method: 'notifications/progress', params }).catch(() => {});
       },
     );
 
