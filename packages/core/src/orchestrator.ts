@@ -15,7 +15,9 @@ import {
 } from './parser';
 import type { CheckContext, PageContext } from './check-context';
 import { defaultConfig } from './audit-config';
-import { runAudits } from './audit-runner';
+import { planAudits, runAudits } from './audit-runner';
+import { ProgressTracker } from './progress';
+import type { PhaseId, ScanEvent } from './progress';
 import { runA11yForHtml } from './audits/accessibility/runner';
 import { A11Y_RULES } from './audits/accessibility';
 import { extractProductFieldVerification } from './product-fields';
@@ -24,7 +26,52 @@ import { detectWafProtection } from './waf-detector';
 
 import type { FetchResult } from './fetcher';
 
-type ProgressCallback = (pct: number, phase: string) => void | Promise<void>;
+export type ProgressCallback = (pct: number, phase: string) => void | Promise<void>;
+
+export interface ScanOptions {
+  onEvent?: (event: ScanEvent) => void;
+  pages?: PageOverride[] | null;
+  signal?: AbortSignal;
+}
+
+// Map structured scan events onto the legacy (pct, phase-label) callback so
+// existing positional callers (e.g. the CLI) keep working unchanged.
+function legacyProgressAdapter(onProgress: ProgressCallback): (event: ScanEvent) => void {
+  const phaseLabels: Record<PhaseId, string> = {
+    'fetch-root': 'Fetching root files',
+    'fetch-pages': 'Fetching pages',
+    analyze: 'Analyzing pages',
+    audits: 'Running audits',
+    report: 'Building report',
+  };
+  return (event) => {
+    const pct = Math.round(event.fraction * 100);
+    switch (event.type) {
+      case 'phase:start':
+        void onProgress(
+          pct,
+          event.phase === 'analyze'
+            ? `Analyzing ${event.totalUnits} pages`
+            : phaseLabels[event.phase],
+        );
+        break;
+      case 'unit:done':
+        if (event.phase === 'audits') {
+          void onProgress(pct, `Running audits (${event.completed}/${event.total})`);
+        }
+        break;
+      case 'phase:done':
+        if (event.phase === 'fetch-root') void onProgress(pct, 'Root files fetched');
+        else if (event.phase === 'analyze') void onProgress(pct, 'Page analysis complete');
+        break;
+      case 'scan:done':
+        void onProgress(100, 'Complete');
+        break;
+      default:
+        break;
+    }
+  };
+}
 
 // Cap how many pages get the jsdom-based a11y pass. Accessibility issues are
 // template-wide, so the first few pages are representative; this bounds the
@@ -157,13 +204,35 @@ function discoverPages(
 
 // ── Main Scan ──────────────────────────────────────────────────
 
-export async function runScan(
+export function runScan(url: string, options?: ScanOptions): Promise<ScanReport>;
+export function runScan(
   url: string,
-  onProgress?: ProgressCallback,
+  onProgress: ProgressCallback,
   pageOverrides?: PageOverride[] | null,
   signal?: AbortSignal,
+): Promise<ScanReport>;
+export async function runScan(
+  url: string,
+  optionsOrProgress?: ScanOptions | ProgressCallback,
+  legacyPages?: PageOverride[] | null,
+  legacySignal?: AbortSignal,
 ): Promise<ScanReport> {
-  const progress = onProgress ?? (() => {});
+  // Normalize the two call shapes: an options bag, or the legacy positional
+  // (onProgress, pageOverrides, signal) form.
+  let onEvent: ((event: ScanEvent) => void) | undefined;
+  let pageOverrides: PageOverride[] | null | undefined;
+  let signal: AbortSignal | undefined;
+  if (typeof optionsOrProgress === 'function') {
+    onEvent = legacyProgressAdapter(optionsOrProgress);
+    pageOverrides = legacyPages;
+    signal = legacySignal;
+  } else {
+    onEvent = optionsOrProgress?.onEvent;
+    pageOverrides = optionsOrProgress?.pages;
+    signal = optionsOrProgress?.signal;
+  }
+
+  const tracker = new ProgressTracker((event) => onEvent?.(event));
   const start = performance.now();
   const fetcher = createFetcher();
 
@@ -198,7 +267,7 @@ export async function runScan(
 
   // ── Phase 1: Root-level file checks (parallel) ───────────────
   signal?.throwIfAborted();
-  await progress(5, 'Fetching root files');
+  tracker.scanStart(displayUrl);
 
   const rootFilePaths = [
     '/robots.txt',
@@ -238,9 +307,15 @@ export async function runScan(
   ];
 
   logger.debug({ count: rootFilePaths.length }, '[orchestrator] Phase 1: Fetching root files');
+  tracker.phaseStart('fetch-root', rootFilePaths.length);
 
   const rootResults = await Promise.all(
-    rootFilePaths.map((path) => fetcher.fetch({ url: `${baseUrl}${path}`, signal })),
+    rootFilePaths.map((path) =>
+      fetcher.fetch({ url: `${baseUrl}${path}`, signal }).then((result) => {
+        tracker.unitDone(path);
+        return result;
+      }),
+    ),
   );
 
   const rootFiles: Record<string, FetchResult> = {};
@@ -248,16 +323,18 @@ export async function runScan(
     rootFiles[path] = rootResults[i]!;
   });
 
-  await progress(25, 'Root files fetched');
+  tracker.phaseDone();
   logger.debug('[orchestrator] Phase 1 complete: Root files fetched');
 
   // ── Phase 2: Page-level checks (parallel per page) ───────────
   signal?.throwIfAborted();
-  await progress(30, 'Fetching pages');
   logger.debug('[orchestrator] Phase 2: Fetching pages');
 
-  // Fetch homepage first
+  // Fetch homepage first. The phase starts with just the homepage as a unit;
+  // discovery below corrects the total once the full page list is known.
+  tracker.phaseStart('fetch-pages', 1);
   const homepageResult = await fetcher.fetch({ url, signal });
+  tracker.unitDone(displayUrl);
   const homepage$ =
     homepageResult.status === 200 && homepageResult.body ? parseHtml(homepageResult.body) : null;
 
@@ -274,17 +351,28 @@ export async function runScan(
 
   // Fetch overrides first (so they take priority), then discovered pages.
   const extraUrls = [...overrideUrls, ...discoveredUrls];
-
-  await progress(40, `Analyzing ${1 + extraUrls.length} pages`);
+  tracker.setPhaseTotal(1 + extraUrls.length);
 
   const extraResults = await Promise.all(
-    extraUrls.map((pageUrl) => fetcher.fetch({ url: pageUrl, signal })),
+    extraUrls.map((pageUrl) =>
+      fetcher.fetch({ url: pageUrl, signal }).then((result) => {
+        tracker.unitDone(pageUrl);
+        return result;
+      }),
+    ),
   );
+  tracker.phaseDone();
 
   // Build page contexts. The homepage keeps its credential-free URL so scanned
   // credentials never surface in the report's page list.
   const allPageResults = [homepageResult, ...extraResults];
   const allPageUrls = [displayUrl, ...extraUrls];
+
+  // ── Phase 2b: Parse pages + bounded jsdom a11y pass ─────────
+  tracker.phaseStart(
+    'analyze',
+    allPageResults.filter((r) => r.status === 200 && r.body).length,
+  );
 
   const pages: PageContext[] = allPageResults
     .map((r, i) => ({ result: r, url: allPageUrls[i]!, index: i }))
@@ -301,6 +389,7 @@ export async function runScan(
       // User-supplied overrides keep their declared type; everything else is
       // classified heuristically.
       const forcedType = overrideTypeByKey.get(p.url.replace(/\/$/, ''));
+      tracker.unitDone(p.url);
       return {
         url: p.url,
         pageType: forcedType ?? detectPageType(p.url, $, structuredData, meta, isFirstPage),
@@ -323,7 +412,7 @@ export async function runScan(
     }),
   );
 
-  await progress(55, 'Page analysis complete');
+  tracker.phaseDone();
   logger.debug(
     { pagesAnalyzed: pages.length },
     '[orchestrator] Phase 2 complete: Page analysis complete',
@@ -331,7 +420,6 @@ export async function runScan(
 
   // ── Phase 3: Run all audits ────────────────────────────────────
   signal?.throwIfAborted();
-  await progress(60, 'Running audits');
   logger.debug('[orchestrator] Phase 3: Running audits');
 
   const wafProtection = detectWafProtection(url, homepageResult, rootFiles, pages.length);
@@ -345,19 +433,22 @@ export async function runScan(
     wafProtection: wafProtection ?? undefined,
   };
 
+  tracker.phaseStart('audits', planAudits(ctx, defaultConfig).runnable.length);
+
   const {
     checks: allChecks,
     categories,
     overallScore,
-  } = await runAudits(ctx, defaultConfig, (completed, total) => {
-    const checkProgress = 60 + Math.round((completed / total) * 30);
-    void progress(checkProgress, `Running audits (${completed}/${total})`);
+  } = await runAudits(ctx, defaultConfig, (event) => {
+    if (event.type === 'unit:done') tracker.unitDone(event.label);
+    else tracker.unitFail(event.label, event.error);
   });
+  tracker.phaseDone();
 
   logger.debug('[orchestrator] Phase 3 complete: Audits finished');
 
   // ── Phase 4: Assemble report ─────────────────────────────────
-  await progress(97, 'Building report');
+  tracker.phaseStart('report', 1);
   logger.debug('[orchestrator] Phase 4: Building final report');
 
   const durationMs = Math.round(performance.now() - start);
@@ -389,8 +480,6 @@ export async function runScan(
         (weightMap.get(b.id) ?? 1) - (weightMap.get(a.id) ?? 1),
     )
     .slice(0, 10);
-
-  await progress(100, 'Complete');
 
   const readinessVitals = calculateReadinessVitals(allChecks);
   const readinessScore = Math.round(
@@ -426,6 +515,9 @@ export async function runScan(
   };
 
   report.summary = generateScanSummary(report);
+  tracker.unitDone();
+  tracker.phaseDone();
+  tracker.scanDone(overallScore);
   logger.debug({ durationMs, score: overallScore }, '[orchestrator] runScan complete');
 
   return report;

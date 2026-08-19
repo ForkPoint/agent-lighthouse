@@ -1,12 +1,15 @@
 export { runScan } from './orchestrator';
+export type { ProgressCallback, ScanOptions } from './orchestrator';
+export { ProgressTracker, PHASE_WEIGHTS } from './progress';
+export type { PhaseId, ScanEvent } from './progress';
 export { createFetcher, isSafeUrl } from './fetcher';
 export type { FetchResult, FetchOptions } from './fetcher';
 export type { CheckContext, CheckFn, PageContext } from './check-context';
 export { Audit } from './audit';
-export { runAudits } from './audit-runner';
+export { runAudits, planAudits } from './audit-runner';
 export { defaultConfig } from './audit-config';
 export type { ScanConfig, CategoryConfig, AuditRegistration } from './audit-config';
-export type { AuditRunResult } from './audit-runner';
+export type { AuditProgressEvent, AuditPlan, AuditRunResult } from './audit-runner';
 export {
   parseHtml,
   extractJsonLd,

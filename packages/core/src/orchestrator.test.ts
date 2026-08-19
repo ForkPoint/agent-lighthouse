@@ -48,6 +48,7 @@ vi.mock('./audit-runner', async (importOriginal) => {
 });
 
 import { runScan } from './orchestrator';
+import type { ScanEvent } from './progress';
 import { defaultConfig } from './audit-config';
 import { runAudits } from './audit-runner';
 import type { AuditRunResult } from './audit-runner';
@@ -386,3 +387,82 @@ describe('runScan — report assembly fallbacks', () => {
     expect(report.readinessVitals?.technical).toBe(0);
   });
 });
+
+// ---------------------------------------------------------------------------
+// Progress events (options-bag API + legacy positional callback)
+// ---------------------------------------------------------------------------
+
+describe('runScan — progress events', () => {
+  const url = 'https://example.com/';
+
+  beforeEach(() => {
+    set(
+      url,
+      `<html><body><nav>
+        <a href="/products/widget">W</a>
+      </nav></body></html>`,
+    );
+    set('https://example.com/products/widget', PRODUCT_HTML);
+  });
+
+  it('emits an ordered, monotonic event stream through a full scan', async () => {
+    const events: ScanEvent[] = [];
+    const report = await runScan(url, { onEvent: (e) => events.push(e) });
+
+    expect(events[0]).toMatchObject({ type: 'scan:start', url, fraction: 0 });
+    expect(events.at(-1)).toMatchObject({
+      type: 'scan:done',
+      score: report.overallScore,
+      fraction: 1,
+      durationMs: expect.any(Number),
+    });
+
+    // Phases run in order, each bracketed by phase:start / phase:done.
+    const phaseStarts = events.filter((e) => e.type === 'phase:start').map((e) => e.phase);
+    const phaseDones = events.filter((e) => e.type === 'phase:done').map((e) => e.phase);
+    const order = ['fetch-root', 'fetch-pages', 'analyze', 'audits', 'report'];
+    expect(phaseStarts).toEqual(order);
+    expect(phaseDones).toEqual(order);
+
+    // fetch-root emits one unit:done per fetched root file.
+    const rootUnits = events.filter((e) => e.type === 'unit:done' && e.phase === 'fetch-root');
+    const rootStart = events.find((e) => e.type === 'phase:start' && e.phase === 'fetch-root')!;
+    expect(rootStart).toMatchObject({ totalUnits: rootUnits.length });
+    expect(rootUnits.length).toBeGreaterThan(30);
+
+    // audits phase: every runnable audit settles into exactly one unit event.
+    const auditsStart = events.find((e) => e.type === 'phase:start' && e.phase === 'audits')!;
+    const auditUnits = events.filter(
+      (e) => (e.type === 'unit:done' || e.type === 'unit:fail') && e.phase === 'audits',
+    );
+    expect(auditsStart).toMatchObject({ totalUnits: auditUnits.length });
+    expect(auditUnits.length).toBeGreaterThan(100);
+
+    // fraction is monotonic non-decreasing, elapsedMs always present.
+    let prev = -1;
+    for (const e of events) {
+      expect(e.fraction).toBeGreaterThanOrEqual(prev);
+      expect(e.elapsedMs).toBeGreaterThanOrEqual(0);
+      prev = e.fraction;
+    }
+  });
+
+  it('maps events onto the legacy (pct, phase) callback, monotonic ending at 100', async () => {
+    const calls: Array<[number, string]> = [];
+    await runScan(url, (pct, phase) => {
+      calls.push([pct, phase]);
+    });
+
+    expect(calls.length).toBeGreaterThan(0);
+    expect(calls[0]).toEqual([0, 'Fetching root files']);
+    expect(calls.at(-1)).toEqual([100, 'Complete']);
+    expect(calls.some(([, phase]) => /^Running audits \(\d+\/\d+\)$/.test(phase))).toBe(true);
+
+    let prev = -1;
+    for (const [pct] of calls) {
+      expect(pct).toBeGreaterThanOrEqual(prev);
+      prev = pct;
+    }
+  });
+});
+

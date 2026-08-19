@@ -5,6 +5,7 @@ import { Audit } from './audit';
 import type { CheckContext } from './check-context';
 import type { ScanConfig, AuditRegistration } from './audit-config';
 import { runAudits } from './audit-runner';
+import type { AuditProgressEvent } from './audit-runner';
 
 // ---------------------------------------------------------------------------
 // Helpers: build tiny fake Audit subclasses + registrations
@@ -98,14 +99,17 @@ describe('runAudits', () => {
       },
     };
 
-    const progress: Array<[number, number]> = [];
-    const out = await runAudits(ctxWith(['homepage']), config, (c, t) => progress.push([c, t]));
+    const events: AuditProgressEvent[] = [];
+    const out = await runAudits(ctxWith(['homepage']), config, (e) => events.push(e));
 
     // s1 skipped (na stub) + t1 throws (na stub) + 4 real checks = 6 total.
     // 5 audits execute (s1 never runs); t1's throw is logged once.
     expect(out.checks).toHaveLength(6);
     expect(errorSpy).toHaveBeenCalledTimes(1);
-    expect(progress.at(-1)).toEqual([5, 5]);
+    expect(events.filter((e) => e.type === 'unit:done')).toHaveLength(4);
+    const fails = events.filter((e) => e.type === 'unit:fail');
+    expect(fails).toHaveLength(1);
+    expect(fails[0]).toMatchObject({ label: 't1 T', error: 'boom' });
 
     // s1 → not-applicable stub tagged as a page-type skip.
     const s1 = out.checks.find((c) => c.id === 's1')!;

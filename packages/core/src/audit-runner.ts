@@ -31,32 +31,40 @@ export interface AuditRunResult {
   overallScore: number;
 }
 
-type ProgressFn = (completed: number, total: number) => void;
+/**
+ * Progress emitted per settled audit. The orchestrator forwards these into the
+ * ProgressTracker, which owns counting and fraction/elapsed stamping.
+ */
+export type AuditProgressEvent =
+  | { type: 'unit:done'; label: string }
+  | { type: 'unit:fail'; label: string; error: string };
+
+export interface AuditPlan {
+  runnable: Array<{ reg: AuditRegistration; categoryId: string }>;
+  skipped: CheckResult[];
+}
 
 /**
- * Execute all audits registered in the config against the scan context.
- * Returns check results grouped into categories with weighted scores.
+ * Split a scan config into the audits that will actually execute and the
+ * page-type-skipped `na` stubs. Exported so the orchestrator can size the
+ * audits progress phase before running it.
  */
-export async function runAudits(
-  ctx: CheckContext,
-  config: ScanConfig,
-  onProgress?: ProgressFn,
-): Promise<AuditRunResult> {
+export function planAudits(ctx: CheckContext, config: ScanConfig): AuditPlan {
   // Collect the set of page types present in the scan context
   const scannedPageTypes = new Set(ctx.pages.map((p) => p.pageType));
 
   // Flatten all registrations for batched execution. Audits whose
   // applicablePageTypes don't match any scanned page type are not executed, but
   // recorded as `na` stubs so they remain visible in the report.
-  const all: Array<{ reg: AuditRegistration; categoryId: string }> = [];
-  const allChecks: CheckResult[] = [];
+  const runnable: AuditPlan['runnable'] = [];
+  const skipped: CheckResult[] = [];
   for (const cat of config.categories) {
     const regs = config.audits[cat.id] ?? [];
     for (const reg of regs) {
       const applicable = reg.meta.applicablePageTypes;
       if (applicable && applicable.length > 0) {
         if (!applicable.some((pt: PageType) => scannedPageTypes.has(pt))) {
-          allChecks.push(
+          skipped.push(
             stubCheck(
               reg.meta,
               TAG_SKIPPED_PAGE_TYPE,
@@ -66,36 +74,49 @@ export async function runAudits(
           continue;
         }
       }
-      all.push({ reg, categoryId: cat.id });
+      runnable.push({ reg, categoryId: cat.id });
     }
   }
+  return { runnable, skipped };
+}
 
-  const totalAudits = all.length;
-  let completed = 0;
+/**
+ * Execute all audits registered in the config against the scan context.
+ * Returns check results grouped into categories with weighted scores.
+ */
+export async function runAudits(
+  ctx: CheckContext,
+  config: ScanConfig,
+  onEvent?: (event: AuditProgressEvent) => void,
+): Promise<AuditRunResult> {
+  const { runnable, skipped } = planAudits(ctx, config);
+  const allChecks: CheckResult[] = [...skipped];
 
   // Run in batches of 20 (same concurrency as before)
   const batchSize = 20;
-  for (let i = 0; i < totalAudits; i += batchSize) {
-    const batch = all.slice(i, i + batchSize);
+  for (let i = 0; i < runnable.length; i += batchSize) {
+    const batch = runnable.slice(i, i + batchSize);
     const batchResults = await Promise.all(
       batch.map(async ({ reg }) => {
+        const label = `${reg.meta.id} ${reg.meta.title}`;
         try {
           const instance = reg.create();
           const result = await instance.audit(ctx);
-          return instance.toCheckResult(result);
+          const check = instance.toCheckResult(result);
+          onEvent?.({ type: 'unit:done', label });
+          return check;
         } catch (err) {
           // Don't silently drop a throwing audit — record it as an errored
           // `na` stub so it stays visible in the report and in coverage.
           logger.error({ err, auditId: reg.meta.id }, '[scanner] Audit error');
           const message = err instanceof Error ? err.message : String(err);
+          onEvent?.({ type: 'unit:fail', label, error: message });
           return stubCheck(reg.meta, TAG_SCAN_ERROR, `Audit failed to run: ${message}`);
         }
       }),
     );
 
     allChecks.push(...batchResults);
-    completed += batchResults.length;
-    onProgress?.(completed, totalAudits);
   }
 
   // Build category results
