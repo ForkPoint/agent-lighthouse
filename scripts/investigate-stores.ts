@@ -22,10 +22,12 @@ async function main() {
     console.log(`Auditing: ${store.name} (${store.url})`);
     console.log(`======================================================`);
     try {
-      const report = await runScan(store.url, (pct, phase) => {
-        if (pct % 20 === 0 || pct === 100) {
-          console.log(`  [${pct}%] ${phase}`);
-        }
+      const report = await runScan(store.url, {
+        onEvent: (event) => {
+          if (event.type === 'phase:done' || event.type === 'scan:done') {
+            console.log(`  [${Math.round(event.fraction * 100)}%] ${event.type === 'phase:done' ? event.phase : 'complete'}`);
+          }
+        },
       });
       reports[store.name] = report;
       console.log(`\n  ✓ COMPLETED: Score ${report.overallScore}/100 | Pages: ${report.pagesScanned.length} | Duration: ${(report.durationMs / 1000).toFixed(1)}s`);

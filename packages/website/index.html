@@ -459,8 +459,12 @@ import { generateHtmlReport, generateMarkdownSummary } from '@forkpoint/agent-li
 import { writeFileSync } from 'node:fs';
 
 // 1. Run live scan
-const report = await runScan('https://yourstore.com', (pct, phase) => {
-  console.log(`[${pct}%] ${phase}`);
+const report = await runScan('https://yourstore.com', {
+  onEvent: (event) => {
+    if (event.type === 'phase:done') {
+      console.log(`[${Math.round(event.fraction * 100)}%] ${event.phase} done`);
+    }
+  },
 });
 
 console.log(`Overall Readiness Score: ${report.overallScore}/100 (${report.scoreTier})`);

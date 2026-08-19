@@ -48,6 +48,7 @@ vi.mock('./audit-runner', async (importOriginal) => {
 });
 
 import { runScan } from './orchestrator';
+import type { ScanEvent } from './progress';
 import { defaultConfig } from './audit-config';
 import { runAudits } from './audit-runner';
 import type { AuditRunResult } from './audit-runner';
@@ -81,8 +82,6 @@ const CATEGORY_HTML = `<html><head>
 </head><body><h1>All</h1></body></html>`;
 
 const CONTENT_HTML = `<html><body><main><h1>Hello</h1><p>Some content here.</p></main></body></html>`;
-
-const noop = async () => {};
 
 beforeEach(() => {
   h.map.clear();
@@ -127,8 +126,8 @@ describe('runScan — discovery', () => {
     set('https://example.com/p/123', PRODUCT_HTML);
     // blog/post-1 is selected but returns 404 → dropped from the page set.
 
-    const onProgress = vi.fn(noop);
-    const report = await runScan(url, onProgress);
+    const onEvent = vi.fn();
+    const report = await runScan(url, { onEvent });
 
     expect(report.url).toBe(url);
     expect(report.domain).toBe('example.com');
@@ -153,7 +152,7 @@ describe('runScan — discovery', () => {
     });
     // No product override → field verification deliberately skipped.
     expect(report.productFields).toBeUndefined();
-    expect(onProgress).toHaveBeenCalledWith(100, 'Complete');
+    expect(onEvent).toHaveBeenCalledWith(expect.objectContaining({ type: 'scan:done', fraction: 1 }));
   });
 });
 
@@ -169,7 +168,7 @@ describe('runScan — credential hygiene', () => {
     set(credUrl, '<html><body><a href="https://example.com/about-page">A</a></body></html>');
     set('https://example.com/about-page', CONTENT_HTML);
 
-    const report = await runScan(credUrl, noop);
+    const report = await runScan(credUrl);
 
     expect(report.url).toBe('https://example.com/');
     expect(report.domain).toBe('example.com');
@@ -205,7 +204,7 @@ describe('runScan — page overrides', () => {
       { url: 'https://example.com/products/special/', pageType: 'content' }, // dup key → skipped
     ];
 
-    const report = await runScan(url, noop, overrides);
+    const report = await runScan(url, { pages: overrides });
 
     const special = report.pagesScanned.find((p) => p.url === 'https://example.com/products/special');
     expect(special).toBeDefined();
@@ -230,7 +229,7 @@ describe('runScan — homepage unreachable', () => {
     const url = 'https://example.com/';
     // No entries set → homepage and every root file resolve to 404.
 
-    const report = await runScan(url, noop);
+    const report = await runScan(url);
 
     expect(report.pagesScanned).toEqual([]);
     expect(report.productFields).toBeUndefined();
@@ -256,7 +255,7 @@ describe('runScan — no root files', () => {
     set('https://example.com/docs', CONTENT_HTML);
     set('https://example.com/about-page', CONTENT_HTML);
 
-    const report = await runScan(url, noop);
+    const report = await runScan(url);
 
     // homepage + docs + about-page.
     expect(report.pagesScanned).toHaveLength(3);
@@ -280,7 +279,7 @@ describe('runScan — sitemap-index fallback', () => {
     );
     set('https://example.com/news/x', CONTENT_HTML);
 
-    const report = await runScan(url, noop);
+    const report = await runScan(url);
 
     expect(report.pagesScanned.some((p) => p.url === 'https://example.com/news/x')).toBe(true);
     expect(report.pagesScanned.some((p) => p.url === url)).toBe(true);
@@ -316,7 +315,7 @@ describe('runScan — limited discovery slots', () => {
       { url: 'https://example.com/o4', pageType: 'content' },
     ];
 
-    const report = await runScan(url, noop, overrides);
+    const report = await runScan(url, { pages: overrides });
 
     // MAX_PAGES_PER_SCAN(6) - homepage(1) - overrides(4) = 1 discovered slot.
     const overrideUrls = overrides.map((o) => o.url);
@@ -375,7 +374,7 @@ describe('runScan — report assembly fallbacks', () => {
     };
     vi.mocked(runAudits).mockResolvedValueOnce(crafted);
 
-    const report = await runScan(url, noop);
+    const report = await runScan(url);
 
     // Both fails surface as recommendations (sorted via the priority fallback).
     expect(report.recommendations).toHaveLength(2);
@@ -386,3 +385,64 @@ describe('runScan — report assembly fallbacks', () => {
     expect(report.readinessVitals?.technical).toBe(0);
   });
 });
+
+// ---------------------------------------------------------------------------
+// Progress events (options-bag API)
+// ---------------------------------------------------------------------------
+
+describe('runScan — progress events', () => {
+  const url = 'https://example.com/';
+
+  beforeEach(() => {
+    set(
+      url,
+      `<html><body><nav>
+        <a href="/products/widget">W</a>
+      </nav></body></html>`,
+    );
+    set('https://example.com/products/widget', PRODUCT_HTML);
+  });
+
+  it('emits an ordered, monotonic event stream through a full scan', async () => {
+    const events: ScanEvent[] = [];
+    const report = await runScan(url, { onEvent: (e) => events.push(e) });
+
+    expect(events[0]).toMatchObject({ type: 'scan:start', url, fraction: 0 });
+    expect(events.at(-1)).toMatchObject({
+      type: 'scan:done',
+      score: report.overallScore,
+      fraction: 1,
+      durationMs: expect.any(Number),
+    });
+
+    // Phases run in order, each bracketed by phase:start / phase:done.
+    const phaseStarts = events.filter((e) => e.type === 'phase:start').map((e) => e.phase);
+    const phaseDones = events.filter((e) => e.type === 'phase:done').map((e) => e.phase);
+    const order = ['fetch-root', 'fetch-pages', 'analyze', 'audits', 'report'];
+    expect(phaseStarts).toEqual(order);
+    expect(phaseDones).toEqual(order);
+
+    // fetch-root emits one unit:done per fetched root file.
+    const rootUnits = events.filter((e) => e.type === 'unit:done' && e.phase === 'fetch-root');
+    const rootStart = events.find((e) => e.type === 'phase:start' && e.phase === 'fetch-root')!;
+    expect(rootStart).toMatchObject({ totalUnits: rootUnits.length });
+    expect(rootUnits.length).toBeGreaterThan(30);
+
+    // audits phase: every runnable audit settles into exactly one unit event.
+    const auditsStart = events.find((e) => e.type === 'phase:start' && e.phase === 'audits')!;
+    const auditUnits = events.filter(
+      (e) => (e.type === 'unit:done' || e.type === 'unit:fail') && e.phase === 'audits',
+    );
+    expect(auditsStart).toMatchObject({ totalUnits: auditUnits.length });
+    expect(auditUnits.length).toBeGreaterThan(100);
+
+    // fraction is monotonic non-decreasing, elapsedMs always present.
+    let prev = -1;
+    for (const e of events) {
+      expect(e.fraction).toBeGreaterThanOrEqual(prev);
+      expect(e.elapsedMs).toBeGreaterThanOrEqual(0);
+      prev = e.fraction;
+    }
+  });
+});
+

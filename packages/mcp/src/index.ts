@@ -5,7 +5,7 @@ import { buildReportView } from '@forkpoint/agent-lighthouse-report';
  * Programmatic helper functions powering the Agent Lighthouse MCP server and custom agent tools.
  */
 export async function auditWebsite(url: string) {
-  const report = await runScan(url, () => {});
+  const report = await runScan(url);
   const view = buildReportView(report);
   
   return {
