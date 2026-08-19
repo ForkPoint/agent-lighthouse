@@ -26,6 +26,10 @@ import { detectWafProtection } from './waf-detector';
 
 import type { FetchResult } from './fetcher';
 
+/**
+ * @deprecated Use `ScanOptions.onEvent` with structured `ScanEvent`s instead.
+ * The positional `(pct, phase)` form will be removed in the next major release.
+ */
 export type ProgressCallback = (pct: number, phase: string) => void | Promise<void>;
 
 export interface ScanOptions {
@@ -34,9 +38,17 @@ export interface ScanOptions {
   signal?: AbortSignal;
 }
 
-// Map structured scan events onto the legacy (pct, phase-label) callback so
-// existing positional callers (e.g. the CLI) keep working unchanged.
+// Map structured scan events onto the deprecated (pct, phase-label) callback so
+// existing positional callers keep working until the next major release.
+let legacyDeprecationWarned = false;
+
 function legacyProgressAdapter(onProgress: ProgressCallback): (event: ScanEvent) => void {
+  if (!legacyDeprecationWarned) {
+    legacyDeprecationWarned = true;
+    logger.warn(
+      'runScan(url, onProgress, ...) is deprecated; use runScan(url, { onEvent }) with structured ScanEvents. Removal in next major.',
+    );
+  }
   const phaseLabels: Record<PhaseId, string> = {
     'fetch-root': 'Fetching root files',
     'fetch-pages': 'Fetching pages',
@@ -205,6 +217,10 @@ function discoverPages(
 // ── Main Scan ──────────────────────────────────────────────────
 
 export function runScan(url: string, options?: ScanOptions): Promise<ScanReport>;
+/**
+ * @deprecated Positional progress callback form. Use `runScan(url, { onEvent, pages, signal })`.
+ * Will be removed in the next major release.
+ */
 export function runScan(
   url: string,
   onProgress: ProgressCallback,

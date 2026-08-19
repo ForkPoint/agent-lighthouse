@@ -448,10 +448,17 @@ describe('runScan — progress events', () => {
   });
 
   it('maps events onto the legacy (pct, phase) callback, monotonic ending at 100', async () => {
+    const { logger } = await import('./logger.js');
+    const prevLevel = logger.level;
+    logger.level = 'silent'; // suppress the expected deprecation warning
     const calls: Array<[number, string]> = [];
-    await runScan(url, (pct, phase) => {
-      calls.push([pct, phase]);
-    });
+    try {
+      await runScan(url, (pct, phase) => {
+        calls.push([pct, phase]);
+      });
+    } finally {
+      logger.level = prevLevel;
+    }
 
     expect(calls.length).toBeGreaterThan(0);
     expect(calls[0]).toEqual([0, 'Fetching root files']);
