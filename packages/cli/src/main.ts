@@ -2,8 +2,11 @@ import {
   runScan,
   loadConfigFile,
   getPreset,
+  logger,
   type PresetName,
+  type ScanEvent,
 } from "@forkpoint/agent-lighthouse-core";
+import { createProgressRenderer } from "./progress-renderer";
 import {
   buildReportView,
   generateHtmlReport,
@@ -51,6 +54,10 @@ Options:
   --min-score <number>         Minimum score (0-100) required to pass CI assertions
   --assert-category <id:min>   Per-category assertions (e.g. --assert-category structured-data:90)
   --silent                     Suppress progress output
+  --progress-json              Stream scan progress as NDJSON (one ScanEvent per line) to stderr
+                               and suppress the interactive progress display. Stderr is used so
+                               NDJSON never interleaves with the terminal report on stdout;
+                               scanner log output is silenced to keep the stream clean.
 
 Examples:
   npx @forkpoint/agent-lighthouse https://yourstore.com
@@ -117,6 +124,9 @@ async function audit(targetUrl?: string) {
   }
 
   const isSilent = args.includes("--silent");
+  const progressJson = args.includes("--progress-json");
+  // Keep the NDJSON stream clean: scanner logs also go to stderr.
+  if (progressJson) logger.level = "silent";
   const shouldView = args.includes("-v") || args.includes("--view");
   const debugAudit = getArgValue("", "--debug-audit");
 
@@ -145,17 +155,19 @@ async function audit(targetUrl?: string) {
     );
   }
 
-  const report = await runScan(url, (pct, phase) => {
-    if (!isSilent) {
-      process.stdout.write(
-        `\r  \x1b[36m[${pct.toString().padStart(3)}%]\x1b[0m ${phase}`,
-      );
-    }
-  });
+  // Progress: --progress-json streams raw ScanEvents as NDJSON to stderr (kept
+  // off stdout so it can't interleave with the terminal report). Otherwise the
+  // interactive renderer animates on a TTY and prints plain phase summaries in
+  // CI (non-TTY). --silent suppresses all progress output as before.
+  const onEvent = progressJson
+    ? (event: ScanEvent) => {
+        process.stderr.write(JSON.stringify(event) + "\n");
+      }
+    : isSilent
+      ? undefined
+      : createProgressRenderer({ tty: Boolean(process.stdout.isTTY) });
 
-  if (!isSilent) {
-    process.stdout.write("\r" + " ".repeat(80) + "\r");
-  }
+  const report = await runScan(url, { onEvent });
 
   const view = buildReportView(report);
 

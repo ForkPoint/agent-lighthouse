@@ -6,6 +6,7 @@ import {
 } from '@modelcontextprotocol/sdk/types.js';
 import { runScan } from '@forkpoint/agent-lighthouse-core';
 import { buildReportView } from '@forkpoint/agent-lighthouse-report';
+import { createProgressNotifier } from './progress';
 
 declare const __PACKAGE_VERSION__: string;
 
@@ -54,7 +55,16 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       throw new Error('Missing target URL');
     }
 
-    const report = await runScan(url);
+    // Forward scan progress as notifications/progress when the client
+    // supplied a progressToken; otherwise scan silently as before.
+    const onEvent = createProgressNotifier(
+      request.params._meta?.progressToken,
+      (params) => {
+        void server.notification({ method: 'notifications/progress', params });
+      },
+    );
+
+    const report = await runScan(url, { onEvent });
     const view = buildReportView(report);
 
     const summary = {
