@@ -1,6 +1,6 @@
 {
   "name": "@forkpoint/agent-lighthouse-mcp",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "Model Context Protocol (MCP) server that lets Claude, Cursor, and agentic IDEs audit website AI-agent readiness with Agent Lighthouse",
   "author": "ForkPoint",
   "license": "Apache-2.0",
