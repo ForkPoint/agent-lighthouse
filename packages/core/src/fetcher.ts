@@ -18,6 +18,8 @@ export interface FetchOptions {
   method?: 'GET' | 'POST' | 'OPTIONS' | 'HEAD';
   body?: string;
   contentType?: string;
+  /** Override the User-Agent header (e.g. to probe a site as a specific AI bot). */
+  userAgent?: string;
   /** External abort (e.g. the per-scan deadline). Combined with the per-request timeout. */
   signal?: AbortSignal;
 }
@@ -104,6 +106,7 @@ export function createFetcher() {
       method = 'GET',
       body: requestBody,
       contentType,
+      userAgent,
       signal: externalSignal,
     } = options;
 
@@ -123,7 +126,7 @@ export function createFetcher() {
 
     try {
       const reqHeaders: Record<string, string> = {
-        'User-Agent': SCANNER_USER_AGENT,
+        'User-Agent': userAgent ?? SCANNER_USER_AGENT,
         Accept: acceptHeader,
       };
 
