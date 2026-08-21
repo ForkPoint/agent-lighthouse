@@ -1,5 +1,5 @@
 /**
- * Standards-derived helpers (axe `commons/standards`): functions that read the
+ * Standards-derived helpers (`commons/standards`): functions that read the
  * pure data tables in `standards.ts` — element specs, global ARIA attributes,
  * implicit HTML role mapping, content-type lookups.
  */

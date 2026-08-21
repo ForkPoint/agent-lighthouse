@@ -1,6 +1,5 @@
 /**
- * Accessibility audits, backed by our vendored a11y rule engine (ported from
- * axe-core v4.12.1; see ./engine).
+ * Accessibility audits, backed by our a11y rule engine (see ./engine).
  *
  * Each audit wraps one or more a11y rules (run over jsdom in the
  * orchestrator and cached on each PageContext as `a11yResults`). We only adopt
@@ -109,7 +108,7 @@ const base = {
 };
 
 // ── 7.4 Landmarks are uniquely identifiable ─────────────────────
-// Replaces the former hand-rolled MultipleNavAudit. axe `landmark-unique`
+// Replaces the former hand-rolled MultipleNavAudit. The `landmark-unique` rule
 // covers all landmark types (not just <nav>) by role + accessible-name.
 export const A11yLandmarkUniqueAudit = defineA11yAudit({
   rules: ['landmark-unique'],

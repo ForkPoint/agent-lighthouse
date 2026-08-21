@@ -1,8 +1,8 @@
 /**
- * Vendored axe-core check `evaluate` functions for the 26 supported rules,
- * adapted to operate on real DOM (`node`) plus the `VNode` wrapper
- * (`virtualNode`). Each returns axe's tri-state EXACTLY: `true` = pass,
- * `false` = fail, `undefined` = incomplete / needs review.
+ * Check `evaluate` functions for the 26 supported rules, operating on real DOM
+ * (`node`) plus the `VNode` wrapper (`virtualNode`). Each returns a tri-state
+ * EXACTLY: `true` = pass, `false` = fail, `undefined` = incomplete / needs
+ * review.
  */
 import { ariaAttrs, ariaRoles } from './standards';
 import {

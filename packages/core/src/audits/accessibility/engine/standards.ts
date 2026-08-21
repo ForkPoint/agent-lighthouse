@@ -1,5 +1,5 @@
 /**
- * Vendored axe-core v4.12.1 standards data (pure data tables, copied verbatim).
+ * Standards data: pure data tables, kept verbatim.
  * These describe ARIA roles/attributes and the HTML element spec used by the
  * accessibility checks. Loose typing (Record<string, any>) is intentional.
  */
@@ -1810,7 +1810,7 @@ const htmlElms: Record<string, any> = {
       },
       default: {
         // Note: allow role presentation and none on image with no
-        // alt as a way to prevent axe from flagging the image as
+        // alt as a way to prevent the image from being flagged as
         // needing an alt
         allowedRoles: ['presentation', 'none'],
         // Note: spec change (do not count as phrasing), because browsers
@@ -2403,5 +2403,5 @@ const htmlElms: Record<string, any> = {
 export { htmlElms };
 
 
-// axe merges dpub + graphics roles into the ariaRoles table.
+// dpub + graphics roles are merged into the ariaRoles table.
 export const ariaRoles: Record<string, any> = { ...ariaRolesBase, ...dpubRoles, ...graphicsRoles };

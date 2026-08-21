@@ -1,5 +1,5 @@
 /**
- * Vendored axe-core `commons/aria` helpers, adapted to operate on real jsdom
+ * ARIA helpers (`commons/aria`), operating on real jsdom
  * DOM via the `VNode` wrapper. ARIA value lookups read attributes only (static
  * HTML has no AOM/ElementInternals); shadow DOM is ignored.
  */
@@ -370,7 +370,7 @@ function cacheIdRefs(node: AnyNode, idRefs: Map<string, AnyNode[]>, refAttrs: st
   }
 }
 
-// Per-document cache of id-ref maps (replaces axe's `cache`).
+// Per-document cache of id-ref maps.
 const idRefsByRoot = new WeakMap<object, Map<string, AnyNode[]>>();
 
 export function getAccessibleRefs(node: VNode | AnyNode): AnyNode[] {

@@ -1,16 +1,15 @@
 /**
  * Accessibility rule runner.
  *
- * Runs a vendored subset of axe-core's accessibility checks over a page's static
- * HTML using jsdom (no browser). We adopt only the rules that describe how an AI
- * agent reads/acts on a page via the accessibility tree — programmatic roles,
- * names, relationships, structure — NOT human-perception rules (color contrast,
- * focus visibility, target size), which a non-human consumer doesn't care about.
+ * Runs a subset of the accessibility rule set over a page's static HTML using
+ * jsdom (no browser). We adopt only the rules that describe how an AI agent
+ * reads/acts on a page via the accessibility tree — programmatic roles, names,
+ * relationships, structure — NOT human-perception rules (color contrast, focus
+ * visibility, target size), which a non-human consumer doesn't care about.
  *
- * Previously this injected the full ~1.2MB axe-core runtime into each jsdom
- * window. The check/commons/standards logic for the 26 supported rules is now
- * vendored in `./engine` (ported from axe-core v4.12.1) and runs directly against
- * the parsed DOM, so the `axe-core` npm dependency is no longer needed.
+ * The check/commons/standards logic for the 26 supported rules lives in
+ * `./engine` and runs directly against the parsed DOM. Nothing is injected into
+ * the jsdom window, so there is no heavyweight runtime to load per page.
  */
 import { JSDOM } from 'jsdom';
 import { logger } from '../../logger';

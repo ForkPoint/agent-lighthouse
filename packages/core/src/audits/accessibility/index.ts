@@ -1,12 +1,12 @@
 // Hand-rolled (cheerio) accessibility audits — agent-readiness checks that have
-// no direct axe-core rule equivalent.
+// no equivalent rule in the a11y rule engine.
 export { SkipNavAudit } from './skip-nav';
 export { AriaLandmarksAudit } from './aria-landmarks';
 export { NavAriaLabelAudit } from './nav-aria-label';
 export { FormErrorMessagesAudit } from './form-error-messages';
 
 // Engine-backed audits (accessibility-tree semantics that AI agents read),
-// powered by the vendored a11y rule engine (ported from axe-core). The
+// powered by the a11y rule engine. The
 // name/label/landmark audits (7.4/7.5/7.7/7.9) replace the former hand-rolled
 // MultipleNav/FormLabels/AccessibleNames/IconLabels/ModalDialog audits.
 export {

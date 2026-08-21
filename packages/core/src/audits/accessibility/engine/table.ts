@@ -1,11 +1,11 @@
 /**
- * Vendored axe-core `commons/table` helpers, adapted to real jsdom DOM. These
- * operate directly on real table elements/cells (as axe's table checks do).
+ * Table helpers (`commons/table`), operating on real jsdom DOM. These work
+ * directly on real table elements/cells, as the table checks do.
  *
- * `isDataTable` keeps axe's full heuristic. The geometry-based branches
- * (offsetWidth/clientWidth borders, viewport width) degrade to their jsdom
- * (zero-layout) values exactly as the original axe-in-jsdom oracle saw them, so
- * data/layout classification stays in parity for our fixtures.
+ * `isDataTable` implements the full data-vs-layout heuristic. The
+ * geometry-based branches (offsetWidth/clientWidth borders, viewport width)
+ * degrade to their jsdom (zero-layout) values, so data/layout classification
+ * stays stable for our fixtures.
  */
 import { VNode, toVNode, escapeSelector, memoize, findUp, type AnyNode } from './core';
 import { getExplicitRole, getRoleType } from './aria';

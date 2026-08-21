@@ -1,5 +1,5 @@
 /**
- * The 26 supported axe rules and the rule runner.
+ * The 26 supported accessibility rules and the rule runner.
  *
  * Per rule we: select candidate elements, filter by the rule `matches` predicate
  * and (unless `excludeHidden:false`) by screen-reader visibility, evaluate the
@@ -171,7 +171,7 @@ interface RuleDef {
   all: string[];
   any: string[];
   none: string[];
-  /** axe rules with `reviewOnFail:true` report violations as "incomplete". */
+  /** Rules with `reviewOnFail:true` report violations as "incomplete". */
   reviewOnFail?: boolean;
 }
 
@@ -354,7 +354,7 @@ export function runRule(rule: RuleDef, doc: Document): RuleResult {
     const status = combine(allStatus(allRes), anyStatus(anyRes), noneStatus(noneRes));
 
     if (status === 'fail' && rule.reviewOnFail) {
-      // axe converts these violations to "needs review".
+      // These violations are converted to "needs review".
       sawIncomplete = true;
     } else if (status === 'fail') {
       sawFail = true;

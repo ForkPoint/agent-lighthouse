@@ -1,9 +1,9 @@
 /**
- * Core adaptation layer for the vendored axe-core accessibility checks.
+ * Core adaptation layer for the accessibility checks.
  *
- * axe-core operates on its own `VirtualNode` abstraction. We scan static HTML
- * with jsdom and have real DOM nodes, so this module provides a thin `VNode`
- * wrapper over a real DOM `Node` that exposes the same surface axe's check/commons
+ * The check/commons code operates on a `VirtualNode` abstraction. We scan
+ * static HTML with jsdom and have real DOM nodes, so this module provides a
+ * thin `VNode` wrapper over a real DOM `Node` that exposes the surface that
  * code expects (`.props`, `.attr()`, `.hasAttr()`, `.attrNames`, `.children`,
  * `.parent`, `.actualNode`). Wrappers are cached per DOM node (WeakMap) so node
  * identity is stable — required by the accessible-name loop guard and by the
@@ -37,10 +37,10 @@ const VALID_INPUT_TYPES = [
 
 const vnodeCache = new WeakMap<AnyNode, VNode>();
 
-/** Wrap a real DOM node, exposing the axe VirtualNode surface. */
+/** Wrap a real DOM node, exposing the VirtualNode surface. */
 export class VNode {
   actualNode: AnyNode;
-  // axe sets these caches on the vNode; we keep them for parity behaviour.
+  // These caches live on the vNode; we keep them for parity behaviour.
   _isDisabled?: boolean;
   _inDisabledFieldset?: boolean;
   _rowHeaders?: unknown;
@@ -143,12 +143,12 @@ export function toVNode(node: AnyNode | VNode): VNode {
   return v;
 }
 
-/** axe's getNodeFromTree — here just returns the wrapping VNode. */
+/** Returns the wrapping VNode for a DOM node. */
 export function getNodeFromTree(node: AnyNode | VNode): VNode {
   return toVNode(node);
 }
 
-/** axe's nodeLookup — accepts a DOM node or VNode, returns both. */
+/** Accepts a DOM node or VNode, returns both the VNode and the DOM node. */
 export function nodeLookup(node: AnyNode | VNode): { vNode: VNode; domNode: AnyNode } {
   const vNode = toVNode(node);
   return { vNode, domNode: vNode.actualNode };
@@ -180,7 +180,7 @@ export function uniqueArray<T>(arr1: T[], arr2: T[]): T[] {
 
 /* eslint-disable */
 // oxlint-disable
-/** CSS.escape-style identifier escaping (from axe-core / mathiasbynens). */
+/** CSS.escape-style identifier escaping (from mathiasbynens). */
 export function escapeSelector(value: string): string {
   const string = String(value);
   const length = string.length;
@@ -225,15 +225,15 @@ export function escapeSelector(value: string): string {
 /* eslint-enable */
 
 /**
- * memoize: axe memoizes for performance. Correctness never depends on it (the
- * accessible-name loop guard and table caches are handled explicitly), so this
- * is a passthrough.
+ * memoize: memoization is a performance optimisation only. Correctness never
+ * depends on it (the accessible-name loop guard and table caches are handled
+ * explicitly), so this is a passthrough.
  */
 export function memoize<T extends (...args: never[]) => unknown>(fn: T): T {
   return fn;
 }
 
-/** axe's getRootNode adapted to real DOM. */
+/** getRootNode adapted to real DOM. */
 export function getRootNode(node: AnyNode): Document | DocumentFragment {
   const n = node as unknown as { getRootNode?: () => Node; ownerDocument?: Document };
   let doc = (n.getRootNode && n.getRootNode()) || (n.ownerDocument as unknown as Node);
@@ -361,12 +361,12 @@ function matchesSelector(vNode: VNode, selector: string): boolean {
   }
 }
 
-/** axe.commons.matches: match a VNode against a definition (string/array/object). */
+/** Match a VNode against a definition (string/array/object). */
 export function matches(vNode: VNode, definition: Matcher): boolean {
   return fromDefinition(vNode, definition);
 }
 
-/** axe.utils.closest over VNodes. */
+/** closest() over VNodes. */
 export function closest(vNode: VNode | null, selector: string): VNode | null {
   while (vNode) {
     if (matches(vNode, selector)) return vNode;
@@ -378,7 +378,7 @@ export function closest(vNode: VNode | null, selector: string): VNode | null {
   return null;
 }
 
-/** axe.commons.dom.findUp adapted: walk up the real DOM via Element#closest. */
+/** findUp adapted: walk up the real DOM via Element#closest. */
 export function findUp(node: AnyNode | VNode, target: string): Element | null {
   const dom = (node instanceof VNode ? node.actualNode : node) as unknown as {
     closest?: (s: string) => Element | null;

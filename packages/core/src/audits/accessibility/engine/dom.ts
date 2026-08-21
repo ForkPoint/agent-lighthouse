@@ -1,14 +1,14 @@
 /**
- * Vendored axe-core `commons/dom` helpers, adapted to real jsdom DOM.
+ * DOM helpers (`commons/dom`), operating on real jsdom DOM.
  *
- * jsdom has no layout engine (no element geometry), so the geometry-dependent
- * visibility heuristics axe uses (overflow/scroll/clip-by-rect/offscreen) cannot
- * run. We keep the layout-independent visibility model — `display:none`,
+ * jsdom has no layout engine (no element geometry), so geometry-dependent
+ * visibility heuristics (overflow/scroll/clip-by-rect/offscreen) cannot run. We
+ * keep the layout-independent visibility model — `display:none`,
  * `visibility:hidden|collapse`, `opacity:0`, the `hidden` attribute,
  * `aria-hidden`, `inert`, natively-hidden tags, and closed `<details>` — which
- * is exactly what `window.getComputedStyle` reports identically for both this
- * port and the original axe-in-jsdom oracle. Geometry-only hiding is treated as
- * "not hidden" (documented divergence; never affects ARIA/table/parsing rules).
+ * is exactly what `window.getComputedStyle` reports reliably under jsdom.
+ * Geometry-only hiding is treated as "not hidden" (documented divergence; never
+ * affects ARIA/table/parsing rules).
  */
 import {
   VNode,

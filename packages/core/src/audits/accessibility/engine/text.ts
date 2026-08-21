@@ -1,6 +1,6 @@
 /**
- * Vendored axe-core `commons/text` (accessible-name computation) and the
- * autocomplete validator, adapted to real jsdom DOM via `VNode`.
+ * Text helpers (`commons/text`): accessible-name computation and the
+ * autocomplete validator, operating on real jsdom DOM via `VNode`.
  *
  * Icon-ligature detection (canvas-based) is dropped — our checks never request
  * it. Unicode/emoji helpers are not needed by the ported rules.
