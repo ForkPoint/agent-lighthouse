@@ -62,6 +62,14 @@ export interface AuditGuidance {
 
 export type ScoreDisplayMode = 'binary' | 'ternary' | 'informative';
 
+/** Public sunset notice for a deprecated audit (see docs/evidence/NOT-A-FACTOR.md). */
+export interface DeprecationNotice {
+  /** One sentence: why this signal is not a factor. */
+  notice: string;
+  /** Public rationale URL (NOT-A-FACTOR.md anchor). */
+  link: string;
+}
+
 export interface AuditMeta {
   id: string;
   category: string;
@@ -73,6 +81,8 @@ export interface AuditMeta {
   applicablePageTypes?: PageType[];
   defaultPriority: CheckPriority;
   guidance?: AuditGuidance;
+  /** Present when the audit is sunset: shown as a notice, excluded from scores. */
+  deprecated?: DeprecationNotice;
 }
 
 export interface AuditResult {
@@ -128,6 +138,8 @@ export interface CheckResult {
     [key: string]: unknown;
   };
   tags?: string[];
+  /** Present when the audit is sunset: shown as a notice, excluded from scores. */
+  deprecated?: DeprecationNotice;
 }
 
 // ── Category Results ───────────────────────────────────────────

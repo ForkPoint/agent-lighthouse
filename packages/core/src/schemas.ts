@@ -36,6 +36,11 @@ export const AuditGuidanceSchema = z.object({
 
 export const ScoreDisplayModeSchema = z.enum(['binary', 'ternary', 'informative']);
 
+export const DeprecationNoticeSchema = z.object({
+  notice: z.string().min(1).max(500),
+  link: z.string().url(),
+});
+
 export const AuditMetaSchema = z.object({
   id: z.string(),
   category: z.string(),
@@ -43,10 +48,12 @@ export const AuditMetaSchema = z.object({
   failureTitle: z.string(),
   description: z.string(),
   scoreDisplayMode: ScoreDisplayModeSchema,
-  weight: z.number().positive(),
+  // Deprecated audits carry weight 0 (excluded from scoring).
+  weight: z.number().nonnegative(),
   applicablePageTypes: z.array(z.string()).optional(),
   defaultPriority: CheckPrioritySchema,
   guidance: AuditGuidanceSchema.optional(),
+  deprecated: DeprecationNoticeSchema.optional(),
 });
 
 export const CheckResultSchema = z.object({
@@ -72,4 +79,5 @@ export const CheckResultSchema = z.object({
     })
     .optional(),
   tags: z.array(z.string().max(50)).max(20).optional(),
+  deprecated: DeprecationNoticeSchema.optional(),
 });
