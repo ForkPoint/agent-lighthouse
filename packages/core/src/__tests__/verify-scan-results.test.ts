@@ -129,12 +129,6 @@ describe('Verify scan results against real sites', () => {
       expect(result!.status).toBe('fail');
     });
 
-    it('1.18: example.com robots.txt check matches reality', () => {
-      const result = allResults.get('1.18');
-      expect(result).toBeDefined();
-      expect(['pass', 'warn', 'fail', 'na']).toContain(result!.status);
-    });
-
     // --- Meta Tags (IDs: '4.x') ---
 
     it('4.1: example.com meta description check matches reality', () => {

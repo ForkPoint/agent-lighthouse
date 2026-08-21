@@ -4,16 +4,17 @@ audit_id: "8.16"
 category: technical-readiness
 source_file: packages/core/src/audits/technical-readiness/lcp-not-lazy.ts
 slug: lcp-not-lazy
+status: sunset
 review_verdict: fix
 severity: high
 evidence_grade: D
-disposition: "keep — fix required"
+disposition: "removed — sunset 2026-08-21 (v2 taxonomy grading pass)"
 reviewed: 2026-08-21
 ---
 
 # lcp-not-lazy (`8.16`)
 
-> technical-readiness · source `lcp-not-lazy.ts` · review verdict **fix** · evidence grade **D** · disposition: **keep — fix required**
+> technical-readiness · source `lcp-not-lazy.ts` · review verdict **fix** · evidence grade **D** · disposition: **removed — sunset 2026-08-21 (v2 taxonomy grading pass)**
 
 ## What it checks
 

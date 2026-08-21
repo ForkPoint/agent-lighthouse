@@ -15,8 +15,6 @@ export { NoNofollowAudit } from './no-nofollow';
 export { InternalLinkingAudit } from './internal-linking';
 export { NoRedirectChainsAudit } from './no-redirect-chains';
 export { CanonicalLinksAudit } from './canonical-links';
-export { MobileFriendlyAudit } from './mobile-friendly';
 export { FastPageLoadAudit } from './fast-page-load';
 export { NoBrokenLinksAudit } from './no-broken-links';
 export { NoOrphanPagesAudit } from './no-orphan-pages';
-export { CommerceLinksAudit } from './commerce-links';

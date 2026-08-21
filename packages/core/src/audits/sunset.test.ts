@@ -1,12 +1,14 @@
 import { describe, it, expect } from 'vitest';
 import { defaultConfig } from '../audit-config';
 
-// The 18 v1 audits removed in this major release. Rationale and per-audit
-// evidence: docs/evidence/sunset/NOT-A-FACTOR.md. Consumers migrate via
-// packages/core/migration-map.json.
+// The 26 v1 audits removed in this major release: the first 18 in the v1.0.0
+// sunset wave, plus the 8 added by the 2026-08-21 grading pass. Rationale and
+// per-audit evidence: docs/evidence/sunset/NOT-A-FACTOR.md. Consumers migrate
+// via packages/core/migration-map.json.
 const REMOVED_IDS = [
   '7.1', '5.11', '5.17', '5.4', '5.25', '1.21', '10.12', '4.14', '4.12',
   '4.17', '6.12', '6.16', '3.16', '3.10', '8.21', '8.6', '8.17', '8.5',
+  '1.18', '1.23', '7.22', '8.14', '8.15', '8.16', '8.19', '8.20',
 ];
 
 describe('sunset audits (NOT-A-FACTOR) are gone', () => {
@@ -16,7 +18,7 @@ describe('sunset audits (NOT-A-FACTOR) are gone', () => {
 
   // Tombstone: these ids must never come back. Re-registering one would
   // silently resurrect a check the evidence review proved has no consumer.
-  it('registers none of the 18 removed audit ids', () => {
+  it('registers none of the 26 removed audit ids', () => {
     const resurrected = allMetas
       .map((m) => m.id)
       .filter((id) => REMOVED_IDS.includes(id));

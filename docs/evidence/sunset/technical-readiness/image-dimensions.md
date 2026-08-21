@@ -4,16 +4,17 @@ audit_id: "8.15"
 category: technical-readiness
 source_file: packages/core/src/audits/technical-readiness/image-dimensions.ts
 slug: image-dimensions
+status: sunset
 review_verdict: fix
 severity: medium
 evidence_grade: D
-disposition: "keep — fix required"
+disposition: "removed — sunset 2026-08-21 (v2 taxonomy grading pass)"
 reviewed: 2026-08-21
 ---
 
 # image-dimensions (`8.15`)
 
-> technical-readiness · source `image-dimensions.ts` · review verdict **fix** · evidence grade **D** · disposition: **keep — fix required**
+> technical-readiness · source `image-dimensions.ts` · review verdict **fix** · evidence grade **D** · disposition: **removed — sunset 2026-08-21 (v2 taxonomy grading pass)**
 
 ## What it checks
 

@@ -6,10 +6,12 @@ const map = JSON.parse(
   readFileSync(join(__dirname, '..', 'migration-map.json'), 'utf8'),
 ) as Record<string, { slug: string; status: string; reason: string; link: string }>;
 
-// The 18 v1 audits removed in this major release.
+// The 26 v1 audits removed in this major release (18 in the v1.0.0 sunset
+// wave, 8 added by the 2026-08-21 grading pass).
 const REMOVED_IDS = [
   '7.1', '5.11', '5.17', '5.4', '5.25', '1.21', '10.12', '4.14', '4.12',
   '4.17', '6.12', '6.16', '3.16', '3.10', '8.21', '8.6', '8.17', '8.5',
+  '1.18', '1.23', '7.22', '8.14', '8.15', '8.16', '8.19', '8.20',
 ];
 
 describe('migration-map.json', () => {

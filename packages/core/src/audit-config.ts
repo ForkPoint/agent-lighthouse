@@ -55,11 +55,9 @@ import {
   InternalLinkingAudit,
   NoRedirectChainsAudit,
   CanonicalLinksAudit,
-  MobileFriendlyAudit,
   FastPageLoadAudit,
   NoBrokenLinksAudit,
   NoOrphanPagesAudit,
-  CommerceLinksAudit,
 } from './audits/content-discoverability';
 
 // Crawler Permissions (28)
@@ -207,7 +205,6 @@ import {
   A11yFrameTitleAudit,
   A11yMetaRefreshAudit,
   A11yTabindexAudit,
-  A11yDeprecatedElementsAudit,
   A11yPresentationConflictAudit,
 } from './audits/accessibility';
 
@@ -224,12 +221,7 @@ import {
   CacheHeadersAudit,
   FastResponseTimeAudit,
   ServerRenderedAudit,
-  NoRenderBlockingAudit,
-  ImageDimensionsAudit,
-  LcpNotLazyAudit,
   NoBrokenAiEndpointsAudit,
-  PrivacyPolicyAudit,
-  TermsOfServiceAudit,
 } from './audits/technical-readiness';
 
 // Answer Engine (11)
@@ -299,11 +291,9 @@ export const defaultConfig: ScanConfig = {
       reg(InternalLinkingAudit),
       reg(NoRedirectChainsAudit),
       reg(CanonicalLinksAudit),
-      reg(MobileFriendlyAudit),
       reg(FastPageLoadAudit),
       reg(NoBrokenLinksAudit),
       reg(NoOrphanPagesAudit),
-      reg(CommerceLinksAudit),
     ],
     'crawler-permissions': [
       reg(GptbotAudit),
@@ -439,7 +429,6 @@ export const defaultConfig: ScanConfig = {
       reg(A11yFrameTitleAudit),
       reg(A11yMetaRefreshAudit),
       reg(A11yTabindexAudit),
-      reg(A11yDeprecatedElementsAudit),
       reg(A11yPresentationConflictAudit),
     ],
     'technical-readiness': [
@@ -454,12 +443,7 @@ export const defaultConfig: ScanConfig = {
       reg(CacheHeadersAudit),
       reg(FastResponseTimeAudit),
       reg(ServerRenderedAudit),
-      reg(NoRenderBlockingAudit),
-      reg(ImageDimensionsAudit),
-      reg(LcpNotLazyAudit),
       reg(NoBrokenAiEndpointsAudit),
-      reg(PrivacyPolicyAudit),
-      reg(TermsOfServiceAudit),
     ],
     'answer-engine': [
       reg(FaqSectionsAudit),

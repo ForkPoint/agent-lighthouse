@@ -466,27 +466,8 @@ export const A11yTabindexAudit = defineA11yAudit({
   },
 });
 
-// ── 7.22 No deprecated presentational elements ──────────────────
-export const A11yDeprecatedElementsAudit = defineA11yAudit({
-  rules: ['marquee', 'blink'],
-  meta: {
-    ...base,
-    id: '7.22',
-    title: 'No deprecated presentational elements',
-    failureTitle: 'Deprecated <marquee>/<blink> elements',
-    description:
-      'Deprecated elements like <marquee> and <blink> have undefined semantics and unstable text content for parsers.',
-    defaultPriority: 'low',
-    guidance: {
-      impact:
-        'Animated/deprecated elements produce unstable or meaningless content for an agent parsing the DOM.',
-      fix: 'Remove <marquee>/<blink>; use semantic HTML + CSS if motion is needed.',
-      code: '<!-- Remove --> <marquee>...</marquee>',
-      effort: 'easy',
-      tags: ['deprecated', 'agent'],
-    },
-  },
-});
+// 7.22 (deprecated <marquee>/<blink> elements) was sunset — grade D, no
+// consumer reads it. See docs/evidence/sunset/NOT-A-FACTOR.md#accessibilitymarquee.
 
 // ── 7.23 No presentation-role conflicts ─────────────────────────
 export const A11yPresentationConflictAudit = defineA11yAudit({

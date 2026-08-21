@@ -4,16 +4,17 @@ audit_id: "1.18"
 category: content-discoverability
 source_file: packages/core/src/audits/content-discoverability/mobile-friendly.ts
 slug: mobile-friendly
+status: sunset
 review_verdict: delete
 severity: medium
 evidence_grade: unrated
-disposition: "proposed: redeem as informative (pending triage)"
+disposition: "removed — sunset 2026-08-21 (v2 taxonomy grading pass)"
 reviewed: 2026-08-21
 ---
 
 # mobile-friendly (`1.18`)
 
-> content-discoverability · source `mobile-friendly.ts` · review verdict **delete** · evidence grade **unrated** · disposition: **proposed: redeem as informative (pending triage)**
+> content-discoverability · source `mobile-friendly.ts` · review verdict **delete** · evidence grade **unrated** · disposition: **removed — sunset 2026-08-21 (v2 taxonomy grading pass)**
 
 ## What it checks
 

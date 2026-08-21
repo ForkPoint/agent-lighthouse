@@ -522,7 +522,6 @@ function calculateReadinessVitals(
       '10.6',
       '10.7',
       '10.8',
-      '1.23',
     ]),
     botAccessibility: getCategoryScoreByPrefix('crawler-permissions'),
     technical: getCategoryScoreByPrefix('technical-readiness'),

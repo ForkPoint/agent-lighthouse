@@ -4,16 +4,17 @@ audit_id: "8.14"
 category: technical-readiness
 source_file: packages/core/src/audits/technical-readiness/no-render-blocking.ts
 slug: no-render-blocking
+status: sunset
 review_verdict: fix
 severity: medium
 evidence_grade: D
-disposition: "keep — fix required"
+disposition: "removed — sunset 2026-08-21 (v2 taxonomy grading pass)"
 reviewed: 2026-08-21
 ---
 
 # no-render-blocking (`8.14`)
 
-> technical-readiness · source `no-render-blocking.ts` · review verdict **fix** · evidence grade **D** · disposition: **keep — fix required**
+> technical-readiness · source `no-render-blocking.ts` · review verdict **fix** · evidence grade **D** · disposition: **removed — sunset 2026-08-21 (v2 taxonomy grading pass)**
 
 ## What it checks
 

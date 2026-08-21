@@ -106,5 +106,53 @@
     "status": "removed",
     "reason": "not-a-factor",
     "link": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/sunset/NOT-A-FACTOR.md#technical-readinessreferrer-policy"
+  },
+  "1.18": {
+    "slug": "content-discoverability/mobile-friendly",
+    "status": "removed",
+    "reason": "not-a-factor",
+    "link": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/sunset/NOT-A-FACTOR.md#content-discoverabilitymobile-friendly"
+  },
+  "1.23": {
+    "slug": "content-discoverability/commerce-links",
+    "status": "removed",
+    "reason": "not-a-factor",
+    "link": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/sunset/NOT-A-FACTOR.md#content-discoverabilitycommerce-links"
+  },
+  "7.22": {
+    "slug": "accessibility/marquee",
+    "status": "removed",
+    "reason": "not-a-factor",
+    "link": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/sunset/NOT-A-FACTOR.md#accessibilitymarquee"
+  },
+  "8.14": {
+    "slug": "technical-readiness/no-render-blocking",
+    "status": "removed",
+    "reason": "not-a-factor",
+    "link": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/sunset/NOT-A-FACTOR.md#technical-readinessno-render-blocking"
+  },
+  "8.15": {
+    "slug": "technical-readiness/image-dimensions",
+    "status": "removed",
+    "reason": "not-a-factor",
+    "link": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/sunset/NOT-A-FACTOR.md#technical-readinessimage-dimensions"
+  },
+  "8.16": {
+    "slug": "technical-readiness/lcp-not-lazy",
+    "status": "removed",
+    "reason": "not-a-factor",
+    "link": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/sunset/NOT-A-FACTOR.md#technical-readinesslcp-not-lazy"
+  },
+  "8.19": {
+    "slug": "technical-readiness/privacy-policy",
+    "status": "removed",
+    "reason": "not-a-factor",
+    "link": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/sunset/NOT-A-FACTOR.md#technical-readinessprivacy-policy"
+  },
+  "8.20": {
+    "slug": "technical-readiness/terms-of-service",
+    "status": "removed",
+    "reason": "not-a-factor",
+    "link": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/sunset/NOT-A-FACTOR.md#technical-readinessterms-of-service"
   }
 }

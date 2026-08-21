@@ -26,6 +26,5 @@ export {
   A11yFrameTitleAudit,
   A11yMetaRefreshAudit,
   A11yTabindexAudit,
-  A11yDeprecatedElementsAudit,
   A11yPresentationConflictAudit,
 } from './_a11y';

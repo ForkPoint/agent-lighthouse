@@ -4,16 +4,17 @@ audit_id: "7.22"
 category: accessibility
 source_file: packages/core/src/audits/accessibility/_a11y.ts
 slug: marquee
+status: sunset
 review_verdict: delete
 severity: low
 evidence_grade: D
-disposition: "delete (superseded — see deletion research)"
+disposition: "removed — sunset 2026-08-21 (v2 taxonomy grading pass)"
 reviewed: 2026-08-21
 ---
 
 # No deprecated presentational elements (`7.22`)
 
-> accessibility · source `_a11y.ts` · review verdict **delete** · evidence grade **D** · disposition: **delete (superseded — see deletion research)**
+> accessibility · source `_a11y.ts` · review verdict **delete** · evidence grade **D** · disposition: **removed — sunset 2026-08-21 (v2 taxonomy grading pass)**
 
 ## What it checks
 

@@ -26,7 +26,7 @@ One dossier per audit: what it checks, the 2026-08-20 code-review findings, grad
 | 7.19 | [Frames are titled](./accessibility/frame-title.md) | accessibility | fix | — | keep — fix required |
 | 7.20 | [No time-based auto-refresh/redirect](./accessibility/meta-refresh.md) | accessibility | keep | — | keep |
 | 7.21 | [No positive tabindex (logical focus order)](./accessibility/tabindex.md) | accessibility | fix | — | keep — fix required |
-| 7.22 | [No deprecated presentational elements](./accessibility/marquee.md) | accessibility | delete | — | delete (superseded — see deletion research) |
+| 7.22 | [No deprecated presentational elements](../sunset/accessibility/marquee.md) | accessibility | delete | — | sunset (2026-08-21) |
 | 7.23 | [No presentation-role conflicts](./accessibility/presentation-role-conflict.md) | accessibility | fix | A | keep — fix required |
 | 5.1 | [openapi-exists](./agent-tools/openapi-exists.md) | agent-tools | fix | — | keep — fix required |
 | 5.2 | [openapi-endpoints](./agent-tools/openapi-endpoints.md) | agent-tools | fix | — | keep — fix required |
@@ -83,12 +83,12 @@ One dossier per audit: what it checks, the 2026-08-20 code-review findings, grad
 | 1.15 | [internal-linking](./content-discoverability/internal-linking.md) | content-discoverability | fix | A | keep — fix required |
 | 1.16 | [no-redirect-chains](./content-discoverability/no-redirect-chains.md) | content-discoverability | fix | — | keep — fix required |
 | 1.17 | [canonical-links](./content-discoverability/canonical-links.md) | content-discoverability | fix | — | keep — fix required |
-| 1.18 | [mobile-friendly](./content-discoverability/mobile-friendly.md) | content-discoverability | delete | — | proposed: redeem as informative (pending triage) |
+| 1.18 | [mobile-friendly](../sunset/content-discoverability/mobile-friendly.md) | content-discoverability | delete | — | sunset (2026-08-21) |
 | 1.19 | [fast-page-load](./content-discoverability/fast-page-load.md) | content-discoverability | fix | B | keep — fix required |
 | 1.20 | [no-broken-links](./content-discoverability/no-broken-links.md) | content-discoverability | fix | A | keep — fix required |
 | 1.21 | [navigation-json](./content-discoverability/navigation-json.md) | content-discoverability | delete | D | sunset (approved 2026-08-21) |
 | 1.22 | [no-orphan-pages](./content-discoverability/no-orphan-pages.md) | content-discoverability | merge | A | merge (approved 2026-08-21) |
-| 1.23 | [commerce-links](./content-discoverability/commerce-links.md) | content-discoverability | fix | D | keep — fix required |
+| 1.23 | [commerce-links](../sunset/content-discoverability/commerce-links.md) | content-discoverability | fix | D | sunset (2026-08-21) |
 | 2.1 | [gptbot](./crawler-permissions/gptbot.md) | crawler-permissions | fix | A | keep — fix required |
 | 2.2 | [google-extended](./crawler-permissions/google-extended.md) | crawler-permissions | fix | A | keep — fix required |
 | 2.3 | [anthropic](./crawler-permissions/anthropic.md) | crawler-permissions | fix | A | keep — fix required |
@@ -205,13 +205,13 @@ One dossier per audit: what it checks, the 2026-08-20 code-review findings, grad
 | 8.11 | [cache-headers](./technical-readiness/cache-headers.md) | technical-readiness | merge | B | merge (approved 2026-08-21) |
 | 8.12 | [fast-response-time](./technical-readiness/fast-response-time.md) | technical-readiness | fix | B | keep — fix required |
 | 8.13 | [server-rendered](./technical-readiness/server-rendered.md) | technical-readiness | fix | B | keep — fix required |
-| 8.14 | [no-render-blocking](./technical-readiness/no-render-blocking.md) | technical-readiness | fix | D | keep — fix required |
-| 8.15 | [image-dimensions](./technical-readiness/image-dimensions.md) | technical-readiness | fix | D | keep — fix required |
-| 8.16 | [lcp-not-lazy](./technical-readiness/lcp-not-lazy.md) | technical-readiness | fix | D | keep — fix required |
+| 8.14 | [no-render-blocking](../sunset/technical-readiness/no-render-blocking.md) | technical-readiness | fix | D | sunset (2026-08-21) |
+| 8.15 | [image-dimensions](../sunset/technical-readiness/image-dimensions.md) | technical-readiness | fix | D | sunset (2026-08-21) |
+| 8.16 | [lcp-not-lazy](../sunset/technical-readiness/lcp-not-lazy.md) | technical-readiness | fix | D | sunset (2026-08-21) |
 | 8.17 | [preconnect-hints](./technical-readiness/preconnect-hints.md) | technical-readiness | delete | D | sunset (approved 2026-08-21) |
 | 8.18 | [no-broken-ai-endpoints](./technical-readiness/no-broken-ai-endpoints.md) | technical-readiness | fix | A | keep — fix required |
-| 8.19 | [privacy-policy](./technical-readiness/privacy-policy.md) | technical-readiness | fix | D | keep — fix required |
-| 8.20 | [terms-of-service](./technical-readiness/terms-of-service.md) | technical-readiness | fix | D | keep — fix required |
+| 8.19 | [privacy-policy](../sunset/technical-readiness/privacy-policy.md) | technical-readiness | fix | D | sunset (2026-08-21) |
+| 8.20 | [terms-of-service](../sunset/technical-readiness/terms-of-service.md) | technical-readiness | fix | D | sunset (2026-08-21) |
 | 8.21 | [framework-detection](./technical-readiness/framework-detection.md) | technical-readiness | delete | D | sunset (approved 2026-08-21) |
 
 ## Evidence banked for checks that do not exist yet
