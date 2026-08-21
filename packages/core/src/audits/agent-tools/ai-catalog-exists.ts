@@ -1,3 +1,14 @@
+// TODO(redeem): this audit survives only if rewritten (approved 2026-08-21).
+// Evidence dossier: docs/evidence/deletions/agent-tools/ai-catalog-exists.md
+// Required rework:
+//   Grade A evidence: a named vendor tool (Hugging Face hf-discover) documents and implements
+//   fetching exactly https://{domain}/.well-known/ai-catalog.json, the path is normative in the ARD
+//   draft spec co-authored by Google/Microsoft/Hugging Face, and there is verifiable production
+//   adoption (Neon, Weaviate, Shopware core, specification.website). Keep the audit, but it MUST be
+//   rewritten: pass condition should be specVersion + host + entries[] per ARD §4.1, not a
+//   `services` array; and guidance/code samples must be replaced with the real schema, otherwise
+//   the audit penalizes spec-conformant sites.
+
 import type { AuditMeta, AuditResult } from "../../types";
 import { Audit } from "../../audit";
 import type { CheckContext } from '../../check-context';

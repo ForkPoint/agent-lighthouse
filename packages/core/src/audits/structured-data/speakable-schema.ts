@@ -1,3 +1,15 @@
+// TODO(redeem): this audit survives only if rewritten (approved 2026-08-21).
+// Evidence dossier: docs/evidence/deletions/structured-data/speakable-schema.md
+// Required rework:
+//   Grade A: a live vendor doc names a specific agent (Google Assistant) that reads the signal, and
+//   the feature is still listed in Google's current supported-features gallery, so the rubric
+//   mandates 'redeemable'. But it must be redeemed in narrowed form, not as-is: (a) applicability
+//   should be restricted to news/article publishers (the audit currently runs site-wide with no
+//   page-type gate and defaults to fail for every non-news site), and (b) the description's claim
+//   that Alexa and Siri consume speakable must be deleted — it is unsupported by any vendor doc and
+//   directly contradicted by Applebot's documentation, which lists isAccessibleForFree as its only
+//   schema.org property. Flag the Gemini-for-Home transition as a re-check trigger.
+
 import type { AuditMeta, AuditResult } from "../../types";
 import { Audit } from "../../audit";
 import type { CheckContext } from '../../check-context';

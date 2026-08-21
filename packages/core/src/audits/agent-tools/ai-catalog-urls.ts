@@ -1,3 +1,13 @@
+// TODO(redeem): this audit survives only if rewritten (approved 2026-08-21).
+// Evidence dossier: docs/evidence/deletions/agent-tools/ai-catalog-urls.md
+// Required rework:
+//   Grade B: the checked property (liveness of manifest-listed endpoints) is a real field in a real
+//   draft spec that a named Hugging Face client dereferences and that independent
+//   crawlers/validators probe. This is the most mechanically defensible of the four — a broken url
+//   genuinely breaks agent traversal. Keep it, but re-point it at `entries[].url` (skipping entries
+//   that use embedded `data`), and treat non-200-but-reachable auth-gated MCP endpoints carefully
+//   to avoid false failures.
+
 import type { AuditMeta, AuditResult } from "../../types";
 import { Audit } from "../../audit";
 import type { CheckContext } from '../../check-context';

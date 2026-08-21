@@ -1,3 +1,9 @@
+// TODO(redeem): this audit survives only if rewritten (pending triage approval). Target tier: experimental.
+// Evidence dossier: docs/evidence/audits/crawler-permissions/tdm-rep.md
+// Required rework:
+//   TDM Reservation Protocol is a real W3C CG spec with EU AI Act relevance. Experimental flag,
+//   unscored, fix internal incoherence.
+
 import type { AuditMeta, AuditResult } from "../../types";
 import { Audit } from "../../audit";
 import type { CheckContext } from '../../check-context';

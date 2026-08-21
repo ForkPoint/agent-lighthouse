@@ -1,3 +1,9 @@
+// TODO(redeem): this audit survives only if rewritten (pending triage approval). Target tier: scored.
+// Evidence dossier: docs/evidence/audits/crawler-permissions/bytespider.md
+// Required rework:
+//   Consolidate all low-signal per-bot audits into one 'ai-bot-directives' audit: parse robots.txt
+//   once, informational per-bot table, score only on documented-active bots.
+
 import type { AuditMeta } from "../../types";
 import type { CrawlerBot } from './_robots-txt-helpers';
 import { CrawlerBotAudit } from './_crawler-bot-audit';

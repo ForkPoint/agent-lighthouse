@@ -1,3 +1,8 @@
+// TODO(redeem): this audit survives only if rewritten (pending triage approval). Target tier: informative.
+// Evidence dossier: docs/evidence/audits/content-discoverability/mobile-friendly.md
+// Required rework:
+//   Keep viewport check as unscored diagnostic; no claimed AI mechanism.
+
 import type { AuditMeta, AuditResult } from "../../types";
 import { Audit } from "../../audit";
 import type { CheckContext } from '../../check-context';

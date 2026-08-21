@@ -1,3 +1,10 @@
+// TODO(redeem): this audit survives only if rewritten (pending triage approval). Target tier: informative.
+// Evidence dossier: docs/evidence/audits/meta-tags/twitter-card.md
+// Required rework:
+//   Fix factual errors (twitter:* falls back to og:*), fold into social-meta diagnostic with
+//   core-open-graph, unscored. Evidence: og:title/og:site_name graded A; twitter:* has no AI
+//   consumer evidence.
+
 import type { AuditMeta, AuditResult } from "../../types";
 import { Audit } from "../../audit";
 import type { CheckContext } from '../../check-context';

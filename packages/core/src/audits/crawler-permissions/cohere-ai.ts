@@ -1,3 +1,8 @@
+// TODO(redeem): this audit survives only if rewritten (pending triage approval). Target tier: scored.
+// Evidence dossier: docs/evidence/audits/crawler-permissions/cohere-ai.md
+// Required rework:
+//   Same consolidation into ai-bot-directives.
+
 import type { AuditMeta } from "../../types";
 import type { CrawlerBot } from './_robots-txt-helpers';
 import { CrawlerBotAudit } from './_crawler-bot-audit';

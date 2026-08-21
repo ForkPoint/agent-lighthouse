@@ -1,3 +1,11 @@
+// TODO(redeem): this audit survives only if rewritten (pending triage approval). Target tier: experimental.
+// Evidence dossier: docs/evidence/audits/agent-tools/webmcp-manifest.md
+// Required rework:
+//   Evidence reshape: the .well-known manifest file is invented (grade D) — but runtime-registered
+//   WebMCP tools are grade B: Google Lighthouse 13.3+ ships 'Registered WebMCP tools' audits in its
+//   new Agentic Browsing category. Replace manifest-file audit with registered-tools detection,
+//   experimental tier.
+
 import type { AuditMeta, AuditResult } from "../../types";
 import { Audit } from "../../audit";
 import type { CheckContext } from '../../check-context';

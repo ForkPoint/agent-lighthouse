@@ -1,3 +1,9 @@
+// TODO(redeem): this audit survives only if rewritten (pending triage approval). Target tier: scored.
+// Evidence dossier: docs/evidence/audits/meta-tags/openapi-link.md
+// Required rework:
+//   Redeem via merge into agent-tools/openapi-exists: one discovery audit for real mechanisms incl.
+//   RFC 9727 api-catalog (graded B), drop link-tag requirement that fails every site.
+
 import type { AuditMeta, AuditResult } from "../../types";
 import { Audit } from "../../audit";
 import type { CheckContext } from '../../check-context';

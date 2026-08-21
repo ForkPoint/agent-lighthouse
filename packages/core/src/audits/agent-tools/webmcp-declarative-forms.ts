@@ -1,3 +1,14 @@
+// TODO(redeem): this audit survives only if rewritten (approved 2026-08-21).
+// Evidence dossier: docs/evidence/deletions/agent-tools/webmcp-declarative-forms.md
+// Required rework:
+//   Grade A. The signal is defined in a W3C Web Machine Learning CG explainer, has a named Baseline
+//   web feature (`declarative-webmcp`), a 17-test WPT conformance suite, first-party Chrome
+//   documentation with the identical attribute names, and named agent consumers (Brave Leo, Chrome
+//   149 / Edge 150 origin trials). Per the rubric this is redeemable. Recommended fixes rather than
+//   deletion: replace the dead webmcp.link docsUrl, require `toolname` (not `tooldescription`
+//   alone) to count a form, and soften default priority from 'high' given Baseline 'limited' status
+//   and Apple's opposition.
+
 import type { AuditMeta, AuditResult } from "../../types";
 import { Audit } from "../../audit";
 import type { CheckContext } from '../../check-context';

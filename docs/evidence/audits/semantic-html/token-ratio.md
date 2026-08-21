@@ -1,0 +1,74 @@
+---
+audit: semantic-html/token-ratio
+audit_id: "6.19"
+category: semantic-html
+source_file: packages/core/src/audits/semantic-html/token-ratio.ts
+slug: token-ratio
+review_verdict: fix
+severity: high
+evidence_grade: B
+disposition: "keep — fix required"
+reviewed: 2026-08-21
+---
+
+# token-ratio (`6.19`)
+
+> semantic-html · source `token-ratio.ts` · review verdict **fix** · evidence grade **B** · disposition: **keep — fix required**
+
+## What it checks
+
+AI agents pay for every token of raw HTML they download, but only the visible text carries meaning. This audit compares the character weight of the raw HTML against the extracted main-content text to produce a "context bloat score": the share of the page that is actual content rather than markup, scripts, and styles. The ratio is evaluated on the homepage (the first crawled page), which is the entry point agents most often fetch. A ratio under 5% means an agent parses 20 tokens of noise for every token of content; under 15% still wastes most of the context window on boilerplate. Unlike content depth (which measures text volume), this measures how efficiently that text is packaged.
+
+## Code review findings (2026-08-20, 11-agent pass)
+
+Good idea, miscalibrated and internally inconsistent. The numerator is getMainContentText (scoped to <main> when present) while the denominator is the entire raw HTML — so adopting <main>, which audit 6.3 pushes as high priority, shrinks the numerator and lowers this score. The two audits in the same category reward opposite behavior on the same markup. Separately the thresholds are set where nearly the whole modern web fails: a typical Next.js/Nuxt/Shopify homepage carries 200–400KB of HTML with hydration payloads and 3–6KB of visible text, i.e. 1–3% — under the 5% FAIL floor. An audit that fails almost every site conveys no information, and its stated harm ('the page may be truncated before the real content is read') does not hold for the Readability/Turndown pipelines that strip scripts first.
+
+**Required fix:** Compute the ratio against comparable scopes: strip script/style/template/svg/noscript and inline data blobs from the denominator before dividing, or use the whole body text as the numerator when <main> is present so both sides cover the same subtree. Recalibrate thresholds against a real corpus of SSR framework output rather than round numbers. Make CHARS_PER_TOKEN script-aware (~1.5 for CJK, ~3 for markup) or drop the token estimate from displayValue. Reject non-HTML content types and WAF interstitials (ctx.wafProtection is available and unused) instead of scoring them.
+
+**False-positive risks:**
+- 'const cleanText = getMainContentText(page.$)' (main-scoped) over 'rawHtml.length' (whole document) — a site is penalized for adopting <main>, directly contradicting audit 6.3.
+- Every SSR React/Vue/Svelte site with a hydration payload lands under 5% → fail. Near-universal failure means the check does not discriminate good sites from bad.
+- Pretty-printed HTML is penalized versus minified HTML for identical content — the audit measures build configuration, not agent experience.
+- 'CHARS_PER_TOKEN = 4' is wrong for HTML (~3) and badly wrong for CJK (~1–1.5), so displayValue's 'est. tokens' misleads on non-English pages.
+- A WAF challenge page or a small soft-404 has a high text-to-markup ratio and PASSES; ctx.wafProtection is never consulted.
+- Only the homepage is measured (documented), so a lean homepage in front of bloated deep pages passes.
+- A CSR shell (tiny HTML, tiny text) can land anywhere on the scale for reasons unrelated to content packaging.
+
+**Test gaps:**
+- No fixture comparing the same content with and without <main> — the 6.3 contradiction is untested.
+- No realistic SSR framework fixture (Next.js __NEXT_DATA__ / Nuxt payload) to show where real sites land against the thresholds.
+- No CJK fixture for the token estimate.
+- No WAF/soft-404 fixture (currently would pass).
+- No boundary tests at exactly 5% and 15%.
+- No minified-vs-pretty-printed comparison.
+
+**Overlaps with:** `6.14`, `6.18`
+
+## Evidence
+
+### Signal: Content depth and text-to-boilerplate token ratio — grade B (semantic-dom-a11y)
+
+**Mechanism:** The larger the share of a page's serialized bytes/tokens that is chrome — nav, repeated headers/footers, wrapper divs, inline scripts — rather than main content, the smaller the fraction of the page that survives extraction into the model's context, and the more likely a fixed truncation cap severs real content. Conversely a page with too little actual content relative to its scaffolding gives an extractor nothing substantive to return.
+
+**Evidence:** Quantified from three independent directions. Cloudflare measured a real blog post at 16,180 HTML tokens versus 3,150 markdown — an 80% reduction — and attributed the delta explicitly to 'the <div> wrappers, nav bars, and script tags that pad every real web page and have zero semantic value'; the response even ships x-original-tokens and x-markdown-tokens headers so agents can compute the ratio [cloudflare-markdown-for-agents]. The 2026 observation study measured HTML at ~56,653 input tokens per agent step against ~6,720 for the accessibility tree, a ~8.4x gap [observation-reduction-paper]. trafilatura's stated purpose is to 'remove the noise consisting of recurring elements (headers and footers, ads, links/blogroll)' [trafilatura-corefunctions], the same job Readability does via link-density and text-density scoring [mozilla-readability-source]. Truncation is real and first-party: Anthropic's read_page caps output at 50,000 characters and truncates at a line boundary [anthropic-browser-use-tool].
+
+**Counter-evidence:** Do not treat 'less boilerplate is always better' as proven. The same study that quantifies the token gap found high-capability models perform BETTER on the fuller HTML observation — Claude Sonnet 4.6 +14.6pp, GPT-5.1 +17.5pp — because they exploit layout information for action grounding, while only weaker models degrade under long inputs [observation-reduction-paper]. No published source defines an acceptable text-to-boilerplate threshold; any specific number an audit uses (e.g. 'main content must be >40% of tokens') is invented and must be presented as a heuristic, not as a standard. Google states no special optimizations are needed for AI features [google-ai-features-docs]. Word-count style 'content depth' minimums in particular have no support in any source found for this domain — score the RATIO with a documented mechanism, not an arbitrary length floor.
+**Consumers:** Cloudflare Markdown for Agents, trafilatura, Mozilla Readability, Anthropic read_page / get_page_text (50k char cap), web-agent observation pipelines · **Recommended tier:** scored
+
+**Sources:** [Introducing Markdown for Agents](https://blog.cloudflare.com/markdown-for-agents/) · [Read More, Think More: Revisiting Observation Reduction for Web Agents](https://arxiv.org/abs/2604.01535) · [trafilatura core functions documentation](https://trafilatura.readthedocs.io/en/latest/corefunctions.html) · [mozilla/readability Readability.js source](https://raw.githubusercontent.com/mozilla/readability/main/Readability.js) · [Browser use tool (browser_toolset_20260801)](https://platform.claude.com/docs/en/agents-and-tools/tool-use/browser-use-tool) · [Beyond Pixels: Exploring DOM Downsampling for LLM-Based Web Agents](https://arxiv.org/html/2508.04412v1) · [AI features and your website — Google Search Central](https://developers.google.com/search/docs/appearance/ai-features)
+
+### Signal: Inline SVG and DOM bloat consuming LLM context — grade B (semantic-dom-a11y)
+
+**Mechanism:** Deeply nested DOM and large inline SVG inflate the serialized page representation an agent receives, pushing it against fixed truncation caps and depth limits so content below the cut is never seen. The general DOM-size claim is well supported; the SVG-specific claim is that inline path data is pure token cost with no semantic payload, since it carries no accessible name and contributes nothing an LLM can reason about.
+
+**Evidence:** Truncation is documented first-party: Anthropic's read_page caps output at 50,000 characters, truncates at a line boundary, and offers depth (default 15) and ref-scoping as the remedy — an explicit admission that page size forces partial reads [anthropic-browser-use-tool]. Scale of the problem: 'Some real world DOMs surpass the size of a megabyte' ≈ 1e6 tokens, versus 1e3–1e4 after downsampling; the D2Snap ablation found DOM hierarchy 'the strongest among those features' for LLM performance, and its attribute filter preserves alt, href and aria-* while discarding the rest [dom-downsampling-paper]. Token magnitudes corroborated at ~56,653 HTML tokens per step [observation-reduction-paper] and by Cloudflare's 80% markdown reduction attributed to semantically empty wrappers and scripts [cloudflare-markdown-for-agents].
+
+**Counter-evidence:** The SVG-specific half is materially weaker than the DOM-size half and should be graded C on its own. No vendor doc, spec, or study I could verify singles out inline SVG as an agent problem. Mechanically the cost is asymmetric: an inline <svg> without a title/aria-label collapses to a single unnamed node (or is omitted) in the accessibility tree, so its bloat lands on raw-HTML and markdown consumers, not on the a11y-tree agents that dominate this domain — meaning an SVG-bloat audit is really a payload-weight audit, not an agent-perception audit. And bigger is not uniformly worse: strong models gained double-digit points from the LARGER HTML observation [observation-reduction-paper]. Recommend scoring total serialized DOM size / node depth with the truncation cap as the documented anchor, and demoting the SVG-specific rule to an informative sub-check unless the SVG is also unnamed where it acts as a control.
+**Consumers:** Anthropic read_page (50,000-char cap, depth 15 default), Playwright MCP snapshot, Chrome DevTools MCP, browser-use DOM serializer, Cloudflare Markdown for Agents · **Recommended tier:** scored
+
+**Sources:** [Browser use tool (browser_toolset_20260801)](https://platform.claude.com/docs/en/agents-and-tools/tool-use/browser-use-tool) · [Beyond Pixels: Exploring DOM Downsampling for LLM-Based Web Agents](https://arxiv.org/html/2508.04412v1) · [Read More, Think More: Revisiting Observation Reduction for Web Agents](https://arxiv.org/abs/2604.01535) · [Introducing Markdown for Agents](https://blog.cloudflare.com/markdown-for-agents/) · [Snapshots — Playwright MCP](https://playwright.dev/mcp/snapshots) · [browser-use ClickableElementDetector source](https://raw.githubusercontent.com/browser-use/browser-use/main/browser_use/dom/serializer/clickable_elements.py)
+
+## Review history
+
+- 2026-08-20 — code review (11-agent workflow) + evidence research (12-domain workflow, 400 sources).
+- 2026-08-21 — dossier generated; disposition pending final taxonomy design.

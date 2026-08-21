@@ -1,3 +1,21 @@
+// TODO(redeem): this audit survives only if rewritten (approved 2026-08-21).
+// Evidence dossier: docs/evidence/deletions/crawler-permissions/sensitive-paths.md
+// Required rework:
+//   Grade A on the mechanism: named AI crawlers are documented to honor path-level Disallow, with
+//   literal directory examples from Apple (Applebot and the AI-training token Applebot-Extended,
+//   'Disallow: /private/') and Meta (meta-externalagent, 'Disallow: /private/ # Disallow a specific
+//   directory'), on top of the ratified RFC 9309 path-matching semantics that OpenAI and Anthropic
+//   both point publishers to. Per the rubric that makes it redeemable — but it needs surgery, not
+//   preservation as written. Required changes: (a) drop the security/privacy framing entirely and
+//   cite RFC 9309's 'not a substitute for valid content security measures'; reframe as crawl
+//   hygiene — keeping low-value, non-canonical, or session-bearing URLs out of AI crawls and
+//   answers. (b) Remove /api/ from the default sensitive list or make it opt-in; blocking API paths
+//   works against agent readiness, and the audit currently fails sites at 'high' priority for
+//   exposing exactly what agents need. (c) Add the caveat that user-initiated fetchers
+//   (ChatGPT-User, Perplexity-User) are documented not to honor these rules, so this must never be
+//   presented as protection. (d) Downgrade defaultPriority from 'high' to low/medium — no vendor
+//   evidence supports a high-severity finding here.
+
 import type { AuditMeta, AuditResult } from "../../types";
 import { Audit } from "../../audit";
 import type { CheckContext } from '../../check-context';

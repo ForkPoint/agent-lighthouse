@@ -1,3 +1,9 @@
+// TODO(redeem): this audit survives only if rewritten (pending triage approval). Target tier: scored.
+// Evidence dossier: docs/evidence/audits/answer-engine/direct-definitions.md
+// Required rework:
+//   Rework detector: language-neutral structural signals (dfn/dl semantics, first-sentence
+//   definition patterns per detected language), notApplicable when page has no definitional intent.
+
 import type { AuditMeta, AuditResult } from "../../types";
 import { Audit } from "../../audit";
 import type { CheckContext } from '../../check-context';
