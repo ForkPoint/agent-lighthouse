@@ -31,7 +31,36 @@ export function extractJsonLd($: CheerioAPI): object[] {
 }
 
 /**
- * Flatten parsed JSON-LD into a flat list of schema.org nodes.
+ * Top-level JSON-LD entities only: expands arrays and `@graph` members,
+ * propagating `@context` downward. Nested property objects (an Article's
+ * `publisher`, a Product's `offers`) are NOT hoisted — v1's deep flatten
+ * made audits "find" entities the page never declared at top level.
+ */
+export function topLevelJsonLd(blocks: object[]): object[] {
+  const tops: object[] = [];
+  const visit = (node: unknown, inheritedContext?: unknown): void => {
+    if (Array.isArray(node)) {
+      for (const item of node) visit(item, inheritedContext);
+      return;
+    }
+    if (!node || typeof node !== 'object') return;
+    const obj = node as Record<string, unknown>;
+    const ctx = obj['@context'] ?? inheritedContext;
+    if (!obj['@context'] && ctx) obj['@context'] = ctx;
+    const graph = obj['@graph'];
+    if (Array.isArray(graph)) {
+      for (const member of graph) visit(member, ctx);
+      return;
+    }
+    tops.push(obj);
+  };
+  for (const block of blocks) visit(block);
+  return tops;
+}
+
+/**
+ * Every JSON-LD node including nested ones — for audits that legitimately
+ * search deep (e.g. AggregateRating nested under Product).
  *
  * Real-world JSON-LD nests the interesting types arbitrarily: a top-level
  * `[{...}]` array (common on Shopify), an `@graph` container, and properties
@@ -41,11 +70,11 @@ export function extractJsonLd($: CheerioAPI): object[] {
  * invisible — producing false "schema not found" verdicts. This walks every
  * object and array value so type/property lookups see the whole graph.
  */
-export function flattenJsonLd(blocks: object[]): object[] {
+export function allJsonLdNodes(blocks: object[]): object[] {
   const flat: object[] = [];
   const visit = (node: unknown, inheritedContext?: unknown): void => {
     if (Array.isArray(node)) {
-      for (const n of node) visit(n, inheritedContext);
+      for (const item of node) visit(item, inheritedContext);
       return;
     }
     if (!node || typeof node !== 'object') return;
@@ -60,6 +89,9 @@ export function flattenJsonLd(blocks: object[]): object[] {
   for (const block of blocks) visit(block);
   return flat;
 }
+
+/** @deprecated v1 name for the deep walk. Use topLevelJsonLd (structure) or allJsonLdNodes (deep search). Removed in v2. */
+export const flattenJsonLd = allJsonLdNodes;
 
 /**
  * Extract links from Markdown-ish text (llms.txt, READMEs).
