@@ -22,6 +22,7 @@ function stubCheck(meta: AuditMeta, tag: string, explanation: string): CheckResu
     impact: meta.guidance?.impact ?? '',
     fix: meta.guidance?.fix ?? '',
     tags: [tag],
+    deprecated: meta.deprecated,
   };
 }
 

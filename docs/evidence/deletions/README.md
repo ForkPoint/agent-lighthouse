@@ -2,30 +2,30 @@
 
 32 audits marked for deletion by the 2026-08-20 quality review were re-researched on 2026-08-21 by an adversarial 8-agent workflow (each researcher's task: **redeem** the audit by finding a named consumer with grade A/B evidence). The user reviewed and accepted all 32 verdicts on 2026-08-21, with disposition set by evidence grade:
 
-- **Grade D (18) → graceful sunset.** Condensed public rationale: [NOT-A-FACTOR.md](../NOT-A-FACTOR.md). Deprecation follows the [evidence policy](../POLICY.md): one minor release informative (weight 0) with notice, removed next major. Dossiers stay published as the record.
+- **Grade D (18) → removed.** Deleted outright in the v2 major release, since the [evidence policy](../POLICY.md) allows a grade-D audit no score weight and no consumer was found. Their dossiers and the condensed public rationale moved to [sunset/](../sunset/README.md) — [NOT-A-FACTOR.md](../sunset/NOT-A-FACTOR.md) — and stay published as the record.
 - **Grade C (5) → kept as informative (weight 0)**, documented.
 - **Grade A/B (9) → kept, rewrite required** per dossier (the research overturned the delete verdict — most notably the `ai-catalog` family, saved by the ARD draft spec and Hugging Face's `hf-discover` client).
 
 | Disposition | Grade | Audit | Rationale (first sentence) |
 | :---------- | :---- | :---- | :------------------------- |
-| 🌇 sunset | D | [accessibility/skip-nav](./accessibility/skip-nav.md) | Grade D |
-| 🌇 sunset | D | [agent-tools/ai-plugin-json](./agent-tools/ai-plugin-json.md) | Grade D: the sole documented consumer (ChatGPT plugins) was discontinued, OpenAI archived its official quickstart with an explicit 'supersed |
-| 🌇 sunset | D | [agent-tools/data-action-ctas](./agent-tools/data-action-ctas.md) | Grade D: speculative attribute with no documented consumer at any vendor, plus active namespace collision with Stimulus/Hotwire that makes t |
-| 🌇 sunset | D | [agent-tools/openapi-ai-instructions](./agent-tools/openapi-ai-instructions.md) | Grade D: an unregistered, vendor-less extension key with no documented consumer and adoption that is essentially self-referential (a single  |
-| 🌇 sunset | D | [agent-tools/webmcp-action-coverage](./agent-tools/webmcp-action-coverage.md) | Grade D |
-| 🌇 sunset | D | [content-discoverability/navigation-json](./content-discoverability/navigation-json.md) | Grade D |
-| 🌇 sunset | D | [generative-engine/pagination-links](./generative-engine/pagination-links.md) | Grade D |
-| 🌇 sunset | D | [meta-tags/ai-instructions](./meta-tags/ai-instructions.md) | Grade D: no spec defines it, no vendor reads it, the one standards body working on the problem explicitly chose HTTP headers and robots.txt  |
-| 🌇 sunset | D | [meta-tags/llms-full-txt-link](./meta-tags/llms-full-txt-link.md) | Grade D |
-| 🌇 sunset | D | [meta-tags/mcp-discovery-link](./meta-tags/mcp-discovery-link.md) | Grade D for the signal as implemented |
-| 🌇 sunset | D | [semantic-html/address-element](./semantic-html/address-element.md) | Grade D |
-| 🌇 sunset | D | [semantic-html/decorative-images](./semantic-html/decorative-images.md) | Grade D |
-| 🌇 sunset | D | [structured-data/action-schema](./structured-data/action-schema.md) | Grade D |
-| 🌇 sunset | D | [structured-data/potential-action](./structured-data/potential-action.md) | Grade D |
-| 🌇 sunset | D | [technical-readiness/framework-detection](./technical-readiness/framework-detection.md) | Grade D |
-| 🌇 sunset | D | [technical-readiness/permissions-policy](./technical-readiness/permissions-policy.md) | Grade D |
-| 🌇 sunset | D | [technical-readiness/preconnect-hints](./technical-readiness/preconnect-hints.md) | Grade D |
-| 🌇 sunset | D | [technical-readiness/referrer-policy](./technical-readiness/referrer-policy.md) | Grade D |
+| 🌇 sunset | D | [accessibility/skip-nav](../sunset/accessibility/skip-nav.md) | Grade D |
+| 🌇 sunset | D | [agent-tools/ai-plugin-json](../sunset/agent-tools/ai-plugin-json.md) | Grade D: the sole documented consumer (ChatGPT plugins) was discontinued, OpenAI archived its official quickstart with an explicit 'supersed |
+| 🌇 sunset | D | [agent-tools/data-action-ctas](../sunset/agent-tools/data-action-ctas.md) | Grade D: speculative attribute with no documented consumer at any vendor, plus active namespace collision with Stimulus/Hotwire that makes t |
+| 🌇 sunset | D | [agent-tools/openapi-ai-instructions](../sunset/agent-tools/openapi-ai-instructions.md) | Grade D: an unregistered, vendor-less extension key with no documented consumer and adoption that is essentially self-referential (a single  |
+| 🌇 sunset | D | [agent-tools/webmcp-action-coverage](../sunset/agent-tools/webmcp-action-coverage.md) | Grade D |
+| 🌇 sunset | D | [content-discoverability/navigation-json](../sunset/content-discoverability/navigation-json.md) | Grade D |
+| 🌇 sunset | D | [generative-engine/pagination-links](../sunset/generative-engine/pagination-links.md) | Grade D |
+| 🌇 sunset | D | [meta-tags/ai-instructions](../sunset/meta-tags/ai-instructions.md) | Grade D: no spec defines it, no vendor reads it, the one standards body working on the problem explicitly chose HTTP headers and robots.txt  |
+| 🌇 sunset | D | [meta-tags/llms-full-txt-link](../sunset/meta-tags/llms-full-txt-link.md) | Grade D |
+| 🌇 sunset | D | [meta-tags/mcp-discovery-link](../sunset/meta-tags/mcp-discovery-link.md) | Grade D for the signal as implemented |
+| 🌇 sunset | D | [semantic-html/address-element](../sunset/semantic-html/address-element.md) | Grade D |
+| 🌇 sunset | D | [semantic-html/decorative-images](../sunset/semantic-html/decorative-images.md) | Grade D |
+| 🌇 sunset | D | [structured-data/action-schema](../sunset/structured-data/action-schema.md) | Grade D |
+| 🌇 sunset | D | [structured-data/potential-action](../sunset/structured-data/potential-action.md) | Grade D |
+| 🌇 sunset | D | [technical-readiness/framework-detection](../sunset/technical-readiness/framework-detection.md) | Grade D |
+| 🌇 sunset | D | [technical-readiness/permissions-policy](../sunset/technical-readiness/permissions-policy.md) | Grade D |
+| 🌇 sunset | D | [technical-readiness/preconnect-hints](../sunset/technical-readiness/preconnect-hints.md) | Grade D |
+| 🌇 sunset | D | [technical-readiness/referrer-policy](../sunset/technical-readiness/referrer-policy.md) | Grade D |
 | ℹ️ informative (weight 0) | C | [agent-tools/agents-json](./agent-tools/agents-json.md) | Grade C (a real community convention with no documented consumer), and the rubric permits 'dead-but-informative-candidate' for grade C only  |
 | ℹ️ informative (weight 0) | C | [content-discoverability/llms-full-txt](./content-discoverability/llms-full-txt.md) | Grade C — a community convention with no documented consumer — but the adoption is genuinely wide and concentrated among the AI vendors them |
 | ℹ️ informative (weight 0) | C | [generative-engine/about-credentials](./generative-engine/about-credentials.md) | The keyword heuristic is grade D on its own — no documented consumer, and Google's rater guidelines specifically instruct evaluators NOT to  |

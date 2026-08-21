@@ -44,7 +44,7 @@ _No dedicated evidence signal was researched for this audit in the 2026-08-20 pa
 
 ## Adversarial redemption research (2026-08-21)
 
-This audit was a delete candidate and went through dedicated adversarial research. Full dossier: [docs/evidence/deletions/agent-tools/data-action-ctas.md](../../deletions/agent-tools/data-action-ctas.md). Outcome: **dead**, grade D.
+This audit was a delete candidate and went through dedicated adversarial research. Full dossier: [docs/evidence/sunset/agent-tools/data-action-ctas.md](../../sunset/agent-tools/data-action-ctas.md). Outcome: **dead**, grade D.
 
 ## Review history
 

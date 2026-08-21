@@ -81,6 +81,32 @@ describe('hydrateReport', () => {
     expect(r.topPasses.map((c) => c.id)).toEqual(['a1']);
   });
 
+  it('excludes informative checks from topFails and topPasses', () => {
+    const r = hydrateReport(
+      row({
+        checkResults: [
+          check({
+            id: 'inf-fail',
+            category: 'agent-tools',
+            status: 'fail',
+            priority: 'critical',
+            scoreDisplayMode: 'informative',
+          }),
+          check({ id: 'norm-fail', category: 'agent-tools', status: 'fail', priority: 'high' }),
+          check({
+            id: 'inf-pass',
+            category: 'agent-tools',
+            status: 'pass',
+            scoreDisplayMode: 'informative',
+          }),
+          check({ id: 'norm-pass', category: 'agent-tools', status: 'pass' }),
+        ],
+      }),
+    );
+    expect(r.topFails.map((c) => c.id)).toEqual(['norm-fail']);
+    expect(r.topPasses.map((c) => c.id)).toEqual(['norm-pass']);
+  });
+
   it('populates a non-empty summary', () => {
     const r = hydrateReport(row());
     expect(typeof r.summary).toBe('string');

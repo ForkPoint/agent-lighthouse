@@ -139,6 +139,7 @@ export abstract class Audit {
         effort: meta.guidance?.effort,
       },
       tags: meta.guidance?.tags,
+      deprecated: meta.deprecated,
     };
   }
 }

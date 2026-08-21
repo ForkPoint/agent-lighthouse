@@ -333,7 +333,6 @@ describe('Verify scan results against real sites', () => {
         const openApiChildIds = [
           '5.2',
           '5.3',
-          '5.4',
           '5.5',
           '5.6',
         ];

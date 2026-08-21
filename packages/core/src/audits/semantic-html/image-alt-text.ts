@@ -33,7 +33,7 @@ export class ImageAltTextAudit extends Audit {
       const images = extractImages(page.$);
       for (const img of images) {
         // Skip images explicitly marked decorative — they intentionally have no
-        // informative alt text and are covered by the decorative-images audit (6.16):
+        // informative alt text, so counting them would penalise correct markup:
         //  - an empty `alt=""` (present but blank) signals decorative intent, OR
         //  - role="presentation"/"none" removes the image from the accessibility tree.
         // An img with NO alt attribute at all (hasAlt === false) is a real failure

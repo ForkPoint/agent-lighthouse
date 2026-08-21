@@ -71,7 +71,7 @@ Right protocol, invented mechanism. A site running a fully functional, correctly
 
 ## Adversarial redemption research (2026-08-21)
 
-This audit was a delete candidate and went through dedicated adversarial research. Full dossier: [docs/evidence/deletions/meta-tags/mcp-discovery-link.md](../../deletions/meta-tags/mcp-discovery-link.md). Outcome: **dead**, grade D.
+This audit was a delete candidate and went through dedicated adversarial research. Full dossier: [docs/evidence/sunset/meta-tags/mcp-discovery-link.md](../../sunset/meta-tags/mcp-discovery-link.md). Outcome: **dead**, grade D.
 
 ## Review history
 

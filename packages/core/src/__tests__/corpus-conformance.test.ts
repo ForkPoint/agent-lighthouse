@@ -103,9 +103,6 @@ describe('Golden Corpus Conformance Tests (False-Positive Elimination)', () => {
     // OpenAPI exists (5.1)
     expect(checkMap.get('5.1')?.status).toBe('pass');
 
-    // MCP Discovery Link (4.17)
-    expect(checkMap.get('4.17')?.status).toBe('pass');
-
     // Markdown Alternate Link (4.15)
     expect(checkMap.get('4.15')?.status).toBe('pass');
 

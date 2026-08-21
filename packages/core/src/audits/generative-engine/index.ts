@@ -9,7 +9,6 @@ export { ReviewSignalsAudit } from './review-signals';
 export { PublicationDateAudit } from './publication-date';
 export { LastModifiedSchemaAudit } from './last-modified-schema';
 export { InternalCrossLinkingAudit } from './internal-cross-linking';
-export { PaginationLinksAudit } from './pagination-links';
 export { UniqueDataAudit } from './unique-data';
 export { BlockquoteUsageAudit } from './blockquote-usage';
 export { DescriptiveUrlsAudit } from './descriptive-urls';

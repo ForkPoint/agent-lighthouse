@@ -165,6 +165,40 @@ describe('runAudits', () => {
     expect(out.categories[0].score).toBe(0);
   });
 
+  it('adding a weight-0 informative audit leaves the category score unchanged', async () => {
+    const baseline: AuditRegistration[] = [
+      makeReg(meta({ id: 'b1', category: 'cat', weight: 1 }), () => result('pass', 1)),
+      makeReg(meta({ id: 'b2', category: 'cat', weight: 1 }), () => result('fail', 0)),
+    ];
+    const categories = [{ id: 'cat', name: 'Cat', weight: 1 }];
+
+    const before = await runAudits(ctxWith(['homepage']), {
+      categories,
+      audits: { cat: baseline },
+    });
+
+    // A sunset (deprecated) audit: weight 0 + informative display mode. Its
+    // failing check must not move the category score in either direction.
+    const withInformative = await runAudits(ctxWith(['homepage']), {
+      categories,
+      audits: {
+        cat: [
+          ...baseline,
+          makeReg(
+            meta({ id: 'i1', category: 'cat', weight: 0, scoreDisplayMode: 'informative' }),
+            () => result('fail', 0),
+          ),
+        ],
+      },
+    });
+
+    expect(before.categories[0].score).toBe(50);
+    expect(withInformative.categories[0].score).toBe(before.categories[0].score);
+    expect(withInformative.overallScore).toBe(before.overallScore);
+    // The informative check is still reported, just not scored.
+    expect(withInformative.checks.map((c) => c.id)).toContain('i1');
+  });
+
   it('executes audits across multiple batches (more than the batch size)', async () => {
     const regs: AuditRegistration[] = [];
     for (let i = 0; i < 25; i++) {
