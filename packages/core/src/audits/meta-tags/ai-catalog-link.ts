@@ -1,3 +1,14 @@
+// TODO(redeem): this audit survives only if rewritten (approved 2026-08-21).
+// Evidence dossier: docs/evidence/deletions/meta-tags/ai-catalog-link.md
+// Required rework:
+//   Grade B: the mechanism is written into two draft specs (ARD §6.1 and the LF Agent Card WG
+//   consuming guide) and is genuinely deployed in production with the exact rel token, verified by
+//   live fetch of neon.com and specification.website. That clears the bar for keeping the check.
+//   But it must be rewritten before it is worth anything: match `rel="ai-catalog"` (any type,
+//   ideally application/ai-catalog+json) in <head> AND accept an HTTP `Link: </...>;
+//   rel="ai-catalog"` header, and downgrade it to a nice-to-have relative to the well-known file,
+//   since the one known consumer resolves only the well-known path.
+
 import type { AuditMeta, AuditResult } from "../../types";
 import { Audit } from "../../audit";
 import type { CheckContext } from '../../check-context';

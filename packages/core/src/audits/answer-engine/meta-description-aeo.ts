@@ -1,3 +1,9 @@
+// TODO(redeem): this audit survives only if rewritten (pending triage approval). Target tier: scored.
+// Evidence dossier: docs/evidence/audits/answer-engine/meta-description-aeo.md
+// Required rework:
+//   Redeem via merge into meta-description: one audit, quality criteria without the invented 'AEO
+//   formula'.
+
 import type { AuditMeta, AuditResult } from "../../types";
 import { Audit } from "../../audit";
 import type { CheckContext } from '../../check-context';

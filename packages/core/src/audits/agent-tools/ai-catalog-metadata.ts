@@ -1,3 +1,14 @@
+// TODO(redeem): this audit survives only if rewritten (approved 2026-08-21).
+// Evidence dossier: docs/evidence/deletions/agent-tools/ai-catalog-metadata.md
+// Required rework:
+//   The underlying mechanism is real and consumer-backed (hf-discover's ranking is driven entirely
+//   by manifest metadata richness), which is grade-B evidence, so deletion would throw away a
+//   genuinely useful check. But the audit is currently wrong in every field it names. Keep only if
+//   rewritten to score ARD's actual schema: require specVersion + host{displayName,identifier} +
+//   entries[], and score entry quality on description, tags, capabilities and representativeQueries
+//   (the exact keys hf-discover indexes), with updatedAt/trustManifest as optional bonuses. Drop
+//   owner/contact/lastUpdated/services entirely.
+
 import type { AuditMeta, AuditResult } from "../../types";
 import { Audit } from "../../audit";
 import type { CheckContext } from '../../check-context';

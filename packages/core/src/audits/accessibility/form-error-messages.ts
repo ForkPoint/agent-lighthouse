@@ -1,3 +1,9 @@
+// TODO(redeem): this audit survives only if rewritten (pending triage approval). Target tier: scored.
+// Evidence dossier: docs/evidence/audits/accessibility/form-error-messages.md
+// Required rework:
+//   Rebuild: verify aria-describedby/aria-errormessage linkage on invalid-state inputs instead of
+//   current broken heuristic. Evidence: a11y-tree consumption by computer-use agents graded A.
+
 import type { AuditMeta, AuditResult } from "../../types";
 import { Audit } from "../../audit";
 import type { CheckContext } from '../../check-context';

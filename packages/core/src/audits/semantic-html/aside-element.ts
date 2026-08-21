@@ -1,3 +1,20 @@
+// TODO(redeem): this audit survives only if rewritten (approved 2026-08-21).
+// Evidence dossier: docs/evidence/deletions/semantic-html/aside-element.md
+// Required rework:
+//   Grade B => redeemable, and the audit's stated mechanism is essentially verbatim correct. Which
+//   consumer reads the signal, and where documented: (a) Mozilla Readability removes `<aside>` via
+//   `this._clean(articleContent, "aside")` in Readability.js — the extractor behind Firefox Reader
+//   Mode, Jina Reader's readability path, and a long tail of LLM/agent tools; (b) trafilatura
+//   removes `<aside>` via its MANUALLY_CLEANED list in trafilatura/settings.py — a standard
+//   extractor in LLM corpus pipelines; (c) Chromium exposes `<aside>` as a `complementary` landmark
+//   in the accessibility tree that Anthropic's browser use tool returns from `read_page`, which I
+//   verified directly by snapshotting a probe page. Save this audit, but fix the check: it should
+//   be conditional (only evaluate pages that plausibly HAVE supplementary content — detect
+//   sidebar/promo/related-links containers by class/id/position that are not wrapped in `<aside>`),
+//   never penalise a page that legitimately has none, and its guidance should state the extraction
+//   consequence explicitly (content inside `<aside>` is discarded by Readability and trafilatura,
+//   so never put citable facts there).
+
 import type { AuditMeta, AuditResult } from "../../types";
 import { Audit } from "../../audit";
 import type { CheckContext } from '../../check-context';

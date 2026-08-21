@@ -1,3 +1,9 @@
+// TODO(redeem): this audit survives only if rewritten (pending triage approval). Target tier: scored.
+// Evidence dossier: docs/evidence/audits/technical-readiness/cors-api-routes.md
+// Required rework:
+//   Keep scored but notApplicable unless site exposes a public API surface agents would call
+//   cross-origin.
+
 import type { AuditMeta, AuditResult } from "../../types";
 import { Audit } from "../../audit";
 import type { CheckContext } from '../../check-context';

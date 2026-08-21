@@ -1,3 +1,10 @@
+// TODO(redeem): this audit survives only if rewritten (pending triage approval). Target tier: experimental.
+// Evidence dossier: docs/evidence/audits/meta-tags/ai-content-declaration.md
+// Required rework:
+//   Evidence upgrade from delete: noai/noimageai/tdm-reservation declaration meta tags graded
+//   D/experimental — real emerging opt-out ecosystem, no ratified consumer yet. Experimental,
+//   unscored, rework to check the real directive names.
+
 import type { AuditMeta, AuditResult } from "../../types";
 import { Audit } from "../../audit";
 import type { CheckContext } from '../../check-context';

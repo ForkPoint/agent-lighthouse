@@ -1,3 +1,20 @@
+// TODO(redeem): this audit survives only if rewritten (approved 2026-08-21).
+// Evidence dossier: docs/evidence/deletions/generative-engine/trust-signals.md
+// Required rework:
+//   Grade B: there is strong, quantified, multi-model empirical data that trust and social-proof
+//   cues in retrieved page text change which source an AI answer engine cites — 252,000 controlled
+//   trials, 4-5 of 6 models significant, plus a +17% 'Authoritative' effect in the KDD'24 GEO
+//   benchmark. Per the rubric that makes it redeemable, and unlike the other three audits here it
+//   has a real measured mechanism behind it. But it must be re-specified to check what was actually
+//   measured rather than what reads well in a marketing deck: keep and strengthen
+//   ratings/reviews-based social proof (coordinating with review-signals.ts so they do not
+//   double-count), add checks for evidence-backed claims and comparison content, and delete the
+//   promotional-puffery patterns ('free shipping', 'secure checkout', 'money-back guarantee',
+//   'sustainable', 'organic', 'handcrafted', 'handmade') since the same study found promotional
+//   tone yields no consistent benefit and neutral phrasing wins where significant. Its weight
+//   should also be demoted relative to the gatekeeper factors — trust cues are explicitly the
+//   'smaller gains' tier.
+
 import type { AuditMeta, AuditResult } from "../../types";
 import { Audit } from "../../audit";
 import type { CheckContext } from '../../check-context';
