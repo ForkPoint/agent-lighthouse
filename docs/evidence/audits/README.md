@@ -1,6 +1,6 @@
 # Audit dossiers — all v1 audits
 
-One dossier per audit: what it checks, the 2026-08-20 code-review findings, graded evidence signals with sources, and current disposition. Companion documents: [evidence policy](../POLICY.md) · [deletion research](../deletions/README.md) · [NOT-A-FACTOR](../NOT-A-FACTOR.md) · [proposed new checks](../proposals/README.md).
+One dossier per audit: what it checks, the 2026-08-20 code-review findings, graded evidence signals with sources, and current disposition. Companion documents: [evidence policy](../POLICY.md) · [deletion research](../deletions/README.md) · [sunset audits](../sunset/README.md) · [proposed new checks](../proposals/README.md).
 
 207 audits. Dispositions marked "pending triage" await the merge/fix review; "approved 2026-08-21" reflect the accepted deletion-research verdicts.
 

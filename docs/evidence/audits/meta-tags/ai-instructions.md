@@ -46,7 +46,7 @@ _No dedicated evidence signal was researched for this audit in the 2026-08-20 pa
 
 ## Adversarial redemption research (2026-08-21)
 
-This audit was a delete candidate and went through dedicated adversarial research. Full dossier: [docs/evidence/deletions/meta-tags/ai-instructions.md](../../deletions/meta-tags/ai-instructions.md). Outcome: **dead**, grade D.
+This audit was a delete candidate and went through dedicated adversarial research. Full dossier: [docs/evidence/sunset/meta-tags/ai-instructions.md](../../sunset/meta-tags/ai-instructions.md). Outcome: **dead**, grade D.
 
 ## Review history
 

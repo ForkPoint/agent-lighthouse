@@ -5,7 +5,7 @@ import { AuditMetaSchema } from './schemas';
 
 const NOTICE = {
   notice: 'No consumer reads this signal.',
-  link: 'https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/NOT-A-FACTOR.md#accessibilityskip-nav',
+  link: 'https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/sunset/NOT-A-FACTOR.md#accessibilityskip-nav',
 };
 
 class DeprecatedAudit extends Audit {

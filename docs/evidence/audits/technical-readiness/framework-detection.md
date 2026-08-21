@@ -57,7 +57,7 @@ Declared `scoreDisplayMode: 'informative'`, but `scorer.ts` never reads that fie
 
 ## Adversarial redemption research (2026-08-21)
 
-This audit was a delete candidate and went through dedicated adversarial research. Full dossier: [docs/evidence/deletions/technical-readiness/framework-detection.md](../../deletions/technical-readiness/framework-detection.md). Outcome: **dead**, grade D.
+This audit was a delete candidate and went through dedicated adversarial research. Full dossier: [docs/evidence/sunset/technical-readiness/framework-detection.md](../../sunset/technical-readiness/framework-detection.md). Outcome: **dead**, grade D.
 
 ## Review history
 

@@ -54,7 +54,7 @@ The mechanism claimed here is simply false. The audit fails sites without a `per
 
 ## Adversarial redemption research (2026-08-21)
 
-This audit was a delete candidate and went through dedicated adversarial research. Full dossier: [docs/evidence/deletions/technical-readiness/permissions-policy.md](../../deletions/technical-readiness/permissions-policy.md). Outcome: **dead**, grade D.
+This audit was a delete candidate and went through dedicated adversarial research. Full dossier: [docs/evidence/sunset/technical-readiness/permissions-policy.md](../../sunset/technical-readiness/permissions-policy.md). Outcome: **dead**, grade D.
 
 ## Review history
 

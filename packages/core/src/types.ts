@@ -62,7 +62,7 @@ export interface AuditGuidance {
 
 export type ScoreDisplayMode = 'binary' | 'ternary' | 'informative';
 
-/** Public sunset notice for a deprecated audit (see docs/evidence/NOT-A-FACTOR.md). */
+/** Public sunset notice for a deprecated audit (see docs/evidence/sunset/NOT-A-FACTOR.md). */
 export interface DeprecationNotice {
   /** One sentence: why this signal is not a factor. */
   notice: string;

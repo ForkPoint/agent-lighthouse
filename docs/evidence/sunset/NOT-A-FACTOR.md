@@ -1,6 +1,8 @@
 # Not a factor — sunset audits
 
-18 audits shipped in Agent Lighthouse v1 claimed signals that our 2026-08-21 adversarial research could not redeem: no consumer reads them, or the only consumer publicly stopped. Per the [evidence policy](./POLICY.md) they are being sunset gracefully: one minor release as informative (weight 0) with a deprecation notice, removal in the next major. This page condenses why each one does not matter — with the evidence — so nobody has to re-litigate them, and so sites that were told to add these signals know they can stop.
+18 audits shipped in Agent Lighthouse v1 claimed signals that our 2026-08-21 adversarial research could not redeem: no consumer reads them, or the only consumer publicly stopped. Per the [evidence policy](../POLICY.md) a grade-D audit may not carry score weight, and no consumer was found for any of these — so they are **removed outright** in this major release rather than lingering as informative. This page condenses why each one does not matter — with the evidence — so nobody has to re-litigate them, and so sites that were told to add these signals know they can stop.
+
+Consumers that keyed on these check ids should read [`migration-map.json`](../../../packages/core/migration-map.json), which maps each removed v1 id to its slug, `status: "removed"`, and the anchor on this page.
 
 Each entry links its full research dossier (steelmanned claim, search trail, all sources).
 
@@ -12,7 +14,7 @@ Each entry links its full research dossier (steelmanned claim, search trail, all
 
 **Verdict:** Grade D. The a11y tree is genuinely read by named agents (Anthropic browser use tool), but nothing in that chain consumes a skip link: agents get the whole tree at once, so there is nothing to skip, and the `main` landmark already provides the addressable content boundary the audit says skip links provide.
 
-**Key sources:** [Computer use tool](https://platform.claude.com/docs/en/docs/agents-and-tools/tool-use/computer-use-tool) · [Browser use tool](https://platform.claude.com/docs/en/docs/agents-and-tools/tool-use/browser-use-tool) · [Aria snapshots](https://playwright.dev/docs/aria-snapshots) — full evidence: [dossier](./deletions/accessibility/skip-nav.md)
+**Key sources:** [Computer use tool](https://platform.claude.com/docs/en/docs/agents-and-tools/tool-use/computer-use-tool) · [Browser use tool](https://platform.claude.com/docs/en/docs/agents-and-tools/tool-use/browser-use-tool) · [Aria snapshots](https://playwright.dev/docs/aria-snapshots) — full evidence: [dossier](./accessibility/skip-nav.md)
 
 ### `agent-tools/ai-plugin-json`
 
@@ -22,7 +24,7 @@ Each entry links its full research dossier (steelmanned claim, search trail, all
 
 **Verdict:** Grade D: the sole documented consumer (ChatGPT plugins) was discontinued, OpenAI archived its official quickstart with an explicit 'superseded by GPTs' notice, and OpenAI removed the manifest spec from its documentation so thoroughly that the audit's own docsUrl now 404s. No successor vendor adopted the format; OpenAI itself moved to MCP via the Apps SDK.
 
-**Key sources:** [openai/plugins-quickstart (ARCHIVED) — official ChatGPT plugin quickstart](https://github.com/openai/plugins-quickstart) · [OpenAI plugin manifest documentation — removed (301 to 404)](https://platform.openai.com/docs/plugins/getting-started/plugin-manifest) · [OpenAI Apps SDK — current third-party extensibility, built on MCP](https://developers.openai.com/apps-sdk/) — full evidence: [dossier](./deletions/agent-tools/ai-plugin-json.md)
+**Key sources:** [openai/plugins-quickstart (ARCHIVED) — official ChatGPT plugin quickstart](https://github.com/openai/plugins-quickstart) · [OpenAI plugin manifest documentation — removed (301 to 404)](https://platform.openai.com/docs/plugins/getting-started/plugin-manifest) · [OpenAI Apps SDK — current third-party extensibility, built on MCP](https://developers.openai.com/apps-sdk/) — full evidence: [dossier](./agent-tools/ai-plugin-json.md)
 
 ### `agent-tools/data-action-ctas`
 
@@ -32,7 +34,7 @@ Each entry links its full research dossier (steelmanned claim, search trail, all
 
 **Verdict:** Grade D: speculative attribute with no documented consumer at any vendor, plus active namespace collision with Stimulus/Hotwire that makes the check unsound even as a heuristic (a Rails site passes for the wrong reason; a well-marked-up React site fails despite perfect semantics).
 
-**Key sources:** [Stimulus Reference — Actions](https://stimulus.hotwired.dev/reference/actions) · [Tools: Connectors and MCP](https://developers.openai.com/api/docs/guides/tools-connectors-mcp) · [Getting started with Claude in Chrome](https://support.claude.com/en/articles/12012173-getting-started-with-claude-in-chrome) — full evidence: [dossier](./deletions/agent-tools/data-action-ctas.md)
+**Key sources:** [Stimulus Reference — Actions](https://stimulus.hotwired.dev/reference/actions) · [Tools: Connectors and MCP](https://developers.openai.com/api/docs/guides/tools-connectors-mcp) · [Getting started with Claude in Chrome](https://support.claude.com/en/articles/12012173-getting-started-with-claude-in-chrome) — full evidence: [dossier](./agent-tools/data-action-ctas.md)
 
 ### `agent-tools/openapi-ai-instructions`
 
@@ -42,7 +44,7 @@ Each entry links its full research dossier (steelmanned claim, search trail, all
 
 **Verdict:** Grade D: an unregistered, vendor-less extension key with no documented consumer and adoption that is essentially self-referential (a single blogger's archive plus this framework's own site). The control comparison is what makes this conclusive — a real vendor-documented AI extension shows 6,464 hits while this shows 54, so the low count reflects invention rather than early-stage adoption.
 
-**Key sources:** [OpenAPI Initiative — Specification Extensions Registry](https://spec.openapis.org/registry/extension/) · [GitHub code search: x-ai-instructions vs x-openai-isConsequential](https://github.com/search?q=%22x-ai-instructions%22&type=code) · [GPT Actions — Introduction (checked for AI OpenAPI extensions)](https://developers.openai.com/api/docs/actions/introduction) — full evidence: [dossier](./deletions/agent-tools/openapi-ai-instructions.md)
+**Key sources:** [OpenAPI Initiative — Specification Extensions Registry](https://spec.openapis.org/registry/extension/) · [GitHub code search: x-ai-instructions vs x-openai-isConsequential](https://github.com/search?q=%22x-ai-instructions%22&type=code) · [GPT Actions — Introduction (checked for AI OpenAPI extensions)](https://developers.openai.com/api/docs/actions/introduction) — full evidence: [dossier](./agent-tools/openapi-ai-instructions.md)
 
 ### `agent-tools/webmcp-action-coverage`
 
@@ -52,7 +54,7 @@ Each entry links its full research dossier (steelmanned claim, search trail, all
 
 **Verdict:** Grade D. The audit's primary evidence source, /.well-known/webmcp, is not merely unspecified — it is a design the WebMCP explainer considered and rejected by name, and Chrome's docs state WebMCP is client-side-only with the page as the tool registry, making a static manifest structurally unreadable by any agent.
 
-**Key sources:** [WebMCP explainer — Alternatives Considered §2: Static Declarative Manifests](https://raw.githubusercontent.com/webmachinelearning/webmcp/main/README.md) · [Chrome modern-web-guidance: guides/webmcp/webmcp](https://raw.githubusercontent.com/GoogleChrome/modern-web-guidance-src/main/guides/webmcp/webmcp/guide.md) · [Agentic Commerce Protocol — Agentic Checkout Spec](https://developers.openai.com/commerce/specs/checkout) — full evidence: [dossier](./deletions/agent-tools/webmcp-action-coverage.md)
+**Key sources:** [WebMCP explainer — Alternatives Considered §2: Static Declarative Manifests](https://raw.githubusercontent.com/webmachinelearning/webmcp/main/README.md) · [Chrome modern-web-guidance: guides/webmcp/webmcp](https://raw.githubusercontent.com/GoogleChrome/modern-web-guidance-src/main/guides/webmcp/webmcp/guide.md) · [Agentic Commerce Protocol — Agentic Checkout Spec](https://developers.openai.com/commerce/specs/checkout) — full evidence: [dossier](./agent-tools/webmcp-action-coverage.md)
 
 ### `content-discoverability/navigation-json`
 
@@ -62,7 +64,7 @@ Each entry links its full research dossier (steelmanned claim, search trail, all
 
 **Verdict:** Grade D. No spec defines /navigation.json, no vendor crawler documents fetching it, no study measures an effect, and the wild instances are build-time docs configs rather than the audited artifact. Adoption as an agent signal is effectively zero, so it does not qualify as dead-but-informative either.
 
-**Key sources:** [SiteNavigationElement](https://schema.org/SiteNavigationElement) · [The /llms.txt file](https://llmstxt.org/) · [Web Model Context API (WebMCP) draft specification](https://webmachinelearning.github.io/webmcp/) — full evidence: [dossier](./deletions/content-discoverability/navigation-json.md)
+**Key sources:** [SiteNavigationElement](https://schema.org/SiteNavigationElement) · [The /llms.txt file](https://llmstxt.org/) · [Web Model Context API (WebMCP) draft specification](https://webmachinelearning.github.io/webmcp/) — full evidence: [dossier](./content-discoverability/navigation-json.md)
 
 ### `generative-engine/pagination-links`
 
@@ -72,7 +74,7 @@ Each entry links its full research dossier (steelmanned claim, search trail, all
 
 **Verdict:** Grade D. The only named consumer in history publicly stopped using the signal, no AI crawler or answer engine documents reading it, no empirical study measures it, and the specific form the audit checks — rel=prev/next on a head <link> element — is explicitly 'not allowed' by the WHATWG HTML Standard, so the audit's own remediation advice produces invalid HTML.
 
-**Key sources:** [Pagination and incremental page loading](https://developers.google.com/search/docs/specialty/ecommerce/pagination-and-incremental-page-loading) · [HTML Standard — 4.6.8 Link types (next, prev)](https://html.spec.whatwg.org/multipage/links.html#sec-link-types) · [Link Relation Types registry](https://www.iana.org/assignments/link-relations/link-relations.xhtml) — full evidence: [dossier](./deletions/generative-engine/pagination-links.md)
+**Key sources:** [Pagination and incremental page loading](https://developers.google.com/search/docs/specialty/ecommerce/pagination-and-incremental-page-loading) · [HTML Standard — 4.6.8 Link types (next, prev)](https://html.spec.whatwg.org/multipage/links.html#sec-link-types) · [Link Relation Types registry](https://www.iana.org/assignments/link-relations/link-relations.xhtml) — full evidence: [dossier](./generative-engine/pagination-links.md)
 
 ### `meta-tags/ai-instructions`
 
@@ -82,7 +84,7 @@ Each entry links its full research dossier (steelmanned claim, search trail, all
 
 **Verdict:** Grade D: no spec defines it, no vendor reads it, the one standards body working on the problem explicitly chose HTTP headers and robots.txt over embedded markup, and Google states it ignores unsupported meta tags outright.
 
-**Key sources:** [Meta tags and HTML attributes that Google supports](https://developers.google.com/search/docs/crawling-indexing/special-tags) · [AI features and your website](https://developers.google.com/search/docs/appearance/ai-features) · [draft-ietf-aipref-attach: Attaching AI Preferences to Content](https://datatracker.ietf.org/doc/draft-ietf-aipref-attach/) — full evidence: [dossier](./deletions/meta-tags/ai-instructions.md)
+**Key sources:** [Meta tags and HTML attributes that Google supports](https://developers.google.com/search/docs/crawling-indexing/special-tags) · [AI features and your website](https://developers.google.com/search/docs/appearance/ai-features) · [draft-ietf-aipref-attach: Attaching AI Preferences to Content](https://datatracker.ietf.org/doc/draft-ietf-aipref-attach/) — full evidence: [dossier](./meta-tags/ai-instructions.md)
 
 ### `meta-tags/llms-full-txt-link`
 
@@ -92,7 +94,7 @@ Each entry links its full research dossier (steelmanned claim, search trail, all
 
 **Verdict:** Grade D. This is a compound of two invented layers: a filename the spec never defines, plus a link-relation/MIME-type combination that appears in no spec and, per direct HTML inspection, on none of the major sites that actually publish the file — Anthropic, Vercel, Mintlify and Stripe all emit zero llms link tags.
 
-**Key sources:** [The /llms.txt file — link relation guidance](https://llmstxt.org/) · [GitHub Docs homepage HTML (live head inspection)](https://docs.github.com/en) · [Anthropic developer docs page HTML (live head inspection)](https://platform.claude.com/en/docs/overview) — full evidence: [dossier](./deletions/meta-tags/llms-full-txt-link.md)
+**Key sources:** [The /llms.txt file — link relation guidance](https://llmstxt.org/) · [GitHub Docs homepage HTML (live head inspection)](https://docs.github.com/en) · [Anthropic developer docs page HTML (live head inspection)](https://platform.claude.com/en/docs/overview) — full evidence: [dossier](./meta-tags/llms-full-txt-link.md)
 
 ### `meta-tags/mcp-discovery-link`
 
@@ -102,7 +104,7 @@ Each entry links its full research dossier (steelmanned claim, search trail, all
 
 **Verdict:** Grade D for the signal as implemented. The audit checks for `<link rel="alternate" type="application/json" title="MCP">` or rel="mcp-discovery" in HTML head — a construct that appears nowhere in MCP's specs, drafts, or SEPs (code search: 0 hits), that no MCP client parses, and that Anthropic's own connector docs contradict by requiring manual URL entry.
 
-**Key sources:** [MCP Specification 2026-07-28 — Discovery (server/discover)](https://modelcontextprotocol.io/specification/2026-07-28/server/discover.md) · [MCP Specification 2025-06-18 — Authorization](https://modelcontextprotocol.io/specification/2025-06-18/basic/authorization) · [SEP-1649: MCP Server Cards — HTTP Server Discovery via .well-known](https://github.com/modelcontextprotocol/modelcontextprotocol/issues/1649) — full evidence: [dossier](./deletions/meta-tags/mcp-discovery-link.md)
+**Key sources:** [MCP Specification 2026-07-28 — Discovery (server/discover)](https://modelcontextprotocol.io/specification/2026-07-28/server/discover.md) · [MCP Specification 2025-06-18 — Authorization](https://modelcontextprotocol.io/specification/2025-06-18/basic/authorization) · [SEP-1649: MCP Server Cards — HTTP Server Discovery via .well-known](https://github.com/modelcontextprotocol/modelcontextprotocol/issues/1649) — full evidence: [dossier](./meta-tags/mcp-discovery-link.md)
 
 ### `semantic-html/address-element`
 
@@ -112,7 +114,7 @@ Each entry links its full research dossier (steelmanned claim, search trail, all
 
 **Verdict:** Grade D. There is no consumer — not a crawler, not an extractor, not an agent. The a11y tree flattens `<address>` to an unnamed generic node indistinguishable from a div (verified live), trafilatura strips the tag entirely, and Google's own contact-info documentation routes exclusively through schema.org PostalAddress/telephone without ever naming the element.
 
-**Key sources:** [Local business (LocalBusiness) structured data](https://developers.google.com/search/docs/appearance/structured-data/local-business) · [WHATWG HTML — the address element](https://html.spec.whatwg.org/multipage/sections.html) · [trafilatura/settings.py — MANUALLY_STRIPPED](https://raw.githubusercontent.com/adbar/trafilatura/master/trafilatura/settings.py) — full evidence: [dossier](./deletions/semantic-html/address-element.md)
+**Key sources:** [Local business (LocalBusiness) structured data](https://developers.google.com/search/docs/appearance/structured-data/local-business) · [WHATWG HTML — the address element](https://html.spec.whatwg.org/multipage/sections.html) · [trafilatura/settings.py — MANUALLY_STRIPPED](https://raw.githubusercontent.com/adbar/trafilatura/master/trafilatura/settings.py) — full evidence: [dossier](./semantic-html/address-element.md)
 
 ### `semantic-html/decorative-images`
 
@@ -122,7 +124,7 @@ Each entry links its full research dossier (steelmanned claim, search trail, all
 
 **Verdict:** Grade D. The required signal is normatively redundant: HTML-AAM 1.0 §3.5.57 states an img with empty alt maps to role none/presentation already, and a live Chromium accessibility snapshot shows `<img alt="">` and `<img alt="" role="presentation">` producing an identical result — both absent from the tree.
 
-**Key sources:** [HTML Accessibility API Mappings 1.0 — §3.5.57 img element](https://www.w3.org/TR/html-aam-1.0/) · [Live Chromium accessibility snapshot of a probe page (own experiment)](https://playwright.dev/docs/aria-snapshots) · [ARIA in HTML](https://www.w3.org/TR/html-aria/) — full evidence: [dossier](./deletions/semantic-html/decorative-images.md)
+**Key sources:** [HTML Accessibility API Mappings 1.0 — §3.5.57 img element](https://www.w3.org/TR/html-aam-1.0/) · [Live Chromium accessibility snapshot of a probe page (own experiment)](https://playwright.dev/docs/aria-snapshots) · [ARIA in HTML](https://www.w3.org/TR/html-aria/) — full evidence: [dossier](./semantic-html/decorative-images.md)
 
 ### `structured-data/action-schema`
 
@@ -132,7 +134,7 @@ Each entry links its full research dossier (steelmanned claim, search trail, all
 
 **Verdict:** Grade D. The claimed mechanism does not correspond to how any shipping agentic-commerce system works: OpenAI/Stripe's ACP confirms transactions over an API/MCP surface and explicitly excludes semantic-markup sources, and Google routes reservations and orders through the Maps Booking API rather than page markup. Deployment is effectively nil (ConfirmAction < 1K domains globally).
 
-**Key sources:** [schema.org: ConfirmAction](https://schema.org/ConfirmAction) · [One Click Action reference (Gmail markup)](https://developers.google.com/workspace/gmail/markup/reference/one-click-action) · [Agentic Commerce Protocol](https://www.agenticcommerce.dev/) — full evidence: [dossier](./deletions/structured-data/action-schema.md)
+**Key sources:** [schema.org: ConfirmAction](https://schema.org/ConfirmAction) · [One Click Action reference (Gmail markup)](https://developers.google.com/workspace/gmail/markup/reference/one-click-action) · [Agentic Commerce Protocol](https://www.agenticcommerce.dev/) — full evidence: [dossier](./structured-data/action-schema.md)
 
 ### `structured-data/potential-action`
 
@@ -142,7 +144,7 @@ Each entry links its full research dossier (steelmanned claim, search trail, all
 
 **Verdict:** Grade D.
 
-**Key sources:** [schema.org current vocabulary (schemaorg-current-https.jsonld)](https://schema.org/version/latest/schemaorg-current-https.jsonld) · [Google Search documentation updates — sitelinks search box removed](https://developers.google.com/search/updates#bye-sitelinkbox) · [Local business (LocalBusiness) structured data](https://developers.google.com/search/docs/appearance/structured-data/local-business) — full evidence: [dossier](./deletions/structured-data/potential-action.md)
+**Key sources:** [schema.org current vocabulary (schemaorg-current-https.jsonld)](https://schema.org/version/latest/schemaorg-current-https.jsonld) · [Google Search documentation updates — sitelinks search box removed](https://developers.google.com/search/updates#bye-sitelinkbox) · [Local business (LocalBusiness) structured data](https://developers.google.com/search/docs/appearance/structured-data/local-business) — full evidence: [dossier](./structured-data/potential-action.md)
 
 ### `technical-readiness/framework-detection`
 
@@ -152,7 +154,7 @@ Each entry links its full research dossier (steelmanned claim, search trail, all
 
 **Verdict:** Grade D. There is no documented consumer: no vendor treats framework choice as an AI-readiness factor, and Google explicitly frames the issue as rendering outcome rather than tooling. The purpose-built agent-readiness literature does not include framework identity among its dimensions.
 
-**Key sources:** [JavaScript SEO Basics](https://developers.google.com/search/docs/crawling-indexing/javascript/javascript-seo-basics) · [Designing Agent-Ready Websites for AI Web Agents](https://arxiv.org/abs/2607.12056) · [OpenAI crawlers and user agents](https://developers.openai.com/api/docs/bots) — full evidence: [dossier](./deletions/technical-readiness/framework-detection.md)
+**Key sources:** [JavaScript SEO Basics](https://developers.google.com/search/docs/crawling-indexing/javascript/javascript-seo-basics) · [Designing Agent-Ready Websites for AI Web Agents](https://arxiv.org/abs/2607.12056) · [OpenAI crawlers and user agents](https://developers.openai.com/api/docs/bots) — full evidence: [dossier](./technical-readiness/framework-detection.md)
 
 ### `technical-readiness/permissions-policy`
 
@@ -162,7 +164,7 @@ Each entry links its full research dossier (steelmanned claim, search trail, all
 
 **Verdict:** Grade D. Not merely undocumented — disproven.
 
-**Key sources:** [Permissions-Policy header](https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Permissions-Policy) · [BrowserContext.grantPermissions()](https://playwright.dev/docs/api/class-browsercontext#browser-context-grant-permissions) · [How Agents Ask for Permission: User Permissions for AI Agents, from Interfaces to Enforcement](https://arxiv.org/html/2607.13718v2) — full evidence: [dossier](./deletions/technical-readiness/permissions-policy.md)
+**Key sources:** [Permissions-Policy header](https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Permissions-Policy) · [BrowserContext.grantPermissions()](https://playwright.dev/docs/api/class-browsercontext#browser-context-grant-permissions) · [How Agents Ask for Permission: User Permissions for AI Agents, from Interfaces to Enforcement](https://arxiv.org/html/2607.13718v2) — full evidence: [dossier](./technical-readiness/permissions-policy.md)
 
 ### `technical-readiness/preconnect-hints`
 
@@ -172,7 +174,7 @@ Each entry links its full research dossier (steelmanned claim, search trail, all
 
 **Verdict:** Grade D. The causal chain requires a renderer, and the dominant AI crawlers do not render — so for GPTBot, ClaudeBot and PerplexityBot the signal is inert by construction.
 
-**Key sources:** [The rise of the AI crawler](https://vercel.com/blog/the-rise-of-the-ai-crawler) · [Large site owner's guide to managing your crawl budget](https://developers.google.com/search/docs/crawling-indexing/large-site-managing-crawl-budget) · [Preconnect to required origins (uses-rel-preconnect)](https://developer.chrome.com/docs/lighthouse/performance/uses-rel-preconnect) — full evidence: [dossier](./deletions/technical-readiness/preconnect-hints.md)
+**Key sources:** [The rise of the AI crawler](https://vercel.com/blog/the-rise-of-the-ai-crawler) · [Large site owner's guide to managing your crawl budget](https://developers.google.com/search/docs/crawling-indexing/large-site-managing-crawl-budget) · [Preconnect to required origins (uses-rel-preconnect)](https://developer.chrome.com/docs/lighthouse/performance/uses-rel-preconnect) — full evidence: [dossier](./technical-readiness/preconnect-hints.md)
 
 ### `technical-readiness/referrer-policy`
 
@@ -182,8 +184,9 @@ Each entry links its full research dossier (steelmanned claim, search trail, all
 
 **Verdict:** Grade D. No documented consumer exists on the AI side, and the stated mechanism is mechanically backwards — the header controls outbound referrers from the site's own pages and cannot influence how any crawler or agent reads the site.
 
-**Key sources:** [Overview of OpenAI Crawlers](https://developers.openai.com/api/docs/bots) · [Google crawlers (user agents) overview](https://developers.google.com/search/docs/crawling-indexing/google-common-crawlers) · [Does Anthropic crawl data from the web, and how can site owners block the crawler?](https://support.claude.com/en/articles/8896518-does-anthropic-crawl-data-from-the-web-and-how-can-site-owners-block-the-crawler) — full evidence: [dossier](./deletions/technical-readiness/referrer-policy.md)
+**Key sources:** [Overview of OpenAI Crawlers](https://developers.openai.com/api/docs/bots) · [Google crawlers (user agents) overview](https://developers.google.com/search/docs/crawling-indexing/google-common-crawlers) · [Does Anthropic crawl data from the web, and how can site owners block the crawler?](https://support.claude.com/en/articles/8896518-does-anthropic-crawl-data-from-the-web-and-how-can-site-owners-block-the-crawler) — full evidence: [dossier](./technical-readiness/referrer-policy.md)
 
 ## History
 
 - 2026-08-21 — created from the adversarial redemption research pass (8 agents, 190 sources) after user review accepted all 32 verdicts.
+- 2026-08-21 — disposition changed from graceful sunset (one informative minor, removal next major) to outright removal in this major release. All 18 audits and their dossiers moved to `docs/evidence/sunset/`.
