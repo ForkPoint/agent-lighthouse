@@ -3,7 +3,6 @@
  * These describe ARIA roles/attributes and the HTML element spec used by the
  * accessibility checks. Loose typing (Record<string, any>) is intentional.
  */
-/* eslint-disable */
 // oxlint-disable
 
 // Source: https://www.w3.org/TR/wai-aria-1.1/#states_and_properties

@@ -178,7 +178,6 @@ export function uniqueArray<T>(arr1: T[], arr2: T[]): T[] {
   return arr1.concat(arr2).filter((elem, pos, arr) => arr.indexOf(elem) === pos);
 }
 
-/* eslint-disable */
 // oxlint-disable
 /** CSS.escape-style identifier escaping (from mathiasbynens). */
 export function escapeSelector(value: string): string {
@@ -222,7 +221,6 @@ export function escapeSelector(value: string): string {
   }
   return result;
 }
-/* eslint-enable */
 
 /**
  * memoize: memoization is a performance optimisation only. Correctness never

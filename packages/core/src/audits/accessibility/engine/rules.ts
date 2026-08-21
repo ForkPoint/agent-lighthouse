@@ -31,7 +31,7 @@ registerMatchers({
   accessibleTextVirtual: (v) => accessibleTextVirtual(v),
 });
 
-export type AxeStatus = 'pass' | 'fail' | 'incomplete' | 'inapplicable';
+export type RuleStatus = 'pass' | 'fail' | 'incomplete' | 'inapplicable';
 
 // ── matches predicates ───────────────────────────────────────────
 
@@ -283,7 +283,7 @@ export interface RuleNodeFinding {
   summary: string;
 }
 export interface RuleResult {
-  status: AxeStatus;
+  status: RuleStatus;
   nodes: RuleNodeFinding[];
 }
 
