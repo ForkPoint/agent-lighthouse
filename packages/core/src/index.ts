@@ -20,7 +20,7 @@ export {
 } from './gatherers/robots';
 export type { RobotsRule, RobotsGroup } from './gatherers/robots';
 export { probeAsBot } from './gatherers/bot-probe';
-export type { BotProbeResult } from './gatherers/bot-probe';
+export type { BotProbeResult, BotProbeSignal } from './gatherers/bot-probe';
 export { pagesOfType, judgePages } from './gatherers/pages';
 export type { PageJudgement } from './gatherers/pages';
 export type { CheckContext, CheckFn, PageContext } from './check-context';

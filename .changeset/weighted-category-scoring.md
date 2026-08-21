@@ -30,6 +30,6 @@ Two consequences worth calling out for anyone constructing `CheckResult` objects
 
 - `./gatherers/fetch-classify` — `classifyFetch`, `isRealFile`, `stripBom`, `normalizeNewlines`, and the `FetchClass` / `ExpectedKind` types. Classifies a fetched root file as `ok`, `soft-404`, or `error` from body evidence rather than trusting status 200.
 - `./gatherers/robots` — `parseRobots`, `matchesUserAgent`, `groupsForBot`, `isPathAllowed`, `isBlanketBlocked`, and the `RobotsRule` / `RobotsGroup` types.
-- `./gatherers/bot-probe` — `probeAsBot` and `BotProbeResult`, for detecting edge blocking that targets AI crawler user agents.
+- `./gatherers/bot-probe` — `probeAsBot`, `BotProbeResult`, and `BotProbeSignal`, for detecting edge blocking that targets AI crawler user agents. A result reports `signal: 'ok' | 'blocked' | 'inconclusive'`, where `inconclusive` means the probe never completed and is explicitly not a pass; the `edgeBlocked` boolean is a convenience mirror of `signal === 'blocked'`.
 - `./gatherers/pages` — `pagesOfType`, `judgePages`, and `PageJudgement`, for judging every crawled page instead of generalizing from the first one.
 - `topLevelJsonLd` and `allJsonLdNodes` — JSON-LD traversal with an explicit depth contract. `topLevelJsonLd` expands arrays and `@graph` while propagating `@context`, but does not hoist nested property objects; `allJsonLdNodes` walks the whole graph for audits that legitimately search deep.
