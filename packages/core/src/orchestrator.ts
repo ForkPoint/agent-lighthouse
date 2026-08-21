@@ -395,8 +395,10 @@ export async function runScan(url: string, options?: ScanOptions): Promise<ScanR
 
   const durationMs = Math.round(performance.now() - start);
 
+  // Informative checks carry no score and no fix worth surfacing, so they are
+  // advisory-only: they never become recommendations, top fails or top passes.
   const recommendations = allChecks
-    .filter((c) => c.status !== 'pass')
+    .filter((c) => c.status !== 'pass' && c.scoreDisplayMode !== 'informative')
     .slice()
     .sort((a: { priority: string }, b: { priority: string }) => {
       const order: Record<string, number> = { critical: 0, high: 1, medium: 2, low: 3 };
@@ -415,7 +417,7 @@ export async function runScan(url: string, options?: ScanOptions): Promise<ScanR
   }
 
   const topPasses = allChecks
-    .filter((c) => c.status === 'pass')
+    .filter((c) => c.status === 'pass' && c.scoreDisplayMode !== 'informative')
     .slice()
     .sort(
       (a: { id: string }, b: { id: string }) =>

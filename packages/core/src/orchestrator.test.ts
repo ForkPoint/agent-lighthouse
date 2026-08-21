@@ -387,6 +387,88 @@ describe('runScan — report assembly fallbacks', () => {
 });
 
 // ---------------------------------------------------------------------------
+// Informative checks are advisory-only: they never drive user-facing lists
+// ---------------------------------------------------------------------------
+
+describe('runScan — informative checks stay out of recommendations and top lists', () => {
+  it('omits informative checks from recommendations, topFails and topPasses', async () => {
+    const url = 'https://example.com/';
+    set(url, CONTENT_HTML);
+
+    const mk = (over: Record<string, unknown>) =>
+      ({
+        category: 'misc',
+        title: 't',
+        description: 'd',
+        score: 0,
+        scoreDisplayMode: 'binary',
+        impact: 'Low',
+        fix: 'f',
+        explanation: 'e',
+        details: {},
+        ...over,
+      }) as unknown;
+
+    const crafted: AuditRunResult = {
+      checks: [
+        mk({
+          id: 'info-fail',
+          description: 'info-fail-description',
+          status: 'fail',
+          priority: 'critical',
+          score: 0,
+          scoreDisplayMode: 'informative',
+        }),
+        mk({
+          id: 'real-fail',
+          description: 'real-fail-description',
+          status: 'fail',
+          priority: 'high',
+          score: 0,
+        }),
+        mk({
+          id: 'info-pass',
+          status: 'pass',
+          priority: 'low',
+          score: 1,
+          scoreDisplayMode: 'informative',
+        }),
+        mk({ id: 'real-pass', status: 'pass', priority: 'low', score: 1 }),
+      ] as AuditRunResult['checks'],
+      categories: [
+        {
+          id: 'misc',
+          name: 'Misc',
+          weight: 1,
+          score: 50,
+          checks: [],
+          passCount: 2,
+          warnCount: 0,
+          failCount: 2,
+        },
+      ],
+      overallScore: 50,
+    };
+    vi.mocked(runAudits).mockResolvedValueOnce(crafted);
+
+    const report = await runScan(url);
+
+    // `recommendations` is typed as CheckRecommendation (no `id`), so identify
+    // the entries by their description instead.
+    const recommendationDescriptions = report.recommendations.map((r) => r.description);
+    expect(recommendationDescriptions).not.toContain('info-fail-description');
+    expect(recommendationDescriptions).toContain('real-fail-description');
+
+    expect(report.topFails.map((c) => c.id)).not.toContain('info-fail');
+    expect(report.topFails.map((c) => c.id)).toContain('real-fail');
+
+    const topPassIds = report.topPasses.map((c) => c.id);
+    expect(topPassIds).not.toContain('info-pass');
+    expect(topPassIds).toContain('real-pass');
+  });
+});
+
+// ---------------------------------------------------------------------------
 // Progress events (options-bag API)
 // ---------------------------------------------------------------------------
 
