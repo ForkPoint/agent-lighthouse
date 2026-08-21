@@ -84,7 +84,7 @@ One dossier per audit: what it checks, the 2026-08-20 code-review findings, grad
 | 1.16 | [no-redirect-chains](./access-crawl-control/no-redirect-chains.md) | content-discoverability | fix | — | keep — fix required |
 | 1.17 | [canonical-links](./access-crawl-control/canonical.md) | content-discoverability | fix | — | keep — fix required |
 | 1.18 | [mobile-friendly](../sunset/content-discoverability/mobile-friendly.md) | content-discoverability | delete | — | sunset (2026-08-21) |
-| 1.19 | [fast-page-load](./content-discoverability/fast-page-load.md) | content-discoverability | fix | B | keep — fix required |
+| 1.19 | [fast-page-load](./content-extraction/server-responsiveness.md) | content-discoverability | fix | B | keep — fix required |
 | 1.20 | [no-broken-links](./content-discoverability/no-broken-links.md) | content-discoverability | fix | A | keep — fix required |
 | 1.21 | [navigation-json](./content-discoverability/navigation-json.md) | content-discoverability | delete | D | sunset (approved 2026-08-21) |
 | 1.22 | [no-orphan-pages](./content-discoverability/no-orphan-pages.md) | content-discoverability | merge | A | merge (approved 2026-08-21) |
@@ -135,7 +135,7 @@ One dossier per audit: what it checks, the 2026-08-20 code-review findings, grad
 | 4.1 | [meta-description](./meta-tags/meta-description.md) | meta-tags | fix | — | keep — fix required |
 | 4.2 | [meta-author](./meta-tags/meta-author.md) | meta-tags | fix | — | keep — fix required |
 | 4.3 | [canonical-url](./access-crawl-control/canonical-url.md) | meta-tags | fix | B | keep — fix required |
-| 4.4 | [language-attribute](./meta-tags/language-attribute.md) | meta-tags | fix | — | keep — fix required |
+| 4.4 | [language-attribute](./content-extraction/language-attribute.md) | meta-tags | fix | — | keep — fix required |
 | 4.5 | [unique-meta](./meta-tags/unique-meta.md) | meta-tags | fix | — | keep — fix required |
 | 4.6 | [core-open-graph](./meta-tags/core-open-graph.md) | meta-tags | fix | — | keep — fix required |
 | 4.7 | [og-type](./meta-tags/og-type.md) | meta-tags | fix | — | keep — fix required |
@@ -146,32 +146,32 @@ One dossier per audit: what it checks, the 2026-08-20 code-review findings, grad
 | 4.12 | [llms-full-txt-link](./meta-tags/llms-full-txt-link.md) | meta-tags | merge | D | sunset (approved 2026-08-21) |
 | 4.13 | [ai-content-declaration](./access-crawl-control/ai-content-declaration.md) | meta-tags | delete | D | proposed: redeem as experimental (pending triage) |
 | 4.14 | [ai-instructions](./meta-tags/ai-instructions.md) | meta-tags | delete | D | sunset (approved 2026-08-21) |
-| 4.15 | [markdown-alternate](./meta-tags/markdown-alternate.md) | meta-tags | fix | A | keep — fix required |
+| 4.15 | [markdown-alternate](./content-extraction/markdown-alternate.md) | meta-tags | fix | A | keep — fix required |
 | 4.16 | [rss-feed-link](./meta-tags/rss-feed-link.md) | meta-tags | fix | C | keep — fix required |
 | 4.17 | [mcp-discovery-link](./meta-tags/mcp-discovery-link.md) | meta-tags | delete | D | sunset (approved 2026-08-21) |
 | 4.18 | [openapi-link](./meta-tags/openapi-link.md) | meta-tags | delete | B | proposed: redeem as scored (pending triage) |
 | 4.19 | [ai-catalog-link](./meta-tags/ai-catalog-link.md) | meta-tags | delete | B | kept — rewrite required (approved 2026-08-21) |
 | 4.20 | [meta-robots](./access-crawl-control/meta-robots.md) | meta-tags | fix | A | keep — fix required |
-| 6.1 | [single-h1](./semantic-html/single-h1.md) | semantic-html | fix | B | keep — fix required |
-| 6.2 | [sequential-headings](./semantic-html/sequential-headings.md) | semantic-html | fix | B | keep — fix required |
-| 6.3 | [main-element](./semantic-html/main-element.md) | semantic-html | fix | A | keep — fix required |
-| 6.4 | [article-element](./semantic-html/article-element.md) | semantic-html | fix | A | keep — fix required |
-| 6.5 | [header-footer](./semantic-html/header-footer.md) | semantic-html | fix | A | keep — fix required |
-| 6.6 | [aside-element](./semantic-html/aside-element.md) | semantic-html | delete | B | kept — rewrite required (approved 2026-08-21) |
-| 6.7 | [section-headings](./semantic-html/section-headings.md) | semantic-html | fix | B | keep — fix required |
-| 6.8 | [semantic-lists](./semantic-html/semantic-lists.md) | semantic-html | fix | B | keep — fix required |
-| 6.9 | [data-tables](./semantic-html/data-tables.md) | semantic-html | fix | B | keep — fix required |
-| 6.10 | [code-language](./semantic-html/code-language.md) | semantic-html | fix | — | keep — fix required |
-| 6.11 | [time-element](./semantic-html/time-element.md) | semantic-html | fix | C | keep — fix required |
+| 6.1 | [single-h1](./content-extraction/single-h1.md) | semantic-html | fix | B | keep — fix required |
+| 6.2 | [sequential-headings](./content-extraction/sequential-headings.md) | semantic-html | fix | B | keep — fix required |
+| 6.3 | [main-element](./content-extraction/main-element.md) | semantic-html | fix | A | keep — fix required |
+| 6.4 | [article-element](./content-extraction/article-element.md) | semantic-html | fix | A | keep — fix required |
+| 6.5 | [header-footer](./content-extraction/header-footer.md) | semantic-html | fix | A | keep — fix required |
+| 6.6 | [aside-element](./content-extraction/aside-element.md) | semantic-html | delete | B | kept — rewrite required (approved 2026-08-21) |
+| 6.7 | [section-headings](./content-extraction/section-headings.md) | semantic-html | fix | B | keep — fix required |
+| 6.8 | [semantic-lists](./content-extraction/semantic-lists.md) | semantic-html | fix | B | keep — fix required |
+| 6.9 | [data-tables](./content-extraction/data-tables.md) | semantic-html | fix | B | keep — fix required |
+| 6.10 | [code-language](./content-extraction/code-language.md) | semantic-html | fix | — | keep — fix required |
+| 6.11 | [time-element](./content-extraction/time-element.md) | semantic-html | fix | C | keep — fix required |
 | 6.12 | [address-element](./semantic-html/address-element.md) | semantic-html | delete | D | sunset (approved 2026-08-21) |
-| 6.13 | [definition-elements](./semantic-html/definition-elements.md) | semantic-html | merge | B | merge (approved 2026-08-21) |
-| 6.14 | [content-depth](./semantic-html/content-depth.md) | semantic-html | fix | B | keep — fix required |
-| 6.15 | [image-alt-text](./semantic-html/image-alt-text.md) | semantic-html | fix | A | keep — fix required |
+| 6.13 | [definition-elements](./content-extraction/definition-elements.md) | semantic-html | merge | B | merge (approved 2026-08-21) |
+| 6.14 | [content-depth](./content-extraction/content-depth.md) | semantic-html | fix | B | keep — fix required |
+| 6.15 | [image-alt-text](./content-extraction/image-alt-text.md) | semantic-html | fix | A | keep — fix required |
 | 6.16 | [decorative-images](./semantic-html/decorative-images.md) | semantic-html | delete | D | sunset (approved 2026-08-21) |
-| 6.17 | [figure-figcaption](./semantic-html/figure-figcaption.md) | semantic-html | fix | C | keep — fix required |
-| 6.18 | [svg-bloat](./semantic-html/svg-bloat.md) | semantic-html | fix | B | keep — fix required |
-| 6.19 | [token-ratio](./semantic-html/token-ratio.md) | semantic-html | fix | B | keep — fix required |
-| 6.20 | [fake-headings](./semantic-html/fake-headings.md) | semantic-html | fix | B | keep — fix required |
+| 6.17 | [figure-figcaption](./content-extraction/figure-figcaption.md) | semantic-html | fix | C | keep — fix required |
+| 6.18 | [svg-bloat](./content-extraction/svg-bloat.md) | semantic-html | fix | B | keep — fix required |
+| 6.19 | [token-ratio](./content-extraction/token-ratio.md) | semantic-html | fix | B | keep — fix required |
+| 6.20 | [fake-headings](./content-extraction/fake-headings.md) | semantic-html | fix | B | keep — fix required |
 | 3.1 | [json-ld-present](./structured-data/json-ld-present.md) | structured-data | fix | A | keep — fix required |
 | 3.2 | [schema-validation](./structured-data/schema-validation.md) | structured-data | fix | — | keep — fix required |
 | 3.3 | [organization-schema](./structured-data/organization-schema.md) | structured-data | fix | — | keep — fix required |
@@ -203,8 +203,8 @@ One dossier per audit: what it checks, the 2026-08-20 code-review findings, grad
 | 8.9 | [cors-api-routes](./technical-readiness/cors-api-routes.md) | technical-readiness | delete | C | proposed: redeem as scored (pending triage) |
 | 8.10 | [correct-content-types](./technical-readiness/correct-content-types.md) | technical-readiness | fix | C | keep — fix required |
 | 8.11 | [cache-headers](./technical-readiness/cache-headers.md) | technical-readiness | merge | B | merge (approved 2026-08-21) |
-| 8.12 | [fast-response-time](./technical-readiness/fast-response-time.md) | technical-readiness | fix | B | keep — fix required |
-| 8.13 | [server-rendered](./technical-readiness/server-rendered.md) | technical-readiness | fix | B | keep — fix required |
+| 8.12 | [fast-response-time](./content-extraction/fast-response-time.md) | technical-readiness | fix | B | keep — fix required |
+| 8.13 | [server-rendered](./content-extraction/server-rendered.md) | technical-readiness | fix | B | keep — fix required |
 | 8.14 | [no-render-blocking](../sunset/technical-readiness/no-render-blocking.md) | technical-readiness | fix | D | sunset (2026-08-21) |
 | 8.15 | [image-dimensions](../sunset/technical-readiness/image-dimensions.md) | technical-readiness | fix | D | sunset (2026-08-21) |
 | 8.16 | [lcp-not-lazy](../sunset/technical-readiness/lcp-not-lazy.md) | technical-readiness | fix | D | sunset (2026-08-21) |

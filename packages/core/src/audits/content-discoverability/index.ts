@@ -11,6 +11,5 @@ export { SitemapLastmodAudit } from './sitemap-lastmod';
 export { RssFeedAudit } from './rss-feed';
 export { RssFeedContentAudit } from './rss-feed-content';
 export { InternalLinkingAudit } from './internal-linking';
-export { FastPageLoadAudit } from './fast-page-load';
 export { NoBrokenLinksAudit } from './no-broken-links';
 export { NoOrphanPagesAudit } from './no-orphan-pages';

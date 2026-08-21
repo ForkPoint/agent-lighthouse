@@ -6,6 +6,4 @@ export { CorsAiFilesAudit } from './cors-ai-files';
 export { CorsApiRoutesAudit } from './cors-api-routes';
 export { CorrectContentTypesAudit } from './correct-content-types';
 export { CacheHeadersAudit } from './cache-headers';
-export { FastResponseTimeAudit } from './fast-response-time';
-export { ServerRenderedAudit } from './server-rendered';
 export { NoBrokenAiEndpointsAudit } from './no-broken-ai-endpoints';

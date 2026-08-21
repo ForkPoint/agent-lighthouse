@@ -36,7 +36,7 @@ function reg(AuditClass: typeof Audit): AuditRegistration {
 
 // ── Imports ─────────────────────────────────────────────────────
 
-// Content Discoverability (16)
+// Content Discoverability (15)
 import {
   LlmsTxtExistsAudit,
   LlmsTxtBlockquoteAudit,
@@ -51,7 +51,6 @@ import {
   RssFeedAudit,
   RssFeedContentAudit,
   InternalLinkingAudit,
-  FastPageLoadAudit,
   NoBrokenLinksAudit,
   NoOrphanPagesAudit,
 } from './audits/content-discoverability';
@@ -118,11 +117,10 @@ import {
   ProductTransactionCertaintyAudit,
 } from './audits/structured-data';
 
-// Meta Tags (14)
+// Meta Tags (12)
 import {
   MetaDescriptionAudit,
   MetaAuthorAudit,
-  LanguageAttributeAudit,
   UniqueMetaAudit,
   CoreOpenGraphAudit,
   OgTypeAudit,
@@ -130,7 +128,6 @@ import {
   OgImageAltAudit,
   TwitterCardAudit,
   LlmsTxtLinkAudit,
-  MarkdownAlternateAudit,
   RssFeedLinkAudit,
   OpenApiLinkAudit,
   AiCatalogLinkAudit,
@@ -163,8 +160,11 @@ import {
   FormActionabilityAudit,
 } from './audits/agent-tools';
 
-// Semantic HTML (18)
+// Content Extraction (23) — v2 taxonomy category (Plan 3, Task 4)
 import {
+  FastPageLoadAudit,
+  LanguageAttributeAudit,
+  MarkdownAlternateAudit,
   SingleH1Audit,
   SequentialHeadingsAudit,
   MainElementAudit,
@@ -183,7 +183,9 @@ import {
   SvgBloatAudit,
   TokenRatioAudit,
   FakeHeadingsAudit,
-} from './audits/semantic-html';
+  FastResponseTimeAudit,
+  ServerRenderedAudit,
+} from './audits/content-extraction';
 
 // Accessibility — hand-rolled markup audits + engine-backed tree audits (21)
 import {
@@ -209,7 +211,7 @@ import {
   A11yPresentationConflictAudit,
 } from './audits/accessibility';
 
-// Technical Readiness (11)
+// Technical Readiness (9)
 import {
   HstsHeaderAudit,
   CspHeaderAudit,
@@ -219,8 +221,6 @@ import {
   CorsApiRoutesAudit,
   CorrectContentTypesAudit,
   CacheHeadersAudit,
-  FastResponseTimeAudit,
-  ServerRenderedAudit,
   NoBrokenAiEndpointsAudit,
 } from './audits/technical-readiness';
 
@@ -264,11 +264,11 @@ export const defaultConfig: ScanConfig = {
     { id: 'content-discoverability', name: 'Content Discoverability', weight: 0.15 },
     { id: 'access-crawl-control', name: 'Access & Crawl Control', weight: 0.08 },
     { id: 'structured-data', name: 'Structured Data & Schema Markup', weight: 0.12 },
-    { id: 'meta-tags', name: 'Meta Tags & AI Head Elements', weight: 0.08 },
+    { id: 'meta-tags', name: 'Meta Tags & AI Head Elements', weight: 0.07 },
     { id: 'agent-tools', name: 'AI Agent Tools & Action Surfaces', weight: 0.18 },
-    { id: 'semantic-html', name: 'Semantic HTML & Content Structure', weight: 0.08 },
+    { id: 'content-extraction', name: 'Content Extraction & Structure', weight: 0.1 },
     { id: 'accessibility', name: 'Accessibility & Agent Interaction', weight: 0.07 },
-    { id: 'technical-readiness', name: 'Technical Readiness & Security', weight: 0.09 },
+    { id: 'technical-readiness', name: 'Technical Readiness & Security', weight: 0.08 },
     { id: 'answer-engine', name: 'Answer Engine Optimization', weight: 0.07 },
     { id: 'generative-engine', name: 'Generative Engine Optimization', weight: 0.08 },
   ],
@@ -287,7 +287,6 @@ export const defaultConfig: ScanConfig = {
       reg(RssFeedAudit),
       reg(RssFeedContentAudit),
       reg(InternalLinkingAudit),
-      reg(FastPageLoadAudit),
       reg(NoBrokenLinksAudit),
       reg(NoOrphanPagesAudit),
     ],
@@ -352,7 +351,6 @@ export const defaultConfig: ScanConfig = {
     'meta-tags': [
       reg(MetaDescriptionAudit),
       reg(MetaAuthorAudit),
-      reg(LanguageAttributeAudit),
       reg(UniqueMetaAudit),
       reg(CoreOpenGraphAudit),
       reg(OgTypeAudit),
@@ -360,7 +358,6 @@ export const defaultConfig: ScanConfig = {
       reg(OgImageAltAudit),
       reg(TwitterCardAudit),
       reg(LlmsTxtLinkAudit),
-      reg(MarkdownAlternateAudit),
       reg(RssFeedLinkAudit),
       reg(OpenApiLinkAudit),
       reg(AiCatalogLinkAudit),
@@ -390,7 +387,10 @@ export const defaultConfig: ScanConfig = {
       reg(OpenApiDescriptionQualityAudit),
       reg(FormActionabilityAudit),
     ],
-    'semantic-html': [
+    'content-extraction': [
+      reg(FastPageLoadAudit),
+      reg(LanguageAttributeAudit),
+      reg(MarkdownAlternateAudit),
       reg(SingleH1Audit),
       reg(SequentialHeadingsAudit),
       reg(MainElementAudit),
@@ -409,6 +409,8 @@ export const defaultConfig: ScanConfig = {
       reg(SvgBloatAudit),
       reg(TokenRatioAudit),
       reg(FakeHeadingsAudit),
+      reg(FastResponseTimeAudit),
+      reg(ServerRenderedAudit),
     ],
     accessibility: [
       reg(AriaLandmarksAudit),
@@ -441,8 +443,6 @@ export const defaultConfig: ScanConfig = {
       reg(CorsApiRoutesAudit),
       reg(CorrectContentTypesAudit),
       reg(CacheHeadersAudit),
-      reg(FastResponseTimeAudit),
-      reg(ServerRenderedAudit),
       reg(NoBrokenAiEndpointsAudit),
     ],
     'answer-engine': [

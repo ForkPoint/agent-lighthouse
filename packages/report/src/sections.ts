@@ -18,11 +18,11 @@ export const SECTION_GROUPS: SectionGroupDef[] = [
   },
   {
     key: 'aiSearchOptimization',
-    categoryIds: ['answer-engine', 'generative-engine'],
+    categoryIds: ['answer-engine', 'generative-engine', 'content-extraction'],
   },
   {
     key: 'technicalFoundation',
-    categoryIds: ['structured-data', 'meta-tags', 'semantic-html', 'accessibility', 'technical-readiness'],
+    categoryIds: ['structured-data', 'meta-tags', 'accessibility', 'technical-readiness'],
   },
 ];
 

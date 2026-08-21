@@ -1,6 +1,5 @@
 export { MetaDescriptionAudit } from './meta-description';
 export { MetaAuthorAudit } from './meta-author';
-export { LanguageAttributeAudit } from './language-attribute';
 export { UniqueMetaAudit } from './unique-meta';
 export { CoreOpenGraphAudit } from './core-open-graph';
 export { OgTypeAudit } from './og-type';
@@ -8,7 +7,6 @@ export { OgSiteNameAudit } from './og-site-name';
 export { OgImageAltAudit } from './og-image-alt';
 export { TwitterCardAudit } from './twitter-card';
 export { LlmsTxtLinkAudit } from './llms-txt-link';
-export { MarkdownAlternateAudit } from './markdown-alternate';
 export { RssFeedLinkAudit } from './rss-feed-link';
 export { OpenApiLinkAudit } from './openapi-link';
 export { AiCatalogLinkAudit } from './ai-catalog-link';

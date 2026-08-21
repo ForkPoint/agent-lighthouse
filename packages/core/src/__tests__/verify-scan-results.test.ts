@@ -146,7 +146,7 @@ describe('Verify scan results against real sites', () => {
     it('4.4: example.com lang attribute check matches reality', () => {
       const $ = ctx.pages[0]!.$;
       const lang = $('html').attr('lang');
-      const result = allResults.get('4.4');
+      const result = allResults.get('content-extraction/language-attribute');
       expect(result).toBeDefined();
       if (lang && lang.length > 0) {
         expect(result!.status).toBe('pass');
@@ -190,7 +190,7 @@ describe('Verify scan results against real sites', () => {
     it('6.1: example.com h1 count check matches reality', () => {
       const $ = ctx.pages[0]!.$;
       const h1Count = $('h1').length;
-      const result = allResults.get('6.1');
+      const result = allResults.get('content-extraction/single-h1');
       expect(result).toBeDefined();
       if (h1Count === 1) {
         expect(result!.status).toBe('pass');
@@ -202,7 +202,7 @@ describe('Verify scan results against real sites', () => {
     it('6.3: example.com <main> element check matches reality', () => {
       const $ = ctx.pages[0]!.$;
       const hasMain = $('main').length > 0;
-      const result = allResults.get('6.3');
+      const result = allResults.get('content-extraction/main-element');
       expect(result).toBeDefined();
       if (hasMain) {
         expect(['pass', 'warn']).toContain(result!.status);
@@ -213,7 +213,7 @@ describe('Verify scan results against real sites', () => {
 
     it('6.14: example.com word count check matches reality', () => {
       const wordCount = getWordCount(ctx.pages[0]!.$);
-      const result = allResults.get('6.14');
+      const result = allResults.get('content-extraction/content-depth');
       expect(result).toBeDefined();
       if (wordCount > 300) {
         expect(['pass', 'warn']).toContain(result!.status);
@@ -238,7 +238,7 @@ describe('Verify scan results against real sites', () => {
 
     it('8.12: example.com response time check matches reality', () => {
       const fetchResult = ctx.pages[0]!.fetchResult;
-      const result = allResults.get('8.12');
+      const result = allResults.get('content-extraction/fast-response-time');
       expect(result).toBeDefined();
       if (fetchResult.error || fetchResult.status === 0) {
         // Request failed — check should fail
@@ -255,7 +255,7 @@ describe('Verify scan results against real sites', () => {
       const wordCount = getWordCount($);
       const mainText = $('main').text().trim() || $('body').text().trim();
       const hasContent = wordCount > 50 || mainText.length > 200;
-      const result = allResults.get('8.13');
+      const result = allResults.get('content-extraction/server-rendered');
       expect(result).toBeDefined();
       if (hasContent) {
         expect(result!.status).toBe('pass');
@@ -399,7 +399,7 @@ describe('Verify scan results against real sites', () => {
 
     it('4.4: docs.anthropic.com lang attribute check matches reality', () => {
       const lang = ctx.pages[0]!.$('html').attr('lang');
-      const result = allResults.get('4.4');
+      const result = allResults.get('content-extraction/language-attribute');
       expect(result).toBeDefined();
       if (lang) {
         expect(result!.status).toBe('pass');
@@ -410,7 +410,7 @@ describe('Verify scan results against real sites', () => {
 
     it('6.1: docs.anthropic.com h1 check matches reality', () => {
       const h1Count = ctx.pages[0]!.$('h1').length;
-      const result = allResults.get('6.1');
+      const result = allResults.get('content-extraction/single-h1');
       expect(result).toBeDefined();
       if (h1Count === 1) {
         expect(result!.status).toBe('pass');

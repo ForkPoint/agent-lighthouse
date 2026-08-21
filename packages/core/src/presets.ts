@@ -20,7 +20,7 @@ export const PRESETS: Record<PresetName, PresetOptions> = {
       'answer-engine': 10,
       'generative-engine': 5,
       'meta-tags': 5,
-      'semantic-html': 5,
+      'content-extraction': 5,
     },
   },
   saas: {
@@ -41,7 +41,7 @@ export const PRESETS: Record<PresetName, PresetOptions> = {
       'content-discoverability': 25,
       'generative-engine': 25,
       'answer-engine': 20,
-      'semantic-html': 15,
+      'content-extraction': 15,
       'meta-tags': 15,
     },
   },
