@@ -380,7 +380,7 @@ describe('runScan — report assembly fallbacks', () => {
     expect(report.recommendations).toHaveLength(2);
     // Both passes surface as top passes (sorted via the weight fallback).
     expect(report.topPasses).toHaveLength(2);
-    // No crawler-permissions / technical-readiness checks → those vitals are 0.
+    // No access-crawl-control / technical-readiness checks → those vitals are 0.
     expect(report.readinessVitals?.botAccessibility).toBe(0);
     expect(report.readinessVitals?.technical).toBe(0);
   });
@@ -406,7 +406,7 @@ describe('runScan — report assembly fallbacks', () => {
     const applicable = [
       mk({ id: '3.8', status: 'pass', priority: 'low', score: 1 }),
       mk({ id: '1.1', status: 'pass', priority: 'low', score: 1 }),
-      mk({ id: 'cp1', category: 'crawler-permissions', status: 'pass', priority: 'low', score: 1 }),
+      mk({ id: 'cp1', category: 'access-crawl-control', status: 'pass', priority: 'low', score: 1 }),
       mk({ id: 'tr1', category: 'technical-readiness', status: 'pass', priority: 'low', score: 1 }),
     ];
 
@@ -414,7 +414,7 @@ describe('runScan — report assembly fallbacks', () => {
     const naStubs = [
       mk({ id: '3.14', status: 'na', priority: 'low', score: 0 }),
       mk({ id: '1.2', status: 'na', priority: 'low', score: 0 }),
-      mk({ id: 'cp2', category: 'crawler-permissions', status: 'na', priority: 'low', score: 0 }),
+      mk({ id: 'cp2', category: 'access-crawl-control', status: 'na', priority: 'low', score: 0 }),
       mk({ id: 'tr2', category: 'technical-readiness', status: 'na', priority: 'low', score: 0 }),
     ];
 
@@ -555,7 +555,7 @@ describe('runScan — informative checks stay out of readiness vitals', () => {
     const baseChecks = [
       mk({ id: '1.1', category: 'content-structure' }),
       mk({ id: '1.2', category: 'content-structure' }),
-      mk({ id: 'cp-1', category: 'crawler-permissions' }),
+      mk({ id: 'cp-1', category: 'access-crawl-control' }),
     ];
 
     const craft = (checks: unknown[]): AuditRunResult => ({
@@ -592,7 +592,7 @@ describe('runScan — informative checks stay out of readiness vitals', () => {
       }),
       mk({
         id: 'cp-2',
-        category: 'crawler-permissions',
+        category: 'access-crawl-control',
         status: 'fail',
         score: 0,
         scoreDisplayMode: 'informative',

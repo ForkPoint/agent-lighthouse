@@ -23,7 +23,7 @@ export const TAG_SCAN_ERROR = 'scan-error';
 
 export const CATEGORY_WEIGHTS: Record<string, number> = {
   'content-discoverability': 0.15,
-  'crawler-permissions': 0.08,
+  'access-crawl-control': 0.08,
   'structured-data': 0.12,
   'meta-tags': 0.08,
   'agent-tools': 0.18,
@@ -36,7 +36,7 @@ export const CATEGORY_WEIGHTS: Record<string, number> = {
 
 export const CATEGORY_NAMES: Record<string, string> = {
   'content-discoverability': 'Content Discoverability',
-  'crawler-permissions': 'AI Crawler Permissions',
+  'access-crawl-control': 'Access & Crawl Control',
   'structured-data': 'Structured Data & Schema Markup',
   'meta-tags': 'Meta Tags & AI Head Elements',
   'agent-tools': 'AI Agent Tools & Action Surfaces',

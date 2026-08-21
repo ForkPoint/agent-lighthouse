@@ -10,7 +10,7 @@ exports[`Snapshot Regression Tests > matches baseline results for Labs Homepage 
   },
   {
     "explanation": "Site is served over HTTPS with a valid TLS connection.",
-    "id": "8.1",
+    "id": "access-crawl-control/https-enabled",
     "score": 1,
     "status": "pass",
   },

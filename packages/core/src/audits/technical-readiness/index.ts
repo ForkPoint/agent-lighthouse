@@ -1,4 +1,3 @@
-export { HttpsEnabledAudit } from './https-enabled';
 export { HstsHeaderAudit } from './hsts-header';
 export { CspHeaderAudit } from './csp-header';
 export { ContentTypeOptionsAudit } from './content-type-options';

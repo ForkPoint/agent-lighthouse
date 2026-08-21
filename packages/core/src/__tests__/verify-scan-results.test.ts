@@ -225,7 +225,7 @@ describe('Verify scan results against real sites', () => {
     // --- Technical Readiness (IDs: '8.x') ---
 
     it('8.1: example.com HTTPS check matches reality', () => {
-      const result = allResults.get('8.1');
+      const result = allResults.get('access-crawl-control/https-enabled');
       expect(result).toBeDefined();
       const page = ctx.pages[0];
       if (page && page.fetchResult.status === 200) {
@@ -373,7 +373,7 @@ describe('Verify scan results against real sites', () => {
     }, TIMEOUT);
 
     it('8.1: docs.anthropic.com HTTPS check matches reality', () => {
-      const result = allResults.get('8.1');
+      const result = allResults.get('access-crawl-control/https-enabled');
       expect(result).toBeDefined();
       const page = ctx.pages[0];
       // HTTPS is used; if homepage returns 200, expect pass; otherwise warn

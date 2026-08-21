@@ -36,7 +36,7 @@ function reg(AuditClass: typeof Audit): AuditRegistration {
 
 // ── Imports ─────────────────────────────────────────────────────
 
-// Content Discoverability (22)
+// Content Discoverability (16)
 import {
   LlmsTxtExistsAudit,
   LlmsTxtBlockquoteAudit,
@@ -50,18 +50,18 @@ import {
   SitemapLastmodAudit,
   RssFeedAudit,
   RssFeedContentAudit,
-  NoNoindexAudit,
-  NoNofollowAudit,
   InternalLinkingAudit,
-  NoRedirectChainsAudit,
-  CanonicalLinksAudit,
   FastPageLoadAudit,
   NoBrokenLinksAudit,
   NoOrphanPagesAudit,
 } from './audits/content-discoverability';
 
-// Crawler Permissions (28)
+// Access & Crawl Control (36) — v2 taxonomy category (Plan 3, Task 3)
 import {
+  NoNoindexAudit,
+  NoNofollowAudit,
+  NoRedirectChainsAudit,
+  CanonicalLinksAudit,
   GptbotAudit,
   GoogleExtendedAudit,
   AnthropicAudit,
@@ -90,7 +90,11 @@ import {
   NoBotDetectionAudit,
   TdmRepAudit,
   AgentGovernanceAudit,
-} from './audits/crawler-permissions';
+  CanonicalUrlAudit,
+  AiContentDeclarationAudit,
+  MetaRobotsAudit,
+  HttpsEnabledAudit,
+} from './audits/access-crawl-control';
 
 // Structured Data (18)
 import {
@@ -114,11 +118,10 @@ import {
   ProductTransactionCertaintyAudit,
 } from './audits/structured-data';
 
-// Meta Tags (17)
+// Meta Tags (14)
 import {
   MetaDescriptionAudit,
   MetaAuthorAudit,
-  CanonicalUrlAudit,
   LanguageAttributeAudit,
   UniqueMetaAudit,
   CoreOpenGraphAudit,
@@ -127,12 +130,10 @@ import {
   OgImageAltAudit,
   TwitterCardAudit,
   LlmsTxtLinkAudit,
-  AiContentDeclarationAudit,
   MarkdownAlternateAudit,
   RssFeedLinkAudit,
   OpenApiLinkAudit,
   AiCatalogLinkAudit,
-  MetaRobotsAudit,
 } from './audits/meta-tags';
 
 // Agent Tools (23)
@@ -208,9 +209,8 @@ import {
   A11yPresentationConflictAudit,
 } from './audits/accessibility';
 
-// Technical Readiness (17)
+// Technical Readiness (11)
 import {
-  HttpsEnabledAudit,
   HstsHeaderAudit,
   CspHeaderAudit,
   ContentTypeOptionsAudit,
@@ -262,7 +262,7 @@ import {
 export const defaultConfig: ScanConfig = {
   categories: [
     { id: 'content-discoverability', name: 'Content Discoverability', weight: 0.15 },
-    { id: 'crawler-permissions', name: 'AI Crawler Permissions', weight: 0.08 },
+    { id: 'access-crawl-control', name: 'Access & Crawl Control', weight: 0.08 },
     { id: 'structured-data', name: 'Structured Data & Schema Markup', weight: 0.12 },
     { id: 'meta-tags', name: 'Meta Tags & AI Head Elements', weight: 0.08 },
     { id: 'agent-tools', name: 'AI Agent Tools & Action Surfaces', weight: 0.18 },
@@ -286,16 +286,16 @@ export const defaultConfig: ScanConfig = {
       reg(SitemapLastmodAudit),
       reg(RssFeedAudit),
       reg(RssFeedContentAudit),
-      reg(NoNoindexAudit),
-      reg(NoNofollowAudit),
       reg(InternalLinkingAudit),
-      reg(NoRedirectChainsAudit),
-      reg(CanonicalLinksAudit),
       reg(FastPageLoadAudit),
       reg(NoBrokenLinksAudit),
       reg(NoOrphanPagesAudit),
     ],
-    'crawler-permissions': [
+    'access-crawl-control': [
+      reg(NoNoindexAudit),
+      reg(NoNofollowAudit),
+      reg(NoRedirectChainsAudit),
+      reg(CanonicalLinksAudit),
       reg(GptbotAudit),
       reg(GoogleExtendedAudit),
       reg(AnthropicAudit),
@@ -324,6 +324,10 @@ export const defaultConfig: ScanConfig = {
       reg(NoBotDetectionAudit),
       reg(TdmRepAudit),
       reg(AgentGovernanceAudit),
+      reg(CanonicalUrlAudit),
+      reg(AiContentDeclarationAudit),
+      reg(MetaRobotsAudit),
+      reg(HttpsEnabledAudit),
     ],
     'structured-data': [
       reg(JsonLdPresentAudit),
@@ -348,7 +352,6 @@ export const defaultConfig: ScanConfig = {
     'meta-tags': [
       reg(MetaDescriptionAudit),
       reg(MetaAuthorAudit),
-      reg(CanonicalUrlAudit),
       reg(LanguageAttributeAudit),
       reg(UniqueMetaAudit),
       reg(CoreOpenGraphAudit),
@@ -357,12 +360,10 @@ export const defaultConfig: ScanConfig = {
       reg(OgImageAltAudit),
       reg(TwitterCardAudit),
       reg(LlmsTxtLinkAudit),
-      reg(AiContentDeclarationAudit),
       reg(MarkdownAlternateAudit),
       reg(RssFeedLinkAudit),
       reg(OpenApiLinkAudit),
       reg(AiCatalogLinkAudit),
-      reg(MetaRobotsAudit),
     ],
     'agent-tools': [
       reg(OpenApiExistsAudit),
@@ -432,7 +433,6 @@ export const defaultConfig: ScanConfig = {
       reg(A11yPresentationConflictAudit),
     ],
     'technical-readiness': [
-      reg(HttpsEnabledAudit),
       reg(HstsHeaderAudit),
       reg(CspHeaderAudit),
       reg(ContentTypeOptionsAudit),

@@ -15,7 +15,7 @@ export const PRESETS: Record<PresetName, PresetOptions> = {
     customWeights: {
       'structured-data': 25,
       'agent-tools': 25,
-      'crawler-permissions': 15,
+      'access-crawl-control': 15,
       'content-discoverability': 10,
       'answer-engine': 10,
       'generative-engine': 5,
@@ -29,7 +29,7 @@ export const PRESETS: Record<PresetName, PresetOptions> = {
     customWeights: {
       'agent-tools': 30,
       'content-discoverability': 20,
-      'crawler-permissions': 20,
+      'access-crawl-control': 20,
       'technical-readiness': 15,
       'answer-engine': 15,
     },

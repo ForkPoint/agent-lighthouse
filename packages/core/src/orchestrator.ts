@@ -523,7 +523,7 @@ function calculateReadinessVitals(
       '10.7',
       '10.8',
     ]),
-    botAccessibility: getCategoryScoreByPrefix('crawler-permissions'),
+    botAccessibility: getCategoryScoreByPrefix('access-crawl-control'),
     technical: getCategoryScoreByPrefix('technical-readiness'),
   };
 }

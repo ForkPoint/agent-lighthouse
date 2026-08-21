@@ -78,45 +78,45 @@ One dossier per audit: what it checks, the 2026-08-20 code-review findings, grad
 | 1.10 | [sitemap-lastmod](./content-discoverability/sitemap-lastmod.md) | content-discoverability | fix | A | keep — fix required |
 | 1.11 | [rss-feed](./content-discoverability/rss-feed.md) | content-discoverability | fix | B | keep — fix required |
 | 1.12 | [rss-feed-content](./content-discoverability/rss-feed-content.md) | content-discoverability | fix | — | keep — fix required |
-| 1.13 | [no-noindex](./content-discoverability/no-noindex.md) | content-discoverability | fix | — | keep — fix required |
-| 1.14 | [no-nofollow](./content-discoverability/no-nofollow.md) | content-discoverability | fix | A | keep — fix required |
+| 1.13 | [no-noindex](./access-crawl-control/no-noindex.md) | content-discoverability | fix | — | keep — fix required |
+| 1.14 | [no-nofollow](./access-crawl-control/no-nofollow.md) | content-discoverability | fix | A | keep — fix required |
 | 1.15 | [internal-linking](./content-discoverability/internal-linking.md) | content-discoverability | fix | A | keep — fix required |
-| 1.16 | [no-redirect-chains](./content-discoverability/no-redirect-chains.md) | content-discoverability | fix | — | keep — fix required |
-| 1.17 | [canonical-links](./content-discoverability/canonical-links.md) | content-discoverability | fix | — | keep — fix required |
+| 1.16 | [no-redirect-chains](./access-crawl-control/no-redirect-chains.md) | content-discoverability | fix | — | keep — fix required |
+| 1.17 | [canonical-links](./access-crawl-control/canonical.md) | content-discoverability | fix | — | keep — fix required |
 | 1.18 | [mobile-friendly](../sunset/content-discoverability/mobile-friendly.md) | content-discoverability | delete | — | sunset (2026-08-21) |
 | 1.19 | [fast-page-load](./content-discoverability/fast-page-load.md) | content-discoverability | fix | B | keep — fix required |
 | 1.20 | [no-broken-links](./content-discoverability/no-broken-links.md) | content-discoverability | fix | A | keep — fix required |
 | 1.21 | [navigation-json](./content-discoverability/navigation-json.md) | content-discoverability | delete | D | sunset (approved 2026-08-21) |
 | 1.22 | [no-orphan-pages](./content-discoverability/no-orphan-pages.md) | content-discoverability | merge | A | merge (approved 2026-08-21) |
 | 1.23 | [commerce-links](../sunset/content-discoverability/commerce-links.md) | content-discoverability | fix | D | sunset (2026-08-21) |
-| 2.1 | [gptbot](./crawler-permissions/gptbot.md) | crawler-permissions | fix | A | keep — fix required |
-| 2.2 | [google-extended](./crawler-permissions/google-extended.md) | crawler-permissions | fix | A | keep — fix required |
-| 2.3 | [anthropic](./crawler-permissions/anthropic.md) | crawler-permissions | fix | A | keep — fix required |
-| 2.4 | [perplexitybot](./crawler-permissions/perplexitybot.md) | crawler-permissions | fix | A | keep — fix required |
-| 2.5 | [applebot-extended](./crawler-permissions/applebot-extended.md) | crawler-permissions | fix | A | keep — fix required |
-| 2.6 | [ccbot](./crawler-permissions/ccbot.md) | crawler-permissions | fix | A | keep — fix required |
-| 2.7 | [meta-external-agent](./crawler-permissions/meta-external-agent.md) | crawler-permissions | fix | A | keep — fix required |
-| 2.8 | [amazonbot](./crawler-permissions/amazonbot.md) | crawler-permissions | fix | A | keep — fix required |
-| 2.9 | [bytespider](./crawler-permissions/bytespider.md) | crawler-permissions | delete | C | proposed: redeem as scored (pending triage) |
-| 2.10 | [cohere-ai](./crawler-permissions/cohere-ai.md) | crawler-permissions | delete | C | proposed: redeem as scored (pending triage) |
-| 2.11 | [youbot](./crawler-permissions/youbot.md) | crawler-permissions | delete | A | proposed: redeem as scored (pending triage) |
-| 2.12 | [diffbot](./crawler-permissions/diffbot.md) | crawler-permissions | delete | C | proposed: redeem as scored (pending triage) |
-| 2.13 | [ai2bot](./crawler-permissions/ai2bot.md) | crawler-permissions | delete | B | proposed: redeem as scored (pending triage) |
-| 2.14 | [chatgpt-user](./crawler-permissions/chatgpt-user.md) | crawler-permissions | fix | A | keep — fix required |
-| 2.15 | [claude-user](./crawler-permissions/claude-user.md) | crawler-permissions | fix | A | keep — fix required |
-| 2.16 | [oai-searchbot](./crawler-permissions/oai-searchbot.md) | crawler-permissions | fix | A | keep — fix required |
-| 2.17 | [meta-external-fetcher](./crawler-permissions/meta-external-fetcher.md) | crawler-permissions | fix | A | keep — fix required |
-| 2.18 | [bravebot](./crawler-permissions/bravebot.md) | crawler-permissions | fix | C | keep — fix required |
-| 2.19 | [duckassistbot](./crawler-permissions/duckassistbot.md) | crawler-permissions | fix | A | keep — fix required |
-| 2.20 | [mistralai-user](./crawler-permissions/mistralai-user.md) | crawler-permissions | fix | A | keep — fix required |
-| 2.21 | [claude-searchbot](./crawler-permissions/claude-searchbot.md) | crawler-permissions | fix | A | keep — fix required |
-| 2.22 | [no-blanket-block](./crawler-permissions/no-blanket-block.md) | crawler-permissions | fix | B | keep — fix required |
-| 2.23 | [sensitive-paths](./crawler-permissions/sensitive-paths.md) | crawler-permissions | delete | A | kept — rewrite required (approved 2026-08-21) |
-| 2.24 | [crawl-delay](./crawler-permissions/crawl-delay.md) | crawler-permissions | fix | C | keep — fix required |
-| 2.25 | [meta-robots-not-blocking](./crawler-permissions/meta-robots-not-blocking.md) | crawler-permissions | fix | — | keep — fix required |
-| 2.26 | [no-bot-detection](./crawler-permissions/no-bot-detection.md) | crawler-permissions | fix | — | keep — fix required |
-| 2.27 | [tdm-rep](./crawler-permissions/tdm-rep.md) | crawler-permissions | delete | — | proposed: redeem as experimental (pending triage) |
-| 2.28 | [agent-governance](./crawler-permissions/agent-governance.md) | crawler-permissions | fix | — | keep — fix required |
+| 2.1 | [gptbot](./access-crawl-control/gptbot.md) | crawler-permissions | fix | A | keep — fix required |
+| 2.2 | [google-extended](./access-crawl-control/google-extended.md) | crawler-permissions | fix | A | keep — fix required |
+| 2.3 | [anthropic](./access-crawl-control/anthropic-ai.md) | crawler-permissions | fix | A | keep — fix required |
+| 2.4 | [perplexitybot](./access-crawl-control/perplexitybot.md) | crawler-permissions | fix | A | keep — fix required |
+| 2.5 | [applebot-extended](./access-crawl-control/applebot-extended.md) | crawler-permissions | fix | A | keep — fix required |
+| 2.6 | [ccbot](./access-crawl-control/ccbot.md) | crawler-permissions | fix | A | keep — fix required |
+| 2.7 | [meta-external-agent](./access-crawl-control/meta-external-agent.md) | crawler-permissions | fix | A | keep — fix required |
+| 2.8 | [amazonbot](./access-crawl-control/amazonbot.md) | crawler-permissions | fix | A | keep — fix required |
+| 2.9 | [bytespider](./access-crawl-control/bytespider.md) | crawler-permissions | delete | C | proposed: redeem as scored (pending triage) |
+| 2.10 | [cohere-ai](./access-crawl-control/cohere-ai.md) | crawler-permissions | delete | C | proposed: redeem as scored (pending triage) |
+| 2.11 | [youbot](./access-crawl-control/youbot.md) | crawler-permissions | delete | A | proposed: redeem as scored (pending triage) |
+| 2.12 | [diffbot](./access-crawl-control/diffbot.md) | crawler-permissions | delete | C | proposed: redeem as scored (pending triage) |
+| 2.13 | [ai2bot](./access-crawl-control/ai2bot.md) | crawler-permissions | delete | B | proposed: redeem as scored (pending triage) |
+| 2.14 | [chatgpt-user](./access-crawl-control/chatgpt-user.md) | crawler-permissions | fix | A | keep — fix required |
+| 2.15 | [claude-user](./access-crawl-control/claude-user.md) | crawler-permissions | fix | A | keep — fix required |
+| 2.16 | [oai-searchbot](./access-crawl-control/oai-searchbot.md) | crawler-permissions | fix | A | keep — fix required |
+| 2.17 | [meta-external-fetcher](./access-crawl-control/meta-external-fetcher.md) | crawler-permissions | fix | A | keep — fix required |
+| 2.18 | [bravebot](./access-crawl-control/bravebot.md) | crawler-permissions | fix | C | keep — fix required |
+| 2.19 | [duckassistbot](./access-crawl-control/duckassistbot.md) | crawler-permissions | fix | A | keep — fix required |
+| 2.20 | [mistralai-user](./access-crawl-control/mistralai-user.md) | crawler-permissions | fix | A | keep — fix required |
+| 2.21 | [claude-searchbot](./access-crawl-control/claude-searchbot.md) | crawler-permissions | fix | A | keep — fix required |
+| 2.22 | [no-blanket-block](./access-crawl-control/no-blanket-block.md) | crawler-permissions | fix | B | keep — fix required |
+| 2.23 | [sensitive-paths](./access-crawl-control/sensitive-paths.md) | crawler-permissions | delete | A | kept — rewrite required (approved 2026-08-21) |
+| 2.24 | [crawl-delay](./access-crawl-control/crawl-delay.md) | crawler-permissions | fix | C | keep — fix required |
+| 2.25 | [meta-robots-not-blocking](./access-crawl-control/robots-directives.md) | crawler-permissions | fix | — | keep — fix required |
+| 2.26 | [no-bot-detection](./access-crawl-control/no-bot-detection.md) | crawler-permissions | fix | — | keep — fix required |
+| 2.27 | [tdm-rep](./access-crawl-control/tdm-rep.md) | crawler-permissions | delete | — | proposed: redeem as experimental (pending triage) |
+| 2.28 | [agent-governance](./access-crawl-control/agent-governance.md) | crawler-permissions | fix | — | keep — fix required |
 | 10.1 | [named-author](./generative-engine/named-author.md) | generative-engine | fix | — | keep — fix required |
 | 10.2 | [author-same-as](./generative-engine/author-same-as.md) | generative-engine | fix | C | keep — fix required |
 | 10.3 | [author-page](./generative-engine/author-page.md) | generative-engine | fix | C | keep — fix required |
@@ -134,7 +134,7 @@ One dossier per audit: what it checks, the 2026-08-20 code-review findings, grad
 | 10.15 | [descriptive-urls](./generative-engine/descriptive-urls.md) | generative-engine | fix | C | keep — fix required |
 | 4.1 | [meta-description](./meta-tags/meta-description.md) | meta-tags | fix | — | keep — fix required |
 | 4.2 | [meta-author](./meta-tags/meta-author.md) | meta-tags | fix | — | keep — fix required |
-| 4.3 | [canonical-url](./meta-tags/canonical-url.md) | meta-tags | fix | B | keep — fix required |
+| 4.3 | [canonical-url](./access-crawl-control/canonical-url.md) | meta-tags | fix | B | keep — fix required |
 | 4.4 | [language-attribute](./meta-tags/language-attribute.md) | meta-tags | fix | — | keep — fix required |
 | 4.5 | [unique-meta](./meta-tags/unique-meta.md) | meta-tags | fix | — | keep — fix required |
 | 4.6 | [core-open-graph](./meta-tags/core-open-graph.md) | meta-tags | fix | — | keep — fix required |
@@ -144,14 +144,14 @@ One dossier per audit: what it checks, the 2026-08-20 code-review findings, grad
 | 4.10 | [twitter-card](./meta-tags/twitter-card.md) | meta-tags | delete | C | proposed: redeem as informative (pending triage) |
 | 4.11 | [llms-txt-link](./meta-tags/llms-txt-link.md) | meta-tags | fix | C | keep — fix required |
 | 4.12 | [llms-full-txt-link](./meta-tags/llms-full-txt-link.md) | meta-tags | merge | D | sunset (approved 2026-08-21) |
-| 4.13 | [ai-content-declaration](./meta-tags/ai-content-declaration.md) | meta-tags | delete | D | proposed: redeem as experimental (pending triage) |
+| 4.13 | [ai-content-declaration](./access-crawl-control/ai-content-declaration.md) | meta-tags | delete | D | proposed: redeem as experimental (pending triage) |
 | 4.14 | [ai-instructions](./meta-tags/ai-instructions.md) | meta-tags | delete | D | sunset (approved 2026-08-21) |
 | 4.15 | [markdown-alternate](./meta-tags/markdown-alternate.md) | meta-tags | fix | A | keep — fix required |
 | 4.16 | [rss-feed-link](./meta-tags/rss-feed-link.md) | meta-tags | fix | C | keep — fix required |
 | 4.17 | [mcp-discovery-link](./meta-tags/mcp-discovery-link.md) | meta-tags | delete | D | sunset (approved 2026-08-21) |
 | 4.18 | [openapi-link](./meta-tags/openapi-link.md) | meta-tags | delete | B | proposed: redeem as scored (pending triage) |
 | 4.19 | [ai-catalog-link](./meta-tags/ai-catalog-link.md) | meta-tags | delete | B | kept — rewrite required (approved 2026-08-21) |
-| 4.20 | [meta-robots](./meta-tags/meta-robots.md) | meta-tags | fix | A | keep — fix required |
+| 4.20 | [meta-robots](./access-crawl-control/meta-robots.md) | meta-tags | fix | A | keep — fix required |
 | 6.1 | [single-h1](./semantic-html/single-h1.md) | semantic-html | fix | B | keep — fix required |
 | 6.2 | [sequential-headings](./semantic-html/sequential-headings.md) | semantic-html | fix | B | keep — fix required |
 | 6.3 | [main-element](./semantic-html/main-element.md) | semantic-html | fix | A | keep — fix required |
@@ -192,7 +192,7 @@ One dossier per audit: what it checks, the 2026-08-20 code-review findings, grad
 | 3.22 | [product-details](./structured-data/product-details.md) | structured-data | fix | — | keep — fix required |
 | 3.23 | [product-reviews](./structured-data/product-reviews.md) | structured-data | merge | — | merge (approved 2026-08-21) |
 | 3.24 | [product-transaction-certainty](./structured-data/product-transaction-certainty.md) | structured-data | fix | — | keep — fix required |
-| 8.1 | [https-enabled](./technical-readiness/https-enabled.md) | technical-readiness | fix | A | keep — fix required |
+| 8.1 | [https-enabled](./access-crawl-control/https-enabled.md) | technical-readiness | fix | A | keep — fix required |
 | 8.2 | [hsts-header](./technical-readiness/hsts-header.md) | technical-readiness | merge | B | merge (approved 2026-08-21) |
 | 8.3 | [csp-header](./technical-readiness/csp-header.md) | technical-readiness | fix | D | keep — fix required |
 | 8.4 | [content-type-options](./technical-readiness/content-type-options.md) | technical-readiness | merge | C | merge (approved 2026-08-21) |

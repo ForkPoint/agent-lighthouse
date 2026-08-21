@@ -24,7 +24,7 @@ describe('Snapshot Regression Tests', () => {
 
     const { checks } = await runAudits(ctx, defaultConfig);
 
-    const snapshotIds = new Set(['1.1', '8.1']);
+    const snapshotIds = new Set(['1.1', 'access-crawl-control/https-enabled']);
     const resultsToSnapshot = checks
       .filter((c) => snapshotIds.has(c.id))
       .map((c) => ({

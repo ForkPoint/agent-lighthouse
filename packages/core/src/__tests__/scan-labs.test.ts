@@ -28,7 +28,7 @@ const LABS_URL = process.env.NEXT_PUBLIC_LABS_URL || (process.env.LABS_PORT ? `h
 // ── Known exceptions ────────────────────────────────────────────
 // Audits that cannot pass in localhost dev:
 const KNOWN_FAIL = new Set([
-  '8.1', // HTTPS — localhost is HTTP
+  'access-crawl-control/https-enabled', // HTTPS — localhost is HTTP
 ]);
 
 // Audits that warn because they are N/A or environment-dependent:
