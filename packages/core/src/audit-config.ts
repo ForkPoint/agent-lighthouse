@@ -124,16 +124,8 @@ import {
   ProductTransactionCertaintyAudit,
 } from './audits/structured-data';
 
-// Meta Tags (10)
+// Meta Tags (2) — the remainder leaves for agent-interfaces in a later task
 import {
-  MetaDescriptionAudit,
-  MetaAuthorAudit,
-  UniqueMetaAudit,
-  CoreOpenGraphAudit,
-  OgTypeAudit,
-  OgSiteNameAudit,
-  OgImageAltAudit,
-  TwitterCardAudit,
   OpenApiLinkAudit,
   AiCatalogLinkAudit,
 } from './audits/meta-tags';
@@ -225,8 +217,16 @@ import {
   CorsApiRoutesAudit,
 } from './audits/technical-readiness';
 
-// Answer Engine (11)
+// Answer Readiness (32) — v2 taxonomy category (Plan 3, Task 7)
 import {
+  MetaDescriptionAudit,
+  MetaAuthorAudit,
+  UniqueMetaAudit,
+  CoreOpenGraphAudit,
+  OgTypeAudit,
+  OgSiteNameAudit,
+  OgImageAltAudit,
+  TwitterCardAudit,
   FaqSectionsAudit,
   QuestionHeadingsAudit,
   FirstParagraphAnswersAudit,
@@ -238,10 +238,6 @@ import {
   ContentWithoutClickthroughAudit,
   LastUpdatedIndicatorAudit,
   MetaDescriptionAeoAudit,
-} from './audits/answer-engine';
-
-// Generative Engine (13)
-import {
   NamedAuthorAudit,
   AuthorSameAsAudit,
   AuthorPageAudit,
@@ -255,7 +251,7 @@ import {
   UniqueDataAudit,
   BlockquoteUsageAudit,
   DescriptiveUrlsAudit,
-} from './audits/generative-engine';
+} from './audits/answer-readiness';
 
 // ── Default Config ──────────────────────────────────────────────
 
@@ -264,13 +260,12 @@ export const defaultConfig: ScanConfig = {
     { id: 'machine-discovery', name: 'Machine Discovery', weight: 0.18 },
     { id: 'access-crawl-control', name: 'Access & Crawl Control', weight: 0.08 },
     { id: 'structured-data', name: 'Structured Data & Schema Markup', weight: 0.12 },
-    { id: 'meta-tags', name: 'Meta Tags & AI Head Elements', weight: 0.06 },
+    { id: 'meta-tags', name: 'Meta Tags & AI Head Elements', weight: 0.03 },
     { id: 'agent-tools', name: 'AI Agent Tools & Action Surfaces', weight: 0.18 },
     { id: 'content-extraction', name: 'Content Extraction & Structure', weight: 0.1 },
     { id: 'accessibility', name: 'Accessibility & Agent Interaction', weight: 0.07 },
     { id: 'technical-readiness', name: 'Technical Readiness & Security', weight: 0.07 },
-    { id: 'answer-engine', name: 'Answer Engine Optimization', weight: 0.07 },
-    { id: 'generative-engine', name: 'Generative Engine Optimization', weight: 0.07 },
+    { id: 'answer-readiness', name: 'Answer Readiness', weight: 0.17 },
   ],
   audits: {
     'machine-discovery': [
@@ -356,14 +351,6 @@ export const defaultConfig: ScanConfig = {
       reg(ProductTransactionCertaintyAudit),
     ],
     'meta-tags': [
-      reg(MetaDescriptionAudit),
-      reg(MetaAuthorAudit),
-      reg(UniqueMetaAudit),
-      reg(CoreOpenGraphAudit),
-      reg(OgTypeAudit),
-      reg(OgSiteNameAudit),
-      reg(OgImageAltAudit),
-      reg(TwitterCardAudit),
       reg(OpenApiLinkAudit),
       reg(AiCatalogLinkAudit),
     ],
@@ -446,7 +433,15 @@ export const defaultConfig: ScanConfig = {
       reg(SecurityTxtAudit),
       reg(CorsApiRoutesAudit),
     ],
-    'answer-engine': [
+    'answer-readiness': [
+      reg(MetaDescriptionAudit),
+      reg(MetaAuthorAudit),
+      reg(UniqueMetaAudit),
+      reg(CoreOpenGraphAudit),
+      reg(OgTypeAudit),
+      reg(OgSiteNameAudit),
+      reg(OgImageAltAudit),
+      reg(TwitterCardAudit),
       reg(FaqSectionsAudit),
       reg(QuestionHeadingsAudit),
       reg(FirstParagraphAnswersAudit),
@@ -458,8 +453,6 @@ export const defaultConfig: ScanConfig = {
       reg(ContentWithoutClickthroughAudit),
       reg(LastUpdatedIndicatorAudit),
       reg(MetaDescriptionAeoAudit),
-    ],
-    'generative-engine': [
       reg(NamedAuthorAudit),
       reg(AuthorSameAsAudit),
       reg(AuthorPageAudit),

@@ -20,7 +20,7 @@ Audits that stay in the framework **only if rewritten**. Each source file carrie
   - Grade A on the mechanism: named AI crawlers are documented to honor path-level Disallow, with literal directory examples from Apple (Applebot and the AI-training token Applebot-Extended, 'Disallow: /private/') and Meta (meta-externalagent, 'Disallow: /private/ # Disallow a specific directory'), on top of the ratified RFC 9309 path-matching semantics that OpenAI and Anthropic both point publishers to. Per the rubric that makes it redeemable — but it needs surgery, not preservation as written.
 - [ ] TODO `content-extraction/aside-element` — grade B (approved 2026-08-21) · [dossier](../../../../docs/evidence/deletions/semantic-html/aside-element.md)
   - Grade B => redeemable, and the audit's stated mechanism is essentially verbatim correct. Which consumer reads the signal, and where documented: (a) Mozilla Readability removes `<aside>` via `this._clean(articleContent, "aside")` in Readability.js — the extractor behind Firefox Reader Mode, Jina Reader's readability path, and a long tail of LLM/agent tools; (b) trafilatura removes `<aside>` via its MANUALLY_CLEANED list in trafilatura/settings.py — a standard extractor in LLM corpus pipelines; (c) Chromium exposes `<aside>` as a `complementary` landmark in the accessibility tree that Anthropic's browser use tool returns from `read_page`, which I verified directly by snapshotting a probe page.
-- [ ] TODO `generative-engine/trust-signals` — grade B (approved 2026-08-21) · [dossier](../../../../docs/evidence/deletions/generative-engine/trust-signals.md)
+- [ ] TODO `answer-readiness/trust-signals` — grade B (approved 2026-08-21) · [dossier](../../../../docs/evidence/deletions/generative-engine/trust-signals.md)
   - Grade B: there is strong, quantified, multi-model empirical data that trust and social-proof cues in retrieved page text change which source an AI answer engine cites — 252,000 controlled trials, 4-5 of 6 models significant, plus a +17% 'Authoritative' effect in the KDD'24 GEO benchmark. Per the rubric that makes it redeemable, and unlike the other three audits here it has a real measured mechanism behind it.
 
 ## Proposed by first triage — pending approval — 15
@@ -31,9 +31,9 @@ Audits that stay in the framework **only if rewritten**. Each source file carrie
   - Evidence reshape: the .well-known manifest file is invented (grade D) — but runtime-registered WebMCP tools are grade B: Google Lighthouse 13.3+ ships 'Registered WebMCP tools' audits in its new Agentic Browsing category. Replace manifest-file audit with registered-tools detection, experimental tier..
 - [ ] TODO `access-crawl-control/ai-content-declaration` — target tier experimental (pending triage approval) · [dossier](../../../../docs/evidence/audits/access-crawl-control/ai-content-declaration.md)
   - Evidence upgrade from delete: noai/noimageai/tdm-reservation declaration meta tags graded D/experimental — real emerging opt-out ecosystem, no ratified consumer yet. Experimental, unscored, rework to check the real directive names..
-- [ ] TODO `answer-engine/direct-definitions` — target tier scored (pending triage approval) · [dossier](../../../../docs/evidence/audits/answer-engine/direct-definitions.md)
+- [ ] TODO `answer-readiness/direct-definitions` — target tier scored (pending triage approval) · [dossier](../../../../docs/evidence/audits/answer-readiness/direct-definitions.md)
   - Rework detector: language-neutral structural signals (dfn/dl semantics, first-sentence definition patterns per detected language), notApplicable when page has no definitional intent..
-- [ ] TODO `answer-engine/meta-description-aeo` — target tier scored (pending triage approval) · [dossier](../../../../docs/evidence/audits/answer-engine/meta-description-aeo.md)
+- [ ] TODO `answer-readiness/meta-description-aeo` — target tier scored (pending triage approval) · [dossier](../../../../docs/evidence/audits/answer-readiness/meta-description-aeo.md)
   - Redeem via merge into meta-description: one audit, quality criteria without the invented 'AEO formula'..
 - [ ] TODO `content-discoverability/mobile-friendly` — target tier informative (pending triage approval) · [dossier](../../../../docs/evidence/audits/content-discoverability/mobile-friendly.md)
   - Keep viewport check as unscored diagnostic; no claimed AI mechanism..
@@ -49,7 +49,7 @@ Audits that stay in the framework **only if rewritten**. Each source file carrie
   - Same consolidation into ai-bot-directives..
 - [ ] TODO `access-crawl-control/tdm-rep` — target tier experimental (pending triage approval) · [dossier](../../../../docs/evidence/audits/access-crawl-control/tdm-rep.md)
   - TDM Reservation Protocol is a real W3C CG spec with EU AI Act relevance. Experimental flag, unscored, fix internal incoherence..
-- [ ] TODO `meta-tags/twitter-card` — target tier informative (pending triage approval) · [dossier](../../../../docs/evidence/audits/meta-tags/twitter-card.md)
+- [ ] TODO `answer-readiness/twitter-card` — target tier informative (pending triage approval) · [dossier](../../../../docs/evidence/audits/answer-readiness/twitter-card.md)
   - Fix factual errors (twitter:* falls back to og:*), fold into social-meta diagnostic with core-open-graph, unscored. Evidence: og:title/og:site_name graded A; twitter:* has no AI consumer evidence..
 - [ ] TODO `meta-tags/openapi-link` — target tier scored (pending triage approval) · [dossier](../../../../docs/evidence/audits/meta-tags/openapi-link.md)
   - Redeem via merge into agent-tools/openapi-exists: one discovery audit for real mechanisms incl. RFC 9727 api-catalog (graded B), drop link-tag requirement that fails every site..

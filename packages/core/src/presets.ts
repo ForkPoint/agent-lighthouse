@@ -17,8 +17,7 @@ export const PRESETS: Record<PresetName, PresetOptions> = {
       'agent-tools': 25,
       'access-crawl-control': 15,
       'machine-discovery': 10,
-      'answer-engine': 10,
-      'generative-engine': 5,
+      'answer-readiness': 15,
       'meta-tags': 5,
       'content-extraction': 5,
     },
@@ -31,7 +30,7 @@ export const PRESETS: Record<PresetName, PresetOptions> = {
       'machine-discovery': 20,
       'access-crawl-control': 20,
       'technical-readiness': 15,
-      'answer-engine': 15,
+      'answer-readiness': 15,
     },
   },
   content: {
@@ -39,8 +38,7 @@ export const PRESETS: Record<PresetName, PresetOptions> = {
     description: 'Optimized for blogs and publications focusing on llms.txt, RSS feeds, article markup, author credentials, and citations.',
     customWeights: {
       'machine-discovery': 25,
-      'generative-engine': 25,
-      'answer-engine': 20,
+      'answer-readiness': 45,
       'content-extraction': 15,
       'meta-tags': 15,
     },

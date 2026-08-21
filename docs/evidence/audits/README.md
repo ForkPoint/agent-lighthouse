@@ -55,17 +55,17 @@ One dossier per audit: what it checks, the 2026-08-20 code-review findings, grad
 | 5.25 | [webmcp-action-coverage](./agent-tools/webmcp-action-coverage.md) | agent-tools | delete | D | sunset (approved 2026-08-21) |
 | 5.26 | [openapi-description-quality](./agent-tools/openapi-description-quality.md) | agent-tools | fix | — | keep — fix required |
 | 5.27 | [form-actionability](./agent-tools/form-actionability.md) | agent-tools | keep | — | keep |
-| 9.1 | [faq-sections](./answer-engine/faq-sections.md) | answer-engine | fix | — | keep — fix required |
-| 9.2 | [question-headings](./answer-engine/question-headings.md) | answer-engine | fix | C | keep — fix required |
-| 9.3 | [first-paragraph-answers](./answer-engine/first-paragraph-answers.md) | answer-engine | fix | — | keep — fix required |
-| 9.4 | [direct-definitions](./answer-engine/direct-definitions.md) | answer-engine | delete | — | proposed: redeem as scored (pending triage) |
-| 9.5 | [comparison-tables](./answer-engine/comparison-tables.md) | answer-engine | fix | C | keep — fix required |
-| 9.6 | [numbered-steps](./answer-engine/numbered-steps.md) | answer-engine | fix | — | keep — fix required |
-| 9.7 | [specific-numbers](./answer-engine/specific-numbers.md) | answer-engine | fix | — | keep — fix required |
-| 9.8 | [dates-on-content](./answer-engine/dates-on-content.md) | answer-engine | fix | — | keep — fix required |
-| 9.9 | [content-without-clickthrough](./answer-engine/content-without-clickthrough.md) | answer-engine | fix | — | keep — fix required |
-| 9.10 | [last-updated-indicator](./answer-engine/last-updated-indicator.md) | answer-engine | merge | — | merge (approved 2026-08-21) |
-| 9.11 | [meta-description-aeo](./answer-engine/meta-description-aeo.md) | answer-engine | delete | C | proposed: redeem as scored (pending triage) |
+| 9.1 | [faq-sections](./answer-readiness/faq-sections.md) | answer-engine | fix | — | keep — fix required |
+| 9.2 | [question-headings](./answer-readiness/question-headings.md) | answer-engine | fix | C | keep — fix required |
+| 9.3 | [first-paragraph-answers](./answer-readiness/first-paragraph-answers.md) | answer-engine | fix | — | keep — fix required |
+| 9.4 | [direct-definitions](./answer-readiness/direct-definitions.md) | answer-engine | delete | — | proposed: redeem as scored (pending triage) |
+| 9.5 | [comparison-tables](./answer-readiness/comparison-tables.md) | answer-engine | fix | C | keep — fix required |
+| 9.6 | [numbered-steps](./answer-readiness/numbered-steps.md) | answer-engine | fix | — | keep — fix required |
+| 9.7 | [specific-numbers](./answer-readiness/specific-numbers.md) | answer-engine | fix | — | keep — fix required |
+| 9.8 | [dates-on-content](./answer-readiness/dates-on-content.md) | answer-engine | fix | — | keep — fix required |
+| 9.9 | [content-without-clickthrough](./answer-readiness/content-without-clickthrough.md) | answer-engine | fix | — | keep — fix required |
+| 9.10 | [last-updated-indicator](./answer-readiness/last-updated-indicator.md) | answer-engine | merge | — | merge (approved 2026-08-21) |
+| 9.11 | [meta-description-aeo](./answer-readiness/meta-description-aeo.md) | answer-engine | delete | C | proposed: redeem as scored (pending triage) |
 | 1.1 | [llms-txt-exists](./machine-discovery/llms-txt-exists.md) | content-discoverability | fix | A | keep — fix required |
 | 1.2 | [llms-txt-blockquote](./machine-discovery/llms-txt-blockquote.md) | content-discoverability | merge | — | merge (approved 2026-08-21) |
 | 1.3 | [llms-txt-sections](./machine-discovery/llms-txt-sections.md) | content-discoverability | merge | — | merge (approved 2026-08-21) |
@@ -117,31 +117,31 @@ One dossier per audit: what it checks, the 2026-08-20 code-review findings, grad
 | 2.26 | [no-bot-detection](./access-crawl-control/no-bot-detection.md) | crawler-permissions | fix | — | keep — fix required |
 | 2.27 | [tdm-rep](./access-crawl-control/tdm-rep.md) | crawler-permissions | delete | — | proposed: redeem as experimental (pending triage) |
 | 2.28 | [agent-governance](./access-crawl-control/agent-governance.md) | crawler-permissions | fix | — | keep — fix required |
-| 10.1 | [named-author](./generative-engine/named-author.md) | generative-engine | fix | — | keep — fix required |
-| 10.2 | [author-same-as](./generative-engine/author-same-as.md) | generative-engine | fix | C | keep — fix required |
-| 10.3 | [author-page](./generative-engine/author-page.md) | generative-engine | fix | C | keep — fix required |
-| 10.4 | [about-credentials](./generative-engine/about-credentials.md) | generative-engine | delete | C | informative, weight 0 (approved 2026-08-21) |
-| 10.5 | [external-citations](./generative-engine/external-citations.md) | generative-engine | fix | — | keep — fix required |
-| 10.6 | [brand-name](./generative-engine/brand-name.md) | generative-engine | fix | C | keep — fix required |
-| 10.7 | [trust-signals](./generative-engine/trust-signals.md) | generative-engine | delete | B | kept — rewrite required (approved 2026-08-21) |
-| 10.8 | [review-signals](./generative-engine/review-signals.md) | generative-engine | fix | — | keep — fix required |
-| 10.9 | [publication-date](./generative-engine/publication-date.md) | generative-engine | keep | — | keep |
-| 10.10 | [last-modified-schema](./generative-engine/last-modified-schema.md) | generative-engine | fix | B | keep — fix required |
+| 10.1 | [named-author](./answer-readiness/named-author.md) | generative-engine | fix | — | keep — fix required |
+| 10.2 | [author-same-as](./answer-readiness/author-same-as.md) | generative-engine | fix | C | keep — fix required |
+| 10.3 | [author-page](./answer-readiness/author-page.md) | generative-engine | fix | C | keep — fix required |
+| 10.4 | [about-credentials](./answer-readiness/about-credentials.md) | generative-engine | delete | C | informative, weight 0 (approved 2026-08-21) |
+| 10.5 | [external-citations](./answer-readiness/external-citations.md) | generative-engine | fix | — | keep — fix required |
+| 10.6 | [brand-name](./answer-readiness/brand-name.md) | generative-engine | fix | C | keep — fix required |
+| 10.7 | [trust-signals](./answer-readiness/trust-signals.md) | generative-engine | delete | B | kept — rewrite required (approved 2026-08-21) |
+| 10.8 | [review-signals](./answer-readiness/review-signals.md) | generative-engine | fix | — | keep — fix required |
+| 10.9 | [publication-date](./answer-readiness/publication-date.md) | generative-engine | keep | — | keep |
+| 10.10 | [last-modified-schema](./answer-readiness/last-modified-schema.md) | generative-engine | fix | B | keep — fix required |
 | 10.11 | [internal-cross-linking](./machine-discovery/internal-cross-linking.md) | generative-engine | fix | — | keep — fix required |
 | 10.12 | [pagination-links](./generative-engine/pagination-links.md) | generative-engine | delete | D | sunset (approved 2026-08-21) |
-| 10.13 | [unique-data](./generative-engine/unique-data.md) | generative-engine | fix | — | keep — fix required |
-| 10.14 | [blockquote-usage](./generative-engine/blockquote-usage.md) | generative-engine | merge | B | merge (approved 2026-08-21) |
-| 10.15 | [descriptive-urls](./generative-engine/descriptive-urls.md) | generative-engine | fix | C | keep — fix required |
-| 4.1 | [meta-description](./meta-tags/meta-description.md) | meta-tags | fix | — | keep — fix required |
-| 4.2 | [meta-author](./meta-tags/meta-author.md) | meta-tags | fix | — | keep — fix required |
+| 10.13 | [unique-data](./answer-readiness/unique-data.md) | generative-engine | fix | — | keep — fix required |
+| 10.14 | [blockquote-usage](./answer-readiness/blockquote-usage.md) | generative-engine | merge | B | merge (approved 2026-08-21) |
+| 10.15 | [descriptive-urls](./answer-readiness/descriptive-urls.md) | generative-engine | fix | C | keep — fix required |
+| 4.1 | [meta-description](./answer-readiness/meta-description.md) | meta-tags | fix | — | keep — fix required |
+| 4.2 | [meta-author](./answer-readiness/meta-author.md) | meta-tags | fix | — | keep — fix required |
 | 4.3 | [canonical-url](./access-crawl-control/canonical-url.md) | meta-tags | fix | B | keep — fix required |
 | 4.4 | [language-attribute](./content-extraction/language-attribute.md) | meta-tags | fix | — | keep — fix required |
-| 4.5 | [unique-meta](./meta-tags/unique-meta.md) | meta-tags | fix | — | keep — fix required |
-| 4.6 | [core-open-graph](./meta-tags/core-open-graph.md) | meta-tags | fix | — | keep — fix required |
-| 4.7 | [og-type](./meta-tags/og-type.md) | meta-tags | fix | — | keep — fix required |
-| 4.8 | [og-site-name](./meta-tags/og-site-name.md) | meta-tags | merge | A | merge (approved 2026-08-21) |
-| 4.9 | [og-image-alt](./meta-tags/og-image-alt.md) | meta-tags | fix | C | keep — fix required |
-| 4.10 | [twitter-card](./meta-tags/twitter-card.md) | meta-tags | delete | C | proposed: redeem as informative (pending triage) |
+| 4.5 | [unique-meta](./answer-readiness/unique-meta.md) | meta-tags | fix | — | keep — fix required |
+| 4.6 | [core-open-graph](./answer-readiness/core-open-graph.md) | meta-tags | fix | — | keep — fix required |
+| 4.7 | [og-type](./answer-readiness/og-type.md) | meta-tags | fix | — | keep — fix required |
+| 4.8 | [og-site-name](./answer-readiness/og-site-name.md) | meta-tags | merge | A | merge (approved 2026-08-21) |
+| 4.9 | [og-image-alt](./answer-readiness/og-image-alt.md) | meta-tags | fix | C | keep — fix required |
+| 4.10 | [twitter-card](./answer-readiness/twitter-card.md) | meta-tags | delete | C | proposed: redeem as informative (pending triage) |
 | 4.11 | [llms-txt-link](./machine-discovery/llms-txt-link.md) | meta-tags | fix | C | keep — fix required |
 | 4.12 | [llms-full-txt-link](./meta-tags/llms-full-txt-link.md) | meta-tags | merge | D | sunset (approved 2026-08-21) |
 | 4.13 | [ai-content-declaration](./access-crawl-control/ai-content-declaration.md) | meta-tags | delete | D | proposed: redeem as experimental (pending triage) |

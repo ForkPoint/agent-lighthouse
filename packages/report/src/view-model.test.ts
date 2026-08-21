@@ -76,10 +76,10 @@ function mixedReport(): ScanReport {
       checks: [check({ id: 'cd1', category: 'machine-discovery', status: 'pass' })],
     }),
     cat({
-      id: 'answer-engine',
+      id: 'answer-readiness',
       weight: 0.07,
       score: 100,
-      checks: [check({ id: 'ae1', category: 'answer-engine', status: 'pass' })],
+      checks: [check({ id: 'ar1', category: 'answer-readiness', status: 'pass' })],
     }),
   ]);
 }
@@ -100,10 +100,10 @@ describe('buildReportView', () => {
 
   it('returns categories flat in canonical order regardless of input order', () => {
     const v = buildReportView(
-      report([cat({ id: 'answer-engine' }), cat({ id: 'agent-tools' })]),
+      report([cat({ id: 'answer-readiness' }), cat({ id: 'agent-tools' })]),
     );
-    // agent-tools precedes answer-engine in CATEGORY_ORDER.
-    expect(v.categories.map((c) => c.id)).toEqual(['agent-tools', 'answer-engine']);
+    // agent-tools precedes answer-readiness in CATEGORY_ORDER.
+    expect(v.categories.map((c) => c.id)).toEqual(['agent-tools', 'answer-readiness']);
   });
 
   it('splits assessed checks from not-applicable and counts them', () => {
@@ -117,7 +117,7 @@ describe('buildReportView', () => {
   it('buckets coverage by na tag across all categories', () => {
     const v = buildReportView(mixedReport());
     expect(v.coverage).toMatchObject({
-      ran: 5, // p1,w1,f1 + cd1 + ae1
+      ran: 5, // p1,w1,f1 + cd1 + ar1
       errored: 1, // e1
       skippedByPageType: 1, // s1
       notApplicable: 1, // n1 (untagged na)
@@ -128,8 +128,8 @@ describe('buildReportView', () => {
   it('orders topFixes by priority (fail+warn) and topPasses by category weight', () => {
     const v = buildReportView(mixedReport());
     expect(v.topFixes.map((c) => c.id)).toEqual(['f1', 'w1']); // critical before high
-    // passes sorted by owning category weight desc: agent-tools .18 > md .15 > ae .07
-    expect(v.topPasses.map((c) => c.id)).toEqual(['p1', 'cd1', 'ae1']);
+    // passes sorted by owning category weight desc: agent-tools .18 > md .15 > ar .07
+    expect(v.topPasses.map((c) => c.id)).toEqual(['p1', 'cd1', 'ar1']);
   });
 
   it('excludes informative checks from topFixes and topPasses', () => {

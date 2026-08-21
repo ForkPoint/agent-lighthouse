@@ -134,7 +134,7 @@ describe('Verify scan results against real sites', () => {
     it('4.1: example.com meta description check matches reality', () => {
       const meta = ctx.pages[0]!.meta;
       const hasDescription = !!meta['description'] && meta['description'].length >= 50;
-      const result = allResults.get('4.1');
+      const result = allResults.get('answer-readiness/meta-description');
       expect(result).toBeDefined();
       if (hasDescription) {
         expect(result!.status).toBe('pass');
@@ -160,7 +160,7 @@ describe('Verify scan results against real sites', () => {
       const ogTags = ['og:title', 'og:description', 'og:image', 'og:url'] as const;
       const present = ogTags.filter((t) => !!meta[t]?.trim());
       const missing = ogTags.filter((t) => !meta[t]?.trim());
-      const result = allResults.get('4.6');
+      const result = allResults.get('answer-readiness/core-open-graph');
       expect(result).toBeDefined();
       if (missing.length === 0) {
         expect(result!.status).toBe('pass');
@@ -395,7 +395,7 @@ describe('Verify scan results against real sites', () => {
 
     it('4.1: docs.anthropic.com meta description check matches reality', () => {
       const meta = ctx.pages[0]!.meta;
-      const result = allResults.get('4.1');
+      const result = allResults.get('answer-readiness/meta-description');
       expect(result).toBeDefined();
       if (meta['description'] && meta['description'].length >= 50) {
         expect(result!.status).toBe('pass');

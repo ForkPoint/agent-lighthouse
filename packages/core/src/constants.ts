@@ -25,13 +25,12 @@ export const CATEGORY_WEIGHTS: Record<string, number> = {
   'machine-discovery': 0.18,
   'access-crawl-control': 0.08,
   'structured-data': 0.12,
-  'meta-tags': 0.06,
+  'meta-tags': 0.03,
   'agent-tools': 0.18,
   'content-extraction': 0.1,
   accessibility: 0.07,
   'technical-readiness': 0.07,
-  'answer-engine': 0.07,
-  'generative-engine': 0.07,
+  'answer-readiness': 0.17,
 };
 
 export const CATEGORY_NAMES: Record<string, string> = {
@@ -43,8 +42,7 @@ export const CATEGORY_NAMES: Record<string, string> = {
   'content-extraction': 'Content Extraction & Structure',
   accessibility: 'Accessibility & Agent Interaction',
   'technical-readiness': 'Technical Readiness & Security',
-  'answer-engine': 'Answer Engine Optimization',
-  'generative-engine': 'Generative Engine Optimization',
+  'answer-readiness': 'Answer Readiness',
 };
 
 export const READINESS_WEIGHTS = {

@@ -18,7 +18,7 @@ export const SECTION_GROUPS: SectionGroupDef[] = [
   },
   {
     key: 'aiSearchOptimization',
-    categoryIds: ['answer-engine', 'generative-engine', 'content-extraction'],
+    categoryIds: ['answer-readiness', 'content-extraction'],
   },
   {
     key: 'technicalFoundation',

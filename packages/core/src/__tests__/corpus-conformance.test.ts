@@ -75,8 +75,8 @@ describe('Golden Corpus Conformance Tests (False-Positive Elimination)', () => {
     expect(checkMap.get('structured-data/advanced-product-details')?.status).toBe('pass');
 
     // Open Graph Title, Image & Alt (4.6, 4.9)
-    expect(checkMap.get('4.6')?.status).toBe('pass');
-    expect(checkMap.get('4.9')?.status).toBe('pass');
+    expect(checkMap.get('answer-readiness/core-open-graph')?.status).toBe('pass');
+    expect(checkMap.get('answer-readiness/og-image-alt')?.status).toBe('pass');
 
     // Semantic Tables (6.9)
     expect(checkMap.get('content-extraction/data-tables')?.status).toBe('pass');
