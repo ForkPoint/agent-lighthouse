@@ -113,6 +113,8 @@ export interface CheckResult {
   description: string;
   status: CheckStatus;
   score: number;
+  /** Evidence-derived weight copied from AuditMeta.weight (A=1.0, B=0.6, informative=0). */
+  weight?: number;
   scoreDisplayMode: ScoreDisplayMode;
   displayValue?: string;
   explanation?: string;

@@ -2,13 +2,13 @@ import type { CheckResult, CategoryResult } from './types';
 import { CATEGORY_WEIGHTS, CATEGORY_NAMES, getScoreTier } from './constants';
 
 export function calculateCategoryScore(checks: CheckResult[]): number {
-  // Not-applicable checks are excluded from the average entirely — they
-  // represent "nothing to assess", so counting them as 0 would unfairly
-  // deflate the score for a feature the site was never expected to have.
+  // Not-applicable checks leave the denominator entirely: "nothing to
+  // assess" must not move a score in either direction.
   const scored = checks.filter((c) => c.status !== 'na');
-  if (scored.length === 0) return 0;
-  const total = scored.reduce((sum, c) => sum + c.score, 0);
-  return Math.round((total / scored.length) * 100);
+  const totalWeight = scored.reduce((sum, c) => sum + (c.weight ?? 0), 0);
+  if (totalWeight === 0) return 0;
+  const weighted = scored.reduce((sum, c) => sum + c.score * (c.weight ?? 0), 0);
+  return Math.round((weighted / totalWeight) * 100);
 }
 
 export function buildCategoryResult(

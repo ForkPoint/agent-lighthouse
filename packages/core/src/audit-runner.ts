@@ -16,6 +16,7 @@ function stubCheck(meta: AuditMeta, tag: string, explanation: string): CheckResu
     description: meta.description,
     status: 'na',
     score: 0,
+    weight: meta.weight,
     scoreDisplayMode: meta.scoreDisplayMode,
     explanation,
     priority: meta.defaultPriority,
@@ -104,7 +105,9 @@ export async function runAudits(
         try {
           const instance = reg.create();
           const result = await instance.audit(ctx);
-          const check = instance.toCheckResult(result);
+          // Carry the audit's evidence weight onto the result so downstream
+          // scoring (scorer.calculateCategoryScore) does not need the registry.
+          const check: CheckResult = { ...instance.toCheckResult(result), weight: reg.meta.weight };
           onEvent?.({ type: 'unit:done', label });
           return check;
         } catch (err) {

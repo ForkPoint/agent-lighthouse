@@ -14,6 +14,9 @@ function makeCheck(overrides: Partial<CheckResult> = {}): CheckResult {
     description: 'Test Description',
     status: 'pass',
     score: 1.0,
+    // Equal weight by default: these cases describe the equal-weight behaviour,
+    // where a weighted mean reduces to a plain mean.
+    weight: 1.0,
     scoreDisplayMode: 'binary',
     priority: 'medium',
     impact: 'Low',
@@ -197,5 +200,44 @@ describe('calculateOverallScore', () => {
       makeCategory({ score: 50, weight: 1.0 }),
     ];
     expect(calculateOverallScore(categories)).toBe(50);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Weighted category score (evidence weight A=1.0 / B=0.6 / informative=0)
+// ---------------------------------------------------------------------------
+
+const check = (over: Partial<CheckResult>): CheckResult =>
+  ({
+    id: 'x', name: 'x', status: 'pass', score: 1, message: '', expected: '', found: '',
+    priority: 'medium',
+    ...over,
+  }) as CheckResult;
+
+describe('weighted category score', () => {
+  it('weights A (1.0) over B (0.6)', () => {
+    const checks = [
+      check({ status: 'pass', score: 1, weight: 1.0 }),
+      check({ status: 'fail', score: 0, weight: 0.6 }),
+    ];
+    // (1*1.0 + 0*0.6) / 1.6 = 0.625
+    expect(calculateCategoryScore(checks)).toBe(63);
+  });
+  it('weight 0 (informative) never moves the score', () => {
+    const base = [check({ status: 'pass', score: 1, weight: 1.0 })];
+    const withInformative = [...base, check({ status: 'fail', score: 0, weight: 0 })];
+    expect(calculateCategoryScore(withInformative)).toBe(calculateCategoryScore(base));
+  });
+  it('property: adding a na check never changes the score', () => {
+    const base = [
+      check({ status: 'pass', score: 1, weight: 1.0 }),
+      check({ status: 'fail', score: 0, weight: 0.6 }),
+    ];
+    const withNa = [...base, check({ status: 'na', score: 0, weight: 1.0 })];
+    expect(calculateCategoryScore(withNa)).toBe(calculateCategoryScore(base));
+  });
+  it('all-na or zero-total-weight scores 0', () => {
+    expect(calculateCategoryScore([check({ status: 'na', weight: 1 })])).toBe(0);
+    expect(calculateCategoryScore([check({ status: 'fail', score: 0, weight: 0 })])).toBe(0);
   });
 });
