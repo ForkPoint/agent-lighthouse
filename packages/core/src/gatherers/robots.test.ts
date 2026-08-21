@@ -69,6 +69,27 @@ describe('isPathAllowed', () => {
   });
 });
 
+describe('path pattern matching', () => {
+  /** True when `pattern` matches `path`, i.e. the Disallow rule bites. */
+  const patternMatches = (pattern: string, path: string) =>
+    !isPathAllowed(parseRobots(`User-agent: *\nDisallow: ${pattern}`), 'gptbot', path);
+
+  it('lets * span arbitrary characters', () => {
+    expect(patternMatches('/a*c', '/abc')).toBe(true);
+  });
+  it('honours the $ anchor after a wildcard', () => {
+    expect(patternMatches('/a*c$', '/abcd')).toBe(false);
+  });
+  it('lets * span path separators', () => {
+    expect(patternMatches('/*.pdf', '/x/y.pdf')).toBe(true);
+  });
+  it('does not backtrack catastrophically on adversarial patterns', () => {
+    // A RegExp-based matcher takes seconds-to-forever here; the suite runtime
+    // is the guard. The path has no 'b', so the pattern must not match.
+    expect(patternMatches('/a*a*a*a*a*a*a*a*a*a*a*a*b', '/'.padEnd(60, 'a'))).toBe(false);
+  });
+});
+
 describe('isBlanketBlocked', () => {
   it.each(['/', '/*', '*'])('detects Disallow: %s as blanket block', (path) => {
     const g = parseRobots(`User-agent: GPTBot\nDisallow: ${path}`);

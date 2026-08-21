@@ -68,14 +68,50 @@ export function groupsForBot(groups: RobotsGroup[], botToken: string): RobotsGro
   return groups.filter((g) => g.userAgent.trim() === '*');
 }
 
-/** Compile an RFC 9309 path pattern (* wildcard, $ anchor) to a RegExp. */
-function patternToRegex(pattern: string): RegExp {
+/**
+ * Match an RFC 9309 path pattern (`*` wildcard, `$` end anchor) against a path.
+ *
+ * Without a trailing `$` the pattern only has to match a prefix of the path.
+ *
+ * This is a two-pointer glob matcher that backtracks by star position, the same
+ * approach the reference robots.txt implementations use. It deliberately avoids
+ * RegExp: robots.txt is attacker-controlled input, and a pattern such as
+ * `/a*a*a*a*a*a*b` compiled to `^/a.*a.*a.*a.*a.*a.*b` makes the engine
+ * backtrack exponentially — seconds to non-termination on a long path.
+ */
+function matchesPathPattern(pattern: string, path: string): boolean {
   const anchored = pattern.endsWith('$');
-  const core = (anchored ? pattern.slice(0, -1) : pattern)
-    .split('*')
-    .map((part) => part.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
-    .join('.*');
-  return new RegExp(`^${core}${anchored ? '$' : ''}`);
+  const pat = anchored ? pattern.slice(0, -1) : pattern;
+
+  let p = 0;
+  let s = 0;
+  // Position of the last `*` seen, and how much of the path it currently spans.
+  let star = -1;
+  let mark = 0;
+
+  for (;;) {
+    if (p < pat.length && pat[p] === '*') {
+      star = p;
+      p += 1;
+      mark = s;
+      continue;
+    }
+    if (p === pat.length) {
+      // Whole pattern consumed: a prefix pattern is satisfied, an anchored one
+      // only if the path ended too.
+      if (!anchored || s === path.length) return true;
+    } else if (s < path.length && pat[p] === path[s]) {
+      p += 1;
+      s += 1;
+      continue;
+    }
+    // Mismatch (or anchored pattern with path left over): let the most recent
+    // `*` swallow one more character and retry from just after it.
+    if (star === -1 || mark >= path.length) return false;
+    mark += 1;
+    p = star + 1;
+    s = mark;
+  }
 }
 
 export function isPathAllowed(groups: RobotsGroup[], botToken: string, path: string): boolean {
@@ -85,7 +121,7 @@ export function isPathAllowed(groups: RobotsGroup[], botToken: string, path: str
     for (const rule of group.rules) {
       if (rule.path === '') continue; // empty Disallow/Allow matches nothing
       const normalized = rule.path === '*' ? '/*' : rule.path;
-      if (!patternToRegex(normalized).test(path)) continue;
+      if (!matchesPathPattern(normalized, path)) continue;
       const length = normalized.replace(/\*/g, '').length;
       // Longest match wins; on a tie, allow wins (RFC 9309 §2.2.2).
       if (!best || length > best.length || (length === best.length && rule.type === 'allow')) {
