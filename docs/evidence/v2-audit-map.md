@@ -4,7 +4,7 @@ Draft mapping of every registered v1 audit to its v2 home, per the approved taxo
 [`docs/superpowers/specs/2026-08-21-audit-restructure-design.md`](../superpowers/specs/2026-08-21-audit-restructure-design.md)
 (§3 categories, §5 merges/splits/consolidations, §6 `category/slug` identity).
 
-- **Rows in this table: 189** (unchanged — the 4 sunset rows stay as rows, with `—` for their v2 category/slug)
+- **Rows in this table: 189** (unchanged — the 8 sunset rows stay as rows, with `—` for their v2 category/slug)
 - **Registered audits in `packages/core/src/audit-config.ts`: 189** (`grep -c 'reg('` returns 190; one hit is the `function reg(...)` helper definition on line 30)
 
 Source of v1 ids: `meta.id` in each audit source file. Numeric ids die in v2 (§6); the `v2 category` + `v2 slug`
@@ -49,7 +49,7 @@ All 20 open `REVIEW:` flags are resolved — **0 open**. Every row carrying a re
 | 1.19 | content-discoverability/fast-page-load | content-extraction | server-responsiveness | rewrite | decided 2026-08-21: merged with 8.12 fast-response-time into one audit `content-extraction/server-responsiveness` — median TTFB, banded |
 | 1.20 | content-discoverability/no-broken-links | machine-discovery | no-broken-links | move | decided 2026-08-21: confirmed — machine-discovery |
 | 1.22 | content-discoverability/no-orphan-pages | machine-discovery | discovery-index-coverage | merge-away | §5: no-orphan-pages → sitemap-key-pages ("discovery index coverage") |
-| 1.23 | content-discoverability/commerce-links | agentic-commerce | commerce-links | move | §3 cat 7 names commerce-links explicitly |
+| 1.23 | content-discoverability/commerce-links | — | — | sunset | decided 2026-08-21: sunset — grade D, no documented consumer |
 | 2.1 | crawler-permissions/gptbot | access-crawl-control | gptbot | move | |
 | 2.2 | crawler-permissions/google-extended | access-crawl-control | google-extended | move | |
 | 2.3 | crawler-permissions/anthropic | access-crawl-control | anthropic-ai | move | slug de-numericised/clarified to the UA token it checks |
@@ -107,7 +107,7 @@ All 20 open `REVIEW:` flags are resolved — **0 open**. Every row carrying a re
 | 4.9 | meta-tags/og-image-alt | answer-readiness | og-image-alt | move | |
 | 4.10 | meta-tags/twitter-card | answer-readiness | core-open-graph | rewrite | redemption rewrite — fix the twitter:*/og:* fallback errors and fold into the social-meta diagnostic alongside core-open-graph, informative tier |
 | 4.11 | meta-tags/llms-txt-link | machine-discovery | llms-txt-exists | merge-away | C3 collapse: file + discovery link become one audit |
-| 4.13 | meta-tags/ai-content-declaration | access-crawl-control | ai-content-declaration | rewrite | redemption rewrite — experimental tier, check the real opt-out directive names |
+| 4.13 | meta-tags/ai-content-declaration | access-crawl-control | ai-content-declaration | rewrite | redemption rewrite — experimental tier, check the real opt-out directive names; decided 2026-08-21: experimental tier (active declaration-spec trajectory) |
 | 4.15 | meta-tags/markdown-alternate | content-extraction | markdown-alternate | move | §3 cat 2 "markdown alternates" |
 | 4.16 | meta-tags/rss-feed-link | machine-discovery | rss-feed | merge-away | C3 collapse: feed file + its `<link rel=alternate>` become one audit |
 | 4.18 | meta-tags/openapi-link | agent-interfaces | openapi-exists | merge-away | TODO(redeem) resolves as a merge: one discovery audit incl. RFC 9727 api-catalog; drop the link-tag requirement |
@@ -173,7 +173,7 @@ All 20 open `REVIEW:` flags are resolved — **0 open**. Every row carrying a re
 | 7.19 | accessibility/_a11y.ts#frame-title | operability-safety | frame-title | move | §6 file split; wraps `frame-title` + `frame-title-unique` |
 | 7.20 | accessibility/_a11y.ts#meta-refresh | operability-safety | meta-refresh | move | §6 file split |
 | 7.21 | accessibility/_a11y.ts#tabindex | operability-safety | tabindex | move | §6 file split |
-| 7.22 | accessibility/_a11y.ts#deprecated-elements | operability-safety | deprecated-elements | move | §6 file split; wraps `marquee` + `blink` |
+| 7.22 | accessibility/_a11y.ts#deprecated-elements | — | — | sunset | decided 2026-08-21: sunset — grade D, mechanism proven false (marquee text is stable DOM text) |
 | 7.23 | accessibility/_a11y.ts#presentation-conflict | operability-safety | presentation-conflict | move | §6 file split |
 | 8.1 | technical-readiness/https-enabled | access-crawl-control | https-enabled | move | decided 2026-08-21: confirmed — access-crawl-control, scored; judge the protocol after redirects |
 | 8.2 | technical-readiness/hsts-header | operability-safety | security-header-hygiene | consolidate | §5 consolidation, weight 0, never fails a site |
@@ -186,18 +186,18 @@ All 20 open `REVIEW:` flags are resolved — **0 open**. Every row carrying a re
 | 8.11 | technical-readiness/cache-headers | machine-discovery | ai-file-delivery | merge-away | §5: cache-headers → correct-content-types ("AI file delivery") |
 | 8.12 | technical-readiness/fast-response-time | content-extraction | server-responsiveness | merge-away | decided 2026-08-21: merge-away into content-extraction/server-responsiveness (1.19 is the surviving row) |
 | 8.13 | technical-readiness/server-rendered | content-extraction | server-rendered | move | §3 cat 2 "rendering checks from technical-readiness" |
-| 8.14 | technical-readiness/no-render-blocking | content-extraction | no-render-blocking | move | rendering check |
+| 8.14 | technical-readiness/no-render-blocking | — | — | sunset | decided 2026-08-21: sunset — grade D, human-viewport performance signal, no agent consumer |
 | 8.15 | technical-readiness/image-dimensions | — | — | sunset | decided 2026-08-21: sunset — grade D CLS proxy, no agent consumer |
 | 8.16 | technical-readiness/lcp-not-lazy | — | — | sunset | decided 2026-08-21: sunset — grade D, `images[0]` is not an LCP proxy |
 | 8.18 | technical-readiness/no-broken-ai-endpoints | machine-discovery | no-broken-ai-endpoints | move | decided 2026-08-21: confirmed — machine-discovery whole, no per-surface split; same-origin fix, drop the navigation.json source |
 | 8.19 | technical-readiness/privacy-policy | — | — | sunset | decided 2026-08-21: sunset — grade D generic trust claim; the ACP link-surface proposal covers the evidenced commerce case |
-| 8.20 | technical-readiness/terms-of-service | operability-safety | terms-of-service | move | operability-safety trust/provenance home; 8.19 privacy-policy was sunset on 2026-08-21, so this row no longer follows it |
+| 8.20 | technical-readiness/terms-of-service | — | — | sunset | decided 2026-08-21: sunset — grade D, no documented consumer, English-only detector |
 | 9.1 | answer-engine/faq-sections | answer-readiness | faq-sections | move | answer-engine + generative-engine fuse (§3) |
 | 9.2 | answer-engine/question-headings | answer-readiness | question-headings | move | |
 | 9.3 | answer-engine/first-paragraph-answers | answer-readiness | first-paragraph-answers | move | |
 | 9.4 | answer-engine/direct-definitions | answer-readiness | direct-definitions | rewrite | redemption rewrite — language-neutral structural detector, `notApplicable` without definitional intent |
 | 9.5 | answer-engine/comparison-tables | answer-readiness | comparison-tables | move | |
-| 9.6 | answer-engine/numbered-steps | answer-readiness | numbered-steps | move | |
+| 9.6 | answer-engine/numbered-steps | answer-readiness | numbered-steps | move | grading pass: evidence duplicates semantic-lists (B) — candidate to fold during Plan 4 rewrites |
 | 9.7 | answer-engine/specific-numbers | answer-readiness | specific-numbers | move | |
 | 9.8 | answer-engine/dates-on-content | answer-readiness | dates-on-content | move | merge target for last-updated-indicator (9.10); C1/C16 clusters resolve via shared gatherer |
 | 9.9 | answer-engine/content-without-clickthrough | answer-readiness | content-without-clickthrough | move | |
@@ -225,31 +225,36 @@ All 20 open `REVIEW:` flags are resolved — **0 open**. Every row carrying a re
 | # | v2 category | incoming v1 audits |
 | :- | :--- | ---: |
 | 1 | access-crawl-control | 36 |
-| 2 | content-extraction | 24 |
+| 2 | content-extraction | 23 |
 | 3 | machine-discovery | 22 |
 | 4 | structured-data | 14 |
 | 5 | answer-readiness | 32 |
 | 6 | agent-interfaces | 22 |
-| 7 | agentic-commerce | 4 |
-| 8 | operability-safety | 31 |
-| — | *sunset (no v2 home)* | 4 |
+| 7 | agentic-commerce | 3 |
+| 8 | operability-safety | 29 |
+| — | *sunset (no v2 home)* | 8 |
 | | **total** | **189** |
 
 Note: these are *incoming v1 rows*, not v2 audit counts — 24 rows merge away, 4 consolidate and
-4 are sunset, so the surviving v2 audit count is lower (≈157 before the 83 proposed audits
-land). Cat 7 is still thin because almost all of agentic-commerce comes from the ACP proposal set (§6),
-not from v1.
+8 are sunset. Deduplicating the `category/slug` identities across the 181 non-sunset rows gives
+**149 surviving v2 audits** from v1 (before the 83 proposed audits land); the plain row arithmetic
+189 − 24 − 4 − 8 = 153 overstates it because several rows share one v2 target
+(`access-crawl-control/ai-bot-directives` takes 5 rows, `answer-readiness/core-open-graph` 2,
+`agent-interfaces/openapi-operation-ids` 2, `operability-safety/security-header-hygiene` 4).
+Distinct v2 audits per category: access-crawl-control 29, answer-readiness 27, operability-safety 24,
+content-extraction 21, machine-discovery 16, agent-interfaces 16, structured-data 13, agentic-commerce 3.
+Cat 7 is thin because almost all of agentic-commerce comes from the ACP proposal set (§6), not from v1.
 
 ### Actions by count
 
 | action | rows |
 | :--- | ---: |
-| move | 129 |
+| move | 125 |
 | rewrite | 26 |
 | merge-away | 24 |
 | consolidate | 4 |
 | split | 2 |
-| sunset | 4 |
+| sunset | 8 |
 | | **total** | **189** |
 
 ### merge-away rows (24)
@@ -299,9 +304,11 @@ All four fold into **operability-safety/security-header-hygiene** (§5, weight 0
 | 8.4 | content-type-options (nosniff also becomes a sub-signal of machine-discovery/ai-file-delivery) |
 | 8.7 | security-txt |
 
-### sunset rows (4)
+### sunset rows (8)
 
 Retired on 2026-08-21. They keep their row here for traceability but get no v2 `category/slug`.
+The first four came out of the taxonomy review; the last four out of the evidence-grading pass the
+same day (all grade D with no spec trajectory).
 
 | v1 id | v1 slug | why |
 | :--- | :--- | :--- |
@@ -309,6 +316,10 @@ Retired on 2026-08-21. They keep their row here for traceability but get no v2 `
 | 8.15 | image-dimensions | grade D CLS proxy, no agent consumer |
 | 8.16 | lcp-not-lazy | grade D, `images[0]` is not an LCP proxy |
 | 8.19 | privacy-policy | grade D generic trust claim; the ACP link-surface proposal covers the evidenced commerce case |
+| 1.23 | commerce-links | grade D, no documented consumer |
+| 7.22 | marquee (`_a11y.ts#deprecated-elements`) | grade D, mechanism proven false — marquee text is stable DOM text |
+| 8.14 | no-render-blocking | grade D human-viewport performance signal, no agent consumer |
+| 8.20 | terms-of-service | grade D, no documented consumer, English-only detector |
 
 ### Decisions (2026-08-21)
 
@@ -337,4 +348,27 @@ All 20 `REVIEW:` flags that this table carried are resolved; **0 open**. One lin
 | 19 | 8.18 no-broken-ai-endpoints | **confirmed** machine-discovery whole, no per-surface split; same-origin fix, drop the navigation.json source |
 | 20 | 10.15 descriptive-urls | **confirmed** answer-readiness, informative tier |
 
-Knock-on: 8.20 terms-of-service keeps its operability-safety home on its own merits now that 8.19 is sunset.
+Knock-on: 8.20 terms-of-service was left with its operability-safety home on its own merits when 8.19 was
+sunset; the evidence-grading pass later the same day sunset it too (see below).
+
+## Evidence grades (2026-08-21 pass)
+
+Every registered v1 audit now carries an `evidence_grade` in its dossier under
+[`docs/evidence/audits/`](audits/). Histogram over the 189 registered audits:
+
+| grade | count |
+| :--- | ---: |
+| A | 80 |
+| B | 47 |
+| C | 49 |
+| D | 12 |
+| unrated | 1 |
+| | **189** |
+
+The single `unrated` is 1.18 mobile-friendly, which was already sunset-decided before the grading pass
+ran, so it was never graded. The 12 grade-D audits dispose as: 3 earlier sunsets (8.15, 8.16, 8.19),
+4 new sunsets from this pass (1.23, 7.22, 8.14, 8.20), 3 merge-away, 1 consolidation, and 4.13
+ai-content-declaration kept at the experimental tier on an active declaration-spec trajectory.
+
+(`docs/evidence/audits/` holds 207 dossiers in total; the 18 beyond the 189 registered rows cover
+audits that are not in `audit-config.ts` and are excluded from the histogram above.)
