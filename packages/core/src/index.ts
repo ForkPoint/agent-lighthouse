@@ -4,6 +4,13 @@ export { ProgressTracker, PHASE_WEIGHTS } from './progress';
 export type { PhaseId, ScanEvent } from './progress';
 export { createFetcher, isSafeUrl } from './fetcher';
 export type { FetchResult, FetchOptions } from './fetcher';
+export {
+  classifyFetch,
+  isRealFile,
+  stripBom,
+  normalizeNewlines,
+} from './gatherers/fetch-classify';
+export type { FetchClass, ExpectedKind } from './gatherers/fetch-classify';
 export type { CheckContext, CheckFn, PageContext } from './check-context';
 export { Audit } from './audit';
 export { runAudits, planAudits } from './audit-runner';
