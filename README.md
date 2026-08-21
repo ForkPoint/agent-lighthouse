@@ -37,7 +37,7 @@ npx @forkpoint/agent-lighthouse https://yourstore.com --view
 npx @forkpoint/agent-lighthouse https://staging.yourstore.com --min-score 85
 ```
 
-Agent Lighthouse checks 207 rules covering `llms.txt`, robots.txt crawler policy, Schema.org, OpenAPI discovery, WebMCP action surfaces, AEO/GEO content structure, accessibility, and technical readiness.
+Agent Lighthouse checks 189 rules covering `llms.txt`, robots.txt crawler policy, Schema.org, OpenAPI discovery, WebMCP action surfaces, AEO/GEO content structure, accessibility, and technical readiness.
 
 ---
 

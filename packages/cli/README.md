@@ -10,7 +10,7 @@ npx @forkpoint/agent-lighthouse https://yourstore.com --view
 npx @forkpoint/agent-lighthouse https://staging.yourstore.com --min-score 85
 ```
 
-The CLI generates terminal, HTML, JSON, and Markdown reports for 207 audits across:
+The CLI generates terminal, HTML, JSON, and Markdown reports for 189 audits across:
 
 - `llms.txt`, `llms-full.txt`, sitemaps, and RSS discovery
 - robots.txt access for GPTBot, ClaudeBot, PerplexityBot, and other AI crawlers
