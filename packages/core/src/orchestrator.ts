@@ -22,6 +22,7 @@ import { runA11yForHtml } from './audits/accessibility/runner';
 import { A11Y_RULES } from './audits/accessibility';
 import { extractProductFieldVerification } from './product-fields';
 import { generateScanSummary } from './summary';
+import { isInformative } from './scorer';
 import { detectWafProtection } from './waf-detector';
 
 import type { FetchResult } from './fetcher';
@@ -395,8 +396,10 @@ export async function runScan(url: string, options?: ScanOptions): Promise<ScanR
 
   const durationMs = Math.round(performance.now() - start);
 
+  // Informative checks carry no score and no fix worth surfacing, so they are
+  // advisory-only: they never become recommendations, top fails or top passes.
   const recommendations = allChecks
-    .filter((c) => c.status !== 'pass')
+    .filter((c) => c.status !== 'pass' && !isInformative(c))
     .slice()
     .sort((a: { priority: string }, b: { priority: string }) => {
       const order: Record<string, number> = { critical: 0, high: 1, medium: 2, low: 3 };
@@ -408,12 +411,16 @@ export async function runScan(url: string, options?: ScanOptions): Promise<ScanR
 
   // Extract Top 10 Passes (sorted by the weight stamped on each check)
   const topPasses = allChecks
-    .filter((c) => c.status === 'pass')
+    .filter((c) => c.status === 'pass' && !isInformative(c))
     .slice()
     .sort((a, b) => (b.weight ?? 0) - (a.weight ?? 0))
     .slice(0, 10);
 
-  const readinessVitals = calculateReadinessVitals(allChecks);
+  // Informative checks carry no meaningful score, so they must not drag the
+  // readiness averages (and therefore readinessScore) around.
+  const readinessVitals = calculateReadinessVitals(
+    allChecks.filter((c) => !isInformative(c)),
+  );
   const readinessScore = Math.round(
     readinessVitals.commerce * READINESS_WEIGHTS.commerce +
       readinessVitals.content * READINESS_WEIGHTS.content +

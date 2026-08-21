@@ -55,7 +55,7 @@ Fails any page without at least one `<link rel="preconnect">`. This is inverted 
 
 ## Adversarial redemption research (2026-08-21)
 
-This audit was a delete candidate and went through dedicated adversarial research. Full dossier: [docs/evidence/deletions/technical-readiness/preconnect-hints.md](../../deletions/technical-readiness/preconnect-hints.md). Outcome: **dead**, grade D.
+This audit was a delete candidate and went through dedicated adversarial research. Full dossier: [docs/evidence/sunset/technical-readiness/preconnect-hints.md](../../sunset/technical-readiness/preconnect-hints.md). Outcome: **dead**, grade D.
 
 ## Review history
 

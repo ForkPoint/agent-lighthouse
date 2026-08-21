@@ -58,7 +58,7 @@ Checks for a 'skip to main content' link among the first 5 body links. The premi
 
 ## Adversarial redemption research (2026-08-21)
 
-This audit was a delete candidate and went through dedicated adversarial research. Full dossier: [docs/evidence/deletions/accessibility/skip-nav.md](../../deletions/accessibility/skip-nav.md). Outcome: **dead**, grade D.
+This audit was a delete candidate and went through dedicated adversarial research. Full dossier: [docs/evidence/sunset/accessibility/skip-nav.md](../../sunset/accessibility/skip-nav.md). Outcome: **dead**, grade D.
 
 ## Review history
 

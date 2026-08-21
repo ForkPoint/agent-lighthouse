@@ -53,6 +53,7 @@ export {
   calculateCategoryScore,
   buildCategoryResult,
   calculateOverallScore,
+  isInformative,
 } from './scorer';
 export { extractProductFieldVerification } from './product-fields';
 

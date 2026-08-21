@@ -6,7 +6,7 @@ Date: 2026-08-21 · Status: approved in review, pending spec sign-off · Scope: 
 
 The v1 framework ships 207 audits in 10 categories. A full evidence review (11-agent code review, 12-domain evidence research with 400+ sources, adversarial redemption research) found:
 
-- 18 audits measure signals no consumer reads — proven, not assumed ([NOT-A-FACTOR](../../evidence/NOT-A-FACTOR.md)).
+- 18 audits measure signals no consumer reads — proven, not assumed ([NOT-A-FACTOR](../../evidence/sunset/NOT-A-FACTOR.md)).
 - 17 audits duplicate another audit's measurement (merge list, approved 2026-08-21).
 - 24 audits survive only if rewritten ([REWORK-TODO](../../../packages/core/src/audits/REWORK-TODO.md)).
 - 134 audits carry implementation defects (per-audit dossiers, [audits/](../../evidence/audits/README.md)).
@@ -20,7 +20,7 @@ v2 rebuilds the taxonomy, the scoring, and the engine so that **no audit contrib
 | Decision | Approved | Record |
 | :--- | :--- | :--- |
 | Deletion review: 18 sunset (grade D), 5 informative (grade C), 9 kept with rewrite (grade A/B) | 2026-08-21, deletion-proof review | `docs/evidence/deletions/README.md` |
-| Graceful sunset: condensed public rationale, one minor release informative + notice, removed in major | 2026-08-21 | `docs/evidence/NOT-A-FACTOR.md`, POLICY deprecation process |
+| Graceful sunset: condensed public rationale, one minor release informative + notice, removed in major | 2026-08-21 | `docs/evidence/sunset/NOT-A-FACTOR.md`, POLICY deprecation process |
 | Merge review: 17/17 accepted (13 merges, 2 splits, 2 consolidations) | 2026-08-21, merge review sheet | §5 below |
 | One audit = one source file; `_a11y.ts` splits into 18 named files | 2026-08-21 | project memory, §6 |
 | 15 redemption rewrites from the first triage (form-error-messages, webmcp-manifest reshape, 6 crawler bots, twitter-card, openapi-link, cors-api-routes, …) | folded into this spec — approved with spec sign-off | `packages/core/src/audits/REWORK-TODO.md` |

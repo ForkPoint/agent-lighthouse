@@ -132,6 +132,25 @@ describe('buildReportView', () => {
     expect(v.topPasses.map((c) => c.id)).toEqual(['p1', 'cd1', 'ae1']);
   });
 
+  it('excludes informative checks from topFixes and topPasses', () => {
+    const v = buildReportView(
+      report([
+        cat({
+          id: 'agent-tools',
+          weight: 0.18,
+          checks: [
+            check({ id: 'inf-fail', status: 'fail', priority: 'critical', scoreDisplayMode: 'informative' }),
+            check({ id: 'norm-fail', status: 'fail', priority: 'high' }),
+            check({ id: 'inf-pass', status: 'pass', scoreDisplayMode: 'informative' }),
+            check({ id: 'norm-pass', status: 'pass' }),
+          ],
+        }),
+      ]),
+    );
+    expect(v.topFixes.map((c) => c.id)).toEqual(['norm-fail']);
+    expect(v.topPasses.map((c) => c.id)).toEqual(['norm-pass']);
+  });
+
   it('honours topN for topFixes / topPasses', () => {
     const many = report([
       cat({

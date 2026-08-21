@@ -36,7 +36,7 @@ function reg(AuditClass: typeof Audit): AuditRegistration {
 
 // ── Imports ─────────────────────────────────────────────────────
 
-// Content Discoverability (23)
+// Content Discoverability (22)
 import {
   LlmsTxtExistsAudit,
   LlmsTxtBlockquoteAudit,
@@ -58,7 +58,6 @@ import {
   MobileFriendlyAudit,
   FastPageLoadAudit,
   NoBrokenLinksAudit,
-  NavigationJsonAudit,
   NoOrphanPagesAudit,
   CommerceLinksAudit,
 } from './audits/content-discoverability';
@@ -95,7 +94,7 @@ import {
   AgentGovernanceAudit,
 } from './audits/crawler-permissions';
 
-// Structured Data (20)
+// Structured Data (18)
 import {
   JsonLdPresentAudit,
   SchemaValidationAudit,
@@ -106,20 +105,18 @@ import {
   FaqPageSchemaAudit,
   ServiceProductSchemaAudit,
   SpeakableSchemaAudit,
-  PotentialActionAudit,
   HowToSchemaAudit,
   LocalBusinessSchemaAudit,
   ReviewSchemaAudit,
   OfferSchemaAudit,
   AuthorSchemaAudit,
-  ActionSchemaAudit,
   ProductIdentifiersAudit,
   ProductDetailsAudit,
   ProductReviewsAudit,
   ProductTransactionCertaintyAudit,
 } from './audits/structured-data';
 
-// Meta Tags (20)
+// Meta Tags (17)
 import {
   MetaDescriptionAudit,
   MetaAuthorAudit,
@@ -132,36 +129,30 @@ import {
   OgImageAltAudit,
   TwitterCardAudit,
   LlmsTxtLinkAudit,
-  LlmsFullTxtLinkAudit,
   AiContentDeclarationAudit,
-  AiInstructionsAudit,
   MarkdownAlternateAudit,
   RssFeedLinkAudit,
-  McpDiscoveryLinkAudit,
   OpenApiLinkAudit,
   AiCatalogLinkAudit,
   MetaRobotsAudit,
 } from './audits/meta-tags';
 
-// Agent Tools (27)
+// Agent Tools (23)
 import {
   OpenApiExistsAudit,
   OpenApiEndpointsAudit,
   OpenApiOperationIdsAudit,
-  OpenApiAiInstructionsAudit,
   OpenApiServersAudit,
   OpenApiSchemasAudit,
   AiCatalogExistsAudit,
   AiCatalogMetadataAudit,
   AiCatalogUrlsAudit,
   AgentsJsonAudit,
-  AiPluginJsonAudit,
   McpDiscoveryAudit,
   McpEndpointAudit,
   McpCapabilitiesAudit,
   ContactFormAudit,
   SearchEndpointAudit,
-  DataActionCtasAudit,
   NoBlockingCaptchaAudit,
   FormsNoJsAudit,
   WebmcpManifestAudit,
@@ -169,12 +160,11 @@ import {
   WebmcpInputQualityAudit,
   WebmcpToolNamingAudit,
   WebmcpToolAnnotationsAudit,
-  WebmcpActionCoverageAudit,
   OpenApiDescriptionQualityAudit,
   FormActionabilityAudit,
 } from './audits/agent-tools';
 
-// Semantic HTML (20)
+// Semantic HTML (18)
 import {
   SingleH1Audit,
   SequentialHeadingsAudit,
@@ -187,20 +177,17 @@ import {
   DataTablesAudit,
   CodeLanguageAudit,
   TimeElementAudit,
-  AddressElementAudit,
   DefinitionElementsAudit,
   ContentDepthAudit,
   ImageAltTextAudit,
-  DecorativeImagesAudit,
   FigureFigcaptionAudit,
   SvgBloatAudit,
   TokenRatioAudit,
   FakeHeadingsAudit,
 } from './audits/semantic-html';
 
-// Accessibility — hand-rolled markup audits + engine-backed tree audits (22)
+// Accessibility — hand-rolled markup audits + engine-backed tree audits (21)
 import {
-  SkipNavAudit,
   AriaLandmarksAudit,
   NavAriaLabelAudit,
   FormErrorMessagesAudit,
@@ -224,14 +211,12 @@ import {
   A11yPresentationConflictAudit,
 } from './audits/accessibility';
 
-// Technical Readiness (21)
+// Technical Readiness (17)
 import {
   HttpsEnabledAudit,
   HstsHeaderAudit,
   CspHeaderAudit,
   ContentTypeOptionsAudit,
-  ReferrerPolicyAudit,
-  PermissionsPolicyAudit,
   SecurityTxtAudit,
   CorsAiFilesAudit,
   CorsApiRoutesAudit,
@@ -242,11 +227,9 @@ import {
   NoRenderBlockingAudit,
   ImageDimensionsAudit,
   LcpNotLazyAudit,
-  PreconnectHintsAudit,
   NoBrokenAiEndpointsAudit,
   PrivacyPolicyAudit,
   TermsOfServiceAudit,
-  FrameworkDetectionAudit,
 } from './audits/technical-readiness';
 
 // Answer Engine (11)
@@ -264,7 +247,7 @@ import {
   MetaDescriptionAeoAudit,
 } from './audits/answer-engine';
 
-// Generative Engine (15)
+// Generative Engine (14)
 import {
   NamedAuthorAudit,
   AuthorSameAsAudit,
@@ -277,7 +260,6 @@ import {
   PublicationDateAudit,
   LastModifiedSchemaAudit,
   InternalCrossLinkingAudit,
-  PaginationLinksAudit,
   UniqueDataAudit,
   BlockquoteUsageAudit,
   DescriptiveUrlsAudit,
@@ -320,7 +302,6 @@ export const defaultConfig: ScanConfig = {
       reg(MobileFriendlyAudit),
       reg(FastPageLoadAudit),
       reg(NoBrokenLinksAudit),
-      reg(NavigationJsonAudit),
       reg(NoOrphanPagesAudit),
       reg(CommerceLinksAudit),
     ],
@@ -364,13 +345,11 @@ export const defaultConfig: ScanConfig = {
       reg(FaqPageSchemaAudit),
       reg(ServiceProductSchemaAudit),
       reg(SpeakableSchemaAudit),
-      reg(PotentialActionAudit),
       reg(HowToSchemaAudit),
       reg(LocalBusinessSchemaAudit),
       reg(ReviewSchemaAudit),
       reg(OfferSchemaAudit),
       reg(AuthorSchemaAudit),
-      reg(ActionSchemaAudit),
       reg(ProductIdentifiersAudit),
       reg(ProductDetailsAudit),
       reg(ProductReviewsAudit),
@@ -388,12 +367,9 @@ export const defaultConfig: ScanConfig = {
       reg(OgImageAltAudit),
       reg(TwitterCardAudit),
       reg(LlmsTxtLinkAudit),
-      reg(LlmsFullTxtLinkAudit),
       reg(AiContentDeclarationAudit),
-      reg(AiInstructionsAudit),
       reg(MarkdownAlternateAudit),
       reg(RssFeedLinkAudit),
-      reg(McpDiscoveryLinkAudit),
       reg(OpenApiLinkAudit),
       reg(AiCatalogLinkAudit),
       reg(MetaRobotsAudit),
@@ -402,20 +378,17 @@ export const defaultConfig: ScanConfig = {
       reg(OpenApiExistsAudit),
       reg(OpenApiEndpointsAudit),
       reg(OpenApiOperationIdsAudit),
-      reg(OpenApiAiInstructionsAudit),
       reg(OpenApiServersAudit),
       reg(OpenApiSchemasAudit),
       reg(AiCatalogExistsAudit),
       reg(AiCatalogMetadataAudit),
       reg(AiCatalogUrlsAudit),
       reg(AgentsJsonAudit),
-      reg(AiPluginJsonAudit),
       reg(McpDiscoveryAudit),
       reg(McpEndpointAudit),
       reg(McpCapabilitiesAudit),
       reg(ContactFormAudit),
       reg(SearchEndpointAudit),
-      reg(DataActionCtasAudit),
       reg(NoBlockingCaptchaAudit),
       reg(FormsNoJsAudit),
       reg(WebmcpManifestAudit),
@@ -423,7 +396,6 @@ export const defaultConfig: ScanConfig = {
       reg(WebmcpInputQualityAudit),
       reg(WebmcpToolNamingAudit),
       reg(WebmcpToolAnnotationsAudit),
-      reg(WebmcpActionCoverageAudit),
       reg(OpenApiDescriptionQualityAudit),
       reg(FormActionabilityAudit),
     ],
@@ -439,18 +411,15 @@ export const defaultConfig: ScanConfig = {
       reg(DataTablesAudit),
       reg(CodeLanguageAudit),
       reg(TimeElementAudit),
-      reg(AddressElementAudit),
       reg(DefinitionElementsAudit),
       reg(ContentDepthAudit),
       reg(ImageAltTextAudit),
-      reg(DecorativeImagesAudit),
       reg(FigureFigcaptionAudit),
       reg(SvgBloatAudit),
       reg(TokenRatioAudit),
       reg(FakeHeadingsAudit),
     ],
     accessibility: [
-      reg(SkipNavAudit),
       reg(AriaLandmarksAudit),
       reg(NavAriaLabelAudit),
       reg(FormErrorMessagesAudit),
@@ -478,8 +447,6 @@ export const defaultConfig: ScanConfig = {
       reg(HstsHeaderAudit),
       reg(CspHeaderAudit),
       reg(ContentTypeOptionsAudit),
-      reg(ReferrerPolicyAudit),
-      reg(PermissionsPolicyAudit),
       reg(SecurityTxtAudit),
       reg(CorsAiFilesAudit),
       reg(CorsApiRoutesAudit),
@@ -490,11 +457,9 @@ export const defaultConfig: ScanConfig = {
       reg(NoRenderBlockingAudit),
       reg(ImageDimensionsAudit),
       reg(LcpNotLazyAudit),
-      reg(PreconnectHintsAudit),
       reg(NoBrokenAiEndpointsAudit),
       reg(PrivacyPolicyAudit),
       reg(TermsOfServiceAudit),
-      reg(FrameworkDetectionAudit),
     ],
     'answer-engine': [
       reg(FaqSectionsAudit),
@@ -521,7 +486,6 @@ export const defaultConfig: ScanConfig = {
       reg(PublicationDateAudit),
       reg(LastModifiedSchemaAudit),
       reg(InternalCrossLinkingAudit),
-      reg(PaginationLinksAudit),
       reg(UniqueDataAudit),
       reg(BlockquoteUsageAudit),
       reg(DescriptiveUrlsAudit),

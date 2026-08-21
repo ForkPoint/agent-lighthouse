@@ -58,7 +58,7 @@ A byte-for-byte copy of llms-txt-link (4.11) with one substring changed ('llms' 
 
 ## Adversarial redemption research (2026-08-21)
 
-This audit was a delete candidate and went through dedicated adversarial research. Full dossier: [docs/evidence/deletions/meta-tags/llms-full-txt-link.md](../../deletions/meta-tags/llms-full-txt-link.md). Outcome: **dead**, grade D.
+This audit was a delete candidate and went through dedicated adversarial research. Full dossier: [docs/evidence/sunset/meta-tags/llms-full-txt-link.md](../../sunset/meta-tags/llms-full-txt-link.md). Outcome: **dead**, grade D.
 
 ## Review history
 

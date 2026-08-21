@@ -54,7 +54,7 @@ Hard-fails (binary, no na, medium priority) any site lacking a schema.org Contac
 
 ## Adversarial redemption research (2026-08-21)
 
-This audit was a delete candidate and went through dedicated adversarial research. Full dossier: [docs/evidence/deletions/structured-data/potential-action.md](../../deletions/structured-data/potential-action.md). Outcome: **dead**, grade D.
+This audit was a delete candidate and went through dedicated adversarial research. Full dossier: [docs/evidence/sunset/structured-data/potential-action.md](../../sunset/structured-data/potential-action.md). Outcome: **dead**, grade D.
 
 ## Review history
 

@@ -92,6 +92,41 @@ describe('calculateCategoryScore', () => {
   });
 });
 
+describe('informative checks are score-neutral', () => {
+  it('adding an informative check never changes the category score', () => {
+    const scored = [
+      makeCheck({ status: 'pass', score: 1, scoreDisplayMode: 'binary' }),
+      makeCheck({ status: 'fail', score: 0, scoreDisplayMode: 'binary' }),
+    ];
+    const before = calculateCategoryScore(scored);
+    const withInformative = [
+      ...scored,
+      makeCheck({ status: 'fail', score: 0, scoreDisplayMode: 'informative' }),
+      makeCheck({ status: 'pass', score: 1, scoreDisplayMode: 'informative' }),
+    ];
+    expect(calculateCategoryScore(withInformative)).toBe(before);
+  });
+
+  it('a failing informative check on its own does not drag the mean down', () => {
+    const scored = [
+      makeCheck({ status: 'pass', score: 1, scoreDisplayMode: 'binary' }),
+      makeCheck({ status: 'pass', score: 1, scoreDisplayMode: 'binary' }),
+    ];
+    expect(calculateCategoryScore(scored)).toBe(100);
+    expect(
+      calculateCategoryScore([
+        ...scored,
+        makeCheck({ status: 'fail', score: 0, scoreDisplayMode: 'informative' }),
+      ]),
+    ).toBe(100);
+  });
+
+  it('a category of only informative checks scores 0', () => {
+    const only = [makeCheck({ status: 'pass', score: 1, scoreDisplayMode: 'informative' })];
+    expect(calculateCategoryScore(only)).toBe(0);
+  });
+});
+
 // ---------------------------------------------------------------------------
 // buildCategoryResult
 // ---------------------------------------------------------------------------

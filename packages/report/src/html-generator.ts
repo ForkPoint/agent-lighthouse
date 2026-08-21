@@ -87,6 +87,7 @@ export function generateHtmlReport(report: ScanReport): string {
                           <div class="font-semibold text-slate-800 dark:text-slate-200 text-sm flex items-center gap-2">
                             <span>${escapeHtml(c.title)}</span>
                             <span class="text-[10px] uppercase tracking-wider font-mono text-slate-400">[${escapeHtml(c.id)}]</span>
+                            ${c.deprecated ? '<span class="text-[10px] uppercase tracking-wider font-bold px-1.5 py-0.5 rounded bg-slate-200 dark:bg-slate-700 text-slate-500 dark:text-slate-400">Deprecated</span>' : ''}
                           </div>
                           ${c.displayValue ? `<div class="text-xs font-mono text-slate-500 dark:text-slate-400 mt-0.5">${escapeHtml(c.displayValue)}</div>` : ''}
                         </div>
@@ -95,6 +96,14 @@ export function generateHtmlReport(report: ScanReport): string {
                     </summary>
 
                     <div class="mt-3 pl-8 text-xs text-slate-600 dark:text-slate-400 space-y-3 cursor-text">
+                      ${c.deprecated ? `
+                        <div class="bg-slate-100 dark:bg-slate-800/60 p-3 rounded-lg border border-slate-300 dark:border-slate-700">
+                          <strong class="text-slate-700 dark:text-slate-300 block mb-1">Deprecated — no longer a factor</strong>
+                          <span>${escapeHtml(c.deprecated.notice)}</span>
+                          <a href="${escapeHtml(c.deprecated.link)}" target="_blank" rel="noopener" class="block mt-1 underline text-slate-500">Why this is not a factor</a>
+                        </div>
+                      ` : ''}
+
                       ${c.explanation ? `<p class="leading-relaxed font-medium text-slate-700 dark:text-slate-300">${escapeHtml(c.explanation)}</p>` : ''}
                       
                       ${c.impact ? `

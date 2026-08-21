@@ -13,7 +13,7 @@ This benchmark is the promotion-friendly story for Agent Lighthouse: most stores
 
 ## What The Benchmark Checks
 
-Agent Lighthouse evaluates 207 audits across:
+Agent Lighthouse evaluates 189 audits across:
 
 - Content discovery: `llms.txt`, `llms-full.txt`, sitemaps, RSS, canonical links.
 - AI crawler access: robots.txt rules for GPTBot, ClaudeBot, PerplexityBot, OAI-SearchBot, Applebot-Extended, and related crawlers.

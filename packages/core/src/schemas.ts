@@ -36,6 +36,11 @@ export const AuditGuidanceSchema = z.object({
 
 export const ScoreDisplayModeSchema = z.enum(['binary', 'ternary', 'informative']);
 
+export const DeprecationNoticeSchema = z.object({
+  notice: z.string().min(1).max(500),
+  link: z.string().url(),
+});
+
 export const AuditMetaSchema = z.object({
   id: z.string(),
   category: z.string(),
@@ -43,12 +48,13 @@ export const AuditMetaSchema = z.object({
   failureTitle: z.string(),
   description: z.string(),
   scoreDisplayMode: ScoreDisplayModeSchema,
-  // 0 is legal: informative-tier audits report evidence without moving the
-  // score, so they carry weight 0 and are excluded from the scorer denominator.
+  // 0 is legal: informative-tier and deprecated audits report evidence without
+  // moving the score, so they carry weight 0 and stay out of the denominator.
   weight: z.number().nonnegative(),
   applicablePageTypes: z.array(z.string()).optional(),
   defaultPriority: CheckPrioritySchema,
   guidance: AuditGuidanceSchema.optional(),
+  deprecated: DeprecationNoticeSchema.optional(),
 });
 
 export const CheckResultSchema = z.object({
@@ -74,4 +80,5 @@ export const CheckResultSchema = z.object({
     })
     .optional(),
   tags: z.array(z.string().max(50)).max(20).optional(),
+  deprecated: DeprecationNoticeSchema.optional(),
 });

@@ -46,7 +46,7 @@ describe('ImageAltTextAudit', () => {
     expect(result.found).toContain('0/2');
   });
 
-  it('excludes explicitly decorative alt="" images from coverage (deferred to 6.16)', () => {
+  it('excludes explicitly decorative alt="" images from coverage', () => {
     // Three decorative `alt=""` images plus one informative image. The decorative
     // images must be excluded from the denominator, leaving 1/1 = 100% coverage
     // rather than 1/4 = 25%.

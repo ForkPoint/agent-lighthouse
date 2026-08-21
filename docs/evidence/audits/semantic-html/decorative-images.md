@@ -55,7 +55,7 @@ This audit gives actively harmful guidance and is built on a confirmed classific
 
 ## Adversarial redemption research (2026-08-21)
 
-This audit was a delete candidate and went through dedicated adversarial research. Full dossier: [docs/evidence/deletions/semantic-html/decorative-images.md](../../deletions/semantic-html/decorative-images.md). Outcome: **dead**, grade D.
+This audit was a delete candidate and went through dedicated adversarial research. Full dossier: [docs/evidence/sunset/semantic-html/decorative-images.md](../../sunset/semantic-html/decorative-images.md). Outcome: **dead**, grade D.
 
 ## Review history
 
