@@ -1,30 +1,31 @@
 import { describe, it, expect } from 'vitest';
 import { defaultConfig } from '../audit-config';
 
-const SUNSET_IDS = [
+// The 18 v1 audits removed in this major release. Rationale and per-audit
+// evidence: docs/evidence/sunset/NOT-A-FACTOR.md. Consumers migrate via
+// packages/core/migration-map.json.
+const REMOVED_IDS = [
   '7.1', '5.11', '5.17', '5.4', '5.25', '1.21', '10.12', '4.14', '4.12',
   '4.17', '6.12', '6.16', '3.16', '3.10', '8.21', '8.6', '8.17', '8.5',
 ];
 
-describe('sunset audits (NOT-A-FACTOR)', () => {
-  const metas = Object.values(defaultConfig.audits)
+describe('sunset audits (NOT-A-FACTOR) are gone', () => {
+  const allMetas = Object.values(defaultConfig.audits)
     .flat()
-    .map((reg) => reg.meta)
-    .filter((m) => SUNSET_IDS.includes(m.id));
+    .map((reg) => reg.meta);
 
-  it('all 18 sunset audits are registered', () => {
-    expect(metas.map((m) => m.id).sort()).toEqual([...SUNSET_IDS].sort());
+  // Tombstone: these ids must never come back. Re-registering one would
+  // silently resurrect a check the evidence review proved has no consumer.
+  it('registers none of the 18 removed audit ids', () => {
+    const resurrected = allMetas
+      .map((m) => m.id)
+      .filter((id) => REMOVED_IDS.includes(id));
+    expect(resurrected).toEqual([]);
   });
 
-  it.each(SUNSET_IDS)('audit %s is informative, weight 0, with a deprecation notice', (id) => {
-    const meta = metas.find((m) => m.id === id);
-    expect(meta).toBeDefined();
-    expect(meta!.scoreDisplayMode).toBe('informative');
-    expect(meta!.weight).toBe(0);
-    expect(meta!.deprecated?.notice).toBeTruthy();
-    expect(meta!.deprecated?.link).toMatch(
-      /^https:\/\/github\.com\/ForkPoint\/agent-lighthouse\/blob\/main\/docs\/evidence\/NOT-A-FACTOR\.md#/,
-    );
+  it('leaves no gap in the registry', () => {
+    const ids = allMetas.map((m) => m.id);
+    expect(new Set(ids).size).toBe(ids.length);
   });
 });
 
@@ -34,7 +35,7 @@ describe('weight/scoreDisplayMode invariant', () => {
     .map((reg) => reg.meta);
 
   it('covers the whole registry', () => {
-    expect(allMetas.length).toBeGreaterThan(190);
+    expect(allMetas.length).toBeGreaterThan(180);
   });
 
   // Two independent scoring paths key off two different fields: the audit

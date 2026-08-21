@@ -1,6 +1,5 @@
 // Hand-rolled (cheerio) accessibility audits — agent-readiness checks that have
 // no direct axe-core rule equivalent.
-export { SkipNavAudit } from './skip-nav';
 export { AriaLandmarksAudit } from './aria-landmarks';
 export { NavAriaLabelAudit } from './nav-aria-label';
 export { FormErrorMessagesAudit } from './form-error-messages';

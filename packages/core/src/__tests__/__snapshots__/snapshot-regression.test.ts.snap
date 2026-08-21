@@ -14,11 +14,5 @@ exports[`Snapshot Regression Tests > matches baseline results for Labs Homepage 
     "score": 1,
     "status": "pass",
   },
-  {
-    "explanation": "No specific frontend framework clearly detected.",
-    "id": "8.21",
-    "score": 1,
-    "status": "pass",
-  },
 ]
 `;
