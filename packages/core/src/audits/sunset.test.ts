@@ -27,3 +27,24 @@ describe('sunset audits (NOT-A-FACTOR)', () => {
     );
   });
 });
+
+describe('weight/scoreDisplayMode invariant', () => {
+  const allMetas = Object.values(defaultConfig.audits)
+    .flat()
+    .map((reg) => reg.meta);
+
+  it('covers the whole registry', () => {
+    expect(allMetas.length).toBeGreaterThan(190);
+  });
+
+  // Two independent scoring paths key off two different fields: the audit
+  // runner weights by `meta.weight`, while the public scorer excludes by
+  // `meta.scoreDisplayMode === 'informative'`. If the two ever disagree an
+  // audit would be silently half-excluded, so they must move together.
+  it('keeps weight === 0 and scoreDisplayMode === informative in lockstep', () => {
+    const divergent = allMetas
+      .filter((m) => (m.weight === 0) !== (m.scoreDisplayMode === 'informative'))
+      .map((m) => `${m.id} (weight=${m.weight}, scoreDisplayMode=${m.scoreDisplayMode})`);
+    expect(divergent).toEqual([]);
+  });
+});
