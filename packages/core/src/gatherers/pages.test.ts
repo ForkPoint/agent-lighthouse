@@ -39,6 +39,12 @@ describe('pagesOfType', () => {
   it('filters by page type', () => {
     expect(pagesOfType(ctx, 'product').map((p) => p.url)).toEqual(['https://x.test/p']);
   });
+  it('returns a copy, so mutating the result never touches ctx.pages', () => {
+    const all = pagesOfType(ctx);
+    all.pop();
+    expect(all).toHaveLength(2);
+    expect(ctx.pages).toHaveLength(3);
+  });
 });
 
 describe('judgePages', () => {
@@ -50,6 +56,11 @@ describe('judgePages', () => {
     expect(judged).toHaveLength(3);
     expect(passRate).toBeCloseTo(2 / 3);
     expect(failures.map((f) => f.page.url)).toEqual(['https://x.test/p']);
+  });
+  it('keeps the real page even when the judge returns its own page key', () => {
+    const [first] = ctx.pages;
+    const { judged } = judgePages([first!], () => ({ ok: true, page: 'bogus' }) as never);
+    expect(judged[0]!.page).toBe(first);
   });
   it('empty page set gives passRate 1 and empty judged (caller must return na)', () => {
     const { judged, passRate } = judgePages([], () => ({ ok: true }));
