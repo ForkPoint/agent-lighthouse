@@ -47,6 +47,39 @@ describe('classifyFetch', () => {
     expect(classifyFetch(fr({ status: 503 }), 'text')).toBe('error');
     expect(classifyFetch(fr({ status: 0, error: 'ENOTFOUND' }), 'text')).toBe('error');
   });
+  it('accepts a real llms.txt mis-served as text/html (body evidence wins)', () => {
+    const llms = fr({
+      contentType: 'text/html; charset=utf-8',
+      body: '# Acme\n\n> Widgets.\n\n## Docs\n- [Guide](https://x.test/guide)\n',
+    });
+    expect(classifyFetch(llms, 'text')).toBe('ok');
+    expect(isRealFile(llms, 'text')).toBe(true);
+  });
+  it('accepts a real sitemap.xml mis-served as text/html (body evidence wins)', () => {
+    const sitemap = fr({
+      contentType: 'text/html',
+      body: '<?xml version="1.0" encoding="UTF-8"?><urlset><url><loc>https://x.test/</loc></url></urlset>',
+    });
+    expect(classifyFetch(sitemap, 'xml')).toBe('ok');
+    const rss = fr({ contentType: 'text/html', body: '<rss version="2.0"><channel/></rss>' });
+    expect(classifyFetch(rss, 'xml')).toBe('ok');
+    const atom = fr({ contentType: 'text/html', body: '﻿  <feed xmlns="http://www.w3.org/2005/Atom"/>' });
+    expect(classifyFetch(atom, 'xml')).toBe('ok');
+  });
+  it('still calls an HTML shell served at a .txt path a soft-404', () => {
+    const shell = fr({
+      contentType: 'text/plain',
+      body: '<!doctype html><html><head><title>App</title></head><body><div id="root"></div></body></html>',
+    });
+    expect(classifyFetch(shell, 'text')).toBe('soft-404');
+  });
+  it('matches an uppercase TEXT/HTML content-type case-insensitively', () => {
+    const shell = fr({ contentType: 'TEXT/HTML; charset=UTF-8', body: '<!DOCTYPE HTML><html><body>x</body></html>' });
+    expect(classifyFetch(shell, 'text')).toBe('soft-404');
+    // Non-XML body under an uppercase text/html header → header decides for xml.
+    const notXml = fr({ contentType: 'TEXT/HTML', body: 'Not found, sorry.' });
+    expect(classifyFetch(notXml, 'xml')).toBe('soft-404');
+  });
   it('html expectation accepts an HTML body as ok', () => {
     expect(classifyFetch(fr({ contentType: 'text/html', body: '<!doctype html><p>hi</p>' }), 'html')).toBe('ok');
   });
