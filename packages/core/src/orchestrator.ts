@@ -1,4 +1,4 @@
-import type { PageOverride, PageType, ScanReport } from './types';
+import type { CheckStatus, PageOverride, PageType, ScanReport } from './types';
 import { getScoreTier, MAX_PAGES_PER_SCAN, READINESS_WEIGHTS } from './constants';
 import { logger } from './logger';
 import { createFetcher, splitCredentials } from './fetcher';
@@ -406,21 +406,11 @@ export async function runScan(url: string, options?: ScanOptions): Promise<ScanR
   // Extract Top 10 Fails (already sorted by priority in recommendations)
   const topFails = recommendations.slice(0, 10);
 
-  // Extract Top 10 Passes (sorted by weight)
-  const weightMap = new Map<string, number>();
-  for (const catId in defaultConfig.audits) {
-    for (const reg of defaultConfig.audits[catId]!) {
-      weightMap.set(reg.meta.id, reg.meta.weight);
-    }
-  }
-
+  // Extract Top 10 Passes (sorted by the weight stamped on each check)
   const topPasses = allChecks
     .filter((c) => c.status === 'pass')
     .slice()
-    .sort(
-      (a: { id: string }, b: { id: string }) =>
-        (weightMap.get(b.id) ?? 1) - (weightMap.get(a.id) ?? 1),
-    )
+    .sort((a, b) => (b.weight ?? 0) - (a.weight ?? 0))
     .slice(0, 10);
 
   const readinessVitals = calculateReadinessVitals(allChecks);
@@ -465,23 +455,38 @@ export async function runScan(url: string, options?: ScanOptions): Promise<ScanR
   return report;
 }
 
-function calculateReadinessVitals(checks: Array<{ id: string; category: string; score: number }>): {
+/**
+ * Readiness vitals average only the *applicable* checks. `na` checks carry a
+ * stub score of 0, so counting them deflated every vital on sites where a whole
+ * area does not apply (a blog has no commerce pages, yet scored 0% Commerce).
+ *
+ * A vital with no applicable checks reads as 0, i.e. "no data". That is the
+ * neutral value the rest of the pipeline already substitutes for absent vitals
+ * (`report.readinessVitals ?? { commerce: 0, ... }` in the report view-model and
+ * in generateScanSummary), so 0 keeps one meaning across the codebase. 100 was
+ * rejected: readinessScore is a weighted sum of the four vitals, and awarding a
+ * full 100 for zero evidence would inflate the headline score of any site that
+ * simply has nothing to measure.
+ */
+function calculateReadinessVitals(
+  checks: Array<{ id: string; category: string; score: number; status: CheckStatus }>,
+): {
   commerce: number;
   content: number;
   botAccessibility: number;
   technical: number;
 } {
-  const getScore = (ids: string[]) => {
-    const matching = checks.filter((c) => ids.includes(c.id));
+  const applicable = checks.filter((c) => c.status !== 'na');
+
+  const average = (matching: Array<{ score: number }>) => {
     if (matching.length === 0) return 0;
     return Math.round((matching.reduce((sum, c) => sum + c.score, 0) / matching.length) * 100);
   };
 
-  const getCategoryScoreByPrefix = (prefix: string) => {
-    const matching = checks.filter((c) => c.id.startsWith(prefix) || c.category === prefix);
-    if (matching.length === 0) return 0;
-    return Math.round((matching.reduce((sum, c) => sum + c.score, 0) / matching.length) * 100);
-  };
+  const getScore = (ids: string[]) => average(applicable.filter((c) => ids.includes(c.id)));
+
+  const getCategoryScoreByPrefix = (prefix: string) =>
+    average(applicable.filter((c) => c.id.startsWith(prefix) || c.category === prefix));
 
   return {
     commerce: getScore(['3.8', '3.14', '3.21', '3.22', '3.23', '3.24']),

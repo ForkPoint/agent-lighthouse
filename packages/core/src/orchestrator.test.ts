@@ -384,6 +384,63 @@ describe('runScan — report assembly fallbacks', () => {
     expect(report.readinessVitals?.botAccessibility).toBe(0);
     expect(report.readinessVitals?.technical).toBe(0);
   });
+
+  it('never lets an na check move a readiness vital', async () => {
+    const url = 'https://example.com/';
+
+    const mk = (over: Record<string, unknown>) =>
+      ({
+        category: 'misc',
+        title: 't',
+        description: 'd',
+        score: 0,
+        scoreDisplayMode: 'binary',
+        impact: 'Low',
+        fix: 'f',
+        explanation: 'e',
+        details: {},
+        ...over,
+      }) as unknown;
+
+    // One passing check per vital, so each vital has real evidence to average.
+    const applicable = [
+      mk({ id: '3.8', status: 'pass', priority: 'low', score: 1 }),
+      mk({ id: '1.1', status: 'pass', priority: 'low', score: 1 }),
+      mk({ id: 'cp1', category: 'crawler-permissions', status: 'pass', priority: 'low', score: 1 }),
+      mk({ id: 'tr1', category: 'technical-readiness', status: 'pass', priority: 'low', score: 1 }),
+    ];
+
+    // The na stubs a real scan emits: status 'na' with the stub score of 0.
+    const naStubs = [
+      mk({ id: '3.14', status: 'na', priority: 'low', score: 0 }),
+      mk({ id: '1.2', status: 'na', priority: 'low', score: 0 }),
+      mk({ id: 'cp2', category: 'crawler-permissions', status: 'na', priority: 'low', score: 0 }),
+      mk({ id: 'tr2', category: 'technical-readiness', status: 'na', priority: 'low', score: 0 }),
+    ];
+
+    const run = async (checks: unknown[]) => {
+      h.map.clear();
+      set(url, CONTENT_HTML);
+      vi.mocked(runAudits).mockResolvedValueOnce({
+        checks: checks as AuditRunResult['checks'],
+        categories: [],
+        overallScore: 100,
+      });
+      return runScan(url);
+    };
+
+    const without = await run(applicable);
+    const withNa = await run([...applicable, ...naStubs]);
+
+    expect(without.readinessVitals).toEqual({
+      commerce: 100,
+      content: 100,
+      botAccessibility: 100,
+      technical: 100,
+    });
+    expect(withNa.readinessVitals).toEqual(without.readinessVitals);
+    expect(withNa.readinessScore).toBe(without.readinessScore);
+  });
 });
 
 // ---------------------------------------------------------------------------
