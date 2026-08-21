@@ -58,9 +58,13 @@ export class WebmcpActionCoverageAudit extends Audit {
     failureTitle: 'WebMCP commerce action coverage',
     description:
       'For e-commerce sites, WebMCP tools should cover key commerce actions: product search, product detail, add to cart, checkout, and contact/support. Broader action coverage means AI agents can complete more user tasks without falling back to manual browsing.',
-    scoreDisplayMode: 'ternary',
-    weight: 1.0,
+    scoreDisplayMode: 'informative',
+    weight: 0,
     defaultPriority: 'medium',
+    deprecated: {
+      notice: 'The WebMCP explainer rejected static manifests by name; WebMCP is client-side-only, so a static coverage manifest is unreadable by any agent.',
+      link: 'https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/NOT-A-FACTOR.md#agent-toolswebmcp-action-coverage',
+    },
     guidance: {
       impact:
         'AI shopping agents need to complete full purchase journeys — search, view, add to cart, checkout. If your WebMCP tools only cover search but not checkout, agents abandon the flow and users turn to competitors with full coverage.',

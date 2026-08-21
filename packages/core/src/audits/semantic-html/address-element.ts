@@ -10,10 +10,14 @@ export class AddressElementAudit extends Audit {
     failureTitle: '<address> for contact info',
     description:
       'AI agents use <address> elements to extract contact information (email, phone, physical address) for structured answers to "how to contact" queries. Without semantic <address> markup, agents must guess which text on your page is contact info.',
-    scoreDisplayMode: 'binary',
-    weight: 1.0,
+    scoreDisplayMode: 'informative',
+    weight: 0,
     applicablePageTypes: ['homepage'],
     defaultPriority: 'low',
+    deprecated: {
+      notice: 'No consumer reads the address element: extractors strip it, the a11y tree flattens it, and Google routes contact data through schema.org PostalAddress.',
+      link: 'https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/NOT-A-FACTOR.md#semantic-htmladdress-element',
+    },
     guidance: {
       impact:
         'AI agents cannot reliably extract contact information (email, phone, physical address) when it is not wrapped in an <address> element. This means your business contact details may be omitted from AI-generated answers to "how do I contact" queries.',

@@ -10,9 +10,13 @@ export class McpDiscoveryLinkAudit extends Audit {
     failureTitle: 'MCP discovery link in head',
     description:
       "The MCP (Model Context Protocol) discovery link in <head> enables AI agents like Claude and ChatGPT to find and connect to your site's tool endpoints. This is how agents discover that your site offers programmatic actions (search, booking, data queries) beyond static content. Without it, agents cannot discover your MCP server.",
-    scoreDisplayMode: 'binary',
-    weight: 1.0,
+    scoreDisplayMode: 'informative',
+    weight: 0,
     defaultPriority: 'low',
+    deprecated: {
+      notice: 'No MCP spec, draft, or client defines HTML link-rel discovery; MCP discovery is moving to .well-known server cards instead.',
+      link: 'https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/NOT-A-FACTOR.md#meta-tagsmcp-discovery-link',
+    },
     guidance: {
       impact:
         "Without an MCP discovery link, AI agents like Claude and ChatGPT cannot find your site's tool endpoints. This means agents cannot discover that your site offers programmatic actions (search, booking, data queries) beyond static content.",

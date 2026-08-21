@@ -24,9 +24,13 @@ export class ActionSchemaAudit extends Audit {
     failureTitle: 'ConfirmAction/ReserveAction schema',
     description:
       'AI agents use ConfirmAction/ReserveAction schema to complete transactions on behalf of users in agentic workflows. Without this schema on your confirmation pages, agents cannot programmatically verify that a booking or purchase was successful.',
-    scoreDisplayMode: 'ternary',
-    weight: 1.0,
+    scoreDisplayMode: 'informative',
+    weight: 0,
     defaultPriority: 'low',
+    deprecated: {
+      notice: 'Agentic checkout confirms transactions over APIs (ACP, Maps Booking), never by page markup; ConfirmAction deployment is under 1K domains.',
+      link: 'https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/NOT-A-FACTOR.md#structured-dataaction-schema',
+    },
     guidance: {
       impact:
         'Without ConfirmAction or ReserveAction schema on confirmation pages, AI agents cannot programmatically verify that a booking or purchase completed successfully. This breaks end-to-end agentic commerce workflows, forcing users back into manual checkout confirmation.',

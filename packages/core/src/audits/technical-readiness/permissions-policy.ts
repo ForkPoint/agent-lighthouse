@@ -10,9 +10,13 @@ export class PermissionsPolicyAudit extends Audit {
     failureTitle: 'Permissions-Policy header',
     description:
       'AI browser agents that visit your site may trigger permission prompts for camera, microphone, or geolocation if Permissions-Policy is not set. These prompts block agent workflows and are flagged as security concerns by AI trust-scoring systems.',
-    scoreDisplayMode: 'binary',
-    weight: 1.0,
+    scoreDisplayMode: 'informative',
+    weight: 0,
     defaultPriority: 'medium',
+    deprecated: {
+      notice: 'A missing Permissions-Policy header cannot cause an agent prompt; prompts fire only when page JavaScript calls a gated API.',
+      link: 'https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/NOT-A-FACTOR.md#technical-readinesspermissions-policy',
+    },
     guidance: {
       impact:
         "Without a Permissions-Policy header, AI browser agents visiting your site may trigger unexpected permission prompts for camera, microphone, or geolocation. These prompts block automated agent workflows entirely and are flagged by AI trust-scoring systems as a security concern, reducing your site's trust score.",

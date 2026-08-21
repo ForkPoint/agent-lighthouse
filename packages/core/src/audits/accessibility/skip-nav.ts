@@ -10,9 +10,13 @@ export class SkipNavAudit extends Audit {
     failureTitle: 'Skip navigation link',
     description:
       'Headless browser agents (Claude computer use, GPTBot with browser) parse the accessibility tree to navigate pages efficiently. A skip navigation link lets these agents jump directly to primary content without processing every nav element, reducing latency and improving content extraction accuracy.',
-    scoreDisplayMode: 'binary',
-    weight: 1.0,
+    scoreDisplayMode: 'informative',
+    weight: 0,
     defaultPriority: 'medium',
+    deprecated: {
+      notice: 'Agents that read the accessibility tree receive the whole tree at once; nothing consumes a skip link, and the main landmark already marks the content boundary.',
+      link: 'https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/NOT-A-FACTOR.md#accessibilityskip-nav',
+    },
     guidance: {
       impact:
         'Headless browser agents (Claude computer use, GPTBot) parse the accessibility tree to navigate pages. A skip navigation link lets agents jump directly to primary content without processing every nav element, reducing latency and improving content extraction accuracy.',

@@ -10,9 +10,13 @@ export class DataActionCtasAudit extends Audit {
     failureTitle: 'data-action attributes on CTAs',
     description:
       'data-action attributes help AI browser agents (like ChatGPT Browse and Google Mariner) identify clickable CTAs and understand what each button does. Without these hints, agents must guess which elements are interactive based on text alone.',
-    scoreDisplayMode: 'ternary',
-    weight: 1.0,
+    scoreDisplayMode: 'informative',
+    weight: 0,
     defaultPriority: 'low',
+    deprecated: {
+      notice: 'No vendor documents reading data-action attributes, and the attribute namespace collides with Stimulus/Hotwire semantics.',
+      link: 'https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/NOT-A-FACTOR.md#agent-toolsdata-action-ctas',
+    },
     guidance: {
       impact:
         'Without data-action attributes, AI browser agents like ChatGPT Browse and Google Mariner must guess which elements are clickable and what they do. This leads to missed conversions when agents cannot reliably identify your "Book a Demo" or "Add to Cart" buttons.',

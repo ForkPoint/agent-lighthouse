@@ -22,9 +22,13 @@ export class AiPluginJsonAudit extends Audit {
     failureTitle: 'ai-plugin.json exists',
     description:
       'ai-plugin.json is the ChatGPT plugin manifest format. Even if you do not build a ChatGPT plugin, having this file helps AI agents understand your site as a tool with human-readable and model-readable names, logos, and API references.',
-    scoreDisplayMode: 'ternary',
-    weight: 1.0,
+    scoreDisplayMode: 'informative',
+    weight: 0,
     defaultPriority: 'medium',
+    deprecated: {
+      notice: 'ChatGPT plugins — the only documented consumer of ai-plugin.json — were discontinued; OpenAI archived the format and removed its spec.',
+      link: 'https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/NOT-A-FACTOR.md#agent-toolsai-plugin-json',
+    },
     guidance: {
       impact:
         'ai-plugin.json is the standard manifest used by ChatGPT and other AI platforms to register your site as a tool. Without it, your site cannot be installed as a plugin, and agents lose the human-readable and model-readable names needed for reliable interactions.',

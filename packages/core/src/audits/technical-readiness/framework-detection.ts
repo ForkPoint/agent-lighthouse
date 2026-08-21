@@ -11,8 +11,12 @@ export class FrameworkDetectionAudit extends Audit {
     description:
       'AI agents can optimize their interaction strategy if they know the underlying technology stack (e.g., React, Next.js, Vue). This also helps identify potential client-side rendering issues.',
     scoreDisplayMode: 'informative',
-    weight: 1.0,
+    weight: 0,
     defaultPriority: 'low',
+    deprecated: {
+      notice: 'No vendor treats framework identity as an AI-readiness factor; Google frames the question purely as rendering outcome.',
+      link: 'https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/NOT-A-FACTOR.md#technical-readinessframework-detection',
+    },
     guidance: {
       impact:
         'This is an informational audit. Knowing your frontend framework helps identify potential rendering issues — for example, pure client-side React apps are invisible to AI crawlers that do not execute JavaScript. Framework detection also helps prioritize other audit recommendations.',

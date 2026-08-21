@@ -10,10 +10,14 @@ export class PaginationLinksAudit extends Audit {
     failureTitle: 'Pagination links',
     description:
       'AI crawlers use rel="prev" and rel="next" to navigate paginated content series without missing pages.',
-    scoreDisplayMode: 'ternary',
-    weight: 1.0,
+    scoreDisplayMode: 'informative',
+    weight: 0,
     applicablePageTypes: ['category'],
     defaultPriority: 'low',
+    deprecated: {
+      notice: 'Google, the only consumer ever documented, states it no longer uses rel=prev/next; the head-link form is invalid per the WHATWG HTML standard.',
+      link: 'https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/NOT-A-FACTOR.md#generative-enginepagination-links',
+    },
     guidance: {
       impact:
         'AI crawlers use rel="prev" and rel="next" to navigate paginated content series sequentially. Without these links, agents may miss pages in a series or index paginated listings out of order, leading to incomplete content coverage in AI knowledge bases.',

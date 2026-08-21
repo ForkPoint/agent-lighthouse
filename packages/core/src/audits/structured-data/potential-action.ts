@@ -24,10 +24,14 @@ export class PotentialActionAudit extends Audit {
     failureTitle: 'potentialAction on service pages',
     description:
       'AI agents use potentialAction to understand what actions users can take on your site (order, book, contact). This enables agentic workflows where ChatGPT or Claude can guide users directly to the right action URL instead of just describing your service.',
-    scoreDisplayMode: 'binary',
-    weight: 1.0,
+    scoreDisplayMode: 'informative',
+    weight: 0,
     applicablePageTypes: ['homepage', 'product'],
     defaultPriority: 'medium',
+    deprecated: {
+      notice: 'Two of the three accepted types do not exist in the schema.org vocabulary, and no consumer reads potentialAction for site actions.',
+      link: 'https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/NOT-A-FACTOR.md#structured-datapotential-action',
+    },
     guidance: {
       impact:
         'Without potentialAction schema, AI agents cannot determine what actions users can take on your site (order, book, contact). This prevents agentic workflows where ChatGPT or Claude could guide users directly to the right action URL, reducing conversion from AI-driven traffic.',

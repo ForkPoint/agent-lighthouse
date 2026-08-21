@@ -10,9 +10,13 @@ export class PreconnectHintsAudit extends Audit {
     failureTitle: 'Preconnect hints',
     description:
       'Preconnect hints reduce the time AI crawlers spend establishing connections to third-party resources. Faster page loads mean AI agents can crawl more of your pages within their time budget, improving overall content coverage in AI knowledge bases.',
-    scoreDisplayMode: 'binary',
-    weight: 1.0,
+    scoreDisplayMode: 'informative',
+    weight: 0,
     defaultPriority: 'low',
+    deprecated: {
+      notice: 'Preconnect only acts inside a rendering engine, and the major AI crawlers do not render JavaScript, so the hint is inert for them.',
+      link: 'https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/NOT-A-FACTOR.md#technical-readinesspreconnect-hints',
+    },
     guidance: {
       impact:
         'Without preconnect hints, each third-party resource requires a full DNS lookup, TCP handshake, and TLS negotiation before loading can begin. This adds hundreds of milliseconds per origin, slowing overall page load and reducing the number of pages AI crawlers can process within their time budget.',

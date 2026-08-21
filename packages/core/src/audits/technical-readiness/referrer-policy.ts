@@ -10,9 +10,13 @@ export class ReferrerPolicyAudit extends Audit {
     failureTitle: 'Referrer-Policy header',
     description:
       'AI trust-scoring systems check for Referrer-Policy as a privacy maturity signal. Without it, your site leaks full URL paths in referrer headers to third parties, which AI security audits flag as a privacy concern that can reduce trust scores.',
-    scoreDisplayMode: 'binary',
-    weight: 1.0,
+    scoreDisplayMode: 'informative',
+    weight: 0,
     defaultPriority: 'medium',
+    deprecated: {
+      notice: 'Referrer-Policy governs outbound referrers from the site\'s own pages; it cannot affect how any crawler or agent reads the site.',
+      link: 'https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/NOT-A-FACTOR.md#technical-readinessreferrer-policy',
+    },
     guidance: {
       impact:
         "Without a Referrer-Policy header, your site leaks full URL paths (including query parameters) in HTTP Referer headers when users navigate to external links. AI security audits flag this as a privacy vulnerability, and trust-scoring systems lower your site's rating. Sensitive URL parameters like session tokens or search queries may be exposed to third parties.",

@@ -10,9 +10,13 @@ export class AiInstructionsAudit extends Audit {
     failureTitle: 'ai-instructions meta',
     description:
       'The ai-instructions meta tag gives AI agents a plain-English brief on how to interact with your site and represent your content. It acts like a system prompt for any AI agent visiting your page, telling it your preferred summarization style, content focus, and usage guidelines.',
-    scoreDisplayMode: 'binary',
-    weight: 1.0,
+    scoreDisplayMode: 'informative',
+    weight: 0,
     defaultPriority: 'medium',
+    deprecated: {
+      notice: 'No spec defines an ai-instructions meta tag and Google states it ignores unsupported meta tags outright.',
+      link: 'https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/NOT-A-FACTOR.md#meta-tagsai-instructions',
+    },
     guidance: {
       impact:
         'Without ai-instructions, AI agents have no guidance on how to interact with your site or represent your content. They may summarize your pages inaccurately, speculate about features, or miss your preferred content focus.',

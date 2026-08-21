@@ -15,9 +15,13 @@ export class NavigationJsonAudit extends Audit {
     failureTitle: 'navigation.json present',
     description:
       'A navigation.json file gives AI agents a machine-readable map of your site hierarchy, helping them navigate your site like a human would.',
-    scoreDisplayMode: 'binary',
-    weight: 1.0,
+    scoreDisplayMode: 'informative',
+    weight: 0,
     defaultPriority: 'medium',
+    deprecated: {
+      notice: 'No spec defines /navigation.json and no crawler fetches it; schema.org SiteNavigationElement already serves this purpose at million-domain adoption.',
+      link: 'https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/NOT-A-FACTOR.md#content-discoverabilitynavigation-json',
+    },
     guidance: {
       impact:
         'Without a machine-readable navigation structure, AI agents must infer your site hierarchy from HTML parsing, which is error-prone and incomplete. A navigation.json gives agents a clear map of your site, enabling accurate multi-step browsing.',

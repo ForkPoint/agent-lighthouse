@@ -11,9 +11,13 @@ export class DecorativeImagesAudit extends Audit {
     failureTitle: 'Decorative images marked correctly',
     description:
       'AI agents processing the accessibility tree treat images with empty alt but no role="presentation" as potentially missing alt text rather than intentionally decorative. Adding role="presentation" explicitly tells agents to skip these images, preventing them from flagging false content gaps.',
-    scoreDisplayMode: 'ternary',
-    weight: 1.0,
+    scoreDisplayMode: 'informative',
+    weight: 0,
     defaultPriority: 'medium',
+    deprecated: {
+      notice: 'Empty alt already maps to role presentation per HTML-AAM; the required explicit role is normatively redundant.',
+      link: 'https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/NOT-A-FACTOR.md#semantic-htmldecorative-images',
+    },
     guidance: {
       impact:
         'AI agents processing the accessibility tree treat images with empty alt but no role="presentation" as potentially missing alt text rather than intentionally decorative. This creates false-positive content gaps and wastes agent processing on irrelevant images.',

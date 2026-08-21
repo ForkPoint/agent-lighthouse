@@ -33,9 +33,13 @@ export class OpenApiAiInstructionsAudit extends Audit {
     failureTitle: 'x-ai-instructions in OpenAPI',
     description:
       'The x-ai-instructions field lets you give natural-language guidance to AI agents about how to use your API. This is your chance to explain business logic, rate limits, authentication flow, and common use cases in plain English.',
-    scoreDisplayMode: 'binary',
-    weight: 1.0,
+    scoreDisplayMode: 'informative',
+    weight: 0,
     defaultPriority: 'medium',
+    deprecated: {
+      notice: 'x-ai-instructions is not in the OpenAPI extensions registry and no consumer reads it.',
+      link: 'https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/NOT-A-FACTOR.md#agent-toolsopenapi-ai-instructions',
+    },
     guidance: {
       impact:
         "Without x-ai-instructions, AI agents must infer your API's business logic, usage patterns, and constraints from endpoint names alone. This leads to incorrect API usage, violated rate limits, and poor user experiences.",

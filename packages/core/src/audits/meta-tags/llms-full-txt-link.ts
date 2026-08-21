@@ -10,9 +10,13 @@ export class LlmsFullTxtLinkAudit extends Audit {
     failureTitle: 'llms-full.txt link in head',
     description:
       'The llms-full.txt file provides AI agents with a comprehensive, unabridged version of your content optimized for ingestion into context windows. Adding this link in <head> lets agents choose between the summary (llms.txt) and full content versions based on their context budget.',
-    scoreDisplayMode: 'binary',
-    weight: 1.0,
+    scoreDisplayMode: 'informative',
+    weight: 0,
     defaultPriority: 'medium',
+    deprecated: {
+      notice: 'The llms.txt spec defines no such link tag, and none of the major publishers serving llms-full.txt emit one.',
+      link: 'https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/NOT-A-FACTOR.md#meta-tagsllms-full-txt-link',
+    },
     guidance: {
       impact:
         'The llms-full.txt file provides AI agents with a comprehensive, unabridged version of your content optimized for large context windows. Without it, agents are limited to the summary version, potentially missing important details about your offerings.',
