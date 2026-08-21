@@ -1,95 +1,39 @@
+// Compatibility shim over the RFC 9309 gatherer in `gatherers/robots.ts`.
+// The parsing/matching logic lives there now; this file keeps the v1 export
+// names and signatures so the crawler-permission audits compile unchanged.
+
+import type { RobotsGroup, RobotsRule } from '../../gatherers/robots';
+import { isPathAllowed, matchesUserAgent } from '../../gatherers/robots';
+
 // ── Types ─────────────────────────────────────────────────────
 
-export interface RobotsTxtRule {
-  type: 'allow' | 'disallow';
-  path: string;
-}
+export type { RobotsRule as RobotsTxtRule, RobotsGroup as RobotsTxtGroup } from '../../gatherers/robots';
 
-export interface RobotsTxtGroup {
-  userAgent: string;
-  rules: RobotsTxtRule[];
-  crawlDelay?: number;
-}
+// ── Re-exported gatherer primitives ───────────────────────────
 
-// ── Helpers ───────────────────────────────────────────────────
+export {
+  parseRobots as parseRobotsTxt,
+  matchesUserAgent,
+  groupsForBot,
+  isPathAllowed,
+} from '../../gatherers/robots';
 
-/**
- * Parses a robots.txt body into structured groups.
- * Each group has a user-agent, a list of allow/disallow rules,
- * and an optional crawl-delay value.
- */
-export function parseRobotsTxt(body: string): RobotsTxtGroup[] {
-  const groups: RobotsTxtGroup[] = [];
-  let currentAgents: string[] = [];
-  let currentRules: RobotsTxtRule[] = [];
-  let currentCrawlDelay: number | undefined;
-
-  const flushGroup = () => {
-    if (currentAgents.length > 0) {
-      for (const agent of currentAgents) {
-        groups.push({
-          userAgent: agent,
-          rules: [...currentRules],
-          crawlDelay: currentCrawlDelay,
-        });
-      }
-    }
-    currentAgents = [];
-    currentRules = [];
-    currentCrawlDelay = undefined;
-  };
-
-  const lines = body.split(/\r\n|\r|\n/);
-
-  for (const rawLine of lines) {
-    // Strip comments and trim
-    const line = rawLine.replace(/#.*$/, '').trim();
-    if (!line) continue;
-
-    const colonIdx = line.indexOf(':');
-    if (colonIdx === -1) continue;
-
-    const directive = line.slice(0, colonIdx).trim().toLowerCase();
-    const value = line.slice(colonIdx + 1).trim();
-
-    if (directive === 'user-agent') {
-      // If we already collected rules, flush the previous group
-      if (currentRules.length > 0 || currentCrawlDelay !== undefined) {
-        flushGroup();
-      }
-      currentAgents.push(value);
-    } else if (directive === 'disallow') {
-      currentRules.push({ type: 'disallow', path: value });
-    } else if (directive === 'allow') {
-      currentRules.push({ type: 'allow', path: value });
-    } else if (directive === 'crawl-delay') {
-      const parsed = parseFloat(value);
-      if (!Number.isNaN(parsed)) {
-        currentCrawlDelay = parsed;
-      }
-    }
-  }
-
-  // Flush any remaining group
-  flushGroup();
-
-  return groups;
-}
+// ── v1-compatible helpers ─────────────────────────────────────
 
 /**
- * Returns true if the rules contain a blanket Disallow: / without a
- * counteracting Allow: /.
+ * Returns true if the given rule set blocks the site root without a
+ * counteracting Allow.
+ *
+ * Kept on the v1 signature (a flat rule list) because audits pass pre-merged
+ * rules; the RFC-correct group/bot variant is
+ * `isBlanketBlocked(groups, botToken)` in `gatherers/robots.ts`.
+ *
+ * Unlike v1 this also catches wildcard blanket blocks (`Disallow: /*` and
+ * `Disallow: *`), not just the literal `Disallow: /`.
  */
-export function isBlanketBlocked(rules: RobotsTxtRule[]): boolean {
-  const hasDisallowRoot = rules.some(
-    (r) => r.type === 'disallow' && r.path === '/',
-  );
-  if (!hasDisallowRoot) return false;
-
-  const hasAllowRoot = rules.some(
-    (r) => r.type === 'allow' && r.path === '/',
-  );
-  return !hasAllowRoot;
+export function isBlanketBlocked(rules: RobotsRule[]): boolean {
+  const group: RobotsGroup = { userAgent: '*', rules };
+  return !isPathAllowed([group], '*', '/');
 }
 
 /**
@@ -97,45 +41,26 @@ export function isBlanketBlocked(rules: RobotsTxtRule[]): boolean {
  *
  * Returns:
  * - `explicitly`: true if there is a group specifically for this bot
- * - `allowed`: true if the bot is not blocked (Disallow: /)
+ * - `allowed`: true if the bot is not blocked at the root
  *
- * Logic:
- * 1. Look for a group matching the bot name (case-insensitive).
- * 2. If found, check its rules for Disallow: / (with no overriding Allow: /).
- * 3. If not found, fall back to the * group.
+ * Bot matching is RFC 9309 product-token matching, so a `User-agent:
+ * GPTBot/1.1` group now counts as an explicit group for `GPTBot`.
  */
 export function isAllowed(
-  groups: RobotsTxtGroup[],
+  groups: RobotsGroup[],
   botName: string,
 ): { explicitly: boolean; allowed: boolean } {
-  const botGroups = groups.filter(
-    (g) => g.userAgent.toLowerCase() === botName.toLowerCase(),
-  );
-
-  if (botGroups.length > 0) {
-    // Bot has explicit rules
-    const rules = botGroups.flatMap((g) => g.rules);
-    const blocked = isBlanketBlocked(rules);
-    return { explicitly: true, allowed: !blocked };
-  }
-
-  // Fall back to wildcard
-  const wildcardGroups = groups.filter((g) => g.userAgent === '*');
-  if (wildcardGroups.length > 0) {
-    const rules = wildcardGroups.flatMap((g) => g.rules);
-    const blocked = isBlanketBlocked(rules);
-    return { explicitly: false, allowed: !blocked };
-  }
-
-  // No robots.txt rules at all — allowed by default, but not explicitly
-  return { explicitly: false, allowed: true };
+  const explicitly = groups.some((g) => matchesUserAgent(g.userAgent, botName));
+  // isPathAllowed already falls back to the `*` groups, and defaults to
+  // allowed when robots.txt carries no applicable rule at all.
+  return { explicitly, allowed: isPathAllowed(groups, botName, '/') };
 }
 
 /**
  * Check 2.3 needs to look at both "anthropic-ai" and "ClaudeBot" user-agents.
  */
 export function isAnthropicAllowed(
-  groups: RobotsTxtGroup[],
+  groups: RobotsGroup[],
 ): { explicitly: boolean; allowed: boolean } {
   const result1 = isAllowed(groups, 'anthropic-ai');
   const result2 = isAllowed(groups, 'ClaudeBot');
@@ -156,26 +81,19 @@ export function isAnthropicAllowed(
  * user-agent. Returns an object with the paths that are and aren't protected.
  */
 export function checkSensitivePaths(
-  groups: RobotsTxtGroup[],
+  groups: RobotsGroup[],
   paths: string[],
 ): { protected: string[]; unprotected: string[] } {
-  const wildcardGroups = groups.filter((g) => g.userAgent === '*');
-  const allRules = wildcardGroups.flatMap((g) => g.rules);
+  const wildcardGroups = groups.filter((g) => g.userAgent.trim() === '*');
 
   const protectedPaths: string[] = [];
   const unprotectedPaths: string[] = [];
 
   for (const path of paths) {
-    const pathNorm = path.replace(/\/+$/, '');
-    const isDisallowed = allRules.some((r) => {
-      if (r.type !== 'disallow') return false;
-      const ruleNorm = r.path.replace(/\/+$/, '');
-      return ruleNorm === pathNorm || r.path.startsWith(path) || path.startsWith(r.path);
-    });
-    if (isDisallowed) {
-      protectedPaths.push(path);
-    } else {
+    if (isPathAllowed(wildcardGroups, '*', path)) {
       unprotectedPaths.push(path);
+    } else {
+      protectedPaths.push(path);
     }
   }
 
