@@ -7,7 +7,7 @@ import type {
   ScanReport,
   ScoreTier,
 } from '@forkpoint/agent-lighthouse-core';
-import { CATEGORY_NAMES, CATEGORY_WEIGHTS } from '@forkpoint/agent-lighthouse-core';
+import { CATEGORY_NAMES, CATEGORY_WEIGHTS, isInformative } from '@forkpoint/agent-lighthouse-core';
 import { CATEGORY_ORDER } from './sections';
 import { generateScanSummary } from './summary';
 
@@ -73,13 +73,14 @@ export function hydrateReport(row: PersistedScanRow): ScanReport {
 
   const recommendations = row.recommendations ?? [];
   const order: Record<string, number> = { critical: 0, high: 1, medium: 2, low: 3 };
+  // Informative checks are advisory-only: they never rank as a top fail or pass.
   const topFails = checkResults
-    .filter((c) => c.status === 'fail' || c.status === 'warn')
+    .filter((c) => (c.status === 'fail' || c.status === 'warn') && !isInformative(c))
     .slice()
     .sort((a, b) => (order[a.priority] ?? 3) - (order[b.priority] ?? 3))
     .slice(0, 10);
   const topPasses = checkResults
-    .filter((c) => c.status === 'pass')
+    .filter((c) => c.status === 'pass' && !isInformative(c))
     .slice()
     .sort((a, b) => (CATEGORY_WEIGHTS[b.category] ?? 0) - (CATEGORY_WEIGHTS[a.category] ?? 0))
     .slice(0, 10);

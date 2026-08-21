@@ -6,6 +6,7 @@ import type {
   ScanReport,
   ScoreTier,
 } from '@forkpoint/agent-lighthouse-core';
+import { isInformative } from '@forkpoint/agent-lighthouse-core';
 import {
   CATEGORY_ORDER,
   SECTION_GROUPS,
@@ -177,17 +178,18 @@ export function buildReportView(report: ScanReport, opts: BuildReportViewOptions
     erroredChecks,
   };
 
-  // Top fixes: highest-priority non-passing assessed checks.
+  // Top fixes: highest-priority non-passing assessed checks. Informative checks
+  // are advisory-only and never surface as a fix or a highlighted pass.
   const order: Record<string, number> = { critical: 0, high: 1, medium: 2, low: 3 };
   const topFixes = allChecks
-    .filter((c) => c.status === 'fail' || c.status === 'warn')
+    .filter((c) => (c.status === 'fail' || c.status === 'warn') && !isInformative(c))
     .slice()
     .sort((a, b) => (order[a.priority] ?? 3) - (order[b.priority] ?? 3))
     .slice(0, topN);
 
   // Top passes: highest category-weight passing checks.
   const topPasses = allChecks
-    .filter((c) => c.status === 'pass')
+    .filter((c) => c.status === 'pass' && !isInformative(c))
     .slice()
     .sort((a, b) => (viewById.get(b.category)?.weight ?? 0) - (viewById.get(a.category)?.weight ?? 0))
     .slice(0, topN);
