@@ -6,14 +6,14 @@ source_file: packages/core/src/audits/accessibility/_a11y.ts
 slug: meta-refresh
 review_verdict: keep
 severity: low
-evidence_grade: unrated
+evidence_grade: A
 disposition: "keep"
 reviewed: 2026-08-21
 ---
 
 # No time-based auto-refresh/redirect (`7.20`)
 
-> accessibility · source `_a11y.ts` · review verdict **keep** · evidence grade **unrated** · disposition: **keep**
+> accessibility · source `_a11y.ts` · review verdict **keep** · evidence grade **A** · disposition: **keep**
 
 ## What it checks
 
@@ -47,3 +47,17 @@ _No dedicated evidence signal was researched for this audit in the 2026-08-20 pa
 
 - 2026-08-20 — code review (11-agent workflow) + evidence research (12-domain workflow, 400 sources).
 - 2026-08-21 — dossier generated; disposition pending final taxonomy design.
+
+## Graded evidence (2026-08-21)
+
+**Mechanism claim:** A `<meta http-equiv="refresh" content="N;url=…">` with N greater than 0 causes the user agent to run the shared declarative refresh steps and navigate (or reload) the document N seconds after load, with no input from the visitor — so any agent driving that page loses its document, its element references and its in-progress form state mid-task.
+
+**Grade: A** — declarative refresh is specified in the WHATWG HTML Standard and implemented by every browser an agent drives, making the "the page navigates itself after N seconds" claim a ratified, universally consumed behavior rather than an inference.
+
+**Evidence:**
+- WHATWG HTML Standard defines the `refresh` pragma and the shared declarative refresh steps that navigate/reload the document — https://html.spec.whatwg.org/multipage/semantics.html#attr-meta-http-equiv-refresh and https://html.spec.whatwg.org/multipage/document-lifecycle.html#shared-declarative-refresh-steps (both verified 2026-08-21)
+- MDN: with a non-negative integer the page "reloads after that many seconds"; followed by `;url=` it "redirects to that URL after the specified delay"; the timer starts after `load`/`pageshow` — https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Elements/meta/http-equiv (verified 2026-08-21)
+- W3C failure technique F41 records the consequence for time-bounded consumers: "If the time interval is too short… people who are blind will not have enough time to make their screen readers read the page before the page refreshes unexpectedly"; fails SC 2.2.1, 2.2.4 and 3.2.5 — https://www.w3.org/WAI/WCAG22/Techniques/failures/F41 (verified 2026-08-21)
+- Agent tool-chains hold element handles across turns (Playwright MCP click/type take an "Exact target element reference from the page snapshot"; chrome-devtools-mcp click/fill take a snapshot uid), and those references do not survive a navigation — https://github.com/microsoft/playwright-mcp and https://github.com/ChromeDevTools/chrome-devtools-mcp/blob/main/docs/tool-reference.md (both verified 2026-08-21)
+
+**Counter-evidence:** No vendor agent documentation names meta refresh as an agent failure mode, and the disruption is conditional on the agent still being on the page when the timer fires — a fast single-turn read may finish first. The signal is a navigation behavior, not an accessibility-tree signal, so it sits outside the mechanism that carries the rest of this category. Delay-0 instant redirects are correctly allowed by the audit. As implemented the selector is case-sensitive, so `http-equiv="Refresh"` — valid and case-insensitive in browsers — is missed.

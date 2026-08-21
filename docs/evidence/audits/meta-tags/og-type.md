@@ -6,7 +6,7 @@ source_file: packages/core/src/audits/meta-tags/og-type.ts
 slug: og-type
 review_verdict: fix
 severity: medium
-evidence_grade: unrated
+evidence_grade: B
 disposition: "keep — fix required"
 reviewed: 2026-08-21
 ---
@@ -52,3 +52,16 @@ _No dedicated evidence signal was researched for this audit in the 2026-08-20 pa
 
 - 2026-08-20 — code review (11-agent workflow) + evidence research (12-domain workflow, 400 sources).
 - 2026-08-21 — dossier generated; disposition pending final taxonomy design.
+
+## Graded evidence (2026-08-21)
+
+**Mechanism claim:** Open Graph consumers read `og:type` to decide which object vocabulary applies to the page (`article`, `website`, `product`, `video.*`, …) and therefore which additional properties they will look for and render; a page declaring the wrong type is interpreted as the wrong kind of object.
+
+**Grade: B** — `og:type` is one of the four required properties in the de-facto Open Graph protocol with enormous adoption, and Meta names it as a tag that changes distribution handling; but the type-selects-behavior effect is documented only in spec terms, and no vendor documents the value-appropriateness effect this audit actually scores.
+
+**Evidence:**
+- The Open Graph protocol lists `og:type` among the four required basic properties and ties it to further requirements: "The type of your object, e.g., 'video.movie'. Depending on the type you specify, other properties may also be required." — https://ogp.me/ (verified 2026-08-21)
+- The protocol defines the type vocabulary the audit should validate against (`article`, `book`, `profile`, `website`, `music.*`, `video.*`) — https://ogp.me/#types (verified 2026-08-21)
+- Meta's webmaster guide lists `og:type` among the tags to add to "improve distribution of your content", alongside the core four read by `facebookexternalhit/1.1` — https://developers.facebook.com/docs/sharing/webmasters/ (verified 2026-08-21)
+
+**Counter-evidence:** The audit's stated mechanism — that AI agents apply "article freshness scoring" or recency weighting keyed on `og:type="article"` — has no source. OpenAI's crawler documentation mentions no HTML metadata — https://developers.openai.com/api/docs/bots (verified 2026-08-21); Google's AI-features page describes query fan-out and snippet controls with no reference to Open Graph — https://developers.google.com/search/docs/appearance/ai-features (verified 2026-08-21); and `og:*` properties are absent from Google's supported-meta-tags list — https://developers.google.com/search/docs/crawling-indexing/special-tags (verified 2026-08-21). Where an engine does consume content typing, the documented vehicle is schema.org structured data (e.g. `Article` with `datePublished`), not `og:type` — https://developers.google.com/search/docs/appearance/structured-data/article (verified 2026-08-21). The B grade covers presence of a valid OGP type only; the "appropriate" half of this audit (URL-substring blog detection warning on non-`article` values) is unsupported by any source and, per the review findings above, is effectively dead code in production.

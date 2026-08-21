@@ -6,14 +6,14 @@ source_file: packages/core/src/audits/structured-data/product-identifiers.ts
 slug: product-identifiers
 review_verdict: fix
 severity: high
-evidence_grade: unrated
+evidence_grade: A
 disposition: "keep — fix required"
 reviewed: 2026-08-21
 ---
 
 # product-identifiers (`3.21`)
 
-> structured-data · source `product-identifiers.ts` · review verdict **fix** · evidence grade **unrated** · disposition: **keep — fix required**
+> structured-data · source `product-identifiers.ts` · review verdict **fix** · evidence grade **A** · disposition: **keep — fix required**
 
 ## What it checks
 
@@ -47,7 +47,22 @@ GTIN/SKU/MPN is a genuinely important agentic-commerce signal, but the audit col
 
 _No dedicated evidence signal was researched for this audit in the 2026-08-20 pass. Its tier assignment falls to the taxonomy design; unproven mechanisms default to informative per the [evidence policy](../../POLICY.md)._
 
+## Graded evidence (2026-08-21)
+
+**Mechanism claim:** Product-matching systems that ingest a page's Product markup (Google's merchant listing pipeline, and feed-based agent catalogues such as OpenAI's ChatGPT shopping index) key on `gtin*`/`mpn`/`sku` to match the page's item to the same item from other sources, so an item published without any unique identifier cannot be matched with confidence and loses eligibility for identifier-dependent surfaces.
+
+**Grade: A** — Google documents `gtin`/`gtin8-14`/`isbn`, `mpn` and `sku` as properties it reads from merchant listing structured data, and states plainly that matching fails without them; OpenAI's product feed spec carries the same identifier set for ChatGPT product results.
+
+**Evidence:**
+- Google merchant listing structured data lists `gtin | gtin8 | gtin12 | gtin13 | gtin14 | isbn` ("Include all applicable global identifiers"), `mpn` (identifies "the product for a given manufacturer") and `sku` ("the merchant-specific identifier for the product") as recommended Product properties — https://developers.google.com/search/docs/appearance/structured-data/merchant-listing (verified 2026-08-21)
+- Google on unique product identifiers: "Accurate matching to products can't be assured when GTIN is missing"; "Products submitted without any unique product identifiers are difficult to classify and may not be eligible for all Shopping programs or features"; GTIN is "strongly recommended for all products with a GTIN assigned by the manufacturer" — https://support.google.com/merchants/answer/6324461 (verified 2026-08-21)
+- OpenAI's product feed spec requires `item_id` ("Merchant product ID (unique per variant)") and carries optional `gtin` ("Universal product identifier", GTIN/UPC/ISBN, 8-14 digits) and `mpn` (max 70 chars) — the identifier set an agent shopping index actually stores — https://developers.openai.com/commerce/specs/feed (verified 2026-08-21)
+- Product snippets list product identifiers (SKU, GTIN, MPN) among the recommended properties Google parses — https://developers.google.com/search/docs/appearance/structured-data/product-snippet (verified 2026-08-21)
+
+**Counter-evidence:** Identifiers are *recommended*, never required, in every structured-data spec checked, and Google notes that store-brand, private-label and customized products legitimately have no GTIN — so a hard fail is stronger than any vendor's guidance (https://support.google.com/merchants/answer/6324461). Google's automatic item updates cover only price, sale price, availability and condition — identifiers are not part of that page-crawl extraction (https://support.google.com/merchants/answer/3246284). The strongest agent-side consumer path (OpenAI/ACP) receives identifiers through a merchant feed or API rather than by parsing page markup (https://developers.openai.com/commerce/, https://www.agenticcommerce.dev/, verified 2026-08-21). Product markup adoption itself is thin: `Product` appears on 0.77% of crawled mobile pages (https://almanac.httparchive.org/en/2024/structured-data).
+
 ## Review history
 
 - 2026-08-20 — code review (11-agent workflow) + evidence research (12-domain workflow, 400 sources).
 - 2026-08-21 — dossier generated; disposition pending final taxonomy design.
+- 2026-08-21 — evidence graded **A** (documented identifier consumption by Google merchant listings and OpenAI's product feed spec).

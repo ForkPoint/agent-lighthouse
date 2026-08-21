@@ -6,7 +6,7 @@ source_file: packages/core/src/audits/meta-tags/meta-description.ts
 slug: meta-description
 review_verdict: fix
 severity: medium
-evidence_grade: unrated
+evidence_grade: B
 disposition: "keep — fix required"
 reviewed: 2026-08-21
 ---
@@ -53,3 +53,17 @@ _No dedicated evidence signal was researched for this audit in the 2026-08-20 pa
 
 - 2026-08-20 — code review (11-agent workflow) + evidence research (12-domain workflow, 400 sources).
 - 2026-08-21 — dossier generated; disposition pending final taxonomy design.
+
+## Graded evidence (2026-08-21)
+
+**Mechanism claim:** A search engine or answer engine that indexes the page reads `<meta name="description">` and may reproduce its text verbatim as the page's summary/snippet instead of generating one from body text.
+
+**Grade: B** — Google documents that Search reads the tag and may use it as the snippet, and the tag is a WHATWG-standard metadata name with near-universal adoption; but the consumption is explicitly conditional ("sometimes"), no AI-agent vendor documents reading it, and the audit's 50-300 character window has no primary support.
+
+**Evidence:**
+- Google Search Central states the tag is a snippet source: "Google sometimes uses the meta description HTML element if it might give users a more accurate description of the page than content taken directly from the page." — https://developers.google.com/search/docs/appearance/snippet (verified 2026-08-21)
+- `description` is one of the meta tags Google Search explicitly supports (the same page notes "Google will ignore `meta` tags that it doesn't support") — https://developers.google.com/search/docs/crawling-indexing/special-tags (verified 2026-08-21)
+- WHATWG HTML defines `description` as a standard metadata name whose value "must be appropriate for use in a directory of pages, e.g. in a search engine" — https://html.spec.whatwg.org/multipage/semantics.html#standard-metadata-names (verified 2026-08-21)
+- Google's AI-features guidance confirms AI Overviews/AI Mode are built on Search and are governed by the same snippet controls (`nosnippet`, `max-snippet`, `data-nosnippet`), which is the only documented link between snippet text and AI answers — https://developers.google.com/search/docs/appearance/ai-features (verified 2026-08-21)
+
+**Counter-evidence:** No AI vendor documents reading this tag. OpenAI's crawler documentation (GPTBot, OAI-SearchBot, ChatGPT-User, OAI-AdsBot) describes only robots.txt and user-agent behavior and mentions no HTML metadata at all — https://developers.openai.com/api/docs/bots (verified 2026-08-21). Google's AI-features page likewise never mentions meta description — https://developers.google.com/search/docs/appearance/ai-features (verified 2026-08-21). The audit's 50-300 character gate is contradicted by the primary source: "There's no limit on how long a meta description can be, but the snippet is truncated in Google Search results as needed, typically to fit the device width" — https://developers.google.com/search/docs/appearance/snippet (verified 2026-08-21). The claim that the tag is the "primary summary" an agent uses when generating answers is unsupported: ChatGPT-User, ClaudeBot and PerplexityBot fetch and read full page bodies, so the tag is at best one candidate among many.

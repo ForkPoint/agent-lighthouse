@@ -6,14 +6,14 @@ source_file: packages/core/src/audits/answer-engine/last-updated-indicator.ts
 slug: last-updated-indicator
 review_verdict: merge
 severity: medium
-evidence_grade: unrated
+evidence_grade: B
 disposition: "merge (approved 2026-08-21)"
 reviewed: 2026-08-21
 ---
 
 # last-updated-indicator (`9.10`)
 
-> answer-engine · source `last-updated-indicator.ts` · review verdict **merge** · evidence grade **unrated** · disposition: **merge (approved 2026-08-21)**
+> answer-engine · source `last-updated-indicator.ts` · review verdict **merge** · evidence grade **B** · disposition: **merge (approved 2026-08-21)**
 
 ## What it checks
 
@@ -55,3 +55,17 @@ _No dedicated evidence signal was researched for this audit in the 2026-08-20 pa
 
 - 2026-08-20 — code review (11-agent workflow) + evidence research (12-domain workflow, 400 sources).
 - 2026-08-21 — dossier generated; disposition pending final taxonomy design.
+
+## Graded evidence (2026-08-21)
+
+**Mechanism claim:** A visible "Last updated / Modified / Revised" label placed next to a machine-readable date lets a date extractor resolve the page's *modification* date as distinct from its original publication date, which freshness-sensitive answer surfaces use to judge how current the page is.
+
+**Grade: B** — the extraction half is vendor-documented and matches this audit's detector (Google names "Last updated" as a recommended label and reads `dateModified`; htmldate resolves updated dates), but the claim that distinguishes this audit from `dates-on-content` — that an explicit update *label* outranks a bare publication date in AI answers — has no documented consumer and no measured effect.
+
+**Evidence:**
+- Google's byline-date guidance covers precisely this pattern: it asks publishers to show a prominently displayed date with clear labeling such as "Posted", "Published" or "Last updated", *and* to specify "the `datePublished` and/or `dateModified` fields" on a `CreativeWork` subtype, with visible and structured values matching. Google states it "estimates that the web page was updated or published" from these signals and "can expose this information in Search results" — https://developers.google.com/search/docs/appearance/publication-dates (verified 2026-08-21)
+- The extraction stack resolves updates as a first-class output: htmldate identifies "original **and updated** publication dates" from `link`/`meta` elements (including Open Graph attributes), `abbr` and `time` elements and page text, and is "used in production on millions of documents" — https://htmldate.readthedocs.io/en/latest/ (verified 2026-08-21); it feeds trafilatura, whose extraction preserves structure and metadata — https://trafilatura.readthedocs.io/en/latest/corefunctions.html (verified 2026-08-21)
+- A vendor ties freshness to AI answers explicitly: Bing states freshness signals "directly influence how quickly updates are reflected in search results and AI generated answers", with `lastmod` "a key signal, helping Bing prioritize URLs for recrawling and reindexing" — https://blogs.bing.com/webmaster/July-2025/Keeping-Content-Discoverable-with-Sitemaps-in-AI-Powered-Search (verified 2026-08-21)
+- The Search path reaches the AI surface: "To be eligible to be shown as a supporting link in AI Overviews or AI Mode, a page must be indexed and eligible to be shown in Google Search with a snippet" — https://developers.google.com/search/docs/appearance/ai-features (verified 2026-08-21)
+
+**Counter-evidence:** Nothing documents this audit's distinctive claim. No vendor and no study shows that a page labeled "Last updated: <date>" is cited more than the same page showing only a publication date — the label is a display convention Google recommends for its own date estimation, not a demonstrated ranking input. Google's AI-features and AI-optimization pages never mention dates or freshness and state that no special markup is needed (https://developers.google.com/search/docs/appearance/ai-features, https://developers.google.com/search/docs/fundamentals/ai-optimization-guide). Bing's freshness statement concerns sitemap `<lastmod>`, not an on-page label. Google's guidance also ties the date to a real publish/update event and asks that visible and structured values agree, so bumping the label without changing the content is an antipattern this audit cannot detect and would reward. Finally the signal is not independent: this audit shares its detector, its date regex and its entire evidence base with `answer-engine/dates-on-content` (graded A on the extraction claim), and the dossier already carries a merge verdict — scoring both would double-count one signal. All URLs verified 2026-08-21.

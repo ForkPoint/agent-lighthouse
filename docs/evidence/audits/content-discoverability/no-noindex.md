@@ -6,14 +6,14 @@ source_file: packages/core/src/audits/content-discoverability/no-noindex.ts
 slug: no-noindex
 review_verdict: fix
 severity: medium
-evidence_grade: unrated
+evidence_grade: A
 disposition: "keep — fix required"
 reviewed: 2026-08-21
 ---
 
 # no-noindex (`1.13`)
 
-> content-discoverability · source `no-noindex.ts` · review verdict **fix** · evidence grade **unrated** · disposition: **keep — fix required**
+> content-discoverability · source `no-noindex.ts` · review verdict **fix** · evidence grade **A** · disposition: **keep — fix required**
 
 ## What it checks
 
@@ -51,3 +51,17 @@ _No dedicated evidence signal was researched for this audit in the 2026-08-20 pa
 
 - 2026-08-20 — code review (11-agent workflow) + evidence research (12-domain workflow, 400 sources).
 - 2026-08-21 — dossier generated; disposition pending final taxonomy design.
+
+## Graded evidence (2026-08-21)
+
+**Mechanism claim:** A page serving `noindex` (via `<meta name="robots">` or the `X-Robots-Tag` header) is dropped from Google's index by Googlebot and is therefore ineligible to be shown or cited as a supporting link in AI Overviews and AI Mode.
+
+**Grade: A** — Google's documentation states both halves of the chain by name: Googlebot honours `noindex`, and a page must be indexed to be eligible for its AI features.
+
+**Evidence:**
+- Google documents the directive and the named crawler that obeys it: `noindex` "is used to prevent indexing content by search engines that support the `noindex` rule, such as Google", implementable as `<meta name="robots" content="noindex">`, `<meta name="googlebot" content="noindex">`, or an `X-Robots-Tag` response header "with a value of either `noindex` or `none`" — https://developers.google.com/search/docs/crawling-indexing/block-indexing (verified 2026-08-21)
+- Google ties indexing directly to AI surface eligibility: "To be eligible to be shown as a supporting link in AI Overviews or AI Mode, a page must be indexed and eligible to be shown in Google Search with a snippet, fulfilling the Search technical requirements", and lists `nosnippet`, `data-nosnippet`, `max-snippet` and `noindex` as the applicable controls — https://developers.google.com/search/docs/appearance/ai-features (verified 2026-08-21)
+- Google's AI-optimization guidance confirms the same control surface governs generative features, with no separate opt-in: "AI is built into Search and integral to how Search functions" and no new files or markup are required — https://developers.google.com/search/docs/fundamentals/ai-optimization-guide (verified 2026-08-21)
+- Same page records the precondition the audit cannot see: "For the `noindex` rule to be effective, the page or resource must not be blocked by a robots.txt file, and it has to be otherwise accessible to the crawler" — https://developers.google.com/search/docs/crawling-indexing/block-indexing (verified 2026-08-21)
+
+**Counter-evidence:** The proven consumer path is Google's. No non-Google AI vendor documents honouring `noindex`: OpenAI's crawler documentation describes robots.txt as the control for OAI-SearchBot, GPTBot and ChatGPT-User and never mentions `noindex` or `X-Robots-Tag` (https://developers.openai.com/api/docs/bots, verified 2026-08-21), and Perplexity documents robots.txt only, noting that Perplexity-User "generally ignores robots.txt rules" because its fetches are user-initiated (https://docs.perplexity.ai/docs/resources/perplexity-crawlers, verified 2026-08-21). So a `noindex` page can still be read and cited by a ChatGPT or Perplexity user-initiated fetch — the signal's proven effect is on Google-index-derived AI surfaces, not on all AI consumers. Google also warns that "some search engines might interpret the `noindex` rule differently" (https://developers.google.com/search/docs/crawling-indexing/block-indexing, verified 2026-08-21).

@@ -6,14 +6,14 @@ source_file: packages/core/src/audits/answer-engine/specific-numbers.ts
 slug: specific-numbers
 review_verdict: fix
 severity: medium
-evidence_grade: unrated
+evidence_grade: B
 disposition: "keep — fix required"
 reviewed: 2026-08-21
 ---
 
 # specific-numbers (`9.7`)
 
-> answer-engine · source `specific-numbers.ts` · review verdict **fix** · evidence grade **unrated** · disposition: **keep — fix required**
+> answer-engine · source `specific-numbers.ts` · review verdict **fix** · evidence grade **B** · disposition: **keep — fix required**
 
 ## What it checks
 
@@ -53,3 +53,17 @@ _No dedicated evidence signal was researched for this audit in the 2026-08-20 pa
 
 - 2026-08-20 — code review (11-agent workflow) + evidence research (12-domain workflow, 400 sources).
 - 2026-08-21 — dossier generated; disposition pending final taxonomy design.
+
+## Graded evidence (2026-08-21)
+
+**Mechanism claim:** Adding concrete statistics to a source document raises the prominence of that source's citations in a generative engine's answer, relative to the same document carrying the same claims in vague quantitative language.
+
+**Grade: B** — this is the one signal in the answer-engine category with a controlled, peer-reviewed measurement of exactly the intervention it describes, on both a 10,000-query benchmark and a live commercial engine.
+
+**Evidence:**
+- GEO (Aggarwal et al., KDD '24) tested Statistics Addition as one of nine methods over GEO-bench (10,000 queries, five random seeds). Table 1: Statistics Addition scores 25.2 on the overall Position-Adjusted Word Count metric against a 19.3 no-optimization baseline (Quotation Addition 27.2, Cite Sources 24.6). The paper states its top methods "achieved a relative improvement of 30-40% on the *Position-Adjusted Word Count* metric and 15-30% on the *Subjective Impression* metric" — https://arxiv.org/abs/2311.09735 (verified 2026-08-21)
+- The abstract generalizes the result: "including citations, quotations from relevant sources, and statistics can significantly boost source visibility, with an increase of over 40% across various queries" — https://arxiv.org/abs/2311.09735 (verified 2026-08-21)
+- Confirmed on a live engine, not just a simulated one: "We also demonstrate the efficacy of Generative Engine Optimization on Perplexity.ai, a real-world generative engine and demonstrate visibility improvements up to 37%" — https://arxiv.org/abs/2311.09735 (verified 2026-08-21)
+- The benchmark discriminates rather than rewarding any edit: Keyword Stuffing scored 17.7, *below* the 19.3 unoptimized baseline, and the authors conclude such methods "offer little to no improvement on generative engine's responses" (Table 1, §4) — https://arxiv.org/abs/2311.09735 (verified 2026-08-21)
+
+**Counter-evidence:** The effect is conditional on where the source already ranks. Table 2 of the same paper reports Statistics Addition's relative visibility change by search rank as −20.6% (Rank-1), −3.9% (Rank-2), +8.1% (Rank-3), +10.0% (Rank-4), +97.9% (Rank-5) — for an already top-ranked page the measured effect is negative, so this is a signal that helps low-visibility sources and can hurt leaders. Table 3 further shows the gain concentrates in "Law & Gov.", "Debate" and "Opinion" query tags, not uniformly. C-SEO Bench, a later independent benchmark, concludes "Most current C-SEO methods are not only largely ineffective but also frequently have a negative impact on document ranking, which is opposite to what is expected" (https://arxiv.org/abs/2506.11097). Google states "You don't need to write in a specific way just for generative AI search" (https://developers.google.com/search/docs/fundamentals/ai-optimization-guide). Most importantly for this audit specifically: the measured intervention was *relevant statistics that support the document's claims*, whereas the detector fires on any unit-bearing number anywhere in main content — "30-day", "$19", "3-5 days", a shipping estimate — so a page can pass without carrying a single supporting statistic. The grade attaches to the signal, not to this detector. All URLs verified 2026-08-21.

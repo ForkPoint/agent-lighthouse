@@ -6,7 +6,7 @@ source_file: packages/core/src/audits/agent-tools/webmcp-tool-naming.ts
 slug: webmcp-tool-naming
 review_verdict: merge
 severity: low
-evidence_grade: unrated
+evidence_grade: C
 disposition: "merge (approved 2026-08-21)"
 reviewed: 2026-08-21
 ---
@@ -48,3 +48,16 @@ _No dedicated evidence signal was researched for this audit in the 2026-08-20 pa
 
 - 2026-08-20 — code review (11-agent workflow) + evidence research (12-domain workflow, 400 sources).
 - 2026-08-21 — dossier generated; disposition pending final taxonomy design.
+
+## Graded evidence (2026-08-21)
+
+**Mechanism claim:** An agent chooses which WebMCP tool to invoke from the tool's name and description, so verb-based camelCase names and descriptions longer than 20 characters raise the rate of correct tool selection.
+
+**Grade: C** — that agents select tools by name and description is documented, but no spec or vendor doc constrains the naming *style* or sets any description length; the verb-camelCase allowlist and the 20-character floor are this project's own convention.
+
+**Evidence:**
+- WebMCP's premise is name/description-driven selection: "Agents can see the list of tools a site offers paired with natural language descriptions of what the tools do, and invoke them with structured data" — https://raw.githubusercontent.com/webmachinelearning/webmcp/main/declarative-api-explainer.md (verified 2026-08-21)
+- Anthropic documents the consuming behavior directly: "Claude determines when to call a tool based on the user's request and the tool's description" — https://platform.claude.com/docs/en/agents-and-tools/tool-use/overview (verified 2026-08-21)
+- WebMCP's IDL requires `name` and `description` on every `ModelContextTool`, with `name` defined as "A unique identifier for the tool. This is used by agents to reference the tool when making tool calls" — https://raw.githubusercontent.com/webmachinelearning/webmcp/main/index.bs (verified 2026-08-21)
+
+**Counter-evidence:** Neither WebMCP nor MCP imposes a naming grammar. MCP defines `name` only as "Unique identifier for the tool" and `description` as "Human-readable description of functionality", with no casing rule and no length rule (https://modelcontextprotocol.io/specification/2025-06-18/server/tools, verified 2026-08-21) — and MCP's own example tool is `get_weather`, snake_case, which this audit's `VERB_PATTERN` rejects. The audit's canonical source, a `/.well-known/webmcp` manifest, appears nowhere in the WebMCP proposal (repository root and declarative explainer checked, https://github.com/webmachinelearning/webmcp, verified 2026-08-21), so that half of the collection path has no consumer at all.

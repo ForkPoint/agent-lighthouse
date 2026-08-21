@@ -6,14 +6,14 @@ source_file: packages/core/src/audits/agent-tools/search-endpoint.ts
 slug: search-endpoint
 review_verdict: fix
 severity: high
-evidence_grade: unrated
+evidence_grade: C
 disposition: "keep — fix required"
 reviewed: 2026-08-21
 ---
 
 # search-endpoint (`5.16`)
 
-> agent-tools · source `search-endpoint.ts` · review verdict **fix** · evidence grade **unrated** · disposition: **keep — fix required**
+> agent-tools · source `search-endpoint.ts` · review verdict **fix** · evidence grade **C** · disposition: **keep — fix required**
 
 ## What it checks
 
@@ -52,3 +52,17 @@ _No dedicated evidence signal was researched for this audit in the 2026-08-20 pa
 
 - 2026-08-20 — code review (11-agent workflow) + evidence research (12-domain workflow, 400 sources).
 - 2026-08-21 — dossier generated; disposition pending final taxonomy design.
+- 2026-08-21 — evidence graded (see below).
+
+## Graded evidence (2026-08-21)
+
+**Mechanism claim:** An AI agent reads a site's `WebSite` → `potentialAction` → `SearchAction` `urlTemplate` (or a `GET /search` operation in its OpenAPI spec), substitutes the query term, and fetches results instead of crawling the site.
+
+**Grade: C** — `SearchAction` is a ratified schema.org term with very large adoption, but its one documented consumer was retired by Google in 2024 and no vendor documents a named AI agent that reads it; the OpenAPI fallback inherits the unproven discovery leg graded in `5.1`.
+
+**Evidence:**
+- `SearchAction` is a stable schema.org type ("The act of searching for an object"), used as a `potentialAction` on `WebSite` with an `EntryPoint` `urlTemplate` carrying the query placeholder; schema.org's Google-index aggregation reports adoption on 10M+ domains — https://schema.org/SearchAction (verified 2026-08-21)
+- Google retired the only documented consumer of that markup, the sitelinks search box, in October 2024 ("Farewell, Sitelinks Search Box"); the feature no longer appears in Search results and its documentation was archived — https://developers.google.com/search/blog/2024/10/sitelinks-search-box (verified 2026-08-21)
+- The OpenAPI half of the signal depends on an agent obtaining the spec at all, which is documented only for developer-registered documents (GPT Actions, Copilot API plugins) — https://developers.openai.com/api/docs/actions/getting-started (verified 2026-08-21)
+
+**Counter-evidence:** No crawler or agent documentation from OpenAI, Anthropic, Google, Microsoft, or Perplexity states that a named agent reads `SearchAction` to query a site rather than crawling or using a general web-search tool; the documented server-side tools those vendors ship (for example Anthropic's `web_search`/`web_fetch`) query the open web, not a site's declared search template. High markup adoption therefore reflects legacy SEO practice, not proven agent consumption — a community convention with a plausible but unverified mechanism.

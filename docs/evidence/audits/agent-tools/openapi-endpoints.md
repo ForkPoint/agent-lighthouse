@@ -6,14 +6,14 @@ source_file: packages/core/src/audits/agent-tools/openapi-endpoints.ts
 slug: openapi-endpoints
 review_verdict: fix
 severity: medium
-evidence_grade: unrated
+evidence_grade: B
 disposition: "keep — fix required"
 reviewed: 2026-08-21
 ---
 
 # openapi-endpoints (`5.2`)
 
-> agent-tools · source `openapi-endpoints.ts` · review verdict **fix** · evidence grade **unrated** · disposition: **keep — fix required**
+> agent-tools · source `openapi-endpoints.ts` · review verdict **fix** · evidence grade **B** · disposition: **keep — fix required**
 
 ## What it checks
 
@@ -47,3 +47,17 @@ _No dedicated evidence signal was researched for this audit in the 2026-08-20 pa
 
 - 2026-08-20 — code review (11-agent workflow) + evidence research (12-domain workflow, 400 sources).
 - 2026-08-21 — dossier generated; disposition pending final taxonomy design.
+- 2026-08-21 — evidence graded (see below).
+
+## Graded evidence (2026-08-21)
+
+**Mechanism claim:** A tool-calling runtime creates one callable function per OpenAPI path operation, so a document whose `paths` object contains no operations exposes zero actions to the agent that ingests it.
+
+**Grade: B** — the operation-to-function conversion is documented consumer behavior at two named agents, but the path is only proven once a developer registers the document, and the audit's own discovery leg is the C-grade claim recorded in `5.1`.
+
+**Evidence:**
+- Microsoft 365 Copilot builds one function per operation and selects among them by path description: "Operation IDs are unique identifiers for an operation in the API and are used by Copilot to create functions that are executed when responding to a user's prompt … it searches through the descriptions of the paths to determine the endpoint to use to satisfy the user's request" — https://learn.microsoft.com/en-us/microsoft-365-copilot/extensibility/openapi-document-guidance (verified 2026-08-21)
+- OpenAI GPT Actions expose the schema's operations as the actions ChatGPT may invoke: "ChatGPT uses those names and descriptions to understand (a) which API action should be called and (b) which parameter should be used" — https://developers.openai.com/api/docs/actions/getting-started (verified 2026-08-21)
+- The Path Item / Operation Object is the unit of the described API surface in OpenAPI 3.1 — https://spec.openapis.org/oas/v3.1.0.html (verified 2026-08-21)
+
+**Counter-evidence:** The measured state is close to unobservable in the wild — a published spec with a `paths` object but no operation objects is rare, so no adoption or effect data distinguishes passing from failing here beyond what `5.1` already establishes. OpenAPI 3.1 also lets a document declare its surface through `webhooks` or `$ref`-ed path items, so "zero operations" as this audit counts them does not always mean zero agent-callable actions.

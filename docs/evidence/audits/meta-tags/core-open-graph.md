@@ -6,7 +6,7 @@ source_file: packages/core/src/audits/meta-tags/core-open-graph.ts
 slug: core-open-graph
 review_verdict: fix
 severity: medium
-evidence_grade: unrated
+evidence_grade: A
 disposition: "keep — fix required"
 reviewed: 2026-08-21
 ---
@@ -52,3 +52,16 @@ _No dedicated evidence signal was researched for this audit in the 2026-08-20 pa
 
 - 2026-08-20 — code review (11-agent workflow) + evidence research (12-domain workflow, 400 sources).
 - 2026-08-21 — dossier generated; disposition pending final taxonomy design.
+
+## Graded evidence (2026-08-21)
+
+**Mechanism claim:** Named link-preview crawlers — `facebookexternalhit` and Slack's unfurler — fetch a shared URL and read `og:title`, `og:description`, `og:image` and `og:url` to build the preview card; when those tags are absent the crawler falls back to heuristic guesses at the title, text and image.
+
+**Grade: A** — two vendors document, by crawler name, that they read exactly these properties, and the fallback behavior when they are missing is stated in the vendor doc itself.
+
+**Evidence:**
+- Meta's webmaster guide instructs sites to add `og:url` ("The canonical URL for your page"), `og:title`, `og:description`, `og:image` and names the crawler user-agent `facebookexternalhit/1.1`; without markup the crawler "uses internal heuristics to make a best guess" — https://developers.facebook.com/docs/sharing/webmasters/ (verified 2026-08-21)
+- Slack documents the same consumption for message unfurls: "Slack crawls the URL, looks for common OpenGraph and X (formerly known as Twitter) Card metadata, and renders some micro-approximation of the content." — https://docs.slack.dev/messaging/unfurling-links-in-messages/ (verified 2026-08-21)
+- The Open Graph protocol itself defines `og:title`, `og:type`, `og:image`, `og:url` as the required basic metadata and names Facebook as the originating consumer — https://ogp.me/ (verified 2026-08-21)
+
+**Counter-evidence:** The proven consumer path is social/messaging link previews, not AI answer generation — the audit's framing ("agents cannot display proper titles… in AI-generated responses") has no source. OpenAI's crawler documentation covers only robots.txt and user agents and mentions no Open Graph tags — https://developers.openai.com/api/docs/bots (verified 2026-08-21); Google's AI-features page likewise never mentions Open Graph — https://developers.google.com/search/docs/appearance/ai-features (verified 2026-08-21); and Google's supported-meta-tags list does not include any `og:*` property, with the note that "Google will ignore `meta` tags that it doesn't support" — https://developers.google.com/search/docs/crawling-indexing/special-tags (verified 2026-08-21). Note also that the grade attaches to *resolvable* values: the vendor doc's `og:image` contract is a URL the crawler can fetch, which the current non-emptiness check does not enforce.

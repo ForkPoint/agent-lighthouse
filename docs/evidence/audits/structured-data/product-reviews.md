@@ -6,14 +6,14 @@ source_file: packages/core/src/audits/structured-data/product-reviews.ts
 slug: product-reviews
 review_verdict: merge
 severity: medium
-evidence_grade: unrated
+evidence_grade: A
 disposition: "merge (approved 2026-08-21)"
 reviewed: 2026-08-21
 ---
 
 # product-reviews (`3.23`)
 
-> structured-data · source `product-reviews.ts` · review verdict **merge** · evidence grade **unrated** · disposition: **merge (approved 2026-08-21)**
+> structured-data · source `product-reviews.ts` · review verdict **merge** · evidence grade **A** · disposition: **merge (approved 2026-08-21)**
 
 ## What it checks
 
@@ -44,7 +44,22 @@ Measures exactly the same underlying signal as 3.13's `schemasWithReviewProp` de
 
 _No dedicated evidence signal was researched for this audit in the 2026-08-20 pass. Its tier assignment falls to the taxonomy design; unproven mechanisms default to informative per the [evidence policy](../../POLICY.md)._
 
+## Graded evidence (2026-08-21)
+
+**Mechanism claim:** Google parses `aggregateRating` (with `ratingValue` plus `ratingCount` or `reviewCount`) attached to a `Product` and renders it as the star review snippet for that result; a product page without it is ineligible for that treatment, and rating/review-count fields are likewise carried in the product feeds that agent shopping surfaces index.
+
+**Grade: A** — a vendor doc names the exact properties, states the requirement level, and describes the surface they produce; the same fields recur in OpenAI's product feed spec.
+
+**Evidence:**
+- Review snippet structured data: `ratingValue` is required ("The average rating for the item's quality using a numerical rating of either a number, fraction, or percentage") and "At least one of `ratingCount` or `reviewCount` is required"; `Product` is among the supported types — https://developers.google.com/search/docs/appearance/structured-data/review-snippet (verified 2026-08-21)
+- Product snippets require `name` plus at least one of `review`, `aggregateRating` or `offers`; `aggregateRating` with `ratingValue` and `reviewCount` is a recommended property Google parses — https://developers.google.com/search/docs/appearance/structured-data/product-snippet (verified 2026-08-21)
+- Merchant listing structured data accepts the same nested review/rating properties on Product — https://developers.google.com/search/docs/appearance/structured-data/merchant-listing (verified 2026-08-21)
+- OpenAI's product feed spec carries `star_rating` ("Average review score", 0-5 scale) and `review_count` ("Number of product reviews", non-negative), showing an agent shopping index that stores ratings per item — https://developers.openai.com/commerce/specs/feed (verified 2026-08-21)
+
+**Counter-evidence:** Google's self-serving review policy removes eligibility where the reviewed entity controls the reviews: "If the entity that's being reviewed controls the reviews about itself, their pages that use `LocalBusiness` or any other type of `Organization` structured data are ineligible for star review feature" (https://developers.google.com/search/docs/appearance/structured-data/review-snippet) — so a site-wide or Organization-level rating, which is what this audit's detection actually accepts, is explicitly *not* a consumed signal. No LLM-assistant vendor documents reading on-page `aggregateRating`; OpenAI takes ratings by feed, and Google states of its AI features that no special schema.org structured data is needed (https://developers.openai.com/commerce/, https://developers.google.com/search/docs/appearance/ai-features, verified 2026-08-21). The grade applies to a Product-attached rating with a non-empty count, not to the presence of any `aggregateRating` object anywhere on the site.
+
 ## Review history
 
 - 2026-08-20 — code review (11-agent workflow) + evidence research (12-domain workflow, 400 sources).
 - 2026-08-21 — dossier generated; disposition pending final taxonomy design.
+- 2026-08-21 — evidence graded **A** (Google review snippet documents ratingValue + ratingCount/reviewCount consumption on Product).

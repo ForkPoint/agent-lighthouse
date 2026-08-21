@@ -6,14 +6,14 @@ source_file: packages/core/src/audits/agent-tools/mcp-capabilities.ts
 slug: mcp-capabilities
 review_verdict: merge
 severity: medium
-evidence_grade: unrated
+evidence_grade: D
 disposition: "merge (approved 2026-08-21)"
 reviewed: 2026-08-21
 ---
 
 # mcp-capabilities (`5.14`)
 
-> agent-tools · source `mcp-capabilities.ts` · review verdict **merge** · evidence grade **unrated** · disposition: **merge (approved 2026-08-21)**
+> agent-tools · source `mcp-capabilities.ts` · review verdict **merge** · evidence grade **D** · disposition: **merge (approved 2026-08-21)**
 
 ## What it checks
 
@@ -47,3 +47,18 @@ _No dedicated evidence signal was researched for this audit in the 2026-08-20 pa
 
 - 2026-08-20 — code review (11-agent workflow) + evidence research (12-domain workflow, 400 sources).
 - 2026-08-21 — dossier generated; disposition pending final taxonomy design.
+- 2026-08-21 — evidence graded (see below).
+
+## Graded evidence (2026-08-21)
+
+**Mechanism claim:** An MCP client learns whether a server offers tools, resources, or prompts by reading a static `/.well-known/mcp/servers.json` published at the site origin.
+
+**Grade: D** — no MCP specification version, registry document, or vendor doc defines that file or any per-origin capability manifest; capabilities are protocol state obtained from the server over the wire, so the artifact this audit measures has no consumer.
+
+**Evidence:**
+- Current MCP spec (2026-07-28): capabilities come from the `server/discover` RPC — "`server/discover` lets a client query a server's supported protocol versions, capabilities, and identity before sending any other requests. Servers **MUST** implement it", returning `capabilities: { tools: {}, resources: {} }` — https://modelcontextprotocol.io/specification/2026-07-28/server/discover (verified 2026-08-21)
+- Legacy MCP revisions (2025-06-18 and earlier): "The server **MUST** respond with its own capabilities and information" in the `initialize` response, where `prompts`, `resources`, and `tools` are declared — https://modelcontextprotocol.io/specification/2025-06-18/basic/lifecycle (verified 2026-08-21)
+- Third-party discovery of MCP servers runs through the MCP Registry — a central REST API over `server.json` metadata with namespace ownership proved by DNS/GitHub/HTTP verification — not a per-origin well-known file: "A REST API for MCP clients and aggregators to discover available servers" — https://modelcontextprotocol.io/registry/about (verified 2026-08-21)
+- A named agent host confirms the wire path: Microsoft 365 Copilot "resolves the plugin's tools dynamically at runtime by default, directly from the MCP server" — https://learn.microsoft.com/en-us/microsoft-365-copilot/extensibility/overview-api-plugins (verified 2026-08-21)
+
+**Counter-evidence:** None found in the file's favour — no draft SEP, registry document, or vendor page defines `/.well-known/mcp/servers.json`, and the UCP fallback branch is likewise undocumented. The question this audit asks is legitimate and answerable at grade A, but only from the `server/discover` (or legacy `initialize`) response that `5.13` already fetches and discards, which is why the disposition is merge rather than keep.

@@ -6,14 +6,14 @@ source_file: packages/core/src/audits/crawler-permissions/tdm-rep.ts
 slug: tdm-rep
 review_verdict: delete
 severity: medium
-evidence_grade: unrated
+evidence_grade: C
 disposition: "proposed: redeem as experimental (pending triage)"
 reviewed: 2026-08-21
 ---
 
 # tdm-rep (`2.27`)
 
-> crawler-permissions · source `tdm-rep.ts` · review verdict **delete** · evidence grade **unrated** · disposition: **proposed: redeem as experimental (pending triage)**
+> crawler-permissions · source `tdm-rep.ts` · review verdict **delete** · evidence grade **C** · disposition: **proposed: redeem as experimental (pending triage)**
 
 ## What it checks
 
@@ -46,7 +46,21 @@ Speculative and internally incoherent for a tool that measures AI agent outcomes
 
 _No dedicated evidence signal was researched for this audit in the 2026-08-20 pass. Its tier assignment falls to the taxonomy design; unproven mechanisms default to informative per the [evidence policy](../../POLICY.md)._
 
+## Graded evidence (2026-08-21)
+
+**Mechanism claim:** An AI crawler fetches `/.well-known/tdmrep.json` or reads `<meta name="tdm-reservation">` and changes whether it collects or uses the page's content as a result.
+
+**Grade: C** — TDM-Rep is a genuinely published specification with real publisher-side participation and one named partial implementer, but no major crawler operator documents consuming it, so the causal claim about agent behavior is plausible and unproven rather than demonstrated.
+
+**Evidence:**
+- W3C TDM Reservation Protocol, Community Group Final Report (10 May 2024). Its own status section says: "It is not a W3C Standard nor is it on the W3C Standards Track." It defines exactly the three signalling methods the audit looks for — a `/.well-known/tdmrep.json` well-known file, a `tdm-reservation` HTTP response header (described in the report as "currently the preferred technique"), and `<meta name="tdm-reservation">` / `<meta name="tdm-policy">` in HTML — https://www.w3.org/community/reports/tdmrep/CG-FINAL-tdmrep-20240510/ (verified 2026-08-21)
+- Spec-defined file shape: an **array of objects**, each with mandatory `location` and `tdm-reservation` and optional `tdm-policy` — confirming the code review's finding that the audit's `Record<string, unknown>` parse accepts non-conforming documents (same URL, verified 2026-08-21)
+- Adoption is publisher-side, not crawler-side: the CG names Mondadori, Penguin Random House, the STM association, Copyright Clearance Center, Taylor & Francis and the BBC among participants, and records that "Spawning AI has already integrated partially the opt-out solution developed by the TDM Rep CG in their service" — the only named consuming implementer found — https://www.w3.org/community/tdmrep/ (verified 2026-08-21)
+
+**Counter-evidence:** No major AI vendor documents honoring the protocol. OpenAI's crawler documentation describes robots.txt and published IP ranges only, with no mention of TDM signals (https://developers.openai.com/api/docs/bots); Anthropic's crawler article describes robots.txt directives and `Crawl-delay` only (https://support.claude.com/en/articles/8896518-does-anthropic-crawl-data-from-the-web-and-how-can-site-owners-block-the-crawler); Perplexity's documents robots.txt and WAF allowlisting only (https://docs.perplexity.ai/guides/bots) — all verified 2026-08-21. Standardization momentum has also moved elsewhere: the IETF **AIPREF** working group is chartered to standardize AI-preference expression via "Well-Known URIs ([RFC 8615](https://www.rfc-editor.org/rfc/rfc8615.html)) such as the Robots Exclusion Protocol ([RFC 9309](https://www.rfc-editor.org/rfc/rfc9309.html)), and HTTP response header fields", with IESG submission targeted for 31 August 2026, and its charter does not reference TDM-Rep — https://datatracker.ietf.org/wg/aipref/about/ (verified 2026-08-21). Finally, the signal is directionally orthogonal to agent readiness: a reservation value of `1` denies mining, and the audit passes it identically to `0`.
+
 ## Review history
 
 - 2026-08-20 — code review (11-agent workflow) + evidence research (12-domain workflow, 400 sources).
 - 2026-08-21 — dossier generated; disposition pending final taxonomy design.
+- 2026-08-21 — evidence graded **C** (mechanism research pass); consistent with the proposed unscored/experimental disposition.

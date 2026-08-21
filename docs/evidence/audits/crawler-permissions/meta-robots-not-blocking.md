@@ -6,14 +6,14 @@ source_file: packages/core/src/audits/crawler-permissions/meta-robots-not-blocki
 slug: meta-robots-not-blocking
 review_verdict: fix
 severity: high
-evidence_grade: unrated
+evidence_grade: A
 disposition: "keep — fix required"
 reviewed: 2026-08-21
 ---
 
 # meta-robots-not-blocking (`2.25`)
 
-> crawler-permissions · source `meta-robots-not-blocking.ts` · review verdict **fix** · evidence grade **unrated** · disposition: **keep — fix required**
+> crawler-permissions · source `meta-robots-not-blocking.ts` · review verdict **fix** · evidence grade **A** · disposition: **keep — fix required**
 
 ## What it checks
 
@@ -49,7 +49,21 @@ The underlying signal is real and important — `noindex` genuinely removes a pa
 
 _No dedicated evidence signal was researched for this audit in the 2026-08-20 pass. Its tier assignment falls to the taxonomy design; unproven mechanisms default to informative per the [evidence policy](../../POLICY.md)._
 
+## Graded evidence (2026-08-21)
+
+**Mechanism claim:** A page carrying `noindex` in a robots meta tag (or the equivalent `X-Robots-Tag` header) is excluded from Google's Search index, and Google documents that the same family of robots directives governs whether the page can be shown or used as a direct input in AI Overviews and AI Mode.
+
+**Grade: A** — the consumer is named in vendor documentation: Google Search Central states that `noindex` removes the page from search results and that `nosnippet`/`max-snippet` "will also prevent"/"limit" the content being "used as a direct input for AI Overviews and AI Mode".
+
+**Evidence:**
+- Google Search Central, robots meta tag reference: `noindex` — "Do not show this page, media, or resource in search results."; `nosnippet` — "will also prevent the content from being used as a direct input for AI Overviews and AI Mode"; `max-snippet:[number]` — "will also limit how much of the content may be used as a direct input for AI Overviews and AI Mode". The doc scopes these rules to "all forms of search results (at Google: web search, Google Images, Discover, AI Overviews, AI Mode)" — https://developers.google.com/search/docs/crawling-indexing/robots-meta-tag (verified 2026-08-21)
+- Google Search Central, AI features and your website: site owners may use the `nosnippet`, `data-nosnippet`, `max-snippet` or `noindex` controls to limit how their content appears in AI features on Search; eligibility for AI Overviews/AI Mode carries "no additional technical requirements" beyond ordinary Search eligibility, i.e. the AI surfaces are fed by the Search index that `noindex` removes the page from — https://developers.google.com/search/docs/appearance/ai-features (verified 2026-08-21)
+- The directive is a long-standing, cross-vendor indexing control rather than a Google-only convention; RFC 9309 governs the robots.txt half of the same exclusion family and is a ratified standard with named crawler consumers — https://www.rfc-editor.org/rfc/rfc9309.html (verified 2026-08-21)
+
+**Counter-evidence:** `noindex` gates *index-derived* surfaces only. User-initiated fetchers are unaffected: OpenAI documents that for `ChatGPT-User` "Because these actions are initiated by a user, robots.txt rules may not apply" (https://developers.openai.com/api/docs/bots), and Perplexity documents that `Perplexity-User` "Generally ignores robots.txt rules" (https://docs.perplexity.ai/guides/bots) — both verified 2026-08-21. A noindexed page can therefore still be fetched and quoted live in a chat answer, so the audit's failure language ("blocking AI crawlers") overstates the effect for the conversational-agent path. Separately, the strongest AI-specific directives Google names — `nosnippet`, `data-nosnippet`, `max-snippet:0` — are outside what the current implementation reads, so the A-grade mechanism is only partially instrumented (see code review findings above).
+
 ## Review history
 
 - 2026-08-20 — code review (11-agent workflow) + evidence research (12-domain workflow, 400 sources).
 - 2026-08-21 — dossier generated; disposition pending final taxonomy design.
+- 2026-08-21 — evidence graded **A** (mechanism research pass).

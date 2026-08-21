@@ -6,7 +6,7 @@ source_file: packages/core/src/audits/agent-tools/no-blocking-captcha.ts
 slug: no-blocking-captcha
 review_verdict: fix
 severity: high
-evidence_grade: unrated
+evidence_grade: A
 disposition: "keep — fix required"
 reviewed: 2026-08-21
 ---
@@ -49,3 +49,17 @@ _No dedicated evidence signal was researched for this audit in the 2026-08-20 pa
 
 - 2026-08-20 — code review (11-agent workflow) + evidence research (12-domain workflow, 400 sources).
 - 2026-08-21 — dossier generated; disposition pending final taxonomy design.
+
+## Graded evidence (2026-08-21)
+
+**Mechanism claim:** An interactive CAPTCHA gating a form (reCAPTCHA v2 checkbox/challenge, an hCaptcha visual challenge, or Cloudflare Turnstile in managed/interactive mode) stops an autonomous browsing agent from submitting that form on its own — the agent must hand control back to a human.
+
+**Grade: A** — OpenAI's computer-use guide names "Solving CAPTCHA challenges" as an action the agent must not perform unattended, and the CAPTCHA vendors document that their interactive modes exist precisely to require a human response; the blocking path is documented consumer behavior, not inference.
+
+**Evidence:**
+- OpenAI's computer-use agent guide lists "Solving CAPTCHA challenges" among the actions that require explicit user confirmation immediately before execution, and treats bypassing a site's safety barrier as requiring full human takeover — https://developers.openai.com/api/docs/guides/tools-computer-use (verified 2026-08-21)
+- hCaptcha states it "helps to protect your sites and apps from bots, spam, and other automated abuse" — its purpose is to deny non-human clients — https://docs.hcaptcha.com/ (verified 2026-08-21)
+- reCAPTCHA v2 gates the `g-recaptcha-response` token on the user submitting a successful response; without that interaction there is no token to post with the form — https://developers.google.com/recaptcha/docs/display (verified 2026-08-21)
+- Anthropic's browser use tool documents no CAPTCHA-handling path at all: it acts on the accessibility tree and screenshots and assumes it can reach the page — https://platform.claude.com/docs/en/agents-and-tools/tool-use/browser-use-tool (verified 2026-08-21)
+
+**Counter-evidence:** The blocking property belongs to the *interactive* variants only, and every vendor documents a frictionless mode that agents pass without noticing. reCAPTCHA v3 "returns a score for each request without user friction" and "will never interrupt your users" (https://developers.google.com/recaptcha/docs/v3, verified 2026-08-21); Turnstile ships managed, non-interactive and invisible widget types and is marketed as a "CAPTCHA-free" alternative (https://developers.cloudflare.com/turnstile/, verified 2026-08-21); hCaptcha offers "nearly passive 'No-CAPTCHA' modes" (https://docs.hcaptcha.com/, verified 2026-08-21). The mechanism is therefore proven for the interactive case and false for the invisible case — which is exactly the distinction this audit's whole-body substring scan cannot make, and which its own remediation text recommends adopting.

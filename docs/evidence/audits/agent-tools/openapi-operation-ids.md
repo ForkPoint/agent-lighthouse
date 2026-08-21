@@ -6,14 +6,14 @@ source_file: packages/core/src/audits/agent-tools/openapi-operation-ids.ts
 slug: openapi-operation-ids
 review_verdict: fix
 severity: medium
-evidence_grade: unrated
+evidence_grade: B
 disposition: "keep — fix required"
 reviewed: 2026-08-21
 ---
 
 # openapi-operation-ids (`5.3`)
 
-> agent-tools · source `openapi-operation-ids.ts` · review verdict **fix** · evidence grade **unrated** · disposition: **keep — fix required**
+> agent-tools · source `openapi-operation-ids.ts` · review verdict **fix** · evidence grade **B** · disposition: **keep — fix required**
 
 ## What it checks
 
@@ -47,3 +47,18 @@ _No dedicated evidence signal was researched for this audit in the 2026-08-20 pa
 
 - 2026-08-20 — code review (11-agent workflow) + evidence research (12-domain workflow, 400 sources).
 - 2026-08-21 — dossier generated; disposition pending final taxonomy design.
+- 2026-08-21 — evidence graded (see below).
+
+## Graded evidence (2026-08-21)
+
+**Mechanism claim:** A tool-calling runtime uses `operationId` as the function name it exposes to the model, so duplicate ids collide into one name and ids that violate the runtime's function-name pattern (`^[a-zA-Z0-9_-]{1,64}$`) are rejected at tool-registration time.
+
+**Grade: B** — a named agent is documented to turn operationIds into the functions it calls, and the function-name constraint is published API contract, but the specification makes operationId optional and generators synthesize one from method + path, so absence degrades naming rather than breaking the call.
+
+**Evidence:**
+- Microsoft 365 Copilot: "Operation IDs are unique identifiers for an operation in the API and are used by Copilot to create functions that are executed when responding to a user's prompt … Operation IDs are shown during debugging as functions to indicate which operations Copilot is attempting to execute" — https://learn.microsoft.com/en-us/microsoft-365-copilot/extensibility/openapi-document-guidance (verified 2026-08-21)
+- Anthropic tool definitions: `name` "Must match the regex `^[a-zA-Z0-9_-]{1,64}$`" — an operationId carrying spaces, punctuation, or more than 64 characters cannot be registered verbatim as a tool name — https://platform.claude.com/docs/en/agents-and-tools/tool-use/define-tools (verified 2026-08-21)
+- Gemini function calling consumes only "a subset of the OpenAPI schema" and instructs "Use descriptive names without spaces or special characters" for function names — https://ai.google.dev/gemini-api/docs/function-calling (verified 2026-08-21)
+- OpenAPI 3.1 on operationId: "Unique string used to identify the operation. The id MUST be unique among all operations described in the API", and "Tools and libraries MAY use the operationId to uniquely identify an operation, therefore, it is RECOMMENDED to follow common programming naming conventions" — https://spec.openapis.org/oas/v3.1.0.html (verified 2026-08-21)
+
+**Counter-evidence:** `operationId` is optional in OpenAPI, and spec-to-tool converters routinely synthesize a name from the method and path when it is absent, so a spec without operationIds is degraded rather than unusable — which weakens the audit's `warn` on missing ids. Conversely the constraint that genuinely breaks registration (character legality and length) is documented at grade A yet is not measured by this audit at all, so the check is graded on a mechanism it only partially exercises.

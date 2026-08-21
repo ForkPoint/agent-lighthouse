@@ -6,14 +6,14 @@ source_file: packages/core/src/audits/structured-data/offer-schema.ts
 slug: offer-schema
 review_verdict: fix
 severity: high
-evidence_grade: unrated
+evidence_grade: A
 disposition: "keep — fix required"
 reviewed: 2026-08-21
 ---
 
 # offer-schema (`3.14`)
 
-> structured-data · source `offer-schema.ts` · review verdict **fix** · evidence grade **unrated** · disposition: **keep — fix required**
+> structured-data · source `offer-schema.ts` · review verdict **fix** · evidence grade **A** · disposition: **keep — fix required**
 
 ## What it checks
 
@@ -45,7 +45,24 @@ Price and currency in structured data is one of the few schema signals with clea
 
 _No dedicated evidence signal was researched for this audit in the 2026-08-20 pass. Its tier assignment falls to the taxonomy design; unproven mechanisms default to informative per the [evidence policy](../../POLICY.md)._
 
+## Graded evidence (2026-08-21)
+
+**Mechanism claim:** Google's product data extractors parse `price` and `priceCurrency` out of the schema.org `Offer` in a product page's markup and use those exact values for merchant listing eligibility and for Merchant Center automatic item updates, so a page without them cannot supply a machine-read price to that pipeline.
+
+**Grade: A** — `offers.price` and `offers.priceCurrency` are the only *required* Offer properties in Google's merchant listing structured-data spec, and Google separately documents crawling that markup off the page HTML to correct price data.
+
+**Evidence:**
+- Google merchant listing structured data — required properties are Product `name`, `image`, `offers`, and on the Offer `price` (or `priceSpecification.price`) plus `priceCurrency` (or `priceSpecification.priceCurrency`); `availability`, `priceValidUntil`, `hasMerchantReturnPolicy` are recommended — https://developers.google.com/search/docs/appearance/structured-data/merchant-listing (verified 2026-08-21)
+- Automatic item updates: "We automatically read the structured data markup on your website using our advanced data extractors and directly pull product data from your HTML into Merchant Center", naming `price`/`priceCurrency` directly on the Offer or via `priceSpecification` — https://support.google.com/merchants/answer/3246284 (verified 2026-08-21)
+- "Structured data lets Google and other web platforms automatically read your site and directly pull product data from your HTML"; markup also powers the website-crawl feed input method — https://support.google.com/merchants/answer/6069143 (verified 2026-08-21)
+- Merchant Center price attribute: "Accurately submit the product's price and currency, and match with the price from your landing page, structured data, and at checkout" — https://support.google.com/merchants/answer/7052112 (verified 2026-08-21)
+- Product snippets accept `offers` as either `Offer` or `AggregateOffer` — https://developers.google.com/search/docs/appearance/structured-data/product-snippet (verified 2026-08-21)
+- schema.org defines `AggregateOffer` with `lowPrice`/`highPrice`/`offerCount` for the multi-offer case; no `price` is mandated — https://schema.org/AggregateOffer (verified 2026-08-21)
+
+**Counter-evidence:** No LLM-assistant vendor documents reading on-page Offer markup. Google states of its AI features: "You don't need to create new machine readable files, AI text files, or markup to appear in these features. There's also no special schema.org structured data that you need to add" (https://developers.google.com/search/docs/appearance/ai-features, verified 2026-08-21). OpenAI's commerce documentation routes product price and availability into ChatGPT through a product feed ("Provide a structured product feed so ChatGPT accurately indexes and displays your products with up-to-date price and availability") and never mentions schema.org page markup (https://developers.openai.com/commerce/ and https://developers.openai.com/commerce/specs/feed, verified 2026-08-21). The proven consumer path is Google's search/shopping pipeline, not a chat agent parsing the page.
+
 ## Review history
 
 - 2026-08-20 — code review (11-agent workflow) + evidence research (12-domain workflow, 400 sources).
 - 2026-08-21 — dossier generated; disposition pending final taxonomy design.
+- 2026-08-21 — evidence graded **A** (documented Google extractor behavior for Offer price/priceCurrency).

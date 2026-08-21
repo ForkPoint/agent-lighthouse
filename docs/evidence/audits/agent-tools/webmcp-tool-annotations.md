@@ -6,7 +6,7 @@ source_file: packages/core/src/audits/agent-tools/webmcp-tool-annotations.ts
 slug: webmcp-tool-annotations
 review_verdict: merge
 severity: low
-evidence_grade: unrated
+evidence_grade: D
 disposition: "merge (approved 2026-08-21)"
 reviewed: 2026-08-21
 ---
@@ -47,3 +47,17 @@ _No dedicated evidence signal was researched for this audit in the 2026-08-20 pa
 
 - 2026-08-20 — code review (11-agent workflow) + evidence research (12-domain workflow, 400 sources).
 - 2026-08-21 — dossier generated; disposition pending final taxonomy design.
+
+## Graded evidence (2026-08-21)
+
+**Mechanism claim:** An agent reads a per-tool `readOnlyHint`/`destructiveHint` annotation published by the site and uses it to decide whether to ask the user for confirmation before invoking the tool.
+
+**Grade: D** — the annotation *concept* is real in both MCP and WebMCP, but neither of the two places this audit reads it from exists in any specification: there is no `/.well-known/webmcp` manifest, and the declarative WebMCP proposal defines no `data-read-only-hint`-style attributes. The measured signal has no consumer.
+
+**Evidence:**
+- WebMCP's IDL defines `ToolAnnotations` with exactly two members — `boolean readOnlyHint = false;` and `boolean untrustedContentHint = false;` — carried on `ModelContextTool` passed to `document.modelContext.registerTool()`, i.e. a JavaScript API surface, not a static file — https://raw.githubusercontent.com/webmachinelearning/webmcp/main/index.bs (verified 2026-08-21)
+- MCP defines `annotations` as "optional properties describing tool behavior" returned from `tools/list`, and warns that clients "MUST consider tool annotations to be untrusted unless they come from trusted servers" — https://modelcontextprotocol.io/specification/2025-06-18/server/tools (verified 2026-08-21)
+- The declarative WebMCP explainer proposes only `toolname`, `tooldescription`, `toolautosubmit` and `toolparamdescription`; it proposes no annotation attributes and no manifest file — https://raw.githubusercontent.com/webmachinelearning/webmcp/main/declarative-api-explainer.md (verified 2026-08-21)
+- No `/.well-known/webmcp` path appears anywhere in the proposal repository — https://github.com/webmachinelearning/webmcp (verified 2026-08-21)
+
+**Counter-evidence:** There is an active draft-spec trajectory, which is what separates this from a purely invented signal: `readOnlyHint` is normative in the WebMCP draft and in MCP, and WebMCP is in origin trial in Chrome 149 and Edge 150 (https://raw.githubusercontent.com/webmachinelearning/webmcp/main/implementation-status.md, verified 2026-08-21). Note also that `destructiveHint`, `idempotentHint` and `openWorldHint` — three of the four annotations this audit scores — are MCP-only and absent from WebMCP's `ToolAnnotations` dictionary. A readable version of this signal exists only over a live MCP `tools/list` response, not over a static crawl.

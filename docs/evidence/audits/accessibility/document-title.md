@@ -6,14 +6,14 @@ source_file: packages/core/src/audits/accessibility/_a11y.ts
 slug: document-title
 review_verdict: keep
 severity: low
-evidence_grade: unrated
+evidence_grade: A
 disposition: "keep"
 reviewed: 2026-08-21
 ---
 
 # Page has a non-empty <title> (`7.18`)
 
-> accessibility · source `_a11y.ts` · review verdict **keep** · evidence grade **unrated** · disposition: **keep**
+> accessibility · source `_a11y.ts` · review verdict **keep** · evidence grade **A** · disposition: **keep**
 
 ## What it checks
 
@@ -45,3 +45,17 @@ _No dedicated evidence signal was researched for this audit in the 2026-08-20 pa
 
 - 2026-08-20 — code review (11-agent workflow) + evidence research (12-domain workflow, 400 sources).
 - 2026-08-21 — dossier generated; disposition pending final taxonomy design.
+
+## Graded evidence (2026-08-21)
+
+**Mechanism claim:** The `<title>` element is the document's name — it is what a browser tab list exposes, what assistive technology announces on page load, and what Google uses as a source for the title link in search results — so a page with a missing or empty title is unnamed in every consumer that identifies a page by name rather than by URL.
+
+**Grade: A** — documented consumer behavior (Google states it generates title links from `<title>` content) plus a ratified Level A success criterion (WCAG 2.4.2 Page Titled) with universal browser/AT implementation.
+
+**Evidence:**
+- Google: title links are generated from several sources, first among them "Content in `<title>` elements" — https://developers.google.com/search/docs/appearance/title-link (verified 2026-08-21)
+- MDN: the title "defines the document's title that is shown in a browser's title bar or a page's tab"; "A common navigation technique for users of assistive technology is to read the page title and infer the content the page contains", with the guidance to "make titles unique to every page" — https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Elements/title (verified 2026-08-21)
+- WCAG 2.2 documents the page-title expectation as a Level A requirement (2.4.2 Page Titled) — referenced from the failure/technique set at https://www.w3.org/WAI/WCAG22/Techniques/failures/F41 (verified 2026-08-21)
+- Agent tool-chains address pages as tabs (Playwright MCP `browser_tabs`: "List, create, close, or select a browser tab"; chrome-devtools-mcp `list_pages`: "Get a list of pages open in the browser"), the surface on which a document's title is the only human/model-readable identifier — https://github.com/microsoft/playwright-mcp and https://github.com/ChromeDevTools/chrome-devtools-mcp/blob/main/docs/tool-reference.md (both verified 2026-08-21)
+
+**Counter-evidence:** Neither Playwright MCP nor Chrome DevTools MCP documents the page title as part of the accessibility snapshot the model reasons over, so a tree-driven agent can complete tasks on an untitled page; the documented dependence is on identification/citation surfaces, not on action. The check is presence-only, so a site shipping the same generic title on every page — the actual disambiguation failure — passes, and JS-assigned titles in a CSR SPA fail here while every real consumer that executes JS sees a title.

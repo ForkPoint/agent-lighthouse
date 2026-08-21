@@ -6,14 +6,14 @@ source_file: packages/core/src/audits/generative-engine/internal-cross-linking.t
 slug: internal-cross-linking
 review_verdict: fix
 severity: high
-evidence_grade: unrated
+evidence_grade: B
 disposition: "keep — fix required"
 reviewed: 2026-08-21
 ---
 
 # internal-cross-linking (`10.11`)
 
-> generative-engine · source `internal-cross-linking.ts` · review verdict **fix** · evidence grade **unrated** · disposition: **keep — fix required**
+> generative-engine · source `internal-cross-linking.ts` · review verdict **fix** · evidence grade **B** · disposition: **keep — fix required**
 
 ## What it checks
 
@@ -48,6 +48,18 @@ Falsy as implemented. `extractInternalLinks` scans every `<a href>` in the docum
 ## Evidence
 
 _No dedicated evidence signal was researched for this audit in the 2026-08-20 pass. Its tier assignment falls to the taxonomy design; unproven mechanisms default to informative per the [evidence policy](../../POLICY.md)._
+
+## Graded evidence (2026-08-21)
+
+**Mechanism claim:** Crawlers discover pages by following `<a href>` links, so a page reachable from no other page on the site is not crawled, and an uncrawled page cannot be shown as a supporting link in AI Overviews or AI Mode.
+
+**Grade: B** — the discovery half of the mechanism is vendor-documented and Google names internal linking as an AI-features fundamental, but the audit's stated mechanism (link structure builds topic clusters and AI-visible site authority) is documented nowhere and has no measured delta.
+
+**Evidence:**
+- Google documents link-following as the discovery mechanism and constrains its form: "Google uses links as a signal when determining the relevancy of pages and to find new pages to crawl", "Google can only crawl your link if it's an `<a>` HTML element with an `href` attribute", "Most links in other formats won't be parsed and extracted by Google's crawlers", and "Every page you care about should have a link from at least one other page on your site" — https://developers.google.com/search/docs/crawling-indexing/links-crawlable (verified 2026-08-21)
+- Google ties that directly to the AI surfaces: eligibility is gated on indexing — "To be eligible to be shown as a supporting link in AI Overviews or AI Mode, a page must be indexed and eligible to be shown in Google Search with a snippet" — and its list of fundamentals that still apply names internal linking explicitly: "Making your content easily findable through internal links on your website" — https://developers.google.com/search/docs/appearance/ai-features (verified 2026-08-21)
+
+**Counter-evidence:** No engine documents deriving "topic clusters" or an authority score from the internal link graph, and the 2026 critical survey rates structural signals as heterogeneous with an unknown sign — "structural fields may improve retrieval without necessarily producing the same effect at the reranking or citation stages", recommending one "test headings, tables, and fields without assuming the direction of effect" (https://arxiv.org/html/2607.14035v1, verified 2026-08-21). The documented benefit also accrues to the *linked-to* page, not to the linking page whose outbound count this audit scores, and sitemaps provide an independent discovery path that makes outbound link count non-necessary for indexing. Google's guidance names no threshold; the audit's "≥2 links" bar is unsupported by any source, and counting template chrome makes the measured quantity unrelated to the contextual linking the description argues for.
 
 ## Review history
 
