@@ -1,0 +1,110 @@
+{
+  "7.1": {
+    "slug": "accessibility/skip-nav",
+    "status": "removed-in-v2",
+    "reason": "not-a-factor",
+    "link": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/NOT-A-FACTOR.md#accessibilityskip-nav"
+  },
+  "5.11": {
+    "slug": "agent-tools/ai-plugin-json",
+    "status": "removed-in-v2",
+    "reason": "not-a-factor",
+    "link": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/NOT-A-FACTOR.md#agent-toolsai-plugin-json"
+  },
+  "5.17": {
+    "slug": "agent-tools/data-action-ctas",
+    "status": "removed-in-v2",
+    "reason": "not-a-factor",
+    "link": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/NOT-A-FACTOR.md#agent-toolsdata-action-ctas"
+  },
+  "5.4": {
+    "slug": "agent-tools/openapi-ai-instructions",
+    "status": "removed-in-v2",
+    "reason": "not-a-factor",
+    "link": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/NOT-A-FACTOR.md#agent-toolsopenapi-ai-instructions"
+  },
+  "5.25": {
+    "slug": "agent-tools/webmcp-action-coverage",
+    "status": "removed-in-v2",
+    "reason": "not-a-factor",
+    "link": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/NOT-A-FACTOR.md#agent-toolswebmcp-action-coverage"
+  },
+  "1.21": {
+    "slug": "content-discoverability/navigation-json",
+    "status": "removed-in-v2",
+    "reason": "not-a-factor",
+    "link": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/NOT-A-FACTOR.md#content-discoverabilitynavigation-json"
+  },
+  "10.12": {
+    "slug": "generative-engine/pagination-links",
+    "status": "removed-in-v2",
+    "reason": "not-a-factor",
+    "link": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/NOT-A-FACTOR.md#generative-enginepagination-links"
+  },
+  "4.14": {
+    "slug": "meta-tags/ai-instructions",
+    "status": "removed-in-v2",
+    "reason": "not-a-factor",
+    "link": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/NOT-A-FACTOR.md#meta-tagsai-instructions"
+  },
+  "4.12": {
+    "slug": "meta-tags/llms-full-txt-link",
+    "status": "removed-in-v2",
+    "reason": "not-a-factor",
+    "link": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/NOT-A-FACTOR.md#meta-tagsllms-full-txt-link"
+  },
+  "4.17": {
+    "slug": "meta-tags/mcp-discovery-link",
+    "status": "removed-in-v2",
+    "reason": "not-a-factor",
+    "link": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/NOT-A-FACTOR.md#meta-tagsmcp-discovery-link"
+  },
+  "6.12": {
+    "slug": "semantic-html/address-element",
+    "status": "removed-in-v2",
+    "reason": "not-a-factor",
+    "link": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/NOT-A-FACTOR.md#semantic-htmladdress-element"
+  },
+  "6.16": {
+    "slug": "semantic-html/decorative-images",
+    "status": "removed-in-v2",
+    "reason": "not-a-factor",
+    "link": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/NOT-A-FACTOR.md#semantic-htmldecorative-images"
+  },
+  "3.16": {
+    "slug": "structured-data/action-schema",
+    "status": "removed-in-v2",
+    "reason": "not-a-factor",
+    "link": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/NOT-A-FACTOR.md#structured-dataaction-schema"
+  },
+  "3.10": {
+    "slug": "structured-data/potential-action",
+    "status": "removed-in-v2",
+    "reason": "not-a-factor",
+    "link": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/NOT-A-FACTOR.md#structured-datapotential-action"
+  },
+  "8.21": {
+    "slug": "technical-readiness/framework-detection",
+    "status": "removed-in-v2",
+    "reason": "not-a-factor",
+    "link": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/NOT-A-FACTOR.md#technical-readinessframework-detection"
+  },
+  "8.6": {
+    "slug": "technical-readiness/permissions-policy",
+    "status": "removed-in-v2",
+    "reason": "not-a-factor",
+    "link": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/NOT-A-FACTOR.md#technical-readinesspermissions-policy"
+  },
+  "8.17": {
+    "slug": "technical-readiness/preconnect-hints",
+    "status": "removed-in-v2",
+    "reason": "not-a-factor",
+    "link": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/NOT-A-FACTOR.md#technical-readinesspreconnect-hints"
+  },
+  "8.5": {
+    "slug": "technical-readiness/referrer-policy",
+    "status": "removed-in-v2",
+    "reason": "not-a-factor",
+    "link": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/NOT-A-FACTOR.md#technical-readinessreferrer-policy"
+  }
+}

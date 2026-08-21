@@ -44,10 +44,12 @@
       "types": "./dist/index.d.ts",
       "import": "./dist/index.mjs",
       "require": "./dist/index.js"
-    }
+    },
+    "./migration-map.json": "./migration-map.json"
   },
   "files": [
-    "dist"
+    "dist",
+    "migration-map.json"
   ],
   "publishConfig": {
     "access": "public"
