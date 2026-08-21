@@ -11,6 +11,18 @@ export {
   normalizeNewlines,
 } from './gatherers/fetch-classify';
 export type { FetchClass, ExpectedKind } from './gatherers/fetch-classify';
+export {
+  parseRobots,
+  matchesUserAgent,
+  groupsForBot,
+  isPathAllowed,
+  isBlanketBlocked,
+} from './gatherers/robots';
+export type { RobotsRule, RobotsGroup } from './gatherers/robots';
+export { probeAsBot } from './gatherers/bot-probe';
+export type { BotProbeResult } from './gatherers/bot-probe';
+export { pagesOfType, judgePages } from './gatherers/pages';
+export type { PageJudgement } from './gatherers/pages';
 export type { CheckContext, CheckFn, PageContext } from './check-context';
 export { Audit } from './audit';
 export { runAudits, planAudits } from './audit-runner';
@@ -20,6 +32,8 @@ export type { AuditProgressEvent, AuditPlan, AuditRunResult } from './audit-runn
 export {
   parseHtml,
   extractJsonLd,
+  topLevelJsonLd,
+  allJsonLdNodes,
   flattenJsonLd,
   extractMarkdownLinks,
   extractMetaTags,
