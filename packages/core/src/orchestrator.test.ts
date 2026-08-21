@@ -469,6 +469,93 @@ describe('runScan — informative checks stay out of recommendations and top lis
 });
 
 // ---------------------------------------------------------------------------
+// Informative checks must not move readiness vitals / readinessScore
+// ---------------------------------------------------------------------------
+
+describe('runScan — informative checks stay out of readiness vitals', () => {
+  it('adding a failing informative check leaves readinessVitals and readinessScore unchanged', async () => {
+    const url = 'https://example.com/';
+    set(url, CONTENT_HTML);
+
+    const mk = (over: Record<string, unknown>) =>
+      ({
+        category: 'misc',
+        title: 't',
+        description: 'd',
+        status: 'pass',
+        priority: 'low',
+        score: 1,
+        scoreDisplayMode: 'binary',
+        impact: 'Low',
+        fix: 'f',
+        explanation: 'e',
+        details: {},
+        ...over,
+      }) as unknown;
+
+    // Baseline: every vital-feeding check passes, so `content` (id list) and
+    // `botAccessibility` (category prefix) both come out at 100.
+    const baseChecks = [
+      mk({ id: '1.1', category: 'content-structure' }),
+      mk({ id: '1.2', category: 'content-structure' }),
+      mk({ id: 'cp-1', category: 'crawler-permissions' }),
+    ];
+
+    const craft = (checks: unknown[]): AuditRunResult => ({
+      checks: checks as AuditRunResult['checks'],
+      categories: [
+        {
+          id: 'misc',
+          name: 'Misc',
+          weight: 1,
+          score: 100,
+          checks: [],
+          passCount: checks.length,
+          warnCount: 0,
+          failCount: 0,
+        },
+      ],
+      overallScore: 100,
+    });
+
+    vi.mocked(runAudits).mockResolvedValueOnce(craft(baseChecks));
+    const baseline = await runScan(url);
+
+    // Same run plus two failing informative checks — one on the id-list vital
+    // (`content`), one on the category-prefix vital (`botAccessibility`).
+    // Unfiltered they would drag both averages down.
+    const withInformative = [
+      ...baseChecks,
+      mk({
+        id: '1.3',
+        category: 'content-structure',
+        status: 'fail',
+        score: 0,
+        scoreDisplayMode: 'informative',
+      }),
+      mk({
+        id: 'cp-2',
+        category: 'crawler-permissions',
+        status: 'fail',
+        score: 0,
+        scoreDisplayMode: 'informative',
+      }),
+    ];
+
+    vi.mocked(runAudits).mockResolvedValueOnce(craft(withInformative));
+    const withInfo = await runScan(url);
+
+    // Sanity: the baseline vitals are actually non-zero, so "unchanged" is a
+    // real claim and not two empty objects matching by accident.
+    expect(baseline.readinessVitals?.content).toBe(100);
+    expect(baseline.readinessVitals?.botAccessibility).toBe(100);
+
+    expect(withInfo.readinessVitals).toEqual(baseline.readinessVitals);
+    expect(withInfo.readinessScore).toBe(baseline.readinessScore);
+  });
+});
+
+// ---------------------------------------------------------------------------
 // Progress events (options-bag API)
 // ---------------------------------------------------------------------------
 

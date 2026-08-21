@@ -425,7 +425,11 @@ export async function runScan(url: string, options?: ScanOptions): Promise<ScanR
     )
     .slice(0, 10);
 
-  const readinessVitals = calculateReadinessVitals(allChecks);
+  // Informative checks carry no meaningful score, so they must not drag the
+  // readiness averages (and therefore readinessScore) around.
+  const readinessVitals = calculateReadinessVitals(
+    allChecks.filter((c) => c.scoreDisplayMode !== 'informative'),
+  );
   const readinessScore = Math.round(
     readinessVitals.commerce * READINESS_WEIGHTS.commerce +
       readinessVitals.content * READINESS_WEIGHTS.content +
