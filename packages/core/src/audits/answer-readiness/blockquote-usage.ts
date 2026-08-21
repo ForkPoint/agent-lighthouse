@@ -1,3 +1,5 @@
+// TODO(merge): folds into answer-readiness/review-signals in Plan 4 (approved 2026-08-21).
+
 import type { AuditMeta, AuditResult } from "../../types";
 import { Audit } from "../../audit";
 import { weightForGrade } from '../../scorer';
