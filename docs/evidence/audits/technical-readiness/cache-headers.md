@@ -7,13 +7,13 @@ slug: cache-headers
 review_verdict: merge
 severity: medium
 evidence_grade: B
-disposition: "proposed: merge (pending triage)"
+disposition: "merge (approved 2026-08-21)"
 reviewed: 2026-08-21
 ---
 
 # cache-headers (`8.11`)
 
-> technical-readiness · source `cache-headers.ts` · review verdict **merge** · evidence grade **B** · disposition: **proposed: merge (pending triage)**
+> technical-readiness · source `cache-headers.ts` · review verdict **merge** · evidence grade **B** · disposition: **merge (approved 2026-08-21)**
 
 ## What it checks
 

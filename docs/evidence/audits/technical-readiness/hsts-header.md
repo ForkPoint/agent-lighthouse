@@ -7,13 +7,13 @@ slug: hsts-header
 review_verdict: merge
 severity: medium
 evidence_grade: B
-disposition: "proposed: merge (pending triage)"
+disposition: "merge (approved 2026-08-21)"
 reviewed: 2026-08-21
 ---
 
 # hsts-header (`8.2`)
 
-> technical-readiness · source `hsts-header.ts` · review verdict **merge** · evidence grade **B** · disposition: **proposed: merge (pending triage)**
+> technical-readiness · source `hsts-header.ts` · review verdict **merge** · evidence grade **B** · disposition: **merge (approved 2026-08-21)**
 
 ## What it checks
 

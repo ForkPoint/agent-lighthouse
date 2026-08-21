@@ -7,13 +7,13 @@ slug: webmcp-tool-naming
 review_verdict: merge
 severity: low
 evidence_grade: unrated
-disposition: "proposed: merge (pending triage)"
+disposition: "merge (approved 2026-08-21)"
 reviewed: 2026-08-21
 ---
 
 # webmcp-tool-naming (`5.23`)
 
-> agent-tools · source `webmcp-tool-naming.ts` · review verdict **merge** · evidence grade **unrated** · disposition: **proposed: merge (pending triage)**
+> agent-tools · source `webmcp-tool-naming.ts` · review verdict **merge** · evidence grade **unrated** · disposition: **merge (approved 2026-08-21)**
 
 ## What it checks
 

@@ -7,13 +7,13 @@ slug: no-orphan-pages
 review_verdict: merge
 severity: high
 evidence_grade: A
-disposition: "proposed: merge (pending triage)"
+disposition: "merge (approved 2026-08-21)"
 reviewed: 2026-08-21
 ---
 
 # no-orphan-pages (`1.22`)
 
-> content-discoverability · source `no-orphan-pages.ts` · review verdict **merge** · evidence grade **A** · disposition: **proposed: merge (pending triage)**
+> content-discoverability · source `no-orphan-pages.ts` · review verdict **merge** · evidence grade **A** · disposition: **merge (approved 2026-08-21)**
 
 ## What it checks
 

@@ -7,13 +7,13 @@ slug: last-updated-indicator
 review_verdict: merge
 severity: medium
 evidence_grade: unrated
-disposition: "proposed: merge (pending triage)"
+disposition: "merge (approved 2026-08-21)"
 reviewed: 2026-08-21
 ---
 
 # last-updated-indicator (`9.10`)
 
-> answer-engine · source `last-updated-indicator.ts` · review verdict **merge** · evidence grade **unrated** · disposition: **proposed: merge (pending triage)**
+> answer-engine · source `last-updated-indicator.ts` · review verdict **merge** · evidence grade **unrated** · disposition: **merge (approved 2026-08-21)**
 
 ## What it checks
 

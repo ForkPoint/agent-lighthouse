@@ -7,13 +7,13 @@ slug: definition-elements
 review_verdict: merge
 severity: low
 evidence_grade: B
-disposition: "proposed: merge (pending triage)"
+disposition: "merge (approved 2026-08-21)"
 reviewed: 2026-08-21
 ---
 
 # definition-elements (`6.13`)
 
-> semantic-html · source `definition-elements.ts` · review verdict **merge** · evidence grade **B** · disposition: **proposed: merge (pending triage)**
+> semantic-html · source `definition-elements.ts` · review verdict **merge** · evidence grade **B** · disposition: **merge (approved 2026-08-21)**
 
 ## What it checks
 

@@ -7,13 +7,13 @@ slug: service-product-schema
 review_verdict: merge
 severity: medium
 evidence_grade: A
-disposition: "proposed: merge (pending triage)"
+disposition: "merge (approved 2026-08-21)"
 reviewed: 2026-08-21
 ---
 
 # service-product-schema (`3.8`)
 
-> structured-data · source `service-product-schema.ts` · review verdict **merge** · evidence grade **A** · disposition: **proposed: merge (pending triage)**
+> structured-data · source `service-product-schema.ts` · review verdict **merge** · evidence grade **A** · disposition: **merge (approved 2026-08-21)**
 
 ## What it checks
 

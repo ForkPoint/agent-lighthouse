@@ -7,13 +7,13 @@ slug: content-type-options
 review_verdict: merge
 severity: high
 evidence_grade: C
-disposition: "proposed: merge (pending triage)"
+disposition: "merge (approved 2026-08-21)"
 reviewed: 2026-08-21
 ---
 
 # content-type-options (`8.4`)
 
-> technical-readiness · source `content-type-options.ts` · review verdict **merge** · evidence grade **C** · disposition: **proposed: merge (pending triage)**
+> technical-readiness · source `content-type-options.ts` · review verdict **merge** · evidence grade **C** · disposition: **merge (approved 2026-08-21)**
 
 ## What it checks
 

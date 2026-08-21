@@ -7,13 +7,13 @@ slug: og-site-name
 review_verdict: merge
 severity: low
 evidence_grade: A
-disposition: "proposed: merge (pending triage)"
+disposition: "merge (approved 2026-08-21)"
 reviewed: 2026-08-21
 ---
 
 # og-site-name (`4.8`)
 
-> meta-tags · source `og-site-name.ts` · review verdict **merge** · evidence grade **A** · disposition: **proposed: merge (pending triage)**
+> meta-tags · source `og-site-name.ts` · review verdict **merge** · evidence grade **A** · disposition: **merge (approved 2026-08-21)**
 
 ## What it checks
 

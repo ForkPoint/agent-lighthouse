@@ -7,13 +7,13 @@ slug: llms-txt-sections
 review_verdict: merge
 severity: low
 evidence_grade: unrated
-disposition: "proposed: merge (pending triage)"
+disposition: "merge (approved 2026-08-21)"
 reviewed: 2026-08-21
 ---
 
 # llms-txt-sections (`1.3`)
 
-> content-discoverability · source `llms-txt-sections.ts` · review verdict **merge** · evidence grade **unrated** · disposition: **proposed: merge (pending triage)**
+> content-discoverability · source `llms-txt-sections.ts` · review verdict **merge** · evidence grade **unrated** · disposition: **merge (approved 2026-08-21)**
 
 ## What it checks
 

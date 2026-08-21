@@ -7,13 +7,13 @@ slug: mcp-capabilities
 review_verdict: merge
 severity: medium
 evidence_grade: unrated
-disposition: "proposed: merge (pending triage)"
+disposition: "merge (approved 2026-08-21)"
 reviewed: 2026-08-21
 ---
 
 # mcp-capabilities (`5.14`)
 
-> agent-tools · source `mcp-capabilities.ts` · review verdict **merge** · evidence grade **unrated** · disposition: **proposed: merge (pending triage)**
+> agent-tools · source `mcp-capabilities.ts` · review verdict **merge** · evidence grade **unrated** · disposition: **merge (approved 2026-08-21)**
 
 ## What it checks
 

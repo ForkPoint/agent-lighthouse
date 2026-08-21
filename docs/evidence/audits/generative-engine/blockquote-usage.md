@@ -7,13 +7,13 @@ slug: blockquote-usage
 review_verdict: merge
 severity: medium
 evidence_grade: B
-disposition: "proposed: merge (pending triage)"
+disposition: "merge (approved 2026-08-21)"
 reviewed: 2026-08-21
 ---
 
 # blockquote-usage (`10.14`)
 
-> generative-engine · source `blockquote-usage.ts` · review verdict **merge** · evidence grade **B** · disposition: **proposed: merge (pending triage)**
+> generative-engine · source `blockquote-usage.ts` · review verdict **merge** · evidence grade **B** · disposition: **merge (approved 2026-08-21)**
 
 ## What it checks
 

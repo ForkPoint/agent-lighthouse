@@ -8,7 +8,7 @@ One dossier per audit: what it checks, the 2026-08-20 code-review findings, grad
 | :- | :---- | :------- | :------------- | :------------- | :---------- |
 | 7.1 | [skip-nav](./accessibility/skip-nav.md) | accessibility | delete | D | sunset (approved 2026-08-21) |
 | 7.2 | [aria-landmarks](./accessibility/aria-landmarks.md) | accessibility | fix | A | keep — fix required |
-| 7.3 | [nav-aria-label](./accessibility/nav-aria-label.md) | accessibility | merge | A | proposed: merge (pending triage) |
+| 7.3 | [nav-aria-label](./accessibility/nav-aria-label.md) | accessibility | merge | A | merge (approved 2026-08-21) |
 | 7.4 | [Landmarks are uniquely identifiable](./accessibility/landmark-unique.md) | accessibility | fix | A | keep — fix required |
 | 7.5 | [Form inputs have associated labels](./accessibility/label.md) | accessibility | keep | A | keep |
 | 7.6 | [form-error-messages](./accessibility/form-error-messages.md) | accessibility | delete | A | proposed: redeem as scored (pending triage) |
@@ -41,7 +41,7 @@ One dossier per audit: what it checks, the 2026-08-20 code-review findings, grad
 | 5.11 | [ai-plugin-json](./agent-tools/ai-plugin-json.md) | agent-tools | delete | D | sunset (approved 2026-08-21) |
 | 5.12 | [mcp-discovery](./agent-tools/mcp-discovery.md) | agent-tools | fix | A | keep — fix required |
 | 5.13 | [mcp-endpoint](./agent-tools/mcp-endpoint.md) | agent-tools | fix | C | keep — fix required |
-| 5.14 | [mcp-capabilities](./agent-tools/mcp-capabilities.md) | agent-tools | merge | — | proposed: merge (pending triage) |
+| 5.14 | [mcp-capabilities](./agent-tools/mcp-capabilities.md) | agent-tools | merge | — | merge (approved 2026-08-21) |
 | 5.15 | [contact-form](./agent-tools/contact-form.md) | agent-tools | fix | C | keep — fix required |
 | 5.16 | [search-endpoint](./agent-tools/search-endpoint.md) | agent-tools | fix | — | keep — fix required |
 | 5.17 | [data-action-ctas](./agent-tools/data-action-ctas.md) | agent-tools | delete | D | sunset (approved 2026-08-21) |
@@ -49,9 +49,9 @@ One dossier per audit: what it checks, the 2026-08-20 code-review findings, grad
 | 5.19 | [forms-no-js](./agent-tools/forms-no-js.md) | agent-tools | fix | — | keep — fix required |
 | 5.20 | [webmcp-manifest](./agent-tools/webmcp-manifest.md) | agent-tools | delete | A | proposed: redeem as experimental (pending triage) |
 | 5.21 | [webmcp-declarative-forms](./agent-tools/webmcp-declarative-forms.md) | agent-tools | delete | A | kept — rewrite required (approved 2026-08-21) |
-| 5.22 | [webmcp-input-quality](./agent-tools/webmcp-input-quality.md) | agent-tools | merge | — | proposed: merge (pending triage) |
-| 5.23 | [webmcp-tool-naming](./agent-tools/webmcp-tool-naming.md) | agent-tools | merge | — | proposed: merge (pending triage) |
-| 5.24 | [webmcp-tool-annotations](./agent-tools/webmcp-tool-annotations.md) | agent-tools | merge | — | proposed: merge (pending triage) |
+| 5.22 | [webmcp-input-quality](./agent-tools/webmcp-input-quality.md) | agent-tools | merge | — | merge (approved 2026-08-21) |
+| 5.23 | [webmcp-tool-naming](./agent-tools/webmcp-tool-naming.md) | agent-tools | merge | — | merge (approved 2026-08-21) |
+| 5.24 | [webmcp-tool-annotations](./agent-tools/webmcp-tool-annotations.md) | agent-tools | merge | — | merge (approved 2026-08-21) |
 | 5.25 | [webmcp-action-coverage](./agent-tools/webmcp-action-coverage.md) | agent-tools | delete | D | sunset (approved 2026-08-21) |
 | 5.26 | [openapi-description-quality](./agent-tools/openapi-description-quality.md) | agent-tools | fix | — | keep — fix required |
 | 5.27 | [form-actionability](./agent-tools/form-actionability.md) | agent-tools | keep | — | keep |
@@ -64,11 +64,11 @@ One dossier per audit: what it checks, the 2026-08-20 code-review findings, grad
 | 9.7 | [specific-numbers](./answer-engine/specific-numbers.md) | answer-engine | fix | — | keep — fix required |
 | 9.8 | [dates-on-content](./answer-engine/dates-on-content.md) | answer-engine | fix | — | keep — fix required |
 | 9.9 | [content-without-clickthrough](./answer-engine/content-without-clickthrough.md) | answer-engine | fix | — | keep — fix required |
-| 9.10 | [last-updated-indicator](./answer-engine/last-updated-indicator.md) | answer-engine | merge | — | proposed: merge (pending triage) |
+| 9.10 | [last-updated-indicator](./answer-engine/last-updated-indicator.md) | answer-engine | merge | — | merge (approved 2026-08-21) |
 | 9.11 | [meta-description-aeo](./answer-engine/meta-description-aeo.md) | answer-engine | delete | C | proposed: redeem as scored (pending triage) |
 | 1.1 | [llms-txt-exists](./content-discoverability/llms-txt-exists.md) | content-discoverability | fix | A | keep — fix required |
-| 1.2 | [llms-txt-blockquote](./content-discoverability/llms-txt-blockquote.md) | content-discoverability | merge | — | proposed: merge (pending triage) |
-| 1.3 | [llms-txt-sections](./content-discoverability/llms-txt-sections.md) | content-discoverability | merge | — | proposed: merge (pending triage) |
+| 1.2 | [llms-txt-blockquote](./content-discoverability/llms-txt-blockquote.md) | content-discoverability | merge | — | merge (approved 2026-08-21) |
+| 1.3 | [llms-txt-sections](./content-discoverability/llms-txt-sections.md) | content-discoverability | merge | — | merge (approved 2026-08-21) |
 | 1.4 | [llms-txt-link-descriptions](./content-discoverability/llms-txt-link-descriptions.md) | content-discoverability | fix | — | keep — fix required |
 | 1.5 | [llms-txt-links-valid](./content-discoverability/llms-txt-links-valid.md) | content-discoverability | fix | B | keep — fix required |
 | 1.6 | [llms-full-txt](./content-discoverability/llms-full-txt.md) | content-discoverability | fix | C | informative, weight 0 (approved 2026-08-21) |
@@ -87,7 +87,7 @@ One dossier per audit: what it checks, the 2026-08-20 code-review findings, grad
 | 1.19 | [fast-page-load](./content-discoverability/fast-page-load.md) | content-discoverability | fix | B | keep — fix required |
 | 1.20 | [no-broken-links](./content-discoverability/no-broken-links.md) | content-discoverability | fix | A | keep — fix required |
 | 1.21 | [navigation-json](./content-discoverability/navigation-json.md) | content-discoverability | delete | D | sunset (approved 2026-08-21) |
-| 1.22 | [no-orphan-pages](./content-discoverability/no-orphan-pages.md) | content-discoverability | merge | A | proposed: merge (pending triage) |
+| 1.22 | [no-orphan-pages](./content-discoverability/no-orphan-pages.md) | content-discoverability | merge | A | merge (approved 2026-08-21) |
 | 1.23 | [commerce-links](./content-discoverability/commerce-links.md) | content-discoverability | fix | D | keep — fix required |
 | 2.1 | [gptbot](./crawler-permissions/gptbot.md) | crawler-permissions | fix | A | keep — fix required |
 | 2.2 | [google-extended](./crawler-permissions/google-extended.md) | crawler-permissions | fix | A | keep — fix required |
@@ -130,7 +130,7 @@ One dossier per audit: what it checks, the 2026-08-20 code-review findings, grad
 | 10.11 | [internal-cross-linking](./generative-engine/internal-cross-linking.md) | generative-engine | fix | — | keep — fix required |
 | 10.12 | [pagination-links](./generative-engine/pagination-links.md) | generative-engine | delete | D | sunset (approved 2026-08-21) |
 | 10.13 | [unique-data](./generative-engine/unique-data.md) | generative-engine | fix | — | keep — fix required |
-| 10.14 | [blockquote-usage](./generative-engine/blockquote-usage.md) | generative-engine | merge | B | proposed: merge (pending triage) |
+| 10.14 | [blockquote-usage](./generative-engine/blockquote-usage.md) | generative-engine | merge | B | merge (approved 2026-08-21) |
 | 10.15 | [descriptive-urls](./generative-engine/descriptive-urls.md) | generative-engine | fix | C | keep — fix required |
 | 4.1 | [meta-description](./meta-tags/meta-description.md) | meta-tags | fix | — | keep — fix required |
 | 4.2 | [meta-author](./meta-tags/meta-author.md) | meta-tags | fix | — | keep — fix required |
@@ -139,7 +139,7 @@ One dossier per audit: what it checks, the 2026-08-20 code-review findings, grad
 | 4.5 | [unique-meta](./meta-tags/unique-meta.md) | meta-tags | fix | — | keep — fix required |
 | 4.6 | [core-open-graph](./meta-tags/core-open-graph.md) | meta-tags | fix | — | keep — fix required |
 | 4.7 | [og-type](./meta-tags/og-type.md) | meta-tags | fix | — | keep — fix required |
-| 4.8 | [og-site-name](./meta-tags/og-site-name.md) | meta-tags | merge | A | proposed: merge (pending triage) |
+| 4.8 | [og-site-name](./meta-tags/og-site-name.md) | meta-tags | merge | A | merge (approved 2026-08-21) |
 | 4.9 | [og-image-alt](./meta-tags/og-image-alt.md) | meta-tags | fix | C | keep — fix required |
 | 4.10 | [twitter-card](./meta-tags/twitter-card.md) | meta-tags | delete | C | proposed: redeem as informative (pending triage) |
 | 4.11 | [llms-txt-link](./meta-tags/llms-txt-link.md) | meta-tags | fix | C | keep — fix required |
@@ -164,7 +164,7 @@ One dossier per audit: what it checks, the 2026-08-20 code-review findings, grad
 | 6.10 | [code-language](./semantic-html/code-language.md) | semantic-html | fix | — | keep — fix required |
 | 6.11 | [time-element](./semantic-html/time-element.md) | semantic-html | fix | C | keep — fix required |
 | 6.12 | [address-element](./semantic-html/address-element.md) | semantic-html | delete | D | sunset (approved 2026-08-21) |
-| 6.13 | [definition-elements](./semantic-html/definition-elements.md) | semantic-html | merge | B | proposed: merge (pending triage) |
+| 6.13 | [definition-elements](./semantic-html/definition-elements.md) | semantic-html | merge | B | merge (approved 2026-08-21) |
 | 6.14 | [content-depth](./semantic-html/content-depth.md) | semantic-html | fix | B | keep — fix required |
 | 6.15 | [image-alt-text](./semantic-html/image-alt-text.md) | semantic-html | fix | A | keep — fix required |
 | 6.16 | [decorative-images](./semantic-html/decorative-images.md) | semantic-html | delete | D | sunset (approved 2026-08-21) |
@@ -179,7 +179,7 @@ One dossier per audit: what it checks, the 2026-08-20 code-review findings, grad
 | 3.5 | [breadcrumb-schema](./structured-data/breadcrumb-schema.md) | structured-data | fix | — | keep — fix required |
 | 3.6 | [article-schema](./structured-data/article-schema.md) | structured-data | fix | — | keep — fix required |
 | 3.7 | [faqpage-schema](./structured-data/faqpage-schema.md) | structured-data | fix | — | keep — fix required |
-| 3.8 | [service-product-schema](./structured-data/service-product-schema.md) | structured-data | merge | A | proposed: merge (pending triage) |
+| 3.8 | [service-product-schema](./structured-data/service-product-schema.md) | structured-data | merge | A | merge (approved 2026-08-21) |
 | 3.9 | [speakable-schema](./structured-data/speakable-schema.md) | structured-data | delete | A | kept — rewrite required (approved 2026-08-21) |
 | 3.10 | [potential-action](./structured-data/potential-action.md) | structured-data | delete | D | sunset (approved 2026-08-21) |
 | 3.11 | [howto-schema](./structured-data/howto-schema.md) | structured-data | delete | C | informative, weight 0 (approved 2026-08-21) |
@@ -190,19 +190,19 @@ One dossier per audit: what it checks, the 2026-08-20 code-review findings, grad
 | 3.16 | [action-schema](./structured-data/action-schema.md) | structured-data | delete | D | sunset (approved 2026-08-21) |
 | 3.21 | [product-identifiers](./structured-data/product-identifiers.md) | structured-data | fix | — | keep — fix required |
 | 3.22 | [product-details](./structured-data/product-details.md) | structured-data | fix | — | keep — fix required |
-| 3.23 | [product-reviews](./structured-data/product-reviews.md) | structured-data | merge | — | proposed: merge (pending triage) |
+| 3.23 | [product-reviews](./structured-data/product-reviews.md) | structured-data | merge | — | merge (approved 2026-08-21) |
 | 3.24 | [product-transaction-certainty](./structured-data/product-transaction-certainty.md) | structured-data | fix | — | keep — fix required |
 | 8.1 | [https-enabled](./technical-readiness/https-enabled.md) | technical-readiness | fix | A | keep — fix required |
-| 8.2 | [hsts-header](./technical-readiness/hsts-header.md) | technical-readiness | merge | B | proposed: merge (pending triage) |
+| 8.2 | [hsts-header](./technical-readiness/hsts-header.md) | technical-readiness | merge | B | merge (approved 2026-08-21) |
 | 8.3 | [csp-header](./technical-readiness/csp-header.md) | technical-readiness | fix | D | keep — fix required |
-| 8.4 | [content-type-options](./technical-readiness/content-type-options.md) | technical-readiness | merge | C | proposed: merge (pending triage) |
+| 8.4 | [content-type-options](./technical-readiness/content-type-options.md) | technical-readiness | merge | C | merge (approved 2026-08-21) |
 | 8.5 | [referrer-policy](./technical-readiness/referrer-policy.md) | technical-readiness | delete | D | sunset (approved 2026-08-21) |
 | 8.6 | [permissions-policy](./technical-readiness/permissions-policy.md) | technical-readiness | delete | D | sunset (approved 2026-08-21) |
 | 8.7 | [security-txt](./technical-readiness/security-txt.md) | technical-readiness | delete | C | informative, weight 0 (approved 2026-08-21) |
 | 8.8 | [cors-ai-files](./technical-readiness/cors-ai-files.md) | technical-readiness | fix | C | keep — fix required |
 | 8.9 | [cors-api-routes](./technical-readiness/cors-api-routes.md) | technical-readiness | delete | C | proposed: redeem as scored (pending triage) |
 | 8.10 | [correct-content-types](./technical-readiness/correct-content-types.md) | technical-readiness | fix | C | keep — fix required |
-| 8.11 | [cache-headers](./technical-readiness/cache-headers.md) | technical-readiness | merge | B | proposed: merge (pending triage) |
+| 8.11 | [cache-headers](./technical-readiness/cache-headers.md) | technical-readiness | merge | B | merge (approved 2026-08-21) |
 | 8.12 | [fast-response-time](./technical-readiness/fast-response-time.md) | technical-readiness | fix | B | keep — fix required |
 | 8.13 | [server-rendered](./technical-readiness/server-rendered.md) | technical-readiness | fix | B | keep — fix required |
 | 8.14 | [no-render-blocking](./technical-readiness/no-render-blocking.md) | technical-readiness | fix | D | keep — fix required |
