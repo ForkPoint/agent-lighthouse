@@ -25,6 +25,8 @@ function stubCheck(meta: AuditMeta, tag: string, explanation: string): CheckResu
     fix: meta.guidance?.fix ?? '',
     tags: [tag],
     deprecated: meta.deprecated,
+    evidenceGrade: meta.evidenceGrade,
+    tier: meta.tier,
   };
 }
 

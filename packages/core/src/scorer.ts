@@ -1,5 +1,15 @@
-import type { CheckResult, CategoryResult } from './types';
+import type { CheckResult, CategoryResult, EvidenceGrade, AuditTier } from './types';
 import { CATEGORY_WEIGHTS, CATEGORY_NAMES, getScoreTier } from './constants';
+
+/**
+ * Spec §4 weight law: an audit's scoring weight is a pure function of its
+ * evidence grade and tier. Only the `scored` tier carries weight, and only
+ * grades A and B are proven enough to move a score.
+ */
+export function weightForGrade(grade: EvidenceGrade, tier: AuditTier): number {
+  if (tier !== 'scored') return 0;
+  return grade === 'A' ? 1.0 : grade === 'B' ? 0.6 : 0;
+}
 
 /**
  * Single source of truth for "this check is advisory only".

@@ -41,6 +41,11 @@ export const DeprecationNoticeSchema = z.object({
   link: z.string().url(),
 });
 
+/** Evidence strength from the audit's dossier (docs/evidence/POLICY.md). */
+export const EvidenceGradeSchema = z.enum(['A', 'B', 'C', 'D']);
+/** Scoring participation tier (spec §4). */
+export const AuditTierSchema = z.enum(['scored', 'informative', 'experimental']);
+
 export const AuditMetaSchema = z.object({
   id: z.string(),
   category: z.string(),
@@ -55,10 +60,16 @@ export const AuditMetaSchema = z.object({
   defaultPriority: CheckPrioritySchema,
   guidance: AuditGuidanceSchema.optional(),
   deprecated: DeprecationNoticeSchema.optional(),
+  // v2 taxonomy fields. Optional here on purpose: audits are stamped
+  // incrementally, and enforcement flips once every audit carries them.
+  evidenceGrade: EvidenceGradeSchema.optional(),
+  tier: AuditTierSchema.optional(),
+  dossier: z.string().max(500).optional(),
 });
 
 export const CheckResultSchema = z.object({
-  id: z.string().max(20),
+  // v2 ids are `category/slug` paths, which outgrew the old 20-char cap.
+  id: z.string().max(64),
   category: z.string().max(100),
   title: z.string().max(500),
   description: z.string().max(5000),
@@ -81,4 +92,8 @@ export const CheckResultSchema = z.object({
     .optional(),
   tags: z.array(z.string().max(50)).max(20).optional(),
   deprecated: DeprecationNoticeSchema.optional(),
+  // Copied from the audit's meta so downstream surfaces can filter by
+  // evidence strength without reaching back into the registry.
+  evidenceGrade: EvidenceGradeSchema.optional(),
+  tier: AuditTierSchema.optional(),
 });

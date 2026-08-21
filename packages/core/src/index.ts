@@ -54,6 +54,7 @@ export {
   buildCategoryResult,
   calculateOverallScore,
   isInformative,
+  weightForGrade,
 } from './scorer';
 export { extractProductFieldVerification } from './product-fields';
 

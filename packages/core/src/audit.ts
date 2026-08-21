@@ -143,6 +143,10 @@ export abstract class Audit {
       },
       tags: meta.guidance?.tags,
       deprecated: meta.deprecated,
+
+      // v2 taxonomy provenance, carried alongside the weight it justifies.
+      evidenceGrade: meta.evidenceGrade,
+      tier: meta.tier,
     };
   }
 }
