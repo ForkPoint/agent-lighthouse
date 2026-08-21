@@ -1,6 +1,7 @@
 import type { AuditMeta, AuditResult } from "../../types";
 import { Audit } from "../../audit";
 import type { CheckContext } from '../../check-context';
+import { weightForGrade } from '../../scorer';
 import { flattenJsonLd } from '../../parser';
 
 function matchesAnyType(schema: Record<string, unknown>, types: string[]): boolean {
@@ -14,14 +15,17 @@ function matchesAnyType(schema: Record<string, unknown>, types: string[]): boole
 
 export class ProductDetailsAudit extends Audit {
   static override meta: AuditMeta = {
-    id: '3.22',
+    id: 'structured-data/advanced-product-details',
     category: 'structured-data',
     title: 'Advanced product details',
     failureTitle: 'Advanced product details',
     description:
       'AI agents use brand, category, and availability status to filter search results and answer availability queries. Missing these details makes your products less likely to surface in filtered AI recommendations.',
     scoreDisplayMode: 'ternary',
-    weight: 1.0,
+    weight: weightForGrade('A', 'scored'),
+    evidenceGrade: 'A',
+    tier: 'scored',
+    dossier: 'docs/evidence/audits/structured-data/advanced-product-details.md',
     applicablePageTypes: ['product'],
     defaultPriority: 'medium',
     guidance: {

@@ -496,7 +496,14 @@ function calculateReadinessVitals(
     average(applicable.filter((c) => c.id.startsWith(prefix) || c.category === prefix));
 
   return {
-    commerce: getScore(['3.8', '3.14', '3.21', '3.22', '3.23', '3.24']),
+    commerce: getScore([
+      'structured-data/service-product-schema',
+      '3.14',
+      '3.21',
+      'structured-data/advanced-product-details',
+      'structured-data/product-reviews',
+      '3.24',
+    ]),
     content: getScore([
       'machine-discovery/llms-txt-exists',
       'machine-discovery/llms-txt-blockquote',

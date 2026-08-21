@@ -189,7 +189,7 @@ One dossier per audit: what it checks, the 2026-08-20 code-review findings, grad
 | 3.15 | [author-schema](./structured-data/author-schema.md) | structured-data | fix | — | keep — fix required |
 | 3.16 | [action-schema](./structured-data/action-schema.md) | structured-data | delete | D | sunset (approved 2026-08-21) |
 | 3.21 | [product-identifiers](./structured-data/product-identifiers.md) | structured-data | fix | — | keep — fix required |
-| 3.22 | [product-details](./structured-data/product-details.md) | structured-data | fix | — | keep — fix required |
+| 3.22 | [advanced-product-details](./structured-data/advanced-product-details.md) | structured-data | fix | — | keep — fix required |
 | 3.23 | [product-reviews](./structured-data/product-reviews.md) | structured-data | merge | — | merge (approved 2026-08-21) |
 | 3.24 | [product-transaction-certainty](./structured-data/product-transaction-certainty.md) | structured-data | fix | — | keep — fix required |
 | 8.1 | [https-enabled](./access-crawl-control/https-enabled.md) | technical-readiness | fix | A | keep — fix required |

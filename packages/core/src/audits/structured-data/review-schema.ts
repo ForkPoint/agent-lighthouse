@@ -1,6 +1,7 @@
 import type { AuditMeta, AuditResult } from "../../types";
 import { Audit } from "../../audit";
 import type { CheckContext, PageContext } from '../../check-context';
+import { weightForGrade } from '../../scorer';
 import { flattenJsonLd } from '../../parser';
 
 function matchesAnyType(schema: Record<string, unknown>, types: string[]): boolean {
@@ -33,14 +34,17 @@ function hasTestimonialContent(page: PageContext): boolean {
 
 export class ReviewSchemaAudit extends Audit {
   static override meta: AuditMeta = {
-    id: '3.13',
+    id: 'structured-data/review-schema',
     category: 'structured-data',
     title: 'Review/AggregateRating schema',
     failureTitle: 'Review/AggregateRating schema',
     description:
       'AI agents use Review/AggregateRating schema as social proof when comparing options. When a user asks "what is the best X?", agents surface structured ratings from schema rather than parsing unstructured testimonial text. Add this schema to make your reviews machine-readable.',
     scoreDisplayMode: 'ternary',
-    weight: 1.0,
+    weight: weightForGrade('A', 'scored'),
+    evidenceGrade: 'A',
+    tier: 'scored',
+    dossier: 'docs/evidence/audits/structured-data/review-schema.md',
     applicablePageTypes: ['homepage', 'product'],
     defaultPriority: 'medium',
     guidance: {

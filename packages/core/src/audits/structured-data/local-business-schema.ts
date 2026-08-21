@@ -1,6 +1,7 @@
 import type { AuditMeta, AuditResult } from "../../types";
 import { Audit } from "../../audit";
 import type { CheckContext, PageContext } from '../../check-context';
+import { weightForGrade } from '../../scorer';
 import { flattenJsonLd } from '../../parser';
 
 function matchesAnyType(schema: Record<string, unknown>, types: string[]): boolean {
@@ -60,14 +61,17 @@ function hasPhysicalLocationSignals(page: PageContext): boolean {
 
 export class LocalBusinessSchemaAudit extends Audit {
   static override meta: AuditMeta = {
-    id: '3.12',
+    id: 'structured-data/local-business-schema',
     category: 'structured-data',
     title: 'LocalBusiness/ProfessionalService schema',
     failureTitle: 'LocalBusiness/ProfessionalService schema',
     description:
       'AI agents use LocalBusiness schema to answer location-based queries like "find a [service] near me." Without it, your business is invisible to location-aware AI systems. Add address, telephone, and openingHours to help agents provide accurate local recommendations.',
     scoreDisplayMode: 'ternary',
-    weight: 1.0,
+    weight: weightForGrade('A', 'scored'),
+    evidenceGrade: 'A',
+    tier: 'scored',
+    dossier: 'docs/evidence/audits/structured-data/local-business-schema.md',
     applicablePageTypes: ['homepage'],
     defaultPriority: 'medium',
     guidance: {

@@ -13,6 +13,7 @@
 import type { AuditMeta, AuditResult } from "../../types";
 import { Audit } from "../../audit";
 import type { CheckContext } from '../../check-context';
+import { weightForGrade } from '../../scorer';
 import { flattenJsonLd } from '../../parser';
 
 function allSchemas(ctx: CheckContext): object[] {
@@ -21,14 +22,17 @@ function allSchemas(ctx: CheckContext): object[] {
 
 export class SpeakableSchemaAudit extends Audit {
   static override meta: AuditMeta = {
-    id: '3.9',
+    id: 'structured-data/speakable-schema',
     category: 'structured-data',
     title: 'Speakable schema',
     failureTitle: 'Speakable schema',
     description:
       'Voice-based AI agents (Google Assistant, Alexa, Siri) use the speakable property to identify which parts of your page to read aloud. Without it, voice agents must guess which content to vocalize, often choosing poorly. Add cssSelector references to your most important content sections.',
     scoreDisplayMode: 'binary',
-    weight: 1.0,
+    weight: weightForGrade('A', 'scored'),
+    evidenceGrade: 'A',
+    tier: 'scored',
+    dossier: 'docs/evidence/audits/structured-data/speakable-schema.md',
     defaultPriority: 'low',
     guidance: {
       impact:

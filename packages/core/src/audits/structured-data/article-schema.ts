@@ -1,6 +1,7 @@
 import type { AuditMeta, AuditResult } from "../../types";
 import { Audit } from "../../audit";
 import type { CheckContext, PageContext } from '../../check-context';
+import { weightForGrade } from '../../scorer';
 import { flattenJsonLd } from '../../parser';
 
 const ARTICLE_TYPES = ['Article', 'NewsArticle', 'BlogPosting'];
@@ -32,14 +33,17 @@ function hasProps(obj: Record<string, unknown>, keys: string[]): string[] {
 
 export class ArticleSchemaAudit extends Audit {
   static override meta: AuditMeta = {
-    id: '3.6',
+    id: 'structured-data/article-schema',
     category: 'structured-data',
     title: 'Article schema',
     failureTitle: 'Article schema',
     description:
       'AI agents extract Article schema to identify content freshness (datePublished/dateModified), authorship, and topic (headline). Without it, your blog content is treated as generic text with no provenance, reducing its chances of being cited in AI-generated answers.',
     scoreDisplayMode: 'ternary',
-    weight: 1.0,
+    weight: weightForGrade('A', 'scored'),
+    evidenceGrade: 'A',
+    tier: 'scored',
+    dossier: 'docs/evidence/audits/structured-data/article-schema.md',
     applicablePageTypes: ['content'],
     defaultPriority: 'high',
     guidance: {

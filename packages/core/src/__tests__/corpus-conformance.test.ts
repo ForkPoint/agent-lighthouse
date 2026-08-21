@@ -63,16 +63,16 @@ describe('Golden Corpus Conformance Tests (False-Positive Elimination)', () => {
     const checkMap = new Map(checks.map((c) => [c.id, c]));
 
     // JSON-LD Present (3.1)
-    expect(checkMap.get('3.1')?.status).toBe('pass');
+    expect(checkMap.get('structured-data/json-ld-present')?.status).toBe('pass');
 
     // Schema Validation (3.2)
-    expect(checkMap.get('3.2')?.status).toBe('pass');
+    expect(checkMap.get('structured-data/schema-validation')?.status).toBe('pass');
 
     // Product Identifiers (SKU/GTIN) (3.21)
     expect(checkMap.get('3.21')?.status).toBe('pass');
 
     // Product Details (3.22)
-    expect(checkMap.get('3.22')?.status).toBe('pass');
+    expect(checkMap.get('structured-data/advanced-product-details')?.status).toBe('pass');
 
     // Open Graph Title, Image & Alt (4.6, 4.9)
     expect(checkMap.get('4.6')?.status).toBe('pass');

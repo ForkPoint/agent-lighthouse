@@ -1,6 +1,7 @@
 import type { AuditMeta, AuditResult } from "../../types";
 import { Audit } from "../../audit";
 import type { CheckContext, PageContext } from '../../check-context';
+import { weightForGrade } from '../../scorer';
 import { flattenJsonLd } from '../../parser';
 
 function matchesType(schema: Record<string, unknown>, type: string): boolean {
@@ -35,14 +36,17 @@ function hasSequentialNumberedHeadings(page: PageContext): boolean {
 
 export class HowToSchemaAudit extends Audit {
   static override meta: AuditMeta = {
-    id: '3.11',
+    id: 'structured-data/howto-schema',
     category: 'structured-data',
     title: 'HowTo schema',
     failureTitle: 'HowTo schema',
     description:
       'AI agents use HowTo schema to present step-by-step instructions as structured answers. Without it, agents must parse your numbered headings heuristically, which often breaks step ordering or misses steps entirely.',
-    scoreDisplayMode: 'ternary',
-    weight: 1.0,
+    scoreDisplayMode: 'informative',
+    weight: weightForGrade('C', 'informative'),
+    evidenceGrade: 'C',
+    tier: 'informative',
+    dossier: 'docs/evidence/audits/structured-data/howto-schema.md',
     applicablePageTypes: ['content'],
     defaultPriority: 'low',
     guidance: {

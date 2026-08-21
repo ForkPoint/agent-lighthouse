@@ -1,18 +1,24 @@
+// TODO(merge): folds into structured-data/review-schema in Plan 4 (approved 2026-08-21).
+
 import type { AuditMeta, AuditResult } from "../../types";
 import { Audit } from "../../audit";
 import type { CheckContext } from '../../check-context';
+import { weightForGrade } from '../../scorer';
 import { flattenJsonLd } from '../../parser';
 
 export class ProductReviewsAudit extends Audit {
   static override meta: AuditMeta = {
-    id: '3.23',
+    id: 'structured-data/product-reviews',
     category: 'structured-data',
     title: 'Product reviews and ratings',
     failureTitle: 'Product reviews and ratings',
     description:
       'AI agents often rank products based on user ratings and review volume. Providing AggregateRating schema allows agents to confidently recommend highly-rated items to users.',
     scoreDisplayMode: 'ternary',
-    weight: 0.8,
+    weight: weightForGrade('A', 'scored'),
+    evidenceGrade: 'A',
+    tier: 'scored',
+    dossier: 'docs/evidence/audits/structured-data/product-reviews.md',
     applicablePageTypes: ['product'],
     defaultPriority: 'low',
     guidance: {

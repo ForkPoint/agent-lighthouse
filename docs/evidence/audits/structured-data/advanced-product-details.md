@@ -1,9 +1,9 @@
 ---
-audit: structured-data/product-details
+audit: structured-data/advanced-product-details
 audit_id: "3.22"
 category: structured-data
-source_file: packages/core/src/audits/structured-data/product-details.ts
-slug: product-details
+source_file: packages/core/src/audits/structured-data/advanced-product-details.ts
+slug: advanced-product-details
 review_verdict: fix
 severity: medium
 evidence_grade: A

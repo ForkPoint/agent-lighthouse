@@ -1,6 +1,12 @@
+// TODO(split): §5 split (approved 2026-08-21) — the Product half folds into
+// structured-data/advanced-product-details (3.22) in Plan 4; the Service half stays standalone,
+// narrowed to Service/ProfessionalService.
+// Evidence dossier: docs/evidence/audits/structured-data/service-product-schema.md
+
 import type { AuditMeta, AuditResult } from "../../types";
 import { Audit } from "../../audit";
 import type { CheckContext } from '../../check-context';
+import { weightForGrade } from '../../scorer';
 import { flattenJsonLd } from '../../parser';
 
 function matchesAnyType(schema: Record<string, unknown>, types: string[]): boolean {
@@ -18,14 +24,17 @@ function allSchemas(ctx: CheckContext): object[] {
 
 export class ServiceProductSchemaAudit extends Audit {
   static override meta: AuditMeta = {
-    id: '3.8',
+    id: 'structured-data/service-product-schema',
     category: 'structured-data',
     title: 'Service/Product schema',
     failureTitle: 'Service/Product schema',
     description:
       'AI agents use Service/Product schema to understand what you offer, who provides it, and how to describe it to users. Without it, agents must infer your offerings from unstructured text, which leads to inaccurate or incomplete descriptions in AI-generated recommendations.',
     scoreDisplayMode: 'ternary',
-    weight: 1.0,
+    weight: weightForGrade('A', 'scored'),
+    evidenceGrade: 'A',
+    tier: 'scored',
+    dossier: 'docs/evidence/audits/structured-data/service-product-schema.md',
     applicablePageTypes: ['product'],
     defaultPriority: 'medium',
     guidance: {

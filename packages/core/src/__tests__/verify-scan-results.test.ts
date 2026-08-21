@@ -176,7 +176,7 @@ describe('Verify scan results against real sites', () => {
 
     it('3.1: example.com JSON-LD check matches reality', () => {
       const jsonLd = ctx.pages[0]!.jsonLd;
-      const result = allResults.get('3.1');
+      const result = allResults.get('structured-data/json-ld-present');
       expect(result).toBeDefined();
       if (jsonLd.length > 0) {
         expect(result!.status).toBe('pass');

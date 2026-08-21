@@ -404,7 +404,7 @@ describe('runScan — report assembly fallbacks', () => {
 
     // One passing check per vital, so each vital has real evidence to average.
     const applicable = [
-      mk({ id: '3.8', status: 'pass', priority: 'low', score: 1 }),
+      mk({ id: 'structured-data/service-product-schema', status: 'pass', priority: 'low', score: 1 }),
       mk({ id: 'machine-discovery/llms-txt-exists', status: 'pass', priority: 'low', score: 1 }),
       mk({ id: 'cp1', category: 'access-crawl-control', status: 'pass', priority: 'low', score: 1 }),
       mk({ id: 'tr1', category: 'technical-readiness', status: 'pass', priority: 'low', score: 1 }),

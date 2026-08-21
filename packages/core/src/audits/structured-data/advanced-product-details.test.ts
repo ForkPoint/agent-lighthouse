@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { ProductDetailsAudit } from './product-details';
+import { ProductDetailsAudit } from './advanced-product-details';
 import { mockPageContext, mockCheckContext } from '../../__tests__/test-utils';
 
 const ld = (obj: unknown) =>
