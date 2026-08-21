@@ -4,15 +4,15 @@ Audits that stay in the framework **only if rewritten**. Each source file carrie
 
 ## Approved by deletion review (2026-08-21) — 9
 
-- [ ] TODO `agent-tools/ai-catalog-exists` — grade A (approved 2026-08-21) · [dossier](../../../../docs/evidence/deletions/agent-tools/ai-catalog-exists.md)
+- [ ] TODO `agent-interfaces/ai-catalog-exists` — grade A (approved 2026-08-21) · [dossier](../../../../docs/evidence/deletions/agent-tools/ai-catalog-exists.md)
   - Grade A evidence: a named vendor tool (Hugging Face hf-discover) documents and implements fetching exactly https://{domain}/.well-known/ai-catalog.json, the path is normative in the ARD draft spec co-authored by Google/Microsoft/Hugging Face, and there is verifiable production adoption (Neon, Weaviate, Shopware core, specification.website). Keep the audit, but it MUST be rewritten: pass condition should be specVersion + host + entries[] per ARD §4.1, not a `services` array; and guidance/code samples must be replaced with the real schema, otherwise the audit penalizes spec-conformant sites..
-- [ ] TODO `agent-tools/ai-catalog-metadata` — grade B (approved 2026-08-21) · [dossier](../../../../docs/evidence/deletions/agent-tools/ai-catalog-metadata.md)
+- [ ] TODO `agent-interfaces/ai-catalog-metadata` — grade B (approved 2026-08-21) · [dossier](../../../../docs/evidence/deletions/agent-tools/ai-catalog-metadata.md)
   - The underlying mechanism is real and consumer-backed (hf-discover's ranking is driven entirely by manifest metadata richness), which is grade-B evidence, so deletion would throw away a genuinely useful check. But the audit is currently wrong in every field it names.
-- [ ] TODO `agent-tools/ai-catalog-urls` — grade B (approved 2026-08-21) · [dossier](../../../../docs/evidence/deletions/agent-tools/ai-catalog-urls.md)
+- [ ] TODO `agent-interfaces/ai-catalog-urls` — grade B (approved 2026-08-21) · [dossier](../../../../docs/evidence/deletions/agent-tools/ai-catalog-urls.md)
   - Grade B: the checked property (liveness of manifest-listed endpoints) is a real field in a real draft spec that a named Hugging Face client dereferences and that independent crawlers/validators probe. This is the most mechanically defensible of the four — a broken url genuinely breaks agent traversal.
-- [ ] TODO `meta-tags/ai-catalog-link` — grade B (approved 2026-08-21) · [dossier](../../../../docs/evidence/deletions/meta-tags/ai-catalog-link.md)
+- [ ] TODO `agent-interfaces/ai-catalog-link` — grade B (approved 2026-08-21) · [dossier](../../../../docs/evidence/deletions/meta-tags/ai-catalog-link.md)
   - Grade B: the mechanism is written into two draft specs (ARD §6.1 and the LF Agent Card WG consuming guide) and is genuinely deployed in production with the exact rel token, verified by live fetch of neon.com and specification.website. That clears the bar for keeping the check.
-- [ ] TODO `agent-tools/webmcp-declarative-forms` — grade A (approved 2026-08-21) · [dossier](../../../../docs/evidence/deletions/agent-tools/webmcp-declarative-forms.md)
+- [ ] TODO `agent-interfaces/webmcp-declarative-forms` — grade A (approved 2026-08-21) · [dossier](../../../../docs/evidence/deletions/agent-tools/webmcp-declarative-forms.md)
   - Grade A. The signal is defined in a W3C Web Machine Learning CG explainer, has a named Baseline web feature (`declarative-webmcp`), a 17-test WPT conformance suite, first-party Chrome documentation with the identical attribute names, and named agent consumers (Brave Leo, Chrome 149 / Edge 150 origin trials).
 - [ ] TODO `structured-data/speakable-schema` — grade A (approved 2026-08-21) · [dossier](../../../../docs/evidence/deletions/structured-data/speakable-schema.md)
   - Grade A: a live vendor doc names a specific agent (Google Assistant) that reads the signal, and the feature is still listed in Google's current supported-features gallery, so the rubric mandates 'redeemable'. But it must be redeemed in narrowed form, not as-is: (a) applicability should be restricted to news/article publishers (the audit currently runs site-wide with no page-type gate and defaults to fail for every non-news site), and (b) the description's claim that Alexa and Siri consume speakable must be deleted — it is unsupported by any vendor doc and directly contradicted by Applebot's documentation, which lists isAccessibleForFree as its only schema.org property.
@@ -27,7 +27,7 @@ Audits that stay in the framework **only if rewritten**. Each source file carrie
 
 - [ ] TODO `accessibility/form-error-messages` — target tier scored (pending triage approval) · [dossier](../../../../docs/evidence/audits/accessibility/form-error-messages.md)
   - Rebuild: verify aria-describedby/aria-errormessage linkage on invalid-state inputs instead of current broken heuristic. Evidence: a11y-tree consumption by computer-use agents graded A..
-- [ ] TODO `agent-tools/webmcp-manifest` — target tier experimental (pending triage approval) · [dossier](../../../../docs/evidence/audits/agent-tools/webmcp-manifest.md)
+- [ ] TODO `agent-interfaces/webmcp-registered-tools` — target tier experimental (pending triage approval) · [dossier](../../../../docs/evidence/audits/agent-interfaces/webmcp-registered-tools.md)
   - Evidence reshape: the .well-known manifest file is invented (grade D) — but runtime-registered WebMCP tools are grade B: Google Lighthouse 13.3+ ships 'Registered WebMCP tools' audits in its new Agentic Browsing category. Replace manifest-file audit with registered-tools detection, experimental tier..
 - [ ] TODO `access-crawl-control/ai-content-declaration` — target tier experimental (pending triage approval) · [dossier](../../../../docs/evidence/audits/access-crawl-control/ai-content-declaration.md)
   - Evidence upgrade from delete: noai/noimageai/tdm-reservation declaration meta tags graded D/experimental — real emerging opt-out ecosystem, no ratified consumer yet. Experimental, unscored, rework to check the real directive names..
@@ -51,7 +51,7 @@ Audits that stay in the framework **only if rewritten**. Each source file carrie
   - TDM Reservation Protocol is a real W3C CG spec with EU AI Act relevance. Experimental flag, unscored, fix internal incoherence..
 - [ ] TODO `answer-readiness/twitter-card` — target tier informative (pending triage approval) · [dossier](../../../../docs/evidence/audits/answer-readiness/twitter-card.md)
   - Fix factual errors (twitter:* falls back to og:*), fold into social-meta diagnostic with core-open-graph, unscored. Evidence: og:title/og:site_name graded A; twitter:* has no AI consumer evidence..
-- [ ] TODO `meta-tags/openapi-link` — target tier scored (pending triage approval) · [dossier](../../../../docs/evidence/audits/meta-tags/openapi-link.md)
-  - Redeem via merge into agent-tools/openapi-exists: one discovery audit for real mechanisms incl. RFC 9727 api-catalog (graded B), drop link-tag requirement that fails every site..
-- [ ] TODO `technical-readiness/cors-api-routes` — target tier scored (pending triage approval) · [dossier](../../../../docs/evidence/audits/technical-readiness/cors-api-routes.md)
+- [ ] TODO `agent-interfaces/openapi-link` — target tier scored (pending triage approval) · [dossier](../../../../docs/evidence/audits/agent-interfaces/openapi-link.md)
+  - Redeem via merge into agent-interfaces/openapi-exists: one discovery audit for real mechanisms incl. RFC 9727 api-catalog (graded B), drop link-tag requirement that fails every site..
+- [ ] TODO `agent-interfaces/cors-api-routes` — target tier scored (pending triage approval) · [dossier](../../../../docs/evidence/audits/agent-interfaces/cors-api-routes.md)
   - Keep scored but notApplicable unless site exposes a public API surface agents would call cross-origin..

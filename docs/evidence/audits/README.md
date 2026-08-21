@@ -28,32 +28,32 @@ One dossier per audit: what it checks, the 2026-08-20 code-review findings, grad
 | 7.21 | [No positive tabindex (logical focus order)](./accessibility/tabindex.md) | accessibility | fix | — | keep — fix required |
 | 7.22 | [No deprecated presentational elements](../sunset/accessibility/marquee.md) | accessibility | delete | — | sunset (2026-08-21) |
 | 7.23 | [No presentation-role conflicts](./accessibility/presentation-role-conflict.md) | accessibility | fix | A | keep — fix required |
-| 5.1 | [openapi-exists](./agent-tools/openapi-exists.md) | agent-tools | fix | — | keep — fix required |
-| 5.2 | [openapi-endpoints](./agent-tools/openapi-endpoints.md) | agent-tools | fix | — | keep — fix required |
-| 5.3 | [openapi-operation-ids](./agent-tools/openapi-operation-ids.md) | agent-tools | fix | — | keep — fix required |
+| 5.1 | [openapi-exists](./agent-interfaces/openapi-exists.md) | agent-tools | fix | — | keep — fix required |
+| 5.2 | [openapi-endpoints](./agent-interfaces/openapi-endpoints.md) | agent-tools | fix | — | keep — fix required |
+| 5.3 | [openapi-operation-ids](./agent-interfaces/openapi-operation-ids.md) | agent-tools | fix | — | keep — fix required |
 | 5.4 | [openapi-ai-instructions](./agent-tools/openapi-ai-instructions.md) | agent-tools | delete | D | sunset (approved 2026-08-21) |
-| 5.5 | [openapi-servers](./agent-tools/openapi-servers.md) | agent-tools | fix | — | keep — fix required |
-| 5.6 | [openapi-schemas](./agent-tools/openapi-schemas.md) | agent-tools | fix | — | keep — fix required |
-| 5.7 | [ai-catalog-exists](./agent-tools/ai-catalog-exists.md) | agent-tools | delete | A | kept — rewrite required (approved 2026-08-21) |
-| 5.8 | [ai-catalog-metadata](./agent-tools/ai-catalog-metadata.md) | agent-tools | delete | B | kept — rewrite required (approved 2026-08-21) |
-| 5.9 | [ai-catalog-urls](./agent-tools/ai-catalog-urls.md) | agent-tools | delete | B | kept — rewrite required (approved 2026-08-21) |
-| 5.10 | [agents-json](./agent-tools/agents-json.md) | agent-tools | delete | C | informative, weight 0 (approved 2026-08-21) |
+| 5.5 | [openapi-servers](./agent-interfaces/openapi-servers.md) | agent-tools | fix | — | keep — fix required |
+| 5.6 | [openapi-schemas](./agent-interfaces/openapi-schemas.md) | agent-tools | fix | — | keep — fix required |
+| 5.7 | [ai-catalog-exists](./agent-interfaces/ai-catalog-exists.md) | agent-tools | delete | A | kept — rewrite required (approved 2026-08-21) |
+| 5.8 | [ai-catalog-metadata](./agent-interfaces/ai-catalog-metadata.md) | agent-tools | delete | B | kept — rewrite required (approved 2026-08-21) |
+| 5.9 | [ai-catalog-urls](./agent-interfaces/ai-catalog-urls.md) | agent-tools | delete | B | kept — rewrite required (approved 2026-08-21) |
+| 5.10 | [agents-json](./agent-interfaces/agents-json.md) | agent-tools | delete | C | informative, weight 0 (approved 2026-08-21) |
 | 5.11 | [ai-plugin-json](./agent-tools/ai-plugin-json.md) | agent-tools | delete | D | sunset (approved 2026-08-21) |
-| 5.12 | [mcp-discovery](./agent-tools/mcp-discovery.md) | agent-tools | fix | A | keep — fix required |
-| 5.13 | [mcp-endpoint](./agent-tools/mcp-endpoint.md) | agent-tools | fix | C | keep — fix required |
-| 5.14 | [mcp-capabilities](./agent-tools/mcp-capabilities.md) | agent-tools | merge | — | merge (approved 2026-08-21) |
+| 5.12 | [mcp-discovery](./agent-interfaces/mcp-discovery.md) | agent-tools | fix | A | keep — fix required |
+| 5.13 | [mcp-endpoint](./agent-interfaces/mcp-endpoint.md) | agent-tools | fix | C | keep — fix required |
+| 5.14 | [mcp-capabilities](./agent-interfaces/mcp-capabilities.md) | agent-tools | merge | — | merge (approved 2026-08-21) |
 | 5.15 | [contact-form](./agent-tools/contact-form.md) | agent-tools | fix | C | keep — fix required |
-| 5.16 | [search-endpoint](./agent-tools/search-endpoint.md) | agent-tools | fix | — | keep — fix required |
+| 5.16 | [search-endpoint](./agent-interfaces/search-endpoint.md) | agent-tools | fix | — | keep — fix required |
 | 5.17 | [data-action-ctas](./agent-tools/data-action-ctas.md) | agent-tools | delete | D | sunset (approved 2026-08-21) |
 | 5.18 | [no-blocking-captcha](./agent-tools/no-blocking-captcha.md) | agent-tools | fix | — | keep — fix required |
 | 5.19 | [forms-no-js](./agent-tools/forms-no-js.md) | agent-tools | fix | — | keep — fix required |
-| 5.20 | [webmcp-manifest](./agent-tools/webmcp-manifest.md) | agent-tools | delete | A | proposed: redeem as experimental (pending triage) |
-| 5.21 | [webmcp-declarative-forms](./agent-tools/webmcp-declarative-forms.md) | agent-tools | delete | A | kept — rewrite required (approved 2026-08-21) |
+| 5.20 | [webmcp-registered-tools](./agent-interfaces/webmcp-registered-tools.md) | agent-tools | delete | A | proposed: redeem as experimental (pending triage) |
+| 5.21 | [webmcp-declarative-forms](./agent-interfaces/webmcp-declarative-forms.md) | agent-tools | delete | A | kept — rewrite required (approved 2026-08-21) |
 | 5.22 | [webmcp-input-quality](./agent-tools/webmcp-input-quality.md) | agent-tools | merge | — | merge (approved 2026-08-21) |
-| 5.23 | [webmcp-tool-naming](./agent-tools/webmcp-tool-naming.md) | agent-tools | merge | — | merge (approved 2026-08-21) |
-| 5.24 | [webmcp-tool-annotations](./agent-tools/webmcp-tool-annotations.md) | agent-tools | merge | — | merge (approved 2026-08-21) |
+| 5.23 | [webmcp-tool-naming](./agent-interfaces/webmcp-tool-naming.md) | agent-tools | merge | — | merge (approved 2026-08-21) |
+| 5.24 | [webmcp-tool-annotations](./agent-interfaces/webmcp-tool-annotations.md) | agent-tools | merge | — | merge (approved 2026-08-21) |
 | 5.25 | [webmcp-action-coverage](./agent-tools/webmcp-action-coverage.md) | agent-tools | delete | D | sunset (approved 2026-08-21) |
-| 5.26 | [openapi-description-quality](./agent-tools/openapi-description-quality.md) | agent-tools | fix | — | keep — fix required |
+| 5.26 | [openapi-description-quality](./agent-interfaces/openapi-description-quality.md) | agent-tools | fix | — | keep — fix required |
 | 5.27 | [form-actionability](./agent-tools/form-actionability.md) | agent-tools | keep | — | keep |
 | 9.1 | [faq-sections](./answer-readiness/faq-sections.md) | answer-engine | fix | — | keep — fix required |
 | 9.2 | [question-headings](./answer-readiness/question-headings.md) | answer-engine | fix | C | keep — fix required |
@@ -149,8 +149,8 @@ One dossier per audit: what it checks, the 2026-08-20 code-review findings, grad
 | 4.15 | [markdown-alternate](./content-extraction/markdown-alternate.md) | meta-tags | fix | A | keep — fix required |
 | 4.16 | [rss-feed-link](./machine-discovery/rss-feed-link.md) | meta-tags | fix | C | keep — fix required |
 | 4.17 | [mcp-discovery-link](./meta-tags/mcp-discovery-link.md) | meta-tags | delete | D | sunset (approved 2026-08-21) |
-| 4.18 | [openapi-link](./meta-tags/openapi-link.md) | meta-tags | delete | B | proposed: redeem as scored (pending triage) |
-| 4.19 | [ai-catalog-link](./meta-tags/ai-catalog-link.md) | meta-tags | delete | B | kept — rewrite required (approved 2026-08-21) |
+| 4.18 | [openapi-link](./agent-interfaces/openapi-link.md) | meta-tags | delete | B | proposed: redeem as scored (pending triage) |
+| 4.19 | [ai-catalog-link](./agent-interfaces/ai-catalog-link.md) | meta-tags | delete | B | kept — rewrite required (approved 2026-08-21) |
 | 4.20 | [meta-robots](./access-crawl-control/meta-robots.md) | meta-tags | fix | A | keep — fix required |
 | 6.1 | [single-h1](./content-extraction/single-h1.md) | semantic-html | fix | B | keep — fix required |
 | 6.2 | [sequential-headings](./content-extraction/sequential-headings.md) | semantic-html | fix | B | keep — fix required |
@@ -175,7 +175,7 @@ One dossier per audit: what it checks, the 2026-08-20 code-review findings, grad
 | 3.1 | [json-ld-present](./structured-data/json-ld-present.md) | structured-data | fix | A | keep — fix required |
 | 3.2 | [schema-validation](./structured-data/schema-validation.md) | structured-data | fix | — | keep — fix required |
 | 3.3 | [organization-schema](./structured-data/organization-schema.md) | structured-data | fix | — | keep — fix required |
-| 3.4 | [website-search-action](./structured-data/website-search-action.md) | structured-data | fix | D | keep — fix required |
+| 3.4 | [website-search-action](./agent-interfaces/website-search-action.md) | structured-data | fix | D | keep — fix required |
 | 3.5 | [breadcrumb-schema](./structured-data/breadcrumb-schema.md) | structured-data | fix | — | keep — fix required |
 | 3.6 | [article-schema](./structured-data/article-schema.md) | structured-data | fix | — | keep — fix required |
 | 3.7 | [faqpage-schema](./structured-data/faqpage-schema.md) | structured-data | fix | — | keep — fix required |
@@ -200,7 +200,7 @@ One dossier per audit: what it checks, the 2026-08-20 code-review findings, grad
 | 8.6 | [permissions-policy](./technical-readiness/permissions-policy.md) | technical-readiness | delete | D | sunset (approved 2026-08-21) |
 | 8.7 | [security-txt](./technical-readiness/security-txt.md) | technical-readiness | delete | C | informative, weight 0 (approved 2026-08-21) |
 | 8.8 | [cors-ai-files](./machine-discovery/cors-ai-files.md) | technical-readiness | fix | C | keep — fix required |
-| 8.9 | [cors-api-routes](./technical-readiness/cors-api-routes.md) | technical-readiness | delete | C | proposed: redeem as scored (pending triage) |
+| 8.9 | [cors-api-routes](./agent-interfaces/cors-api-routes.md) | technical-readiness | delete | C | proposed: redeem as scored (pending triage) |
 | 8.10 | [correct-content-types](./machine-discovery/ai-file-delivery.md) | technical-readiness | fix | C | keep — fix required |
 | 8.11 | [cache-headers](./machine-discovery/cache-headers.md) | technical-readiness | merge | B | merge (approved 2026-08-21) |
 | 8.12 | [fast-response-time](./content-extraction/fast-response-time.md) | technical-readiness | fix | B | keep — fix required |

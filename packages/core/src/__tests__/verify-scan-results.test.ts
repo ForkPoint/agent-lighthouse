@@ -264,11 +264,11 @@ describe('Verify scan results against real sites', () => {
       }
     });
 
-    // --- Agent Tools (IDs: '5.*') ---
+    // --- Agent Interfaces (IDs: 'agent-interfaces/*') ---
 
     it('5.1: example.com should NOT have OpenAPI spec', () => {
       expect(ctx.rootFiles['/openapi.json']!.status).not.toBe(200);
-      const result = allResults.get('5.1');
+      const result = allResults.get('agent-interfaces/openapi-exists');
       expect(result).toBeDefined();
       expect(result!.status).toBe('fail');
     });
@@ -334,10 +334,10 @@ describe('Verify scan results against real sites', () => {
         ctx.rootFiles['/openapi.yaml']!.status !== 200
       ) {
         const openApiChildIds = [
-          '5.2',
-          '5.3',
-          '5.5',
-          '5.6',
+          'agent-interfaces/openapi-endpoints',
+          'agent-interfaces/openapi-operation-ids',
+          'agent-interfaces/openapi-servers',
+          'agent-interfaces/openapi-schemas',
         ];
         for (const id of openApiChildIds) {
           const result = allResults.get(id);

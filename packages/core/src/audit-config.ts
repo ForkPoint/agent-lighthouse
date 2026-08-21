@@ -102,12 +102,11 @@ import {
   HttpsEnabledAudit,
 } from './audits/access-crawl-control';
 
-// Structured Data (18)
+// Structured Data (17)
 import {
   JsonLdPresentAudit,
   SchemaValidationAudit,
   OrganizationSchemaAudit,
-  WebSiteSearchActionAudit,
   BreadcrumbSchemaAudit,
   ArticleSchemaAudit,
   FaqPageSchemaAudit,
@@ -124,14 +123,20 @@ import {
   ProductTransactionCertaintyAudit,
 } from './audits/structured-data';
 
-// Meta Tags (2) — the remainder leaves for agent-interfaces in a later task
+// Agent Tools (5) — the remainder leaves for operability-safety in a later task
 import {
+  ContactFormAudit,
+  NoBlockingCaptchaAudit,
+  FormsNoJsAudit,
+  WebmcpInputQualityAudit,
+  FormActionabilityAudit,
+} from './audits/agent-tools';
+
+// Agent Interfaces (22) — v2 taxonomy category (Plan 3, Task 8)
+import {
+  WebSiteSearchActionAudit,
   OpenApiLinkAudit,
   AiCatalogLinkAudit,
-} from './audits/meta-tags';
-
-// Agent Tools (23)
-import {
   OpenApiExistsAudit,
   OpenApiEndpointsAudit,
   OpenApiOperationIdsAudit,
@@ -144,18 +149,14 @@ import {
   McpDiscoveryAudit,
   McpEndpointAudit,
   McpCapabilitiesAudit,
-  ContactFormAudit,
   SearchEndpointAudit,
-  NoBlockingCaptchaAudit,
-  FormsNoJsAudit,
   WebmcpManifestAudit,
   WebmcpDeclarativeFormsAudit,
-  WebmcpInputQualityAudit,
   WebmcpToolNamingAudit,
   WebmcpToolAnnotationsAudit,
   OpenApiDescriptionQualityAudit,
-  FormActionabilityAudit,
-} from './audits/agent-tools';
+  CorsApiRoutesAudit,
+} from './audits/agent-interfaces';
 
 // Content Extraction (23) — v2 taxonomy category (Plan 3, Task 4)
 import {
@@ -208,13 +209,12 @@ import {
   A11yPresentationConflictAudit,
 } from './audits/accessibility';
 
-// Technical Readiness (5)
+// Technical Readiness (4)
 import {
   HstsHeaderAudit,
   CspHeaderAudit,
   ContentTypeOptionsAudit,
   SecurityTxtAudit,
-  CorsApiRoutesAudit,
 } from './audits/technical-readiness';
 
 // Answer Readiness (32) — v2 taxonomy category (Plan 3, Task 7)
@@ -260,8 +260,8 @@ export const defaultConfig: ScanConfig = {
     { id: 'machine-discovery', name: 'Machine Discovery', weight: 0.18 },
     { id: 'access-crawl-control', name: 'Access & Crawl Control', weight: 0.08 },
     { id: 'structured-data', name: 'Structured Data & Schema Markup', weight: 0.12 },
-    { id: 'meta-tags', name: 'Meta Tags & AI Head Elements', weight: 0.03 },
-    { id: 'agent-tools', name: 'AI Agent Tools & Action Surfaces', weight: 0.18 },
+    { id: 'agent-tools', name: 'AI Agent Tools & Action Surfaces', weight: 0.03 },
+    { id: 'agent-interfaces', name: 'Agent Interfaces', weight: 0.18 },
     { id: 'content-extraction', name: 'Content Extraction & Structure', weight: 0.1 },
     { id: 'accessibility', name: 'Accessibility & Agent Interaction', weight: 0.07 },
     { id: 'technical-readiness', name: 'Technical Readiness & Security', weight: 0.07 },
@@ -334,7 +334,6 @@ export const defaultConfig: ScanConfig = {
       reg(JsonLdPresentAudit),
       reg(SchemaValidationAudit),
       reg(OrganizationSchemaAudit),
-      reg(WebSiteSearchActionAudit),
       reg(BreadcrumbSchemaAudit),
       reg(ArticleSchemaAudit),
       reg(FaqPageSchemaAudit),
@@ -350,11 +349,17 @@ export const defaultConfig: ScanConfig = {
       reg(ProductReviewsAudit),
       reg(ProductTransactionCertaintyAudit),
     ],
-    'meta-tags': [
+    'agent-tools': [
+      reg(ContactFormAudit),
+      reg(NoBlockingCaptchaAudit),
+      reg(FormsNoJsAudit),
+      reg(WebmcpInputQualityAudit),
+      reg(FormActionabilityAudit),
+    ],
+    'agent-interfaces': [
+      reg(WebSiteSearchActionAudit),
       reg(OpenApiLinkAudit),
       reg(AiCatalogLinkAudit),
-    ],
-    'agent-tools': [
       reg(OpenApiExistsAudit),
       reg(OpenApiEndpointsAudit),
       reg(OpenApiOperationIdsAudit),
@@ -367,17 +372,13 @@ export const defaultConfig: ScanConfig = {
       reg(McpDiscoveryAudit),
       reg(McpEndpointAudit),
       reg(McpCapabilitiesAudit),
-      reg(ContactFormAudit),
       reg(SearchEndpointAudit),
-      reg(NoBlockingCaptchaAudit),
-      reg(FormsNoJsAudit),
       reg(WebmcpManifestAudit),
       reg(WebmcpDeclarativeFormsAudit),
-      reg(WebmcpInputQualityAudit),
       reg(WebmcpToolNamingAudit),
       reg(WebmcpToolAnnotationsAudit),
       reg(OpenApiDescriptionQualityAudit),
-      reg(FormActionabilityAudit),
+      reg(CorsApiRoutesAudit),
     ],
     'content-extraction': [
       reg(FastPageLoadAudit),
@@ -431,7 +432,6 @@ export const defaultConfig: ScanConfig = {
       reg(CspHeaderAudit),
       reg(ContentTypeOptionsAudit),
       reg(SecurityTxtAudit),
-      reg(CorsApiRoutesAudit),
     ],
     'answer-readiness': [
       reg(MetaDescriptionAudit),

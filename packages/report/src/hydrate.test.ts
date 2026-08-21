@@ -55,10 +55,10 @@ describe('hydrateReport', () => {
   });
 
   it('includes a category that has a score but no checks', () => {
-    const r = hydrateReport(row({ categoryScores: { 'agent-tools': 80, 'meta-tags': 50 } }));
-    const meta = r.categories.find((c) => c.id === 'meta-tags')!;
-    expect(meta.score).toBe(50);
-    expect(meta.checks).toHaveLength(0);
+    const r = hydrateReport(row({ categoryScores: { 'agent-tools': 80, 'structured-data': 50 } }));
+    const scoredOnly = r.categories.find((c) => c.id === 'structured-data')!;
+    expect(scoredOnly.score).toBe(50);
+    expect(scoredOnly.checks).toHaveLength(0);
   });
 
   it('appends unexpected (non-canonical) categories after the known ones', () => {

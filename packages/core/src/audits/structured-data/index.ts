@@ -1,8 +1,8 @@
 // Structured Data — v2 taxonomy category (Plan 3, Task 6).
 // STRUCTURED_DATA_AUDITS order mirrors docs/evidence/v2-audit-map.md so Task 11 can consume the
-// list verbatim. The four audits exported below it (website-search-action, offer-schema,
-// product-identifiers, product-transaction-certainty) still live in this folder but leave for
-// agent-interfaces / agentic-commerce in later tasks, so they are deliberately not on the list.
+// list verbatim. The three audits exported below it (offer-schema, product-identifiers,
+// product-transaction-certainty) still live in this folder but leave for agentic-commerce in a
+// later task, so they are deliberately not on the list.
 
 export { JsonLdPresentAudit } from './json-ld-present';
 export { SchemaValidationAudit } from './schema-validation';
@@ -20,7 +20,6 @@ export { ProductDetailsAudit } from './advanced-product-details';
 export { ProductReviewsAudit } from './product-reviews';
 
 // Still registered here, moving to another v2 category in a later task.
-export { WebSiteSearchActionAudit } from './website-search-action';
 export { OfferSchemaAudit } from './offer-schema';
 export { ProductIdentifiersAudit } from './product-identifiers';
 export { ProductTransactionCertaintyAudit } from './product-transaction-certainty';

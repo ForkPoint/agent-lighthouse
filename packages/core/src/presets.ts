@@ -13,12 +13,11 @@ export const PRESETS: Record<PresetName, PresetOptions> = {
     name: 'ecommerce',
     description: 'Optimized for storefronts with heavy focus on Schema.org Product, SKU, GTIN, stock status, and WebMCP actions.',
     customWeights: {
+      'agent-interfaces': 30,
       'structured-data': 25,
-      'agent-tools': 25,
       'access-crawl-control': 15,
       'machine-discovery': 10,
       'answer-readiness': 15,
-      'meta-tags': 5,
       'content-extraction': 5,
     },
   },
@@ -26,7 +25,7 @@ export const PRESETS: Record<PresetName, PresetOptions> = {
     name: 'saas',
     description: 'Optimized for software and developer tools focusing on OpenAPI discovery, llms.txt, API permissions, and bot crawling.',
     customWeights: {
-      'agent-tools': 30,
+      'agent-interfaces': 30,
       'machine-discovery': 20,
       'access-crawl-control': 20,
       'technical-readiness': 15,
@@ -37,10 +36,9 @@ export const PRESETS: Record<PresetName, PresetOptions> = {
     name: 'content',
     description: 'Optimized for blogs and publications focusing on llms.txt, RSS feeds, article markup, author credentials, and citations.',
     customWeights: {
+      'answer-readiness': 60,
       'machine-discovery': 25,
-      'answer-readiness': 45,
       'content-extraction': 15,
-      'meta-tags': 15,
     },
   },
   quick: {
@@ -50,7 +48,7 @@ export const PRESETS: Record<PresetName, PresetOptions> = {
   },
   full: {
     name: 'full',
-    description: 'Default comprehensive scan executing all 10 audit categories.',
+    description: 'Default comprehensive scan executing all 9 audit categories.',
   },
 };
 

@@ -101,7 +101,7 @@ describe('Golden Corpus Conformance Tests (False-Positive Elimination)', () => {
     expect(checkMap.get('machine-discovery/llms-txt-exists')?.status).toBe('pass');
 
     // OpenAPI exists (5.1)
-    expect(checkMap.get('5.1')?.status).toBe('pass');
+    expect(checkMap.get('agent-interfaces/openapi-exists')?.status).toBe('pass');
 
     // Markdown Alternate Link (4.15)
     expect(checkMap.get('content-extraction/markdown-alternate')?.status).toBe('pass');
