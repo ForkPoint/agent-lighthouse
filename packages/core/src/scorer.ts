@@ -2,10 +2,9 @@ import type { CheckResult, CategoryResult } from './types';
 import { CATEGORY_WEIGHTS, CATEGORY_NAMES, getScoreTier } from './constants';
 
 export function calculateCategoryScore(checks: CheckResult[]): number {
-  // Not-applicable checks are excluded from the average entirely — they
-  // represent "nothing to assess", so counting them as 0 would unfairly
-  // deflate the score for a feature the site was never expected to have.
-  const scored = checks.filter((c) => c.status !== 'na');
+  // Not-applicable checks represent "nothing to assess"; informative checks
+  // (deprecated / no proven consumer) are shown but never scored.
+  const scored = checks.filter((c) => c.status !== 'na' && c.scoreDisplayMode !== 'informative');
   if (scored.length === 0) return 0;
   const total = scored.reduce((sum, c) => sum + c.score, 0);
   return Math.round((total / scored.length) * 100);
