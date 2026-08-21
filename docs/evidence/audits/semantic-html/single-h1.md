@@ -1,0 +1,61 @@
+---
+audit: semantic-html/single-h1
+audit_id: "6.1"
+category: semantic-html
+source_file: packages/core/src/audits/semantic-html/single-h1.ts
+slug: single-h1
+review_verdict: fix
+severity: medium
+evidence_grade: B
+disposition: "keep — fix required"
+reviewed: 2026-08-21
+---
+
+# single-h1 (`6.1`)
+
+> semantic-html · source `single-h1.ts` · review verdict **fix** · evidence grade **B** · disposition: **keep — fix required**
+
+## What it checks
+
+AI agents use the single <h1> as the authoritative title of the page for content indexing and answer generation. Ensure exactly one <h1> per page.
+
+## Code review findings (2026-08-20, 11-agent pass)
+
+Title and description promise 'Single h1 per page' but the code only ever inspects ctx.pages[0] ('const homepage = ctx.pages[0]'), so a 20-page crawl where 19 pages have three h1s each reports a green pass. It also treats zero h1 and five h1 identically (both hard fail, priority high) although zero-h1 is a materially worse problem, and hard-fails the extremely common responsive pattern of duplicate desktop/mobile h1 markup where only one is visible. Signal is real but the audit under-delivers on its own stated scope.
+
+**Required fix:** Loop all ctx.pages like the sibling audits do and report an X/Y ratio with offending URLs. Split the verdict: 0 h1 = fail (high), 2+ h1 = warn (medium) rather than fail. Exclude h1s inside <template>, and inside subtrees hidden via hidden/[aria-hidden=true]/style="display:none" so responsive duplicates are not double-counted.
+
+**False-positive risks:**
+- Only the homepage is audited despite the 'per page' title — 'const homepage = ctx.pages[0]; const h1Count = $('h1').length'. Deep-page h1 problems are invisible; users get false reassurance.
+- Responsive themes that render a desktop h1 and a mobile h1 (one CSS-hidden) count as 2 → fail, though exactly one is visible and exactly one is in the accessibility tree.
+- Cookie banners, off-canvas menus, and modal dialogs injected server-side often carry their own h1 → fail on an otherwise correct page.
+- CSR SPAs served as an empty shell have 0 h1 in server HTML → fail, though the rendered page an agentic browser sees has one.
+- A WAF/Cloudflare challenge page ('Checking your browser…') typically has 1 h1 → PASS. ctx.wafProtection is never consulted.
+- h1 inside <svg><title> is not an issue, but h1 inside <template> IS counted by cheerio and is not rendered.
+
+**Test gaps:**
+- No test asserting the homepage-only limitation (a multi-page ctx where page 2 has three h1s still passes) — the bug is invisible to the suite.
+- No hidden/responsive duplicate-h1 fixture.
+- No h1-inside-<template> or h1-inside-modal fixture.
+- No SPA shell or WAF interstitial fixture.
+- No non-English page.
+
+**Overlaps with:** `6.2`, `6.20`
+
+## Evidence
+
+### Signal: Heading hierarchy (h1–h6) for LLM parsing and chunking — grade B (semantic-dom-a11y)
+
+**Mechanism:** Real h1–h6 elements (as opposed to visually-styled div/span/p pseudo-headings) are the boundary markers that heading-aware chunkers and accessibility-tree serializers use to segment a page: LangChain's HTMLHeaderTextSplitter/HTMLSectionSplitter split on header tags and attach the enclosing header chain as chunk metadata, Readability scores h2–h6 and uses a lone h1 to recover the article title, and a11y snapshots emit heading nodes with an explicit level. If a page has no true heading elements, these consumers produce either one undifferentiated blob (no heading metadata to attach) or fall back to guessing (HTMLSectionSplitter infers sections from font size).
+
+**Evidence:** Documented consumer behaviour on the RAG side: LangChain's splitter docs state it operates on <h1>,<h2>,<h3> and 'adds metadata for each header "relevant" to any given chunk', with the stated goal of 'keeping related text grouped (more or less) semantically and preserving context-rich information encoded in document structures' [langchain-html-splitters]. On the agent side, HTML-AAM maps h1–h6 to the heading role with aria-level [w3c-html-aam], and Playwright MCP snapshots explicitly include 'headings with levels' [playwright-mcp-snapshots]; Anthropic's read_page returns the same tree [anthropic-browser-use-tool]. Extraction-side: Readability's DEFAULT_TAGS_TO_SCORE is 'section,h2,h3,h4,h5,h6,p,td,pre' and _getArticleTitle prefers the single h1 when <title> is ambiguous [mozilla-readability-source]. Cloudflare's markdown conversion maps headings to '##', costing ~3 tokens vs 12-15 for the HTML form [cloudflare-markdown-for-agents]. Baseline: 59% of mobile sites pass the ordered-headings audit [web-almanac-2025-accessibility].
+
+**Counter-evidence:** The falsifiable claim that survives is 'headings must exist and be real elements'. The stricter claim audited by sequential-headings — that levels must never skip (h2→h4) — has no documented consumer: every splitter and snapshot cited tolerates skipped levels and simply records whatever level it finds; no vendor doc or study shows a measured penalty for skipped levels in LLM parsing. Google states outright that 'there are no additional requirements to appear in AI Overviews or AI Mode, nor other special optimizations necessary' [google-ai-features-docs], so no AI-search vendor endorses heading structure as an extraction or ranking requirement. LangChain is a library used by site owners' own pipelines, not a public crawler of third-party sites — treat it as mechanism evidence, not proof that ChatGPT chunks your page this way.
+**Consumers:** LangChain HTMLHeaderTextSplitter / HTMLSectionSplitter, Playwright MCP browser_snapshot, Chrome DevTools MCP take_snapshot, Anthropic browser use / Claude-in-Chrome read_page, Mozilla Readability (Firefox Reader Mode and derived reader pipelines), Cloudflare Markdown for Agents · **Recommended tier:** scored
+
+**Sources:** [Split HTML — LangChain text splitter integrations](https://docs.langchain.com/oss/python/integrations/splitters/split_html) · [Snapshots — Playwright MCP](https://playwright.dev/mcp/snapshots) · [Browser use tool (browser_toolset_20260801)](https://platform.claude.com/docs/en/agents-and-tools/tool-use/browser-use-tool) · [HTML Accessibility API Mappings 1.0](https://www.w3.org/TR/html-aam-1.0/) · [mozilla/readability Readability.js source](https://raw.githubusercontent.com/mozilla/readability/main/Readability.js) · [Introducing Markdown for Agents](https://blog.cloudflare.com/markdown-for-agents/) · [Web Almanac 2025 — Accessibility chapter](https://almanac.httparchive.org/en/2025/accessibility) · [AI features and your website — Google Search Central](https://developers.google.com/search/docs/appearance/ai-features)
+
+## Review history
+
+- 2026-08-20 — code review (11-agent workflow) + evidence research (12-domain workflow, 400 sources).
+- 2026-08-21 — dossier generated; disposition pending final taxonomy design.
