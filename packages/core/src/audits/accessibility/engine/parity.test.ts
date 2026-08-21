@@ -11,19 +11,13 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, it, expect } from 'vitest';
 import { JSDOM } from 'jsdom';
+// The ORACLE: the real axe-core@4.12.1, a pinned devDependency. A static import
+// means a missing oracle is a module-resolution failure that takes the whole
+// suite down — exactly the loud failure we want. A skipped oracle would leave
+// the ported rules with no correctness gate at all.
+import axe from 'axe-core';
 import { runA11yForHtml, type A11yStatus } from '../runner';
 import { SUPPORTED_RULE_IDS } from './rules';
-
-// This is the ORACLE gate: it compares the vendored port against the real
-// axe-core@4.12.1, a pinned devDependency of this package. If it is missing the
-// suite fails loudly (below) rather than skipping — a skipped oracle means the
-// ported rules have no correctness gate at all.
-let axeAvailable = true;
-try {
-  require.resolve('axe-core');
-} catch {
-  axeAvailable = false;
-}
 
 // ── Oracle: original axe-core injected into jsdom (the old runner) ──
 interface OracleRaw {
@@ -37,20 +31,10 @@ interface OracleResults {
   inapplicable: OracleRaw[];
 }
 
-let axeSource: string | null = null;
-async function getAxeSource(): Promise<string> {
-  if (!axeSource) {
-    // Non-literal specifier so the typecheck doesn't require axe-core to be
-    // installed (it is an optional oracle, not a dependency).
-    const spec = 'axe-core';
-    const mod = (await import(spec)) as unknown as { default?: { source?: string }; source?: string };
-    axeSource = (mod.default?.source ?? mod.source)!;
-  }
-  return axeSource;
-}
+/** The axe-core bundle as a source string, ready to eval inside a jsdom window. */
+const AXE_SOURCE: string = axe.source;
 
 async function runOracle(html: string, url: string): Promise<Record<string, A11yStatus>> {
-  const source = await getAxeSource();
   const dom = new JSDOM(html, { url, runScripts: 'outside-only', pretendToBeVisual: true });
   try {
     const win = dom.window as unknown as {
@@ -58,7 +42,7 @@ async function runOracle(html: string, url: string): Promise<Record<string, A11y
       axe: { run: (ctx: unknown, opts: unknown) => Promise<OracleResults> };
       document: unknown;
     };
-    win.eval(source);
+    win.eval(AXE_SOURCE);
     const results = await win.axe.run(win.document, {
       runOnly: { type: 'rule', values: SUPPORTED_RULE_IDS },
       elementRef: false,
@@ -243,12 +227,6 @@ const fixtures: { name: string; html: string }[] = [
     ),
   },
 ];
-
-if (!axeAvailable) {
-  throw new Error(
-    'axe-core is not installed — the a11y parity suite is the correctness gate for the ported rules and must run. `pnpm --filter @forkpoint/agent-lighthouse-core add -D axe-core@4.12.1`',
-  );
-}
 
 describe('a11y port parity with axe-core@4.12.1', () => {
   for (const fixture of fixtures) {
