@@ -207,37 +207,51 @@ describe('calculateOverallScore', () => {
 // Weighted category score (evidence weight A=1.0 / B=0.6 / informative=0)
 // ---------------------------------------------------------------------------
 
-const check = (over: Partial<CheckResult>): CheckResult =>
-  ({
-    id: 'x', name: 'x', status: 'pass', score: 1, message: '', expected: '', found: '',
-    priority: 'medium',
-    ...over,
-  }) as CheckResult;
-
 describe('weighted category score', () => {
   it('weights A (1.0) over B (0.6)', () => {
     const checks = [
-      check({ status: 'pass', score: 1, weight: 1.0 }),
-      check({ status: 'fail', score: 0, weight: 0.6 }),
+      makeCheck({ status: 'pass', score: 1, weight: 1.0 }),
+      makeCheck({ status: 'fail', score: 0, weight: 0.6 }),
     ];
     // (1*1.0 + 0*0.6) / 1.6 = 0.625
     expect(calculateCategoryScore(checks)).toBe(63);
   });
+
   it('weight 0 (informative) never moves the score', () => {
-    const base = [check({ status: 'pass', score: 1, weight: 1.0 })];
-    const withInformative = [...base, check({ status: 'fail', score: 0, weight: 0 })];
+    const base = [makeCheck({ status: 'pass', score: 1, weight: 1.0 })];
+    const withInformative = [...base, makeCheck({ status: 'fail', score: 0, weight: 0 })];
     expect(calculateCategoryScore(withInformative)).toBe(calculateCategoryScore(base));
   });
+
+  it('a check with no weight contributes nothing to either side of the ratio', () => {
+    // An unstamped check is unproven evidence: it must not move the score, so
+    // this mixed set scores exactly as the weighted pair alone does.
+    const base = [
+      makeCheck({ status: 'pass', score: 1, weight: 1.0 }),
+      makeCheck({ status: 'fail', score: 0, weight: 0.6 }),
+    ];
+    const withUnweighted = [
+      ...base,
+      makeCheck({ status: 'fail', score: 0, weight: undefined }),
+      makeCheck({ status: 'pass', score: 1, weight: undefined }),
+    ];
+    expect(calculateCategoryScore(base)).toBe(63);
+    expect(calculateCategoryScore(withUnweighted)).toBe(63);
+    // …and a set of only unweighted checks has no evidence at all.
+    expect(calculateCategoryScore([makeCheck({ status: 'pass', score: 1, weight: undefined })])).toBe(0);
+  });
+
   it('property: adding a na check never changes the score', () => {
     const base = [
-      check({ status: 'pass', score: 1, weight: 1.0 }),
-      check({ status: 'fail', score: 0, weight: 0.6 }),
+      makeCheck({ status: 'pass', score: 1, weight: 1.0 }),
+      makeCheck({ status: 'fail', score: 0, weight: 0.6 }),
     ];
-    const withNa = [...base, check({ status: 'na', score: 0, weight: 1.0 })];
+    const withNa = [...base, makeCheck({ status: 'na', score: 0, weight: 1.0 })];
     expect(calculateCategoryScore(withNa)).toBe(calculateCategoryScore(base));
   });
+
   it('all-na or zero-total-weight scores 0', () => {
-    expect(calculateCategoryScore([check({ status: 'na', weight: 1 })])).toBe(0);
-    expect(calculateCategoryScore([check({ status: 'fail', score: 0, weight: 0 })])).toBe(0);
+    expect(calculateCategoryScore([makeCheck({ status: 'na', weight: 1 })])).toBe(0);
+    expect(calculateCategoryScore([makeCheck({ status: 'fail', score: 0, weight: 0 })])).toBe(0);
   });
 });

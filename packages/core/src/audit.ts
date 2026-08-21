@@ -119,6 +119,9 @@ export abstract class Audit {
       description: meta.description,
       status: result.status,
       score: result.score,
+      // Single source of truth for a check's evidence weight: stamped here, at
+      // the one place a CheckResult is built from its meta.
+      weight: meta.weight,
       scoreDisplayMode: meta.scoreDisplayMode,
       displayValue,
       explanation,

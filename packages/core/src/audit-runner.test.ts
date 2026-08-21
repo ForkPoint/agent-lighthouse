@@ -87,8 +87,8 @@ describe('runAudits', () => {
           makeReg(meta({ id: 't1', category: 'cat1' }), () => {
             throw new Error('boom');
           }),
-          // reg.meta.id differs from the instance's static meta.id → check.id not in
-          // weightMap → weight falls back to 1.0
+          // reg.meta.id differs from the instance's static meta.id → the check is
+          // stamped from the audit's own static meta (weight 1), not from reg.meta
           makeReg(
             meta({ id: 'actual-mismatch', category: 'cat1' }),
             () => result('pass', 1),
@@ -122,7 +122,7 @@ describe('runAudits', () => {
 
     const cat1 = out.categories.find((c) => c.id === 'cat1')!;
     // na stubs are excluded from the weighted score and the counts.
-    // checks: p1(pass,w2), w1(warn,w1), e1(pass,w1), mismatch(pass,w1 fallback)
+    // checks: p1(pass,w2), w1(warn,w1), e1(pass,w1), mismatch(pass,w1)
     // weightedSum = 1*2 + 0.5*1 + 1*1 + 1*1 = 4.5 ; totalWeight = 5 → 90
     expect(cat1.score).toBe(90);
     expect(cat1.passCount).toBe(3);
@@ -135,6 +135,43 @@ describe('runAudits', () => {
 
     // overall = round(90*0.5 + 0*0.5) = 45
     expect(out.overallScore).toBe(45);
+
+    errorSpy.mockRestore();
+  });
+
+  it('stamps meta.weight onto every produced check, real results and na stubs alike', async () => {
+    const errorSpy = vi.spyOn(logger, 'error').mockImplementation(() => logger);
+
+    const config: ScanConfig = {
+      categories: [{ id: 'w', name: 'W', weight: 1 }],
+      audits: {
+        w: [
+          // real audit path → stamped by Audit.toCheckResult
+          makeReg(meta({ id: 'real', category: 'w', weight: 0.6 }), () => result('pass', 1)),
+          // page-type skip → stamped by the stub built in planAudits
+          makeReg(
+            meta({ id: 'skip', category: 'w', weight: 0.4, applicablePageTypes: ['product'] }),
+            () => result('pass', 1),
+          ),
+          // throwing audit → stamped by the stub built on the error path
+          makeReg(meta({ id: 'boom', category: 'w', weight: 0.25 }), () => {
+            throw new Error('boom');
+          }),
+        ],
+      },
+    };
+
+    const out = await runAudits(ctxWith(['homepage']), config);
+    const byId = new Map(out.checks.map((c) => [c.id, c]));
+
+    expect(byId.get('real')!.weight).toBe(0.6);
+    expect(byId.get('skip')!.weight).toBe(0.4);
+    expect(byId.get('boom')!.weight).toBe(0.25);
+    // Both stub kinds are still `na`, so their stamped weight stays out of the score.
+    expect(byId.get('skip')!.status).toBe('na');
+    expect(byId.get('boom')!.status).toBe('na');
+    // Only `real` contributes: 1*0.6 / 0.6 → 100
+    expect(out.categories[0].score).toBe(100);
 
     errorSpy.mockRestore();
   });
