@@ -14,7 +14,7 @@ export interface SectionGroupDef {
 export const SECTION_GROUPS: SectionGroupDef[] = [
   {
     key: 'agenticReadiness',
-    categoryIds: ['agent-tools', 'content-discoverability', 'access-crawl-control'],
+    categoryIds: ['agent-tools', 'machine-discovery', 'access-crawl-control'],
   },
   {
     key: 'aiSearchOptimization',

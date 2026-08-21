@@ -405,7 +405,7 @@ describe('runScan — report assembly fallbacks', () => {
     // One passing check per vital, so each vital has real evidence to average.
     const applicable = [
       mk({ id: '3.8', status: 'pass', priority: 'low', score: 1 }),
-      mk({ id: '1.1', status: 'pass', priority: 'low', score: 1 }),
+      mk({ id: 'machine-discovery/llms-txt-exists', status: 'pass', priority: 'low', score: 1 }),
       mk({ id: 'cp1', category: 'access-crawl-control', status: 'pass', priority: 'low', score: 1 }),
       mk({ id: 'tr1', category: 'technical-readiness', status: 'pass', priority: 'low', score: 1 }),
     ];
@@ -413,7 +413,7 @@ describe('runScan — report assembly fallbacks', () => {
     // The na stubs a real scan emits: status 'na' with the stub score of 0.
     const naStubs = [
       mk({ id: '3.14', status: 'na', priority: 'low', score: 0 }),
-      mk({ id: '1.2', status: 'na', priority: 'low', score: 0 }),
+      mk({ id: 'machine-discovery/llms-txt-blockquote', status: 'na', priority: 'low', score: 0 }),
       mk({ id: 'cp2', category: 'access-crawl-control', status: 'na', priority: 'low', score: 0 }),
       mk({ id: 'tr2', category: 'technical-readiness', status: 'na', priority: 'low', score: 0 }),
     ];
@@ -553,8 +553,8 @@ describe('runScan — informative checks stay out of readiness vitals', () => {
     // Baseline: every vital-feeding check passes, so `content` (id list) and
     // `botAccessibility` (category prefix) both come out at 100.
     const baseChecks = [
-      mk({ id: '1.1', category: 'content-structure' }),
-      mk({ id: '1.2', category: 'content-structure' }),
+      mk({ id: 'machine-discovery/llms-txt-exists', category: 'content-structure' }),
+      mk({ id: 'machine-discovery/llms-txt-blockquote', category: 'content-structure' }),
       mk({ id: 'cp-1', category: 'access-crawl-control' }),
     ];
 
@@ -584,7 +584,7 @@ describe('runScan — informative checks stay out of readiness vitals', () => {
     const withInformative = [
       ...baseChecks,
       mk({
-        id: '1.3',
+        id: 'machine-discovery/llms-txt-sections',
         category: 'content-structure',
         status: 'fail',
         score: 0,

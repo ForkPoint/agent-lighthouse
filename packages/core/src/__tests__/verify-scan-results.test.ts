@@ -116,7 +116,7 @@ describe('Verify scan results against real sites', () => {
       // Independently verify
       expect(ctx.rootFiles['/llms.txt']!.status).not.toBe(200);
       // Check agrees
-      const result = allResults.get('1.1');
+      const result = allResults.get('machine-discovery/llms-txt-exists');
       expect(result).toBeDefined();
       expect(result!.status).toBe('fail');
     });
@@ -124,7 +124,7 @@ describe('Verify scan results against real sites', () => {
     it('1.8: example.com should NOT have a sitemap', () => {
       expect(ctx.rootFiles['/sitemap.xml']!.status).not.toBe(200);
       expect(ctx.rootFiles['/sitemap-index.xml']!.status).not.toBe(200);
-      const result = allResults.get('1.8');
+      const result = allResults.get('machine-discovery/discovery-index-coverage');
       expect(result).toBeDefined();
       expect(result!.status).toBe('fail');
     });
@@ -296,7 +296,12 @@ describe('Verify scan results against real sites', () => {
 
     it('no false positives: llms.txt child checks should not pass if llms.txt is missing', () => {
       if (ctx.rootFiles['/llms.txt']!.status !== 200) {
-        for (const id of ['1.2', '1.3', '1.4', '1.5']) {
+        for (const id of [
+          'machine-discovery/llms-txt-blockquote',
+          'machine-discovery/llms-txt-sections',
+          'machine-discovery/llms-txt-link-descriptions',
+          'machine-discovery/llms-txt-links-valid',
+        ]) {
           const result = allResults.get(id);
           if (result) {
             expect(result.status).not.toBe('pass');
@@ -310,7 +315,11 @@ describe('Verify scan results against real sites', () => {
         ctx.rootFiles['/sitemap.xml']!.status === 200 ||
         ctx.rootFiles['/sitemap-index.xml']!.status === 200;
       if (!hasSitemap) {
-        for (const id of ['1.9', '1.10', '1.11']) {
+        for (const id of [
+          'machine-discovery/sitemap-absolute-urls',
+          'machine-discovery/sitemap-lastmod',
+          'machine-discovery/rss-feed',
+        ]) {
           const result = allResults.get(id);
           if (result) {
             expect(result.status).not.toBe('pass');
@@ -421,7 +430,7 @@ describe('Verify scan results against real sites', () => {
 
     it('1.1: docs.anthropic.com llms.txt check matches reality', () => {
       const llmsTxt = ctx.rootFiles['/llms.txt']!;
-      const result = allResults.get('1.1');
+      const result = allResults.get('machine-discovery/llms-txt-exists');
       expect(result).toBeDefined();
       if (llmsTxt.status === 200 && llmsTxt.body.trimStart().startsWith('#')) {
         expect(result!.status).toBe('pass');

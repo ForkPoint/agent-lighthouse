@@ -6,7 +6,5 @@ export { OgTypeAudit } from './og-type';
 export { OgSiteNameAudit } from './og-site-name';
 export { OgImageAltAudit } from './og-image-alt';
 export { TwitterCardAudit } from './twitter-card';
-export { LlmsTxtLinkAudit } from './llms-txt-link';
-export { RssFeedLinkAudit } from './rss-feed-link';
 export { OpenApiLinkAudit } from './openapi-link';
 export { AiCatalogLinkAudit } from './ai-catalog-link';

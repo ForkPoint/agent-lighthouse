@@ -98,7 +98,7 @@ describe('Golden Corpus Conformance Tests (False-Positive Elimination)', () => {
     const checkMap = new Map(checks.map((c) => [c.id, c]));
 
     // llms.txt exists (1.1)
-    expect(checkMap.get('1.1')?.status).toBe('pass');
+    expect(checkMap.get('machine-discovery/llms-txt-exists')?.status).toBe('pass');
 
     // OpenAPI exists (5.1)
     expect(checkMap.get('5.1')?.status).toBe('pass');

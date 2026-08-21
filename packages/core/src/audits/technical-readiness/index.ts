@@ -2,8 +2,4 @@ export { HstsHeaderAudit } from './hsts-header';
 export { CspHeaderAudit } from './csp-header';
 export { ContentTypeOptionsAudit } from './content-type-options';
 export { SecurityTxtAudit } from './security-txt';
-export { CorsAiFilesAudit } from './cors-ai-files';
 export { CorsApiRoutesAudit } from './cors-api-routes';
-export { CorrectContentTypesAudit } from './correct-content-types';
-export { CacheHeadersAudit } from './cache-headers';
-export { NoBrokenAiEndpointsAudit } from './no-broken-ai-endpoints';

@@ -36,7 +36,7 @@ function reg(AuditClass: typeof Audit): AuditRegistration {
 
 // ── Imports ─────────────────────────────────────────────────────
 
-// Content Discoverability (15)
+// Machine Discovery (22) — v2 taxonomy category (Plan 3, Task 5)
 import {
   LlmsTxtExistsAudit,
   LlmsTxtBlockquoteAudit,
@@ -53,7 +53,14 @@ import {
   InternalLinkingAudit,
   NoBrokenLinksAudit,
   NoOrphanPagesAudit,
-} from './audits/content-discoverability';
+  LlmsTxtLinkAudit,
+  RssFeedLinkAudit,
+  CorsAiFilesAudit,
+  CorrectContentTypesAudit,
+  CacheHeadersAudit,
+  NoBrokenAiEndpointsAudit,
+  InternalCrossLinkingAudit,
+} from './audits/machine-discovery';
 
 // Access & Crawl Control (36) — v2 taxonomy category (Plan 3, Task 3)
 import {
@@ -117,7 +124,7 @@ import {
   ProductTransactionCertaintyAudit,
 } from './audits/structured-data';
 
-// Meta Tags (12)
+// Meta Tags (10)
 import {
   MetaDescriptionAudit,
   MetaAuthorAudit,
@@ -127,8 +134,6 @@ import {
   OgSiteNameAudit,
   OgImageAltAudit,
   TwitterCardAudit,
-  LlmsTxtLinkAudit,
-  RssFeedLinkAudit,
   OpenApiLinkAudit,
   AiCatalogLinkAudit,
 } from './audits/meta-tags';
@@ -211,17 +216,13 @@ import {
   A11yPresentationConflictAudit,
 } from './audits/accessibility';
 
-// Technical Readiness (9)
+// Technical Readiness (5)
 import {
   HstsHeaderAudit,
   CspHeaderAudit,
   ContentTypeOptionsAudit,
   SecurityTxtAudit,
-  CorsAiFilesAudit,
   CorsApiRoutesAudit,
-  CorrectContentTypesAudit,
-  CacheHeadersAudit,
-  NoBrokenAiEndpointsAudit,
 } from './audits/technical-readiness';
 
 // Answer Engine (11)
@@ -239,7 +240,7 @@ import {
   MetaDescriptionAeoAudit,
 } from './audits/answer-engine';
 
-// Generative Engine (14)
+// Generative Engine (13)
 import {
   NamedAuthorAudit,
   AuthorSameAsAudit,
@@ -251,7 +252,6 @@ import {
   ReviewSignalsAudit,
   PublicationDateAudit,
   LastModifiedSchemaAudit,
-  InternalCrossLinkingAudit,
   UniqueDataAudit,
   BlockquoteUsageAudit,
   DescriptiveUrlsAudit,
@@ -261,19 +261,19 @@ import {
 
 export const defaultConfig: ScanConfig = {
   categories: [
-    { id: 'content-discoverability', name: 'Content Discoverability', weight: 0.15 },
+    { id: 'machine-discovery', name: 'Machine Discovery', weight: 0.18 },
     { id: 'access-crawl-control', name: 'Access & Crawl Control', weight: 0.08 },
     { id: 'structured-data', name: 'Structured Data & Schema Markup', weight: 0.12 },
-    { id: 'meta-tags', name: 'Meta Tags & AI Head Elements', weight: 0.07 },
+    { id: 'meta-tags', name: 'Meta Tags & AI Head Elements', weight: 0.06 },
     { id: 'agent-tools', name: 'AI Agent Tools & Action Surfaces', weight: 0.18 },
     { id: 'content-extraction', name: 'Content Extraction & Structure', weight: 0.1 },
     { id: 'accessibility', name: 'Accessibility & Agent Interaction', weight: 0.07 },
-    { id: 'technical-readiness', name: 'Technical Readiness & Security', weight: 0.08 },
+    { id: 'technical-readiness', name: 'Technical Readiness & Security', weight: 0.07 },
     { id: 'answer-engine', name: 'Answer Engine Optimization', weight: 0.07 },
-    { id: 'generative-engine', name: 'Generative Engine Optimization', weight: 0.08 },
+    { id: 'generative-engine', name: 'Generative Engine Optimization', weight: 0.07 },
   ],
   audits: {
-    'content-discoverability': [
+    'machine-discovery': [
       reg(LlmsTxtExistsAudit),
       reg(LlmsTxtBlockquoteAudit),
       reg(LlmsTxtSectionsAudit),
@@ -289,6 +289,13 @@ export const defaultConfig: ScanConfig = {
       reg(InternalLinkingAudit),
       reg(NoBrokenLinksAudit),
       reg(NoOrphanPagesAudit),
+      reg(LlmsTxtLinkAudit),
+      reg(RssFeedLinkAudit),
+      reg(CorsAiFilesAudit),
+      reg(CorrectContentTypesAudit),
+      reg(CacheHeadersAudit),
+      reg(NoBrokenAiEndpointsAudit),
+      reg(InternalCrossLinkingAudit),
     ],
     'access-crawl-control': [
       reg(NoNoindexAudit),
@@ -357,8 +364,6 @@ export const defaultConfig: ScanConfig = {
       reg(OgSiteNameAudit),
       reg(OgImageAltAudit),
       reg(TwitterCardAudit),
-      reg(LlmsTxtLinkAudit),
-      reg(RssFeedLinkAudit),
       reg(OpenApiLinkAudit),
       reg(AiCatalogLinkAudit),
     ],
@@ -439,11 +444,7 @@ export const defaultConfig: ScanConfig = {
       reg(CspHeaderAudit),
       reg(ContentTypeOptionsAudit),
       reg(SecurityTxtAudit),
-      reg(CorsAiFilesAudit),
       reg(CorsApiRoutesAudit),
-      reg(CorrectContentTypesAudit),
-      reg(CacheHeadersAudit),
-      reg(NoBrokenAiEndpointsAudit),
     ],
     'answer-engine': [
       reg(FaqSectionsAudit),
@@ -469,7 +470,6 @@ export const defaultConfig: ScanConfig = {
       reg(ReviewSignalsAudit),
       reg(PublicationDateAudit),
       reg(LastModifiedSchemaAudit),
-      reg(InternalCrossLinkingAudit),
       reg(UniqueDataAudit),
       reg(BlockquoteUsageAudit),
       reg(DescriptiveUrlsAudit),

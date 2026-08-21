@@ -70,10 +70,10 @@ function mixedReport(): ScanReport {
       ],
     }),
     cat({
-      id: 'content-discoverability',
+      id: 'machine-discovery',
       weight: 0.15,
       score: 60,
-      checks: [check({ id: 'cd1', category: 'content-discoverability', status: 'pass' })],
+      checks: [check({ id: 'cd1', category: 'machine-discovery', status: 'pass' })],
     }),
     cat({
       id: 'answer-engine',
@@ -128,7 +128,7 @@ describe('buildReportView', () => {
   it('orders topFixes by priority (fail+warn) and topPasses by category weight', () => {
     const v = buildReportView(mixedReport());
     expect(v.topFixes.map((c) => c.id)).toEqual(['f1', 'w1']); // critical before high
-    // passes sorted by owning category weight desc: agent-tools .18 > cd .15 > ae .07
+    // passes sorted by owning category weight desc: agent-tools .18 > md .15 > ae .07
     expect(v.topPasses.map((c) => c.id)).toEqual(['p1', 'cd1', 'ae1']);
   });
 

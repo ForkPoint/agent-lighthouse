@@ -22,20 +22,20 @@ export const TAG_SCAN_ERROR = 'scan-error';
 // ── Scoring ────────────────────────────────────────────────────
 
 export const CATEGORY_WEIGHTS: Record<string, number> = {
-  'content-discoverability': 0.15,
+  'machine-discovery': 0.18,
   'access-crawl-control': 0.08,
   'structured-data': 0.12,
-  'meta-tags': 0.07,
+  'meta-tags': 0.06,
   'agent-tools': 0.18,
   'content-extraction': 0.1,
   accessibility: 0.07,
-  'technical-readiness': 0.08,
+  'technical-readiness': 0.07,
   'answer-engine': 0.07,
-  'generative-engine': 0.08,
+  'generative-engine': 0.07,
 };
 
 export const CATEGORY_NAMES: Record<string, string> = {
-  'content-discoverability': 'Content Discoverability',
+  'machine-discovery': 'Machine Discovery',
   'access-crawl-control': 'Access & Crawl Control',
   'structured-data': 'Structured Data & Schema Markup',
   'meta-tags': 'Meta Tags & AI Head Elements',

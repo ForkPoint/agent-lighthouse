@@ -24,7 +24,10 @@ describe('Snapshot Regression Tests', () => {
 
     const { checks } = await runAudits(ctx, defaultConfig);
 
-    const snapshotIds = new Set(['1.1', 'access-crawl-control/https-enabled']);
+    const snapshotIds = new Set([
+      'machine-discovery/llms-txt-exists',
+      'access-crawl-control/https-enabled',
+    ]);
     const resultsToSnapshot = checks
       .filter((c) => snapshotIds.has(c.id))
       .map((c) => ({
