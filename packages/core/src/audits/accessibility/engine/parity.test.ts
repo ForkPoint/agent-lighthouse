@@ -3,9 +3,9 @@
  * jsdom) and the vendored port over a set of HTML fixtures, asserting the
  * per-rule status matches for all 26 supported rule ids.
  *
- * This test is what guarantees the port behaves like axe. Once axe-core is
- * removed from dependencies this test can no longer run the oracle and should be
- * deleted/skipped — it exists to prove correctness before removal.
+ * This test is what guarantees the port behaves like axe. It is the correctness
+ * gate for the ported rules: axe-core is a pinned devDependency and the suite
+ * must run — a missing oracle is a hard failure, never a silent skip.
  */
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
@@ -15,9 +15,9 @@ import { runA11yForHtml, type A11yStatus } from '../runner';
 import { SUPPORTED_RULE_IDS } from './rules';
 
 // This is the ORACLE gate: it compares the vendored port against the real
-// axe-core@4.12.1. axe-core is no longer a dependency, so the suite self-skips
-// unless axe-core is still installed (e.g. re-added locally to re-verify
-// parity). It is intentionally inert in normal CI.
+// axe-core@4.12.1, a pinned devDependency of this package. If it is missing the
+// suite fails loudly (below) rather than skipping — a skipped oracle means the
+// ported rules have no correctness gate at all.
 let axeAvailable = true;
 try {
   require.resolve('axe-core');
@@ -244,7 +244,13 @@ const fixtures: { name: string; html: string }[] = [
   },
 ];
 
-describe.skipIf(!axeAvailable)('a11y port parity with axe-core@4.12.1', () => {
+if (!axeAvailable) {
+  throw new Error(
+    'axe-core is not installed — the a11y parity suite is the correctness gate for the ported rules and must run. `pnpm --filter @forkpoint/agent-lighthouse-core add -D axe-core@4.12.1`',
+  );
+}
+
+describe('a11y port parity with axe-core@4.12.1', () => {
   for (const fixture of fixtures) {
     it(`matches oracle: ${fixture.name}`, async () => {
       const oracle = await runOracle(fixture.html, URL_BASE);
