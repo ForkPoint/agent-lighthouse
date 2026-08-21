@@ -43,7 +43,9 @@ export const AuditMetaSchema = z.object({
   failureTitle: z.string(),
   description: z.string(),
   scoreDisplayMode: ScoreDisplayModeSchema,
-  weight: z.number().positive(),
+  // 0 is legal: informative-tier audits report evidence without moving the
+  // score, so they carry weight 0 and are excluded from the scorer denominator.
+  weight: z.number().nonnegative(),
   applicablePageTypes: z.array(z.string()).optional(),
   defaultPriority: CheckPrioritySchema,
   guidance: AuditGuidanceSchema.optional(),
