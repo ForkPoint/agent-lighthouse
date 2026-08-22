@@ -1,18 +1,19 @@
 ---
-check: checkout-eligible-offer-field-mapping
-title: "Checkout-Eligible Offer Field Mapping"
-domain: agentic-commerce
-status: proposed
+audit: agentic-commerce/checkout-offer-field-mapping
+category: agentic-commerce
+source_file: packages/core/src/audits/agentic-commerce/checkout-offer-field-mapping.ts
+slug: checkout-offer-field-mapping
 evidence_grade: A
-uniqueness: partial-overlap
-difficulty: multi-page
-scoring_tier: scored
+tier: scored
+disposition: "new in v2 — graduated from proposal 2026-08-22"
 reviewed: 2026-08-20
+graduated: 2026-08-22
 ---
+
 
 # Checkout-Eligible Offer Field Mapping
 
-> Proposed check. Evidence grade **A** · partial overlap · implementation: `multi-page`
+> Shipped in v2. Evidence grade **A** · scored tier · partial overlap · implementation: `multi-page`
 
 ## What it checks
 
@@ -52,3 +53,31 @@ Tier per evidence policy: **scored** — grade A meets the A/B bar required for 
 ## Review history
 
 - 2026-08-20 — proposed by the novel-checks research pass (10-agent evidence workflow); sources URL-verified at research time.
+
+## Implementation deviations
+
+- **The plan sheet's GTIN example was wrong.** It names `gtin13: '1234567890128'`
+  as a *wrong* check digit; 8 is in fact the correct check digit for that body.
+  The test pins both directions instead: `1234567890128` is accepted and
+  `1234567890123` is rejected with the digit it should have ended in. The check
+  digit is computed the same way for GTIN-8/12/13/14 — alternating 3/1 weights
+  from the right — so one function covers all four lengths.
+- **`image_url` is not fetched.** Extension and scheme are checked; a HEAD
+  request per PDP to confirm `200` and an `image/*` content type is deferred, so
+  a URL that looks right but 404s is reported as valid here.
+- **Self-canonical is compared only when the `Product` declares its own `url`.**
+  When it does not, the page URL is used and there is nothing to disagree with.
+- **`target_countries` is not evaluated.** It has no schema.org source on the
+  PDP, so requiring it would fail every page for a reason the page cannot fix.
+- **Sale-versus-list** is read from `priceSpecification` with a `ListPrice`
+  `priceType`, falling back to `highPrice` on the offer.
+- Presence per field comes from the shared
+  `extractProductFieldVerification(pages)`; this audit adds only the length,
+  format and mappability assertions on top of it.
+
+## Deferred
+
+- Per-PDP row verdicts across a sampled set: the audit reports the first product
+  page with `Product` markup rather than every PDP in the scan.
+- `identifier_exists=no` is named in the finding as the escape hatch but is not
+  detectable from the PDP, so it cannot be verified.
