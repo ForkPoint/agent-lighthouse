@@ -170,9 +170,22 @@ function matchesPathPattern(pattern: string, path: string): boolean {
   }
 }
 
-export function isPathAllowed(groups: RobotsGroup[], botToken: string, path: string): boolean {
+/**
+ * The rule that decides `path` for `botToken`, or undefined when no rule
+ * matches and the path is allowed by default.
+ *
+ * Exposed so a finding can quote the exact line it acted on: "blocked by
+ * Disallow: /*.xml$" is checkable evidence, "blocked" is not. `isPathAllowed`
+ * is defined on top of it, so the quoted line can never disagree with the
+ * decision the audit reported.
+ */
+export function decidingRule(
+  groups: RobotsGroup[],
+  botToken: string,
+  path: string,
+): RobotsRule | undefined {
   const applicable = groupsForBot(groups, botToken);
-  let best: { length: number; type: 'allow' | 'disallow' } | undefined;
+  let best: { length: number; rule: RobotsRule } | undefined;
   for (const group of applicable) {
     for (const rule of group.rules) {
       if (rule.path === '') continue; // empty Disallow/Allow matches nothing
@@ -181,11 +194,16 @@ export function isPathAllowed(groups: RobotsGroup[], botToken: string, path: str
       const length = normalized.replace(/\*/g, '').length;
       // Longest match wins; on a tie, allow wins (RFC 9309 §2.2.2).
       if (!best || length > best.length || (length === best.length && rule.type === 'allow')) {
-        best = { length, type: rule.type };
+        best = { length, rule };
       }
     }
   }
-  return !best || best.type === 'allow';
+  return best?.rule;
+}
+
+export function isPathAllowed(groups: RobotsGroup[], botToken: string, path: string): boolean {
+  const rule = decidingRule(groups, botToken, path);
+  return !rule || rule.type === 'allow';
 }
 
 export function isBlanketBlocked(groups: RobotsGroup[], botToken: string): boolean {

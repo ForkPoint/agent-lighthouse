@@ -1,18 +1,19 @@
 ---
-check: ai-crawler-reachability-of-advertised-discovery-surfaces
-title: "AI-crawler reachability of advertised discovery surfaces"
-domain: feeds-indexing
-status: proposed
+audit: machine-discovery/ai-crawler-surface-reachability
+category: machine-discovery
+source_file: packages/core/src/audits/machine-discovery/ai-crawler-surface-reachability.ts
+slug: ai-crawler-surface-reachability
 evidence_grade: A
-uniqueness: unique
-difficulty: multi-page
-scoring_tier: scored
+tier: scored
+disposition: "new in v2 — graduated from proposal 2026-08-22"
 reviewed: 2026-08-20
+graduated: 2026-08-22
 ---
+
 
 # AI-crawler reachability of advertised discovery surfaces
 
-> Proposed check. Evidence grade **A** · unique · implementation: `multi-page`
+> Shipped in v2. Evidence grade **A** · scored tier · unique · implementation: `multi-page`
 
 ## What it checks
 
@@ -50,3 +51,38 @@ Tier per evidence policy: **scored** — grade A meets the A/B bar required for 
 ## Review history
 
 - 2026-08-20 — proposed by the novel-checks research pass (10-agent evidence workflow); sources URL-verified at research time.
+
+## Implementation deviations
+
+- **`decidingRule` added to `packages/core/src/gatherers/robots.ts`.** The sketch
+  asks the finding to "report the exact conflicting lines". `isPathAllowed`
+  returns a boolean, so quoting the line that decided a path would have meant a
+  second, approximate matcher. `isPathAllowed` is now defined on top of
+  `decidingRule`, which returns the winning rule: the quoted `Disallow:` line
+  can never disagree with the verdict the audit reported.
+- **Deterministic sample, not a reservoir sample.** The sketch says
+  "reservoir-sample 50 URLs". The audit uses `sampleEntries` (even stride,
+  deterministic) so two audits sampling the same sitemap tree probe the same
+  URLs and their findings can be lined up. A reservoir sample would make the
+  result irreproducible between runs.
+- **Feeds are read from `page.headLinks` across every scanned page**, not from
+  the homepage and one article page. The orchestrator already parses head links
+  for every page it fetched, so the wider set costs nothing and catches a feed
+  advertised only on section pages.
+- **Sitemap roots** are every on-site `Sitemap:` value plus `/sitemap.xml`. The
+  walk is `collectSitemapEntries`, which is `isSafeUrl`- and same-host-gated and
+  expands one level of `<sitemapindex>`; no request is made beyond that tree.
+
+## Deferred
+
+- **Off-site discovery surfaces are not evaluated.** A `Sitemap:` value on
+  another host is dropped: it is not governed by this robots.txt, and deciding
+  it would need that host's file. A cross-host reachability check is a separate
+  audit.
+- **The coverage floor is a share of the sample, not of the tree.** With more
+  than 50 listed URLs the reported percentage is the sample's, so a crawler
+  sitting near the 50% line can move across it between sitemap revisions. The
+  finding reports the sample size for exactly this reason.
+- **`Disallow` outside a group is ignored**, as RFC 9309 requires. Files that
+  put rules before any `User-agent:` line are therefore read as having no rules
+  at all, matching every other robots audit in the suite.

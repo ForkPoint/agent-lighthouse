@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import {
-  parseRobots, matchesUserAgent, groupsForBot, isPathAllowed, isBlanketBlocked,
+  parseRobots, matchesUserAgent, groupsForBot, isPathAllowed, isBlanketBlocked, decidingRule,
   parseRobotsFile, hasNamedGroup,
 } from './robots';
 
@@ -173,5 +173,26 @@ describe('hasNamedGroup', () => {
   it('matches the product token, not the version suffix', () => {
     const versioned = parseRobots('User-agent: GPTBot/1.4\nDisallow: /a\n');
     expect(hasNamedGroup(versioned, 'gptbot')).toBe(true);
+  });
+});
+
+describe('decidingRule', () => {
+  const groups = parseRobots('User-agent: *\nDisallow: /private\nAllow: /private/press\n');
+
+  // The audits quote this rule verbatim, so it must be the line that actually
+  // decided the path, not merely a line that matched it.
+  it('returns the longest matching rule', () => {
+    expect(decidingRule(groups, 'gptbot', '/private/press/kit.html')).toEqual({
+      type: 'allow',
+      path: '/private/press',
+    });
+    expect(decidingRule(groups, 'gptbot', '/private/mail.html')).toEqual({
+      type: 'disallow',
+      path: '/private',
+    });
+  });
+
+  it('returns undefined when no rule matches', () => {
+    expect(decidingRule(groups, 'gptbot', '/public/x')).toBeUndefined();
   });
 });
