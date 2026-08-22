@@ -1,7 +1,6 @@
 // Agent Interfaces — v2 taxonomy category (Plan 3, Task 8).
 // Order mirrors docs/evidence/v2-audit-map.md so Task 11 can consume the list verbatim.
 
-export { WebSiteSearchActionAudit } from './website-search-action';
 export { OpenApiLinkAudit } from './openapi-link';
 export { AiCatalogLinkAudit } from './ai-catalog-link';
 export { OpenApiExistsAudit } from './openapi-exists';
@@ -24,7 +23,6 @@ export { WebmcpToolAnnotationsAudit } from './webmcp-tool-annotations';
 export { OpenApiDescriptionQualityAudit } from './openapi-description-quality';
 export { CorsApiRoutesAudit } from './cors-api-routes';
 
-import { WebSiteSearchActionAudit } from './website-search-action';
 import { OpenApiLinkAudit } from './openapi-link';
 import { AiCatalogLinkAudit } from './ai-catalog-link';
 import { OpenApiExistsAudit } from './openapi-exists';
@@ -49,7 +47,6 @@ import { CorsApiRoutesAudit } from './cors-api-routes';
 
 /** Every audit that lives in the agent-interfaces category, in map order. */
 export const AGENT_INTERFACES_AUDITS = [
-  WebSiteSearchActionAudit,
   OpenApiLinkAudit,
   AiCatalogLinkAudit,
   OpenApiExistsAudit,

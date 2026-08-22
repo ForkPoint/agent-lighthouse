@@ -58,3 +58,5 @@ Two concrete implementation bugs make this audit warn on correct markup: it cast
 
 - 2026-08-20 — code review (11-agent workflow) + evidence research (12-domain workflow, 400 sources).
 - 2026-08-21 — dossier generated; disposition pending final taxonomy design.
+
+**Merged into:** `agent-interfaces/search-endpoint` (Plan 4, 2026-08-22) — [merged dossier](../../audits/agent-interfaces/search-endpoint.md)

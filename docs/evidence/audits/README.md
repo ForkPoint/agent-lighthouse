@@ -43,7 +43,7 @@ One dossier per audit: what it checks, the 2026-08-20 code-review findings, grad
 | 5.13 | [mcp-endpoint](./agent-interfaces/mcp-endpoint.md) | agent-tools | fix | C | keep — fix required |
 | 5.14 | [mcp-capabilities](./agent-interfaces/mcp-capabilities.md) | agent-tools | merge | — | merge (approved 2026-08-21) |
 | 5.15 | [contact-form](./operability-safety/contact-form.md) | agent-tools | fix | C | keep — fix required |
-| 5.16 | [search-endpoint](./agent-interfaces/search-endpoint.md) | agent-tools | fix | — | keep — fix required |
+| 5.16 | [search-endpoint](./agent-interfaces/search-endpoint.md) | agent-tools | fix | C | merged — absorbs 3.4 (2026-08-22) |
 | 5.17 | [data-action-ctas](./agent-tools/data-action-ctas.md) | agent-tools | delete | D | sunset (approved 2026-08-21) |
 | 5.18 | [no-blocking-captcha](./operability-safety/no-blocking-captcha.md) | agent-tools | fix | — | keep — fix required |
 | 5.19 | [forms-no-js](./operability-safety/forms-no-js.md) | agent-tools | fix | — | keep — fix required |
@@ -175,7 +175,7 @@ One dossier per audit: what it checks, the 2026-08-20 code-review findings, grad
 | 3.1 | [json-ld-present](./structured-data/json-ld-present.md) | structured-data | fix | A | keep — fix required |
 | 3.2 | [schema-validation](./structured-data/schema-validation.md) | structured-data | fix | — | keep — fix required |
 | 3.3 | [organization-schema](./structured-data/organization-schema.md) | structured-data | fix | — | keep — fix required |
-| 3.4 | [website-search-action](./agent-interfaces/website-search-action.md) | structured-data | fix | D | keep — fix required |
+| 3.4 | [website-search-action](../merged/agent-interfaces/website-search-action.md) | structured-data | fix | D | merged into [agent-interfaces/search-endpoint](./agent-interfaces/search-endpoint.md) (2026-08-22) |
 | 3.5 | [breadcrumb-schema](./structured-data/breadcrumb-schema.md) | structured-data | fix | — | keep — fix required |
 | 3.6 | [article-schema](./structured-data/article-schema.md) | structured-data | fix | — | keep — fix required |
 | 3.7 | [faqpage-schema](./structured-data/faqpage-schema.md) | structured-data | fix | — | keep — fix required |

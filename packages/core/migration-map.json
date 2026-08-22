@@ -325,10 +325,9 @@
   },
   "3.4": {
     "slug": "structured-data/website-search-action",
-    "status": "merging",
+    "status": "renamed",
     "to": "agent-interfaces/search-endpoint",
-    "interim": "agent-interfaces/website-search-action",
-    "link": "docs/evidence/audits/agent-interfaces/website-search-action.md"
+    "link": "docs/evidence/audits/agent-interfaces/search-endpoint.md"
   },
   "3.5": {
     "slug": "structured-data/breadcrumb-schema",

@@ -49,6 +49,7 @@ const CONSOLIDATION_TARGETS = [
   'answer-readiness/dates-on-content',
   'answer-readiness/meta-description',
   'answer-readiness/review-signals',
+  'agent-interfaces/search-endpoint',
 ];
 
 // v2 identity: `category/slug`. Slugs carry digits and dots (json-ld-1-1,
