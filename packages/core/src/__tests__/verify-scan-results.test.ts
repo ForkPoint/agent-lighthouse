@@ -268,11 +268,14 @@ describe('Verify scan results against real sites', () => {
 
     // --- Agent Interfaces (IDs: 'agent-interfaces/*') ---
 
+    // example.com has no API surface at all: no api-catalog, no spec at a
+    // probed path, no service-desc link. That is `na` — there is nothing for a
+    // brochure site to fix — not a failure.
     it('5.1: example.com should NOT have OpenAPI spec', () => {
       expect(ctx.rootFiles['/openapi.json']!.status).not.toBe(200);
       const result = allResults.get('agent-interfaces/openapi-exists');
       expect(result).toBeDefined();
-      expect(result!.status).toBe('fail');
+      expect(result!.status).toBe('na');
     });
 
     // --- Operability & Safety ---

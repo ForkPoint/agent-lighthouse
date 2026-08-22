@@ -28,7 +28,7 @@ One dossier per audit: what it checks, the 2026-08-20 code-review findings, grad
 | 7.21 | [No positive tabindex (logical focus order)](./operability-safety/tabindex.md) | accessibility | fix | — | keep — fix required |
 | 7.22 | [No deprecated presentational elements](../sunset/accessibility/marquee.md) | accessibility | delete | — | sunset (2026-08-21) |
 | 7.23 | [No presentation-role conflicts](./operability-safety/presentation-conflict.md) | accessibility | fix | A | keep — fix required |
-| 5.1 | [openapi-exists](./agent-interfaces/openapi-exists.md) | agent-tools | fix | — | keep — fix required |
+| 5.1 | [openapi-exists](./agent-interfaces/openapi-exists.md) | agent-tools | fix | B | merged — absorbs 4.18 (2026-08-22) |
 | 5.2 | [openapi-endpoints](./agent-interfaces/openapi-endpoints.md) | agent-tools | fix | — | keep — fix required |
 | 5.3 | [openapi-operation-ids](./agent-interfaces/openapi-operation-ids.md) | agent-tools | fix | — | keep — fix required |
 | 5.4 | [openapi-ai-instructions](./agent-tools/openapi-ai-instructions.md) | agent-tools | delete | D | sunset (approved 2026-08-21) |
@@ -149,7 +149,7 @@ One dossier per audit: what it checks, the 2026-08-20 code-review findings, grad
 | 4.15 | [markdown-alternate](./content-extraction/markdown-alternate.md) | meta-tags | fix | A | keep — fix required |
 | 4.16 | [rss-feed-link](../merged/machine-discovery/rss-feed-link.md) | meta-tags | fix | C | merged into [machine-discovery/rss-feed](./machine-discovery/rss-feed.md) (2026-08-22) |
 | 4.17 | [mcp-discovery-link](./meta-tags/mcp-discovery-link.md) | meta-tags | delete | D | sunset (approved 2026-08-21) |
-| 4.18 | [openapi-link](./agent-interfaces/openapi-link.md) | meta-tags | delete | B | proposed: redeem as scored (pending triage) |
+| 4.18 | [openapi-link](../merged/agent-interfaces/openapi-link.md) | meta-tags | delete | B | redeemed by merge into [agent-interfaces/openapi-exists](./agent-interfaces/openapi-exists.md) (2026-08-22) |
 | 4.19 | [ai-catalog-link](./agent-interfaces/ai-catalog-link.md) | meta-tags | delete | B | kept — rewrite required (approved 2026-08-21) |
 | 4.20 | [meta-robots](../merged/access-crawl-control/meta-robots.md) | meta-tags | fix | A | merged into [access-crawl-control/robots-directives](./access-crawl-control/robots-directives.md) (2026-08-22) |
 | 6.1 | [single-h1](./content-extraction/single-h1.md) | semantic-html | fix | B | keep — fix required |

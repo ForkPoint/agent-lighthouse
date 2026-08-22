@@ -217,6 +217,9 @@ export async function runScan(url: string, options?: ScanOptions): Promise<ScanR
     '/feed.xml',
     '/openapi.json',
     '/openapi.yaml',
+    // RFC 9727 (June 2025): the only ratified, IANA-registered domain-level
+    // API discovery mechanism. Read by agent-interfaces/openapi-exists.
+    '/.well-known/api-catalog',
     '/.well-known/ai-catalog.json',
     '/.well-known/mcp/servers.json',
     '/.well-known/ucp',

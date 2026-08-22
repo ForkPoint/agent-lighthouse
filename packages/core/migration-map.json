@@ -531,10 +531,9 @@
   },
   "4.18": {
     "slug": "meta-tags/openapi-link",
-    "status": "merging",
+    "status": "renamed",
     "to": "agent-interfaces/openapi-exists",
-    "interim": "agent-interfaces/openapi-link",
-    "link": "docs/evidence/audits/agent-interfaces/openapi-link.md"
+    "link": "docs/evidence/audits/agent-interfaces/openapi-exists.md"
   },
   "4.19": {
     "slug": "meta-tags/ai-catalog-link",
