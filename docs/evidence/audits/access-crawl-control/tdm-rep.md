@@ -7,15 +7,15 @@ slug: tdm-rep
 review_verdict: delete
 severity: medium
 evidence_grade: C
-disposition: "proposed: redeem as experimental (pending triage)"
-reviewed: 2026-08-21
+disposition: "kept — internal incoherence fixed, moved to experimental 2026-08-22 (Plan 4, Task 16)"
+reviewed: 2026-08-22
 ---
 
 # tdm-rep (`2.27`)
 
-> crawler-permissions · source `tdm-rep.ts` · review verdict **delete** · evidence grade **C** · disposition: **proposed: redeem as experimental (pending triage)**
+> access-crawl-control · source `tdm-rep.ts` · evidence grade **C** · tier **experimental** (weight 0) · rewritten so the two reservation directions are distinct outcomes, absence is `na`, and the file is validated against the spec shape — see below
 
-## What it checks
+## What it checked before the rewrite
 
 The TDM-Rep (Text and Data Mining Reservation) protocol is the emerging machine-readable standard for declaring whether your content may be used for text and data mining, anchored in EU DSM Directive Article 4. Without an explicit declaration — either a <meta name="tdm-reservation"> tag or a /.well-known/tdmrep.json policy file — AI crawlers and licensing agents cannot tell whether you reserve your mining rights, leaving your content in a legal gray zone where well-behaved agents guess and the rest assume permission. Declaring your terms explicitly puts you in control of how AI systems may use your content.
 
@@ -42,6 +42,46 @@ Speculative and internally incoherent for a tool that measures AI agent outcomes
 
 **Overlaps with:** _none_
 
+## The coherence rewrite (Plan 4, Task 16, 2026-08-22)
+
+**Old pass condition:** the first scanned page carrying `<meta name="tdm-reservation">` with *any* value, or any 200 response at `/.well-known/tdmrep.json` whose body happened to survive `JSON.parse`. Absence **warned** (0.5); a `1` and a `0` passed identically.
+
+**New pass condition:** an unambiguous declaration in one of the three forms the CG report defines, carrying a value the protocol defines, consistent across the site — and the direction is reported. Malformed, non-conforming and self-contradictory declarations warn. No declaration is `notApplicable`. The audit can no longer fail.
+
+### Every item on the required-fix list
+
+- **Weight 0 / `scoreDisplayMode: 'informative'`** — was already true; the tier now says the same thing (see the grade decision below).
+- **`notApplicable`, not `warn`, when absent.** Roughly every site on the web was losing half a point for not adopting a convention nothing consumes. Declining to publish a legal instrument is a choice, not a gap, and the message says so.
+- **`JSON.parse` gated.** Two independent guards, because either alone is bypassable: the media type must be JSON-ish, **and** the body must not start with `<`. An SPA catch-all answering 200 + `text/html` is now read as "no file", not as the confident false claim "a file exists at /.well-known/tdmrep.json but is not valid JSON" about a file that does not exist. A framework answering `application/json` with an HTML error document is caught by the second guard.
+- **Spec shape validated.** The CG report defines the document as an **array of objects**, each with a mandatory `location` and `tdm-reservation`. `123`, `{"foo":1}`, `[]` and `[{"location":"/"}]` are all rejected as non-conforming instead of being certified as "Valid JSON policy".
+- **Reservation 1 and 0 are distinct outcomes.** `1` reports "rights reserved — mining denied by default", `0` reports "mining explicitly permitted", and the two are never narrated with the same sentence.
+- **`describeReservation` no longer invents permission.** Anything that is not `1` or `0` is reported as *not a value the protocol defines*, at `warn`. Previously a typo, an empty-ish value or a nested structure was narrated to the user as an affirmative grant of mining rights they never made — misreporting a licensing posture, which is the most serious wrong answer this audit could give.
+- **First-match-wins fixed.** Meta declarations are collected across every scanned page; disagreement warns and names both values rather than silently reporting whichever page was crawled first. A file declaring different reservations per `location` is legal, and warns with that explained rather than being flattened.
+
+### Added: the response header
+
+The CG report calls the `tdm-reservation` HTTP response header "currently the preferred technique", and the old audit did not look at it at all. It is now checked first, ahead of the well-known file and the meta tags, with `tdm-policy` read alongside it.
+
+### Removed: the fallback fetch
+
+`/.well-known/tdmrep.json` is in the orchestrator's `rootFilePaths`, so the audit's `ctx.fetch` fallback could never fire in production; it existed only to be exercised by a test. It is gone, and `audit()` is synchronous again — which also means the audit issues no network request of its own and needs no `isSafeUrl` gate.
+
+### Copy: the incoherence the code review named
+
+The shipped description ended "Declaring your terms explicitly puts you in control of how AI systems may use your content" — a behavioural claim about a signal with no crawler consumer. The description now states what the protocol is (a CG Final Report, explicitly not a W3C Standard), what it is for (EU DSM Article 4 opt-out evidence) and that no major AI crawler operator documents honouring it. A regression test pins that the audit's meta contains "no major AI crawler" and not the old control claim.
+
+### Deviation from the required fix: the category
+
+The required fix asks to "move it to a compliance category". Not done, deliberately: an audit's id is `category/slug`, so a category move renames the id, which would need a `migration-map.json` entry and would break every consumer keyed on `access-crawl-control/tdm-rep`. This task was explicitly scoped to no id changes. Everything the category move was meant to achieve — that the signal never touches a score, and is not presented as agent readiness — is achieved by the `experimental` tier and weight 0.
+
+### Grade decision: stays **C**, tier `informative` → `experimental`, weight 0
+
+Source: the [REWORK-TODO redemption note](../../../../packages/core/src/audits/REWORK-TODO.md) — "TDM Reservation Protocol is a real W3C CG spec with EU AI Act relevance. Experimental flag, unscored, fix internal incoherence" — and the graded evidence above, which assigns **C** on the reasoning that TDM-Rep is genuinely published with real publisher-side participation and one named partial implementer (Spawning AI), but no major crawler operator documents consuming it. The target tier `experimental` is met; `weightForGrade('C', 'experimental') = 0`, so `scoreDisplayMode` stays `informative`. `defaultPriority` drops `medium` → `low`.
+
+### Re-check trigger
+
+The IETF AIPREF working group targeted IESG submission for 2026-08-31 and its charter does not reference TDM-Rep. If AIPREF ratifies and a named crawler documents honouring either protocol, this grade needs re-examining. The `Content-Usage` half of that work is already read by `access-crawl-control/ai-content-declaration`; the trigger is stamped in the source file header.
+
 ## Evidence
 
 _No dedicated evidence signal was researched for this audit in the 2026-08-20 pass. Its tier assignment falls to the taxonomy design; unproven mechanisms default to informative per the [evidence policy](../../POLICY.md)._
@@ -64,3 +104,4 @@ _No dedicated evidence signal was researched for this audit in the 2026-08-20 pa
 - 2026-08-20 — code review (11-agent workflow) + evidence research (12-domain workflow, 400 sources).
 - 2026-08-21 — dossier generated; disposition pending final taxonomy design.
 - 2026-08-21 — evidence graded **C** (mechanism research pass); consistent with the proposed unscored/experimental disposition.
+- 2026-08-22 — user approved the pending-triage redeem; required rework executed (Plan 4, Task 16): reservation 1 and 0 are distinct outcomes, unrecognized values are no longer narrated as permission, absence is `na` instead of a universal warn, `JSON.parse` is gated on media type plus a leading-`<` guard, the file is validated against the spec's array-of-objects shape, meta declarations are judged across every page instead of first-match-wins, the `tdm-reservation` response header is read (the CG's preferred technique), and the dead `ctx.fetch` fallback is removed so the audit is synchronous and issues no request. Grade C unchanged; tier `informative` → `experimental` per the target; weight 0; `defaultPriority` `medium` → `low`. The category move in the required fix was deliberately not done — it would rename the id. `TODO(redeem)` marker removed from the source file.
