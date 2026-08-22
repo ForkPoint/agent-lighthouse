@@ -54,13 +54,57 @@ describe('AiCatalogMetadataAudit', () => {
     expect(result.status).toBe('pass');
   });
 
-  it('reports updatedAt and trustManifest as bonuses when present', () => {
+  // ARD §4.2 puts updatedAt on the entry, and §4.2/§4.3 put trustManifest on
+  // the entry and the host. Neither is a root-level manifest field.
+
+  it('reports an entry-level updatedAt and a host-level trustManifest as bonuses', () => {
     const result = audit.audit(
-      ctxWith(manifest({ updatedAt: '2026-08-01', trustManifest: { issuer: 'did:web:example.com' } })),
+      ctxWith(
+        manifest({
+          host: {
+            displayName: 'Example',
+            identifier: 'did:web:example.com',
+            trustManifest: { issuer: 'did:web:example.com' },
+          },
+          entries: [{ ...richEntry(1), updatedAt: '2026-08-01T00:00:00Z' }],
+        }),
+      ),
     );
     expect(result.status).toBe('pass');
     expect(result.found).toContain('updatedAt');
     expect(result.found).toContain('trustManifest');
+  });
+
+  it('reports an entry-level trustManifest as a bonus', () => {
+    const result = audit.audit(
+      ctxWith(
+        manifest({
+          entries: [{ ...richEntry(1), trustManifest: { issuer: 'did:web:example.com' } }],
+        }),
+      ),
+    );
+    expect(result.status).toBe('pass');
+    expect(result.found).toContain('trustManifest');
+  });
+
+  it('ignores root-level updatedAt and trustManifest, which the spec does not define', () => {
+    const result = audit.audit(
+      ctxWith(manifest({ updatedAt: '2026-08-01', trustManifest: { issuer: 'did:web:example.com' } })),
+    );
+    expect(result.status).toBe('pass');
+    expect(result.found).not.toContain('updatedAt');
+    expect(result.found).not.toContain('trustManifest');
+  });
+
+  it('counts how many entries carry updatedAt, not merely that one does', () => {
+    const result = audit.audit(
+      ctxWith(
+        manifest({
+          entries: [{ ...richEntry(1), updatedAt: '2026-08-01T00:00:00Z' }, richEntry(2)],
+        }),
+      ),
+    );
+    expect(result.found).toContain('1/2 entries with updatedAt');
   });
 
   it('warns when only some entries carry indexable metadata', () => {

@@ -35,11 +35,20 @@ function isDiscoverable(entry: ArdEntry): boolean {
   return present.includes('description') && present.length >= 2;
 }
 
-/** Optional enrichment ARD §4.2 defines; reported, never required. */
+/**
+ * Optional enrichment, reported and never required.
+ *
+ * Levels matter: ARD §4.2 defines `updatedAt` on the **entry**, and §4.2/§4.3
+ * define `trustManifest` on the **entry** and the **host**. Neither is a
+ * root-level manifest field, so a root-level copy is not counted.
+ */
 function bonuses(manifest: ArdManifest): string[] {
   const found: string[] = [];
-  if (manifest.updatedAt) found.push('updatedAt');
-  if (manifest.hasTrustManifest) found.push('trustManifest');
+  const dated = manifest.entries.filter((e) => e.updatedAt).length;
+  if (dated > 0) found.push(`${dated}/${manifest.entries.length} entries with updatedAt`);
+  if (manifest.hostHasTrustManifest || manifest.entries.some((e) => e.hasTrustManifest)) {
+    found.push('trustManifest');
+  }
   return found;
 }
 
@@ -53,7 +62,6 @@ const SAMPLE = `// /.well-known/ai-catalog.json — the keys a consumer indexes
     "displayName": "Your Site",
     "identifier": "did:web:yoursite.com"
   },
-  "updatedAt": "2026-08-01T00:00:00Z",
   "entries": [
     {
       "identifier": "urn:air:yoursite.com:server:search",
@@ -66,7 +74,8 @@ const SAMPLE = `// /.well-known/ai-catalog.json — the keys a consumer indexes
       "representativeQueries": [
         "find blue running shoes under $100",
         "is the trail jacket in stock in medium"
-      ]
+      ],
+      "updatedAt": "2026-08-01T00:00:00Z"
     }
   ]
 }`;
@@ -88,7 +97,7 @@ export class AiCatalogMetadataAudit extends Audit {
     guidance: {
       impact:
         'A thin catalog entry is a catalog entry nobody finds. Consumers match a user query against the entry text, so entries with no description, tags, capabilities or representative queries lose to better-described alternatives even when your service is the better answer.',
-      fix: 'Name the catalog operator in host.displayName (and add a did:web identifier), then give every entry a plain-language description plus at least one of tags, capabilities or representativeQueries. updatedAt and a trustManifest are optional enrichment on top.',
+      fix: 'Name the catalog operator in host.displayName (and add a did:web identifier), then give every entry a plain-language description plus at least one of tags, capabilities or representativeQueries. Optional enrichment on top: an ISO 8601 updatedAt on each entry, and a trustManifest on the host or on individual entries — both are entry/host fields, not manifest-root ones.',
       code: SAMPLE,
       effort: 'trivial',
       docsUrl: 'https://github.com/ards-project/ard-spec/blob/main/spec/ard.md',

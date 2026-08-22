@@ -47,6 +47,13 @@ export interface ArdEntry {
   capabilities: string[];
   representativeQueries: string[];
   tags: string[];
+  /**
+   * Optional ISO 8601 freshness marker. §4.2 defines this on the **entry**;
+   * there is no root-level `updatedAt` in the schema.
+   */
+  updatedAt?: string;
+  /** Optional per-entry attestation extension (§4.2). Never a pass condition. */
+  hasTrustManifest: boolean;
   /** Position in `entries`, used to label entries that name themselves poorly. */
   index: number;
 }
@@ -55,10 +62,13 @@ export interface ArdManifest {
   specVersion: string;
   host: Record<string, unknown>;
   entries: ArdEntry[];
-  /** Optional freshness marker (§4.2). Never a pass condition. */
-  updatedAt?: string;
-  /** Optional attestation extension (§4.2). Never a pass condition. */
-  hasTrustManifest: boolean;
+  /**
+   * Optional attestation extension on the **host** object (§4.3, "Trust
+   * metadata for the host"). The spec defines `trustManifest` at host and
+   * entry scope only — a root-level copy is not part of the schema and is
+   * deliberately not read.
+   */
+  hostHasTrustManifest: boolean;
   /** Content-Type the manifest was served with, lower-cased. */
   contentType: string;
 }
@@ -103,7 +113,14 @@ export function entryLabel(entry: ArdEntry): string {
 
 function parseEntry(raw: unknown, index: number): ArdEntry {
   if (!isObject(raw)) {
-    return { hasData: false, capabilities: [], representativeQueries: [], tags: [], index };
+    return {
+      hasData: false,
+      capabilities: [],
+      representativeQueries: [],
+      tags: [],
+      hasTrustManifest: false,
+      index,
+    };
   }
   return {
     identifier: nonEmptyString(raw['identifier']),
@@ -115,6 +132,8 @@ function parseEntry(raw: unknown, index: number): ArdEntry {
     capabilities: stringList(raw['capabilities']),
     representativeQueries: stringList(raw['representativeQueries']),
     tags: stringList(raw['tags']),
+    updatedAt: nonEmptyString(raw['updatedAt']),
+    hasTrustManifest: isObject(raw['trustManifest']),
     index,
   };
 }
@@ -170,9 +189,7 @@ export function readAiCatalog(ctx: CheckContext): ArdRead {
       specVersion,
       host,
       entries: entries.map(parseEntry),
-      updatedAt: nonEmptyString(parsed['updatedAt']),
-      hasTrustManifest:
-        isObject(parsed['trustManifest']) || isObject((host as Record<string, unknown>)['trustManifest']),
+      hostHasTrustManifest: isObject(host['trustManifest']),
       contentType,
     },
   };

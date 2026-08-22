@@ -58,6 +58,51 @@ describe('readAiCatalog', () => {
     expect(read.reason).toBe('html');
   });
 
+  // ARD §4.2: updatedAt is an entry field. §4.2/§4.3: trustManifest sits on the
+  // entry and the host. Neither is defined at the manifest root.
+  it('reads updatedAt and trustManifest at their spec-defined levels', () => {
+    const read = readAiCatalog(
+      ctxWith(
+        JSON.stringify({
+          specVersion: '1.0',
+          updatedAt: '2026-08-01',
+          trustManifest: { issuer: 'did:web:example.com' },
+          host: { displayName: 'Example', trustManifest: { issuer: 'did:web:example.com' } },
+          entries: [
+            { identifier: 'urn:air:example.com:a', updatedAt: '2026-08-02T00:00:00Z' },
+            { identifier: 'urn:air:example.com:b', trustManifest: { issuer: 'did:web:example.com' } },
+          ],
+        }),
+      ),
+    );
+    expect(read.ok).toBe(true);
+    if (!read.ok) return;
+    expect(read.manifest.entries[0]!.updatedAt).toBe('2026-08-02T00:00:00Z');
+    expect(read.manifest.entries[0]!.hasTrustManifest).toBe(false);
+    expect(read.manifest.entries[1]!.hasTrustManifest).toBe(true);
+    expect(read.manifest.hostHasTrustManifest).toBe(true);
+    // The root-level copies are not part of the schema and must not leak in.
+    expect('updatedAt' in read.manifest).toBe(false);
+    expect('hasTrustManifest' in read.manifest).toBe(false);
+  });
+
+  it('does not promote a root-level trustManifest onto the host', () => {
+    const read = readAiCatalog(
+      ctxWith(
+        JSON.stringify({
+          specVersion: '1.0',
+          trustManifest: { issuer: 'did:web:example.com' },
+          host: { displayName: 'Example' },
+          entries: [{ identifier: 'urn:air:example.com:a' }],
+        }),
+      ),
+    );
+    expect(read.ok).toBe(true);
+    if (!read.ok) return;
+    expect(read.manifest.hostHasTrustManifest).toBe(false);
+    expect(read.manifest.entries[0]!.hasTrustManifest).toBe(false);
+  });
+
   it('treats a whitespace-only specVersion as missing', () => {
     const read = readAiCatalog(
       ctxWith(JSON.stringify({ specVersion: '  ', host: {}, entries: [] })),
@@ -81,7 +126,14 @@ describe('_ard helpers', () => {
   });
 
   it('entryLabel falls back through displayName, identifier and position', () => {
-    const base = { hasData: false, capabilities: [], representativeQueries: [], tags: [], index: 2 };
+    const base = {
+      hasData: false,
+      capabilities: [],
+      representativeQueries: [],
+      tags: [],
+      hasTrustManifest: false,
+      index: 2,
+    };
     expect(entryLabel({ ...base, displayName: 'Name', identifier: 'urn:x' })).toBe('Name');
     expect(entryLabel({ ...base, identifier: 'urn:x' })).toBe('urn:x');
     expect(entryLabel(base)).toBe('entry #3');
