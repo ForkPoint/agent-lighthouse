@@ -59,3 +59,5 @@ Real signal, but a hard 800 ms cliff applied to a single cold measurement makes 
 
 - 2026-08-20 — code review (11-agent workflow) + evidence research (12-domain workflow, 400 sources).
 - 2026-08-21 — dossier generated; disposition pending final taxonomy design.
+
+**Merged into:** `content-extraction/server-responsiveness` (Plan 4, 2026-08-22) — [merged dossier](../../audits/content-extraction/server-responsiveness.md)

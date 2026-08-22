@@ -1,52 +1,100 @@
 import { describe, it, expect } from 'vitest';
-import { FastPageLoadAudit } from './server-responsiveness';
+import { ServerResponsivenessAudit } from './server-responsiveness';
 import { mockCheckContext, mockPageContext } from '../../__tests__/test-utils';
+import type { PageContext } from '../../check-context';
 
-describe('FastPageLoadAudit', () => {
-  const audit = new FastPageLoadAudit();
+/** A page whose fetch recorded `ttfb` milliseconds to first byte. */
+function timedPage(ttfb: number, path = '/'): PageContext {
+  const page = mockPageContext(`https://example.com${path}`, '<html><body>ok</body></html>', 1);
+  page.fetchResult.ttfbMs = ttfb;
+  page.fetchResult.totalMs = ttfb;
+  return page;
+}
 
-  function pageWithTtfb(url: string, ttfb: number, index = 0) {
-    const page = mockPageContext(url, '<html><body>Hi</body></html>', index);
-    page.fetchResult.ttfbMs = ttfb;
-    return page;
-  }
+/** A page whose fetch failed: the fetcher reports ttfbMs = the full timeout. */
+function failedPage(path = '/down'): PageContext {
+  const page = timedPage(10_000, path);
+  page.fetchResult.status = 0;
+  page.fetchResult.error = 'ECONNRESET';
+  return page;
+}
 
-  it('passes when average TTFB is fast', () => {
-    const ctx = mockCheckContext([pageWithTtfb('https://example.com/', 200)]);
-    const result = audit.audit(ctx);
-    expect(result.status).toBe('pass');
-    expect(result.message).toContain('Average TTFB');
+const run = (...pages: PageContext[]) =>
+  new ServerResponsivenessAudit().audit(mockCheckContext(pages));
+
+describe('ServerResponsivenessAudit', () => {
+  describe('when there is nothing to measure', () => {
+    it('is not applicable when no pages were scanned', () => {
+      expect(run().status).toBe('na');
+    });
+
+    it('is not applicable when the scan was blocked by a WAF', () => {
+      const ctx = mockCheckContext([timedPage(5000)]);
+      ctx.wafProtection = { isBlocked: true, name: 'Cloudflare', reason: 'challenge' };
+      const result = new ServerResponsivenessAudit().audit(ctx);
+      expect(result.status).toBe('na');
+      expect(result.message).toContain('Cloudflare');
+    });
+
+    it('is not applicable when every fetch failed', () => {
+      const result = run(failedPage('/a'), failedPage('/b'));
+      expect(result.status).toBe('na');
+    });
   });
 
-  it('warns when average TTFB is above the fast threshold but no page is very slow', () => {
-    const ctx = mockCheckContext([pageWithTtfb('https://example.com/', 1000)]);
-    const result = audit.audit(ctx);
-    expect(result.status).toBe('warn');
-    expect(result.message).toContain('Average TTFB is 1000ms');
+  describe('median, not a single sample', () => {
+    it('passes when the median is fast even though one page is very slow', () => {
+      const result = run(timedPage(120, '/a'), timedPage(140, '/b'), timedPage(5000, '/c'));
+      expect(result.status).toBe('pass');
+      expect(result.found).toContain('140ms');
+    });
+
+    it('does not let a slow average drag a fast median down', () => {
+      const result = run(timedPage(100, '/a'), timedPage(100, '/b'), timedPage(9000, '/c'));
+      expect(result.status).toBe('pass');
+    });
+
+    it('excludes failed fetches from the sample instead of charging them the timeout', () => {
+      const result = run(timedPage(150, '/a'), timedPage(160, '/b'), failedPage('/c'));
+      expect(result.status).toBe('pass');
+      expect(result.found).toContain('1 page(s) could not be measured');
+    });
+
+    it('averages the two middle samples on an even count', () => {
+      const result = run(timedPage(100, '/a'), timedPage(300, '/b'));
+      expect(result.found).toContain('200ms');
+    });
   });
 
-  it('fails when a page has a very slow TTFB', () => {
-    const ctx = mockCheckContext([pageWithTtfb('https://example.com/', 2000)]);
-    const result = audit.audit(ctx);
-    expect(result.status).toBe('fail');
-    expect(result.message).toContain('TTFB > 1800ms');
+  describe('banded verdict', () => {
+    it('passes at exactly the fast threshold', () => {
+      expect(run(timedPage(800)).status).toBe('pass');
+    });
+
+    it('warns just above the fast threshold', () => {
+      const result = run(timedPage(801));
+      expect(result.status).toBe('warn');
+      expect(result.priority).toBe('medium');
+    });
+
+    it('warns at exactly the slow threshold', () => {
+      expect(run(timedPage(2500)).status).toBe('warn');
+    });
+
+    it('fails above the slow threshold', () => {
+      const result = run(timedPage(2501));
+      expect(result.status).toBe('fail');
+      expect(result.priority).toBe('high');
+    });
+
+    it('no longer fails on a single page above 1800ms with a fast median', () => {
+      const result = run(timedPage(200, '/a'), timedPage(210, '/b'), timedPage(1900, '/c'));
+      expect(result.status).toBe('pass');
+    });
   });
 
-  it('fails when no pages were scanned', () => {
-    const ctx = mockCheckContext([]);
-    const result = audit.audit(ctx);
-    expect(result.status).toBe('fail');
-    expect(result.message).toContain('No pages scanned');
-  });
-
-  it('shows "+N more" suffix when more than 5 pages are very slow', () => {
-    // 6 pages with TTFB > 1800ms → fail path, slowPages.length > 5 → "+N more" branch
-    const slowPages = Array.from({ length: 6 }, (_, i) =>
-      pageWithTtfb(`https://example.com/page${i}`, 2000, i),
-    );
-    const ctx = mockCheckContext(slowPages);
-    const result = audit.audit(ctx);
-    expect(result.status).toBe('fail');
-    expect(result.found).toContain('+1 more');
+  it('discloses that the figure includes connection setup from the scanner location', () => {
+    const result = run(timedPage(200));
+    expect(result.found).toContain('connection setup');
   });
 });

@@ -84,7 +84,7 @@ One dossier per audit: what it checks, the 2026-08-20 code-review findings, grad
 | 1.16 | [no-redirect-chains](./access-crawl-control/no-redirect-chains.md) | content-discoverability | fix | — | keep — fix required |
 | 1.17 | [canonical](./access-crawl-control/canonical.md) | content-discoverability | rewrite | A | rewritten + absorbs 4.3 (2026-08-22) |
 | 1.18 | [mobile-friendly](../sunset/content-discoverability/mobile-friendly.md) | content-discoverability | delete | — | sunset (2026-08-21) |
-| 1.19 | [fast-page-load](./content-extraction/server-responsiveness.md) | content-discoverability | fix | B | keep — fix required |
+| 1.19 | [server-responsiveness](./content-extraction/server-responsiveness.md) | content-discoverability | fix | B | merged + rewritten — absorbs 8.12 (2026-08-22) |
 | 1.20 | [no-broken-links](./machine-discovery/no-broken-links.md) | content-discoverability | fix | A | keep — fix required |
 | 1.21 | [navigation-json](./content-discoverability/navigation-json.md) | content-discoverability | delete | D | sunset (approved 2026-08-21) |
 | 1.22 | [no-orphan-pages](../merged/machine-discovery/no-orphan-pages.md) | content-discoverability | merge | A | merged into [machine-discovery/discovery-index-coverage](./machine-discovery/discovery-index-coverage.md) (2026-08-22) |
@@ -203,7 +203,7 @@ One dossier per audit: what it checks, the 2026-08-20 code-review findings, grad
 | 8.9 | [cors-api-routes](./agent-interfaces/cors-api-routes.md) | technical-readiness | delete | C | proposed: redeem as scored (pending triage) |
 | 8.10 | [correct-content-types](./machine-discovery/ai-file-delivery.md) | technical-readiness | fix | C | keep — fix required |
 | 8.11 | [cache-headers](../merged/machine-discovery/cache-headers.md) | technical-readiness | merge | B | merged into [machine-discovery/ai-file-delivery](./machine-discovery/ai-file-delivery.md) (2026-08-22) |
-| 8.12 | [fast-response-time](./content-extraction/fast-response-time.md) | technical-readiness | fix | B | keep — fix required |
+| 8.12 | [fast-response-time](../merged/content-extraction/fast-response-time.md) | technical-readiness | fix | B | merged into [content-extraction/server-responsiveness](./content-extraction/server-responsiveness.md) (2026-08-22) |
 | 8.13 | [server-rendered](./content-extraction/server-rendered.md) | technical-readiness | fix | B | keep — fix required |
 | 8.14 | [no-render-blocking](../sunset/technical-readiness/no-render-blocking.md) | technical-readiness | fix | D | sunset (2026-08-21) |
 | 8.15 | [image-dimensions](../sunset/technical-readiness/image-dimensions.md) | technical-readiness | fix | D | sunset (2026-08-21) |

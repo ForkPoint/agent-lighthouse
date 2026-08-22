@@ -1031,10 +1031,9 @@
   },
   "8.12": {
     "slug": "technical-readiness/fast-response-time",
-    "status": "merging",
+    "status": "renamed",
     "to": "content-extraction/server-responsiveness",
-    "interim": "content-extraction/fast-response-time",
-    "link": "docs/evidence/audits/content-extraction/fast-response-time.md"
+    "link": "docs/evidence/audits/content-extraction/server-responsiveness.md"
   },
   "8.13": {
     "slug": "technical-readiness/server-rendered",

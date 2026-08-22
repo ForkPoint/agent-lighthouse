@@ -38,8 +38,7 @@ const KNOWN_WARN = new Set([
 
 // Audits that may fail due to dev server performance (cold compilation):
 const TIMING_SENSITIVE = new Set([
-  'content-extraction/server-responsiveness', // Fast page load — TTFB varies in dev
-  'content-extraction/fast-response-time', // Fast response time — TTFB varies in dev
+  'content-extraction/server-responsiveness', // Server responsiveness — TTFB varies in dev
 ]);
 
 // Resolve the title suffix + assertion for a given audit id without

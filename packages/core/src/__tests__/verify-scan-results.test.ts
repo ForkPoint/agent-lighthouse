@@ -238,15 +238,18 @@ describe('Verify scan results against real sites', () => {
       }
     });
 
-    it('8.12: example.com response time check matches reality', () => {
+    // 8.12 folded into 1.19 in Plan 4: one banded median-TTFB audit.
+    it('1.19 + 8.12: example.com response time check matches reality', () => {
       const fetchResult = ctx.pages[0]!.fetchResult;
-      const result = allResults.get('content-extraction/fast-response-time');
+      const result = allResults.get('content-extraction/server-responsiveness');
       expect(result).toBeDefined();
       if (fetchResult.error || fetchResult.status === 0) {
-        // Request failed — check should fail
-        expect(result!.status).toBe('fail');
-      } else if (fetchResult.ttfbMs < 800) {
+        // Nothing measurable — the audit reports na, not a performance defect.
+        expect(result!.status).toBe('na');
+      } else if (fetchResult.ttfbMs <= 800) {
         expect(result!.status).toBe('pass');
+      } else if (fetchResult.ttfbMs <= 2500) {
+        expect(result!.status).toBe('warn');
       } else {
         expect(result!.status).toBe('fail');
       }

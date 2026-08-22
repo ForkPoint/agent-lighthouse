@@ -1,25 +1,36 @@
-// TODO(rewrite): approved 2026-08-21 — this audit and technical-readiness/fast-response-time
-// (8.12) collapse into one `content-extraction/server-responsiveness` check in Plan 4:
-// median TTFB across the crawled pages, banded rather than pass/fail on a single sample.
-// Evidence dossier: docs/evidence/audits/content-extraction/server-responsiveness.md
-
 import type { AuditMeta, AuditResult } from "../../types";
 import { Audit } from "../../audit";
 import type { CheckContext } from '../../check-context';
 import { weightForGrade } from '../../scorer';
 
-/** Threshold in milliseconds for TTFB: fast <= 800ms, slow > 1800ms */
+/**
+ * Bands, not a cliff. 800ms is the widely used "good TTFB" target; 2500ms is
+ * the low end of the 2-3 second abandonment window both source audits cite in
+ * their own copy — 8.12 failed at 800ms while its description said crawlers
+ * "abandon requests over 2-3 seconds", a threefold disagreement with itself.
+ */
 const FAST_TTFB_MS = 800;
-const SLOW_TTFB_MS = 1800;
+const SLOW_TTFB_MS = 2500;
 
-export class FastPageLoadAudit extends Audit {
+/** Median of a non-empty list, rounded; the mean of the two middle samples on an even count. */
+function median(values: number[]): number {
+  const sorted = [...values].sort((a, b) => a - b);
+  const mid = Math.floor(sorted.length / 2);
+  const value =
+    sorted.length % 2 === 0 ? ((sorted[mid - 1] ?? 0) + (sorted[mid] ?? 0)) / 2 : (sorted[mid] ?? 0);
+  return Math.round(value);
+}
+
+const EXPECTED = `Median TTFB across the crawled pages <= ${FAST_TTFB_MS}ms (warn to ${SLOW_TTFB_MS}ms).`;
+
+export class ServerResponsivenessAudit extends Audit {
   static override meta: AuditMeta = {
     id: 'content-extraction/server-responsiveness',
     category: 'content-extraction',
-    title: 'Fast page load',
-    failureTitle: 'Fast page load',
+    title: 'Server responsiveness',
+    failureTitle: 'Server responsiveness',
     description:
-      'AI crawlers have limited time budgets. Fast Time-to-First-Byte (TTFB) ensures crawlers can fetch more of your pages within their allotted time.',
+      'AI crawlers fetch fewer pages per session from a slow origin, and a user-triggered agent fetch that outlasts the client budget is abandoned before bytes arrive. This measures the median time to first byte across the crawled pages, not a single cold sample.',
     scoreDisplayMode: 'ternary',
     weight: weightForGrade('B', 'scored'),
     evidenceGrade: 'B',
@@ -28,70 +39,85 @@ export class FastPageLoadAudit extends Audit {
     defaultPriority: 'medium',
     guidance: {
       impact:
-        'AI crawlers operate on strict time budgets. Slow Time-to-First-Byte (TTFB) means crawlers index fewer of your pages per session, leaving content undiscovered and reducing your visibility in AI-powered search results.',
-      fix: 'Optimize server response times by enabling caching (Redis, Varnish), deploying a CDN (Cloudflare, Fastly), reducing server-side computation, and enabling HTTP/2 or HTTP/3. Target TTFB under 800ms for all pages.',
-      code: '# Potential optimizations:\n# - Enable server-side caching (Redis, Varnish)\n# - Use a CDN (Cloudflare, Fastly, Vercel Edge)\n# - Optimize database queries and indexes\n# - Enable HTTP/2 or HTTP/3\n# - Use static generation where possible',
+        'Google documents that crawl capacity falls when a host slows down ("if the site slows down… the limit goes down and Google crawls less"), and slow origins are where logged HTTP 499 client-closed-request clusters from AI fetchers appear. A slow origin therefore gets less of its content into the indexes AI answers are drawn from.',
+      fix: 'Reduce time to first byte: cache at the origin (Redis, Varnish, nginx microcaching), serve through a CDN with edge caching, cut database work on the critical path, and pre-render or statically generate content pages. Note that the figure below is measured from the scanner and includes DNS, TCP and TLS setup.',
+      code: '# Nginx microcaching example:\nproxy_cache_path /tmp/cache levels=1:2 keys_zone=ai:10m max_size=1g;\nproxy_cache_valid 200 1m;\nadd_header X-Cache-Status $upstream_cache_status;',
       effort: 'moderate',
-      tags: ['performance', 'crawl-budget', 'discoverability'],
+      docsUrl: 'https://web.dev/articles/ttfb',
+      tags: ['performance', 'crawl-budget', 'discoverability', 'speed'],
     },
   };
 
   audit(ctx: CheckContext): AuditResult {
-    if (ctx.pages.length === 0) {
-      return this.fail('No pages scanned.', `TTFB <= ${FAST_TTFB_MS}ms`, 'No pages scanned', {
-        priority: 'medium',
-        description: FastPageLoadAudit.meta.description,
-      });
+    // A challenge or JS interstitial is slow by design; that is bot protection,
+    // not a performance defect, and another audit reports it.
+    if (ctx.wafProtection?.isBlocked) {
+      return this.notApplicable(
+        `Response time could not be measured — the scan was blocked by ${ctx.wafProtection.name}.`,
+        EXPECTED,
+        `Blocked by ${ctx.wafProtection.name}`,
+      );
     }
 
-    const slowPages: Array<{ url: string; ttfb: number }> = [];
+    // A failed fetch reports ttfbMs = the full timeout, which is an error, not
+    // a slow origin. Reachability is a different audit's subject.
+    const measured = ctx.pages.filter((p) => !p.fetchResult.error && p.fetchResult.status !== 0);
+    const unmeasured = ctx.pages.length - measured.length;
 
-    for (const page of ctx.pages) {
-      if (page.fetchResult.ttfbMs > SLOW_TTFB_MS) {
-        slowPages.push({ url: page.url, ttfb: page.fetchResult.ttfbMs });
-      }
+    if (measured.length === 0) {
+      return this.notApplicable(
+        ctx.pages.length === 0
+          ? 'No pages scanned, so there is no response time to measure.'
+          : 'No page fetch completed, so there is no response time to measure.',
+        EXPECTED,
+        `${ctx.pages.length} page(s) scanned, 0 measurable`,
+      );
     }
 
-    const avgTtfb = Math.round(
-      ctx.pages.reduce((sum, p) => sum + p.fetchResult.ttfbMs, 0) / ctx.pages.length,
-    );
+    const samples = measured.map((p) => p.fetchResult.ttfbMs);
+    const medianTtfb = median(samples);
+    const slowest = Math.max(...samples);
+    const overSlowBand = samples.filter((ms) => ms > SLOW_TTFB_MS).length;
 
-    if (slowPages.length > 0) {
-      return this.fail(
-        `${slowPages.length}/${ctx.pages.length} page(s) have TTFB > ${SLOW_TTFB_MS}ms (avg ${avgTtfb}ms).`,
-        `TTFB <= ${FAST_TTFB_MS}ms`,
-        `Slow pages: ${slowPages
-          .slice(0, 5)
-          .map((p) => `${p.url} (${p.ttfb}ms)`)
-          .join(', ')}${slowPages.length > 5 ? ` (+${slowPages.length - 5} more)` : ''}`,
+    const found =
+      `Median TTFB ${medianTtfb}ms across ${measured.length} page(s) ` +
+      `(slowest ${slowest}ms, ${overSlowBand} over ${SLOW_TTFB_MS}ms` +
+      `${unmeasured > 0 ? `, ${unmeasured} page(s) could not be measured` : ''}); ` +
+      `includes DNS, TCP and TLS connection setup measured from the scanner's location.`;
+
+    if (medianTtfb <= FAST_TTFB_MS) {
+      return this.pass(
+        `Median TTFB is ${medianTtfb}ms across ${measured.length} measured page(s).`,
+        EXPECTED,
+        found,
+      );
+    }
+
+    if (medianTtfb <= SLOW_TTFB_MS) {
+      return this.warn(
+        `Median TTFB is ${medianTtfb}ms across ${measured.length} measured page(s) — above the ${FAST_TTFB_MS}ms target.`,
+        EXPECTED,
+        found,
         {
           priority: 'medium',
           description:
-            'Some pages have very slow Time-to-First-Byte (TTFB), which may cause AI crawlers to time out or skip them. Optimize server response times through caching, CDN usage, or reducing server-side processing.',
-          code: `# Potential optimizations:\n# - Enable server-side caching\n# - Use a CDN (Cloudflare, Fastly)\n# - Optimize database queries\n# - Enable HTTP/2 or HTTP/3`,
-        },
-        slowPages[0]?.url,
-      );
-    }
-
-    if (avgTtfb > FAST_TTFB_MS) {
-      return this.warn(
-        `Average TTFB is ${avgTtfb}ms across ${ctx.pages.length} page(s).`,
-        `TTFB <= ${FAST_TTFB_MS}ms`,
-        `Average ${avgTtfb}ms`,
-        {
-          priority: 'low',
-          description:
-            'Average TTFB is above the ideal threshold. Faster responses help AI crawlers index more pages within their time budget.',
-          code: `# Potential optimizations:\n# - Enable server-side caching\n# - Use a CDN\n# - Optimize server-side rendering`,
+            'A median above the 800ms target leaves less of the site inside a crawler session and closer to the point where a user-triggered agent fetch is abandoned. Note the figure includes connection setup from the scanner, so part of it may be distance rather than server work.',
+          code: '# Potential optimizations:\n# - Enable server-side caching (Redis, Varnish, nginx microcaching)\n# - Serve through a CDN with edge caching\n# - Optimize database queries on the critical path',
         },
       );
     }
 
-    return this.pass(
-      `Average TTFB is ${avgTtfb}ms across ${ctx.pages.length} page(s).`,
-      `TTFB <= ${FAST_TTFB_MS}ms`,
-      `Average ${avgTtfb}ms`,
+    return this.fail(
+      `Median TTFB is ${medianTtfb}ms across ${measured.length} measured page(s) — beyond the ${SLOW_TTFB_MS}ms abandonment band.`,
+      EXPECTED,
+      found,
+      {
+        priority: 'high',
+        description:
+          'A median TTFB in seconds means most pages sit inside the window where AI fetchers are observed to close the connection before bytes arrive, and Google documents crawl capacity falling as host latency rises. This is a whole-site figure, not one unlucky sample.',
+        code: '# Potential optimizations:\n# - Enable server-side caching (Redis, Varnish, nginx microcaching)\n# - Serve through a CDN with edge caching\n# - Pre-render or statically generate content pages\n# - Enable HTTP/2 or HTTP/3',
+      },
+      measured.find((p) => p.fetchResult.ttfbMs === slowest)?.url,
     );
   }
 }
