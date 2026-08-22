@@ -79,6 +79,8 @@ export interface UaProbe {
   probeText: string;
   /** The raw baseline body, so a caller can resolve declared markup against the DOM a browser got. */
   baselineBody: string;
+  /** The raw probe body, so a caller can look for challenge fingerprints the classifier does not model. */
+  probeBody: string;
 }
 
 /** Below this share of the baseline's text, a 200 is a block wearing a 200. */
@@ -109,6 +111,7 @@ export function classifyResponse(
   baselineText: string;
   probeText: string;
   baselineBody: string;
+  probeBody: string;
 } {
   const baselineOk = baseline.status >= 200 && baseline.status < 300;
   if (!baselineOk) {
@@ -119,6 +122,7 @@ export function classifyResponse(
       baselineText: '',
       probeText: '',
       baselineBody: baseline.body,
+      probeBody: probe.body,
     };
   }
 
@@ -134,6 +138,7 @@ export function classifyResponse(
     baselineText,
     probeText,
     baselineBody: baseline.body,
+    probeBody: probe.body,
   });
 
   const cfMitigated = probe.headers['cf-mitigated'];

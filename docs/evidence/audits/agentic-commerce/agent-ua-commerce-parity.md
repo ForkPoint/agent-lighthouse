@@ -1,18 +1,19 @@
 ---
-check: agent-user-agent-fetch-parity-on-commerce-paths
-title: "Agent User-Agent Fetch Parity on Commerce Paths"
-domain: agentic-commerce
-status: proposed
+audit: agentic-commerce/agent-ua-commerce-parity
+category: agentic-commerce
+source_file: packages/core/src/audits/agentic-commerce/agent-ua-commerce-parity.ts
+slug: agent-ua-commerce-parity
 evidence_grade: A
-uniqueness: unique
-difficulty: static-fetch
-scoring_tier: scored
+tier: scored
+disposition: "new in v2 — graduated from proposal 2026-08-22"
 reviewed: 2026-08-20
+graduated: 2026-08-22
 ---
+
 
 # Agent User-Agent Fetch Parity on Commerce Paths
 
-> Proposed check. Evidence grade **A** · unique · implementation: `static-fetch`
+> Shipped in v2. Evidence grade **A** · scored tier · unique · implementation: `static-fetch`
 
 ## What it checks
 
@@ -50,3 +51,19 @@ Tier per evidence policy: **scored** — grade A meets the A/B bar required for 
 ## Review history
 
 - 2026-08-20 — proposed by the novel-checks research pass (10-agent evidence workflow); sources URL-verified at research time.
+
+## Implementation deviations
+
+Recorded at graduation (2026-08-22, Plan 5 Task 25).
+
+- **Per-host throttling and `Retry-After` are not implemented.** The sketch asked for at most 1 request per second per host with `Retry-After` honoured. A sleep inside a single audit serialises the whole scan, because every audit shares one scan budget and the live-site verification suite cannot absorb the added wall-clock. The paired probes instead go through the shared `sharedUaProbes` cache in `packages/core/src/gatherers/ua-parity.ts`, so each (URL, User-Agent) pair is fetched at most once per scan and the audits that need the same probes reuse them.
+- **The two OpenAI CIDR endpoints are named, never fetched.** `https://openai.com/searchbot.json` and `https://openai.com/chatgpt-user.json` appear in the failure message and in the fix guidance as the sources the operator should allowlist from. Fetching them would add two off-site requests per scan and would tell the audit nothing it can act on, since the scanner is not the agent whose address matters.
+- **Two of the four OpenAI tokens are probed.** OAI-SearchBot and ChatGPT-User are the two a purchase depends on. GPTBot is read from robots.txt only, and OAI-AdsBot is out of scope: a paid-ads landing-page validator is not on the organic commerce path.
+- **The GPTBot posture is reported, never scored.** `Disallow` for GPTBot while OAI-SearchBot stays allowed is the documented way to opt out of training without leaving search. The audit appends a sentence naming it and takes nothing off the score, on a pass or a fail.
+- **Blocking is decided by one reason per probe, in fixed order**: a challenge-body fingerprint first, then an HTTP status class mismatch, then an extracted-text ratio under 0.6. One target therefore contributes at most one finding per agent, so a Cloudflare interstitial is not also counted as a text-ratio failure.
+
+## Deferred
+
+- Per-host rate limiting with `Retry-After` support, if the scanner ever grows a shared request scheduler that all audits go through.
+- OAI-AdsBot probing, which would only matter for a site that runs paid placements into ChatGPT.
+- Fetching and diffing the published CIDR ranges against the site's observed edge behaviour. That needs the scan to run from a known address, which it does not.

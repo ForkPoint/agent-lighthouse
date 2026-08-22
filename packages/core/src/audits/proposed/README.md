@@ -1,6 +1,6 @@
 # Proposed audits — TODO stubs
 
-58 stub files for the proposed checks from the 2026-08-20 research pass. Every stub compiles, is **not** registered in any category index, and returns `notApplicable` until implemented. Each file's header carries its implementation sketch; full proof lives in [docs/evidence/proposals](../../../../../docs/evidence/proposals/README.md).
+57 stub files for the proposed checks from the 2026-08-20 research pass. Every stub compiles, is **not** registered in any category index, and returns `notApplicable` until implemented. Each file's header carries its implementation sketch; full proof lives in [docs/evidence/proposals](../../../../../docs/evidence/proposals/README.md).
 
 A stub that graduates to a shipped audit is deleted; its bullet leaves the list
 below, the count above drops by one, and the audit's id joins `NEW_IN_V2` in
@@ -34,7 +34,6 @@ the `--experimental` flag work in Plan 6.
 ## agentic-commerce
 
 - [ ] TODO [`acp-endpoint-conformance-probe`](./agentic-commerce/acp-endpoint-conformance-probe.ts) — ACP Endpoint Conformance Probe (grade A, informative, `static-fetch`) · [dossier](../../../../../docs/evidence/proposals/agentic-commerce/acp-endpoint-conformance-probe.md)
-- [ ] TODO [`agent-user-agent-fetch-parity-on-commerce-paths`](./agentic-commerce/agent-user-agent-fetch-parity-on-commerce-paths.ts) — Agent User-Agent Fetch Parity on Commerce Paths (grade A, scored, `static-fetch`) · [dossier](../../../../../docs/evidence/proposals/agentic-commerce/agent-user-agent-fetch-parity-on-commerce-paths.md)
 - [ ] TODO [`buyable-variant-resolution`](./agentic-commerce/buyable-variant-resolution.ts) — Buyable Variant Resolution (grade B, scored, `multi-page`) · [dossier](../../../../../docs/evidence/proposals/agentic-commerce/buyable-variant-resolution.md)
 - [ ] TODO [`cart-handoff-reachability`](./agentic-commerce/cart-handoff-reachability.ts) — Cart Handoff Reachability (grade B, scored, `multi-page`) · [dossier](../../../../../docs/evidence/proposals/agentic-commerce/cart-handoff-reachability.md)
 - [ ] TODO [`offer-truth-consistency`](./agentic-commerce/offer-truth-consistency.ts) — Offer Truth Consistency (grade B, scored, `multi-page`) · [dossier](../../../../../docs/evidence/proposals/agentic-commerce/offer-truth-consistency.md)

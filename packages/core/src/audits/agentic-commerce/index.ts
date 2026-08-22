@@ -11,6 +11,7 @@ export { ProductTransactionCertaintyAudit } from './product-transaction-certaint
 export { AcpPolicyLinkSurfaceAudit } from './acp-policy-link-surface';
 export { LandedCostAndReturnsAudit } from './landed-cost-and-returns';
 export { CheckoutOfferFieldMappingAudit } from './checkout-offer-field-mapping';
+export { AgentUaCommerceParityAudit } from './agent-ua-commerce-parity';
 
 import { OfferSchemaAudit } from './offer-schema';
 import { ProductIdentifiersAudit } from './product-identifiers';
@@ -18,6 +19,7 @@ import { ProductTransactionCertaintyAudit } from './product-transaction-certaint
 import { AcpPolicyLinkSurfaceAudit } from './acp-policy-link-surface';
 import { LandedCostAndReturnsAudit } from './landed-cost-and-returns';
 import { CheckoutOfferFieldMappingAudit } from './checkout-offer-field-mapping';
+import { AgentUaCommerceParityAudit } from './agent-ua-commerce-parity';
 
 /** Every audit that lives in the agentic-commerce category, in map order. */
 export const AGENTIC_COMMERCE_AUDITS = [
@@ -27,4 +29,5 @@ export const AGENTIC_COMMERCE_AUDITS = [
   AcpPolicyLinkSurfaceAudit,
   LandedCostAndReturnsAudit,
   CheckoutOfferFieldMappingAudit,
+  AgentUaCommerceParityAudit,
 ] as const;
