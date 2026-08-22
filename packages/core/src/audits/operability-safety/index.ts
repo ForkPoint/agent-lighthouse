@@ -14,7 +14,6 @@ export { FormActionabilityAudit } from './form-actionability';
 
 // Hand-rolled (cheerio) markup audits — no equivalent rule in the a11y engine.
 export { AriaLandmarksAudit } from './aria-landmarks';
-export { NavAriaLabelAudit } from './nav-aria-label';
 
 // Engine-backed audits (accessibility-tree semantics that AI agents read),
 // powered by the a11y rule engine. One audit = one file; the shared base class,
@@ -54,7 +53,6 @@ import { NoBlockingCaptchaAudit } from './no-blocking-captcha';
 import { FormsNoJsAudit } from './forms-no-js';
 import { FormActionabilityAudit } from './form-actionability';
 import { AriaLandmarksAudit } from './aria-landmarks';
-import { NavAriaLabelAudit } from './nav-aria-label';
 import { LandmarkUniqueAudit } from './landmark-unique';
 import { LabelAudit } from './label';
 import { FormErrorMessagesAudit } from './form-error-messages';
@@ -82,7 +80,6 @@ export const OPERABILITY_SAFETY_AUDITS = [
   FormsNoJsAudit,
   FormActionabilityAudit,
   AriaLandmarksAudit,
-  NavAriaLabelAudit,
   LandmarkUniqueAudit,
   LabelAudit,
   FormErrorMessagesAudit,

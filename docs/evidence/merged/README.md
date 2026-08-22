@@ -44,6 +44,7 @@ in [`../sunset/`](../sunset/).
 | [answer-readiness/numbered-steps](./answer-readiness/numbered-steps.md) | 9.6 | [content-extraction/semantic-lists](../audits/content-extraction/semantic-lists.md) | B |
 | [content-extraction/fast-response-time](./content-extraction/fast-response-time.md) | 8.12 | [content-extraction/server-responsiveness](../audits/content-extraction/server-responsiveness.md) | B |
 | [operability-safety/webmcp-input-quality](./operability-safety/webmcp-input-quality.md) | 5.22 | [operability-safety/form-actionability](../audits/operability-safety/form-actionability.md) | B |
+| [operability-safety/nav-aria-label](./operability-safety/nav-aria-label.md) | 7.3 | [operability-safety/landmark-unique](../audits/operability-safety/landmark-unique.md) | A |
 
 The grade column is the *absorbed* audit's own grade, not the merged audit's. A merged audit is graded
 on the strongest **proven** consumer path among its sources, which is why `ai-bot-directives` ships at
@@ -51,4 +52,4 @@ B rather than inheriting youbot's A — see that dossier's Grade section. Grade 
 prices: `security-header-hygiene` also ships at B, but at tier `informative` (weight 0), because none
 of the four absorbed signals has a documented AI consumer.
 
-Later Plan 4 tasks extend this table as their folds land.
+The v2 consolidation is complete as of Task 8 (2026-08-22): `migration-map.json` has no `merging` entries left, and every row above resolves to a live dossier in [`../audits/`](../audits/).

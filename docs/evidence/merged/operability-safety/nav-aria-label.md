@@ -70,3 +70,5 @@ Requires an aria-label/aria-labelledby on EVERY `<nav>`. That is stricter than t
 
 - 2026-08-20 — code review (11-agent workflow) + evidence research (12-domain workflow, 400 sources).
 - 2026-08-21 — dossier generated; disposition pending final taxonomy design.
+
+**Merged into:** `operability-safety/landmark-unique` (Plan 4, 2026-08-22) — [merged dossier](../../audits/operability-safety/landmark-unique.md)

@@ -843,10 +843,9 @@
   },
   "7.3": {
     "slug": "accessibility/nav-aria-label",
-    "status": "merging",
+    "status": "renamed",
     "to": "operability-safety/landmark-unique",
-    "interim": "operability-safety/nav-aria-label",
-    "link": "docs/evidence/audits/operability-safety/nav-aria-label.md"
+    "link": "docs/evidence/audits/operability-safety/landmark-unique.md"
   },
   "7.4": {
     "slug": "accessibility/landmark-unique",

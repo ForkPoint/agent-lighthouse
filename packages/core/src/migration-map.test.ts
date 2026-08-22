@@ -5,12 +5,20 @@ import { defaultConfig } from './audit-config';
 
 interface Entry {
   slug: string;
+  /**
+   * `merging` is extinct in the data as of Plan 4 Task 8 — every fold has
+   * landed, so every surviving row is a plain `renamed`. The union (and
+   * `interim`) still admit it so the vocabulary is available if a later wave
+   * needs the same transitional state; the extinction test below is what keeps
+   * it from reappearing unnoticed.
+   */
   status: 'removed' | 'renamed' | 'merging';
   reason?: string;
   to?: string;
-  /** Where the signal lives *today*; `to` may already be registered (survivor row) or land in Plan 4. */
+  /** Only ever set on a `merging` row: where the signal lived until its fold landed. */
   interim?: string;
   link: string;
+  /** Historical record on a row whose route to its target is not obvious from `slug`/`to`. */
   note?: string;
 }
 
@@ -57,6 +65,7 @@ const CONSOLIDATION_TARGETS = [
   'content-extraction/semantic-lists',
   'content-extraction/server-responsiveness',
   'operability-safety/form-actionability',
+  'operability-safety/landmark-unique',
 ];
 
 // v2 identity: `category/slug`. Slugs carry digits and dots (json-ld-1-1,
@@ -105,18 +114,17 @@ describe('migration-map.json', () => {
     }
   });
 
-  // A "merging" entry's `to` is where the signal ends up: usually an already
-  // registered survivor audit, sometimes a Plan-4 target that only lands later.
-  // Either way the entry must say where this audit's own check is readable
-  // today, so consumers can resolve `interim ?? to` to something live.
-  it('gives every merging entry an interim id that is registered today', () => {
-    const merging = surviving.filter(([, e]) => e.status === 'merging');
-    expect(merging.length).toBeGreaterThan(0);
-    for (const [id, entry] of merging) {
-      expect(entry.interim, `entry ${id} interim`).toMatch(ID_RE);
-      expect(registeredIds, `entry ${id} interim is registered`).toContain(entry.interim);
-      expect(entry.to, `entry ${id} merges into a different id`).not.toBe(entry.interim);
-    }
+  // "merging" was the transitional status for an audit whose signal still lived
+  // under its own id because its fold target had not landed yet, with `interim`
+  // naming that temporary home. Plan 4 Task 8 landed the last fold, so the
+  // status is extinct and `interim ?? to` collapses to `to` for every consumer.
+  // This inverts the old "every merging entry has a registered interim" check:
+  // there is nothing left to be transitional.
+  it('has no "merging" entries left — every fold has landed', () => {
+    const merging = surviving.filter(([, e]) => e.status === 'merging').map(([id]) => id);
+    expect(merging).toEqual([]);
+    const withInterim = surviving.filter(([, e]) => e.interim !== undefined).map(([id]) => id);
+    expect(withInterim).toEqual([]);
   });
 
   it('points every "renamed" entry at a registered v2 audit', () => {
@@ -127,18 +135,16 @@ describe('migration-map.json', () => {
   });
 
   it('reaches every registered v2 audit from some entry', () => {
-    // Each landed audit is either the direct rename target of a v1 id, or the
-    // interim home of one or more ids that fold into another audit in Plan 4.
-    const reachable = new Set(
-      surviving.flatMap(([, e]) => [e.status === 'merging' ? e.interim! : e.to!]),
-    );
+    // With the folds landed, every registered audit is the `to` of at least one
+    // v1 id — a 1:1 rename, or one of a consolidation's several sources.
+    const reachable = new Set(surviving.map(([, e]) => e.to!));
     const unreachable = registeredIds.filter((id) => !reachable.has(id));
     expect(unreachable).toEqual([]);
   });
 
   it('keys the map by v1 numeric id and only shares a landed audit across a known consolidation', () => {
     for (const [id] of entries) expect(id).toMatch(/^\d+\.\d+$/);
-    const landed = surviving.map(([, e]) => (e.status === 'merging' ? e.interim! : e.to!));
+    const landed = surviving.map(([, e]) => e.to!);
     const counts = new Map<string, number>();
     for (const id of landed) counts.set(id, (counts.get(id) ?? 0) + 1);
     const shared = [...counts].filter(([, n]) => n > 1).map(([id]) => id);
@@ -147,8 +153,7 @@ describe('migration-map.json', () => {
 
   it('links every surviving entry to the dossier of the audit it resolves to', () => {
     for (const [id, entry] of surviving) {
-      const landed = entry.status === 'merging' ? entry.interim! : entry.to!;
-      expect(entry.link, `entry ${id} link`).toBe(`docs/evidence/audits/${landed}.md`);
+      expect(entry.link, `entry ${id} link`).toBe(`docs/evidence/audits/${entry.to}.md`);
     }
   });
 });

@@ -8,8 +8,8 @@ One dossier per audit: what it checks, the 2026-08-20 code-review findings, grad
 | :- | :---- | :------- | :------------- | :------------- | :---------- |
 | 7.1 | [skip-nav](./accessibility/skip-nav.md) | accessibility | delete | D | sunset (approved 2026-08-21) |
 | 7.2 | [aria-landmarks](./operability-safety/aria-landmarks.md) | accessibility | fix | A | keep — fix required |
-| 7.3 | [nav-aria-label](./operability-safety/nav-aria-label.md) | accessibility | merge | A | merge (approved 2026-08-21) |
-| 7.4 | [Landmarks are uniquely identifiable](./operability-safety/landmark-unique.md) | accessibility | fix | A | keep — fix required |
+| 7.3 | [nav-aria-label](../merged/operability-safety/nav-aria-label.md) | accessibility | merge | A | merged into [operability-safety/landmark-unique](./operability-safety/landmark-unique.md) (2026-08-22) |
+| 7.4 | [Landmarks are uniquely identifiable](./operability-safety/landmark-unique.md) | accessibility | fix | A | merged — absorbs 7.3 (2026-08-22) |
 | 7.5 | [Form inputs have associated labels](./operability-safety/label.md) | accessibility | keep | A | keep |
 | 7.6 | [form-error-messages](./operability-safety/form-error-messages.md) | accessibility | delete | A | proposed: redeem as scored (pending triage) |
 | 7.7 | [Buttons and links have accessible names](./operability-safety/accessible-names.md) | accessibility | keep | A | keep |
