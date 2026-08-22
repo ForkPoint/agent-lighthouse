@@ -1,6 +1,6 @@
 # Proposed audits — TODO stubs
 
-67 stub files for the proposed checks from the 2026-08-20 research pass. Every stub compiles, is **not** registered in any category index, and returns `notApplicable` until implemented. Each file's header carries its implementation sketch; full proof lives in [docs/evidence/proposals](../../../../../docs/evidence/proposals/README.md).
+66 stub files for the proposed checks from the 2026-08-20 research pass. Every stub compiles, is **not** registered in any category index, and returns `notApplicable` until implemented. Each file's header carries its implementation sketch; full proof lives in [docs/evidence/proposals](../../../../../docs/evidence/proposals/README.md).
 
 A stub that graduates to a shipped audit is deleted; its bullet leaves the list
 below, the count above drops by one, and the audit's id joins `NEW_IN_V2` in
@@ -34,7 +34,6 @@ the `--experimental` flag work in Plan 6.
 ## agentic-commerce
 
 - [ ] TODO [`acp-endpoint-conformance-probe`](./agentic-commerce/acp-endpoint-conformance-probe.ts) — ACP Endpoint Conformance Probe (grade A, informative, `static-fetch`) · [dossier](../../../../../docs/evidence/proposals/agentic-commerce/acp-endpoint-conformance-probe.md)
-- [ ] TODO [`acp-link-surface-completeness-the-8-required-policy-link-typ`](./agentic-commerce/acp-link-surface-completeness-the-8-required-policy-link-typ.ts) — ACP Link-Surface Completeness (the 8 required policy link types) (grade A, scored, `multi-page`) · [dossier](../../../../../docs/evidence/proposals/agentic-commerce/acp-link-surface-completeness-the-8-required-policy-link-typ.md)
 - [ ] TODO [`agent-user-agent-fetch-parity-on-commerce-paths`](./agentic-commerce/agent-user-agent-fetch-parity-on-commerce-paths.ts) — Agent User-Agent Fetch Parity on Commerce Paths (grade A, scored, `static-fetch`) · [dossier](../../../../../docs/evidence/proposals/agentic-commerce/agent-user-agent-fetch-parity-on-commerce-paths.md)
 - [ ] TODO [`checkout-eligible-offer-field-mapping`](./agentic-commerce/checkout-eligible-offer-field-mapping.ts) — Checkout-Eligible Offer Field Mapping (grade A, scored, `multi-page`) · [dossier](../../../../../docs/evidence/proposals/agentic-commerce/checkout-eligible-offer-field-mapping.md)
 - [ ] TODO [`landed-cost-and-returns-machine-readability`](./agentic-commerce/landed-cost-and-returns-machine-readability.ts) — Landed-Cost and Returns Machine Readability (grade A, scored, `static-fetch`) · [dossier](../../../../../docs/evidence/proposals/agentic-commerce/landed-cost-and-returns-machine-readability.md)

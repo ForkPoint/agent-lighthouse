@@ -78,3 +78,7 @@ export * from './config-loader';
 export { detectWafProtection } from './waf-detector';
 export { logger } from './logger';
 
+
+// ACP policy-link resolution, reused by the checkout-eligibility audits.
+export { resolvePolicyLinks, ACP_LINK_TYPES } from './audits/agentic-commerce/acp-policy-link-surface';
+export type { AcpLinkType } from './audits/agentic-commerce/acp-policy-link-surface';

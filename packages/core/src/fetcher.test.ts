@@ -465,6 +465,20 @@ describe('fetcher.fetch — body and headers edge cases', () => {
     expect(result.headers['x-content-type-options']).toBe('nosniff, nosniff');
   });
 
+  it('uses a non-following dispatcher when followRedirects is false', async () => {
+    mockRequest.mockResolvedValue(mockResponse(301, '', { location: '/next' }) as any);
+
+    const fetcher = createFetcher();
+    await fetcher.fetch({ url: 'https://example.com/a' });
+    await fetcher.fetch({ url: 'https://example.com/a', followRedirects: false });
+
+    const following = mockRequest.mock.calls[0][1]?.dispatcher;
+    const notFollowing = mockRequest.mock.calls[1][1]?.dispatcher;
+    expect(following).toBeDefined();
+    expect(notFollowing).toBeDefined();
+    expect(notFollowing).not.toBe(following);
+  });
+
   it('ignores header values that are neither a string nor an array', async () => {
     mockRequest.mockResolvedValue(
       mockResponse(200, '', { 'x-weird': undefined as unknown as string }) as any,

@@ -9,6 +9,8 @@ import { isPrivateIp } from './url-utils';
 import { logger } from './logger';
 
 const redirectAgent = new Agent().compose(interceptors.redirect({ maxRedirections: 5 }));
+/** Used when a caller needs to see each hop of a redirect chain itself. */
+const noRedirectAgent = new Agent();
 
 export interface FetchOptions {
   url: string;
@@ -115,6 +117,7 @@ export function createFetcher() {
       contentType,
       userAgent,
       headers: extraHeaders,
+      followRedirects = true,
       signal: externalSignal,
     } = options;
 
@@ -154,7 +157,7 @@ export function createFetcher() {
         headers: reqHeaders,
         body: requestBody,
         signal,
-        dispatcher: redirectAgent,
+        dispatcher: followRedirects ? redirectAgent : noRedirectAgent,
       });
 
       ttfbMs = performance.now() - start;

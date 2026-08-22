@@ -7,13 +7,18 @@ export { OfferSchemaAudit } from './offer-schema';
 export { ProductIdentifiersAudit } from './product-identifiers';
 export { ProductTransactionCertaintyAudit } from './product-transaction-certainty';
 
+// New in v2 (Plan 5): graduated from the proposal backlog on 2026-08-22.
+export { AcpPolicyLinkSurfaceAudit } from './acp-policy-link-surface';
+
 import { OfferSchemaAudit } from './offer-schema';
 import { ProductIdentifiersAudit } from './product-identifiers';
 import { ProductTransactionCertaintyAudit } from './product-transaction-certainty';
+import { AcpPolicyLinkSurfaceAudit } from './acp-policy-link-surface';
 
 /** Every audit that lives in the agentic-commerce category, in map order. */
 export const AGENTIC_COMMERCE_AUDITS = [
   OfferSchemaAudit,
   ProductIdentifiersAudit,
   ProductTransactionCertaintyAudit,
+  AcpPolicyLinkSurfaceAudit,
 ] as const;

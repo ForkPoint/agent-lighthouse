@@ -1,18 +1,19 @@
 ---
-check: acp-link-surface-completeness-the-8-required-policy-link-typ
-title: "ACP Link-Surface Completeness (the 8 required policy link types)"
-domain: agentic-commerce
-status: proposed
+audit: agentic-commerce/acp-policy-link-surface
+category: agentic-commerce
+source_file: packages/core/src/audits/agentic-commerce/acp-policy-link-surface.ts
+slug: acp-policy-link-surface
 evidence_grade: A
-uniqueness: unique
-difficulty: multi-page
-scoring_tier: scored
+tier: scored
+disposition: "new in v2 — graduated from proposal 2026-08-22"
 reviewed: 2026-08-20
+graduated: 2026-08-22
 ---
+
 
 # ACP Link-Surface Completeness (the 8 required policy link types)
 
-> Proposed check. Evidence grade **A** · unique · implementation: `multi-page`
+> Shipped in v2. Evidence grade **A** · scored tier · unique · implementation: `multi-page`
 
 ## What it checks
 
@@ -52,3 +53,31 @@ Tier per evidence policy: **scored** — grade A meets the A/B bar required for 
 ## Review history
 
 - 2026-08-20 — proposed by the novel-checks research pass (10-agent evidence workflow); sources URL-verified at research time.
+
+## Implementation deviations
+
+- **The fetcher's declared `followRedirects` option was inert.** It is now
+  honoured (`packages/core/src/fetcher.ts`): `false` selects a dispatcher with
+  no redirect interceptor, so this audit can walk the chain one hop at a time
+  and count it. Pinned in `packages/core/src/fetcher.test.ts`.
+- **Registrable domain uses a short public-suffix list**, not a bundled PSL
+  snapshot, because the global constraint forbids new runtime dependencies. It
+  covers the common multi-label suffixes (`co.uk`, `com.au`, …); a merchant on
+  an exotic suffix may see a same-site link reported as off-domain.
+- **The no-JS guard is a text-versus-body-size comparison.** Under 500
+  characters of extracted text with a response body over 2,000 characters is
+  reported as a client-rendered shell; under 500 characters with a small body is
+  reported as a thin page. Scripts, styles and templates are removed before the
+  text is measured.
+- **Classification is path-first, anchor-text-second**, so an opaque path is
+  still classified by its label and a mislabelled link is still classified by
+  its path. The first match in document order wins per type.
+- `resolvePolicyLinks(ctx)` is exported from the package root so other
+  checkout-eligibility audits reuse the resolved `terms_of_use` and
+  `privacy_policy` targets rather than re-deriving them.
+
+## Deferred
+
+- The sampled-PDP sweep is implicit: the audit reads every page already in the
+  scan context rather than issuing its own PDP fetches.
+- `<link rel>` policy hints are not read; every candidate comes from `<a href>`.

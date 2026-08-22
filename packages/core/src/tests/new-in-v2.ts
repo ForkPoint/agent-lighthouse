@@ -21,6 +21,7 @@ export const NEW_IN_V2: readonly string[] = [
   'content-extraction/hydration-payload-share',
   'answer-readiness/snippet-gate-coverage',
   'answer-readiness/text-fragment-addressability',
+  'agentic-commerce/acp-policy-link-surface',
 ];
 
 /** The 148 audits Plan 4 closed the v2 migration on. Never changes again. */
