@@ -26,7 +26,7 @@ Every task's requirements implicitly include this section.
 
 ## Roster
 
-24 audits ship. Source of the number: 32 grade-A stubs, minus 5 tool-survey stubs archived as research (Task 2), minus 1 duplicate folded into its twin (Task 2), minus `agent-operability/overlay-interception-hazard` (needs a headless browser, stays a stub), minus `agentic-commerce/acp-endpoint-conformance-probe` (see below).
+24 audits ship. Source of the number: 32 grade-A stubs, minus 5 grade-A tool-survey stubs archived as research (Task 2, which archived 6 in total — the sixth is grade B), minus 1 duplicate folded into its twin (Task 2), minus `agent-operability/overlay-interception-hazard` (needs a headless browser, stays a stub), minus `agentic-commerce/acp-endpoint-conformance-probe` (see below).
 
 | # | New id | Source stub | Tier | Needs |
 | :-- | :-- | :-- | :-- | :-- |
@@ -61,7 +61,7 @@ Category mapping follows the v2 spec line 92 map recorded in `docs/superpowers/H
 
 - **`agentic-commerce/acp-endpoint-conformance-probe`** (grade A, informative). Its own dossier records that ACP defines **no** discovery mechanism — no registry, no `.well-known` path — so the audit needs an operator-supplied base URL. No such config surface exists: `ScanOptions`, the CLI flag set and the MCP tool schema would all have to grow one. That plumbing belongs with the `--experimental` flag work in Plan 6. The stub stays in `proposed/` and this deferral is recorded in Task 2's README edit.
 - **`agent-operability/overlay-interception-hazard`** (grade A, headless-browser) — one of the 6 infra-blocked stubs. Unchanged.
-- **The 45 grade-B stubs** — Plan 5b, after this wave lands.
+- **The 44 grade-B stubs** — Plan 5b, after this wave lands. (45 minus the Lighthouse-ARD survey archived in Task 2.)
 
 ---
 
@@ -249,9 +249,9 @@ Two roster defects block a clean wave. First, five `competitor-gap-verify` stubs
 
 **Files:**
 - Create: `docs/evidence/research/README.md`
-- Move: 5 dossiers from `docs/evidence/proposals/competitor-gap-verify/` → `docs/evidence/research/`
+- Move: 6 dossiers from `docs/evidence/proposals/competitor-gap-verify/` → `docs/evidence/research/`
 - Move: `docs/evidence/proposals/competitor-gap-verify/ai-crawler-edge-parity.md` → `docs/evidence/merged/access-crawl-control/ai-crawler-edge-parity.md`
-- Delete: 6 stub files under `packages/core/src/audits/proposed/competitor-gap-verify/`
+- Delete: 7 stub files under `packages/core/src/audits/proposed/competitor-gap-verify/`
 - Modify: `packages/core/src/audits/proposed/README.md`
 - Modify: `docs/evidence/proposals/README.md`
 
@@ -1398,7 +1398,7 @@ rg -c '' packages/core/src/tests/new-in-v2.ts
 rg -n 'TODO: implement proposed audit' packages/core/src/audits --type ts | wc -l
 ```
 
-Expected: 53 remaining proposal dossiers (77 stubs minus the 24 graduated), `NEW_IN_V2` holding exactly 24 ids, and 53 remaining stub markers. Any mismatch is an incomplete task.
+Expected: 52 remaining proposal dossiers (76 stubs minus the 24 graduated), `NEW_IN_V2` holding exactly 24 ids, and 52 remaining stub markers. Any mismatch is an incomplete task.
 
 - [ ] **Step 3: Update the audit count in the CLI README**
 
