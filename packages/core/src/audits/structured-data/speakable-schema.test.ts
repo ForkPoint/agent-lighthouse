@@ -4,67 +4,242 @@ import { mockPageContext, mockCheckContext } from '../../__tests__/test-utils';
 
 const ld = (obj: unknown) =>
   `<script type="application/ld+json">${JSON.stringify(obj)}</script>`;
-const page = (head: string) =>
+
+/** A homepage (index 0, path `/`) — never a news/article page on its own. */
+const homepage = (head: string) =>
   mockPageContext('https://example.com/', `<html><head>${head}</head><body></body></html>`, 0);
+
+/** A non-first page under /news/ classifies as `content`, the news/article page type. */
+const newsPage = (head: string, path = 'https://example.com/news/story') =>
+  mockPageContext(path, `<html><head>${head}</head><body></body></html>`, 1);
+
+const speakableSpec = {
+  '@type': 'SpeakableSpecification',
+  cssSelector: ['.headline', '.summary'],
+};
+
+const newsArticle = (extra: Record<string, unknown> = {}) => ({
+  '@context': 'https://schema.org',
+  '@type': 'NewsArticle',
+  headline: 'A Story',
+  ...extra,
+});
 
 describe('SpeakableSchemaAudit', () => {
   const audit = new SpeakableSchemaAudit();
 
-  it('passes when a schema has speakable with a cssSelector array', () => {
-    const ctx = mockCheckContext([
-      page(
-        ld({
-          '@context': 'https://schema.org',
-          '@type': 'WebPage',
-          name: 'Home',
-          speakable: { '@type': 'SpeakableSpecification', cssSelector: ['.title', '.summary'] },
-        }),
-      ),
-    ]);
-    const result = audit.audit(ctx);
-    expect(result.status).toBe('pass');
-    expect(result.message).toContain('Speakable property');
+  describe('meta', () => {
+    it('is gated to news/article page types', () => {
+      expect(SpeakableSchemaAudit.meta.applicablePageTypes).toEqual(['content']);
+    });
+
+    it('keeps grade A / tier scored / weight 1.0 per the approved dossier', () => {
+      expect(SpeakableSchemaAudit.meta.evidenceGrade).toBe('A');
+      expect(SpeakableSchemaAudit.meta.tier).toBe('scored');
+      expect(SpeakableSchemaAudit.meta.weight).toBe(1.0);
+      expect(SpeakableSchemaAudit.meta.scoreDisplayMode).toBe('ternary');
+    });
+
+    it('never claims Alexa or Siri consume speakable', () => {
+      const meta = SpeakableSchemaAudit.meta;
+      const copy = [
+        meta.description,
+        meta.guidance?.impact ?? '',
+        meta.guidance?.fix ?? '',
+        meta.guidance?.code ?? '',
+        (meta.guidance?.tags ?? []).join(' '),
+      ].join(' ');
+      expect(copy).not.toMatch(/alexa/i);
+      expect(copy).not.toMatch(/siri/i);
+      expect(copy).toMatch(/Google Assistant/);
+    });
   });
 
-  it('detects speakable on a schema nested inside @graph', () => {
-    const ctx = mockCheckContext([
-      page(
-        ld({
-          '@context': 'https://schema.org',
-          '@graph': [
-            {
-              '@type': 'Article',
-              headline: 'X',
-              speakable: { '@type': 'SpeakableSpecification', cssSelector: ['.headline'] },
-            },
-          ],
-        }),
-      ),
-    ]);
-    const result = audit.audit(ctx);
-    expect(result.status).toBe('pass');
+  describe('applicability gate', () => {
+    it('is not applicable when no news/article page was scanned', () => {
+      const ctx = mockCheckContext([
+        homepage(ld({ '@context': 'https://schema.org', '@type': 'Organization', name: 'Acme' })),
+      ]);
+      const result = audit.audit(ctx);
+      expect(result.status).toBe('na');
+      expect(result.message).toContain('No news or article page');
+    });
+
+    it('is not applicable for a product page with no article content', () => {
+      const ctx = mockCheckContext([
+        mockPageContext(
+          'https://example.com/products/widget',
+          `<html><head>${ld({ '@context': 'https://schema.org', '@type': 'Product', name: 'Widget' })}</head><body></body></html>`,
+          1,
+        ),
+      ]);
+      expect(audit.audit(ctx).status).toBe('na');
+    });
+
+    it('brings a non-content page into scope when it carries Article markup', () => {
+      const ctx = mockCheckContext([
+        homepage(ld(newsArticle({ speakable: speakableSpec }))),
+      ]);
+      expect(audit.audit(ctx).status).toBe('pass');
+    });
   });
 
-  it('fails when no speakable property is present', () => {
-    const ctx = mockCheckContext([
-      page(ld({ '@context': 'https://schema.org', '@type': 'WebPage', name: 'Home' })),
-    ]);
-    const result = audit.audit(ctx);
-    expect(result.status).toBe('fail');
-    expect(result.message).toContain('No speakable property');
+  describe('detection', () => {
+    it('passes when a news page carries speakable with a cssSelector array', () => {
+      const ctx = mockCheckContext([newsPage(ld(newsArticle({ speakable: speakableSpec })))]);
+      const result = audit.audit(ctx);
+      expect(result.status).toBe('pass');
+      expect(result.message).toContain('1 of 1');
+    });
+
+    it('accepts a single-string cssSelector (schema.org permits it)', () => {
+      const ctx = mockCheckContext([
+        newsPage(
+          ld(
+            newsArticle({
+              speakable: { '@type': 'SpeakableSpecification', cssSelector: '.article-body' },
+            }),
+          ),
+        ),
+      ]);
+      expect(audit.audit(ctx).status).toBe('pass');
+    });
+
+    it('accepts xpath as the alternative selector property', () => {
+      const ctx = mockCheckContext([
+        newsPage(
+          ld(
+            newsArticle({
+              speakable: {
+                '@type': 'SpeakableSpecification',
+                xpath: ['/html/head/title'],
+              },
+            }),
+          ),
+        ),
+      ]);
+      expect(audit.audit(ctx).status).toBe('pass');
+    });
+
+    it('accepts an array of SpeakableSpecification nodes', () => {
+      const ctx = mockCheckContext([
+        newsPage(
+          ld(
+            newsArticle({
+              speakable: [
+                { '@type': 'SpeakableSpecification' },
+                { '@type': 'SpeakableSpecification', cssSelector: ['.headline'] },
+              ],
+            }),
+          ),
+        ),
+      ]);
+      expect(audit.audit(ctx).status).toBe('pass');
+    });
+
+    it('detects speakable on a node nested inside @graph', () => {
+      const ctx = mockCheckContext([
+        newsPage(
+          ld({
+            '@context': 'https://schema.org',
+            '@graph': [
+              { '@type': 'Organization', name: 'Acme' },
+              { '@type': 'Article', headline: 'X', speakable: speakableSpec },
+            ],
+          }),
+        ),
+      ]);
+      expect(audit.audit(ctx).status).toBe('pass');
+    });
+
+    it('accepts speakable on a WebPage node', () => {
+      const ctx = mockCheckContext([
+        newsPage(
+          ld({
+            '@context': 'https://schema.org',
+            '@type': 'WebPage',
+            name: 'Story',
+            speakable: speakableSpec,
+          }),
+        ),
+      ]);
+      expect(audit.audit(ctx).status).toBe('pass');
+    });
+
+    it('accepts an array @type that includes an eligible host type', () => {
+      const ctx = mockCheckContext([
+        newsPage(
+          ld({
+            '@context': 'https://schema.org',
+            '@type': ['CreativeWork', 'NewsArticle'],
+            headline: 'X',
+            speakable: speakableSpec,
+          }),
+        ),
+      ]);
+      expect(audit.audit(ctx).status).toBe('pass');
+    });
   });
 
-  it('fails when speakable cssSelector is not an array', () => {
-    const ctx = mockCheckContext([
-      page(
-        ld({
-          '@context': 'https://schema.org',
-          '@type': 'WebPage',
-          speakable: { '@type': 'SpeakableSpecification', cssSelector: '.title' },
-        }),
-      ),
-    ]);
-    const result = audit.audit(ctx);
-    expect(result.status).toBe('fail');
+  describe('rejection', () => {
+    it('fails when an article page carries no speakable at all', () => {
+      const ctx = mockCheckContext([newsPage(ld(newsArticle()))]);
+      const result = audit.audit(ctx);
+      expect(result.status).toBe('fail');
+      expect(result.message).toContain('No speakable');
+    });
+
+    it('fails when speakable sits on a host type that does not define it', () => {
+      const ctx = mockCheckContext([
+        newsPage(
+          ld({
+            '@context': 'https://schema.org',
+            '@graph': [
+              { '@type': 'NewsArticle', headline: 'X' },
+              { '@type': 'Organization', name: 'Acme', speakable: speakableSpec },
+            ],
+          }),
+        ),
+      ]);
+      expect(audit.audit(ctx).status).toBe('fail');
+    });
+
+    it('fails when SpeakableSpecification carries no selector at all', () => {
+      const ctx = mockCheckContext([
+        newsPage(ld(newsArticle({ speakable: { '@type': 'SpeakableSpecification' } }))),
+      ]);
+      expect(audit.audit(ctx).status).toBe('fail');
+    });
+
+    it('fails when the selector is an empty string', () => {
+      const ctx = mockCheckContext([
+        newsPage(
+          ld(newsArticle({ speakable: { '@type': 'SpeakableSpecification', cssSelector: '  ' } })),
+        ),
+      ]);
+      expect(audit.audit(ctx).status).toBe('fail');
+    });
+  });
+
+  describe('coverage', () => {
+    it('warns when only some article pages carry speakable', () => {
+      const ctx = mockCheckContext([
+        newsPage(ld(newsArticle({ speakable: speakableSpec })), 'https://example.com/news/one'),
+        newsPage(ld(newsArticle()), 'https://example.com/news/two'),
+      ]);
+      const result = audit.audit(ctx);
+      expect(result.status).toBe('warn');
+      expect(result.message).toContain('1 of 2');
+    });
+
+    it('passes when every article page carries speakable', () => {
+      const ctx = mockCheckContext([
+        newsPage(ld(newsArticle({ speakable: speakableSpec })), 'https://example.com/news/one'),
+        newsPage(ld(newsArticle({ speakable: speakableSpec })), 'https://example.com/news/two'),
+      ]);
+      const result = audit.audit(ctx);
+      expect(result.status).toBe('pass');
+      expect(result.message).toContain('2 of 2');
+    });
   });
 });
