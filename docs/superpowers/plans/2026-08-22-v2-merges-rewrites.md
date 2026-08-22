@@ -8,7 +8,7 @@
 
 **Tech Stack:** TypeScript, zod, vitest, changesets. Branch: continue on `feat/v2-engine`.
 
-**Data sources:** `docs/evidence/v2-audit-map.md` (map, user-approved 2026-08-21) · `packages/core/migration-map.json` (34 merging entries) · `packages/core/src/audits/REWORK-TODO.md` (9 approved + 15 pending-triage redeems — executing this plan approves the 15) · dossiers under `docs/evidence/audits/` and `docs/evidence/deletions/`.
+**Data sources:** `docs/evidence/v2-audit-map.md` (map, user-approved 2026-08-21) · `packages/core/migration-map.json` (34 merging entries) · `packages/core/src/audits/REWORK-TODO.md` (9 approved redeems execute; of the 15 pending-triage entries, only those that coincide with map-approved merges/consolidations execute — the 6 pure rewrites are SKIPPED per user decision 2026-08-22: webmcp-registered-tools, ai-content-declaration, tdm-rep, form-error-messages, direct-definitions, cors-api-routes) · dossiers under `docs/evidence/audits/` and `docs/evidence/deletions/`.
 
 ## Global Constraints
 
@@ -152,29 +152,29 @@ Requirement source per file = its `TODO(redeem)` header + linked dossier "Requir
 - [ ] `ai-catalog-metadata` — check real ARD metadata fields (dossier names them).
 - [ ] `ai-catalog-urls` — liveness of manifest-listed endpoints per ARD.
 - [ ] `webmcp-declarative-forms` — align to the W3C explainer/Baseline `declarative-webmcp` attribute names (WPT-backed).
-- [ ] `webmcp-registered-tools` — replace manifest-file check with registered-tools detection per Lighthouse 13.3 precedent; stays `tier: 'experimental'`, weight 0; RENAME class `WebmcpManifestAudit` → `WebmcpRegisteredToolsAudit`.
 - [ ] Update dossiers (grades per REWORK-TODO), drop the executed entries from REWORK-TODO.md. Full gates. Commit `feat(core)!: rewrite agent catalog + WebMCP audits to real specs`.
+
+SKIPPED by user decision (2026-08-22): `webmcp-registered-tools` — pending-triage redeem not approved; keeps its `TODO(redeem)` marker and current behavior.
 
 ---
 
-### Task 11: Rewrites — access-crawl-control + content signals (5 files)
+### Task 11: Rewrites — crawl-control + content signals (3 files)
 
 - [ ] `access-crawl-control/sensitive-paths` — surgery per dossier (RFC 9309 path semantics, vendor-documented Disallow examples).
-- [ ] `access-crawl-control/ai-content-declaration` — check the REAL directive names (noai/noimageai/tdm-reservation); stays experimental/weight 0.
-- [ ] `access-crawl-control/tdm-rep` — fix internal incoherence; flip tier `informative` → `experimental` (REWORK-TODO target; weight stays 0).
 - [ ] `content-extraction/aside-element` — mechanism verbatim-correct per dossier; fix what the TODO(redeem) header lists; drop stale `deletions/` pointer comments.
 - [ ] `answer-readiness/trust-signals` — rebuild on the GEO-benchmark evidence per dossier.
 - [ ] Dossiers + REWORK-TODO.md updated. Full gates. Commit `feat(core)!: rewrite crawl-control and content-signal audits per evidence`.
 
+SKIPPED by user decision (2026-08-22): `ai-content-declaration`, `tdm-rep` — pending-triage redeems not approved; markers and current behavior stay.
+
 ---
 
-### Task 12: Rewrites — remaining redeems (4 files)
+### Task 12: Rewrite — speakable-schema (1 file)
 
 - [ ] `structured-data/speakable-schema` — page-type gate to news/article publishers; delete the Alexa/Siri claim.
-- [ ] `operability-safety/form-error-messages` — aria-describedby/aria-errormessage linkage on invalid-state inputs.
-- [ ] `answer-readiness/direct-definitions` — language-neutral structural detector; notApplicable without definitional intent.
-- [ ] `agent-interfaces/cors-api-routes` — notApplicable unless a public API surface exists.
-- [ ] Dossiers + REWORK-TODO.md: after this task the file lists ONLY deliberate deferrals (delete the stale `mobile-friendly` entry — audit sunset in Plan 3). Full gates. Commit `feat(core)!: rewrite form, definition and CORS audits`.
+- [ ] Dossiers + REWORK-TODO.md: delete the stale `mobile-friendly` entry (audit sunset in Plan 3); the 6 user-skipped pending redeems (`webmcp-registered-tools`, `ai-content-declaration`, `tdm-rep`, `form-error-messages`, `direct-definitions`, `cors-api-routes`) STAY listed under "pending approval" with a note `skipped 2026-08-22 — awaiting user triage`. Full gates. Commit `feat(core)!: redeem speakable-schema per approved dossier`.
+
+SKIPPED by user decision (2026-08-22): `form-error-messages`, `direct-definitions`, `cors-api-routes` — pending-triage redeems not approved.
 
 ---
 
