@@ -37,6 +37,7 @@ export { HttpsEnabledAudit } from './https-enabled';
 // New in v2 (Plan 5): graduated from the proposal backlog on 2026-08-22.
 export { RobotsAiGroupShadowingAudit } from './robots-ai-group-shadowing';
 export { AiCrawlerEdgeParityAudit } from './ai-crawler-edge-parity';
+export { BotContentDeltaDeclaredAudit } from './bot-content-delta-declared';
 
 import { NoNofollowAudit } from './no-nofollow';
 import { NoRedirectChainsAudit } from './no-redirect-chains';
@@ -69,6 +70,7 @@ import { AiContentDeclarationAudit } from './ai-content-declaration';
 import { HttpsEnabledAudit } from './https-enabled';
 import { RobotsAiGroupShadowingAudit } from './robots-ai-group-shadowing';
 import { AiCrawlerEdgeParityAudit } from './ai-crawler-edge-parity';
+import { BotContentDeltaDeclaredAudit } from './bot-content-delta-declared';
 
 /** Every audit that lives in the access-crawl-control category, in map order. */
 export const ACCESS_CRAWL_CONTROL_AUDITS = [
@@ -103,4 +105,5 @@ export const ACCESS_CRAWL_CONTROL_AUDITS = [
   HttpsEnabledAudit,
   RobotsAiGroupShadowingAudit,
   AiCrawlerEdgeParityAudit,
+  BotContentDeltaDeclaredAudit,
 ] as const;

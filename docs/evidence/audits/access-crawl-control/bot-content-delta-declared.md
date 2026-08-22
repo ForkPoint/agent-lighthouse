@@ -1,18 +1,19 @@
 ---
-check: bot-specific-content-delta-declared-not-cloaked
-title: "Bot-specific content delta declared, not cloaked"
-domain: bot-auth-access
-status: proposed
+audit: access-crawl-control/bot-content-delta-declared
+category: access-crawl-control
+source_file: packages/core/src/audits/access-crawl-control/bot-content-delta-declared.ts
+slug: bot-content-delta-declared
 evidence_grade: A
-uniqueness: unique
-difficulty: multi-page
-scoring_tier: scored
+tier: scored
+disposition: "new in v2 — graduated from proposal 2026-08-22"
 reviewed: 2026-08-20
+graduated: 2026-08-22
 ---
+
 
 # Bot-specific content delta declared, not cloaked
 
-> Proposed check. Evidence grade **A** · unique · implementation: `multi-page`
+> Shipped in v2. Evidence grade **A** · scored tier · unique · implementation: `multi-page`
 
 ## What it checks
 
@@ -48,3 +49,42 @@ Tier per evidence policy: **scored** — grade A meets the A/B bar required for 
 ## Review history
 
 - 2026-08-20 — proposed by the novel-checks research pass (10-agent evidence workflow); sources URL-verified at research time.
+
+## Implementation deviations
+
+- **Three crawler UAs, three sampled URLs.** The sketch says 3-5 URLs; three
+  keeps the probe count at nine per scan, and every probe is shared with the
+  other UA-parity audits through `sharedUaProbes`, so overlapping URLs cost one
+  request between them.
+- **URLs come from the sitemap sample.** The sketch allows internal links as a
+  fallback; the sitemap sample is deterministic (`sampleEntries`, even stride),
+  so a re-scan compares the same pages.
+- **A `soft-block` probe is compared, not discarded.** The shared gatherer gives
+  that class to a 200 carrying under 40% of the baseline text — which is exactly
+  the delta this audit adjudicates. Every other block class means the crawler
+  never got a page at all, and that is
+  `access-crawl-control/ai-crawler-edge-parity`'s finding, not this one's.
+- **`isAccessibleForFree` is read as both a boolean and the strings
+  "false"/"False"**, which is how CMS templates emit it.
+- **The `cssSelector` is resolved with cheerio against the exact body the
+  browser baseline received**, not against the crawler response — the
+  declaration describes what a reader sees and the crawler does not.
+- **An unparseable selector counts as resolving to nothing.** It cannot match an
+  element, and reporting a parse error separately would split one defect in two.
+
+## Deferred
+
+- **No JavaScript execution.** A site that injects the restricted body after
+  hydration serves an empty selector target in the HTML, and reads here as a
+  silent no-op. That is the honest reading of the served DOM, but a headless
+  browser would settle it.
+- **The thresholds are fixed** at a 0.6 length ratio and 0.7 shingle
+  similarity, per the sketch. A page whose boilerplate dominates its main
+  content can cross either line without a real delta; both metrics are always
+  reported so the reader can see which one fired.
+- **Only the first complete declaration is read.** A page carrying several
+  CreativeWork nodes with different `hasPart` selectors is judged on the first
+  that validates.
+- **The inverse case is reported, not diagnosed.** Bot text materially longer
+  than the browser text is flagged as a bot-only variant; deciding whether it is
+  keyword stuffing or a legitimately expanded print view needs a human.

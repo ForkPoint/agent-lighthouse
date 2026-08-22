@@ -74,6 +74,11 @@ export interface UaProbe {
   textRatio: number;
   /** The shortest decisive fact — a header line, a status, a body marker. */
   evidence: string;
+  /** Main-content text of each side, kept so a caller can diff them word by word. */
+  baselineText: string;
+  probeText: string;
+  /** The raw baseline body, so a caller can resolve declared markup against the DOM a browser got. */
+  baselineBody: string;
 }
 
 /** Below this share of the baseline's text, a 200 is a block wearing a 200. */
@@ -82,9 +87,9 @@ const SOFT_BLOCK_RATIO = 0.4;
 /** Anubis serves this script path and this phrase on its interstitial. */
 const ANUBIS_MARKERS = ['/.within.website/x/cmd/anubis/', 'Protected by Anubis'];
 
-function mainTextLength(body: string): number {
-  if (!body.trim()) return 0;
-  return getMainContentText(parseHtml(body)).length;
+function mainText(body: string): string {
+  if (!body.trim()) return '';
+  return getMainContentText(parseHtml(body));
 }
 
 /**
@@ -97,22 +102,39 @@ function mainTextLength(body: string): number {
 export function classifyResponse(
   baseline: FetchResult,
   probe: FetchResult,
-): { blockClass: BlockClass; textRatio: number; evidence: string } {
+): {
+  blockClass: BlockClass;
+  textRatio: number;
+  evidence: string;
+  baselineText: string;
+  probeText: string;
+  baselineBody: string;
+} {
   const baselineOk = baseline.status >= 200 && baseline.status < 300;
   if (!baselineOk) {
     return {
       blockClass: 'ok',
       textRatio: 1,
       evidence: 'baseline blocked; nothing bot-specific to report',
+      baselineText: '',
+      probeText: '',
+      baselineBody: baseline.body,
     };
   }
 
-  const baselineLength = mainTextLength(baseline.body);
-  const probeLength = mainTextLength(probe.body);
+  const baselineText = mainText(baseline.body);
+  const probeText = mainText(probe.body);
   // No baseline text means no denominator; a ratio of 1 says "no shortfall
   // measured" rather than inventing a division by zero.
-  const textRatio = baselineLength === 0 ? 1 : probeLength / baselineLength;
-  const done = (blockClass: BlockClass, evidence: string) => ({ blockClass, textRatio, evidence });
+  const textRatio = baselineText.length === 0 ? 1 : probeText.length / baselineText.length;
+  const done = (blockClass: BlockClass, evidence: string) => ({
+    blockClass,
+    textRatio,
+    evidence,
+    baselineText,
+    probeText,
+    baselineBody: baseline.body,
+  });
 
   const cfMitigated = probe.headers['cf-mitigated'];
   if (cfMitigated && cfMitigated.toLowerCase().includes('challenge')) {
