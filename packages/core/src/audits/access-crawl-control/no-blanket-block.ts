@@ -1,7 +1,7 @@
 import type { AuditMeta, AuditResult } from "../../types";
 import { Audit } from "../../audit";
 import type { CheckContext } from '../../check-context';
-import { parseRobotsTxt, isBlanketBlocked } from './_robots-txt-helpers';
+import { parseRobotsTxt, isPathAllowed } from './_robots-txt-helpers';
 import { weightForGrade } from '../../scorer';
 
 export class NoBlanketBlockAudit extends Audit {
@@ -47,9 +47,10 @@ export class NoBlanketBlockAudit extends Audit {
     }
 
     const groups = parseRobotsTxt(robotsFile.body);
-    const wildcardGroups = groups.filter((g) => g.userAgent === '*');
-    const wildcardRules = wildcardGroups.flatMap((g) => g.rules);
-    const blocked = isBlanketBlocked(wildcardRules);
+    // Group selection and longest-match resolution both come from the shared
+    // RFC 9309 gatherer: `isPathAllowed` picks the `*` groups itself, so the
+    // audit no longer filters and flattens the rule list by hand.
+    const blocked = !isPathAllowed(groups, '*', '/');
 
     if (blocked) {
       return this.fail(

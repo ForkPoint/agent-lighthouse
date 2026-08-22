@@ -14,6 +14,15 @@ import { weightForGrade } from '../../scorer';
  * Returns the bots from the given list that have at least one explicit
  * User-agent group in robots.txt (matched case-insensitively, including
  * aliases like ClaudeBot for anthropic-ai).
+ *
+ * Deliberately NOT the gatherer's `matchesUserAgent`: that compares RFC 9309
+ * product tokens, so it also counts a `User-agent: GPTBot/1.1` group as an
+ * explicit GPTBot group, while this audit has always required the token to be
+ * written bare. Switching would change this audit's verdict on versioned
+ * user-agent lines (see the `versioned-product-token` fixture in
+ * `_robots-consumers.differential.test.ts`, where `gptbot` already reads the
+ * versioned group and this audit does not), so the exact-match rule stays
+ * until that behaviour change is approved on its own dossier.
  */
 function explicitlyNamed(
   groups: RobotsTxtGroup[],
