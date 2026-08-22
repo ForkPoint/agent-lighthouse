@@ -7,17 +7,19 @@ slug: direct-definitions
 review_verdict: delete
 severity: medium
 evidence_grade: C
-disposition: "proposed: redeem as scored (pending triage)"
-reviewed: 2026-08-21
+disposition: "kept — rewritten to an intent-gated, language-neutral check 2026-08-22 (Plan 4, Task 16)"
+reviewed: 2026-08-22
 ---
 
 # direct-definitions (`9.4`)
 
-> answer-engine · source `direct-definitions.ts` · review verdict **delete** · evidence grade **C** · disposition: **proposed: redeem as scored (pending triage)**
+> answer-readiness · source `direct-definitions.ts` · evidence grade **C** · tier **informative** (weight 0) · rewritten from a three-branch markup sniff to an intent-gated, language-neutral coverage report — see below
 
 ## What it checks
 
-AI engines extract term-definition pairs to generate direct-answer snippets for "what is X?" queries. Use <dfn>, <dl>, or bold-colon patterns to mark up key terms.
+HTML-AAM maps `<dfn>` and `<dt>`/`<dd>` to the `term` and `definition` roles, and WHATWG requires the definition to sit alongside the term it defines, so the pairing survives extraction intact. No consumer is documented as acting on that mapping and prose definitions read fine, so this is reported as upside on pages that already answer a definitional question — never as a defect.
+
+_(The pre-rewrite audit also counted a `<strong>Term:</strong>` bold-colon pattern. That branch is graded D on its own and is deleted; see the rewrite section.)_
 
 ## Code review findings (2026-08-20, 11-agent pass)
 
@@ -43,6 +45,42 @@ Looks for <dfn>, a <dl> with a ≥6-word <dd>, or a <strong>/<b> label ending in
 
 **Overlaps with:** _none_
 
+## The intent-gated rewrite (Plan 4, Task 16, 2026-08-22)
+
+**Old pass condition:** any page passing the leaky `isArticleContentPage` filter contains a `<dfn>`, **or** a `<dl>` with a ≥6-word `<dd>`, **or** a `<strong>`/`<b>` whose text ends in `:` followed by ≥6 words. Everything else **failed**.
+
+**New pass condition:** every page that shows definitional intent pairs its terms with `<dfn>` or a `<dl>` carrying a substantive `<dd>`. Partial or prose-only coverage warns; a crawl with no definitional page is `notApplicable`. The audit can no longer fail anything.
+
+### The bold-colon branch is deleted
+
+Graded **D** on its own in the section below — "no spec, no role mapping and no consumer". In practice it was the whole audit: `if (!label.endsWith(':')) return;` then `wordCount(after) >= 6` passes on `<strong>Note:</strong> this applies to all plans as of March`, on `Tip:`, on `Warning:`, on `Ingredients:`. It also sliced the definition out of `parentText` at the **first** occurrence of the label, so a repeated label, or a `<strong>` inside a list item whose parent text concatenates siblings, attributed a neighbouring item's words to the term. Both the branch and its parent-text slicing are gone, along with every mention of the pattern in the guidance copy — pinned by a regression test.
+
+### Definitional intent replaces the leaky article gate
+
+`isArticleContentPage` let a `/contact` or `/privacy` page be the sole "article" and produce a site-level verdict about definitions. The gate is now the question the audit is actually about — does this page define something:
+
+- **Structural**, and therefore language-neutral: the page carries a `<dfn>` or a `<dl>`/`<dt>`. That markup *is* the page declaring that it defines a term, in any language.
+- **Lexical**, per detected language: the title or a heading asks "what is X?", or indexes a glossary or terminology. Read from the primary subtag of `<html lang>`, with English as the fallback.
+
+A crawl where no page passes either test is `na`, which is the "notApplicable when page has no definitional intent" the required rework asks for.
+
+### Language neutrality
+
+The required rework asks for "language-neutral structural signals … and first-sentence definition patterns per detected language", and both halves landed:
+
+- **Substantiveness is measured two ways**: ≥6 whitespace-separated words **or** ≥20 non-whitespace characters. The second is what makes CJK work — `split(/\s+/)` reads a whole Japanese sentence as one word, so the old ≥6-word threshold was unreachable for any CJK `<dd>`, and CJK definition lists could never count. The old full-width-colon problem disappears with the bold-colon branch itself.
+- **Intent and prose-copula patterns** are tabled for `en`, `es`, `fr`, `de`, `pt`, `it`, `nl`, `ru`, `ja`, `zh` and `ko`. One implementation note worth keeping: JavaScript word boundaries are ASCII-only, so `/é\b/` never matches — the Portuguese and Italian rules end on the accented vowel without a trailing `\b`.
+
+### The direction inversion is corrected
+
+The code review's sharpest finding was that a genuinely well-written prose glossary — "An X is a Y that does Z" — **failed**, while a spec sheet with a bold label passed. Prose definitions are now detected in the opening paragraphs via the language's copula pattern and reported as *prose coverage*, and the strongest verdict the audit can reach is `warn`. That ceiling is deliberate and follows the counter-evidence: no vendor or harness documents acting on `role="term"`/`role="definition"`; CommonMark has no definition-list syntax, so a `<dl>` flattens in any markdown-for-agents pipeline; Google states "You don't need to write in a specific way just for generative AI search"; and C-SEO Bench found most C-SEO interventions ineffective or harmful. Failing a page whose definitions are perfectly readable prose would repeat the error the rewrite exists to remove.
+
+### Grade and tier decision: **C**, tier `informative`, weight 0 — target tier `scored` not reachable
+
+The REWORK-TODO row proposed `scored`. It cannot land: the [graded evidence below](#graded-evidence-2026-08-21) assigns **C**, and under the §4 weight law `weightForGrade('C', 'scored') = 0`, while `sunset.test.ts` enforces `tier !== 'scored' ⟺ weight === 0`. A grade-C audit in the `scored` tier is therefore not a registrable state, and `informative` is where the grade puts it — the same resolution recorded for `openapi-link`, where a proposed `scored` target lost to the tier the evidence named. Nothing in the required rework depends on the tier: it asks for a better detector and an `na` path, both of which landed. `scoreDisplayMode` stays `informative`; `defaultPriority` drops `medium` → `low`, since the audit now reports upside rather than a defect.
+
+Re-grading to A or B would need a documented consumer acting on the term/definition roles. The dossier records that none exists, and this project's own semantic-html research says the same of `<dl>`/`<dt>`/`<dd>`.
+
 ## Evidence
 
 _No dedicated evidence signal was researched for this audit in the 2026-08-20 pass. Its tier assignment falls to the taxonomy design; unproven mechanisms default to informative per the [evidence policy](../../POLICY.md)._
@@ -51,6 +89,7 @@ _No dedicated evidence signal was researched for this audit in the 2026-08-20 pa
 
 - 2026-08-20 — code review (11-agent workflow) + evidence research (12-domain workflow, 400 sources).
 - 2026-08-21 — dossier generated; disposition pending final taxonomy design.
+- 2026-08-22 — user approved the pending-triage redeem; required rework executed (Plan 4, Task 16): bold-colon branch deleted, definitional-intent gate replaces `isArticleContentPage`, substantiveness measured character-wise as well as word-wise so CJK counts, per-language intent and prose-copula patterns for 11 languages, prose definitions reported rather than failed, `na` when no page has definitional intent, and the audit can no longer fail. Grade C, tier `informative`, weight 0 — the row's proposed `scored` target is unreachable for a grade-C audit under the §4 weight law and the registry invariant; rationale in the rewrite section. `defaultPriority` `medium` → `low`. `TODO(redeem)` marker removed from the source file.
 
 ## Graded evidence (2026-08-21)
 
