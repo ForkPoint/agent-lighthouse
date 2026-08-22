@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { defaultConfig } from './audit-config';
 
@@ -37,6 +37,26 @@ const REMOVED_IDS = [
 // The 181 v1 audits that survive into v2 — every non-sunset row of
 // docs/evidence/v2-audit-map.md, one entry each.
 const SURVIVING_COUNT = 181;
+
+// Pinned end state of the v2 migration wave. 26 + 181 = 207, the full v1 audit
+// set; the map is closed, so any later change to any of the three has to be a
+// deliberate edit here rather than silent drift.
+const TOTAL_COUNT = 207;
+
+// The 148 audits the v2 registry ships. Every surviving entry's `to` must be
+// one of them, and every one of them must be some entry's `to`.
+const REGISTRY_COUNT = 148;
+
+// `to` targets that are deliberately allowed not to be registered, each with a
+// written rationale. Empty by design: every one of the 181 surviving entries
+// points at a landed, registered v2 audit. The one deferral Plan 4 carries —
+// 5.23's runtime half, reading a live MCP `tools/list` response — is a deferred
+// *part of a signal*, not a deferred target: 5.23 still resolves to the
+// registered agent-interfaces/openapi-operation-ids, whose dossier records what
+// was left out. If a later wave ever ships an entry whose `to` has no audit
+// behind it, it gets named here with its reason rather than weakening the
+// registration assertion below.
+const DOCUMENTED_DEFERRALS: string[] = [];
 
 // v2 audits that deliberately absorb more than one v1 row: a consolidation
 // points several `renamed` entries at a single merged audit. Every other
@@ -83,8 +103,18 @@ const registeredIds = Object.values(defaultConfig.audits)
 
 describe('migration-map.json', () => {
   it('covers every v1 audit id — 26 removed plus 181 carried into v2', () => {
-    expect(entries).toHaveLength(REMOVED_IDS.length + SURVIVING_COUNT);
+    expect(REMOVED_IDS).toHaveLength(26);
+    expect(REMOVED_IDS.length + SURVIVING_COUNT).toBe(TOTAL_COUNT);
+    expect(entries).toHaveLength(TOTAL_COUNT);
     expect(surviving).toHaveLength(SURVIVING_COUNT);
+  });
+
+  // Exact per-status census, not just a total: a row flipped from `renamed` to
+  // `removed` (or back) keeps the total at 207 and would otherwise slip through.
+  it('splits the 207 entries exactly 26 removed / 181 renamed', () => {
+    const census = new Map<string, number>();
+    for (const [, entry] of entries) census.set(entry.status, (census.get(entry.status) ?? 0) + 1);
+    expect(Object.fromEntries(census)).toEqual({ removed: 26, renamed: 181 });
   });
 
   it('has exactly the known removed ids under status "removed"', () => {
@@ -109,7 +139,7 @@ describe('migration-map.json', () => {
 
   it('gives every surviving entry a v1 slug, a v2 target and a dossier link', () => {
     for (const [id, entry] of surviving) {
-      expect(['renamed', 'merging'], `entry ${id} status`).toContain(entry.status);
+      expect(entry.status, `entry ${id} status`).toBe('renamed');
       expect(entry.slug, `entry ${id} slug`).toMatch(ID_RE);
       expect(entry.to, `entry ${id} to`).toMatch(ID_RE);
       expect(entry.link, `entry ${id} link`).toMatch(/^docs\/evidence\/audits\/.+\.md$/);
@@ -123,17 +153,40 @@ describe('migration-map.json', () => {
   // This inverts the old "every merging entry has a registered interim" check:
   // there is nothing left to be transitional.
   it('has no "merging" entries left — every fold has landed', () => {
-    const merging = surviving.filter(([, e]) => e.status === 'merging').map(([id]) => id);
+    // Scanned across every entry, not just the surviving ones, so the status
+    // cannot reappear anywhere in the file.
+    const merging = entries.filter(([, e]) => e.status === 'merging').map(([id]) => id);
     expect(merging).toEqual([]);
-    const withInterim = surviving.filter(([, e]) => e.interim !== undefined).map(([id]) => id);
+    const withInterim = entries.filter(([, e]) => e.interim !== undefined).map(([id]) => id);
     expect(withInterim).toEqual([]);
   });
 
   it('points every "renamed" entry at a registered v2 audit', () => {
-    for (const [id, entry] of surviving.filter(([, e]) => e.status === 'renamed')) {
-      expect(registeredIds, `entry ${id} target is registered`).toContain(entry.to);
-      expect(entry.interim, `entry ${id} needs no interim`).toBeUndefined();
-    }
+    const label = ([id, e]: (typeof surviving)[number]) => `${id} -> ${e.to}`;
+    const unregistered = surviving.filter(([, e]) => !registeredIds.includes(e.to!)).map(label);
+    // Anything unregistered has to be a named, documented deferral. That list
+    // is empty, so this reads as: all 181 targets have landed in the registry.
+    const allowed = surviving.filter(([, e]) => DOCUMENTED_DEFERRALS.includes(e.to!)).map(label);
+    expect(unregistered).toEqual(allowed);
+  });
+
+  // The registry is pinned here too, so a migration-map entry and an audit
+  // registration can never drift apart without one of the two tests failing.
+  it('registers exactly 148 v2 audits, all reachable from the map', () => {
+    expect(registeredIds).toHaveLength(REGISTRY_COUNT);
+    expect(new Set(surviving.map(([, e]) => e.to!)).size).toBe(REGISTRY_COUNT);
+  });
+
+  // Plan-3 deferral: a link is only a migration path if the file is really
+  // there. Paths are repo-relative, so they resolve from the repo root — two
+  // levels above packages/core/src.
+  it('has the dossier of every surviving entry on disk', () => {
+    const repoRoot = join(__dirname, '..', '..', '..');
+    const missing = surviving
+      .map(([id, e]) => [id, e.link] as const)
+      .filter(([, link]) => !existsSync(join(repoRoot, link)))
+      .map(([id, link]) => `${id}: ${link}`);
+    expect(missing).toEqual([]);
   });
 
   it('reaches every registered v2 audit from some entry', () => {

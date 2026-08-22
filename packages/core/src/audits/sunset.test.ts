@@ -38,12 +38,13 @@ describe('registry-wide meta invariants', () => {
     .flat()
     .map((reg) => reg.meta);
 
-  // Floor, not a pin: Plan 4 shrinks the registry fold by fold (181 → 177 with
-  // the ai-bot-directives consolidation, 177 → 174 with security-header-hygiene,
-  // 174 → 168 with the machine-discovery folds, and further with each later
-  // task). Task 14 replaces this with the exact final count.
-  it('covers the whole registry', () => {
-    expect(allMetas.length).toBeGreaterThan(145);
+  // Pinned, not a floor: Plan 4 shrank the registry fold by fold (181 v1 rows →
+  // 148 v2 audits) and Task 14 closed it. An audit added or dropped without a
+  // deliberate edit here is drift, not a passing build. The same 148 is asserted
+  // against the migration map in migration-map.test.ts, so the registry and the
+  // consumer-facing migration path can never move independently.
+  it('registers exactly the 148 v2 audits', () => {
+    expect(allMetas).toHaveLength(148);
   });
 
   // The v2 meta contract is enforced, not aspirational: an audit without a

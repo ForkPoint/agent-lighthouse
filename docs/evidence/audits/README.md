@@ -2,11 +2,11 @@
 
 One dossier per audit: what it checks, the 2026-08-20 code-review findings, graded evidence signals with sources, and current disposition. Companion documents: [evidence policy](../POLICY.md) · [deletion research](../deletions/README.md) · [sunset audits](../sunset/README.md) · [proposed new checks](../proposals/README.md).
 
-207 audits. Dispositions marked "pending triage" await the merge/fix review; "approved 2026-08-21" reflect the accepted deletion-research verdicts.
+207 v1 audits are indexed here, but this folder holds only the 148 that survive into v2 as registered audits. A row whose dossier moved links out of the folder: `../sunset/` for the 26 removed audits, `../merged/` for a signal folded into another audit. Dispositions marked "pending triage" await the merge/fix review; "approved 2026-08-21" reflect the accepted deletion-research verdicts.
 
 | ID | Audit | Category | Review verdict | Evidence grade | Disposition |
 | :- | :---- | :------- | :------------- | :------------- | :---------- |
-| 7.1 | [skip-nav](./accessibility/skip-nav.md) | accessibility | delete | D | sunset (approved 2026-08-21) |
+| 7.1 | [skip-nav](../sunset/accessibility/skip-nav.md) | accessibility | delete | D | sunset (approved 2026-08-21) |
 | 7.2 | [aria-landmarks](./operability-safety/aria-landmarks.md) | accessibility | fix | A | keep — fix required |
 | 7.3 | [nav-aria-label](../merged/operability-safety/nav-aria-label.md) | accessibility | merge | A | merged into [operability-safety/landmark-unique](./operability-safety/landmark-unique.md) (2026-08-22) |
 | 7.4 | [Landmarks are uniquely identifiable](./operability-safety/landmark-unique.md) | accessibility | fix | A | merged — absorbs 7.3 (2026-08-22) |
@@ -31,20 +31,20 @@ One dossier per audit: what it checks, the 2026-08-20 code-review findings, grad
 | 5.1 | [openapi-exists](./agent-interfaces/openapi-exists.md) | agent-tools | fix | B | merged — absorbs 4.18 (2026-08-22) |
 | 5.2 | [openapi-endpoints](./agent-interfaces/openapi-endpoints.md) | agent-tools | fix | — | keep — fix required |
 | 5.3 | [openapi-operation-ids](./agent-interfaces/openapi-operation-ids.md) | agent-tools | fix | B | keep — fix required; absorbs the naming rule of 5.23 (2026-08-22) |
-| 5.4 | [openapi-ai-instructions](./agent-tools/openapi-ai-instructions.md) | agent-tools | delete | D | sunset (approved 2026-08-21) |
+| 5.4 | [openapi-ai-instructions](../sunset/agent-tools/openapi-ai-instructions.md) | agent-tools | delete | D | sunset (approved 2026-08-21) |
 | 5.5 | [openapi-servers](./agent-interfaces/openapi-servers.md) | agent-tools | fix | — | keep — fix required |
 | 5.6 | [openapi-schemas](./agent-interfaces/openapi-schemas.md) | agent-tools | fix | — | keep — fix required |
 | 5.7 | [ai-catalog-exists](./agent-interfaces/ai-catalog-exists.md) | agent-tools | delete | A | merged — absorbs 4.19 (2026-08-22); rewritten to ARD §4.1 (2026-08-22) |
 | 5.8 | [ai-catalog-metadata](./agent-interfaces/ai-catalog-metadata.md) | agent-tools | delete | B | kept — rewritten to ARD §4.2 metadata (2026-08-22) |
 | 5.9 | [ai-catalog-urls](./agent-interfaces/ai-catalog-urls.md) | agent-tools | delete | B | kept — rewritten to entries[].url liveness (2026-08-22) |
 | 5.10 | [agents-json](./agent-interfaces/agents-json.md) | agent-tools | delete | C | informative, weight 0 (approved 2026-08-21) |
-| 5.11 | [ai-plugin-json](./agent-tools/ai-plugin-json.md) | agent-tools | delete | D | sunset (approved 2026-08-21) |
+| 5.11 | [ai-plugin-json](../sunset/agent-tools/ai-plugin-json.md) | agent-tools | delete | D | sunset (approved 2026-08-21) |
 | 5.12 | [mcp-discovery](./agent-interfaces/mcp-discovery.md) | agent-tools | fix | A | keep — fix required |
 | 5.13 | [mcp-endpoint](./agent-interfaces/mcp-endpoint.md) | agent-tools | fix | C | merged — absorbs 5.14 + 5.24 (2026-08-22) |
 | 5.14 | [mcp-capabilities](../merged/agent-interfaces/mcp-capabilities.md) | agent-tools | merge | D | merged into [agent-interfaces/mcp-endpoint](./agent-interfaces/mcp-endpoint.md) (2026-08-22) |
 | 5.15 | [contact-form](./operability-safety/contact-form.md) | agent-tools | fix | C | keep — fix required |
 | 5.16 | [search-endpoint](./agent-interfaces/search-endpoint.md) | agent-tools | fix | C | merged — absorbs 3.4 (2026-08-22) |
-| 5.17 | [data-action-ctas](./agent-tools/data-action-ctas.md) | agent-tools | delete | D | sunset (approved 2026-08-21) |
+| 5.17 | [data-action-ctas](../sunset/agent-tools/data-action-ctas.md) | agent-tools | delete | D | sunset (approved 2026-08-21) |
 | 5.18 | [no-blocking-captcha](./operability-safety/no-blocking-captcha.md) | agent-tools | fix | — | keep — fix required |
 | 5.19 | [forms-no-js](./operability-safety/forms-no-js.md) | agent-tools | fix | — | keep — fix required |
 | 5.20 | [webmcp-registered-tools](./agent-interfaces/webmcp-registered-tools.md) | agent-tools | delete | A | proposed: redeem as experimental (pending triage) |
@@ -52,7 +52,7 @@ One dossier per audit: what it checks, the 2026-08-20 code-review findings, grad
 | 5.22 | [webmcp-input-quality](../merged/operability-safety/webmcp-input-quality.md) | agent-tools | merge | B | merged into [operability-safety/form-actionability](./operability-safety/form-actionability.md) (2026-08-22) |
 | 5.23 | [webmcp-tool-naming](../merged/agent-interfaces/webmcp-tool-naming.md) | agent-tools | merge | C | naming rule merged into [agent-interfaces/openapi-operation-ids](./agent-interfaces/openapi-operation-ids.md) (2026-08-22); runtime half deferred out of v2.0 |
 | 5.24 | [webmcp-tool-annotations](../merged/agent-interfaces/webmcp-tool-annotations.md) | agent-tools | merge | D | merged into [agent-interfaces/mcp-endpoint](./agent-interfaces/mcp-endpoint.md) (2026-08-22) |
-| 5.25 | [webmcp-action-coverage](./agent-tools/webmcp-action-coverage.md) | agent-tools | delete | D | sunset (approved 2026-08-21) |
+| 5.25 | [webmcp-action-coverage](../sunset/agent-tools/webmcp-action-coverage.md) | agent-tools | delete | D | sunset (approved 2026-08-21) |
 | 5.26 | [openapi-description-quality](./agent-interfaces/openapi-description-quality.md) | agent-tools | fix | — | keep — fix required |
 | 5.27 | [form-actionability](./operability-safety/form-actionability.md) | agent-tools | keep | A | merged — absorbs 5.22 (2026-08-22) |
 | 9.1 | [faq-sections](./answer-readiness/faq-sections.md) | answer-engine | fix | — | keep — fix required |
@@ -86,7 +86,7 @@ One dossier per audit: what it checks, the 2026-08-20 code-review findings, grad
 | 1.18 | [mobile-friendly](../sunset/content-discoverability/mobile-friendly.md) | content-discoverability | delete | — | sunset (2026-08-21) |
 | 1.19 | [server-responsiveness](./content-extraction/server-responsiveness.md) | content-discoverability | fix | B | merged + rewritten — absorbs 8.12 (2026-08-22) |
 | 1.20 | [no-broken-links](./machine-discovery/no-broken-links.md) | content-discoverability | fix | A | keep — fix required |
-| 1.21 | [navigation-json](./content-discoverability/navigation-json.md) | content-discoverability | delete | D | sunset (approved 2026-08-21) |
+| 1.21 | [navigation-json](../sunset/content-discoverability/navigation-json.md) | content-discoverability | delete | D | sunset (approved 2026-08-21) |
 | 1.22 | [no-orphan-pages](../merged/machine-discovery/no-orphan-pages.md) | content-discoverability | merge | A | merged into [machine-discovery/discovery-index-coverage](./machine-discovery/discovery-index-coverage.md) (2026-08-22) |
 | 1.23 | [commerce-links](../sunset/content-discoverability/commerce-links.md) | content-discoverability | fix | D | sunset (2026-08-21) |
 | 2.1 | [gptbot](./access-crawl-control/gptbot.md) | crawler-permissions | fix | A | keep — fix required |
@@ -128,7 +128,7 @@ One dossier per audit: what it checks, the 2026-08-20 code-review findings, grad
 | 10.9 | [publication-date](./answer-readiness/publication-date.md) | generative-engine | keep | — | keep |
 | 10.10 | [last-modified-schema](./answer-readiness/last-modified-schema.md) | generative-engine | fix | B | keep — fix required |
 | 10.11 | [internal-cross-linking](../merged/machine-discovery/internal-cross-linking.md) | generative-engine | fix | B | merged into [machine-discovery/in-content-links](./machine-discovery/in-content-links.md) (2026-08-22) |
-| 10.12 | [pagination-links](./generative-engine/pagination-links.md) | generative-engine | delete | D | sunset (approved 2026-08-21) |
+| 10.12 | [pagination-links](../sunset/generative-engine/pagination-links.md) | generative-engine | delete | D | sunset (approved 2026-08-21) |
 | 10.13 | [unique-data](./answer-readiness/unique-data.md) | generative-engine | fix | — | keep — fix required |
 | 10.14 | [blockquote-usage](../merged/answer-readiness/blockquote-usage.md) | generative-engine | merge | B | merged into [answer-readiness/review-signals](./answer-readiness/review-signals.md) (2026-08-22) |
 | 10.15 | [descriptive-urls](./answer-readiness/descriptive-urls.md) | generative-engine | fix | C | keep — fix required |
@@ -143,12 +143,12 @@ One dossier per audit: what it checks, the 2026-08-20 code-review findings, grad
 | 4.9 | [og-image-alt](./answer-readiness/og-image-alt.md) | meta-tags | fix | C | keep — fix required |
 | 4.10 | [twitter-card](../merged/answer-readiness/twitter-card.md) | meta-tags | delete | C | redeemed by merge into [answer-readiness/core-open-graph](./answer-readiness/core-open-graph.md) (2026-08-22) |
 | 4.11 | [llms-txt-link](../merged/machine-discovery/llms-txt-link.md) | meta-tags | fix | C | merged into [machine-discovery/llms-txt-exists](./machine-discovery/llms-txt-exists.md) (2026-08-22) |
-| 4.12 | [llms-full-txt-link](./meta-tags/llms-full-txt-link.md) | meta-tags | merge | D | sunset (approved 2026-08-21) |
+| 4.12 | [llms-full-txt-link](../sunset/meta-tags/llms-full-txt-link.md) | meta-tags | merge | D | sunset (approved 2026-08-21) |
 | 4.13 | [ai-content-declaration](./access-crawl-control/ai-content-declaration.md) | meta-tags | delete | D | proposed: redeem as experimental (pending triage) |
-| 4.14 | [ai-instructions](./meta-tags/ai-instructions.md) | meta-tags | delete | D | sunset (approved 2026-08-21) |
+| 4.14 | [ai-instructions](../sunset/meta-tags/ai-instructions.md) | meta-tags | delete | D | sunset (approved 2026-08-21) |
 | 4.15 | [markdown-alternate](./content-extraction/markdown-alternate.md) | meta-tags | fix | A | keep — fix required |
 | 4.16 | [rss-feed-link](../merged/machine-discovery/rss-feed-link.md) | meta-tags | fix | C | merged into [machine-discovery/rss-feed](./machine-discovery/rss-feed.md) (2026-08-22) |
-| 4.17 | [mcp-discovery-link](./meta-tags/mcp-discovery-link.md) | meta-tags | delete | D | sunset (approved 2026-08-21) |
+| 4.17 | [mcp-discovery-link](../sunset/meta-tags/mcp-discovery-link.md) | meta-tags | delete | D | sunset (approved 2026-08-21) |
 | 4.18 | [openapi-link](../merged/agent-interfaces/openapi-link.md) | meta-tags | delete | B | redeemed by merge into [agent-interfaces/openapi-exists](./agent-interfaces/openapi-exists.md) (2026-08-22) |
 | 4.19 | [ai-catalog-link](../merged/agent-interfaces/ai-catalog-link.md) | meta-tags | delete | B | merged into [agent-interfaces/ai-catalog-exists](./agent-interfaces/ai-catalog-exists.md) (2026-08-22) |
 | 4.20 | [meta-robots](../merged/access-crawl-control/meta-robots.md) | meta-tags | fix | A | merged into [access-crawl-control/robots-directives](./access-crawl-control/robots-directives.md) (2026-08-22) |
@@ -163,11 +163,11 @@ One dossier per audit: what it checks, the 2026-08-20 code-review findings, grad
 | 6.9 | [data-tables](./content-extraction/data-tables.md) | semantic-html | fix | B | keep — fix required |
 | 6.10 | [code-language](./content-extraction/code-language.md) | semantic-html | fix | — | keep — fix required |
 | 6.11 | [time-element](./content-extraction/time-element.md) | semantic-html | fix | C | keep — fix required |
-| 6.12 | [address-element](./semantic-html/address-element.md) | semantic-html | delete | D | sunset (approved 2026-08-21) |
+| 6.12 | [address-element](../sunset/semantic-html/address-element.md) | semantic-html | delete | D | sunset (approved 2026-08-21) |
 | 6.13 | [definition-elements](../merged/content-extraction/definition-elements.md) | semantic-html | merge | B | merged into [content-extraction/semantic-lists](./content-extraction/semantic-lists.md) (2026-08-22) |
 | 6.14 | [content-depth](./content-extraction/content-depth.md) | semantic-html | fix | B | keep — fix required |
 | 6.15 | [image-alt-text](./content-extraction/image-alt-text.md) | semantic-html | fix | A | keep — fix required |
-| 6.16 | [decorative-images](./semantic-html/decorative-images.md) | semantic-html | delete | D | sunset (approved 2026-08-21) |
+| 6.16 | [decorative-images](../sunset/semantic-html/decorative-images.md) | semantic-html | delete | D | sunset (approved 2026-08-21) |
 | 6.17 | [figure-figcaption](./content-extraction/figure-figcaption.md) | semantic-html | fix | C | keep — fix required |
 | 6.18 | [svg-bloat](./content-extraction/svg-bloat.md) | semantic-html | fix | B | keep — fix required |
 | 6.19 | [token-ratio](./content-extraction/token-ratio.md) | semantic-html | fix | B | keep — fix required |
@@ -181,13 +181,13 @@ One dossier per audit: what it checks, the 2026-08-20 code-review findings, grad
 | 3.7 | [faqpage-schema](./structured-data/faqpage-schema.md) | structured-data | fix | — | keep — fix required |
 | 3.8 | [service-schema](./structured-data/service-schema.md) | structured-data | merge | A | split (2026-08-22) — Service half kept as [structured-data/service-schema](./structured-data/service-schema.md), Product half into [structured-data/advanced-product-details](./structured-data/advanced-product-details.md) |
 | 3.9 | [speakable-schema](./structured-data/speakable-schema.md) | structured-data | delete | A | kept — rewrite required (approved 2026-08-21) |
-| 3.10 | [potential-action](./structured-data/potential-action.md) | structured-data | delete | D | sunset (approved 2026-08-21) |
+| 3.10 | [potential-action](../sunset/structured-data/potential-action.md) | structured-data | delete | D | sunset (approved 2026-08-21) |
 | 3.11 | [howto-schema](./structured-data/howto-schema.md) | structured-data | delete | C | informative, weight 0 (approved 2026-08-21) |
 | 3.12 | [local-business-schema](./structured-data/local-business-schema.md) | structured-data | fix | — | keep — fix required |
 | 3.13 | [review-schema](./structured-data/review-schema.md) | structured-data | fix | A | merged — absorbs 3.23 (2026-08-22) |
 | 3.14 | [offer-schema](./agentic-commerce/offer-schema.md) | structured-data | fix | — | keep — fix required |
 | 3.15 | [author-schema](./structured-data/author-schema.md) | structured-data | fix | — | keep — fix required |
-| 3.16 | [action-schema](./structured-data/action-schema.md) | structured-data | delete | D | sunset (approved 2026-08-21) |
+| 3.16 | [action-schema](../sunset/structured-data/action-schema.md) | structured-data | delete | D | sunset (approved 2026-08-21) |
 | 3.21 | [product-identifiers](./agentic-commerce/product-identifiers.md) | structured-data | fix | — | keep — fix required |
 | 3.22 | [advanced-product-details](./structured-data/advanced-product-details.md) | structured-data | fix | — | keep — fix required; absorbs the Product half of 3.8 (2026-08-22) |
 | 3.23 | [product-reviews](../merged/structured-data/product-reviews.md) | structured-data | merge | A | merged into [structured-data/review-schema](./structured-data/review-schema.md) (2026-08-22) |
@@ -196,8 +196,8 @@ One dossier per audit: what it checks, the 2026-08-20 code-review findings, grad
 | 8.2 | [hsts-header](../merged/operability-safety/hsts-header.md) | technical-readiness | merge | B | merged into [operability-safety/security-header-hygiene](./operability-safety/security-header-hygiene.md) (2026-08-22) |
 | 8.3 | [csp-header](../merged/operability-safety/csp-header.md) | technical-readiness | fix | D | merged into [operability-safety/security-header-hygiene](./operability-safety/security-header-hygiene.md) (2026-08-22) |
 | 8.4 | [content-type-options](../merged/operability-safety/content-type-options.md) | technical-readiness | merge | C | merged into [operability-safety/security-header-hygiene](./operability-safety/security-header-hygiene.md) (2026-08-22) |
-| 8.5 | [referrer-policy](./technical-readiness/referrer-policy.md) | technical-readiness | delete | D | sunset (approved 2026-08-21) |
-| 8.6 | [permissions-policy](./technical-readiness/permissions-policy.md) | technical-readiness | delete | D | sunset (approved 2026-08-21) |
+| 8.5 | [referrer-policy](../sunset/technical-readiness/referrer-policy.md) | technical-readiness | delete | D | sunset (approved 2026-08-21) |
+| 8.6 | [permissions-policy](../sunset/technical-readiness/permissions-policy.md) | technical-readiness | delete | D | sunset (approved 2026-08-21) |
 | 8.7 | [security-txt](../merged/operability-safety/security-txt.md) | technical-readiness | delete | C | merged into [operability-safety/security-header-hygiene](./operability-safety/security-header-hygiene.md) (2026-08-22) |
 | 8.8 | [cors-ai-files](./machine-discovery/cors-ai-files.md) | technical-readiness | fix | C | keep — fix required |
 | 8.9 | [cors-api-routes](./agent-interfaces/cors-api-routes.md) | technical-readiness | delete | C | proposed: redeem as scored (pending triage) |
@@ -208,11 +208,11 @@ One dossier per audit: what it checks, the 2026-08-20 code-review findings, grad
 | 8.14 | [no-render-blocking](../sunset/technical-readiness/no-render-blocking.md) | technical-readiness | fix | D | sunset (2026-08-21) |
 | 8.15 | [image-dimensions](../sunset/technical-readiness/image-dimensions.md) | technical-readiness | fix | D | sunset (2026-08-21) |
 | 8.16 | [lcp-not-lazy](../sunset/technical-readiness/lcp-not-lazy.md) | technical-readiness | fix | D | sunset (2026-08-21) |
-| 8.17 | [preconnect-hints](./technical-readiness/preconnect-hints.md) | technical-readiness | delete | D | sunset (approved 2026-08-21) |
+| 8.17 | [preconnect-hints](../sunset/technical-readiness/preconnect-hints.md) | technical-readiness | delete | D | sunset (approved 2026-08-21) |
 | 8.18 | [no-broken-ai-endpoints](./machine-discovery/no-broken-ai-endpoints.md) | technical-readiness | fix | A | keep — fix required |
 | 8.19 | [privacy-policy](../sunset/technical-readiness/privacy-policy.md) | technical-readiness | fix | D | sunset (2026-08-21) |
 | 8.20 | [terms-of-service](../sunset/technical-readiness/terms-of-service.md) | technical-readiness | fix | D | sunset (2026-08-21) |
-| 8.21 | [framework-detection](./technical-readiness/framework-detection.md) | technical-readiness | delete | D | sunset (approved 2026-08-21) |
+| 8.21 | [framework-detection](../sunset/technical-readiness/framework-detection.md) | technical-readiness | delete | D | sunset (approved 2026-08-21) |
 
 ## Evidence banked for checks that do not exist yet
 

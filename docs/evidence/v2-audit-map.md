@@ -237,11 +237,11 @@ All 20 open `REVIEW:` flags are resolved — **0 open**. Every row carrying a re
 
 Note: these are *incoming v1 rows*, not v2 audit counts — 24 rows merge away, 4 consolidate and
 8 are sunset. Deduplicating the `category/slug` identities across the 181 non-sunset rows gives
-**149 surviving v2 audits** from v1 (before the 83 proposed audits land); the plain row arithmetic
+**148 surviving v2 audits** from v1 (before the 83 proposed audits land); the plain row arithmetic
 189 − 24 − 4 − 8 = 153 overstates it because several rows share one v2 target
 (`access-crawl-control/ai-bot-directives` takes 5 rows, `answer-readiness/core-open-graph` 2,
 `agent-interfaces/openapi-operation-ids` 2, `operability-safety/security-header-hygiene` 4).
-Distinct v2 audits per category: access-crawl-control 29, answer-readiness 27, operability-safety 24,
+Distinct v2 audits per category: access-crawl-control 29, answer-readiness 26, operability-safety 24,
 content-extraction 21, machine-discovery 16, agent-interfaces 16, structured-data 13, agentic-commerce 3.
 Cat 7 is thin because almost all of agentic-commerce comes from the ACP proposal set (§6), not from v1.
 

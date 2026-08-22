@@ -8,6 +8,13 @@
  *   (c) the dossier's frontmatter `slug` matches the audit's slug (the segment
  *       after the `/` in `meta.id`).
  *
+ * It also runs the reverse check: every `.md` under `docs/evidence/audits/`
+ * (README aside) must be the dossier of a registered audit. A file left behind
+ * there after its audit was removed or folded away is an orphan — the record of
+ * a removed audit belongs under `docs/evidence/sunset/`, and of a merged-away
+ * signal under `docs/evidence/merged/`. Without this direction the folder
+ * silently accumulates dossiers for checks that no longer ship.
+ *
  * Reads the registry from the *built* core bundle, so `pnpm build` (or at least
  * `pnpm --filter @forkpoint/agent-lighthouse-core build`) must run first — which
  * is exactly what CI already does before this step.
@@ -15,8 +22,8 @@
  * Exits 0 when every audit passes, 1 with a per-violation list otherwise.
  */
 
-import { existsSync, readFileSync } from 'node:fs';
-import { resolve, dirname } from 'node:path';
+import { existsSync, readdirSync, readFileSync } from 'node:fs';
+import { resolve, dirname, relative, sep } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..');
@@ -68,6 +75,8 @@ function parseFrontmatter(source) {
 /** @type {string[]} */
 const violations = [];
 let checked = 0;
+/** Repo-relative, POSIX-separated dossier paths claimed by a registered audit. */
+const claimed = new Set();
 
 for (const registrations of Object.values(defaultConfig.audits)) {
   for (const { meta } of registrations) {
@@ -80,6 +89,7 @@ for (const registrations of Object.values(defaultConfig.audits)) {
     }
 
     const dossierPath = resolve(repoRoot, meta.dossier);
+    claimed.add(relative(repoRoot, dossierPath).split(sep).join('/'));
     if (!existsSync(dossierPath)) {
       violations.push(`${id}: dossier file not found — ${meta.dossier}`);
       continue;
@@ -108,6 +118,38 @@ for (const registrations of Object.values(defaultConfig.audits)) {
   }
 }
 
+// Reverse direction: nothing may sit in the audit-dossier folder without a
+// registered audit pointing at it.
+const dossierRoot = 'docs/evidence/audits';
+
+/**
+ * Collect every `.md` under a directory, repo-relative and POSIX-separated.
+ *
+ * @param {string} relDir directory to walk, relative to the repo root
+ * @returns {string[]} repo-relative paths
+ */
+function collectMarkdown(relDir) {
+  /** @type {string[]} */
+  const found = [];
+  for (const entry of readdirSync(resolve(repoRoot, relDir), { withFileTypes: true })) {
+    const child = `${relDir}/${entry.name}`;
+    if (entry.isDirectory()) found.push(...collectMarkdown(child));
+    else if (entry.name.endsWith('.md')) found.push(child);
+  }
+  return found;
+}
+
+const onDisk = collectMarkdown(dossierRoot);
+// The folder's own index is not an audit dossier.
+const orphans = onDisk.filter((p) => p !== `${dossierRoot}/README.md` && !claimed.has(p));
+for (const orphan of orphans) {
+  violations.push(
+    `orphan dossier — no registered audit claims ${orphan} ` +
+      '(move it to docs/evidence/sunset/ if the audit was removed, ' +
+      'or docs/evidence/merged/ if its signal folded into another audit)',
+  );
+}
+
 if (violations.length > 0) {
   console.error(`check-dossiers: ${violations.length} violation(s) across ${checked} audits:\n`);
   for (const v of violations) console.error(`  ✗ ${v}`);
@@ -115,4 +157,7 @@ if (violations.length > 0) {
   process.exit(1);
 }
 
-console.log(`check-dossiers: ${checked} audits OK (dossier exists, grade + slug match).`);
+console.log(
+  `check-dossiers: ${checked} audits OK (dossier exists, grade + slug match); ` +
+    `${onDisk.length - 1} dossiers under ${dossierRoot}/, no orphans.`,
+);
