@@ -34,6 +34,7 @@ export const NEW_IN_V2: readonly string[] = [
   'agent-interfaces/mcp-modern-era-reachability',
   'agent-interfaces/mcp-oauth-discovery-chain',
   'agent-interfaces/mcp-tool-contract-validity',
+  'agent-interfaces/mcp-tools-list-determinism',
 ];
 
 /** The 148 audits Plan 4 closed the v2 migration on. Never changes again. */

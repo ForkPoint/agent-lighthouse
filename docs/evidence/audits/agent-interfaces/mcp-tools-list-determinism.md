@@ -1,18 +1,19 @@
 ---
-check: tools-list-determinism-and-cache-hint-compliance
-title: "tools/list Determinism and Cache-Hint Compliance"
-domain: mcp-server-quality
-status: proposed
+audit: agent-interfaces/mcp-tools-list-determinism
+category: agent-interfaces
+source_file: packages/core/src/audits/agent-interfaces/mcp-tools-list-determinism.ts
+slug: mcp-tools-list-determinism
 evidence_grade: A
-uniqueness: unique
-difficulty: static-fetch
-scoring_tier: scored
+tier: scored
+disposition: "new in v2 — graduated from proposal 2026-08-22"
 reviewed: 2026-08-20
+graduated: 2026-08-22
 ---
+
 
 # tools/list Determinism and Cache-Hint Compliance
 
-> Proposed check. Evidence grade **A** · unique · implementation: `static-fetch`
+> Shipped in v2. Evidence grade **A** · scored tier · unique · implementation: `static-fetch`
 
 ## What it checks
 
@@ -53,3 +54,19 @@ Tier per evidence policy: **scored** — grade A meets the A/B bar required for 
 ## Review history
 
 - 2026-08-20 — proposed by the novel-checks research pass (10-agent evidence workflow); sources URL-verified at research time.
+
+## Implementation deviations
+
+Recorded at graduation (2026-08-22, Plan 5 Task 29).
+
+- **The three calls are issued back to back, not 2s and 5s apart on separate connections.** The sketch's timing would add roughly 7 seconds to every scan of an MCP-bearing site, inside a 60-second scan budget shared by the whole registry. Because connection reuse is therefore not controlled, a differing tool **set** between calls is reported as a `warn` review item that names the per-connection MUST and states this deviation, rather than the `fail` a timed probe would justify. Every other determinism finding is unaffected: ordering and serialization drift show up regardless of which connection carried the request.
+- **These calls deliberately bypass the per-scan probe cache.** `agent-interfaces/mcp-tool-contract-validity` reads `tools/list` through `sharedProbe`; this audit calls `postRpcRaw` directly, because a cache would answer all three calls from one response and make every determinism assertion vacuously true.
+- **Two hashes, not one.** The canonical hash (every object key sorted) catches content drift; the raw hash catches key-order churn that the canonical form hides. Both break byte-level prompt caching, and the message says which one happened.
+- **Caching hints are read from the result root and from `result._meta`.** Servers place them in either, and rejecting a `_meta` placement would report a compliant server as broken.
+- **At most 4 `nextCursor` pages per call**, matching `agent-interfaces/mcp-tool-contract-validity`.
+- **Hint checks run against the first call's pages.** Repeating them for all three would triple the finding count without adding information; drift between calls is caught by the determinism comparison instead.
+
+## Deferred
+
+- Timed calls on a controlled connection, which is what would upgrade a per-connection set difference from `warn` to `fail`. That needs a scanner-wide request scheduler and a socket-level API the fetcher does not expose.
+- Comparing results across differing authorization. The scanner sends no credentials on any of the three calls, so authorization is held constant by construction rather than varied deliberately.
