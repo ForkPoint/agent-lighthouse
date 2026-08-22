@@ -60,7 +60,7 @@ One dossier per audit: what it checks, the 2026-08-20 code-review findings, grad
 | 9.3 | [first-paragraph-answers](./answer-readiness/first-paragraph-answers.md) | answer-engine | fix | — | keep — fix required |
 | 9.4 | [direct-definitions](./answer-readiness/direct-definitions.md) | answer-engine | delete | — | proposed: redeem as scored (pending triage) |
 | 9.5 | [comparison-tables](./answer-readiness/comparison-tables.md) | answer-engine | fix | C | keep — fix required |
-| 9.6 | [numbered-steps](./answer-readiness/numbered-steps.md) | answer-engine | fix | — | keep — fix required |
+| 9.6 | [numbered-steps](../merged/answer-readiness/numbered-steps.md) | answer-engine | fix | B | merged into [content-extraction/semantic-lists](./content-extraction/semantic-lists.md) (2026-08-22, late fold) |
 | 9.7 | [specific-numbers](./answer-readiness/specific-numbers.md) | answer-engine | fix | — | keep — fix required |
 | 9.8 | [dates-on-content](./answer-readiness/dates-on-content.md) | answer-engine | fix | A | merged — absorbs 9.10 (2026-08-22) |
 | 9.9 | [content-without-clickthrough](./answer-readiness/content-without-clickthrough.md) | answer-engine | fix | — | keep — fix required |
@@ -159,12 +159,12 @@ One dossier per audit: what it checks, the 2026-08-20 code-review findings, grad
 | 6.5 | [header-footer](./content-extraction/header-footer.md) | semantic-html | fix | A | keep — fix required |
 | 6.6 | [aside-element](./content-extraction/aside-element.md) | semantic-html | delete | B | kept — rewrite required (approved 2026-08-21) |
 | 6.7 | [section-headings](./content-extraction/section-headings.md) | semantic-html | fix | B | keep — fix required |
-| 6.8 | [semantic-lists](./content-extraction/semantic-lists.md) | semantic-html | fix | B | keep — fix required |
+| 6.8 | [semantic-lists](./content-extraction/semantic-lists.md) | semantic-html | fix | B | merged — absorbs 6.13 + 9.6 (2026-08-22) |
 | 6.9 | [data-tables](./content-extraction/data-tables.md) | semantic-html | fix | B | keep — fix required |
 | 6.10 | [code-language](./content-extraction/code-language.md) | semantic-html | fix | — | keep — fix required |
 | 6.11 | [time-element](./content-extraction/time-element.md) | semantic-html | fix | C | keep — fix required |
 | 6.12 | [address-element](./semantic-html/address-element.md) | semantic-html | delete | D | sunset (approved 2026-08-21) |
-| 6.13 | [definition-elements](./content-extraction/definition-elements.md) | semantic-html | merge | B | merge (approved 2026-08-21) |
+| 6.13 | [definition-elements](../merged/content-extraction/definition-elements.md) | semantic-html | merge | B | merged into [content-extraction/semantic-lists](./content-extraction/semantic-lists.md) (2026-08-22) |
 | 6.14 | [content-depth](./content-extraction/content-depth.md) | semantic-html | fix | B | keep — fix required |
 | 6.15 | [image-alt-text](./content-extraction/image-alt-text.md) | semantic-html | fix | A | keep — fix required |
 | 6.16 | [decorative-images](./semantic-html/decorative-images.md) | semantic-html | delete | D | sunset (approved 2026-08-21) |

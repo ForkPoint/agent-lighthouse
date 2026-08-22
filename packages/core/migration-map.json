@@ -784,10 +784,9 @@
   },
   "6.13": {
     "slug": "semantic-html/definition-elements",
-    "status": "merging",
+    "status": "renamed",
     "to": "content-extraction/semantic-lists",
-    "interim": "content-extraction/definition-elements",
-    "link": "docs/evidence/audits/content-extraction/definition-elements.md"
+    "link": "docs/evidence/audits/content-extraction/semantic-lists.md"
   },
   "6.14": {
     "slug": "semantic-html/content-depth",
@@ -1124,8 +1123,9 @@
   "9.6": {
     "slug": "answer-engine/numbered-steps",
     "status": "renamed",
-    "to": "answer-readiness/numbered-steps",
-    "link": "docs/evidence/audits/answer-readiness/numbered-steps.md"
+    "to": "content-extraction/semantic-lists",
+    "link": "docs/evidence/audits/content-extraction/semantic-lists.md",
+    "note": "Renamed to answer-readiness/numbered-steps in Plan 3, then folded into content-extraction/semantic-lists in Plan 4 (Task 8, 2026-08-22): 9.6's own grading records that its signal is not independent of 6.8's and that scoring both double-counts one mechanism."
   },
   "9.7": {
     "slug": "answer-engine/specific-numbers",

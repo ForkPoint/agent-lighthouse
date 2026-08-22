@@ -15,7 +15,6 @@ export { SemanticListsAudit } from './semantic-lists';
 export { DataTablesAudit } from './data-tables';
 export { CodeLanguageAudit } from './code-language';
 export { TimeElementAudit } from './time-element';
-export { DefinitionElementsAudit } from './definition-elements';
 export { ContentDepthAudit } from './content-depth';
 export { ImageAltTextAudit } from './image-alt-text';
 export { FigureFigcaptionAudit } from './figure-figcaption';
@@ -39,7 +38,6 @@ import { SemanticListsAudit } from './semantic-lists';
 import { DataTablesAudit } from './data-tables';
 import { CodeLanguageAudit } from './code-language';
 import { TimeElementAudit } from './time-element';
-import { DefinitionElementsAudit } from './definition-elements';
 import { ContentDepthAudit } from './content-depth';
 import { ImageAltTextAudit } from './image-alt-text';
 import { FigureFigcaptionAudit } from './figure-figcaption';
@@ -65,7 +63,6 @@ export const CONTENT_EXTRACTION_AUDITS = [
   DataTablesAudit,
   CodeLanguageAudit,
   TimeElementAudit,
-  DefinitionElementsAudit,
   ContentDepthAudit,
   ImageAltTextAudit,
   FigureFigcaptionAudit,

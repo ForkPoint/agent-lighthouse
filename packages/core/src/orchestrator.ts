@@ -503,7 +503,8 @@ export const READINESS_VITAL_IDS = {
     'answer-readiness/first-paragraph-answers',
     'answer-readiness/direct-definitions',
     'answer-readiness/comparison-tables',
-    'answer-readiness/numbered-steps',
+    // 9.6 (numbered-steps) folded into 6.8 (semantic-lists) in Plan 4.
+    'content-extraction/semantic-lists',
     'answer-readiness/specific-numbers',
     'answer-readiness/dates-on-content',
     'answer-readiness/content-without-clickthrough',

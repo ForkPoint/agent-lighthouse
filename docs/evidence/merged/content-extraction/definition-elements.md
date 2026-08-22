@@ -58,3 +58,5 @@ Duplicate signal and falsy on its own. It passes when '$('dfn').length > 0 || $(
 
 - 2026-08-20 — code review (11-agent workflow) + evidence research (12-domain workflow, 400 sources).
 - 2026-08-21 — dossier generated; disposition pending final taxonomy design.
+
+**Merged into:** `content-extraction/semantic-lists` (Plan 4, 2026-08-22) — [merged dossier](../../audits/content-extraction/semantic-lists.md)

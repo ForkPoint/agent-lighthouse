@@ -14,7 +14,6 @@ export { QuestionHeadingsAudit } from './question-headings';
 export { FirstParagraphAnswersAudit } from './first-paragraph-answers';
 export { DirectDefinitionsAudit } from './direct-definitions';
 export { ComparisonTablesAudit } from './comparison-tables';
-export { NumberedStepsAudit } from './numbered-steps';
 export { SpecificNumbersAudit } from './specific-numbers';
 // One freshness audit in the place of dates-on-content + last-updated-indicator (9.10).
 export { DatesOnContentAudit } from './dates-on-content';
@@ -44,7 +43,6 @@ import { QuestionHeadingsAudit } from './question-headings';
 import { FirstParagraphAnswersAudit } from './first-paragraph-answers';
 import { DirectDefinitionsAudit } from './direct-definitions';
 import { ComparisonTablesAudit } from './comparison-tables';
-import { NumberedStepsAudit } from './numbered-steps';
 import { SpecificNumbersAudit } from './specific-numbers';
 import { DatesOnContentAudit } from './dates-on-content';
 import { ContentWithoutClickthroughAudit } from './content-without-clickthrough';
@@ -74,7 +72,6 @@ export const ANSWER_READINESS_AUDITS = [
   FirstParagraphAnswersAudit,
   DirectDefinitionsAudit,
   ComparisonTablesAudit,
-  NumberedStepsAudit,
   SpecificNumbersAudit,
   DatesOnContentAudit,
   ContentWithoutClickthroughAudit,
