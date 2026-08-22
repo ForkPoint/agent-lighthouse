@@ -11,6 +11,11 @@ const CITATIONS = `
     (<a href="https://www.nist.gov/report">NIST report</a>,
      <a href="https://arxiv.org/abs/2605.25517">arXiv 2605.25517</a>).</p>`;
 
+/** Machine-readable review data — the fact `review-signals` owns. */
+const REVIEW_MARKUP =
+  '<script type="application/ld+json">{"@context":"https://schema.org","@type":"Organization",' +
+  '"aggregateRating":{"@type":"AggregateRating","ratingValue":"4.8","reviewCount":"1204"}}</script>';
+
 describe('TrustSignalsAudit', () => {
   const audit = new TrustSignalsAudit();
 
@@ -84,16 +89,46 @@ describe('TrustSignalsAudit', () => {
   });
 
   it('defers the social-proof factor to review-signals when review markup is present', () => {
-    const markup =
-      '<script type="application/ld+json">{"@context":"https://schema.org","@type":"Organization",' +
-      '"aggregateRating":{"@type":"AggregateRating","ratingValue":"4.8","reviewCount":"1204"}}</script>';
     const page = homepage(`<main>
         <p>Rated 4.8 out of 5 across 1,204 reviews.</p>
         ${CITATIONS}
-        ${markup}
+        ${REVIEW_MARKUP}
       </main>`);
     const result = audit.audit(mockCheckContext([page]));
     expect(result.found).toContain('answer-readiness/review-signals');
+    // The deferral is an attribution change, not a penalty: this is the same
+    // page as the "quantified social proof plus evidence" case above.
+    expect(result.status).toBe('pass');
+  });
+
+  it('does not let valid AggregateRating markup score worse than its absence', () => {
+    const body = `<main>
+        <p>Rated 4.8 out of 5 across 1,204 reviews.</p>
+        ${CITATIONS}
+      </main>`;
+    const without = audit.audit(mockCheckContext([homepage(body)]));
+    const withMarkup = audit.audit(mockCheckContext([homepage(`${body}${REVIEW_MARKUP}`)]));
+    expect(without.status).toBe('pass');
+    expect(withMarkup.status).toBe('pass');
+    expect(withMarkup.score).toBeGreaterThanOrEqual(without.score);
+  });
+
+  it('warns rather than fails when review markup is the only factor present', () => {
+    // Boundary: the deferred factor is known-present, just scored elsewhere,
+    // so a bare page carrying valid markup cannot report "none found".
+    const bare = audit.audit(mockCheckContext([homepage('<main><p>We build software.</p></main>')]));
+    const withMarkup = audit.audit(
+      mockCheckContext([homepage(`<main><p>We build software.</p>${REVIEW_MARKUP}</main>`)]),
+    );
+    expect(bare.status).toBe('fail');
+    expect(withMarkup.status).toBe('warn');
+    expect(withMarkup.score).toBeGreaterThan(bare.score);
+  });
+
+  it('still requires a second factor alongside review markup to pass', () => {
+    const page = homepage(`<main><p>Great software.</p>${REVIEW_MARKUP}</main>`);
+    const result = audit.audit(mockCheckContext([page]));
+    expect(result.status).not.toBe('pass');
   });
 
   it('does not count social or share links as evidence-backed citations', () => {

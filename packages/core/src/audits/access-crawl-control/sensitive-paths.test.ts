@@ -111,6 +111,48 @@ describe('SensitivePathsAudit', () => {
     expect(result.status).toBe('na');
   });
 
+  it('emits a fix rule that matches a locale-prefixed path, and applying it passes', () => {
+    const pages = [pageLinking('/en-gb/checkout', '/en-gb/cart')];
+    const before = audit.audit(
+      mockCheckContext(pages, { '/robots.txt': mockFetchResult('User-agent: *\nAllow: /', 200) }),
+    );
+    expect(before.status).toBe('fail');
+
+    // A bare `Disallow: /checkout` would not match `/en-gb/checkout` under
+    // RFC 9309, so the emitted rule has to carry the locale segment.
+    const emitted = before.details?.code ?? '';
+    expect(emitted).toContain('Disallow: /en-gb/checkout');
+    expect(emitted).toContain('Disallow: /en-gb/cart');
+
+    // Feed the audit's own recommendation back in as robots.txt.
+    const after = audit.audit(
+      mockCheckContext(pages, { '/robots.txt': mockFetchResult(emitted, 200) }),
+    );
+    expect(after.status).toBe('pass');
+  });
+
+  it('emits one rule per locale rather than collapsing them to one family', () => {
+    const ctx = mockCheckContext([pageLinking('/en-gb/checkout', '/de/checkout')], {
+      '/robots.txt': mockFetchResult('User-agent: *\nAllow: /', 200),
+    });
+    const result = audit.audit(ctx);
+    const emitted = result.details?.code ?? '';
+    expect(emitted).toContain('Disallow: /en-gb/checkout');
+    expect(emitted).toContain('Disallow: /de/checkout');
+  });
+
+  it('emits a rule that makes a non-locale candidate pass too', () => {
+    const pages = [pageLinking('/search?q=shoes', '/account/orders')];
+    const before = audit.audit(mockCheckContext(pages, {}));
+    expect(before.status).toBe('fail');
+
+    const emitted = before.details?.code ?? '';
+    const after = audit.audit(
+      mockCheckContext(pages, { '/robots.txt': mockFetchResult(emitted, 200) }),
+    );
+    expect(after.status).toBe('pass');
+  });
+
   it('does not frame the finding as a security or privacy control', () => {
     const meta = SensitivePathsAudit.meta;
     const blob = JSON.stringify(meta).toLowerCase();

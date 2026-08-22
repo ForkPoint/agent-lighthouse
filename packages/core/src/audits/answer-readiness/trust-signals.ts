@@ -180,7 +180,10 @@ export class TrustSignalsAudit extends Audit {
     // ── Factor 1: quantified social proof ───────────────────────
     // `answer-readiness/review-signals` owns machine-readable review data on
     // this same page. When it is present that audit scores it, so this factor
-    // leaves both the numerator and the denominator here.
+    // leaves both the numerator and the denominator here — and the pass bar
+    // drops with the denominator (see `required` below), because a page that
+    // publishes valid AggregateRating markup must never score worse than the
+    // same page without it.
     const reviewMarkup = findReviewNodes(page.jsonLd);
     if (reviewMarkup.length > 0) {
       deferred = `social proof deferred to answer-readiness/review-signals (JSON-LD ${reviewMarkup.join(', ')})`;
@@ -205,18 +208,30 @@ export class TrustSignalsAudit extends Audit {
 
     const found = [...satisfied, ...(deferred ? [deferred] : [])].join('; ') || 'None found';
 
-    if (satisfied.length >= 2 || (satisfied.length > 0 && satisfied.length === counted)) {
+    // Two of the three factors carry a pass. A deferred factor removes itself
+    // from the denominator, so the bar moves with it: requiring 2 out of a
+    // 2-factor denominator would mean adding correct review markup could flip
+    // a passing page to `warn`, penalising the very signal the evidence says
+    // to strengthen. The deferred factor is *known present* — it is simply
+    // scored by review-signals — so it also lifts the floor off `fail`.
+    const required = counted >= 3 ? 2 : 1;
+    const tally = `${satisfied.length} of the ${counted} GEO-measured trust factor(s)`;
+    const deferNote = deferred
+      ? ' Social proof is scored by answer-readiness/review-signals.'
+      : '';
+
+    if (satisfied.length >= required) {
       return this.pass(
-        `Homepage carries ${satisfied.length} of the ${counted} GEO-measured trust factors.`,
+        `Homepage carries ${tally}.${deferNote}`,
         EXPECTED,
         found,
         page.url,
       );
     }
 
-    if (satisfied.length === 1) {
+    if (satisfied.length >= 1 || deferred) {
       return this.warn(
-        `Homepage carries only 1 of the ${counted} GEO-measured trust factors.`,
+        `Homepage carries only ${tally}.${deferNote}`,
         EXPECTED,
         found,
         {
