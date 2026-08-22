@@ -2,12 +2,10 @@
 check: google-lighthouse-agentic-browsing-category-shipped-complete
 title: "Google Lighthouse — Agentic Browsing category (SHIPPED, complete list)"
 domain: competitor-gap-verify
-status: proposed
+status: research
 evidence_grade: A
-uniqueness: commodity
-difficulty: headless-browser
-scoring_tier: informative (weight 0)
 reviewed: 2026-08-20
+archived: 2026-08-22
 ---
 
 # Google Lighthouse — Agentic Browsing category (SHIPPED, complete list)

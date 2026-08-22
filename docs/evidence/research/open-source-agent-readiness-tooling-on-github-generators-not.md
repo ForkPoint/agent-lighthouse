@@ -2,12 +2,10 @@
 check: open-source-agent-readiness-tooling-on-github-generators-not
 title: "Open-source agent-readiness tooling on GitHub — generators, not auditors"
 domain: competitor-gap-verify
-status: proposed
+status: research
 evidence_grade: A
-uniqueness: commodity
-difficulty: static-fetch
-scoring_tier: informative (weight 0)
 reviewed: 2026-08-20
+archived: 2026-08-22
 ---
 
 # Open-source agent-readiness tooling on GitHub — generators, not auditors

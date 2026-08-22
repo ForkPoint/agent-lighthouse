@@ -1,8 +1,20 @@
 # Proposed audits — TODO stubs
 
-83 stub files for the proposed checks from the 2026-08-20 research pass. Every stub compiles, is **not** registered in any category index, and returns `notApplicable` until implemented. Each file's header carries its implementation sketch; full proof lives in [docs/evidence/proposals](../../../../../docs/evidence/proposals/README.md).
+76 stub files for the proposed checks from the 2026-08-20 research pass. Every stub compiles, is **not** registered in any category index, and returns `notApplicable` until implemented. Each file's header carries its implementation sketch; full proof lives in [docs/evidence/proposals](../../../../../docs/evidence/proposals/README.md).
 
 Tier per [evidence policy](../../../../../docs/evidence/POLICY.md): grade A/B → scored, grade C → informative (weight 0).
+
+Seven stubs left this folder on 2026-08-22 (Plan 5, Task 2): six tool surveys
+moved to [docs/evidence/research](../../../../../docs/evidence/research/README.md)
+because their verdict is a market fact identical for every scanned URL, and
+`ai-crawler-edge-parity`, which was the same check as
+`bot-auth-access/ai-crawler-edge-response-parity` and folded into
+[docs/evidence/merged](../../../../../docs/evidence/merged/access-crawl-control/ai-crawler-edge-parity.md).
+
+`agentic-commerce/acp-endpoint-conformance-probe` stays a stub despite grade A:
+ACP defines no discovery mechanism, so the check needs an operator-supplied
+base URL, and no scan-configuration surface carries one yet. It graduates with
+the `--experimental` flag work in Plan 6.
 
 
 ## agent-operability
@@ -51,15 +63,8 @@ Tier per [evidence policy](../../../../../docs/evidence/POLICY.md): grade A/B �
 
 ## competitor-gap-verify
 
-- [ ] TODO [`ai-crawler-edge-parity`](./competitor-gap-verify/ai-crawler-edge-parity.ts) — ai-crawler-edge-parity (grade A, scored, `multi-page`) · [dossier](../../../../../docs/evidence/proposals/competitor-gap-verify/ai-crawler-edge-parity.md)
-- [ ] TODO [`ai-visibility-monitors-otterly-ai-peec-ai-ahrefs-brand-radar`](./competitor-gap-verify/ai-visibility-monitors-otterly-ai-peec-ai-ahrefs-brand-radar.ts) — AI-visibility monitors (Otterly.ai, Peec AI, Ahrefs Brand Radar, HubSpot AI Search Grader) (grade A, informative, `llm-assisted`) · [dossier](../../../../../docs/evidence/proposals/competitor-gap-verify/ai-visibility-monitors-otterly-ai-peec-ai-ahrefs-brand-radar.md)
-- [ ] TODO [`enterprise-seo-suites-semrush-conductor-seoclarity-log-based`](./competitor-gap-verify/enterprise-seo-suites-semrush-conductor-seoclarity-log-based.ts) — Enterprise SEO suites (Semrush, Conductor, seoClarity) — log-based bot analytics (grade A, informative, `multi-page`) · [dossier](../../../../../docs/evidence/proposals/competitor-gap-verify/enterprise-seo-suites-semrush-conductor-seoclarity-log-based.md)
-- [ ] TODO [`google-lighthouse-agentic-browsing-category-shipped-complete`](./competitor-gap-verify/google-lighthouse-agentic-browsing-category-shipped-complete.ts) — Google Lighthouse — Agentic Browsing category (SHIPPED, complete list) (grade A, informative, `headless-browser`) · [dossier](../../../../../docs/evidence/proposals/competitor-gap-verify/google-lighthouse-agentic-browsing-category-shipped-complete.md)
-- [ ] TODO [`open-source-agent-readiness-tooling-on-github-generators-not`](./competitor-gap-verify/open-source-agent-readiness-tooling-on-github-generators-not.ts) — Open-source agent-readiness tooling on GitHub — generators, not auditors (grade A, informative, `static-fetch`) · [dossier](../../../../../docs/evidence/proposals/competitor-gap-verify/open-source-agent-readiness-tooling-on-github-generators-not.md)
-- [ ] TODO [`profound-agent-analytics-ai-visibility-passive-bot-telemetry`](./competitor-gap-verify/profound-agent-analytics-ai-visibility-passive-bot-telemetry.ts) — Profound — Agent Analytics (AI visibility + passive bot telemetry) (grade A, informative, `llm-assisted`) · [dossier](../../../../../docs/evidence/proposals/competitor-gap-verify/profound-agent-analytics-ai-visibility-passive-bot-telemetry.md)
 - [ ] TODO [`robots-ai-group-shadowing`](./competitor-gap-verify/robots-ai-group-shadowing.ts) — robots-ai-group-shadowing (grade A, scored, `static-fetch`) · [dossier](../../../../../docs/evidence/proposals/competitor-gap-verify/robots-ai-group-shadowing.md)
 - [ ] TODO [`content-signal-coherence`](./competitor-gap-verify/content-signal-coherence.ts) — content-signal-coherence (grade B, scored, `static-fetch`) · [dossier](../../../../../docs/evidence/proposals/competitor-gap-verify/content-signal-coherence.md)
-- [ ] TODO [`google-lighthouse-ard-schema-ai-catalog-json-audit-open-pr-1`](./competitor-gap-verify/google-lighthouse-ard-schema-ai-catalog-json-audit-open-pr-1.ts) — Google Lighthouse — ard-schema (ai-catalog.json) audit, OPEN PR #17168 (grade B, informative, `static-fetch`) · [dossier](../../../../../docs/evidence/proposals/competitor-gap-verify/google-lighthouse-ard-schema-ai-catalog-json-audit-open-pr-1.md)
 - [ ] TODO [`offer-dom-price-parity`](./competitor-gap-verify/offer-dom-price-parity.ts) — offer-dom-price-parity (grade B, scored, `multi-page`) · [dossier](../../../../../docs/evidence/proposals/competitor-gap-verify/offer-dom-price-parity.md)
 
 ## feeds-indexing

@@ -2,12 +2,10 @@
 check: ai-visibility-monitors-otterly-ai-peec-ai-ahrefs-brand-radar
 title: "AI-visibility monitors (Otterly.ai, Peec AI, Ahrefs Brand Radar, HubSpot AI Search Grader)"
 domain: competitor-gap-verify
-status: proposed
+status: research
 evidence_grade: A
-uniqueness: commodity
-difficulty: llm-assisted
-scoring_tier: informative (weight 0)
 reviewed: 2026-08-20
+archived: 2026-08-22
 ---
 
 # AI-visibility monitors (Otterly.ai, Peec AI, Ahrefs Brand Radar, HubSpot AI Search Grader)

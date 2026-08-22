@@ -1,18 +1,25 @@
 ---
 check: ai-crawler-edge-parity
-title: "ai-crawler-edge-parity"
+title: "AI crawler edge parity (competitor-gap restatement)"
 domain: competitor-gap-verify
-status: proposed
+status: merged
+merged_into: access-crawl-control/ai-crawler-edge-parity
 evidence_grade: A
-uniqueness: unique
-difficulty: multi-page
-scoring_tier: scored
 reviewed: 2026-08-20
+merged: 2026-08-22
 ---
 
 # ai-crawler-edge-parity
 
-> Proposed check. Evidence grade **A** · unique · implementation: `multi-page`
+> **Merged 2026-08-22.** This is the competitor-gap restatement of the same
+> check as `bot-auth-access/ai-crawler-edge-response-parity`: paired per-UA
+> fetches against a sampled URL set, with the honesty constraint that a spoofed
+> UA without the matching source IP cannot distinguish edge IP-verification
+> from AI-crawler blocking. The `bot-auth-access` sketch carries the fuller
+> spec (robots-consistency verdict matrix, block-class taxonomy) and is the one
+> that shipped, as `access-crawl-control/ai-crawler-edge-parity`. The evidence
+> below is retained because it is the source of the UA-string-based-blocking
+> caveat that audit reports.
 
 ## What it checks
 

@@ -2,12 +2,10 @@
 check: google-lighthouse-ard-schema-ai-catalog-json-audit-open-pr-1
 title: "Google Lighthouse — ard-schema (ai-catalog.json) audit, OPEN PR #17168"
 domain: competitor-gap-verify
-status: proposed
+status: research
 evidence_grade: B
-uniqueness: partial-overlap
-difficulty: static-fetch
-scoring_tier: informative (weight 0)
 reviewed: 2026-08-20
+archived: 2026-08-22
 ---
 
 # Google Lighthouse — ard-schema (ai-catalog.json) audit, OPEN PR #17168

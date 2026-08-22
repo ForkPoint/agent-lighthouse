@@ -2,12 +2,10 @@
 check: enterprise-seo-suites-semrush-conductor-seoclarity-log-based
 title: "Enterprise SEO suites (Semrush, Conductor, seoClarity) — log-based bot analytics"
 domain: competitor-gap-verify
-status: proposed
+status: research
 evidence_grade: A
-uniqueness: commodity
-difficulty: multi-page
-scoring_tier: informative (weight 0)
 reviewed: 2026-08-20
+archived: 2026-08-22
 ---
 
 # Enterprise SEO suites (Semrush, Conductor, seoClarity) — log-based bot analytics
