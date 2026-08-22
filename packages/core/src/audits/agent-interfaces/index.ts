@@ -13,7 +13,7 @@ export { AgentsJsonAudit } from './agents-json';
 export { McpDiscoveryAudit } from './mcp-discovery';
 export { McpEndpointAudit } from './mcp-endpoint';
 export { SearchEndpointAudit } from './search-endpoint';
-export { WebmcpManifestAudit } from './webmcp-registered-tools';
+export { WebmcpRegisteredToolsAudit } from './webmcp-registered-tools';
 export { WebmcpDeclarativeFormsAudit } from './webmcp-declarative-forms';
 export { OpenApiDescriptionQualityAudit } from './openapi-description-quality';
 export { CorsApiRoutesAudit } from './cors-api-routes';
@@ -30,7 +30,7 @@ import { AgentsJsonAudit } from './agents-json';
 import { McpDiscoveryAudit } from './mcp-discovery';
 import { McpEndpointAudit } from './mcp-endpoint';
 import { SearchEndpointAudit } from './search-endpoint';
-import { WebmcpManifestAudit } from './webmcp-registered-tools';
+import { WebmcpRegisteredToolsAudit } from './webmcp-registered-tools';
 import { WebmcpDeclarativeFormsAudit } from './webmcp-declarative-forms';
 import { OpenApiDescriptionQualityAudit } from './openapi-description-quality';
 import { CorsApiRoutesAudit } from './cors-api-routes';
@@ -49,7 +49,7 @@ export const AGENT_INTERFACES_AUDITS = [
   McpDiscoveryAudit,
   McpEndpointAudit,
   SearchEndpointAudit,
-  WebmcpManifestAudit,
+  WebmcpRegisteredToolsAudit,
   WebmcpDeclarativeFormsAudit,
   OpenApiDescriptionQualityAudit,
   CorsApiRoutesAudit,

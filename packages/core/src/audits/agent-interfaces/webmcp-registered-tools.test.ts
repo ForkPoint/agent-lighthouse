@@ -1,89 +1,169 @@
 import { describe, it, expect } from 'vitest';
-import { WebmcpManifestAudit } from './webmcp-registered-tools';
-import { mockCheckContext, mockFetchResult } from '../../__tests__/test-utils';
+import { WebmcpRegisteredToolsAudit } from './webmcp-registered-tools';
+import { mockCheckContext, mockPageContext, mockFetchResult } from '../../__tests__/test-utils';
+import { expectNotApplicableOnEmpty } from '../../tests/na-contract';
 
-describe('WebmcpManifestAudit', () => {
-  const audit = new WebmcpManifestAudit();
+const page = (body: string, url = 'https://example.com/') =>
+  mockPageContext(url, `<html lang="en"><body>${body}</body></html>`);
 
-  it('passes when manifest exists with tools', () => {
-    const manifest = JSON.stringify({
-      name: 'Test Store',
-      tools: [{ name: 'searchProducts', description: 'Search products' }],
-    });
-    const ctx = mockCheckContext([], {
-      '/.well-known/webmcp': mockFetchResult(manifest, 200, 'application/json'),
-    });
-    const result = audit.audit(ctx);
-    expect(result.status).toBe('pass');
-    expect(result.message).toContain('1 valid tool(s)');
+const script = (js: string) => `<script>${js}</script>`;
+
+describe('WebmcpRegisteredToolsAudit', () => {
+  const audit = new WebmcpRegisteredToolsAudit();
+
+  it('returns na on an empty site', async () => {
+    await expectNotApplicableOnEmpty(audit);
   });
 
-  it('passes with multiple tools', () => {
-    const manifest = JSON.stringify({
-      tools: [
-        { name: 'searchProducts', description: 'Search' },
-        { name: 'addToCart', description: 'Add to cart' },
-        { name: 'checkout', description: 'Checkout' },
-      ],
+  describe('imperative registration detection', () => {
+    it('passes on a registerTool call and names the tool', () => {
+      const result = audit.audit(
+        mockCheckContext([
+          page(
+            script(`navigator.modelContext.registerTool({
+              name: "search_products",
+              description: "Search the catalog",
+              inputSchema: { type: "object" },
+            });`),
+          ),
+        ]),
+      );
+      expect(result.status).toBe('pass');
+      expect(result.found).toContain('search_products');
     });
-    const ctx = mockCheckContext([], {
-      '/.well-known/webmcp': mockFetchResult(manifest, 200, 'application/json'),
+
+    it('reads tools out of a provideContext call', () => {
+      const result = audit.audit(
+        mockCheckContext([
+          page(
+            script(`navigator.modelContext.provideContext({
+              tools: [
+                { name: 'add_to_cart', description: 'Add an item' },
+                { name: 'checkout', description: 'Check out' },
+              ],
+            });`),
+          ),
+        ]),
+      );
+      expect(result.status).toBe('pass');
+      expect(result.found).toContain('add_to_cart');
+      expect(result.found).toContain('checkout');
     });
-    const result = audit.audit(ctx);
-    expect(result.status).toBe('pass');
-    expect(result.message).toContain('3 valid tool(s)');
+
+    it('accepts a bare string first argument to registerTool', () => {
+      const result = audit.audit(
+        mockCheckContext([page(script(`navigator.modelContext.registerTool("get_status", fn)`))]),
+      );
+      expect(result.status).toBe('pass');
+      expect(result.found).toContain('get_status');
+    });
+
+    it('deduplicates a tool registered on more than one page', () => {
+      const js = script('navigator.modelContext.registerTool({ name: "search" });');
+      const result = audit.audit(
+        mockCheckContext([page(js), page(js, 'https://example.com/shop')]),
+      );
+      expect(result.status).toBe('pass');
+      expect(result.found).toContain('1 tool');
+    });
+
+    it('warns when the API is referenced but no tool name is observable', () => {
+      const result = audit.audit(
+        mockCheckContext([page(script('if (navigator.modelContext) { init(); }'))]),
+      );
+      expect(result.status).toBe('warn');
+      expect(result.message).toContain('navigator.modelContext');
+    });
+
+    it('ignores a script that never touches navigator.modelContext', () => {
+      const result = audit.audit(
+        mockCheckContext([page(script('window.registerTool({ name: "not_webmcp" });'))]),
+      );
+      expect(result.status).toBe('na');
+    });
+
+    it('does not read external script bodies it never fetched', () => {
+      const result = audit.audit(
+        mockCheckContext([page('<script src="/bundle.js"></script>')]),
+      );
+      expect(result.status).toBe('na');
+      expect(result.message).toContain('cannot execute');
+    });
   });
 
-  it('fails when manifest is missing (404)', () => {
-    const ctx = mockCheckContext([], {
-      '/.well-known/webmcp': mockFetchResult('', 404),
+  describe('non-double-counting with webmcp-declarative-forms', () => {
+    it('defers to the declarative audit when only declarative forms exist', () => {
+      const result = audit.audit(
+        mockCheckContext([
+          page('<form toolname="search" tooldescription="Search"><input name="q"></form>'),
+        ]),
+      );
+      expect(result.status).toBe('na');
+      expect(result.message).toContain('webmcp-declarative-forms');
     });
-    const result = audit.audit(ctx);
-    expect(result.status).toBe('fail');
+
+    it('still reports imperative tools when declarative forms are also present', () => {
+      const result = audit.audit(
+        mockCheckContext([
+          page(
+            '<form toolname="search" tooldescription="Search"><input name="q"></form>' +
+              script('navigator.modelContext.registerTool({ name: "checkout" });'),
+          ),
+        ]),
+      );
+      expect(result.status).toBe('pass');
+      expect(result.found).toContain('checkout');
+    });
   });
 
-  it('fails when manifest is not fetched at all', () => {
-    const ctx = mockCheckContext([], {});
-    const result = audit.audit(ctx);
-    expect(result.status).toBe('fail');
+  describe('the invented manifest is gone', () => {
+    // The whole point of the redeem: /.well-known/webmcp is a private,
+    // vendor-versioned format with no spec and no consumer. A site that
+    // publishes one must not be credited, and a site that does not must not
+    // be failed.
+    it('does not pass on a /.well-known/webmcp manifest', () => {
+      const result = audit.audit(
+        mockCheckContext([page('<p>store</p>')], {
+          '/.well-known/webmcp': mockFetchResult(
+            JSON.stringify({ tools: [{ name: 'searchProducts' }] }),
+            200,
+            'application/json',
+          ),
+        }),
+      );
+      expect(result.status).toBe('na');
+    });
+
+    it('never fails a site for the absence of the manifest', () => {
+      const result = audit.audit(
+        mockCheckContext([page('<p>store</p>')], {
+          '/.well-known/webmcp': mockFetchResult('', 404),
+        }),
+      );
+      expect(result.status).not.toBe('fail');
+    });
+
+    it('mentions neither the well-known path nor webmcp.link in its guidance', () => {
+      const meta = WebmcpRegisteredToolsAudit.meta;
+      const copy = JSON.stringify(meta).toLowerCase();
+      expect(copy).not.toContain('.well-known/webmcp');
+      expect(copy).not.toContain('webmcp.link');
+    });
   });
 
-  it('fails when manifest is invalid JSON', () => {
-    const ctx = mockCheckContext([], {
-      '/.well-known/webmcp': mockFetchResult('not json {{{', 200),
-    });
-    const result = audit.audit(ctx);
-    expect(result.status).toBe('fail');
-    expect(result.message).toContain('not valid JSON');
-  });
+  describe('meta contract', () => {
+    const meta = WebmcpRegisteredToolsAudit.meta;
 
-  it('fails when manifest has no tools array', () => {
-    const ctx = mockCheckContext([], {
-      '/.well-known/webmcp': mockFetchResult(JSON.stringify({ name: 'Store' }), 200),
+    it('is grade B, experimental, weight 0, informative', () => {
+      expect(meta.id).toBe('agent-interfaces/webmcp-registered-tools');
+      expect(meta.evidenceGrade).toBe('B');
+      expect(meta.tier).toBe('experimental');
+      expect(meta.weight).toBe(0);
+      expect(meta.scoreDisplayMode).toBe('informative');
     });
-    const result = audit.audit(ctx);
-    expect(result.status).toBe('fail');
-    expect(result.message).toContain('does not contain a tools array');
-  });
 
-  it('fails when tools array is empty', () => {
-    const ctx = mockCheckContext([], {
-      '/.well-known/webmcp': mockFetchResult(JSON.stringify({ tools: [] }), 200),
+    it('drops the high priority it carried as a hard fail', () => {
+      expect(meta.defaultPriority).toBe('low');
     });
-    const result = audit.audit(ctx);
-    expect(result.status).toBe('fail');
-    expect(result.message).toContain('empty tools array');
-  });
-
-  it('fails when tools array has entries but none are valid tool objects with a name', () => {
-    const ctx = mockCheckContext([], {
-      '/.well-known/webmcp': mockFetchResult(
-        JSON.stringify({ tools: [null, 42, { description: 'no name field' }] }),
-        200,
-      ),
-    });
-    const result = audit.audit(ctx);
-    expect(result.status).toBe('fail');
-    expect(result.message).toContain('none are valid tool objects');
   });
 });

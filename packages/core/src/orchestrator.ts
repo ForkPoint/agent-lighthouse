@@ -225,7 +225,10 @@ export async function runScan(url: string, options?: ScanOptions): Promise<ScanR
     '/.well-known/ucp',
     '/.well-known/agents.json',
     '/.well-known/ai-plugin.json',
-    '/.well-known/webmcp',
+    // '/.well-known/webmcp' was dropped 2026-08-22: the only reader was the
+    // pre-rewrite webmcp-registered-tools audit, and the path is an invented
+    // convention with no spec and no IANA registration. Real WebMCP tools are
+    // registered at runtime, so there was nothing at the end of that request.
     '/.well-known/security.txt',
     '/.well-known/tdmrep.json',
     '/navigation.json',

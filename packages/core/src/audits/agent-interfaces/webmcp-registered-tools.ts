@@ -1,125 +1,203 @@
-// TODO(redeem): this audit survives only if rewritten (pending triage approval). Target tier: experimental.
+// Redemption rewrite landed 2026-08-22 (Plan 4, Task 16). The audit used to
+// demand a `/.well-known/webmcp` manifest — an invented artifact (dossier
+// grade D): the WebMCP spec defines no manifest format at all, `webmcp` is not
+// in the IANA Well-Known URIs registry, and every deployment in the wild is a
+// different private schema (Zapier's self-identifies as
+// "zapier-webmcp-discovery/1"). It was a binary hard FAIL at `high` priority
+// for effectively every site on the web, and a site correctly implementing real
+// WebMCP failed it too, because the real API leaves no static artifact.
 // Evidence dossier: docs/evidence/audits/agent-interfaces/webmcp-registered-tools.md
-// Required rework:
-//   Evidence reshape: the .well-known manifest file is invented (grade D) — but runtime-registered
-//   WebMCP tools are grade B: Google Lighthouse 13.3+ ships 'Registered WebMCP tools' audits in its
-//   new Agentic Browsing category. Replace manifest-file audit with registered-tools detection,
-//   experimental tier.
-
-import type { AuditMeta, AuditResult } from "../../types";
-import { Audit } from "../../audit";
+//
+// What replaces it is the mechanism Google Lighthouse 13.3+ reports in its
+// Agentic Browsing category as "Registered WebMCP tools" (grade B): tools
+// registered at runtime through `navigator.modelContext`. Lighthouse reads them
+// from a live browser; this scanner has no JS runtime, so it reports the
+// registrations it can see in the served document and says plainly that absence
+// is not evidence of absence. That honesty is why the tier is `experimental`
+// and the weight 0 — the check informs, it never scores.
+//
+// RE-CHECK TRIGGER: if this project ever gains a headless-browser gatherer,
+// this audit should read `navigator.modelContext.getTools()` after load instead
+// of pattern-matching source text, and the `warn`/`na` branches below collapse.
+import type { AuditMeta, AuditResult } from '../../types';
+import { Audit } from '../../audit';
 import { weightForGrade } from '../../scorer';
 import type { CheckContext } from '../../check-context';
 
-function tryParseJson(body: string): unknown {
-  try {
-    return JSON.parse(body);
-  } catch {
-    return undefined;
+/** The runtime API surface. Nothing else in the platform carries this name. */
+const API_RE = /navigator\s*\.\s*modelContext/;
+
+/**
+ * `registerTool("name", …)` — the string-first form.
+ *
+ * The descriptor-object form (`registerTool({ name: "…" })`) and
+ * `provideContext({ tools: [{ name: "…" }] })` are both covered by NAME_KEY_RE
+ * below, which is why this one only has to handle the bare string.
+ */
+const REGISTER_STRING_RE = /register(?:Tool|Tools)\s*\(\s*["'`]([^"'`]+)["'`]/g;
+
+/**
+ * A `name:` key inside the argument text of a registration call. Deliberately
+ * scoped to the call's own source slice (see `callBodies`) so an unrelated
+ * `name:` elsewhere in the bundle cannot be reported as a WebMCP tool.
+ */
+const NAME_KEY_RE = /\bname\s*:\s*["'`]([^"'`]+)["'`]/g;
+
+/** Registration entry points defined by the WebMCP explainer. */
+const CALL_RE = /\b(?:registerTool|registerTools|provideContext)\s*\(/g;
+
+/**
+ * The source text of each registration call, from the opening parenthesis to
+ * its match. A brace/paren counter is enough here and cannot loop forever: it
+ * stops at the end of the slice whether or not the source is balanced.
+ */
+function callBodies(source: string): string[] {
+  const bodies: string[] = [];
+  for (const match of source.matchAll(CALL_RE)) {
+    const start = match.index! + match[0].length;
+    let depth = 1;
+    let i = start;
+    for (; i < source.length && depth > 0; i++) {
+      const ch = source[i];
+      if (ch === '(') depth++;
+      else if (ch === ')') depth--;
+    }
+    bodies.push(source.slice(start, i));
   }
+  return bodies;
 }
 
-function isObject(val: unknown): val is Record<string, unknown> {
-  return typeof val === 'object' && val !== null && !Array.isArray(val);
+interface Registration {
+  /** Tool names observed in the served document, deduplicated and ordered. */
+  tools: string[];
+  /** A page referenced `navigator.modelContext` at all. */
+  apiReferenced: boolean;
+  /** A page carries a declarative WebMCP form, which another audit owns. */
+  declarativeForms: boolean;
+  pageUrl?: string;
 }
 
-export class WebmcpManifestAudit extends Audit {
+function survey(ctx: CheckContext): Registration {
+  const tools = new Set<string>();
+  const result: Registration = { tools: [], apiReferenced: false, declarativeForms: false };
+
+  for (const page of ctx.pages) {
+    if (page.$('form[toolname]').length > 0) result.declarativeForms = true;
+
+    // Inline scripts only. An external bundle is not fetched — following every
+    // `<script src>` on every page would multiply the scan's request count for
+    // a weight-0 signal, and a minified bundle would rarely survive matching.
+    page.$('script:not([src])').each((_, el) => {
+      const source = page.$(el).text();
+      if (!source || !API_RE.test(source)) return;
+
+      result.apiReferenced = true;
+      if (!result.pageUrl) result.pageUrl = page.url;
+
+      for (const match of source.matchAll(REGISTER_STRING_RE)) tools.add(match[1]!);
+      for (const body of callBodies(source)) {
+        for (const match of body.matchAll(NAME_KEY_RE)) tools.add(match[1]!);
+      }
+    });
+  }
+
+  result.tools = [...tools];
+  return result;
+}
+
+const EXPECTED =
+  'Tools registered at runtime through navigator.modelContext, observable in the served document';
+
+const SAMPLE = `<!-- WebMCP is a JavaScript API: tools are registered imperatively at
+     runtime. There is no manifest file, and no well-known path. -->
+<script>
+  navigator.modelContext.registerTool({
+    name: "search_products",
+    description: "Search the product catalog by keyword or category",
+    inputSchema: {
+      type: "object",
+      properties: { query: { type: "string", description: "Search keywords" } },
+      required: ["query"],
+    },
+    async execute({ query }) {
+      const results = await fetch(\`/api/search?q=\${query}\`).then((r) => r.json());
+      return { content: [{ type: "text", text: JSON.stringify(results) }] };
+    },
+  });
+</script>`;
+
+export class WebmcpRegisteredToolsAudit extends Audit {
   static override meta: AuditMeta = {
     id: 'agent-interfaces/webmcp-registered-tools',
     category: 'agent-interfaces',
-    title: 'WebMCP discovery manifest',
-    failureTitle: 'WebMCP discovery manifest',
+    title: 'WebMCP registered tools',
+    failureTitle: 'WebMCP registered tools',
     description:
-      "WebMCP is a proposed W3C standard (Chrome 146+) that lets websites expose structured tools to AI agents. A /.well-known/webmcp manifest is an emerging convention (not yet in the formal spec) that enables agentic crawlers to discover your site's capabilities before visiting, similar to how robots.txt works for search engines.",
+      'WebMCP lets a page register agent-callable tools at runtime through navigator.modelContext, which is what Chrome exposes to an in-browser agent and what Lighthouse reports as "Registered WebMCP tools". This scanner has no JavaScript runtime, so it reports the registrations visible in the served document and treats silence as unknown rather than as absence — which is why it is experimental and never scores.',
     scoreDisplayMode: 'informative',
-    weight: weightForGrade('A', 'experimental'),
-    evidenceGrade: 'A',
-    // Tier deviates from the grade→tier rule on the map's instruction: the
-    // dossier's grade A covers WebMCP itself, but the `.well-known` manifest
-    // this audit currently looks for is invented, so it scores nothing until
-    // the Plan 4 rewrite replaces it with runtime registered-tools detection.
+    weight: weightForGrade('B', 'experimental'),
+    evidenceGrade: 'B',
+    // The mechanism is real and shipped in a Google product, but this scanner
+    // can only observe it partially: no JS runtime means a tool registered from
+    // an external bundle is invisible. `experimental` is the honest tier for a
+    // detector that cannot distinguish "no tools" from "cannot see the tools".
     tier: 'experimental',
     dossier: 'docs/evidence/audits/agent-interfaces/webmcp-registered-tools.md',
-    defaultPriority: 'high',
+    // Was `high` on an admittedly non-standard convention, so it outranked
+    // genuinely actionable items in the recommendation list.
+    defaultPriority: 'low',
     guidance: {
       impact:
-        'Without a WebMCP manifest, AI agents cannot pre-discover what actions your site supports. Agents must fall back to scraping or vision-based interaction, which is slower, less reliable, and may miss key capabilities like product search or checkout.',
-      fix: "Create a /.well-known/webmcp manifest file describing your site's available tools, their parameters, and capabilities.",
-      code: `// /.well-known/webmcp
-{
-  "name": "Your Store",
-  "description": "E-commerce store with product search and checkout",
-  "tools": [
-    {
-      "name": "searchProducts",
-      "description": "Search the product catalog by keyword, category, or filters",
-      "inputSchema": {
-        "type": "object",
-        "properties": {
-          "query": { "type": "string", "description": "Search keywords" },
-          "category": { "type": "string", "description": "Product category" }
-        },
-        "required": ["query"]
-      }
-    }
-  ]
-}`,
+        'A page with no registered tools gives an in-browser agent nothing structured to call, so it falls back to reading the DOM and clicking — slower, and wrong more often on anything past a single text input. Note that this is upside rather than a deficiency: the API is an origin trial, and no site is penalised here for not having adopted it.',
+      fix: 'Register your tools from the page with navigator.modelContext.registerTool(), giving each a name, a description an agent can select on, and an inputSchema. For tools that map onto a form, the declarative toolname/tooldescription attributes are simpler and are covered by the agent-interfaces/webmcp-declarative-forms audit.',
+      code: SAMPLE,
       effort: 'moderate',
-      docsUrl: 'https://webmcp.link/',
-      tags: ['webmcp', 'discovery', 'agent-protocol', 'chrome-146'],
+      docsUrl: 'https://developer.chrome.com/docs/ai/webmcp',
+      tags: ['webmcp', 'agent-protocol', 'runtime-tools', 'experimental'],
     },
   };
 
   audit(ctx: CheckContext): AuditResult {
-    const result = ctx.rootFiles['/.well-known/webmcp'];
-    if (!result || result.status !== 200 || !result.body) {
-      return this.fail(
-        '/.well-known/webmcp manifest not found.',
-        '/.well-known/webmcp returns 200 with valid JSON describing available tools',
-        result ? `HTTP ${result.status}` : 'Not fetched',
-        'high',
+    const found = survey(ctx);
+
+    if (found.tools.length > 0) {
+      const count = `${found.tools.length} tool${found.tools.length === 1 ? '' : 's'}`;
+      return this.pass(
+        `WebMCP tools are registered from the page: ${found.tools.join(', ')}.`,
+        EXPECTED,
+        `${count} registered via navigator.modelContext: ${found.tools.join(', ')}`,
+        found.pageUrl,
       );
     }
 
-    const parsed = tryParseJson(result.body);
-    if (!isObject(parsed)) {
-      return this.fail(
-        '/.well-known/webmcp is not valid JSON.',
-        'Valid JSON object with tools array',
-        'Invalid JSON',
-        'high',
+    if (found.apiReferenced) {
+      return this.warn(
+        'A script references navigator.modelContext but no tool name is observable in the served document, so it cannot be confirmed that any tool is registered.',
+        EXPECTED,
+        'navigator.modelContext referenced, no tool name observable',
+        'low',
+        found.pageUrl,
       );
     }
 
-    if (!Array.isArray(parsed['tools'])) {
-      return this.fail(
-        '/.well-known/webmcp does not contain a tools array.',
-        'JSON object with "tools" array',
-        'No tools array found',
-        'high',
+    // Declarative forms are a different registration path, audited separately.
+    // Reporting them here too would score one adoption decision twice.
+    if (found.declarativeForms) {
+      return this.notApplicable(
+        'This site registers its tools declaratively from forms, which agent-interfaces/webmcp-declarative-forms assesses; no imperative navigator.modelContext registration was observed.',
+        EXPECTED,
+        'Declarative WebMCP forms only',
       );
     }
 
-    const rawTools = parsed['tools'] as unknown[];
-    const tools = rawTools.filter(
-      (t): t is Record<string, unknown> => isObject(t) && typeof t['name'] === 'string',
-    );
-
-    if (tools.length === 0) {
-      return this.fail(
-        rawTools.length === 0
-          ? '/.well-known/webmcp has an empty tools array.'
-          : `/.well-known/webmcp has ${rawTools.length} entries but none are valid tool objects with a name.`,
-        'At least one tool with a name defined in the manifest',
-        `${tools.length} valid tool(s) out of ${rawTools.length} entries`,
-        'high',
-      );
-    }
-
-    return this.pass(
-      `WebMCP manifest found with ${tools.length} valid tool(s).`,
-      '/.well-known/webmcp returns 200 with valid JSON containing tools array',
-      `Valid JSON with ${tools.length} tool(s)`,
+    // Absence of evidence, stated as such. A static scan cannot execute the
+    // page's JavaScript, so a site registering tools from an external bundle
+    // looks identical to a site with no WebMCP at all — and failing both was
+    // the defect this rewrite removes.
+    return this.notApplicable(
+      'No WebMCP registration was observed. This scan cannot execute the page JavaScript, so tools registered from an external bundle are invisible to it and absence here is not evidence of absence.',
+      EXPECTED,
+      'No navigator.modelContext registration in the served document',
     );
   }
 }
