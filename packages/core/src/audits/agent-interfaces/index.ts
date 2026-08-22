@@ -21,6 +21,7 @@ export { CorsApiRoutesAudit } from './cors-api-routes';
 // New in v2 (Plan 5): graduated from the MCP proposal set on 2026-08-22.
 export { McpModernEraReachabilityAudit } from './mcp-modern-era-reachability';
 export { McpOauthDiscoveryChainAudit } from './mcp-oauth-discovery-chain';
+export { McpToolContractValidityAudit } from './mcp-tool-contract-validity';
 
 import { OpenApiExistsAudit } from './openapi-exists';
 import { OpenApiEndpointsAudit } from './openapi-endpoints';
@@ -40,6 +41,7 @@ import { OpenApiDescriptionQualityAudit } from './openapi-description-quality';
 import { CorsApiRoutesAudit } from './cors-api-routes';
 import { McpModernEraReachabilityAudit } from './mcp-modern-era-reachability';
 import { McpOauthDiscoveryChainAudit } from './mcp-oauth-discovery-chain';
+import { McpToolContractValidityAudit } from './mcp-tool-contract-validity';
 
 /** Every audit that lives in the agent-interfaces category, in map order. */
 export const AGENT_INTERFACES_AUDITS = [
@@ -61,4 +63,5 @@ export const AGENT_INTERFACES_AUDITS = [
   CorsApiRoutesAudit,
   McpModernEraReachabilityAudit,
   McpOauthDiscoveryChainAudit,
+  McpToolContractValidityAudit,
 ] as const;

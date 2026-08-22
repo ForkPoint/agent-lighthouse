@@ -1,18 +1,19 @@
 ---
-check: tool-contract-validity-and-silent-drop-risk
-title: "Tool Contract Validity and Silent-Drop Risk"
-domain: mcp-server-quality
-status: proposed
+audit: agent-interfaces/mcp-tool-contract-validity
+category: agent-interfaces
+source_file: packages/core/src/audits/agent-interfaces/mcp-tool-contract-validity.ts
+slug: mcp-tool-contract-validity
 evidence_grade: A
-uniqueness: unique
-difficulty: static-fetch
-scoring_tier: scored
+tier: scored
+disposition: "new in v2 — graduated from proposal 2026-08-22"
 reviewed: 2026-08-20
+graduated: 2026-08-22
 ---
+
 
 # Tool Contract Validity and Silent-Drop Risk
 
-> Proposed check. Evidence grade **A** · unique · implementation: `static-fetch`
+> Shipped in v2. Evidence grade **A** · scored tier · unique · implementation: `static-fetch`
 
 ## What it checks
 
@@ -54,3 +55,20 @@ Tier per evidence policy: **scored** — grade A meets the A/B bar required for 
 ## Review history
 
 - 2026-08-20 — proposed by the novel-checks research pass (10-agent evidence workflow); sources URL-verified at research time.
+
+## Implementation deviations
+
+Recorded at graduation (2026-08-22, Plan 5 Task 28).
+
+- **Pass ratio is reported, not scored directly.** The sketch proposed `score = tools passing all MUSTs / total tools`. This audit is ternary, so the ratio appears in `found` and in the failure message while the status is decided by the rules themselves: any MUST-level defect fails, SHOULD-level naming defects warn, otherwise pass. That keeps the sketch's own override — "any `x-mcp-header` violation forces a failing grade regardless of ratio" — true by construction rather than as a special case.
+- **Name rules are SHOULD-level, as the sketch classifies them, so they warn.** Length over 128, characters outside `/^[A-Za-z0-9_.\-]+$/`, non-printable-ASCII names and duplicates are reported as warnings. A missing `name` is a MUST and fails.
+- **`$ref` is treated as a hop, not resolved.** A schema that reaches an `x-mcp-header` through `$ref` is a violation whatever the reference points at, which is exactly the client's static-reachability rule; no reference resolution is attempted.
+- **At most 4 `nextCursor` pages are followed.** A server paginating past that is reported in `found` as stopped at the limit rather than silently truncated.
+- **`tools/list` responses are shared per scan**, keyed by endpoint and cursor, so this audit and `agent-interfaces/mcp-modern-era-reachability` do not each pay for the same page. `agent-interfaces/mcp-tools-list-determinism` deliberately bypasses that cache.
+- **A server that lists no tools is `notApplicable`.** There is no contract to validate, and whether the endpoint answers at all is scored by `agent-interfaces/mcp-modern-era-reachability`.
+
+## Deferred
+
+- Calling any tool. Every rule checked here is static, which is the point: the whole audit costs one `tools/list` fetch.
+- Validating that results conform to a declared `outputSchema`. That needs a call, and a call has side effects.
+- Full JSON Schema validation of `inputSchema` beyond the structural MUSTs (object, `type: "object"`, no dangling `required`).
