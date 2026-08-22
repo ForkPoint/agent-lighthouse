@@ -119,7 +119,7 @@ export class AiBotDirectivesAudit extends Audit {
     guidance: {
       impact:
         "Blocking YouBot removes the site from You.com's live search index; blocking AI2Bot removes it from the Allen Institute's open training corpora while leaving closed commercial crawlers untouched. Leaving either to the wildcard rule means the policy silently flips the day a blanket block is added. The other three tokens carry no comparable consumer, so this audit never penalises blocking them.",
-      fix: 'Name YouBot and AI2Bot explicitly in robots.txt with the policy you actually intend. Blocking is a valid choice — state it deliberately rather than inheriting it from User-agent: *.',
+      fix: 'Give YouBot and AI2Bot their own User-agent groups with Allow: / — that is the state this audit passes, because it keeps the documented consumer path open and pins it against a later blanket block. Leaving them to User-agent: * is a warning: the policy is unstated and flips the day a blanket block is added. An explicit Disallow: / for either bot is reported as a failure — it is a legitimate publisher decision, but it does close a documented consumer path, and this audit records that cost rather than hiding it; if that is what you intend, enforce it at the edge too, since robots.txt alone is not a reliable block. Bytespider, cohere-ai and Diffbot never affect the score, whatever you do with them.',
       code: 'User-agent: YouBot\nAllow: /\n\nUser-agent: AI2Bot\nAllow: /',
       effort: 'trivial',
       tags: ['robots-txt', 'crawler-permissions', 'ai-bots'],
