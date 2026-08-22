@@ -1,6 +1,6 @@
 # Proposed checks — evidence dossiers
 
-73 proposed checks from the 2026-08-20 novel-checks research pass. Each dossier states what the check verifies, the falsifiable mechanism behind it, cited evidence from the [source registry](../sources.json), competitor coverage, and an implementation sketch. Grading rubric: [evidence policy](../POLICY.md).
+72 proposed checks from the 2026-08-20 novel-checks research pass. Each dossier states what the check verifies, the falsifiable mechanism behind it, cited evidence from the [source registry](../sources.json), competitor coverage, and an implementation sketch. Grading rubric: [evidence policy](../POLICY.md).
 
 Seven dossiers left this folder on 2026-08-22 (Plan 5, Task 2): six tool
 surveys moved to [../research](../research/README.md) because their verdict is
@@ -31,7 +31,6 @@ Grades: **A** = documented consumer behavior or ratified standard · **B** = dra
 | A | [Agent-commerce feed-field parity from product-page structured data](./feeds-indexing/agent-commerce-feed-field-parity-from-product-page-structure.md) | feeds-indexing | unique | `multi-page` | scored |
 | A | [AI-crawler reachability of advertised discovery surfaces](./feeds-indexing/ai-crawler-reachability-of-advertised-discovery-surfaces.md) | feeds-indexing | unique | `multi-page` | scored |
 | A | [Sitemap lastmod verifiability (page-level cross-validation)](./feeds-indexing/sitemap-lastmod-verifiability-page-level-cross-validation.md) | feeds-indexing | partial-overlap | `multi-page` | scored |
-| A | [Accessibility-Layer Injection Scan](./injection-safety/accessibility-layer-injection-scan.md) | injection-safety | partial-overlap | `static-fetch` | scored |
 | A | [Modern-Era Reachability Probe (server/discover)](./mcp-server-quality/modern-era-reachability-probe-server-discover.md) | mcp-server-quality | unique | `static-fetch` | scored |
 | A | [OAuth Discovery Chain Integrity (RFC 9728 → RFC 8414)](./mcp-server-quality/oauth-discovery-chain-integrity-rfc-9728-rfc-8414.md) | mcp-server-quality | unique | `multi-page` | scored |
 | A | [Tool Contract Validity and Silent-Drop Risk](./mcp-server-quality/tool-contract-validity-and-silent-drop-risk.md) | mcp-server-quality | unique | `static-fetch` | scored |

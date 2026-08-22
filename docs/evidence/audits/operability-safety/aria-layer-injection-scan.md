@@ -1,18 +1,19 @@
 ---
-check: accessibility-layer-injection-scan
-title: "Accessibility-Layer Injection Scan"
-domain: injection-safety
-status: proposed
+audit: operability-safety/aria-layer-injection-scan
+category: operability-safety
+source_file: packages/core/src/audits/operability-safety/aria-layer-injection-scan.ts
+slug: aria-layer-injection-scan
 evidence_grade: A
-uniqueness: partial-overlap
-difficulty: static-fetch
-scoring_tier: scored
+tier: scored
+disposition: "new in v2 — graduated from proposal 2026-08-22"
 reviewed: 2026-08-20
+graduated: 2026-08-22
 ---
+
 
 # Accessibility-Layer Injection Scan
 
-> Proposed check. Evidence grade **A** · partial overlap · implementation: `static-fetch`
+> Shipped in v2. Evidence grade **A** · scored tier · partial overlap · implementation: `static-fetch`
 
 ## What it checks
 
@@ -46,3 +47,37 @@ Tier per evidence policy: **scored** — grade A meets the A/B bar required for 
 ## Review history
 
 - 2026-08-20 — proposed by the novel-checks research pass (10-agent evidence workflow); sources URL-verified at research time.
+
+## Implementation deviations
+
+Shipped as `operability-safety/aria-layer-injection-scan`: v2 has no
+`injection-safety` category, and the shorter slug keeps the id inside the
+64-character limit `CheckResultSchema` enforces.
+
+The instruction lexicon is **imported** from
+`operability-safety/invisible-instruction-scan` rather than restated. One
+lexicon, two surfaces — hidden body text there, non-visual attributes here — so
+the two cannot drift apart.
+
+**Stopwords before Jaccard.** The sketch specifies "Jaccard on lowercased
+alphanumeric tokens". Raw Jaccard warns on legitimate pairs: `aria-label="Place
+your order now"` against visible text "Submit order" scores 0.2, below the 0.3
+floor, purely because both strings carry function words the other does not.
+Topic-free tokens (a, the, your, now, please, to, ...) are dropped before the
+comparison, which lifts that pair to 0.33 and leaves genuinely unrelated pairs
+below the floor.
+
+**Finite-verb detection.** "A natural-language sentence (>=5 tokens containing a
+finite verb)" is implemented as a closed verb list rather than a parser. A
+security heuristic should miss a sentence sooner than flag a nonce, and no
+part-of-speech tagger is available without a new dependency.
+
+## Deferred
+
+- `aria-labelledby`/`aria-describedby` targets are read for lexicon hits, but a
+  divergence check between a *referenced* label and the element's visible text
+  is not performed — only the inline `aria-label` case is, where the two strings
+  belong to one element unambiguously.
+- The long-value warning applies to `alt` and `aria-label`, the two channels the
+  dossier names as the canonical smuggling slot. A 300-character `title` is an
+  ordinary tooltip and is not warned on.

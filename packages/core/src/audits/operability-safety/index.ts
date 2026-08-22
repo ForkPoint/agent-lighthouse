@@ -47,6 +47,7 @@ export { SecurityHeaderHygieneAudit } from './security-header-hygiene';
 export { FormAutofillTokenCoverageAudit } from './form-autofill-token-coverage';
 export { NativeControlSubstitutionAudit } from './native-control-substitution';
 export { InvisibleInstructionScanAudit } from './invisible-instruction-scan';
+export { AriaLayerInjectionScanAudit } from './aria-layer-injection-scan';
 
 // Not an audit: the rule-id list the orchestrator feeds to the engine. It is
 // only complete once every engine-backed audit module has been evaluated — this
@@ -80,6 +81,7 @@ import { SecurityHeaderHygieneAudit } from './security-header-hygiene';
 import { FormAutofillTokenCoverageAudit } from './form-autofill-token-coverage';
 import { NativeControlSubstitutionAudit } from './native-control-substitution';
 import { InvisibleInstructionScanAudit } from './invisible-instruction-scan';
+import { AriaLayerInjectionScanAudit } from './aria-layer-injection-scan';
 
 /** Every audit that lives in the operability-safety category, in map order. */
 export const OPERABILITY_SAFETY_AUDITS = [
@@ -110,4 +112,5 @@ export const OPERABILITY_SAFETY_AUDITS = [
   FormAutofillTokenCoverageAudit,
   NativeControlSubstitutionAudit,
   InvisibleInstructionScanAudit,
+  AriaLayerInjectionScanAudit,
 ] as const;
