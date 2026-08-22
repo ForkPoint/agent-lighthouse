@@ -10,7 +10,6 @@
 export { ContactFormAudit } from './contact-form';
 export { NoBlockingCaptchaAudit } from './no-blocking-captcha';
 export { FormsNoJsAudit } from './forms-no-js';
-export { WebmcpInputQualityAudit } from './webmcp-input-quality';
 export { FormActionabilityAudit } from './form-actionability';
 
 // Hand-rolled (cheerio) markup audits — no equivalent rule in the a11y engine.
@@ -53,7 +52,6 @@ export { A11Y_RULES } from './_shared';
 import { ContactFormAudit } from './contact-form';
 import { NoBlockingCaptchaAudit } from './no-blocking-captcha';
 import { FormsNoJsAudit } from './forms-no-js';
-import { WebmcpInputQualityAudit } from './webmcp-input-quality';
 import { FormActionabilityAudit } from './form-actionability';
 import { AriaLandmarksAudit } from './aria-landmarks';
 import { NavAriaLabelAudit } from './nav-aria-label';
@@ -82,7 +80,6 @@ export const OPERABILITY_SAFETY_AUDITS = [
   ContactFormAudit,
   NoBlockingCaptchaAudit,
   FormsNoJsAudit,
-  WebmcpInputQualityAudit,
   FormActionabilityAudit,
   AriaLandmarksAudit,
   NavAriaLabelAudit,

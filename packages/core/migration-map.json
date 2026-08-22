@@ -674,10 +674,9 @@
   },
   "5.22": {
     "slug": "agent-tools/webmcp-input-quality",
-    "status": "merging",
+    "status": "renamed",
     "to": "operability-safety/form-actionability",
-    "interim": "operability-safety/webmcp-input-quality",
-    "link": "docs/evidence/audits/operability-safety/webmcp-input-quality.md"
+    "link": "docs/evidence/audits/operability-safety/form-actionability.md"
   },
   "5.23": {
     "slug": "agent-tools/webmcp-tool-naming",

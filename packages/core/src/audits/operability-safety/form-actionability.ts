@@ -117,11 +117,26 @@ function isStandardAutocomplete(value: string): boolean {
   return tokens.length > 0 && STANDARD_AUTOCOMPLETE_TOKENS.has(tokens[tokens.length - 1]);
 }
 
-function labelTextFor($: CheerioAPI, formEl: Parameters<CheerioAPI>[0], id: string | undefined): string {
-  if (!id) return '';
-  const escapedId = id.replace(/(["\\\]:])/g, '\\$1');
-  const label = $(formEl).find(`label[for="${escapedId}"]`).first();
-  return label.text().trim();
+/**
+ * Escape only what a quoted attribute value needs. The previous regex also
+ * escaped `:` and `]`, which are legal inside quotes — so framework ids
+ * (JSF/PrimeFaces `form:email`, ASP.NET WebForms) produced a selector that
+ * matched nothing and their correctly labelled fields were reported unlabelled.
+ */
+function escapeAttrValue(id: string): string {
+  return id.replace(/(["\\])/g, '\\$1');
+}
+
+/**
+ * HTML lets a `<label for>` live anywhere in the document, and layout-driven
+ * markup routinely puts it in a sibling grid cell. Both source audits checked
+ * this and disagreed on the scope; the document-wide lookup is the one that
+ * matches the spec.
+ */
+function labelFor($: CheerioAPI, id: string | undefined) {
+  if (!id) return undefined;
+  const label = $(`label[for="${escapeAttrValue(id)}"]`);
+  return label.length > 0 ? label.first() : undefined;
 }
 
 export class FormActionabilityAudit extends Audit {
@@ -131,7 +146,7 @@ export class FormActionabilityAudit extends Audit {
     title: 'Form backend actionability',
     failureTitle: 'Form backend actionability',
     description:
-      'Autonomous agents fill forms by reading the DOM directly — they cannot see placeholders rendered visually or guess what a custom div-based widget expects. Fields without a native element, an explicit label (label[for], wrapping label, aria-label, or aria-labelledby), or a standard autocomplete attribute for identity data (email, phone, name, address) force agents to guess, producing failed or incorrect submissions. Keep every fillable field a native input/select/textarea with an explicit label and standard autocomplete tokens.',
+      'Autonomous agents fill forms by reading the DOM directly — they cannot see placeholders rendered visually or guess what a custom div-based widget expects. Fields without a native element, a name attribute, an explicit label (label[for], wrapping label, aria-label, or aria-labelledby), or a standard autocomplete attribute for identity data (email, phone, name, address) force agents to guess, producing failed or incorrect submissions. Keep every fillable field a native input/select/textarea with a name, an explicit label and standard autocomplete tokens.',
     scoreDisplayMode: 'ternary',
     weight: weightForGrade('A', 'scored'),
     evidenceGrade: 'A',
@@ -141,7 +156,7 @@ export class FormActionabilityAudit extends Audit {
     guidance: {
       impact:
         'AI agents do not render your page visually. Unlabeled fields, div-based fake inputs, and missing autocomplete attributes mean agents cannot tell which field is the email address or the name, so submissions fail silently or land in the wrong fields — lost leads, broken signups, and abandoned checkouts.',
-      fix: 'Use native input/select/textarea elements (never divs with role="textbox" or contenteditable), associate every field with a <label for="id">, wrapping <label>, aria-label, or aria-labelledby, and add standard autocomplete tokens (email, tel, name, street-address, postal-code, country-name) to identity fields.',
+      fix: 'Use native input/select/textarea elements (never divs with role="textbox" or contenteditable), give every field a name attribute, associate it with a <label for="id">, wrapping <label>, aria-label, or aria-labelledby, and add standard autocomplete tokens (email, tel, name, street-address, postal-code, country-name) to identity fields. A declarative WebMCP form (<form toolname=…>) takes each control name as a property of its generated tool input schema, so a nameless control is not callable.',
       code: `<form action="/api/contact" method="POST">
   <label for="full-name">Full name</label>
   <input id="full-name" name="name" type="text" autocomplete="name" required />
@@ -156,7 +171,7 @@ export class FormActionabilityAudit extends Audit {
 </form>`,
       effort: 'easy',
       docsUrl: 'https://html.spec.whatwg.org/multipage/form-control-infrastructure.html#autofill',
-      tags: ['forms', 'labels', 'autocomplete', 'agent-fillable'],
+      tags: ['forms', 'labels', 'autocomplete', 'agent-fillable', 'webmcp'],
     },
   };
 
@@ -169,6 +184,10 @@ export class FormActionabilityAudit extends Audit {
       const $ = page.$;
 
       $('form').each((formIndex, formEl) => {
+        // A `<form toolname=…>` is a declarative WebMCP tool. It is still just
+        // a form, and it is evaluated by the same rules as every other form.
+        const isWebmcpForm = ($(formEl).attr('toolname') ?? '').trim().length > 0;
+
         // Flag div-based fake inputs — agents can't type into these.
         $(formEl)
           .find('[role="textbox"], [contenteditable="true"]')
@@ -198,9 +217,21 @@ export class FormActionabilityAudit extends Audit {
             const name = $input.attr('name') ?? '';
             const id = $input.attr('id');
 
+            // Absorbed from 5.22: WebMCP's declarative API takes each control's
+            // `name` as the property name in the tool's generated input schema,
+            // so a nameless control is no callable parameter at all — and a
+            // nameless control is not submitted by a plain form either.
+            if (name.trim() === '') {
+              failedChecks.push(
+                isWebmcpForm
+                  ? 'no name attribute (WebMCP tool schema has no property for this field)'
+                  : 'no name attribute (the field is not submitted and has no schema property)',
+              );
+            }
+
             // Check: explicit label association.
-            const escapedId = id ? id.replace(/(["\\\]:])/g, '\\$1') : '';
-            const hasForLabel = escapedId !== '' && $(formEl).find(`label[for="${escapedId}"]`).length > 0;
+            const forLabel = labelFor($, id);
+            const hasForLabel = forLabel !== undefined;
             const hasWrappingLabel = $input.closest('label').length > 0;
             const hasAriaLabel = ($input.attr('aria-label') ?? '').trim().length > 0;
             const hasAriaLabelledby = ($input.attr('aria-labelledby') ?? '').trim().length > 0;
@@ -209,7 +240,7 @@ export class FormActionabilityAudit extends Audit {
             }
 
             // Check: identity fields need a standard autocomplete token.
-            const labelText = hasForLabel ? labelTextFor($, formEl, id) : $input.closest('label').text().trim();
+            const labelText = forLabel ? forLabel.text().trim() : $input.closest('label').text().trim();
             const expectedToken = expectedAutocompleteToken(tag, type, name, id ?? '', labelText);
             const autocomplete = $input.attr('autocomplete');
             if (expectedToken && (!autocomplete || !isStandardAutocomplete(autocomplete))) {
@@ -237,7 +268,7 @@ export class FormActionabilityAudit extends Audit {
     if (totalFields === 0) {
       return this.notApplicable(
         'No forms with fillable fields found on scanned pages — nothing to check.',
-        'Forms contain native, labeled fields with standard autocomplete attributes',
+        'Forms contain native, named, labeled fields with standard autocomplete attributes',
         '0 fillable fields',
       );
     }
@@ -255,7 +286,7 @@ export class FormActionabilityAudit extends Audit {
     if (ratio >= 0.9) {
       return this.pass(
         `${actionableFields}/${totalFields} form fields are fully actionable for agents (native element, labeled, standard autocomplete).`,
-        'At least 90% of form fields are native, labeled, and use standard autocomplete',
+        'At least 90% of form fields are native, named, labeled, and use standard autocomplete',
         found,
         firstIssueUrl,
       );
@@ -264,7 +295,7 @@ export class FormActionabilityAudit extends Audit {
     if (ratio >= 0.5) {
       return this.warn(
         `${actionableFields}/${totalFields} form fields are fully actionable — agents will struggle with the rest.`,
-        'At least 90% of form fields are native, labeled, and use standard autocomplete',
+        'At least 90% of form fields are native, named, labeled, and use standard autocomplete',
         found,
         'high',
         firstIssueUrl,
@@ -273,7 +304,7 @@ export class FormActionabilityAudit extends Audit {
 
     return this.fail(
       `Only ${actionableFields}/${totalFields} form fields are actionable — agents cannot reliably fill these forms.`,
-      'At least 90% of form fields are native, labeled, and use standard autocomplete',
+      'At least 90% of form fields are native, named, labeled, and use standard autocomplete',
       found,
       'high',
       firstIssueUrl,

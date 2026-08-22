@@ -49,12 +49,12 @@ One dossier per audit: what it checks, the 2026-08-20 code-review findings, grad
 | 5.19 | [forms-no-js](./operability-safety/forms-no-js.md) | agent-tools | fix | — | keep — fix required |
 | 5.20 | [webmcp-registered-tools](./agent-interfaces/webmcp-registered-tools.md) | agent-tools | delete | A | proposed: redeem as experimental (pending triage) |
 | 5.21 | [webmcp-declarative-forms](./agent-interfaces/webmcp-declarative-forms.md) | agent-tools | delete | A | kept — rewrite required (approved 2026-08-21) |
-| 5.22 | [webmcp-input-quality](./operability-safety/webmcp-input-quality.md) | agent-tools | merge | — | merge (approved 2026-08-21) |
+| 5.22 | [webmcp-input-quality](../merged/operability-safety/webmcp-input-quality.md) | agent-tools | merge | B | merged into [operability-safety/form-actionability](./operability-safety/form-actionability.md) (2026-08-22) |
 | 5.23 | [webmcp-tool-naming](./agent-interfaces/webmcp-tool-naming.md) | agent-tools | merge | — | merge (approved 2026-08-21) |
 | 5.24 | [webmcp-tool-annotations](../merged/agent-interfaces/webmcp-tool-annotations.md) | agent-tools | merge | D | merged into [agent-interfaces/mcp-endpoint](./agent-interfaces/mcp-endpoint.md) (2026-08-22) |
 | 5.25 | [webmcp-action-coverage](./agent-tools/webmcp-action-coverage.md) | agent-tools | delete | D | sunset (approved 2026-08-21) |
 | 5.26 | [openapi-description-quality](./agent-interfaces/openapi-description-quality.md) | agent-tools | fix | — | keep — fix required |
-| 5.27 | [form-actionability](./operability-safety/form-actionability.md) | agent-tools | keep | — | keep |
+| 5.27 | [form-actionability](./operability-safety/form-actionability.md) | agent-tools | keep | A | merged — absorbs 5.22 (2026-08-22) |
 | 9.1 | [faq-sections](./answer-readiness/faq-sections.md) | answer-engine | fix | — | keep — fix required |
 | 9.2 | [question-headings](./answer-readiness/question-headings.md) | answer-engine | fix | C | keep — fix required |
 | 9.3 | [first-paragraph-answers](./answer-readiness/first-paragraph-answers.md) | answer-engine | fix | — | keep — fix required |

@@ -62,3 +62,5 @@ _No dedicated evidence signal was researched for this audit in the 2026-08-20 pa
 - WebMCP is incubating in the W3C Web Machine Learning Community Group with a Bikeshed spec draft — https://github.com/webmachinelearning/webmcp (verified 2026-08-21)
 
 **Counter-evidence:** The spec does not derive parameter descriptions from `<label>` and never from `placeholder` — it introduces `toolparamdescription` precisely because "there's no pre-existing description attribute we can use" (declarative explainer, verified 2026-08-21), and the accessible name computation likewise excludes `placeholder` (https://www.w3.org/TR/accname-1.2/, W3C Working Draft, verified 2026-08-21). So the label/placeholder half of the score has no consumer. The input-schema synthesis algorithm is still marked TBD in the explainer, and the vendor link this audit cites as `docsUrl`, https://webmcp.link/, returns HTTP 451 (checked 2026-08-21). Site-side adoption is effectively zero, so on real scans the audit returns `notApplicable`.
+
+**Merged into:** `operability-safety/form-actionability` (Plan 4, 2026-08-22) — [merged dossier](../../audits/operability-safety/form-actionability.md)
