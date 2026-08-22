@@ -23,6 +23,12 @@ export {
 export type { RobotsRule, RobotsGroup, RobotsFile } from './gatherers/robots';
 export { probeAsBot } from './gatherers/bot-probe';
 export type { BotProbeResult, BotProbeSignal } from './gatherers/bot-probe';
+export {
+  collectSitemapEntries,
+  sampleEntries,
+  isW3CDateTime,
+} from './gatherers/sitemap';
+export type { SitemapEntry, SitemapTree } from './gatherers/sitemap';
 export { pagesOfType, judgePages } from './gatherers/pages';
 export type { PageJudgement } from './gatherers/pages';
 export type { CheckContext, CheckFn, PageContext } from './check-context';
