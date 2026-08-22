@@ -25,9 +25,10 @@ actually does with a site.** Gone: `content-discoverability`,
 | `operability-safety` | is the site safe and stable to operate against |
 
 Membership changed with the names: an audit keeping its slug did not
-necessarily keep its home (`technical-readiness/fast-response-time` is scored
-under `content-extraction`, `structured-data/website-search-action` under
-`agent-interfaces`). Category scores are not comparable across the major.
+necessarily keep its home (`technical-readiness/https-enabled` is scored under
+`access-crawl-control`, `semantic-html/image-alt-text` under
+`content-extraction`, `generative-engine/descriptive-urls` under
+`answer-readiness`). Category scores are not comparable across the major.
 
 **Breaking: numeric ids are gone.** v1 identified audits by a `major.minor`
 number whose major half encoded the old taxonomy. `CheckResult.id` is now a
@@ -37,9 +38,11 @@ numeric id, and `--debug-audit` takes a slug id.
 
 **Translate v1 ids with the shipped map.**
 `@forkpoint/agent-lighthouse-core/migration-map.json` is keyed by v1 numeric id
-and carries all 207 of them: 147 `renamed` (one-for-one, use `to`), 34 `merging`
-(signal folds into another audit later, read `interim` today), 26 `removed`
-(nothing to re-point at). Every surviving entry links its evidence dossier.
+and carries all 207 of them: 181 `renamed` (use `to`, which is registered and
+running in this release) and 26 `removed` (nothing to re-point at). Every
+surviving entry links its evidence dossier. Note that the 181 `renamed` entries
+point at only 148 distinct v2 ids — several v1 series collapse onto one — see
+the merge-wave note in this release.
 
 ```js
 import map from '@forkpoint/agent-lighthouse-core/migration-map.json';
@@ -47,7 +50,7 @@ import map from '@forkpoint/agent-lighthouse-core/migration-map.json';
 const v2IdFor = (v1Id) => {
   const e = map[v1Id];
   if (!e || e.status === 'removed') return null; // gone, drop the series
-  return e.interim ?? e.to;                      // what runs today
+  return e.to;                                   // live in this release
 };
 ```
 

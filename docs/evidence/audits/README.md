@@ -2,7 +2,9 @@
 
 One dossier per audit: what it checks, the 2026-08-20 code-review findings, graded evidence signals with sources, and current disposition. Companion documents: [evidence policy](../POLICY.md) · [deletion research](../deletions/README.md) · [sunset audits](../sunset/README.md) · [proposed new checks](../proposals/README.md).
 
-207 v1 audits are indexed here, but this folder holds only the 148 that survive into v2 as registered audits. A row whose dossier moved links out of the folder: `../sunset/` for the 26 removed audits, `../merged/` for a signal folded into another audit. Dispositions marked "pending triage" await the merge/fix review; "approved 2026-08-21" reflect the accepted deletion-research verdicts.
+207 v1 audits are indexed here, but this folder holds only the 148 that survive into v2 as registered audits. A row whose dossier moved links out of the folder: `../sunset/` for the 26 removed audits, `../merged/` for a signal folded into another audit. Dispositions marked "pending triage" await the merge/fix review — the six of them (2.27, 4.13, 5.20, 7.6, 8.9, 9.4) were deliberately deferred out of v2.0 and ship byte-unchanged. "Approved 2026-08-21" reflects the accepted deletion-research verdicts.
+
+The ID, Audit and Category columns are the **v1** identity — that is what this index is keyed on. Where the v2 rename changed the slug, the Disposition column names the v2 audit. An "—" in Evidence grade means the 2026-08-20 research pass did not grade that signal, not that the audit is ungraded today: the audit's own dossier frontmatter carries the grade the registry ships, and `scripts/check-dossiers.mjs` keeps the two in sync.
 
 | ID | Audit | Category | Review verdict | Evidence grade | Disposition |
 | :- | :---- | :------- | :------------- | :------------- | :---------- |
@@ -66,21 +68,21 @@ One dossier per audit: what it checks, the 2026-08-20 code-review findings, grad
 | 9.9 | [content-without-clickthrough](./answer-readiness/content-without-clickthrough.md) | answer-engine | fix | — | keep — fix required |
 | 9.10 | [last-updated-indicator](../merged/answer-readiness/last-updated-indicator.md) | answer-engine | merge | B | merged into [answer-readiness/dates-on-content](./answer-readiness/dates-on-content.md) (2026-08-22) |
 | 9.11 | [meta-description-aeo](../merged/answer-readiness/meta-description-aeo.md) | answer-engine | delete | C | redeemed by merge into [answer-readiness/meta-description](./answer-readiness/meta-description.md) (2026-08-22) |
-| 1.1 | [llms-txt-exists](./machine-discovery/llms-txt-exists.md) | content-discoverability | fix | A | keep — fix required |
+| 1.1 | [llms-txt-exists](./machine-discovery/llms-txt-exists.md) | content-discoverability | fix | A | merged — absorbs 4.11 (2026-08-22) |
 | 1.2 | [llms-txt-blockquote](../merged/machine-discovery/llms-txt-blockquote.md) | content-discoverability | merge | — | merged into [machine-discovery/llms-txt-structure](./machine-discovery/llms-txt-structure.md) (2026-08-22) |
 | 1.3 | [llms-txt-sections](../merged/machine-discovery/llms-txt-sections.md) | content-discoverability | merge | — | merged into [machine-discovery/llms-txt-structure](./machine-discovery/llms-txt-structure.md) (2026-08-22) |
 | 1.4 | [llms-txt-link-descriptions](./machine-discovery/llms-txt-link-descriptions.md) | content-discoverability | fix | — | keep — fix required |
 | 1.5 | [llms-txt-links-valid](./machine-discovery/llms-txt-links-valid.md) | content-discoverability | fix | B | keep — fix required |
 | 1.6 | [llms-full-txt](./machine-discovery/llms-full-txt.md) | content-discoverability | fix | C | informative, weight 0 (approved 2026-08-21) |
 | 1.7 | [sitemap-exists](./machine-discovery/sitemap-exists.md) | content-discoverability | fix | A | keep — fix required |
-| 1.8 | [sitemap-key-pages](./machine-discovery/discovery-index-coverage.md) | content-discoverability | fix | B | keep — fix required |
+| 1.8 | [sitemap-key-pages](./machine-discovery/discovery-index-coverage.md) | content-discoverability | fix | B | merged — absorbs 1.22 (2026-08-22); ships as [machine-discovery/discovery-index-coverage](./machine-discovery/discovery-index-coverage.md) |
 | 1.9 | [sitemap-absolute-urls](./machine-discovery/sitemap-absolute-urls.md) | content-discoverability | fix | B | keep — fix required |
 | 1.10 | [sitemap-lastmod](./machine-discovery/sitemap-lastmod.md) | content-discoverability | fix | A | keep — fix required |
-| 1.11 | [rss-feed](./machine-discovery/rss-feed.md) | content-discoverability | fix | B | keep — fix required |
+| 1.11 | [rss-feed](./machine-discovery/rss-feed.md) | content-discoverability | fix | B | merged — absorbs 4.16 (2026-08-22) |
 | 1.12 | [rss-feed-content](./machine-discovery/rss-feed-content.md) | content-discoverability | fix | — | keep — fix required |
 | 1.13 | [no-noindex](../merged/access-crawl-control/no-noindex.md) | content-discoverability | fix | A | merged into [access-crawl-control/robots-directives](./access-crawl-control/robots-directives.md) (2026-08-22) |
 | 1.14 | [no-nofollow](./access-crawl-control/no-nofollow.md) | content-discoverability | fix | A | keep — fix required |
-| 1.15 | [internal-linking](./machine-discovery/in-content-links.md) | content-discoverability | fix | A | keep — fix required |
+| 1.15 | [internal-linking](./machine-discovery/in-content-links.md) | content-discoverability | fix | A | merged + rewritten — absorbs 10.11 (2026-08-22); ships as [machine-discovery/in-content-links](./machine-discovery/in-content-links.md) |
 | 1.16 | [no-redirect-chains](./access-crawl-control/no-redirect-chains.md) | content-discoverability | fix | — | keep — fix required |
 | 1.17 | [canonical](./access-crawl-control/canonical.md) | content-discoverability | rewrite | A | rewritten + absorbs 4.3 (2026-08-22) |
 | 1.18 | [mobile-friendly](../sunset/content-discoverability/mobile-friendly.md) | content-discoverability | delete | — | sunset (2026-08-21) |
@@ -91,7 +93,7 @@ One dossier per audit: what it checks, the 2026-08-20 code-review findings, grad
 | 1.23 | [commerce-links](../sunset/content-discoverability/commerce-links.md) | content-discoverability | fix | D | sunset (2026-08-21) |
 | 2.1 | [gptbot](./access-crawl-control/gptbot.md) | crawler-permissions | fix | A | keep — fix required |
 | 2.2 | [google-extended](./access-crawl-control/google-extended.md) | crawler-permissions | fix | A | keep — fix required |
-| 2.3 | [anthropic](./access-crawl-control/anthropic-ai.md) | crawler-permissions | fix | A | keep — fix required |
+| 2.3 | [anthropic](./access-crawl-control/anthropic-ai.md) | crawler-permissions | fix | A | keep — fix required; ships as [access-crawl-control/anthropic-ai](./access-crawl-control/anthropic-ai.md) |
 | 2.4 | [perplexitybot](./access-crawl-control/perplexitybot.md) | crawler-permissions | fix | A | keep — fix required |
 | 2.5 | [applebot-extended](./access-crawl-control/applebot-extended.md) | crawler-permissions | fix | A | keep — fix required |
 | 2.6 | [ccbot](./access-crawl-control/ccbot.md) | crawler-permissions | fix | A | keep — fix required |
@@ -111,7 +113,7 @@ One dossier per audit: what it checks, the 2026-08-20 code-review findings, grad
 | 2.20 | [mistralai-user](./access-crawl-control/mistralai-user.md) | crawler-permissions | fix | A | keep — fix required |
 | 2.21 | [claude-searchbot](./access-crawl-control/claude-searchbot.md) | crawler-permissions | fix | A | keep — fix required |
 | 2.22 | [no-blanket-block](./access-crawl-control/no-blanket-block.md) | crawler-permissions | fix | B | keep — fix required |
-| 2.23 | [sensitive-paths](./access-crawl-control/sensitive-paths.md) | crawler-permissions | delete | A | kept — rewrite required (approved 2026-08-21) |
+| 2.23 | [sensitive-paths](./access-crawl-control/sensitive-paths.md) | crawler-permissions | delete | A | kept — rewritten (2026-08-22); missing robots.txt now fails |
 | 2.24 | [crawl-delay](./access-crawl-control/crawl-delay.md) | crawler-permissions | fix | C | keep — fix required |
 | 2.25 | [robots-directives](./access-crawl-control/robots-directives.md) | crawler-permissions | rewrite | A | rewritten + absorbs 1.13 and 4.20 (2026-08-22) |
 | 2.26 | [no-bot-detection](./access-crawl-control/no-bot-detection.md) | crawler-permissions | fix | — | keep — fix required |
@@ -123,7 +125,7 @@ One dossier per audit: what it checks, the 2026-08-20 code-review findings, grad
 | 10.4 | [about-credentials](./answer-readiness/about-credentials.md) | generative-engine | delete | C | informative, weight 0 (approved 2026-08-21) |
 | 10.5 | [external-citations](./answer-readiness/external-citations.md) | generative-engine | fix | — | keep — fix required |
 | 10.6 | [brand-name](./answer-readiness/brand-name.md) | generative-engine | fix | C | keep — fix required |
-| 10.7 | [trust-signals](./answer-readiness/trust-signals.md) | generative-engine | delete | B | kept — rewrite required (approved 2026-08-21) |
+| 10.7 | [trust-signals](./answer-readiness/trust-signals.md) | generative-engine | delete | B | kept — rewritten (2026-08-22); stays scored at grade B per the 2026-08-21 redemption |
 | 10.8 | [review-signals](./answer-readiness/review-signals.md) | generative-engine | fix | B | merged — absorbs 10.14 (2026-08-22) |
 | 10.9 | [publication-date](./answer-readiness/publication-date.md) | generative-engine | keep | — | keep |
 | 10.10 | [last-modified-schema](./answer-readiness/last-modified-schema.md) | generative-engine | fix | B | keep — fix required |
@@ -157,7 +159,7 @@ One dossier per audit: what it checks, the 2026-08-20 code-review findings, grad
 | 6.3 | [main-element](./content-extraction/main-element.md) | semantic-html | fix | A | keep — fix required |
 | 6.4 | [article-element](./content-extraction/article-element.md) | semantic-html | fix | A | keep — fix required |
 | 6.5 | [header-footer](./content-extraction/header-footer.md) | semantic-html | fix | A | keep — fix required |
-| 6.6 | [aside-element](./content-extraction/aside-element.md) | semantic-html | delete | B | kept — rewrite required (approved 2026-08-21) |
+| 6.6 | [aside-element](./content-extraction/aside-element.md) | semantic-html | delete | B | kept — rewritten (2026-08-22); binary result became three-state |
 | 6.7 | [section-headings](./content-extraction/section-headings.md) | semantic-html | fix | B | keep — fix required |
 | 6.8 | [semantic-lists](./content-extraction/semantic-lists.md) | semantic-html | fix | B | merged — absorbs 6.13 + 9.6 (2026-08-22) |
 | 6.9 | [data-tables](./content-extraction/data-tables.md) | semantic-html | fix | B | keep — fix required |
@@ -180,7 +182,7 @@ One dossier per audit: what it checks, the 2026-08-20 code-review findings, grad
 | 3.6 | [article-schema](./structured-data/article-schema.md) | structured-data | fix | — | keep — fix required |
 | 3.7 | [faqpage-schema](./structured-data/faqpage-schema.md) | structured-data | fix | — | keep — fix required |
 | 3.8 | [service-schema](./structured-data/service-schema.md) | structured-data | merge | A | split (2026-08-22) — Service half kept as [structured-data/service-schema](./structured-data/service-schema.md), Product half into [structured-data/advanced-product-details](./structured-data/advanced-product-details.md) |
-| 3.9 | [speakable-schema](./structured-data/speakable-schema.md) | structured-data | delete | A | kept — rewrite required (approved 2026-08-21) |
+| 3.9 | [speakable-schema](./structured-data/speakable-schema.md) | structured-data | delete | A | redeemed — rewritten and scored at grade A (2026-08-22) |
 | 3.10 | [potential-action](../sunset/structured-data/potential-action.md) | structured-data | delete | D | sunset (approved 2026-08-21) |
 | 3.11 | [howto-schema](./structured-data/howto-schema.md) | structured-data | delete | C | informative, weight 0 (approved 2026-08-21) |
 | 3.12 | [local-business-schema](./structured-data/local-business-schema.md) | structured-data | fix | — | keep — fix required |
@@ -201,7 +203,7 @@ One dossier per audit: what it checks, the 2026-08-20 code-review findings, grad
 | 8.7 | [security-txt](../merged/operability-safety/security-txt.md) | technical-readiness | delete | C | merged into [operability-safety/security-header-hygiene](./operability-safety/security-header-hygiene.md) (2026-08-22) |
 | 8.8 | [cors-ai-files](./machine-discovery/cors-ai-files.md) | technical-readiness | fix | C | keep — fix required |
 | 8.9 | [cors-api-routes](./agent-interfaces/cors-api-routes.md) | technical-readiness | delete | C | proposed: redeem as scored (pending triage) |
-| 8.10 | [correct-content-types](./machine-discovery/ai-file-delivery.md) | technical-readiness | fix | C | keep — fix required |
+| 8.10 | [correct-content-types](./machine-discovery/ai-file-delivery.md) | technical-readiness | fix | B | merged — absorbs 8.11 (2026-08-22, grade C → B); ships as [machine-discovery/ai-file-delivery](./machine-discovery/ai-file-delivery.md) |
 | 8.11 | [cache-headers](../merged/machine-discovery/cache-headers.md) | technical-readiness | merge | B | merged into [machine-discovery/ai-file-delivery](./machine-discovery/ai-file-delivery.md) (2026-08-22) |
 | 8.12 | [fast-response-time](../merged/content-extraction/fast-response-time.md) | technical-readiness | fix | B | merged into [content-extraction/server-responsiveness](./content-extraction/server-responsiveness.md) (2026-08-22) |
 | 8.13 | [server-rendered](./content-extraction/server-rendered.md) | technical-readiness | fix | B | keep — fix required |
@@ -217,6 +219,8 @@ One dossier per audit: what it checks, the 2026-08-20 code-review findings, grad
 ## Evidence banked for checks that do not exist yet
 
 The 2026-08-20 evidence research graded 82 signals that map to no current audit (mostly granular robots.txt semantics, per-bot directives for uncovered bots, and snippet-control directives). They feed the [proposed new checks](../proposals/README.md) and the taxonomy design.
+
+This table is that research snapshot, kept verbatim as the record of what was graded on 2026-08-20 — it is not a statement about the registry as it ships. Where a signal has since been matched to a registered audit, the **audit's dossier governs**, not the row below. The clearest case is `speakable / SpeakableSpecification`: it is graded C / informative here, but the 2026-08-21 redemption research (accepted) re-graded it A and [structured-data/speakable-schema](./structured-data/speakable-schema.md) ships scored at grade A.
 
 | Grade | Signal | Domain | Recommended tier |
 | :---- | :----- | :----- | :--------------- |

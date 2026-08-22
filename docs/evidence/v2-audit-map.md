@@ -5,7 +5,7 @@ Draft mapping of every registered v1 audit to its v2 home, per the approved taxo
 (§3 categories, §5 merges/splits/consolidations, §6 `category/slug` identity).
 
 - **Rows in this table: 189** (unchanged — the 8 sunset rows stay as rows, with `—` for their v2 category/slug)
-- **Registered audits in `packages/core/src/audit-config.ts`: 189** (`grep -c 'reg('` returns 190; one hit is the `function reg(...)` helper definition on line 30)
+- **Registered v1 audits when this map was drafted: 189**, all listed in a single `packages/core/src/audit-config.ts`. That is no longer how the registry is built: `audit-config.ts` now assembles it from the eight category `index.ts` files, and it holds **148** audits. See [Incoming audits per v2 category](#incoming-audits-per-v2-category) below for the per-category breakdown.
 
 Source of v1 ids: `meta.id` in each audit source file. Numeric ids die in v2 (§6); the `v2 category` + `v2 slug`
 columns form the new stable id `category/slug`.
@@ -238,9 +238,12 @@ All 20 open `REVIEW:` flags are resolved — **0 open**. Every row carrying a re
 Note: these are *incoming v1 rows*, not v2 audit counts — 24 rows merge away, 4 consolidate and
 8 are sunset. Deduplicating the `category/slug` identities across the 181 non-sunset rows gives
 **148 surviving v2 audits** from v1 (before the 83 proposed audits land); the plain row arithmetic
-189 − 24 − 4 − 8 = 153 overstates it because several rows share one v2 target
-(`access-crawl-control/ai-bot-directives` takes 5 rows, `answer-readiness/core-open-graph` 2,
-`agent-interfaces/openapi-operation-ids` 2, `operability-safety/security-header-hygiene` 4).
+189 − 24 − 4 − 8 = 153 overstates it because 24 v2 targets each take more than one row — 57 rows
+land on 24 audits, 33 fewer checks than ids. The largest folds, by way of example:
+`access-crawl-control/ai-bot-directives` takes 5 rows, `operability-safety/security-header-hygiene`
+4, and `access-crawl-control/robots-directives`, `answer-readiness/core-open-graph`,
+`agent-interfaces/mcp-endpoint` and `content-extraction/semantic-lists` take 3 each; the remaining
+18 shared targets take 2 rows apiece. `migration-map.json` is the authoritative list.
 Distinct v2 audits per category: access-crawl-control 29, answer-readiness 26, operability-safety 24,
 content-extraction 21, machine-discovery 16, agent-interfaces 16, structured-data 13, agentic-commerce 3.
 Cat 7 is thin because almost all of agentic-commerce comes from the ACP proposal set (§6), not from v1.

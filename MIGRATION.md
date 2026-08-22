@@ -43,8 +43,8 @@ Semantics:
 
 - `slug` — the audit's `category/name` identity in v1.
 - `status` — `"removed"`: the check is gone, with no replacement. Ids that v2
-  keeps land in the same file with `"renamed"` or `"merging"` and a `to` field
-  (see [Numeric ids are gone](#numeric-ids-are-gone) below).
+  keeps land in the same file with `"renamed"` and a `to` field (see
+  [Numeric ids are gone](#numeric-ids-are-gone) below).
 - `reason` — why. `"not-a-factor"` means the evidence review found no consumer.
 - `link` — for a removed audit, the anchor on NOT-A-FACTOR.md holding its proof;
   for a surviving audit, the repo-relative path of its evidence dossier.
@@ -70,9 +70,10 @@ major half encoded the old 10-category taxonomy. Both are gone in v2:
   `semantic-html`, `technical-readiness`, `answer-engine`, `generative-engine`,
   `agent-tools`, `accessibility`) no longer appear anywhere.
 - **Audits moved across categories.** An audit keeping its slug does not mean it
-  kept its home: `technical-readiness/fast-response-time` is now scored under
-  `content-extraction`, `structured-data/website-search-action` under
-  `agent-interfaces`, and so on. Never reconstruct a v2 id by pasting a v1 slug
+  kept its home: `technical-readiness/https-enabled` is now scored under
+  `access-crawl-control`, `semantic-html/image-alt-text` under
+  `content-extraction`, `generative-engine/descriptive-urls` under
+  `answer-readiness`, and so on. Never reconstruct a v2 id by pasting a v1 slug
   onto a guessed category — look it up.
 - **Category scores are not comparable.** Category weight in v2 is *evidence
   mass* — the summed weight of the audits registered in that category — so both
@@ -82,7 +83,12 @@ major half encoded the old 10-category taxonomy. Both are gone in v2:
 ## Translating a v1 id
 
 `migration-map.json` is keyed by the v1 numeric id and carries all 207 of them:
-26 removed, 181 carried into v2.
+26 `removed`, 181 `renamed`. There is no third status — every id that v2 keeps
+has a `to` that is registered and running in this release.
+
+Those 181 `renamed` ids point at only **148 distinct v2 ids**. Renaming is
+one-for-one at the id level, not at the audit level: 57 of the v1 ids were
+folded into 24 shared targets, so several old series collapse onto one new one.
 
     {
       "1.1": {
@@ -93,27 +99,29 @@ major half encoded the old 10-category taxonomy. Both are gone in v2:
       },
       "1.2": {
         "slug": "content-discoverability/llms-txt-blockquote",
-        "status": "merging",
+        "status": "renamed",
         "to": "machine-discovery/llms-txt-structure",
-        "interim": "machine-discovery/llms-txt-blockquote",
-        "link": "docs/evidence/audits/machine-discovery/llms-txt-blockquote.md"
+        "link": "docs/evidence/audits/machine-discovery/llms-txt-structure.md"
+      },
+      "1.3": {
+        "slug": "content-discoverability/llms-txt-sections",
+        "status": "renamed",
+        "to": "machine-discovery/llms-txt-structure",
+        "link": "docs/evidence/audits/machine-discovery/llms-txt-structure.md"
       }
     }
 
+`1.2` and `1.3` are a fold: two v1 checks, one v2 audit
+(`machine-discovery/llms-txt-structure`), and therefore one series from here on.
+
 Read it like this:
 
-- **`"renamed"`** — the audit survives one-for-one. `to` is its v2 id, live in
-  this release. Re-point the series at `to` and you are done.
-- **`"merging"`** — the audit's signal is being folded into another audit. `to`
-  is the id the signal ends up under. That id may already be registered — most
-  merge targets are survivor audits that run in this release — or it may only
-  land in a later one, so do not assume `to` is resolvable. `interim` is where
-  this audit's check runs *today*; always prefer `interim ?? to` to find the
-  audit that is live now. Several v1 ids can share one `to`; when they collapse,
-  so do their series.
+- **`"renamed"`** — `to` is the audit's v2 id, live in this release. Re-point the
+  series at `to` and you are done. Check whether any of your other v1 ids resolve
+  to the same `to` before you assume the series are independent.
 - **`"removed"`** — nothing to re-point at (see above).
 - **`link`** — the audit's evidence dossier in this repo: the claim, the grade,
-  the sources. For `renamed`/`merging` entries it is repo-relative — prefix with
+  the sources. For `renamed` entries it is repo-relative — prefix with
   `https://github.com/ForkPoint/agent-lighthouse/blob/main/` for a URL. For
   `removed` entries it is already an absolute URL.
 
@@ -124,8 +132,23 @@ A one-line translation, in JS:
     const v2IdFor = (v1Id) => {
       const e = map[v1Id];
       if (!e || e.status === 'removed') return null;   // gone, drop the series
-      return e.interim ?? e.to;                        // what runs today
+      return e.to;                                     // live in this release
     };
+
+### If you are holding an older copy of the map
+
+Pre-release copies of `migration-map.json` carried a third status, `"merging"`,
+for an audit whose signal was scheduled to fold into another audit but had not
+been folded yet. Those entries also carried an `interim` field naming the id
+that was still running under its own name at the time, and the advice was to
+read `interim ?? to`.
+
+**Both are extinct in the shipped map**: the folds are done, no entry has
+`status: "merging"`, and no entry has an `interim` field. `interim ?? to` still
+evaluates correctly against the shipped map — `interim` is simply always absent —
+so code written against the older guidance keeps working; it is just carrying a
+branch that can no longer be taken. A test in `packages/core` fails the build if
+either ever reappears.
 
 The full v1 → v2 table, with the reasoning behind every move, merge and split,
 is in [docs/evidence/v2-audit-map.md](docs/evidence/v2-audit-map.md).
