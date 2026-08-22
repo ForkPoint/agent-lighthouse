@@ -63,3 +63,5 @@ Sound signal, but the type match is so narrow that it produces a high-volume fal
 
 - 2026-08-20 — code review (11-agent workflow) + evidence research (12-domain workflow, 400 sources).
 - 2026-08-21 — dossier generated; disposition pending final taxonomy design.
+
+**Merged into:** `machine-discovery/rss-feed` (Plan 4, 2026-08-22) — [merged dossier](../../audits/machine-discovery/rss-feed.md)

@@ -8,24 +8,52 @@ function isOk(result: FetchResult): boolean {
   return result.status === 200;
 }
 
+/** Feed media types, MIME parameters stripped. Atom and JSON Feed included. */
+const FEED_TYPES = new Set([
+  'application/rss+xml',
+  'application/atom+xml',
+  'application/feed+json',
+  'application/rdf+xml',
+]);
+
+/**
+ * Every `<link>` on the scanned pages that advertises a feed, resolved to an
+ * absolute URL.
+ *
+ * Absorbed from v1 4.16 with its review's required fixes: `rel` is a normalized
+ * token list rather than an exact string, the media type is compared with its
+ * MIME parameters stripped, Atom and JSON Feed count, and every page is
+ * inspected — a site declaring its feed on /blog rather than on the homepage
+ * used to be reported as having no feed link at all.
+ */
+function autodiscoveryLinks(ctx: CheckContext): Array<{ url: string; pageUrl: string }> {
+  const found: Array<{ url: string; pageUrl: string }> = [];
+  for (const page of ctx.pages) {
+    for (const link of page.headLinks) {
+      const rels = link.rel.toLowerCase().trim().split(/\s+/);
+      if (!rels.includes('alternate')) continue;
+      const type = link.type.split(';')[0]!.trim().toLowerCase();
+      if (!FEED_TYPES.has(type) || !link.href) continue;
+      try {
+        // v1 resolved '/'-prefixed hrefs only, so `feed.xml` or `./rss` was
+        // handed to the fetcher verbatim and always failed.
+        found.push({ url: new URL(link.href, page.url).href, pageUrl: page.url });
+      } catch {
+        // Skip unparseable hrefs.
+      }
+    }
+  }
+  return found;
+}
+
 /** Find RSS/Atom feed result -- check head links on pages first, then root file paths */
 async function findFeedResult(
   ctx: CheckContext,
+  links: Array<{ url: string }>,
 ): Promise<{ result: FetchResult; url: string } | null> {
-  // Check <link rel="alternate"> in page heads
-  for (const page of ctx.pages) {
-    for (const link of page.headLinks) {
-      if (
-        link.rel === 'alternate' &&
-        (link.type === 'application/rss+xml' || link.type === 'application/atom+xml') &&
-        link.href
-      ) {
-        let feedUrl = link.href;
-        if (feedUrl.startsWith('/')) feedUrl = `${ctx.baseUrl}${feedUrl}`;
-        const result = await ctx.fetch({ url: feedUrl });
-        if (isOk(result)) return { result, url: feedUrl };
-      }
-    }
+  for (const link of links) {
+    const result = await ctx.fetch({ url: link.url });
+    if (isOk(result)) return { result, url: link.url };
   }
 
   // Fall back to well-known paths
@@ -51,7 +79,7 @@ export class RssFeedAudit extends Audit {
     title: 'RSS/Atom feed link present',
     failureTitle: 'RSS/Atom feed link present',
     description:
-      'RSS/Atom feeds let AI agents track new and updated content without re-crawling your entire site.',
+      'RSS/Atom feeds let AI agents track new and updated content without re-crawling your entire site. The <head> autodiscovery link is reported alongside the feed, not scored on its own.',
     scoreDisplayMode: 'binary',
     weight: weightForGrade('B', 'scored'),
     evidenceGrade: 'B',
@@ -69,13 +97,21 @@ export class RssFeedAudit extends Audit {
   };
 
   async audit(ctx: CheckContext): Promise<AuditResult> {
-    const feed = await findFeedResult(ctx);
+    const links = autodiscoveryLinks(ctx);
+    const feed = await findFeedResult(ctx, links);
+    // Autodiscovery is a convention with browser and aggregator consumers but no
+    // documented AI consumer, so its state is reported next to the feed rather
+    // than scored on its own (v1 4.16 failed sites for the link alone).
+    const linkNote =
+      links.length > 0
+        ? `autodiscovery <link> present (${links[0]!.url})`
+        : 'no autodiscovery <link> in <head>';
 
     if (!feed) {
       return this.fail(
         'No RSS or Atom feed found via head links or common paths (/rss.xml, /feed.xml, /atom.xml).',
         'At least one feed returns HTTP 200 with valid XML',
-        'No feed found',
+        `No feed found; ${linkNote}`,
         {
           priority: 'medium',
           description:
@@ -88,7 +124,7 @@ export class RssFeedAudit extends Audit {
     return this.pass(
       `RSS/Atom feed found at ${feed.url}.`,
       'Feed returns HTTP 200',
-      `HTTP 200 at ${feed.url}`,
+      `HTTP 200 at ${feed.url}; ${linkNote}`,
     );
   }
 }

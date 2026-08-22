@@ -524,10 +524,9 @@
   },
   "4.16": {
     "slug": "meta-tags/rss-feed-link",
-    "status": "merging",
+    "status": "renamed",
     "to": "machine-discovery/rss-feed",
-    "interim": "machine-discovery/rss-feed-link",
-    "link": "docs/evidence/audits/machine-discovery/rss-feed-link.md"
+    "link": "docs/evidence/audits/machine-discovery/rss-feed.md"
   },
   "4.17": {
     "slug": "meta-tags/mcp-discovery-link",

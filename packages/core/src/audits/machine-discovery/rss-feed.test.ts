@@ -105,4 +105,123 @@ describe('RssFeedAudit', () => {
     const result = await audit.audit(ctx);
     expect(result.status).toBe('pass');
   });
+
+  describe('feed autodiscovery <link> (absorbed from rss-feed-link, v1 4.16)', () => {
+    const withHead = (head: string) =>
+      mockPageContext('https://example.com/', `<html><head>${head}</head><body></body></html>`);
+
+    it('reports the autodiscovery link alongside the feed', async () => {
+      const ctx = mockCheckContext(
+        [withHead('<link rel="alternate" type="application/rss+xml" href="/rss.xml">')],
+        { '/rss.xml': mockFetchResult('<rss><channel></channel></rss>', 200, 'application/rss+xml') },
+      );
+      ctx.fetch = async ({ url }) => {
+        const r = mockFetchResult('<rss><channel></channel></rss>', 200, 'application/rss+xml');
+        r.url = url;
+        r.finalUrl = url;
+        return r;
+      };
+      const result = await audit.audit(ctx);
+      expect(result.status).toBe('pass');
+      expect(result.found).toContain('autodiscovery <link> present');
+    });
+
+    it('reports a feed found without any autodiscovery link', async () => {
+      const ctx = mockCheckContext([withHead('')], {
+        '/rss.xml': mockFetchResult('<rss><channel></channel></rss>', 200, 'application/rss+xml'),
+      });
+      const result = await audit.audit(ctx);
+      expect(result.status).toBe('pass');
+      expect(result.found).toContain('no autodiscovery <link>');
+    });
+
+    // Review finding (4.16): only `application/rss+xml` was accepted, so every
+    // Atom- or JSON-Feed-only site was reported as having no feed link — the
+    // highest-frequency false failure in the category.
+    it('accepts atom, JSON Feed and charset-parameterised feed types', async () => {
+      for (const type of [
+        'application/atom+xml',
+        'application/feed+json',
+        'application/rss+xml; charset=UTF-8',
+      ]) {
+        const ctx = mockCheckContext([withHead(`<link rel="alternate" type="${type}" href="/feed">`)]);
+        ctx.fetch = async ({ url }) => {
+          const r = mockFetchResult('<feed></feed>', 200, 'application/atom+xml');
+          r.url = url;
+          r.finalUrl = url;
+          return r;
+        };
+        const result = await audit.audit(ctx);
+        expect(result.status, type).toBe('pass');
+        expect(result.found, type).toContain('autodiscovery <link> present');
+      }
+    });
+
+    // Review finding (4.16 + 1.11): rel was compared exactly and case-sensitively,
+    // so WordPress' multi-token rel and a capitalised rel both missed.
+    it('accepts an uppercase or multi-token rel', async () => {
+      for (const rel of ['Alternate', 'alternate home']) {
+        const ctx = mockCheckContext([
+          withHead(`<link rel="${rel}" type="application/rss+xml" href="/rss.xml">`),
+        ]);
+        ctx.fetch = async ({ url }) => {
+          const r = mockFetchResult('<rss><channel></channel></rss>', 200, 'application/rss+xml');
+          r.url = url;
+          r.finalUrl = url;
+          return r;
+        };
+        const result = await audit.audit(ctx);
+        expect(result.status, rel).toBe('pass');
+        expect(result.found, rel).toContain('autodiscovery <link> present');
+      }
+    });
+
+    // Review finding (1.11): only '/'-prefixed hrefs were resolved, so a
+    // document-relative feed href was fetched verbatim and failed.
+    it('resolves a document-relative feed href against the page URL', async () => {
+      const page = mockPageContext(
+        'https://example.com/blog/',
+        '<html><head><link rel="alternate" type="application/rss+xml" href="feed.xml"></head><body></body></html>',
+      );
+      const ctx = mockCheckContext([page]);
+      ctx.fetch = async ({ url }) => {
+        const ok = url === 'https://example.com/blog/feed.xml';
+        const r = mockFetchResult(ok ? '<rss><channel></channel></rss>' : '', ok ? 200 : 404);
+        r.url = url;
+        r.finalUrl = url;
+        return r;
+      };
+      const result = await audit.audit(ctx);
+      expect(result.status).toBe('pass');
+      expect(result.message).toContain('blog/feed.xml');
+    });
+
+    // Review finding (4.16): the feed is often declared on the blog index, not
+    // the homepage, and v1 4.16 only looked at ctx.pages[0].
+    it('finds the autodiscovery link on a non-homepage', async () => {
+      const ctx = mockCheckContext([
+        withHead(''),
+        mockPageContext(
+          'https://example.com/blog',
+          '<html><head><link rel="alternate" type="application/rss+xml" href="/rss.xml"></head><body></body></html>',
+          1,
+        ),
+      ]);
+      ctx.fetch = async ({ url }) => {
+        const r = mockFetchResult('<rss><channel></channel></rss>', 200, 'application/rss+xml');
+        r.url = url;
+        r.finalUrl = url;
+        return r;
+      };
+      const result = await audit.audit(ctx);
+      expect(result.found).toContain('autodiscovery <link> present');
+    });
+
+    it('reports the missing link when no feed is found at all', async () => {
+      const ctx = mockCheckContext([withHead('')]);
+      const result = await audit.audit(ctx);
+      expect(result.status).toBe('fail');
+      expect(result.found).toContain('no autodiscovery <link>');
+    });
+  });
 });

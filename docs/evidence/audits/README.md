@@ -147,7 +147,7 @@ One dossier per audit: what it checks, the 2026-08-20 code-review findings, grad
 | 4.13 | [ai-content-declaration](./access-crawl-control/ai-content-declaration.md) | meta-tags | delete | D | proposed: redeem as experimental (pending triage) |
 | 4.14 | [ai-instructions](./meta-tags/ai-instructions.md) | meta-tags | delete | D | sunset (approved 2026-08-21) |
 | 4.15 | [markdown-alternate](./content-extraction/markdown-alternate.md) | meta-tags | fix | A | keep — fix required |
-| 4.16 | [rss-feed-link](./machine-discovery/rss-feed-link.md) | meta-tags | fix | C | keep — fix required |
+| 4.16 | [rss-feed-link](../merged/machine-discovery/rss-feed-link.md) | meta-tags | fix | C | merged into [machine-discovery/rss-feed](./machine-discovery/rss-feed.md) (2026-08-22) |
 | 4.17 | [mcp-discovery-link](./meta-tags/mcp-discovery-link.md) | meta-tags | delete | D | sunset (approved 2026-08-21) |
 | 4.18 | [openapi-link](./agent-interfaces/openapi-link.md) | meta-tags | delete | B | proposed: redeem as scored (pending triage) |
 | 4.19 | [ai-catalog-link](./agent-interfaces/ai-catalog-link.md) | meta-tags | delete | B | kept — rewrite required (approved 2026-08-21) |
