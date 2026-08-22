@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { defaultConfig } from '../audit-config';
 import { AuditMetaSchema } from '../schemas';
 import { weightForGrade } from '../scorer';
+import { NEW_IN_V2, MIGRATED_COUNT } from '../tests/new-in-v2';
 
 // The 26 v1 audits removed in this major release: the first 18 in the v1.0.0
 // sunset wave, plus the 8 added by the 2026-08-21 grading pass. Rationale and
@@ -39,12 +40,14 @@ describe('registry-wide meta invariants', () => {
     .map((reg) => reg.meta);
 
   // Pinned, not a floor: Plan 4 shrank the registry fold by fold (181 v1 rows →
-  // 148 v2 audits) and Task 14 closed it. An audit added or dropped without a
-  // deliberate edit here is drift, not a passing build. The same 148 is asserted
-  // against the migration map in migration-map.test.ts, so the registry and the
-  // consumer-facing migration path can never move independently.
-  it('registers exactly the 148 v2 audits', () => {
-    expect(allMetas).toHaveLength(148);
+  // 148 v2 audits) and Task 14 closed it. Plan 5 grows it again, but only
+  // through NEW_IN_V2, so the expected total is derived rather than retyped. An
+  // audit added or dropped without a deliberate edit to that list is drift, not
+  // a passing build. The same 148 is asserted against the migration map in
+  // migration-map.test.ts, so the registry and the consumer-facing migration
+  // path can never move independently.
+  it('registers exactly the migrated 148 plus every new-in-v2 audit', () => {
+    expect(allMetas).toHaveLength(MIGRATED_COUNT + NEW_IN_V2.length);
   });
 
   // The v2 meta contract is enforced, not aspirational: an audit without a

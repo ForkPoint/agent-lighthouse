@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { defaultConfig } from './audit-config';
+import { NEW_IN_V2, MIGRATED_COUNT } from './tests/new-in-v2';
 
 interface Entry {
   slug: string;
@@ -43,9 +44,13 @@ const SURVIVING_COUNT = 181;
 // deliberate edit here rather than silent drift.
 const TOTAL_COUNT = 207;
 
-// The 148 audits the v2 registry ships. Every surviving entry's `to` must be
-// one of them, and every one of them must be some entry's `to`.
-const REGISTRY_COUNT = 148;
+// The audits reachable from the migration map: the 148 Plan 4 closed on. Every
+// surviving entry's `to` must be one of them, and every one of them must be
+// some entry's `to`. Plan 5 grows the registry past this number with audits
+// that have no v1 predecessor; those are named in NEW_IN_V2 and excluded from
+// the reachability assertions below, because there is no v1 id that could
+// point at them.
+const REGISTRY_COUNT = MIGRATED_COUNT;
 
 // `to` targets that are deliberately allowed not to be registered, each with a
 // written rationale. Empty by design: every one of the 181 surviving entries
@@ -172,8 +177,8 @@ describe('migration-map.json', () => {
 
   // The registry is pinned here too, so a migration-map entry and an audit
   // registration can never drift apart without one of the two tests failing.
-  it('registers exactly 148 v2 audits, all reachable from the map', () => {
-    expect(registeredIds).toHaveLength(REGISTRY_COUNT);
+  it('registers the 148 migrated audits plus the new-in-v2 additions', () => {
+    expect(registeredIds).toHaveLength(REGISTRY_COUNT + NEW_IN_V2.length);
     expect(new Set(surviving.map(([, e]) => e.to!)).size).toBe(REGISTRY_COUNT);
   });
 
@@ -189,11 +194,14 @@ describe('migration-map.json', () => {
     expect(missing).toEqual([]);
   });
 
-  it('reaches every registered v2 audit from some entry', () => {
-    // With the folds landed, every registered audit is the `to` of at least one
-    // v1 id — a 1:1 rename, or one of a consolidation's several sources.
+  it('reaches every migrated v2 audit from some entry', () => {
+    // With the folds landed, every migrated audit is the `to` of at least one
+    // v1 id — a 1:1 rename, or one of a consolidation's several sources. Audits
+    // introduced in v2 have no such id and are excluded by name.
     const reachable = new Set(surviving.map(([, e]) => e.to!));
-    const unreachable = registeredIds.filter((id) => !reachable.has(id));
+    const unreachable = registeredIds
+      .filter((id) => !reachable.has(id))
+      .filter((id) => !NEW_IN_V2.includes(id));
     expect(unreachable).toEqual([]);
   });
 
