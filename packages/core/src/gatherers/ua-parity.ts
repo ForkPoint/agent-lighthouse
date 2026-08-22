@@ -184,3 +184,85 @@ export async function probeUaParity(
   }
   return probes;
 }
+
+/** The slice of CheckContext this gatherer needs, kept structural to avoid a cycle. */
+interface ProbeContext {
+  fetch: (options: FetchOptions) => Promise<FetchResult>;
+}
+
+interface ProbeCache {
+  baselines: Map<string, Promise<FetchResult | undefined>>;
+  probes: Map<string, Promise<UaProbe | undefined>>;
+}
+
+const probeCache = new WeakMap<object, ProbeCache>();
+
+function cacheFor(ctx: object): ProbeCache {
+  let cache = probeCache.get(ctx);
+  if (!cache) {
+    cache = { baselines: new Map(), probes: new Map() };
+    probeCache.set(ctx, cache);
+  }
+  return cache;
+}
+
+/**
+ * `probeUaParity`, with every request memoised for the life of one scan.
+ *
+ * Three audits probe overlapping URL sets with the same crawler UAs, and each
+ * pair costs a real request to a live origin. Keyed on the CheckContext object,
+ * so one scan shares its probes and two scans share nothing.
+ */
+export async function sharedUaProbes(
+  ctx: ProbeContext,
+  urls: string[],
+  tokens: string[],
+  opts: { signal?: AbortSignal } = {},
+): Promise<UaProbe[]> {
+  const agents = tokens
+    .map((token) => AI_CRAWLER_UAS.find((u) => u.token === token.toLowerCase()))
+    .filter((u): u is (typeof AI_CRAWLER_UAS)[number] => u !== undefined);
+  if (agents.length === 0) return [];
+
+  const cache = cacheFor(ctx);
+  const out: UaProbe[] = [];
+
+  for (const url of urls) {
+    let baseline = cache.baselines.get(url);
+    if (!baseline) {
+      baseline = (async () => {
+        if (!(await isSafeUrl(url))) return undefined;
+        return ctx.fetch({ url, userAgent: BASELINE_UA, followRedirects: true, signal: opts.signal });
+      })();
+      cache.baselines.set(url, baseline);
+    }
+    const baselineResult = await baseline;
+    if (!baselineResult) continue;
+
+    for (const agent of agents) {
+      const key = `${agent.token}|${url}`;
+      let pending = cache.probes.get(key);
+      if (!pending) {
+        pending = (async () => {
+          const probe = await ctx.fetch({
+            url,
+            userAgent: agent.ua,
+            followRedirects: true,
+            signal: opts.signal,
+          });
+          return {
+            url,
+            token: agent.token,
+            baselineStatus: baselineResult.status,
+            probeStatus: probe.status,
+            ...classifyResponse(baselineResult, probe),
+          };
+        })();
+        cache.probes.set(key, pending);
+      }
+      const probe = await pending;
+      if (probe) out.push(probe);
+    }
+  }
+  return out;
+}

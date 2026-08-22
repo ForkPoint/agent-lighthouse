@@ -1,18 +1,19 @@
 ---
-check: ai-crawler-edge-response-parity
-title: "AI crawler edge-response parity"
-domain: bot-auth-access
-status: proposed
+audit: access-crawl-control/ai-crawler-edge-parity
+category: access-crawl-control
+source_file: packages/core/src/audits/access-crawl-control/ai-crawler-edge-parity.ts
+slug: ai-crawler-edge-parity
 evidence_grade: A
-uniqueness: partial-overlap
-difficulty: multi-page
-scoring_tier: scored
+tier: scored
+disposition: "new in v2 — graduated from proposal 2026-08-22"
 reviewed: 2026-08-20
+graduated: 2026-08-22
 ---
+
 
 # AI crawler edge-response parity
 
-> Proposed check. Evidence grade **A** · partial overlap · implementation: `multi-page`
+> Shipped in v2. Evidence grade **A** · scored tier · partial overlap · implementation: `multi-page`
 
 ## What it checks
 
@@ -54,3 +55,49 @@ Tier per evidence policy: **scored** — grade A meets the A/B bar required for 
 ## Review history
 
 - 2026-08-20 — proposed by the novel-checks research pass (10-agent evidence workflow); sources URL-verified at research time.
+
+## Merged
+
+`docs/evidence/merged/access-crawl-control/ai-crawler-edge-parity.md` holds the
+competitor-gap restatement of this same check, folded into this audit on
+2026-08-22 (Plan 5, Task 2). The two sketches described one measurement — paired
+per-UA fetches over a sampled URL set — and the `bot-auth-access` one carried
+the fuller spec (robots-consistency verdict matrix, block-class taxonomy), so it
+is the one that shipped.
+
+## Implementation deviations
+
+- **Probe set is `/`, up to 2 sitemap URLs and `/llms.txt`.** The sketch says
+  "2-3 content URLs"; two keeps the request count at 7 per URL (one baseline
+  plus six crawler UAs) without a third round of the same measurement.
+- **Every probe is memoised per scan** (`sharedUaProbes`), so the three
+  UA-parity audits share one baseline and one probe per (URL, crawler) pair
+  instead of repeating them.
+- **`Google-Extended` is not probed.** It is a robots.txt product token with no
+  user agent of its own, so a UA probe for it would compare the site against a
+  string that never appears in real traffic. The gatherer documents the same
+  exclusion.
+- **Findings are grouped by URL and cause**, not listed per crawler. Six
+  crawlers hitting one wall is one line naming six crawlers; listing them
+  separately filled the message with copies of the homepage and hid the other
+  URLs.
+- **A generic non-2xx is a hard finding.** The sketch enumerates the decidable
+  classes (challenge, 402, proof-of-work, soft block); a plain 503 or 404 to a
+  crawler where a browser gets 200 is just as decidable and is reported the same
+  way, quoting both statuses.
+
+## Deferred
+
+- **An opaque 403 or 429 is never scored as a failure.** Cloudflare and Akamai
+  deliberately block UA-spoofed AI bots arriving from unpublished addresses, and
+  the scanner sends the crawler User-Agent without the matching source IP. That
+  branch is a warning that names the classification and tells the operator to
+  confirm against the edge logs — the honest verdict, not the convenient one.
+- **No reverse-DNS or published-CIDR verification.** Fetching from a verified
+  crawler address would resolve the ambiguity above, and needs infrastructure
+  the scanner does not have.
+- **No retry on a rate limit.** A 429 is reported as observed rather than
+  waited out; honouring `Retry-After` inside a single audit would stall the scan.
+- **The soft-block threshold is fixed at 40% of the baseline main-content
+  text**, per the gatherer. A page that legitimately serves less to a crawler —
+  a very aggressive cache variant, for instance — reads as a soft block.

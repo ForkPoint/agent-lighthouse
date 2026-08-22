@@ -1,6 +1,7 @@
 import { describe, it, expect, vi } from 'vitest';
 import {
   probeUaParity,
+  sharedUaProbes,
   classifyResponse,
   AI_CRAWLER_UAS,
   BASELINE_UA,
@@ -188,5 +189,45 @@ describe('AI_CRAWLER_UAS', () => {
     for (const { token, ua } of AI_CRAWLER_UAS) {
       expect(ua.toLowerCase()).toContain(token);
     }
+  });
+});
+
+describe('sharedUaProbes', () => {
+  function scan() {
+    const calls: Array<{ url: string; ua?: string }> = [];
+    return {
+      calls,
+      fetch: async (o: FetchOptions): Promise<FetchResult> => {
+        calls.push({ url: o.url, ...(o.userAgent ? { ua: o.userAgent } : {}) });
+        return mockFetchResult('<html><body><main><p>Copy here.</p></main></body></html>', 200, 'text/html');
+      },
+    };
+  }
+
+  // Three audits probe overlapping URL sets, and every pair is a real request
+  // to a live origin.
+  it('fetches each baseline and each crawler pair once per scan', async () => {
+    const ctx = scan();
+    const first = await sharedUaProbes(ctx, ['https://example.com/'], ['gptbot', 'claudebot']);
+    const second = await sharedUaProbes(ctx, ['https://example.com/'], ['gptbot']);
+    expect(first).toHaveLength(2);
+    expect(second).toHaveLength(1);
+    // 1 baseline + 2 crawler probes, and nothing on the second call.
+    expect(ctx.calls).toHaveLength(3);
+  });
+
+  it('does not share its cache between two scans', async () => {
+    const first = scan();
+    const second = scan();
+    await sharedUaProbes(first, ['https://example.com/'], ['gptbot']);
+    await sharedUaProbes(second, ['https://example.com/'], ['gptbot']);
+    expect(first.calls).toHaveLength(2);
+    expect(second.calls).toHaveLength(2);
+  });
+
+  it('never probes a URL that fails the SSRF gate', async () => {
+    const ctx = scan();
+    expect(await sharedUaProbes(ctx, ['https://localhost/'], ['gptbot'])).toEqual([]);
+    expect(ctx.calls).toEqual([]);
   });
 });

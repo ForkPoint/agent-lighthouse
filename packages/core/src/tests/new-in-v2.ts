@@ -28,6 +28,7 @@ export const NEW_IN_V2: readonly string[] = [
   'machine-discovery/ai-crawler-surface-reachability',
   'machine-discovery/sitemap-lastmod-verifiability',
   'machine-discovery/agent-commerce-feed-parity',
+  'access-crawl-control/ai-crawler-edge-parity',
 ];
 
 /** The 148 audits Plan 4 closed the v2 migration on. Never changes again. */

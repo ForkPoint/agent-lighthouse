@@ -1,6 +1,6 @@
 # Proposed checks — evidence dossiers
 
-60 proposed checks from the 2026-08-20 novel-checks research pass. Each dossier states what the check verifies, the falsifiable mechanism behind it, cited evidence from the [source registry](../sources.json), competitor coverage, and an implementation sketch. Grading rubric: [evidence policy](../POLICY.md).
+59 proposed checks from the 2026-08-20 novel-checks research pass. Each dossier states what the check verifies, the falsifiable mechanism behind it, cited evidence from the [source registry](../sources.json), competitor coverage, and an implementation sketch. Grading rubric: [evidence policy](../POLICY.md).
 
 Seven dossiers left this folder on 2026-08-22 (Plan 5, Task 2): six tool
 surveys moved to [../research](../research/README.md) because their verdict is
@@ -20,7 +20,6 @@ Grades: **A** = documented consumer behavior or ratified standard · **B** = dra
 | A | [Overlay Interception Hazard](./agent-operability/overlay-interception-hazard.md) | agent-operability | unique | `headless-browser` | scored |
 | A | [ACP Endpoint Conformance Probe](./agentic-commerce/acp-endpoint-conformance-probe.md) | agentic-commerce | unique | `static-fetch` | informative (weight 0) |
 | A | [Agent User-Agent Fetch Parity on Commerce Paths](./agentic-commerce/agent-user-agent-fetch-parity-on-commerce-paths.md) | agentic-commerce | unique | `static-fetch` | scored |
-| A | [AI crawler edge-response parity](./bot-auth-access/ai-crawler-edge-response-parity.md) | bot-auth-access | partial-overlap | `multi-page` | scored |
 | A | [Bot-specific content delta declared, not cloaked](./bot-auth-access/bot-specific-content-delta-declared-not-cloaked.md) | bot-auth-access | unique | `multi-page` | scored |
 | A | [Modern-Era Reachability Probe (server/discover)](./mcp-server-quality/modern-era-reachability-probe-server-discover.md) | mcp-server-quality | unique | `static-fetch` | scored |
 | A | [OAuth Discovery Chain Integrity (RFC 9728 → RFC 8414)](./mcp-server-quality/oauth-discovery-chain-integrity-rfc-9728-rfc-8414.md) | mcp-server-quality | unique | `multi-page` | scored |
