@@ -193,12 +193,12 @@ One dossier per audit: what it checks, the 2026-08-20 code-review findings, grad
 | 3.23 | [product-reviews](./structured-data/product-reviews.md) | structured-data | merge | — | merge (approved 2026-08-21) |
 | 3.24 | [product-transaction-certainty](./agentic-commerce/product-transaction-certainty.md) | structured-data | fix | — | keep — fix required |
 | 8.1 | [https-enabled](./access-crawl-control/https-enabled.md) | technical-readiness | fix | A | keep — fix required |
-| 8.2 | [hsts-header](./operability-safety/hsts-header.md) | technical-readiness | merge | B | merge (approved 2026-08-21) |
-| 8.3 | [csp-header](./operability-safety/csp-header.md) | technical-readiness | fix | D | keep — fix required |
-| 8.4 | [content-type-options](./operability-safety/content-type-options.md) | technical-readiness | merge | C | merge (approved 2026-08-21) |
+| 8.2 | [hsts-header](../merged/operability-safety/hsts-header.md) | technical-readiness | merge | B | merged into [operability-safety/security-header-hygiene](./operability-safety/security-header-hygiene.md) (2026-08-22) |
+| 8.3 | [csp-header](../merged/operability-safety/csp-header.md) | technical-readiness | fix | D | merged into [operability-safety/security-header-hygiene](./operability-safety/security-header-hygiene.md) (2026-08-22) |
+| 8.4 | [content-type-options](../merged/operability-safety/content-type-options.md) | technical-readiness | merge | C | merged into [operability-safety/security-header-hygiene](./operability-safety/security-header-hygiene.md) (2026-08-22) |
 | 8.5 | [referrer-policy](./technical-readiness/referrer-policy.md) | technical-readiness | delete | D | sunset (approved 2026-08-21) |
 | 8.6 | [permissions-policy](./technical-readiness/permissions-policy.md) | technical-readiness | delete | D | sunset (approved 2026-08-21) |
-| 8.7 | [security-txt](./operability-safety/security-txt.md) | technical-readiness | delete | C | informative, weight 0 (approved 2026-08-21) |
+| 8.7 | [security-txt](../merged/operability-safety/security-txt.md) | technical-readiness | delete | C | merged into [operability-safety/security-header-hygiene](./operability-safety/security-header-hygiene.md) (2026-08-22) |
 | 8.8 | [cors-ai-files](./machine-discovery/cors-ai-files.md) | technical-readiness | fix | C | keep — fix required |
 | 8.9 | [cors-api-routes](./agent-interfaces/cors-api-routes.md) | technical-readiness | delete | C | proposed: redeem as scored (pending triage) |
 | 8.10 | [correct-content-types](./machine-discovery/ai-file-delivery.md) | technical-readiness | fix | C | keep — fix required |

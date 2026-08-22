@@ -988,24 +988,21 @@
   },
   "8.2": {
     "slug": "technical-readiness/hsts-header",
-    "status": "merging",
+    "status": "renamed",
     "to": "operability-safety/security-header-hygiene",
-    "interim": "operability-safety/hsts-header",
-    "link": "docs/evidence/audits/operability-safety/hsts-header.md"
+    "link": "docs/evidence/audits/operability-safety/security-header-hygiene.md"
   },
   "8.3": {
     "slug": "technical-readiness/csp-header",
-    "status": "merging",
+    "status": "renamed",
     "to": "operability-safety/security-header-hygiene",
-    "interim": "operability-safety/csp-header",
-    "link": "docs/evidence/audits/operability-safety/csp-header.md"
+    "link": "docs/evidence/audits/operability-safety/security-header-hygiene.md"
   },
   "8.4": {
     "slug": "technical-readiness/content-type-options",
-    "status": "merging",
+    "status": "renamed",
     "to": "operability-safety/security-header-hygiene",
-    "interim": "operability-safety/content-type-options",
-    "link": "docs/evidence/audits/operability-safety/content-type-options.md"
+    "link": "docs/evidence/audits/operability-safety/security-header-hygiene.md"
   },
   "8.5": {
     "slug": "technical-readiness/referrer-policy",
@@ -1021,10 +1018,9 @@
   },
   "8.7": {
     "slug": "technical-readiness/security-txt",
-    "status": "merging",
+    "status": "renamed",
     "to": "operability-safety/security-header-hygiene",
-    "interim": "operability-safety/security-txt",
-    "link": "docs/evidence/audits/operability-safety/security-txt.md"
+    "link": "docs/evidence/audits/operability-safety/security-header-hygiene.md"
   },
   "8.8": {
     "slug": "technical-readiness/cors-ai-files",

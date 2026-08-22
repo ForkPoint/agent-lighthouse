@@ -40,12 +40,10 @@ export { MetaRefreshAudit } from './meta-refresh';
 export { TabindexAudit } from './tabindex';
 export { PresentationConflictAudit } from './presentation-conflict';
 
-// Security headers (from v1 technical-readiness) — all four consolidate into
-// operability-safety/security-header-hygiene in Plan 4.
-export { HstsHeaderAudit } from './hsts-header';
-export { CspHeaderAudit } from './csp-header';
-export { ContentTypeOptionsAudit } from './content-type-options';
-export { SecurityTxtAudit } from './security-txt';
+// Security headers (from v1 technical-readiness): hsts-header (8.2),
+// csp-header (8.3), content-type-options (8.4) and security-txt (8.7)
+// consolidated into this one informative audit in Plan 4, Task 3.
+export { SecurityHeaderHygieneAudit } from './security-header-hygiene';
 
 // Not an audit: the rule-id list the orchestrator feeds to the engine. It is
 // only complete once every engine-backed audit module has been evaluated — this
@@ -77,10 +75,7 @@ import { FrameTitleAudit } from './frame-title';
 import { MetaRefreshAudit } from './meta-refresh';
 import { TabindexAudit } from './tabindex';
 import { PresentationConflictAudit } from './presentation-conflict';
-import { HstsHeaderAudit } from './hsts-header';
-import { CspHeaderAudit } from './csp-header';
-import { ContentTypeOptionsAudit } from './content-type-options';
-import { SecurityTxtAudit } from './security-txt';
+import { SecurityHeaderHygieneAudit } from './security-header-hygiene';
 
 /** Every audit that lives in the operability-safety category, in map order. */
 export const OPERABILITY_SAFETY_AUDITS = [
@@ -109,8 +104,5 @@ export const OPERABILITY_SAFETY_AUDITS = [
   MetaRefreshAudit,
   TabindexAudit,
   PresentationConflictAudit,
-  HstsHeaderAudit,
-  CspHeaderAudit,
-  ContentTypeOptionsAudit,
-  SecurityTxtAudit,
+  SecurityHeaderHygieneAudit,
 ] as const;

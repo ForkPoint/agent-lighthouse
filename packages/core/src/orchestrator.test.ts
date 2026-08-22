@@ -557,7 +557,7 @@ describe('readiness vitals — v2 id translation', () => {
         },
         {
           // operability-safety no longer feeds a vital, so it must not move it.
-          id: 'operability-safety/csp-header',
+          id: 'operability-safety/security-header-hygiene',
           category: 'operability-safety',
           title: 't',
           description: 'd',

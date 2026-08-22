@@ -60,3 +60,5 @@ This audit was a delete candidate and went through dedicated adversarial researc
 
 - 2026-08-20 — code review (11-agent workflow) + evidence research (12-domain workflow, 400 sources).
 - 2026-08-21 — adversarial redemption research; user accepted verdict (disposition above).
+
+**Merged into:** `operability-safety/security-header-hygiene` (Plan 4, 2026-08-22) — [merged dossier](../../audits/operability-safety/security-header-hygiene.md)

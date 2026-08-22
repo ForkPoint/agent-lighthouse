@@ -15,9 +15,15 @@ in [`../sunset/`](../sunset/).
 | [access-crawl-control/youbot](./access-crawl-control/youbot.md) | 2.11 | [access-crawl-control/ai-bot-directives](../audits/access-crawl-control/ai-bot-directives.md) | A |
 | [access-crawl-control/diffbot](./access-crawl-control/diffbot.md) | 2.12 | [access-crawl-control/ai-bot-directives](../audits/access-crawl-control/ai-bot-directives.md) | C |
 | [access-crawl-control/ai2bot](./access-crawl-control/ai2bot.md) | 2.13 | [access-crawl-control/ai-bot-directives](../audits/access-crawl-control/ai-bot-directives.md) | B |
+| [operability-safety/hsts-header](./operability-safety/hsts-header.md) | 8.2 | [operability-safety/security-header-hygiene](../audits/operability-safety/security-header-hygiene.md) | B |
+| [operability-safety/csp-header](./operability-safety/csp-header.md) | 8.3 | [operability-safety/security-header-hygiene](../audits/operability-safety/security-header-hygiene.md) | D |
+| [operability-safety/content-type-options](./operability-safety/content-type-options.md) | 8.4 | [operability-safety/security-header-hygiene](../audits/operability-safety/security-header-hygiene.md) | C |
+| [operability-safety/security-txt](./operability-safety/security-txt.md) | 8.7 | [operability-safety/security-header-hygiene](../audits/operability-safety/security-header-hygiene.md) | C |
 
 The grade column is the *absorbed* audit's own grade, not the merged audit's. A merged audit is graded
 on the strongest **proven** consumer path among its sources, which is why `ai-bot-directives` ships at
-B rather than inheriting youbot's A — see that dossier's Grade section.
+B rather than inheriting youbot's A — see that dossier's Grade section. Grade and tier are separate
+prices: `security-header-hygiene` also ships at B, but at tier `informative` (weight 0), because none
+of the four absorbed signals has a documented AI consumer.
 
 Later Plan 4 tasks extend this table as their folds land.

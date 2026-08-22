@@ -34,7 +34,10 @@ const SURVIVING_COUNT = 181;
 // points several `renamed` entries at a single merged audit. Every other
 // landed id stays 1:1, so this list is the allow-list for shared targets and
 // grows one line per fold as Plan 4 lands them.
-const CONSOLIDATION_TARGETS = ['access-crawl-control/ai-bot-directives'];
+const CONSOLIDATION_TARGETS = [
+  'access-crawl-control/ai-bot-directives',
+  'operability-safety/security-header-hygiene',
+];
 
 // v2 identity: `category/slug`. Slugs carry digits and dots (json-ld-1-1,
 // llms-full-txt, ai-plugin.json-style names), so the pattern is deliberately
