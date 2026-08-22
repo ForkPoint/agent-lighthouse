@@ -12,12 +12,11 @@ export { SitemapAbsoluteUrlsAudit } from './sitemap-absolute-urls';
 export { SitemapLastmodAudit } from './sitemap-lastmod';
 export { RssFeedAudit } from './rss-feed';
 export { RssFeedContentAudit } from './rss-feed-content';
-export { InternalLinkingAudit } from './in-content-links';
+export { InContentLinksAudit } from './in-content-links';
 export { NoBrokenLinksAudit } from './no-broken-links';
 export { CorsAiFilesAudit } from './cors-ai-files';
 export { AiFileDeliveryAudit } from './ai-file-delivery';
 export { NoBrokenAiEndpointsAudit } from './no-broken-ai-endpoints';
-export { InternalCrossLinkingAudit } from './internal-cross-linking';
 
 import { LlmsTxtExistsAudit } from './llms-txt-exists';
 import { LlmsTxtStructureAudit } from './llms-txt-structure';
@@ -30,12 +29,11 @@ import { SitemapAbsoluteUrlsAudit } from './sitemap-absolute-urls';
 import { SitemapLastmodAudit } from './sitemap-lastmod';
 import { RssFeedAudit } from './rss-feed';
 import { RssFeedContentAudit } from './rss-feed-content';
-import { InternalLinkingAudit } from './in-content-links';
+import { InContentLinksAudit } from './in-content-links';
 import { NoBrokenLinksAudit } from './no-broken-links';
 import { CorsAiFilesAudit } from './cors-ai-files';
 import { AiFileDeliveryAudit } from './ai-file-delivery';
 import { NoBrokenAiEndpointsAudit } from './no-broken-ai-endpoints';
-import { InternalCrossLinkingAudit } from './internal-cross-linking';
 
 /** Every audit that lives in the machine-discovery category, in map order. */
 export const MACHINE_DISCOVERY_AUDITS = [
@@ -50,10 +48,9 @@ export const MACHINE_DISCOVERY_AUDITS = [
   SitemapLastmodAudit,
   RssFeedAudit,
   RssFeedContentAudit,
-  InternalLinkingAudit,
+  InContentLinksAudit,
   NoBrokenLinksAudit,
   CorsAiFilesAudit,
   AiFileDeliveryAudit,
   NoBrokenAiEndpointsAudit,
-  InternalCrossLinkingAudit,
 ] as const;

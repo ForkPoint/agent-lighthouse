@@ -127,7 +127,7 @@ One dossier per audit: what it checks, the 2026-08-20 code-review findings, grad
 | 10.8 | [review-signals](./answer-readiness/review-signals.md) | generative-engine | fix | — | keep — fix required |
 | 10.9 | [publication-date](./answer-readiness/publication-date.md) | generative-engine | keep | — | keep |
 | 10.10 | [last-modified-schema](./answer-readiness/last-modified-schema.md) | generative-engine | fix | B | keep — fix required |
-| 10.11 | [internal-cross-linking](./machine-discovery/internal-cross-linking.md) | generative-engine | fix | — | keep — fix required |
+| 10.11 | [internal-cross-linking](../merged/machine-discovery/internal-cross-linking.md) | generative-engine | fix | B | merged into [machine-discovery/in-content-links](./machine-discovery/in-content-links.md) (2026-08-22) |
 | 10.12 | [pagination-links](./generative-engine/pagination-links.md) | generative-engine | delete | D | sunset (approved 2026-08-21) |
 | 10.13 | [unique-data](./answer-readiness/unique-data.md) | generative-engine | fix | — | keep — fix required |
 | 10.14 | [blockquote-usage](./answer-readiness/blockquote-usage.md) | generative-engine | merge | B | merge (approved 2026-08-21) |

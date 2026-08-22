@@ -1,21 +1,94 @@
-// TODO(rewrite): approved 2026-08-21 — this audit and generative-engine/internal-cross-linking
-// (10.11) collapse into one `machine-discovery/in-content-links` check in Plan 4: in-content
-// links only, ignoring nav/footer chrome.
-// Evidence dossier: docs/evidence/audits/machine-discovery/in-content-links.md
-
-import type { AuditMeta, AuditResult } from "../../types";
-import { Audit } from "../../audit";
-import type { CheckContext } from '../../check-context';
+import type { AuditMeta, AuditResult } from '../../types';
+import { Audit } from '../../audit';
+import type { CheckContext, PageContext } from '../../check-context';
 import { weightForGrade } from '../../scorer';
 
-export class InternalLinkingAudit extends Audit {
+/** Template chrome: links here say the site has a layout, not that it interlinks. */
+const CHROME_SELECTOR =
+  'nav, header, footer, aside, [role="navigation"], [role="banner"], [role="contentinfo"], [role="complementary"]';
+
+/** Distinct in-content destinations a page needs to count as interlinked. */
+const LINK_BAR = 2;
+
+/** `/blog/page/2`-style pagination is navigation, not a topical cross-link. */
+const PAGINATION = /\/(page|pagina|seite)\/\d+$/;
+
+/**
+ * One comparison key per destination: host without `www.`, lower-cased path
+ * with no trailing slash, no query and no fragment.
+ *
+ * Without it, `/about`, `/about/` and `/about?utm_source=nav` counted as three
+ * distinct destinations, and a site scanned as `www.example.com` treated its
+ * own bare-host links as external (review findings 1.15 and 10.11).
+ */
+function destinationKey(url: URL): string {
+  const host = url.hostname.toLowerCase().replace(/^www\./, '');
+  const path = url.pathname.replace(/\/+$/, '').toLowerCase();
+  return `${host}${path}`;
+}
+
+function isSameSite(url: URL, domain: string): boolean {
+  const host = url.hostname.toLowerCase().replace(/^www\./, '');
+  const site = domain.toLowerCase().replace(/^www\./, '');
+  return host === site || host.endsWith(`.${site}`);
+}
+
+/**
+ * Distinct internal destinations linked from a page's own content.
+ *
+ * Anchors are read from `<main>`/`<article>` when present (otherwise the whole
+ * body) and any anchor with a chrome ancestor is dropped, so the count measures
+ * editorial linking rather than the presence of a template.
+ */
+function inContentDestinations(page: PageContext, domain: string): Set<string> {
+  const $ = page.$;
+  const scope = $('main, article').length > 0 ? $('main, article') : $('body');
+  const selfKey = (() => {
+    try {
+      return destinationKey(new URL(page.url));
+    } catch {
+      return null;
+    }
+  })();
+
+  const destinations = new Set<string>();
+  scope.find('a[href]').each((_, el) => {
+    if ($(el).closest(CHROME_SELECTOR).length > 0) return;
+    const href = ($(el).attr('href') ?? '').trim();
+    // A '#main' skip-link resolves to the page's own URL, so a page whose only
+    // anchor is an accessibility affordance used to look well-interlinked.
+    if (!href || href.startsWith('#')) return;
+
+    let url: URL;
+    try {
+      url = new URL(href, page.url);
+    } catch {
+      return;
+    }
+    if (url.protocol !== 'http:' && url.protocol !== 'https:') return;
+    if (!isSameSite(url, domain)) return;
+
+    const key = destinationKey(url);
+    // The site root is the logo's destination on every page; a self-link is not
+    // a cross-link; pagination is navigation.
+    if (key === selfKey) return;
+    if (!key.includes('/')) return;
+    if (PAGINATION.test(key)) return;
+
+    destinations.add(key);
+  });
+
+  return destinations;
+}
+
+export class InContentLinksAudit extends Audit {
   static override meta: AuditMeta = {
     id: 'machine-discovery/in-content-links',
     category: 'machine-discovery',
-    title: 'Internal linking structure',
-    failureTitle: 'Internal linking structure',
+    title: 'In-content internal links',
+    failureTitle: 'In-content internal links',
     description:
-      'A strong internal linking structure helps AI crawlers discover and understand the relationships between your pages.',
+      'Contextual links inside the page body — not the nav or footer — are how AI crawlers discover related pages and read the relationships between them. Crawlers that do not execute JavaScript see only the links present as <a href> in the served HTML.',
     scoreDisplayMode: 'ternary',
     weight: weightForGrade('A', 'scored'),
     evidenceGrade: 'A',
@@ -24,97 +97,70 @@ export class InternalLinkingAudit extends Audit {
     defaultPriority: 'medium',
     guidance: {
       impact:
-        'Without internal links, AI crawlers cannot discover related pages or understand how your content is organized. This limits the depth of your site that gets indexed and weakens topical authority in AI search results.',
-      fix: 'Add contextual internal links between related pages. Use descriptive anchor text that tells AI crawlers what the linked page is about. Aim for at least 3-5 internal links per page.',
-      code: '<a href="/related-page">Learn more about related topic</a>',
+        'Google can only crawl a link that is an <a> element with an href, and the measured behaviour of GPTBot and ClaudeBot is that they do not execute JavaScript — so a page whose only links are in a client-rendered nav is a dead end for them. Links inside the body copy also tell an agent which pages belong together, which template chrome (identical on every page) cannot.',
+      fix: 'Link to related pages from within the body copy, with anchor text that names the destination. Aim for at least two distinct in-content destinations per page (the nav and footer do not count), and make sure they are server-rendered <a href> elements.',
+      code: '<main>\n  <p>Our <a href="/guide/getting-started">getting-started guide</a> walks through setup, and the <a href="/api">API reference</a> documents every endpoint.</p>\n</main>',
       effort: 'easy',
-      tags: ['internal-links', 'seo', 'discoverability'],
+      tags: ['internal-links', 'in-content', 'discoverability'],
     },
   };
 
   audit(ctx: CheckContext): AuditResult {
+    const expected = `Each page links to ${LINK_BAR}+ other internal pages from its own content`;
+
     if (ctx.pages.length === 0) {
-      return this.fail(
-        'No pages scanned.',
-        'Pages have internal links to other pages on the same domain',
-        'No pages scanned',
-        {
-          priority: 'medium',
-          description: InternalLinkingAudit.meta.description,
-        },
-      );
+      return this.notApplicable('No pages scanned.', expected, 'No pages scanned');
     }
 
-    const domain = ctx.domain;
-    let totalInternalLinks = 0;
-    const pagesWithNoInternalLinks: string[] = [];
+    const linkless: string[] = [];
+    const thin: string[] = [];
+    let totalDestinations = 0;
 
     for (const page of ctx.pages) {
-      const $ = page.$;
-      let pageInternalLinks = 0;
-
-      $('a[href]').each((_, el) => {
-        /* v8 ignore next -- a[href] selector guarantees attr is always a string */
-        const href = $(el).attr('href') ?? '';
-        try {
-          const resolved = new URL(href, page.url);
-          if (resolved.hostname === domain || resolved.hostname.endsWith(`.${domain}`)) {
-            pageInternalLinks++;
-          }
-        } catch {
-          // Relative URLs that fail to parse are likely internal
-          if (
-            href.startsWith('/') ||
-            href.startsWith('#') ||
-            href.startsWith('./') ||
-            href.startsWith('../')
-          ) {
-            pageInternalLinks++;
-          }
-        }
-      });
-
-      totalInternalLinks += pageInternalLinks;
-      if (pageInternalLinks === 0) {
-        pagesWithNoInternalLinks.push(page.url);
-      }
+      const destinations = inContentDestinations(page, ctx.domain);
+      totalDestinations += destinations.size;
+      if (destinations.size === 0) linkless.push(page.url);
+      else if (destinations.size < LINK_BAR) thin.push(page.url);
     }
 
-    if (pagesWithNoInternalLinks.length === ctx.pages.length) {
+    const below = [...linkless, ...thin];
+    const found = `${totalDestinations} distinct in-content destination(s) across ${ctx.pages.length} page(s)`;
+
+    if (linkless.length === ctx.pages.length) {
       return this.fail(
-        'No scanned pages have internal links.',
-        'Pages have internal links to other pages',
-        `${totalInternalLinks} internal links across ${ctx.pages.length} page(s)`,
+        'Every scanned page has no in-content internal links — every internal link sits in the nav, header or footer.',
+        expected,
+        found,
         {
           priority: 'medium',
           description:
-            'None of your scanned pages contain internal links. Internal links help AI crawlers discover related content and understand your site structure. Add links between related pages.',
-          code: `<a href="/related-page">Related content</a>`,
+            'Template chrome is identical on every page, so it tells an agent nothing about which pages belong together — and if your navigation is client-rendered, the crawlers that do not execute JavaScript see no links at all. Add contextual links from the body copy of each page to related pages.',
+          code: `<p>See our <a href="/guide">guide</a> and the <a href="/api">API reference</a>.</p>`,
         },
-        pagesWithNoInternalLinks[0],
+        linkless[0],
       );
     }
 
-    if (pagesWithNoInternalLinks.length > 0) {
+    if (below.length > 0) {
+      const shown = `${below.slice(0, 5).join(', ')}${below.length > 5 ? ` (+${below.length - 5} more)` : ''}`;
       return this.warn(
-        `${pagesWithNoInternalLinks.length}/${ctx.pages.length} page(s) have no internal links.`,
-        'All pages have internal links',
-        `Pages without links: ${pagesWithNoInternalLinks.slice(0, 5).join(', ')}${pagesWithNoInternalLinks.length > 5 ? ` (+${pagesWithNoInternalLinks.length - 5} more)` : ''}`,
+        `${below.length}/${ctx.pages.length} page(s) have thin in-content linking (fewer than ${LINK_BAR} distinct internal destinations in the body).`,
+        expected,
+        `${found}. Thin pages: ${shown}`,
         {
           priority: 'low',
           description:
-            'Some pages lack internal links, making them harder for AI crawlers to connect to the rest of your site. Add contextual links to related content.',
-          code: `<a href="/related-page">Related content</a>`,
+            'Some pages link to fewer than two other pages from their own content, so an agent reading them learns little about what else is relevant. Add contextual links to related pages.',
+          code: `<p>See our <a href="/guide">guide</a> and the <a href="/api">API reference</a>.</p>`,
         },
-        pagesWithNoInternalLinks[0],
+        below[0],
       );
     }
 
-    const avgLinks = Math.round(totalInternalLinks / ctx.pages.length);
     return this.pass(
-      `All ${ctx.pages.length} page(s) have internal links (avg ${avgLinks} per page).`,
-      'All pages have internal links',
-      `${totalInternalLinks} total internal links`,
+      `All ${ctx.pages.length} page(s) have ${LINK_BAR}+ in-content internal links to other pages.`,
+      expected,
+      found,
     );
   }
 }

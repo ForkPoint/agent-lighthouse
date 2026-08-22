@@ -1,23 +1,32 @@
 ---
 audit: machine-discovery/in-content-links
-audit_id: "1.15"
+audit_id: "1.15, 10.11"
 category: machine-discovery
 source_file: packages/core/src/audits/machine-discovery/in-content-links.ts
 slug: in-content-links
-review_verdict: fix
+review_verdict: rewrite
 severity: medium
 evidence_grade: A
-disposition: "keep — fix required"
-reviewed: 2026-08-21
+disposition: "rewritten + merged 2026-08-22 (Plan 4, Task 4) — absorbs internal-cross-linking (10.11)"
+reviewed: 2026-08-22
 ---
 
-# internal-linking (`1.15`)
+# in-content-links (`1.15`, `10.11`)
 
-> content-discoverability · source `internal-linking.ts` · review verdict **fix** · evidence grade **A** · disposition: **keep — fix required**
+> machine-discovery · source `in-content-links.ts` · rewritten, absorbs internal-cross-linking (10.11) · evidence grade **A** · tier **scored** (weight 1.0)
 
 ## What it checks
 
-A strong internal linking structure helps AI crawlers discover and understand the relationships between your pages.
+Distinct internal destinations linked **from the page's own content** — anchors inside `<main>`/`<article>` (or the body when neither exists), minus anything under `nav`, `header`, `footer`, `aside` or the equivalent ARIA roles.
+
+A destination is counted once per page, keyed on host-without-`www` plus lower-cased path with no trailing slash, query or fragment. Same-page fragments, self-links, the site root and `/…/page/N` pagination do not count, and non-HTTP schemes (`mailto:`, `tel:`, `javascript:`) are ignored.
+
+| State | Result |
+| :--- | :--- |
+| every page has ≥ 2 distinct in-content destinations | `pass` |
+| some pages below the bar | `warn`, priority `low` |
+| *no* page has a single in-content internal link | `fail`, priority `medium` |
+| no pages scanned | `na` |
 
 ## Code review findings (2026-08-20, 11-agent pass)
 
@@ -66,7 +75,31 @@ Counts internal anchors per page and fails only when a page has literally zero. 
 
 **Sources:** [About Applebot](https://support.apple.com/en-us/119829) · [Qualify Your Outbound Links to Google (nofollow, sponsored, ugc)](https://developers.google.com/search/docs/crawling-indexing/qualify-outbound-links) · [AI Features and Your Website](https://developers.google.com/search/docs/appearance/ai-features) · [Overview of OpenAI Crawlers](https://developers.openai.com/api/docs/bots) · [Does Anthropic crawl data from the web, and how can site owners block the crawler?](https://support.claude.com/en/articles/8896518) · [Perplexity Crawlers](https://docs.perplexity.ai/docs/resources/perplexity-crawlers)
 
+## The rewrite (`TODO(rewrite)`, approved 2026-08-21)
+
+Both source audits measured the presence of a template, not internal linking, and both passed essentially every real site:
+
+- **1.15 internal-linking** failed a page only when it had *literally zero* internal anchors. Since `new URL('#main', page.url)` resolves to the page's own host, a lone "skip to content" accessibility link satisfied it. The guidance prescribed "3-5 internal links per page" — a threshold the code never enforced.
+- **10.11 internal-cross-linking** required ≥ 2 internal links per page but counted the whole document, so any site with a header nav cleared the bar on every page. Its review calls it "a near-unconditional PASS running at `defaultPriority: 'high'`, consuming a high-weight report slot while distinguishing nothing".
+
+The rewritten audit measures what both descriptions always claimed: contextual links in the body. Every required fix from the two reviews is in the list above — chrome exclusion, fragment and self-link exclusion, site-root and pagination exclusion, normalize-then-deduplicate (so `/about`, `/about/` and `/about?utm_source=nav` are one destination), www/bare-host normalization on both sides, the ≥ 2 bar applied to *contextual* links, and `defaultPriority` at `medium` rather than `high`.
+
+**One review finding deliberately not adopted:** both reviews list "SPA whose server HTML contains no anchors" as a false-positive risk. This dossier's own grade-A evidence says the opposite — Vercel and MERJ measured that no major AI crawler executes JavaScript, so a client-rendered nav genuinely is "a link-less void to GPTBot and ClaudeBot". A page with no server-rendered in-content links is a true finding for this audit, and the guidance copy names the cause. The site-wide `fail` still requires *every* scanned page to be linkless, so a single JS-heavy page only warns.
+
+Also out of scope: this audit does not read `rel="nofollow"` or `<meta name="robots" content="nofollow">`. The second evidence signal below grades that mechanism A for Applebot, but the same source warns that page-level meta-robots and per-link `rel` are different things and that Google treats `rel=nofollow` as a hint; it belongs in a dedicated check, not in a link-count.
+
+## Absorbed evidence — internal-cross-linking (10.11)
+
+10.11's dossier is kept verbatim at [merged/machine-discovery/internal-cross-linking.md](../../merged/machine-discovery/internal-cross-linking.md) (grade **B**). Its signal — internal link structure as the input AI engines use to build topic clusters — is the same claim as this audit's, at a different threshold, which is why the v2 map collapses them into this one rewritten check with 1.15 as the surviving row.
+
+### Grade decision: stays **A**
+
+10.11 graded **B**; this audit's own link-graph evidence grades **A** on two vendor-documented consumer paths (Google: "Google can only crawl your link if it's an `<a>` HTML element with an href attribute"; Apple: links are an explicit Apple Search ranking factor) plus the Vercel/MERJ measurement that the major AI crawlers do not execute JavaScript. The absorbed evidence is weaker, so nothing is raised: **A**, `tier: scored`, `weight 1.0`.
+
+Note that the rewrite makes the audit *harder* to pass at unchanged weight — deliberately. The A grade prices a real mechanism; it was previously spent on a check that could not fail a templated site.
+
 ## Review history
 
-- 2026-08-20 — code review (11-agent workflow) + evidence research (12-domain workflow, 400 sources).
-- 2026-08-21 — dossier generated; disposition pending final taxonomy design.
+- 2026-08-20 — code review (11-agent workflow) + evidence research (12-domain workflow, 400 sources) on both source audits.
+- 2026-08-21 — approved: 1.15 + 10.11 collapse into one rewritten `in-content-links` (in-content links only).
+- 2026-08-22 — rewritten and merged (Plan 4, Task 4); registry 169 → 168.

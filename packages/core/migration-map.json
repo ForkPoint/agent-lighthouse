@@ -1232,10 +1232,9 @@
   },
   "10.11": {
     "slug": "generative-engine/internal-cross-linking",
-    "status": "merging",
+    "status": "renamed",
     "to": "machine-discovery/in-content-links",
-    "interim": "machine-discovery/internal-cross-linking",
-    "link": "docs/evidence/audits/machine-discovery/internal-cross-linking.md"
+    "link": "docs/evidence/audits/machine-discovery/in-content-links.md"
   },
   "10.12": {
     "slug": "generative-engine/pagination-links",

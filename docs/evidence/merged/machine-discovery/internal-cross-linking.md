@@ -65,3 +65,5 @@ _No dedicated evidence signal was researched for this audit in the 2026-08-20 pa
 
 - 2026-08-20 — code review (11-agent workflow) + evidence research (12-domain workflow, 400 sources).
 - 2026-08-21 — dossier generated; disposition pending final taxonomy design.
+
+**Merged into:** `machine-discovery/in-content-links` (Plan 4, 2026-08-22) — [merged dossier](../../audits/machine-discovery/in-content-links.md)
