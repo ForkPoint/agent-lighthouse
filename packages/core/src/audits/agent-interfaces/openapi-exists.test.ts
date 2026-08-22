@@ -1,6 +1,25 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { OpenApiExistsAudit } from './openapi-exists';
 import { mockCheckContext, mockPageContext, mockFetchResult } from '../../__tests__/test-utils';
+
+// isSafeUrl performs a real DNS lookup before the audit follows an advertised
+// <link>. Stub it with an offline stand-in that still blocks loopback and
+// private ranges, so the refusal test below proves the gate rather than the mock.
+vi.mock('../../fetcher', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../../fetcher')>();
+  return {
+    ...actual,
+    isSafeUrl: async (url: string) => {
+      try {
+        const { protocol, hostname } = new URL(url);
+        if (protocol !== 'http:' && protocol !== 'https:') return false;
+        return !/^(localhost$|127\.|\[?::1\]?$|10\.|192\.168\.)/.test(hostname);
+      } catch {
+        return false;
+      }
+    },
+  };
+});
 
 const SPEC = JSON.stringify({ openapi: '3.0.3', info: { title: 'API' }, paths: { '/x': {} } });
 const YAML_SPEC = 'openapi: 3.0.3\ninfo:\n  title: API\npaths:\n  /x: {}\n';
@@ -184,6 +203,21 @@ describe('OpenApiExistsAudit', () => {
     const result = await audit.audit(ctx);
     expect(result.status).toBe('warn');
     expect(result.message).toContain('advertised');
+  });
+
+  it('refuses to follow a link pointing at a private address, without fetching it', async () => {
+    const ctx = mockCheckContext([
+      page('<link rel="service-desc" type="application/json" href="http://127.0.0.1:8080/openapi.json">'),
+    ]);
+    let called = false;
+    ctx.fetch = async () => {
+      called = true;
+      return mockFetchResult(SPEC, 200, 'application/json');
+    };
+    const result = await audit.audit(ctx);
+    expect(called).toBe(false);
+    expect(result.status).toBe('warn');
+    expect(result.message).toContain('not safe to probe');
   });
 
   it('ignores an unrelated alternate link (RSS)', async () => {

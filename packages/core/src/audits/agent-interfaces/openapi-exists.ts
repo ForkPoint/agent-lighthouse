@@ -2,7 +2,7 @@ import type { AuditMeta, AuditResult } from '../../types';
 import { Audit } from '../../audit';
 import { weightForGrade } from '../../scorer';
 import type { CheckContext, PageContext } from '../../check-context';
-import type { FetchResult } from '../../fetcher';
+import { type FetchResult, isSafeUrl } from '../../fetcher';
 
 function tryParseJson(body: string): unknown {
   try {
@@ -190,6 +190,19 @@ export class OpenApiExistsAudit extends Audit {
     const link = findSpecLink(ctx.pages);
     if (link) {
       const url = new URL(link.href, ctx.baseUrl).toString();
+      // The href is site-controlled and may be absolute, so it can point at a
+      // private address or a non-HTTP scheme. Validate before fetching, the
+      // same way llms-txt-links-valid, no-broken-ai-endpoints and mcp-endpoint
+      // gate the URLs they harvest from scanned content.
+      if (!(await isSafeUrl(url))) {
+        return this.warn(
+          `An API description is advertised at ${link.href} but it is not safe to probe (non-HTTP scheme or private address).`,
+          EXPECTED,
+          `<link> -> ${url} -> refused`,
+          { priority: 'medium', description: OpenApiExistsAudit.meta.description, code: SAMPLE },
+          link.pageUrl,
+        );
+      }
       try {
         const result = await ctx.fetch({ url });
         const valid =

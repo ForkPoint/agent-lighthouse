@@ -1,7 +1,26 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { McpEndpointAudit } from './mcp-endpoint';
 import { mockCheckContext, mockFetchResult } from '../../__tests__/test-utils';
 import type { FetchOptions, FetchResult } from '../../fetcher';
+
+// isSafeUrl performs a real DNS lookup before the audit POSTs to the declared
+// endpoint. Stub it with an offline stand-in that still blocks loopback and
+// private ranges, so the refusal test below proves the gate rather than the mock.
+vi.mock('../../fetcher', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../../fetcher')>();
+  return {
+    ...actual,
+    isSafeUrl: async (url: string) => {
+      try {
+        const { protocol, hostname } = new URL(url);
+        if (protocol !== 'http:' && protocol !== 'https:') return false;
+        return !/^(localhost$|127\.|\[?::1\]?$|10\.|192\.168\.)/.test(hostname);
+      } catch {
+        return false;
+      }
+    },
+  };
+});
 
 function serversFile(url = 'https://example.com/mcp'): string {
   return JSON.stringify({ servers: [{ name: 'MCP', url }] });
