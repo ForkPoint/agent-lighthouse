@@ -93,7 +93,7 @@ describe('AiContentDeclarationAudit', () => {
 
     it('says plainly that no AI vendor documents honoring these names', () => {
       const result = audit.audit(mockCheckContext([page('<meta name="noai">')]));
-      expect(result.message.toLowerCase()).toContain('no ai vendor documents');
+      expect((result.message ?? '').toLowerCase()).toContain('no ai vendor documents');
       expect(result.message).toContain('robots.txt');
     });
 

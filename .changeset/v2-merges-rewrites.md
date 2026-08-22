@@ -68,17 +68,44 @@ const v2IdFor = (v1Id) => {
 The census is unchanged — 207 v1 ids, 26 `removed`, 181 `renamed` — but those
 181 point at only 148 distinct v2 ids.
 
-**Breaking: every remaining audit except the six pending-triage holdovers was
-rewritten to evidence-backed pass conditions.** A v1 audit passed when a pattern
-matched; a v2 audit passes when the dossier says the agent-visible signal is
-actually present. Pass conditions, thresholds, `na` handling and priorities all
-moved, so **the same site will score differently on the same audit id**.
-
-Six audits are the exception: `agent-interfaces/webmcp-registered-tools`,
+**Breaking: every remaining audit was rewritten to evidence-backed pass
+conditions.** A v1 audit passed when a pattern matched; a v2 audit passes when
+the dossier says the agent-visible signal is actually present. Pass conditions,
+thresholds, `na` handling and priorities all moved, so **the same site will
+score differently on the same audit id**. There are no holdovers: the last six
+— `agent-interfaces/webmcp-registered-tools`,
 `access-crawl-control/ai-content-declaration`, `access-crawl-control/tdm-rep`,
 `operability-safety/form-error-messages`, `answer-readiness/direct-definitions`
-and `agent-interfaces/cors-api-routes` were deliberately deferred out of v2.0
-and ship byte-unchanged apart from their v2 metadata block.
+and `agent-interfaces/cors-api-routes` — were rewritten too, and four of them
+changed shape enough to be worth calling out:
+
+- `agent-interfaces/webmcp-registered-tools` no longer reads
+  `/.well-known/webmcp`, an invented path with no spec and no IANA
+  registration; it reports tools registered at runtime through
+  `navigator.modelContext` and returns `na` when it cannot see any, since it
+  has no JavaScript runtime. A guaranteed high-priority zero on nearly every
+  site becomes `na`. The exported class is renamed `WebmcpManifestAudit` →
+  `WebmcpRegisteredToolsAudit`, and `/.well-known/webmcp` is dropped from the
+  root-file fetch list, so scans issue one fewer request.
+- `access-crawl-control/ai-content-declaration` stops demanding a meta tag that
+  does not exist and stops claiming GPTBot and ClaudeBot read it. It passes on
+  an AIPREF `Content-Usage` header or robots.txt rule, warns on
+  `noai`/`noimageai` with the "no documented consumer" caveat, and is `na`
+  otherwise.
+- `access-crawl-control/tdm-rep` reports `tdm-reservation` 1 (rights reserved)
+  and 0 (mining permitted) as distinct outcomes rather than one shared pass,
+  validates the well-known file against the spec's array-of-objects shape
+  behind a content-type and leading-`<` guard, reads the `tdm-reservation`
+  response header, and returns `na` when nothing is declared — removing a
+  half-point penalty from nearly every scan. `audit()` is now synchronous.
+- `agent-interfaces/cors-api-routes` probes the endpoints the OpenAPI document
+  declares (`servers[].url` plus concrete paths, `isSafeUrl()`-gated) instead of
+  a hardcoded `/api/`, requires an `Access-Control-Allow-Origin` that admits a
+  third-party origin, and is `na` for any site that publishes no OpenAPI
+  document.
+
+`operability-safety/form-error-messages` and `answer-readiness/direct-definitions`
+moved too — see the list below.
 
 The changes that move the most results:
 
@@ -106,6 +133,18 @@ The changes that move the most results:
 - `content-extraction/aside-element` goes from a binary to a three-state
   result, and `operability-safety/security-header-hygiene` never returns
   `fail` — it is informative at weight 0 by design.
+- `operability-safety/form-error-messages` stops passing a whole site on one
+  input carrying `aria-describedby`. It reports coverage as a ratio over the
+  fields the server rendered as `aria-invalid`, or — the normal case on a GET —
+  over the required fields, accepts `aria-errormessage` on equal terms, counts
+  fields outside a `<form>`, and is `na` when nothing declares a constraint. A
+  site with one wired input among many now warns; a site using
+  `aria-invalid` + `aria-errormessage` now passes instead of being warned.
+- `answer-readiness/direct-definitions` drops its bold-colon branch, which
+  every `<strong>Note:</strong>` satisfied, gates on definitional intent
+  detected structurally and in eleven languages, counts CJK definitions
+  correctly, and reports prose definitions instead of failing them. It never
+  returns `fail`.
 
 **Breaking: `_a11y.ts` is gone, split into 17 per-rule audit files.** The
 accessibility rules were a single module behind a shared base class; each rule
