@@ -10,7 +10,7 @@ npx @forkpoint/agent-lighthouse https://yourstore.com --view
 npx @forkpoint/agent-lighthouse https://staging.yourstore.com --min-score 85
 ```
 
-The CLI generates terminal, HTML, JSON, and Markdown reports for 148 audits across 8 agent-journey categories:
+The CLI generates terminal, HTML, JSON, and Markdown reports for 172 audits across 8 agent-journey categories:
 
 - Access & Crawl Control — robots.txt access for GPTBot, ClaudeBot, PerplexityBot, and other AI crawlers
 - Content Extraction — clean main content, semantic structure, render and response cost
