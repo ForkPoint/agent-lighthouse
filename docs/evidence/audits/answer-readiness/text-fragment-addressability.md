@@ -1,18 +1,19 @@
 ---
-check: text-fragment-citation-addressability
-title: "Text-Fragment Citation Addressability"
-domain: answer-selection-forensics
-status: proposed
+audit: answer-readiness/text-fragment-addressability
+category: answer-readiness
+source_file: packages/core/src/audits/answer-readiness/text-fragment-addressability.ts
+slug: text-fragment-addressability
 evidence_grade: A
-uniqueness: unique
-difficulty: static-fetch
-scoring_tier: scored
+tier: scored
+disposition: "new in v2 — graduated from proposal 2026-08-22"
 reviewed: 2026-08-20
+graduated: 2026-08-22
 ---
+
 
 # Text-Fragment Citation Addressability
 
-> Proposed check. Evidence grade **A** · unique · implementation: `static-fetch`
+> Shipped in v2. Evidence grade **A** · scored tier · unique · implementation: `static-fetch`
 
 ## What it checks
 
@@ -52,3 +53,32 @@ Tier per evidence policy: **scored** — grade A meets the A/B bar required for 
 ## Review history
 
 - 2026-08-20 — proposed by the novel-checks research pass (10-agent evidence workflow); sources URL-verified at research time.
+
+## Implementation deviations
+
+- **Block containment is decided over leaf blocks.** Every element in the spec's
+  block-level list that contains no other block-level element is treated as one
+  block; a span is addressable only when some leaf block's normalized text
+  contains it whole. This is the spec's rule expressed over the parsed DOM,
+  without a layout engine, so `display` overrides in CSS are not consulted.
+- **Ambiguity is counted over the same leaf-block texts**, including repeats
+  inside one block. A repeated span is addressable only through same-block
+  context: a prefix when the block has text before the span, otherwise a suffix.
+  Emitted URLs use at most five words of context.
+- **Term encoding** percent-encodes `-` and `,` inside terms so they cannot be
+  read as the fragment's own delimiters.
+- Spans over 300 characters are emitted in the `start,end` form (first and last
+  five words) rather than whole.
+- **`Document-Policy` is read from the response header only.** A
+  `<meta http-equiv="Document-Policy">` is explicitly not treated as a signal,
+  and the finding says so, because Document Policy is header-only: the meta form
+  neither sets the policy nor proves it is set.
+
+## Deferred
+
+- The headless variant — re-running the matcher against the post-JS DOM to catch
+  answers injected after load and `::before`/`::after` text — stays a roadmap
+  item.
+- Entity-encoded smart quotes are flagged as a hazard by codepoint; comparing
+  the encoded source against the rendered glyph needs the raw byte offsets the
+  parser does not retain.

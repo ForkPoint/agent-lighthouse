@@ -20,6 +20,7 @@ export const NEW_IN_V2: readonly string[] = [
   'content-extraction/css-hidden-ghost-content',
   'content-extraction/hydration-payload-share',
   'answer-readiness/snippet-gate-coverage',
+  'answer-readiness/text-fragment-addressability',
 ];
 
 /** The 148 audits Plan 4 closed the v2 migration on. Never changes again. */

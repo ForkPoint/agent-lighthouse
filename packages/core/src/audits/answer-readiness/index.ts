@@ -34,6 +34,7 @@ export { DescriptiveUrlsAudit } from './descriptive-urls';
 
 // New in v2 (Plan 5): graduated from the proposal backlog on 2026-08-22.
 export { SnippetGateCoverageAudit } from './snippet-gate-coverage';
+export { TextFragmentAddressabilityAudit } from './text-fragment-addressability';
 
 import { MetaDescriptionAudit } from './meta-description';
 import { MetaAuthorAudit } from './meta-author';
@@ -62,6 +63,7 @@ import { LastModifiedSchemaAudit } from './last-modified-schema';
 import { UniqueDataAudit } from './unique-data';
 import { DescriptiveUrlsAudit } from './descriptive-urls';
 import { SnippetGateCoverageAudit } from './snippet-gate-coverage';
+import { TextFragmentAddressabilityAudit } from './text-fragment-addressability';
 
 /** Every audit that lives in the answer-readiness category, in map order. */
 export const ANSWER_READINESS_AUDITS = [
@@ -92,4 +94,5 @@ export const ANSWER_READINESS_AUDITS = [
   UniqueDataAudit,
   DescriptiveUrlsAudit,
   SnippetGateCoverageAudit,
+  TextFragmentAddressabilityAudit,
 ] as const;
