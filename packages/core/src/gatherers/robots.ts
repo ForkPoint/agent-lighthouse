@@ -9,25 +9,58 @@ export interface RobotsGroup {
   userAgent: string;
   rules: RobotsRule[];
   crawlDelay?: number;
+  /**
+   * Directives inside the group that are neither rules nor crawl-delay, in file
+   * order — Content-Signal, Request-rate, vendor extensions. Retained rather
+   * than dropped: a directive we do not model today is still evidence about
+   * what the operator declared. Absent when the group carries none.
+   */
+  otherDirectives?: Array<{ name: string; value: string }>;
+}
+
+/** A parsed robots.txt: its groups plus the file-level directives outside them. */
+export interface RobotsFile {
+  groups: RobotsGroup[];
+  /**
+   * Every `Sitemap:` value, in file order. RFC 9309 §2.2.3 makes this directive
+   * host-global and user-agent independent: it is not part of any group, which
+   * is exactly why a site can advertise a sitemap its own rules forbid.
+   */
+  sitemaps: string[];
 }
 
 /** RFC 9309 §2.4: parsers must handle at least 500 KiB; we stop there. */
 const MAX_BYTES = 500 * 1024;
 
-export function parseRobots(body: string): RobotsGroup[] {
+/**
+ * Parse robots.txt into groups plus file-level directives.
+ *
+ * `parseRobots` returns this function's `groups` and nothing else, so the
+ * group-only view every existing audit uses and the whole-file view added for
+ * the Plan 5 discovery audits can never disagree about grouping.
+ */
+export function parseRobotsFile(body: string): RobotsFile {
   const text = normalizeNewlines(stripBom(body)).slice(0, MAX_BYTES);
   const groups: RobotsGroup[] = [];
+  const sitemaps: string[] = [];
   let agents: string[] = [];
   let rules: RobotsRule[] = [];
+  let otherDirectives: Array<{ name: string; value: string }> = [];
   let crawlDelay: number | undefined;
   let inRules = false;
 
   const flush = () => {
     for (const agent of agents) {
-      groups.push({ userAgent: agent, rules: [...rules], crawlDelay });
+      groups.push({
+        userAgent: agent,
+        rules: [...rules],
+        crawlDelay,
+        ...(otherDirectives.length ? { otherDirectives: [...otherDirectives] } : {}),
+      });
     }
     agents = [];
     rules = [];
+    otherDirectives = [];
     crawlDelay = undefined;
     inRules = false;
   };
@@ -50,16 +83,39 @@ export function parseRobots(body: string): RobotsGroup[] {
       inRules = true;
       const parsed = Number.parseFloat(value);
       if (!Number.isNaN(parsed)) crawlDelay = parsed;
+    } else if (directive === 'sitemap') {
+      // Host-global, outside every group. Deliberately does NOT set inRules — a
+      // Sitemap line sitting between two rules must not split their group.
+      if (value) sitemaps.push(value);
+    } else if (value) {
+      inRules = true;
+      otherDirectives.push({ name: directive, value });
     }
   }
   flush();
-  return groups;
+  return { groups, sitemaps };
+}
+
+export function parseRobots(body: string): RobotsGroup[] {
+  return parseRobotsFile(body).groups;
 }
 
 /** Group UA "GPTBot/1.1" matches bot token "gptbot": compare the product token. */
 export function matchesUserAgent(groupUserAgent: string, botToken: string): boolean {
   const product = groupUserAgent.trim().toLowerCase().split('/')[0];
   return product === botToken.trim().toLowerCase();
+}
+
+/**
+ * Does this bot have a group of its own?
+ *
+ * Under RFC 9309 §2.2.1 a crawler obeys the most specific matching group and
+ * ignores `*` entirely once a named group exists. So "the wildcard allows it"
+ * is not an answer for a bot with its own group, and this predicate is what
+ * lets an audit report which set of rules actually applied.
+ */
+export function hasNamedGroup(groups: RobotsGroup[], botToken: string): boolean {
+  return groups.some((g) => matchesUserAgent(g.userAgent, botToken));
 }
 
 export function groupsForBot(groups: RobotsGroup[], botToken: string): RobotsGroup[] {

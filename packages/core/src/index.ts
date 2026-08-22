@@ -13,12 +13,14 @@ export {
 export type { FetchClass, ExpectedKind } from './gatherers/fetch-classify';
 export {
   parseRobots,
+  parseRobotsFile,
   matchesUserAgent,
   groupsForBot,
+  hasNamedGroup,
   isPathAllowed,
   isBlanketBlocked,
 } from './gatherers/robots';
-export type { RobotsRule, RobotsGroup } from './gatherers/robots';
+export type { RobotsRule, RobotsGroup, RobotsFile } from './gatherers/robots';
 export { probeAsBot } from './gatherers/bot-probe';
 export type { BotProbeResult, BotProbeSignal } from './gatherers/bot-probe';
 export { pagesOfType, judgePages } from './gatherers/pages';

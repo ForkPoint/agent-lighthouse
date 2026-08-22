@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import {
   parseRobots, matchesUserAgent, groupsForBot, isPathAllowed, isBlanketBlocked,
+  parseRobotsFile, hasNamedGroup,
 } from './robots';
 
 describe('parseRobots', () => {
@@ -102,5 +103,75 @@ describe('isBlanketBlocked', () => {
   it('is false when only other bots are blocked', () => {
     const g = parseRobots('User-agent: ClaudeBot\nDisallow: /');
     expect(isBlanketBlocked(g, 'gptbot')).toBe(false);
+  });
+});
+
+describe('parseRobotsFile', () => {
+  it('collects Sitemap directives regardless of position', () => {
+    const file = parseRobotsFile(
+      'Sitemap: https://a.test/sitemap.xml\nUser-agent: *\nDisallow: /x\nSitemap: https://a.test/news.xml\n',
+    );
+    expect(file.sitemaps).toEqual([
+      'https://a.test/sitemap.xml',
+      'https://a.test/news.xml',
+    ]);
+    expect(file.groups).toHaveLength(1);
+  });
+
+  it('is case-insensitive on the directive name and trims the value', () => {
+    const file = parseRobotsFile('SITEMAP:   https://a.test/s.xml   \n');
+    expect(file.sitemaps).toEqual(['https://a.test/s.xml']);
+  });
+
+  // A Sitemap line is host-global and sits outside every group, so it must not
+  // be treated as a rule line — doing so would split one group into two and
+  // silently drop the second half's rules from the first.
+  it('does not let a Sitemap line between rules split a group', () => {
+    const file = parseRobotsFile(
+      'User-agent: GPTBot\nDisallow: /a\nSitemap: https://a.test/s.xml\nDisallow: /b\n',
+    );
+    expect(file.groups).toHaveLength(1);
+    expect(file.groups[0]!.rules).toEqual([
+      { type: 'disallow', path: '/a' },
+      { type: 'disallow', path: '/b' },
+    ]);
+  });
+
+  it('retains non-rule directives per group in file order', () => {
+    const file = parseRobotsFile(
+      'User-agent: GPTBot\nContent-Signal: search=yes, ai-train=no\nDisallow: /x\n',
+    );
+    expect(file.groups[0]!.otherDirectives).toEqual([
+      { name: 'content-signal', value: 'search=yes, ai-train=no' },
+    ]);
+  });
+
+  it('leaves otherDirectives unset on a group that has none', () => {
+    const file = parseRobotsFile('User-agent: *\nDisallow: /x\n');
+    expect(file.groups[0]!.otherDirectives).toBeUndefined();
+  });
+
+  it('gives parseRobots and parseRobotsFile the same grouping', () => {
+    const body = 'User-agent: GPTBot\nDisallow: /a\n\nUser-agent: *\nAllow: /\n';
+    expect(parseRobotsFile(body).groups).toEqual(parseRobots(body));
+  });
+});
+
+describe('hasNamedGroup', () => {
+  const groups = parseRobots('User-agent: GPTBot\nDisallow: /a\n\nUser-agent: *\nDisallow: /b\n');
+
+  it('is true for a bot with its own group', () => {
+    expect(hasNamedGroup(groups, 'gptbot')).toBe(true);
+  });
+
+  // The distinction that matters: a bot with no named group inherits the
+  // wildcard rules, and a bot with one ignores them completely.
+  it('is false for a bot that only falls back to the wildcard group', () => {
+    expect(hasNamedGroup(groups, 'perplexitybot')).toBe(false);
+  });
+
+  it('matches the product token, not the version suffix', () => {
+    const versioned = parseRobots('User-agent: GPTBot/1.4\nDisallow: /a\n');
+    expect(hasNamedGroup(versioned, 'gptbot')).toBe(true);
   });
 });
