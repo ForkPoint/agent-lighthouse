@@ -33,23 +33,24 @@ describe('ReviewSignalsAudit', () => {
     expect(result.message).toContain('JSON-LD');
   });
 
-  it('passes via a review widget class fallback', () => {
+  it('warns rather than passes on a review widget class fallback', () => {
     const page = mockPageContext(
       'https://example.com/products/widget',
       `<html><body><div class="yotpo-reviews-stars"></div></body></html>`,
     );
     const result = audit.audit(mockCheckContext([page]));
-    expect(result.status).toBe('pass');
+    expect(result.status).toBe('warn');
     expect(result.message).toContain('review widget markup');
+    expect(result.message).toContain('not machine-readable');
   });
 
-  it('passes via visible "N reviews" text fallback', () => {
+  it('warns rather than passes on visible "N reviews" text', () => {
     const page = mockPageContext(
       'https://example.com/products/widget',
       `<html><body><p>1,234 reviews from happy customers</p></body></html>`,
     );
     const result = audit.audit(mockCheckContext([page]));
-    expect(result.status).toBe('pass');
+    expect(result.status).toBe('warn');
     expect(result.message).toContain('reviews');
   });
 
@@ -81,7 +82,7 @@ describe('ReviewSignalsAudit', () => {
     );
     const result = audit.audit(mockCheckContext([page]));
     expect(result.status).toBe('pass');
-    expect(result.message).toContain('attributed blockquote');
+    expect(result.message).toContain('attributed quotation');
   });
 
   it('passes via attributed blockquote with a cite attribute', () => {
@@ -95,25 +96,25 @@ describe('ReviewSignalsAudit', () => {
     );
     const result = audit.audit(mockCheckContext([page]));
     expect(result.status).toBe('pass');
-    expect(result.message).toContain('attributed blockquote');
+    expect(result.message).toContain('attributed quotation');
   });
 
-  it('passes via blockquote without attribution (records unattributed count)', () => {
+  it('passes via a <figure> quotation attributed with <figcaption>', () => {
     const page = mockPageContext(
       'https://example.com/',
       `<html><body>
-        <blockquote><p>"A great quote with no attribution."</p></blockquote>
+        <figure>
+          <blockquote><p>"It halved our onboarding time."</p></blockquote>
+          <figcaption>Jane Smith, CTO at Acme</figcaption>
+        </figure>
       </body></html>`,
     );
     const result = audit.audit(mockCheckContext([page]));
     expect(result.status).toBe('pass');
-    expect(result.message).toContain('blockquote(s) (no attribution)');
+    expect(result.message).toContain('attributed quotation');
   });
 
-  it('covers line 18 false (@type absent), line 19 array @type, and line 30 review property', () => {
-    // Node with @type:["Review"] covers Array.isArray true (line 19).
-    // Product node with "review" property covers line 30.
-    // "metadata" nested object without @type covers line 18 false branch.
+  it('covers @type array, nested review property and a typeless nested object', () => {
     const page = mockPageContext(
       'https://example.com/products/widget',
       `<html><body>
@@ -127,5 +128,90 @@ describe('ReviewSignalsAudit', () => {
     const result = audit.audit(mockCheckContext([page]));
     expect(result.status).toBe('pass');
     expect(result.message).toContain('JSON-LD');
+  });
+
+  // --- absorbed from blockquote-usage (v1 10.14) ---------------------------
+
+  it('does not treat an unattributed pull-quote as a review signal', () => {
+    // v1 10.8 passed here ("blockquote(s) (no attribution)") and v1 10.14
+    // passed on the bare presence of the element. Neither is social proof.
+    const page = mockPageContext(
+      'https://example.com/',
+      `<html><body>
+        <blockquote><p>"A great quote with no attribution."</p></blockquote>
+      </body></html>`,
+    );
+    const result = audit.audit(mockCheckContext([page]));
+    expect(result.status).toBe('warn');
+    expect(result.message).toContain('unattributed');
+  });
+
+  it('ignores an empty blockquote entirely', () => {
+    // A spacer or a lazy-loading placeholder passed v1 10.14 outright.
+    const page = mockPageContext(
+      'https://example.com/',
+      `<html><body><blockquote></blockquote><p>Just a plain product description.</p></body></html>`,
+    );
+    const result = audit.audit(mockCheckContext([page]));
+    expect(result.status).toBe('fail');
+  });
+
+  it('rejects a zero reviewCount as social proof', () => {
+    const page = mockPageContext(
+      'https://example.com/products/widget',
+      `<html><body>
+        <script type="application/ld+json">
+        {"@context":"https://schema.org","@type":"Product","name":"Widget","aggregateRating":{"@type":"AggregateRating","ratingValue":"0","reviewCount":"0"}}
+        </script>
+      </body></html>`,
+    );
+    const result = audit.audit(mockCheckContext([page]));
+    expect(result.status).toBe('fail');
+  });
+
+  it('counts a non-zero reviewCount carried directly on the node', () => {
+    const page = mockPageContext(
+      'https://example.com/products/widget',
+      `<html><body>
+        <script type="application/ld+json">
+        {"@context":"https://schema.org","@type":"Product","name":"Widget","ratingCount":42}
+        </script>
+      </body></html>`,
+    );
+    const result = audit.audit(mockCheckContext([page]));
+    expect(result.status).toBe('pass');
+  });
+
+  it('reports the page the quotation was found on', () => {
+    const plain = mockPageContext(
+      'https://example.com/',
+      `<html><body><p>Just a plain product description.</p></body></html>`,
+    );
+    const quoted = mockPageContext(
+      'https://example.com/products/widget',
+      `<html><body><blockquote cite="https://example.com/r"><p>"Superb."</p></blockquote></body></html>`,
+      1,
+    );
+    const result = audit.audit(mockCheckContext([plain, quoted]));
+    expect(result.status).toBe('pass');
+    expect(result.pageUrl).toBe('https://example.com/products/widget');
+  });
+
+  it('prefers machine-readable review data over a weaker signal on an earlier page', () => {
+    const widgetOnly = mockPageContext(
+      'https://example.com/',
+      `<html><body><div class="yotpo-reviews-stars"></div></body></html>`,
+    );
+    const structured = mockPageContext(
+      'https://example.com/products/widget',
+      `<html><body>
+        <script type="application/ld+json">
+        {"@context":"https://schema.org","@type":"Product","aggregateRating":{"@type":"AggregateRating","ratingValue":"4.5","reviewCount":"120"}}
+        </script>
+      </body></html>`,
+      1,
+    );
+    const result = audit.audit(mockCheckContext([widgetOnly, structured]));
+    expect(result.status).toBe('pass');
   });
 });

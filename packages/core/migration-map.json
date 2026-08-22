@@ -1243,10 +1243,9 @@
   },
   "10.14": {
     "slug": "generative-engine/blockquote-usage",
-    "status": "merging",
+    "status": "renamed",
     "to": "answer-readiness/review-signals",
-    "interim": "answer-readiness/blockquote-usage",
-    "link": "docs/evidence/audits/answer-readiness/blockquote-usage.md"
+    "link": "docs/evidence/audits/answer-readiness/review-signals.md"
   },
   "10.15": {
     "slug": "generative-engine/descriptive-urls",

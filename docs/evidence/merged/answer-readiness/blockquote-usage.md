@@ -59,3 +59,5 @@ Falsy as a standalone audit: a bare presence check, `p.$('blockquote').length > 
 
 - 2026-08-20 — code review (11-agent workflow) + evidence research (12-domain workflow, 400 sources).
 - 2026-08-21 — dossier generated; disposition pending final taxonomy design.
+
+**Merged into:** `answer-readiness/review-signals` (Plan 4, 2026-08-22) — [merged dossier](../../audits/answer-readiness/review-signals.md)

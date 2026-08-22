@@ -26,11 +26,11 @@ export { AboutCredentialsAudit } from './about-credentials';
 export { ExternalCitationsAudit } from './external-citations';
 export { BrandNameAudit } from './brand-name';
 export { TrustSignalsAudit } from './trust-signals';
+// One social-proof audit in the place of review-signals + blockquote-usage (10.14).
 export { ReviewSignalsAudit } from './review-signals';
 export { PublicationDateAudit } from './publication-date';
 export { LastModifiedSchemaAudit } from './last-modified-schema';
 export { UniqueDataAudit } from './unique-data';
-export { BlockquoteUsageAudit } from './blockquote-usage';
 export { DescriptiveUrlsAudit } from './descriptive-urls';
 
 import { MetaDescriptionAudit } from './meta-description';
@@ -59,7 +59,6 @@ import { ReviewSignalsAudit } from './review-signals';
 import { PublicationDateAudit } from './publication-date';
 import { LastModifiedSchemaAudit } from './last-modified-schema';
 import { UniqueDataAudit } from './unique-data';
-import { BlockquoteUsageAudit } from './blockquote-usage';
 import { DescriptiveUrlsAudit } from './descriptive-urls';
 
 /** Every audit that lives in the answer-readiness category, in map order. */
@@ -90,6 +89,5 @@ export const ANSWER_READINESS_AUDITS = [
   PublicationDateAudit,
   LastModifiedSchemaAudit,
   UniqueDataAudit,
-  BlockquoteUsageAudit,
   DescriptiveUrlsAudit,
 ] as const;

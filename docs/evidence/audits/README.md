@@ -124,13 +124,13 @@ One dossier per audit: what it checks, the 2026-08-20 code-review findings, grad
 | 10.5 | [external-citations](./answer-readiness/external-citations.md) | generative-engine | fix | — | keep — fix required |
 | 10.6 | [brand-name](./answer-readiness/brand-name.md) | generative-engine | fix | C | keep — fix required |
 | 10.7 | [trust-signals](./answer-readiness/trust-signals.md) | generative-engine | delete | B | kept — rewrite required (approved 2026-08-21) |
-| 10.8 | [review-signals](./answer-readiness/review-signals.md) | generative-engine | fix | — | keep — fix required |
+| 10.8 | [review-signals](./answer-readiness/review-signals.md) | generative-engine | fix | B | merged — absorbs 10.14 (2026-08-22) |
 | 10.9 | [publication-date](./answer-readiness/publication-date.md) | generative-engine | keep | — | keep |
 | 10.10 | [last-modified-schema](./answer-readiness/last-modified-schema.md) | generative-engine | fix | B | keep — fix required |
 | 10.11 | [internal-cross-linking](../merged/machine-discovery/internal-cross-linking.md) | generative-engine | fix | B | merged into [machine-discovery/in-content-links](./machine-discovery/in-content-links.md) (2026-08-22) |
 | 10.12 | [pagination-links](./generative-engine/pagination-links.md) | generative-engine | delete | D | sunset (approved 2026-08-21) |
 | 10.13 | [unique-data](./answer-readiness/unique-data.md) | generative-engine | fix | — | keep — fix required |
-| 10.14 | [blockquote-usage](./answer-readiness/blockquote-usage.md) | generative-engine | merge | B | merge (approved 2026-08-21) |
+| 10.14 | [blockquote-usage](../merged/answer-readiness/blockquote-usage.md) | generative-engine | merge | B | merged into [answer-readiness/review-signals](./answer-readiness/review-signals.md) (2026-08-22) |
 | 10.15 | [descriptive-urls](./answer-readiness/descriptive-urls.md) | generative-engine | fix | C | keep — fix required |
 | 4.1 | [meta-description](./answer-readiness/meta-description.md) | meta-tags | fix | B | merged — absorbs 9.11 (2026-08-22) |
 | 4.2 | [meta-author](./answer-readiness/meta-author.md) | meta-tags | fix | — | keep — fix required |
