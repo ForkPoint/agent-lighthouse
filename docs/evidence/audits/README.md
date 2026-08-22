@@ -78,7 +78,7 @@ One dossier per audit: what it checks, the 2026-08-20 code-review findings, grad
 | 1.10 | [sitemap-lastmod](./machine-discovery/sitemap-lastmod.md) | content-discoverability | fix | A | keep — fix required |
 | 1.11 | [rss-feed](./machine-discovery/rss-feed.md) | content-discoverability | fix | B | keep — fix required |
 | 1.12 | [rss-feed-content](./machine-discovery/rss-feed-content.md) | content-discoverability | fix | — | keep — fix required |
-| 1.13 | [no-noindex](./access-crawl-control/no-noindex.md) | content-discoverability | fix | — | keep — fix required |
+| 1.13 | [no-noindex](../merged/access-crawl-control/no-noindex.md) | content-discoverability | fix | A | merged into [access-crawl-control/robots-directives](./access-crawl-control/robots-directives.md) (2026-08-22) |
 | 1.14 | [no-nofollow](./access-crawl-control/no-nofollow.md) | content-discoverability | fix | A | keep — fix required |
 | 1.15 | [internal-linking](./machine-discovery/in-content-links.md) | content-discoverability | fix | A | keep — fix required |
 | 1.16 | [no-redirect-chains](./access-crawl-control/no-redirect-chains.md) | content-discoverability | fix | — | keep — fix required |
@@ -113,7 +113,7 @@ One dossier per audit: what it checks, the 2026-08-20 code-review findings, grad
 | 2.22 | [no-blanket-block](./access-crawl-control/no-blanket-block.md) | crawler-permissions | fix | B | keep — fix required |
 | 2.23 | [sensitive-paths](./access-crawl-control/sensitive-paths.md) | crawler-permissions | delete | A | kept — rewrite required (approved 2026-08-21) |
 | 2.24 | [crawl-delay](./access-crawl-control/crawl-delay.md) | crawler-permissions | fix | C | keep — fix required |
-| 2.25 | [meta-robots-not-blocking](./access-crawl-control/robots-directives.md) | crawler-permissions | fix | — | keep — fix required |
+| 2.25 | [robots-directives](./access-crawl-control/robots-directives.md) | crawler-permissions | rewrite | A | rewritten + absorbs 1.13 and 4.20 (2026-08-22) |
 | 2.26 | [no-bot-detection](./access-crawl-control/no-bot-detection.md) | crawler-permissions | fix | — | keep — fix required |
 | 2.27 | [tdm-rep](./access-crawl-control/tdm-rep.md) | crawler-permissions | delete | — | proposed: redeem as experimental (pending triage) |
 | 2.28 | [agent-governance](./access-crawl-control/agent-governance.md) | crawler-permissions | fix | — | keep — fix required |
@@ -151,7 +151,7 @@ One dossier per audit: what it checks, the 2026-08-20 code-review findings, grad
 | 4.17 | [mcp-discovery-link](./meta-tags/mcp-discovery-link.md) | meta-tags | delete | D | sunset (approved 2026-08-21) |
 | 4.18 | [openapi-link](./agent-interfaces/openapi-link.md) | meta-tags | delete | B | proposed: redeem as scored (pending triage) |
 | 4.19 | [ai-catalog-link](./agent-interfaces/ai-catalog-link.md) | meta-tags | delete | B | kept — rewrite required (approved 2026-08-21) |
-| 4.20 | [meta-robots](./access-crawl-control/meta-robots.md) | meta-tags | fix | A | keep — fix required |
+| 4.20 | [meta-robots](../merged/access-crawl-control/meta-robots.md) | meta-tags | fix | A | merged into [access-crawl-control/robots-directives](./access-crawl-control/robots-directives.md) (2026-08-22) |
 | 6.1 | [single-h1](./content-extraction/single-h1.md) | semantic-html | fix | B | keep — fix required |
 | 6.2 | [sequential-headings](./content-extraction/sequential-headings.md) | semantic-html | fix | B | keep — fix required |
 | 6.3 | [main-element](./content-extraction/main-element.md) | semantic-html | fix | A | keep — fix required |

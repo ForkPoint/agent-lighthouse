@@ -65,3 +65,5 @@ The most important audit in the category and the one whose false PASSES are most
 
 - 2026-08-20 — code review (11-agent workflow) + evidence research (12-domain workflow, 400 sources).
 - 2026-08-21 — dossier generated; disposition pending final taxonomy design.
+
+**Merged into:** `access-crawl-control/robots-directives` (Plan 4, 2026-08-22) — [merged dossier](../../audits/access-crawl-control/robots-directives.md)

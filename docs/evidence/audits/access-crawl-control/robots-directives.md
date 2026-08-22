@@ -1,23 +1,36 @@
 ---
 audit: access-crawl-control/robots-directives
-audit_id: "2.25"
+audit_id: "2.25, 1.13, 4.20"
 category: access-crawl-control
 source_file: packages/core/src/audits/access-crawl-control/robots-directives.ts
 slug: robots-directives
-review_verdict: fix
+review_verdict: rewrite
 severity: high
 evidence_grade: A
-disposition: "keep — fix required"
-reviewed: 2026-08-21
+disposition: "rewritten + merged 2026-08-22 (Plan 4, Task 5) — absorbs no-noindex (1.13) and meta-robots (4.20)"
+reviewed: 2026-08-22
 ---
 
-# meta-robots-not-blocking (`2.25`)
+# robots-directives (`2.25`, `1.13`, `4.20`)
 
-> crawler-permissions · source `meta-robots-not-blocking.ts` · review verdict **fix** · evidence grade **A** · disposition: **keep — fix required**
+> access-crawl-control · source `robots-directives.ts` · rewritten, absorbs no-noindex (1.13) + meta-robots (4.20) · evidence grade **A** · tier **scored** (weight 1.0)
 
 ## What it checks
 
-Pages with <meta name="robots" content="noindex"> are hidden from all search engines, including AI-powered ones. Ensure your important content pages do not have this tag.
+Every robots directive that applies to a scanned page, from both transports and from every directive-carrying meta name:
+
+- `<meta name="robots">` **and** the per-bot forms (`googlebot`, `google-extended`, `gptbot`, `oai-searchbot`, `claudebot`, `applebot-extended`, `bingbot`, `perplexitybot`, …), read off the DOM so *all* tags count rather than the last one;
+- the `X-Robots-Tag` response header, including the per-bot `X-Robots-Tag: googlebot: noindex` form.
+
+Values are tokenized on commas and compared token-wise, so `none` is recognised as noindex+nofollow and `noindexifembedded` is not mistaken for a full block.
+
+| State | Result |
+| :--- | :--- |
+| a **content** page carries `noindex`/`none` | `fail` — `critical` when the homepage is among them, otherwise `high` |
+| a content page carries `nosnippet`, `noarchive` or `max-snippet:0` | `warn`, priority `medium` — indexed but unquotable |
+| only utility routes (cart, login, search, account, …) carry `noindex` | `pass`, naming them |
+| no directive blocks or suppresses | `pass` |
+| no pages scanned | `na` |
 
 ## Code review findings (2026-08-20, 11-agent pass)
 
@@ -62,8 +75,38 @@ _No dedicated evidence signal was researched for this audit in the 2026-08-20 pa
 
 **Counter-evidence:** `noindex` gates *index-derived* surfaces only. User-initiated fetchers are unaffected: OpenAI documents that for `ChatGPT-User` "Because these actions are initiated by a user, robots.txt rules may not apply" (https://developers.openai.com/api/docs/bots), and Perplexity documents that `Perplexity-User` "Generally ignores robots.txt rules" (https://docs.perplexity.ai/guides/bots) — both verified 2026-08-21. A noindexed page can therefore still be fetched and quoted live in a chat answer, so the audit's failure language ("blocking AI crawlers") overstates the effect for the conversational-agent path. Separately, the strongest AI-specific directives Google names — `nosnippet`, `data-nosnippet`, `max-snippet:0` — are outside what the current implementation reads, so the A-grade mechanism is only partially instrumented (see code review findings above).
 
+## The rewrite and the three-way merge (approved 2026-08-21)
+
+The v2 map collapses 2.25, 1.13 and 4.20 into one audit — all three read the same directive family, each through a different keyhole, and all three shipped the same class of false PASS:
+
+- **2.25 meta-robots-not-blocking** (the surviving row) read `page.meta['robots']` only, so `X-Robots-Tag: noindex` — the CDN/staging form — was invisible; and it failed the whole site at `high` when any scanned page carried noindex, so a crawl that included `/cart` reported "blocking AI crawlers from indexing". Its own `expected` string promised "primary content pages" while the code never consulted the page at all.
+- **1.13 no-noindex** read the homepage only (`ctx.pages[0]`), so a site that noindexed its entire `/docs` tree passed with "Homepage has no noindex directive".
+- **4.20 meta-robots** was `robots.includes('noindex')` on `ctx.pages[0]`: `content="none"` (noindex+nofollow) reported "no blocking directives" at `critical` priority, `noindexifembedded` reported a hard failure, and an empty page list — every fetch failed — reported a critical-priority PASS, a behaviour its test suite explicitly enshrined.
+
+The merged audit executes the required fixes from all three reviews: every page rather than `pages[0]`; both transports; per-bot meta names *and* per-bot `X-Robots-Tag` syntax; all robots meta tags collected off the DOM instead of last-wins `page.meta`; comma-tokenized comparison instead of `includes`; `none` recognised, `noindexifembedded` not; the snippet-suppressing family (`nosnippet`, `noarchive`, `max-snippet:0`) reported, since Google names exactly those as the controls that stop content "being used as a direct input for AI Overviews and AI Mode"; utility routes excused; and an empty page list returning `na` instead of a green pass.
+
+**Deviation from the reviews:** two reviews ask that the FAIL be scoped by `page.pageType`. `PageType` cannot carry that decision — its four values (`homepage`, `category`, `product`, `content`) are all primary content — so the content/utility split is made on the URL path (`/cart`, `/checkout`, `/login`, `/account`, `/search`, `/thank-you`, `/wp-admin`, …). A noindexed utility route is reported in the pass message rather than being silently dropped.
+
+**Also deliberate:** the failure copy no longer says "blocking AI crawlers". As the counter-evidence below records, `noindex` gates *index-derived* surfaces; user-initiated fetchers (`ChatGPT-User`, `Perplexity-User`) may still fetch and quote the page live. The message now says the pages are excluded from the index that AI Overviews and AI Mode draw on, which is what the evidence supports.
+
+## Absorbed evidence — no-noindex (1.13) and meta-robots (4.20)
+
+Both absorbed dossiers are kept verbatim at [merged/access-crawl-control/no-noindex.md](../../merged/access-crawl-control/no-noindex.md) (grade **A**) and [merged/access-crawl-control/meta-robots.md](../../merged/access-crawl-control/meta-robots.md) (grade **A**).
+
+1.13 adds the explicit Google chain for the `noindex` token itself — "`noindex` is used to prevent indexing content by search engines that support the `noindex` rule, such as Google", implementable as a meta tag, a per-bot meta tag, *or* an `X-Robots-Tag` header — plus the precondition this audit still cannot see: "For the `noindex` rule to be effective, the page or resource must not be blocked by a robots.txt file."
+
+4.20 adds the two non-Google consumer paths that justify reading the suppressing directives: Apple states that `nosnippet` data is not used "as additional context and up-to-date content when AI models are used to generate output for display in Apple products and services" and that `noindex` keeps a page out of Spotlight and Siri Suggestions; Microsoft states that `NOARCHIVE` content "will not be included in Bing Chat answers". It is also the source of the per-bot meta-name requirement — Applebot honours an `applebot`-scoped meta name and `X-Robots-Tag`.
+
+### Grade decision: stays **A**
+
+All three rows graded **A** independently, on the same proven consumer path (Googlebot → the index that AI Overviews and AI Mode draw on), with 4.20 adding documented Apple and Microsoft paths for the snippet directives. No absorbed evidence is stronger than the survivor's, so nothing is raised and nothing is lowered: **A**, `tier: scored`, `weight 1.0` (`weightForGrade('A', 'scored')`).
+
+`defaultPriority` stays `high` rather than inheriting the absorbed rows' `critical`: `critical` is now emitted per result, and only when the homepage is among the blocked pages — which is exactly the case 1.13 existed to catch.
+
 ## Review history
 
 - 2026-08-20 — code review (11-agent workflow) + evidence research (12-domain workflow, 400 sources).
 - 2026-08-21 — dossier generated; disposition pending final taxonomy design.
 - 2026-08-21 — evidence graded **A** (mechanism research pass).
+- 2026-08-21 — approved: 2.25 + 1.13 + 4.20 collapse into one rewritten `robots-directives` (all pages, meta + `X-Robots-Tag`, token-parsed).
+- 2026-08-22 — rewritten and merged (Plan 4, Task 5); registry 168 → 167.

@@ -1,7 +1,6 @@
 // Access & Crawl Control — v2 taxonomy category (Plan 3, Task 3).
 // Order mirrors docs/evidence/v2-audit-map.md so Task 11 can consume the list verbatim.
 
-export { NoNoindexAudit } from './no-noindex';
 export { NoNofollowAudit } from './no-nofollow';
 export { NoRedirectChainsAudit } from './no-redirect-chains';
 export { CanonicalLinksAudit } from './canonical';
@@ -26,16 +25,15 @@ export { ClaudeSearchbotAudit } from './claude-searchbot';
 export { NoBlanketBlockAudit } from './no-blanket-block';
 export { SensitivePathsAudit } from './sensitive-paths';
 export { CrawlDelayAudit } from './crawl-delay';
+// One audit in the place of the three robots-directive checks (v1 2.25 + 1.13 + 4.20).
 export { MetaRobotsNotBlockingAudit } from './robots-directives';
 export { NoBotDetectionAudit } from './no-bot-detection';
 export { TdmRepAudit } from './tdm-rep';
 export { AgentGovernanceAudit } from './agent-governance';
 export { CanonicalUrlAudit } from './canonical-url';
 export { AiContentDeclarationAudit } from './ai-content-declaration';
-export { MetaRobotsAudit } from './meta-robots';
 export { HttpsEnabledAudit } from './https-enabled';
 
-import { NoNoindexAudit } from './no-noindex';
 import { NoNofollowAudit } from './no-nofollow';
 import { NoRedirectChainsAudit } from './no-redirect-chains';
 import { CanonicalLinksAudit } from './canonical';
@@ -65,12 +63,10 @@ import { TdmRepAudit } from './tdm-rep';
 import { AgentGovernanceAudit } from './agent-governance';
 import { CanonicalUrlAudit } from './canonical-url';
 import { AiContentDeclarationAudit } from './ai-content-declaration';
-import { MetaRobotsAudit } from './meta-robots';
 import { HttpsEnabledAudit } from './https-enabled';
 
 /** Every audit that lives in the access-crawl-control category, in map order. */
 export const ACCESS_CRAWL_CONTROL_AUDITS = [
-  NoNoindexAudit,
   NoNofollowAudit,
   NoRedirectChainsAudit,
   CanonicalLinksAudit,
@@ -100,6 +96,5 @@ export const ACCESS_CRAWL_CONTROL_AUDITS = [
   AgentGovernanceAudit,
   CanonicalUrlAudit,
   AiContentDeclarationAudit,
-  MetaRobotsAudit,
   HttpsEnabledAudit,
 ] as const;

@@ -73,10 +73,9 @@
   },
   "1.13": {
     "slug": "content-discoverability/no-noindex",
-    "status": "merging",
+    "status": "renamed",
     "to": "access-crawl-control/robots-directives",
-    "interim": "access-crawl-control/no-noindex",
-    "link": "docs/evidence/audits/access-crawl-control/no-noindex.md"
+    "link": "docs/evidence/audits/access-crawl-control/robots-directives.md"
   },
   "1.14": {
     "slug": "content-discoverability/no-nofollow",
@@ -550,10 +549,9 @@
   },
   "4.20": {
     "slug": "meta-tags/meta-robots",
-    "status": "merging",
+    "status": "renamed",
     "to": "access-crawl-control/robots-directives",
-    "interim": "access-crawl-control/meta-robots",
-    "link": "docs/evidence/audits/access-crawl-control/meta-robots.md"
+    "link": "docs/evidence/audits/access-crawl-control/robots-directives.md"
   },
   "5.1": {
     "slug": "agent-tools/openapi-exists",
