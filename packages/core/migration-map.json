@@ -1,111 +1,108 @@
 {
-  "7.1": {
-    "slug": "accessibility/skip-nav",
-    "status": "removed",
-    "reason": "not-a-factor",
-    "link": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/sunset/NOT-A-FACTOR.md#accessibilityskip-nav"
+  "1.1": {
+    "slug": "content-discoverability/llms-txt-exists",
+    "status": "renamed",
+    "to": "machine-discovery/llms-txt-exists",
+    "link": "docs/evidence/audits/machine-discovery/llms-txt-exists.md"
   },
-  "5.11": {
-    "slug": "agent-tools/ai-plugin-json",
-    "status": "removed",
-    "reason": "not-a-factor",
-    "link": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/sunset/NOT-A-FACTOR.md#agent-toolsai-plugin-json"
+  "1.2": {
+    "slug": "content-discoverability/llms-txt-blockquote",
+    "status": "merging",
+    "to": "machine-discovery/llms-txt-structure",
+    "interim": "machine-discovery/llms-txt-blockquote",
+    "link": "docs/evidence/audits/machine-discovery/llms-txt-blockquote.md"
   },
-  "5.17": {
-    "slug": "agent-tools/data-action-ctas",
-    "status": "removed",
-    "reason": "not-a-factor",
-    "link": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/sunset/NOT-A-FACTOR.md#agent-toolsdata-action-ctas"
+  "1.3": {
+    "slug": "content-discoverability/llms-txt-sections",
+    "status": "merging",
+    "to": "machine-discovery/llms-txt-structure",
+    "interim": "machine-discovery/llms-txt-sections",
+    "link": "docs/evidence/audits/machine-discovery/llms-txt-sections.md"
   },
-  "5.4": {
-    "slug": "agent-tools/openapi-ai-instructions",
-    "status": "removed",
-    "reason": "not-a-factor",
-    "link": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/sunset/NOT-A-FACTOR.md#agent-toolsopenapi-ai-instructions"
+  "1.4": {
+    "slug": "content-discoverability/llms-txt-link-descriptions",
+    "status": "renamed",
+    "to": "machine-discovery/llms-txt-link-descriptions",
+    "link": "docs/evidence/audits/machine-discovery/llms-txt-link-descriptions.md"
   },
-  "5.25": {
-    "slug": "agent-tools/webmcp-action-coverage",
-    "status": "removed",
-    "reason": "not-a-factor",
-    "link": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/sunset/NOT-A-FACTOR.md#agent-toolswebmcp-action-coverage"
+  "1.5": {
+    "slug": "content-discoverability/llms-txt-links-valid",
+    "status": "renamed",
+    "to": "machine-discovery/llms-txt-links-valid",
+    "link": "docs/evidence/audits/machine-discovery/llms-txt-links-valid.md"
   },
-  "1.21": {
-    "slug": "content-discoverability/navigation-json",
-    "status": "removed",
-    "reason": "not-a-factor",
-    "link": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/sunset/NOT-A-FACTOR.md#content-discoverabilitynavigation-json"
+  "1.6": {
+    "slug": "content-discoverability/llms-full-txt",
+    "status": "renamed",
+    "to": "machine-discovery/llms-full-txt",
+    "link": "docs/evidence/audits/machine-discovery/llms-full-txt.md"
   },
-  "10.12": {
-    "slug": "generative-engine/pagination-links",
-    "status": "removed",
-    "reason": "not-a-factor",
-    "link": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/sunset/NOT-A-FACTOR.md#generative-enginepagination-links"
+  "1.7": {
+    "slug": "content-discoverability/sitemap-exists",
+    "status": "renamed",
+    "to": "machine-discovery/sitemap-exists",
+    "link": "docs/evidence/audits/machine-discovery/sitemap-exists.md"
   },
-  "4.14": {
-    "slug": "meta-tags/ai-instructions",
-    "status": "removed",
-    "reason": "not-a-factor",
-    "link": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/sunset/NOT-A-FACTOR.md#meta-tagsai-instructions"
+  "1.8": {
+    "slug": "content-discoverability/sitemap-key-pages",
+    "status": "renamed",
+    "to": "machine-discovery/discovery-index-coverage",
+    "link": "docs/evidence/audits/machine-discovery/discovery-index-coverage.md"
   },
-  "4.12": {
-    "slug": "meta-tags/llms-full-txt-link",
-    "status": "removed",
-    "reason": "not-a-factor",
-    "link": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/sunset/NOT-A-FACTOR.md#meta-tagsllms-full-txt-link"
+  "1.9": {
+    "slug": "content-discoverability/sitemap-absolute-urls",
+    "status": "renamed",
+    "to": "machine-discovery/sitemap-absolute-urls",
+    "link": "docs/evidence/audits/machine-discovery/sitemap-absolute-urls.md"
   },
-  "4.17": {
-    "slug": "meta-tags/mcp-discovery-link",
-    "status": "removed",
-    "reason": "not-a-factor",
-    "link": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/sunset/NOT-A-FACTOR.md#meta-tagsmcp-discovery-link"
+  "1.10": {
+    "slug": "content-discoverability/sitemap-lastmod",
+    "status": "renamed",
+    "to": "machine-discovery/sitemap-lastmod",
+    "link": "docs/evidence/audits/machine-discovery/sitemap-lastmod.md"
   },
-  "6.12": {
-    "slug": "semantic-html/address-element",
-    "status": "removed",
-    "reason": "not-a-factor",
-    "link": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/sunset/NOT-A-FACTOR.md#semantic-htmladdress-element"
+  "1.11": {
+    "slug": "content-discoverability/rss-feed",
+    "status": "renamed",
+    "to": "machine-discovery/rss-feed",
+    "link": "docs/evidence/audits/machine-discovery/rss-feed.md"
   },
-  "6.16": {
-    "slug": "semantic-html/decorative-images",
-    "status": "removed",
-    "reason": "not-a-factor",
-    "link": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/sunset/NOT-A-FACTOR.md#semantic-htmldecorative-images"
+  "1.12": {
+    "slug": "content-discoverability/rss-feed-content",
+    "status": "renamed",
+    "to": "machine-discovery/rss-feed-content",
+    "link": "docs/evidence/audits/machine-discovery/rss-feed-content.md"
   },
-  "3.16": {
-    "slug": "structured-data/action-schema",
-    "status": "removed",
-    "reason": "not-a-factor",
-    "link": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/sunset/NOT-A-FACTOR.md#structured-dataaction-schema"
+  "1.13": {
+    "slug": "content-discoverability/no-noindex",
+    "status": "merging",
+    "to": "access-crawl-control/robots-directives",
+    "interim": "access-crawl-control/no-noindex",
+    "link": "docs/evidence/audits/access-crawl-control/no-noindex.md"
   },
-  "3.10": {
-    "slug": "structured-data/potential-action",
-    "status": "removed",
-    "reason": "not-a-factor",
-    "link": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/sunset/NOT-A-FACTOR.md#structured-datapotential-action"
+  "1.14": {
+    "slug": "content-discoverability/no-nofollow",
+    "status": "renamed",
+    "to": "access-crawl-control/no-nofollow",
+    "link": "docs/evidence/audits/access-crawl-control/no-nofollow.md"
   },
-  "8.21": {
-    "slug": "technical-readiness/framework-detection",
-    "status": "removed",
-    "reason": "not-a-factor",
-    "link": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/sunset/NOT-A-FACTOR.md#technical-readinessframework-detection"
+  "1.15": {
+    "slug": "content-discoverability/internal-linking",
+    "status": "renamed",
+    "to": "machine-discovery/in-content-links",
+    "link": "docs/evidence/audits/machine-discovery/in-content-links.md"
   },
-  "8.6": {
-    "slug": "technical-readiness/permissions-policy",
-    "status": "removed",
-    "reason": "not-a-factor",
-    "link": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/sunset/NOT-A-FACTOR.md#technical-readinesspermissions-policy"
+  "1.16": {
+    "slug": "content-discoverability/no-redirect-chains",
+    "status": "renamed",
+    "to": "access-crawl-control/no-redirect-chains",
+    "link": "docs/evidence/audits/access-crawl-control/no-redirect-chains.md"
   },
-  "8.17": {
-    "slug": "technical-readiness/preconnect-hints",
-    "status": "removed",
-    "reason": "not-a-factor",
-    "link": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/sunset/NOT-A-FACTOR.md#technical-readinesspreconnect-hints"
-  },
-  "8.5": {
-    "slug": "technical-readiness/referrer-policy",
-    "status": "removed",
-    "reason": "not-a-factor",
-    "link": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/sunset/NOT-A-FACTOR.md#technical-readinessreferrer-policy"
+  "1.17": {
+    "slug": "content-discoverability/canonical-links",
+    "status": "renamed",
+    "to": "access-crawl-control/canonical",
+    "link": "docs/evidence/audits/access-crawl-control/canonical.md"
   },
   "1.18": {
     "slug": "content-discoverability/mobile-friendly",
@@ -113,17 +110,964 @@
     "reason": "not-a-factor",
     "link": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/sunset/NOT-A-FACTOR.md#content-discoverabilitymobile-friendly"
   },
+  "1.19": {
+    "slug": "content-discoverability/fast-page-load",
+    "status": "renamed",
+    "to": "content-extraction/server-responsiveness",
+    "link": "docs/evidence/audits/content-extraction/server-responsiveness.md"
+  },
+  "1.20": {
+    "slug": "content-discoverability/no-broken-links",
+    "status": "renamed",
+    "to": "machine-discovery/no-broken-links",
+    "link": "docs/evidence/audits/machine-discovery/no-broken-links.md"
+  },
+  "1.21": {
+    "slug": "content-discoverability/navigation-json",
+    "status": "removed",
+    "reason": "not-a-factor",
+    "link": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/sunset/NOT-A-FACTOR.md#content-discoverabilitynavigation-json"
+  },
+  "1.22": {
+    "slug": "content-discoverability/no-orphan-pages",
+    "status": "merging",
+    "to": "machine-discovery/discovery-index-coverage",
+    "interim": "machine-discovery/no-orphan-pages",
+    "link": "docs/evidence/audits/machine-discovery/no-orphan-pages.md"
+  },
   "1.23": {
     "slug": "content-discoverability/commerce-links",
     "status": "removed",
     "reason": "not-a-factor",
     "link": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/sunset/NOT-A-FACTOR.md#content-discoverabilitycommerce-links"
   },
+  "2.1": {
+    "slug": "crawler-permissions/gptbot",
+    "status": "renamed",
+    "to": "access-crawl-control/gptbot",
+    "link": "docs/evidence/audits/access-crawl-control/gptbot.md"
+  },
+  "2.2": {
+    "slug": "crawler-permissions/google-extended",
+    "status": "renamed",
+    "to": "access-crawl-control/google-extended",
+    "link": "docs/evidence/audits/access-crawl-control/google-extended.md"
+  },
+  "2.3": {
+    "slug": "crawler-permissions/anthropic",
+    "status": "renamed",
+    "to": "access-crawl-control/anthropic-ai",
+    "link": "docs/evidence/audits/access-crawl-control/anthropic-ai.md"
+  },
+  "2.4": {
+    "slug": "crawler-permissions/perplexitybot",
+    "status": "renamed",
+    "to": "access-crawl-control/perplexitybot",
+    "link": "docs/evidence/audits/access-crawl-control/perplexitybot.md"
+  },
+  "2.5": {
+    "slug": "crawler-permissions/applebot-extended",
+    "status": "renamed",
+    "to": "access-crawl-control/applebot-extended",
+    "link": "docs/evidence/audits/access-crawl-control/applebot-extended.md"
+  },
+  "2.6": {
+    "slug": "crawler-permissions/ccbot",
+    "status": "renamed",
+    "to": "access-crawl-control/ccbot",
+    "link": "docs/evidence/audits/access-crawl-control/ccbot.md"
+  },
+  "2.7": {
+    "slug": "crawler-permissions/meta-external-agent",
+    "status": "renamed",
+    "to": "access-crawl-control/meta-external-agent",
+    "link": "docs/evidence/audits/access-crawl-control/meta-external-agent.md"
+  },
+  "2.8": {
+    "slug": "crawler-permissions/amazonbot",
+    "status": "renamed",
+    "to": "access-crawl-control/amazonbot",
+    "link": "docs/evidence/audits/access-crawl-control/amazonbot.md"
+  },
+  "2.9": {
+    "slug": "crawler-permissions/bytespider",
+    "status": "merging",
+    "to": "access-crawl-control/ai-bot-directives",
+    "interim": "access-crawl-control/bytespider",
+    "link": "docs/evidence/audits/access-crawl-control/bytespider.md"
+  },
+  "2.10": {
+    "slug": "crawler-permissions/cohere-ai",
+    "status": "merging",
+    "to": "access-crawl-control/ai-bot-directives",
+    "interim": "access-crawl-control/cohere-ai",
+    "link": "docs/evidence/audits/access-crawl-control/cohere-ai.md"
+  },
+  "2.11": {
+    "slug": "crawler-permissions/youbot",
+    "status": "merging",
+    "to": "access-crawl-control/ai-bot-directives",
+    "interim": "access-crawl-control/youbot",
+    "link": "docs/evidence/audits/access-crawl-control/youbot.md"
+  },
+  "2.12": {
+    "slug": "crawler-permissions/diffbot",
+    "status": "merging",
+    "to": "access-crawl-control/ai-bot-directives",
+    "interim": "access-crawl-control/diffbot",
+    "link": "docs/evidence/audits/access-crawl-control/diffbot.md"
+  },
+  "2.13": {
+    "slug": "crawler-permissions/ai2bot",
+    "status": "merging",
+    "to": "access-crawl-control/ai-bot-directives",
+    "interim": "access-crawl-control/ai2bot",
+    "link": "docs/evidence/audits/access-crawl-control/ai2bot.md"
+  },
+  "2.14": {
+    "slug": "crawler-permissions/chatgpt-user",
+    "status": "renamed",
+    "to": "access-crawl-control/chatgpt-user",
+    "link": "docs/evidence/audits/access-crawl-control/chatgpt-user.md"
+  },
+  "2.15": {
+    "slug": "crawler-permissions/claude-user",
+    "status": "renamed",
+    "to": "access-crawl-control/claude-user",
+    "link": "docs/evidence/audits/access-crawl-control/claude-user.md"
+  },
+  "2.16": {
+    "slug": "crawler-permissions/oai-searchbot",
+    "status": "renamed",
+    "to": "access-crawl-control/oai-searchbot",
+    "link": "docs/evidence/audits/access-crawl-control/oai-searchbot.md"
+  },
+  "2.17": {
+    "slug": "crawler-permissions/meta-external-fetcher",
+    "status": "renamed",
+    "to": "access-crawl-control/meta-external-fetcher",
+    "link": "docs/evidence/audits/access-crawl-control/meta-external-fetcher.md"
+  },
+  "2.18": {
+    "slug": "crawler-permissions/bravebot",
+    "status": "renamed",
+    "to": "access-crawl-control/bravebot",
+    "link": "docs/evidence/audits/access-crawl-control/bravebot.md"
+  },
+  "2.19": {
+    "slug": "crawler-permissions/duckassistbot",
+    "status": "renamed",
+    "to": "access-crawl-control/duckassistbot",
+    "link": "docs/evidence/audits/access-crawl-control/duckassistbot.md"
+  },
+  "2.20": {
+    "slug": "crawler-permissions/mistralai-user",
+    "status": "renamed",
+    "to": "access-crawl-control/mistralai-user",
+    "link": "docs/evidence/audits/access-crawl-control/mistralai-user.md"
+  },
+  "2.21": {
+    "slug": "crawler-permissions/claude-searchbot",
+    "status": "renamed",
+    "to": "access-crawl-control/claude-searchbot",
+    "link": "docs/evidence/audits/access-crawl-control/claude-searchbot.md"
+  },
+  "2.22": {
+    "slug": "crawler-permissions/no-blanket-block",
+    "status": "renamed",
+    "to": "access-crawl-control/no-blanket-block",
+    "link": "docs/evidence/audits/access-crawl-control/no-blanket-block.md"
+  },
+  "2.23": {
+    "slug": "crawler-permissions/sensitive-paths",
+    "status": "renamed",
+    "to": "access-crawl-control/sensitive-paths",
+    "link": "docs/evidence/audits/access-crawl-control/sensitive-paths.md"
+  },
+  "2.24": {
+    "slug": "crawler-permissions/crawl-delay",
+    "status": "renamed",
+    "to": "access-crawl-control/crawl-delay",
+    "link": "docs/evidence/audits/access-crawl-control/crawl-delay.md"
+  },
+  "2.25": {
+    "slug": "crawler-permissions/meta-robots-not-blocking",
+    "status": "renamed",
+    "to": "access-crawl-control/robots-directives",
+    "link": "docs/evidence/audits/access-crawl-control/robots-directives.md"
+  },
+  "2.26": {
+    "slug": "crawler-permissions/no-bot-detection",
+    "status": "renamed",
+    "to": "access-crawl-control/no-bot-detection",
+    "link": "docs/evidence/audits/access-crawl-control/no-bot-detection.md"
+  },
+  "2.27": {
+    "slug": "crawler-permissions/tdm-rep",
+    "status": "renamed",
+    "to": "access-crawl-control/tdm-rep",
+    "link": "docs/evidence/audits/access-crawl-control/tdm-rep.md"
+  },
+  "2.28": {
+    "slug": "crawler-permissions/agent-governance",
+    "status": "renamed",
+    "to": "access-crawl-control/agent-governance",
+    "link": "docs/evidence/audits/access-crawl-control/agent-governance.md"
+  },
+  "3.1": {
+    "slug": "structured-data/json-ld-present",
+    "status": "renamed",
+    "to": "structured-data/json-ld-present",
+    "link": "docs/evidence/audits/structured-data/json-ld-present.md"
+  },
+  "3.2": {
+    "slug": "structured-data/schema-validation",
+    "status": "renamed",
+    "to": "structured-data/schema-validation",
+    "link": "docs/evidence/audits/structured-data/schema-validation.md"
+  },
+  "3.3": {
+    "slug": "structured-data/organization-schema",
+    "status": "renamed",
+    "to": "structured-data/organization-schema",
+    "link": "docs/evidence/audits/structured-data/organization-schema.md"
+  },
+  "3.4": {
+    "slug": "structured-data/website-search-action",
+    "status": "merging",
+    "to": "agent-interfaces/search-endpoint",
+    "interim": "agent-interfaces/website-search-action",
+    "link": "docs/evidence/audits/agent-interfaces/website-search-action.md"
+  },
+  "3.5": {
+    "slug": "structured-data/breadcrumb-schema",
+    "status": "renamed",
+    "to": "structured-data/breadcrumb-schema",
+    "link": "docs/evidence/audits/structured-data/breadcrumb-schema.md"
+  },
+  "3.6": {
+    "slug": "structured-data/article-schema",
+    "status": "renamed",
+    "to": "structured-data/article-schema",
+    "link": "docs/evidence/audits/structured-data/article-schema.md"
+  },
+  "3.7": {
+    "slug": "structured-data/faqpage-schema",
+    "status": "renamed",
+    "to": "structured-data/faqpage-schema",
+    "link": "docs/evidence/audits/structured-data/faqpage-schema.md"
+  },
+  "3.8": {
+    "slug": "structured-data/service-product-schema",
+    "status": "renamed",
+    "to": "structured-data/service-product-schema",
+    "link": "docs/evidence/audits/structured-data/service-product-schema.md",
+    "note": "§5 split: Product half → structured-data/advanced-product-details (3.22); Service half stays standalone, narrowed to Service/ProfessionalService"
+  },
+  "3.9": {
+    "slug": "structured-data/speakable-schema",
+    "status": "renamed",
+    "to": "structured-data/speakable-schema",
+    "link": "docs/evidence/audits/structured-data/speakable-schema.md"
+  },
+  "3.10": {
+    "slug": "structured-data/potential-action",
+    "status": "removed",
+    "reason": "not-a-factor",
+    "link": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/sunset/NOT-A-FACTOR.md#structured-datapotential-action"
+  },
+  "3.11": {
+    "slug": "structured-data/howto-schema",
+    "status": "renamed",
+    "to": "structured-data/howto-schema",
+    "link": "docs/evidence/audits/structured-data/howto-schema.md"
+  },
+  "3.12": {
+    "slug": "structured-data/local-business-schema",
+    "status": "renamed",
+    "to": "structured-data/local-business-schema",
+    "link": "docs/evidence/audits/structured-data/local-business-schema.md"
+  },
+  "3.13": {
+    "slug": "structured-data/review-schema",
+    "status": "renamed",
+    "to": "structured-data/review-schema",
+    "link": "docs/evidence/audits/structured-data/review-schema.md"
+  },
+  "3.14": {
+    "slug": "structured-data/offer-schema",
+    "status": "renamed",
+    "to": "agentic-commerce/offer-schema",
+    "link": "docs/evidence/audits/agentic-commerce/offer-schema.md"
+  },
+  "3.15": {
+    "slug": "structured-data/author-schema",
+    "status": "renamed",
+    "to": "structured-data/author-schema",
+    "link": "docs/evidence/audits/structured-data/author-schema.md"
+  },
+  "3.16": {
+    "slug": "structured-data/action-schema",
+    "status": "removed",
+    "reason": "not-a-factor",
+    "link": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/sunset/NOT-A-FACTOR.md#structured-dataaction-schema"
+  },
+  "3.21": {
+    "slug": "structured-data/product-identifiers",
+    "status": "renamed",
+    "to": "agentic-commerce/product-identifiers",
+    "link": "docs/evidence/audits/agentic-commerce/product-identifiers.md"
+  },
+  "3.22": {
+    "slug": "structured-data/product-details",
+    "status": "renamed",
+    "to": "structured-data/advanced-product-details",
+    "link": "docs/evidence/audits/structured-data/advanced-product-details.md"
+  },
+  "3.23": {
+    "slug": "structured-data/product-reviews",
+    "status": "merging",
+    "to": "structured-data/review-schema",
+    "interim": "structured-data/product-reviews",
+    "link": "docs/evidence/audits/structured-data/product-reviews.md"
+  },
+  "3.24": {
+    "slug": "structured-data/product-transaction-certainty",
+    "status": "renamed",
+    "to": "agentic-commerce/product-transaction-certainty",
+    "link": "docs/evidence/audits/agentic-commerce/product-transaction-certainty.md"
+  },
+  "4.1": {
+    "slug": "meta-tags/meta-description",
+    "status": "renamed",
+    "to": "answer-readiness/meta-description",
+    "link": "docs/evidence/audits/answer-readiness/meta-description.md"
+  },
+  "4.2": {
+    "slug": "meta-tags/meta-author",
+    "status": "renamed",
+    "to": "answer-readiness/meta-author",
+    "link": "docs/evidence/audits/answer-readiness/meta-author.md"
+  },
+  "4.3": {
+    "slug": "meta-tags/canonical-url",
+    "status": "merging",
+    "to": "access-crawl-control/canonical",
+    "interim": "access-crawl-control/canonical-url",
+    "link": "docs/evidence/audits/access-crawl-control/canonical-url.md"
+  },
+  "4.4": {
+    "slug": "meta-tags/language-attribute",
+    "status": "renamed",
+    "to": "content-extraction/language-attribute",
+    "link": "docs/evidence/audits/content-extraction/language-attribute.md"
+  },
+  "4.5": {
+    "slug": "meta-tags/unique-meta",
+    "status": "renamed",
+    "to": "answer-readiness/unique-meta",
+    "link": "docs/evidence/audits/answer-readiness/unique-meta.md"
+  },
+  "4.6": {
+    "slug": "meta-tags/core-open-graph",
+    "status": "renamed",
+    "to": "answer-readiness/core-open-graph",
+    "link": "docs/evidence/audits/answer-readiness/core-open-graph.md"
+  },
+  "4.7": {
+    "slug": "meta-tags/og-type",
+    "status": "renamed",
+    "to": "answer-readiness/og-type",
+    "link": "docs/evidence/audits/answer-readiness/og-type.md"
+  },
+  "4.8": {
+    "slug": "meta-tags/og-site-name",
+    "status": "merging",
+    "to": "answer-readiness/core-open-graph",
+    "interim": "answer-readiness/og-site-name",
+    "link": "docs/evidence/audits/answer-readiness/og-site-name.md"
+  },
+  "4.9": {
+    "slug": "meta-tags/og-image-alt",
+    "status": "renamed",
+    "to": "answer-readiness/og-image-alt",
+    "link": "docs/evidence/audits/answer-readiness/og-image-alt.md"
+  },
+  "4.10": {
+    "slug": "meta-tags/twitter-card",
+    "status": "merging",
+    "to": "answer-readiness/core-open-graph",
+    "interim": "answer-readiness/twitter-card",
+    "link": "docs/evidence/audits/answer-readiness/twitter-card.md"
+  },
+  "4.11": {
+    "slug": "meta-tags/llms-txt-link",
+    "status": "merging",
+    "to": "machine-discovery/llms-txt-exists",
+    "interim": "machine-discovery/llms-txt-link",
+    "link": "docs/evidence/audits/machine-discovery/llms-txt-link.md"
+  },
+  "4.12": {
+    "slug": "meta-tags/llms-full-txt-link",
+    "status": "removed",
+    "reason": "not-a-factor",
+    "link": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/sunset/NOT-A-FACTOR.md#meta-tagsllms-full-txt-link"
+  },
+  "4.13": {
+    "slug": "meta-tags/ai-content-declaration",
+    "status": "renamed",
+    "to": "access-crawl-control/ai-content-declaration",
+    "link": "docs/evidence/audits/access-crawl-control/ai-content-declaration.md"
+  },
+  "4.14": {
+    "slug": "meta-tags/ai-instructions",
+    "status": "removed",
+    "reason": "not-a-factor",
+    "link": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/sunset/NOT-A-FACTOR.md#meta-tagsai-instructions"
+  },
+  "4.15": {
+    "slug": "meta-tags/markdown-alternate",
+    "status": "renamed",
+    "to": "content-extraction/markdown-alternate",
+    "link": "docs/evidence/audits/content-extraction/markdown-alternate.md"
+  },
+  "4.16": {
+    "slug": "meta-tags/rss-feed-link",
+    "status": "merging",
+    "to": "machine-discovery/rss-feed",
+    "interim": "machine-discovery/rss-feed-link",
+    "link": "docs/evidence/audits/machine-discovery/rss-feed-link.md"
+  },
+  "4.17": {
+    "slug": "meta-tags/mcp-discovery-link",
+    "status": "removed",
+    "reason": "not-a-factor",
+    "link": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/sunset/NOT-A-FACTOR.md#meta-tagsmcp-discovery-link"
+  },
+  "4.18": {
+    "slug": "meta-tags/openapi-link",
+    "status": "merging",
+    "to": "agent-interfaces/openapi-exists",
+    "interim": "agent-interfaces/openapi-link",
+    "link": "docs/evidence/audits/agent-interfaces/openapi-link.md"
+  },
+  "4.19": {
+    "slug": "meta-tags/ai-catalog-link",
+    "status": "merging",
+    "to": "agent-interfaces/ai-catalog-exists",
+    "interim": "agent-interfaces/ai-catalog-link",
+    "link": "docs/evidence/audits/agent-interfaces/ai-catalog-link.md"
+  },
+  "4.20": {
+    "slug": "meta-tags/meta-robots",
+    "status": "merging",
+    "to": "access-crawl-control/robots-directives",
+    "interim": "access-crawl-control/meta-robots",
+    "link": "docs/evidence/audits/access-crawl-control/meta-robots.md"
+  },
+  "5.1": {
+    "slug": "agent-tools/openapi-exists",
+    "status": "renamed",
+    "to": "agent-interfaces/openapi-exists",
+    "link": "docs/evidence/audits/agent-interfaces/openapi-exists.md"
+  },
+  "5.2": {
+    "slug": "agent-tools/openapi-endpoints",
+    "status": "renamed",
+    "to": "agent-interfaces/openapi-endpoints",
+    "link": "docs/evidence/audits/agent-interfaces/openapi-endpoints.md"
+  },
+  "5.3": {
+    "slug": "agent-tools/openapi-operation-ids",
+    "status": "renamed",
+    "to": "agent-interfaces/openapi-operation-ids",
+    "link": "docs/evidence/audits/agent-interfaces/openapi-operation-ids.md"
+  },
+  "5.4": {
+    "slug": "agent-tools/openapi-ai-instructions",
+    "status": "removed",
+    "reason": "not-a-factor",
+    "link": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/sunset/NOT-A-FACTOR.md#agent-toolsopenapi-ai-instructions"
+  },
+  "5.5": {
+    "slug": "agent-tools/openapi-servers",
+    "status": "renamed",
+    "to": "agent-interfaces/openapi-servers",
+    "link": "docs/evidence/audits/agent-interfaces/openapi-servers.md"
+  },
+  "5.6": {
+    "slug": "agent-tools/openapi-schemas",
+    "status": "renamed",
+    "to": "agent-interfaces/openapi-schemas",
+    "link": "docs/evidence/audits/agent-interfaces/openapi-schemas.md"
+  },
+  "5.7": {
+    "slug": "agent-tools/ai-catalog-exists",
+    "status": "renamed",
+    "to": "agent-interfaces/ai-catalog-exists",
+    "link": "docs/evidence/audits/agent-interfaces/ai-catalog-exists.md"
+  },
+  "5.8": {
+    "slug": "agent-tools/ai-catalog-metadata",
+    "status": "renamed",
+    "to": "agent-interfaces/ai-catalog-metadata",
+    "link": "docs/evidence/audits/agent-interfaces/ai-catalog-metadata.md"
+  },
+  "5.9": {
+    "slug": "agent-tools/ai-catalog-urls",
+    "status": "renamed",
+    "to": "agent-interfaces/ai-catalog-urls",
+    "link": "docs/evidence/audits/agent-interfaces/ai-catalog-urls.md"
+  },
+  "5.10": {
+    "slug": "agent-tools/agents-json",
+    "status": "renamed",
+    "to": "agent-interfaces/agents-json",
+    "link": "docs/evidence/audits/agent-interfaces/agents-json.md"
+  },
+  "5.11": {
+    "slug": "agent-tools/ai-plugin-json",
+    "status": "removed",
+    "reason": "not-a-factor",
+    "link": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/sunset/NOT-A-FACTOR.md#agent-toolsai-plugin-json"
+  },
+  "5.12": {
+    "slug": "agent-tools/mcp-discovery",
+    "status": "renamed",
+    "to": "agent-interfaces/mcp-discovery",
+    "link": "docs/evidence/audits/agent-interfaces/mcp-discovery.md"
+  },
+  "5.13": {
+    "slug": "agent-tools/mcp-endpoint",
+    "status": "renamed",
+    "to": "agent-interfaces/mcp-endpoint",
+    "link": "docs/evidence/audits/agent-interfaces/mcp-endpoint.md"
+  },
+  "5.14": {
+    "slug": "agent-tools/mcp-capabilities",
+    "status": "merging",
+    "to": "agent-interfaces/mcp-endpoint",
+    "interim": "agent-interfaces/mcp-capabilities",
+    "link": "docs/evidence/audits/agent-interfaces/mcp-capabilities.md"
+  },
+  "5.15": {
+    "slug": "agent-tools/contact-form",
+    "status": "renamed",
+    "to": "operability-safety/contact-form",
+    "link": "docs/evidence/audits/operability-safety/contact-form.md"
+  },
+  "5.16": {
+    "slug": "agent-tools/search-endpoint",
+    "status": "renamed",
+    "to": "agent-interfaces/search-endpoint",
+    "link": "docs/evidence/audits/agent-interfaces/search-endpoint.md"
+  },
+  "5.17": {
+    "slug": "agent-tools/data-action-ctas",
+    "status": "removed",
+    "reason": "not-a-factor",
+    "link": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/sunset/NOT-A-FACTOR.md#agent-toolsdata-action-ctas"
+  },
+  "5.18": {
+    "slug": "agent-tools/no-blocking-captcha",
+    "status": "renamed",
+    "to": "operability-safety/no-blocking-captcha",
+    "link": "docs/evidence/audits/operability-safety/no-blocking-captcha.md"
+  },
+  "5.19": {
+    "slug": "agent-tools/forms-no-js",
+    "status": "renamed",
+    "to": "operability-safety/forms-no-js",
+    "link": "docs/evidence/audits/operability-safety/forms-no-js.md"
+  },
+  "5.20": {
+    "slug": "agent-tools/webmcp-manifest",
+    "status": "renamed",
+    "to": "agent-interfaces/webmcp-registered-tools",
+    "link": "docs/evidence/audits/agent-interfaces/webmcp-registered-tools.md"
+  },
+  "5.21": {
+    "slug": "agent-tools/webmcp-declarative-forms",
+    "status": "renamed",
+    "to": "agent-interfaces/webmcp-declarative-forms",
+    "link": "docs/evidence/audits/agent-interfaces/webmcp-declarative-forms.md"
+  },
+  "5.22": {
+    "slug": "agent-tools/webmcp-input-quality",
+    "status": "merging",
+    "to": "operability-safety/form-actionability",
+    "interim": "operability-safety/webmcp-input-quality",
+    "link": "docs/evidence/audits/operability-safety/webmcp-input-quality.md"
+  },
+  "5.23": {
+    "slug": "agent-tools/webmcp-tool-naming",
+    "status": "renamed",
+    "to": "agent-interfaces/webmcp-tool-naming",
+    "link": "docs/evidence/audits/agent-interfaces/webmcp-tool-naming.md",
+    "note": "§5 split: naming rule → openapi-operation-ids; runtime part deferred to a future MCP tools/list check (not a v2.0 audit)"
+  },
+  "5.24": {
+    "slug": "agent-tools/webmcp-tool-annotations",
+    "status": "merging",
+    "to": "agent-interfaces/mcp-endpoint",
+    "interim": "agent-interfaces/webmcp-tool-annotations",
+    "link": "docs/evidence/audits/agent-interfaces/webmcp-tool-annotations.md"
+  },
+  "5.25": {
+    "slug": "agent-tools/webmcp-action-coverage",
+    "status": "removed",
+    "reason": "not-a-factor",
+    "link": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/sunset/NOT-A-FACTOR.md#agent-toolswebmcp-action-coverage"
+  },
+  "5.26": {
+    "slug": "agent-tools/openapi-description-quality",
+    "status": "renamed",
+    "to": "agent-interfaces/openapi-description-quality",
+    "link": "docs/evidence/audits/agent-interfaces/openapi-description-quality.md"
+  },
+  "5.27": {
+    "slug": "agent-tools/form-actionability",
+    "status": "renamed",
+    "to": "operability-safety/form-actionability",
+    "link": "docs/evidence/audits/operability-safety/form-actionability.md"
+  },
+  "6.1": {
+    "slug": "semantic-html/single-h1",
+    "status": "renamed",
+    "to": "content-extraction/single-h1",
+    "link": "docs/evidence/audits/content-extraction/single-h1.md"
+  },
+  "6.2": {
+    "slug": "semantic-html/sequential-headings",
+    "status": "renamed",
+    "to": "content-extraction/sequential-headings",
+    "link": "docs/evidence/audits/content-extraction/sequential-headings.md"
+  },
+  "6.3": {
+    "slug": "semantic-html/main-element",
+    "status": "renamed",
+    "to": "content-extraction/main-element",
+    "link": "docs/evidence/audits/content-extraction/main-element.md"
+  },
+  "6.4": {
+    "slug": "semantic-html/article-element",
+    "status": "renamed",
+    "to": "content-extraction/article-element",
+    "link": "docs/evidence/audits/content-extraction/article-element.md"
+  },
+  "6.5": {
+    "slug": "semantic-html/header-footer",
+    "status": "renamed",
+    "to": "content-extraction/header-footer",
+    "link": "docs/evidence/audits/content-extraction/header-footer.md"
+  },
+  "6.6": {
+    "slug": "semantic-html/aside-element",
+    "status": "renamed",
+    "to": "content-extraction/aside-element",
+    "link": "docs/evidence/audits/content-extraction/aside-element.md"
+  },
+  "6.7": {
+    "slug": "semantic-html/section-headings",
+    "status": "renamed",
+    "to": "content-extraction/section-headings",
+    "link": "docs/evidence/audits/content-extraction/section-headings.md"
+  },
+  "6.8": {
+    "slug": "semantic-html/semantic-lists",
+    "status": "renamed",
+    "to": "content-extraction/semantic-lists",
+    "link": "docs/evidence/audits/content-extraction/semantic-lists.md"
+  },
+  "6.9": {
+    "slug": "semantic-html/data-tables",
+    "status": "renamed",
+    "to": "content-extraction/data-tables",
+    "link": "docs/evidence/audits/content-extraction/data-tables.md"
+  },
+  "6.10": {
+    "slug": "semantic-html/code-language",
+    "status": "renamed",
+    "to": "content-extraction/code-language",
+    "link": "docs/evidence/audits/content-extraction/code-language.md"
+  },
+  "6.11": {
+    "slug": "semantic-html/time-element",
+    "status": "renamed",
+    "to": "content-extraction/time-element",
+    "link": "docs/evidence/audits/content-extraction/time-element.md"
+  },
+  "6.12": {
+    "slug": "semantic-html/address-element",
+    "status": "removed",
+    "reason": "not-a-factor",
+    "link": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/sunset/NOT-A-FACTOR.md#semantic-htmladdress-element"
+  },
+  "6.13": {
+    "slug": "semantic-html/definition-elements",
+    "status": "merging",
+    "to": "content-extraction/semantic-lists",
+    "interim": "content-extraction/definition-elements",
+    "link": "docs/evidence/audits/content-extraction/definition-elements.md"
+  },
+  "6.14": {
+    "slug": "semantic-html/content-depth",
+    "status": "renamed",
+    "to": "content-extraction/content-depth",
+    "link": "docs/evidence/audits/content-extraction/content-depth.md"
+  },
+  "6.15": {
+    "slug": "semantic-html/image-alt-text",
+    "status": "renamed",
+    "to": "content-extraction/image-alt-text",
+    "link": "docs/evidence/audits/content-extraction/image-alt-text.md"
+  },
+  "6.16": {
+    "slug": "semantic-html/decorative-images",
+    "status": "removed",
+    "reason": "not-a-factor",
+    "link": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/sunset/NOT-A-FACTOR.md#semantic-htmldecorative-images"
+  },
+  "6.17": {
+    "slug": "semantic-html/figure-figcaption",
+    "status": "renamed",
+    "to": "content-extraction/figure-figcaption",
+    "link": "docs/evidence/audits/content-extraction/figure-figcaption.md"
+  },
+  "6.18": {
+    "slug": "semantic-html/svg-bloat",
+    "status": "renamed",
+    "to": "content-extraction/svg-bloat",
+    "link": "docs/evidence/audits/content-extraction/svg-bloat.md"
+  },
+  "6.19": {
+    "slug": "semantic-html/token-ratio",
+    "status": "renamed",
+    "to": "content-extraction/token-ratio",
+    "link": "docs/evidence/audits/content-extraction/token-ratio.md"
+  },
+  "6.20": {
+    "slug": "semantic-html/fake-headings",
+    "status": "renamed",
+    "to": "content-extraction/fake-headings",
+    "link": "docs/evidence/audits/content-extraction/fake-headings.md"
+  },
+  "7.1": {
+    "slug": "accessibility/skip-nav",
+    "status": "removed",
+    "reason": "not-a-factor",
+    "link": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/sunset/NOT-A-FACTOR.md#accessibilityskip-nav"
+  },
+  "7.2": {
+    "slug": "accessibility/aria-landmarks",
+    "status": "renamed",
+    "to": "operability-safety/aria-landmarks",
+    "link": "docs/evidence/audits/operability-safety/aria-landmarks.md"
+  },
+  "7.3": {
+    "slug": "accessibility/nav-aria-label",
+    "status": "merging",
+    "to": "operability-safety/landmark-unique",
+    "interim": "operability-safety/nav-aria-label",
+    "link": "docs/evidence/audits/operability-safety/nav-aria-label.md"
+  },
+  "7.4": {
+    "slug": "accessibility/landmark-unique",
+    "status": "renamed",
+    "to": "operability-safety/landmark-unique",
+    "link": "docs/evidence/audits/operability-safety/landmark-unique.md"
+  },
+  "7.5": {
+    "slug": "accessibility/form-labels",
+    "status": "renamed",
+    "to": "operability-safety/label",
+    "link": "docs/evidence/audits/operability-safety/label.md"
+  },
+  "7.6": {
+    "slug": "accessibility/form-error-messages",
+    "status": "renamed",
+    "to": "operability-safety/form-error-messages",
+    "link": "docs/evidence/audits/operability-safety/form-error-messages.md"
+  },
+  "7.7": {
+    "slug": "accessibility/accessible-names",
+    "status": "renamed",
+    "to": "operability-safety/accessible-names",
+    "link": "docs/evidence/audits/operability-safety/accessible-names.md"
+  },
+  "7.9": {
+    "slug": "accessibility/dialog-name",
+    "status": "renamed",
+    "to": "operability-safety/dialog-name",
+    "link": "docs/evidence/audits/operability-safety/dialog-name.md"
+  },
+  "7.10": {
+    "slug": "accessibility/aria-hidden-body",
+    "status": "renamed",
+    "to": "operability-safety/aria-hidden-body",
+    "link": "docs/evidence/audits/operability-safety/aria-hidden-body.md"
+  },
+  "7.11": {
+    "slug": "accessibility/aria-roles",
+    "status": "renamed",
+    "to": "operability-safety/aria-roles",
+    "link": "docs/evidence/audits/operability-safety/aria-roles.md"
+  },
+  "7.12": {
+    "slug": "accessibility/aria-attributes",
+    "status": "renamed",
+    "to": "operability-safety/aria-attributes",
+    "link": "docs/evidence/audits/operability-safety/aria-attributes.md"
+  },
+  "7.13": {
+    "slug": "accessibility/aria-relationships",
+    "status": "renamed",
+    "to": "operability-safety/aria-relationships",
+    "link": "docs/evidence/audits/operability-safety/aria-relationships.md"
+  },
+  "7.14": {
+    "slug": "accessibility/duplicate-id",
+    "status": "renamed",
+    "to": "operability-safety/duplicate-id",
+    "link": "docs/evidence/audits/operability-safety/duplicate-id.md"
+  },
+  "7.15": {
+    "slug": "accessibility/autocomplete",
+    "status": "renamed",
+    "to": "operability-safety/autocomplete",
+    "link": "docs/evidence/audits/operability-safety/autocomplete.md"
+  },
+  "7.16": {
+    "slug": "accessibility/nested-interactive",
+    "status": "renamed",
+    "to": "operability-safety/nested-interactive",
+    "link": "docs/evidence/audits/operability-safety/nested-interactive.md"
+  },
+  "7.17": {
+    "slug": "accessibility/table-headers",
+    "status": "renamed",
+    "to": "operability-safety/table-headers",
+    "link": "docs/evidence/audits/operability-safety/table-headers.md"
+  },
+  "7.18": {
+    "slug": "accessibility/document-title",
+    "status": "renamed",
+    "to": "operability-safety/document-title",
+    "link": "docs/evidence/audits/operability-safety/document-title.md"
+  },
+  "7.19": {
+    "slug": "accessibility/frame-title",
+    "status": "renamed",
+    "to": "operability-safety/frame-title",
+    "link": "docs/evidence/audits/operability-safety/frame-title.md"
+  },
+  "7.20": {
+    "slug": "accessibility/meta-refresh",
+    "status": "renamed",
+    "to": "operability-safety/meta-refresh",
+    "link": "docs/evidence/audits/operability-safety/meta-refresh.md"
+  },
+  "7.21": {
+    "slug": "accessibility/tabindex",
+    "status": "renamed",
+    "to": "operability-safety/tabindex",
+    "link": "docs/evidence/audits/operability-safety/tabindex.md"
+  },
   "7.22": {
     "slug": "accessibility/marquee",
     "status": "removed",
     "reason": "not-a-factor",
     "link": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/sunset/NOT-A-FACTOR.md#accessibilitymarquee"
+  },
+  "7.23": {
+    "slug": "accessibility/presentation-conflict",
+    "status": "renamed",
+    "to": "operability-safety/presentation-conflict",
+    "link": "docs/evidence/audits/operability-safety/presentation-conflict.md"
+  },
+  "8.1": {
+    "slug": "technical-readiness/https-enabled",
+    "status": "renamed",
+    "to": "access-crawl-control/https-enabled",
+    "link": "docs/evidence/audits/access-crawl-control/https-enabled.md"
+  },
+  "8.2": {
+    "slug": "technical-readiness/hsts-header",
+    "status": "merging",
+    "to": "operability-safety/security-header-hygiene",
+    "interim": "operability-safety/hsts-header",
+    "link": "docs/evidence/audits/operability-safety/hsts-header.md"
+  },
+  "8.3": {
+    "slug": "technical-readiness/csp-header",
+    "status": "merging",
+    "to": "operability-safety/security-header-hygiene",
+    "interim": "operability-safety/csp-header",
+    "link": "docs/evidence/audits/operability-safety/csp-header.md"
+  },
+  "8.4": {
+    "slug": "technical-readiness/content-type-options",
+    "status": "merging",
+    "to": "operability-safety/security-header-hygiene",
+    "interim": "operability-safety/content-type-options",
+    "link": "docs/evidence/audits/operability-safety/content-type-options.md"
+  },
+  "8.5": {
+    "slug": "technical-readiness/referrer-policy",
+    "status": "removed",
+    "reason": "not-a-factor",
+    "link": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/sunset/NOT-A-FACTOR.md#technical-readinessreferrer-policy"
+  },
+  "8.6": {
+    "slug": "technical-readiness/permissions-policy",
+    "status": "removed",
+    "reason": "not-a-factor",
+    "link": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/sunset/NOT-A-FACTOR.md#technical-readinesspermissions-policy"
+  },
+  "8.7": {
+    "slug": "technical-readiness/security-txt",
+    "status": "merging",
+    "to": "operability-safety/security-header-hygiene",
+    "interim": "operability-safety/security-txt",
+    "link": "docs/evidence/audits/operability-safety/security-txt.md"
+  },
+  "8.8": {
+    "slug": "technical-readiness/cors-ai-files",
+    "status": "renamed",
+    "to": "machine-discovery/cors-ai-files",
+    "link": "docs/evidence/audits/machine-discovery/cors-ai-files.md"
+  },
+  "8.9": {
+    "slug": "technical-readiness/cors-api-routes",
+    "status": "renamed",
+    "to": "agent-interfaces/cors-api-routes",
+    "link": "docs/evidence/audits/agent-interfaces/cors-api-routes.md"
+  },
+  "8.10": {
+    "slug": "technical-readiness/correct-content-types",
+    "status": "renamed",
+    "to": "machine-discovery/ai-file-delivery",
+    "link": "docs/evidence/audits/machine-discovery/ai-file-delivery.md"
+  },
+  "8.11": {
+    "slug": "technical-readiness/cache-headers",
+    "status": "merging",
+    "to": "machine-discovery/ai-file-delivery",
+    "interim": "machine-discovery/cache-headers",
+    "link": "docs/evidence/audits/machine-discovery/cache-headers.md"
+  },
+  "8.12": {
+    "slug": "technical-readiness/fast-response-time",
+    "status": "merging",
+    "to": "content-extraction/server-responsiveness",
+    "interim": "content-extraction/fast-response-time",
+    "link": "docs/evidence/audits/content-extraction/fast-response-time.md"
+  },
+  "8.13": {
+    "slug": "technical-readiness/server-rendered",
+    "status": "renamed",
+    "to": "content-extraction/server-rendered",
+    "link": "docs/evidence/audits/content-extraction/server-rendered.md"
   },
   "8.14": {
     "slug": "technical-readiness/no-render-blocking",
@@ -143,6 +1087,18 @@
     "reason": "not-a-factor",
     "link": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/sunset/NOT-A-FACTOR.md#technical-readinesslcp-not-lazy"
   },
+  "8.17": {
+    "slug": "technical-readiness/preconnect-hints",
+    "status": "removed",
+    "reason": "not-a-factor",
+    "link": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/sunset/NOT-A-FACTOR.md#technical-readinesspreconnect-hints"
+  },
+  "8.18": {
+    "slug": "technical-readiness/no-broken-ai-endpoints",
+    "status": "renamed",
+    "to": "machine-discovery/no-broken-ai-endpoints",
+    "link": "docs/evidence/audits/machine-discovery/no-broken-ai-endpoints.md"
+  },
   "8.19": {
     "slug": "technical-readiness/privacy-policy",
     "status": "removed",
@@ -154,5 +1110,171 @@
     "status": "removed",
     "reason": "not-a-factor",
     "link": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/sunset/NOT-A-FACTOR.md#technical-readinessterms-of-service"
+  },
+  "8.21": {
+    "slug": "technical-readiness/framework-detection",
+    "status": "removed",
+    "reason": "not-a-factor",
+    "link": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/sunset/NOT-A-FACTOR.md#technical-readinessframework-detection"
+  },
+  "9.1": {
+    "slug": "answer-engine/faq-sections",
+    "status": "renamed",
+    "to": "answer-readiness/faq-sections",
+    "link": "docs/evidence/audits/answer-readiness/faq-sections.md"
+  },
+  "9.2": {
+    "slug": "answer-engine/question-headings",
+    "status": "renamed",
+    "to": "answer-readiness/question-headings",
+    "link": "docs/evidence/audits/answer-readiness/question-headings.md"
+  },
+  "9.3": {
+    "slug": "answer-engine/first-paragraph-answers",
+    "status": "renamed",
+    "to": "answer-readiness/first-paragraph-answers",
+    "link": "docs/evidence/audits/answer-readiness/first-paragraph-answers.md"
+  },
+  "9.4": {
+    "slug": "answer-engine/direct-definitions",
+    "status": "renamed",
+    "to": "answer-readiness/direct-definitions",
+    "link": "docs/evidence/audits/answer-readiness/direct-definitions.md"
+  },
+  "9.5": {
+    "slug": "answer-engine/comparison-tables",
+    "status": "renamed",
+    "to": "answer-readiness/comparison-tables",
+    "link": "docs/evidence/audits/answer-readiness/comparison-tables.md"
+  },
+  "9.6": {
+    "slug": "answer-engine/numbered-steps",
+    "status": "renamed",
+    "to": "answer-readiness/numbered-steps",
+    "link": "docs/evidence/audits/answer-readiness/numbered-steps.md"
+  },
+  "9.7": {
+    "slug": "answer-engine/specific-numbers",
+    "status": "renamed",
+    "to": "answer-readiness/specific-numbers",
+    "link": "docs/evidence/audits/answer-readiness/specific-numbers.md"
+  },
+  "9.8": {
+    "slug": "answer-engine/dates-on-content",
+    "status": "renamed",
+    "to": "answer-readiness/dates-on-content",
+    "link": "docs/evidence/audits/answer-readiness/dates-on-content.md"
+  },
+  "9.9": {
+    "slug": "answer-engine/content-without-clickthrough",
+    "status": "renamed",
+    "to": "answer-readiness/content-without-clickthrough",
+    "link": "docs/evidence/audits/answer-readiness/content-without-clickthrough.md"
+  },
+  "9.10": {
+    "slug": "answer-engine/last-updated-indicator",
+    "status": "merging",
+    "to": "answer-readiness/dates-on-content",
+    "interim": "answer-readiness/last-updated-indicator",
+    "link": "docs/evidence/audits/answer-readiness/last-updated-indicator.md"
+  },
+  "9.11": {
+    "slug": "answer-engine/meta-description-aeo",
+    "status": "merging",
+    "to": "answer-readiness/meta-description",
+    "interim": "answer-readiness/meta-description-aeo",
+    "link": "docs/evidence/audits/answer-readiness/meta-description-aeo.md"
+  },
+  "10.1": {
+    "slug": "generative-engine/named-author",
+    "status": "renamed",
+    "to": "answer-readiness/named-author",
+    "link": "docs/evidence/audits/answer-readiness/named-author.md"
+  },
+  "10.2": {
+    "slug": "generative-engine/author-same-as",
+    "status": "renamed",
+    "to": "answer-readiness/author-same-as",
+    "link": "docs/evidence/audits/answer-readiness/author-same-as.md"
+  },
+  "10.3": {
+    "slug": "generative-engine/author-page",
+    "status": "renamed",
+    "to": "answer-readiness/author-page",
+    "link": "docs/evidence/audits/answer-readiness/author-page.md"
+  },
+  "10.4": {
+    "slug": "generative-engine/about-credentials",
+    "status": "renamed",
+    "to": "answer-readiness/about-credentials",
+    "link": "docs/evidence/audits/answer-readiness/about-credentials.md"
+  },
+  "10.5": {
+    "slug": "generative-engine/external-citations",
+    "status": "renamed",
+    "to": "answer-readiness/external-citations",
+    "link": "docs/evidence/audits/answer-readiness/external-citations.md"
+  },
+  "10.6": {
+    "slug": "generative-engine/brand-name",
+    "status": "renamed",
+    "to": "answer-readiness/brand-name",
+    "link": "docs/evidence/audits/answer-readiness/brand-name.md"
+  },
+  "10.7": {
+    "slug": "generative-engine/trust-signals",
+    "status": "renamed",
+    "to": "answer-readiness/trust-signals",
+    "link": "docs/evidence/audits/answer-readiness/trust-signals.md"
+  },
+  "10.8": {
+    "slug": "generative-engine/review-signals",
+    "status": "renamed",
+    "to": "answer-readiness/review-signals",
+    "link": "docs/evidence/audits/answer-readiness/review-signals.md"
+  },
+  "10.9": {
+    "slug": "generative-engine/publication-date",
+    "status": "renamed",
+    "to": "answer-readiness/publication-date",
+    "link": "docs/evidence/audits/answer-readiness/publication-date.md"
+  },
+  "10.10": {
+    "slug": "generative-engine/last-modified-schema",
+    "status": "renamed",
+    "to": "answer-readiness/last-modified-schema",
+    "link": "docs/evidence/audits/answer-readiness/last-modified-schema.md"
+  },
+  "10.11": {
+    "slug": "generative-engine/internal-cross-linking",
+    "status": "merging",
+    "to": "machine-discovery/in-content-links",
+    "interim": "machine-discovery/internal-cross-linking",
+    "link": "docs/evidence/audits/machine-discovery/internal-cross-linking.md"
+  },
+  "10.12": {
+    "slug": "generative-engine/pagination-links",
+    "status": "removed",
+    "reason": "not-a-factor",
+    "link": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/sunset/NOT-A-FACTOR.md#generative-enginepagination-links"
+  },
+  "10.13": {
+    "slug": "generative-engine/unique-data",
+    "status": "renamed",
+    "to": "answer-readiness/unique-data",
+    "link": "docs/evidence/audits/answer-readiness/unique-data.md"
+  },
+  "10.14": {
+    "slug": "generative-engine/blockquote-usage",
+    "status": "merging",
+    "to": "answer-readiness/review-signals",
+    "interim": "answer-readiness/blockquote-usage",
+    "link": "docs/evidence/audits/answer-readiness/blockquote-usage.md"
+  },
+  "10.15": {
+    "slug": "generative-engine/descriptive-urls",
+    "status": "renamed",
+    "to": "answer-readiness/descriptive-urls",
+    "link": "docs/evidence/audits/answer-readiness/descriptive-urls.md"
   }
 }
