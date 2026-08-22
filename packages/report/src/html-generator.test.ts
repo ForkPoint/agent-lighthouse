@@ -105,11 +105,33 @@ describe('generateHtmlReport', () => {
 
     // The summary line keeps the newlines instead of collapsing the table.
     expect(html).toMatch(/class="[^"]*whitespace-pre-line[^"]*"[^>]*>GPTBot: allowed\nClaudeBot/);
-    // And the evidence block renders details.found, also newline-preserving.
-    expect(html).toContain('What we found:');
+    // details.found equals displayValue here, so the evidence block is
+    // suppressed — the table renders exactly once, not duplicated.
+    expect(html).not.toContain('What we found:');
     expect(
       html.match(/whitespace-pre-line[^>]*>GPTBot: allowed\nClaudeBot: allowed\nPerplexityBot: blocked/g),
-    ).toHaveLength(2);
+    ).toHaveLength(1);
+  });
+
+  it('renders details.found as its own block when it differs from displayValue', () => {
+    const html = generateHtmlReport(
+      report([
+        cat({
+          id: 'access-crawl-control',
+          checks: [
+            check({
+              id: 'access-crawl-control/ai-bot-directives',
+              status: 'warn',
+              displayValue: '1 of 2 documented AI bots allowed',
+              details: { found: 'GPTBot: allowed\nClaudeBot: blocked' },
+            }),
+          ],
+        }),
+      ]),
+    );
+
+    expect(html).toContain('What we found:');
+    expect(html).toMatch(/whitespace-pre-line[^>]*>GPTBot: allowed\nClaudeBot: blocked/);
   });
 
   it('omits the deprecation block for a check without a notice', () => {

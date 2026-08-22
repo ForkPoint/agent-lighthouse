@@ -106,7 +106,7 @@ export function generateHtmlReport(report: ScanReport): string {
 
                       ${c.explanation ? `<p class="leading-relaxed font-medium text-slate-700 dark:text-slate-300">${escapeHtml(c.explanation)}</p>` : ''}
                       
-                      ${c.details?.found ? `
+                      ${c.details?.found && c.details.found !== c.displayValue ? `
                         <div class="bg-slate-50 dark:bg-slate-950/60 p-3 rounded-lg border border-slate-200/60 dark:border-slate-800/60">
                           <strong class="text-slate-900 dark:text-slate-200 block mb-1">What we found:</strong>
                           <span class="font-mono text-[11px] whitespace-pre-line">${escapeHtml(c.details.found)}</span>
