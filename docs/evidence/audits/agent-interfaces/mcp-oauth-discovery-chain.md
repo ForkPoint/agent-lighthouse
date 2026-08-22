@@ -1,18 +1,19 @@
 ---
-check: oauth-discovery-chain-integrity-rfc-9728-rfc-8414
-title: "OAuth Discovery Chain Integrity (RFC 9728 → RFC 8414)"
-domain: mcp-server-quality
-status: proposed
+audit: agent-interfaces/mcp-oauth-discovery-chain
+category: agent-interfaces
+source_file: packages/core/src/audits/agent-interfaces/mcp-oauth-discovery-chain.ts
+slug: mcp-oauth-discovery-chain
 evidence_grade: A
-uniqueness: unique
-difficulty: multi-page
-scoring_tier: scored
+tier: scored
+disposition: "new in v2 — graduated from proposal 2026-08-22"
 reviewed: 2026-08-20
+graduated: 2026-08-22
 ---
+
 
 # OAuth Discovery Chain Integrity (RFC 9728 → RFC 8414)
 
-> Proposed check. Evidence grade **A** · unique · implementation: `multi-page`
+> Shipped in v2. Evidence grade **A** · scored tier · unique · implementation: `multi-page`
 
 ## What it checks
 
@@ -57,3 +58,19 @@ Tier per evidence policy: **scored** — grade A meets the A/B bar required for 
 ## Review history
 
 - 2026-08-20 — proposed by the novel-checks research pass (10-agent evidence workflow); sources URL-verified at research time.
+
+## Implementation deviations
+
+Recorded at graduation (2026-08-22, Plan 5 Task 27).
+
+- **Private, loopback and link-local authorization servers are named as a finding, not skipped.** `isSafeUrl` refuses to fetch them, which on its own would produce a silent "no metadata" result. The audit therefore tests the `authorization_servers` host against the literal ranges (10/8, 172.16/12, 192.168/16, 127/8, 169.254/16, ::1, fc00::/7, fe80::/10, `localhost`) itself and reports the address as the cause. A hostname that merely *resolves* into one of those ranges is still stopped by the gate and reported as unreachable metadata, since the audit cannot see the resolution result.
+- **At most 2 authorization servers are probed.** A PRM may list more; each one costs up to three well-known requests. The count of declared servers is always reported, so a list longer than the probe budget is visible in `found`.
+- **The endpoint probe is shared.** The `server/discover` response comes from the same per-scan cache `agent-interfaces/mcp-modern-era-reachability` uses, so the 401 challenge is read once per scan rather than once per audit.
+- **An unreachable endpoint is `notApplicable` here, not a failure.** Reachability is what `agent-interfaces/mcp-modern-era-reachability` scores; failing both would charge a site twice for one defect.
+- **An open endpoint that publishes no PRM is `notApplicable`.** A fully public MCP server with no protected surface has no authorization chain to walk, and absence is not a defect. A server that *challenges* and then publishes no PRM is a `fail`, because the client is told to authenticate and given nowhere to go.
+- **The audit is ternary.** MUST-level breaks (resource drift, missing or empty `authorization_servers`, private AS, issuer mismatch, missing AS metadata, missing endpoints, a non-Bearer scheme) fail. RECOMMENDED and SHOULD-level items (`resource_name`, `scopes_supported`, `offline_access`, omnibus scopes, `S256`, RFC 9207 `iss`) warn.
+
+## Deferred
+
+- Requesting a token, exercising dynamic client registration, or validating the authorization endpoint's behaviour. The chain is walked credential-free and stops before the first authorization request, exactly as the sketch specified.
+- Following `authorization_servers` beyond the first two entries.
