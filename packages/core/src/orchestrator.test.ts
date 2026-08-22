@@ -404,7 +404,7 @@ describe('runScan — report assembly fallbacks', () => {
 
     // One passing check per vital, so each vital has real evidence to average.
     const applicable = [
-      mk({ id: 'structured-data/service-product-schema', status: 'pass', priority: 'low', score: 1 }),
+      mk({ id: 'structured-data/service-schema', status: 'pass', priority: 'low', score: 1 }),
       mk({ id: 'machine-discovery/llms-txt-exists', status: 'pass', priority: 'low', score: 1 }),
       mk({ id: 'cp1', category: 'access-crawl-control', status: 'pass', priority: 'low', score: 1 }),
       mk({ id: 'tr1', category: 'content-extraction', status: 'pass', priority: 'low', score: 1 }),
@@ -463,7 +463,7 @@ describe('readiness vitals — v2 id translation', () => {
   it('commerce names exactly the v2 ids of v1 3.8/3.14/3.21/3.22/3.23/3.24', () => {
     expect([...READINESS_VITAL_IDS.commerce].sort()).toEqual(
       [
-        'structured-data/service-product-schema',
+        'structured-data/service-schema',
         'agentic-commerce/offer-schema',
         'agentic-commerce/product-identifiers',
         'structured-data/advanced-product-details',
@@ -484,7 +484,7 @@ describe('readiness vitals — v2 id translation', () => {
     // v1 id → v2 id, with the score the check reports on both sides.
     const rows = [
       // commerce (v1 3.8 / 3.14)
-      { v1: '3.8', v2: 'structured-data/service-product-schema', v2Category: 'structured-data', score: 1 },
+      { v1: '3.8', v2: 'structured-data/service-schema', v2Category: 'structured-data', score: 1 },
       { v1: '3.14', v2: 'agentic-commerce/offer-schema', v2Category: 'agentic-commerce', score: 0 },
       // content (v1 1.1 / 2.4)
       { v1: '1.1', v2: 'machine-discovery/llms-txt-exists', v2Category: 'machine-discovery', score: 1 },

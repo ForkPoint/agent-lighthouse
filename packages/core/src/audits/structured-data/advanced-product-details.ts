@@ -1,3 +1,8 @@
+// Absorbs the Product half of v1 3.8 (service-product-schema) as of the
+// 2026-08-22 split (Plan 4, Task 9): the `name` requirement is ported here,
+// where the wider Product type list already lives. 3.8's `description`
+// requirement and its "offers/provider counts as a brand" fallback are
+// deliberately not ported — see the dossier's "Ported from 3.8" section.
 import type { AuditMeta, AuditResult } from "../../types";
 import { Audit } from "../../audit";
 import type { CheckContext } from '../../check-context';
@@ -20,7 +25,7 @@ export class ProductDetailsAudit extends Audit {
     title: 'Advanced product details',
     failureTitle: 'Advanced product details',
     description:
-      'AI agents use brand, category, and availability status to filter search results and answer availability queries. Missing these details makes your products less likely to surface in filtered AI recommendations.',
+      'AI agents use a product\'s name, brand, category, and availability status to filter search results and answer availability queries. A Product without a name cannot be matched to a catalog entry at all; missing brand, category or availability makes it less likely to surface in filtered AI recommendations.',
     scoreDisplayMode: 'ternary',
     weight: weightForGrade('A', 'scored'),
     evidenceGrade: 'A',
@@ -31,7 +36,7 @@ export class ProductDetailsAudit extends Audit {
     guidance: {
       impact:
         'Missing brand, category, or availability in your Product schema means AI agents cannot filter or surface your products in response to specific shopping queries. Your products are less likely to appear in AI-generated comparisons and "best of" recommendations.',
-      fix: 'Add brand (as a nested Organization or Brand), category, and availability to your existing Product JSON-LD. If availability lives on your Offer, ensure it uses a schema.org ItemAvailability value.',
+      fix: 'Give every Product JSON-LD node a name, then add brand (as a nested Organization or Brand), category, and availability. If availability lives on your Offer, ensure it uses a schema.org ItemAvailability value.',
       code: `{
   "@context": "https://schema.org",
   "@type": "Product",
@@ -65,13 +70,19 @@ export class ProductDetailsAudit extends Audit {
     if (products.length === 0) {
       return this.fail(
         'No Product schema found.',
-        'Product schema with brand and availability.',
+        'Product schema with name, brand, category, and availability.',
         'None',
       );
     }
 
     const first = products[0] as Record<string, unknown>;
     const missing: string[] = [];
+
+    // 0. Name — ported from 3.8. Unlike brand/category/availability, which
+    // Google lists as *recommended*, `name` is one of the four properties its
+    // merchant-listing table marks required, so a nameless Product is not
+    // eligible at all and fails regardless of the rest.
+    const hasName = !!first['name'];
 
     // 1. Brand or Manufacturer
     const hasBrand = !!first['brand'] || !!first['manufacturer'];
@@ -88,10 +99,24 @@ export class ProductDetailsAudit extends Audit {
     }
     if (!hasAvailability) missing.push('availability');
 
+    if (!hasName) {
+      const alsoMissing = missing.length > 0 ? ` (also missing: ${missing.join(', ')})` : '';
+      return this.fail(
+        `Product schema is missing the required name property${alsoMissing}.`,
+        'Product schema with name, brand, category, and availability.',
+        `Missing ${['name', ...missing].join(', ')}`,
+        {
+          priority: 'medium',
+          description:
+            'name is a required Product property in Google\'s merchant-listing extraction: without it the product cannot be matched to a catalog entry at all, so brand, category and availability have nothing to attach to.',
+        },
+      );
+    }
+
     if (missing.length === 0) {
       return this.pass(
         'Found brand, category, and availability in Product schema.',
-        'Product schema with brand, category, and availability.',
+        'Product schema with name, brand, category, and availability.',
         'All present',
       );
     }
@@ -99,7 +124,7 @@ export class ProductDetailsAudit extends Audit {
     if (missing.length < 3) {
       return this.warn(
         `Missing some product details: ${missing.join(', ')}.`,
-        'Product schema with brand, category, and availability.',
+        'Product schema with name, brand, category, and availability.',
         `Missing ${missing.join(', ')}`,
         {
           priority: 'medium',
@@ -110,7 +135,7 @@ export class ProductDetailsAudit extends Audit {
 
     return this.fail(
       'Missing critical product details (brand, category, availability).',
-      'Product schema with brand, category, and availability.',
+      'Product schema with name, brand, category, and availability.',
       'None',
       {
         priority: 'medium',

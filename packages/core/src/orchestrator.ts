@@ -479,7 +479,7 @@ export async function runScan(url: string, options?: ScanOptions): Promise<ScanR
 export const READINESS_VITAL_IDS = {
   /** v1 3.8, 3.14, 3.21, 3.22, 3.23, 3.24 after the v2 rename. */
   commerce: [
-    'structured-data/service-product-schema',
+    'structured-data/service-schema',
     'agentic-commerce/offer-schema',
     'agentic-commerce/product-identifiers',
     'structured-data/advanced-product-details',

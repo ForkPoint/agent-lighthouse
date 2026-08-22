@@ -350,9 +350,9 @@
   "3.8": {
     "slug": "structured-data/service-product-schema",
     "status": "renamed",
-    "to": "structured-data/service-product-schema",
-    "link": "docs/evidence/audits/structured-data/service-product-schema.md",
-    "note": "§5 split: Product half → structured-data/advanced-product-details (3.22); Service half stays standalone, narrowed to Service/ProfessionalService"
+    "to": "structured-data/service-schema",
+    "link": "docs/evidence/audits/structured-data/service-schema.md",
+    "note": "§5 split landed 2026-08-22 (Plan 4, Task 9): the Service half is this row's target, renamed to structured-data/service-schema and narrowed to Service/ProfessionalService; the Product half (the `name` requirement over the Product shape) moved into structured-data/advanced-product-details (3.22), whose dossier documents the ported checks"
   },
   "3.9": {
     "slug": "structured-data/speakable-schema",
@@ -681,9 +681,9 @@
   "5.23": {
     "slug": "agent-tools/webmcp-tool-naming",
     "status": "renamed",
-    "to": "agent-interfaces/webmcp-tool-naming",
-    "link": "docs/evidence/audits/agent-interfaces/webmcp-tool-naming.md",
-    "note": "§5 split: naming rule → openapi-operation-ids; runtime part deferred to a future MCP tools/list check (not a v2.0 audit)"
+    "to": "agent-interfaces/openapi-operation-ids",
+    "link": "docs/evidence/audits/agent-interfaces/openapi-operation-ids.md",
+    "note": "§5 split landed 2026-08-22 (Plan 4, Task 9): the naming rule folded into agent-interfaces/openapi-operation-ids as a structural legality check; the runtime half (reading a live MCP tools/list response) is deferred out of v2.0 and is recorded in that audit's dossier"
   },
   "5.24": {
     "slug": "agent-tools/webmcp-tool-annotations",

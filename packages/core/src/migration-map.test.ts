@@ -61,6 +61,8 @@ const CONSOLIDATION_TARGETS = [
   'agent-interfaces/openapi-exists',
   'agent-interfaces/ai-catalog-exists',
   'agent-interfaces/mcp-endpoint',
+  // 5.3 (its own row) plus 5.23, whose naming rule folded in here on 2026-08-22.
+  'agent-interfaces/openapi-operation-ids',
   'structured-data/review-schema',
   'content-extraction/semantic-lists',
   'content-extraction/server-responsiveness',

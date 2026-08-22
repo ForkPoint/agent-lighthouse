@@ -20,6 +20,25 @@ type OpenApiOperation = Record<string, unknown>;
 
 const HTTP_METHODS = ['get', 'post', 'put', 'patch', 'delete', 'options', 'head', 'trace'];
 
+/**
+ * The naming rule folded in from v1 5.23 (webmcp-tool-naming) on 2026-08-22.
+ *
+ * An operationId is the function name a tool-calling runtime registers, and
+ * Anthropic's tool `name` "must match the regex `^[a-zA-Z0-9_-]{1,64}$`", with
+ * Gemini asking for "descriptive names without spaces or special characters".
+ * An id outside this shape cannot be registered verbatim, so it is a harder
+ * breakage than a missing id (which converters synthesize from method + path).
+ *
+ * 5.23's English-verb allowlist and its 20-character description floor are
+ * deliberately NOT ported: no spec or vendor doc constrains naming style or
+ * description length, and the allowlist rejected snake_case — the casing of
+ * MCP's own example tool.
+ */
+const LEGAL_OPERATION_ID = /^[a-zA-Z0-9_-]{1,64}$/;
+
+/** Shared `expected` line: uniqueness and registrability are one requirement. */
+const EXPECTED = 'Every operation has a unique operationId that is a legal tool-call function name';
+
 function getOpenApiSpec(ctx: {
   rootFiles: Record<string, { status: number; body: string }>;
 }): Record<string, unknown> | undefined {
@@ -57,7 +76,7 @@ export class OpenApiOperationIdsAudit extends Audit {
     title: 'OpenAPI has operationIds',
     failureTitle: 'OpenAPI has operationIds',
     description:
-      'AI agents use operationIds as stable function names when calling your API. Without unique operationIds, agents must guess endpoint names from paths, leading to ambiguity and errors. Use descriptive camelCase names.',
+      'AI agents use operationIds as stable function names when calling your API. Without unique operationIds, agents must guess endpoint names from paths, leading to ambiguity and errors. An operationId that is not a legal function name (spaces, punctuation, or more than 64 characters) cannot be registered as a tool at all.',
     scoreDisplayMode: 'ternary',
     weight: weightForGrade('B', 'scored'),
     evidenceGrade: 'B',
@@ -67,7 +86,7 @@ export class OpenApiOperationIdsAudit extends Audit {
     guidance: {
       impact:
         'AI agents use operationIds as stable function names when calling your API. Without unique operationIds, agents must infer endpoint names from URL paths, leading to ambiguous calls, naming collisions, and broken integrations.',
-      fix: 'Add a unique, descriptive operationId (camelCase) to every operation in your OpenAPI spec. Use verb-noun format like "searchContent", "submitContactForm", or "getProductDetails".',
+      fix: 'Add a unique, descriptive operationId to every operation in your OpenAPI spec, and keep it inside ^[a-zA-Z0-9_-]{1,64}$ so a tool-calling runtime can register it verbatim. Verb-noun names read best — "searchContent", "submitContactForm", "get_product_details" — but casing style is not the constraint; spaces, punctuation and length are.',
       code: `"paths": {
   "/contact": {
     "post": {
@@ -93,7 +112,7 @@ export class OpenApiOperationIdsAudit extends Audit {
     if (!spec) {
       return this.fail(
         'No parseable OpenAPI JSON spec found.',
-        'Every operation has a unique operationId',
+        EXPECTED,
         'No spec',
         {
           priority: 'medium',
@@ -107,7 +126,7 @@ export class OpenApiOperationIdsAudit extends Audit {
     if (ops.length === 0) {
       return this.fail(
         'No operations to check.',
-        'Every operation has a unique operationId',
+        EXPECTED,
         '0 operations',
         {
           priority: 'medium',
@@ -120,33 +139,54 @@ export class OpenApiOperationIdsAudit extends Audit {
     const ids = new Set<string>();
     let missing = 0;
     let duplicates = 0;
+    const illegal: string[] = [];
 
     for (const { op } of ops) {
       const id = op['operationId'];
       if (typeof id !== 'string' || !id) {
         missing++;
-      } else if (ids.has(id)) {
+        continue;
+      }
+      if (!LEGAL_OPERATION_ID.test(id)) illegal.push(id);
+      if (ids.has(id)) {
         duplicates++;
       } else {
         ids.add(id);
       }
     }
 
-    if (missing === 0 && duplicates === 0) {
+    if (missing === 0 && duplicates === 0 && illegal.length === 0) {
       return this.pass(
-        `All ${ops.length} operation(s) have unique operationIds.`,
-        'Every operation has a unique operationId',
+        `All ${ops.length} operation(s) have unique, registrable operationIds.`,
+        EXPECTED,
         `${ops.length} unique operationId(s)`,
       );
     }
 
     const issues: string[] = [];
+    if (illegal.length > 0) issues.push(`${illegal.length} cannot be registered as a tool name`);
     if (missing > 0) issues.push(`${missing} missing`);
     if (duplicates > 0) issues.push(`${duplicates} duplicate(s)`);
 
+    // An illegal id is rejected at tool-registration time, so it breaks the
+    // call outright; a missing or duplicated id only degrades naming.
+    if (illegal.length > 0) {
+      return this.fail(
+        `operationId issues: ${issues.join(', ')} out of ${ops.length} operation(s).`,
+        EXPECTED,
+        `Illegal operationId(s): ${illegal.join(', ')}${missing > 0 ? `; ${missing} missing` : ''}${duplicates > 0 ? `; ${duplicates} duplicate(s)` : ''}`,
+        {
+          priority: 'medium',
+          description:
+            'A tool-calling runtime registers each operationId as a function name. Anthropic requires that name to match ^[a-zA-Z0-9_-]{1,64}$, so an operationId carrying spaces, punctuation or more than 64 characters cannot be registered verbatim and the operation is unreachable.',
+          code: `"paths": {\n  "/contact": {\n    "post": {\n      "operationId": "submitContactForm"\n    }\n  }\n}`,
+        },
+      );
+    }
+
     return this.warn(
       `operationId issues: ${issues.join(', ')} out of ${ops.length} operation(s).`,
-      'Every operation has a unique operationId',
+      EXPECTED,
       issues.join(', '),
       {
         priority: 'medium',

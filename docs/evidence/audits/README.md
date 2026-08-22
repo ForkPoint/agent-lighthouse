@@ -30,7 +30,7 @@ One dossier per audit: what it checks, the 2026-08-20 code-review findings, grad
 | 7.23 | [No presentation-role conflicts](./operability-safety/presentation-conflict.md) | accessibility | fix | A | keep — fix required |
 | 5.1 | [openapi-exists](./agent-interfaces/openapi-exists.md) | agent-tools | fix | B | merged — absorbs 4.18 (2026-08-22) |
 | 5.2 | [openapi-endpoints](./agent-interfaces/openapi-endpoints.md) | agent-tools | fix | — | keep — fix required |
-| 5.3 | [openapi-operation-ids](./agent-interfaces/openapi-operation-ids.md) | agent-tools | fix | — | keep — fix required |
+| 5.3 | [openapi-operation-ids](./agent-interfaces/openapi-operation-ids.md) | agent-tools | fix | B | keep — fix required; absorbs the naming rule of 5.23 (2026-08-22) |
 | 5.4 | [openapi-ai-instructions](./agent-tools/openapi-ai-instructions.md) | agent-tools | delete | D | sunset (approved 2026-08-21) |
 | 5.5 | [openapi-servers](./agent-interfaces/openapi-servers.md) | agent-tools | fix | — | keep — fix required |
 | 5.6 | [openapi-schemas](./agent-interfaces/openapi-schemas.md) | agent-tools | fix | — | keep — fix required |
@@ -50,7 +50,7 @@ One dossier per audit: what it checks, the 2026-08-20 code-review findings, grad
 | 5.20 | [webmcp-registered-tools](./agent-interfaces/webmcp-registered-tools.md) | agent-tools | delete | A | proposed: redeem as experimental (pending triage) |
 | 5.21 | [webmcp-declarative-forms](./agent-interfaces/webmcp-declarative-forms.md) | agent-tools | delete | A | kept — rewrite required (approved 2026-08-21) |
 | 5.22 | [webmcp-input-quality](../merged/operability-safety/webmcp-input-quality.md) | agent-tools | merge | B | merged into [operability-safety/form-actionability](./operability-safety/form-actionability.md) (2026-08-22) |
-| 5.23 | [webmcp-tool-naming](./agent-interfaces/webmcp-tool-naming.md) | agent-tools | merge | — | merge (approved 2026-08-21) |
+| 5.23 | [webmcp-tool-naming](../merged/agent-interfaces/webmcp-tool-naming.md) | agent-tools | merge | C | naming rule merged into [agent-interfaces/openapi-operation-ids](./agent-interfaces/openapi-operation-ids.md) (2026-08-22); runtime half deferred out of v2.0 |
 | 5.24 | [webmcp-tool-annotations](../merged/agent-interfaces/webmcp-tool-annotations.md) | agent-tools | merge | D | merged into [agent-interfaces/mcp-endpoint](./agent-interfaces/mcp-endpoint.md) (2026-08-22) |
 | 5.25 | [webmcp-action-coverage](./agent-tools/webmcp-action-coverage.md) | agent-tools | delete | D | sunset (approved 2026-08-21) |
 | 5.26 | [openapi-description-quality](./agent-interfaces/openapi-description-quality.md) | agent-tools | fix | — | keep — fix required |
@@ -179,7 +179,7 @@ One dossier per audit: what it checks, the 2026-08-20 code-review findings, grad
 | 3.5 | [breadcrumb-schema](./structured-data/breadcrumb-schema.md) | structured-data | fix | — | keep — fix required |
 | 3.6 | [article-schema](./structured-data/article-schema.md) | structured-data | fix | — | keep — fix required |
 | 3.7 | [faqpage-schema](./structured-data/faqpage-schema.md) | structured-data | fix | — | keep — fix required |
-| 3.8 | [service-product-schema](./structured-data/service-product-schema.md) | structured-data | merge | A | merge (approved 2026-08-21) |
+| 3.8 | [service-schema](./structured-data/service-schema.md) | structured-data | merge | A | split (2026-08-22) — Service half kept as [structured-data/service-schema](./structured-data/service-schema.md), Product half into [structured-data/advanced-product-details](./structured-data/advanced-product-details.md) |
 | 3.9 | [speakable-schema](./structured-data/speakable-schema.md) | structured-data | delete | A | kept — rewrite required (approved 2026-08-21) |
 | 3.10 | [potential-action](./structured-data/potential-action.md) | structured-data | delete | D | sunset (approved 2026-08-21) |
 | 3.11 | [howto-schema](./structured-data/howto-schema.md) | structured-data | delete | C | informative, weight 0 (approved 2026-08-21) |
@@ -189,7 +189,7 @@ One dossier per audit: what it checks, the 2026-08-20 code-review findings, grad
 | 3.15 | [author-schema](./structured-data/author-schema.md) | structured-data | fix | — | keep — fix required |
 | 3.16 | [action-schema](./structured-data/action-schema.md) | structured-data | delete | D | sunset (approved 2026-08-21) |
 | 3.21 | [product-identifiers](./agentic-commerce/product-identifiers.md) | structured-data | fix | — | keep — fix required |
-| 3.22 | [advanced-product-details](./structured-data/advanced-product-details.md) | structured-data | fix | — | keep — fix required |
+| 3.22 | [advanced-product-details](./structured-data/advanced-product-details.md) | structured-data | fix | — | keep — fix required; absorbs the Product half of 3.8 (2026-08-22) |
 | 3.23 | [product-reviews](../merged/structured-data/product-reviews.md) | structured-data | merge | A | merged into [structured-data/review-schema](./structured-data/review-schema.md) (2026-08-22) |
 | 3.24 | [product-transaction-certainty](./agentic-commerce/product-transaction-certainty.md) | structured-data | fix | — | keep — fix required |
 | 8.1 | [https-enabled](./access-crawl-control/https-enabled.md) | technical-readiness | fix | A | keep — fix required |

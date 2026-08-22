@@ -8,7 +8,7 @@ export { OrganizationSchemaAudit } from './organization-schema';
 export { BreadcrumbSchemaAudit } from './breadcrumb-schema';
 export { ArticleSchemaAudit } from './article-schema';
 export { FaqPageSchemaAudit } from './faqpage-schema';
-export { ServiceProductSchemaAudit } from './service-product-schema';
+export { ServiceSchemaAudit } from './service-schema';
 export { SpeakableSchemaAudit } from './speakable-schema';
 export { HowToSchemaAudit } from './howto-schema';
 export { LocalBusinessSchemaAudit } from './local-business-schema';
@@ -22,7 +22,7 @@ import { OrganizationSchemaAudit } from './organization-schema';
 import { BreadcrumbSchemaAudit } from './breadcrumb-schema';
 import { ArticleSchemaAudit } from './article-schema';
 import { FaqPageSchemaAudit } from './faqpage-schema';
-import { ServiceProductSchemaAudit } from './service-product-schema';
+import { ServiceSchemaAudit } from './service-schema';
 import { SpeakableSchemaAudit } from './speakable-schema';
 import { HowToSchemaAudit } from './howto-schema';
 import { LocalBusinessSchemaAudit } from './local-business-schema';
@@ -38,7 +38,7 @@ export const STRUCTURED_DATA_AUDITS = [
   BreadcrumbSchemaAudit,
   ArticleSchemaAudit,
   FaqPageSchemaAudit,
-  ServiceProductSchemaAudit,
+  ServiceSchemaAudit,
   SpeakableSchemaAudit,
   HowToSchemaAudit,
   LocalBusinessSchemaAudit,

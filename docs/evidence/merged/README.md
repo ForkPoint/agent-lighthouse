@@ -45,6 +45,7 @@ in [`../sunset/`](../sunset/).
 | [content-extraction/fast-response-time](./content-extraction/fast-response-time.md) | 8.12 | [content-extraction/server-responsiveness](../audits/content-extraction/server-responsiveness.md) | B |
 | [operability-safety/webmcp-input-quality](./operability-safety/webmcp-input-quality.md) | 5.22 | [operability-safety/form-actionability](../audits/operability-safety/form-actionability.md) | B |
 | [operability-safety/nav-aria-label](./operability-safety/nav-aria-label.md) | 7.3 | [operability-safety/landmark-unique](../audits/operability-safety/landmark-unique.md) | A |
+| [agent-interfaces/webmcp-tool-naming](./agent-interfaces/webmcp-tool-naming.md) | 5.23 | [agent-interfaces/openapi-operation-ids](../audits/agent-interfaces/openapi-operation-ids.md) | C |
 
 The grade column is the *absorbed* audit's own grade, not the merged audit's. A merged audit is graded
 on the strongest **proven** consumer path among its sources, which is why `ai-bot-directives` ships at
@@ -53,3 +54,5 @@ prices: `security-header-hygiene` also ships at B, but at tier `informative` (we
 of the four absorbed signals has a documented AI consumer.
 
 The v2 consolidation is complete as of Task 8 (2026-08-22): `migration-map.json` has no `merging` entries left, and every row above resolves to a live dossier in [`../audits/`](../audits/).
+
+Task 9 (2026-08-22) adds one further row that is a *split*, not a consolidation: `webmcp-tool-naming` (5.23) was cut in two, its naming rule folded into `openapi-operation-ids` and its runtime half deferred out of v2.0. It is listed here because the audit is gone and its dossier is the record of why. The other half of that task — `service-product-schema` (3.8) — is a split with a surviving audit on both sides, so it appears in [`../audits/`](../audits/) twice over rather than here: the Service half as [`structured-data/service-schema`](../audits/structured-data/service-schema.md), the Product half inside [`structured-data/advanced-product-details`](../audits/structured-data/advanced-product-details.md).

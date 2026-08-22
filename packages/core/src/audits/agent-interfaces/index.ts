@@ -15,7 +15,6 @@ export { McpEndpointAudit } from './mcp-endpoint';
 export { SearchEndpointAudit } from './search-endpoint';
 export { WebmcpManifestAudit } from './webmcp-registered-tools';
 export { WebmcpDeclarativeFormsAudit } from './webmcp-declarative-forms';
-export { WebmcpToolNamingAudit } from './webmcp-tool-naming';
 export { OpenApiDescriptionQualityAudit } from './openapi-description-quality';
 export { CorsApiRoutesAudit } from './cors-api-routes';
 
@@ -33,7 +32,6 @@ import { McpEndpointAudit } from './mcp-endpoint';
 import { SearchEndpointAudit } from './search-endpoint';
 import { WebmcpManifestAudit } from './webmcp-registered-tools';
 import { WebmcpDeclarativeFormsAudit } from './webmcp-declarative-forms';
-import { WebmcpToolNamingAudit } from './webmcp-tool-naming';
 import { OpenApiDescriptionQualityAudit } from './openapi-description-quality';
 import { CorsApiRoutesAudit } from './cors-api-routes';
 
@@ -53,7 +51,6 @@ export const AGENT_INTERFACES_AUDITS = [
   SearchEndpointAudit,
   WebmcpManifestAudit,
   WebmcpDeclarativeFormsAudit,
-  WebmcpToolNamingAudit,
   OpenApiDescriptionQualityAudit,
   CorsApiRoutesAudit,
 ] as const;

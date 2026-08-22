@@ -120,6 +120,101 @@ describe('ProductDetailsAudit', () => {
     expect(result.status).toBe('pass');
   });
 
+  // Ported from 3.8 (service-product-schema) in the 2026-08-22 split: the
+  // Product-shape half of that audit checked `name`, which Google's
+  // merchant-listing table lists as *required* (unlike brand/category, which
+  // are only recommended). A nameless Product is not eligible at all, so it
+  // fails regardless of how complete the recommended properties are.
+  describe('ported Product-shape checks (from 3.8)', () => {
+    it('fails a Product with no name even when brand, category and availability are all present', () => {
+      const ctx = mockCheckContext([
+        productPage(
+          ld({
+            '@context': 'https://schema.org',
+            '@type': 'Product',
+            brand: { '@type': 'Brand', name: 'Acme' },
+            category: 'Electronics',
+            offers: { '@type': 'Offer', availability: 'https://schema.org/InStock' },
+          }),
+        ),
+      ]);
+      const result = audit.audit(ctx);
+      expect(result.status).toBe('fail');
+      expect(result.message).toContain('name');
+    });
+
+    it('names `name` alongside the recommended properties it is missing', () => {
+      const ctx = mockCheckContext([
+        productPage(
+          ld({
+            '@context': 'https://schema.org',
+            '@type': 'Product',
+            brand: { '@type': 'Brand', name: 'Acme' },
+          }),
+        ),
+      ]);
+      const result = audit.audit(ctx);
+      expect(result.status).toBe('fail');
+      expect(result.message).toContain('name');
+      expect(result.found).toContain('name');
+    });
+
+    it('keeps `name` a requirement for the wider ported type list (ProductModel)', () => {
+      const ctx = mockCheckContext([
+        productPage(
+          ld({
+            '@context': 'https://schema.org',
+            '@type': 'ProductModel',
+            brand: { '@type': 'Brand', name: 'Acme' },
+            category: 'Electronics',
+            offers: { '@type': 'Offer', availability: 'https://schema.org/InStock' },
+          }),
+        ),
+      ]);
+      expect(audit.audit(ctx).status).toBe('fail');
+    });
+
+    // 3.8 required `description` too. Its own review recorded that as an
+    // invented requirement (schema.org does not require it, and Google's
+    // Product guidance does not either), so it is deliberately NOT ported.
+    it('does not port 3.8’s invented `description` requirement', () => {
+      const ctx = mockCheckContext([
+        productPage(
+          ld({
+            '@context': 'https://schema.org',
+            '@type': 'Product',
+            name: 'Widget',
+            brand: { '@type': 'Brand', name: 'Acme' },
+            category: 'Electronics',
+            offers: { '@type': 'Offer', availability: 'https://schema.org/InStock' },
+          }),
+        ),
+      ]);
+      const result = audit.audit(ctx);
+      expect(result.status).toBe('pass');
+      expect(result.message).not.toContain('description');
+    });
+
+    // 3.8 accepted `provider` or `offers` in place of a brand. Not ported:
+    // brand is the property Google's table names, and an Offer is not a brand.
+    it('does not accept `offers` as a substitute for brand', () => {
+      const ctx = mockCheckContext([
+        productPage(
+          ld({
+            '@context': 'https://schema.org',
+            '@type': 'Product',
+            name: 'Widget',
+            category: 'Electronics',
+            offers: { '@type': 'Offer', availability: 'https://schema.org/InStock' },
+          }),
+        ),
+      ]);
+      const result = audit.audit(ctx);
+      expect(result.status).toBe('warn');
+      expect(result.message).toContain('brand');
+    });
+  });
+
   it('detects availability from an array of offers (Array.isArray offers branch)', () => {
     // `offers` as an array triggers Array.isArray(first['offers']) true branch
     const ctx = mockCheckContext([
