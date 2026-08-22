@@ -41,6 +41,7 @@ const CONSOLIDATION_TARGETS = [
   'machine-discovery/discovery-index-coverage',
   'machine-discovery/llms-txt-exists',
   'machine-discovery/rss-feed',
+  'machine-discovery/ai-file-delivery',
 ];
 
 // v2 identity: `category/slug`. Slugs carry digits and dots (json-ld-1-1,

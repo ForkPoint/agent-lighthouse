@@ -1037,10 +1037,9 @@
   },
   "8.11": {
     "slug": "technical-readiness/cache-headers",
-    "status": "merging",
+    "status": "renamed",
     "to": "machine-discovery/ai-file-delivery",
-    "interim": "machine-discovery/cache-headers",
-    "link": "docs/evidence/audits/machine-discovery/cache-headers.md"
+    "link": "docs/evidence/audits/machine-discovery/ai-file-delivery.md"
   },
   "8.12": {
     "slug": "technical-readiness/fast-response-time",

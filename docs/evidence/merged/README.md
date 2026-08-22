@@ -24,6 +24,7 @@ in [`../sunset/`](../sunset/).
 | [machine-discovery/no-orphan-pages](./machine-discovery/no-orphan-pages.md) | 1.22 | [machine-discovery/discovery-index-coverage](../audits/machine-discovery/discovery-index-coverage.md) | A |
 | [machine-discovery/llms-txt-link](./machine-discovery/llms-txt-link.md) | 4.11 | [machine-discovery/llms-txt-exists](../audits/machine-discovery/llms-txt-exists.md) | C |
 | [machine-discovery/rss-feed-link](./machine-discovery/rss-feed-link.md) | 4.16 | [machine-discovery/rss-feed](../audits/machine-discovery/rss-feed.md) | C |
+| [machine-discovery/cache-headers](./machine-discovery/cache-headers.md) | 8.11 | [machine-discovery/ai-file-delivery](../audits/machine-discovery/ai-file-delivery.md) | B |
 
 The grade column is the *absorbed* audit's own grade, not the merged audit's. A merged audit is graded
 on the strongest **proven** consumer path among its sources, which is why `ai-bot-directives` ships at

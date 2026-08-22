@@ -15,8 +15,7 @@ export { RssFeedContentAudit } from './rss-feed-content';
 export { InternalLinkingAudit } from './in-content-links';
 export { NoBrokenLinksAudit } from './no-broken-links';
 export { CorsAiFilesAudit } from './cors-ai-files';
-export { CorrectContentTypesAudit } from './ai-file-delivery';
-export { CacheHeadersAudit } from './cache-headers';
+export { AiFileDeliveryAudit } from './ai-file-delivery';
 export { NoBrokenAiEndpointsAudit } from './no-broken-ai-endpoints';
 export { InternalCrossLinkingAudit } from './internal-cross-linking';
 
@@ -34,8 +33,7 @@ import { RssFeedContentAudit } from './rss-feed-content';
 import { InternalLinkingAudit } from './in-content-links';
 import { NoBrokenLinksAudit } from './no-broken-links';
 import { CorsAiFilesAudit } from './cors-ai-files';
-import { CorrectContentTypesAudit } from './ai-file-delivery';
-import { CacheHeadersAudit } from './cache-headers';
+import { AiFileDeliveryAudit } from './ai-file-delivery';
 import { NoBrokenAiEndpointsAudit } from './no-broken-ai-endpoints';
 import { InternalCrossLinkingAudit } from './internal-cross-linking';
 
@@ -55,8 +53,7 @@ export const MACHINE_DISCOVERY_AUDITS = [
   InternalLinkingAudit,
   NoBrokenLinksAudit,
   CorsAiFilesAudit,
-  CorrectContentTypesAudit,
-  CacheHeadersAudit,
+  AiFileDeliveryAudit,
   NoBrokenAiEndpointsAudit,
   InternalCrossLinkingAudit,
 ] as const;

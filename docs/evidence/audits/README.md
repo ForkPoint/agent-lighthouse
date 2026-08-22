@@ -202,7 +202,7 @@ One dossier per audit: what it checks, the 2026-08-20 code-review findings, grad
 | 8.8 | [cors-ai-files](./machine-discovery/cors-ai-files.md) | technical-readiness | fix | C | keep — fix required |
 | 8.9 | [cors-api-routes](./agent-interfaces/cors-api-routes.md) | technical-readiness | delete | C | proposed: redeem as scored (pending triage) |
 | 8.10 | [correct-content-types](./machine-discovery/ai-file-delivery.md) | technical-readiness | fix | C | keep — fix required |
-| 8.11 | [cache-headers](./machine-discovery/cache-headers.md) | technical-readiness | merge | B | merge (approved 2026-08-21) |
+| 8.11 | [cache-headers](../merged/machine-discovery/cache-headers.md) | technical-readiness | merge | B | merged into [machine-discovery/ai-file-delivery](./machine-discovery/ai-file-delivery.md) (2026-08-22) |
 | 8.12 | [fast-response-time](./content-extraction/fast-response-time.md) | technical-readiness | fix | B | keep — fix required |
 | 8.13 | [server-rendered](./content-extraction/server-rendered.md) | technical-readiness | fix | B | keep — fix required |
 | 8.14 | [no-render-blocking](../sunset/technical-readiness/no-render-blocking.md) | technical-readiness | fix | D | sunset (2026-08-21) |

@@ -1,23 +1,41 @@
 ---
 audit: machine-discovery/ai-file-delivery
-audit_id: "8.10"
+audit_id: "8.10, 8.11"
 category: machine-discovery
 source_file: packages/core/src/audits/machine-discovery/ai-file-delivery.ts
 slug: ai-file-delivery
 review_verdict: fix
 severity: medium
-evidence_grade: C
-disposition: "keep — fix required"
-reviewed: 2026-08-21
+evidence_grade: B
+disposition: "merged 2026-08-22 (Plan 4, Task 4) — absorbs cache-headers (8.11); informative, weight 0"
+reviewed: 2026-08-22
 ---
 
-# correct-content-types (`8.10`)
+# ai-file-delivery (`8.10`, `8.11`)
 
-> technical-readiness · source `correct-content-types.ts` · review verdict **fix** · evidence grade **C** · disposition: **keep — fix required**
+> machine-discovery · source `ai-file-delivery.ts` · absorbs cache-headers (8.11) · evidence grade **B** · tier **informative** (weight 0)
 
 ## What it checks
 
-AI agents use Content-Type headers to determine how to parse your files. Incorrect MIME types cause JSON files to be treated as plain text (breaking schema parsing) or XML to be treated as HTML (breaking sitemap crawling). Fix Content-Type headers to match each file format.
+How the AI files the scan already fetched are *delivered* — two headers per file, one audit:
+
+| File | Expected Content-Type |
+| :--- | :--- |
+| `/llms.txt` | `text/plain` or `text/markdown` |
+| `/.well-known/ai-catalog.json` | `application/json` |
+| `/openapi.json` | `application/json` (YAML types tolerated) |
+| `/sitemap.xml` | `application/xml` or `text/xml` |
+
+A file counts as cacheable when it carries a `Cache-Control` with a non-zero `max-age` and no `no-store`/`no-cache`, **or** an `ETag` / `Last-Modified` validator.
+
+| State | Result |
+| :--- | :--- |
+| every served file correctly typed and cacheable | `pass` |
+| any file mis-typed | `fail`, priority `medium` |
+| types correct, some file with no caching headers | `warn`, priority `low` |
+| no AI file was served (or the response is the site's HTML shell) | `na` |
+
+At `tier: informative` / `weight 0` none of these outcomes moves a score.
 
 ## Code review findings (2026-08-20, 11-agent pass)
 
@@ -55,7 +73,45 @@ The most defensible audit in the category — an llms.txt served as `application
 
 **Sources:** [The /llms.txt file](https://llmstxt.org/) · [RFC 9116 — A File Format to Aid in Security Vulnerability Disclosure](https://www.rfc-editor.org/rfc/rfc9116.html) · [Overview of OpenAI Crawlers](https://developers.openai.com/api/docs/bots) · [Does Anthropic crawl data from the web, and how can site owners block the crawler?](https://support.claude.com/en/articles/8896518-does-anthropic-crawl-data-from-the-web-and-how-can-site-owners-block-the-crawler)
 
+## Absorbed evidence — cache-headers (8.11)
+
+8.11 asked whether `/llms.txt` and `/openapi.json` carry a `cache-control` header. That is the same subject as this audit — how the AI files are served — so the two collapse into one per-file delivery report.
+
+Its dossier is kept verbatim at [merged/machine-discovery/cache-headers.md](../../merged/machine-discovery/cache-headers.md) (grade **B**).
+
+### Signal: Cache headers and conditional requests for crawlers (ETag, Last-Modified, 304) — grade B (technical-infra)
+
+**Mechanism:** Correct `ETag`/`If-None-Match` and `Last-Modified`/`If-Modified-Since` handling, returning `304 Not Modified` for unchanged resources, cuts the cost of each crawl and lets a crawler spend its capacity on more distinct URLs.
+
+**Evidence:** Documented first-party by Google, whose crawling infrastructure feeds both Search and Gemini/AI-Overviews grounding: it supports both mechanisms "exactly as defined in the HTTP Caching standard", prefers ETag, and states that a 304 "tells Google to reuse the cached version, saving your server bandwidth and resources". MCP's authorization spec independently instructs clients to "cache metadata respecting HTTP cache headers".
+
+**Counter-evidence:** Google hedges — "individual Google crawlers and fetchers may or may not make use of caching" — and *no* AI-specific crawler vendor documents conditional-request support: OpenAI's, Anthropic's and Perplexity's crawler docs are silent on caching. Vercel observed ChatGPT and Claude often not fetching at all when asked for fresh docs, implying reliance on cached or training data rather than well-behaved revalidation. The benefit is therefore best stated as efficiency/hygiene evidenced through Google, not as an AI-agent outcome.
+
+**Sources:** [Crawling December: HTTP caching](https://developers.google.com/search/blog/2024/12/crawling-december-caching) · [Large site owner's guide to managing your crawl budget](https://developers.google.com/search/docs/crawling-indexing/large-site-managing-crawl-budget) · [Model Context Protocol Specification (2025-11-25) — Authorization](https://modelcontextprotocol.io/specification/2025-11-25/basic/authorization) · [The rise of the AI crawler](https://vercel.com/blog/the-rise-of-the-ai-crawler)
+
+### Grade decision: raised **C → B**, tier stays informative (weight 0)
+
+The meta law grades a merged audit on the strongest **proven** path for the merged signal. That signal is now *delivery headers on AI files*, and the caching half is the better-evidenced of the two: the Content-Type claim grades **C** (plausible mechanism, no vendor requirement, "none-known among server-side crawlers"), while the conditional-request claim grades **B** on Google's own first-party documentation of the mechanism it implements — the same transitive Google-index path that earns `discovery-index-coverage` its B.
+
+The tier does **not** follow the grade. As with `security-header-hygiene`, the grade prices the evidence and the tier prices the claim: 8.11's review is explicit that the benefit is "to the site owner's bandwidth, not to any AI agent outcome", and that standalone the audit "should at minimum … drop to informational weight". `weightForGrade('B', 'informative') === 0`, so absorbing a `scored`/0.6 audit into an informative one removes 0.6 of machine-discovery's evidence mass — deliberately. A later task that finds an AI consumer documenting conditional requests can promote the tier without re-grading.
+
+### Required fixes — landed 2026-08-22
+
+From 8.11's review:
+
+- **The directive value is parsed.** `if (file.headers['cache-control'])` passed `no-store`, `no-cache` and `max-age=0` — exactly the configurations that force the re-fetching the audit warns about, a directly inverted result. A file now counts as cacheable only with a non-zero `max-age` and no blocking directive.
+- **Validators count.** `ETag` / `Last-Modified` — the mechanism that actually saves the download via conditional requests — are accepted as an equivalent path, so a site doing correct validator-based caching without `Cache-Control` is no longer reported as uncached.
+- **Absence is `na`.** `checked === 0` scored a `warn`; combined with 8.8 and 8.10 doing the same, a site with no llms.txt was docked three times for one absence.
+
+From 8.10's own review:
+
+- **Soft-404 guard.** A 200 whose body is the site's HTML shell is treated as an unpublished file and skipped, instead of being reported as mis-typed with a fix the user cannot act on — the review calls this "the single most likely false failure on modern hosting".
+- **nosniff sub-signal (v2 map row 8.4 → 8.10).** When a mis-typed file is also served with `X-Content-Type-Options: nosniff`, the message says so: nosniff removes a client's ability to recover from the wrong type, which is the one place that header changes a parsing outcome. Homepage-level nosniff hygiene stays in `operability-safety/security-header-hygiene`.
+
+Not addressed by this fold (8.10's remaining backlog): extending the path list to `/llms-full.txt`, `/agents.md`, `/sitemap-index.xml` and the feeds; splitting the openapi entry so `.json` expects JSON and `.yaml` expects YAML; and gzipped-sitemap content types.
+
 ## Review history
 
-- 2026-08-20 — code review (11-agent workflow) + evidence research (12-domain workflow, 400 sources).
-- 2026-08-21 — dossier generated; disposition pending final taxonomy design.
+- 2026-08-20 — code review (11-agent workflow) + evidence research (12-domain workflow, 400 sources) on both source audits.
+- 2026-08-21 — dispositions approved: 8.10 keep-with-fixes, 8.11 merge into it.
+- 2026-08-22 — 8.11 folded in, grade raised C → B at tier informative, both reviews' required fixes landed (Plan 4, Task 4); registry 170 → 169.
