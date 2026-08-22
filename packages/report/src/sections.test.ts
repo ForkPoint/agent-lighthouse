@@ -1,6 +1,9 @@
 import { describe, it, expect } from 'vitest';
-import { CATEGORY_WEIGHTS } from '@forkpoint/agent-lighthouse-core';
+import { defaultConfig } from '@forkpoint/agent-lighthouse-core';
 import { CATEGORY_ORDER, SECTION_GROUPS } from './sections';
+
+/** The categories the scanner registry can emit — the single source of truth. */
+const REGISTRY_CATEGORY_IDS = defaultConfig.categories.map((c) => c.id);
 
 describe('SECTION_GROUPS ↔ core taxonomy', () => {
   // buildReportView keeps only categories listed in CATEGORY_ORDER (which is
@@ -10,12 +13,12 @@ describe('SECTION_GROUPS ↔ core taxonomy', () => {
   // contradicts itself. Renaming a category in core must therefore be mirrored
   // here, and this test is what makes that failure loud.
   it('names every scored category that core can emit', () => {
-    const missing = Object.keys(CATEGORY_WEIGHTS).filter((id) => !CATEGORY_ORDER.includes(id));
+    const missing = REGISTRY_CATEGORY_IDS.filter((id) => !CATEGORY_ORDER.includes(id));
     expect(missing).toEqual([]);
   });
 
   it('names no category core does not know about', () => {
-    const unknown = CATEGORY_ORDER.filter((id) => !(id in CATEGORY_WEIGHTS));
+    const unknown = CATEGORY_ORDER.filter((id) => !REGISTRY_CATEGORY_IDS.includes(id));
     expect(unknown).toEqual([]);
   });
 

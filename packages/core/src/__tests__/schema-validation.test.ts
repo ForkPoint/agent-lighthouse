@@ -5,14 +5,17 @@ import { mockCheckContext, mockPageContext, mockFetchResult } from './test-utils
 
 describe('AuditMetaSchema.weight', () => {
   const meta = {
-    id: '1.1',
-    category: 'content-structure',
+    id: 'content-extraction/single-h1',
+    category: 'content-extraction',
     title: 't',
     failureTitle: 'ft',
     description: 'd',
     scoreDisplayMode: 'informative' as const,
     weight: 0,
     defaultPriority: 'low' as const,
+    evidenceGrade: 'C' as const,
+    tier: 'informative' as const,
+    dossier: 'docs/evidence/audits/content-extraction/single-h1.md',
   };
 
   it('accepts weight 0 (informative tier — reported but not scored)', () => {

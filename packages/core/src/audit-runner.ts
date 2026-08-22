@@ -3,7 +3,7 @@ import { logger } from './logger';
 import { TAG_SKIPPED_PAGE_TYPE, TAG_SCAN_ERROR } from './constants';
 import type { CheckContext } from './check-context';
 import type { ScanConfig, CategoryConfig, AuditRegistration } from './audit-config';
-import { calculateCategoryScore } from './scorer';
+import { calculateCategoryScore, calculateOverallScore } from './scorer';
 
 /**
  * Build a not-applicable stub for an audit that never produced a real verdict,
@@ -133,7 +133,8 @@ export async function runAudits(
     return buildWeightedCategoryResult(cat, catChecks);
   });
 
-  const overallScore = Math.round(categories.reduce((sum, cat) => sum + cat.score * cat.weight, 0));
+  // One overall-score law for the whole engine: evidence-mass weighted (spec §4).
+  const overallScore = calculateOverallScore(categories);
 
   return { checks: allChecks, categories, overallScore };
 }

@@ -475,6 +475,51 @@ export async function runScan(url: string, options?: ScanOptions): Promise<ScanR
  * full 100 for zero evidence would inflate the headline score of any site that
  * simply has nothing to measure.
  */
+/**
+ * The audit ids each id-driven vital averages, in v2 `category/slug` form.
+ *
+ * Exported so a test can prove every id still resolves to a registered audit:
+ * a rename that misses this list would silently empty a vital.
+ */
+export const READINESS_VITAL_IDS = {
+  /** v1 3.8, 3.14, 3.21, 3.22, 3.23, 3.24 after the v2 rename. */
+  commerce: [
+    'structured-data/service-product-schema',
+    'agentic-commerce/offer-schema',
+    'agentic-commerce/product-identifiers',
+    'structured-data/advanced-product-details',
+    'structured-data/product-reviews',
+    'agentic-commerce/product-transaction-certainty',
+  ],
+  /** The v1 content list, minus sunsets, with merged ids mapped to survivors. */
+  content: [
+    'machine-discovery/llms-txt-exists',
+    'machine-discovery/llms-txt-blockquote',
+    'machine-discovery/llms-txt-sections',
+    'machine-discovery/llms-txt-link-descriptions',
+    'machine-discovery/llms-txt-links-valid',
+    'machine-discovery/llms-full-txt',
+    'machine-discovery/sitemap-exists',
+    'machine-discovery/discovery-index-coverage',
+    'machine-discovery/sitemap-absolute-urls',
+    'machine-discovery/sitemap-lastmod',
+    'answer-readiness/faq-sections',
+    'answer-readiness/question-headings',
+    'answer-readiness/first-paragraph-answers',
+    'answer-readiness/direct-definitions',
+    'answer-readiness/comparison-tables',
+    'answer-readiness/numbered-steps',
+    'answer-readiness/specific-numbers',
+    'answer-readiness/dates-on-content',
+    'answer-readiness/content-without-clickthrough',
+    'answer-readiness/last-updated-indicator',
+    'answer-readiness/meta-description-aeo',
+    'answer-readiness/brand-name',
+    'answer-readiness/trust-signals',
+    'answer-readiness/review-signals',
+  ],
+} as const;
+
 function calculateReadinessVitals(
   checks: Array<{ id: string; category: string; score: number; status: CheckStatus }>,
 ): {
@@ -490,47 +535,15 @@ function calculateReadinessVitals(
     return Math.round((matching.reduce((sum, c) => sum + c.score, 0) / matching.length) * 100);
   };
 
-  const getScore = (ids: string[]) => average(applicable.filter((c) => ids.includes(c.id)));
+  const getScore = (ids: readonly string[]) => average(applicable.filter((c) => ids.includes(c.id)));
 
-  const getCategoryScoreByPrefix = (prefix: string) =>
-    average(applicable.filter((c) => c.id.startsWith(prefix) || c.category === prefix));
+  const getCategoryScore = (category: string) =>
+    average(applicable.filter((c) => c.category === category));
 
   return {
-    commerce: getScore([
-      'structured-data/service-product-schema',
-      'agentic-commerce/offer-schema',
-      'agentic-commerce/product-identifiers',
-      'structured-data/advanced-product-details',
-      'structured-data/product-reviews',
-      'agentic-commerce/product-transaction-certainty',
-    ]),
-    content: getScore([
-      'machine-discovery/llms-txt-exists',
-      'machine-discovery/llms-txt-blockquote',
-      'machine-discovery/llms-txt-sections',
-      'machine-discovery/llms-txt-link-descriptions',
-      'machine-discovery/llms-txt-links-valid',
-      'machine-discovery/llms-full-txt',
-      'machine-discovery/sitemap-exists',
-      'machine-discovery/discovery-index-coverage',
-      'machine-discovery/sitemap-absolute-urls',
-      'machine-discovery/sitemap-lastmod',
-      'answer-readiness/faq-sections',
-      'answer-readiness/question-headings',
-      'answer-readiness/first-paragraph-answers',
-      'answer-readiness/direct-definitions',
-      'answer-readiness/comparison-tables',
-      'answer-readiness/numbered-steps',
-      'answer-readiness/specific-numbers',
-      'answer-readiness/dates-on-content',
-      'answer-readiness/content-without-clickthrough',
-      'answer-readiness/last-updated-indicator',
-      'answer-readiness/meta-description-aeo',
-      'answer-readiness/brand-name',
-      'answer-readiness/trust-signals',
-      'answer-readiness/review-signals',
-    ]),
-    botAccessibility: getCategoryScoreByPrefix('access-crawl-control'),
-    technical: getCategoryScoreByPrefix('operability-safety'),
+    commerce: getScore(READINESS_VITAL_IDS.commerce),
+    content: getScore(READINESS_VITAL_IDS.content),
+    botAccessibility: getCategoryScore('access-crawl-control'),
+    technical: getCategoryScore('content-extraction'),
   };
 }

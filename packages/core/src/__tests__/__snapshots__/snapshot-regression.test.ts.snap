@@ -3,14 +3,14 @@
 exports[`Snapshot Regression Tests > matches baseline results for Labs Homepage 1`] = `
 [
   {
-    "explanation": "llms.txt exists and is valid.",
-    "id": "machine-discovery/llms-txt-exists",
+    "explanation": "Site is served over HTTPS with a valid TLS connection.",
+    "id": "access-crawl-control/https-enabled",
     "score": 1,
     "status": "pass",
   },
   {
-    "explanation": "Site is served over HTTPS with a valid TLS connection.",
-    "id": "access-crawl-control/https-enabled",
+    "explanation": "llms.txt exists and is valid.",
+    "id": "machine-discovery/llms-txt-exists",
     "score": 1,
     "status": "pass",
   },

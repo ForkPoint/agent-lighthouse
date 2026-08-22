@@ -21,26 +21,20 @@ export const TAG_SCAN_ERROR = 'scan-error';
 
 // ── Scoring ────────────────────────────────────────────────────
 
-export const CATEGORY_WEIGHTS: Record<string, number> = {
-  'machine-discovery': 0.18,
-  'access-crawl-control': 0.08,
-  'structured-data': 0.1,
-  'agentic-commerce': 0.02,
-  'agent-interfaces': 0.18,
-  'content-extraction': 0.1,
-  'operability-safety': 0.17,
-  'answer-readiness': 0.17,
-};
+// Category weights are no longer hand-tuned percentages. A category's share of
+// the overall score is its *evidence mass* — the summed weight of its
+// registered audits — derived in `audit-config.ts` as `CATEGORY_MASS` (spec §4).
 
+/** Display names for the 8 v2 categories. */
 export const CATEGORY_NAMES: Record<string, string> = {
-  'machine-discovery': 'Machine Discovery',
   'access-crawl-control': 'Access & Crawl Control',
-  'structured-data': 'Structured Data & Schema Markup',
-  'agentic-commerce': 'Agentic Commerce',
-  'agent-interfaces': 'Agent Interfaces',
-  'content-extraction': 'Content Extraction & Structure',
-  'operability-safety': 'Operability & Safety',
+  'content-extraction': 'Content Extraction',
+  'machine-discovery': 'Machine Discovery',
+  'structured-data': 'Structured Data',
   'answer-readiness': 'Answer Readiness',
+  'agent-interfaces': 'Agent Interfaces',
+  'agentic-commerce': 'Agentic Commerce',
+  'operability-safety': 'Agent Operability & Safety',
 };
 
 export const READINESS_WEIGHTS = {

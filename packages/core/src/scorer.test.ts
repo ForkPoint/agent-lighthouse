@@ -1,5 +1,6 @@
 import type { CheckResult, CategoryResult } from './types';
-import { CATEGORY_WEIGHTS, CATEGORY_NAMES } from './constants';
+import { CATEGORY_NAMES } from './constants';
+import { CATEGORY_MASS, defaultConfig } from './audit-config';
 import { calculateCategoryScore, buildCategoryResult, calculateOverallScore } from './scorer';
 
 // ---------------------------------------------------------------------------
@@ -132,17 +133,17 @@ describe('informative checks are score-neutral', () => {
 // ---------------------------------------------------------------------------
 
 describe('buildCategoryResult', () => {
-  it('returns correct id, name, weight from constants', () => {
+  it('returns correct id and name, and the evidence mass it was handed', () => {
     const categoryId = 'structured-data';
     const checks = [makeCheck({ category: categoryId })];
-    const result = buildCategoryResult(categoryId, checks);
+    const result = buildCategoryResult(categoryId, checks, CATEGORY_MASS[categoryId]);
 
     expect(result.id).toBe(categoryId);
     expect(result.name).toBe(CATEGORY_NAMES[categoryId]);
-    expect(result.weight).toBe(CATEGORY_WEIGHTS[categoryId]);
+    expect(result.weight).toBe(CATEGORY_MASS[categoryId]);
   });
 
-  it('falls back to id as name when category is unknown', () => {
+  it('falls back to id as name and zero mass when category is unknown', () => {
     const result = buildCategoryResult('unknown-category', []);
     expect(result.name).toBe('unknown-category');
     expect(result.weight).toBe(0);
@@ -235,6 +236,73 @@ describe('calculateOverallScore', () => {
       makeCategory({ score: 50, weight: 1.0 }),
     ];
     expect(calculateOverallScore(categories)).toBe(50);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Evidence-mass overall score (spec §4)
+// ---------------------------------------------------------------------------
+
+describe('calculateOverallScore — evidence mass', () => {
+  // Category weight is no longer a hand-tuned percentage: it is the summed
+  // weight of the category's registered audits, so the divisor is whatever the
+  // evidence adds up to rather than a fixed 1.0.
+  it('normalizes by total mass instead of assuming weights sum to 1', () => {
+    const categories: CategoryResult[] = [
+      makeCategory({ id: 'a', score: 80, weight: 12 }),
+      makeCategory({ id: 'b', score: 60, weight: 4 }),
+    ];
+    // (80*12 + 60*4) / 16 = 75
+    expect(calculateOverallScore(categories)).toBe(75);
+  });
+
+  it('property: moving an audit between categories cannot move the overall when scores are equal', () => {
+    const before: CategoryResult[] = [
+      makeCategory({ id: 'a', score: 64, weight: 10 }),
+      makeCategory({ id: 'b', score: 64, weight: 6 }),
+    ];
+    // The same audit (weight 1.0) now sits in category b instead of a: mass
+    // shifts across the boundary, total mass is unchanged.
+    const after: CategoryResult[] = [
+      makeCategory({ id: 'a', score: 64, weight: 9 }),
+      makeCategory({ id: 'b', score: 64, weight: 7 }),
+    ];
+    expect(calculateOverallScore(after)).toBe(calculateOverallScore(before));
+    expect(calculateOverallScore(after)).toBe(64);
+  });
+
+  it('property: a category of only informative audits (mass 0) cannot move the overall', () => {
+    const scoredOnly: CategoryResult[] = [
+      makeCategory({ id: 'a', score: 90, weight: 8 }),
+      makeCategory({ id: 'b', score: 40, weight: 2 }),
+    ];
+    const withMassless: CategoryResult[] = [
+      ...scoredOnly,
+      // Every member audit is informative/experimental → zero evidence mass.
+      makeCategory({ id: 'informative-only', score: 0, weight: 0 }),
+      makeCategory({ id: 'experimental-only', score: 100, weight: 0 }),
+    ];
+    expect(calculateOverallScore(withMassless)).toBe(calculateOverallScore(scoredOnly));
+  });
+
+  it('returns 0 when nothing carries mass at all', () => {
+    expect(
+      calculateOverallScore([
+        makeCategory({ id: 'a', score: 100, weight: 0 }),
+        makeCategory({ id: 'b', score: 100, weight: 0 }),
+      ]),
+    ).toBe(0);
+  });
+
+  it('is driven by the registry: every category weight is its evidence mass', () => {
+    for (const cat of defaultConfig.categories) {
+      const mass = (defaultConfig.audits[cat.id] ?? []).reduce(
+        (sum, reg) => sum + reg.meta.weight,
+        0,
+      );
+      expect(cat.weight).toBe(mass);
+      expect(CATEGORY_MASS[cat.id]).toBe(mass);
+    }
   });
 });
 

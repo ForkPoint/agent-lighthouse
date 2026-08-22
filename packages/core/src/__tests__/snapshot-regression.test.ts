@@ -30,6 +30,9 @@ describe('Snapshot Regression Tests', () => {
     ]);
     const resultsToSnapshot = checks
       .filter((c) => snapshotIds.has(c.id))
+      // Sort by id: the snapshot is about verdicts, not about the order the
+      // registry happens to iterate its categories in.
+      .sort((a, b) => a.id.localeCompare(b.id))
       .map((c) => ({
         id: c.id,
         status: c.status,

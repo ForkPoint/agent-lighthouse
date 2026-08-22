@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import type { CheckResult } from '@forkpoint/agent-lighthouse-core';
-import { CATEGORY_NAMES, CATEGORY_WEIGHTS } from '@forkpoint/agent-lighthouse-core';
+import { CATEGORY_MASS, CATEGORY_NAMES } from '@forkpoint/agent-lighthouse-core';
 import { hydrateReport, type PersistedScanRow } from './hydrate';
 
 function check(over: Partial<CheckResult> & { id: string; category: string }): CheckResult {
@@ -45,7 +45,7 @@ describe('hydrateReport', () => {
     expect(r.categories.map((c) => c.id)).toEqual(['agent-interfaces', 'answer-engine']);
     const at = r.categories[0]!;
     expect(at.name).toBe(CATEGORY_NAMES['agent-interfaces']);
-    expect(at.weight).toBe(CATEGORY_WEIGHTS['agent-interfaces']);
+    expect(at.weight).toBe(CATEGORY_MASS['agent-interfaces']);
     expect(at.score).toBe(80); // from categoryScores
     expect({ pass: at.passCount, warn: at.warnCount, fail: at.failCount }).toEqual({
       pass: 1,
@@ -72,7 +72,7 @@ describe('hydrateReport', () => {
       }),
     );
     expect(r.categories.map((c) => c.id)).toEqual(['agent-interfaces', 'mystery-cat']);
-    expect(r.categories.find((c) => c.id === 'mystery-cat')!.weight).toBe(0); // no shared weight
+    expect(r.categories.find((c) => c.id === 'mystery-cat')!.weight).toBe(0); // no shared mass
   });
 
   it('derives topFails (priority order) and topPasses', () => {

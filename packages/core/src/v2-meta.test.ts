@@ -75,14 +75,36 @@ describe('AuditMetaSchema v2 fields', () => {
     expect(parsed.id).toBe(V2_ID);
   });
 
-  it('still accepts a v1 meta without the new fields', () => {
+  // Enforcement flipped in Task 11: the v2 fields are the contract, so a v1
+  // meta (no grade/tier/dossier, numeric id) can no longer be registered.
+  it('rejects a v1 meta without the new fields', () => {
     const { evidenceGrade: _g, tier: _t, dossier: _d, ...v1 } = makeMeta();
-    expect(() => AuditMetaSchema.parse(v1)).not.toThrow();
+    expect(() => AuditMetaSchema.parse(v1)).toThrow();
+  });
+
+  it('requires each of evidenceGrade, tier and dossier individually', () => {
+    for (const field of ['evidenceGrade', 'tier', 'dossier'] as const) {
+      const meta = makeMeta();
+      delete (meta as unknown as Record<string, unknown>)[field];
+      expect(AuditMetaSchema.safeParse(meta).success).toBe(false);
+    }
   });
 
   it('rejects an unknown evidence grade or tier', () => {
     expect(() => AuditMetaSchema.parse(makeMeta({ evidenceGrade: 'E' as never }))).toThrow();
     expect(() => AuditMetaSchema.parse(makeMeta({ tier: 'scoring' as never }))).toThrow();
+  });
+
+  it('rejects an id that is not a category/slug path', () => {
+    for (const id of ['1.1', 'machine-discovery', 'Machine-Discovery/llms-txt', 'a/b/c', 'md/llms_txt']) {
+      expect(AuditMetaSchema.safeParse(makeMeta({ id })).success).toBe(false);
+    }
+  });
+
+  it('accepts digits inside the slug half', () => {
+    expect(AuditMetaSchema.safeParse(makeMeta({ id: 'content-extraction/single-h1' })).success).toBe(
+      true,
+    );
   });
 });
 

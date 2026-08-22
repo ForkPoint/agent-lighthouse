@@ -46,8 +46,11 @@ export const EvidenceGradeSchema = z.enum(['A', 'B', 'C', 'D']);
 /** Scoring participation tier (spec §4). */
 export const AuditTierSchema = z.enum(['scored', 'informative', 'experimental']);
 
+/** v2 audit identity: `category/slug`, stable across releases (spec §6). */
+export const AUDIT_ID_PATTERN = /^[a-z-]+\/[a-z0-9-]+$/;
+
 export const AuditMetaSchema = z.object({
-  id: z.string(),
+  id: z.string().regex(AUDIT_ID_PATTERN, 'audit id must be a `category/slug` path'),
   category: z.string(),
   title: z.string(),
   failureTitle: z.string(),
@@ -60,11 +63,11 @@ export const AuditMetaSchema = z.object({
   defaultPriority: CheckPrioritySchema,
   guidance: AuditGuidanceSchema.optional(),
   deprecated: DeprecationNoticeSchema.optional(),
-  // v2 taxonomy fields. Optional here on purpose: audits are stamped
-  // incrementally, and enforcement flips once every audit carries them.
-  evidenceGrade: EvidenceGradeSchema.optional(),
-  tier: AuditTierSchema.optional(),
-  dossier: z.string().max(500).optional(),
+  // v2 taxonomy fields, now required: every registered audit must state where
+  // its weight comes from (grade + tier) and which dossier proves it.
+  evidenceGrade: EvidenceGradeSchema,
+  tier: AuditTierSchema,
+  dossier: z.string().min(1).max(500),
 });
 
 export const CheckResultSchema = z.object({

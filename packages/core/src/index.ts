@@ -26,7 +26,7 @@ export type { PageJudgement } from './gatherers/pages';
 export type { CheckContext, CheckFn, PageContext } from './check-context';
 export { Audit } from './audit';
 export { runAudits, planAudits } from './audit-runner';
-export { defaultConfig } from './audit-config';
+export { defaultConfig, CATEGORY_MASS } from './audit-config';
 export type { ScanConfig, CategoryConfig, AuditRegistration } from './audit-config';
 export type { AuditProgressEvent, AuditPlan, AuditRunResult } from './audit-runner';
 export {
