@@ -20,6 +20,13 @@ export interface FetchOptions {
   contentType?: string;
   /** Override the User-Agent header (e.g. to probe a site as a specific AI bot). */
   userAgent?: string;
+  /**
+   * Extra request headers (e.g. `MCP-Protocol-Version`). Applied before the
+   * fetcher's own headers, so a caller can add headers but cannot clobber the
+   * scanner User-Agent, the negotiated Accept, or credentials lifted out of the
+   * URL's userinfo.
+   */
+  headers?: Record<string, string>;
   /** External abort (e.g. the per-scan deadline). Combined with the per-request timeout. */
   signal?: AbortSignal;
 }
@@ -107,6 +114,7 @@ export function createFetcher() {
       body: requestBody,
       contentType,
       userAgent,
+      headers: extraHeaders,
       signal: externalSignal,
     } = options;
 
@@ -126,6 +134,7 @@ export function createFetcher() {
 
     try {
       const reqHeaders: Record<string, string> = {
+        ...extraHeaders,
         'User-Agent': userAgent ?? SCANNER_USER_AGENT,
         Accept: acceptHeader,
       };

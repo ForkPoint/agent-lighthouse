@@ -3,121 +3,16 @@ import { Audit } from '../../audit';
 import { weightForGrade } from '../../scorer';
 import type { CheckContext } from '../../check-context';
 import { isSafeUrl } from '../../fetcher';
-
-function tryParseJson(body: string): unknown {
-  try {
-    return JSON.parse(body);
-  } catch {
-    return undefined;
-  }
-}
-
-function isObject(val: unknown): val is Record<string, unknown> {
-  return typeof val === 'object' && val !== null && !Array.isArray(val);
-}
-
-/**
- * The Streamable HTTP transport may answer a JSON-RPC request with an SSE
- * stream instead of a JSON body. Pull the `data:` payload out before parsing;
- * the old audit ran JSON.parse on the raw frame and reported a healthy server
- * as "HTTP 200 but response is not valid JSON-RPC".
- */
-function parseRpcBody(body: string): unknown {
-  const direct = tryParseJson(body);
-  if (direct !== undefined) return direct;
-
-  const payloads = [...body.matchAll(/^data:\s*(.*)$/gm)].map((m) => m[1]!.trim()).filter(Boolean);
-  for (const payload of payloads) {
-    const parsed = tryParseJson(payload);
-    if (parsed !== undefined) return parsed;
-  }
-  return undefined;
-}
-
-/** The `result` of a successful JSON-RPC 2.0 response, or undefined. */
-function rpcResult(body: string): Record<string, unknown> | undefined {
-  const parsed = parseRpcBody(body);
-  if (!isObject(parsed)) return undefined;
-  if (parsed['jsonrpc'] !== '2.0' || 'error' in parsed) return undefined;
-  return isObject(parsed['result']) ? parsed['result'] : undefined;
-}
-
-// MCP's current specification revision. The old audit pinned 2024-11-05, which
-// servers that reject unsupported versions answer with a JSON-RPC error.
-const PROTOCOL_VERSION = '2026-07-28';
-// Streamable HTTP requires both; the official TypeScript SDK transport answers
-// 406 Not Acceptable when they are missing, which read as a broken server.
-const MCP_ACCEPT = 'application/json, text/event-stream';
+import {
+  discoverMcpEndpoint,
+  parseRpcResponse,
+  rpcRequest,
+  isObject,
+  MCP_ACCEPT,
+  MCP_PROTOCOL_VERSION as PROTOCOL_VERSION,
+} from './_mcp-client';
 
 const CAPABILITY_KEYS = ['tools', 'resources', 'prompts'];
-
-function rpcRequest(id: number, method: string, params?: unknown): string {
-  return JSON.stringify({ jsonrpc: '2.0', id, method, ...(params ? { params } : {}) });
-}
-
-/**
- * Either a usable endpoint, or the reason the site's own declaration is
- * malformed — both come out of the same pass over the declared sources.
- */
-type Endpoint =
-  | { url: string; source: 'servers.json' | 'ucp' | 'ai-catalog' }
-  | { url: ''; source: 'no-array' | 'no-url' };
-
-/**
- * Where the site says its MCP server is. Every path here is an *explicit*
- * declaration; see the dossier for why `/mcp` is not probed speculatively.
- */
-function discoverEndpoint(ctx: CheckContext): Endpoint | undefined {
-  const servers = ctx.rootFiles['/.well-known/mcp/servers.json'];
-  if (servers && servers.status === 200 && servers.body) {
-    const parsed = tryParseJson(servers.body);
-    if (!isObject(parsed) || !Array.isArray(parsed['servers'])) return { url: '', source: 'no-array' };
-    const entry = (parsed['servers'] as unknown[]).find(
-      (s) => isObject(s) && typeof s['url'] === 'string' && s['url'],
-    );
-    if (!entry) return { url: '', source: 'no-url' };
-    return { url: (entry as Record<string, unknown>)['url'] as string, source: 'servers.json' };
-  }
-
-  const ucp = ctx.rootFiles['/.well-known/ucp'];
-  if (ucp && ucp.status === 200 && ucp.body) {
-    const parsed = tryParseJson(ucp.body);
-    if (isObject(parsed)) {
-      const root = (parsed['ucp'] ?? parsed) as Record<string, unknown>;
-      const services = (parsed['services'] ?? root['services']) as
-        | Record<string, unknown>
-        | undefined;
-      if (isObject(services)) {
-        for (const list of Object.values(services)) {
-          if (!Array.isArray(list)) continue;
-          for (const svc of list) {
-            if (isObject(svc) && svc['transport'] === 'mcp' && typeof svc['endpoint'] === 'string') {
-              return { url: svc['endpoint'], source: 'ucp' };
-            }
-          }
-        }
-      }
-    }
-  }
-
-  // An MCP server card declared in the AI catalog is an explicit declaration
-  // too, and it is the one the mcp-endpoint evidence recommends detecting.
-  const catalog = ctx.rootFiles['/.well-known/ai-catalog.json'];
-  if (catalog && catalog.status === 200 && catalog.body) {
-    const parsed = tryParseJson(catalog.body);
-    if (isObject(parsed) && Array.isArray(parsed['entries'])) {
-      for (const entry of parsed['entries'] as unknown[]) {
-        if (!isObject(entry)) continue;
-        const type = typeof entry['type'] === 'string' ? entry['type'] : '';
-        if (type.includes('mcp-server-card') && typeof entry['url'] === 'string') {
-          return { url: entry['url'], source: 'ai-catalog' };
-        }
-      }
-    }
-  }
-
-  return undefined;
-}
 
 const EXPECTED =
   'A declared MCP endpoint answers a spec-compliant initialize handshake, negotiates capabilities, and annotates its tools';
@@ -176,7 +71,7 @@ export class McpEndpointAudit extends Audit {
   }
 
   async audit(ctx: CheckContext): Promise<AuditResult> {
-    const endpoint = discoverEndpoint(ctx);
+    const endpoint = discoverMcpEndpoint(ctx);
 
     if (!endpoint) {
       return this.fail(
@@ -257,7 +152,8 @@ export class McpEndpointAudit extends Audit {
       );
     }
 
-    const result = rpcResult(response.body);
+    const outcome = parseRpcResponse(response);
+    const result = outcome.ok ? outcome.value : undefined;
     if (!result || typeof result['protocolVersion'] !== 'string') {
       return this.warn(
         `MCP endpoint at ${url} returned HTTP 200 but the response is not valid JSON-RPC.`,
@@ -307,8 +203,10 @@ export class McpEndpointAudit extends Audit {
         body: rpcRequest(2, 'tools/list'),
       });
       if (listed.status === 200) {
-        const listResult = rpcResult(listed.body);
-        if (listResult && Array.isArray(listResult['tools'])) tools = listResult['tools'];
+        const listOutcome = parseRpcResponse(listed);
+        if (listOutcome.ok && Array.isArray(listOutcome.value['tools'])) {
+          tools = listOutcome.value['tools'] as unknown[];
+        }
       }
     } catch {
       tools = undefined;
