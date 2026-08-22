@@ -16,6 +16,9 @@ export { ReviewSchemaAudit } from './review-schema';
 export { AuthorSchemaAudit } from './author-schema';
 export { ProductDetailsAudit } from './advanced-product-details';
 
+// New in v2 (Plan 5): graduated from the proposal backlog on 2026-08-22.
+export { ClaimreviewAdvisoryAudit } from './claimreview-advisory';
+
 import { JsonLdPresentAudit } from './json-ld-present';
 import { SchemaValidationAudit } from './schema-validation';
 import { OrganizationSchemaAudit } from './organization-schema';
@@ -29,6 +32,7 @@ import { LocalBusinessSchemaAudit } from './local-business-schema';
 import { ReviewSchemaAudit } from './review-schema';
 import { AuthorSchemaAudit } from './author-schema';
 import { ProductDetailsAudit } from './advanced-product-details';
+import { ClaimreviewAdvisoryAudit } from './claimreview-advisory';
 
 /** Every audit that lives in the structured-data category, in map order. */
 export const STRUCTURED_DATA_AUDITS = [
@@ -45,4 +49,5 @@ export const STRUCTURED_DATA_AUDITS = [
   ReviewSchemaAudit,
   AuthorSchemaAudit,
   ProductDetailsAudit,
+  ClaimreviewAdvisoryAudit,
 ] as const;

@@ -1,18 +1,19 @@
 ---
-check: claimreview-investment-advisory
-title: "ClaimReview investment advisory"
-domain: trust-provenance
-status: proposed
+audit: structured-data/claimreview-advisory
+category: structured-data
+source_file: packages/core/src/audits/structured-data/claimreview-advisory.ts
+slug: claimreview-advisory
 evidence_grade: A
-uniqueness: partial-overlap
-difficulty: multi-page
-scoring_tier: informative (weight 0)
+tier: informative
+disposition: "new in v2 — graduated from proposal 2026-08-22"
 reviewed: 2026-08-20
+graduated: 2026-08-22
 ---
+
 
 # ClaimReview investment advisory
 
-> Proposed check. Evidence grade **A** · partial overlap · implementation: `multi-page`
+> Shipped in v2. Evidence grade **A** · informative tier · partial overlap · implementation: `multi-page`
 
 ## What it checks
 
@@ -46,3 +47,26 @@ Tier per evidence policy: **informative (weight 0)** — grade A does not meet t
 ## Review history
 
 - 2026-08-20 — proposed by the novel-checks research pass (10-agent evidence workflow); sources URL-verified at research time.
+
+## Implementation deviations
+
+**Category.** The Plan 5 task sheet filed this under `operability-safety`. It
+ships under `structured-data`: the audit reads JSON-LD and validates a schema.org
+type, which is what that category holds. Filing a schema-shape advisory under
+Operability & Safety would have mis-filed it permanently in the v2 taxonomy.
+
+Shipped as `claimreview-advisory`, dropping the proposal's `-investment` segment.
+
+**Multi-page, without extra fetches.** The proposal is graded `multi-page`. It
+consumes `ctx.pages`, which the orchestrator has already fetched and parsed, so
+the audit issues no requests of its own.
+
+Microdata is not parsed — only JSON-LD, including nodes nested inside `@graph`.
+Every fact-check publisher in the evidence emits JSON-LD; adding a microdata
+walker for this one advisory would not change any verdict it reaches.
+
+## Deferred
+
+Nothing. The sketch's six steps all ship, including the zero weight, which the
+weight law derives from `weightForGrade('A', 'informative')` rather than
+hard-coding.

@@ -1,6 +1,6 @@
 # Proposed checks — evidence dossiers
 
-72 proposed checks from the 2026-08-20 novel-checks research pass. Each dossier states what the check verifies, the falsifiable mechanism behind it, cited evidence from the [source registry](../sources.json), competitor coverage, and an implementation sketch. Grading rubric: [evidence policy](../POLICY.md).
+71 proposed checks from the 2026-08-20 novel-checks research pass. Each dossier states what the check verifies, the falsifiable mechanism behind it, cited evidence from the [source registry](../sources.json), competitor coverage, and an implementation sketch. Grading rubric: [evidence policy](../POLICY.md).
 
 Seven dossiers left this folder on 2026-08-22 (Plan 5, Task 2): six tool
 surveys moved to [../research](../research/README.md) because their verdict is
@@ -38,7 +38,6 @@ Grades: **A** = documented consumer behavior or ratified standard · **B** = dra
 | A | [Version Downgrade Recoverability](./mcp-server-quality/version-downgrade-recoverability.md) | mcp-server-quality | unique | `static-fetch` | scored |
 | A | [Ghost content: CSS-hidden text ingested as visible](./token-economics/ghost-content-css-hidden-text-ingested-as-visible.md) | token-economics | unique | `static-fetch` | scored |
 | A | [Inlined hydration-state payload share](./token-economics/inlined-hydration-state-payload-share.md) | token-economics | unique | `static-fetch` | scored |
-| A | [ClaimReview investment advisory](./trust-provenance/claimreview-investment-advisory.md) | trust-provenance | partial-overlap | `multi-page` | informative (weight 0) |
 | B | [Drag and Slider Dependency](./agent-operability/drag-and-slider-dependency.md) | agent-operability | unique | `static-fetch` | scored |
 | B | [Ghost-Clickable Element Ratio](./agent-operability/ghost-clickable-element-ratio.md) | agent-operability | unique | `static-fetch` | scored |
 | B | [Hover-Only Content and Navigation](./agent-operability/hover-only-content-and-navigation.md) | agent-operability | unique | `static-fetch` | scored |
