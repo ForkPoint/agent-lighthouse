@@ -154,7 +154,7 @@ Requirement source per file = its `TODO(redeem)` header + linked dossier "Requir
 - [ ] `webmcp-declarative-forms` — align to the W3C explainer/Baseline `declarative-webmcp` attribute names (WPT-backed).
 - [ ] Update dossiers (grades per REWORK-TODO), drop the executed entries from REWORK-TODO.md. Full gates. Commit `feat(core)!: rewrite agent catalog + WebMCP audits to real specs`.
 
-SKIPPED by user decision (2026-08-22): `webmcp-registered-tools` — pending-triage redeem not approved; keeps its `TODO(redeem)` marker and current behavior.
+EXECUTED 2026-08-22 (user approved same day): `webmcp-registered-tools` redeemed in the follow-up wave (commit 7aad239).
 
 ---
 
@@ -165,7 +165,7 @@ SKIPPED by user decision (2026-08-22): `webmcp-registered-tools` — pending-tri
 - [ ] `answer-readiness/trust-signals` — rebuild on the GEO-benchmark evidence per dossier.
 - [ ] Dossiers + REWORK-TODO.md updated. Full gates. Commit `feat(core)!: rewrite crawl-control and content-signal audits per evidence`.
 
-SKIPPED by user decision (2026-08-22): `ai-content-declaration`, `tdm-rep` — pending-triage redeems not approved; markers and current behavior stay.
+EXECUTED 2026-08-22 (user approved same day): `ai-content-declaration` (027174d) and `tdm-rep` (4839134) redeemed in the follow-up wave.
 
 ---
 
@@ -174,7 +174,7 @@ SKIPPED by user decision (2026-08-22): `ai-content-declaration`, `tdm-rep` — p
 - [ ] `structured-data/speakable-schema` — page-type gate to news/article publishers; delete the Alexa/Siri claim.
 - [ ] Dossiers + REWORK-TODO.md: delete the stale `mobile-friendly` entry (audit sunset in Plan 3); the 6 user-skipped pending redeems (`webmcp-registered-tools`, `ai-content-declaration`, `tdm-rep`, `form-error-messages`, `direct-definitions`, `cors-api-routes`) STAY listed under "pending approval" with a note `skipped 2026-08-22 — awaiting user triage`. Full gates. Commit `feat(core)!: redeem speakable-schema per approved dossier`.
 
-SKIPPED by user decision (2026-08-22): `form-error-messages`, `direct-definitions`, `cors-api-routes` — pending-triage redeems not approved.
+EXECUTED 2026-08-22 (user approved same day): `form-error-messages` (1681037), `direct-definitions` (ee8a349), `cors-api-routes` (dc430d4) redeemed in the follow-up wave.
 
 ---
 

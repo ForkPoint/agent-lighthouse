@@ -92,7 +92,10 @@ function survey(ctx: CheckContext): Survey {
         result.invalid.push(field);
         return;
       }
-      if ($el.attr('required') !== undefined || ($el.attr('aria-required') ?? '') === 'true') {
+      if (
+        $el.attr('required') !== undefined ||
+        ($el.attr('aria-required') ?? '').toLowerCase() === 'true'
+      ) {
         result.required.push(field);
       }
     });

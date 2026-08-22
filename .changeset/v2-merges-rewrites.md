@@ -96,8 +96,9 @@ changed shape enough to be worth calling out:
   and 0 (mining permitted) as distinct outcomes rather than one shared pass,
   validates the well-known file against the spec's array-of-objects shape
   behind a content-type and leading-`<` guard, reads the `tdm-reservation`
-  response header, and returns `na` when nothing is declared — removing a
-  half-point penalty from nearly every scan. `audit()` is now synchronous.
+  response header, and returns `na` when nothing is declared instead of a
+  `warn` on nearly every scan (the audit is weight 0, so no score moved).
+  `audit()` is now synchronous.
 - `agent-interfaces/cors-api-routes` probes the endpoints the OpenAPI document
   declares (`servers[].url` plus concrete paths, `isSafeUrl()`-gated) instead of
   a hardcoded `/api/`, requires an `Access-Control-Allow-Origin` that admits a
