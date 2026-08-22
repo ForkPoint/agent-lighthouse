@@ -82,6 +82,36 @@ describe('generateHtmlReport', () => {
     expect(html).toContain('No consumer reads this signal.');
   });
 
+  // Final-review finding I2: the ai-bot-directives per-bot table and the
+  // security-header-hygiene weak-vs-missing breakdown live entirely in `found`,
+  // so the report must keep its newlines and must render `details.found`.
+  it('preserves newlines in a multi-line found value and renders details.found', () => {
+    const table = 'GPTBot: allowed\nClaudeBot: allowed\nPerplexityBot: blocked';
+    const html = generateHtmlReport(
+      report([
+        cat({
+          id: 'access-crawl-control',
+          checks: [
+            check({
+              id: 'access-crawl-control/ai-bot-directives',
+              status: 'warn',
+              displayValue: table,
+              details: { found: table },
+            }),
+          ],
+        }),
+      ]),
+    );
+
+    // The summary line keeps the newlines instead of collapsing the table.
+    expect(html).toMatch(/class="[^"]*whitespace-pre-line[^"]*"[^>]*>GPTBot: allowed\nClaudeBot/);
+    // And the evidence block renders details.found, also newline-preserving.
+    expect(html).toContain('What we found:');
+    expect(
+      html.match(/whitespace-pre-line[^>]*>GPTBot: allowed\nClaudeBot: allowed\nPerplexityBot: blocked/g),
+    ).toHaveLength(2);
+  });
+
   it('omits the deprecation block for a check without a notice', () => {
     const html = generateHtmlReport(
       report([cat({ id: 'agent-interfaces', checks: [check({ id: 'live', status: 'pass' })] })]),

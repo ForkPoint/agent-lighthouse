@@ -13,7 +13,7 @@ v2 registry: evidence-mass overall score and an enforced audit contract.
 overall = Σ(categoryScore × categoryMass) / Σ(categoryMass)
 ```
 
-A category made only of informative/experimental audits has mass 0 and cannot move the overall score. Scores shift accordingly: influence now follows proven evidence (e.g. Access & Crawl Control carries 36 mostly grade-A audits and weighs far more than its old 0.08).
+A category made only of informative/experimental audits has mass 0 and cannot move the overall score. Scores shift accordingly: influence now follows proven evidence (e.g. Access & Crawl Control carries 29 mostly grade-A audits and weighs far more than its old 0.08).
 
 **Breaking: `AuditMetaSchema` enforces the v2 contract.** `evidenceGrade`, `tier` and `dossier` are required — an audit must state where its weight comes from and which dossier proves it — and `id` must match `AUDIT_ID_PATTERN` (`/^[a-z-]+\/[a-z0-9-]+$/`, i.e. `category/slug`), so numeric v1 ids no longer validate. Translating an existing id is covered in the taxonomy note.
 

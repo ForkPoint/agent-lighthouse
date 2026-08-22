@@ -89,7 +89,7 @@ export function generateHtmlReport(report: ScanReport): string {
                             <span class="text-[10px] uppercase tracking-wider font-mono text-slate-400">[${escapeHtml(c.id)}]</span>
                             ${c.deprecated ? '<span class="text-[10px] uppercase tracking-wider font-bold px-1.5 py-0.5 rounded bg-slate-200 dark:bg-slate-700 text-slate-500 dark:text-slate-400">Deprecated</span>' : ''}
                           </div>
-                          ${c.displayValue ? `<div class="text-xs font-mono text-slate-500 dark:text-slate-400 mt-0.5">${escapeHtml(c.displayValue)}</div>` : ''}
+                          ${c.displayValue ? `<div class="text-xs font-mono text-slate-500 dark:text-slate-400 mt-0.5 whitespace-pre-line">${escapeHtml(c.displayValue)}</div>` : ''}
                         </div>
                       </div>
                       <span class="text-xs text-slate-400 group-open:rotate-180 transition-transform mt-1">▼</span>
@@ -106,6 +106,13 @@ export function generateHtmlReport(report: ScanReport): string {
 
                       ${c.explanation ? `<p class="leading-relaxed font-medium text-slate-700 dark:text-slate-300">${escapeHtml(c.explanation)}</p>` : ''}
                       
+                      ${c.details?.found ? `
+                        <div class="bg-slate-50 dark:bg-slate-950/60 p-3 rounded-lg border border-slate-200/60 dark:border-slate-800/60">
+                          <strong class="text-slate-900 dark:text-slate-200 block mb-1">What we found:</strong>
+                          <span class="font-mono text-[11px] whitespace-pre-line">${escapeHtml(c.details.found)}</span>
+                        </div>
+                      ` : ''}
+
                       ${c.impact ? `
                         <div class="bg-slate-50 dark:bg-slate-950/60 p-3 rounded-lg border border-slate-200/60 dark:border-slate-800/60">
                           <strong class="text-slate-900 dark:text-slate-200 block mb-1">Impact on AI Agents:</strong>

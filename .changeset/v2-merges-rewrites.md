@@ -5,8 +5,8 @@
 "@forkpoint/agent-lighthouse-mcp": patch
 ---
 
-v2 merge wave: the registry lands at 148 audits, and every one of them was
-rewritten against its evidence dossier.
+v2 merge wave: the registry lands at 148 audits, and every one the evidence
+review flagged for rework was rewritten against its evidence dossier.
 
 **Breaking: the registry is 148 audits, down from 181.** The v2 taxonomy note
 described 181 v1 ids carried forward; carrying them forward is not the same as
@@ -26,7 +26,8 @@ keeping 181 separate checks. 57 of those ids resolve onto just 24 v2 audits —
 | | **148** |
 
 The collapse is 2 consolidations and 22 merge folds, plus 2 splits that move a
-signal rather than remove one:
+signal rather than remove one (one of the two splits, `webmcp-tool-naming`, is
+already counted among the 22 folds — its id stops emitting):
 
 - **2 consolidations** — 5 per-bot audits (`bytespider`, `cohere-ai`, `youbot`,
   `diffbot`, `ai2bot`) become one `access-crawl-control/ai-bot-directives`, and
@@ -67,19 +68,30 @@ const v2IdFor = (v1Id) => {
 The census is unchanged — 207 v1 ids, 26 `removed`, 181 `renamed` — but those
 181 point at only 148 distinct v2 ids.
 
-**Breaking: every remaining audit was rewritten to evidence-backed pass
-conditions.** A v1 audit passed when a pattern matched; a v2 audit passes when
-the dossier says the agent-visible signal is actually present. Pass conditions,
-thresholds, `na` handling and priorities all moved, so **the same site will
-score differently on the same audit id**. The changes that move the most
-results:
+**Breaking: every remaining audit except the six pending-triage holdovers was
+rewritten to evidence-backed pass conditions.** A v1 audit passed when a pattern
+matched; a v2 audit passes when the dossier says the agent-visible signal is
+actually present. Pass conditions, thresholds, `na` handling and priorities all
+moved, so **the same site will score differently on the same audit id**.
+
+Six audits are the exception: `agent-interfaces/webmcp-registered-tools`,
+`access-crawl-control/ai-content-declaration`, `access-crawl-control/tdm-rep`,
+`operability-safety/form-error-messages`, `answer-readiness/direct-definitions`
+and `agent-interfaces/cors-api-routes` were deliberately deferred out of v2.0
+and ship byte-unchanged apart from their v2 metadata block.
+
+The changes that move the most results:
 
 - `access-crawl-control/robots-directives` now warns on `nosnippet`,
   `noarchive` and `max-snippet:0` — no v1 audit did. Sites with a deliberate
   AI-snippet policy will see a new warn.
-- `access-crawl-control/sensitive-paths` fails on a missing `robots.txt`
-  instead of warning; warning would have scored deleting the file above
-  shipping an empty one.
+- `access-crawl-control/sensitive-paths` fails, instead of warning, when the
+  crawl observed low-value URL families (cart, checkout, search, login,
+  account, admin) and none of them is disallowed for AI crawlers — including
+  when no `robots.txt` is served at all; warning would have scored deleting the
+  file above shipping an empty one. A site whose crawl surfaced no such family
+  returns `na` before `robots.txt` is read, so a missing file alone never
+  fails this audit.
 - `answer-readiness/dates-on-content` warns on publication-only dates that
   claim to be current, and `answer-readiness/review-signals` warns when review
   counts come from a third-party widget rather than markup.

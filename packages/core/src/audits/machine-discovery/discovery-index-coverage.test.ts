@@ -3,6 +3,30 @@ import { DiscoveryIndexCoverageAudit } from './discovery-index-coverage';
 import { mockCheckContext, mockPageContext, mockFetchResult } from '../../__tests__/test-utils';
 import type { CheckContext } from '../../check-context';
 
+// isSafeUrl performs a real DNS lookup before the audit fetches a sub-sitemap
+// harvested from the scanned site's own sitemap index. Stub it with an offline
+// stand-in that still blocks loopback and private ranges, so the tripwire test
+// below proves the gate rather than the mock.
+vi.mock('../../fetcher', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../../fetcher')>();
+  return {
+    ...actual,
+    isSafeUrl: async (url: string) => {
+      try {
+        const { protocol, hostname } = new URL(url);
+        if (protocol !== 'http:' && protocol !== 'https:') return false;
+        // `internal.*` stands in for a public-looking hostname that resolves
+        // into a private range — the case the real DNS lookup rejects
+        // (see fetcher.test.ts, 'https://internal.example.com/' -> false).
+        if (hostname.startsWith('internal.')) return false;
+        return !/^(localhost$|127\.|\[?::1\]?$|10\.|192\.168\.)/.test(hostname);
+      } catch {
+        return false;
+      }
+    },
+  };
+});
+
 const sitemap = (locs: string[]) =>
   `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">${locs
     .map((l) => `<url><loc>${l}</loc></url>`)
@@ -136,6 +160,37 @@ describe('DiscoveryIndexCoverageAudit', () => {
     const result = await audit.audit(ctx);
     expect(result.status).toBe('fail');
     expect(result.message).toContain('in no discovery index');
+  });
+
+  // Final-review finding I1: <loc> values are site-controlled input for a fetch
+  // this audit initiates, so they are origin-filtered and isSafeUrl-gated.
+  it('fetches no sub-sitemap that is off-origin or unsafe to probe', async () => {
+    const fetch = vi.fn(async () =>
+      mockFetchResult(sitemap(['https://example.com/about']), 200, 'application/xml'),
+    );
+    const ctx: CheckContext = {
+      ...mockCheckContext([page('https://example.com/about')], {
+        '/sitemap.xml': mockFetchResult(
+          sitemapIndex([
+            'https://attacker.example.net/sitemap.xml', // off-origin
+            'http://localhost/sitemap.xml', // off-origin and unsafe
+            'http://127.0.0.1/sitemap.xml', // off-origin and unsafe
+            'file:///etc/passwd', // not an HTTP(S) URL
+            'https://internal.example.com/sitemap.xml', // on-origin but unsafe
+            'https://cdn.example.com/post-sitemap.xml', // the only fetchable one
+          ]),
+          200,
+          'application/xml',
+        ),
+      }),
+      fetch,
+    };
+
+    const result = await audit.audit(ctx);
+
+    expect(fetch).toHaveBeenCalledTimes(1);
+    expect(fetch).toHaveBeenCalledWith({ url: 'https://cdn.example.com/post-sitemap.xml' });
+    expect(result.status).toBe('pass');
   });
 
   it('caps sub-sitemap fetches at ten', async () => {
