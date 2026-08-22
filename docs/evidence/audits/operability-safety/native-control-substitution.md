@@ -1,18 +1,19 @@
 ---
-check: native-control-substitution-index
-title: "Native Control Substitution Index"
-domain: agent-operability
-status: proposed
+audit: operability-safety/native-control-substitution
+category: operability-safety
+source_file: packages/core/src/audits/operability-safety/native-control-substitution.ts
+slug: native-control-substitution
 evidence_grade: A
-uniqueness: unique
-difficulty: static-fetch
-scoring_tier: scored
+tier: scored
+disposition: "new in v2 — graduated from proposal 2026-08-22"
 reviewed: 2026-08-20
+graduated: 2026-08-22
 ---
+
 
 # Native Control Substitution Index
 
-> Proposed check. Evidence grade **A** · unique · implementation: `static-fetch`
+> Shipped in v2. Evidence grade **A** · scored tier · unique · implementation: `static-fetch`
 
 ## What it checks
 
@@ -54,3 +55,28 @@ Tier per evidence policy: **scored** — grade A meets the A/B bar required for 
 ## Review history
 
 - 2026-08-20 — proposed by the novel-checks research pass (10-agent evidence workflow); sources URL-verified at research time.
+
+## Implementation deviations
+
+The shipped audit is `operability-safety/native-control-substitution`; the
+proposal's `-index` suffix is dropped because the result carries the index as a
+weighted count rather than being an index in its own right.
+
+No dependency substitution was needed: detection is cheerio selector matching
+over the document the scanner already parses.
+
+The region rule is stated concretely, where the sketch said "labelled field
+region": the region is the control's enclosing `<form>` when it has one, and its
+parent element otherwise. A native control anywhere in that region means the
+styled div is decoration around a real element, not a stand-in for one, and the
+div is not counted.
+
+## Deferred
+
+- **Action-cost reporting.** The sketch asks for "the number of agent actions it
+  costs versus its native equivalent". Counting actions requires driving the
+  widget, which is the headless-browser tier. The shipped audit reports the
+  weighted substitution index and the specific contract defect instead.
+- **Virtualised option lists.** The dossier's example failure turns on a popup
+  that renders 20 of 195 options. Whether a list is virtualised is only
+  observable once its script runs, so it is not assessed.

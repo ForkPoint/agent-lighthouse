@@ -13,6 +13,7 @@
  */
 export const NEW_IN_V2: readonly string[] = [
   'operability-safety/form-autofill-token-coverage',
+  'operability-safety/native-control-substitution',
 ];
 
 /** The 148 audits Plan 4 closed the v2 migration on. Never changes again. */
