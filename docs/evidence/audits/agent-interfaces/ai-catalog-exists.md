@@ -1,19 +1,19 @@
 ---
 audit: agent-interfaces/ai-catalog-exists
-audit_id: "5.7"
+audit_id: "5.7, 4.19"
 category: agent-interfaces
 source_file: packages/core/src/audits/agent-interfaces/ai-catalog-exists.ts
 slug: ai-catalog-exists
 review_verdict: delete
 severity: high
 evidence_grade: A
-disposition: "kept — rewrite required (approved 2026-08-21)"
-reviewed: 2026-08-21
+disposition: "merged 2026-08-22 (Plan 4, Task 7) — absorbs ai-catalog-link (4.19); ARD rewrite still open (Task 10)"
+reviewed: 2026-08-22
 ---
 
-# ai-catalog-exists (`5.7`)
+# ai-catalog-exists (`5.7`, `4.19`)
 
-> agent-tools · source `ai-catalog-exists.ts` · review verdict **delete** · evidence grade **A** · disposition: **kept — rewrite required (approved 2026-08-21)**
+> agent-interfaces · source `ai-catalog-exists.ts` · absorbs ai-catalog-link (4.19) · evidence grade **A** · tier **scored** (weight 1.0) · **rewrite still required** — see below
 
 ## What it checks
 
@@ -36,7 +36,35 @@ Invented standard. `/.well-known/ai-catalog.json` is not registered with IANA, i
 - No HTML-soft-404 fixture
 - No content-type assertion
 
-**Overlaps with:** `5.8`, `5.9`, `5.10`
+**Overlaps with:** `5.8`, `5.9`, `5.10`, `4.19` (now absorbed here)
+
+## The merge (Plan 4, Task 7, 2026-08-22)
+
+**Scope note first: this is the fold only.** 5.7's own required rework — the pass condition becoming ARD §4.1's `specVersion` + `host` + `entries[]` instead of a `services` array, and the guidance/code samples being replaced with the real schema — is **not** done here. It is Task 10's job, and the `TODO(redeem)` header stays on the source file with a note saying so. Everything below concerns 4.19's advertisement check and nothing else; the `services`-array pass condition, the vacuous `{"services": []}` pass, the HTML-soft-404 misdiagnosis and the unused `ctx.wafProtection` are all still open against 5.7.
+
+**What was folded.** 4.19 checked for a `<link rel="alternate" type="application/json">` whose optional, English, human-authored `title` attribute contained the exact two-word phrase "ai catalog" — on `ctx.pages[0]` only, with exact case-sensitive `rel` and `type` comparisons that also rejected `application/json; charset=utf-8`. No site on the public web emits that shape, so the audit returned a scored `fail` on every real scan and measured nothing. Its own required rework names the real token: **match `rel="ai-catalog"` (any type), accept the equivalent HTTP `Link` header, and downgrade it to a nice-to-have relative to the well-known file.** All three land:
+
+- `ai-catalog` is matched as a `rel` *token* — case-insensitive, at any position in a multi-token `rel`, with no constraint on `type` and no reference to `title`.
+- An RFC 8288 `Link: </ai-catalog.json>; rel="ai-catalog"` response header counts the same way.
+- Every crawled page is searched, not just the homepage.
+
+**It is deliberately not a pass path.** The one documented consumer, Hugging Face's `hf-discover`, resolves `https://{domain}/.well-known/ai-catalog.json` and nothing else, so an advertisement without the well-known file is not a working catalog. It therefore converts the three `fail` states into a `warn`: *a catalog is advertised at X, but the documented consumer only resolves the well-known path*. When the well-known file is valid, the advertisement is reported in the pass detail as the nice-to-have it is.
+
+### Absorbed evidence — ai-catalog-link (4.19)
+
+4.19's dossier is kept verbatim at [merged/agent-interfaces/ai-catalog-link.md](../../merged/agent-interfaces/ai-catalog-link.md) (grade **B**). The grade comes from its adversarial redemption research: the `rel="ai-catalog"` mechanism is written into two draft specs (ARD §6.1 and the Linux Foundation Agent Card WG consuming guide) and is genuinely deployed in production with the exact token, verified by live fetch of neon.com and specification.website. That is what justifies keeping an advertisement check at all — and the same research is what caps it: the consuming side resolves the well-known path, so the link is a hint, not a location an agent will follow.
+
+### Grade decision: stays **A**, tier `scored`, weight 1.0
+
+5.7 grades **A** — a named vendor tool (`hf-discover`) documents and implements fetching exactly `https://{domain}/.well-known/ai-catalog.json`, the path is normative in the ARD draft co-authored by Google, Microsoft and Hugging Face, and there is verifiable production adoption (Neon, Weaviate, Shopware core, specification.website). 4.19 grades **B** on the advertisement half. The strongest proven path is unchanged, and the absorbed evidence is weaker, so the grade does not move: **A**, `tier: scored`, `weight 1.0`.
+
+`scoreDisplayMode` moves from `binary` to `ternary` for the new middle state. `defaultPriority` stays `medium`.
+
+### Deviations
+
+- **The ARD rewrite is out of scope** — see the scope note above. This fold does not touch the pass condition, and the code sample still shows the invented `services` schema (with the `rel="ai-catalog"` line appended). Task 10 replaces both.
+- **The advertised href is never fetched.** Following it would be the natural next step, but the audit's own evidence says no consumer does, so spending a request on it would model behaviour nothing exhibits.
+- **`type="application/ai-catalog+json"` is preferred in the guidance but not required in the match**, exactly as 4.19's rework specifies ("any type, ideally application/ai-catalog+json").
 
 ## Evidence
 
@@ -58,4 +86,6 @@ This audit was a delete candidate and went through dedicated adversarial researc
 ## Review history
 
 - 2026-08-20 — code review (11-agent workflow) + evidence research (12-domain workflow, 400 sources).
-- 2026-08-21 — adversarial redemption research; user accepted verdict (disposition above).
+- 2026-08-21 — adversarial redemption research; user accepted verdict (grade A, rewrite required).
+- 2026-08-21 — approved: 4.19 merges away into 5.7 (v2 audit map).
+- 2026-08-22 — merged (Plan 4, Task 7): 4.19 folded in, grade and tier unchanged; registry 158 → 157 for this fold. The ARD §4.1 rewrite remains open for Task 10.

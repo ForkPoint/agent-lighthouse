@@ -537,10 +537,9 @@
   },
   "4.19": {
     "slug": "meta-tags/ai-catalog-link",
-    "status": "merging",
+    "status": "renamed",
     "to": "agent-interfaces/ai-catalog-exists",
-    "interim": "agent-interfaces/ai-catalog-link",
-    "link": "docs/evidence/audits/agent-interfaces/ai-catalog-link.md"
+    "link": "docs/evidence/audits/agent-interfaces/ai-catalog-exists.md"
   },
   "4.20": {
     "slug": "meta-tags/meta-robots",

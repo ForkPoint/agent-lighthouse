@@ -34,7 +34,7 @@ One dossier per audit: what it checks, the 2026-08-20 code-review findings, grad
 | 5.4 | [openapi-ai-instructions](./agent-tools/openapi-ai-instructions.md) | agent-tools | delete | D | sunset (approved 2026-08-21) |
 | 5.5 | [openapi-servers](./agent-interfaces/openapi-servers.md) | agent-tools | fix | — | keep — fix required |
 | 5.6 | [openapi-schemas](./agent-interfaces/openapi-schemas.md) | agent-tools | fix | — | keep — fix required |
-| 5.7 | [ai-catalog-exists](./agent-interfaces/ai-catalog-exists.md) | agent-tools | delete | A | kept — rewrite required (approved 2026-08-21) |
+| 5.7 | [ai-catalog-exists](./agent-interfaces/ai-catalog-exists.md) | agent-tools | delete | A | merged — absorbs 4.19 (2026-08-22); ARD rewrite still open |
 | 5.8 | [ai-catalog-metadata](./agent-interfaces/ai-catalog-metadata.md) | agent-tools | delete | B | kept — rewrite required (approved 2026-08-21) |
 | 5.9 | [ai-catalog-urls](./agent-interfaces/ai-catalog-urls.md) | agent-tools | delete | B | kept — rewrite required (approved 2026-08-21) |
 | 5.10 | [agents-json](./agent-interfaces/agents-json.md) | agent-tools | delete | C | informative, weight 0 (approved 2026-08-21) |
@@ -150,7 +150,7 @@ One dossier per audit: what it checks, the 2026-08-20 code-review findings, grad
 | 4.16 | [rss-feed-link](../merged/machine-discovery/rss-feed-link.md) | meta-tags | fix | C | merged into [machine-discovery/rss-feed](./machine-discovery/rss-feed.md) (2026-08-22) |
 | 4.17 | [mcp-discovery-link](./meta-tags/mcp-discovery-link.md) | meta-tags | delete | D | sunset (approved 2026-08-21) |
 | 4.18 | [openapi-link](../merged/agent-interfaces/openapi-link.md) | meta-tags | delete | B | redeemed by merge into [agent-interfaces/openapi-exists](./agent-interfaces/openapi-exists.md) (2026-08-22) |
-| 4.19 | [ai-catalog-link](./agent-interfaces/ai-catalog-link.md) | meta-tags | delete | B | kept — rewrite required (approved 2026-08-21) |
+| 4.19 | [ai-catalog-link](../merged/agent-interfaces/ai-catalog-link.md) | meta-tags | delete | B | merged into [agent-interfaces/ai-catalog-exists](./agent-interfaces/ai-catalog-exists.md) (2026-08-22) |
 | 4.20 | [meta-robots](../merged/access-crawl-control/meta-robots.md) | meta-tags | fix | A | merged into [access-crawl-control/robots-directives](./access-crawl-control/robots-directives.md) (2026-08-22) |
 | 6.1 | [single-h1](./content-extraction/single-h1.md) | semantic-html | fix | B | keep — fix required |
 | 6.2 | [sequential-headings](./content-extraction/sequential-headings.md) | semantic-html | fix | B | keep — fix required |
