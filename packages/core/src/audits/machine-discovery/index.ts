@@ -19,6 +19,7 @@ export { AiFileDeliveryAudit } from './ai-file-delivery';
 export { NoBrokenAiEndpointsAudit } from './no-broken-ai-endpoints';
 // New in v2 (Plan 5): graduated from the proposal backlog on 2026-08-22.
 export { AiCrawlerSurfaceReachabilityAudit } from './ai-crawler-surface-reachability';
+export { SitemapLastmodVerifiabilityAudit } from './sitemap-lastmod-verifiability';
 
 import { LlmsTxtExistsAudit } from './llms-txt-exists';
 import { LlmsTxtStructureAudit } from './llms-txt-structure';
@@ -37,6 +38,7 @@ import { CorsAiFilesAudit } from './cors-ai-files';
 import { AiFileDeliveryAudit } from './ai-file-delivery';
 import { NoBrokenAiEndpointsAudit } from './no-broken-ai-endpoints';
 import { AiCrawlerSurfaceReachabilityAudit } from './ai-crawler-surface-reachability';
+import { SitemapLastmodVerifiabilityAudit } from './sitemap-lastmod-verifiability';
 
 /** Every audit that lives in the machine-discovery category, in map order. */
 export const MACHINE_DISCOVERY_AUDITS = [
@@ -57,4 +59,5 @@ export const MACHINE_DISCOVERY_AUDITS = [
   AiFileDeliveryAudit,
   NoBrokenAiEndpointsAudit,
   AiCrawlerSurfaceReachabilityAudit,
+  SitemapLastmodVerifiabilityAudit,
 ] as const;

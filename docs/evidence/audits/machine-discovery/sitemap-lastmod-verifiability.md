@@ -1,18 +1,19 @@
 ---
-check: sitemap-lastmod-verifiability-page-level-cross-validation
-title: "Sitemap lastmod verifiability (page-level cross-validation)"
-domain: feeds-indexing
-status: proposed
+audit: machine-discovery/sitemap-lastmod-verifiability
+category: machine-discovery
+source_file: packages/core/src/audits/machine-discovery/sitemap-lastmod-verifiability.ts
+slug: sitemap-lastmod-verifiability
 evidence_grade: A
-uniqueness: partial-overlap
-difficulty: multi-page
-scoring_tier: scored
+tier: scored
+disposition: "new in v2 — graduated from proposal 2026-08-22"
 reviewed: 2026-08-20
+graduated: 2026-08-22
 ---
+
 
 # Sitemap lastmod verifiability (page-level cross-validation)
 
-> Proposed check. Evidence grade **A** · partial overlap · implementation: `multi-page`
+> Shipped in v2. Evidence grade **A** · scored tier · partial overlap · implementation: `multi-page`
 
 ## What it checks
 
@@ -48,3 +49,52 @@ Tier per evidence policy: **scored** — grade A meets the A/B bar required for 
 ## Review history
 
 - 2026-08-20 — proposed by the novel-checks research pass (10-agent evidence workflow); sources URL-verified at research time.
+
+## Not a duplicate of `machine-discovery/sitemap-lastmod`
+
+The two audits ask different questions and must not be collapsed into one:
+
+| Audit | Question | Fails when |
+| --- | --- | --- |
+| `machine-discovery/sitemap-lastmod` | Is `lastmod` **present**? | The sitemap omits it, or omits it on most URLs. |
+| `machine-discovery/sitemap-lastmod-verifiability` | Is `lastmod` **true**? | The values that exist contradict the pages, are future-dated, or are one deploy stamp repeated. |
+
+A sitemap can pass the first and fail this one, which is the common case: the
+CMS emits `lastmod` on every URL and rewrites all of them on every build.
+Absence is `notApplicable` here, never a failure — with no values there is
+nothing to verify, and reporting it twice would double-count one defect.
+
+## Implementation deviations
+
+- **Deterministic sample, not a reservoir sample.** The sketch says
+  "reservoir-sample 30-50 URLs". The audit uses `sampleEntries` (even stride,
+  deterministic, 30 URLs) so a re-scan probes the same URLs and two runs can be
+  compared. A reservoir sample would make every result irreproducible.
+- **Scanned pages are reused before any URL is fetched.** A sampled URL the
+  orchestrator already fetched contributes its headers, JSON-LD and meta from
+  `ctx.pages`; only the remainder costs a request, and each of those is
+  `isSafeUrl`-gated.
+- **`og:updated_time` is accepted as a fourth signal** alongside the three the
+  sketch names. It costs nothing to read from the meta map the parser already
+  built, and a page that publishes only that one is still verifiable.
+- **Distribution entropy is not computed.** The sketch mentions "distribution
+  entropy of lastmod values"; the falsifiable claim underneath it is the modal
+  share, which is what the audit measures (modal value over 90% of the sample
+  and within 3 days of the scan). An entropy number would have to be explained
+  before it could be acted on, and would fire on shapes that are not defects.
+- **One hour of clock skew is tolerated** before a value counts as
+  future-dated, so a server a few minutes ahead of the scanner is not reported.
+
+## Deferred
+
+- **Only the first level of a `<sitemapindex>` is walked**, per the shared
+  gatherer. A site whose freshness problem lives in a third-level child sitemap
+  is sampled from the levels above it.
+- **The 7-day divergence window is fixed.** A daily-publishing news site and a
+  documentation set that changes quarterly are held to the same window; making
+  it adaptive needs a publication-cadence estimate this audit does not build.
+- **`Last-Modified` is taken at face value.** Many origins send the response
+  time rather than the document time, which makes the header agree with almost
+  any recent `lastmod`. The audit reports how many URLs were corroborated so
+  the reader can weigh that, but it cannot tell a real document date from a
+  synthesised one.

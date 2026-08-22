@@ -1,6 +1,6 @@
 # Proposed audits — TODO stubs
 
-62 stub files for the proposed checks from the 2026-08-20 research pass. Every stub compiles, is **not** registered in any category index, and returns `notApplicable` until implemented. Each file's header carries its implementation sketch; full proof lives in [docs/evidence/proposals](../../../../../docs/evidence/proposals/README.md).
+61 stub files for the proposed checks from the 2026-08-20 research pass. Every stub compiles, is **not** registered in any category index, and returns `notApplicable` until implemented. Each file's header carries its implementation sketch; full proof lives in [docs/evidence/proposals](../../../../../docs/evidence/proposals/README.md).
 
 A stub that graduates to a shipped audit is deleted; its bullet leaves the list
 below, the count above drops by one, and the audit's id joins `NEW_IN_V2` in
@@ -66,7 +66,6 @@ the `--experimental` flag work in Plan 6.
 ## feeds-indexing
 
 - [ ] TODO [`agent-commerce-feed-field-parity-from-product-page-structure`](./feeds-indexing/agent-commerce-feed-field-parity-from-product-page-structure.ts) — Agent-commerce feed-field parity from product-page structured data (grade A, scored, `multi-page`) · [dossier](../../../../../docs/evidence/proposals/feeds-indexing/agent-commerce-feed-field-parity-from-product-page-structure.md)
-- [ ] TODO [`sitemap-lastmod-verifiability-page-level-cross-validation`](./feeds-indexing/sitemap-lastmod-verifiability-page-level-cross-validation.ts) — Sitemap lastmod verifiability (page-level cross-validation) (grade A, scored, `multi-page`) · [dossier](../../../../../docs/evidence/proposals/feeds-indexing/sitemap-lastmod-verifiability-page-level-cross-validation.md)
 - [ ] TODO [`conditional-request-support-on-discovery-surfaces`](./feeds-indexing/conditional-request-support-on-discovery-surfaces.ts) — Conditional-request support on discovery surfaces (grade B, scored, `static-fetch`) · [dossier](../../../../../docs/evidence/proposals/feeds-indexing/conditional-request-support-on-discovery-surfaces.md)
 - [ ] TODO [`feed-entry-identity-and-canonical-integrity`](./feeds-indexing/feed-entry-identity-and-canonical-integrity.ts) — Feed entry identity and canonical integrity (grade B, scored, `multi-page`) · [dossier](../../../../../docs/evidence/proposals/feeds-indexing/feed-entry-identity-and-canonical-integrity.md)
 - [ ] TODO [`root-text-file-resolution-integrity-indexnow-key-file-precon`](./feeds-indexing/root-text-file-resolution-integrity-indexnow-key-file-precon.ts) — Root text-file resolution integrity (IndexNow key-file precondition) (grade B, scored, `static-fetch`) · [dossier](../../../../../docs/evidence/proposals/feeds-indexing/root-text-file-resolution-integrity-indexnow-key-file-precon.md)
