@@ -15,19 +15,19 @@ export const SECTION_GROUPS: SectionGroupDef[] = [
   {
     key: 'agenticReadiness',
     categoryIds: [
+      'access-crawl-control',
+      'machine-discovery',
       'agent-interfaces',
       'agentic-commerce',
-      'machine-discovery',
-      'access-crawl-control',
     ],
   },
   {
     key: 'aiSearchOptimization',
-    categoryIds: ['answer-readiness', 'content-extraction'],
+    categoryIds: ['content-extraction', 'structured-data', 'answer-readiness'],
   },
   {
     key: 'technicalFoundation',
-    categoryIds: ['structured-data', 'operability-safety'],
+    categoryIds: ['operability-safety'],
   },
 ];
 

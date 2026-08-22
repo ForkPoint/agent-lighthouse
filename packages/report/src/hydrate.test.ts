@@ -24,11 +24,11 @@ function row(over: Partial<PersistedScanRow> = {}): PersistedScanRow {
     domain: 'x.test',
     overallScore: 70,
     scoreTier: 'needs-work',
-    categoryScores: { 'agent-interfaces': 80, 'answer-engine': 100 },
+    categoryScores: { 'agent-interfaces': 80, 'answer-readiness': 100 },
     checkResults: [
       check({ id: 'a1', category: 'agent-interfaces', status: 'pass' }),
       check({ id: 'a2', category: 'agent-interfaces', status: 'fail', priority: 'critical' }),
-      check({ id: 'e1', category: 'answer-engine', status: 'warn', priority: 'high' }),
+      check({ id: 'e1', category: 'answer-readiness', status: 'warn', priority: 'high' }),
     ],
     recommendations: [],
     pagesData: [{ url: 'https://x.test/', pageType: 'homepage' }],
@@ -42,7 +42,7 @@ function row(over: Partial<PersistedScanRow> = {}): PersistedScanRow {
 describe('hydrateReport', () => {
   it('rebuilds categories in canonical order with shared names/weights and counts', () => {
     const r = hydrateReport(row());
-    expect(r.categories.map((c) => c.id)).toEqual(['agent-interfaces', 'answer-engine']);
+    expect(r.categories.map((c) => c.id)).toEqual(['agent-interfaces', 'answer-readiness']);
     const at = r.categories[0]!;
     expect(at.name).toBe(CATEGORY_NAMES['agent-interfaces']);
     expect(at.weight).toBe(CATEGORY_MASS['agent-interfaces']);

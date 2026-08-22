@@ -156,7 +156,7 @@ describe('buildCategoryResult', () => {
       makeCheck({ status: 'warn', score: 0.5 }),
       makeCheck({ status: 'fail', score: 0.0 }),
     ];
-    const result = buildCategoryResult('meta-tags', checks);
+    const result = buildCategoryResult('machine-discovery', checks);
     expect(result.passCount).toBe(2);
     expect(result.warnCount).toBe(1);
     expect(result.failCount).toBe(1);
@@ -168,13 +168,13 @@ describe('buildCategoryResult', () => {
       makeCheck({ score: 0.5 }),
       makeCheck({ score: 0.0 }),
     ];
-    const result = buildCategoryResult('accessibility', checks);
+    const result = buildCategoryResult('operability-safety', checks);
     expect(result.score).toBe(calculateCategoryScore(checks));
   });
 
   it('includes the checks array in the result', () => {
     const checks = [makeCheck()];
-    const result = buildCategoryResult('semantic-html', checks);
+    const result = buildCategoryResult('content-extraction', checks);
     expect(result.checks).toBe(checks);
   });
 });
