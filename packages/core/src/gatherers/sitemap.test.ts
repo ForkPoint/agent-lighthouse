@@ -1,7 +1,7 @@
 import { describe, it, expect, vi } from 'vitest';
-import { collectSitemapEntries, sampleEntries, isW3CDateTime } from './sitemap';
+import { collectSitemapEntries, sampleEntries, isW3CDateTime, siteSitemapTree } from './sitemap';
 import { mockFetchResult } from '../__tests__/test-utils';
-import type { FetchOptions } from '../fetcher';
+import type { FetchOptions, FetchResult } from '../fetcher';
 
 // isSafeUrl performs a real DNS lookup before the gatherer follows a URL it
 // read out of a site-controlled sitemap. Stub it with an offline stand-in that
@@ -193,5 +193,50 @@ describe('isW3CDateTime', () => {
     expect(isW3CDateTime('1755859200')).toBe(false);
     expect(isW3CDateTime('2026-13-01')).toBe(false);
     expect(isW3CDateTime('')).toBe(false);
+  });
+});
+
+describe('siteSitemapTree', () => {
+  const xml = `<?xml version="1.0"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"><url><loc>https://example.com/a</loc></url></urlset>`;
+
+  function ctx(robots?: string) {
+    const calls: string[] = [];
+    const rootFiles: Record<string, FetchResult> = robots
+      ? { '/robots.txt': mockFetchResult(robots, 200, 'text/plain') }
+      : {};
+    return {
+      calls,
+      baseUrl: 'https://example.com',
+      rootFiles,
+      fetch: async (o: FetchOptions): Promise<FetchResult> => {
+        calls.push(o.url);
+        return new URL(o.url).pathname === '/sitemap.xml'
+          ? mockFetchResult(xml, 200, 'application/xml')
+          : mockFetchResult('', 404);
+      },
+    };
+  }
+
+  it('walks the sitemap once per scan', async () => {
+    const scan = ctx();
+    const first = await siteSitemapTree(scan);
+    const second = await siteSitemapTree(scan);
+    expect(second).toBe(first);
+    expect(first.entries).toHaveLength(1);
+    expect(scan.calls.filter((url) => url.endsWith('/sitemap.xml'))).toHaveLength(1);
+  });
+
+  it('walks the roots robots.txt advertises', async () => {
+    const scan = ctx('Sitemap: https://example.com/sitemap.xml\n');
+    await siteSitemapTree(scan);
+    expect(scan.calls[0]).toBe('https://example.com/sitemap.xml');
+  });
+
+  // An off-site Sitemap: value is not this site's to walk, and following it
+  // would turn a site-scoped scan into a crawl of another host.
+  it('drops an off-site Sitemap directive', async () => {
+    const scan = ctx('Sitemap: https://other.test/sitemap.xml\n');
+    await siteSitemapTree(scan);
+    expect(scan.calls.some((url) => url.startsWith('https://other.test'))).toBe(false);
   });
 });

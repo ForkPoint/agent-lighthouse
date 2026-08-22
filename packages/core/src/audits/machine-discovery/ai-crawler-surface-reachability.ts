@@ -19,7 +19,7 @@ import {
   decidingRule,
   type RobotsGroup,
 } from '../../gatherers/robots';
-import { collectSitemapEntries, sampleEntries } from '../../gatherers/sitemap';
+import { siteSitemapTree, sampleEntries } from '../../gatherers/sitemap';
 
 /**
  * The crawler panel, in the spelling each operator documents.
@@ -191,9 +191,8 @@ export class AiCrawlerSurfaceReachabilityAudit extends Audit {
 
     const declared = onSite(sitemaps, ctx.baseUrl);
     const feeds = advertisedFeeds(ctx);
-    const roots = onSite([...sitemaps, `${ctx.baseUrl}/sitemap.xml`], ctx.baseUrl);
 
-    const tree = await collectSitemapEntries(ctx.fetch, roots);
+    const tree = await siteSitemapTree(ctx);
     const samplePaths = sampleEntries(tree.entries, SAMPLE_SIZE)
       .map((entry) => pathOf(entry.loc))
       .filter((path): path is string => path !== undefined);

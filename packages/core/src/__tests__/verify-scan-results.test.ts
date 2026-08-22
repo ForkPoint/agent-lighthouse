@@ -95,8 +95,11 @@ async function runAllChecks(
 }
 
 describe('Verify scan results against real sites', () => {
-  // Increase timeout for real HTTP requests
-  const TIMEOUT = 60_000;
+  // Increase timeout for real HTTP requests. The budget is per describe block:
+  // one block builds a whole context and runs the entire registry against a
+  // live site, and that registry keeps growing — 164 audits at v2, several of
+  // which walk the sitemap and open sampled pages.
+  const TIMEOUT = 150_000;
 
   // ────────────────────────────────────────────────────────────────
   // example.com — minimal site, should fail most agent-specific checks

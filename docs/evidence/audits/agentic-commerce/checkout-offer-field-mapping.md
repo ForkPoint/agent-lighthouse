@@ -54,6 +54,17 @@ Tier per evidence policy: **scored** — grade A meets the A/B bar required for 
 
 - 2026-08-20 — proposed by the novel-checks research pass (10-agent evidence workflow); sources URL-verified at research time.
 
+## Relationship to `machine-discovery/agent-commerce-feed-parity`
+
+The overlap is deliberate. This audit judges the offer graph of the scanned
+product page in depth, including the conditional feed triggers
+(`availability_date`, `identifier_exists`, checkout-eligibility policy links).
+`machine-discovery/agent-commerce-feed-parity` samples product pages
+from the sitemap and reports a per-field pass rate plus a separate
+agent-commerce gap for the fields Google's rich-result validator never asks
+for. A site can pass one and fail the other: a single bad template shows up
+across the sample there while the scanned PDP passes here.
+
 ## Implementation deviations
 
 - **The plan sheet's GTIN example was wrong.** It names `gtin13: '1234567890128'`

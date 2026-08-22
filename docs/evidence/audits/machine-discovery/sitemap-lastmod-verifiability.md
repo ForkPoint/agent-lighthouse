@@ -68,8 +68,12 @@ nothing to verify, and reporting it twice would double-count one defect.
 
 - **Deterministic sample, not a reservoir sample.** The sketch says
   "reservoir-sample 30-50 URLs". The audit uses `sampleEntries` (even stride,
-  deterministic, 30 URLs) so a re-scan probes the same URLs and two runs can be
+  deterministic, 6 URLs) so a re-scan probes the same URLs and two runs can be
   compared. A reservoir sample would make every result irreproducible.
+- **The sitemap tree is walked once per scan** and shared with the other two
+  sitemap-sampling audits (`siteSitemapTree`), and the sampled documents go
+  through one per-scan cache (`fetchSampledPage`), so three audits reading the
+  same URL cost one request between them.
 - **Scanned pages are reused before any URL is fetched.** A sampled URL the
   orchestrator already fetched contributes its headers, JSON-LD and meta from
   `ctx.pages`; only the remainder costs a request, and each of those is

@@ -1,6 +1,7 @@
 import * as cheerio from 'cheerio';
 import type { FetchOptions, FetchResult } from '../fetcher';
 import { isSafeUrl } from '../fetcher';
+import { parseRobotsFile } from './robots';
 
 /** One `<url>` row of a sitemap. */
 export interface SitemapEntry {
@@ -162,4 +163,58 @@ export function sampleEntries(entries: SitemapEntry[], n: number): SitemapEntry[
   const out: SitemapEntry[] = [];
   for (let i = 0; i < n; i += 1) out.push(entries[Math.floor(i * stride)]!);
   return out;
+}
+
+/** The sitemap roots a site advertises, plus the two conventional paths. */
+function siteRoots(ctx: SitemapContext): string[] {
+  const robots = ctx.rootFiles['/robots.txt'];
+  const declared = robots && robots.status === 200 ? parseRobotsFile(robots.body).sitemaps : [];
+  let baseHost: string;
+  try {
+    baseHost = new URL(ctx.baseUrl).hostname.toLowerCase().replace(/^www\./, '');
+  } catch {
+    return [];
+  }
+
+  const out: string[] = [];
+  for (const raw of [...declared, `${ctx.baseUrl}/sitemap.xml`, `${ctx.baseUrl}/sitemap_index.xml`]) {
+    let url: URL;
+    try {
+      url = new URL(raw, ctx.baseUrl);
+    } catch {
+      continue;
+    }
+    if (url.protocol !== 'http:' && url.protocol !== 'https:') continue;
+    const host = url.hostname.toLowerCase().replace(/^www\./, '');
+    // An off-site sitemap is not this site's to walk, and following it would
+    // turn a site-scoped scan into a crawl of somebody else's host.
+    if (host !== baseHost && !host.endsWith(`.${baseHost}`)) continue;
+    const href = url.toString();
+    if (!out.includes(href)) out.push(href);
+  }
+  return out;
+}
+
+/** The slice of CheckContext this gatherer needs, kept structural to avoid a cycle. */
+interface SitemapContext {
+  rootFiles: Record<string, FetchResult>;
+  baseUrl: string;
+  fetch: (options: FetchOptions) => Promise<FetchResult>;
+}
+
+const treeCache = new WeakMap<object, Promise<SitemapTree>>();
+
+/**
+ * The site's sitemap tree, walked once per scan.
+ *
+ * Three audits need the same tree, and a sitemap index expands to several
+ * requests. Keyed on the CheckContext object, so every audit in one scan shares
+ * one walk and two scans never share anything.
+ */
+export function siteSitemapTree(ctx: SitemapContext): Promise<SitemapTree> {
+  const cached = treeCache.get(ctx);
+  if (cached) return cached;
+  const walk = collectSitemapEntries(ctx.fetch, siteRoots(ctx));
+  treeCache.set(ctx, walk);
+  return walk;
 }

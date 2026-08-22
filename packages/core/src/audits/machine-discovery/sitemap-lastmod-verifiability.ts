@@ -9,18 +9,19 @@ import type { AuditMeta, AuditResult } from '../../types';
 import { Audit } from '../../audit';
 import { weightForGrade } from '../../scorer';
 import type { CheckContext, PageContext } from '../../check-context';
-import { isSafeUrl, type FetchResult } from '../../fetcher';
+import type { FetchResult } from '../../fetcher';
+import { fetchSampledPage } from '../../gatherers/sampled-pages';
 import { parseHtml, extractJsonLd, extractMetaTags, allJsonLdNodes } from '../../parser';
 import {
-  collectSitemapEntries,
+  siteSitemapTree,
   sampleEntries,
   isW3CDateTime,
   type SitemapEntry,
 } from '../../gatherers/sitemap';
 
 const DAY_MS = 86_400_000;
-/** How many URLs to cross-validate. */
-const SAMPLE_SIZE = 30;
+/** How many URLs to cross-validate. Each one that was not already scanned costs a request. */
+const SAMPLE_SIZE = 6;
 /** Clock skew allowed before a lastmod counts as future-dated. */
 const FUTURE_SKEW_MS = 60 * 60 * 1000;
 /** One value on this share of the sample is a stamp, not a set of content dates. */
@@ -131,8 +132,7 @@ export class SitemapLastmodVerifiabilityAudit extends Audit {
   };
 
   async audit(ctx: CheckContext): Promise<AuditResult> {
-    const roots = [`${ctx.baseUrl}/sitemap.xml`, `${ctx.baseUrl}/sitemap_index.xml`];
-    const tree = await collectSitemapEntries(ctx.fetch, roots);
+    const tree = await siteSitemapTree(ctx);
 
     const withLastmod = tree.entries.filter((entry): entry is SitemapEntry & { lastmod: string } =>
       Boolean(entry.lastmod),
@@ -173,9 +173,9 @@ export class SitemapLastmodVerifiabilityAudit extends Audit {
       let signals: number[] = [];
       if (scanned) {
         signals = signalsFromPage(scanned);
-      } else if (await isSafeUrl(entry.loc)) {
-        const result = await ctx.fetch({ url: entry.loc });
-        if (result.status === 200) signals = signalsFromFetch(result);
+      } else {
+        const result = await fetchSampledPage(ctx, entry.loc);
+        if (result) signals = signalsFromFetch(result);
       }
 
       if (signals.length === 0) {
