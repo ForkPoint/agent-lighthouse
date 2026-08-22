@@ -1,23 +1,31 @@
 ---
 audit: machine-discovery/llms-txt-exists
-audit_id: "1.1"
+audit_id: "1.1, 4.11"
 category: machine-discovery
 source_file: packages/core/src/audits/machine-discovery/llms-txt-exists.ts
 slug: llms-txt-exists
 review_verdict: fix
 severity: medium
 evidence_grade: A
-disposition: "keep — fix required"
-reviewed: 2026-08-21
+disposition: "merged 2026-08-22 (Plan 4, Task 4) — absorbs llms-txt-link (4.11)"
+reviewed: 2026-08-22
 ---
 
 # llms-txt-exists (`1.1`)
 
-> content-discoverability · source `llms-txt-exists.ts` · review verdict **fix** · evidence grade **A** · disposition: **keep — fix required**
+> machine-discovery · source `llms-txt-exists.ts` · absorbs llms-txt-link (4.11) · evidence grade **A** · tier **scored** (weight 1.0)
 
 ## What it checks
 
-llms.txt is the primary way AI agents discover your site content. Without it, LLMs must crawl your entire site to understand what you offer. Create this file at your site root.
+`GET /llms.txt` returns 200 with a markdown body, plus — reported, not scored — whether a `<link>` in the page head points at that file.
+
+| State | Result |
+| :--- | :--- |
+| 200 with a body starting with `#` | `pass` |
+| 200 but no markdown heading | `warn`, priority `high` |
+| non-200 or no response | `fail`, priority `critical` |
+
+The discovery `<link>` is appended to `found` in every branch (`discovery <link> → <href>` or `no discovery <link> in <head>`), and when the file is missing *and* a link points at it the message says so — a link to a file that is not served is the one case where the absorbed signal changes what the user reads.
 
 ## Code review findings (2026-08-20, 11-agent pass)
 
@@ -75,7 +83,30 @@ Checks GET /llms.txt returns 200 and the body starts with '#'. The signal is def
 
 **Sources:** [Fix Search-related JavaScript problems](https://developers.google.com/search/docs/crawling-indexing/javascript/fix-search-javascript) · [How HTTP status codes, and network and DNS errors affect Google Search](https://developers.google.com/search/docs/crawling-indexing/http-network-errors) · [Large site owner's guide to managing your crawl budget](https://developers.google.com/search/docs/crawling-indexing/large-site-managing-crawl-budget) · [The rise of the AI crawler](https://vercel.com/blog/the-rise-of-the-ai-crawler)
 
+## Absorbed evidence — llms-txt-link (4.11)
+
+4.11 checked for `<link rel="alternate" type="text/plain" title="…llms…">` in the head. It is the same claim as this audit's ("an agent can find your llms.txt"), one hop earlier, so the C3 collapse makes it one audit: the file is the signal, the link is a hint about the file.
+
+Its dossier is kept verbatim at [merged/machine-discovery/llms-txt-link.md](../../merged/machine-discovery/llms-txt-link.md) (grade **C**).
+
+### Grade decision: stays **A**
+
+4.11 graded **C**: the llms.txt v2 spec (2026-08-10) does define `rel="alternate" type="text/markdown"` and `rel="describedby"`, and Cloudflare deploys the former, but the `describedby → llms.txt` half has *no known consumer at all* — Lighthouse's own gatherer resolves `new URL('/llms.txt', finalDisplayedUrl)` and never looks at link tags. Weaker evidence than the target's and not proven for the merged signal, so nothing is raised: the audit keeps grade **A**, `tier: scored`, `weight 1.0`.
+
+### Why the link never fails a site
+
+v1 failed at priority `high` on a site that correctly served /llms.txt at the well-known path — the exact path the spec defines for discovery — because no `<link>` advertised it. With no documented consumer for that link, charging a passing site for its absence is unsupported guidance. The link state is therefore reported in `found` and never changes the status, which is the fold's version of the review's "at most a warn, not a high fail".
+
+### Required fixes from 4.11 — landed 2026-08-22
+
+- **Match the href, not the title.** `title.toLowerCase().includes('llms')` made an optional, language-dependent attribute mandatory; detection now tests the resolved pathname against `/\/llms\.txt$/i`.
+- **No MIME requirement.** `type === 'text/plain'` rejected `text/markdown` (arguably the correct type), `text/plain; charset=utf-8` and an omitted type. Any type is accepted.
+- **No cross-file false positive.** `includes('llms')` matched `title="LLMs-full.txt"`, so a site publishing only llms-full.txt passed the llms.txt link check. The filename anchor removes it.
+- **Normalized `rel`.** `rel === 'alternate'` was an exact, case-sensitive compare; `rel` is now lower-cased and split into tokens, and the spec's `describedby` is accepted alongside `alternate`.
+- **The well-known path is consulted first.** The file's own status drives the result; the link is reported against it.
+
 ## Review history
 
-- 2026-08-20 — code review (11-agent workflow) + evidence research (12-domain workflow, 400 sources).
-- 2026-08-21 — dossier generated; disposition pending final taxonomy design.
+- 2026-08-20 — code review (11-agent workflow) + evidence research (12-domain workflow, 400 sources) on both source audits.
+- 2026-08-21 — dispositions approved: 1.1 keep-with-fixes, 4.11 folds in (C3 collapse).
+- 2026-08-22 — 4.11 folded in with its required fixes (Plan 4, Task 4); registry 172 → 171.

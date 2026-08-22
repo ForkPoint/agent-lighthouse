@@ -14,7 +14,6 @@ export { RssFeedAudit } from './rss-feed';
 export { RssFeedContentAudit } from './rss-feed-content';
 export { InternalLinkingAudit } from './in-content-links';
 export { NoBrokenLinksAudit } from './no-broken-links';
-export { LlmsTxtLinkAudit } from './llms-txt-link';
 export { RssFeedLinkAudit } from './rss-feed-link';
 export { CorsAiFilesAudit } from './cors-ai-files';
 export { CorrectContentTypesAudit } from './ai-file-delivery';
@@ -35,7 +34,6 @@ import { RssFeedAudit } from './rss-feed';
 import { RssFeedContentAudit } from './rss-feed-content';
 import { InternalLinkingAudit } from './in-content-links';
 import { NoBrokenLinksAudit } from './no-broken-links';
-import { LlmsTxtLinkAudit } from './llms-txt-link';
 import { RssFeedLinkAudit } from './rss-feed-link';
 import { CorsAiFilesAudit } from './cors-ai-files';
 import { CorrectContentTypesAudit } from './ai-file-delivery';
@@ -58,7 +56,6 @@ export const MACHINE_DISCOVERY_AUDITS = [
   RssFeedContentAudit,
   InternalLinkingAudit,
   NoBrokenLinksAudit,
-  LlmsTxtLinkAudit,
   RssFeedLinkAudit,
   CorsAiFilesAudit,
   CorrectContentTypesAudit,

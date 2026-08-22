@@ -494,10 +494,9 @@
   },
   "4.11": {
     "slug": "meta-tags/llms-txt-link",
-    "status": "merging",
+    "status": "renamed",
     "to": "machine-discovery/llms-txt-exists",
-    "interim": "machine-discovery/llms-txt-link",
-    "link": "docs/evidence/audits/machine-discovery/llms-txt-link.md"
+    "link": "docs/evidence/audits/machine-discovery/llms-txt-exists.md"
   },
   "4.12": {
     "slug": "meta-tags/llms-full-txt-link",

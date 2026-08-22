@@ -62,3 +62,5 @@ The underlying file matters; this specific head-link check is both non-standard 
 
 - 2026-08-20 — code review (11-agent workflow) + evidence research (12-domain workflow, 400 sources).
 - 2026-08-21 — dossier generated; disposition pending final taxonomy design.
+
+**Merged into:** `machine-discovery/llms-txt-exists` (Plan 4, 2026-08-22) — [merged dossier](../../audits/machine-discovery/llms-txt-exists.md)

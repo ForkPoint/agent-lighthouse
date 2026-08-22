@@ -142,7 +142,7 @@ One dossier per audit: what it checks, the 2026-08-20 code-review findings, grad
 | 4.8 | [og-site-name](./answer-readiness/og-site-name.md) | meta-tags | merge | A | merge (approved 2026-08-21) |
 | 4.9 | [og-image-alt](./answer-readiness/og-image-alt.md) | meta-tags | fix | C | keep — fix required |
 | 4.10 | [twitter-card](./answer-readiness/twitter-card.md) | meta-tags | delete | C | proposed: redeem as informative (pending triage) |
-| 4.11 | [llms-txt-link](./machine-discovery/llms-txt-link.md) | meta-tags | fix | C | keep — fix required |
+| 4.11 | [llms-txt-link](../merged/machine-discovery/llms-txt-link.md) | meta-tags | fix | C | merged into [machine-discovery/llms-txt-exists](./machine-discovery/llms-txt-exists.md) (2026-08-22) |
 | 4.12 | [llms-full-txt-link](./meta-tags/llms-full-txt-link.md) | meta-tags | merge | D | sunset (approved 2026-08-21) |
 | 4.13 | [ai-content-declaration](./access-crawl-control/ai-content-declaration.md) | meta-tags | delete | D | proposed: redeem as experimental (pending triage) |
 | 4.14 | [ai-instructions](./meta-tags/ai-instructions.md) | meta-tags | delete | D | sunset (approved 2026-08-21) |
