@@ -28,7 +28,6 @@ export class AnthropicAudit extends CrawlerBotAudit {
   };
 
   protected bot: CrawlerBot = {
-    id: '2.3',
     botName: 'anthropic-ai',
     displayName: 'anthropic-ai / ClaudeBot',
     category: 'training',

@@ -28,7 +28,6 @@ export class ClaudeSearchbotAudit extends CrawlerBotAudit {
   };
 
   protected bot: CrawlerBot = {
-    id: '2.21',
     botName: 'Claude-SearchBot',
     displayName: 'Claude-SearchBot',
     category: 'realtime',

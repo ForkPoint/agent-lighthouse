@@ -29,7 +29,6 @@ export class CcbotAudit extends CrawlerBotAudit {
   };
 
   protected bot: CrawlerBot = {
-    id: '2.6',
     botName: 'CCBot',
     displayName: 'CCBot',
     category: 'training',

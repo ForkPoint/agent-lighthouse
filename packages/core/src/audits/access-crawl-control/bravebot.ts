@@ -28,7 +28,6 @@ export class BravebotAudit extends CrawlerBotAudit {
   };
 
   protected bot: CrawlerBot = {
-    id: '2.18',
     botName: 'Bravebot',
     displayName: 'Bravebot',
     category: 'realtime',

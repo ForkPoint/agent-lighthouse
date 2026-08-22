@@ -191,38 +191,33 @@
   },
   "2.9": {
     "slug": "crawler-permissions/bytespider",
-    "status": "merging",
+    "status": "renamed",
     "to": "access-crawl-control/ai-bot-directives",
-    "interim": "access-crawl-control/bytespider",
-    "link": "docs/evidence/audits/access-crawl-control/bytespider.md"
+    "link": "docs/evidence/audits/access-crawl-control/ai-bot-directives.md"
   },
   "2.10": {
     "slug": "crawler-permissions/cohere-ai",
-    "status": "merging",
+    "status": "renamed",
     "to": "access-crawl-control/ai-bot-directives",
-    "interim": "access-crawl-control/cohere-ai",
-    "link": "docs/evidence/audits/access-crawl-control/cohere-ai.md"
+    "link": "docs/evidence/audits/access-crawl-control/ai-bot-directives.md"
   },
   "2.11": {
     "slug": "crawler-permissions/youbot",
-    "status": "merging",
+    "status": "renamed",
     "to": "access-crawl-control/ai-bot-directives",
-    "interim": "access-crawl-control/youbot",
-    "link": "docs/evidence/audits/access-crawl-control/youbot.md"
+    "link": "docs/evidence/audits/access-crawl-control/ai-bot-directives.md"
   },
   "2.12": {
     "slug": "crawler-permissions/diffbot",
-    "status": "merging",
+    "status": "renamed",
     "to": "access-crawl-control/ai-bot-directives",
-    "interim": "access-crawl-control/diffbot",
-    "link": "docs/evidence/audits/access-crawl-control/diffbot.md"
+    "link": "docs/evidence/audits/access-crawl-control/ai-bot-directives.md"
   },
   "2.13": {
     "slug": "crawler-permissions/ai2bot",
-    "status": "merging",
+    "status": "renamed",
     "to": "access-crawl-control/ai-bot-directives",
-    "interim": "access-crawl-control/ai2bot",
-    "link": "docs/evidence/audits/access-crawl-control/ai2bot.md"
+    "link": "docs/evidence/audits/access-crawl-control/ai-bot-directives.md"
   },
   "2.14": {
     "slug": "crawler-permissions/chatgpt-user",

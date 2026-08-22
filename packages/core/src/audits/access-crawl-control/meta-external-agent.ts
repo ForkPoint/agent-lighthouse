@@ -28,7 +28,6 @@ export class MetaExternalAgentAudit extends CrawlerBotAudit {
   };
 
   protected bot: CrawlerBot = {
-    id: '2.7',
     botName: 'Meta-ExternalAgent',
     displayName: 'Meta-ExternalAgent',
     category: 'training',

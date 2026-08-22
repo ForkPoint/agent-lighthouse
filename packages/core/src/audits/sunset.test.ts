@@ -38,8 +38,11 @@ describe('registry-wide meta invariants', () => {
     .flat()
     .map((reg) => reg.meta);
 
+  // Floor, not a pin: Plan 4 shrinks the registry fold by fold (181 → 177 with
+  // the ai-bot-directives consolidation, and further with each later task).
+  // Task 14 replaces this with the exact final count.
   it('covers the whole registry', () => {
-    expect(allMetas.length).toBeGreaterThan(180);
+    expect(allMetas.length).toBeGreaterThan(175);
   });
 
   // The v2 meta contract is enforced, not aspirational: an audit without a

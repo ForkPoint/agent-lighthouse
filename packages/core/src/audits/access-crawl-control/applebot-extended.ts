@@ -29,7 +29,6 @@ export class ApplebotExtendedAudit extends CrawlerBotAudit {
   };
 
   protected bot: CrawlerBot = {
-    id: '2.5',
     botName: 'Applebot-Extended',
     displayName: 'Applebot-Extended',
     category: 'training',

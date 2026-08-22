@@ -97,11 +97,11 @@ One dossier per audit: what it checks, the 2026-08-20 code-review findings, grad
 | 2.6 | [ccbot](./access-crawl-control/ccbot.md) | crawler-permissions | fix | A | keep — fix required |
 | 2.7 | [meta-external-agent](./access-crawl-control/meta-external-agent.md) | crawler-permissions | fix | A | keep — fix required |
 | 2.8 | [amazonbot](./access-crawl-control/amazonbot.md) | crawler-permissions | fix | A | keep — fix required |
-| 2.9 | [bytespider](./access-crawl-control/bytespider.md) | crawler-permissions | delete | C | proposed: redeem as scored (pending triage) |
-| 2.10 | [cohere-ai](./access-crawl-control/cohere-ai.md) | crawler-permissions | delete | C | proposed: redeem as scored (pending triage) |
-| 2.11 | [youbot](./access-crawl-control/youbot.md) | crawler-permissions | delete | A | proposed: redeem as scored (pending triage) |
-| 2.12 | [diffbot](./access-crawl-control/diffbot.md) | crawler-permissions | delete | C | proposed: redeem as scored (pending triage) |
-| 2.13 | [ai2bot](./access-crawl-control/ai2bot.md) | crawler-permissions | delete | B | proposed: redeem as scored (pending triage) |
+| 2.9 | [bytespider](../merged/access-crawl-control/bytespider.md) | crawler-permissions | delete | C | merged into [access-crawl-control/ai-bot-directives](./access-crawl-control/ai-bot-directives.md) (2026-08-22) |
+| 2.10 | [cohere-ai](../merged/access-crawl-control/cohere-ai.md) | crawler-permissions | delete | C | merged into [access-crawl-control/ai-bot-directives](./access-crawl-control/ai-bot-directives.md) (2026-08-22) |
+| 2.11 | [youbot](../merged/access-crawl-control/youbot.md) | crawler-permissions | delete | A | merged into [access-crawl-control/ai-bot-directives](./access-crawl-control/ai-bot-directives.md) (2026-08-22) |
+| 2.12 | [diffbot](../merged/access-crawl-control/diffbot.md) | crawler-permissions | delete | C | merged into [access-crawl-control/ai-bot-directives](./access-crawl-control/ai-bot-directives.md) (2026-08-22) |
+| 2.13 | [ai2bot](../merged/access-crawl-control/ai2bot.md) | crawler-permissions | delete | B | merged into [access-crawl-control/ai-bot-directives](./access-crawl-control/ai-bot-directives.md) (2026-08-22) |
 | 2.14 | [chatgpt-user](./access-crawl-control/chatgpt-user.md) | crawler-permissions | fix | A | keep — fix required |
 | 2.15 | [claude-user](./access-crawl-control/claude-user.md) | crawler-permissions | fix | A | keep — fix required |
 | 2.16 | [oai-searchbot](./access-crawl-control/oai-searchbot.md) | crawler-permissions | fix | A | keep — fix required |

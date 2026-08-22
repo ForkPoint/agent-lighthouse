@@ -29,7 +29,6 @@ export class AmazonbotAudit extends CrawlerBotAudit {
   };
 
   protected bot: CrawlerBot = {
-    id: '2.8',
     botName: 'Amazonbot',
     displayName: 'Amazonbot',
     category: 'training',

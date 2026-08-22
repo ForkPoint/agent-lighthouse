@@ -28,7 +28,6 @@ export class DuckassistbotAudit extends CrawlerBotAudit {
   };
 
   protected bot: CrawlerBot = {
-    id: '2.19',
     botName: 'DuckAssistBot',
     displayName: 'DuckAssistBot',
     category: 'realtime',

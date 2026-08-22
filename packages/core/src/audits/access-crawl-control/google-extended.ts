@@ -30,7 +30,6 @@ export class GoogleExtendedAudit extends CrawlerBotAudit {
   };
 
   protected bot: CrawlerBot = {
-    id: '2.2',
     botName: 'Google-Extended',
     displayName: 'Google-Extended',
     category: 'training',

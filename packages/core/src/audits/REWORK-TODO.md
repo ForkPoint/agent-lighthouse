@@ -37,15 +37,15 @@ Audits that stay in the framework **only if rewritten**. Each source file carrie
   - Redeem via merge into meta-description: one audit, quality criteria without the invented 'AEO formula'..
 - [ ] TODO `content-discoverability/mobile-friendly` — target tier informative (pending triage approval) · [dossier](../../../../docs/evidence/audits/content-discoverability/mobile-friendly.md)
   - Keep viewport check as unscored diagnostic; no claimed AI mechanism..
-- [ ] TODO `access-crawl-control/bytespider` — target tier scored (pending triage approval) · [dossier](../../../../docs/evidence/audits/access-crawl-control/bytespider.md)
+- [x] DONE `access-crawl-control/bytespider` (2.9) — consolidated into `access-crawl-control/ai-bot-directives` 2026-08-22 (Plan 4, Task 2) · [merged dossier](../../../../docs/evidence/audits/access-crawl-control/ai-bot-directives.md) · [source dossier](../../../../docs/evidence/merged/access-crawl-control/bytespider.md)
   - Consolidate all low-signal per-bot audits into one 'ai-bot-directives' audit: parse robots.txt once, informational per-bot table, score only on documented-active bots..
-- [ ] TODO `access-crawl-control/cohere-ai` — target tier scored (pending triage approval) · [dossier](../../../../docs/evidence/audits/access-crawl-control/cohere-ai.md)
+- [x] DONE `access-crawl-control/cohere-ai` (2.10) — consolidated into `access-crawl-control/ai-bot-directives` 2026-08-22 (Plan 4, Task 2) · [merged dossier](../../../../docs/evidence/audits/access-crawl-control/ai-bot-directives.md) · [source dossier](../../../../docs/evidence/merged/access-crawl-control/cohere-ai.md)
   - Same consolidation into ai-bot-directives..
-- [ ] TODO `access-crawl-control/youbot` — target tier scored (pending triage approval) · [dossier](../../../../docs/evidence/audits/access-crawl-control/youbot.md)
+- [x] DONE `access-crawl-control/youbot` (2.11) — consolidated into `access-crawl-control/ai-bot-directives` 2026-08-22 (Plan 4, Task 2) · [merged dossier](../../../../docs/evidence/audits/access-crawl-control/ai-bot-directives.md) · [source dossier](../../../../docs/evidence/merged/access-crawl-control/youbot.md)
   - Same consolidation into ai-bot-directives..
-- [ ] TODO `access-crawl-control/diffbot` — target tier scored (pending triage approval) · [dossier](../../../../docs/evidence/audits/access-crawl-control/diffbot.md)
+- [x] DONE `access-crawl-control/diffbot` (2.12) — consolidated into `access-crawl-control/ai-bot-directives` 2026-08-22 (Plan 4, Task 2) · [merged dossier](../../../../docs/evidence/audits/access-crawl-control/ai-bot-directives.md) · [source dossier](../../../../docs/evidence/merged/access-crawl-control/diffbot.md)
   - Same consolidation into ai-bot-directives..
-- [ ] TODO `access-crawl-control/ai2bot` — target tier scored (pending triage approval) · [dossier](../../../../docs/evidence/audits/access-crawl-control/ai2bot.md)
+- [x] DONE `access-crawl-control/ai2bot` (2.13) — consolidated into `access-crawl-control/ai-bot-directives` 2026-08-22 (Plan 4, Task 2) · [merged dossier](../../../../docs/evidence/audits/access-crawl-control/ai-bot-directives.md) · [source dossier](../../../../docs/evidence/merged/access-crawl-control/ai2bot.md)
   - Same consolidation into ai-bot-directives..
 - [ ] TODO `access-crawl-control/tdm-rep` — target tier experimental (pending triage approval) · [dossier](../../../../docs/evidence/audits/access-crawl-control/tdm-rep.md)
   - TDM Reservation Protocol is a real W3C CG spec with EU AI Act relevance. Experimental flag, unscored, fix internal incoherence..

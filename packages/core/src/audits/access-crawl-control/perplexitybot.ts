@@ -29,7 +29,6 @@ export class PerplexitybotAudit extends CrawlerBotAudit {
   };
 
   protected bot: CrawlerBot = {
-    id: '2.4',
     botName: 'PerplexityBot',
     displayName: 'PerplexityBot',
     category: 'training',

@@ -29,7 +29,6 @@ export class ChatgptUserAudit extends CrawlerBotAudit {
   };
 
   protected bot: CrawlerBot = {
-    id: '2.14',
     botName: 'ChatGPT-User',
     displayName: 'ChatGPT-User',
     category: 'realtime',

@@ -29,7 +29,6 @@ export class GptbotAudit extends CrawlerBotAudit {
   };
 
   protected bot: CrawlerBot = {
-    id: '2.1',
     botName: 'GPTBot',
     displayName: 'GPTBot',
     category: 'training',

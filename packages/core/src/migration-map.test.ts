@@ -30,6 +30,12 @@ const REMOVED_IDS = [
 // docs/evidence/v2-audit-map.md, one entry each.
 const SURVIVING_COUNT = 181;
 
+// v2 audits that deliberately absorb more than one v1 row: a consolidation
+// points several `renamed` entries at a single merged audit. Every other
+// landed id stays 1:1, so this list is the allow-list for shared targets and
+// grows one line per fold as Plan 4 lands them.
+const CONSOLIDATION_TARGETS = ['access-crawl-control/ai-bot-directives'];
+
 // v2 identity: `category/slug`. Slugs carry digits and dots (json-ld-1-1,
 // llms-full-txt, ai-plugin.json-style names), so the pattern is deliberately
 // wider than the v1 `[a-z-]+` shape.
@@ -107,10 +113,13 @@ describe('migration-map.json', () => {
     expect(unreachable).toEqual([]);
   });
 
-  it('keys the map by v1 numeric id and never reuses a landed audit twice', () => {
+  it('keys the map by v1 numeric id and only shares a landed audit across a known consolidation', () => {
     for (const [id] of entries) expect(id).toMatch(/^\d+\.\d+$/);
     const landed = surviving.map(([, e]) => (e.status === 'merging' ? e.interim! : e.to!));
-    expect(new Set(landed).size).toBe(landed.length);
+    const counts = new Map<string, number>();
+    for (const id of landed) counts.set(id, (counts.get(id) ?? 0) + 1);
+    const shared = [...counts].filter(([, n]) => n > 1).map(([id]) => id);
+    expect(shared.sort()).toEqual([...CONSOLIDATION_TARGETS].sort());
   });
 
   it('links every surviving entry to the dossier of the audit it resolves to', () => {

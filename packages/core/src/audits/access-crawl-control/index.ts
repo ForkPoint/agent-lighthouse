@@ -13,11 +13,8 @@ export { ApplebotExtendedAudit } from './applebot-extended';
 export { CcbotAudit } from './ccbot';
 export { MetaExternalAgentAudit } from './meta-external-agent';
 export { AmazonbotAudit } from './amazonbot';
-export { BytespiderAudit } from './bytespider';
-export { CohereAiAudit } from './cohere-ai';
-export { YoubotAudit } from './youbot';
-export { DiffbotAudit } from './diffbot';
-export { Ai2botAudit } from './ai2bot';
+// One audit in the place of the five low-signal per-bot checks (v1 2.9–2.13).
+export { AiBotDirectivesAudit } from './ai-bot-directives';
 export { ChatgptUserAudit } from './chatgpt-user';
 export { ClaudeUserAudit } from './claude-user';
 export { OaiSearchbotAudit } from './oai-searchbot';
@@ -50,11 +47,7 @@ import { ApplebotExtendedAudit } from './applebot-extended';
 import { CcbotAudit } from './ccbot';
 import { MetaExternalAgentAudit } from './meta-external-agent';
 import { AmazonbotAudit } from './amazonbot';
-import { BytespiderAudit } from './bytespider';
-import { CohereAiAudit } from './cohere-ai';
-import { YoubotAudit } from './youbot';
-import { DiffbotAudit } from './diffbot';
-import { Ai2botAudit } from './ai2bot';
+import { AiBotDirectivesAudit } from './ai-bot-directives';
 import { ChatgptUserAudit } from './chatgpt-user';
 import { ClaudeUserAudit } from './claude-user';
 import { OaiSearchbotAudit } from './oai-searchbot';
@@ -89,11 +82,7 @@ export const ACCESS_CRAWL_CONTROL_AUDITS = [
   CcbotAudit,
   MetaExternalAgentAudit,
   AmazonbotAudit,
-  BytespiderAudit,
-  CohereAiAudit,
-  YoubotAudit,
-  DiffbotAudit,
-  Ai2botAudit,
+  AiBotDirectivesAudit,
   ChatgptUserAudit,
   ClaudeUserAudit,
   OaiSearchbotAudit,

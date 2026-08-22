@@ -29,7 +29,6 @@ export class OaiSearchbotAudit extends CrawlerBotAudit {
   };
 
   protected bot: CrawlerBot = {
-    id: '2.16',
     botName: 'OAI-SearchBot',
     displayName: 'OAI-SearchBot',
     category: 'realtime',

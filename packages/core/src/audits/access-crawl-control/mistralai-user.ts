@@ -28,7 +28,6 @@ export class MistralaiUserAudit extends CrawlerBotAudit {
   };
 
   protected bot: CrawlerBot = {
-    id: '2.20',
     botName: 'MistralAI-User',
     displayName: 'MistralAI-User',
     category: 'realtime',

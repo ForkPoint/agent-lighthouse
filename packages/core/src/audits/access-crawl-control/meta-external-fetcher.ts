@@ -28,7 +28,6 @@ export class MetaExternalFetcherAudit extends CrawlerBotAudit {
   };
 
   protected bot: CrawlerBot = {
-    id: '2.17',
     botName: 'Meta-ExternalFetcher',
     displayName: 'Meta-ExternalFetcher',
     category: 'realtime',
