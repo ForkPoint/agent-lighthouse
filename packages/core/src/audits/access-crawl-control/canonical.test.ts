@@ -32,14 +32,40 @@ describe('CanonicalLinksAudit', () => {
     expect(result.message).toContain('homepage');
   });
 
-  it('does not fail one page that legitimately canonicalizes elsewhere', () => {
+  // Lower boundary of the non-root collapse threshold: one page pointing at a
+  // genuinely different URL is ordinary pagination. Drop the threshold to 1 and
+  // this test fails.
+  it('does not report one page that legitimately canonicalizes elsewhere', () => {
     const ctx = mockCheckContext([
       self('https://example.com/blog'),
       page(
-        'https://example.com/blog?page=2',
+        'https://example.com/blog/page/2',
         '<link rel="canonical" href="https://example.com/blog">',
         1,
       ),
+    ]);
+    expect(audit.audit(ctx).status).toBe('pass');
+  });
+
+  // Lower boundary of the homepage-collapse threshold. Drop it to 1 and this
+  // test fails.
+  it('does not fail when exactly one page canonicalizes onto the homepage', () => {
+    const ctx = mockCheckContext([
+      self('https://example.com/'),
+      page('https://example.com/about', '<link rel="canonical" href="https://example.com/">', 1),
+    ]);
+    expect(audit.audit(ctx).status).toBe('pass');
+  });
+
+  // The majority half of the non-root rule: 2 of 5 declaring pages is a pair of
+  // variants, not a template bug.
+  it('does not warn when a minority of declaring pages share a non-root target', () => {
+    const ctx = mockCheckContext([
+      self('https://example.com/'),
+      page('https://example.com/a', '<link rel="canonical" href="https://example.com/hub">', 1),
+      page('https://example.com/b', '<link rel="canonical" href="https://example.com/hub">', 2),
+      self('https://example.com/c', 3),
+      self('https://example.com/d', 4),
     ]);
     expect(audit.audit(ctx).status).toBe('pass');
   });

@@ -73,6 +73,22 @@ describe('MetaRobotsNotBlockingAudit', () => {
     expect(result.found).toContain('googlebot');
   });
 
+  // 1.13's review: a per-bot header was read as a blanket noindex. A crawler
+  // outside the allowlist binds nobody this audit reports on.
+  it('ignores an X-Robots-Tag scoped to a bot outside the allowlist', () => {
+    const page = mockPageContext('https://example.com/', doc(''));
+    page.fetchResult.headers['x-robots-tag'] = 'yandexbot: noindex';
+    expect(audit.audit(mockCheckContext([page])).status).toBe('pass');
+  });
+
+  it('still counts an X-Robots-Tag scoped to an AI crawler', () => {
+    const page = mockPageContext('https://example.com/', doc(''));
+    page.fetchResult.headers['x-robots-tag'] = 'gptbot: noindex';
+    const result = audit.audit(mockCheckContext([page]));
+    expect(result.status).toBe('fail');
+    expect(result.found).toContain('gptbot');
+  });
+
   it('fails on a bot-specific noindex meta tag', () => {
     const ctx = mockCheckContext([
       mockPageContext('https://example.com/', doc('<meta name="GPTBot" content="noindex">')),

@@ -107,7 +107,13 @@ function directivesFor(page: PageContext): Directive[] {
     const colon = part.indexOf(':');
     const prefix = colon === -1 ? '' : part.slice(0, colon);
     if (colon !== -1 && !VALUED_DIRECTIVES.has(prefix)) {
-      found.push({ token: part.slice(colon + 1).trim(), source: `X-Robots-Tag (${prefix})` });
+      // A bot-scoped header binds only that crawler. The allowlist is the same
+      // one the meta transport uses, so `X-Robots-Tag: yandexbot: noindex` is
+      // ignored exactly as `<meta name="yandexbot" content="noindex">` is —
+      // v1 1.13 read the whole header as a blanket noindex and over-reported.
+      if (DIRECTIVE_META_NAMES.has(prefix)) {
+        found.push({ token: part.slice(colon + 1).trim(), source: `X-Robots-Tag (${prefix})` });
+      }
       continue;
     }
     found.push({ token: part, source: 'X-Robots-Tag' });
