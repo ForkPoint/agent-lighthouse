@@ -21,8 +21,8 @@ export {
   isBlanketBlocked,
 } from './gatherers/robots';
 export type { RobotsRule, RobotsGroup, RobotsFile } from './gatherers/robots';
-export { probeAsBot } from './gatherers/bot-probe';
-export type { BotProbeResult, BotProbeSignal } from './gatherers/bot-probe';
+export { probeUaParity, classifyResponse, AI_CRAWLER_UAS, BASELINE_UA } from './gatherers/ua-parity';
+export type { UaProbe, BlockClass } from './gatherers/ua-parity';
 export {
   collectSitemapEntries,
   sampleEntries,
