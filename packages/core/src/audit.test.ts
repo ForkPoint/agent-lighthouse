@@ -9,7 +9,7 @@ import type { CheckContext } from './check-context';
 
 const META_WITH_GUIDANCE: AuditMeta = {
   id: 'a1',
-  category: 'meta-tags',
+  category: 'machine-discovery',
   title: 'Passing Title',
   failureTitle: 'Failing Title',
   description: 'Some description',
@@ -28,7 +28,7 @@ const META_WITH_GUIDANCE: AuditMeta = {
 
 const META_NO_GUIDANCE: AuditMeta = {
   id: 'a2',
-  category: 'meta-tags',
+  category: 'machine-discovery',
   title: 'Passing Title 2',
   failureTitle: 'Failing Title 2',
   description: 'Description fallback',

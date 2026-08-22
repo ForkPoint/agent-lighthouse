@@ -7,7 +7,7 @@ import { generateHtmlReport } from './html-generator';
 function check(over: Partial<CheckResult> = {}): CheckResult {
   return {
     id: 'c',
-    category: 'agent-tools',
+    category: 'agent-interfaces',
     title: 'title',
     description: 'desc',
     status: 'pass',
@@ -62,7 +62,7 @@ describe('generateHtmlReport', () => {
     const html = generateHtmlReport(
       report([
         cat({
-          id: 'agent-tools',
+          id: 'agent-interfaces',
           checks: [
             check({
               id: 'accessibility-skip-nav',
@@ -82,9 +82,61 @@ describe('generateHtmlReport', () => {
     expect(html).toContain('No consumer reads this signal.');
   });
 
+  // Final-review finding I2: the ai-bot-directives per-bot table and the
+  // security-header-hygiene weak-vs-missing breakdown live entirely in `found`,
+  // so the report must keep its newlines and must render `details.found`.
+  it('preserves newlines in a multi-line found value and renders details.found', () => {
+    const table = 'GPTBot: allowed\nClaudeBot: allowed\nPerplexityBot: blocked';
+    const html = generateHtmlReport(
+      report([
+        cat({
+          id: 'access-crawl-control',
+          checks: [
+            check({
+              id: 'access-crawl-control/ai-bot-directives',
+              status: 'warn',
+              displayValue: table,
+              details: { found: table },
+            }),
+          ],
+        }),
+      ]),
+    );
+
+    // The summary line keeps the newlines instead of collapsing the table.
+    expect(html).toMatch(/class="[^"]*whitespace-pre-line[^"]*"[^>]*>GPTBot: allowed\nClaudeBot/);
+    // details.found equals displayValue here, so the evidence block is
+    // suppressed — the table renders exactly once, not duplicated.
+    expect(html).not.toContain('What we found:');
+    expect(
+      html.match(/whitespace-pre-line[^>]*>GPTBot: allowed\nClaudeBot: allowed\nPerplexityBot: blocked/g),
+    ).toHaveLength(1);
+  });
+
+  it('renders details.found as its own block when it differs from displayValue', () => {
+    const html = generateHtmlReport(
+      report([
+        cat({
+          id: 'access-crawl-control',
+          checks: [
+            check({
+              id: 'access-crawl-control/ai-bot-directives',
+              status: 'warn',
+              displayValue: '1 of 2 documented AI bots allowed',
+              details: { found: 'GPTBot: allowed\nClaudeBot: blocked' },
+            }),
+          ],
+        }),
+      ]),
+    );
+
+    expect(html).toContain('What we found:');
+    expect(html).toMatch(/whitespace-pre-line[^>]*>GPTBot: allowed\nClaudeBot: blocked/);
+  });
+
   it('omits the deprecation block for a check without a notice', () => {
     const html = generateHtmlReport(
-      report([cat({ id: 'agent-tools', checks: [check({ id: 'live', status: 'pass' })] })]),
+      report([cat({ id: 'agent-interfaces', checks: [check({ id: 'live', status: 'pass' })] })]),
     );
 
     expect(html).not.toContain('Deprecated — no longer a factor');

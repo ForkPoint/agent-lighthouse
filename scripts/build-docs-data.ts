@@ -30,12 +30,14 @@ for (const [categoryId, registrations] of Object.entries(defaultConfig.audits)) 
   }
 }
 
-// Sort audits naturally by ID (e.g. 1.1, 1.2, ... 10.15)
+// Sort audits by slug ID (e.g. `structured-data/faqpage-schema`): category
+// slug first, then the audit slug, both compared as text. The v1 ids were
+// numeric (`3.2`) and sorted numerically; v2 ids are slugs, so a numeric parse
+// yields NaN for every id and leaves the list in registry order.
 auditList.sort((a, b) => {
-  const [aCat, aNum] = a.id.split('.').map(Number);
-  const [bCat, bNum] = b.id.split('.').map(Number);
-  if (aCat !== bCat) return aCat - bCat;
-  return aNum - bNum;
+  const [aCat = '', aName = ''] = String(a.id).split('/');
+  const [bCat = '', bName = ''] = String(b.id).split('/');
+  return aCat.localeCompare(bCat) || aName.localeCompare(bName);
 });
 
 const outPath = path.resolve(__dirname, '../packages/website/audits-data.json');

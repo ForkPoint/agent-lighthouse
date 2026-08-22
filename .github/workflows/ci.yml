@@ -33,6 +33,9 @@ jobs:
       - name: Build
         run: pnpm build
 
+      - name: Check audit-dossier linkage
+        run: pnpm check:dossiers
+
       - name: Typecheck
         run: pnpm typecheck
 

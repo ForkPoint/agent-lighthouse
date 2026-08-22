@@ -1,17 +1,21 @@
 import type { AuditMeta, AuditResult } from "../../types";
 import { Audit } from "../../audit";
 import type { CheckContext } from '../../check-context';
+import { weightForGrade } from '../../scorer';
 
 export class JsonLdPresentAudit extends Audit {
   static override meta: AuditMeta = {
-    id: '3.1',
+    id: 'structured-data/json-ld-present',
     category: 'structured-data',
     title: 'JSON-LD present',
     failureTitle: 'JSON-LD present',
     description:
       'AI agents rely on JSON-LD structured data to understand what your site offers, who runs it, and how to interact with it. Without any JSON-LD, agents like ChatGPT and Perplexity treat your site as unstructured text with no machine-readable identity. Add Organization and WebSite schemas to your homepage <head> as a starting point.',
     scoreDisplayMode: 'binary',
-    weight: 1.0,
+    weight: weightForGrade('A', 'scored'),
+    evidenceGrade: 'A',
+    tier: 'scored',
+    dossier: 'docs/evidence/audits/structured-data/json-ld-present.md',
     defaultPriority: 'critical',
     guidance: {
       impact:

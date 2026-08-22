@@ -8,3 +8,7 @@ reports/
 *.log
 .env
 .env.local
+
+# Local review/browser artifacts — never commit
+.lavish/
+.playwright-mcp/

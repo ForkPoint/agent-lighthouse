@@ -4,15 +4,46 @@ export { ProgressTracker, PHASE_WEIGHTS } from './progress';
 export type { PhaseId, ScanEvent } from './progress';
 export { createFetcher, isSafeUrl } from './fetcher';
 export type { FetchResult, FetchOptions } from './fetcher';
+export {
+  classifyFetch,
+  isRealFile,
+  stripBom,
+  normalizeNewlines,
+} from './gatherers/fetch-classify';
+export type { FetchClass, ExpectedKind } from './gatherers/fetch-classify';
+export {
+  parseRobots,
+  parseRobotsFile,
+  matchesUserAgent,
+  groupsForBot,
+  hasNamedGroup,
+  isPathAllowed,
+  isBlanketBlocked,
+} from './gatherers/robots';
+export type { RobotsRule, RobotsGroup, RobotsFile } from './gatherers/robots';
+export { probeUaParity, classifyResponse, AI_CRAWLER_UAS, BASELINE_UA } from './gatherers/ua-parity';
+export type { UaProbe, BlockClass } from './gatherers/ua-parity';
+export {
+  collectSitemapEntries,
+  sampleEntries,
+  isW3CDateTime,
+} from './gatherers/sitemap';
+export type { SitemapEntry, SitemapTree } from './gatherers/sitemap';
+export { parseCssRules, collectPageCss } from './gatherers/css-rules';
+export type { CssRule, PageCss } from './gatherers/css-rules';
+export { pagesOfType, judgePages } from './gatherers/pages';
+export type { PageJudgement } from './gatherers/pages';
 export type { CheckContext, CheckFn, PageContext } from './check-context';
 export { Audit } from './audit';
 export { runAudits, planAudits } from './audit-runner';
-export { defaultConfig } from './audit-config';
+export { defaultConfig, CATEGORY_MASS } from './audit-config';
 export type { ScanConfig, CategoryConfig, AuditRegistration } from './audit-config';
 export type { AuditProgressEvent, AuditPlan, AuditRunResult } from './audit-runner';
 export {
   parseHtml,
   extractJsonLd,
+  topLevelJsonLd,
+  allJsonLdNodes,
   flattenJsonLd,
   extractMarkdownLinks,
   extractMetaTags,
@@ -33,6 +64,7 @@ export {
   buildCategoryResult,
   calculateOverallScore,
   isInformative,
+  weightForGrade,
 } from './scorer';
 export { extractProductFieldVerification } from './product-fields';
 

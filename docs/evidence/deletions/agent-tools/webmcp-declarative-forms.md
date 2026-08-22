@@ -54,7 +54,13 @@ Grade A. The signal is defined in a W3C Web Machine Learning CG explainer, has a
 - **[webmcp.link (docsUrl cited by the audit)](https://webmcp.link/)** — third party (article, NOT verified)
   - (Returns HTTP 451 — the legal-block status IS the observation.) Returns HTTP 451 Unavailable For Legal Reasons — the docsUrl both WebMCP audits point at is dead. Should be replaced with developer.chrome.com/docs/ai/webmcp.
 
+## Rework executed — 2026-08-22
+
+**Resolved.** All three recommended fixes landed: the HTTP-451 `webmcp.link` docsUrl is replaced with `https://developer.chrome.com/docs/ai/webmcp/declarative-api`; a non-empty `toolname` is now required to count a form (a `tooldescription`-only form registers nothing and no longer produces a pass); and `defaultPriority` is softened from `high` to `medium`. `toolparamdescription` and `toolautosubmit` are documented in the guidance, and a page with no forms is `na` rather than `warn`. Grade stays **A**, tier `scored`, weight 1.0. Implementation record: [audits/agent-interfaces/webmcp-declarative-forms.md](../../audits/agent-interfaces/webmcp-declarative-forms.md#the-rewrite-plan-4-task-10-2026-08-22).
+
 ## Review history
+
+- 2026-08-22 — required rework executed (Plan 4, Task 10); `TODO(redeem)` marker removed from the source file.
 
 - 2026-08-21 — user decision: all research verdicts accepted. Disposition by grade: **kept-rewrite** (kept, rewrite required per dossier).
 

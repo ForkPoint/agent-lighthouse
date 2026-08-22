@@ -52,6 +52,8 @@ Grade B => redeemable, and the audit's stated mechanism is essentially verbatim 
 
 ## Review history
 
+- 2026-08-22 — required rework executed (Plan 4, Task 11); the check is now conditional on detected supplementary content, a page that legitimately has none is `notApplicable`, and the guidance states that Readability and trafilatura discard `<aside>` content. `TODO(redeem)` marker removed from the source file.
+
 - 2026-08-21 — user decision: all research verdicts accepted. Disposition by grade: **kept-rewrite** (kept, rewrite required per dossier).
 
 - 2026-08-21 — adversarial redemption research pass (8-agent workflow); URLs fetched at research time.

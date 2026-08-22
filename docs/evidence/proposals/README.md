@@ -1,13 +1,22 @@
 # Proposed checks — evidence dossiers
 
-83 proposed checks from the 2026-08-20 novel-checks research pass. Each dossier states what the check verifies, the falsifiable mechanism behind it, cited evidence from the [source registry](../sources.json), competitor coverage, and an implementation sketch. Grading rubric: [evidence policy](../POLICY.md).
+71 proposed checks from the 2026-08-20 novel-checks research pass. Each dossier states what the check verifies, the falsifiable mechanism behind it, cited evidence from the [source registry](../sources.json), competitor coverage, and an implementation sketch. Grading rubric: [evidence policy](../POLICY.md).
+
+Seven dossiers left this folder on 2026-08-22 (Plan 5, Task 2): six tool
+surveys moved to [../research](../research/README.md) because their verdict is
+a market fact identical for every scanned URL, and `ai-crawler-edge-parity`,
+which was the same check as `bot-auth-access/ai-crawler-edge-response-parity`
+and folded into
+[../merged/access-crawl-control/ai-crawler-edge-parity.md](../merged/access-crawl-control/ai-crawler-edge-parity.md).
+
+Dossiers that graduate to a shipped audit move to
+[../audits](../audits/README.md) with `status: merged`-style audit frontmatter;
+their row leaves the table below and the count above drops by one.
 
 Grades: **A** = documented consumer behavior or ratified standard · **B** = draft standard with adoption, or strong empirical data · **C** = plausible convention, unproven · **D** = speculative.
 
 | Grade | Check | Domain | Uniqueness | Implementation | Scoring tier |
 | :---- | :---- | :----- | :--------- | :------------- | :----------- |
-| A | [Form Autofill Token Coverage](./agent-operability/form-autofill-token-coverage.md) | agent-operability | partial-overlap | `static-fetch` | scored |
-| A | [Native Control Substitution Index](./agent-operability/native-control-substitution-index.md) | agent-operability | unique | `static-fetch` | scored |
 | A | [Overlay Interception Hazard](./agent-operability/overlay-interception-hazard.md) | agent-operability | unique | `headless-browser` | scored |
 | A | [ACP Endpoint Conformance Probe](./agentic-commerce/acp-endpoint-conformance-probe.md) | agentic-commerce | unique | `static-fetch` | informative (weight 0) |
 | A | [ACP Link-Surface Completeness (the 8 required policy link types)](./agentic-commerce/acp-link-surface-completeness-the-8-required-policy-link-typ.md) | agentic-commerce | unique | `multi-page` | scored |
@@ -18,18 +27,10 @@ Grades: **A** = documented consumer behavior or ratified standard · **B** = dra
 | A | [Text-Fragment Citation Addressability](./answer-selection-forensics/text-fragment-citation-addressability.md) | answer-selection-forensics | unique | `static-fetch` | scored |
 | A | [AI crawler edge-response parity](./bot-auth-access/ai-crawler-edge-response-parity.md) | bot-auth-access | partial-overlap | `multi-page` | scored |
 | A | [Bot-specific content delta declared, not cloaked](./bot-auth-access/bot-specific-content-delta-declared-not-cloaked.md) | bot-auth-access | unique | `multi-page` | scored |
-| A | [ai-crawler-edge-parity](./competitor-gap-verify/ai-crawler-edge-parity.md) | competitor-gap-verify | unique | `multi-page` | scored |
-| A | [AI-visibility monitors (Otterly.ai, Peec AI, Ahrefs Brand Radar, HubSpot AI Search Grader)](./competitor-gap-verify/ai-visibility-monitors-otterly-ai-peec-ai-ahrefs-brand-radar.md) | competitor-gap-verify | commodity | `llm-assisted` | informative (weight 0) |
-| A | [Enterprise SEO suites (Semrush, Conductor, seoClarity) — log-based bot analytics](./competitor-gap-verify/enterprise-seo-suites-semrush-conductor-seoclarity-log-based.md) | competitor-gap-verify | commodity | `multi-page` | informative (weight 0) |
-| A | [Google Lighthouse — Agentic Browsing category (SHIPPED, complete list)](./competitor-gap-verify/google-lighthouse-agentic-browsing-category-shipped-complete.md) | competitor-gap-verify | commodity | `headless-browser` | informative (weight 0) |
-| A | [Open-source agent-readiness tooling on GitHub — generators, not auditors](./competitor-gap-verify/open-source-agent-readiness-tooling-on-github-generators-not.md) | competitor-gap-verify | commodity | `static-fetch` | informative (weight 0) |
-| A | [Profound — Agent Analytics (AI visibility + passive bot telemetry)](./competitor-gap-verify/profound-agent-analytics-ai-visibility-passive-bot-telemetry.md) | competitor-gap-verify | commodity | `llm-assisted` | informative (weight 0) |
 | A | [robots-ai-group-shadowing](./competitor-gap-verify/robots-ai-group-shadowing.md) | competitor-gap-verify | unique | `static-fetch` | scored |
 | A | [Agent-commerce feed-field parity from product-page structured data](./feeds-indexing/agent-commerce-feed-field-parity-from-product-page-structure.md) | feeds-indexing | unique | `multi-page` | scored |
 | A | [AI-crawler reachability of advertised discovery surfaces](./feeds-indexing/ai-crawler-reachability-of-advertised-discovery-surfaces.md) | feeds-indexing | unique | `multi-page` | scored |
 | A | [Sitemap lastmod verifiability (page-level cross-validation)](./feeds-indexing/sitemap-lastmod-verifiability-page-level-cross-validation.md) | feeds-indexing | partial-overlap | `multi-page` | scored |
-| A | [Accessibility-Layer Injection Scan](./injection-safety/accessibility-layer-injection-scan.md) | injection-safety | partial-overlap | `static-fetch` | scored |
-| A | [Invisible Instruction Payload Scan](./injection-safety/invisible-instruction-payload-scan.md) | injection-safety | unique | `static-fetch` | scored |
 | A | [Modern-Era Reachability Probe (server/discover)](./mcp-server-quality/modern-era-reachability-probe-server-discover.md) | mcp-server-quality | unique | `static-fetch` | scored |
 | A | [OAuth Discovery Chain Integrity (RFC 9728 → RFC 8414)](./mcp-server-quality/oauth-discovery-chain-integrity-rfc-9728-rfc-8414.md) | mcp-server-quality | unique | `multi-page` | scored |
 | A | [Tool Contract Validity and Silent-Drop Risk](./mcp-server-quality/tool-contract-validity-and-silent-drop-risk.md) | mcp-server-quality | unique | `static-fetch` | scored |
@@ -37,7 +38,6 @@ Grades: **A** = documented consumer behavior or ratified standard · **B** = dra
 | A | [Version Downgrade Recoverability](./mcp-server-quality/version-downgrade-recoverability.md) | mcp-server-quality | unique | `static-fetch` | scored |
 | A | [Ghost content: CSS-hidden text ingested as visible](./token-economics/ghost-content-css-hidden-text-ingested-as-visible.md) | token-economics | unique | `static-fetch` | scored |
 | A | [Inlined hydration-state payload share](./token-economics/inlined-hydration-state-payload-share.md) | token-economics | unique | `static-fetch` | scored |
-| A | [ClaimReview investment advisory](./trust-provenance/claimreview-investment-advisory.md) | trust-provenance | partial-overlap | `multi-page` | informative (weight 0) |
 | B | [Drag and Slider Dependency](./agent-operability/drag-and-slider-dependency.md) | agent-operability | unique | `static-fetch` | scored |
 | B | [Ghost-Clickable Element Ratio](./agent-operability/ghost-clickable-element-ratio.md) | agent-operability | unique | `static-fetch` | scored |
 | B | [Hover-Only Content and Navigation](./agent-operability/hover-only-content-and-navigation.md) | agent-operability | unique | `static-fetch` | scored |
@@ -57,7 +57,6 @@ Grades: **A** = documented consumer behavior or ratified standard · **B** = dra
 | B | [RSL licensing terms discoverable and conformant](./bot-auth-access/rsl-licensing-terms-discoverable-and-conformant.md) | bot-auth-access | unique | `static-fetch` | scored |
 | B | [Signed-agent (Web Bot Auth) request tolerance](./bot-auth-access/signed-agent-web-bot-auth-request-tolerance.md) | bot-auth-access | unique | `static-fetch` | scored |
 | B | [content-signal-coherence](./competitor-gap-verify/content-signal-coherence.md) | competitor-gap-verify | unique | `static-fetch` | scored |
-| B | [Google Lighthouse — ard-schema (ai-catalog.json) audit, OPEN PR #17168](./competitor-gap-verify/google-lighthouse-ard-schema-ai-catalog-json-audit-open-pr-1.md) | competitor-gap-verify | partial-overlap | `static-fetch` | informative (weight 0) |
 | B | [offer-dom-price-parity](./competitor-gap-verify/offer-dom-price-parity.md) | competitor-gap-verify | unique | `multi-page` | scored |
 | B | [Conditional-request support on discovery surfaces](./feeds-indexing/conditional-request-support-on-discovery-surfaces.md) | feeds-indexing | unique | `static-fetch` | scored |
 | B | [Feed entry identity and canonical integrity](./feeds-indexing/feed-entry-identity-and-canonical-integrity.md) | feeds-indexing | unique | `multi-page` | scored |

@@ -46,7 +46,8 @@ function usage(): never {
 Options:
   -p, --preset <name>          Audit preset (ecommerce, saas, content, quick, full) [default: full]
   -c, --config <path>          Path to configuration file (e.g. agent-lighthouse.config.json)
-  --debug-audit <id|fails>     Print deep diagnostic breakdown for specific audit ID (e.g. 3.2) or all fails
+  --debug-audit <id|fails>     Print deep diagnostic breakdown for a specific audit ID
+                               (e.g. structured-data/faqpage-schema) or all fails
   --categories <list>          Comma-separated list of categories to audit
   -o, --output <formats>       Output formats (comma-separated: terminal, html, json, md) [default: terminal,html,json]
   -d, --output-dir <path>      Output directory for generated reports [default: ./reports]
@@ -63,7 +64,7 @@ Options:
 Examples:
   npx @forkpoint/agent-lighthouse https://yourstore.com
   npx @forkpoint/agent-lighthouse https://yourstore.com --preset ecommerce
-  npx @forkpoint/agent-lighthouse https://yourstore.com --debug-audit 3.2
+  npx @forkpoint/agent-lighthouse https://yourstore.com --debug-audit structured-data/faqpage-schema
   npx @forkpoint/agent-lighthouse https://staging.yourstore.com --min-score 85
 `);
   process.exit(1);

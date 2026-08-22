@@ -119,6 +119,9 @@ export abstract class Audit {
       description: meta.description,
       status: result.status,
       score: result.score,
+      // Single source of truth for a check's evidence weight: stamped here, at
+      // the one place a CheckResult is built from its meta.
+      weight: meta.weight,
       scoreDisplayMode: meta.scoreDisplayMode,
       displayValue,
       explanation,
@@ -140,6 +143,10 @@ export abstract class Audit {
       },
       tags: meta.guidance?.tags,
       deprecated: meta.deprecated,
+
+      // v2 taxonomy provenance, carried alongside the weight it justifies.
+      evidenceGrade: meta.evidenceGrade,
+      tier: meta.tier,
     };
   }
 }

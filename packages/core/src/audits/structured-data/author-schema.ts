@@ -1,6 +1,7 @@
 import type { AuditMeta, AuditResult } from "../../types";
 import { Audit } from "../../audit";
 import type { CheckContext } from '../../check-context';
+import { weightForGrade } from '../../scorer';
 import { flattenJsonLd } from '../../parser';
 
 function matchesType(schema: Record<string, unknown>, type: string): boolean {
@@ -24,14 +25,17 @@ function hasProps(obj: Record<string, unknown>, keys: string[]): string[] {
 
 export class AuthorSchemaAudit extends Audit {
   static override meta: AuditMeta = {
-    id: '3.15',
+    id: 'structured-data/author-schema',
     category: 'structured-data',
     title: 'Author schema with credentials',
     failureTitle: 'Author schema with credentials',
     description:
       'AI systems assign higher confidence to content from named experts with verifiable credentials. Person schema with jobTitle, sameAs, and affiliation lets AI agents cross-reference author identity across platforms, boosting your content in RAG trust scoring.',
-    scoreDisplayMode: 'ternary',
-    weight: 1.0,
+    scoreDisplayMode: 'informative',
+    weight: weightForGrade('C', 'informative'),
+    evidenceGrade: 'C',
+    tier: 'informative',
+    dossier: 'docs/evidence/audits/structured-data/author-schema.md',
     applicablePageTypes: ['content'],
     defaultPriority: 'medium',
     guidance: {

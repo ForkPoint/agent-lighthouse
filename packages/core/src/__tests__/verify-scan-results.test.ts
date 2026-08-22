@@ -116,7 +116,7 @@ describe('Verify scan results against real sites', () => {
       // Independently verify
       expect(ctx.rootFiles['/llms.txt']!.status).not.toBe(200);
       // Check agrees
-      const result = allResults.get('1.1');
+      const result = allResults.get('machine-discovery/llms-txt-exists');
       expect(result).toBeDefined();
       expect(result!.status).toBe('fail');
     });
@@ -124,15 +124,11 @@ describe('Verify scan results against real sites', () => {
     it('1.8: example.com should NOT have a sitemap', () => {
       expect(ctx.rootFiles['/sitemap.xml']!.status).not.toBe(200);
       expect(ctx.rootFiles['/sitemap-index.xml']!.status).not.toBe(200);
-      const result = allResults.get('1.8');
+      const result = allResults.get('machine-discovery/discovery-index-coverage');
       expect(result).toBeDefined();
-      expect(result!.status).toBe('fail');
-    });
-
-    it('1.18: example.com robots.txt check matches reality', () => {
-      const result = allResults.get('1.18');
-      expect(result).toBeDefined();
-      expect(['pass', 'warn', 'fail', 'na']).toContain(result!.status);
+      // With no index of any kind there is nothing to compare against: the
+      // missing sitemap is sitemap-exists' failure, not a second one here.
+      expect(result!.status).toBe('warn');
     });
 
     // --- Meta Tags (IDs: '4.x') ---
@@ -140,7 +136,7 @@ describe('Verify scan results against real sites', () => {
     it('4.1: example.com meta description check matches reality', () => {
       const meta = ctx.pages[0]!.meta;
       const hasDescription = !!meta['description'] && meta['description'].length >= 50;
-      const result = allResults.get('4.1');
+      const result = allResults.get('answer-readiness/meta-description');
       expect(result).toBeDefined();
       if (hasDescription) {
         expect(result!.status).toBe('pass');
@@ -152,7 +148,7 @@ describe('Verify scan results against real sites', () => {
     it('4.4: example.com lang attribute check matches reality', () => {
       const $ = ctx.pages[0]!.$;
       const lang = $('html').attr('lang');
-      const result = allResults.get('4.4');
+      const result = allResults.get('content-extraction/language-attribute');
       expect(result).toBeDefined();
       if (lang && lang.length > 0) {
         expect(result!.status).toBe('pass');
@@ -166,7 +162,7 @@ describe('Verify scan results against real sites', () => {
       const ogTags = ['og:title', 'og:description', 'og:image', 'og:url'] as const;
       const present = ogTags.filter((t) => !!meta[t]?.trim());
       const missing = ogTags.filter((t) => !meta[t]?.trim());
-      const result = allResults.get('4.6');
+      const result = allResults.get('answer-readiness/core-open-graph');
       expect(result).toBeDefined();
       if (missing.length === 0) {
         expect(result!.status).toBe('pass');
@@ -182,7 +178,7 @@ describe('Verify scan results against real sites', () => {
 
     it('3.1: example.com JSON-LD check matches reality', () => {
       const jsonLd = ctx.pages[0]!.jsonLd;
-      const result = allResults.get('3.1');
+      const result = allResults.get('structured-data/json-ld-present');
       expect(result).toBeDefined();
       if (jsonLd.length > 0) {
         expect(result!.status).toBe('pass');
@@ -196,7 +192,7 @@ describe('Verify scan results against real sites', () => {
     it('6.1: example.com h1 count check matches reality', () => {
       const $ = ctx.pages[0]!.$;
       const h1Count = $('h1').length;
-      const result = allResults.get('6.1');
+      const result = allResults.get('content-extraction/single-h1');
       expect(result).toBeDefined();
       if (h1Count === 1) {
         expect(result!.status).toBe('pass');
@@ -208,7 +204,7 @@ describe('Verify scan results against real sites', () => {
     it('6.3: example.com <main> element check matches reality', () => {
       const $ = ctx.pages[0]!.$;
       const hasMain = $('main').length > 0;
-      const result = allResults.get('6.3');
+      const result = allResults.get('content-extraction/main-element');
       expect(result).toBeDefined();
       if (hasMain) {
         expect(['pass', 'warn']).toContain(result!.status);
@@ -219,7 +215,7 @@ describe('Verify scan results against real sites', () => {
 
     it('6.14: example.com word count check matches reality', () => {
       const wordCount = getWordCount(ctx.pages[0]!.$);
-      const result = allResults.get('6.14');
+      const result = allResults.get('content-extraction/content-depth');
       expect(result).toBeDefined();
       if (wordCount > 300) {
         expect(['pass', 'warn']).toContain(result!.status);
@@ -231,7 +227,7 @@ describe('Verify scan results against real sites', () => {
     // --- Technical Readiness (IDs: '8.x') ---
 
     it('8.1: example.com HTTPS check matches reality', () => {
-      const result = allResults.get('8.1');
+      const result = allResults.get('access-crawl-control/https-enabled');
       expect(result).toBeDefined();
       const page = ctx.pages[0];
       if (page && page.fetchResult.status === 200) {
@@ -242,15 +238,18 @@ describe('Verify scan results against real sites', () => {
       }
     });
 
-    it('8.12: example.com response time check matches reality', () => {
+    // 8.12 folded into 1.19 in Plan 4: one banded median-TTFB audit.
+    it('1.19 + 8.12: example.com response time check matches reality', () => {
       const fetchResult = ctx.pages[0]!.fetchResult;
-      const result = allResults.get('8.12');
+      const result = allResults.get('content-extraction/server-responsiveness');
       expect(result).toBeDefined();
       if (fetchResult.error || fetchResult.status === 0) {
-        // Request failed — check should fail
-        expect(result!.status).toBe('fail');
-      } else if (fetchResult.ttfbMs < 800) {
+        // Nothing measurable — the audit reports na, not a performance defect.
+        expect(result!.status).toBe('na');
+      } else if (fetchResult.ttfbMs <= 800) {
         expect(result!.status).toBe('pass');
+      } else if (fetchResult.ttfbMs <= 2500) {
+        expect(result!.status).toBe('warn');
       } else {
         expect(result!.status).toBe('fail');
       }
@@ -261,7 +260,7 @@ describe('Verify scan results against real sites', () => {
       const wordCount = getWordCount($);
       const mainText = $('main').text().trim() || $('body').text().trim();
       const hasContent = wordCount > 50 || mainText.length > 200;
-      const result = allResults.get('8.13');
+      const result = allResults.get('content-extraction/server-rendered');
       expect(result).toBeDefined();
       if (hasContent) {
         expect(result!.status).toBe('pass');
@@ -270,25 +269,28 @@ describe('Verify scan results against real sites', () => {
       }
     });
 
-    // --- Agent Tools (IDs: '5.*') ---
+    // --- Agent Interfaces (IDs: 'agent-interfaces/*') ---
 
+    // example.com has no API surface at all: no api-catalog, no spec at a
+    // probed path, no service-desc link. That is `na` — there is nothing for a
+    // brochure site to fix — not a failure.
     it('5.1: example.com should NOT have OpenAPI spec', () => {
       expect(ctx.rootFiles['/openapi.json']!.status).not.toBe(200);
-      const result = allResults.get('5.1');
+      const result = allResults.get('agent-interfaces/openapi-exists');
       expect(result).toBeDefined();
-      expect(result!.status).toBe('fail');
+      expect(result!.status).toBe('na');
     });
 
-    // --- Accessibility (IDs: '7.x') ---
+    // --- Operability & Safety ---
 
-    it('7.2: example.com ARIA landmarks check matches reality', () => {
+    it('operability-safety/aria-landmarks: example.com ARIA landmarks check matches reality', () => {
       const $ = ctx.pages[0]!.$;
       const hasHeader = $('header, [role="banner"]').length > 0;
       const hasMain = $('main, [role="main"]').length > 0;
       const hasNav = $('nav, [role="navigation"]').length > 0;
       const hasFooter = $('footer, [role="contentinfo"]').length > 0;
       const allPresent = hasHeader && hasMain && hasNav && hasFooter;
-      const result = allResults.get('7.2');
+      const result = allResults.get('operability-safety/aria-landmarks');
       expect(result).toBeDefined();
       if (allPresent) {
         expect(result!.status).toBe('pass');
@@ -302,7 +304,11 @@ describe('Verify scan results against real sites', () => {
 
     it('no false positives: llms.txt child checks should not pass if llms.txt is missing', () => {
       if (ctx.rootFiles['/llms.txt']!.status !== 200) {
-        for (const id of ['1.2', '1.3', '1.4', '1.5']) {
+        for (const id of [
+          'machine-discovery/llms-txt-structure',
+          'machine-discovery/llms-txt-link-descriptions',
+          'machine-discovery/llms-txt-links-valid',
+        ]) {
           const result = allResults.get(id);
           if (result) {
             expect(result.status).not.toBe('pass');
@@ -316,7 +322,11 @@ describe('Verify scan results against real sites', () => {
         ctx.rootFiles['/sitemap.xml']!.status === 200 ||
         ctx.rootFiles['/sitemap-index.xml']!.status === 200;
       if (!hasSitemap) {
-        for (const id of ['1.9', '1.10', '1.11']) {
+        for (const id of [
+          'machine-discovery/sitemap-absolute-urls',
+          'machine-discovery/sitemap-lastmod',
+          'machine-discovery/rss-feed',
+        ]) {
           const result = allResults.get(id);
           if (result) {
             expect(result.status).not.toBe('pass');
@@ -331,10 +341,10 @@ describe('Verify scan results against real sites', () => {
         ctx.rootFiles['/openapi.yaml']!.status !== 200
       ) {
         const openApiChildIds = [
-          '5.2',
-          '5.3',
-          '5.5',
-          '5.6',
+          'agent-interfaces/openapi-endpoints',
+          'agent-interfaces/openapi-operation-ids',
+          'agent-interfaces/openapi-servers',
+          'agent-interfaces/openapi-schemas',
         ];
         for (const id of openApiChildIds) {
           const result = allResults.get(id);
@@ -379,7 +389,7 @@ describe('Verify scan results against real sites', () => {
     }, TIMEOUT);
 
     it('8.1: docs.anthropic.com HTTPS check matches reality', () => {
-      const result = allResults.get('8.1');
+      const result = allResults.get('access-crawl-control/https-enabled');
       expect(result).toBeDefined();
       const page = ctx.pages[0];
       // HTTPS is used; if homepage returns 200, expect pass; otherwise warn
@@ -392,7 +402,7 @@ describe('Verify scan results against real sites', () => {
 
     it('4.1: docs.anthropic.com meta description check matches reality', () => {
       const meta = ctx.pages[0]!.meta;
-      const result = allResults.get('4.1');
+      const result = allResults.get('answer-readiness/meta-description');
       expect(result).toBeDefined();
       if (meta['description'] && meta['description'].length >= 50) {
         expect(result!.status).toBe('pass');
@@ -405,7 +415,7 @@ describe('Verify scan results against real sites', () => {
 
     it('4.4: docs.anthropic.com lang attribute check matches reality', () => {
       const lang = ctx.pages[0]!.$('html').attr('lang');
-      const result = allResults.get('4.4');
+      const result = allResults.get('content-extraction/language-attribute');
       expect(result).toBeDefined();
       if (lang) {
         expect(result!.status).toBe('pass');
@@ -416,7 +426,7 @@ describe('Verify scan results against real sites', () => {
 
     it('6.1: docs.anthropic.com h1 check matches reality', () => {
       const h1Count = ctx.pages[0]!.$('h1').length;
-      const result = allResults.get('6.1');
+      const result = allResults.get('content-extraction/single-h1');
       expect(result).toBeDefined();
       if (h1Count === 1) {
         expect(result!.status).toBe('pass');
@@ -427,7 +437,7 @@ describe('Verify scan results against real sites', () => {
 
     it('1.1: docs.anthropic.com llms.txt check matches reality', () => {
       const llmsTxt = ctx.rootFiles['/llms.txt']!;
-      const result = allResults.get('1.1');
+      const result = allResults.get('machine-discovery/llms-txt-exists');
       expect(result).toBeDefined();
       if (llmsTxt.status === 200 && llmsTxt.body.trimStart().startsWith('#')) {
         expect(result!.status).toBe('pass');

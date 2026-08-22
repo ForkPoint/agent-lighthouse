@@ -24,9 +24,15 @@ describe('Snapshot Regression Tests', () => {
 
     const { checks } = await runAudits(ctx, defaultConfig);
 
-    const snapshotIds = new Set(['1.1', '8.1']);
+    const snapshotIds = new Set([
+      'machine-discovery/llms-txt-exists',
+      'access-crawl-control/https-enabled',
+    ]);
     const resultsToSnapshot = checks
       .filter((c) => snapshotIds.has(c.id))
+      // Sort by id: the snapshot is about verdicts, not about the order the
+      // registry happens to iterate its categories in.
+      .sort((a, b) => a.id.localeCompare(b.id))
       .map((c) => ({
         id: c.id,
         status: c.status,

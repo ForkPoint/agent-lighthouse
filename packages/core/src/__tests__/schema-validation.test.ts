@@ -3,6 +3,35 @@ import { defaultConfig } from '../audit-config';
 import { AuditMetaSchema, AuditResultSchema, CheckResultSchema } from '../schemas';
 import { mockCheckContext, mockPageContext, mockFetchResult } from './test-utils';
 
+describe('AuditMetaSchema.weight', () => {
+  const meta = {
+    id: 'content-extraction/single-h1',
+    category: 'content-extraction',
+    title: 't',
+    failureTitle: 'ft',
+    description: 'd',
+    scoreDisplayMode: 'informative' as const,
+    weight: 0,
+    defaultPriority: 'low' as const,
+    evidenceGrade: 'C' as const,
+    tier: 'informative' as const,
+    dossier: 'docs/evidence/audits/content-extraction/single-h1.md',
+  };
+
+  it('accepts weight 0 (informative tier — reported but not scored)', () => {
+    expect(AuditMetaSchema.safeParse(meta).success).toBe(true);
+  });
+
+  it('accepts the A (1.0) and B (0.6) evidence weights', () => {
+    expect(AuditMetaSchema.safeParse({ ...meta, weight: 1 }).success).toBe(true);
+    expect(AuditMetaSchema.safeParse({ ...meta, weight: 0.6 }).success).toBe(true);
+  });
+
+  it('rejects a negative weight', () => {
+    expect(AuditMetaSchema.safeParse({ ...meta, weight: -0.1 }).success).toBe(false);
+  });
+});
+
 describe('Audit Schema Validation (All 183+ Audits)', () => {
   const ctx = mockCheckContext(
     [mockPageContext('https://example.com/', '<html><body><h1>Test</h1></body></html>')],

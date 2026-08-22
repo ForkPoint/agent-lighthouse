@@ -7,7 +7,7 @@ import type {
   ScanReport,
   ScoreTier,
 } from '@forkpoint/agent-lighthouse-core';
-import { CATEGORY_NAMES, CATEGORY_WEIGHTS, isInformative } from '@forkpoint/agent-lighthouse-core';
+import { CATEGORY_MASS, CATEGORY_NAMES, isInformative } from '@forkpoint/agent-lighthouse-core';
 import { CATEGORY_ORDER } from './sections';
 import { generateScanSummary } from './summary';
 
@@ -62,7 +62,7 @@ export function hydrateReport(row: PersistedScanRow): ScanReport {
     return {
       id,
       name: CATEGORY_NAMES[id] ?? id,
-      weight: CATEGORY_WEIGHTS[id] ?? 0,
+      weight: CATEGORY_MASS[id] ?? 0,
       score: categoryScores[id] ?? 0,
       checks,
       passCount: countBy(checks, 'pass'),
@@ -82,7 +82,7 @@ export function hydrateReport(row: PersistedScanRow): ScanReport {
   const topPasses = checkResults
     .filter((c) => c.status === 'pass' && !isInformative(c))
     .slice()
-    .sort((a, b) => (CATEGORY_WEIGHTS[b.category] ?? 0) - (CATEGORY_WEIGHTS[a.category] ?? 0))
+    .sort((a, b) => (CATEGORY_MASS[b.category] ?? 0) - (CATEGORY_MASS[a.category] ?? 0))
     .slice(0, 10);
 
   const report: ScanReport = {

@@ -1,6 +1,7 @@
 import type { AuditMeta, AuditResult } from "../../types";
 import { Audit } from "../../audit";
 import type { CheckContext } from '../../check-context';
+import { weightForGrade } from '../../scorer';
 import { flattenJsonLd } from '../../parser';
 
 function matchesType(schema: Record<string, unknown>, type: string): boolean {
@@ -21,14 +22,17 @@ function urlDepth(url: string): number {
 
 export class BreadcrumbSchemaAudit extends Audit {
   static override meta: AuditMeta = {
-    id: '3.5',
+    id: 'structured-data/breadcrumb-schema',
     category: 'structured-data',
     title: 'BreadcrumbList schema',
     failureTitle: 'BreadcrumbList schema',
     description:
       'AI agents use BreadcrumbList to understand your site hierarchy and navigate between parent/child pages. Without breadcrumbs, agents cannot infer where a page sits in your content tree, making it harder to provide contextual answers that reference related pages.',
     scoreDisplayMode: 'ternary',
-    weight: 1.0,
+    weight: weightForGrade('A', 'scored'),
+    evidenceGrade: 'A',
+    tier: 'scored',
+    dossier: 'docs/evidence/audits/structured-data/breadcrumb-schema.md',
     applicablePageTypes: ['category', 'product', 'content'],
     defaultPriority: 'medium',
     guidance: {

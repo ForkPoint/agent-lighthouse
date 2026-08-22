@@ -50,6 +50,8 @@ Grade A: a live vendor doc names a specific agent (Google Assistant) that reads 
 
 ## Review history
 
+- 2026-08-22 — required rework executed (Plan 4, Task 12); both required changes landed — applicability restricted to news/article publishers (`applicablePageTypes: ['content']` plus a runtime article-page guard, `notApplicable` when the crawl has none) and the fabricated Alexa/Siri claim deleted from every user-facing string. The Gemini-for-Home re-check trigger is stamped in the source header and the audit dossier. `TODO(redeem)` marker removed from the source file.
+
 - 2026-08-21 — user decision: all research verdicts accepted. Disposition by grade: **kept-rewrite** (kept, rewrite required per dossier).
 
 - 2026-08-21 — adversarial redemption research pass (8-agent workflow); URLs fetched at research time.

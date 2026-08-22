@@ -41,23 +41,38 @@ export const DeprecationNoticeSchema = z.object({
   link: z.string().url(),
 });
 
+/** Evidence strength from the audit's dossier (docs/evidence/POLICY.md). */
+export const EvidenceGradeSchema = z.enum(['A', 'B', 'C', 'D']);
+/** Scoring participation tier (spec §4). */
+export const AuditTierSchema = z.enum(['scored', 'informative', 'experimental']);
+
+/** v2 audit identity: `category/slug`, stable across releases (spec §6). */
+export const AUDIT_ID_PATTERN = /^[a-z-]+\/[a-z0-9-]+$/;
+
 export const AuditMetaSchema = z.object({
-  id: z.string(),
+  id: z.string().regex(AUDIT_ID_PATTERN, 'audit id must be a `category/slug` path'),
   category: z.string(),
   title: z.string(),
   failureTitle: z.string(),
   description: z.string(),
   scoreDisplayMode: ScoreDisplayModeSchema,
-  // Deprecated audits carry weight 0 (excluded from scoring).
+  // 0 is legal: informative-tier and deprecated audits report evidence without
+  // moving the score, so they carry weight 0 and stay out of the denominator.
   weight: z.number().nonnegative(),
   applicablePageTypes: z.array(z.string()).optional(),
   defaultPriority: CheckPrioritySchema,
   guidance: AuditGuidanceSchema.optional(),
   deprecated: DeprecationNoticeSchema.optional(),
+  // v2 taxonomy fields, now required: every registered audit must state where
+  // its weight comes from (grade + tier) and which dossier proves it.
+  evidenceGrade: EvidenceGradeSchema,
+  tier: AuditTierSchema,
+  dossier: z.string().min(1).max(500),
 });
 
 export const CheckResultSchema = z.object({
-  id: z.string().max(20),
+  // v2 ids are `category/slug` paths, which outgrew the old 20-char cap.
+  id: z.string().max(64),
   category: z.string().max(100),
   title: z.string().max(500),
   description: z.string().max(5000),
@@ -80,4 +95,8 @@ export const CheckResultSchema = z.object({
     .optional(),
   tags: z.array(z.string().max(50)).max(20).optional(),
   deprecated: DeprecationNoticeSchema.optional(),
+  // Copied from the audit's meta so downstream surfaces can filter by
+  // evidence strength without reaching back into the registry.
+  evidenceGrade: EvidenceGradeSchema.optional(),
+  tier: AuditTierSchema.optional(),
 });
