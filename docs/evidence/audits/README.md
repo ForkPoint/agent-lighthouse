@@ -87,7 +87,7 @@ One dossier per audit: what it checks, the 2026-08-20 code-review findings, grad
 | 1.19 | [fast-page-load](./content-extraction/server-responsiveness.md) | content-discoverability | fix | B | keep — fix required |
 | 1.20 | [no-broken-links](./machine-discovery/no-broken-links.md) | content-discoverability | fix | A | keep — fix required |
 | 1.21 | [navigation-json](./content-discoverability/navigation-json.md) | content-discoverability | delete | D | sunset (approved 2026-08-21) |
-| 1.22 | [no-orphan-pages](./machine-discovery/no-orphan-pages.md) | content-discoverability | merge | A | merge (approved 2026-08-21) |
+| 1.22 | [no-orphan-pages](../merged/machine-discovery/no-orphan-pages.md) | content-discoverability | merge | A | merged into [machine-discovery/discovery-index-coverage](./machine-discovery/discovery-index-coverage.md) (2026-08-22) |
 | 1.23 | [commerce-links](../sunset/content-discoverability/commerce-links.md) | content-discoverability | fix | D | sunset (2026-08-21) |
 | 2.1 | [gptbot](./access-crawl-control/gptbot.md) | crawler-permissions | fix | A | keep — fix required |
 | 2.2 | [google-extended](./access-crawl-control/google-extended.md) | crawler-permissions | fix | A | keep — fix required |

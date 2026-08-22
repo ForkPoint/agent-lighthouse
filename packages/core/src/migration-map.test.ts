@@ -38,6 +38,7 @@ const CONSOLIDATION_TARGETS = [
   'access-crawl-control/ai-bot-directives',
   'operability-safety/security-header-hygiene',
   'machine-discovery/llms-txt-structure',
+  'machine-discovery/discovery-index-coverage',
 ];
 
 // v2 identity: `category/slug`. Slugs carry digits and dots (json-ld-1-1,

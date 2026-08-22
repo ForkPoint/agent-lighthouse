@@ -128,10 +128,9 @@
   },
   "1.22": {
     "slug": "content-discoverability/no-orphan-pages",
-    "status": "merging",
+    "status": "renamed",
     "to": "machine-discovery/discovery-index-coverage",
-    "interim": "machine-discovery/no-orphan-pages",
-    "link": "docs/evidence/audits/machine-discovery/no-orphan-pages.md"
+    "link": "docs/evidence/audits/machine-discovery/discovery-index-coverage.md"
   },
   "1.23": {
     "slug": "content-discoverability/commerce-links",

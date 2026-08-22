@@ -126,7 +126,9 @@ describe('Verify scan results against real sites', () => {
       expect(ctx.rootFiles['/sitemap-index.xml']!.status).not.toBe(200);
       const result = allResults.get('machine-discovery/discovery-index-coverage');
       expect(result).toBeDefined();
-      expect(result!.status).toBe('fail');
+      // With no index of any kind there is nothing to compare against: the
+      // missing sitemap is sitemap-exists' failure, not a second one here.
+      expect(result!.status).toBe('warn');
     });
 
     // --- Meta Tags (IDs: '4.x') ---

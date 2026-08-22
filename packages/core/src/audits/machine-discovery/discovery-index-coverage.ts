@@ -1,7 +1,7 @@
 import * as cheerio from 'cheerio';
-import type { AuditMeta, AuditResult } from "../../types";
-import { Audit } from "../../audit";
-import type { CheckContext } from '../../check-context';
+import type { AuditMeta, AuditResult } from '../../types';
+import { Audit } from '../../audit';
+import type { CheckContext, PageContext } from '../../check-context';
 import { weightForGrade } from '../../scorer';
 import type { FetchResult } from '../../fetcher';
 
@@ -9,7 +9,7 @@ function isOk(result: FetchResult): boolean {
   return result.status === 200;
 }
 
-/** Try to find the sitemap FetchResult from rootFiles, checking /sitemap.xml first then /sitemap-index.xml */
+/** Try to find the sitemap FetchResult, checking /sitemap.xml first then /sitemap-index.xml. */
 function getSitemapResult(ctx: CheckContext): FetchResult | null {
   const sitemap = ctx.rootFiles['/sitemap.xml'];
   if (sitemap && isOk(sitemap)) return sitemap;
@@ -18,14 +18,66 @@ function getSitemapResult(ctx: CheckContext): FetchResult | null {
   return null;
 }
 
-export class SitemapKeyPagesAudit extends Audit {
+/** Sub-sitemaps fetched from a <sitemapindex> before the comparison. */
+const MAX_SUB_SITEMAPS = 10;
+
+/**
+ * One comparison key for both sides of the coverage check.
+ *
+ * Raw string equality over trailing-slash variants produced phantom "missing"
+ * pages whenever protocol, `www.`, case, percent-encoding or tracking query
+ * params differed between the sitemap and the scanned URL (review findings 1.8
+ * and 1.22). The key drops everything that cannot change which document is
+ * served: scheme, `www.`, default port, query, fragment, trailing slash, case.
+ */
+function coverageKey(rawUrl: string, base?: string): string | null {
+  try {
+    const url = new URL(rawUrl, base);
+    const host = url.hostname.toLowerCase().replace(/^www\./, '');
+    let path = decodeURI(url.pathname).replace(/\/+$/, '');
+    path = path.toLowerCase();
+    return `${host}${path}`;
+  } catch {
+    return null;
+  }
+}
+
+/** Collect every <loc> of a sitemap or sitemap-index body. */
+function locsOf(body: string, selector: string): string[] {
+  const $ = cheerio.load(body, { xmlMode: true });
+  const out: string[] = [];
+  $(selector).each((_, el) => {
+    const loc = $(el).text().trim();
+    if (loc) out.push(loc);
+  });
+  return out;
+}
+
+/**
+ * Markdown links from llms.txt, relative ones included.
+ *
+ * `parser.extractMarkdownLinks` keeps absolute URLs only, so a site listing its
+ * pages as `- [About](/about)` looked like it had no llms.txt index at all
+ * (review finding 1.22).
+ */
+function llmsTxtLinks(body: string): string[] {
+  const out: string[] = [];
+  const inline = /\[[^\]]+\]\(([^)\s]+)\)/g;
+  let match: RegExpExecArray | null;
+  while ((match = inline.exec(body)) !== null) out.push(match[1]!);
+  const bullet = /^\s*(?:[-*+]|\d+\.)\s+(?:\*\*[^*]+\*\*[:\-—]?\s*)?(https?:\/\/\S+)/gm;
+  while ((match = bullet.exec(body)) !== null) out.push(match[1]!);
+  return out;
+}
+
+export class DiscoveryIndexCoverageAudit extends Audit {
   static override meta: AuditMeta = {
     id: 'machine-discovery/discovery-index-coverage',
     category: 'machine-discovery',
-    title: 'Sitemap includes all key pages',
-    failureTitle: 'Sitemap includes all key pages',
+    title: 'Pages are covered by a discovery index',
+    failureTitle: 'Pages are covered by a discovery index',
     description:
-      'The sitemap should include all scanned pages so AI crawlers can discover your full site content.',
+      'Every scanned page should be listed in a discovery index — the sitemap (including its sub-sitemaps) or llms.txt — so AI crawlers can find it without relying on the link graph.',
     scoreDisplayMode: 'ternary',
     weight: weightForGrade('B', 'scored'),
     evidenceGrade: 'B',
@@ -34,111 +86,116 @@ export class SitemapKeyPagesAudit extends Audit {
     defaultPriority: 'medium',
     guidance: {
       impact:
-        'Pages missing from your sitemap may not be discovered by AI crawlers, even if they exist on your site. This means important content -- product pages, documentation, blog posts -- could be absent from AI search results.',
-      fix: 'Ensure your sitemap.xml includes all important pages. Compare your sitemap against your actual site pages and add any missing URLs. Configure your CMS or build tool to auto-include new pages in the sitemap.',
-      code: '<url>\n  <loc>https://yoursite.com/missing-page</loc>\n  <lastmod>2026-01-01</lastmod>\n</url>',
+        'A page listed in no discovery index is reachable only through the link graph, and the major AI crawlers do not execute JavaScript — so a page missing from both the sitemap and llms.txt can stay invisible to AI search even though it exists on your site.',
+      fix: 'List every important page in sitemap.xml (or in one of the sub-sitemaps its index points at), and/or reference it from llms.txt. Configure your CMS or build tool to add new pages automatically.',
+      code: '<!-- sitemap.xml -->\n<url>\n  <loc>https://yoursite.com/missing-page</loc>\n  <lastmod>2026-01-01</lastmod>\n</url>\n\n<!-- or llms.txt -->\n- [Missing Page](/missing-page): Description of the page',
       effort: 'easy',
       docsUrl: 'https://www.sitemaps.org/protocol.html',
-      tags: ['sitemap', 'seo', 'discoverability'],
+      tags: ['sitemap', 'llms-txt', 'discoverability'],
     },
   };
 
-  audit(ctx: CheckContext): AuditResult {
-    const sitemapResult = getSitemapResult(ctx);
+  /** Every URL any discovery index lists, as comparison keys. */
+  private async indexKeys(ctx: CheckContext): Promise<Set<string>> {
+    const keys = new Set<string>();
+    const add = (url: string, base?: string) => {
+      const key = coverageKey(url, base);
+      if (key) keys.add(key);
+    };
 
-    if (!sitemapResult) {
-      return this.fail(
-        'No sitemap found; cannot check key page coverage.',
-        'All scanned pages appear in sitemap',
-        'Sitemap not found',
+    const sitemapResult = getSitemapResult(ctx);
+    if (sitemapResult) {
+      for (const loc of locsOf(sitemapResult.body, 'urlset > url > loc')) add(loc);
+
+      // A <sitemapindex> lists no page URLs of its own. v1 short-circuited to a
+      // pass here without reading one; the sub-sitemaps are fetched instead.
+      const subSitemaps = locsOf(sitemapResult.body, 'sitemapindex > sitemap > loc').slice(
+        0,
+        MAX_SUB_SITEMAPS,
+      );
+      if (subSitemaps.length > 0) {
+        const fetched = await Promise.all(
+          subSitemaps.map((url) => ctx.fetch({ url }).catch(() => null)),
+        );
+        for (const sub of fetched) {
+          if (!sub || !isOk(sub)) continue;
+          for (const loc of locsOf(sub.body, 'urlset > url > loc')) add(loc);
+        }
+      }
+    }
+
+    const llmsResult = ctx.rootFiles['/llms.txt'];
+    if (llmsResult && isOk(llmsResult)) {
+      for (const link of llmsTxtLinks(llmsResult.body)) add(link, ctx.baseUrl);
+    }
+
+    return keys;
+  }
+
+  /** A page's own keys: its URL plus its declared canonical, if any. */
+  private pageKeys(page: PageContext): string[] {
+    const keys = [coverageKey(page.url)];
+    // v1 read `page.meta['canonical']`, which extractMetaTags never populates —
+    // canonical is a <link>, so the fallback silently never ran.
+    const canonical = page.$('link[rel="canonical"]').attr('href');
+    if (canonical) keys.push(coverageKey(canonical, page.url));
+    return keys.filter((k): k is string => k !== null);
+  }
+
+  async audit(ctx: CheckContext): Promise<AuditResult> {
+    const expected = 'Every scanned page appears in the sitemap or llms.txt';
+
+    if (ctx.pages.length === 0) {
+      return this.notApplicable('No pages scanned; there is no coverage to check.', expected, 'No pages scanned');
+    }
+
+    const indexKeys = await this.indexKeys(ctx);
+
+    // The missing sitemap is sitemap-exists' (1.7) finding. Charging for it here
+    // too levied two penalties for one missing file.
+    if (indexKeys.size === 0) {
+      return this.warn(
+        'No sitemap URLs or llms.txt links to compare the scanned pages against.',
+        expected,
+        'No discovery index entries found',
         {
-          priority: 'critical',
+          priority: 'medium',
           description:
-            'First, create your sitemap.xml file (see check 1.7). The sitemap should list all your important pages so AI crawlers can discover them.',
+            'Without a sitemap or an llms.txt link list, AI crawlers have no reference list of your pages and must rely entirely on the link graph. Publish at least one.',
           code: `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n  <url>\n    <loc>https://yoursite.com/</loc>\n    <lastmod>2026-01-01</lastmod>\n  </url>\n</urlset>`,
         },
       );
     }
 
-    const $ = cheerio.load(sitemapResult.body, { xmlMode: true });
+    const uncovered = ctx.pages
+      .filter((page) => !this.pageKeys(page).some((key) => indexKeys.has(key)))
+      .map((page) => page.url);
 
-    // Handle sitemap index files (<sitemapindex>)
-    const isSitemapIndex = $('sitemapindex').length > 0 || $('sitemap > loc').length > 0;
-    if (isSitemapIndex) {
-      const subSitemaps: string[] = [];
-      $('sitemap > loc').each((_, el) => {
-        const loc = $(el).text().trim();
-        if (loc) subSitemaps.push(loc);
-      });
-      return this.pass(
-        `Sitemap index file found linking to ${subSitemaps.length} sub-sitemap(s).`,
-        'All scanned pages appear in sitemap or sitemap index',
-        `Sitemap Index (${subSitemaps.length} sub-sitemaps)`,
-      );
-    }
+    if (uncovered.length > 0) {
+      const shown = `Not indexed: ${uncovered.slice(0, 5).join(', ')}${uncovered.length > 5 ? ` (+${uncovered.length - 5} more)` : ''}`;
+      const message = `${uncovered.length}/${ctx.pages.length} scanned page(s) are in no discovery index.`;
 
-    const sitemapUrls = new Set<string>();
-    $('url > loc').each((_, el) => {
-      const loc = $(el).text().trim();
-      if (loc) sitemapUrls.add(loc);
-    });
-
-    if (sitemapUrls.size === 0) {
-      return this.warn(
-        'Sitemap has no <url> entries.',
-        'All scanned pages appear in sitemap',
-        'No <url> entries',
-        {
-          priority: 'high',
+      if (uncovered.length / ctx.pages.length > 0.5) {
+        return this.fail(message, expected, shown, {
+          priority: 'medium',
           description:
-            'Your sitemap exists but contains no <url> entries. Add at least your main pages so AI crawlers can discover them.',
-          code: `<url>\n  <loc>https://yoursite.com/</loc>\n  <lastmod>2026-01-01</lastmod>\n</url>`,
-        },
-      );
-    }
-
-    const missing: string[] = [];
-    for (const page of ctx.pages) {
-      const pageUrl = page.url;
-      const variants = [pageUrl, pageUrl.replace(/\/$/, ''), pageUrl + '/'];
-      const inSitemap = variants.some((v) => sitemapUrls.has(v));
-      if (!inSitemap) {
-        missing.push(pageUrl);
-      }
-    }
-
-    if (missing.length > 0) {
-      const ratio = missing.length / ctx.pages.length;
-      if (ratio > 0.5) {
-        return this.fail(
-          `${missing.length}/${ctx.pages.length} scanned page(s) missing from sitemap.`,
-          'All scanned pages appear in sitemap',
-          `Missing: ${missing.slice(0, 5).join(', ')}${missing.length > 5 ? ` (+${missing.length - 5} more)` : ''}`,
-          {
-            priority: 'medium',
-            description:
-              'Many of your scanned pages are not listed in the sitemap. AI crawlers rely on the sitemap to discover pages. Add all important pages to ensure complete indexing.',
-            code: `<url>\n  <loc>https://yoursite.com/missing-page</loc>\n  <lastmod>2026-01-01</lastmod>\n</url>`,
-          },
-        );
-      }
-      return this.warn(
-        `${missing.length}/${ctx.pages.length} scanned page(s) missing from sitemap.`,
-        'All scanned pages appear in sitemap',
-        `Missing: ${missing.slice(0, 5).join(', ')}${missing.length > 5 ? ` (+${missing.length - 5} more)` : ''}`,
-        {
-          priority: 'low',
-          description:
-            'Some scanned pages are not listed in the sitemap. Adding them helps AI crawlers discover all your content.',
+            'Most scanned pages are listed in neither the sitemap nor llms.txt. AI crawlers that do not execute JavaScript may never reach them. Add them to your sitemap or llms.txt.',
           code: `<url>\n  <loc>https://yoursite.com/missing-page</loc>\n  <lastmod>2026-01-01</lastmod>\n</url>`,
-        },
-      );
+        });
+      }
+
+      return this.warn(message, expected, shown, {
+        priority: 'low',
+        description:
+          'Some scanned pages are listed in neither the sitemap nor llms.txt. Adding them helps AI crawlers discover all your content.',
+        code: `<url>\n  <loc>https://yoursite.com/missing-page</loc>\n  <lastmod>2026-01-01</lastmod>\n</url>`,
+      });
     }
 
     return this.pass(
-      `All ${ctx.pages.length} scanned page(s) found in the sitemap.`,
-      'All scanned pages appear in sitemap',
-      `${ctx.pages.length} page(s) found`,
+      `All ${ctx.pages.length} scanned page(s) are covered by a discovery index.`,
+      expected,
+      `${ctx.pages.length} page(s) covered`,
     );
   }
 }
