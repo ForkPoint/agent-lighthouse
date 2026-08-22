@@ -1,18 +1,19 @@
 ---
-check: invisible-instruction-payload-scan
-title: "Invisible Instruction Payload Scan"
-domain: injection-safety
-status: proposed
+audit: operability-safety/invisible-instruction-scan
+category: operability-safety
+source_file: packages/core/src/audits/operability-safety/invisible-instruction-scan.ts
+slug: invisible-instruction-scan
 evidence_grade: A
-uniqueness: unique
-difficulty: static-fetch
-scoring_tier: scored
+tier: scored
+disposition: "new in v2 — graduated from proposal 2026-08-22"
 reviewed: 2026-08-20
+graduated: 2026-08-22
 ---
+
 
 # Invisible Instruction Payload Scan
 
-> Proposed check. Evidence grade **A** · unique · implementation: `static-fetch`
+> Shipped in v2. Evidence grade **A** · scored tier · unique · implementation: `static-fetch`
 
 ## What it checks
 
@@ -54,3 +55,42 @@ Tier per evidence policy: **scored** — grade A meets the A/B bar required for 
 ## Review history
 
 - 2026-08-20 — proposed by the novel-checks research pass (10-agent evidence workflow); sources URL-verified at research time.
+
+## Implementation deviations
+
+Shipped as `operability-safety/invisible-instruction-scan`; the category is
+`operability-safety` because v2 has no `injection-safety` category, and the
+`-payload` segment is dropped to keep the id inside the 64-character limit
+`CheckResultSchema` enforces.
+
+**No `postcss`.** The Global Constraints forbid new runtime dependencies, so
+same-origin stylesheets are scanned by a local rule scanner
+(`packages/core/src/gatherers/css-rules.ts`) and matched with cheerio's own
+selector engine. The scanner performs **no cascade, no specificity ordering and
+no media-query evaluation**: it answers "does any rule that could apply to this
+element declare a hiding property", and the audit reports the technique it
+matched so a human can adjudicate. `@media print` rules are skipped, because
+hiding text from a printer is not hiding it from a reader. `@font-face`,
+`@keyframes` and the other declaration-bodied at-rules are skipped wholesale.
+
+**Colour comparison.** ΔE(CIE76) is computed locally: sRGB to linear RGB to
+CIE XYZ (D65) to L\*a\*b\*, then Euclidean distance, with the floor at 5 exactly
+as the sketch specifies. Only literal `color:` and `background-color:`
+declarations participate — an inherited or image background is not resolvable
+without a rendering engine.
+
+## Deferred
+
+The sketch's non-rendered channels — HTML comments, `<noscript>`, `<template>`,
+oversized `data-*` values, `<script type="text/plain">` blobs, non-standard
+`<meta name>` content, and inline `<svg><text>` — are **not** scanned by this
+audit. They are a different question (text that never enters the DOM's text
+layer at all, versus text that does and is then hidden), and folding them in
+would make one failure message cover two unrelated remedies. Neither is covered
+by another shipped audit today; both are tracked for a follow-up.
+
+Cross-origin stylesheets are never fetched. When a page links one, the result
+says so in `found`, so a clean verdict built on partial CSS is visibly partial.
+
+The headless-browser upgrade the sketch names — real computed styles,
+JS-inserted nodes, post-hydration DOM — remains out of tier.

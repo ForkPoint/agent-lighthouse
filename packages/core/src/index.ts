@@ -29,6 +29,8 @@ export {
   isW3CDateTime,
 } from './gatherers/sitemap';
 export type { SitemapEntry, SitemapTree } from './gatherers/sitemap';
+export { parseCssRules, collectPageCss } from './gatherers/css-rules';
+export type { CssRule, PageCss } from './gatherers/css-rules';
 export { pagesOfType, judgePages } from './gatherers/pages';
 export type { PageJudgement } from './gatherers/pages';
 export type { CheckContext, CheckFn, PageContext } from './check-context';
