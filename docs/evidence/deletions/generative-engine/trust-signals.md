@@ -50,6 +50,8 @@ Grade B: there is strong, quantified, multi-model empirical data that trust and 
 
 ## Review history
 
+- 2026-08-22 — required rework executed (Plan 4, Task 11); rebuilt on the three measured factors, promotional-puffery patterns deleted, social proof deferred to `answer-readiness/review-signals` when review markup is present, priority demoted to the "smaller gains" tier. `TODO(redeem)` marker removed from the source file.
+
 - 2026-08-21 — user decision: all research verdicts accepted. Disposition by grade: **kept-rewrite** (kept, rewrite required per dossier).
 
 - 2026-08-21 — adversarial redemption research pass (8-agent workflow); URLs fetched at research time.

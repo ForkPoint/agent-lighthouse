@@ -7,13 +7,13 @@ slug: trust-signals
 review_verdict: delete
 severity: high
 evidence_grade: B
-disposition: "kept — rewrite required (approved 2026-08-21)"
-reviewed: 2026-08-21
+disposition: "kept — rebuilt on the GEO-benchmark factors 2026-08-22 (Plan 4, Task 11)"
+reviewed: 2026-08-22
 ---
 
 # trust-signals (`10.7`)
 
-> generative-engine · source `trust-signals.ts` · review verdict **delete** · evidence grade **B** · disposition: **kept — rewrite required (approved 2026-08-21)**
+> answer-readiness · source `trust-signals.ts` · evidence grade **B** · tier **scored** (weight 0.6) · rebuilt from a 12-regex puffery scan to the three factors arXiv 2605.25517 actually measured — see below
 
 ## What it checks
 
@@ -44,6 +44,56 @@ Falsy and near-constantly PASSING. The claimed mechanism — 'AI engines scan ho
 - Only 5 tests, all with one-sentence hand-written bodies — none resembles real page markup.
 
 **Overlaps with:** `10.4`, `10.8`
+
+## The GEO-benchmark rebuild (Plan 4, Task 11, 2026-08-22)
+
+The [redemption dossier](../../deletions/generative-engine/trust-signals.md) found something the 2026-08-20 review had not: the *mechanism* is real and quantified — arXiv 2605.25517 ran 252,000 paired trials across six LLMs in a controlled RAG testbed and measured which content factors change citation. What it also found is that this audit checked none of them. So the audit is not repaired, it is re-specified against the measured factor list.
+
+**Old pass condition:** ≥2 matches from 12 free-text regexes anywhere in `ctx.pages[0]`'s body, or a `[class*="logo"]`-style container holding ≥3 `<img>`. 1 match warned, 0 failed. In practice a "Partners" nav link plus a "Free shipping over $50" banner passed — the modal outcome for e-commerce — while any non-English homepage failed no matter how much real trust content it carried.
+
+**New pass condition:** on the homepage, at least 2 of the 3 factors the benchmark measured are present.
+
+| Factor | Measured effect | Detected as |
+| --- | --- | --- |
+| Quantified social proof | "Weaker Social Proof" (defined as *fewer or lower ratings/reviews*), OR 2.14 to >10,000, significant in 4 of 6 models | a rating out of 5, a review/rating count, or a customer/client/user count — always with a magnitude |
+| Evidence-backed claims | "Claims With Evidence", OR 2.09 to >10,000, significant in 5 of 6 models; KDD'24 GEO measured Cite Sources at +28% and Statistics at +33% | ≥2 outbound citation hosts with readable anchor text, or non-empty `<cite>` / `blockquote[cite]` |
+| Comparison content | named in the paper's practical implications ("include comparisons") | a `<table>` with ≥3 `<th>`, or a heading framed `vs` / `versus` / `compare` / `difference between` / `alternatives to` |
+
+`warn` at exactly 1 factor, `fail` at 0, `notApplicable` when the page cannot be assessed.
+
+### Promotional puffery deleted
+
+Every pattern the redeem note named is gone: `free shipping`, `secure checkout`, `money-back guarantee`, `sustainable`, `organic`, `handcrafted`, `handmade` — plus the rest of the untested list (`trusted by` with no number, `clients`, `partner`, `certified`, `award`, `as seen in`) and the `[class*="logo"]` image-grid heuristic. The same study tested "Overly Promotional" tone and found it significant in only 3 of 6 models with mixed direction, "effect size insufficient to establish clear guideline", with neutral phrasing winning where the effect existed. Two regression tests pin this: a homepage full of puffery fails, and so does the Partners-nav-plus-shipping-banner page that used to pass.
+
+The surviving social-proof detector requires a **number**, because the number is what the study manipulated. "Trusted by" alone matches nothing; "Trusted by 12,000 companies" matches.
+
+### Non-double-counting with review-signals
+
+The redeem note's explicit constraint. Three separate mechanisms enforce it:
+
+- **`answer-readiness/review-signals` keeps ownership of machine-readable review data.** When `findReviewNodes()` — imported from that audit, not reimplemented — finds Review/AggregateRating JSON-LD on the homepage, the social-proof factor is *deferred*: it leaves both the numerator and the denominator here, and the reported evidence names `answer-readiness/review-signals` as the owner. That function is now exported for exactly this purpose, so the two audits cannot drift apart on what review data is.
+- **`answer-readiness/external-citations` is scoped to `content` pages**, so the evidence-backed-claims factor, which is homepage-only, never scores the same anchor twice.
+- **`answer-readiness/comparison-tables` is scoped to `category`/`product`/`content` pages**, so the comparison factor is uncontested on the homepage.
+
+The evidence factor also deliberately excludes social and share hosts (facebook, twitter/x, instagram, linkedin, youtube, tiktok, pinterest, threads, reddit, medium, substack…) and icon-only links with fewer than 3 characters of anchor text — a footer icon row is chrome, not evidence-backing.
+
+### Scoping and language gate
+
+- `applicablePageTypes: ['homepage']` is added, and `audit()` selects `pageType === 'homepage'` rather than trusting `ctx.pages[0]`. With user-supplied `PageOverride`s, `pages[0]` could be any page while the verdict text still said "on the homepage".
+- A homepage declaring a non-English `lang` returns `notApplicable` instead of a confident `fail`. The detectors are English patterns; saying so is honest, failing a German testimonial wall was not.
+
+### Grade decision: stays **B**, tier `scored`, weight 0.6
+
+Source: the [redemption dossier's verdict](../../deletions/generative-engine/trust-signals.md) — "redeemed — keep with rewrite (grade B)" — and the [REWORK-TODO entry](../../../../packages/core/src/audits/REWORK-TODO.md). The grade rests on the 252,000-trial multi-model benchmark plus the KDD'24 GEO paper's +17% "Authoritative" result. It is B rather than A because the consumers are research testbeds, not a named production engine with vendor documentation, and because the same literature warns that "generic heuristics transfer poorly" and that competition erodes individual gains.
+
+On the redeem note's instruction that "its weight should also be demoted relative to the gatekeeper factors — trust cues are explicitly the 'smaller gains' tier": under the §4 weight law that demotion is already expressed by the grade, since `weightForGrade('B', 'scored') = 0.6` against the `1.0` a grade-A gatekeeper carries. The law forbids hand-setting a weight, so the demotion is additionally carried by `defaultPriority`, which moves `medium` → `low`. `scoreDisplayMode` stays `ternary`.
+
+### Rewrite deviations
+
+- **The audit stays `scored`, against the 2026-08-20 review's "not salvageable as a scored audit / demote to `informative`".** That recommendation predates the adversarial redemption pass, which is the approved disposition (2026-08-21) and which found a real measured mechanism. The redeem note asks for re-specification and a relative weight demotion, not a tier change, and neither it nor the REWORK-TODO row names `informative`. Tier assignment is not this task's to invent, so it stays `scored` at grade B.
+- **The review-signals coordination is a deferral, not a merge.** Folding the two audits together would be a merge decision, which no dossier authorises.
+- **The language gate keys on the declared `lang` attribute only.** A homepage with no `lang` is assessed with the English detectors; adding language detection is out of scope, and `content-extraction/language-attribute` already scores the missing attribute.
+- **arXiv 2606.17443 is not used as a detector.** Its authority-language effect was demonstrated with fabricated clinical-evidence claims; the dossier flags it as a manipulation vulnerability, so building a check on it would be advising GEO spam.
 
 ## Evidence
 
@@ -76,4 +126,5 @@ This audit was a delete candidate and went through dedicated adversarial researc
 ## Review history
 
 - 2026-08-20 — code review (11-agent workflow) + evidence research (12-domain workflow, 400 sources).
-- 2026-08-21 — adversarial redemption research; user accepted verdict (disposition above).
+- 2026-08-21 — adversarial redemption research; user accepted verdict (grade B, rewrite required).
+- 2026-08-22 — required rework executed (Plan 4, Task 11): rebuilt on the three arXiv 2605.25517 factors, promotional-puffery patterns deleted, social proof deferred to `answer-readiness/review-signals` when review markup is present, scoped to the homepage, non-English homepages `na`, `defaultPriority` `medium` → `low`. Grade B / tier `scored` / weight 0.6 unchanged; `TODO(redeem)` marker removed from the source file.

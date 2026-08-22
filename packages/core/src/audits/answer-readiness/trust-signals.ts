@@ -1,138 +1,241 @@
-// TODO(redeem): this audit survives only if rewritten (approved 2026-08-21).
-// Evidence dossier: docs/evidence/deletions/generative-engine/trust-signals.md
-// Required rework:
-//   Grade B: there is strong, quantified, multi-model empirical data that trust and social-proof
-//   cues in retrieved page text change which source an AI answer engine cites — 252,000 controlled
-//   trials, 4-5 of 6 models significant, plus a +17% 'Authoritative' effect in the KDD'24 GEO
-//   benchmark. Per the rubric that makes it redeemable, and unlike the other three audits here it
-//   has a real measured mechanism behind it. But it must be re-specified to check what was actually
-//   measured rather than what reads well in a marketing deck: keep and strengthen
-//   ratings/reviews-based social proof (coordinating with review-signals.ts so they do not
-//   double-count), add checks for evidence-backed claims and comparison content, and delete the
-//   promotional-puffery patterns ('free shipping', 'secure checkout', 'money-back guarantee',
-//   'sustainable', 'organic', 'handcrafted', 'handmade') since the same study found promotional
-//   tone yields no consistent benefit and neutral phrasing wins where significant. Its weight
-//   should also be demoted relative to the gatekeeper factors — trust cues are explicitly the
-//   'smaller gains' tier.
-
-import type { AuditMeta, AuditResult } from "../../types";
-import { Audit } from "../../audit";
+import type { AuditMeta, AuditResult } from '../../types';
+import { Audit } from '../../audit';
 import { weightForGrade } from '../../scorer';
-import type { CheckContext } from '../../check-context';
+import type { CheckContext, PageContext } from '../../check-context';
+import { findReviewNodes } from './review-signals';
 
-const TRUST_PATTERNS = [
-  /trusted\s+by/i,
-  /\bclients\b/i,
-  /\btestimonial/i,
-  /\bcase\s+stud/i,
-  /\baward/i,
-  /\bas\s+seen\s+(in|on)\b/i,
-  /\bpartner(s|ed|ship)?\b/i,
-  /\bcertif(ied|icate|ication)\b/i,
-  /\b(money[-\s]back\s+guarantee|satisfaction\s+guarantee|guaranteed)\b/i,
-  /\b(reviews|customer\s+rating|verified\s+(buyer|customer|review)|happy\s+customers)\b/i,
-  /\b(sustainable|organic|fair\s+trade|b\s+corp|handcrafted|handmade)\b/i,
-  /\b(secure\s+checkout|free\s+returns|free\s+shipping)\b/i,
+/**
+ * Quantified social proof — the factor the GEO benchmark actually measured.
+ *
+ * arXiv 2605.25517 (252,000 paired trials, six LLMs) defines its "Weaker
+ * Social Proof" condition as *fewer or lower ratings/reviews*, OR 2.14 to
+ * >10,000, significant in 4 of 6 models. What moved citation was the number,
+ * not the adjective, so every pattern here requires a magnitude. The v1
+ * regexes ("trusted by", "award", "partner", "certified", "as seen in") were
+ * never tested by any study and matched ordinary nav and legal boilerplate.
+ */
+const SOCIAL_PROOF_PATTERNS: readonly RegExp[] = [
+  // "4.8/5", "4.8 out of 5"
+  /\b[0-5](?:\.\d)?\s*(?:\/|out\s+of)\s*5\b/i,
+  // "1,204 reviews", "350+ ratings"
+  /\b\d{2,}[\d,]*\+?\s*(?:reviews?|ratings?)\b/i,
+  // "Trusted by 12,000", "used by 500+"
+  /\b(?:trusted|used|chosen|loved|backed)\s+by\s+\d{2,}[\d,]*\+?/i,
+  // "12,000 customers", "500+ companies"
+  /\b\d{2,}[\d,]*\+?\s*(?:customers?|clients?|users?|teams?|companies|businesses|developers?|members?|subscribers?|organi[sz]ations?)\b/i,
 ];
+
+/**
+ * Hosts whose links are site chrome, not citations. An icon row in the footer
+ * is not evidence-backing, and counting it would recreate v1's problem of
+ * passing every commercial homepage on boilerplate.
+ */
+const NON_CITATION_HOSTS =
+  /(^|\.)(facebook|twitter|x|instagram|linkedin|youtube|tiktok|pinterest|threads|snapchat|whatsapp|t|telegram|reddit|discord|medium|substack)\.(com|co|me|be|org)$/i;
+
+/** Headings that carry comparison intent when no comparison table exists. */
+const COMPARISON_HEADING =
+  /\bvs\.?\b|\bversus\b|\bcompar(?:e|ed|ing|ison)\b|\bdifference between\b|\balternatives? to\b/i;
+
+/** Whether a page declares a non-English language. The detectors are English. */
+function isNonEnglish(page: PageContext): boolean {
+  const lang = (page.$('html').attr('lang') ?? '').trim().toLowerCase();
+  return lang !== '' && !lang.startsWith('en');
+}
+
+/** Page text with script/style noise stripped, collapsed to single spaces. */
+function readableText(page: PageContext): string {
+  const body = page.$('body').clone();
+  body.find('script, style, noscript, template').remove();
+  return body.text().replace(/\s+/g, ' ').trim();
+}
+
+/**
+ * Claims paired with evidence — "Claims With Evidence" in arXiv 2605.25517,
+ * OR 2.09 to >10,000, significant in 5 of 6 models, and the paper's own
+ * practical guidance ("replace hedging with evidence-backed claims"). Counted
+ * as outbound citations to third-party sources, or explicit <cite> attribution.
+ *
+ * `answer-readiness/external-citations` is scoped to content pages, so this
+ * homepage-scoped check does not double-count it.
+ */
+function evidenceBackedClaims(page: PageContext): string[] {
+  const $ = page.$;
+  const found: string[] = [];
+
+  let host: string;
+  try {
+    host = new URL(page.url).host;
+  } catch {
+    host = '';
+  }
+
+  const citations = new Set<string>();
+  $('a[href]').each((_, el) => {
+    const node = $(el);
+    const href = node.attr('href');
+    if (!href) return;
+    // Icon-only links are chrome; a citation carries readable anchor text.
+    if (node.text().trim().length < 3) return;
+    let url: URL;
+    try {
+      url = new URL(href, page.url);
+    } catch {
+      return;
+    }
+    if (url.protocol !== 'http:' && url.protocol !== 'https:') return;
+    if (url.host === host || url.host === '') return;
+    if (NON_CITATION_HOSTS.test(url.host.replace(/^www\./, ''))) return;
+    citations.add(url.host);
+  });
+
+  if (citations.size >= 2) {
+    found.push(`${citations.size} outbound citation host(s): ${[...citations].slice(0, 3).join(', ')}`);
+  }
+
+  const cites = $('cite').filter((_, el) => $(el).text().trim().length > 0).length;
+  const citedQuotes = $('blockquote[cite]').length;
+  if (cites + citedQuotes > 0) found.push(`${cites + citedQuotes} attributed source element(s)`);
+
+  return found;
+}
+
+/**
+ * Comparison content — named in arXiv 2605.25517's practical implications
+ * ("include comparisons"). `answer-readiness/comparison-tables` is scoped to
+ * category/product/content pages, so the homepage is uncontested here.
+ */
+function comparisonContent(page: PageContext): string[] {
+  const $ = page.$;
+  const found: string[] = [];
+
+  const tables = $('table').filter((_, el) => $(el).find('th').length >= 3).length;
+  if (tables > 0) found.push(`${tables} comparison table(s)`);
+
+  const headings = $('h1, h2, h3, h4')
+    .toArray()
+    .map((el) => $(el).text().trim())
+    .filter((t) => COMPARISON_HEADING.test(t));
+  if (headings.length > 0) found.push(`comparison heading "${headings[0]}"`);
+
+  return found;
+}
+
+const EXPECTED =
+  'Homepage carries at least 2 of the 3 GEO-measured factors: quantified social proof, evidence-backed claims, comparison content';
 
 export class TrustSignalsAudit extends Audit {
   static override meta: AuditMeta = {
     id: 'answer-readiness/trust-signals',
     category: 'answer-readiness',
-    title: 'Trust signals on homepage',
-    failureTitle: 'Trust signals on homepage',
+    title: 'Trust and evidence signals on homepage',
+    failureTitle: 'Trust and evidence signals on homepage',
     description:
-      'AI engines scan homepages for trust signals (client logos, testimonials, awards) as authority indicators when deciding whether to recommend your content.',
+      'A 252,000-trial controlled study across six LLMs (arXiv 2605.25517) found that quantified social proof, evidence-backed claims and comparison content shift which source an AI answer engine cites; promotional tone does not. This audit checks the homepage for those three measured factors and nothing else.',
     scoreDisplayMode: 'ternary',
     weight: weightForGrade('B', 'scored'),
     evidenceGrade: 'B',
     tier: 'scored',
     dossier: 'docs/evidence/audits/answer-readiness/trust-signals.md',
-    defaultPriority: 'medium',
+    applicablePageTypes: ['homepage'],
+    defaultPriority: 'low',
     guidance: {
       impact:
-        'AI generative engines scan homepages for trust signals (client logos, testimonials, awards, certifications) as authority indicators when deciding whether to recommend your site. Without these signals, agents rank your site lower than competitors with visible social proof.',
-      fix: 'Add a combination of trust elements to your homepage: "Trusted by X clients" text, a client logo grid, customer testimonials with attribution, and links to case studies or awards.',
-      code: '<section>\n  <h2>Trusted by 500+ companies</h2>\n  <div class="client-logos"><!-- client logo images --></div>\n  <blockquote>\n    <p>"Outstanding results"</p>\n    <footer>- <cite>Jane Smith, CEO at Company</cite></footer>\n  </blockquote>\n</section>',
+        'Trust cues in retrieved page text change which source an answer engine cites, but only the measured ones: quantified ratings/review counts (OR 2.14 to >10,000, significant in 4 of 6 models), claims paired with evidence (OR 2.09 to >10,000, 5 of 6 models), and comparison content. The same study found "Overly Promotional" tone significant in only 3 of 6 models with mixed direction — neutral phrasing won where the effect was significant — so puffery earns nothing. These are the "smaller gains" tier: topic match, price, recency and list position dwarf them.',
+      fix: 'Put a number on your social proof ("Rated 4.8/5 across 1,204 reviews", "Trusted by 12,000 teams"), back factual claims with outbound citations or attributed sources instead of hedging, and add a comparison table or a comparison-framed section. Delete promotional adjectives — they do not move citation.',
+      code: '<section>\n  <p>Rated <strong>4.8 out of 5</strong> across <strong>1,204 reviews</strong>.</p>\n  <p>Independent testing confirms a 40% reduction in latency\n     (<a href="https://example.org/benchmark">2026 benchmark report</a>).</p>\n  <table>\n    <thead><tr><th>Feature</th><th>Us</th><th>Alternative</th></tr></thead>\n    <tbody><tr><td>Setup time</td><td>5 min</td><td>2 hours</td></tr></tbody>\n  </table>\n</section>',
       effort: 'moderate',
-      tags: ['trust', 'social-proof', 'generative-engine'],
+      docsUrl: 'https://arxiv.org/abs/2605.25517',
+      tags: ['trust', 'social-proof', 'generative-engine', 'geo'],
     },
   };
 
   audit(ctx: CheckContext): AuditResult {
-    const page = ctx.pages[0];
+    const page = ctx.pages.find((p) => p.pageType === 'homepage');
+
     if (!page) {
-      return this.fail(
-        'No pages scanned.',
-        'Homepage contains trust signals: "trusted by", "clients", "testimonial", "case study", "award", or logo grids',
-        'No pages scanned',
-        {
-          priority: 'medium',
-          description:
-            'AI engines scan homepages for trust signals (client logos, testimonials, awards) as authority indicators when deciding whether to recommend your content.',
-          code: '<section>\n  <h2>Trusted by 500+ companies</h2>\n  <div class="client-logos"><!-- logo images --></div>\n</section>',
-        },
+      return this.notApplicable(
+        'No homepage was scanned, and the measured factors are homepage-scoped.',
+        EXPECTED,
+        'No homepage in scan',
       );
     }
 
-    const $ = page.$;
-    // Scan the whole <body>, not just <main>: trust badges, "as seen in"
-    // strips, certifications and testimonials commonly live in the footer or
-    // other regions outside <main> (e.g. allbirds), and a main-scoped read
-    // misses them. Clone + strip non-content nodes so inline JS/CSS in
-    // <script>/<style> can't pollute the text regexes.
-    const body = $('body').clone();
-    body.find('script, style, noscript, template').remove();
-    const text = body.text().replace(/\s+/g, ' ').trim();
-    const foundSignals: string[] = [];
-
-    for (const pattern of TRUST_PATTERNS) {
-      const match = text.match(pattern);
-      if (match) {
-        foundSignals.push(match[0]);
-      }
+    // v1 reported a confident FAIL on any non-English homepage, however much
+    // real trust content it carried. English-only detectors report `na`.
+    if (isNonEnglish(page)) {
+      return this.notApplicable(
+        `The homepage declares lang="${page.$('html').attr('lang')}"; the trust-signal detectors are English-only.`,
+        EXPECTED,
+        'Non-English homepage — detector not applicable',
+      );
     }
 
-    // Check for image grids (common logo carousel/grid patterns)
-    const logoGrids = $('[class*="logo"], [class*="client"], [class*="partner"], [class*="trust"]');
-    const imgInGrids = logoGrids.find('img').length;
-    if (imgInGrids >= 3) {
-      foundSignals.push(`image grid (${imgInGrids} logos)`);
+    const text = readableText(page);
+    const satisfied: string[] = [];
+    const missing: string[] = [];
+    let counted = 0;
+    let deferred: string | undefined;
+
+    // ── Factor 1: quantified social proof ───────────────────────
+    // `answer-readiness/review-signals` owns machine-readable review data on
+    // this same page. When it is present that audit scores it, so this factor
+    // leaves both the numerator and the denominator here.
+    const reviewMarkup = findReviewNodes(page.jsonLd);
+    if (reviewMarkup.length > 0) {
+      deferred = `social proof deferred to answer-readiness/review-signals (JSON-LD ${reviewMarkup.join(', ')})`;
+    } else {
+      counted += 1;
+      const hit = SOCIAL_PROOF_PATTERNS.map((re) => text.match(re)?.[0]).find(Boolean);
+      if (hit) satisfied.push(`quantified social proof ("${hit.trim()}")`);
+      else missing.push('quantified social proof (a rating, review count or customer count)');
     }
 
-    if (foundSignals.length >= 2) {
+    // ── Factor 2: evidence-backed claims ────────────────────────
+    counted += 1;
+    const evidence = evidenceBackedClaims(page);
+    if (evidence.length > 0) satisfied.push(`evidence-backed claims (${evidence.join('; ')})`);
+    else missing.push('evidence-backed claims (outbound citations or attributed sources)');
+
+    // ── Factor 3: comparison content ────────────────────────────
+    counted += 1;
+    const comparison = comparisonContent(page);
+    if (comparison.length > 0) satisfied.push(`comparison content (${comparison.join('; ')})`);
+    else missing.push('comparison content (a comparison table or comparison-framed section)');
+
+    const found = [...satisfied, ...(deferred ? [deferred] : [])].join('; ') || 'None found';
+
+    if (satisfied.length >= 2 || (satisfied.length > 0 && satisfied.length === counted)) {
       return this.pass(
-        `Found ${foundSignals.length} trust signal(s) on homepage.`,
-        'Homepage contains trust signals: "trusted by", "clients", "testimonial", "case study", "award", or logo grids',
-        foundSignals.join(', '),
+        `Homepage carries ${satisfied.length} of the ${counted} GEO-measured trust factors.`,
+        EXPECTED,
+        found,
         page.url,
       );
     }
 
-    if (foundSignals.length === 1) {
+    if (satisfied.length === 1) {
       return this.warn(
-        `Only 1 trust signal found: "${foundSignals[0]}".`,
-        'Homepage contains trust signals: "trusted by", "clients", "testimonial", "case study", "award", or logo grids',
-        foundSignals[0],
+        `Homepage carries only 1 of the ${counted} GEO-measured trust factors.`,
+        EXPECTED,
+        found,
         {
-          priority: 'medium',
-          description:
-            'AI engines scan homepages for trust signals as authority indicators when deciding whether to recommend your content. A single trust signal is weak. Add a combination of "Trusted by X clients" text, client logo grids, testimonials, and case study links to build a stronger authority profile.',
-          code: '<section>\n  <h2>Trusted by 500+ companies</h2>\n  <div class="client-logos"><!-- logo images --></div>\n</section>\n<section>\n  <h2>What our clients say</h2>\n  <blockquote><p>"Excellent service"</p><footer>- Client Name</footer></blockquote>\n</section>',
+          priority: 'low',
+          description: `Missing: ${missing.join('; ')}. These are the factors a 252,000-trial study measured as moving AI citation; add at least one more. Promotional adjectives are not among them.`,
+          code: TrustSignalsAudit.meta.guidance?.code,
         },
         page.url,
       );
     }
 
     return this.fail(
-      'No trust signals found on the homepage.',
-      'Homepage contains trust signals: "trusted by", "clients", "testimonial", "case study", "award", or logo grids',
-      'Not found',
+      'Homepage carries none of the GEO-measured trust factors.',
+      EXPECTED,
+      found,
       {
-        priority: 'medium',
-        description:
-          'AI generative engines scan homepages for trust signals when assessing whether to recommend your site in AI-generated answers. Without trust indicators like client counts, testimonials, case studies, or awards, agents rank your site lower than competitors with visible social proof.',
-        code: '<section>\n  <h2>Trusted by 500+ companies</h2>\n  <div class="client-logos"><!-- client logo images --></div>\n  <blockquote>\n    <p>"Outstanding results"</p>\n    <footer>- <cite>Jane Smith, CEO at Company</cite></footer>\n  </blockquote>\n</section>',
+        priority: 'low',
+        description: `Missing: ${missing.join('; ')}. A 252,000-trial controlled study across six LLMs found these shift which source an answer engine cites; promotional tone did not. Quantify your social proof, cite evidence for factual claims, and add comparison content.`,
+        code: TrustSignalsAudit.meta.guidance?.code,
       },
       page.url,
     );

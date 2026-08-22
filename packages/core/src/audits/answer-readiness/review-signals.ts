@@ -31,8 +31,12 @@ function statesZeroReviews(record: Record<string, unknown>): boolean {
  * nest `aggregateRating`/`review` inside Product nodes (not just inside
  * @graph), so we rely on the shared `flattenJsonLd` deep recursion and then
  * match on both the @type and the property keys that carry review data.
+ *
+ * Exported so `answer-readiness/trust-signals` can defer its social-proof
+ * factor to this audit on pages that already carry machine-readable review
+ * data — the two audits must not score the same page fact twice.
  */
-function findReviewNodes(jsonLd: object[]): string[] {
+export function findReviewNodes(jsonLd: object[]): string[] {
   const found: string[] = [];
   const nodes = flattenJsonLd(jsonLd) as Record<string, unknown>[];
 

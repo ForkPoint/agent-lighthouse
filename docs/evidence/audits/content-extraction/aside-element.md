@@ -7,13 +7,13 @@ slug: aside-element
 review_verdict: delete
 severity: medium
 evidence_grade: B
-disposition: "kept — rewrite required (approved 2026-08-21)"
-reviewed: 2026-08-21
+disposition: "kept — rewritten to a conditional extraction check 2026-08-22 (Plan 4, Task 11)"
+reviewed: 2026-08-22
 ---
 
 # aside-element (`6.6`)
 
-> semantic-html · source `aside-element.ts` · review verdict **delete** · evidence grade **B** · disposition: **kept — rewrite required (approved 2026-08-21)**
+> content-extraction · source `aside-element.ts` · evidence grade **B** · tier **scored** (weight 0.6) · rewritten from "any page has an `<aside>`" to a conditional per-page extraction check — see below
 
 ## What it checks
 
@@ -38,6 +38,54 @@ Falsy audit with no discriminative power. It passes if a single <aside> exists o
 
 **Overlaps with:** `6.12`, `6.13`, `6.3`, `6.5`
 
+## The conditional-check rewrite (Plan 4, Task 11, 2026-08-22)
+
+The [redemption dossier](../../deletions/semantic-html/aside-element.md) is unusual in this batch: it found the audit's *stated mechanism* "essentially verbatim correct" and put the entire fault in the implementation. So the description and guidance keep their claim and gain its sources; the check underneath is replaced.
+
+**Old pass condition:** `pagesWithAside > 0` — one `<aside>` anywhere in the crawl passed the whole site; anything else warned. The audit could not fail, could not tell "no sidebar" from "sidebar in a `<div>`" (its entire stated purpose), penalised pages that correctly have no supplementary content, and looped every page while declaring `applicablePageTypes: ['content']`.
+
+**New pass condition:** on content pages, every detected supplementary block — sidebar, promo, advert, related-links, newsletter, pull-quote container — is inside an `<aside>` or an element with `role="complementary"`. Pages carrying no supplementary block at all are not evaluated; if no content page has one, the audit is `notApplicable`.
+
+### The check is now conditional, and it can fail
+
+Supplementary blocks are detected two ways and compared:
+
+- **Marked** — top-level `<aside>` and `[role="complementary"]` elements. A nested one belongs to the same block and is not double-counted.
+- **Unmarked** — `div`/`section`/`ul`/`nav` containers whose `class`/`id` matches the supplementary-content token set (`sidebar`, `side-nav`, `supplemental`, `complementary`, `secondary`, `related`, `recirc`, `promo`, `callout`, `pullquote`, `newsletter`, `subscribe-box`, `advert`, `ad-slot`, `sponsored`, `widget`) and which are **not** inside a marked landmark. Only the outermost container of a nested stack is reported.
+
+Those tokens are not invented: Readability's own `unlikelyCandidates` regex matches `sidebar|skyscraper|supplemental|related` and its negative class-weight regex penalises `sidebar`, so this is the same string family the extractor falls back to when a page has no landmarks.
+
+The four outcomes replace the old two:
+
+| Outcome | Condition |
+| --- | --- |
+| `na` | no content page carries a supplementary block |
+| `pass` | every detected block is marked |
+| `warn` | some marked, some not |
+| `fail` | blocks exist and none are marked |
+
+`scoreDisplayMode` moves `binary` → `ternary` for the new middle state. The `fail` branch is precisely the failure mode the audit always claimed to catch and never could: a `<div class="sidebar">` on a page with no `<aside>` anywhere.
+
+### Page-type mismatch closed
+
+`audit()` now filters `ctx.pages` to `pageType === 'content'`, matching the declared `applicablePageTypes`. The v1 denominator ("X/`ctx.pages.length`") mixed page types and let a homepage decide a content-page verdict; a regression test pins that a homepage sidebar no longer drives the result.
+
+### Guidance states the extraction consequence
+
+The redeem note's last requirement was that the guidance say out loud what marking content as supplementary *costs*. It now does, with the source-level evidence behind it: Readability deletes every `<aside>` from extracted article content via `this._clean(articleContent, "aside")`, trafilatura lists `"aside"` first in `MANUALLY_CLEANED`, and Chromium exposes the element as a `complementary` landmark in the accessibility tree that Anthropic's `read_page` returns. The `fix` text therefore ends with the warning the dossier asked for: never put citable facts — author bios, specifications, key figures — inside an `<aside>`, because that subtree never reaches the model.
+
+### Grade decision: stays **B**, tier `scored`, weight 0.6
+
+Source: the [redemption dossier's verdict](../../deletions/semantic-html/aside-element.md) — "redeemed — keep with rewrite (grade B)" — and the [REWORK-TODO entry](../../../../packages/core/src/audits/REWORK-TODO.md). Grade B rests on two independent consumers acting on the element by name (Readability's `_clean(articleContent, "aside")`; trafilatura's `MANUALLY_CLEANED`) plus an empirically verified a11y-tree path (a live Chromium snapshot surfacing both a top-level and a nested `<aside>` as `complementary`). It is B rather than A because no AI vendor documents `<aside>` as a requirement and both extractors also work without landmarks — the signal degrades a page, it does not gate it.
+
+Neither the redeem note nor the REWORK-TODO row asks for a grade or tier change; the required rework is to the check and the guidance. Per the §4 weight law `weightForGrade('B', 'scored') = 0.6`; `defaultPriority` stays `low`.
+
+### Rewrite deviations
+
+- **Detection is class/id-based, so Tailwind-only and CSS-Modules markup is invisible to it.** A hashed or utility-class sidebar produces no candidate and the page simply is not evaluated, which fails safe to `na`/`pass` rather than to a false accusation. Position- and geometry-based detection needs a rendered layout the scanner does not have.
+- **`widget` is kept in the token set despite being noisy on WordPress themes.** It is one of the most common real names for a sidebar block, and the cost of a false positive here is a `warn` telling an author to wrap a widget in `<aside>` — which is correct advice even when the container was not what we guessed.
+- **Misuse is not penalised.** The evidence dossier for landmark elements notes the signal is bidirectional (wrapping citable content in `<aside>` actively destroys it), but detecting *that* means judging whether the text inside an `<aside>` is citable. It is stated in the guidance instead of scored.
+
 ## Evidence
 
 ### Signal: Landmark elements (main, nav, header, footer, article, aside) as extraction boundaries — grade A (semantic-dom-a11y)
@@ -58,4 +106,5 @@ This audit was a delete candidate and went through dedicated adversarial researc
 ## Review history
 
 - 2026-08-20 — code review (11-agent workflow) + evidence research (12-domain workflow, 400 sources).
-- 2026-08-21 — adversarial redemption research; user accepted verdict (disposition above).
+- 2026-08-21 — adversarial redemption research; user accepted verdict (grade B, rewrite required).
+- 2026-08-22 — required rework executed (Plan 4, Task 11): check made conditional on detected supplementary content, `na` when a page legitimately has none, page-type filter aligned with `applicablePageTypes`, `binary` → `ternary`, guidance now states that Readability and trafilatura discard `<aside>` content. Grade B / tier `scored` / weight 0.6 unchanged; `TODO(redeem)` marker removed from the source file.
