@@ -1,6 +1,6 @@
 # Proposed checks — evidence dossiers
 
-53 proposed checks from the 2026-08-20 novel-checks research pass. Each dossier states what the check verifies, the falsifiable mechanism behind it, cited evidence from the [source registry](../sources.json), competitor coverage, and an implementation sketch. Grading rubric: [evidence policy](../POLICY.md).
+52 proposed checks from the 2026-08-20 novel-checks research pass. Each dossier states what the check verifies, the falsifiable mechanism behind it, cited evidence from the [source registry](../sources.json), competitor coverage, and an implementation sketch. Grading rubric: [evidence policy](../POLICY.md).
 
 Seven dossiers left this folder on 2026-08-22 (Plan 5, Task 2): six tool
 surveys moved to [../research](../research/README.md) because their verdict is
@@ -19,7 +19,6 @@ Grades: **A** = documented consumer behavior or ratified standard · **B** = dra
 | :---- | :---- | :----- | :--------- | :------------- | :----------- |
 | A | [Overlay Interception Hazard](./agent-operability/overlay-interception-hazard.md) | agent-operability | unique | `headless-browser` | scored |
 | A | [ACP Endpoint Conformance Probe](./agentic-commerce/acp-endpoint-conformance-probe.md) | agentic-commerce | unique | `static-fetch` | informative (weight 0) |
-| A | [Version Downgrade Recoverability](./mcp-server-quality/version-downgrade-recoverability.md) | mcp-server-quality | unique | `static-fetch` | scored |
 | B | [Drag and Slider Dependency](./agent-operability/drag-and-slider-dependency.md) | agent-operability | unique | `static-fetch` | scored |
 | B | [Ghost-Clickable Element Ratio](./agent-operability/ghost-clickable-element-ratio.md) | agent-operability | unique | `static-fetch` | scored |
 | B | [Hover-Only Content and Navigation](./agent-operability/hover-only-content-and-navigation.md) | agent-operability | unique | `static-fetch` | scored |

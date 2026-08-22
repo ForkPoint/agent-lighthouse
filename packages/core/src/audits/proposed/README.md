@@ -1,6 +1,6 @@
 # Proposed audits — TODO stubs
 
-53 stub files for the proposed checks from the 2026-08-20 research pass. Every stub compiles, is **not** registered in any category index, and returns `notApplicable` until implemented. Each file's header carries its implementation sketch; full proof lives in [docs/evidence/proposals](../../../../../docs/evidence/proposals/README.md).
+52 stub files for the proposed checks from the 2026-08-20 research pass. Every stub compiles, is **not** registered in any category index, and returns `notApplicable` until implemented. Each file's header carries its implementation sketch; full proof lives in [docs/evidence/proposals](../../../../../docs/evidence/proposals/README.md).
 
 A stub that graduates to a shipped audit is deleted; its bullet leaves the list
 below, the count above drops by one, and the audit's id joins `NEW_IN_V2` in
@@ -79,7 +79,6 @@ the `--experimental` flag work in Plan 6.
 
 ## mcp-server-quality
 
-- [ ] TODO [`version-downgrade-recoverability`](./mcp-server-quality/version-downgrade-recoverability.ts) — Version Downgrade Recoverability (grade A, scored, `static-fetch`) · [dossier](../../../../../docs/evidence/proposals/mcp-server-quality/version-downgrade-recoverability.md)
 - [ ] TODO [`origin-validation-and-cors-coherence`](./mcp-server-quality/origin-validation-and-cors-coherence.ts) — Origin Validation and CORS Coherence (grade B, scored, `static-fetch`) · [dossier](../../../../../docs/evidence/proposals/mcp-server-quality/origin-validation-and-cors-coherence.md)
 - [ ] TODO [`registry-listing-and-namespace-ownership-proof`](./mcp-server-quality/registry-listing-and-namespace-ownership-proof.ts) — Registry Listing and Namespace Ownership Proof (grade B, scored, `multi-page`) · [dossier](../../../../../docs/evidence/proposals/mcp-server-quality/registry-listing-and-namespace-ownership-proof.md)
 - [ ] TODO [`tool-self-description-coverage`](./mcp-server-quality/tool-self-description-coverage.ts) — Tool Self-Description Coverage (grade B, scored, `static-fetch`) · [dossier](../../../../../docs/evidence/proposals/mcp-server-quality/tool-self-description-coverage.md)
