@@ -412,7 +412,7 @@ describe('runScan — report assembly fallbacks', () => {
 
     // The na stubs a real scan emits: status 'na' with the stub score of 0.
     const naStubs = [
-      mk({ id: '3.14', status: 'na', priority: 'low', score: 0 }),
+      mk({ id: 'agentic-commerce/offer-schema', status: 'na', priority: 'low', score: 0 }),
       mk({ id: 'machine-discovery/llms-txt-blockquote', status: 'na', priority: 'low', score: 0 }),
       mk({ id: 'cp2', category: 'access-crawl-control', status: 'na', priority: 'low', score: 0 }),
       mk({ id: 'tr2', category: 'technical-readiness', status: 'na', priority: 'low', score: 0 }),

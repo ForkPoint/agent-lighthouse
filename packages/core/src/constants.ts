@@ -24,7 +24,8 @@ export const TAG_SCAN_ERROR = 'scan-error';
 export const CATEGORY_WEIGHTS: Record<string, number> = {
   'machine-discovery': 0.18,
   'access-crawl-control': 0.08,
-  'structured-data': 0.12,
+  'structured-data': 0.1,
+  'agentic-commerce': 0.02,
   'agent-tools': 0.03,
   'agent-interfaces': 0.18,
   'content-extraction': 0.1,
@@ -37,6 +38,7 @@ export const CATEGORY_NAMES: Record<string, string> = {
   'machine-discovery': 'Machine Discovery',
   'access-crawl-control': 'Access & Crawl Control',
   'structured-data': 'Structured Data & Schema Markup',
+  'agentic-commerce': 'Agentic Commerce',
   'agent-tools': 'AI Agent Tools & Action Surfaces',
   'agent-interfaces': 'Agent Interfaces',
   'content-extraction': 'Content Extraction & Structure',

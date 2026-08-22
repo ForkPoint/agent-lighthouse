@@ -1,8 +1,8 @@
 ---
-audit: structured-data/product-identifiers
+audit: agentic-commerce/product-identifiers
 audit_id: "3.21"
-category: structured-data
-source_file: packages/core/src/audits/structured-data/product-identifiers.ts
+category: agentic-commerce
+source_file: packages/core/src/audits/agentic-commerce/product-identifiers.ts
 slug: product-identifiers
 review_verdict: fix
 severity: high
@@ -13,7 +13,7 @@ reviewed: 2026-08-21
 
 # product-identifiers (`3.21`)
 
-> structured-data · source `product-identifiers.ts` · review verdict **fix** · evidence grade **A** · disposition: **keep — fix required**
+> agentic-commerce · source `product-identifiers.ts` · review verdict **fix** · evidence grade **A** · disposition: **keep — fix required**
 
 ## What it checks
 

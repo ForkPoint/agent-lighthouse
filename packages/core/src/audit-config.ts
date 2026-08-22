@@ -102,7 +102,7 @@ import {
   HttpsEnabledAudit,
 } from './audits/access-crawl-control';
 
-// Structured Data (17)
+// Structured Data (14)
 import {
   JsonLdPresentAudit,
   SchemaValidationAudit,
@@ -115,13 +115,17 @@ import {
   HowToSchemaAudit,
   LocalBusinessSchemaAudit,
   ReviewSchemaAudit,
-  OfferSchemaAudit,
   AuthorSchemaAudit,
-  ProductIdentifiersAudit,
   ProductDetailsAudit,
   ProductReviewsAudit,
-  ProductTransactionCertaintyAudit,
 } from './audits/structured-data';
+
+// Agentic Commerce (3) — v2 taxonomy category (Plan 3, Task 9)
+import {
+  OfferSchemaAudit,
+  ProductIdentifiersAudit,
+  ProductTransactionCertaintyAudit,
+} from './audits/agentic-commerce';
 
 // Agent Tools (5) — the remainder leaves for operability-safety in a later task
 import {
@@ -259,7 +263,8 @@ export const defaultConfig: ScanConfig = {
   categories: [
     { id: 'machine-discovery', name: 'Machine Discovery', weight: 0.18 },
     { id: 'access-crawl-control', name: 'Access & Crawl Control', weight: 0.08 },
-    { id: 'structured-data', name: 'Structured Data & Schema Markup', weight: 0.12 },
+    { id: 'structured-data', name: 'Structured Data & Schema Markup', weight: 0.1 },
+    { id: 'agentic-commerce', name: 'Agentic Commerce', weight: 0.02 },
     { id: 'agent-tools', name: 'AI Agent Tools & Action Surfaces', weight: 0.03 },
     { id: 'agent-interfaces', name: 'Agent Interfaces', weight: 0.18 },
     { id: 'content-extraction', name: 'Content Extraction & Structure', weight: 0.1 },
@@ -342,11 +347,13 @@ export const defaultConfig: ScanConfig = {
       reg(HowToSchemaAudit),
       reg(LocalBusinessSchemaAudit),
       reg(ReviewSchemaAudit),
-      reg(OfferSchemaAudit),
       reg(AuthorSchemaAudit),
-      reg(ProductIdentifiersAudit),
       reg(ProductDetailsAudit),
       reg(ProductReviewsAudit),
+    ],
+    'agentic-commerce': [
+      reg(OfferSchemaAudit),
+      reg(ProductIdentifiersAudit),
       reg(ProductTransactionCertaintyAudit),
     ],
     'agent-tools': [

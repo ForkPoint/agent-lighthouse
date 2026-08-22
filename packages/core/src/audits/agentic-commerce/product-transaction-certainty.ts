@@ -2,6 +2,7 @@ import type { AuditMeta, AuditResult } from "../../types";
 import { Audit } from "../../audit";
 import type { CheckContext } from '../../check-context';
 import { flattenJsonLd } from '../../parser';
+import { weightForGrade } from '../../scorer';
 
 function matchesAnyType(schema: Record<string, unknown>, types: string[]): boolean {
   return types.some((t) => {
@@ -35,14 +36,17 @@ const SIGNAL_LABELS: Record<keyof CertaintySignals, string> = {
 
 export class ProductTransactionCertaintyAudit extends Audit {
   static override meta: AuditMeta = {
-    id: '3.24',
-    category: 'structured-data',
+    id: 'agentic-commerce/product-transaction-certainty',
+    category: 'agentic-commerce',
     title: 'Product transactional certainty',
     failureTitle: 'Product transactional certainty',
     description:
       'AI shopping assistants need more than a product name and price to make an authoritative recommendation: they must know whether the item is in stock, how long the quoted price is valid, and what the return policy is before they commit a user to a purchase. A Product schema that only carries name and price forces agents to guess at availability, quote potentially stale prices, and stay silent on returns — all of which erode transactional certainty in agentic commerce flows. Complete your Offer with availability, priceValidUntil, and a valid price + priceCurrency pair, and attach hasMerchantReturnPolicy to the Product or Offer.',
     scoreDisplayMode: 'ternary',
-    weight: 1.0,
+    weight: weightForGrade('A', 'scored'),
+    evidenceGrade: 'A',
+    tier: 'scored',
+    dossier: 'docs/evidence/audits/agentic-commerce/product-transaction-certainty.md',
     applicablePageTypes: ['product'],
     defaultPriority: 'high',
     guidance: {

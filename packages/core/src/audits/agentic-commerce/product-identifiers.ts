@@ -2,6 +2,7 @@ import type { AuditMeta, AuditResult } from "../../types";
 import { Audit } from "../../audit";
 import type { CheckContext } from '../../check-context';
 import { flattenJsonLd } from '../../parser';
+import { weightForGrade } from '../../scorer';
 
 function matchesAnyType(schema: Record<string, unknown>, types: string[]): boolean {
   return types.some((t) => {
@@ -14,14 +15,17 @@ function matchesAnyType(schema: Record<string, unknown>, types: string[]): boole
 
 export class ProductIdentifiersAudit extends Audit {
   static override meta: AuditMeta = {
-    id: '3.21',
-    category: 'structured-data',
+    id: 'agentic-commerce/product-identifiers',
+    category: 'agentic-commerce',
     title: 'Product identifiers (GTIN/UPC/MPN)',
     failureTitle: 'Product identifiers (GTIN/UPC/MPN)',
     description:
       'AI agents use unique identifiers like GTIN, UPC, or MPN to de-duplicate products across different sources and confirm they are looking at the exact item the user wants. Without them, agents may confuse similar products or fail to find specific pricing.',
     scoreDisplayMode: 'ternary',
-    weight: 1.0,
+    weight: weightForGrade('A', 'scored'),
+    evidenceGrade: 'A',
+    tier: 'scored',
+    dossier: 'docs/evidence/audits/agentic-commerce/product-identifiers.md',
     applicablePageTypes: ['product'],
     defaultPriority: 'high',
     guidance: {

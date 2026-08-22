@@ -14,7 +14,8 @@ export const PRESETS: Record<PresetName, PresetOptions> = {
     description: 'Optimized for storefronts with heavy focus on Schema.org Product, SKU, GTIN, stock status, and WebMCP actions.',
     customWeights: {
       'agent-interfaces': 30,
-      'structured-data': 25,
+      'structured-data': 20,
+      'agentic-commerce': 5,
       'access-crawl-control': 15,
       'machine-discovery': 10,
       'answer-readiness': 15,
@@ -48,7 +49,7 @@ export const PRESETS: Record<PresetName, PresetOptions> = {
   },
   full: {
     name: 'full',
-    description: 'Default comprehensive scan executing all 9 audit categories.',
+    description: 'Default comprehensive scan executing all 10 audit categories.',
   },
 };
 

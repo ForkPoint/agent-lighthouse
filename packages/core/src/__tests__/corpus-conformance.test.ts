@@ -69,7 +69,7 @@ describe('Golden Corpus Conformance Tests (False-Positive Elimination)', () => {
     expect(checkMap.get('structured-data/schema-validation')?.status).toBe('pass');
 
     // Product Identifiers (SKU/GTIN) (3.21)
-    expect(checkMap.get('3.21')?.status).toBe('pass');
+    expect(checkMap.get('agentic-commerce/product-identifiers')?.status).toBe('pass');
 
     // Product Details (3.22)
     expect(checkMap.get('structured-data/advanced-product-details')?.status).toBe('pass');

@@ -2,6 +2,7 @@ import type { AuditMeta, AuditResult } from "../../types";
 import { Audit } from "../../audit";
 import type { CheckContext } from '../../check-context';
 import { flattenJsonLd } from '../../parser';
+import { weightForGrade } from '../../scorer';
 
 function matchesAnyType(schema: Record<string, unknown>, types: string[]): boolean {
   return types.some((t) => {
@@ -14,14 +15,17 @@ function matchesAnyType(schema: Record<string, unknown>, types: string[]): boole
 
 export class OfferSchemaAudit extends Audit {
   static override meta: AuditMeta = {
-    id: '3.14',
-    category: 'structured-data',
+    id: 'agentic-commerce/offer-schema',
+    category: 'agentic-commerce',
     title: 'Offer schema on pricing pages',
     failureTitle: 'Offer schema on pricing pages',
     description:
       'AI agents use Offer schema to answer pricing queries with exact numbers. Without price and priceCurrency in structured data, agents must scrape and guess pricing from page text, which often produces inaccurate or outdated results in AI-generated comparisons.',
     scoreDisplayMode: 'ternary',
-    weight: 1.0,
+    weight: weightForGrade('A', 'scored'),
+    evidenceGrade: 'A',
+    tier: 'scored',
+    dossier: 'docs/evidence/audits/agentic-commerce/offer-schema.md',
     applicablePageTypes: ['product'],
     defaultPriority: 'medium',
     guidance: {

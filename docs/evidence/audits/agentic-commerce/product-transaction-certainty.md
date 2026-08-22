@@ -1,8 +1,8 @@
 ---
-audit: structured-data/product-transaction-certainty
+audit: agentic-commerce/product-transaction-certainty
 audit_id: "3.24"
-category: structured-data
-source_file: packages/core/src/audits/structured-data/product-transaction-certainty.ts
+category: agentic-commerce
+source_file: packages/core/src/audits/agentic-commerce/product-transaction-certainty.ts
 slug: product-transaction-certainty
 review_verdict: fix
 severity: medium
@@ -13,7 +13,7 @@ reviewed: 2026-08-21
 
 # product-transaction-certainty (`3.24`)
 
-> structured-data · source `product-transaction-certainty.ts` · review verdict **fix** · evidence grade **A** · disposition: **keep — fix required**
+> agentic-commerce · source `product-transaction-certainty.ts` · review verdict **fix** · evidence grade **A** · disposition: **keep — fix required**
 
 ## What it checks
 

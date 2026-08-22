@@ -498,11 +498,11 @@ function calculateReadinessVitals(
   return {
     commerce: getScore([
       'structured-data/service-product-schema',
-      '3.14',
-      '3.21',
+      'agentic-commerce/offer-schema',
+      'agentic-commerce/product-identifiers',
       'structured-data/advanced-product-details',
       'structured-data/product-reviews',
-      '3.24',
+      'agentic-commerce/product-transaction-certainty',
     ]),
     content: getScore([
       'machine-discovery/llms-txt-exists',

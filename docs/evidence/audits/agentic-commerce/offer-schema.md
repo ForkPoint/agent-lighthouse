@@ -1,8 +1,8 @@
 ---
-audit: structured-data/offer-schema
+audit: agentic-commerce/offer-schema
 audit_id: "3.14"
-category: structured-data
-source_file: packages/core/src/audits/structured-data/offer-schema.ts
+category: agentic-commerce
+source_file: packages/core/src/audits/agentic-commerce/offer-schema.ts
 slug: offer-schema
 review_verdict: fix
 severity: high
@@ -13,7 +13,7 @@ reviewed: 2026-08-21
 
 # offer-schema (`3.14`)
 
-> structured-data · source `offer-schema.ts` · review verdict **fix** · evidence grade **A** · disposition: **keep — fix required**
+> agentic-commerce · source `offer-schema.ts` · review verdict **fix** · evidence grade **A** · disposition: **keep — fix required**
 
 ## What it checks
 
