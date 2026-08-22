@@ -157,8 +157,10 @@ describe('FormActionabilityAudit', () => {
     });
   });
 
-  // Both dossiers name the same selector bug, and they disagreed on label
-  // scope; the merged audit resolves both.
+  // The two source audits disagreed on label scope; the merged audit resolves
+  // that. The framework-id case is a regression guard, not a bug fix: the
+  // "selector over-escaping" both 2026-08-20 reviews named does not reproduce
+  // against the selector engine this repo ships.
   describe('label association', () => {
     it('resolves a framework id containing a colon', () => {
       const html = `<html><body>

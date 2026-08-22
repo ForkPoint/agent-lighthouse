@@ -118,10 +118,12 @@ function isStandardAutocomplete(value: string): boolean {
 }
 
 /**
- * Escape only what a quoted attribute value needs. The previous regex also
- * escaped `:` and `]`, which are legal inside quotes — so framework ids
- * (JSF/PrimeFaces `form:email`, ASP.NET WebForms) produced a selector that
- * matched nothing and their correctly labelled fields were reported unlabelled.
+ * Escape only what a quoted attribute value needs: `"` and `\`.
+ *
+ * Both source audits also escaped `:` and `]`. That was superfluous rather than
+ * broken — the selector engine here resolves `label[for="form\:email"]` and
+ * `label[for="a\]b"]` to the same elements as the unescaped forms — so this is
+ * a simplification with no behaviour change, verified against both id shapes.
  */
 function escapeAttrValue(id: string): string {
   return id.replace(/(["\\])/g, '\\$1');
@@ -131,7 +133,7 @@ function escapeAttrValue(id: string): string {
  * HTML lets a `<label for>` live anywhere in the document, and layout-driven
  * markup routinely puts it in a sibling grid cell. Both source audits checked
  * this and disagreed on the scope; the document-wide lookup is the one that
- * matches the spec.
+ * matches the spec, and it is the real behaviour change in this pair.
  */
 function labelFor($: CheerioAPI, id: string | undefined) {
   if (!id) return undefined;

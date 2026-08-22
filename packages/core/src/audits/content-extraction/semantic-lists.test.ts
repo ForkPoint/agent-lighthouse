@@ -71,6 +71,51 @@ describe('SemanticListsAudit', () => {
       expect(result.status).toBe('warn');
     });
 
+    it('counts a nested card grid once, not once per card', () => {
+      // Each card is itself a container of three same-class children, so a
+      // per-container count reports the grid plus every card.
+      const card = (n: number) =>
+        `<div class="card">
+           <div class="line">Title ${n}</div>
+           <div class="line">Body ${n}</div>
+           <div class="line">Foot ${n}</div>
+         </div>`;
+      const result = run(`<main><div class="grid">${card(1)}${card(2)}${card(3)}</div></main>`);
+      expect(result.found).toContain('1 pseudo-list');
+    });
+
+    it('never reads a data table as a pseudo-list', () => {
+      const result = run(
+        `<main>
+           <ul><li>One</li><li>Two</li></ul>
+           <table>
+             <thead><tr class="row"><th class="cell">Plan</th><th class="cell">Price</th><th class="cell">Seats</th></tr></thead>
+             <tbody>
+               <tr class="row"><td class="cell">Free</td><td class="cell">0</td><td class="cell">1</td></tr>
+               <tr class="row"><td class="cell">Team</td><td class="cell">20</td><td class="cell">10</td></tr>
+               <tr class="row"><td class="cell">Corp</td><td class="cell">99</td><td class="cell">50</td></tr>
+             </tbody>
+           </table>
+         </main>`,
+      );
+      expect(result.found).toContain('0 pseudo-list');
+      expect(result.status).toBe('pass');
+    });
+
+    it('never reads a <select> option list as a pseudo-list', () => {
+      const result = run(
+        `<main>
+           <ul><li>One</li><li>Two</li></ul>
+           <select name="plan">
+             <option class="opt">Free</option>
+             <option class="opt">Team</option>
+             <option class="opt">Corp</option>
+           </select>
+         </main>`,
+      );
+      expect(result.found).toContain('0 pseudo-list');
+    });
+
     it('counts manually numbered prose steps as a pseudo-list', () => {
       const result = run(
         `<main><p>1. Create an account</p><p>2. Add your API key</p><p>3. Ship it</p></main>`,

@@ -20,6 +20,30 @@ const LEADING_MARKER = /^\s*(?:step\s*)?(?:\d{1,2}\s*[.):]|[•·▪‣*+]\s|[-�
 /** Longest text a child can carry and still read as one list item. */
 const MAX_ITEM_TEXT = 200;
 
+/**
+ * Containers whose repeated children are already structured markup, not a
+ * div stack standing in for a list: real lists, and the table and select
+ * families. A data table's `<tr>` rows are rows — telling a site to convert
+ * them to `<ul>` would be worse advice than saying nothing.
+ */
+const SKIP_CONTAINER = new Set([
+  'ul',
+  'ol',
+  'dl',
+  'table',
+  'thead',
+  'tbody',
+  'tfoot',
+  'tr',
+  'td',
+  'th',
+  'caption',
+  'colgroup',
+  'select',
+  'optgroup',
+  'datalist',
+]);
+
 interface PageTally {
   /** Content lists correctly marked up as <ul>/<ol>/<dl>. */
   semantic: number;
@@ -49,11 +73,16 @@ function isChrome(page: PageContext, el: unknown): boolean {
 function countPseudoLists(page: PageContext): number {
   const $ = page.$;
   let pseudo = 0;
+  // Outermost match wins. A card grid whose cards are themselves stacks of
+  // same-class children would otherwise be counted once for the grid and once
+  // per card, turning one layout into four defects.
+  const counted = new Set<unknown>();
 
   $('body *').each((_, parent) => {
     const tag = (parent as { tagName?: string }).tagName?.toLowerCase() ?? '';
-    if (tag === 'ul' || tag === 'ol' || tag === 'dl') return;
+    if (SKIP_CONTAINER.has(tag)) return;
     if (isChrome(page, parent)) return;
+    if ($(parent).parents().toArray().some((a) => counted.has(a))) return;
 
     const children = $(parent).children().toArray();
     if (children.length < 3) return;
@@ -70,6 +99,7 @@ function countPseudoLists(page: PageContext): number {
     const classGroups = [...byClass.values()].filter((n) => n >= 3).length;
     if (classGroups > 0) {
       pseudo += classGroups;
+      counted.add(parent);
       return;
     }
 
@@ -80,7 +110,10 @@ function countPseudoLists(page: PageContext): number {
       if (childTag === 'li' || childTag === 'dt' || childTag === 'dd') return false;
       return LEADING_MARKER.test($(child).text());
     });
-    if (marked.length >= 3) pseudo++;
+    if (marked.length >= 3) {
+      pseudo++;
+      counted.add(parent);
+    }
   });
 
   return pseudo;
