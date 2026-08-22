@@ -8,7 +8,7 @@ interface Entry {
   status: 'removed' | 'renamed' | 'merging';
   reason?: string;
   to?: string;
-  /** Where the signal lives *today*, when `to` is a Plan-4 target that has not landed yet. */
+  /** Where the signal lives *today*; `to` may already be registered (survivor row) or land in Plan 4. */
   interim?: string;
   link: string;
   note?: string;
@@ -99,7 +99,7 @@ describe('migration-map.json', () => {
 
   it('reaches every registered v2 audit from some entry', () => {
     // Each landed audit is either the direct rename target of a v1 id, or the
-    // interim home of one or more ids whose Plan-4 target has yet to land.
+    // interim home of one or more ids that fold into another audit in Plan 4.
     const reachable = new Set(
       surviving.flatMap(([, e]) => [e.status === 'merging' ? e.interim! : e.to!]),
     );

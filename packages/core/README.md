@@ -14,7 +14,7 @@ const report = await runScan("https://example.com");
 console.log(report.overallScore);
 ```
 
-The engine runs deterministic audits for `llms.txt`, AI crawler access, Schema.org, WebMCP, OpenAPI discovery, AEO/GEO content structure, accessibility, and technical readiness.
+The engine runs deterministic audits for AI crawler access, machine discovery (`llms.txt`, sitemaps, feeds), content extraction, Schema.org structured data, answer readiness, agent interfaces (WebMCP, MCP, OpenAPI discovery), agentic commerce, and agent operability & safety.
 
 ## Links
 

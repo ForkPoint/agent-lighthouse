@@ -113,8 +113,9 @@ Read it like this:
   so do their series.
 - **`"removed"`** — nothing to re-point at (see above).
 - **`link`** — the audit's evidence dossier in this repo: the claim, the grade,
-  the sources. Repo-relative; prefix with
-  `https://github.com/ForkPoint/agent-lighthouse/blob/main/` for a URL.
+  the sources. For `renamed`/`merging` entries it is repo-relative — prefix with
+  `https://github.com/ForkPoint/agent-lighthouse/blob/main/` for a URL. For
+  `removed` entries it is already an absolute URL.
 
 A one-line translation, in JS:
 
