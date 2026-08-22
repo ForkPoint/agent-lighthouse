@@ -1159,10 +1159,9 @@
   },
   "9.11": {
     "slug": "answer-engine/meta-description-aeo",
-    "status": "merging",
+    "status": "renamed",
     "to": "answer-readiness/meta-description",
-    "interim": "answer-readiness/meta-description-aeo",
-    "link": "docs/evidence/audits/answer-readiness/meta-description-aeo.md"
+    "link": "docs/evidence/audits/answer-readiness/meta-description.md"
   },
   "10.1": {
     "slug": "generative-engine/named-author",

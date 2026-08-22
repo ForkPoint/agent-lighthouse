@@ -64,3 +64,5 @@ Claims to check whether the meta description follows an 'AEO formula', but the c
 
 - 2026-08-20 — code review (11-agent workflow) + evidence research (12-domain workflow, 400 sources).
 - 2026-08-21 — dossier generated; disposition pending final taxonomy design.
+
+**Merged into:** `answer-readiness/meta-description` (Plan 4, 2026-08-22) — [merged dossier](../../audits/answer-readiness/meta-description.md)

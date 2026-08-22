@@ -1,6 +1,7 @@
 // Answer Readiness — v2 taxonomy category (Plan 3, Task 7).
 // Order mirrors docs/evidence/v2-audit-map.md so Task 11 can consume the list verbatim.
 
+// One meta-description audit in the place of meta-description + meta-description-aeo (9.11).
 export { MetaDescriptionAudit } from './meta-description';
 export { MetaAuthorAudit } from './meta-author';
 export { UniqueMetaAudit } from './unique-meta';
@@ -18,7 +19,6 @@ export { SpecificNumbersAudit } from './specific-numbers';
 // One freshness audit in the place of dates-on-content + last-updated-indicator (9.10).
 export { DatesOnContentAudit } from './dates-on-content';
 export { ContentWithoutClickthroughAudit } from './content-without-clickthrough';
-export { MetaDescriptionAeoAudit } from './meta-description-aeo';
 export { NamedAuthorAudit } from './named-author';
 export { AuthorSameAsAudit } from './author-same-as';
 export { AuthorPageAudit } from './author-page';
@@ -48,7 +48,6 @@ import { NumberedStepsAudit } from './numbered-steps';
 import { SpecificNumbersAudit } from './specific-numbers';
 import { DatesOnContentAudit } from './dates-on-content';
 import { ContentWithoutClickthroughAudit } from './content-without-clickthrough';
-import { MetaDescriptionAeoAudit } from './meta-description-aeo';
 import { NamedAuthorAudit } from './named-author';
 import { AuthorSameAsAudit } from './author-same-as';
 import { AuthorPageAudit } from './author-page';
@@ -80,7 +79,6 @@ export const ANSWER_READINESS_AUDITS = [
   SpecificNumbersAudit,
   DatesOnContentAudit,
   ContentWithoutClickthroughAudit,
-  MetaDescriptionAeoAudit,
   NamedAuthorAudit,
   AuthorSameAsAudit,
   AuthorPageAudit,

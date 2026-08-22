@@ -33,7 +33,7 @@ Audits that stay in the framework **only if rewritten**. Each source file carrie
   - Evidence upgrade from delete: noai/noimageai/tdm-reservation declaration meta tags graded D/experimental — real emerging opt-out ecosystem, no ratified consumer yet. Experimental, unscored, rework to check the real directive names..
 - [ ] TODO `answer-readiness/direct-definitions` — target tier scored (pending triage approval) · [dossier](../../../../docs/evidence/audits/answer-readiness/direct-definitions.md)
   - Rework detector: language-neutral structural signals (dfn/dl semantics, first-sentence definition patterns per detected language), notApplicable when page has no definitional intent..
-- [ ] TODO `answer-readiness/meta-description-aeo` — target tier scored (pending triage approval) · [dossier](../../../../docs/evidence/audits/answer-readiness/meta-description-aeo.md)
+- [x] DONE `answer-readiness/meta-description-aeo` (9.11) — redeemed by merge into `answer-readiness/meta-description` 2026-08-22 (Plan 4, Task 6) · [merged dossier](../../../../docs/evidence/audits/answer-readiness/meta-description.md) · [source dossier](../../../../docs/evidence/merged/answer-readiness/meta-description-aeo.md)
   - Redeem via merge into meta-description: one audit, quality criteria without the invented 'AEO formula'..
 - [ ] TODO `content-discoverability/mobile-friendly` — target tier informative (pending triage approval) · [dossier](../../../../docs/evidence/audits/content-discoverability/mobile-friendly.md)
   - Keep viewport check as unscored diagnostic; no claimed AI mechanism..

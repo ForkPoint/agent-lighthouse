@@ -65,7 +65,7 @@ One dossier per audit: what it checks, the 2026-08-20 code-review findings, grad
 | 9.8 | [dates-on-content](./answer-readiness/dates-on-content.md) | answer-engine | fix | A | merged — absorbs 9.10 (2026-08-22) |
 | 9.9 | [content-without-clickthrough](./answer-readiness/content-without-clickthrough.md) | answer-engine | fix | — | keep — fix required |
 | 9.10 | [last-updated-indicator](../merged/answer-readiness/last-updated-indicator.md) | answer-engine | merge | B | merged into [answer-readiness/dates-on-content](./answer-readiness/dates-on-content.md) (2026-08-22) |
-| 9.11 | [meta-description-aeo](./answer-readiness/meta-description-aeo.md) | answer-engine | delete | C | proposed: redeem as scored (pending triage) |
+| 9.11 | [meta-description-aeo](../merged/answer-readiness/meta-description-aeo.md) | answer-engine | delete | C | redeemed by merge into [answer-readiness/meta-description](./answer-readiness/meta-description.md) (2026-08-22) |
 | 1.1 | [llms-txt-exists](./machine-discovery/llms-txt-exists.md) | content-discoverability | fix | A | keep — fix required |
 | 1.2 | [llms-txt-blockquote](../merged/machine-discovery/llms-txt-blockquote.md) | content-discoverability | merge | — | merged into [machine-discovery/llms-txt-structure](./machine-discovery/llms-txt-structure.md) (2026-08-22) |
 | 1.3 | [llms-txt-sections](../merged/machine-discovery/llms-txt-sections.md) | content-discoverability | merge | — | merged into [machine-discovery/llms-txt-structure](./machine-discovery/llms-txt-structure.md) (2026-08-22) |
@@ -132,7 +132,7 @@ One dossier per audit: what it checks, the 2026-08-20 code-review findings, grad
 | 10.13 | [unique-data](./answer-readiness/unique-data.md) | generative-engine | fix | — | keep — fix required |
 | 10.14 | [blockquote-usage](./answer-readiness/blockquote-usage.md) | generative-engine | merge | B | merge (approved 2026-08-21) |
 | 10.15 | [descriptive-urls](./answer-readiness/descriptive-urls.md) | generative-engine | fix | C | keep — fix required |
-| 4.1 | [meta-description](./answer-readiness/meta-description.md) | meta-tags | fix | — | keep — fix required |
+| 4.1 | [meta-description](./answer-readiness/meta-description.md) | meta-tags | fix | B | merged — absorbs 9.11 (2026-08-22) |
 | 4.2 | [meta-author](./answer-readiness/meta-author.md) | meta-tags | fix | — | keep — fix required |
 | 4.3 | [canonical-url](../merged/access-crawl-control/canonical-url.md) | meta-tags | fix | B | merged into [access-crawl-control/canonical](./access-crawl-control/canonical.md) (2026-08-22) |
 | 4.4 | [language-attribute](./content-extraction/language-attribute.md) | meta-tags | fix | — | keep — fix required |
