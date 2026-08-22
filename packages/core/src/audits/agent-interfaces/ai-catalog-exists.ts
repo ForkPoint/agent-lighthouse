@@ -1,32 +1,8 @@
-// TODO(redeem): this audit survives only if rewritten (approved 2026-08-21).
-// Evidence dossier: docs/evidence/deletions/agent-tools/ai-catalog-exists.md
-// Required rework:
-//   Grade A evidence: a named vendor tool (Hugging Face hf-discover) documents and implements
-//   fetching exactly https://{domain}/.well-known/ai-catalog.json, the path is normative in the ARD
-//   draft spec co-authored by Google/Microsoft/Hugging Face, and there is verifiable production
-//   adoption (Neon, Weaviate, Shopware core, specification.website). Keep the audit, but it MUST be
-//   rewritten: pass condition should be specVersion + host + entries[] per ARD §4.1, not a
-//   `services` array; and guidance/code samples must be replaced with the real schema, otherwise
-//   the audit penalizes spec-conformant sites.
-//   NOTE (Plan 4, Task 7): the rel="ai-catalog" advertisement from 4.19 is folded in below. The
-//   ARD §4.1 pass-condition rewrite above is still open and is Task 10's job.
-
-import type { AuditMeta, AuditResult } from "../../types";
-import { Audit } from "../../audit";
+import type { AuditMeta, AuditResult } from '../../types';
+import { Audit } from '../../audit';
 import { weightForGrade } from '../../scorer';
 import type { CheckContext, PageContext } from '../../check-context';
-
-function tryParseJson(body: string): unknown {
-  try {
-    return JSON.parse(body);
-  } catch {
-    return undefined;
-  }
-}
-
-function isObject(val: unknown): val is Record<string, unknown> {
-  return typeof val === 'object' && val !== null && !Array.isArray(val);
-}
+import { AI_CATALOG_PATH, describeFailure, readAiCatalog } from './_ard';
 
 /** `<link ...; rel="ai-catalog">` in an HTTP Link header (RFC 8288). */
 const LINK_HEADER_RE = /<([^>]+)>\s*;[^,]*?\brel\s*=\s*"?([^",;]+)"?/gi;
@@ -63,24 +39,29 @@ function findCatalogAdvertisement(
   return undefined;
 }
 
-const EXPECTED =
-  '/.well-known/ai-catalog.json returns 200 with valid JSON containing services array';
+const EXPECTED = `${AI_CATALOG_PATH} returns 200 with an ARD §4.1 manifest: specVersion, host and a non-empty entries array`;
 
-const SAMPLE = `// /.well-known/ai-catalog.json
+// The schema is ARD v0.9 §4.1-4.3, mirroring the spec's own conformance
+// example. Every field below appears in live manifests (neon.com, weaviate.io,
+// the Shopware core template); the framework's previous `services`/`owner`/
+// `contact`/`lastUpdated` sample appears in none of them.
+const SAMPLE = `// /.well-known/ai-catalog.json  (Content-Type: application/ai-catalog+json)
 {
-  "version": "1.0",
-  "name": "Your Site",
-  "description": "What your site does",
-  "capabilities": ["search", "contact", "product-info"],
-  "owner": "Your Company",
-  "contact": "hello@yoursite.com",
-  "lastUpdated": "2026-01-01",
-  "services": [
+  "specVersion": "1.0",
+  "host": {
+    "displayName": "Your Site",
+    "identifier": "did:web:yoursite.com",
+    "documentationUrl": "https://yoursite.com/docs"
+  },
+  "entries": [
     {
-      "name": "Search",
-      "description": "Search our content",
-      "url": "https://yoursite.com/api/search",
-      "type": "rest"
+      "identifier": "urn:air:yoursite.com:server:search",
+      "displayName": "Product Search",
+      "type": "application/mcp-server-card+json",
+      "url": "https://yoursite.com/mcp/search.json",
+      "description": "Search the product catalog by keyword, category or price.",
+      "capabilities": ["searchProducts"],
+      "representativeQueries": ["find blue running shoes under $100"]
     }
   ]
 }
@@ -96,7 +77,7 @@ export class AiCatalogExistsAudit extends Audit {
     title: 'AI Catalog exists',
     failureTitle: 'AI Catalog exists',
     description:
-      'The AI catalog is the central discovery file that tells AI agents what capabilities your site offers. Think of it as a table of contents for your APIs, tools, and services. Without it, agents must probe multiple endpoints to understand what your site can do.',
+      'The AI catalog is the ARD discovery manifest that tells AI agents which MCP servers, agent cards, skills and API descriptions your site offers. Hugging Face\'s hf-discover resolves it at /.well-known/ai-catalog.json and reads its entries; without it, agents must probe endpoints to work out what your site can do.',
     scoreDisplayMode: 'ternary',
     weight: weightForGrade('A', 'scored'),
     evidenceGrade: 'A',
@@ -105,13 +86,22 @@ export class AiCatalogExistsAudit extends Audit {
     defaultPriority: 'medium',
     guidance: {
       impact:
-        'Without an AI catalog, agents must probe multiple endpoints to discover your services. This wastes time, increases error rates, and often results in agents skipping your site entirely in favor of competitors with clear service listings.',
-      fix: "Create a /.well-known/ai-catalog.json file listing your site name, description, capabilities, and a services array with each service's name, description, URL, and type. Optionally advertise it with <link rel=\"ai-catalog\"> or the equivalent HTTP Link header — but serve it at the well-known path, which is the only location a documented consumer resolves.",
+        'Without an AI catalog, agents must probe multiple endpoints to discover your services. This wastes time, increases error rates, and often results in agents skipping your site entirely in favor of competitors with a machine-readable capability manifest.',
+      fix: 'Serve /.well-known/ai-catalog.json as application/ai-catalog+json with the three fields ARD §4.1 requires — specVersion, a host object naming your site, and an entries array where each entry has an identifier, displayName, type and either a url or inline data. Optionally advertise it with <link rel="ai-catalog"> or the equivalent HTTP Link header, but serve it at the well-known path, which is the only location a documented consumer resolves.',
       code: SAMPLE,
       effort: 'easy',
+      docsUrl: 'https://github.com/ards-project/ard-spec/blob/main/spec/ard.md',
       tags: ['ai-catalog', 'discovery', 'agent-protocol', 'ard'],
     },
   };
+
+  private recommendation() {
+    return {
+      priority: 'medium' as const,
+      description: AiCatalogExistsAudit.meta.description,
+      code: SAMPLE,
+    };
+  }
 
   audit(ctx: CheckContext): AuditResult {
     // Absorbed from ai-catalog-link (4.19). The advertisement is a
@@ -120,48 +110,54 @@ export class AiCatalogExistsAudit extends Audit {
     // so a rel="ai-catalog" link never passes this audit on its own — it turns
     // "no catalog" into "a catalog is advertised but not served there".
     const ad = findCatalogAdvertisement(ctx.pages);
-    const miss = (message: string, found: string): AuditResult => {
-      const recommendation = {
-        priority: 'medium' as const,
-        description: AiCatalogExistsAudit.meta.description,
-        code: SAMPLE,
-      };
-      if (ad) {
+    const read = readAiCatalog(ctx);
+
+    if (!read.ok) {
+      const message = describeFailure(read);
+
+      // The advertisement only mitigates *absence*. When a manifest is served
+      // and merely malformed, saying "advertised but not served there" would be
+      // a wrong diagnosis, so the ad is reported as context instead.
+      if (ad && (read.reason === 'absent' || read.reason === 'html')) {
         return this.warn(
-          `${message} A catalog is advertised as ${ad.href} via rel="ai-catalog" (${ad.source}), but the one documented consumer resolves only /.well-known/ai-catalog.json.`,
+          `${message} A catalog is advertised as ${ad.href} via rel="ai-catalog" (${ad.source}), but the one documented consumer resolves only ${AI_CATALOG_PATH}.`,
           EXPECTED,
-          `${found}; advertised at ${ad.href}`,
-          recommendation,
+          `${read.found}; advertised at ${ad.href}`,
+          this.recommendation(),
           ad.pageUrl,
         );
       }
-      return this.fail(message, EXPECTED, found, recommendation);
-    };
 
-    const result = ctx.rootFiles['/.well-known/ai-catalog.json'];
-    if (!result || result.status !== 200 || !result.body) {
-      return miss(
-        '/.well-known/ai-catalog.json not found or not accessible.',
-        result ? `HTTP ${result.status}` : 'Not fetched',
+      return this.fail(
+        message,
+        EXPECTED,
+        ad ? `${read.found}; also advertised via rel="ai-catalog"` : read.found,
+        this.recommendation(),
+        ad?.pageUrl,
       );
     }
 
-    const parsed = tryParseJson(result.body);
-    if (!isObject(parsed)) {
-      return miss('ai-catalog.json is not valid JSON.', 'Invalid JSON');
+    const { manifest } = read;
+    const advertised = ad ? `; also advertised via rel="ai-catalog" (${ad.source})` : '';
+
+    // Spec-conformant but inert: `entries: []` satisfies §4.1 and tells an
+    // agent nothing. The pre-rewrite audit reported the same shape as a pass.
+    if (manifest.entries.length === 0) {
+      return this.warn(
+        `${AI_CATALOG_PATH} is a valid ARD manifest (specVersion ${manifest.specVersion}) but lists no entries, so it advertises no capability to an agent.`,
+        EXPECTED,
+        `Valid ARD manifest with 0 entries${advertised}`,
+        this.recommendation(),
+        ad?.pageUrl,
+      );
     }
 
-    if (!Array.isArray(parsed['services'])) {
-      return miss('ai-catalog.json does not contain a services array.', 'No services array');
-    }
-
-    const count = (parsed['services'] as unknown[]).length;
+    const count = manifest.entries.length;
     return this.pass(
-      `AI catalog found with ${count} service(s).`,
+      `AI catalog found: a valid ARD manifest (specVersion ${manifest.specVersion}) with ${count} entr${count === 1 ? 'y' : 'ies'}.`,
       EXPECTED,
-      ad
-        ? `Valid JSON with ${count} service(s); also advertised via rel="ai-catalog" (${ad.source})`
-        : `Valid JSON with ${count} service(s)`,
+      `Valid ARD manifest with ${count} entr${count === 1 ? 'y' : 'ies'}${advertised}`,
+      ad?.pageUrl,
     );
   }
 }

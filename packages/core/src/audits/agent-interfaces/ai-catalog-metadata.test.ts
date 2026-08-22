@@ -2,67 +2,131 @@ import { describe, it, expect } from 'vitest';
 import { AiCatalogMetadataAudit } from './ai-catalog-metadata';
 import { mockCheckContext, mockFetchResult } from '../../__tests__/test-utils';
 
+/** An entry carrying everything hf-discover indexes. */
+function richEntry(n: number): Record<string, unknown> {
+  return {
+    identifier: `urn:air:example.com:server:s${n}`,
+    displayName: `Service ${n}`,
+    type: 'application/mcp-server-card+json',
+    url: `https://example.com/mcp/s${n}.json`,
+    description: `Service ${n} does something useful.`,
+    capabilities: ['search'],
+    representativeQueries: [`use service ${n}`],
+    tags: ['api'],
+  };
+}
+
+/** An entry with only the three fields ARD requires — nothing indexable. */
+function bareEntry(n: number): Record<string, unknown> {
+  return {
+    identifier: `urn:air:example.com:server:b${n}`,
+    displayName: `Bare ${n}`,
+    type: 'application/mcp-server-card+json',
+    url: `https://example.com/mcp/b${n}.json`,
+  };
+}
+
+function manifest(over: Record<string, unknown> = {}): string {
+  return JSON.stringify({
+    specVersion: '1.0',
+    host: { displayName: 'Example', identifier: 'did:web:example.com' },
+    entries: [richEntry(1)],
+    ...over,
+  });
+}
+
+const ctxWith = (body: string) =>
+  mockCheckContext([], {
+    '/.well-known/ai-catalog.json': mockFetchResult(body, 200, 'application/ai-catalog+json'),
+  });
+
 describe('AiCatalogMetadataAudit', () => {
   const audit = new AiCatalogMetadataAudit();
 
-  it('passes when all required metadata fields are present', () => {
-    const body = JSON.stringify({
-      version: '1.0',
-      name: 'Site',
-      description: 'A site',
-      capabilities: ['search'],
-      owner: 'Acme',
-      contact: 'hello@example.com',
-      lastUpdated: '2026-01-01',
-      services: [],
-    });
-    const ctx = mockCheckContext([], {
-      '/.well-known/ai-catalog.json': mockFetchResult(body, 200),
-    });
-    const result = audit.audit(ctx);
+  it('passes when the host is named and every entry is indexable', () => {
+    const result = audit.audit(ctxWith(manifest({ entries: [richEntry(1), richEntry(2)] })));
     expect(result.status).toBe('pass');
-    expect(result.message).toContain('all required metadata');
+    expect(result.found).toContain('2/2');
   });
 
-  it('warns when at least half (but not all) fields are present', () => {
-    const body = JSON.stringify({
-      version: '1.0',
-      name: 'Site',
-      description: 'A site',
-      capabilities: ['search'],
-      owner: 'Acme',
-      // missing contact and lastUpdated -> 5/7 present
-    });
-    const ctx = mockCheckContext([], {
-      '/.well-known/ai-catalog.json': mockFetchResult(body, 200),
-    });
-    const result = audit.audit(ctx);
+  it('passes without the optional updatedAt / trustManifest bonuses', () => {
+    const result = audit.audit(ctxWith(manifest()));
+    expect(result.status).toBe('pass');
+  });
+
+  it('reports updatedAt and trustManifest as bonuses when present', () => {
+    const result = audit.audit(
+      ctxWith(manifest({ updatedAt: '2026-08-01', trustManifest: { issuer: 'did:web:example.com' } })),
+    );
+    expect(result.status).toBe('pass');
+    expect(result.found).toContain('updatedAt');
+    expect(result.found).toContain('trustManifest');
+  });
+
+  it('warns when only some entries carry indexable metadata', () => {
+    const result = audit.audit(ctxWith(manifest({ entries: [richEntry(1), bareEntry(2)] })));
     expect(result.status).toBe('warn');
-    expect(result.message).toContain('contact');
-    expect(result.message).toContain('lastUpdated');
+    expect(result.message).toContain('Bare 2');
   });
 
-  it('fails when most fields are missing', () => {
-    const body = JSON.stringify({ version: '1.0', name: 'Site' }); // 2/7 present
-    const ctx = mockCheckContext([], {
-      '/.well-known/ai-catalog.json': mockFetchResult(body, 200),
-    });
-    const result = audit.audit(ctx);
+  it('fails when no entry carries any indexable metadata', () => {
+    const result = audit.audit(ctxWith(manifest({ entries: [bareEntry(1), bareEntry(2)] })));
     expect(result.status).toBe('fail');
-    expect(result.message).toContain('missing most');
   });
 
-  it('fails when ai-catalog.json is missing', () => {
-    const ctx = mockCheckContext([], {});
-    expect(audit.audit(ctx).status).toBe('fail');
+  it('warns when host.displayName is missing even though every entry is rich', () => {
+    const result = audit.audit(ctxWith(manifest({ host: { identifier: 'did:web:example.com' } })));
+    expect(result.status).toBe('warn');
+    expect(result.message).toContain('host.displayName');
   });
 
-  it('fails when ai-catalog.json is invalid JSON', () => {
-    const ctx = mockCheckContext([], {
-      '/.well-known/ai-catalog.json': mockFetchResult('nope {{{', 200),
-    });
-    const result = audit.audit(ctx);
-    expect(result.status).toBe('fail');
-    expect(result.message).toContain('not valid JSON');
+  it('mentions a missing host.identifier without failing on it', () => {
+    const result = audit.audit(ctxWith(manifest({ host: { displayName: 'Example' } })));
+    expect(result.status).toBe('pass');
+    expect(result.found).toContain('host.identifier');
+  });
+
+  it('does not count whitespace-only descriptions or empty arrays as metadata', () => {
+    const hollow = {
+      ...bareEntry(1),
+      description: '   ',
+      capabilities: [],
+      representativeQueries: [],
+      tags: [],
+    };
+    expect(audit.audit(ctxWith(manifest({ entries: [hollow] }))).status).toBe('fail');
+  });
+
+  it('requires more than a description alone to call an entry indexable', () => {
+    const descOnly = { ...bareEntry(1), description: 'Just a description.' };
+    const result = audit.audit(ctxWith(manifest({ entries: [descOnly] })));
+    expect(result.status).toBe('warn');
+  });
+
+  // ── no second zero for a file ai-catalog-exists already scores ──
+
+  it('is not applicable when no manifest is served', () => {
+    expect(audit.audit(mockCheckContext([], {})).status).toBe('na');
+  });
+
+  it('is not applicable when the served file is not an ARD manifest', () => {
+    const legacy = JSON.stringify({ version: '1.0', name: 'Site', services: [] });
+    expect(audit.audit(ctxWith(legacy)).status).toBe('na');
+  });
+
+  it('is not applicable when the manifest body is not valid JSON', () => {
+    expect(audit.audit(ctxWith('nope {{{')).status).toBe('na');
+  });
+
+  // ── guidance must not teach the invented field list ──
+
+  it('drops owner / contact / lastUpdated from its guidance', () => {
+    const code = AiCatalogMetadataAudit.meta.guidance?.code ?? '';
+    const fix = AiCatalogMetadataAudit.meta.guidance?.fix ?? '';
+    for (const invented of ['owner', 'contact', 'lastUpdated', 'services']) {
+      expect(code).not.toContain(invented);
+      expect(fix).not.toContain(invented);
+    }
+    expect(code).toContain('representativeQueries');
   });
 });

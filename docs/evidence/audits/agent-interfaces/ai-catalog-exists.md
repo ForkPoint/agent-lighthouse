@@ -7,13 +7,13 @@ slug: ai-catalog-exists
 review_verdict: delete
 severity: high
 evidence_grade: A
-disposition: "merged 2026-08-22 (Plan 4, Task 7) — absorbs ai-catalog-link (4.19); ARD rewrite still open (Task 10)"
+disposition: "merged 2026-08-22 (Plan 4, Task 7) — absorbs ai-catalog-link (4.19); rewritten to ARD §4.1 2026-08-22 (Plan 4, Task 10)"
 reviewed: 2026-08-22
 ---
 
 # ai-catalog-exists (`5.7`, `4.19`)
 
-> agent-interfaces · source `ai-catalog-exists.ts` · absorbs ai-catalog-link (4.19) · evidence grade **A** · tier **scored** (weight 1.0) · **rewrite still required** — see below
+> agent-interfaces · source `ai-catalog-exists.ts` · absorbs ai-catalog-link (4.19) · evidence grade **A** · tier **scored** (weight 1.0) · rewritten to the real ARD schema — see below
 
 ## What it checks
 
@@ -40,7 +40,7 @@ Invented standard. `/.well-known/ai-catalog.json` is not registered with IANA, i
 
 ## The merge (Plan 4, Task 7, 2026-08-22)
 
-**Scope note first: this is the fold only.** 5.7's own required rework — the pass condition becoming ARD §4.1's `specVersion` + `host` + `entries[]` instead of a `services` array, and the guidance/code samples being replaced with the real schema — is **not** done here. It is Task 10's job, and the `TODO(redeem)` header stays on the source file with a note saying so. Everything below concerns 4.19's advertisement check and nothing else; the `services`-array pass condition, the vacuous `{"services": []}` pass, the HTML-soft-404 misdiagnosis and the unused `ctx.wafProtection` are all still open against 5.7.
+**Scope note first: this was the fold only.** 5.7's own required rework — the pass condition becoming ARD §4.1's `specVersion` + `host` + `entries[]` instead of a `services` array, and the guidance/code samples being replaced with the real schema — was not done here. It landed in Task 10, recorded in the next section. Everything below concerns 4.19's advertisement check and nothing else.
 
 **What was folded.** 4.19 checked for a `<link rel="alternate" type="application/json">` whose optional, English, human-authored `title` attribute contained the exact two-word phrase "ai catalog" — on `ctx.pages[0]` only, with exact case-sensitive `rel` and `type` comparisons that also rejected `application/json; charset=utf-8`. No site on the public web emits that shape, so the audit returned a scored `fail` on every real scan and measured nothing. Its own required rework names the real token: **match `rel="ai-catalog"` (any type), accept the equivalent HTTP `Link` header, and downgrade it to a nice-to-have relative to the well-known file.** All three land:
 
@@ -62,9 +62,38 @@ Invented standard. `/.well-known/ai-catalog.json` is not registered with IANA, i
 
 ### Deviations
 
-- **The ARD rewrite is out of scope** — see the scope note above. This fold does not touch the pass condition, and the code sample still shows the invented `services` schema (with the `rel="ai-catalog"` line appended). Task 10 replaces both.
 - **The advertised href is never fetched.** Following it would be the natural next step, but the audit's own evidence says no consumer does, so spending a request on it would model behaviour nothing exhibits.
 - **`type="application/ai-catalog+json"` is preferred in the guidance but not required in the match**, exactly as 4.19's rework specifies ("any type, ideally application/ai-catalog+json").
+
+## The ARD rewrite (Plan 4, Task 10, 2026-08-22)
+
+The required rework from the [redemption dossier](../../deletions/agent-tools/ai-catalog-exists.md) is executed. That dossier's fatal finding was that the audit passed only on a top-level `services` array, a shape that occurs in no revision of the ARD spec and in none of the four live manifests checked (ARD conformance example, neon.com, weaviate.io, the Shopware core Twig template) — so a spec-perfect site failed at medium priority and was handed an invented schema to implement.
+
+**Old pass condition:** `/.well-known/ai-catalog.json` returns 200 and `Array.isArray(parsed.services)`. `{"services": []}` passed as "AI catalog found with 0 service(s)".
+
+**New pass condition:** the file returns 200 with a JSON body carrying all three fields ARD §4.1 makes mandatory — a non-empty `specVersion` string, a `host` object and an `entries` array — and `entries` is non-empty.
+
+Parsing now lives in the shared `_ard.ts` module (see the ai-catalog-urls and ai-catalog-metadata dossiers), so the three catalog audits cannot drift apart on what an ARD manifest is.
+
+Four of the false-positive risks listed above are closed by the same change:
+
+- **The vacuous pass is gone.** A conformant manifest with `entries: []` is spec-legal but advertises nothing to an agent, so it is a `warn` — the middle state the `ternary` display mode already carries — not a pass.
+- **The HTML soft-404 is diagnosed correctly.** A 200 `text/html` body (or a body starting with `<!doctype`/`<html>`) now reports "returns HTML, not a manifest — the request is being answered by a catch-all route" instead of "ai-catalog.json is not valid JSON".
+- **A malformed manifest names its missing fields.** The failure message lists exactly which of `specVersion`/`host`/`entries` is absent, so a site publishing the old invented schema is told what to change.
+- **The advertisement no longer misdiagnoses a served-but-broken manifest.** The `rel="ai-catalog"` warn ("advertised at X, but the documented consumer resolves only the well-known path") now fires only for *absence* — a 404 or an HTML soft-404. When a manifest is served and merely malformed, the result is a plain `fail` naming the shape problem, with the advertisement reported as context.
+
+**Guidance and code sample** are the spec's own schema: `specVersion`, `host{displayName, identifier, documentationUrl}` and `entries[]` with `identifier` (a domain-anchored URN), `displayName`, `type` (an IANA media type), `url`, `description`, `capabilities` and `representativeQueries`. `docsUrl` points at the ARD spec. The `rel="ai-catalog"` line stays appended as the nice-to-have it is.
+
+### Grade decision: stays **A**, tier `scored`, weight 1.0
+
+Source: the [redemption dossier's verdict](../../deletions/agent-tools/ai-catalog-exists.md) — "redeemed — keep with rewrite (grade A)" — and the [REWORK-TODO entry](../../../../packages/core/src/audits/REWORK-TODO.md) that carries it. The grade rests on a named vendor tool (Hugging Face `hf-discover`) that resolves exactly `https://{domain}/.well-known/ai-catalog.json` and reads `entries[]`, the path being normative in the ARD draft co-authored by Google, Microsoft and Hugging Face, and verifiable production adoption (Neon, Weaviate, Shopware core, specification.website).
+
+Task 7 recorded that the A/`scored`/1.0 meta was only defensible once this rewrite landed, because the audit as written could not pass on a conformant site. It now checks the shape those consumers actually read, so the grade stands as researched. Per the §4 weight law `weightForGrade('A', 'scored') = 1.0`; `scoreDisplayMode` stays `ternary`; `defaultPriority` stays `medium`.
+
+### Rewrite deviations
+
+- **`application/ai-catalog+json` is not required to pass.** §3.3 calls the media type a "de-facto community standard tracking towards formal registration" and it is unregistered with IANA, so requiring it would fail conformant publishers who serve `application/json`. It is recommended in the guidance and reported, not gated.
+- **`ctx.wafProtection` is still unused.** A WAF 403 on `/.well-known/*` continues to read as absence. Distinguishing the two is a cross-audit concern (every well-known-file audit has it) and is out of scope for a pass-condition rewrite.
 
 ## Evidence
 
@@ -88,4 +117,5 @@ This audit was a delete candidate and went through dedicated adversarial researc
 - 2026-08-20 — code review (11-agent workflow) + evidence research (12-domain workflow, 400 sources).
 - 2026-08-21 — adversarial redemption research; user accepted verdict (grade A, rewrite required).
 - 2026-08-21 — approved: 4.19 merges away into 5.7 (v2 audit map).
-- 2026-08-22 — merged (Plan 4, Task 7): 4.19 folded in, grade and tier unchanged; registry 158 → 157 for this fold. The ARD §4.1 rewrite remains open for Task 10.
+- 2026-08-22 — merged (Plan 4, Task 7): 4.19 folded in, grade and tier unchanged; registry 158 → 157 for this fold. The ARD §4.1 rewrite remained open for Task 10.
+- 2026-08-22 — rewritten (Plan 4, Task 10): pass condition is ARD §4.1 (`specVersion` + `host` + non-empty `entries[]`), guidance and code sample replaced with the real schema, parsing extracted to `_ard.ts`. Grade **A**, tier `scored`, weight 1.0 — unchanged, and now defensible on a conformant site. `TODO(redeem)` header removed; entry dropped from REWORK-TODO.md.

@@ -46,7 +46,13 @@ Grade B: the checked property (liveness of manifest-listed endpoints) is a real 
 - **[ardvark — ARD crawler/probe (GitHub code search hits)](https://github.com/HelgeSverre/ardvark)** — HelgeSverre (repo, URL verified 2026-08-21)
   - Code search shows internal/crawler, internal/probe, internal/fetch and internal/mcpserver all referencing ai-catalog.json — an independent crawler that fetches and probes catalogs and their URLs. (Identified via GitHub code search; repo page not individually fetched.)
 
+## Rework executed — 2026-08-22
+
+**Resolved.** The audit probes `entries[].url`, skips entries that embed `data`, and treats 2xx/3xx plus auth-gated 401/403/405/429 as reachable so a healthy OAuth-protected or POST-only endpoint is no longer reported as broken. Probes are `isSafeUrl()`-gated and capped at 5 concurrent. Grade stays **B**, tier `scored`, weight 0.6. Implementation record: [audits/agent-interfaces/ai-catalog-urls.md](../../audits/agent-interfaces/ai-catalog-urls.md#the-rewrite-plan-4-task-10-2026-08-22).
+
 ## Review history
+
+- 2026-08-22 — required rework executed (Plan 4, Task 10); `TODO(redeem)` marker removed from the source file.
 
 - 2026-08-21 — user decision: all research verdicts accepted. Disposition by grade: **kept-rewrite** (kept, rewrite required per dossier).
 

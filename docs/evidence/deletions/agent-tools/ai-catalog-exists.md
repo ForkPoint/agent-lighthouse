@@ -56,7 +56,13 @@ Grade A evidence: a named vendor tool (Hugging Face hf-discover) documents and i
 - **[Agent-Card/ai-catalog README](https://raw.githubusercontent.com/Agent-Card/ai-catalog/main/README.md)** — Linux Foundation (Agent Card WG) (repo, URL verified 2026-08-21)
   - Calls itself a temporary Linux Foundation working repo; states A2A and MCP steering committees will vote on adoption — i.e. pre-ratification. 210 stars, actively pushed 2026-08-20.
 
+## Rework executed — 2026-08-22
+
+**Resolved.** The pass condition is now ARD §4.1 (`specVersion` + `host` + a non-empty `entries[]`), and the guidance and code sample carry the real schema. Grade stays **A**, tier `scored`, weight 1.0. Implementation record: [audits/agent-interfaces/ai-catalog-exists.md](../../audits/agent-interfaces/ai-catalog-exists.md#the-ard-rewrite-plan-4-task-10-2026-08-22).
+
 ## Review history
+
+- 2026-08-22 — required rework executed (Plan 4, Task 10); `TODO(redeem)` marker removed from the source file.
 
 - 2026-08-21 — user decision: all research verdicts accepted. Disposition by grade: **kept-rewrite** (kept, rewrite required per dossier).
 

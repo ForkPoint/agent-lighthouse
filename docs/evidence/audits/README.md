@@ -34,9 +34,9 @@ One dossier per audit: what it checks, the 2026-08-20 code-review findings, grad
 | 5.4 | [openapi-ai-instructions](./agent-tools/openapi-ai-instructions.md) | agent-tools | delete | D | sunset (approved 2026-08-21) |
 | 5.5 | [openapi-servers](./agent-interfaces/openapi-servers.md) | agent-tools | fix | — | keep — fix required |
 | 5.6 | [openapi-schemas](./agent-interfaces/openapi-schemas.md) | agent-tools | fix | — | keep — fix required |
-| 5.7 | [ai-catalog-exists](./agent-interfaces/ai-catalog-exists.md) | agent-tools | delete | A | merged — absorbs 4.19 (2026-08-22); ARD rewrite still open |
-| 5.8 | [ai-catalog-metadata](./agent-interfaces/ai-catalog-metadata.md) | agent-tools | delete | B | kept — rewrite required (approved 2026-08-21) |
-| 5.9 | [ai-catalog-urls](./agent-interfaces/ai-catalog-urls.md) | agent-tools | delete | B | kept — rewrite required (approved 2026-08-21) |
+| 5.7 | [ai-catalog-exists](./agent-interfaces/ai-catalog-exists.md) | agent-tools | delete | A | merged — absorbs 4.19 (2026-08-22); rewritten to ARD §4.1 (2026-08-22) |
+| 5.8 | [ai-catalog-metadata](./agent-interfaces/ai-catalog-metadata.md) | agent-tools | delete | B | kept — rewritten to ARD §4.2 metadata (2026-08-22) |
+| 5.9 | [ai-catalog-urls](./agent-interfaces/ai-catalog-urls.md) | agent-tools | delete | B | kept — rewritten to entries[].url liveness (2026-08-22) |
 | 5.10 | [agents-json](./agent-interfaces/agents-json.md) | agent-tools | delete | C | informative, weight 0 (approved 2026-08-21) |
 | 5.11 | [ai-plugin-json](./agent-tools/ai-plugin-json.md) | agent-tools | delete | D | sunset (approved 2026-08-21) |
 | 5.12 | [mcp-discovery](./agent-interfaces/mcp-discovery.md) | agent-tools | fix | A | keep — fix required |
@@ -48,7 +48,7 @@ One dossier per audit: what it checks, the 2026-08-20 code-review findings, grad
 | 5.18 | [no-blocking-captcha](./operability-safety/no-blocking-captcha.md) | agent-tools | fix | — | keep — fix required |
 | 5.19 | [forms-no-js](./operability-safety/forms-no-js.md) | agent-tools | fix | — | keep — fix required |
 | 5.20 | [webmcp-registered-tools](./agent-interfaces/webmcp-registered-tools.md) | agent-tools | delete | A | proposed: redeem as experimental (pending triage) |
-| 5.21 | [webmcp-declarative-forms](./agent-interfaces/webmcp-declarative-forms.md) | agent-tools | delete | A | kept — rewrite required (approved 2026-08-21) |
+| 5.21 | [webmcp-declarative-forms](./agent-interfaces/webmcp-declarative-forms.md) | agent-tools | delete | A | kept — rewritten to declarative-webmcp attributes (2026-08-22) |
 | 5.22 | [webmcp-input-quality](../merged/operability-safety/webmcp-input-quality.md) | agent-tools | merge | B | merged into [operability-safety/form-actionability](./operability-safety/form-actionability.md) (2026-08-22) |
 | 5.23 | [webmcp-tool-naming](../merged/agent-interfaces/webmcp-tool-naming.md) | agent-tools | merge | C | naming rule merged into [agent-interfaces/openapi-operation-ids](./agent-interfaces/openapi-operation-ids.md) (2026-08-22); runtime half deferred out of v2.0 |
 | 5.24 | [webmcp-tool-annotations](../merged/agent-interfaces/webmcp-tool-annotations.md) | agent-tools | merge | D | merged into [agent-interfaces/mcp-endpoint](./agent-interfaces/mcp-endpoint.md) (2026-08-22) |
