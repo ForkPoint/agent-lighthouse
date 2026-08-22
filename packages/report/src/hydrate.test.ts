@@ -24,10 +24,10 @@ function row(over: Partial<PersistedScanRow> = {}): PersistedScanRow {
     domain: 'x.test',
     overallScore: 70,
     scoreTier: 'needs-work',
-    categoryScores: { 'agent-tools': 80, 'answer-engine': 100 },
+    categoryScores: { 'agent-interfaces': 80, 'answer-engine': 100 },
     checkResults: [
-      check({ id: 'a1', category: 'agent-tools', status: 'pass' }),
-      check({ id: 'a2', category: 'agent-tools', status: 'fail', priority: 'critical' }),
+      check({ id: 'a1', category: 'agent-interfaces', status: 'pass' }),
+      check({ id: 'a2', category: 'agent-interfaces', status: 'fail', priority: 'critical' }),
       check({ id: 'e1', category: 'answer-engine', status: 'warn', priority: 'high' }),
     ],
     recommendations: [],
@@ -42,10 +42,10 @@ function row(over: Partial<PersistedScanRow> = {}): PersistedScanRow {
 describe('hydrateReport', () => {
   it('rebuilds categories in canonical order with shared names/weights and counts', () => {
     const r = hydrateReport(row());
-    expect(r.categories.map((c) => c.id)).toEqual(['agent-tools', 'answer-engine']);
+    expect(r.categories.map((c) => c.id)).toEqual(['agent-interfaces', 'answer-engine']);
     const at = r.categories[0]!;
-    expect(at.name).toBe(CATEGORY_NAMES['agent-tools']);
-    expect(at.weight).toBe(CATEGORY_WEIGHTS['agent-tools']);
+    expect(at.name).toBe(CATEGORY_NAMES['agent-interfaces']);
+    expect(at.weight).toBe(CATEGORY_WEIGHTS['agent-interfaces']);
     expect(at.score).toBe(80); // from categoryScores
     expect({ pass: at.passCount, warn: at.warnCount, fail: at.failCount }).toEqual({
       pass: 1,
@@ -55,7 +55,7 @@ describe('hydrateReport', () => {
   });
 
   it('includes a category that has a score but no checks', () => {
-    const r = hydrateReport(row({ categoryScores: { 'agent-tools': 80, 'structured-data': 50 } }));
+    const r = hydrateReport(row({ categoryScores: { 'agent-interfaces': 80, 'structured-data': 50 } }));
     const scoredOnly = r.categories.find((c) => c.id === 'structured-data')!;
     expect(scoredOnly.score).toBe(50);
     expect(scoredOnly.checks).toHaveLength(0);
@@ -67,11 +67,11 @@ describe('hydrateReport', () => {
         categoryScores: {},
         checkResults: [
           check({ id: 'z1', category: 'mystery-cat' }),
-          check({ id: 'a1', category: 'agent-tools' }),
+          check({ id: 'a1', category: 'agent-interfaces' }),
         ],
       }),
     );
-    expect(r.categories.map((c) => c.id)).toEqual(['agent-tools', 'mystery-cat']);
+    expect(r.categories.map((c) => c.id)).toEqual(['agent-interfaces', 'mystery-cat']);
     expect(r.categories.find((c) => c.id === 'mystery-cat')!.weight).toBe(0); // no shared weight
   });
 
@@ -87,19 +87,19 @@ describe('hydrateReport', () => {
         checkResults: [
           check({
             id: 'inf-fail',
-            category: 'agent-tools',
+            category: 'agent-interfaces',
             status: 'fail',
             priority: 'critical',
             scoreDisplayMode: 'informative',
           }),
-          check({ id: 'norm-fail', category: 'agent-tools', status: 'fail', priority: 'high' }),
+          check({ id: 'norm-fail', category: 'agent-interfaces', status: 'fail', priority: 'high' }),
           check({
             id: 'inf-pass',
-            category: 'agent-tools',
+            category: 'agent-interfaces',
             status: 'pass',
             scoreDisplayMode: 'informative',
           }),
-          check({ id: 'norm-pass', category: 'agent-tools', status: 'pass' }),
+          check({ id: 'norm-pass', category: 'agent-interfaces', status: 'pass' }),
         ],
       }),
     );

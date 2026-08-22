@@ -127,15 +127,6 @@ import {
   ProductTransactionCertaintyAudit,
 } from './audits/agentic-commerce';
 
-// Agent Tools (5) — the remainder leaves for operability-safety in a later task
-import {
-  ContactFormAudit,
-  NoBlockingCaptchaAudit,
-  FormsNoJsAudit,
-  WebmcpInputQualityAudit,
-  FormActionabilityAudit,
-} from './audits/agent-tools';
-
 // Agent Interfaces (22) — v2 taxonomy category (Plan 3, Task 8)
 import {
   WebSiteSearchActionAudit,
@@ -189,8 +180,15 @@ import {
   ServerRenderedAudit,
 } from './audits/content-extraction';
 
-// Accessibility — hand-rolled markup audits + engine-backed tree audits (21)
+// Operability & Safety (29) — v2 taxonomy category (Plan 3, Task 10).
+// Absorbs all of v1 agent-tools + accessibility and the security-header rump of
+// v1 technical-readiness; those three v1 categories no longer exist.
 import {
+  ContactFormAudit,
+  NoBlockingCaptchaAudit,
+  FormsNoJsAudit,
+  WebmcpInputQualityAudit,
+  FormActionabilityAudit,
   AriaLandmarksAudit,
   NavAriaLabelAudit,
   FormErrorMessagesAudit,
@@ -211,15 +209,11 @@ import {
   A11yMetaRefreshAudit,
   A11yTabindexAudit,
   A11yPresentationConflictAudit,
-} from './audits/accessibility';
-
-// Technical Readiness (4)
-import {
   HstsHeaderAudit,
   CspHeaderAudit,
   ContentTypeOptionsAudit,
   SecurityTxtAudit,
-} from './audits/technical-readiness';
+} from './audits/operability-safety';
 
 // Answer Readiness (32) — v2 taxonomy category (Plan 3, Task 7)
 import {
@@ -265,11 +259,9 @@ export const defaultConfig: ScanConfig = {
     { id: 'access-crawl-control', name: 'Access & Crawl Control', weight: 0.08 },
     { id: 'structured-data', name: 'Structured Data & Schema Markup', weight: 0.1 },
     { id: 'agentic-commerce', name: 'Agentic Commerce', weight: 0.02 },
-    { id: 'agent-tools', name: 'AI Agent Tools & Action Surfaces', weight: 0.03 },
     { id: 'agent-interfaces', name: 'Agent Interfaces', weight: 0.18 },
     { id: 'content-extraction', name: 'Content Extraction & Structure', weight: 0.1 },
-    { id: 'accessibility', name: 'Accessibility & Agent Interaction', weight: 0.07 },
-    { id: 'technical-readiness', name: 'Technical Readiness & Security', weight: 0.07 },
+    { id: 'operability-safety', name: 'Operability & Safety', weight: 0.17 },
     { id: 'answer-readiness', name: 'Answer Readiness', weight: 0.17 },
   ],
   audits: {
@@ -356,13 +348,6 @@ export const defaultConfig: ScanConfig = {
       reg(ProductIdentifiersAudit),
       reg(ProductTransactionCertaintyAudit),
     ],
-    'agent-tools': [
-      reg(ContactFormAudit),
-      reg(NoBlockingCaptchaAudit),
-      reg(FormsNoJsAudit),
-      reg(WebmcpInputQualityAudit),
-      reg(FormActionabilityAudit),
-    ],
     'agent-interfaces': [
       reg(WebSiteSearchActionAudit),
       reg(OpenApiLinkAudit),
@@ -412,12 +397,17 @@ export const defaultConfig: ScanConfig = {
       reg(FastResponseTimeAudit),
       reg(ServerRenderedAudit),
     ],
-    accessibility: [
+    'operability-safety': [
+      reg(ContactFormAudit),
+      reg(NoBlockingCaptchaAudit),
+      reg(FormsNoJsAudit),
+      reg(WebmcpInputQualityAudit),
+      reg(FormActionabilityAudit),
       reg(AriaLandmarksAudit),
       reg(NavAriaLabelAudit),
-      reg(FormErrorMessagesAudit),
       reg(A11yLandmarkUniqueAudit),
       reg(A11yFormLabelsAudit),
+      reg(FormErrorMessagesAudit),
       reg(A11yAccessibleNamesAudit),
       reg(A11yDialogNameAudit),
       reg(A11yAriaHiddenBodyAudit),
@@ -433,8 +423,6 @@ export const defaultConfig: ScanConfig = {
       reg(A11yMetaRefreshAudit),
       reg(A11yTabindexAudit),
       reg(A11yPresentationConflictAudit),
-    ],
-    'technical-readiness': [
       reg(HstsHeaderAudit),
       reg(CspHeaderAudit),
       reg(ContentTypeOptionsAudit),

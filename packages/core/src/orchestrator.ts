@@ -18,8 +18,8 @@ import { defaultConfig } from './audit-config';
 import { planAudits, runAudits } from './audit-runner';
 import { ProgressTracker } from './progress';
 import type { ScanEvent } from './progress';
-import { runA11yForHtml } from './audits/accessibility/runner';
-import { A11Y_RULES } from './audits/accessibility';
+import { runA11yForHtml } from './audits/operability-safety/runner';
+import { A11Y_RULES } from './audits/operability-safety';
 import { extractProductFieldVerification } from './product-fields';
 import { generateScanSummary } from './summary';
 import { isInformative } from './scorer';
@@ -531,6 +531,6 @@ function calculateReadinessVitals(
       'answer-readiness/review-signals',
     ]),
     botAccessibility: getCategoryScoreByPrefix('access-crawl-control'),
-    technical: getCategoryScoreByPrefix('technical-readiness'),
+    technical: getCategoryScoreByPrefix('operability-safety'),
   };
 }

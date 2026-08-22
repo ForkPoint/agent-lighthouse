@@ -25,7 +25,7 @@ Audits that stay in the framework **only if rewritten**. Each source file carrie
 
 ## Proposed by first triage — pending approval — 15
 
-- [ ] TODO `accessibility/form-error-messages` — target tier scored (pending triage approval) · [dossier](../../../../docs/evidence/audits/accessibility/form-error-messages.md)
+- [ ] TODO `operability-safety/form-error-messages` — target tier scored (pending triage approval) · [dossier](../../../../docs/evidence/audits/operability-safety/form-error-messages.md)
   - Rebuild: verify aria-describedby/aria-errormessage linkage on invalid-state inputs instead of current broken heuristic. Evidence: a11y-tree consumption by computer-use agents graded A..
 - [ ] TODO `agent-interfaces/webmcp-registered-tools` — target tier experimental (pending triage approval) · [dossier](../../../../docs/evidence/audits/agent-interfaces/webmcp-registered-tools.md)
   - Evidence reshape: the .well-known manifest file is invented (grade D) — but runtime-registered WebMCP tools are grade B: Google Lighthouse 13.3+ ships 'Registered WebMCP tools' audits in its new Agentic Browsing category. Replace manifest-file audit with registered-tools detection, experimental tier..

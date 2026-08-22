@@ -29,7 +29,7 @@ export const PRESETS: Record<PresetName, PresetOptions> = {
       'agent-interfaces': 30,
       'machine-discovery': 20,
       'access-crawl-control': 20,
-      'technical-readiness': 15,
+      'operability-safety': 15,
       'answer-readiness': 15,
     },
   },
@@ -49,7 +49,7 @@ export const PRESETS: Record<PresetName, PresetOptions> = {
   },
   full: {
     name: 'full',
-    description: 'Default comprehensive scan executing all 10 audit categories.',
+    description: 'Default comprehensive scan executing all 8 audit categories.',
   },
 };
 

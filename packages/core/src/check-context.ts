@@ -1,7 +1,7 @@
 import type { CheerioAPI } from 'cheerio';
 import type { CheckResult, PageType } from './types';
 import type { FetchOptions, FetchResult } from './fetcher';
-import type { A11yPageResult } from './audits/accessibility/runner';
+import type { A11yPageResult } from './audits/operability-safety/runner';
 
 export interface PageContext {
   url: string;

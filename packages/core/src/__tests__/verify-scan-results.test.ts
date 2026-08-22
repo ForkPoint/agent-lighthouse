@@ -273,16 +273,16 @@ describe('Verify scan results against real sites', () => {
       expect(result!.status).toBe('fail');
     });
 
-    // --- Accessibility (IDs: '7.x') ---
+    // --- Operability & Safety ---
 
-    it('7.2: example.com ARIA landmarks check matches reality', () => {
+    it('operability-safety/aria-landmarks: example.com ARIA landmarks check matches reality', () => {
       const $ = ctx.pages[0]!.$;
       const hasHeader = $('header, [role="banner"]').length > 0;
       const hasMain = $('main, [role="main"]').length > 0;
       const hasNav = $('nav, [role="navigation"]').length > 0;
       const hasFooter = $('footer, [role="contentinfo"]').length > 0;
       const allPresent = hasHeader && hasMain && hasNav && hasFooter;
-      const result = allResults.get('7.2');
+      const result = allResults.get('operability-safety/aria-landmarks');
       expect(result).toBeDefined();
       if (allPresent) {
         expect(result!.status).toBe('pass');

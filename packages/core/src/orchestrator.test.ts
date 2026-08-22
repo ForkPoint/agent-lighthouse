@@ -35,7 +35,7 @@ vi.mock('./fetcher', async (importOriginal) => {
 
 // Avoid spinning up jsdom for every page; the orchestrator only needs
 // a resolved result object.
-vi.mock('./audits/accessibility/runner', () => ({
+vi.mock('./audits/operability-safety/runner', () => ({
   runA11yForHtml: async () => ({}),
   A11Y_RULES: [],
 }));
@@ -380,7 +380,7 @@ describe('runScan — report assembly fallbacks', () => {
     expect(report.recommendations).toHaveLength(2);
     // Both passes surface as top passes (sorted via the weight fallback).
     expect(report.topPasses).toHaveLength(2);
-    // No access-crawl-control / technical-readiness checks → those vitals are 0.
+    // No access-crawl-control / operability-safety checks → those vitals are 0.
     expect(report.readinessVitals?.botAccessibility).toBe(0);
     expect(report.readinessVitals?.technical).toBe(0);
   });
@@ -407,7 +407,7 @@ describe('runScan — report assembly fallbacks', () => {
       mk({ id: 'structured-data/service-product-schema', status: 'pass', priority: 'low', score: 1 }),
       mk({ id: 'machine-discovery/llms-txt-exists', status: 'pass', priority: 'low', score: 1 }),
       mk({ id: 'cp1', category: 'access-crawl-control', status: 'pass', priority: 'low', score: 1 }),
-      mk({ id: 'tr1', category: 'technical-readiness', status: 'pass', priority: 'low', score: 1 }),
+      mk({ id: 'tr1', category: 'operability-safety', status: 'pass', priority: 'low', score: 1 }),
     ];
 
     // The na stubs a real scan emits: status 'na' with the stub score of 0.
@@ -415,7 +415,7 @@ describe('runScan — report assembly fallbacks', () => {
       mk({ id: 'agentic-commerce/offer-schema', status: 'na', priority: 'low', score: 0 }),
       mk({ id: 'machine-discovery/llms-txt-blockquote', status: 'na', priority: 'low', score: 0 }),
       mk({ id: 'cp2', category: 'access-crawl-control', status: 'na', priority: 'low', score: 0 }),
-      mk({ id: 'tr2', category: 'technical-readiness', status: 'na', priority: 'low', score: 0 }),
+      mk({ id: 'tr2', category: 'operability-safety', status: 'na', priority: 'low', score: 0 }),
     ];
 
     const run = async (checks: unknown[]) => {

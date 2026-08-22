@@ -81,8 +81,8 @@ describe('Golden Corpus Conformance Tests (False-Positive Elimination)', () => {
     // Semantic Tables (6.9)
     expect(checkMap.get('content-extraction/data-tables')?.status).toBe('pass');
 
-    // Form No-JS / Actionable Form (5.19)
-    expect(checkMap.get('5.19')?.status).toBe('pass');
+    // Form No-JS / Actionable Form (operability-safety)
+    expect(checkMap.get('operability-safety/forms-no-js')?.status).toBe('pass');
   });
 
   it('correctly evaluates SaaS / Documentation fixtures with OpenAPI & Code blocks', async () => {

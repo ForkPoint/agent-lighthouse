@@ -17,7 +17,6 @@ export const SECTION_GROUPS: SectionGroupDef[] = [
     categoryIds: [
       'agent-interfaces',
       'agentic-commerce',
-      'agent-tools',
       'machine-discovery',
       'access-crawl-control',
     ],
@@ -28,7 +27,7 @@ export const SECTION_GROUPS: SectionGroupDef[] = [
   },
   {
     key: 'technicalFoundation',
-    categoryIds: ['structured-data', 'accessibility', 'technical-readiness'],
+    categoryIds: ['structured-data', 'operability-safety'],
   },
 ];
 

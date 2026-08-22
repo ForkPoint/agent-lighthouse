@@ -7,27 +7,27 @@ One dossier per audit: what it checks, the 2026-08-20 code-review findings, grad
 | ID | Audit | Category | Review verdict | Evidence grade | Disposition |
 | :- | :---- | :------- | :------------- | :------------- | :---------- |
 | 7.1 | [skip-nav](./accessibility/skip-nav.md) | accessibility | delete | D | sunset (approved 2026-08-21) |
-| 7.2 | [aria-landmarks](./accessibility/aria-landmarks.md) | accessibility | fix | A | keep — fix required |
-| 7.3 | [nav-aria-label](./accessibility/nav-aria-label.md) | accessibility | merge | A | merge (approved 2026-08-21) |
-| 7.4 | [Landmarks are uniquely identifiable](./accessibility/landmark-unique.md) | accessibility | fix | A | keep — fix required |
-| 7.5 | [Form inputs have associated labels](./accessibility/label.md) | accessibility | keep | A | keep |
-| 7.6 | [form-error-messages](./accessibility/form-error-messages.md) | accessibility | delete | A | proposed: redeem as scored (pending triage) |
-| 7.7 | [Buttons and links have accessible names](./accessibility/button-name.md) | accessibility | keep | A | keep |
-| 7.9 | [Dialogs have accessible names](./accessibility/aria-dialog-name.md) | accessibility | fix | — | keep — fix required |
-| 7.10 | [Page exposed to the accessibility tree](./accessibility/aria-hidden-body.md) | accessibility | fix | — | keep — fix required |
-| 7.11 | [Valid ARIA roles](./accessibility/aria-roles.md) | accessibility | fix | A | keep — fix required |
-| 7.12 | [Valid ARIA attributes](./accessibility/aria-valid-attr.md) | accessibility | keep | — | keep |
-| 7.13 | [Complete ARIA relationships](./accessibility/aria-required-attr.md) | accessibility | fix | A | keep — fix required |
-| 7.14 | [Unique IDs for ARIA references](./accessibility/duplicate-id-aria.md) | accessibility | fix | — | keep — fix required |
-| 7.15 | [Form fields use valid autocomplete tokens](./accessibility/autocomplete-valid.md) | accessibility | fix | A | keep — fix required |
-| 7.16 | [No nested interactive controls](./accessibility/nested-interactive.md) | accessibility | keep | A | keep |
-| 7.17 | [Data tables have header associations](./accessibility/td-has-header.md) | accessibility | keep | B | keep |
-| 7.18 | [Page has a non-empty <title>](./accessibility/document-title.md) | accessibility | keep | — | keep |
-| 7.19 | [Frames are titled](./accessibility/frame-title.md) | accessibility | fix | — | keep — fix required |
-| 7.20 | [No time-based auto-refresh/redirect](./accessibility/meta-refresh.md) | accessibility | keep | — | keep |
-| 7.21 | [No positive tabindex (logical focus order)](./accessibility/tabindex.md) | accessibility | fix | — | keep — fix required |
+| 7.2 | [aria-landmarks](./operability-safety/aria-landmarks.md) | accessibility | fix | A | keep — fix required |
+| 7.3 | [nav-aria-label](./operability-safety/nav-aria-label.md) | accessibility | merge | A | merge (approved 2026-08-21) |
+| 7.4 | [Landmarks are uniquely identifiable](./operability-safety/landmark-unique.md) | accessibility | fix | A | keep — fix required |
+| 7.5 | [Form inputs have associated labels](./operability-safety/label.md) | accessibility | keep | A | keep |
+| 7.6 | [form-error-messages](./operability-safety/form-error-messages.md) | accessibility | delete | A | proposed: redeem as scored (pending triage) |
+| 7.7 | [Buttons and links have accessible names](./operability-safety/accessible-names.md) | accessibility | keep | A | keep |
+| 7.9 | [Dialogs have accessible names](./operability-safety/dialog-name.md) | accessibility | fix | — | keep — fix required |
+| 7.10 | [Page exposed to the accessibility tree](./operability-safety/aria-hidden-body.md) | accessibility | fix | — | keep — fix required |
+| 7.11 | [Valid ARIA roles](./operability-safety/aria-roles.md) | accessibility | fix | A | keep — fix required |
+| 7.12 | [Valid ARIA attributes](./operability-safety/aria-attributes.md) | accessibility | keep | — | keep |
+| 7.13 | [Complete ARIA relationships](./operability-safety/aria-relationships.md) | accessibility | fix | A | keep — fix required |
+| 7.14 | [Unique IDs for ARIA references](./operability-safety/duplicate-id.md) | accessibility | fix | — | keep — fix required |
+| 7.15 | [Form fields use valid autocomplete tokens](./operability-safety/autocomplete.md) | accessibility | fix | A | keep — fix required |
+| 7.16 | [No nested interactive controls](./operability-safety/nested-interactive.md) | accessibility | keep | A | keep |
+| 7.17 | [Data tables have header associations](./operability-safety/table-headers.md) | accessibility | keep | B | keep |
+| 7.18 | [Page has a non-empty <title>](./operability-safety/document-title.md) | accessibility | keep | — | keep |
+| 7.19 | [Frames are titled](./operability-safety/frame-title.md) | accessibility | fix | — | keep — fix required |
+| 7.20 | [No time-based auto-refresh/redirect](./operability-safety/meta-refresh.md) | accessibility | keep | — | keep |
+| 7.21 | [No positive tabindex (logical focus order)](./operability-safety/tabindex.md) | accessibility | fix | — | keep — fix required |
 | 7.22 | [No deprecated presentational elements](../sunset/accessibility/marquee.md) | accessibility | delete | — | sunset (2026-08-21) |
-| 7.23 | [No presentation-role conflicts](./accessibility/presentation-role-conflict.md) | accessibility | fix | A | keep — fix required |
+| 7.23 | [No presentation-role conflicts](./operability-safety/presentation-conflict.md) | accessibility | fix | A | keep — fix required |
 | 5.1 | [openapi-exists](./agent-interfaces/openapi-exists.md) | agent-tools | fix | — | keep — fix required |
 | 5.2 | [openapi-endpoints](./agent-interfaces/openapi-endpoints.md) | agent-tools | fix | — | keep — fix required |
 | 5.3 | [openapi-operation-ids](./agent-interfaces/openapi-operation-ids.md) | agent-tools | fix | — | keep — fix required |
@@ -42,19 +42,19 @@ One dossier per audit: what it checks, the 2026-08-20 code-review findings, grad
 | 5.12 | [mcp-discovery](./agent-interfaces/mcp-discovery.md) | agent-tools | fix | A | keep — fix required |
 | 5.13 | [mcp-endpoint](./agent-interfaces/mcp-endpoint.md) | agent-tools | fix | C | keep — fix required |
 | 5.14 | [mcp-capabilities](./agent-interfaces/mcp-capabilities.md) | agent-tools | merge | — | merge (approved 2026-08-21) |
-| 5.15 | [contact-form](./agent-tools/contact-form.md) | agent-tools | fix | C | keep — fix required |
+| 5.15 | [contact-form](./operability-safety/contact-form.md) | agent-tools | fix | C | keep — fix required |
 | 5.16 | [search-endpoint](./agent-interfaces/search-endpoint.md) | agent-tools | fix | — | keep — fix required |
 | 5.17 | [data-action-ctas](./agent-tools/data-action-ctas.md) | agent-tools | delete | D | sunset (approved 2026-08-21) |
-| 5.18 | [no-blocking-captcha](./agent-tools/no-blocking-captcha.md) | agent-tools | fix | — | keep — fix required |
-| 5.19 | [forms-no-js](./agent-tools/forms-no-js.md) | agent-tools | fix | — | keep — fix required |
+| 5.18 | [no-blocking-captcha](./operability-safety/no-blocking-captcha.md) | agent-tools | fix | — | keep — fix required |
+| 5.19 | [forms-no-js](./operability-safety/forms-no-js.md) | agent-tools | fix | — | keep — fix required |
 | 5.20 | [webmcp-registered-tools](./agent-interfaces/webmcp-registered-tools.md) | agent-tools | delete | A | proposed: redeem as experimental (pending triage) |
 | 5.21 | [webmcp-declarative-forms](./agent-interfaces/webmcp-declarative-forms.md) | agent-tools | delete | A | kept — rewrite required (approved 2026-08-21) |
-| 5.22 | [webmcp-input-quality](./agent-tools/webmcp-input-quality.md) | agent-tools | merge | — | merge (approved 2026-08-21) |
+| 5.22 | [webmcp-input-quality](./operability-safety/webmcp-input-quality.md) | agent-tools | merge | — | merge (approved 2026-08-21) |
 | 5.23 | [webmcp-tool-naming](./agent-interfaces/webmcp-tool-naming.md) | agent-tools | merge | — | merge (approved 2026-08-21) |
 | 5.24 | [webmcp-tool-annotations](./agent-interfaces/webmcp-tool-annotations.md) | agent-tools | merge | — | merge (approved 2026-08-21) |
 | 5.25 | [webmcp-action-coverage](./agent-tools/webmcp-action-coverage.md) | agent-tools | delete | D | sunset (approved 2026-08-21) |
 | 5.26 | [openapi-description-quality](./agent-interfaces/openapi-description-quality.md) | agent-tools | fix | — | keep — fix required |
-| 5.27 | [form-actionability](./agent-tools/form-actionability.md) | agent-tools | keep | — | keep |
+| 5.27 | [form-actionability](./operability-safety/form-actionability.md) | agent-tools | keep | — | keep |
 | 9.1 | [faq-sections](./answer-readiness/faq-sections.md) | answer-engine | fix | — | keep — fix required |
 | 9.2 | [question-headings](./answer-readiness/question-headings.md) | answer-engine | fix | C | keep — fix required |
 | 9.3 | [first-paragraph-answers](./answer-readiness/first-paragraph-answers.md) | answer-engine | fix | — | keep — fix required |
@@ -193,12 +193,12 @@ One dossier per audit: what it checks, the 2026-08-20 code-review findings, grad
 | 3.23 | [product-reviews](./structured-data/product-reviews.md) | structured-data | merge | — | merge (approved 2026-08-21) |
 | 3.24 | [product-transaction-certainty](./agentic-commerce/product-transaction-certainty.md) | structured-data | fix | — | keep — fix required |
 | 8.1 | [https-enabled](./access-crawl-control/https-enabled.md) | technical-readiness | fix | A | keep — fix required |
-| 8.2 | [hsts-header](./technical-readiness/hsts-header.md) | technical-readiness | merge | B | merge (approved 2026-08-21) |
-| 8.3 | [csp-header](./technical-readiness/csp-header.md) | technical-readiness | fix | D | keep — fix required |
-| 8.4 | [content-type-options](./technical-readiness/content-type-options.md) | technical-readiness | merge | C | merge (approved 2026-08-21) |
+| 8.2 | [hsts-header](./operability-safety/hsts-header.md) | technical-readiness | merge | B | merge (approved 2026-08-21) |
+| 8.3 | [csp-header](./operability-safety/csp-header.md) | technical-readiness | fix | D | keep — fix required |
+| 8.4 | [content-type-options](./operability-safety/content-type-options.md) | technical-readiness | merge | C | merge (approved 2026-08-21) |
 | 8.5 | [referrer-policy](./technical-readiness/referrer-policy.md) | technical-readiness | delete | D | sunset (approved 2026-08-21) |
 | 8.6 | [permissions-policy](./technical-readiness/permissions-policy.md) | technical-readiness | delete | D | sunset (approved 2026-08-21) |
-| 8.7 | [security-txt](./technical-readiness/security-txt.md) | technical-readiness | delete | C | informative, weight 0 (approved 2026-08-21) |
+| 8.7 | [security-txt](./operability-safety/security-txt.md) | technical-readiness | delete | C | informative, weight 0 (approved 2026-08-21) |
 | 8.8 | [cors-ai-files](./machine-discovery/cors-ai-files.md) | technical-readiness | fix | C | keep — fix required |
 | 8.9 | [cors-api-routes](./agent-interfaces/cors-api-routes.md) | technical-readiness | delete | C | proposed: redeem as scored (pending triage) |
 | 8.10 | [correct-content-types](./machine-discovery/ai-file-delivery.md) | technical-readiness | fix | C | keep — fix required |

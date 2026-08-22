@@ -1,0 +1,27 @@
+- generic [active] [ref=e1]:
+  - link "Skip to main content" [ref=e2] [cursor=pointer]:
+    - /url: "#main-content"
+  - navigation [ref=e3]:
+    - link "Alpha" [ref=e4] [cursor=pointer]:
+      - /url: /a
+    - link "Beta" [ref=e5] [cursor=pointer]:
+      - /url: /b
+  - main [ref=e6]:
+    - heading "Main heading" [level=1] [ref=e7]
+    - paragraph [ref=e8]: Body text here.
+    - img "A described chart" [ref=e9]
+    - complementary [ref=e10]:
+      - heading "Related" [level=3] [ref=e11]
+      - paragraph [ref=e12]: Sidebar promo text
+    - complementary [ref=e14]:
+      - paragraph [ref=e15]: Nested aside text
+  - contentinfo [ref=e16]:
+    - generic [ref=e17]:
+      - link "info@example.com" [ref=e18] [cursor=pointer]:
+        - /url: mailto:info@example.com
+      - text: 123 Main St, Springfield, ST 12345
+    - paragraph [ref=e19]:
+      - text: "Alt contact:"
+      - link "sales@example.com" [ref=e20] [cursor=pointer]:
+        - /url: mailto:sales@example.com
+      - text: 456 Other Rd, Springfield, ST 12345

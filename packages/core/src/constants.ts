@@ -26,11 +26,9 @@ export const CATEGORY_WEIGHTS: Record<string, number> = {
   'access-crawl-control': 0.08,
   'structured-data': 0.1,
   'agentic-commerce': 0.02,
-  'agent-tools': 0.03,
   'agent-interfaces': 0.18,
   'content-extraction': 0.1,
-  accessibility: 0.07,
-  'technical-readiness': 0.07,
+  'operability-safety': 0.17,
   'answer-readiness': 0.17,
 };
 
@@ -39,11 +37,9 @@ export const CATEGORY_NAMES: Record<string, string> = {
   'access-crawl-control': 'Access & Crawl Control',
   'structured-data': 'Structured Data & Schema Markup',
   'agentic-commerce': 'Agentic Commerce',
-  'agent-tools': 'AI Agent Tools & Action Surfaces',
   'agent-interfaces': 'Agent Interfaces',
   'content-extraction': 'Content Extraction & Structure',
-  accessibility: 'Accessibility & Agent Interaction',
-  'technical-readiness': 'Technical Readiness & Security',
+  'operability-safety': 'Operability & Safety',
   'answer-readiness': 'Answer Readiness',
 };
 

@@ -7,7 +7,7 @@ import { generateHtmlReport } from './html-generator';
 function check(over: Partial<CheckResult> = {}): CheckResult {
   return {
     id: 'c',
-    category: 'agent-tools',
+    category: 'agent-interfaces',
     title: 'title',
     description: 'desc',
     status: 'pass',
@@ -62,7 +62,7 @@ describe('generateHtmlReport', () => {
     const html = generateHtmlReport(
       report([
         cat({
-          id: 'agent-tools',
+          id: 'agent-interfaces',
           checks: [
             check({
               id: 'accessibility-skip-nav',
@@ -84,7 +84,7 @@ describe('generateHtmlReport', () => {
 
   it('omits the deprecation block for a check without a notice', () => {
     const html = generateHtmlReport(
-      report([cat({ id: 'agent-tools', checks: [check({ id: 'live', status: 'pass' })] })]),
+      report([cat({ id: 'agent-interfaces', checks: [check({ id: 'live', status: 'pass' })] })]),
     );
 
     expect(html).not.toContain('Deprecated — no longer a factor');
