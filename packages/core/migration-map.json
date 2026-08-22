@@ -627,10 +627,9 @@
   },
   "5.14": {
     "slug": "agent-tools/mcp-capabilities",
-    "status": "merging",
+    "status": "renamed",
     "to": "agent-interfaces/mcp-endpoint",
-    "interim": "agent-interfaces/mcp-capabilities",
-    "link": "docs/evidence/audits/agent-interfaces/mcp-capabilities.md"
+    "link": "docs/evidence/audits/agent-interfaces/mcp-endpoint.md"
   },
   "5.15": {
     "slug": "agent-tools/contact-form",
@@ -690,10 +689,9 @@
   },
   "5.24": {
     "slug": "agent-tools/webmcp-tool-annotations",
-    "status": "merging",
+    "status": "renamed",
     "to": "agent-interfaces/mcp-endpoint",
-    "interim": "agent-interfaces/webmcp-tool-annotations",
-    "link": "docs/evidence/audits/agent-interfaces/webmcp-tool-annotations.md"
+    "link": "docs/evidence/audits/agent-interfaces/mcp-endpoint.md"
   },
   "5.25": {
     "slug": "agent-tools/webmcp-action-coverage",

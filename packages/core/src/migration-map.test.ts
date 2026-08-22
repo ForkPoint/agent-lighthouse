@@ -52,6 +52,7 @@ const CONSOLIDATION_TARGETS = [
   'agent-interfaces/search-endpoint',
   'agent-interfaces/openapi-exists',
   'agent-interfaces/ai-catalog-exists',
+  'agent-interfaces/mcp-endpoint',
 ];
 
 // v2 identity: `category/slug`. Slugs carry digits and dots (json-ld-1-1,

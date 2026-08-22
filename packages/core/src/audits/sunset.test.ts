@@ -43,7 +43,7 @@ describe('registry-wide meta invariants', () => {
   // 174 → 168 with the machine-discovery folds, and further with each later
   // task). Task 14 replaces this with the exact final count.
   it('covers the whole registry', () => {
-    expect(allMetas.length).toBeGreaterThan(155);
+    expect(allMetas.length).toBeGreaterThan(150);
   });
 
   // The v2 meta contract is enforced, not aspirational: an audit without a

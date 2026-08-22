@@ -61,3 +61,5 @@ _No dedicated evidence signal was researched for this audit in the 2026-08-20 pa
 - No `/.well-known/webmcp` path appears anywhere in the proposal repository — https://github.com/webmachinelearning/webmcp (verified 2026-08-21)
 
 **Counter-evidence:** There is an active draft-spec trajectory, which is what separates this from a purely invented signal: `readOnlyHint` is normative in the WebMCP draft and in MCP, and WebMCP is in origin trial in Chrome 149 and Edge 150 (https://raw.githubusercontent.com/webmachinelearning/webmcp/main/implementation-status.md, verified 2026-08-21). Note also that `destructiveHint`, `idempotentHint` and `openWorldHint` — three of the four annotations this audit scores — are MCP-only and absent from WebMCP's `ToolAnnotations` dictionary. A readable version of this signal exists only over a live MCP `tools/list` response, not over a static crawl.
+
+**Merged into:** `agent-interfaces/mcp-endpoint` (Plan 4, 2026-08-22) — [merged dossier](../../audits/agent-interfaces/mcp-endpoint.md)

@@ -62,3 +62,5 @@ _No dedicated evidence signal was researched for this audit in the 2026-08-20 pa
 - A named agent host confirms the wire path: Microsoft 365 Copilot "resolves the plugin's tools dynamically at runtime by default, directly from the MCP server" — https://learn.microsoft.com/en-us/microsoft-365-copilot/extensibility/overview-api-plugins (verified 2026-08-21)
 
 **Counter-evidence:** None found in the file's favour — no draft SEP, registry document, or vendor page defines `/.well-known/mcp/servers.json`, and the UCP fallback branch is likewise undocumented. The question this audit asks is legitimate and answerable at grade A, but only from the `server/discover` (or legacy `initialize`) response that `5.13` already fetches and discards, which is why the disposition is merge rather than keep.
+
+**Merged into:** `agent-interfaces/mcp-endpoint` (Plan 4, 2026-08-22) — [merged dossier](../../audits/agent-interfaces/mcp-endpoint.md)

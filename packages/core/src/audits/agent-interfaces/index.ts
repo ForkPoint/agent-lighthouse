@@ -12,12 +12,10 @@ export { AiCatalogUrlsAudit } from './ai-catalog-urls';
 export { AgentsJsonAudit } from './agents-json';
 export { McpDiscoveryAudit } from './mcp-discovery';
 export { McpEndpointAudit } from './mcp-endpoint';
-export { McpCapabilitiesAudit } from './mcp-capabilities';
 export { SearchEndpointAudit } from './search-endpoint';
 export { WebmcpManifestAudit } from './webmcp-registered-tools';
 export { WebmcpDeclarativeFormsAudit } from './webmcp-declarative-forms';
 export { WebmcpToolNamingAudit } from './webmcp-tool-naming';
-export { WebmcpToolAnnotationsAudit } from './webmcp-tool-annotations';
 export { OpenApiDescriptionQualityAudit } from './openapi-description-quality';
 export { CorsApiRoutesAudit } from './cors-api-routes';
 
@@ -32,12 +30,10 @@ import { AiCatalogUrlsAudit } from './ai-catalog-urls';
 import { AgentsJsonAudit } from './agents-json';
 import { McpDiscoveryAudit } from './mcp-discovery';
 import { McpEndpointAudit } from './mcp-endpoint';
-import { McpCapabilitiesAudit } from './mcp-capabilities';
 import { SearchEndpointAudit } from './search-endpoint';
 import { WebmcpManifestAudit } from './webmcp-registered-tools';
 import { WebmcpDeclarativeFormsAudit } from './webmcp-declarative-forms';
 import { WebmcpToolNamingAudit } from './webmcp-tool-naming';
-import { WebmcpToolAnnotationsAudit } from './webmcp-tool-annotations';
 import { OpenApiDescriptionQualityAudit } from './openapi-description-quality';
 import { CorsApiRoutesAudit } from './cors-api-routes';
 
@@ -54,12 +50,10 @@ export const AGENT_INTERFACES_AUDITS = [
   AgentsJsonAudit,
   McpDiscoveryAudit,
   McpEndpointAudit,
-  McpCapabilitiesAudit,
   SearchEndpointAudit,
   WebmcpManifestAudit,
   WebmcpDeclarativeFormsAudit,
   WebmcpToolNamingAudit,
-  WebmcpToolAnnotationsAudit,
   OpenApiDescriptionQualityAudit,
   CorsApiRoutesAudit,
 ] as const;

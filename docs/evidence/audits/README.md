@@ -40,8 +40,8 @@ One dossier per audit: what it checks, the 2026-08-20 code-review findings, grad
 | 5.10 | [agents-json](./agent-interfaces/agents-json.md) | agent-tools | delete | C | informative, weight 0 (approved 2026-08-21) |
 | 5.11 | [ai-plugin-json](./agent-tools/ai-plugin-json.md) | agent-tools | delete | D | sunset (approved 2026-08-21) |
 | 5.12 | [mcp-discovery](./agent-interfaces/mcp-discovery.md) | agent-tools | fix | A | keep — fix required |
-| 5.13 | [mcp-endpoint](./agent-interfaces/mcp-endpoint.md) | agent-tools | fix | C | keep — fix required |
-| 5.14 | [mcp-capabilities](./agent-interfaces/mcp-capabilities.md) | agent-tools | merge | — | merge (approved 2026-08-21) |
+| 5.13 | [mcp-endpoint](./agent-interfaces/mcp-endpoint.md) | agent-tools | fix | C | merged — absorbs 5.14 + 5.24 (2026-08-22) |
+| 5.14 | [mcp-capabilities](../merged/agent-interfaces/mcp-capabilities.md) | agent-tools | merge | D | merged into [agent-interfaces/mcp-endpoint](./agent-interfaces/mcp-endpoint.md) (2026-08-22) |
 | 5.15 | [contact-form](./operability-safety/contact-form.md) | agent-tools | fix | C | keep — fix required |
 | 5.16 | [search-endpoint](./agent-interfaces/search-endpoint.md) | agent-tools | fix | C | merged — absorbs 3.4 (2026-08-22) |
 | 5.17 | [data-action-ctas](./agent-tools/data-action-ctas.md) | agent-tools | delete | D | sunset (approved 2026-08-21) |
@@ -51,7 +51,7 @@ One dossier per audit: what it checks, the 2026-08-20 code-review findings, grad
 | 5.21 | [webmcp-declarative-forms](./agent-interfaces/webmcp-declarative-forms.md) | agent-tools | delete | A | kept — rewrite required (approved 2026-08-21) |
 | 5.22 | [webmcp-input-quality](./operability-safety/webmcp-input-quality.md) | agent-tools | merge | — | merge (approved 2026-08-21) |
 | 5.23 | [webmcp-tool-naming](./agent-interfaces/webmcp-tool-naming.md) | agent-tools | merge | — | merge (approved 2026-08-21) |
-| 5.24 | [webmcp-tool-annotations](./agent-interfaces/webmcp-tool-annotations.md) | agent-tools | merge | — | merge (approved 2026-08-21) |
+| 5.24 | [webmcp-tool-annotations](../merged/agent-interfaces/webmcp-tool-annotations.md) | agent-tools | merge | D | merged into [agent-interfaces/mcp-endpoint](./agent-interfaces/mcp-endpoint.md) (2026-08-22) |
 | 5.25 | [webmcp-action-coverage](./agent-tools/webmcp-action-coverage.md) | agent-tools | delete | D | sunset (approved 2026-08-21) |
 | 5.26 | [openapi-description-quality](./agent-interfaces/openapi-description-quality.md) | agent-tools | fix | — | keep — fix required |
 | 5.27 | [form-actionability](./operability-safety/form-actionability.md) | agent-tools | keep | — | keep |
