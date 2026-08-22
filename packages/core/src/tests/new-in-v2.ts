@@ -17,6 +17,7 @@ export const NEW_IN_V2: readonly string[] = [
   'operability-safety/invisible-instruction-scan',
   'operability-safety/aria-layer-injection-scan',
   'structured-data/claimreview-advisory',
+  'content-extraction/css-hidden-ghost-content',
 ];
 
 /** The 148 audits Plan 4 closed the v2 migration on. Never changes again. */

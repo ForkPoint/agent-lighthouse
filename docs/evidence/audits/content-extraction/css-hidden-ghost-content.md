@@ -1,18 +1,19 @@
 ---
-check: ghost-content-css-hidden-text-ingested-as-visible
-title: "Ghost content: CSS-hidden text ingested as visible"
-domain: token-economics
-status: proposed
+audit: content-extraction/css-hidden-ghost-content
+category: content-extraction
+source_file: packages/core/src/audits/content-extraction/css-hidden-ghost-content.ts
+slug: css-hidden-ghost-content
 evidence_grade: A
-uniqueness: unique
-difficulty: static-fetch
-scoring_tier: scored
+tier: scored
+disposition: "new in v2 — graduated from proposal 2026-08-22"
 reviewed: 2026-08-20
+graduated: 2026-08-22
 ---
+
 
 # Ghost content: CSS-hidden text ingested as visible
 
-> Proposed check. Evidence grade **A** · unique · implementation: `static-fetch`
+> Shipped in v2. Evidence grade **A** · scored tier · unique · implementation: `static-fetch`
 
 ## What it checks
 
@@ -54,3 +55,35 @@ Tier per evidence policy: **scored** — grade A meets the A/B bar required for 
 ## Review history
 
 - 2026-08-20 — proposed by the novel-checks research pass (10-agent evidence workflow); sources URL-verified at research time.
+
+## Implementation deviations
+
+- **No `postcss`, `linkedom` or `css-select`.** The global constraint forbids new
+  runtime dependencies, so stylesheet scanning uses the local
+  `packages/core/src/gatherers/css-rules.ts` scanner (selector list +
+  declaration block, at-rule prelude retained) and selector matching uses
+  cheerio's `$(selector)`.
+- **No tokenizer.** Token counts are `characters / 4` (`CHARS_PER_TOKEN = 4`),
+  the same estimator `content-extraction/token-ratio` uses. Counts are labelled
+  `est. tokens` everywhere they surface.
+- **No cascade, no specificity, no media-query evaluation.** The scanner asks
+  only whether *any* rule that could apply to an element declares a hiding
+  property. Rules inside `@media print` are ignored, and at-rule bodies that
+  hold declarations rather than selectors (`@font-face`, `@keyframes`, `@page`)
+  are skipped wholesale. The matched selector text is reported verbatim in the
+  finding so a human can adjudicate a match the scanner cannot resolve exactly.
+- **Cross-origin stylesheets are never fetched.** Their count is appended to the
+  `found` string, so a result built on partial CSS says so.
+- Elements already carrying an inline hidden marker (`hidden`, `aria-hidden="true"`,
+  inline `display:none` / `visibility:hidden`) are excluded: Readability honours
+  those, so their text is not ingested and costs nothing.
+- Nested matches are counted once — only the outermost hidden element of a
+  subtree contributes tokens.
+
+## Deferred
+
+- Exact style resolution through `getComputedStyle` in a headless browser stays
+  a roadmap item; it would replace the scanner, not supplement it.
+- Contradiction risk is reported as a signal (prices, availability, dated
+  claims found inside hidden text) rather than adjudicated against the visible
+  copy.

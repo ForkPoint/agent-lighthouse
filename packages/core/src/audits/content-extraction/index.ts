@@ -23,6 +23,9 @@ export { TokenRatioAudit } from './token-ratio';
 export { FakeHeadingsAudit } from './fake-headings';
 export { ServerRenderedAudit } from './server-rendered';
 
+// New in v2 (Plan 5): graduated from the proposal backlog on 2026-08-22.
+export { CssHiddenGhostContentAudit } from './css-hidden-ghost-content';
+
 import { ServerResponsivenessAudit } from './server-responsiveness';
 import { LanguageAttributeAudit } from './language-attribute';
 import { MarkdownAlternateAudit } from './markdown-alternate';
@@ -44,6 +47,7 @@ import { SvgBloatAudit } from './svg-bloat';
 import { TokenRatioAudit } from './token-ratio';
 import { FakeHeadingsAudit } from './fake-headings';
 import { ServerRenderedAudit } from './server-rendered';
+import { CssHiddenGhostContentAudit } from './css-hidden-ghost-content';
 
 /** Every audit that lives in the content-extraction category, in map order. */
 export const CONTENT_EXTRACTION_AUDITS = [
@@ -68,4 +72,5 @@ export const CONTENT_EXTRACTION_AUDITS = [
   TokenRatioAudit,
   FakeHeadingsAudit,
   ServerRenderedAudit,
+  CssHiddenGhostContentAudit,
 ] as const;
