@@ -1153,10 +1153,9 @@
   },
   "9.10": {
     "slug": "answer-engine/last-updated-indicator",
-    "status": "merging",
+    "status": "renamed",
     "to": "answer-readiness/dates-on-content",
-    "interim": "answer-readiness/last-updated-indicator",
-    "link": "docs/evidence/audits/answer-readiness/last-updated-indicator.md"
+    "link": "docs/evidence/audits/answer-readiness/dates-on-content.md"
   },
   "9.11": {
     "slug": "answer-engine/meta-description-aeo",

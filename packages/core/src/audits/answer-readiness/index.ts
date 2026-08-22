@@ -15,9 +15,9 @@ export { DirectDefinitionsAudit } from './direct-definitions';
 export { ComparisonTablesAudit } from './comparison-tables';
 export { NumberedStepsAudit } from './numbered-steps';
 export { SpecificNumbersAudit } from './specific-numbers';
+// One freshness audit in the place of dates-on-content + last-updated-indicator (9.10).
 export { DatesOnContentAudit } from './dates-on-content';
 export { ContentWithoutClickthroughAudit } from './content-without-clickthrough';
-export { LastUpdatedIndicatorAudit } from './last-updated-indicator';
 export { MetaDescriptionAeoAudit } from './meta-description-aeo';
 export { NamedAuthorAudit } from './named-author';
 export { AuthorSameAsAudit } from './author-same-as';
@@ -48,7 +48,6 @@ import { NumberedStepsAudit } from './numbered-steps';
 import { SpecificNumbersAudit } from './specific-numbers';
 import { DatesOnContentAudit } from './dates-on-content';
 import { ContentWithoutClickthroughAudit } from './content-without-clickthrough';
-import { LastUpdatedIndicatorAudit } from './last-updated-indicator';
 import { MetaDescriptionAeoAudit } from './meta-description-aeo';
 import { NamedAuthorAudit } from './named-author';
 import { AuthorSameAsAudit } from './author-same-as';
@@ -81,7 +80,6 @@ export const ANSWER_READINESS_AUDITS = [
   SpecificNumbersAudit,
   DatesOnContentAudit,
   ContentWithoutClickthroughAudit,
-  LastUpdatedIndicatorAudit,
   MetaDescriptionAeoAudit,
   NamedAuthorAudit,
   AuthorSameAsAudit,

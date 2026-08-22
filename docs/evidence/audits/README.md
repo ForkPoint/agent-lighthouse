@@ -62,9 +62,9 @@ One dossier per audit: what it checks, the 2026-08-20 code-review findings, grad
 | 9.5 | [comparison-tables](./answer-readiness/comparison-tables.md) | answer-engine | fix | C | keep — fix required |
 | 9.6 | [numbered-steps](./answer-readiness/numbered-steps.md) | answer-engine | fix | — | keep — fix required |
 | 9.7 | [specific-numbers](./answer-readiness/specific-numbers.md) | answer-engine | fix | — | keep — fix required |
-| 9.8 | [dates-on-content](./answer-readiness/dates-on-content.md) | answer-engine | fix | — | keep — fix required |
+| 9.8 | [dates-on-content](./answer-readiness/dates-on-content.md) | answer-engine | fix | A | merged — absorbs 9.10 (2026-08-22) |
 | 9.9 | [content-without-clickthrough](./answer-readiness/content-without-clickthrough.md) | answer-engine | fix | — | keep — fix required |
-| 9.10 | [last-updated-indicator](./answer-readiness/last-updated-indicator.md) | answer-engine | merge | — | merge (approved 2026-08-21) |
+| 9.10 | [last-updated-indicator](../merged/answer-readiness/last-updated-indicator.md) | answer-engine | merge | B | merged into [answer-readiness/dates-on-content](./answer-readiness/dates-on-content.md) (2026-08-22) |
 | 9.11 | [meta-description-aeo](./answer-readiness/meta-description-aeo.md) | answer-engine | delete | C | proposed: redeem as scored (pending triage) |
 | 1.1 | [llms-txt-exists](./machine-discovery/llms-txt-exists.md) | content-discoverability | fix | A | keep — fix required |
 | 1.2 | [llms-txt-blockquote](../merged/machine-discovery/llms-txt-blockquote.md) | content-discoverability | merge | — | merged into [machine-discovery/llms-txt-structure](./machine-discovery/llms-txt-structure.md) (2026-08-22) |

@@ -31,6 +31,7 @@ in [`../sunset/`](../sunset/).
 | [access-crawl-control/canonical-url](./access-crawl-control/canonical-url.md) | 4.3 | [access-crawl-control/canonical](../audits/access-crawl-control/canonical.md) | B |
 | [answer-readiness/og-site-name](./answer-readiness/og-site-name.md) | 4.8 | [answer-readiness/core-open-graph](../audits/answer-readiness/core-open-graph.md) | A |
 | [answer-readiness/twitter-card](./answer-readiness/twitter-card.md) | 4.10 | [answer-readiness/core-open-graph](../audits/answer-readiness/core-open-graph.md) | C |
+| [answer-readiness/last-updated-indicator](./answer-readiness/last-updated-indicator.md) | 9.10 | [answer-readiness/dates-on-content](../audits/answer-readiness/dates-on-content.md) | B |
 
 The grade column is the *absorbed* audit's own grade, not the merged audit's. A merged audit is graded
 on the strongest **proven** consumer path among its sources, which is why `ai-bot-directives` ships at

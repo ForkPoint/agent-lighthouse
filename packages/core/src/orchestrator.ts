@@ -503,7 +503,6 @@ export const READINESS_VITAL_IDS = {
     'answer-readiness/specific-numbers',
     'answer-readiness/dates-on-content',
     'answer-readiness/content-without-clickthrough',
-    'answer-readiness/last-updated-indicator',
     'answer-readiness/meta-description-aeo',
     'answer-readiness/brand-name',
     'answer-readiness/trust-signals',

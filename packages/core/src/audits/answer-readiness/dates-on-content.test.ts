@@ -12,7 +12,7 @@ describe('DatesOnContentAudit', () => {
     expect(result.message).toContain('No article content pages');
   });
 
-  it('passes on a structured <time datetime> element', () => {
+  it('warns on a publication-only <time datetime> element', () => {
     const page = mockPageContext(
       'https://example.com/blog/post',
       `<html><body><main>
@@ -20,11 +20,12 @@ describe('DatesOnContentAudit', () => {
       </main></body></html>`,
     );
     const result = audit.audit(mockCheckContext([page]));
-    expect(result.status).toBe('pass');
+    expect(result.status).toBe('warn');
+    expect(result.score).toBe(0.5);
     expect(result.found).toContain('<time datetime>');
   });
 
-  it('passes on JSON-LD datePublished', () => {
+  it('warns on JSON-LD datePublished with no modification date', () => {
     const page = mockPageContext(
       'https://example.com/blog/post',
       `<html><head>
@@ -34,11 +35,11 @@ describe('DatesOnContentAudit', () => {
       </head><body><main><p>An article body with prose here.</p></main></body></html>`,
     );
     const result = audit.audit(mockCheckContext([page]));
-    expect(result.status).toBe('pass');
+    expect(result.status).toBe('warn');
     expect(result.found).toContain('JSON-LD');
   });
 
-  it('passes on a visible date pattern in content text', () => {
+  it('warns on a visible date pattern in content text', () => {
     const page = mockPageContext(
       'https://example.com/blog/post',
       `<html><body><main>
@@ -46,8 +47,8 @@ describe('DatesOnContentAudit', () => {
       </main></body></html>`,
     );
     const result = audit.audit(mockCheckContext([page]));
-    expect(result.status).toBe('pass');
-    expect(result.message).toContain('Visible date pattern');
+    expect(result.status).toBe('warn');
+    expect(result.message).toContain('publication date');
   });
 
   it('fails when a content page has no date at all', () => {
@@ -61,8 +62,6 @@ describe('DatesOnContentAudit', () => {
   });
 
   it('is not-applicable when the body starts with <?xml (xml interstitial)', () => {
-    // isArticleContentPage must return false for pages whose body starts with <?xml,
-    // covering the `return false` branch on line 31.
     const page = mockPageContext(
       'https://example.com/blog/feed',
       '<?xml version="1.0" encoding="UTF-8"?><rss><channel><title>Feed</title></channel></rss>',
@@ -80,8 +79,7 @@ describe('DatesOnContentAudit', () => {
     expect(result.status).toBe('na');
   });
 
-  it('passes when a bare <time> element without datetime attribute contains a date', () => {
-    // No time[datetime], no JSON-LD, no meta — falls through to the bare <time> path (lines 68-69).
+  it('warns when a bare <time> element without datetime attribute contains a date', () => {
     const page = mockPageContext(
       'https://example.com/blog/post',
       `<html><body><main>
@@ -90,12 +88,11 @@ describe('DatesOnContentAudit', () => {
       </main></body></html>`,
     );
     const result = audit.audit(mockCheckContext([page]));
-    expect(result.status).toBe('pass');
+    expect(result.status).toBe('warn');
     expect(result.found).toContain('<time>');
   });
 
-  it('passes when article:published_time meta tag is present', () => {
-    // No time[datetime], no JSON-LD — falls through to the meta date path.
+  it('warns when article:published_time meta tag is present', () => {
     const page = mockPageContext(
       'https://example.com/blog/post',
       `<html><head>
@@ -103,13 +100,11 @@ describe('DatesOnContentAudit', () => {
       </head><body><main><p>An article with only a meta publication date.</p></main></body></html>`,
     );
     const result = audit.audit(mockCheckContext([page]));
-    expect(result.status).toBe('pass');
+    expect(result.status).toBe('warn');
     expect(result.found).toContain('meta');
   });
 
   it('is not-applicable when the URL ends with .xml (pathname.endsWith check)', () => {
-    // isArticleContentPage must return false for content pages whose URL ends in .xml,
-    // covering the `return false` true branch on the pathname.endsWith('.xml') line.
     const page = mockPageContext(
       'https://example.com/blog/sitemap.xml',
       '<html><body><main><p>An article page with .xml URL extension.</p></main></body></html>',
@@ -118,25 +113,7 @@ describe('DatesOnContentAudit', () => {
     expect(result.status).toBe('na');
   });
 
-  it('passes when JSON-LD has dateModified but no datePublished', () => {
-    // Exercises the ?? chain in findJsonLdDate: datePublished is undefined →
-    // right side evaluated → dateModified is used.
-    const page = mockPageContext(
-      'https://example.com/blog/post',
-      `<html><head>
-        <script type="application/ld+json">
-          {"@context":"https://schema.org","@type":"Article","dateModified":"2025-04-02T10:00:00Z"}
-        </script>
-      </head><body><main><p>An article with only a modified date.</p></main></body></html>`,
-    );
-    const result = audit.audit(mockCheckContext([page]));
-    expect(result.status).toBe('pass');
-    expect(result.found).toContain('JSON-LD');
-  });
-
-  it('passes when JSON-LD has uploadDate and no other date fields', () => {
-    // Exercises the ?? chain further: datePublished undefined, dateModified undefined,
-    // uploadDate is used.
+  it('warns when JSON-LD has uploadDate and no other date fields', () => {
     const page = mockPageContext(
       'https://example.com/blog/post',
       `<html><head>
@@ -146,13 +123,11 @@ describe('DatesOnContentAudit', () => {
       </head><body><main><p>A video article with only an upload date.</p></main></body></html>`,
     );
     const result = audit.audit(mockCheckContext([page]));
-    expect(result.status).toBe('pass');
+    expect(result.status).toBe('warn');
     expect(result.found).toContain('JSON-LD');
   });
 
-  it('passes when JSON-LD has dateCreated and no other date fields', () => {
-    // Exercises the ?? chain to its last fallback: datePublished/dateModified/uploadDate
-    // are all undefined; dateCreated is used.
+  it('warns when JSON-LD has dateCreated and no other date fields', () => {
     const page = mockPageContext(
       'https://example.com/blog/post',
       `<html><head>
@@ -162,13 +137,11 @@ describe('DatesOnContentAudit', () => {
       </head><body><main><p>An article with only a creation date.</p></main></body></html>`,
     );
     const result = audit.audit(mockCheckContext([page]));
-    expect(result.status).toBe('pass');
+    expect(result.status).toBe('warn');
     expect(result.found).toContain('JSON-LD');
   });
 
   it('falls back to visible date when JSON-LD datePublished is a non-string value', () => {
-    // typeof v !== 'string' branch: datePublished is an object, not a string.
-    // findJsonLdDate skips it; findStructuredDate returns null; visible date matches.
     const page = mockPageContext(
       'https://example.com/blog/post',
       `<html><head>
@@ -180,12 +153,11 @@ describe('DatesOnContentAudit', () => {
       </main></body></html>`,
     );
     const result = audit.audit(mockCheckContext([page]));
-    expect(result.status).toBe('pass');
-    expect(result.message).toContain('Visible date pattern');
+    expect(result.status).toBe('warn');
+    expect(result.found).toContain('January 15, 2025');
   });
 
   it('fails when JSON-LD datePublished is an empty string', () => {
-    // typeof v === 'string' but v.trim() is falsy branch: empty string date is skipped.
     const page = mockPageContext(
       'https://example.com/blog/post',
       `<html><head>
@@ -199,8 +171,6 @@ describe('DatesOnContentAudit', () => {
   });
 
   it('fails when a bare empty <time> element exists (if(v) false branch)', () => {
-    // anyTime.attr('datetime') is undefined, anyTime.text().trim() is '' → v = '' → falsy.
-    // Covers the false branch of `if (v)` in findStructuredDate.
     const page = mockPageContext(
       'https://example.com/blog/post',
       `<html><body><main>
@@ -211,10 +181,7 @@ describe('DatesOnContentAudit', () => {
     expect(result.status).toBe('fail');
   });
 
-  it('is not-applicable when the URL has an invalid format (catch block)', () => {
-    // Override url after creation to trigger the try/catch in isArticleContentPage.
-    // With pathname = '' the .xml check is false; the body is normal HTML so it is
-    // treated as a content page — but since it has a date the audit passes.
+  it('handles an invalid page URL (catch block in isArticleContentPage)', () => {
     const page = mockPageContext(
       'https://example.com/blog/post',
       `<html><body><main>
@@ -223,8 +190,137 @@ describe('DatesOnContentAudit', () => {
     );
     page.url = 'not-a-valid-url';
     const result = audit.audit(mockCheckContext([page]));
-    // The page is still treated as a content page (pathname='' does not end in .xml,
-    // body is not XML), so the audit runs and finds the <time datetime> → pass.
+    // Still treated as a content page (pathname='' does not end in .xml, body is
+    // not XML), so the audit runs and finds the publication date → warn.
+    expect(result.status).toBe('warn');
+  });
+
+  // --- absorbed from last-updated-indicator (v1 9.10) ----------------------
+
+  it('passes when an update keyword sits next to a <time> element', () => {
+    const page = mockPageContext(
+      'https://example.com/blog/post',
+      `<html><body><main>
+        <p>Last updated: <time datetime="2025-01-15">January 15, 2025</time></p>
+      </main></body></html>`,
+    );
+    const result = audit.audit(mockCheckContext([page]));
     expect(result.status).toBe('pass');
+    expect(result.score).toBe(1);
+    expect(result.message).toContain('last updated');
+  });
+
+  it('passes when an update keyword has an adjacent text date', () => {
+    const page = mockPageContext(
+      'https://example.com/blog/post',
+      '<html><body><main><p>Last updated January 15, 2025 by our team.</p></main></body></html>',
+    );
+    const result = audit.audit(mockCheckContext([page]));
+    expect(result.status).toBe('pass');
+    expect(result.message).toContain('last updated');
+  });
+
+  it('passes on JSON-LD dateModified without needing a visible label', () => {
+    const page = mockPageContext(
+      'https://example.com/blog/post',
+      `<html><head>
+        <script type="application/ld+json">
+          {"@context":"https://schema.org","@type":"Article","datePublished":"2025-01-01","dateModified":"2025-04-02T10:00:00Z"}
+        </script>
+      </head><body><main><p>An article with a modification date.</p></main></body></html>`,
+    );
+    const result = audit.audit(mockCheckContext([page]));
+    expect(result.status).toBe('pass');
+    expect(result.found).toContain('dateModified');
+  });
+
+  it('passes on an article:modified_time meta tag', () => {
+    const page = mockPageContext(
+      'https://example.com/blog/post',
+      `<html><head>
+        <meta property="article:modified_time" content="2025-04-02">
+      </head><body><main><p>An article with a meta modification date.</p></main></body></html>`,
+    );
+    const result = audit.audit(mockCheckContext([page]));
+    expect(result.status).toBe('pass');
+    expect(result.found).toContain('article:modified_time');
+  });
+
+  it('passes when a bare <time> (no datetime attr) sits next to update text', () => {
+    const page = mockPageContext(
+      'https://example.com/blog/post',
+      `<html><body><main>
+        <p>Last updated: <time>January 15, 2025</time></p>
+      </main></body></html>`,
+    );
+    const result = audit.audit(mockCheckContext([page]));
+    expect(result.status).toBe('pass');
+  });
+
+  it('short-circuits on the first matching <time> when several are present', () => {
+    const page = mockPageContext(
+      'https://example.com/blog/post',
+      `<html><body><main>
+        <p>Last updated: <time datetime="2025-01-15">January 15, 2025</time></p>
+        <p>Event date: <time datetime="2025-03-01">March 1, 2025</time></p>
+      </main></body></html>`,
+    );
+    const result = audit.audit(mockCheckContext([page]));
+    expect(result.status).toBe('pass');
+  });
+
+  it('falls through to the text search when no <time> carries an update keyword', () => {
+    const page = mockPageContext(
+      'https://example.com/blog/post',
+      `<html><body><main>
+        <p>Published: <time datetime="2025-01-15">January 15, 2025</time></p>
+        <p>Last updated January 15, 2025 by our editorial team.</p>
+      </main></body></html>`,
+    );
+    const result = audit.audit(mockCheckContext([page]));
+    expect(result.status).toBe('pass');
+  });
+
+  it('does not fail a dated evergreen article that was never revised', () => {
+    // The double-penalty case the merge removes: v1 passed 9.8 and failed 9.10
+    // on the same page. One audit, one partial result.
+    const page = mockPageContext(
+      'https://example.com/blog/post',
+      `<html><body><main>
+        <p>Published <time datetime="2025-01-15">January 15, 2025</time></p>
+        <p>An evergreen article that has never needed a revision.</p>
+      </main></body></html>`,
+    );
+    const result = audit.audit(mockCheckContext([page]));
+    expect(result.status).not.toBe('fail');
+    expect(result.status).toBe('warn');
+    expect(result.priority).toBe('low');
+  });
+
+  it('fails rather than warns when update wording carries no date at all', () => {
+    // v1 9.10 warned here on incidental prose. With no date anywhere on the
+    // page there is nothing for an extractor to read, so this is the fail case.
+    const page = mockPageContext(
+      'https://example.com/blog/post',
+      '<html><body><main><p>Our content team last updated this section for better clarity.</p></main></body></html>',
+    );
+    const result = audit.audit(mockCheckContext([page]));
+    expect(result.status).toBe('fail');
+    expect(result.message).toContain('No dates found');
+  });
+
+  it('prefers an updated page over an earlier publication-only page', () => {
+    const publishedOnly = mockPageContext(
+      'https://example.com/blog/a',
+      '<html><body><main><p>Published <time datetime="2025-01-15">January 15, 2025</time></p></main></body></html>',
+    );
+    const updated = mockPageContext(
+      'https://example.com/blog/b',
+      '<html><body><main><p>Last updated: <time datetime="2025-04-02">April 2, 2025</time></p></main></body></html>',
+      1,
+    );
+    const result = audit.audit(mockCheckContext([publishedOnly, updated]));
+    expect(result.status).toBe('pass');
+    expect(result.pageUrl).toBe('https://example.com/blog/b');
   });
 });
