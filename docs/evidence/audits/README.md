@@ -137,11 +137,11 @@ One dossier per audit: what it checks, the 2026-08-20 code-review findings, grad
 | 4.3 | [canonical-url](../merged/access-crawl-control/canonical-url.md) | meta-tags | fix | B | merged into [access-crawl-control/canonical](./access-crawl-control/canonical.md) (2026-08-22) |
 | 4.4 | [language-attribute](./content-extraction/language-attribute.md) | meta-tags | fix | — | keep — fix required |
 | 4.5 | [unique-meta](./answer-readiness/unique-meta.md) | meta-tags | fix | — | keep — fix required |
-| 4.6 | [core-open-graph](./answer-readiness/core-open-graph.md) | meta-tags | fix | — | keep — fix required |
+| 4.6 | [core-open-graph](./answer-readiness/core-open-graph.md) | meta-tags | fix | A | merged — absorbs 4.8 + 4.10 (2026-08-22) |
 | 4.7 | [og-type](./answer-readiness/og-type.md) | meta-tags | fix | — | keep — fix required |
-| 4.8 | [og-site-name](./answer-readiness/og-site-name.md) | meta-tags | merge | A | merge (approved 2026-08-21) |
+| 4.8 | [og-site-name](../merged/answer-readiness/og-site-name.md) | meta-tags | merge | A | merged into [answer-readiness/core-open-graph](./answer-readiness/core-open-graph.md) (2026-08-22) |
 | 4.9 | [og-image-alt](./answer-readiness/og-image-alt.md) | meta-tags | fix | C | keep — fix required |
-| 4.10 | [twitter-card](./answer-readiness/twitter-card.md) | meta-tags | delete | C | proposed: redeem as informative (pending triage) |
+| 4.10 | [twitter-card](../merged/answer-readiness/twitter-card.md) | meta-tags | delete | C | redeemed by merge into [answer-readiness/core-open-graph](./answer-readiness/core-open-graph.md) (2026-08-22) |
 | 4.11 | [llms-txt-link](../merged/machine-discovery/llms-txt-link.md) | meta-tags | fix | C | merged into [machine-discovery/llms-txt-exists](./machine-discovery/llms-txt-exists.md) (2026-08-22) |
 | 4.12 | [llms-full-txt-link](./meta-tags/llms-full-txt-link.md) | meta-tags | merge | D | sunset (approved 2026-08-21) |
 | 4.13 | [ai-content-declaration](./access-crawl-control/ai-content-declaration.md) | meta-tags | delete | D | proposed: redeem as experimental (pending triage) |

@@ -49,7 +49,7 @@ Audits that stay in the framework **only if rewritten**. Each source file carrie
   - Same consolidation into ai-bot-directives..
 - [ ] TODO `access-crawl-control/tdm-rep` — target tier experimental (pending triage approval) · [dossier](../../../../docs/evidence/audits/access-crawl-control/tdm-rep.md)
   - TDM Reservation Protocol is a real W3C CG spec with EU AI Act relevance. Experimental flag, unscored, fix internal incoherence..
-- [ ] TODO `answer-readiness/twitter-card` — target tier informative (pending triage approval) · [dossier](../../../../docs/evidence/audits/answer-readiness/twitter-card.md)
+- [x] DONE `answer-readiness/twitter-card` (4.10) — redeemed by merge into `answer-readiness/core-open-graph` 2026-08-22 (Plan 4, Task 6) · [merged dossier](../../../../docs/evidence/audits/answer-readiness/core-open-graph.md) · [source dossier](../../../../docs/evidence/merged/answer-readiness/twitter-card.md)
   - Fix factual errors (twitter:* falls back to og:*), fold into social-meta diagnostic with core-open-graph, unscored. Evidence: og:title/og:site_name graded A; twitter:* has no AI consumer evidence..
 - [ ] TODO `agent-interfaces/openapi-link` — target tier scored (pending triage approval) · [dossier](../../../../docs/evidence/audits/agent-interfaces/openapi-link.md)
   - Redeem via merge into agent-interfaces/openapi-exists: one discovery audit for real mechanisms incl. RFC 9727 api-catalog (graded B), drop link-tag requirement that fails every site..

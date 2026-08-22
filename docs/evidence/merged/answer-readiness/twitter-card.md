@@ -58,3 +58,5 @@ Falsy and factually wrong. The audit fails a site for omitting `twitter:title`/`
 
 - 2026-08-20 — code review (11-agent workflow) + evidence research (12-domain workflow, 400 sources).
 - 2026-08-21 — dossier generated; disposition pending final taxonomy design.
+
+**Merged into:** `answer-readiness/core-open-graph` (Plan 4, 2026-08-22) — [merged dossier](../../audits/answer-readiness/core-open-graph.md)

@@ -4,11 +4,10 @@
 export { MetaDescriptionAudit } from './meta-description';
 export { MetaAuthorAudit } from './meta-author';
 export { UniqueMetaAudit } from './unique-meta';
+// One social-meta audit in the place of core-open-graph + og-site-name (4.8) + twitter-card (4.10).
 export { CoreOpenGraphAudit } from './core-open-graph';
 export { OgTypeAudit } from './og-type';
-export { OgSiteNameAudit } from './og-site-name';
 export { OgImageAltAudit } from './og-image-alt';
-export { TwitterCardAudit } from './twitter-card';
 export { FaqSectionsAudit } from './faq-sections';
 export { QuestionHeadingsAudit } from './question-headings';
 export { FirstParagraphAnswersAudit } from './first-paragraph-answers';
@@ -39,9 +38,7 @@ import { MetaAuthorAudit } from './meta-author';
 import { UniqueMetaAudit } from './unique-meta';
 import { CoreOpenGraphAudit } from './core-open-graph';
 import { OgTypeAudit } from './og-type';
-import { OgSiteNameAudit } from './og-site-name';
 import { OgImageAltAudit } from './og-image-alt';
-import { TwitterCardAudit } from './twitter-card';
 import { FaqSectionsAudit } from './faq-sections';
 import { QuestionHeadingsAudit } from './question-headings';
 import { FirstParagraphAnswersAudit } from './first-paragraph-answers';
@@ -74,9 +71,7 @@ export const ANSWER_READINESS_AUDITS = [
   UniqueMetaAudit,
   CoreOpenGraphAudit,
   OgTypeAudit,
-  OgSiteNameAudit,
   OgImageAltAudit,
-  TwitterCardAudit,
   FaqSectionsAudit,
   QuestionHeadingsAudit,
   FirstParagraphAnswersAudit,

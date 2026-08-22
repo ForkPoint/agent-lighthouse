@@ -472,10 +472,9 @@
   },
   "4.8": {
     "slug": "meta-tags/og-site-name",
-    "status": "merging",
+    "status": "renamed",
     "to": "answer-readiness/core-open-graph",
-    "interim": "answer-readiness/og-site-name",
-    "link": "docs/evidence/audits/answer-readiness/og-site-name.md"
+    "link": "docs/evidence/audits/answer-readiness/core-open-graph.md"
   },
   "4.9": {
     "slug": "meta-tags/og-image-alt",
@@ -485,10 +484,9 @@
   },
   "4.10": {
     "slug": "meta-tags/twitter-card",
-    "status": "merging",
+    "status": "renamed",
     "to": "answer-readiness/core-open-graph",
-    "interim": "answer-readiness/twitter-card",
-    "link": "docs/evidence/audits/answer-readiness/twitter-card.md"
+    "link": "docs/evidence/audits/answer-readiness/core-open-graph.md"
   },
   "4.11": {
     "slug": "meta-tags/llms-txt-link",
