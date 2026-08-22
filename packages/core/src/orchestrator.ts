@@ -483,7 +483,8 @@ export const READINESS_VITAL_IDS = {
     'agentic-commerce/offer-schema',
     'agentic-commerce/product-identifiers',
     'structured-data/advanced-product-details',
-    'structured-data/product-reviews',
+    // 3.23 (product-reviews) folded into 3.13 (review-schema) in Plan 4.
+    'structured-data/review-schema',
     'agentic-commerce/product-transaction-certainty',
   ],
   /** The v1 content list, minus sunsets, with merged ids mapped to survivors. */

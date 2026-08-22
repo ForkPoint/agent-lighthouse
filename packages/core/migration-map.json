@@ -416,10 +416,9 @@
   },
   "3.23": {
     "slug": "structured-data/product-reviews",
-    "status": "merging",
+    "status": "renamed",
     "to": "structured-data/review-schema",
-    "interim": "structured-data/product-reviews",
-    "link": "docs/evidence/audits/structured-data/product-reviews.md"
+    "link": "docs/evidence/audits/structured-data/review-schema.md"
   },
   "3.24": {
     "slug": "structured-data/product-transaction-certainty",

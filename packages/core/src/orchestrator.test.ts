@@ -467,7 +467,8 @@ describe('readiness vitals — v2 id translation', () => {
         'agentic-commerce/offer-schema',
         'agentic-commerce/product-identifiers',
         'structured-data/advanced-product-details',
-        'structured-data/product-reviews',
+        // 3.23 resolves through its Plan 4 merge target, 3.13.
+        'structured-data/review-schema',
         'agentic-commerce/product-transaction-certainty',
       ].sort(),
     );

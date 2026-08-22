@@ -15,7 +15,6 @@ export { LocalBusinessSchemaAudit } from './local-business-schema';
 export { ReviewSchemaAudit } from './review-schema';
 export { AuthorSchemaAudit } from './author-schema';
 export { ProductDetailsAudit } from './advanced-product-details';
-export { ProductReviewsAudit } from './product-reviews';
 
 import { JsonLdPresentAudit } from './json-ld-present';
 import { SchemaValidationAudit } from './schema-validation';
@@ -30,7 +29,6 @@ import { LocalBusinessSchemaAudit } from './local-business-schema';
 import { ReviewSchemaAudit } from './review-schema';
 import { AuthorSchemaAudit } from './author-schema';
 import { ProductDetailsAudit } from './advanced-product-details';
-import { ProductReviewsAudit } from './product-reviews';
 
 /** Every audit that lives in the structured-data category, in map order. */
 export const STRUCTURED_DATA_AUDITS = [
@@ -47,5 +45,4 @@ export const STRUCTURED_DATA_AUDITS = [
   ReviewSchemaAudit,
   AuthorSchemaAudit,
   ProductDetailsAudit,
-  ProductReviewsAudit,
 ] as const;

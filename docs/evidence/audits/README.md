@@ -184,13 +184,13 @@ One dossier per audit: what it checks, the 2026-08-20 code-review findings, grad
 | 3.10 | [potential-action](./structured-data/potential-action.md) | structured-data | delete | D | sunset (approved 2026-08-21) |
 | 3.11 | [howto-schema](./structured-data/howto-schema.md) | structured-data | delete | C | informative, weight 0 (approved 2026-08-21) |
 | 3.12 | [local-business-schema](./structured-data/local-business-schema.md) | structured-data | fix | — | keep — fix required |
-| 3.13 | [review-schema](./structured-data/review-schema.md) | structured-data | fix | — | keep — fix required |
+| 3.13 | [review-schema](./structured-data/review-schema.md) | structured-data | fix | A | merged — absorbs 3.23 (2026-08-22) |
 | 3.14 | [offer-schema](./agentic-commerce/offer-schema.md) | structured-data | fix | — | keep — fix required |
 | 3.15 | [author-schema](./structured-data/author-schema.md) | structured-data | fix | — | keep — fix required |
 | 3.16 | [action-schema](./structured-data/action-schema.md) | structured-data | delete | D | sunset (approved 2026-08-21) |
 | 3.21 | [product-identifiers](./agentic-commerce/product-identifiers.md) | structured-data | fix | — | keep — fix required |
 | 3.22 | [advanced-product-details](./structured-data/advanced-product-details.md) | structured-data | fix | — | keep — fix required |
-| 3.23 | [product-reviews](./structured-data/product-reviews.md) | structured-data | merge | — | merge (approved 2026-08-21) |
+| 3.23 | [product-reviews](../merged/structured-data/product-reviews.md) | structured-data | merge | A | merged into [structured-data/review-schema](./structured-data/review-schema.md) (2026-08-22) |
 | 3.24 | [product-transaction-certainty](./agentic-commerce/product-transaction-certainty.md) | structured-data | fix | — | keep — fix required |
 | 8.1 | [https-enabled](./access-crawl-control/https-enabled.md) | technical-readiness | fix | A | keep — fix required |
 | 8.2 | [hsts-header](../merged/operability-safety/hsts-header.md) | technical-readiness | merge | B | merged into [operability-safety/security-header-hygiene](./operability-safety/security-header-hygiene.md) (2026-08-22) |
