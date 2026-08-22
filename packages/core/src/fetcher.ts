@@ -178,8 +178,16 @@ export function createFetcher() {
 
       const headers: Record<string, string> = {};
       for (const [key, value] of Object.entries(response.headers)) {
+        const name = key.toLowerCase();
         if (typeof value === 'string') {
-          headers[key.toLowerCase()] = value;
+          headers[name] = value;
+        } else if (Array.isArray(value)) {
+          // A field sent on several lines is one field value, combined with
+          // ", " (RFC 9110 §5.3). Dropping the extra lines would hide, for
+          // example, a second X-Robots-Tag naming a different crawler.
+          // Set-Cookie is the standing exception: its values may contain
+          // commas, so they are kept on separate lines.
+          headers[name] = value.join(name === 'set-cookie' ? '\n' : ', ');
         }
       }
 

@@ -1,6 +1,6 @@
 # Proposed audits — TODO stubs
 
-69 stub files for the proposed checks from the 2026-08-20 research pass. Every stub compiles, is **not** registered in any category index, and returns `notApplicable` until implemented. Each file's header carries its implementation sketch; full proof lives in [docs/evidence/proposals](../../../../../docs/evidence/proposals/README.md).
+68 stub files for the proposed checks from the 2026-08-20 research pass. Every stub compiles, is **not** registered in any category index, and returns `notApplicable` until implemented. Each file's header carries its implementation sketch; full proof lives in [docs/evidence/proposals](../../../../../docs/evidence/proposals/README.md).
 
 A stub that graduates to a shipped audit is deleted; its bullet leaves the list
 below, the count above drops by one, and the audit's id joins `NEW_IN_V2` in
@@ -44,7 +44,6 @@ the `--experimental` flag work in Plan 6.
 
 ## answer-selection-forensics
 
-- [ ] TODO [`snippet-gate-coverage-analysis`](./answer-selection-forensics/snippet-gate-coverage-analysis.ts) — Snippet-Gate Coverage Analysis (grade A, scored, `static-fetch`) · [dossier](../../../../../docs/evidence/proposals/answer-selection-forensics/snippet-gate-coverage-analysis.md)
 - [ ] TODO [`text-fragment-citation-addressability`](./answer-selection-forensics/text-fragment-citation-addressability.ts) — Text-Fragment Citation Addressability (grade A, scored, `static-fetch`) · [dossier](../../../../../docs/evidence/proposals/answer-selection-forensics/text-fragment-citation-addressability.md)
 - [ ] TODO [`chunk-boundary-referent-integrity`](./answer-selection-forensics/chunk-boundary-referent-integrity.ts) — Chunk-Boundary Referent Integrity (grade B, scored, `static-fetch`) · [dossier](../../../../../docs/evidence/proposals/answer-selection-forensics/chunk-boundary-referent-integrity.md)
 - [ ] TODO [`extractor-survival-recall`](./answer-selection-forensics/extractor-survival-recall.ts) — Extractor Survival Recall (grade B, scored, `static-fetch`) · [dossier](../../../../../docs/evidence/proposals/answer-selection-forensics/extractor-survival-recall.md)

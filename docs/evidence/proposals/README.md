@@ -1,6 +1,6 @@
 # Proposed checks — evidence dossiers
 
-69 proposed checks from the 2026-08-20 novel-checks research pass. Each dossier states what the check verifies, the falsifiable mechanism behind it, cited evidence from the [source registry](../sources.json), competitor coverage, and an implementation sketch. Grading rubric: [evidence policy](../POLICY.md).
+68 proposed checks from the 2026-08-20 novel-checks research pass. Each dossier states what the check verifies, the falsifiable mechanism behind it, cited evidence from the [source registry](../sources.json), competitor coverage, and an implementation sketch. Grading rubric: [evidence policy](../POLICY.md).
 
 Seven dossiers left this folder on 2026-08-22 (Plan 5, Task 2): six tool
 surveys moved to [../research](../research/README.md) because their verdict is
@@ -23,7 +23,6 @@ Grades: **A** = documented consumer behavior or ratified standard · **B** = dra
 | A | [Agent User-Agent Fetch Parity on Commerce Paths](./agentic-commerce/agent-user-agent-fetch-parity-on-commerce-paths.md) | agentic-commerce | unique | `static-fetch` | scored |
 | A | [Checkout-Eligible Offer Field Mapping](./agentic-commerce/checkout-eligible-offer-field-mapping.md) | agentic-commerce | partial-overlap | `multi-page` | scored |
 | A | [Landed-Cost and Returns Machine Readability](./agentic-commerce/landed-cost-and-returns-machine-readability.md) | agentic-commerce | partial-overlap | `static-fetch` | scored |
-| A | [Snippet-Gate Coverage Analysis](./answer-selection-forensics/snippet-gate-coverage-analysis.md) | answer-selection-forensics | partial-overlap | `static-fetch` | scored |
 | A | [Text-Fragment Citation Addressability](./answer-selection-forensics/text-fragment-citation-addressability.md) | answer-selection-forensics | unique | `static-fetch` | scored |
 | A | [AI crawler edge-response parity](./bot-auth-access/ai-crawler-edge-response-parity.md) | bot-auth-access | partial-overlap | `multi-page` | scored |
 | A | [Bot-specific content delta declared, not cloaked](./bot-auth-access/bot-specific-content-delta-declared-not-cloaked.md) | bot-auth-access | unique | `multi-page` | scored |

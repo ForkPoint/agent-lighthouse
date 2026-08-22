@@ -433,11 +433,13 @@ describe('fetcher.fetch — body and headers edge cases', () => {
     expect(result.contentLength).toBe(MAX_RESPONSE_BODY_BYTES);
   });
 
-  it('skips non-string header values', async () => {
+  // RFC 9110 §5.3: repeated field lines are one field value. Set-Cookie is the
+  // standing exception, because its own values may contain commas.
+  it('keeps repeated Set-Cookie lines on separate lines', async () => {
     mockRequest.mockResolvedValue(
       mockResponse(200, '', {
         'content-type': 'text/html',
-        'set-cookie': ['a=1', 'b=2'] as unknown as string, // array → not a string
+        'set-cookie': ['a=1', 'b=2'] as unknown as string,
       }) as any,
     );
 
@@ -445,7 +447,33 @@ describe('fetcher.fetch — body and headers edge cases', () => {
     const result = await fetcher.fetch({ url: 'https://example.com' });
 
     expect(result.headers['content-type']).toBe('text/html');
-    expect(result.headers['set-cookie']).toBeUndefined();
+    expect(result.headers['set-cookie']).toBe('a=1\nb=2');
+  });
+
+  it('joins repeated header lines with ", " so none is lost', async () => {
+    mockRequest.mockResolvedValue(
+      mockResponse(200, '', {
+        'x-robots-tag': ['googlebot: max-snippet:0', 'noarchive'] as unknown as string,
+        'x-content-type-options': ['nosniff', 'nosniff'] as unknown as string,
+      }) as any,
+    );
+
+    const fetcher = createFetcher();
+    const result = await fetcher.fetch({ url: 'https://example.com' });
+
+    expect(result.headers['x-robots-tag']).toBe('googlebot: max-snippet:0, noarchive');
+    expect(result.headers['x-content-type-options']).toBe('nosniff, nosniff');
+  });
+
+  it('ignores header values that are neither a string nor an array', async () => {
+    mockRequest.mockResolvedValue(
+      mockResponse(200, '', { 'x-weird': undefined as unknown as string }) as any,
+    );
+
+    const fetcher = createFetcher();
+    const result = await fetcher.fetch({ url: 'https://example.com' });
+
+    expect(result.headers['x-weird']).toBeUndefined();
   });
 
   it('defaults contentType to empty string when no content-type header present', async () => {

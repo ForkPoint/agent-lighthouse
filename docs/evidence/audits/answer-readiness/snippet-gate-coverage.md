@@ -1,18 +1,19 @@
 ---
-check: snippet-gate-coverage-analysis
-title: "Snippet-Gate Coverage Analysis"
-domain: answer-selection-forensics
-status: proposed
+audit: answer-readiness/snippet-gate-coverage
+category: answer-readiness
+source_file: packages/core/src/audits/answer-readiness/snippet-gate-coverage.ts
+slug: snippet-gate-coverage
 evidence_grade: A
-uniqueness: partial-overlap
-difficulty: static-fetch
-scoring_tier: scored
+tier: scored
+disposition: "new in v2 — graduated from proposal 2026-08-22"
 reviewed: 2026-08-20
+graduated: 2026-08-22
 ---
+
 
 # Snippet-Gate Coverage Analysis
 
-> Proposed check. Evidence grade **A** · partial overlap · implementation: `static-fetch`
+> Shipped in v2. Evidence grade **A** · scored tier · partial overlap · implementation: `static-fetch`
 
 ## What it checks
 
@@ -46,3 +47,34 @@ Tier per evidence policy: **scored** — grade A meets the A/B bar required for 
 ## Review history
 
 - 2026-08-20 — proposed by the novel-checks research pass (10-agent evidence workflow); sources URL-verified at research time.
+
+## Implementation deviations
+
+- **Repeated `X-Robots-Tag` field lines required a fetcher fix.**
+  `packages/core/src/fetcher.ts` previously dropped every non-string header
+  value, so a response sending the header twice reached audits as a single
+  line — or none. It now combines repeated field lines with `", "` per
+  RFC 9110 §5.3 (`Set-Cookie` excepted, kept newline-separated because its own
+  values may contain commas), pinned by two cases in
+  `packages/core/src/fetcher.test.ts`.
+- **Bot attribution after combination is a within-line reading.** A `bot:`
+  prefix scopes the directives that follow it until the next prefix. Once field
+  lines are combined, line boundaries are gone, so an unprefixed directive that
+  originally stood on its own line is attributed to the last named bot. The full
+  parsed directive list is reported in `found` so a human can adjudicate.
+- **Crawlers evaluated:** the generic rule plus `googlebot`, `google-extended`,
+  `bingbot`, and any crawler a directive on the page names. Resolution is
+  most-restrictive-wins: any blocking token, or `max-snippet:0`, gates the page;
+  `max-snippet:-1` is unlimited.
+- **One combined finding.** `FAQPage` / `HowTo` markup on a page that also
+  forbids snippets is reported inside the snippet-gate finding, not as a second
+  finding, because it is one configuration mistake.
+- The primary answer span is the first sentence after the `h1`, else after the
+  first `h2`, else the first paragraph of the main content.
+
+## Deferred
+
+- `unavailable_after` is parsed and reported but not evaluated against the
+  current date.
+- Per-bot `max-snippet` budgets are reported; the truncation comparison runs
+  against the generic rule, since that is the budget every unnamed crawler gets.
