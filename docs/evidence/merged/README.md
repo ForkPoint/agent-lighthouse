@@ -19,6 +19,8 @@ in [`../sunset/`](../sunset/).
 | [operability-safety/csp-header](./operability-safety/csp-header.md) | 8.3 | [operability-safety/security-header-hygiene](../audits/operability-safety/security-header-hygiene.md) | D |
 | [operability-safety/content-type-options](./operability-safety/content-type-options.md) | 8.4 | [operability-safety/security-header-hygiene](../audits/operability-safety/security-header-hygiene.md) | C |
 | [operability-safety/security-txt](./operability-safety/security-txt.md) | 8.7 | [operability-safety/security-header-hygiene](../audits/operability-safety/security-header-hygiene.md) | C |
+| [machine-discovery/llms-txt-blockquote](./machine-discovery/llms-txt-blockquote.md) | 1.2 | [machine-discovery/llms-txt-structure](../audits/machine-discovery/llms-txt-structure.md) | C |
+| [machine-discovery/llms-txt-sections](./machine-discovery/llms-txt-sections.md) | 1.3 | [machine-discovery/llms-txt-structure](../audits/machine-discovery/llms-txt-structure.md) | C |
 
 The grade column is the *absorbed* audit's own grade, not the merged audit's. A merged audit is graded
 on the strongest **proven** consumer path among its sources, which is why `ai-bot-directives` ships at

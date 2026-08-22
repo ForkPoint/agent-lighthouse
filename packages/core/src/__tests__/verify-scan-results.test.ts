@@ -297,8 +297,7 @@ describe('Verify scan results against real sites', () => {
     it('no false positives: llms.txt child checks should not pass if llms.txt is missing', () => {
       if (ctx.rootFiles['/llms.txt']!.status !== 200) {
         for (const id of [
-          'machine-discovery/llms-txt-blockquote',
-          'machine-discovery/llms-txt-sections',
+          'machine-discovery/llms-txt-structure',
           'machine-discovery/llms-txt-link-descriptions',
           'machine-discovery/llms-txt-links-valid',
         ]) {

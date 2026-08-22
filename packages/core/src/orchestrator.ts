@@ -486,8 +486,7 @@ export const READINESS_VITAL_IDS = {
   /** The v1 content list, minus sunsets, with merged ids mapped to survivors. */
   content: [
     'machine-discovery/llms-txt-exists',
-    'machine-discovery/llms-txt-blockquote',
-    'machine-discovery/llms-txt-sections',
+    'machine-discovery/llms-txt-structure',
     'machine-discovery/llms-txt-link-descriptions',
     'machine-discovery/llms-txt-links-valid',
     'machine-discovery/llms-full-txt',

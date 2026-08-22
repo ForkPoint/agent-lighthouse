@@ -413,7 +413,7 @@ describe('runScan — report assembly fallbacks', () => {
     // The na stubs a real scan emits: status 'na' with the stub score of 0.
     const naStubs = [
       mk({ id: 'agentic-commerce/offer-schema', status: 'na', priority: 'low', score: 0 }),
-      mk({ id: 'machine-discovery/llms-txt-blockquote', status: 'na', priority: 'low', score: 0 }),
+      mk({ id: 'machine-discovery/llms-txt-structure', status: 'na', priority: 'low', score: 0 }),
       mk({ id: 'cp2', category: 'access-crawl-control', status: 'na', priority: 'low', score: 0 }),
       mk({ id: 'tr2', category: 'content-extraction', status: 'na', priority: 'low', score: 0 }),
     ];
@@ -691,7 +691,7 @@ describe('runScan — informative checks stay out of readiness vitals', () => {
     // `botAccessibility` (category prefix) both come out at 100.
     const baseChecks = [
       mk({ id: 'machine-discovery/llms-txt-exists', category: 'content-structure' }),
-      mk({ id: 'machine-discovery/llms-txt-blockquote', category: 'content-structure' }),
+      mk({ id: 'machine-discovery/llms-txt-structure', category: 'content-structure' }),
       mk({ id: 'cp-1', category: 'access-crawl-control' }),
     ];
 
@@ -721,7 +721,7 @@ describe('runScan — informative checks stay out of readiness vitals', () => {
     const withInformative = [
       ...baseChecks,
       mk({
-        id: 'machine-discovery/llms-txt-sections',
+        id: 'machine-discovery/llms-txt-link-descriptions',
         category: 'content-structure',
         status: 'fail',
         score: 0,

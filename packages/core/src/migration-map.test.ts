@@ -37,6 +37,7 @@ const SURVIVING_COUNT = 181;
 const CONSOLIDATION_TARGETS = [
   'access-crawl-control/ai-bot-directives',
   'operability-safety/security-header-hygiene',
+  'machine-discovery/llms-txt-structure',
 ];
 
 // v2 identity: `category/slug`. Slugs carry digits and dots (json-ld-1-1,

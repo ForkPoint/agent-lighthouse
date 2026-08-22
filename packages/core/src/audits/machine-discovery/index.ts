@@ -2,8 +2,7 @@
 // Order mirrors docs/evidence/v2-audit-map.md so Task 11 can consume the list verbatim.
 
 export { LlmsTxtExistsAudit } from './llms-txt-exists';
-export { LlmsTxtBlockquoteAudit } from './llms-txt-blockquote';
-export { LlmsTxtSectionsAudit } from './llms-txt-sections';
+export { LlmsTxtStructureAudit } from './llms-txt-structure';
 export { LlmsTxtLinkDescriptionsAudit } from './llms-txt-link-descriptions';
 export { LlmsTxtLinksValidAudit } from './llms-txt-links-valid';
 export { LlmsFullTxtAudit } from './llms-full-txt';
@@ -25,8 +24,7 @@ export { NoBrokenAiEndpointsAudit } from './no-broken-ai-endpoints';
 export { InternalCrossLinkingAudit } from './internal-cross-linking';
 
 import { LlmsTxtExistsAudit } from './llms-txt-exists';
-import { LlmsTxtBlockquoteAudit } from './llms-txt-blockquote';
-import { LlmsTxtSectionsAudit } from './llms-txt-sections';
+import { LlmsTxtStructureAudit } from './llms-txt-structure';
 import { LlmsTxtLinkDescriptionsAudit } from './llms-txt-link-descriptions';
 import { LlmsTxtLinksValidAudit } from './llms-txt-links-valid';
 import { LlmsFullTxtAudit } from './llms-full-txt';
@@ -50,8 +48,7 @@ import { InternalCrossLinkingAudit } from './internal-cross-linking';
 /** Every audit that lives in the machine-discovery category, in map order. */
 export const MACHINE_DISCOVERY_AUDITS = [
   LlmsTxtExistsAudit,
-  LlmsTxtBlockquoteAudit,
-  LlmsTxtSectionsAudit,
+  LlmsTxtStructureAudit,
   LlmsTxtLinkDescriptionsAudit,
   LlmsTxtLinksValidAudit,
   LlmsFullTxtAudit,

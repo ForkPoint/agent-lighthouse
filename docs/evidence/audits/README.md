@@ -67,8 +67,8 @@ One dossier per audit: what it checks, the 2026-08-20 code-review findings, grad
 | 9.10 | [last-updated-indicator](./answer-readiness/last-updated-indicator.md) | answer-engine | merge | — | merge (approved 2026-08-21) |
 | 9.11 | [meta-description-aeo](./answer-readiness/meta-description-aeo.md) | answer-engine | delete | C | proposed: redeem as scored (pending triage) |
 | 1.1 | [llms-txt-exists](./machine-discovery/llms-txt-exists.md) | content-discoverability | fix | A | keep — fix required |
-| 1.2 | [llms-txt-blockquote](./machine-discovery/llms-txt-blockquote.md) | content-discoverability | merge | — | merge (approved 2026-08-21) |
-| 1.3 | [llms-txt-sections](./machine-discovery/llms-txt-sections.md) | content-discoverability | merge | — | merge (approved 2026-08-21) |
+| 1.2 | [llms-txt-blockquote](../merged/machine-discovery/llms-txt-blockquote.md) | content-discoverability | merge | — | merged into [machine-discovery/llms-txt-structure](./machine-discovery/llms-txt-structure.md) (2026-08-22) |
+| 1.3 | [llms-txt-sections](../merged/machine-discovery/llms-txt-sections.md) | content-discoverability | merge | — | merged into [machine-discovery/llms-txt-structure](./machine-discovery/llms-txt-structure.md) (2026-08-22) |
 | 1.4 | [llms-txt-link-descriptions](./machine-discovery/llms-txt-link-descriptions.md) | content-discoverability | fix | — | keep — fix required |
 | 1.5 | [llms-txt-links-valid](./machine-discovery/llms-txt-links-valid.md) | content-discoverability | fix | B | keep — fix required |
 | 1.6 | [llms-full-txt](./machine-discovery/llms-full-txt.md) | content-discoverability | fix | C | informative, weight 0 (approved 2026-08-21) |
