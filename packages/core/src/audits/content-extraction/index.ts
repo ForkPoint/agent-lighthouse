@@ -25,6 +25,7 @@ export { ServerRenderedAudit } from './server-rendered';
 
 // New in v2 (Plan 5): graduated from the proposal backlog on 2026-08-22.
 export { CssHiddenGhostContentAudit } from './css-hidden-ghost-content';
+export { HydrationPayloadShareAudit } from './hydration-payload-share';
 
 import { ServerResponsivenessAudit } from './server-responsiveness';
 import { LanguageAttributeAudit } from './language-attribute';
@@ -48,6 +49,7 @@ import { TokenRatioAudit } from './token-ratio';
 import { FakeHeadingsAudit } from './fake-headings';
 import { ServerRenderedAudit } from './server-rendered';
 import { CssHiddenGhostContentAudit } from './css-hidden-ghost-content';
+import { HydrationPayloadShareAudit } from './hydration-payload-share';
 
 /** Every audit that lives in the content-extraction category, in map order. */
 export const CONTENT_EXTRACTION_AUDITS = [
@@ -73,4 +75,5 @@ export const CONTENT_EXTRACTION_AUDITS = [
   FakeHeadingsAudit,
   ServerRenderedAudit,
   CssHiddenGhostContentAudit,
+  HydrationPayloadShareAudit,
 ] as const;

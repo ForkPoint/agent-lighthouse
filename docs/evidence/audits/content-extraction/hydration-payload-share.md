@@ -1,18 +1,19 @@
 ---
-check: inlined-hydration-state-payload-share
-title: "Inlined hydration-state payload share"
-domain: token-economics
-status: proposed
+audit: content-extraction/hydration-payload-share
+category: content-extraction
+source_file: packages/core/src/audits/content-extraction/hydration-payload-share.ts
+slug: hydration-payload-share
 evidence_grade: A
-uniqueness: unique
-difficulty: static-fetch
-scoring_tier: scored
+tier: scored
+disposition: "new in v2 — graduated from proposal 2026-08-22"
 reviewed: 2026-08-20
+graduated: 2026-08-22
 ---
+
 
 # Inlined hydration-state payload share
 
-> Proposed check. Evidence grade **A** · unique · implementation: `static-fetch`
+> Shipped in v2. Evidence grade **A** · scored tier · unique · implementation: `static-fetch`
 
 ## What it checks
 
@@ -54,3 +55,30 @@ Tier per evidence policy: **scored** — grade A meets the A/B bar required for 
 ## Review history
 
 - 2026-08-20 — proposed by the novel-checks research pass (10-agent evidence workflow); sources URL-verified at research time.
+
+## Implementation deviations
+
+- **No tokenizer.** The dossier sizes payloads at `o200k_base`; the shipped
+  audit uses the repo-wide estimator `characters / 4` (`CHARS_PER_TOKEN = 4`),
+  because the global constraint forbids new runtime dependencies. Counts are
+  labelled `est. tokens` wherever they surface. The 128 kB single-payload
+  ceiling is unaffected: it is a byte threshold, taken verbatim from the vendor.
+- **Share is measured in characters, not tokens.** Serialized-state characters
+  over document characters. For a fixed estimator the two ratios are the same
+  number, so the 30% ceiling keeps its meaning.
+- **RSC flight frames are summed by script body, not by parsed argument.**
+  Every `<script>` containing `self.__next_f.push(` contributes its whole body
+  to one payload. The wrapper adds a constant few dozen bytes per frame and
+  removes a fragile argument-boundary parse.
+- **Duplication reads JSON string literals only**, unescaped and stripped of
+  markup, then compares 5-gram shingles against `getMainContentText`. Keys and
+  type metadata are excluded, so the reported fraction is about prose shipped
+  twice rather than about JSON shape.
+
+## Deferred
+
+- Per-payload duplication attribution (which payload repeats the body) is
+  reported at the aggregate level; the per-payload breakdown needs the state
+  parsed into a tree rather than scanned for literals.
+- Svelte island props are matched through the `__sveltekit_*` assignment; the
+  `<astro-island props>` attribute form is sized directly.
