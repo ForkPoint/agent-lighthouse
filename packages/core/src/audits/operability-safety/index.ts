@@ -43,6 +43,9 @@ export { PresentationConflictAudit } from './presentation-conflict';
 // consolidated into this one informative audit in Plan 4, Task 3.
 export { SecurityHeaderHygieneAudit } from './security-header-hygiene';
 
+// New in v2 (Plan 5): graduated from the proposal backlog on 2026-08-22.
+export { FormAutofillTokenCoverageAudit } from './form-autofill-token-coverage';
+
 // Not an audit: the rule-id list the orchestrator feeds to the engine. It is
 // only complete once every engine-backed audit module has been evaluated — this
 // barrel imports them all, so importing it is enough.
@@ -72,6 +75,7 @@ import { MetaRefreshAudit } from './meta-refresh';
 import { TabindexAudit } from './tabindex';
 import { PresentationConflictAudit } from './presentation-conflict';
 import { SecurityHeaderHygieneAudit } from './security-header-hygiene';
+import { FormAutofillTokenCoverageAudit } from './form-autofill-token-coverage';
 
 /** Every audit that lives in the operability-safety category, in map order. */
 export const OPERABILITY_SAFETY_AUDITS = [
@@ -99,4 +103,5 @@ export const OPERABILITY_SAFETY_AUDITS = [
   TabindexAudit,
   PresentationConflictAudit,
   SecurityHeaderHygieneAudit,
+  FormAutofillTokenCoverageAudit,
 ] as const;

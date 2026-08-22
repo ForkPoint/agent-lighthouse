@@ -1,18 +1,19 @@
 ---
-check: form-autofill-token-coverage
-title: "Form Autofill Token Coverage"
-domain: agent-operability
-status: proposed
+audit: operability-safety/form-autofill-token-coverage
+category: operability-safety
+source_file: packages/core/src/audits/operability-safety/form-autofill-token-coverage.ts
+slug: form-autofill-token-coverage
 evidence_grade: A
-uniqueness: partial-overlap
-difficulty: static-fetch
-scoring_tier: scored
+tier: scored
+disposition: "new in v2 — graduated from proposal 2026-08-22"
 reviewed: 2026-08-20
+graduated: 2026-08-22
 ---
+
 
 # Form Autofill Token Coverage
 
-> Proposed check. Evidence grade **A** · partial overlap · implementation: `static-fetch`
+> Shipped in v2. Evidence grade **A** · scored tier · partial overlap · implementation: `static-fetch`
 
 ## What it checks
 
@@ -54,3 +55,35 @@ Tier per evidence policy: **scored** — grade A meets the A/B bar required for 
 ## Review history
 
 - 2026-08-20 — proposed by the novel-checks research pass (10-agent evidence workflow); sources URL-verified at research time.
+
+## Implementation deviations
+
+None. The sketch names no dependency outside the repo: concept inference reads
+the label, `name`, `id`, `placeholder` and `aria-label` through the cheerio
+document the scanner already parses.
+
+Two sketch details were tightened during implementation:
+
+- **Password token.** The sketch keys `current-password` vs `new-password` off
+  "a login form" vs "a signup form". The implementation keys it off the page
+  URL (`/signup`, `/register`, `/create-account`, `/join` against `/login`,
+  `/signin`, `/auth`), because a served document carries no other reliable
+  marker of which one it is. An unrecognisable URL defaults to
+  `current-password`, the more common case.
+- **Prefixed tokens.** `autocomplete="billing postal-code"` and
+  `autocomplete="shipping tel"` are valid WHATWG values. Coverage compares the
+  final token, so a section- or address-type prefix does not read as a miss.
+
+## Deferred
+
+- **Constraint programmability.** The sketch also asks for "validation
+  constraints expressed only in JS with no pattern/min/max/minlength". Deciding
+  that a constraint exists *only* in JS requires executing the page's scripts,
+  which is the headless-browser tier. The static half — that a field carries no
+  `pattern`/`min`/`max`/`minlength` at all — is not reported, because on its own
+  it cannot distinguish an unconstrained field from a field with no constraint
+  to express.
+- **Per-field diff table.** The sketch asks for a per-field expected-vs-actual
+  table. The result surface carries one `found` string; the audit reports the
+  coverage ratio plus the first uncovered field as an example. A structured
+  per-field table is a report-format change, tracked for Plan 6.

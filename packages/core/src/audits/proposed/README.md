@@ -1,6 +1,10 @@
 # Proposed audits — TODO stubs
 
-76 stub files for the proposed checks from the 2026-08-20 research pass. Every stub compiles, is **not** registered in any category index, and returns `notApplicable` until implemented. Each file's header carries its implementation sketch; full proof lives in [docs/evidence/proposals](../../../../../docs/evidence/proposals/README.md).
+75 stub files for the proposed checks from the 2026-08-20 research pass. Every stub compiles, is **not** registered in any category index, and returns `notApplicable` until implemented. Each file's header carries its implementation sketch; full proof lives in [docs/evidence/proposals](../../../../../docs/evidence/proposals/README.md).
+
+A stub that graduates to a shipped audit is deleted; its bullet leaves the list
+below, the count above drops by one, and the audit's id joins `NEW_IN_V2` in
+`packages/core/src/tests/new-in-v2.ts`.
 
 Tier per [evidence policy](../../../../../docs/evidence/POLICY.md): grade A/B → scored, grade C → informative (weight 0).
 
@@ -19,7 +23,6 @@ the `--experimental` flag work in Plan 6.
 
 ## agent-operability
 
-- [ ] TODO [`form-autofill-token-coverage`](./agent-operability/form-autofill-token-coverage.ts) — Form Autofill Token Coverage (grade A, scored, `static-fetch`) · [dossier](../../../../../docs/evidence/proposals/agent-operability/form-autofill-token-coverage.md)
 - [ ] TODO [`native-control-substitution-index`](./agent-operability/native-control-substitution-index.ts) — Native Control Substitution Index (grade A, scored, `static-fetch`) · [dossier](../../../../../docs/evidence/proposals/agent-operability/native-control-substitution-index.md)
 - [ ] TODO [`overlay-interception-hazard`](./agent-operability/overlay-interception-hazard.ts) — Overlay Interception Hazard (grade A, scored, `headless-browser`) · [dossier](../../../../../docs/evidence/proposals/agent-operability/overlay-interception-hazard.md)
 - [ ] TODO [`drag-and-slider-dependency`](./agent-operability/drag-and-slider-dependency.ts) — Drag and Slider Dependency (grade B, scored, `static-fetch`) · [dossier](../../../../../docs/evidence/proposals/agent-operability/drag-and-slider-dependency.md)
