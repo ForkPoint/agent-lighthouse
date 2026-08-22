@@ -1,4 +1,6 @@
 // TODO(consolidate): security-header-hygiene (Plan 4).
+// Tier is informative despite the grade-B dossier: the approved map row for 8.2 rules the
+// consolidated signal "weight 0, never fails a site", which governs it from now on.
 
 import type { AuditMeta, AuditResult } from "../../types";
 import { Audit } from "../../audit";
@@ -13,10 +15,10 @@ export class HstsHeaderAudit extends Audit {
     failureTitle: 'HSTS header',
     description:
       'AI agents that follow redirects from HTTP to HTTPS waste time on the redirect hop and may be blocked by strict security policies that reject non-HSTS sites. HSTS ensures agents always connect over HTTPS on the first request, improving crawl efficiency and trust scoring.',
-    scoreDisplayMode: 'binary',
-    weight: weightForGrade('B', 'scored'),
+    scoreDisplayMode: 'informative',
+    weight: weightForGrade('B', 'informative'),
     evidenceGrade: 'B',
-    tier: 'scored',
+    tier: 'informative',
     dossier: 'docs/evidence/audits/operability-safety/hsts-header.md',
     defaultPriority: 'high',
     guidance: {
