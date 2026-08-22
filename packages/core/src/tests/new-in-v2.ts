@@ -24,6 +24,7 @@ export const NEW_IN_V2: readonly string[] = [
   'agentic-commerce/acp-policy-link-surface',
   'agentic-commerce/landed-cost-and-returns',
   'agentic-commerce/checkout-offer-field-mapping',
+  'access-crawl-control/robots-ai-group-shadowing',
 ];
 
 /** The 148 audits Plan 4 closed the v2 migration on. Never changes again. */

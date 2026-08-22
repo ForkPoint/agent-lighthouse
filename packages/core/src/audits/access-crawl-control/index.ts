@@ -34,6 +34,9 @@ export { AgentGovernanceAudit } from './agent-governance';
 export { AiContentDeclarationAudit } from './ai-content-declaration';
 export { HttpsEnabledAudit } from './https-enabled';
 
+// New in v2 (Plan 5): graduated from the proposal backlog on 2026-08-22.
+export { RobotsAiGroupShadowingAudit } from './robots-ai-group-shadowing';
+
 import { NoNofollowAudit } from './no-nofollow';
 import { NoRedirectChainsAudit } from './no-redirect-chains';
 import { CanonicalLinksAudit } from './canonical';
@@ -63,6 +66,7 @@ import { TdmRepAudit } from './tdm-rep';
 import { AgentGovernanceAudit } from './agent-governance';
 import { AiContentDeclarationAudit } from './ai-content-declaration';
 import { HttpsEnabledAudit } from './https-enabled';
+import { RobotsAiGroupShadowingAudit } from './robots-ai-group-shadowing';
 
 /** Every audit that lives in the access-crawl-control category, in map order. */
 export const ACCESS_CRAWL_CONTROL_AUDITS = [
@@ -95,4 +99,5 @@ export const ACCESS_CRAWL_CONTROL_AUDITS = [
   AgentGovernanceAudit,
   AiContentDeclarationAudit,
   HttpsEnabledAudit,
+  RobotsAiGroupShadowingAudit,
 ] as const;

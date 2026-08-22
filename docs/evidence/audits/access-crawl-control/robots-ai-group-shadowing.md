@@ -1,18 +1,19 @@
 ---
-check: robots-ai-group-shadowing
-title: "robots-ai-group-shadowing"
-domain: competitor-gap-verify
-status: proposed
+audit: access-crawl-control/robots-ai-group-shadowing
+category: access-crawl-control
+source_file: packages/core/src/audits/access-crawl-control/robots-ai-group-shadowing.ts
+slug: robots-ai-group-shadowing
 evidence_grade: A
-uniqueness: unique
-difficulty: static-fetch
-scoring_tier: scored
+tier: scored
+disposition: "new in v2 — graduated from proposal 2026-08-22"
 reviewed: 2026-08-20
+graduated: 2026-08-22
 ---
+
 
 # robots-ai-group-shadowing
 
-> Proposed check. Evidence grade **A** · unique · implementation: `static-fetch`
+> Shipped in v2. Evidence grade **A** · scored tier · unique · implementation: `static-fetch`
 
 ## What it checks
 
@@ -56,3 +57,30 @@ Tier per evidence policy: **scored** — grade A meets the A/B bar required for 
 ## Review history
 
 - 2026-08-20 — proposed by the novel-checks research pass (10-agent evidence workflow); sources URL-verified at research time.
+
+## Implementation deviations
+
+- **`_robots-txt-helpers.ts` is deliberately not used.** Its `categoryBlocked()`
+  flattens rules across different bots' groups — correct for governance
+  reporting, wrong here. This audit calls `groupsForBot`, `hasNamedGroup` and
+  `isPathAllowed` from `packages/core/src/gatherers/robots.ts`, which are
+  strictly per-token and already implement longest-match-wins with
+  Allow-winning-on-tie (RFC 9309 §2.2.2).
+- **The wildcard baseline is evaluated by passing a token that appears in no
+  group**, over a group list filtered to `*`. That reproduces "what the wildcard
+  would have said" without duplicating the matcher.
+- **Probe paths** are every `Allow`/`Disallow` literal in any group (with a
+  trailing `$` stripped and the prefix before the first `*` added), plus `/`,
+  plus the pathname of every scanned page, capped at 200. Sitemap URLs are not
+  fetched for this audit; the scanned pages already stand in for real paths.
+- **Three classes, two severities.** A reopened wildcard-protected path and an
+  empty named group both fail: protection the operator wrote is not enforced.
+  A named group that blocks a bot the wildcard allowed warns instead — it is
+  frequently deliberate, and the finding says which reading applies.
+
+## Deferred
+
+- Group merging across several groups that share one product token relies on
+  `groupsForBot` returning all of them; a token spelled two different ways
+  (`GPTBot` and `gptbot/1.1`) merges, but a typo'd token does not and is
+  reported as no named group.
