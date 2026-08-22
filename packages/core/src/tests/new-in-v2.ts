@@ -22,6 +22,7 @@ export const NEW_IN_V2: readonly string[] = [
   'answer-readiness/snippet-gate-coverage',
   'answer-readiness/text-fragment-addressability',
   'agentic-commerce/acp-policy-link-surface',
+  'agentic-commerce/landed-cost-and-returns',
 ];
 
 /** The 148 audits Plan 4 closed the v2 migration on. Never changes again. */

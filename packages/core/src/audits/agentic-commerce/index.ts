@@ -9,11 +9,13 @@ export { ProductTransactionCertaintyAudit } from './product-transaction-certaint
 
 // New in v2 (Plan 5): graduated from the proposal backlog on 2026-08-22.
 export { AcpPolicyLinkSurfaceAudit } from './acp-policy-link-surface';
+export { LandedCostAndReturnsAudit } from './landed-cost-and-returns';
 
 import { OfferSchemaAudit } from './offer-schema';
 import { ProductIdentifiersAudit } from './product-identifiers';
 import { ProductTransactionCertaintyAudit } from './product-transaction-certainty';
 import { AcpPolicyLinkSurfaceAudit } from './acp-policy-link-surface';
+import { LandedCostAndReturnsAudit } from './landed-cost-and-returns';
 
 /** Every audit that lives in the agentic-commerce category, in map order. */
 export const AGENTIC_COMMERCE_AUDITS = [
@@ -21,4 +23,5 @@ export const AGENTIC_COMMERCE_AUDITS = [
   ProductIdentifiersAudit,
   ProductTransactionCertaintyAudit,
   AcpPolicyLinkSurfaceAudit,
+  LandedCostAndReturnsAudit,
 ] as const;

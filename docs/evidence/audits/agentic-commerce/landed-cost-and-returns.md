@@ -1,18 +1,19 @@
 ---
-check: landed-cost-and-returns-machine-readability
-title: "Landed-Cost and Returns Machine Readability"
-domain: agentic-commerce
-status: proposed
+audit: agentic-commerce/landed-cost-and-returns
+category: agentic-commerce
+source_file: packages/core/src/audits/agentic-commerce/landed-cost-and-returns.ts
+slug: landed-cost-and-returns
 evidence_grade: A
-uniqueness: partial-overlap
-difficulty: static-fetch
-scoring_tier: scored
+tier: scored
+disposition: "new in v2 — graduated from proposal 2026-08-22"
 reviewed: 2026-08-20
+graduated: 2026-08-22
 ---
+
 
 # Landed-Cost and Returns Machine Readability
 
-> Proposed check. Evidence grade **A** · partial overlap · implementation: `static-fetch`
+> Shipped in v2. Evidence grade **A** · scored tier · partial overlap · implementation: `static-fetch`
 
 ## What it checks
 
@@ -56,3 +57,29 @@ Tier per evidence policy: **scored** — grade A meets the A/B bar required for 
 ## Review history
 
 - 2026-08-20 — proposed by the novel-checks research pass (10-agent evidence workflow); sources URL-verified at research time.
+
+## Implementation deviations
+
+- **Scope is the scan context, not a fresh sample.** The audit reads the product
+  pages already in the scan plus any `Organization` node on any scanned page,
+  rather than issuing its own two-PDP sample fetch.
+- **`unitCode` accepts `DAY` and `D`**; any other unit is treated as absent,
+  because the feed's positional string counts days.
+- **The feed string uses `maxValue`** for both handling and transit days — the
+  worst case is what an agent must plan around. `service_class` comes from the
+  `OfferShippingDetails` `name`, defaulting to `standard`; `region` comes from
+  `shippingDestination.addressRegion` and is left empty when absent, which is
+  what produces the `US::standard:` shape.
+- **`merchantReturnLink`-only policies warn and never pass**, and their other
+  shape problems are not also reported: reporting "no returnPolicyCategory" next
+  to "a URL is not a number" would be the same finding twice.
+- **`returnPolicyCategory`** is accepted bare or as a schema.org URL; only the
+  final path segment is compared against the three-value enum.
+
+## Deferred
+
+- `returnFees` and `returnMethod` are not scored. They are recommended rather
+  than required, and a sub-score would move the total on a field Google itself
+  treats as optional.
+- Microdata and RDFa offers are read only through the shared JSON-LD-shaped
+  normalization; no separate microdata traversal is performed.
