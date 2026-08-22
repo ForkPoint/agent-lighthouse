@@ -1,8 +1,8 @@
 ---
-audit: operability-safety/_a11y
+audit: operability-safety/aria-relationships
 audit_id: "7.13"
 category: operability-safety
-source_file: packages/core/src/audits/operability-safety/_a11y.ts
+source_file: packages/core/src/audits/operability-safety/aria-relationships.ts
 slug: aria-relationships
 review_verdict: fix
 severity: medium

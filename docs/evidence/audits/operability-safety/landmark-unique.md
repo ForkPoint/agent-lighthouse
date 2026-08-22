@@ -1,8 +1,8 @@
 ---
-audit: operability-safety/_a11y
+audit: operability-safety/landmark-unique
 audit_id: "7.4"
 category: operability-safety
-source_file: packages/core/src/audits/operability-safety/_a11y.ts
+source_file: packages/core/src/audits/operability-safety/landmark-unique.ts
 slug: landmark-unique
 review_verdict: fix
 severity: medium

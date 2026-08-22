@@ -1,8 +1,8 @@
 ---
-audit: operability-safety/_a11y
+audit: operability-safety/autocomplete
 audit_id: "7.15"
 category: operability-safety
-source_file: packages/core/src/audits/operability-safety/_a11y.ts
+source_file: packages/core/src/audits/operability-safety/autocomplete.ts
 slug: autocomplete
 review_verdict: fix
 severity: medium

@@ -1,8 +1,8 @@
 ---
-audit: operability-safety/_a11y
+audit: operability-safety/table-headers
 audit_id: "7.17"
 category: operability-safety
-source_file: packages/core/src/audits/operability-safety/_a11y.ts
+source_file: packages/core/src/audits/operability-safety/table-headers.ts
 slug: table-headers
 review_verdict: keep
 severity: low

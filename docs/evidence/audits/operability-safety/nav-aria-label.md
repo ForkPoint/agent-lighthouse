@@ -23,7 +23,7 @@ AI browser agents use aria-label on <nav> elements to understand navigation purp
 
 Requires an aria-label/aria-labelledby on EVERY `<nav>`. That is stricter than the actual accessibility consensus (labels are needed to DISAMBIGUATE when more than one navigation landmark exists) and is exactly the signal 7.4 (`landmark-unique`, ported from axe) already measures correctly by role+accessible-name. A page with a single unlabeled `<nav>` is unambiguous to any agent, yet this audit fails it at ratio <0.5 and warns above. Its no-nav branch also re-reports what 7.2 already reports.
 
-**Required fix:** Merge into 7.4 (A11yLandmarkUniqueAudit), which measures the same thing with axe's role+accessible-name uniqueness logic and covers all landmark types, not just `<nav>`. If a nav-specific signal is retained, only require labels when 2+ nav landmarks exist, resolve `aria-labelledby` ids, and delete the 'no <nav> found' branch (duplicate of 7.2).
+**Required fix:** Merge into 7.4 (LandmarkUniqueAudit), which measures the same thing with axe's role+accessible-name uniqueness logic and covers all landmark types, not just `<nav>`. If a nav-specific signal is retained, only require labels when 2+ nav landmarks exist, resolve `aria-labelledby` ids, and delete the 'no <nav> found' branch (duplicate of 7.2).
 
 **False-positive risks:**
 - Fails correct markup: a page with one unlabeled `<nav>` plus two more unlabeled navs (breadcrumb + footer) gets 'fail (0 of 3 labeled)' even though 7.4 would only flag the genuinely ambiguous duplicates; a single-nav page is scored 'fail' at 0/1 labeled.

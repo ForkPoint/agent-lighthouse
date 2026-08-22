@@ -1,8 +1,8 @@
 ---
-audit: operability-safety/_a11y
+audit: operability-safety/tabindex
 audit_id: "7.21"
 category: operability-safety
-source_file: packages/core/src/audits/operability-safety/_a11y.ts
+source_file: packages/core/src/audits/operability-safety/tabindex.ts
 slug: tabindex
 review_verdict: fix
 severity: low

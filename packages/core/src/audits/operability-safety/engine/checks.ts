@@ -836,10 +836,6 @@ const presentationalRole: EvaluateFn = function (_node, _options, virtualNode) {
   return false;
 };
 
-const isOnScreen: EvaluateFn = function (node) {
-  return isVisibleOnScreen(node);
-};
-
 // ── navigation ───────────────────────────────────────────────────
 
 const uniqueFrameTitle: EvaluateFn = function (_node, _options, vNode) {
@@ -1040,7 +1036,6 @@ export const checks: Record<string, CheckDef> = {
   'aria-label': { evaluate: ariaLabelCheck },
   'aria-labelledby': { evaluate: ariaLabelledbyCheck },
   'presentational-role': { evaluate: presentationalRole },
-  'is-on-screen': { evaluate: isOnScreen },
   'unique-frame-title': { evaluate: uniqueFrameTitle, after: uniqueFrameTitleAfter },
   'meta-refresh': { evaluate: metaRefresh, options: { minDelay: 0, maxDelay: 72000 } },
 };

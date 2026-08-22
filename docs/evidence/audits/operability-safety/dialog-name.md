@@ -1,8 +1,8 @@
 ---
-audit: operability-safety/_a11y
+audit: operability-safety/dialog-name
 audit_id: "7.9"
 category: operability-safety
-source_file: packages/core/src/audits/operability-safety/_a11y.ts
+source_file: packages/core/src/audits/operability-safety/dialog-name.ts
 slug: dialog-name
 review_verdict: fix
 severity: medium

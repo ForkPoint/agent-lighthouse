@@ -1,8 +1,8 @@
 ---
-audit: operability-safety/_a11y
+audit: operability-safety/nested-interactive
 audit_id: "7.16"
 category: operability-safety
-source_file: packages/core/src/audits/operability-safety/_a11y.ts
+source_file: packages/core/src/audits/operability-safety/nested-interactive.ts
 slug: nested-interactive
 review_verdict: keep
 severity: low

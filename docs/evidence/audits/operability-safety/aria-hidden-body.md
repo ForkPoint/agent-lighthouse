@@ -1,8 +1,8 @@
 ---
-audit: operability-safety/_a11y
+audit: operability-safety/aria-hidden-body
 audit_id: "7.10"
 category: operability-safety
-source_file: packages/core/src/audits/operability-safety/_a11y.ts
+source_file: packages/core/src/audits/operability-safety/aria-hidden-body.ts
 slug: aria-hidden-body
 review_verdict: fix
 severity: low

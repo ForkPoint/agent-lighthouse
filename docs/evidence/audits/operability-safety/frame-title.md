@@ -1,8 +1,8 @@
 ---
-audit: operability-safety/_a11y
+audit: operability-safety/frame-title
 audit_id: "7.19"
 category: operability-safety
-source_file: packages/core/src/audits/operability-safety/_a11y.ts
+source_file: packages/core/src/audits/operability-safety/frame-title.ts
 slug: frame-title
 review_verdict: fix
 severity: medium

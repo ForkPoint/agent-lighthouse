@@ -1,8 +1,8 @@
 ---
-audit: operability-safety/_a11y
+audit: operability-safety/accessible-names
 audit_id: "7.7"
 category: operability-safety
-source_file: packages/core/src/audits/operability-safety/_a11y.ts
+source_file: packages/core/src/audits/operability-safety/accessible-names.ts
 slug: accessible-names
 review_verdict: keep
 severity: medium
