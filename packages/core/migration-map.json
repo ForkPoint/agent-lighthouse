@@ -442,10 +442,9 @@
   },
   "4.3": {
     "slug": "meta-tags/canonical-url",
-    "status": "merging",
+    "status": "renamed",
     "to": "access-crawl-control/canonical",
-    "interim": "access-crawl-control/canonical-url",
-    "link": "docs/evidence/audits/access-crawl-control/canonical-url.md"
+    "link": "docs/evidence/audits/access-crawl-control/canonical.md"
   },
   "4.4": {
     "slug": "meta-tags/language-attribute",

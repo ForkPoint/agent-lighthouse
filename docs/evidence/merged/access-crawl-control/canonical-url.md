@@ -74,3 +74,5 @@ Right signal, dangerously shallow check. It verifies only that some `<link rel="
 
 - 2026-08-20 — code review (11-agent workflow) + evidence research (12-domain workflow, 400 sources).
 - 2026-08-21 — dossier generated; disposition pending final taxonomy design.
+
+**Merged into:** `access-crawl-control/canonical` (Plan 4, 2026-08-22) — [merged dossier](../../audits/access-crawl-control/canonical.md)

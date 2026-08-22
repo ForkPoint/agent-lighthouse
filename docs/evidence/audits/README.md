@@ -82,7 +82,7 @@ One dossier per audit: what it checks, the 2026-08-20 code-review findings, grad
 | 1.14 | [no-nofollow](./access-crawl-control/no-nofollow.md) | content-discoverability | fix | A | keep — fix required |
 | 1.15 | [internal-linking](./machine-discovery/in-content-links.md) | content-discoverability | fix | A | keep — fix required |
 | 1.16 | [no-redirect-chains](./access-crawl-control/no-redirect-chains.md) | content-discoverability | fix | — | keep — fix required |
-| 1.17 | [canonical-links](./access-crawl-control/canonical.md) | content-discoverability | fix | — | keep — fix required |
+| 1.17 | [canonical](./access-crawl-control/canonical.md) | content-discoverability | rewrite | A | rewritten + absorbs 4.3 (2026-08-22) |
 | 1.18 | [mobile-friendly](../sunset/content-discoverability/mobile-friendly.md) | content-discoverability | delete | — | sunset (2026-08-21) |
 | 1.19 | [fast-page-load](./content-extraction/server-responsiveness.md) | content-discoverability | fix | B | keep — fix required |
 | 1.20 | [no-broken-links](./machine-discovery/no-broken-links.md) | content-discoverability | fix | A | keep — fix required |
@@ -134,7 +134,7 @@ One dossier per audit: what it checks, the 2026-08-20 code-review findings, grad
 | 10.15 | [descriptive-urls](./answer-readiness/descriptive-urls.md) | generative-engine | fix | C | keep — fix required |
 | 4.1 | [meta-description](./answer-readiness/meta-description.md) | meta-tags | fix | — | keep — fix required |
 | 4.2 | [meta-author](./answer-readiness/meta-author.md) | meta-tags | fix | — | keep — fix required |
-| 4.3 | [canonical-url](./access-crawl-control/canonical-url.md) | meta-tags | fix | B | keep — fix required |
+| 4.3 | [canonical-url](../merged/access-crawl-control/canonical-url.md) | meta-tags | fix | B | merged into [access-crawl-control/canonical](./access-crawl-control/canonical.md) (2026-08-22) |
 | 4.4 | [language-attribute](./content-extraction/language-attribute.md) | meta-tags | fix | — | keep — fix required |
 | 4.5 | [unique-meta](./answer-readiness/unique-meta.md) | meta-tags | fix | — | keep — fix required |
 | 4.6 | [core-open-graph](./answer-readiness/core-open-graph.md) | meta-tags | fix | — | keep — fix required |

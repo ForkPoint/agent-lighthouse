@@ -3,6 +3,7 @@
 
 export { NoNofollowAudit } from './no-nofollow';
 export { NoRedirectChainsAudit } from './no-redirect-chains';
+// One audit in the place of the two canonical checks (v1 1.17 + 4.3).
 export { CanonicalLinksAudit } from './canonical';
 export { GptbotAudit } from './gptbot';
 export { GoogleExtendedAudit } from './google-extended';
@@ -30,7 +31,6 @@ export { MetaRobotsNotBlockingAudit } from './robots-directives';
 export { NoBotDetectionAudit } from './no-bot-detection';
 export { TdmRepAudit } from './tdm-rep';
 export { AgentGovernanceAudit } from './agent-governance';
-export { CanonicalUrlAudit } from './canonical-url';
 export { AiContentDeclarationAudit } from './ai-content-declaration';
 export { HttpsEnabledAudit } from './https-enabled';
 
@@ -61,7 +61,6 @@ import { MetaRobotsNotBlockingAudit } from './robots-directives';
 import { NoBotDetectionAudit } from './no-bot-detection';
 import { TdmRepAudit } from './tdm-rep';
 import { AgentGovernanceAudit } from './agent-governance';
-import { CanonicalUrlAudit } from './canonical-url';
 import { AiContentDeclarationAudit } from './ai-content-declaration';
 import { HttpsEnabledAudit } from './https-enabled';
 
@@ -94,7 +93,6 @@ export const ACCESS_CRAWL_CONTROL_AUDITS = [
   NoBotDetectionAudit,
   TdmRepAudit,
   AgentGovernanceAudit,
-  CanonicalUrlAudit,
   AiContentDeclarationAudit,
   HttpsEnabledAudit,
 ] as const;

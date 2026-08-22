@@ -2,73 +2,147 @@ import { describe, it, expect } from 'vitest';
 import { CanonicalLinksAudit } from './canonical';
 import { mockCheckContext, mockPageContext } from '../../__tests__/test-utils';
 
+const page = (url: string, head: string, index = 0) =>
+  mockPageContext(url, `<html lang="en"><head>${head}</head><body>Hi</body></html>`, index);
+
+const self = (url: string, index = 0) => page(url, `<link rel="canonical" href="${url}">`, index);
+
 describe('CanonicalLinksAudit', () => {
   const audit = new CanonicalLinksAudit();
 
-  it('passes when all pages have a canonical link', () => {
+  it('passes when every page is self-referentially canonical', () => {
     const ctx = mockCheckContext([
-      mockPageContext(
-        'https://example.com/',
-        '<html><head><link rel="canonical" href="https://example.com/" /></head><body>Home</body></html>',
-      ),
+      self('https://example.com/'),
+      self('https://example.com/about', 1),
     ]);
     const result = audit.audit(ctx);
     expect(result.status).toBe('pass');
-    expect(result.message).toContain('have canonical link tags');
   });
 
-  it('warns when some pages are missing canonical links', () => {
+  // The failure mode the graded mechanism actually warns about: v1 scored it 1.0.
+  it('fails when several pages collapse onto the homepage', () => {
+    const ctx = mockCheckContext([
+      self('https://example.com/'),
+      page('https://example.com/about', '<link rel="canonical" href="https://example.com/">', 1),
+      page('https://example.com/pricing', '<link rel="canonical" href="https://example.com/">', 2),
+    ]);
+    const result = audit.audit(ctx);
+    expect(result.status).toBe('fail');
+    expect(result.priority).toBe('high');
+    expect(result.message).toContain('homepage');
+  });
+
+  it('does not fail one page that legitimately canonicalizes elsewhere', () => {
+    const ctx = mockCheckContext([
+      self('https://example.com/blog'),
+      page(
+        'https://example.com/blog?page=2',
+        '<link rel="canonical" href="https://example.com/blog">',
+        1,
+      ),
+    ]);
+    expect(audit.audit(ctx).status).toBe('pass');
+  });
+
+  it('warns when most pages collapse onto one non-root URL', () => {
+    const ctx = mockCheckContext([
+      self('https://example.com/'),
+      page('https://example.com/a', '<link rel="canonical" href="https://example.com/hub">', 1),
+      page('https://example.com/b', '<link rel="canonical" href="https://example.com/hub">', 2),
+      page('https://example.com/c', '<link rel="canonical" href="https://example.com/hub">', 3),
+    ]);
+    const result = audit.audit(ctx);
+    expect(result.status).toBe('warn');
+    expect(result.message).toContain('collapse');
+  });
+
+  it('matches rel case-insensitively and token-wise', () => {
+    const ctx = mockCheckContext([
+      page('https://example.com/', '<link rel=" Canonical " href="https://example.com/">'),
+      page(
+        'https://example.com/x',
+        '<link rel="shortlink canonical" href="https://example.com/x">',
+        1,
+      ),
+    ]);
+    expect(audit.audit(ctx).status).toBe('pass');
+  });
+
+  // v1 warned on a relative canonical; resolving it against the page URL makes
+  // it unambiguous, which is exactly what the rewrite header asks for.
+  it('resolves a relative canonical against the page URL', () => {
+    const ctx = mockCheckContext([page('https://example.com/page', '<link rel="canonical" href="/page">')]);
+    expect(audit.audit(ctx).status).toBe('pass');
+  });
+
+  it('normalizes trailing slash and case when comparing to the page URL', () => {
+    const ctx = mockCheckContext([
+      page('https://example.com/Page/', '<link rel="canonical" href="https://www.example.com/Page">'),
+    ]);
+    expect(audit.audit(ctx).status).toBe('pass');
+  });
+
+  it('fails on a canonical that is not an http(s) URL', () => {
+    const ctx = mockCheckContext([
+      page('https://example.com/', '<link rel="canonical" href="javascript:void(0)">'),
+    ]);
+    const result = audit.audit(ctx);
+    expect(result.status).toBe('fail');
+    expect(result.message).toContain('not a valid http');
+  });
+
+  it('warns on an off-domain canonical', () => {
+    const ctx = mockCheckContext([
+      self('https://example.com/'),
+      page('https://example.com/post', '<link rel="canonical" href="https://medium.com/@x/post">', 1),
+    ]);
+    const result = audit.audit(ctx);
+    expect(result.status).toBe('warn');
+    expect(result.message).toContain('another domain');
+  });
+
+  it('warns when one page carries two conflicting canonicals', () => {
+    const ctx = mockCheckContext([
+      page(
+        'https://example.com/',
+        '<link rel="canonical" href="https://example.com/"><link rel="canonical" href="https://example.com/other">',
+      ),
+    ]);
+    const result = audit.audit(ctx);
+    expect(result.status).toBe('warn');
+    expect(result.message).toContain('conflicting');
+  });
+
+  // Crawlers honour a canonical in <head> only.
+  it('treats a body-only canonical as missing and says why', () => {
     const ctx = mockCheckContext([
       mockPageContext(
         'https://example.com/',
-        '<html><head><link rel="canonical" href="https://example.com/" /></head><body>Home</body></html>',
+        '<html lang="en"><head></head><body><link rel="canonical" href="https://example.com/"></body></html>',
       ),
-      mockPageContext('https://example.com/about', '<html><head></head><body>About</body></html>', 1),
     ]);
     const result = audit.audit(ctx);
     expect(result.status).toBe('warn');
-    expect(result.message).toContain('missing canonical');
+    expect(result.found).toContain('outside <head>');
   });
 
-  it('fails when no pages have canonical links', () => {
-    const ctx = mockCheckContext([
-      mockPageContext('https://example.com/', '<html><head></head><body>Home</body></html>'),
-    ]);
-    const result = audit.audit(ctx);
-    expect(result.status).toBe('fail');
-    expect(result.message).toContain('No scanned pages have canonical');
-  });
-
-  it('fails when no pages were scanned', () => {
-    const ctx = mockCheckContext([]);
-    const result = audit.audit(ctx);
-    expect(result.status).toBe('fail');
-    expect(result.message).toContain('No pages scanned');
-  });
-
-  it('warns with +more suffix when more than 5 pages are missing canonical links', () => {
-    // 6 pages without canonical + 1 with → warn path, length > 5 → "+N more" branch
-    const withCanonical = mockPageContext(
-      'https://example.com/',
-      '<html><head><link rel="canonical" href="https://example.com/" /></head><body>Home</body></html>',
-    );
-    const withoutCanonical = (i: number) =>
-      mockPageContext(
-        `https://example.com/page${i}`,
-        '<html><head></head><body>Page</body></html>',
-        i,
-      );
-    const ctx = mockCheckContext([
-      withCanonical,
-      withoutCanonical(1),
-      withoutCanonical(2),
-      withoutCanonical(3),
-      withoutCanonical(4),
-      withoutCanonical(5),
-      withoutCanonical(6),
-    ]);
+  // Google: "your site will likely do just fine without specifying a canonical
+  // preference" — absence is not a documented defect, so it no longer fails.
+  it('warns rather than fails when no page has a canonical', () => {
+    const ctx = mockCheckContext([page('https://example.com/', '')]);
     const result = audit.audit(ctx);
     expect(result.status).toBe('warn');
-    expect(result.found).toContain('+1 more');
+    expect(result.priority).toBe('medium');
+  });
+
+  it('warns at low priority when only some pages are missing a canonical', () => {
+    const ctx = mockCheckContext([self('https://example.com/'), page('https://example.com/a', '', 1)]);
+    const result = audit.audit(ctx);
+    expect(result.status).toBe('warn');
+    expect(result.priority).toBe('low');
+  });
+
+  it('is not-applicable when no pages were scanned', () => {
+    expect(audit.audit(mockCheckContext([])).status).toBe('na');
   });
 });

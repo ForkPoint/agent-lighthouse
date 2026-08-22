@@ -44,6 +44,7 @@ const CONSOLIDATION_TARGETS = [
   'machine-discovery/ai-file-delivery',
   'machine-discovery/in-content-links',
   'access-crawl-control/robots-directives',
+  'access-crawl-control/canonical',
 ];
 
 // v2 identity: `category/slug`. Slugs carry digits and dots (json-ld-1-1,
