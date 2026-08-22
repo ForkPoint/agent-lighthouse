@@ -15,7 +15,14 @@ Weighted category scoring, plus the gatherer helpers the v2 audits are built on.
 score = Σ(check.score × check.weight) / Σ(check.weight)
 ```
 
-Not-applicable checks (`status === 'na'`) stay out of the denominator, as before. What changed is that evidence strength now moves the number: A-tier audits carry weight `1.0`, B-tier `0.6`, and informative-tier `0` — reported as evidence but deliberately unable to move a score. **Expect published scores to shift for the same site**; they are not comparable to scores from a previous release.
+Not-applicable checks (`status === 'na'`) stay out of the denominator, as before. What changed is that evidence strength now moves the number.
+
+**New: an audit's weight is derived, not chosen.** Every audit declares an `evidenceGrade` (`A` | `B` | `C` | `D`, taken from its evidence dossier) and a `tier` (`scored` | `informative` | `experimental`), and its weight is a pure function of the two — exported as `weightForGrade(grade, tier)`:
+
+- `scored` + grade `A` → `1.0`; `scored` + grade `B` → `0.6`; `scored` + grade `C` or `D` → `0`.
+- `informative` and `experimental` → `0` at any grade. These audits still run and still report their findings, but they are deliberately unable to move a score, and every surface that ranks or scores checks filters them out of recommendations, top fixes/passes and readiness vitals.
+
+`CheckResult` now carries `evidenceGrade` and `tier` alongside `weight`, so a consumer can see why a check weighed what it did without reaching back into the registry. **Expect published scores to shift for the same site**; they are not comparable to scores from a previous release.
 
 Two consequences worth calling out for anyone constructing `CheckResult` objects directly rather than via `Audit`:
 
