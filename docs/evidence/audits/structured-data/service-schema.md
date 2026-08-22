@@ -61,6 +61,7 @@ Checks that a Product or Service node exists with name/description/provider, whi
 - 2026-08-21 — dossier generated; disposition pending final taxonomy design.
 - 2026-08-21 — approved: §5 split — Product half → 3.22, Service half stays standalone and narrowed.
 - 2026-08-22 — split landed (Plan 4, Task 9); audit renamed `structured-data/service-product-schema` → `structured-data/service-schema`, this dossier renamed with it. Registry count unchanged by this half (net 0).
+- 2026-08-22 — review round 1: scoping corrected. `applicablePageTypes` moves from the inherited `['product']` to `['homepage', 'content']` and a runtime service-intent guard returns `na` on sites that offer no services. See "Scoping" below.
 
 ## The split (Plan 4, Task 9, 2026-08-22)
 
@@ -88,8 +89,23 @@ The migration-map row for 3.8 keeps `status: "renamed"` and points at `structure
 
 The A-grade record this audit rests on is the Product/Offer commerce-markup signal, and its consumer path (Google Merchant Center website crawl → Shopping Graph → AI Mode shopping) is a *Product* path, not a Service path — that is an honest weakness of the original grading, and the split does not change it, because the same record is what 3.22 is graded on and 3.22 is where the Product shape now lives. Nothing in this task raises or lowers the evidence, so per the weight law the grade stays **A** at `tier: scored`, `weightForGrade('A', 'scored')` = **1.0**, on both audits. The Service half's own evidence remains the weakest link in this dossier and is called out as a standing item below.
 
+### Scoping: which sites this runs on (fixed 2026-08-22, review round 1)
+
+The split originally left `applicablePageTypes: ['product']` in place, inherited from the pre-split audit where it was correct for the Product half. For a Service-only check it is exactly backwards, and the effect is not cosmetic: `planAudits()` never *executes* an audit whose declared page types are absent from the scan, stubbing it as `na`. So the audit
+
+- **never ran on the sites it is for.** An agency, consultancy or trades site publishes no `product` page, so the check was skipped outright — invisible, and excluded from the commerce vital.
+- **ran only on the sites it does not fit,** ecommerce stores, where it was a guaranteed `fail`: stores emit Product markup, not `Service`. v1 3.8 passed those stores on their Product markup; after the narrowing, the same store failed a check about services it does not sell.
+
+Fixed by mirroring how the siblings gate — a coarse page-type declaration plus a runtime precondition that returns `notApplicable`, exactly the shape of [`local-business-schema`](./local-business-schema.md) (`['homepage']` + a physical-location guard) and [`article-schema`](./article-schema.md) (`['content']` + a real-article-page guard):
+
+- `applicablePageTypes: ['homepage', 'content']` — where a service business publishes its offerings. Both types are present in essentially every scan, so the coarse gate no longer decides anything; it declares intent and stops claiming this is a product-page audit.
+- A page is in scope when it **carries Service/ProfessionalService markup** (the strongest evidence of intent), when **its own URL sits in a services section**, or when it **links to one**. No page matching → `na` with "No service offering detected".
+
+Path and link matching are deliberately anchored on segments and on offering-phrases (`/services`, `/our-services`, `/what-we-do`, `/solutions`, `/consulting`; "our services", "what we do") so that `/legal/terms-of-service` and a "Customer service" help link — chrome on almost every store — do not drag ecommerce back into scope. Tests pin both directions: a service site with Service markup runs and passes; a product store with neither markup nor a services section is `na`, not `fail`; and a site that clearly sells services but publishes no Service markup still **fails**, which is the case the audit exists for.
+
+The schema search itself stays site-wide (`allSchemas(ctx)`): a site may declare its Service nodes on the homepage while the services link lives elsewhere.
+
 ### Deviations — standing required-fix items not addressed here
 
-- **`applicablePageTypes: ['product']` is unchanged** while the audit still reads the whole site graph. That is a scan-scoping concern shared by 3.21/3.22/3.24 and is not a split.
 - **A Service nested under an Organization's `makesOffer`** — where the provider is implicit — is still warned for a missing `provider`. Recorded in the false-positive list above; resolving implicit providers is a parser-level change, not part of this split.
 - **The Service half has no Service-specific graded evidence.** The graded record below is a Product/Offer record. A dedicated Service-schema consumer path has never been researched, so the A rests on a mechanism that now lives mostly in 3.22. This is the item to revisit if the Service half is ever re-graded.

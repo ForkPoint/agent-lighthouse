@@ -5,7 +5,7 @@
 
 import type { AuditMeta, AuditResult } from "../../types";
 import { Audit } from "../../audit";
-import type { CheckContext } from '../../check-context';
+import type { CheckContext, PageContext } from '../../check-context';
 import { weightForGrade } from '../../scorer';
 import { flattenJsonLd } from '../../parser';
 
@@ -23,6 +23,55 @@ function matchesAnyType(schema: Record<string, unknown>, types: string[]): boole
 
 function allSchemas(ctx: CheckContext): object[] {
   return ctx.pages.flatMap((p) => flattenJsonLd(p.structuredData ?? p.jsonLd));
+}
+
+/**
+ * A URL path that belongs to a services section. Deliberately anchored on path
+ * segments: `/legal/terms-of-service` and `/help/customer-service` are store
+ * chrome, not an offering, and must not drag every ecommerce site into scope.
+ */
+const SERVICE_PATH_RE =
+  /(^|\/)(our-)?services?(\/|$)|(^|\/)what-we-do(\/|$)|(^|\/)solutions?(\/|$)|(^|\/)consulting(\/|$)/;
+
+/** Link text that names an offering rather than a support desk or a policy. */
+const SERVICE_TEXT_RE = /\bour services\b|\bwhat we do\b|\bservices we offer\b|\bservice offerings\b/;
+
+function carriesServiceSchema(page: PageContext): boolean {
+  return flattenJsonLd(page.structuredData ?? page.jsonLd).some((s) =>
+    matchesAnyType(s as Record<string, unknown>, SERVICE_TYPES),
+  );
+}
+
+/** A link/CTA that points at a services section. */
+function hasServicesLink(page: PageContext): boolean {
+  let found = false;
+  page.$('a[href]').each((_, el) => {
+    if (found) return;
+    /* v8 ignore next */
+    const href = (page.$(el).attr('href') ?? '').toLowerCase();
+    const text = page.$(el).text().toLowerCase();
+    const path = href.split('?')[0]!.split('#')[0]!;
+    if (SERVICE_PATH_RE.test(path) || SERVICE_TEXT_RE.test(text)) {
+      found = true;
+    }
+  });
+  return found;
+}
+
+/**
+ * Does this site offer services at all?
+ *
+ * The precondition, mirroring how `local-business-schema` gates on real
+ * physical-location signals and `article-schema` on real article pages: a page
+ * is in scope if it already carries Service markup (the strongest possible
+ * evidence of intent), if its own URL sits in a services section, or if it
+ * links to one. A pure product store matches none of the three and is `na` —
+ * scoring a shop for missing Service markup measures nothing.
+ */
+function hasServiceIntent(page: PageContext): boolean {
+  if (carriesServiceSchema(page)) return true;
+  if (SERVICE_PATH_RE.test(new URL(page.url).pathname.toLowerCase())) return true;
+  return hasServicesLink(page);
 }
 
 /**
@@ -49,7 +98,12 @@ export class ServiceSchemaAudit extends Audit {
     evidenceGrade: 'A',
     tier: 'scored',
     dossier: 'docs/evidence/audits/structured-data/service-schema.md',
-    applicablePageTypes: ['product'],
+    // Where a service business publishes its offerings. NOT ['product'] —
+    // that was inherited from the pre-split audit and inverted this check:
+    // it skipped every service site (no product page in the scan) and ran only
+    // on stores, which do not emit Service markup. The runtime guard below
+    // carries the real precondition.
+    applicablePageTypes: ['homepage', 'content'],
     defaultPriority: 'medium',
     guidance: {
       impact:
@@ -72,6 +126,14 @@ export class ServiceSchemaAudit extends Audit {
   };
 
   audit(ctx: CheckContext): AuditResult {
+    if (!ctx.pages.some(hasServiceIntent)) {
+      return this.notApplicable(
+        'No service offering detected (no Service markup, no services section, no link to one).',
+        'Service schema with name and provider on sites that offer services.',
+        'No service offering found.',
+      );
+    }
+
     const services = allSchemas(ctx).filter((s) =>
       matchesAnyType(s as Record<string, unknown>, SERVICE_TYPES),
     );
