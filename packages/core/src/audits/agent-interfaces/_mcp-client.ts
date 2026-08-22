@@ -195,3 +195,109 @@ export async function postRpc(
   }
   return parseRpcResponse(response);
 }
+
+/**
+ * One request to a declared MCP endpoint, returning the whole response.
+ *
+ * `postRpc` above answers the question "did the call succeed", which is all the
+ * initialize handshake needs. The protocol-conformance audits need the opposite:
+ * the status line, the response headers and the error body *are* the evidence —
+ * a 400 carrying `-32022`, a 401 carrying `WWW-Authenticate`, a GET that fails
+ * to answer 405. Returns undefined when the URL is refused or the socket is not
+ * answered, so a caller can tell "no answer" from "an answer we did not like".
+ */
+export async function mcpFetch(
+  ctx: CheckContext,
+  url: string,
+  init: {
+    method?: 'GET' | 'POST' | 'DELETE';
+    body?: string;
+    headers?: Record<string, string>;
+    signal?: AbortSignal;
+  } = {},
+): Promise<FetchResult | undefined> {
+  if (!(await isSafeUrl(url))) return undefined;
+  try {
+    return await ctx.fetch({
+      url,
+      method: init.method ?? 'POST',
+      acceptHeader: MCP_ACCEPT,
+      ...(init.method === undefined || init.method === 'POST'
+        ? { contentType: 'application/json' }
+        : {}),
+      ...(init.body !== undefined ? { body: init.body } : {}),
+      ...(init.headers ? { headers: init.headers } : {}),
+      ...(init.signal ? { signal: init.signal } : {}),
+    });
+  } catch {
+    return undefined;
+  }
+}
+
+/** Frame and POST one JSON-RPC call, returning the whole response. */
+export function postRpcRaw(
+  ctx: CheckContext,
+  url: string,
+  id: number | string,
+  method: string,
+  params?: unknown,
+  headers?: Record<string, string>,
+): Promise<FetchResult | undefined> {
+  return mcpFetch(ctx, url, {
+    method: 'POST',
+    body: rpcRequest(id, method, params),
+    ...(headers ? { headers } : {}),
+  });
+}
+
+/**
+ * The five protocol audits probe the same endpoint in the same scan, and three
+ * of them want the same `server/discover` response. Memoise per scan, keyed on
+ * the CheckContext object so two concurrent scans never share a probe.
+ *
+ * Deliberately opt-in: `mcp-tools-list-determinism` must issue its three
+ * `tools/list` calls for real, and a cache would answer them from one response
+ * and make every determinism assertion vacuously true.
+ */
+const probeCache = new WeakMap<object, Map<string, Promise<FetchResult | undefined>>>();
+
+export function sharedProbe(
+  ctx: CheckContext,
+  key: string,
+  run: () => Promise<FetchResult | undefined>,
+): Promise<FetchResult | undefined> {
+  let byKey = probeCache.get(ctx);
+  if (!byKey) {
+    byKey = new Map();
+    probeCache.set(ctx, byKey);
+  }
+  const hit = byKey.get(key);
+  if (hit) return hit;
+  const pending = run();
+  byKey.set(key, pending);
+  return pending;
+}
+
+/**
+ * The modern-era `server/discover` probe, shared by the reachability, OAuth and
+ * downgrade audits: one POST carrying the current revision in both the header
+ * and `_meta`, exactly as a current client sends it.
+ */
+export function discoverProbe(ctx: CheckContext, url: string): Promise<FetchResult | undefined> {
+  return sharedProbe(ctx, `discover|${url}`, () =>
+    postRpcRaw(ctx, url, 'al-1', 'server/discover', discoverParams(), {
+      'MCP-Protocol-Version': MCP_PROTOCOL_VERSION,
+    }),
+  );
+}
+
+/** The `_meta` block a modern client carries on every request. */
+export function discoverParams(version: string = MCP_PROTOCOL_VERSION): Record<string, unknown> {
+  return {
+    _meta: {
+      'io.modelcontextprotocol/protocolVersion': version,
+      'io.modelcontextprotocol/clientInfo': { name: 'AgentLighthouse', version: '1.0.0' },
+      'io.modelcontextprotocol/clientCapabilities': {},
+    },
+  };
+}

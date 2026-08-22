@@ -31,6 +31,7 @@ export const NEW_IN_V2: readonly string[] = [
   'access-crawl-control/ai-crawler-edge-parity',
   'access-crawl-control/bot-content-delta-declared',
   'agentic-commerce/agent-ua-commerce-parity',
+  'agent-interfaces/mcp-modern-era-reachability',
 ];
 
 /** The 148 audits Plan 4 closed the v2 migration on. Never changes again. */

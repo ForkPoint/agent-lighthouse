@@ -17,7 +17,7 @@ export interface FetchOptions {
   timeout?: number;
   followRedirects?: boolean;
   acceptHeader?: string;
-  method?: 'GET' | 'POST' | 'OPTIONS' | 'HEAD';
+  method?: 'GET' | 'POST' | 'OPTIONS' | 'HEAD' | 'DELETE';
   body?: string;
   contentType?: string;
   /** Override the User-Agent header (e.g. to probe a site as a specific AI bot). */

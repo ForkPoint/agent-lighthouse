@@ -4,6 +4,8 @@ import {
   rpcRequest,
   parseRpcResponse,
   postRpc,
+  mcpFetch,
+  discoverProbe,
   MCP_PROTOCOL_VERSION,
   MCP_ACCEPT,
 } from './_mcp-client';
@@ -219,5 +221,72 @@ describe('postRpc', () => {
     };
     const out = await postRpc(ctx, 'https://a.test/mcp', 1, 'initialize');
     expect(out).toMatchObject({ ok: false, reason: 'unreachable' });
+  });
+});
+
+describe('mcpFetch and the shared probe cache', () => {
+  function recorder2(...responses: FetchResult[]) {
+    const seen: FetchOptions[] = [];
+    const ctx = mockCheckContext([]);
+    let i = 0;
+    ctx.fetch = async (o: FetchOptions) => {
+      seen.push(o);
+      const r = responses[Math.min(i, responses.length - 1)]!;
+      i += 1;
+      return r;
+    };
+    return { ctx, seen };
+  }
+
+  it('returns the whole response, including a non-200 status and its headers', async () => {
+    const body = JSON.stringify({ jsonrpc: '2.0', id: 1, error: { code: -32022, message: 'old' } });
+    const res = mockFetchResult(body, 400, 'application/json');
+    res.headers['www-authenticate'] = 'Bearer';
+    const r = recorder2(res);
+    const out = await mcpFetch(r.ctx, 'https://a.test/mcp', { method: 'POST', body: '{}' });
+    expect(out?.status).toBe(400);
+    expect(out?.headers['www-authenticate']).toBe('Bearer');
+  });
+
+  it('sends a GET with no JSON content type', async () => {
+    const r = recorder2(mockFetchResult('', 405));
+    await mcpFetch(r.ctx, 'https://a.test/mcp', { method: 'GET' });
+    expect(r.seen[0]).toMatchObject({ method: 'GET', acceptHeader: MCP_ACCEPT });
+    expect(r.seen[0]!.contentType).toBeUndefined();
+  });
+
+  it('refuses a private-range URL without fetching it', async () => {
+    const r = recorder2(mockFetchResult('{}', 200));
+    expect(await mcpFetch(r.ctx, 'http://10.0.0.1/mcp')).toBeUndefined();
+    expect(r.seen).toEqual([]);
+  });
+
+  it('returns undefined rather than throwing when the socket dies', async () => {
+    const ctx = mockCheckContext([]);
+    ctx.fetch = async () => {
+      throw new Error('socket hang up');
+    };
+    expect(await mcpFetch(ctx, 'https://a.test/mcp')).toBeUndefined();
+  });
+
+  it('issues one discover probe per endpoint per scan', async () => {
+    const r = recorder2(mockFetchResult('{"jsonrpc":"2.0","id":1,"result":{}}', 200));
+    await discoverProbe(r.ctx, 'https://a.test/mcp');
+    await discoverProbe(r.ctx, 'https://a.test/mcp');
+    expect(r.seen).toHaveLength(1);
+    expect(r.seen[0]!.headers).toMatchObject({ 'MCP-Protocol-Version': MCP_PROTOCOL_VERSION });
+    expect(JSON.parse(r.seen[0]!.body!)).toMatchObject({
+      method: 'server/discover',
+      params: { _meta: { 'io.modelcontextprotocol/protocolVersion': MCP_PROTOCOL_VERSION } },
+    });
+  });
+
+  it('keeps two scans apart', async () => {
+    const a = recorder2(mockFetchResult('{}', 200));
+    const b = recorder2(mockFetchResult('{}', 200));
+    await discoverProbe(a.ctx, 'https://a.test/mcp');
+    await discoverProbe(b.ctx, 'https://a.test/mcp');
+    expect(a.seen).toHaveLength(1);
+    expect(b.seen).toHaveLength(1);
   });
 });

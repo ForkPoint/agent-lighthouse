@@ -1,18 +1,19 @@
 ---
-check: modern-era-reachability-probe-server-discover
-title: "Modern-Era Reachability Probe (server/discover)"
-domain: mcp-server-quality
-status: proposed
+audit: agent-interfaces/mcp-modern-era-reachability
+category: agent-interfaces
+source_file: packages/core/src/audits/agent-interfaces/mcp-modern-era-reachability.ts
+slug: mcp-modern-era-reachability
 evidence_grade: A
-uniqueness: unique
-difficulty: static-fetch
-scoring_tier: scored
+tier: scored
+disposition: "new in v2 — graduated from proposal 2026-08-22"
 reviewed: 2026-08-20
+graduated: 2026-08-22
 ---
+
 
 # Modern-Era Reachability Probe (server/discover)
 
-> Proposed check. Evidence grade **A** · unique · implementation: `static-fetch`
+> Shipped in v2. Evidence grade **A** · scored tier · unique · implementation: `static-fetch`
 
 ## What it checks
 
@@ -71,3 +72,18 @@ Tier per evidence policy: **scored** — grade A meets the A/B bar required for 
 ## Review history
 
 - 2026-08-20 — proposed by the novel-checks research pass (10-agent evidence workflow); sources URL-verified at research time.
+
+## Implementation deviations
+
+Recorded at graduation (2026-08-22, Plan 5 Task 26).
+
+- **"Modern era, older revision" is a `warn`, not a low-scoring pass.** The sketch called a `-32022` rejection "PASS at a lower score". This audit is ternary, where the lower score *is* `warn`; there is no third passing grade to hand out. The classification, the supported list and the newest revision are all reported in the message either way.
+- **Endpoint discovery is the shared one.** The sketch allowed resolving the endpoint from "a registry match, an llms.txt reference, a documented /mcp path, or user config". This implementation uses only `discoverMcpEndpoint` from `_mcp-client.ts`, which reads the three explicit declarations (`/.well-known/mcp/servers.json`, `/.well-known/ucp`, `/.well-known/ai-catalog.json`). Probing `/mcp` speculatively would POST to a path the site never declared; see the `agent-interfaces/mcp-endpoint` dossier for why that is out of bounds.
+- **Probes are shared per scan.** `server/discover`, the GET and the DELETE go through the `sharedProbe` cache keyed on the `CheckContext` object, so the five MCP audits in this wave issue each of those requests once per scan rather than once per audit.
+- **The deprecated-transport verdict outranks the POST classification.** A GET answering with an SSE stream whose first event is `endpoint` is reported as the 2024-11-05 HTTP+SSE transport regardless of what the POST returned, because that finding is decisive: a current client cannot speak that transport at all.
+- **Legacy confirmation is one extra POST, and only when nothing modern came back.** The `initialize` probe fires only after `server/discover` produced neither a result nor a recognised modern error code, and LEGACY-ONLY is asserted only when the response carries an `Mcp-Session-Id` header.
+
+## Deferred
+
+- Re-probing after the 401 challenge with a token. The audit reports the challenge and names `agent-interfaces/mcp-oauth-discovery-chain` as the check that follows the chain; acquiring credentials is out of scope for an unauthenticated scanner.
+- Validating `instructions` content quality, and validating the declared capabilities against what `tools/list` actually returns. The first is subjective; the second belongs to `agent-interfaces/mcp-tool-contract-validity`.

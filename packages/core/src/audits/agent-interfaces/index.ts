@@ -18,6 +18,9 @@ export { WebmcpDeclarativeFormsAudit } from './webmcp-declarative-forms';
 export { OpenApiDescriptionQualityAudit } from './openapi-description-quality';
 export { CorsApiRoutesAudit } from './cors-api-routes';
 
+// New in v2 (Plan 5): graduated from the MCP proposal set on 2026-08-22.
+export { McpModernEraReachabilityAudit } from './mcp-modern-era-reachability';
+
 import { OpenApiExistsAudit } from './openapi-exists';
 import { OpenApiEndpointsAudit } from './openapi-endpoints';
 import { OpenApiOperationIdsAudit } from './openapi-operation-ids';
@@ -34,6 +37,7 @@ import { WebmcpRegisteredToolsAudit } from './webmcp-registered-tools';
 import { WebmcpDeclarativeFormsAudit } from './webmcp-declarative-forms';
 import { OpenApiDescriptionQualityAudit } from './openapi-description-quality';
 import { CorsApiRoutesAudit } from './cors-api-routes';
+import { McpModernEraReachabilityAudit } from './mcp-modern-era-reachability';
 
 /** Every audit that lives in the agent-interfaces category, in map order. */
 export const AGENT_INTERFACES_AUDITS = [
@@ -53,4 +57,5 @@ export const AGENT_INTERFACES_AUDITS = [
   WebmcpDeclarativeFormsAudit,
   OpenApiDescriptionQualityAudit,
   CorsApiRoutesAudit,
+  McpModernEraReachabilityAudit,
 ] as const;

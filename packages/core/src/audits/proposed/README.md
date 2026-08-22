@@ -1,6 +1,6 @@
 # Proposed audits — TODO stubs
 
-57 stub files for the proposed checks from the 2026-08-20 research pass. Every stub compiles, is **not** registered in any category index, and returns `notApplicable` until implemented. Each file's header carries its implementation sketch; full proof lives in [docs/evidence/proposals](../../../../../docs/evidence/proposals/README.md).
+56 stub files for the proposed checks from the 2026-08-20 research pass. Every stub compiles, is **not** registered in any category index, and returns `notApplicable` until implemented. Each file's header carries its implementation sketch; full proof lives in [docs/evidence/proposals](../../../../../docs/evidence/proposals/README.md).
 
 A stub that graduates to a shipped audit is deleted; its bullet leaves the list
 below, the count above drops by one, and the audit's id joins `NEW_IN_V2` in
@@ -79,7 +79,6 @@ the `--experimental` flag work in Plan 6.
 
 ## mcp-server-quality
 
-- [ ] TODO [`modern-era-reachability-probe-server-discover`](./mcp-server-quality/modern-era-reachability-probe-server-discover.ts) — Modern-Era Reachability Probe (server/discover) (grade A, scored, `static-fetch`) · [dossier](../../../../../docs/evidence/proposals/mcp-server-quality/modern-era-reachability-probe-server-discover.md)
 - [ ] TODO [`oauth-discovery-chain-integrity-rfc-9728-rfc-8414`](./mcp-server-quality/oauth-discovery-chain-integrity-rfc-9728-rfc-8414.ts) — OAuth Discovery Chain Integrity (RFC 9728 → RFC 8414) (grade A, scored, `multi-page`) · [dossier](../../../../../docs/evidence/proposals/mcp-server-quality/oauth-discovery-chain-integrity-rfc-9728-rfc-8414.md)
 - [ ] TODO [`tool-contract-validity-and-silent-drop-risk`](./mcp-server-quality/tool-contract-validity-and-silent-drop-risk.ts) — Tool Contract Validity and Silent-Drop Risk (grade A, scored, `static-fetch`) · [dossier](../../../../../docs/evidence/proposals/mcp-server-quality/tool-contract-validity-and-silent-drop-risk.md)
 - [ ] TODO [`tools-list-determinism-and-cache-hint-compliance`](./mcp-server-quality/tools-list-determinism-and-cache-hint-compliance.ts) — tools/list Determinism and Cache-Hint Compliance (grade A, scored, `static-fetch`) · [dossier](../../../../../docs/evidence/proposals/mcp-server-quality/tools-list-determinism-and-cache-hint-compliance.md)
