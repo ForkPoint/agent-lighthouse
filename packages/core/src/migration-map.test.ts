@@ -76,8 +76,10 @@ describe('migration-map.json', () => {
     }
   });
 
-  // A "merging" entry points at a Plan-4 target that does not exist yet, so it
-  // must also say where the signal is readable today.
+  // A "merging" entry's `to` is where the signal ends up: usually an already
+  // registered survivor audit, sometimes a Plan-4 target that only lands later.
+  // Either way the entry must say where this audit's own check is readable
+  // today, so consumers can resolve `interim ?? to` to something live.
   it('gives every merging entry an interim id that is registered today', () => {
     const merging = surviving.filter(([, e]) => e.status === 'merging');
     expect(merging.length).toBeGreaterThan(0);

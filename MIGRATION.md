@@ -105,10 +105,12 @@ Read it like this:
 - **`"renamed"`** — the audit survives one-for-one. `to` is its v2 id, live in
   this release. Re-point the series at `to` and you are done.
 - **`"merging"`** — the audit's signal is being folded into another audit. `to`
-  is the id it ends up under; that id does not exist yet. `interim` is where the
-  check runs *today*, so read `interim` to keep a series alive now, and expect it
-  to disappear into `to` in a later release. Several v1 ids can share one `to`;
-  when they collapse, so do their series.
+  is the id the signal ends up under. That id may already be registered — most
+  merge targets are survivor audits that run in this release — or it may only
+  land in a later one, so do not assume `to` is resolvable. `interim` is where
+  this audit's check runs *today*; always prefer `interim ?? to` to find the
+  audit that is live now. Several v1 ids can share one `to`; when they collapse,
+  so do their series.
 - **`"removed"`** — nothing to re-point at (see above).
 - **`link`** — the audit's evidence dossier in this repo: the claim, the grade,
   the sources. Repo-relative; prefix with

@@ -53,7 +53,8 @@ const v2IdFor = (v1Id) => {
 
 **Breaking: 8 more audits are removed as not-a-factor**, on top of the 18 sunset
 in 1.0.0 — 26 v1 audits are now gone in total. The 2026-08-21 grading pass
-graded these D, and the adversarial evidence review could not name a consumer:
+graded these D (or, for `1.18` mobile-friendly, `unrated`), and the adversarial
+evidence review could not name a consumer:
 
 `1.18` mobile-friendly, `1.23` commerce-links, `7.22` marquee, `8.14`
 no-render-blocking, `8.15` image-dimensions, `8.16` lcp-not-lazy, `8.19`
@@ -61,7 +62,8 @@ privacy-policy, `8.20` terms-of-service.
 
 They no longer run, no longer appear in any report, and no longer emit a
 `CheckResult`. Dashboards keyed on those ids need the series dropped. Rationale
-and sources: [docs/evidence/sunset/](docs/evidence/sunset/README.md).
+and sources:
+[docs/evidence/sunset/](https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/sunset/README.md).
 
 **Breaking: `SECTION_GROUPS` is regrouped** onto the v2 categories. The three
 group keys and labels are unchanged, but membership and the flattened
@@ -76,6 +78,8 @@ now reports under **AI Search Optimization** rather than Technical Foundation:
 
 Consumers pinning section membership or category ordering must be updated.
 
-The full upgrade guide is [MIGRATION.md](MIGRATION.md); the audit-by-audit v1 →
-v2 table, with the reasoning behind every move, merge and split, is in
-[docs/evidence/v2-audit-map.md](docs/evidence/v2-audit-map.md).
+The full upgrade guide is
+[MIGRATION.md](https://github.com/ForkPoint/agent-lighthouse/blob/main/MIGRATION.md);
+the audit-by-audit v1 → v2 table, with the reasoning behind every move, merge
+and split, is in
+[docs/evidence/v2-audit-map.md](https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/v2-audit-map.md).

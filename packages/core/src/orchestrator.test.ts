@@ -789,7 +789,7 @@ describe('runScan — progress events', () => {
     const rootUnits = events.filter((e) => e.type === 'unit:done' && e.phase === 'fetch-root');
     const rootStart = events.find((e) => e.type === 'phase:start' && e.phase === 'fetch-root')!;
     expect(rootStart).toMatchObject({ totalUnits: rootUnits.length });
-    expect(rootUnits.length).toBeGreaterThan(30);
+    expect(rootUnits.length).toBeGreaterThan(20);
 
     // audits phase: every runnable audit settles into exactly one unit event.
     const auditsStart = events.find((e) => e.type === 'phase:start' && e.phase === 'audits')!;
