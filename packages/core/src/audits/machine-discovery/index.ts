@@ -24,6 +24,7 @@ export { AgentCommerceFeedParityAudit } from './agent-commerce-feed-parity';
 export { ConditionalRequestSupportAudit } from './conditional-request-support';
 export { FeedEntryIdentityAndCanonicalIntegrityAudit } from './feed-entry-identity-and-canonical-integrity';
 export { RootTextFileResolutionIntegrityAudit } from './root-text-file-resolution-integrity';
+export { ThreeWayFreshnessLagAudit } from './three-way-freshness-lag';
 
 import { LlmsTxtExistsAudit } from './llms-txt-exists';
 import { LlmsTxtStructureAudit } from './llms-txt-structure';
@@ -47,6 +48,7 @@ import { AgentCommerceFeedParityAudit } from './agent-commerce-feed-parity';
 import { ConditionalRequestSupportAudit } from './conditional-request-support';
 import { FeedEntryIdentityAndCanonicalIntegrityAudit } from './feed-entry-identity-and-canonical-integrity';
 import { RootTextFileResolutionIntegrityAudit } from './root-text-file-resolution-integrity';
+import { ThreeWayFreshnessLagAudit } from './three-way-freshness-lag';
 
 /** Every audit that lives in the machine-discovery category, in map order. */
 export const MACHINE_DISCOVERY_AUDITS = [
@@ -72,4 +74,5 @@ export const MACHINE_DISCOVERY_AUDITS = [
   ConditionalRequestSupportAudit,
   FeedEntryIdentityAndCanonicalIntegrityAudit,
   RootTextFileResolutionIntegrityAudit,
+  ThreeWayFreshnessLagAudit,
 ] as const;

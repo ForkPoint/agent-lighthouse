@@ -65,6 +65,7 @@ export const NEW_IN_V2: readonly string[] = [
   'machine-discovery/conditional-request-support',
   'machine-discovery/feed-entry-identity-and-canonical-integrity',
   'machine-discovery/root-text-file-resolution-integrity',
+  'machine-discovery/three-way-freshness-lag',
 ];
 
 /** The 148 audits Plan 4 closed the v2 migration on. Never changes again. */

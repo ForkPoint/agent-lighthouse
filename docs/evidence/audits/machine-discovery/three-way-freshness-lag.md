@@ -1,18 +1,19 @@
 ---
-check: three-way-freshness-lag-and-orphaned-fresh-content
-title: "Three-way freshness lag and orphaned fresh content"
-domain: feeds-indexing
-status: proposed
+audit: machine-discovery/three-way-freshness-lag
+category: machine-discovery
+source_file: packages/core/src/audits/machine-discovery/three-way-freshness-lag.ts
+slug: three-way-freshness-lag
 evidence_grade: B
-uniqueness: partial-overlap
-difficulty: multi-page
-scoring_tier: scored
+tier: scored
+disposition: "new in v2 — graduated from proposal 2026-08-23"
 reviewed: 2026-08-20
+graduated: 2026-08-23
 ---
+
 
 # Three-way freshness lag and orphaned fresh content
 
-> Proposed check. Evidence grade **B** · partial overlap · implementation: `multi-page`
+> Shipped in v2. Evidence grade **B** · scored tier · partial overlap · implementation: `multi-page`
 
 ## What it checks
 
@@ -52,3 +53,52 @@ Tier per evidence policy: **scored** — grade B meets the A/B bar required for 
 ## Review history
 
 - 2026-08-20 — proposed by the novel-checks research pass (10-agent evidence workflow); sources URL-verified at research time.
+
+## Implementation deviations
+
+**Renamed** from `three-way-freshness-lag-and-orphaned-fresh-content`, which
+would make a 71-character id, and because only the freshness half ships here.
+
+**The orphan half is deliberately not recomputed.** Sketch steps 1 and 2 build
+SITE, SITEMAP and FEED sets and report `SITE \ (SITEMAP ∪ FEED)`.
+`machine-discovery/discovery-index-coverage` already owns that computation and
+already reports the URLs it finds. Running it a second time here would report
+one defect twice, in two audits, with two scores against it — which is exactly
+the double-counting the v2 restructure removes. What ships is steps 3, 4, 5 and
+the advertised-but-dead half of step 6.
+
+**Every date is read with `parseFeedDate`**, the strict parser from
+`gatherers/feeds.ts`: a timestamp carrying no timezone yields `undefined`
+rather than being read in the scanner's own offset. The audit measures a lag in
+days and the guess is worth up to a day of it. Sitemap `<lastmod>` additionally
+has to pass `isW3CDateTime` before it counts, which is the sitemap protocol's
+own requirement.
+
+**Dead sitemap URLs are sampled, not swept.** Five URLs, chosen by
+`sampleEntries` across the whole tree, because each one is a request. A dead
+entry is a systemic defect — a stale generator — and five spread samples find a
+systemic defect if it is there.
+
+**A dead URL or an unordered feed warns; a lag fails.** The sketch marks
+ordering as a warning already. The advertised-but-dead set is reported at the
+same level because a sampled 404 is evidence of a stale sitemap, not a
+measurement of how stale.
+
+**Evidence hygiene.** The dossier's first two sources are IndexNow
+documentation, which belongs to
+`machine-discovery/root-text-file-resolution-integrity`; only the phrase they
+support — that organic rediscovery takes days to weeks, which is why a
+discovery surface has to be fresher than it — bears on this audit. The Google
+sitemap documentation supports the `<lastmod>` assertion and RFC 4287 supports
+reading `atom:updated` as the item's own modification time.
+
+## Deferred
+
+- **The orphan set.** Owned by `machine-discovery/discovery-index-coverage`.
+- **Crawling section index pages to widen the SITE set.** The audit reads the
+  dates on the pages the scan already fetched. Fetching five more listing pages
+  to find more dates would change the request budget without changing what a
+  seven-day lag means.
+- **Per-URL lag.** The finding is about a surface's regeneration cadence, which
+  is one number for the whole surface. A per-URL comparison is
+  `machine-discovery/sitemap-lastmod-verifiability`.
