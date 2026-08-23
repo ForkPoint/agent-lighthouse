@@ -144,15 +144,32 @@ export function renderIndexHtml(html: string, audits: AuditDoc[]): string {
 
   out = out.slice(0, pillsStart + PILLS_START.length) + pills + out.slice(pillsEnd);
 
-  // Static copy that quotes the registry size. The v1 page advertised 207.
-  out = out.replace(/\b207\b/g, String(audits.length));
-  out = out.replace(/207-audit/g, `${audits.length}-audit`);
-  out = out.replace(/\(10 categories\)/g, `(${defaultConfig.categories.length} categories)`);
-  // The hero's category counter, which the v1 page hard-coded at 10.
-  out = out.replace(
-    /(<div class="text-2xl font-extrabold text-indigo-400">)\d+(<\/div>\s*<div class="text-xs text-slate-400 mt-0\.5">Audit Categories<\/div>)/,
-    `$1${defaultConfig.categories.length}$2`,
-  );
+  // Static copy that quotes the registry size. Each pattern is anchored on the
+  // words around the number rather than on the number itself, so the page stays
+  // regenerable after the count moves — matching on the previous literal only
+  // works once.
+  const count = String(audits.length);
+  const categories = String(defaultConfig.categories.length);
+  const rewrites: Array<[RegExp, string]> = [
+    [/\b\d+(?= AI-agent readiness checks)/g, count],
+    [/(?<=Audit Directory \()\d+(?=\))/g, count],
+    [/(?<=Audit Explorer \()\d+(?=\))/g, count],
+    [/\b\d+(?= pure deterministic rules)/g, count],
+    [/(?<=Explore all )\d+(?= audits)/g, count],
+    [/(?<=id="audit-count-badge"[^>]*>)\d+/g, count],
+    [/\b\d+(?=-audit scan)/g, count],
+    [/\(\d+ categories\)/g, `(${categories} categories)`],
+    // The hero's two counters, each anchored on the label beneath it.
+    [
+      /(<div class="text-2xl font-extrabold text-white">)\d+(<\/div>\s*<div class="text-xs text-slate-400 mt-0\.5">Specialized Audits<\/div>)/,
+      `$1${count}$2`,
+    ],
+    [
+      /(<div class="text-2xl font-extrabold text-indigo-400">)\d+(<\/div>\s*<div class="text-xs text-slate-400 mt-0\.5">Audit Categories<\/div>)/,
+      `$1${categories}$2`,
+    ],
+  ];
+  for (const [pattern, replacement] of rewrites) out = out.replace(pattern, replacement);
 
   return out;
 }

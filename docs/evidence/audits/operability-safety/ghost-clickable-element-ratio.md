@@ -1,18 +1,19 @@
 ---
-check: ghost-clickable-element-ratio
-title: "Ghost-Clickable Element Ratio"
-domain: agent-operability
-status: proposed
+audit: operability-safety/ghost-clickable-element-ratio
+category: operability-safety
+source_file: packages/core/src/audits/operability-safety/ghost-clickable-element-ratio.ts
+slug: ghost-clickable-element-ratio
 evidence_grade: B
-uniqueness: unique
-difficulty: static-fetch
-scoring_tier: scored
+tier: scored
+disposition: "new in v2 — graduated from proposal 2026-08-23"
 reviewed: 2026-08-20
+graduated: 2026-08-23
 ---
+
 
 # Ghost-Clickable Element Ratio
 
-> Proposed check. Evidence grade **B** · unique · implementation: `static-fetch`
+> Shipped in v2. Evidence grade **B** · scored tier · unique · implementation: `static-fetch`
 
 ## What it checks
 
@@ -58,3 +59,43 @@ Tier per evidence policy: **scored** — grade B meets the A/B bar required for 
 ## Review history
 
 - 2026-08-20 — proposed by the novel-checks research pass (10-agent evidence workflow); sources URL-verified at research time.
+
+## Implementation deviations
+
+The shipped audit is `operability-safety/ghost-clickable-element-ratio`, in the
+`operability-safety` category: the proposal's `agent-operability` domain is a
+research grouping, not one of the eight v2 categories.
+
+The clickability and accessible-name helpers live in
+`packages/core/src/audits/operability-safety/_agent-affordances.ts` rather than
+in this audit, because three audits in this category need the same two answers
+and the patterns must not drift apart between them.
+
+The ratio is reported as semantic / (semantic + ghost) — the sketch writes the
+same quantity as `1 - ghost/(ghost+semantic)`. The floor is 0.9 exactly: a page
+at 0.9 warns, below it fails, and a page with no ghost at all passes.
+
+The empty-accessible-name arm is applied to `<a>`, `<button>` and `<summary>`
+only. A form control usually takes its name from a `<label for>` association,
+which accname resolution over the served markup alone does not follow, so
+calling a nameless `<input>` a ghost would be a guess rather than a measurement.
+
+A ghost whose ancestor was already flagged on the click-signal arm is not
+counted again, so a clickable wrapper holding a clickable inner div is one
+finding rather than two.
+
+## Deferred
+
+- **Headless CDP tier.** The sketch's higher-precision tier intersects
+  `DOMDebugger.getEventListeners` and `DOMSnapshot` cursor/`isClickable` against
+  `Accessibility.getFullAXTree`. All three need a live browser, which the
+  scanner does not drive. The shipped audit is the static tier only, and its
+  description does not claim otherwise.
+- **Listener-based detection.** Only inline handler attributes are visible in
+  served markup. A listener attached with `addEventListener` in a script is not
+  detectable without executing the page, so the class-name vocabulary and the
+  `cursor: pointer` rule carry that signal instead.
+- **Occlusion and paint order.** browser-use consumes bounding boxes, client
+  rects and stacking contexts to decide what is really clickable. None of those
+  exist before layout, so overlay interception is left to the proposed
+  `overlay-interception-hazard` check, which stays blocked on the headless tier.

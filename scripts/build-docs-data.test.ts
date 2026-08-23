@@ -2,12 +2,15 @@ import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { buildAuditList, buildCategoryPills, renderIndexHtml } from './build-docs-data';
+import { defaultConfig } from '../packages/core/src';
 
 describe('buildAuditList', () => {
   const list = buildAuditList();
 
   it('emits one record per registered audit', () => {
-    expect(list).toHaveLength(172);
+    // Derived from the registry: a graduation must not need this number retyped.
+    const registered = Object.values(defaultConfig.audits).reduce((n, regs) => n + regs.length, 0);
+    expect(list).toHaveLength(registered);
   });
 
   it('uses v2 slug ids and names a dossier for each', () => {
@@ -39,7 +42,7 @@ describe('renderIndexHtml', () => {
 
   it('leaves no v1 audit count behind', () => {
     expect(out).not.toContain('207');
-    expect(out).toContain('172 audits');
+    expect(out).toContain(`${buildAuditList().length} audits`);
   });
 
   // Guidance tags legitimately still contain words like "crawler-permissions",

@@ -1,6 +1,6 @@
 # Proposed audits — TODO stubs
 
-52 stub files for the proposed checks from the 2026-08-20 research pass. Every stub compiles, is **not** registered in any category index, and returns `notApplicable` until implemented. Each file's header carries its implementation sketch; full proof lives in [docs/evidence/proposals](../../../../../docs/evidence/proposals/README.md).
+51 stub files for the proposed checks from the 2026-08-20 research pass. Every stub compiles, is **not** registered in any category index, and returns `notApplicable` until implemented. Each file's header carries its implementation sketch; full proof lives in [docs/evidence/proposals](../../../../../docs/evidence/proposals/README.md).
 
 A stub that graduates to a shipped audit is deleted; its bullet leaves the list
 below, the count above drops by one, and the audit's id joins `NEW_IN_V2` in
@@ -25,7 +25,6 @@ the `--experimental` flag work in Plan 6.
 
 - [ ] TODO [`overlay-interception-hazard`](./agent-operability/overlay-interception-hazard.ts) — Overlay Interception Hazard (grade A, scored, `headless-browser`) · [dossier](../../../../../docs/evidence/proposals/agent-operability/overlay-interception-hazard.md)
 - [ ] TODO [`drag-and-slider-dependency`](./agent-operability/drag-and-slider-dependency.ts) — Drag and Slider Dependency (grade B, scored, `static-fetch`) · [dossier](../../../../../docs/evidence/proposals/agent-operability/drag-and-slider-dependency.md)
-- [ ] TODO [`ghost-clickable-element-ratio`](./agent-operability/ghost-clickable-element-ratio.ts) — Ghost-Clickable Element Ratio (grade B, scored, `static-fetch`) · [dossier](../../../../../docs/evidence/proposals/agent-operability/ghost-clickable-element-ratio.md)
 - [ ] TODO [`hover-only-content-and-navigation`](./agent-operability/hover-only-content-and-navigation.ts) — Hover-Only Content and Navigation (grade B, scored, `static-fetch`) · [dossier](../../../../../docs/evidence/proposals/agent-operability/hover-only-content-and-navigation.md)
 - [ ] TODO [`stateful-control-introspectability`](./agent-operability/stateful-control-introspectability.ts) — Stateful Control Introspectability (grade B, scored, `static-fetch`) · [dossier](../../../../../docs/evidence/proposals/agent-operability/stateful-control-introspectability.md)
 - [ ] TODO [`url-addressable-state-and-pagination-fallback`](./agent-operability/url-addressable-state-and-pagination-fallback.ts) — URL-Addressable State and Pagination Fallback (grade B, scored, `multi-page`) · [dossier](../../../../../docs/evidence/proposals/agent-operability/url-addressable-state-and-pagination-fallback.md)
