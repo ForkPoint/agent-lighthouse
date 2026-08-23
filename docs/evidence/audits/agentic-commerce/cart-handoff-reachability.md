@@ -1,18 +1,19 @@
 ---
-check: cart-handoff-reachability
-title: "Cart Handoff Reachability"
-domain: agentic-commerce
-status: proposed
+audit: agentic-commerce/cart-handoff-reachability
+category: agentic-commerce
+source_file: packages/core/src/audits/agentic-commerce/cart-handoff-reachability.ts
+slug: cart-handoff-reachability
 evidence_grade: B
-uniqueness: unique
-difficulty: multi-page
-scoring_tier: scored
+tier: scored
+disposition: "new in v2 — graduated from proposal 2026-08-23"
 reviewed: 2026-08-20
+graduated: 2026-08-23
 ---
+
 
 # Cart Handoff Reachability
 
-> Proposed check. Evidence grade **B** · unique · implementation: `multi-page`
+> Shipped in v2. Evidence grade **B** · scored tier · unique · implementation: `multi-page`
 
 ## What it checks
 
@@ -52,3 +53,19 @@ Tier per evidence policy: **scored** — grade B meets the A/B bar required for 
 ## Review history
 
 - 2026-08-20 — proposed by the novel-checks research pass (10-agent evidence workflow); sources URL-verified at research time.
+
+## Implementation deviations
+
+- **Read-only, and it stops at the document.** Every request is a GET. The audit never POSTs to add-to-cart, never submits a form and never follows a checkout button. What it measures is whether the cart document can be read at all, not whether a purchase completes.
+- **A robots.txt `Disallow` on a cart path is honoured, not overridden.** The path is reported under `details.disallowedByRobots` and never fetched. A storefront that disallows its own cart still fails the audit — no path answered — but the finding says why, and no request was sent.
+- **One request per path per user agent, two user agents.** A browser UA and `ChatGPT-User`. The sketch names a browser UA and ChatGPT-User; the other three OpenAI tokens are `agentic-commerce/agent-ua-commerce-parity`'s job. The browser-UA request shares the per-scan cache that audit already fills, so a `/cart` it probed is not fetched twice.
+- **`/cart.js` is not probed.** The sketch lists it for Shopify. It is a JSON endpoint rather than the document a buyer is handed to, and the failures this audit looks for — a login redirect, a challenge widget — live on the document.
+- **BigCommerce and Magento get one candidate path each** (`/cart.php`, `/checkout/cart`). Their `/checkout` paths are gated behind a cart that has something in it, so an empty-cart probe there measures nothing.
+- **Without a platform fingerprint the audit is not applicable, not failing.** It still probes `/cart` and `/checkout`, but when neither answers it reports `notApplicable`: the paths were a guess. With a fingerprint, an unanswered cart path is a failure, because the platform's own convention says where it should be.
+- **The JS-only arm needs both halves.** A document warns only when its visible text is under 200 characters *and* it carries no `<noscript>` content. A short page with a real fallback passes.
+
+## Deferred
+
+- **The ACP `continue_url` itself is never probed.** Reaching it needs a Cart API session, which needs credentials and a POST. The audit probes the storefront cart the same handoff lands on.
+- **Guest-checkout detection beyond the redirect.** A store that renders the cart to anonymous buyers but demands an account at the payment step reads as reachable here.
+- **Edge blocks that key on IP rather than UA** are invisible to this audit, as they are to any UA-string probe.

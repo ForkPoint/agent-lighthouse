@@ -77,6 +77,7 @@ export const NEW_IN_V2: readonly string[] = [
   'agent-interfaces/mcp-registry-listing-ownership',
   'agent-interfaces/mcp-tool-description-coverage',
   'agentic-commerce/buyable-variant-resolution',
+  'agentic-commerce/cart-handoff-reachability',
 ];
 
 /** The 148 audits Plan 4 closed the v2 migration on. Never changes again. */

@@ -231,6 +231,8 @@ interface ProbeCache {
   baselines: Map<string, Promise<FetchResult | undefined>>;
   probes: Map<string, Promise<UaProbe | undefined>>;
   controls: Map<string, Promise<FetchResult | undefined>>;
+  /** Responses an audit needed the body of, keyed by UA and URL. */
+  raw: Map<string, Promise<FetchResult | undefined>>;
 }
 
 const probeCache = new WeakMap<object, ProbeCache>();
@@ -238,7 +240,7 @@ const probeCache = new WeakMap<object, ProbeCache>();
 function cacheFor(ctx: object): ProbeCache {
   let cache = probeCache.get(ctx);
   if (!cache) {
-    cache = { baselines: new Map(), probes: new Map(), controls: new Map() };
+    cache = { baselines: new Map(), probes: new Map(), controls: new Map(), raw: new Map() };
     probeCache.set(ctx, cache);
   }
   return cache;
@@ -335,6 +337,36 @@ export function sharedControlProbe(
       return ctx.fetch({ url, userAgent: CONTROL_UA, followRedirects: true, signal: opts.signal });
     })();
     cache.controls.set(url, pending);
+  }
+  return pending;
+}
+
+/**
+ * One URL under one user agent, at most once per scan, body included.
+ *
+ * `sharedUaProbes` keeps only statuses, which is all a parity verdict needs. An
+ * audit that has to read the document — a cart page carrying a bot challenge,
+ * say — goes through here instead, and a browser-UA request shares the same
+ * cache entry `sharedUaProbes` already filled.
+ */
+export function sharedUaFetch(
+  ctx: ProbeContext,
+  url: string,
+  userAgent: string,
+  opts: { signal?: AbortSignal } = {},
+): Promise<FetchResult | undefined> {
+  const cache = cacheFor(ctx);
+  const baseline = userAgent === BASELINE_UA;
+  const map = baseline ? cache.baselines : cache.raw;
+  const key = baseline ? url : `${userAgent}|${url}`;
+
+  let pending = map.get(key);
+  if (!pending) {
+    pending = (async () => {
+      if (!(await isSafeUrl(url))) return undefined;
+      return ctx.fetch({ url, userAgent, followRedirects: true, signal: opts.signal });
+    })();
+    map.set(key, pending);
   }
   return pending;
 }

@@ -7,6 +7,7 @@ export { OfferSchemaAudit } from './offer-schema';
 export { ProductIdentifiersAudit } from './product-identifiers';
 export { ProductTransactionCertaintyAudit } from './product-transaction-certainty';
 export { BuyableVariantResolutionAudit } from './buyable-variant-resolution';
+export { CartHandoffReachabilityAudit } from './cart-handoff-reachability';
 
 // New in v2 (Plan 5): graduated from the proposal backlog on 2026-08-22.
 export { AcpPolicyLinkSurfaceAudit } from './acp-policy-link-surface';
@@ -18,6 +19,7 @@ import { OfferSchemaAudit } from './offer-schema';
 import { ProductIdentifiersAudit } from './product-identifiers';
 import { ProductTransactionCertaintyAudit } from './product-transaction-certainty';
 import { BuyableVariantResolutionAudit } from './buyable-variant-resolution';
+import { CartHandoffReachabilityAudit } from './cart-handoff-reachability';
 import { AcpPolicyLinkSurfaceAudit } from './acp-policy-link-surface';
 import { LandedCostAndReturnsAudit } from './landed-cost-and-returns';
 import { CheckoutOfferFieldMappingAudit } from './checkout-offer-field-mapping';
@@ -33,4 +35,5 @@ export const AGENTIC_COMMERCE_AUDITS = [
   CheckoutOfferFieldMappingAudit,
   AgentUaCommerceParityAudit,
   BuyableVariantResolutionAudit,
+  CartHandoffReachabilityAudit,
 ] as const;
