@@ -1,18 +1,19 @@
 ---
-check: chunk-boundary-referent-integrity
-title: "Chunk-Boundary Referent Integrity"
-domain: answer-selection-forensics
-status: proposed
+audit: answer-readiness/chunk-boundary-referent-integrity
+category: answer-readiness
+source_file: packages/core/src/audits/answer-readiness/chunk-boundary-referent-integrity.ts
+slug: chunk-boundary-referent-integrity
 evidence_grade: B
-uniqueness: unique
-difficulty: static-fetch
-scoring_tier: scored
+tier: scored
+disposition: "new in v2 — graduated from proposal 2026-08-23"
 reviewed: 2026-08-20
+graduated: 2026-08-23
 ---
+
 
 # Chunk-Boundary Referent Integrity
 
-> Proposed check. Evidence grade **B** · unique · implementation: `static-fetch`
+> Shipped in v2. Evidence grade **B** · scored tier · unique · implementation: `static-fetch`
 
 ## What it checks
 
@@ -48,3 +49,46 @@ Tier per evidence policy: **scored** — grade B meets the A/B bar required for 
 ## Review history
 
 - 2026-08-20 — proposed by the novel-checks research pass (10-agent evidence workflow); sources URL-verified at research time.
+
+## Implementation deviations
+
+The shipped audit is `answer-readiness/chunk-boundary-referent-integrity`: the
+proposal's `answer-selection-forensics` domain is a research grouping, not one
+of the eight v2 categories.
+
+Segmentation is heading-led over `<main>`/`<article>`, falling back to `<body>`:
+every `h2` and `h3` starts a chunk that runs to the next heading of either
+level. The proposal's "next heading of level ≤ level_i" rule differs only for an
+`h3` following an `h3`, where both readings produce the same boundary.
+
+Readability is not used to isolate the content. The three flags are computed
+against the same DOM the segmentation walks, and running an extractor first
+would put its opinion between the page and the finding.
+
+The entity set is built from `h1`, `og:title` and JSON-LD `name`/`headline`,
+plus three derived aliases per multi-word name: the acronym, the first
+significant word, and the last. Stopwords are dropped before deriving them, so
+"The New Kettle" does not alias to "T".
+
+Matching is case-insensitive with light stemming — plural `s`/`es`/`ies` only.
+Real stemming would need a dependency to decide that "boiling" and "boil" are
+the same word, and the flag it feeds is about naming the subject, where the
+plural is the only form that varies in practice.
+
+Thresholds: below 80% clean chunks fails, per the proposal. The 80–95% warn band
+is this implementation's.
+
+One evidence sentence per chunk, not one per flag: the fix is a one-line edit
+and the first offending sentence is where it goes.
+
+## Deferred
+
+- **Coreference resolution.** Whether "it" resolves to something a reader
+  understands needs a model. The three deterministic flags catch the cases that
+  are decidable from the text alone, which is what a scored audit can defend.
+- **Sub-chunk boundaries.** A retriever that splits mid-section produces chunks
+  this audit does not model; `answer-readiness/section-split-risk-profile`
+  measures that from the token side.
+- **Per-page assessment.** Only the entry page is segmented. Referent integrity
+  is a property of how a template's sections are written, and the entry page is
+  where an agent starts.

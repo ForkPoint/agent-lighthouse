@@ -1,6 +1,6 @@
 # Proposed checks — evidence dossiers
 
-33 proposed checks from the 2026-08-20 novel-checks research pass. Each dossier states what the check verifies, the falsifiable mechanism behind it, cited evidence from the [source registry](../sources.json), competitor coverage, and an implementation sketch. Grading rubric: [evidence policy](../POLICY.md).
+32 proposed checks from the 2026-08-20 novel-checks research pass. Each dossier states what the check verifies, the falsifiable mechanism behind it, cited evidence from the [source registry](../sources.json), competitor coverage, and an implementation sketch. Grading rubric: [evidence policy](../POLICY.md).
 
 Seven dossiers left this folder on 2026-08-22 (Plan 5, Task 2): six tool
 surveys moved to [../research](../research/README.md) because their verdict is
@@ -22,7 +22,6 @@ Grades: **A** = documented consumer behavior or ratified standard · **B** = dra
 | B | [Buyable Variant Resolution](./agentic-commerce/buyable-variant-resolution.md) | agentic-commerce | unique | `multi-page` | scored |
 | B | [Cart Handoff Reachability](./agentic-commerce/cart-handoff-reachability.md) | agentic-commerce | unique | `multi-page` | scored |
 | B | [Offer Truth Consistency](./agentic-commerce/offer-truth-consistency.md) | agentic-commerce | unique | `multi-page` | scored |
-| B | [Chunk-Boundary Referent Integrity](./answer-selection-forensics/chunk-boundary-referent-integrity.md) | answer-selection-forensics | unique | `static-fetch` | scored |
 | B | [Extractor Survival Recall](./answer-selection-forensics/extractor-survival-recall.md) | answer-selection-forensics | unique | `static-fetch` | scored |
 | B | [Section Split-Risk Profile](./answer-selection-forensics/section-split-risk-profile.md) | answer-selection-forensics | unique | `static-fetch` | scored |
 | B | [Site-Wide Passage Uniqueness Ratio](./answer-selection-forensics/site-wide-passage-uniqueness-ratio.md) | answer-selection-forensics | partial-overlap | `multi-page` | scored |
