@@ -111,7 +111,7 @@ describe('buildReportView', () => {
     const at = v.categories.find((c) => c.id === 'agent-interfaces')!;
     expect(at.checks.map((c) => c.id)).toEqual(['p1', 'w1', 'f1']); // assessed only
     expect(at.notApplicable.map((c) => c.id)).toEqual(['e1', 's1', 'n1']);
-    expect(at.counts).toEqual({ pass: 1, warn: 1, fail: 1, na: 3, total: 3 });
+    expect(at.counts).toEqual({ pass: 1, warn: 1, fail: 1, na: 3, advisory: 0, total: 3 });
   });
 
   it('buckets coverage by na tag across all categories', () => {
@@ -200,5 +200,49 @@ describe('buildReportView', () => {
     expect(v.summary).toBe('');
     expect(v.vitals).toEqual({ commerce: 0, content: 0, botAccessibility: 0, technical: 0 });
     expect(v.readinessScore).toBe(55); // falls back to overallScore
+  });
+});
+
+describe('tier counts', () => {
+  it('counts advisory checks per category', () => {
+    const view = buildReportView(
+      report([
+        cat({
+          id: 'agent-interfaces',
+          checks: [
+            check({ id: 'agent-interfaces/a', tier: 'scored' }),
+            check({
+              id: 'structured-data/claimreview-advisory',
+              tier: 'informative',
+              scoreDisplayMode: 'informative',
+              status: 'fail',
+              score: 0,
+            }),
+          ],
+        }),
+      ]),
+    );
+    expect(view.categories[0]!.counts.advisory).toBe(1);
+  });
+
+  it('does not count a not-applicable advisory check', () => {
+    const view = buildReportView(
+      report([
+        cat({
+          id: 'agent-interfaces',
+          checks: [
+            check({ tier: 'informative', scoreDisplayMode: 'informative', status: 'na', score: 0 }),
+          ],
+        }),
+      ]),
+    );
+    expect(view.categories[0]!.counts.advisory).toBe(0);
+  });
+
+  it('counts an experimental check as advisory', () => {
+    const view = buildReportView(
+      report([cat({ id: 'agent-interfaces', checks: [check({ tier: 'experimental' })] })]),
+    );
+    expect(view.categories[0]!.counts.advisory).toBe(1);
   });
 });

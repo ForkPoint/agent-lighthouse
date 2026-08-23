@@ -242,6 +242,26 @@ describe('runScan — homepage unreachable', () => {
 // No root files, only "other" discovery bucket
 // ---------------------------------------------------------------------------
 
+describe('runScan — evidence tier', () => {
+  // Every registered audit declares a tier, and toCheckResult stamps it. If a
+  // check ever reached a report without one, the advisory badge would silently
+  // stop rendering.
+  it('stamps a tier on every check in the report', async () => {
+    const url = 'https://example.com/';
+    set(url, '<html><body><h1>Home</h1></body></html>');
+
+    const report = await runScan(url);
+    const all = report.categories.flatMap((c) => c.checks);
+
+    expect(all.length).toBeGreaterThan(0);
+    expect(
+      all.every(
+        (c) => c.tier === 'scored' || c.tier === 'informative' || c.tier === 'experimental',
+      ),
+    ).toBe(true);
+  });
+});
+
 describe('runScan — no root files', () => {
   it('discovers from internal links when there is no sitemap or llms.txt', async () => {
     const url = 'https://example.com/';

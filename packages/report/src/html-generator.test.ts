@@ -143,3 +143,41 @@ describe('generateHtmlReport', () => {
     expect(html).not.toContain('NOT-A-FACTOR.md');
   });
 });
+
+describe('tier badges', () => {
+  it('badges an advisory check and leaves a scored one unbadged', () => {
+    const html = generateHtmlReport(
+      report([
+        cat({
+          id: 'agent-interfaces',
+          checks: [
+            check({
+              id: 'structured-data/claimreview-advisory',
+              title: 'Advisory check',
+              tier: 'informative',
+              scoreDisplayMode: 'informative',
+              status: 'fail',
+              score: 0,
+            }),
+            check({ id: 'agent-interfaces/scored', title: 'Scored check', tier: 'scored' }),
+          ],
+        }),
+      ]),
+    );
+    expect(html).toContain('Advisory — not scored');
+    expect(html.match(/Advisory — not scored/g)).toHaveLength(1);
+    expect(html).toContain('1 Advisory');
+  });
+
+  it('badges an experimental check with its own label', () => {
+    const html = generateHtmlReport(
+      report([
+        cat({
+          id: 'agent-interfaces',
+          checks: [check({ title: 'Trial check', tier: 'experimental' })],
+        }),
+      ]),
+    );
+    expect(html).toContain('Experimental — not scored');
+  });
+});

@@ -7,6 +7,7 @@ import {
   type ScanEvent,
 } from "@forkpoint/agent-lighthouse-core";
 import { createProgressRenderer } from "./progress-renderer";
+import { tierMarker } from "./tier-marker";
 import {
   buildReportView,
   generateHtmlReport,
@@ -223,7 +224,7 @@ async function audit(targetUrl?: string) {
             .toString()
             .padStart(
               3,
-            )}/100\x1b[0m  \x1b[90m(${c.pass}✓ ${c.warn}! ${c.fail}✗)\x1b[0m`,
+            )}/100\x1b[0m  \x1b[90m(${c.pass}✓ ${c.warn}! ${c.fail}✗${c.advisory > 0 ? ` ${c.advisory} advisory` : ""})\x1b[0m`,
         );
       }
     }
@@ -267,7 +268,7 @@ async function audit(targetUrl?: string) {
                 : "\x1b[90m[N/A]\x1b[0m";
 
         console.log(
-          `\n${statusBadge} \x1b[1m[${check.id}] ${check.title}\x1b[0m (Score: ${check.score})`,
+          `\n${statusBadge} \x1b[1m[${check.id}] ${check.title}\x1b[0m (Score: ${check.score})${tierMarker(check.tier)}`,
         );
         if (check.pageUrl)
           console.log(`  \x1b[90mPage:\x1b[0m        ${check.pageUrl}`);

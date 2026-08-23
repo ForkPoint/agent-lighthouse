@@ -23,6 +23,8 @@ export interface CheckCounts {
   fail: number;
   /** Not-applicable (page-type skips, scan errors, audit-declared na). */
   na: number;
+  /** Assessed checks whose tier is not `scored` — reported, never scored. */
+  advisory: number;
   /** Assessed checks only: pass + warn + fail. */
   total: number;
 }
@@ -99,7 +101,11 @@ function countChecks(checks: CheckResult[]): CheckCounts {
   const warn = checks.filter((c) => c.status === 'warn').length;
   const fail = checks.filter((c) => c.status === 'fail').length;
   const na = checks.filter((c) => c.status === 'na').length;
-  return { pass, warn, fail, na, total: pass + warn + fail };
+  // Tier is not a status: an advisory check passes or fails like any other, it
+  // just never moves a score. Counting it separately is what stops a deliberate
+  // advisory from reading as a defect.
+  const advisory = checks.filter((c) => c.status !== 'na' && c.tier !== undefined && c.tier !== 'scored').length;
+  return { pass, warn, fail, na, advisory, total: pass + warn + fail };
 }
 
 function toCategoryView(cat: CategoryResult): CategoryView {

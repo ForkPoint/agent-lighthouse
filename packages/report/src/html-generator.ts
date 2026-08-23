@@ -61,6 +61,7 @@ export function generateHtmlReport(report: ScanReport): string {
                     <span>•</span>
                     <span class="text-red-600 dark:text-red-400 font-semibold">${cat.counts.fail} Failed</span>
                     ${cat.counts.na > 0 ? `<span>•</span><span>${cat.counts.na} N/A</span>` : ''}
+                    ${cat.counts.advisory > 0 ? `<span>•</span><span>${cat.counts.advisory} Advisory</span>` : ''}
                   </div>
                 </div>
                 <div class="flex items-center gap-3">
@@ -88,6 +89,7 @@ export function generateHtmlReport(report: ScanReport): string {
                             <span>${escapeHtml(c.title)}</span>
                             <span class="text-[10px] uppercase tracking-wider font-mono text-slate-400">[${escapeHtml(c.id)}]</span>
                             ${c.deprecated ? '<span class="text-[10px] uppercase tracking-wider font-bold px-1.5 py-0.5 rounded bg-slate-200 dark:bg-slate-700 text-slate-500 dark:text-slate-400">Deprecated</span>' : ''}
+                            ${c.tier && c.tier !== 'scored' ? `<span class="text-[10px] uppercase tracking-wider font-bold px-1.5 py-0.5 rounded bg-sky-100 dark:bg-sky-950 text-sky-700 dark:text-sky-300" title="${c.tier === 'experimental' ? 'Experimental check — excluded from scoring while it is validated.' : 'Advisory check — reported, never scored.'}">${c.tier === 'experimental' ? 'Experimental' : 'Advisory'} — not scored</span>` : ''}
                           </div>
                           ${c.displayValue ? `<div class="text-xs font-mono text-slate-500 dark:text-slate-400 mt-0.5 whitespace-pre-line">${escapeHtml(c.displayValue)}</div>` : ''}
                         </div>
