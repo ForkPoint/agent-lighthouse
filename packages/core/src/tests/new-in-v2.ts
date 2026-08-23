@@ -42,6 +42,7 @@ export const NEW_IN_V2: readonly string[] = [
   'operability-safety/drag-and-slider-dependency',
   'operability-safety/url-addressable-state-and-pagination-fallback',
   'operability-safety/first-contact-consent-gate-operability',
+  'operability-safety/unicode-covert-channel-scan',
 ];
 
 /** The 148 audits Plan 4 closed the v2 migration on. Never changes again. */

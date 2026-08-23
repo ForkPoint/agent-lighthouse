@@ -1,18 +1,19 @@
 ---
-check: unicode-covert-channel-scan
-title: "Unicode Covert-Channel Scan"
-domain: injection-safety
-status: proposed
+audit: operability-safety/unicode-covert-channel-scan
+category: operability-safety
+source_file: packages/core/src/audits/operability-safety/unicode-covert-channel-scan.ts
+slug: unicode-covert-channel-scan
 evidence_grade: B
-uniqueness: unique
-difficulty: static-fetch
-scoring_tier: scored
+tier: scored
+disposition: "new in v2 — graduated from proposal 2026-08-23"
 reviewed: 2026-08-20
+graduated: 2026-08-23
 ---
+
 
 # Unicode Covert-Channel Scan
 
-> Proposed check. Evidence grade **B** · unique · implementation: `static-fetch`
+> Shipped in v2. Evidence grade **B** · scored tier · unique · implementation: `static-fetch`
 
 ## What it checks
 
@@ -50,3 +51,39 @@ Tier per evidence policy: **scored** — grade B meets the A/B bar required for 
 ## Review history
 
 - 2026-08-20 — proposed by the novel-checks research pass (10-agent evidence workflow); sources URL-verified at research time.
+
+## Implementation deviations
+
+The shipped audit is `operability-safety/unicode-covert-channel-scan`, in the
+`operability-safety` category: the proposal's `injection-safety` domain is a
+research grouping, not one of the eight v2 categories.
+
+The declared-charset decode in the sketch is not repeated here. The fetcher
+already decodes the response before the parser sees it, so the scanner works on
+the same string every other audit does.
+
+Every payload is printed as `\u{XXXX}` escapes rather than verbatim. A report
+that pasted the raw characters would carry the covert channel into whatever
+document quoted it. Tag-block runs are the exception in one direction only: the
+decoded ASCII is printed as plain text, because that sentence is the finding.
+
+Zero-width characters are counted only between two letters or digits. A
+character adjacent to an emoji, or to Arabic or Indic script, is skipped: those
+are the shaping uses the codepoints exist for.
+
+Bidi controls are a finding when the pushes and pops do not balance, and also
+when a balanced pair wraps text containing no right-to-left script at all — a
+direction scope around Latin text does nothing except reorder what an extractor
+reads.
+
+## Deferred
+
+- **Rendered-order comparison.** The dossier's falsifier compares the DOM text
+  against the rendered text. Rendering is the headless-browser tier, so the
+  audit reasons from the codepoints alone.
+- **Homoglyph substitution.** Cyrillic and Greek letters that look like Latin
+  ones are a related channel with a very different false-positive profile, and
+  belong to their own check rather than to this one.
+- **Attribute coverage.** Nine named attributes plus `href` and `src` are
+  scanned. A payload in a bespoke `data-*` attribute that only the site's own
+  script reads is not text an agent ingests, so it is out of scope.

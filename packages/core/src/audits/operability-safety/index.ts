@@ -54,6 +54,7 @@ export { HoverOnlyContentAndNavigationAudit } from './hover-only-content-and-nav
 export { DragAndSliderDependencyAudit } from './drag-and-slider-dependency';
 export { UrlAddressableStateAndPaginationFallbackAudit } from './url-addressable-state-and-pagination-fallback';
 export { FirstContactConsentGateOperabilityAudit } from './first-contact-consent-gate-operability';
+export { UnicodeCovertChannelScanAudit } from './unicode-covert-channel-scan';
 
 // Not an audit: the rule-id list the orchestrator feeds to the engine. It is
 // only complete once every engine-backed audit module has been evaluated — this
@@ -94,6 +95,7 @@ import { HoverOnlyContentAndNavigationAudit } from './hover-only-content-and-nav
 import { DragAndSliderDependencyAudit } from './drag-and-slider-dependency';
 import { UrlAddressableStateAndPaginationFallbackAudit } from './url-addressable-state-and-pagination-fallback';
 import { FirstContactConsentGateOperabilityAudit } from './first-contact-consent-gate-operability';
+import { UnicodeCovertChannelScanAudit } from './unicode-covert-channel-scan';
 
 /** Every audit that lives in the operability-safety category, in map order. */
 export const OPERABILITY_SAFETY_AUDITS = [
@@ -131,4 +133,5 @@ export const OPERABILITY_SAFETY_AUDITS = [
   DragAndSliderDependencyAudit,
   UrlAddressableStateAndPaginationFallbackAudit,
   FirstContactConsentGateOperabilityAudit,
+  UnicodeCovertChannelScanAudit,
 ] as const;

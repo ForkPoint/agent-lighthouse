@@ -1,6 +1,6 @@
 # Proposed checks — evidence dossiers
 
-46 proposed checks from the 2026-08-20 novel-checks research pass. Each dossier states what the check verifies, the falsifiable mechanism behind it, cited evidence from the [source registry](../sources.json), competitor coverage, and an implementation sketch. Grading rubric: [evidence policy](../POLICY.md).
+45 proposed checks from the 2026-08-20 novel-checks research pass. Each dossier states what the check verifies, the falsifiable mechanism behind it, cited evidence from the [source registry](../sources.json), competitor coverage, and an implementation sketch. Grading rubric: [evidence policy](../POLICY.md).
 
 Seven dossiers left this folder on 2026-08-22 (Plan 5, Task 2): six tool
 surveys moved to [../research](../research/README.md) because their verdict is
@@ -42,7 +42,6 @@ Grades: **A** = documented consumer behavior or ratified standard · **B** = dra
 | B | [Reflected-Parameter Injection Canary](./injection-safety/reflected-parameter-injection-canary.md) | injection-safety | unique | `static-fetch` | scored |
 | B | [Third-Party DOM-Write Blast Radius](./injection-safety/third-party-dom-write-blast-radius.md) | injection-safety | partial-overlap | `static-fetch` | scored |
 | B | [UGC Trust-Boundary Markers](./injection-safety/ugc-trust-boundary-markers.md) | injection-safety | unique | `multi-page` | scored |
-| B | [Unicode Covert-Channel Scan](./injection-safety/unicode-covert-channel-scan.md) | injection-safety | unique | `static-fetch` | scored |
 | B | [Unsafe Agent-Triggerable Affordances](./injection-safety/unsafe-agent-triggerable-affordances.md) | injection-safety | unique | `static-fetch` | scored |
 | B | [Origin Validation and CORS Coherence](./mcp-server-quality/origin-validation-and-cors-coherence.md) | mcp-server-quality | unique | `static-fetch` | scored |
 | B | [Registry Listing and Namespace Ownership Proof](./mcp-server-quality/registry-listing-and-namespace-ownership-proof.md) | mcp-server-quality | partial-overlap | `multi-page` | scored |
