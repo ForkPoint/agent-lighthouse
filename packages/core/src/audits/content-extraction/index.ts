@@ -28,6 +28,7 @@ export { CssHiddenGhostContentAudit } from './css-hidden-ghost-content';
 export { HydrationPayloadShareAudit } from './hydration-payload-share';
 export { PreambleTaxTokensBeforeTheFirstContentTokenAudit } from './preamble-tax';
 export { BoilerplateTaxAudit } from './boilerplate-tax';
+export { ExtractionDeterminismAudit } from './extraction-determinism';
 
 import { ServerResponsivenessAudit } from './server-responsiveness';
 import { LanguageAttributeAudit } from './language-attribute';
@@ -54,6 +55,7 @@ import { CssHiddenGhostContentAudit } from './css-hidden-ghost-content';
 import { HydrationPayloadShareAudit } from './hydration-payload-share';
 import { PreambleTaxTokensBeforeTheFirstContentTokenAudit } from './preamble-tax';
 import { BoilerplateTaxAudit } from './boilerplate-tax';
+import { ExtractionDeterminismAudit } from './extraction-determinism';
 
 /** Every audit that lives in the content-extraction category, in map order. */
 export const CONTENT_EXTRACTION_AUDITS = [
@@ -82,4 +84,5 @@ export const CONTENT_EXTRACTION_AUDITS = [
   HydrationPayloadShareAudit,
   PreambleTaxTokensBeforeTheFirstContentTokenAudit,
   BoilerplateTaxAudit,
+  ExtractionDeterminismAudit,
 ] as const;

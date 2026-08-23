@@ -50,6 +50,7 @@ export const NEW_IN_V2: readonly string[] = [
   'operability-safety/agent-ua-content-divergence-diff',
   'content-extraction/preamble-tax',
   'content-extraction/boilerplate-tax',
+  'content-extraction/extraction-determinism',
 ];
 
 /** The 148 audits Plan 4 closed the v2 migration on. Never changes again. */

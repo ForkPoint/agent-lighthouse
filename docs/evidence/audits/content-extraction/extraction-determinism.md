@@ -1,18 +1,19 @@
 ---
-check: extraction-determinism-multi-extractor-agreement
-title: "Extraction determinism (multi-extractor agreement)"
-domain: token-economics
-status: proposed
+audit: content-extraction/extraction-determinism
+category: content-extraction
+source_file: packages/core/src/audits/content-extraction/extraction-determinism.ts
+slug: extraction-determinism
 evidence_grade: B
-uniqueness: unique
-difficulty: static-fetch
-scoring_tier: scored
+tier: scored
+disposition: "new in v2 — graduated from proposal 2026-08-23"
 reviewed: 2026-08-20
+graduated: 2026-08-23
 ---
+
 
 # Extraction determinism (multi-extractor agreement)
 
-> Proposed check. Evidence grade **B** · unique · implementation: `static-fetch`
+> Shipped in v2. Evidence grade **B** · scored tier · unique · implementation: `static-fetch`
 
 ## What it checks
 
@@ -56,3 +57,49 @@ Tier per evidence policy: **scored** — grade B meets the A/B bar required for 
 ## Review history
 
 - 2026-08-20 — proposed by the novel-checks research pass (10-agent evidence workflow); sources URL-verified at research time.
+
+## Implementation deviations
+
+The shipped audit is `content-extraction/extraction-determinism`: the proposal's
+`token-economics` domain is a research grouping, not one of the eight v2
+categories, and its slug —
+`extraction-determinism-multi-extractor-agreement` — produced a 67-character id,
+over the 64-character cap `v2-meta.test.ts` enforces. The full name survives as
+the audit's title.
+
+The three extractors are `@mozilla/readability` over jsdom, a semantic-container
+selector (`main` → `[role=main]` → `article` → `body`, chrome removed), and a
+text-density scorer that picks the block with the most text that is not link
+text. The proposal names `linkedom` for parsing and `defuddle` as the third
+extractor; jsdom is already a dependency of this package and the density scorer
+is the one load-bearing idea of the boilerpipe/trafilatura family, written in
+place rather than added as a dependency.
+
+Two conditions fail outright, before any comparison runs: readability declining
+the document, and readability returning fewer than 500 characters — its own
+`charThreshold`. Both mean the same thing, which is that the most widely
+deployed extractor of the three hands an agent nothing.
+
+`isProbablyReaderable` is not called separately. It answers a weaker version of
+the same question that `parse()` already answers definitively, and calling it
+would parse the document twice.
+
+Agreement is pairwise Jaccard over five-word shingles. Above 0.8 all three are
+reading the same article; below 0.6 two of them are reading different documents.
+The 0.6–0.8 warn band is this implementation's, not the proposal's.
+
+The applicability gate measures the page's whole visible text, not its main
+content. Asking an extractor whether there is anything to extract would decide
+the question with the tool under test.
+
+Only the entry page is compared. Three extractions cost one jsdom parse and two
+cheerio passes; running that per page would multiply the scan's cost to report
+the same template property.
+
+## Deferred
+
+- **A fourth extractor.** Two heuristics plus readability already separate "one
+  article" from "three answers". A fourth adds cost without adding a verdict.
+- **Per-template sampling.** Extraction determinism is a property of the
+  template. Sampling one page per detected template needs template detection,
+  which this wave does not build.
