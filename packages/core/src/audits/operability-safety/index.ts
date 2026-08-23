@@ -52,6 +52,7 @@ export { GhostClickableElementRatioAudit } from './ghost-clickable-element-ratio
 export { StatefulControlIntrospectabilityAudit } from './stateful-control-introspectability';
 export { HoverOnlyContentAndNavigationAudit } from './hover-only-content-and-navigation';
 export { DragAndSliderDependencyAudit } from './drag-and-slider-dependency';
+export { UrlAddressableStateAndPaginationFallbackAudit } from './url-addressable-state-and-pagination-fallback';
 
 // Not an audit: the rule-id list the orchestrator feeds to the engine. It is
 // only complete once every engine-backed audit module has been evaluated — this
@@ -90,6 +91,7 @@ import { GhostClickableElementRatioAudit } from './ghost-clickable-element-ratio
 import { StatefulControlIntrospectabilityAudit } from './stateful-control-introspectability';
 import { HoverOnlyContentAndNavigationAudit } from './hover-only-content-and-navigation';
 import { DragAndSliderDependencyAudit } from './drag-and-slider-dependency';
+import { UrlAddressableStateAndPaginationFallbackAudit } from './url-addressable-state-and-pagination-fallback';
 
 /** Every audit that lives in the operability-safety category, in map order. */
 export const OPERABILITY_SAFETY_AUDITS = [
@@ -125,4 +127,5 @@ export const OPERABILITY_SAFETY_AUDITS = [
   StatefulControlIntrospectabilityAudit,
   HoverOnlyContentAndNavigationAudit,
   DragAndSliderDependencyAudit,
+  UrlAddressableStateAndPaginationFallbackAudit,
 ] as const;

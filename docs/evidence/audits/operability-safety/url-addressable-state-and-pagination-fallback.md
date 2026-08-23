@@ -1,18 +1,19 @@
 ---
-check: url-addressable-state-and-pagination-fallback
-title: "URL-Addressable State and Pagination Fallback"
-domain: agent-operability
-status: proposed
+audit: operability-safety/url-addressable-state-and-pagination-fallback
+category: operability-safety
+source_file: packages/core/src/audits/operability-safety/url-addressable-state-and-pagination-fallback.ts
+slug: url-addressable-state-and-pagination-fallback
 evidence_grade: B
-uniqueness: unique
-difficulty: multi-page
-scoring_tier: scored
+tier: scored
+disposition: "new in v2 — graduated from proposal 2026-08-23"
 reviewed: 2026-08-20
+graduated: 2026-08-23
 ---
+
 
 # URL-Addressable State and Pagination Fallback
 
-> Proposed check. Evidence grade **B** · unique · implementation: `multi-page`
+> Shipped in v2. Evidence grade **B** · scored tier · unique · implementation: `multi-page`
 
 ## What it checks
 
@@ -52,3 +53,38 @@ Tier per evidence policy: **scored** — grade B meets the A/B bar required for 
 ## Review history
 
 - 2026-08-20 — proposed by the novel-checks research pass (10-agent evidence workflow); sources URL-verified at research time.
+
+## Implementation deviations
+
+The shipped audit is `operability-safety/url-addressable-state-and-pagination-fallback`,
+in the `operability-safety` category: the proposal's `agent-operability` domain
+is a research grouping, not one of the eight v2 categories. It declares
+`applicablePageTypes: ['category']`, and returns notApplicable when the scan
+found no listing page.
+
+The three pagination affordances are graded apart, in the order the sketch
+argues for: an `href` or a `rel="next"` passes, a "Load more" button warns
+because it is at least a discrete action, and scroll machinery alone fails.
+
+The declared-total check fires only when the total exceeds the rendered items by
+more than half. A listing that renders 20 of 24 is paginating normally; one that
+renders 20 of 100 with no `href` is hiding four fifths of its catalogue.
+
+Facet probing is capped at two same-origin GETs per listing, each through the
+shared sampled-page cache and its SSRF gate. A facet is called client-only when
+the fetched response is byte-identical to the unfiltered page, or when it holds
+the same number of items — either way the server did not act on the parameter.
+
+## Deferred
+
+- **Headless tab and modal extension.** The sketch extends the check to tabs and
+  modals by clicking each one and asserting `location.href` changed. Clicking
+  needs a live browser, which the scanner does not drive.
+- **Varying the page parameter to prove it works.** The audit reads the page
+  numbers the listing itself advertises. Fetching `?page=2` to confirm the
+  server returns different items would double the request budget for a claim
+  the markup already makes.
+- **Facets that filter through a different parameter name.** Only links whose
+  own class, `data-filter` or parent class reads as a facet are probed. A filter
+  rendered as an unlabelled anchor is not distinguishable from ordinary
+  navigation without running the page.
