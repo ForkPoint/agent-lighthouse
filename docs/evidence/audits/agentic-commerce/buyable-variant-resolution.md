@@ -1,18 +1,19 @@
 ---
-check: buyable-variant-resolution
-title: "Buyable Variant Resolution"
-domain: agentic-commerce
-status: proposed
+audit: agentic-commerce/buyable-variant-resolution
+category: agentic-commerce
+source_file: packages/core/src/audits/agentic-commerce/buyable-variant-resolution.ts
+slug: buyable-variant-resolution
 evidence_grade: B
-uniqueness: unique
-difficulty: multi-page
-scoring_tier: scored
+tier: scored
+disposition: "new in v2 — graduated from proposal 2026-08-23"
 reviewed: 2026-08-20
+graduated: 2026-08-23
 ---
+
 
 # Buyable Variant Resolution
 
-> Proposed check. Evidence grade **B** · unique · implementation: `multi-page`
+> Shipped in v2. Evidence grade **B** · scored tier · unique · implementation: `multi-page`
 
 ## What it checks
 
@@ -52,3 +53,18 @@ Tier per evidence policy: **scored** — grade B meets the A/B bar required for 
 ## Review history
 
 - 2026-08-20 — proposed by the novel-checks research pass (10-agent evidence workflow); sources URL-verified at research time.
+
+## Implementation deviations
+
+- **No network calls.** The sketch mentions fetching `/products/{handle}.js` for Shopify variant JSON. The audit reads only pages the scan already fetched: the Shopify variant array is counted out of the inline `window.ShopifyAnalytics` script, and WooCommerce out of `data-product_variations` on the variations form. BigCommerce `productOptions` and Magento are covered only through the `<select>` and data-attribute arms.
+- **Variant counts come from the strongest signal, not from all of them summed.** A page carrying both a size `<select>` and per-swatch `data-variant-id` attributes would double-count if the arms were added; the audit takes the largest single count instead. That undercounts a true size × colour matrix — a 5 × 3 page reports 5 — so the cardinality warning fires only when the markup resolves fewer variants than the single largest selector shows. Undercounting is the safe direction: it never invents a mismatch that is not there.
+- **At most 3 product pages** are examined, and the failure reported is the first one found. The details block carries up to 5 of each finding kind.
+- **Reachability of variant URLs is not probed.** The audit checks that each variant is addressable in the markup, not that its URL answers.
+- **A ProductGroup that exists but does not resolve outranks the offer-shape arms.** When a page carries a `ProductGroup` with problems, the finding names the missing per-variant fields rather than saying "exactly one Offer": the field list is what a developer acts on.
+- **`mpn` is accepted as a variant identifier** alongside `sku` and the `gtin` family. Google's guidance names sku-or-gtin; a unique `mpn` addresses the variant just as well, and rejecting it would fail pages that are in fact resolvable.
+
+## Deferred
+
+- **The DOM-versus-markup cardinality check is partial.** Step 4 of the sketch compares the variant count in markup against the count "in the DOM/platform JSON". Without a rendered DOM the audit compares against the largest static selector it can see, so a page that builds its selectors in JavaScript reports no variants at all and is treated as single-variant.
+- **`variesBy` values are not cross-checked against the variants.** The audit requires `variesBy` to be present; it does not verify that every variant carries the colour/size properties `variesBy` names.
+- **Feed-side validation.** Whether the merchant's ACP or OpenAI feed actually carries the variants is out of scope: the audit reads the page, not the feed.
