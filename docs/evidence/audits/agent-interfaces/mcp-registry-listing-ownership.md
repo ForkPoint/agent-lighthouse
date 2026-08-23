@@ -1,18 +1,19 @@
 ---
-check: registry-listing-and-namespace-ownership-proof
-title: "Registry Listing and Namespace Ownership Proof"
-domain: mcp-server-quality
-status: proposed
+audit: agent-interfaces/mcp-registry-listing-ownership
+category: agent-interfaces
+source_file: packages/core/src/audits/agent-interfaces/mcp-registry-listing-ownership.ts
+slug: mcp-registry-listing-ownership
 evidence_grade: B
-uniqueness: partial-overlap
-difficulty: multi-page
-scoring_tier: scored
+tier: scored
+disposition: "new in v2 — graduated from proposal 2026-08-23"
 reviewed: 2026-08-20
+graduated: 2026-08-23
 ---
+
 
 # Registry Listing and Namespace Ownership Proof
 
-> Proposed check. Evidence grade **B** · partial overlap · implementation: `multi-page`
+> Shipped in v2. Evidence grade **B** · scored tier · partial overlap · implementation: `multi-page`
 
 ## What it checks
 
@@ -57,3 +58,18 @@ Tier per evidence policy: **scored** — grade B meets the A/B bar required for 
 ## Review history
 
 - 2026-08-20 — proposed by the novel-checks research pass (10-agent evidence workflow); sources URL-verified at research time.
+
+## Implementation deviations
+
+- **The Evidence block above does not belong to this check.** Its four sources — the Lighthouse `agent-accessibility-tree` audit, the WebSuite agent study, the web.dev text-fragments article and browser-use's DOM extractor — are about accessibility trees and agent DOM parsing. None of them says anything about the MCP Registry, namespaces or ownership proofs. The block was mis-pasted during the proposal pass; the mechanism, the sketch and the failure example are the ones that were reviewed, and they are what the implementation follows. The evidence grade is held at **B** on the strength of the registry API itself being directly observable, not on the strength of the block above.
+- **Slug renamed** from `registry-listing-and-namespace-ownership-proof` to `mcp-registry-listing-ownership`: the audit id is capped at 64 characters, and the `mcp-` prefix groups it with the other MCP audits in `agent-interfaces`.
+- **No pagination.** The sketch paginates on `metadata.nextCursor`. The implementation reads only the first page of each of at most two searches — `<apex>` and the brand token. A server that a search ranks below the first page is one an agent resolving the same query would also miss.
+- **Version drift is not compared.** Step 4 of the sketch compares `server.version` against the version `server/discover` reports. That comparison needs a second live call to the endpoint on top of the registry calls, so the implementation reports the registry's own `status` and `isLatest` and leaves drift alone.
+- **Remote reachability is not probed.** Step 6 feeds each `remotes[].url` through a reachability probe. The audit does not: the URLs come from a third-party document, and the other MCP audits already probe the endpoint the site itself declares.
+- **The aggregator arm fails, the GitHub arm warns.** An entry under a third-party aggregator namespace leaves the brand unable to update or revoke its own listing, which is the failure the example describes. An `io.github.<user>` entry is at least held by somebody who can update it, so it is reported as a warning rather than a failure.
+- **The proof is fetched from the apex, not read from the scan's root files.** A scan of `www.example.com` collects root files for the `www` host; the namespace is bound to the apex, so the proof is fetched at `https://<apex>/.well-known/mcp-registry-auth`.
+
+## Deferred
+
+- **The DNS TXT leg of the proof.** The mechanism accepts either an apex TXT record or the `.well-known` file. The scanner has no DNS resolver, so only the file is checked. A domain that proves control by TXT alone is reported as having no proof — the audit says which file it looked for, and the remediation names it.
+- **Trust in the registry's own answer.** The audit reports what the registry says about `status` and `isLatest`. It does not verify the registry's signature over the entry.
