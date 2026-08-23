@@ -1,18 +1,19 @@
 ---
-check: third-party-dom-write-blast-radius
-title: "Third-Party DOM-Write Blast Radius"
-domain: injection-safety
-status: proposed
+audit: operability-safety/third-party-dom-write-blast-radius
+category: operability-safety
+source_file: packages/core/src/audits/operability-safety/third-party-dom-write-blast-radius.ts
+slug: third-party-dom-write-blast-radius
 evidence_grade: B
-uniqueness: partial-overlap
-difficulty: static-fetch
-scoring_tier: scored
+tier: scored
+disposition: "new in v2 — graduated from proposal 2026-08-23"
 reviewed: 2026-08-20
+graduated: 2026-08-23
 ---
+
 
 # Third-Party DOM-Write Blast Radius
 
-> Proposed check. Evidence grade **B** · partial overlap · implementation: `static-fetch`
+> Shipped in v2. Evidence grade **B** · scored tier · partial overlap · implementation: `static-fetch`
 
 ## What it checks
 
@@ -52,3 +53,43 @@ Tier per evidence policy: **scored** — grade B meets the A/B bar required for 
 ## Review history
 
 - 2026-08-20 — proposed by the novel-checks research pass (10-agent evidence workflow); sources URL-verified at research time.
+
+## Implementation deviations
+
+The shipped audit is `operability-safety/third-party-dom-write-blast-radius`, in
+the `operability-safety` category: the proposal's `injection-safety` domain is a
+research grouping, not one of the eight v2 categories.
+
+The CSP is read from the response header first and from `<meta http-equiv>`
+second — the same two delivery paths `security-header-hygiene` accepts. Nothing
+is imported from that audit: it answers whether the headers are well-formed,
+this one answers how many companies can write to the page.
+
+"Constraining" is decided as CSP3 decides it: a nonce, a hash or
+`strict-dynamic` constrains, and so does a plain host allowlist. A source list
+containing `https:`, `http:`, `data:`, `blob:` or `*` does not, and neither does
+`'unsafe-inline'` with no nonce or hash beside it — that policy is present in
+the response and decorative in effect.
+
+Origins are grouped by eTLD+1 using the same short suffix list
+`agentic-commerce/acp-policy-link-surface` carries, rather than a bundled Public
+Suffix List snapshot. `cdn.vendor.com` and `static.vendor.com` are one company
+with write access, so they are one origin.
+
+Cross-origin frames are reported only when they are large enough to render text.
+A frame under 50 pixels in either declared direction is a beacon, not a surface
+an agent reads.
+
+The `found` line always ends with "runtime-injected tags not counted", so the
+number is not read as the whole list.
+
+## Deferred
+
+- **Runtime tag-manager tier.** Tags a manager injects after load are not in the
+  served HTML, and that is usually where most of the origin list lives.
+  Enumerating them needs a live browser.
+- **Whether a script actually writes to the DOM.** Every third-party script
+  *can*; proving which ones *do* means executing them. The count is a capability
+  measure, which is what the finding claims.
+- **Report-only policies.** A `Content-Security-Policy-Report-Only` header
+  enforces nothing, so it is not read as a constraint and not reported as one.
