@@ -1,18 +1,19 @@
 ---
-check: hover-only-content-and-navigation
-title: "Hover-Only Content and Navigation"
-domain: agent-operability
-status: proposed
+audit: operability-safety/hover-only-content-and-navigation
+category: operability-safety
+source_file: packages/core/src/audits/operability-safety/hover-only-content-and-navigation.ts
+slug: hover-only-content-and-navigation
 evidence_grade: B
-uniqueness: unique
-difficulty: static-fetch
-scoring_tier: scored
+tier: scored
+disposition: "new in v2 — graduated from proposal 2026-08-23"
 reviewed: 2026-08-20
+graduated: 2026-08-23
 ---
+
 
 # Hover-Only Content and Navigation
 
-> Proposed check. Evidence grade **B** · unique · implementation: `static-fetch`
+> Shipped in v2. Evidence grade **B** · scored tier · unique · implementation: `static-fetch`
 
 ## What it checks
 
@@ -54,3 +55,39 @@ Tier per evidence policy: **scored** — grade B meets the A/B bar required for 
 ## Review history
 
 - 2026-08-20 — proposed by the novel-checks research pass (10-agent evidence workflow); sources URL-verified at research time.
+
+## Implementation deviations
+
+The shipped audit is `operability-safety/hover-only-content-and-navigation`, in
+the `operability-safety` category: the proposal's `agent-operability` domain is
+a research grouping, not one of the eight v2 categories.
+
+A `:hover` rule is only a finding when the element it reveals is also hidden at
+rest by a rule with no state pseudo-class. A hover rule that merely changes an
+opacity from 0.8 to 1 reveals nothing and is not counted.
+
+"No JS toggle is plausible" is read from three markers on the elements around
+the submenu: an `aria-expanded` or `aria-haspopup` attribute, an inline
+click/keydown/focus handler, or an `aria-controls` reference to the submenu's
+id. Any one of them is enough to stop the finding, because the audit does not
+run scripts and must not report a menu it cannot prove is unreachable.
+
+A `title` attribute that repeats the element's own text is not counted: it
+carries no information that would be lost. Form controls, `<iframe>` and
+`<abbr>` are exempt, because their `title` is a label the platform already
+exposes rather than content.
+
+The two halves are graded apart. A lost destination fails; a title-only string
+or an unreferenced hover card warns, because the agent still reaches every page.
+
+## Deferred
+
+- **Headless snapshot diff.** The sketch's higher-precision tier dispatches a
+  synthetic hover on each nav trigger and diffs the exposed link set against the
+  resting snapshot. That needs a live browser, which the scanner does not drive.
+- **Transition-revealed menus.** A submenu revealed by a `transform` or a
+  `transition` on hover is not detected: whether the end state is visible
+  depends on layout, which does not exist before rendering.
+- **Cross-origin stylesheets.** A scan never fetches a third party's CSS on the
+  scanned site's behalf. When a sheet is skipped the result says so, so a
+  partial read does not read as a clean one.
