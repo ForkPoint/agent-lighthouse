@@ -301,3 +301,57 @@ export function discoverParams(version: string = MCP_PROTOCOL_VERSION): Record<s
     },
   };
 }
+
+/** A complete `tools/list` read, with whether the page budget cut it short. */
+export interface ToolListing {
+  tools: Record<string, unknown>[];
+  /** True when a `nextCursor` was still pending when the budget ran out. */
+  truncated: boolean;
+  /** How many pages were actually read. */
+  pages: number;
+}
+
+/**
+ * Every tool the endpoint lists, following `nextCursor` up to `maxPages`.
+ *
+ * Each page goes through `sharedProbe` under the same key, so the audits that
+ * read the tool surface — contract validity, description coverage — pay for one
+ * fetch between them however many of them run.
+ */
+export async function listTools(
+  ctx: CheckContext,
+  url: string,
+  maxPages: number,
+): Promise<ToolListing> {
+  const tools: Record<string, unknown>[] = [];
+  let cursor: string | undefined;
+  let pages = 0;
+
+  for (; pages < maxPages; pages += 1) {
+    const key = `tools|${url}|${cursor ?? ''}`;
+    const page = await sharedProbe(ctx, key, () =>
+      postRpcRaw(
+        ctx,
+        url,
+        `al-tools-${pages}`,
+        'tools/list',
+        { ...discoverParams(), ...(cursor ? { cursor } : {}) },
+        { 'MCP-Protocol-Version': MCP_PROTOCOL_VERSION },
+      ),
+    );
+    if (!page || page.status !== 200) break;
+    const parsed = parseRpcResponse(page);
+    if (!parsed.ok) break;
+    const list = parsed.value['tools'];
+    if (!Array.isArray(list)) break;
+    for (const tool of list) if (isObject(tool)) tools.push(tool);
+    const next = parsed.value['nextCursor'];
+    if (typeof next !== 'string' || !next) {
+      cursor = undefined;
+      break;
+    }
+    cursor = next;
+  }
+
+  return { tools, truncated: cursor !== undefined, pages };
+}

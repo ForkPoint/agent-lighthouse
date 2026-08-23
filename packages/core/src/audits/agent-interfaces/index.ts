@@ -26,6 +26,7 @@ export { McpToolsListDeterminismAudit } from './mcp-tools-list-determinism';
 export { McpVersionDowngradeAudit } from './mcp-version-downgrade';
 export { McpOriginValidationCorsAudit } from './mcp-origin-validation-cors';
 export { McpRegistryListingOwnershipAudit } from './mcp-registry-listing-ownership';
+export { McpToolDescriptionCoverageAudit } from './mcp-tool-description-coverage';
 
 import { OpenApiExistsAudit } from './openapi-exists';
 import { OpenApiEndpointsAudit } from './openapi-endpoints';
@@ -50,6 +51,7 @@ import { McpToolsListDeterminismAudit } from './mcp-tools-list-determinism';
 import { McpVersionDowngradeAudit } from './mcp-version-downgrade';
 import { McpOriginValidationCorsAudit } from './mcp-origin-validation-cors';
 import { McpRegistryListingOwnershipAudit } from './mcp-registry-listing-ownership';
+import { McpToolDescriptionCoverageAudit } from './mcp-tool-description-coverage';
 
 /** Every audit that lives in the agent-interfaces category, in map order. */
 export const AGENT_INTERFACES_AUDITS = [
@@ -76,4 +78,5 @@ export const AGENT_INTERFACES_AUDITS = [
   McpVersionDowngradeAudit,
   McpOriginValidationCorsAudit,
   McpRegistryListingOwnershipAudit,
+  McpToolDescriptionCoverageAudit,
 ] as const;

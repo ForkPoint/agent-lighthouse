@@ -11,12 +11,8 @@ import { weightForGrade } from '../../scorer';
 import type { CheckContext } from '../../check-context';
 import {
   discoverMcpEndpoint,
-  parseRpcResponse,
-  postRpcRaw,
-  sharedProbe,
-  discoverParams,
+  listTools,
   isObject,
-  MCP_PROTOCOL_VERSION,
 } from './_mcp-client';
 
 /** How many `nextCursor` pages are followed. */
@@ -145,37 +141,7 @@ export class McpToolContractValidityAudit extends Audit {
     }
 
     const url = endpoint.url;
-    const tools: Record<string, unknown>[] = [];
-    let cursor: string | undefined;
-    let pages = 0;
-    let truncated = false;
-
-    for (; pages < MAX_PAGES; pages += 1) {
-      const key = `tools|${url}|${cursor ?? ''}`;
-      const page = await sharedProbe(ctx, key, () =>
-        postRpcRaw(
-          ctx,
-          url,
-          `al-tools-${pages}`,
-          'tools/list',
-          { ...discoverParams(), ...(cursor ? { cursor } : {}) },
-          { 'MCP-Protocol-Version': MCP_PROTOCOL_VERSION },
-        ),
-      );
-      if (!page || page.status !== 200) break;
-      const parsed = parseRpcResponse(page);
-      if (!parsed.ok) break;
-      const list = parsed.value['tools'];
-      if (!Array.isArray(list)) break;
-      for (const tool of list) if (isObject(tool)) tools.push(tool);
-      const next = parsed.value['nextCursor'];
-      if (typeof next !== 'string' || !next) {
-        cursor = undefined;
-        break;
-      }
-      cursor = next;
-    }
-    if (cursor) truncated = true;
+    const { tools, truncated, pages } = await listTools(ctx, url, MAX_PAGES);
 
     if (tools.length === 0) {
       return this.notApplicable(

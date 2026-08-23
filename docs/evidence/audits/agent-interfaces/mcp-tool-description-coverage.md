@@ -1,18 +1,19 @@
 ---
-check: tool-self-description-coverage
-title: "Tool Self-Description Coverage"
-domain: mcp-server-quality
-status: proposed
+audit: agent-interfaces/mcp-tool-description-coverage
+category: agent-interfaces
+source_file: packages/core/src/audits/agent-interfaces/mcp-tool-description-coverage.ts
+slug: mcp-tool-description-coverage
 evidence_grade: B
-uniqueness: partial-overlap
-difficulty: static-fetch
-scoring_tier: scored
+tier: scored
+disposition: "new in v2 — graduated from proposal 2026-08-23"
 reviewed: 2026-08-20
+graduated: 2026-08-23
 ---
+
 
 # Tool Self-Description Coverage
 
-> Proposed check. Evidence grade **B** · partial overlap · implementation: `static-fetch`
+> Shipped in v2. Evidence grade **B** · scored tier · partial overlap · implementation: `static-fetch`
 
 ## What it checks
 
@@ -56,3 +57,19 @@ Tier per evidence policy: **scored** — grade B meets the A/B bar required for 
 ## Review history
 
 - 2026-08-20 — proposed by the novel-checks research pass (10-agent evidence workflow); sources URL-verified at research time.
+
+## Implementation deviations
+
+- **One of the two Evidence sources does not belong to this check.** The Playwright actionability entry is about browser click gating and says nothing about MCP tool metadata; it was mis-pasted during the proposal pass. The second source — the MCP 2026-07-28 tools specification — is the one the mechanism rests on, and it is accurate. The grade stays **B**: the metrics are counts of directly observable fields, and only the pass thresholds are our convention.
+- **Slug renamed** from `tool-self-description-coverage` to `mcp-tool-description-coverage`, grouping it with the other MCP audits in `agent-interfaces`.
+- **Container parameters are not counted.** The sketch says "leaf parameters"; the implementation counts only leaves and walks through object and array-of-object containers, so `line_items` itself is not a parameter but `line_items[].tax_code` is. Counting containers would let a server raise its coverage by describing wrappers rather than fields.
+- **Required-ness is read from the enclosing schema.** A leaf counts as required only when its own immediate parent names it in `required`. A required container whose children are optional does not make those children required.
+- **Recursion is capped at 6 levels**, and combinators are not followed. `oneOf`/`anyOf`/`allOf`/`$ref` branches are skipped rather than merged: which branch applies depends on the instance, so a count over all branches would report parameters that never coexist.
+- **The tool list is the shared probe.** Pages come from `listTools`, which memoises each page under `tools|<url>|<cursor>` for the scan, so this audit and `agent-interfaces/mcp-tool-contract-validity` split the cost of one `tools/list` read. `instructions` is read off the `server/discover` response `agent-interfaces/mcp-modern-era-reachability` already requests.
+- **Stub descriptions warn, they do not fail.** A description under 40 characters is reported and counted, but a described tool clears the 100 % tool-description gate. The threshold that fails is presence, not length.
+
+## Deferred
+
+- **No judgement of description quality.** The audit counts presence and length. Whether a description actually tells a model what the tool does is not measured, and no LLM is asked.
+- **`enum` coverage is advisory only.** `constrainedStringRatio` is reported and never gated: a free-text parameter is legitimate, and a threshold would punish it.
+- **Pagination beyond 4 pages.** A tool surface wider than four pages is measured on the first four, and `details.pagesTruncated` says so.
