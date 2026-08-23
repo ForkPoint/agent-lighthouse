@@ -68,13 +68,27 @@ export function buildCategoryResult(
  * with no mass (only informative/experimental audits) drops out of both sums
  * and cannot move the result; with no mass anywhere there is nothing to score,
  * which reads as 0 — the same "no data" value every other surface uses.
+ *
+ * A category whose every check came back notApplicable drops out too. That is
+ * the rule `calculateCategoryScore` already applies to a single na check,
+ * lifted one level: without it a site with no commerce surface paid the whole
+ * agentic-commerce evidence mass at score 0, which reads as a penalty for not
+ * being a shop.
  */
+function hasAssessableCheck(cat: CategoryResult): boolean {
+  // A category that reported no checks at all is left alone — callers build
+  // those from a mass and a score directly, with no check list to inspect.
+  if (cat.checks.length === 0) return true;
+  return cat.checks.some((c) => c.status !== 'na' && !isInformative(c));
+}
+
 export function calculateOverallScore(categories: CategoryResult[]): number {
   let weighted = 0;
   let totalMass = 0;
   for (const cat of categories) {
     const mass = cat.weight ?? 0;
     if (mass <= 0) continue;
+    if (!hasAssessableCheck(cat)) continue;
     weighted += cat.score * mass;
     totalMass += mass;
   }

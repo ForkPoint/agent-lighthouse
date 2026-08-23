@@ -184,6 +184,56 @@ describe('buildCategoryResult', () => {
 // ---------------------------------------------------------------------------
 
 describe('calculateOverallScore', () => {
+  it('drops a category whose checks are all notApplicable', () => {
+    const commerce = makeCategory({
+      id: 'agentic-commerce',
+      score: 0,
+      weight: 4,
+      checks: [makeCheck({ status: 'na', score: 0 }), makeCheck({ status: 'na', score: 0 })],
+    });
+    const discovery = makeCategory({
+      id: 'machine-discovery',
+      score: 50,
+      weight: 4,
+      checks: [makeCheck(), makeCheck({ status: 'fail', score: 0 })],
+    });
+    // Without the rule this is (0*4 + 50*4) / 8 = 25.
+    expect(calculateOverallScore([commerce, discovery])).toBe(50);
+  });
+
+  it('still counts a category that has one assessable check', () => {
+    const commerce = makeCategory({
+      id: 'agentic-commerce',
+      score: 0,
+      weight: 4,
+      checks: [makeCheck({ status: 'na', score: 0 }), makeCheck({ status: 'fail', score: 0 })],
+    });
+    const discovery = makeCategory({
+      id: 'machine-discovery',
+      score: 100,
+      weight: 4,
+      checks: [makeCheck(), makeCheck()],
+    });
+    expect(calculateOverallScore([commerce, discovery])).toBe(50);
+  });
+
+  // A category whose only checks are advisory has no scored evidence either.
+  it('drops a category whose checks are all informative', () => {
+    const advisory = makeCategory({
+      id: 'structured-data',
+      score: 0,
+      weight: 2,
+      checks: [makeCheck({ scoreDisplayMode: 'informative', status: 'fail', score: 0 })],
+    });
+    const discovery = makeCategory({
+      id: 'machine-discovery',
+      score: 80,
+      weight: 4,
+      checks: [makeCheck()],
+    });
+    expect(calculateOverallScore([advisory, discovery])).toBe(80);
+  });
+
   it('computes weighted average correctly', () => {
     const categories: CategoryResult[] = [
       makeCategory({ score: 80, weight: 0.5 }),
