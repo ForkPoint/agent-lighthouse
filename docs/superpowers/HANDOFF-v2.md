@@ -4,10 +4,10 @@ Continuation anchor for the next session. Read this first, then the ledgers.
 
 ## Where things stand
 
-- Branch: `feat/v2-engine` (PR #10), pushed through `c84ce54` (Wave A); Plan 5b Wave B is committed locally and **not pushed** — the controller pushes after approval.
-- Registry: **193 audits, 8 categories**, ids `category/slug`, evidence-mass scoring.
-- Gates at HEAD: `pnpm test` 2982 passed / 0 failed / 217 skipped · `pnpm typecheck` clean · `rtk err pnpm lint` clean · `node scripts/check-dossiers.mjs` → "193 audits OK, no orphans" · `npx changeset status` all-major (core/report/cli/mcp → 2.0.0).
-- migration-map.json: 207 entries — 26 removed, 181 renamed, **zero** merging/interim. `migration-map.test.ts` pins the census, extinction, dossier-link existence, registry cross-pin; `sunset.test.ts` pins the v1 roster; `new-in-v2.ts` carries the 45 ids added by Plans 5 and 5b.
+- Branch: `feat/v2-engine` (PR #10), pushed through `fba7c75` (Wave B); Plan 5b Wave C is committed locally and **not pushed** — the controller pushes after approval.
+- Registry: **203 audits, 8 categories**, ids `category/slug`, evidence-mass scoring.
+- Gates at HEAD: `pnpm test` 3160 passed / 0 failed / 227 skipped · `pnpm typecheck` clean · `rtk err pnpm lint` clean · `node scripts/check-dossiers.mjs` → "203 audits OK, no orphans" · `npx changeset status` all-major (core/report/cli/mcp → 2.0.0).
+- migration-map.json: 207 entries — 26 removed, 181 renamed, **zero** merging/interim. `migration-map.test.ts` pins the census, extinction, dossier-link existence, registry cross-pin; `sunset.test.ts` pins the v1 roster; `new-in-v2.ts` carries the 55 ids added by Plans 5 and 5b.
 - Zero `TODO(redeem)` / `TODO(merge)` / `TODO(rewrite)` markers left in live audit code. `REWORK-TODO.md` is all `[x] DONE`.
 
 ## Executed plans
@@ -20,7 +20,8 @@ Continuation anchor for the next session. Read this first, then the ledgers.
 | 5 — grade-A graduation | `docs/superpowers/plans/2026-08-22-v2-graduate-grade-a.md` | complete — 24 audits graduated, registry 148 → 172, commits `2bb2506..32955d4` |
 | 6 — polish + backlog | `docs/superpowers/plans/2026-08-23-v2-polish-backlog.md` | complete — 15 tasks, commits `16a4662..e4a4e13`. What it deliberately did not fix is listed under "Triage record" in that file |
 | 5b Wave A — grade-B graduation | `docs/superpowers/plans/2026-08-23-v2-graduate-grade-b-wave-a.md` | complete — 12 audits graduated into `operability-safety`, registry 172 → 184, commits `c310763..9b443f0` (plan doc `853a8d9`) |
-| 5b Wave B — grade-B graduation | `docs/superpowers/plans/2026-08-23-v2-graduate-grade-b-wave-b.md` | complete — 9 audits graduated (4 `content-extraction`, 5 `answer-readiness`) and 3 proposals folded into shipped audits, registry 184 → 193, commits `af9a654..HEAD` (plan doc `6bacd41`) |
+| 5b Wave B — grade-B graduation | `docs/superpowers/plans/2026-08-23-v2-graduate-grade-b-wave-b.md` | complete — 9 audits graduated (4 `content-extraction`, 5 `answer-readiness`) and 3 proposals folded into shipped audits, registry 184 → 193, commits `af9a654..fba7c75` (plan doc `6bacd41`) |
+| 5b Wave C — grade-B graduation | `docs/superpowers/plans/2026-08-23-v2-graduate-grade-b-wave-c.md` | complete — 10 audits graduated (5 `access-crawl-control`, 5 `machine-discovery`) and 1 proposal folded, registry 193 → 203, commits `23915ff..HEAD` |
 
 Ledgers (Plan 6 consumed their deferral lists and marked both; keep as the record of what was found):
 - `.superpowers/sdd/2026-08-21-v2-taxonomy/progress.md`
@@ -29,12 +30,12 @@ Ledgers (Plan 6 consumed their deferral lists and marked both; keep as the recor
 ## Remaining scope
 
 ### Plan 5b — graduate the remaining grade-B proposals
-Source: `packages/core/src/audits/proposed/` (**28 stubs left**, none registered) + `docs/evidence/proposals/`.
-- Waves A and B are done. **24 feasible stubs remain across Waves C and D**, plus 3 infra-blocked and 1 deferred on the operator base URL.
+Source: `packages/core/src/audits/proposed/` (**17 stubs left**, none registered) + `docs/evidence/proposals/`.
+- Waves A, B and C are done. **13 feasible stubs remain, all in Wave D**, plus 3 infra-blocked and 1 deferred on the operator base URL.
 - Grade B → scored tier at `weightForGrade('B', 'scored')` = 0.6. Same tier law otherwise.
 - Intended grouping for the rest (user chose the four-wave split):
   - ~~**Wave B** — token-economics (7) + answer-selection-forensics (5)~~ done: 9 graduated, 3 folded into `content-extraction/token-ratio`, `content-extraction/svg-bloat` and `content-extraction/markdown-alternate`; `answer-selection-forensics/question-heading-answer-span-alignment` stays a stub (grade C, `llm-assisted`)
-  - **Wave C** — feeds-indexing (5) + bot-auth-access (5) + `competitor-gap-verify/content-signal-coherence` (1)
+  - ~~**Wave C** — feeds-indexing (5) + bot-auth-access (5) + `competitor-gap-verify/content-signal-coherence` (1)~~ done: 10 graduated, `competitor-gap-verify/content-signal-coherence` folded into `access-crawl-control/ai-usage-signal-coherence-across-channels`; six ids renamed to fit the 64-character cap in `schemas.ts`; the orphan half of `three-way-freshness-lag` was dropped because `machine-discovery/discovery-index-coverage` owns it
   - **Wave D** — trust-provenance (6) + mcp-server-quality (3) + agentic-commerce (3) + `offer-dom-price-parity` (1)
 - Still blocked on missing infra: **3** (1 `headless-browser` — `agent-operability/overlay-interception-hazard`, left behind by Wave A; 2 `llm-assisted`) — leave as stubs.
 - Deferred on plumbing, not on evidence: `agentic-commerce/acp-endpoint-conformance-probe` (grade A, informative) — ACP defines no discovery mechanism, so the audit needs an operator-supplied base URL. `ScanOptions`, the CLI flag set and the MCP tool schema would all have to grow one; Plan 6 shipped `--categories` and `--experimental`, but no base-URL flag.
@@ -58,6 +59,30 @@ Source: `packages/core/src/audits/proposed/` (**28 stubs left**, none registered
   (`readabilityArticle`, `semanticText`, `densityText`, `Extracted`).
   `sentences()` splits on terminal punctuation followed by whitespace *or* by a
   capital, because extractors concatenate block elements with no separator.
+- Shared modules added by Wave C, to reuse rather than duplicate:
+  `gatherers/feeds.ts` (`sharedFeed`, `sharedFeeds`, `discoverFeedUrls`,
+  `parseFeed`, `parseFeedDate` — the strict date parser that returns
+  `undefined` for a timezone-less value rather than guessing an offset),
+  `gatherers/conditional.ts` (`sharedRevalidation`),
+  `gatherers/structured-fields.ts` (`parseDictionary`, `parseLinkHeader`,
+  `linksWithRel`), `gatherers/currency.ts` (`isIso4217`),
+  `gatherers/robots.ts` (`directiveLines`), and `gatherers/ua-parity.ts`
+  gained `baselineHeaders`/`probeHeaders` on `UaProbe`.
+- **Audit ids are capped at 64 characters** by `packages/core/src/schemas.ts`.
+  Six Wave C proposals needed a shorter slug; each rename is recorded under
+  `## Implementation deviations` in its dossier. Check the id length before
+  writing the meta block.
+- **A `fail()`/`warn()` fourth argument may be a priority token or a
+  remediation sentence.** Thirty-two call sites passed a sentence, which threw
+  a `ZodError` at report time; `Audit.splitRecommendation` now accepts both and
+  `AuditResult.remediation` carries the sentence. Unit tests call
+  `audit.audit(ctx)` directly and never see `toCheckResult`, so this class of
+  defect only shows in a full scan — watch for `[scanner] Audit error` in the
+  test output.
+- **`details` values must be scalars or an array of strings.** A number array
+  is dropped whole by the result schema, which is how
+  `answer-readiness/section-split-risk-profile` lost `sectionTokens` until Wave
+  C fixed it.
 - Watch the scan budget: `verify-scan-results.test.ts` runs the whole registry against live sites at a 150s per-describe timeout, and the registry keeps growing. Share probes per scan rather than adding per-audit fetches.
 
 ### Endgame

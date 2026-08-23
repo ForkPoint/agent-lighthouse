@@ -107,6 +107,59 @@
     }
   },
   {
+    "id": "access-crawl-control/ai-usage-signal-coherence-across-channels",
+    "category": "access-crawl-control",
+    "categoryTitle": "Access & Crawl Control",
+    "title": "AI usage signals agree across every channel that carries them",
+    "failureTitle": "This site tells different AI systems opposite things about the same content",
+    "description": "Normalizes every AI-usage signal the site emits — robots.txt Allow/Disallow for training crawlers, AIPREF Content-Usage, Cloudflare Content-Signal, TDM-Rep in its three transports, and inline RSL permits/prohibits — into one comparable model, and reports where two channels contradict each other for the same category over overlapping paths.",
+    "scoreDisplayMode": "ternary",
+    "weight": 0.6,
+    "priority": "high",
+    "tier": "scored",
+    "evidenceGrade": "B",
+    "dossier": "docs/evidence/audits/access-crawl-control/ai-usage-signal-coherence-across-channels.md",
+    "guidance": {
+      "impact": "No standard defines precedence between these channels; each specifies only its own parsing. A crawler that reads TDM-Rep and a crawler that reads AIPREF therefore read disjoint inputs, and when those inputs disagree the two reach opposite conclusions about the same page. Whichever one you did not mean to publish is the one some operator will act on. The documented worst case is not even yours to make: Cloudflare’s managed robots.txt prepends its own Content-Signal block above your file, so your stated policy can be contradicted at the edge without you knowing.",
+      "fix": "Decide the policy once, then say the same thing in every channel you publish. If you do not intend to maintain a channel, remove it rather than leaving a stale value — a contradicted signal is worse than a missing one. Where your CDN prepends its own robots.txt block, either turn that feature off or make your own declarations match it.",
+      "effort": "moderate",
+      "docsUrl": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/audits/access-crawl-control/ai-usage-signal-coherence-across-channels.md",
+      "tags": [
+        "robots",
+        "aipref",
+        "tdmrep",
+        "rsl",
+        "licensing"
+      ]
+    }
+  },
+  {
+    "id": "access-crawl-control/aipref-content-usage-declaration-validity",
+    "category": "access-crawl-control",
+    "categoryTitle": "Access & Crawl Control",
+    "title": "AIPREF Content-Usage declarations are valid and can be read",
+    "failureTitle": "The AI-usage preference this site publishes cannot be read as written",
+    "description": "Parses every `Content-Usage` declaration — in robots.txt at file scope and inside each group, and in the response header — as the RFC 8941 dictionary AIPREF defines, validates its categories and values, and checks that the paths it attaches to are actually crawlable. A preference attached to a disallowed path has no effect: attach-05 gives disallowed paths no usage preferences at all.",
+    "scoreDisplayMode": "ternary",
+    "weight": 0.6,
+    "priority": "medium",
+    "tier": "scored",
+    "evidenceGrade": "B",
+    "dossier": "docs/evidence/audits/access-crawl-control/aipref-content-usage-declaration-validity.md",
+    "guidance": {
+      "impact": "AIPREF is the one AI-usage vocabulary on the IETF standards track, so a declaration written in it is the one a future crawler is most likely to read. A crawler that cannot parse the line ignores it, and the site is then treated as having no preference at all — the same outcome as publishing nothing, after the work of publishing something. The costliest version is invisible: a preference attached to a path robots.txt disallows is discarded by the spec itself, so the line looks right and does nothing.",
+      "fix": "Write `Content-Usage: train-ai=n` — an RFC 8941 dictionary of `y`/`n` values against the `train-ai` and `search` categories. Use `yes`/`no` only in a Cloudflare `Content-Signal:` line, which is a different directive. Attach preferences to paths a crawler is allowed to fetch, and keep the robots.txt line and the response header saying the same thing for the same path.",
+      "effort": "moderate",
+      "docsUrl": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/audits/access-crawl-control/aipref-content-usage-declaration-validity.md",
+      "tags": [
+        "aipref",
+        "robots",
+        "headers",
+        "licensing"
+      ]
+    }
+  },
+  {
     "id": "access-crawl-control/amazonbot",
     "category": "access-crawl-control",
     "categoryTitle": "Access & Crawl Control",
@@ -497,6 +550,33 @@
     }
   },
   {
+    "id": "access-crawl-control/machine-actionable-402-paid-access",
+    "category": "access-crawl-control",
+    "categoryTitle": "Access & Crawl Control",
+    "title": "A 402 tells a crawler how to pay",
+    "failureTitle": "This site charges crawlers but does not say how to pay in a form they can read",
+    "description": "Looks at every 402 the crawler-UA probes and the browser baseline received, and asks whether any machine-readable payment mechanism came with it: a `crawler-price` header, an x402 `PAYMENT-REQUIRED` challenge, or an RSL licence with a crawl payment covering the path. A 402 carrying only an HTML page is a price tag no crawler can read.",
+    "scoreDisplayMode": "ternary",
+    "weight": 0.6,
+    "priority": "medium",
+    "tier": "scored",
+    "evidenceGrade": "B",
+    "dossier": "docs/evidence/audits/access-crawl-control/machine-actionable-402-paid-access.md",
+    "guidance": {
+      "impact": "Charging for crawler access is a legitimate choice, and 402 is the status code for it. But a crawler is a program: it can pay only what it can parse. A 402 whose body is an HTML page explaining your licensing terms reads, to the client, as an unexplained refusal — the same outcome as a 403, after you built a paywall meant to earn revenue. A 402 that a shared cache is allowed to store is worse: the next crawler gets a stored refusal even after paying.",
+      "fix": "Send one of the machine-readable forms with the 402: Cloudflare’s `crawler-price: USD 0.01`, an x402 `PAYMENT-REQUIRED` challenge listing what you accept, or a `Link: rel=license` pointing at an RSL document whose `<payment type=\"crawl\">` covers the path. Mark the response `Cache-Control: no-store` so a proxy cannot hand your 402 to a crawler that already paid.",
+      "effort": "moderate",
+      "docsUrl": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/audits/access-crawl-control/machine-actionable-402-paid-access.md",
+      "tags": [
+        "402",
+        "pay-per-crawl",
+        "x402",
+        "rsl",
+        "crawlers"
+      ]
+    }
+  },
+  {
     "id": "access-crawl-control/meta-external-agent",
     "category": "access-crawl-control",
     "categoryTitle": "Access & Crawl Control",
@@ -782,6 +862,32 @@
     }
   },
   {
+    "id": "access-crawl-control/rsl-licensing-terms-conformance",
+    "category": "access-crawl-control",
+    "categoryTitle": "Access & Crawl Control",
+    "title": "RSL licensing terms are discoverable and conformant",
+    "failureTitle": "This site’s machine-readable licence cannot be found or cannot be read",
+    "description": "Looks for an RSL licence in all four channels the specification defines — the robots.txt `License:` directive, a `Link: rel=license` response header, an HTML `<link>`, and an inline `<script type=\"application/rsl+xml\">` — then validates the document: its namespace, its media type, the paths its `<content url>` covers, and the enumerated attributes on every permits, prohibits, payment and amount element.",
+    "scoreDisplayMode": "ternary",
+    "weight": 0.6,
+    "priority": "medium",
+    "tier": "scored",
+    "evidenceGrade": "B",
+    "dossier": "docs/evidence/audits/access-crawl-control/rsl-licensing-terms-conformance.md",
+    "guidance": {
+      "impact": "RSL is the machine-readable form of \"here are my terms\". A crawler that cannot find the document applies its own defaults instead, and a document it finds but cannot parse is worth no more than one it never found. The specification mandates no default location, so a licence reachable only at a guessed path is one no crawler is obliged to look for. The quiet failure is a `<content url>` prefix that does not cover the pages the licence was written for: the terms load, parse, and apply to nothing.",
+      "fix": "Point at the licence from robots.txt with an absolute `License:` URI, and add the `Link: <...>; rel=\"license\"; type=\"application/rsl+xml\"` response header so a crawler that never reads robots.txt still finds it. Serve the document as `application/rsl+xml`, keep the `https://rslstandard.org/rsl` namespace on the root element, and make every `<content url>` prefix cover the paths it licenses.",
+      "effort": "moderate",
+      "docsUrl": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/audits/access-crawl-control/rsl-licensing-terms-conformance.md",
+      "tags": [
+        "rsl",
+        "licensing",
+        "robots",
+        "headers"
+      ]
+    }
+  },
+  {
     "id": "access-crawl-control/sensitive-paths",
     "category": "access-crawl-control",
     "categoryTitle": "Access & Crawl Control",
@@ -832,6 +938,33 @@
         "crawler-permissions",
         "compliance",
         "experimental"
+      ]
+    }
+  },
+  {
+    "id": "access-crawl-control/web-bot-auth-request-tolerance",
+    "category": "access-crawl-control",
+    "categoryTitle": "Access & Crawl Control",
+    "title": "A signed agent request is not rejected for being signed",
+    "failureTitle": "This site rejects requests that carry HTTP message signatures",
+    "description": "Fetches the site root twice: once plainly, and once with the RFC 9421 `Signature`, `Signature-Input` and `Signature-Agent` headers a Web Bot Auth agent sends, signed with a per-scan ephemeral Ed25519 key. Reports when the signed request is refused, truncated, or answered differently without `Vary` naming the headers that changed the answer.",
+    "scoreDisplayMode": "ternary",
+    "weight": 0.6,
+    "priority": "medium",
+    "tier": "scored",
+    "evidenceGrade": "B",
+    "dossier": "docs/evidence/audits/access-crawl-control/web-bot-auth-request-tolerance.md",
+    "guidance": {
+      "impact": "Web Bot Auth is how an agent says who it is in a way an origin can check, and the operators building it are the ones whose traffic you would most want to identify. An edge that answers a signed request with 400 or 403 turns that identification into a reason for refusal: the agents willing to declare themselves are the ones you turn away, and the ones that lie carry no signature headers at all and sail through. A 431 is the same outcome from a different cause — a header-size limit — and it is fixed differently.",
+      "fix": "Let unknown request headers through: `Signature`, `Signature-Input` and `Signature-Agent` are additive and safe to ignore. If your edge enforces a header-size budget, raise it enough for an Ed25519 signature. If you do vary behaviour on those headers, list them in `Vary` so a shared cache cannot serve the rejected variant to everyone.",
+      "effort": "complex",
+      "docsUrl": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/audits/access-crawl-control/web-bot-auth-request-tolerance.md",
+      "tags": [
+        "web-bot-auth",
+        "rfc9421",
+        "signatures",
+        "waf",
+        "crawlers"
       ]
     }
   },
@@ -3327,6 +3460,33 @@
     }
   },
   {
+    "id": "machine-discovery/conditional-request-support",
+    "category": "machine-discovery",
+    "categoryTitle": "Machine Discovery",
+    "title": "Discovery surfaces answer conditional requests",
+    "failureTitle": "Every poll of this site’s discovery files downloads the whole file again",
+    "description": "Fetches robots.txt, the sitemaps and the feeds twice identically, then once with `If-None-Match` and once with `If-Modified-Since`, and reports what came back. A surface with no validator cannot be revalidated at all; one whose `ETag` changes while its body does not is worse, because every poll looks like a change.",
+    "scoreDisplayMode": "ternary",
+    "weight": 0.6,
+    "priority": "medium",
+    "tier": "scored",
+    "evidenceGrade": "B",
+    "dossier": "docs/evidence/audits/machine-discovery/conditional-request-support.md",
+    "guidance": {
+      "impact": "A crawler that wants to know what changed re-reads your sitemap and your feed on a schedule. If those responses carry no `ETag` and no `Last-Modified`, it cannot ask \"has this changed?\" — it can only download the file again, every time, forever. The cost is yours as much as theirs: bandwidth you serve for no new information, and a crawl budget spent re-reading a list instead of fetching the pages on it. A validator that changes on every build is the same cost wearing a correct-looking header.",
+      "fix": "Emit a strong `ETag` derived from the file’s content, not from the build, and a `Last-Modified` that moves only when the content does. Answer `If-None-Match` and `If-Modified-Since` with 304 and an empty body. Keep `no-store` and `private` off public discovery surfaces — they tell a crawler not to keep the copy it just paid for.",
+      "effort": "moderate",
+      "docsUrl": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/audits/machine-discovery/conditional-request-support.md",
+      "tags": [
+        "http",
+        "caching",
+        "sitemap",
+        "feeds",
+        "robots"
+      ]
+    }
+  },
+  {
     "id": "machine-discovery/cors-ai-files",
     "category": "machine-discovery",
     "categoryTitle": "Machine Discovery",
@@ -3375,6 +3535,32 @@
         "sitemap",
         "llms-txt",
         "discoverability"
+      ]
+    }
+  },
+  {
+    "id": "machine-discovery/feed-entry-identity-and-canonical-integrity",
+    "category": "machine-discovery",
+    "categoryTitle": "Machine Discovery",
+    "title": "Feed entries have stable identities that resolve to their canonical pages",
+    "failureTitle": "This site’s feed entries cannot be identified or point away from their canonical URLs",
+    "description": "Checks the identity half of a feed: that every entry carries exactly the id and timestamp its format requires, that no id repeats, and that item links are absolute HTTPS URLs which match the `rel=\"canonical\"` of the page they open — no redirect, no tracking parameters the canonical does not carry.",
+    "scoreDisplayMode": "ternary",
+    "weight": 0.6,
+    "priority": "medium",
+    "tier": "scored",
+    "evidenceGrade": "B",
+    "dossier": "docs/evidence/audits/machine-discovery/feed-entry-identity-and-canonical-integrity.md",
+    "guidance": {
+      "impact": "A feed is how a consumer tracks what changed without re-crawling the site, and identity is what makes that possible: the id says \"this is the same item you saw last time\". An entry with no id, or with an id that repeats, forces the consumer to guess — usually by URL, which is exactly the thing that changes. A link that carries `utm_` parameters or redirects somewhere else creates a second address for one page, so the item the consumer stores is not the page the site considers canonical.",
+      "fix": "Give every entry a stable id — an `atom:id` that never changes, or an RSS `<guid>` that is an absolute URL when `isPermaLink` is true — and never reuse one. Point item links at the canonical URL itself, with no tracking parameters and no redirect in between. Serve the feed as its registered media type, with no byte-order mark before the first element.",
+      "effort": "complex",
+      "docsUrl": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/audits/machine-discovery/feed-entry-identity-and-canonical-integrity.md",
+      "tags": [
+        "feeds",
+        "rss",
+        "atom",
+        "canonical"
       ]
     }
   },
@@ -3580,6 +3766,32 @@
     }
   },
   {
+    "id": "machine-discovery/root-text-file-resolution-integrity",
+    "category": "machine-discovery",
+    "categoryTitle": "Machine Discovery",
+    "title": "The origin serves and correctly 404s root-level .txt resources",
+    "failureTitle": "This origin answers 200 for root .txt paths that do not exist",
+    "description": "Fetches two root-level `.txt` files with random names that cannot exist. Both must answer 404 or 410. An origin that answers 200 instead has a catch-all, which makes every probe-based discovery file — `llms.txt`, `ai.txt`, `security.txt`, the IndexNow key file — impossible to tell apart from a soft 404. Also checks that `/robots.txt` is served as `text/plain`.",
+    "scoreDisplayMode": "ternary",
+    "weight": 0.6,
+    "priority": "medium",
+    "tier": "scored",
+    "evidenceGrade": "B",
+    "dossier": "docs/evidence/audits/machine-discovery/root-text-file-resolution-integrity.md",
+    "guidance": {
+      "impact": "IndexNow proves ownership by fetching `https://host/{key}.txt` and byte-comparing the body to the key, and six engines discard the submission when that comparison fails. The same property decides whether any other root `.txt` file means anything: if an origin answers 200 for a path that does not exist, then a 200 for `/llms.txt` is not evidence the file is there. A catch-all rewrite ahead of static file serving turns every one of those signals into noise, with no visible symptom on the site itself.",
+      "fix": "Serve root-level `.txt` paths from static files and let a missing one answer 404. Order the static-file handler ahead of any SPA or catch-all rewrite, and make sure the rewrite does not cover `*.txt`. Serve `/robots.txt` as `text/plain`, not as `text/html` or `application/octet-stream`.",
+      "effort": "easy",
+      "docsUrl": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/audits/machine-discovery/root-text-file-resolution-integrity.md",
+      "tags": [
+        "indexnow",
+        "llms-txt",
+        "discovery",
+        "soft-404"
+      ]
+    }
+  },
+  {
     "id": "machine-discovery/rss-feed",
     "category": "machine-discovery",
     "categoryTitle": "Machine Discovery",
@@ -3731,6 +3943,58 @@
         "lastmod",
         "freshness",
         "crawl-scheduling"
+      ]
+    }
+  },
+  {
+    "id": "machine-discovery/three-way-freshness-lag",
+    "category": "machine-discovery",
+    "categoryTitle": "Machine Discovery",
+    "title": "The sitemap and the feed are as fresh as the site itself",
+    "failureTitle": "This site’s sitemap or feed trails what the site actually publishes",
+    "description": "Compares the newest date the pages themselves publish against the newest `<lastmod>` in the sitemap and the newest entry in the feed. A surface that trails the site by more than a week is regenerated on a slower cadence than publication, so a crawler polling it sees a site that stopped publishing. Also checks that a feed’s own build timestamp is not older than its newest item, and that its items are in newest-first order.",
+    "scoreDisplayMode": "ternary",
+    "weight": 0.6,
+    "priority": "medium",
+    "tier": "scored",
+    "evidenceGrade": "B",
+    "dossier": "docs/evidence/audits/machine-discovery/three-way-freshness-lag.md",
+    "guidance": {
+      "impact": "A pull-based crawler fetches the sitemap and the feed on a schedule and reads nothing else. When those two surfaces trail the site, everything published in between is discoverable only by link-following, which is the slow path the site published a sitemap to avoid. A feed whose `lastBuildDate` is older than its own newest item is worse than stale: consumers that poll conditionally on that timestamp skip the feed entirely, so the new items are never read at all.",
+      "fix": "Regenerate the sitemap and the feed when content changes, not on a nightly cron that can fail silently. Stamp `<lastBuildDate>` (or the Atom feed-level `<updated>`) from the newest item at generation time. Order feed items newest-first, since many consumers read only the head. Remove sitemap entries whose URLs 404 or are noindex.",
+      "effort": "moderate",
+      "docsUrl": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/audits/machine-discovery/three-way-freshness-lag.md",
+      "tags": [
+        "freshness",
+        "sitemap",
+        "feeds",
+        "discovery"
+      ]
+    }
+  },
+  {
+    "id": "machine-discovery/websub-hub-advertisement",
+    "category": "machine-discovery",
+    "categoryTitle": "Machine Discovery",
+    "title": "Feeds advertise a WebSub hub and exactly one canonical self link",
+    "failureTitle": "This site’s WebSub advertisement is incomplete",
+    "description": "Reads the WebSub discovery links on each feed — the `Link:` response headers first, as the specification requires, then the document — and checks the shape the W3C Recommendation asks for: exactly one absolute `rel=self` equal to the URL the feed was fetched from, and at least one `rel=hub` over HTTPS that answers a HEAD. Advisory only: no AI answer engine is documented as a WebSub subscriber, so this audit never affects the score.",
+    "scoreDisplayMode": "informative",
+    "weight": 0,
+    "priority": "low",
+    "tier": "informative",
+    "evidenceGrade": "C",
+    "dossier": "docs/evidence/audits/machine-discovery/websub-hub-advertisement.md",
+    "guidance": {
+      "impact": "A hub subscription is verified against the feed’s own `rel=self`. When that link is missing, relative, or points at a different URL than the one the feed is served from, verification cannot complete, and the push path degrades to whatever polling cadence subscribers happen to use. The publisher sees a hub that looks configured and no error anywhere. The benefit side is unproven: WebSub is a W3C Recommendation, but no AI answer engine is documented as a subscriber, which is why this audit reports and does not score.",
+      "fix": "Advertise the hub and the canonical topic URL in the feed’s `Link:` response headers, which is where a subscriber looks first. Emit exactly one `rel=self` with an absolute URL identical to the address the feed is served from, and at least one `rel=hub` over HTTPS. If you run no hub, a hosted one (Google’s pubsubhubbub, Superfeedr, websub.rocks) needs only the two link relations.",
+      "effort": "easy",
+      "docsUrl": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/audits/machine-discovery/websub-hub-advertisement.md",
+      "tags": [
+        "websub",
+        "feeds",
+        "push",
+        "advisory"
       ]
     }
   },
