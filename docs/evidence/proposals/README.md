@@ -1,6 +1,6 @@
 # Proposed checks — evidence dossiers
 
-28 proposed checks from the 2026-08-20 novel-checks research pass. Each dossier states what the check verifies, the falsifiable mechanism behind it, cited evidence from the [source registry](../sources.json), competitor coverage, and an implementation sketch. Grading rubric: [evidence policy](../POLICY.md).
+26 proposed checks from the 2026-08-20 novel-checks research pass. Each dossier states what the check verifies, the falsifiable mechanism behind it, cited evidence from the [source registry](../sources.json), competitor coverage, and an implementation sketch. Grading rubric: [evidence policy](../POLICY.md).
 
 Seven dossiers left this folder on 2026-08-22 (Plan 5, Task 2): six tool
 surveys moved to [../research](../research/README.md) because their verdict is
@@ -22,12 +22,10 @@ Grades: **A** = documented consumer behavior or ratified standard · **B** = dra
 | B | [Buyable Variant Resolution](./agentic-commerce/buyable-variant-resolution.md) | agentic-commerce | unique | `multi-page` | scored |
 | B | [Cart Handoff Reachability](./agentic-commerce/cart-handoff-reachability.md) | agentic-commerce | unique | `multi-page` | scored |
 | B | [Offer Truth Consistency](./agentic-commerce/offer-truth-consistency.md) | agentic-commerce | unique | `multi-page` | scored |
-| B | [AI usage signal coherence across channels](./bot-auth-access/ai-usage-signal-coherence-across-channels.md) | bot-auth-access | unique | `static-fetch` | scored |
 | B | [AIPREF Content-Usage declaration validity](./bot-auth-access/aipref-content-usage-declaration-validity.md) | bot-auth-access | unique | `static-fetch` | scored |
 | B | [Machine-actionable 402 paid-access response](./bot-auth-access/machine-actionable-402-paid-access-response.md) | bot-auth-access | unique | `static-fetch` | scored |
 | B | [RSL licensing terms discoverable and conformant](./bot-auth-access/rsl-licensing-terms-discoverable-and-conformant.md) | bot-auth-access | unique | `static-fetch` | scored |
 | B | [Signed-agent (Web Bot Auth) request tolerance](./bot-auth-access/signed-agent-web-bot-auth-request-tolerance.md) | bot-auth-access | unique | `static-fetch` | scored |
-| B | [content-signal-coherence](./competitor-gap-verify/content-signal-coherence.md) | competitor-gap-verify | unique | `static-fetch` | scored |
 | B | [offer-dom-price-parity](./competitor-gap-verify/offer-dom-price-parity.md) | competitor-gap-verify | unique | `multi-page` | scored |
 | B | [Conditional-request support on discovery surfaces](./feeds-indexing/conditional-request-support-on-discovery-surfaces.md) | feeds-indexing | unique | `static-fetch` | scored |
 | B | [Feed entry identity and canonical integrity](./feeds-indexing/feed-entry-identity-and-canonical-integrity.md) | feeds-indexing | unique | `multi-page` | scored |

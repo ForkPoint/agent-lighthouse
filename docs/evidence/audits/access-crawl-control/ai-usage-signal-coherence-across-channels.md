@@ -1,18 +1,19 @@
 ---
-check: ai-usage-signal-coherence-across-channels
-title: "AI usage signal coherence across channels"
-domain: bot-auth-access
-status: proposed
+audit: access-crawl-control/ai-usage-signal-coherence-across-channels
+category: access-crawl-control
+source_file: packages/core/src/audits/access-crawl-control/ai-usage-signal-coherence-across-channels.ts
+slug: ai-usage-signal-coherence-across-channels
 evidence_grade: B
-uniqueness: unique
-difficulty: static-fetch
-scoring_tier: scored
+tier: scored
+disposition: "new in v2 — graduated from proposal 2026-08-23"
 reviewed: 2026-08-20
+graduated: 2026-08-23
 ---
+
 
 # AI usage signal coherence across channels
 
-> Proposed check. Evidence grade **B** · unique · implementation: `static-fetch`
+> Shipped in v2. Evidence grade **B** · scored tier · unique · implementation: `static-fetch`
 
 ## What it checks
 
@@ -56,3 +57,64 @@ Tier per evidence policy: **scored** — grade B meets the A/B bar required for 
 ## Review history
 
 - 2026-08-20 — proposed by the novel-checks research pass (10-agent evidence workflow); sources URL-verified at research time.
+
+## Absorbed proposal
+
+`competitor-gap-verify/content-signal-coherence` folded into this audit on
+2026-08-23 rather than shipping beside it. It read one channel — the
+`Content-Signal` lines of robots.txt, with RFC 9309 group precedence applied to
+them the way `access-crawl-control/robots-ai-group-shadowing` applies it to
+rules — and this audit reads five, that one included. Two audits would have
+reported the same Cloudflare edge-override twice, under two names, and a
+contradiction spanning `Content-Signal` and any other channel would have
+belonged to neither. Its dossier is kept at
+[merged/access-crawl-control/content-signal-coherence.md](../../merged/access-crawl-control/content-signal-coherence.md).
+
+Its mechanism ships whole: `Content-Signal` values map into the same category
+space as everything else (`ai-train` → `train-ai`, `search` → `search`,
+`ai-input` → `ai-input`), a line written inside a named group binds only that
+group, and a `Content-Signal` block sitting above every directive the operator
+wrote is reported as an edge override rather than as an inconsistent policy.
+
+## Implementation deviations
+
+The audit sends no request. Every channel it reads was already fetched by the
+scan: `/robots.txt` and `/.well-known/tdmrep.json` from `ctx.rootFiles`, the
+response headers and meta tags from the sampled pages, and RSL from the inline
+`<script type="application/rsl+xml">` blocks those pages carry.
+
+**RSL by inline script only.** The sketch also resolves the `License:` directive
+and the `Link: rel=license` header to a document and reads its
+permits/prohibits. That is a fetch, and
+`access-crawl-control/rsl-licensing-terms-conformance` already makes it. Reading
+the same document twice in one scan to answer two questions is a request this
+audit does not need to spend.
+
+**A contradiction needs two channels.** Two lines of one channel disagreeing is
+that channel's own precedence question, and the audit that owns the channel
+answers it — `robots-ai-group-shadowing` for robots.txt rules,
+`aipref-content-usage-declaration-validity` for `Content-Usage`. Only
+cross-channel disagreement is reported here.
+
+**Path scopes overlap by prefix.** attach-05 defines longest-prefix matching for
+`Content-Usage`; TDM-Rep's `location` and RSL's `<content url>` are also
+prefixes. Two declarations are compared when either prefix contains the other,
+which is the same test in all three vocabularies.
+
+**Silence warns, it does not fail.** A site that declares nothing is not
+misconfigured — it has left every crawler to its own default, which is a real
+cost but not a contradiction. A scan that read neither a page nor a robots.txt
+is `notApplicable`: nothing could have carried a signal.
+
+## Deferred
+
+- **EPUB TDM-Rep.** The report defines a fourth transport, `tdm:reservation` in
+  EPUB metadata. A web scan never sees it.
+- **Per-agent AIPREF scoping.** `Content-Usage` inside a `User-agent` group is
+  read as that group's, but AIPREF itself does not define per-agent
+  preferences — attach-05 attaches them to resources. If the draft grows agent
+  scoping, the comparison here needs revisiting.
+- **Diffing declared against served robots.txt.** Cloudflare's prepend is
+  detected by position, which is what a scanner can see from outside. Proving it
+  came from the edge would need the origin's own copy, which only the operator
+  has.

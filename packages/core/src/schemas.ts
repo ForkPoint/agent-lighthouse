@@ -35,6 +35,8 @@ export const AuditResultSchema = z.object({
     .optional(),
   pageUrl: z.string().max(2048).url().optional().or(z.string().max(2048).startsWith('/')).or(z.string().length(0)),
   priority: CheckPrioritySchema.optional(),
+  /** A fix written from what this scan found, which beats the generic one in meta.guidance. */
+  remediation: z.string().max(5000).optional(),
   code: z.string().max(10000).optional(),
 });
 

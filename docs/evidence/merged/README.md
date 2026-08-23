@@ -49,6 +49,7 @@ in [`../sunset/`](../sunset/).
 | [content-extraction/signal-density-index-content-tokens-delivered-tokens](./content-extraction/signal-density-index-content-tokens-delivered-tokens.md) | — (proposal) | [content-extraction/token-ratio](../audits/content-extraction/token-ratio.md) | B |
 | [content-extraction/data-uri-and-inline-svg-token-bloat](./content-extraction/data-uri-and-inline-svg-token-bloat.md) | — (proposal) | [content-extraction/svg-bloat](../audits/content-extraction/svg-bloat.md) | B |
 | [content-extraction/markdown-alternate-discoverable-resolvable-faithful-cheaper](./content-extraction/markdown-alternate-discoverable-resolvable-faithful-cheaper.md) | — (proposal) | [content-extraction/markdown-alternate](../audits/content-extraction/markdown-alternate.md) | B |
+| [access-crawl-control/content-signal-coherence](./access-crawl-control/content-signal-coherence.md) | — (proposal) | [access-crawl-control/ai-usage-signal-coherence-across-channels](../audits/access-crawl-control/ai-usage-signal-coherence-across-channels.md) | B |
 
 The grade column is the *absorbed* audit's own grade, not the merged audit's. A merged audit is graded
 on the strongest **proven** consumer path among its sources, which is why `ai-bot-directives` ships at
@@ -65,3 +66,9 @@ measured something an audit already shipped, so the proposal's mechanism was fol
 rather than registered beside it — the three dossiers above have no v1 id because they were never
 audits. What each fold changed is recorded under `## Absorbed proposal` in the receiving audit's
 dossier.
+
+Plan 5b Wave C (2026-08-23) adds one more proposal row, and it is a merge between two proposals rather
+than into a shipped audit: `content-signal-coherence` read the `Content-Signal` channel of robots.txt,
+which is one of the five channels `ai-usage-signal-coherence-across-channels` normalizes. Shipping both
+would have reported one Cloudflare edge-override twice, and left a contradiction spanning two channels
+owned by neither.

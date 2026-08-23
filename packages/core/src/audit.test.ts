@@ -133,9 +133,12 @@ describe('Audit.warn', () => {
     expect(r.priority).toBe('high');
   });
 
-  it('falls back to the raw string for an unknown string priority', () => {
+  // A string that is not one of the four tokens is a fix sentence, not a
+  // priority. It used to land in `priority` and make the result unschemable.
+  it('reads an unknown string as the remediation, not as the priority', () => {
     const r = a.callWarn('m', 'e', 'f', 'bogus');
-    expect(r.priority).toBe('bogus');
+    expect(r.priority).toBeUndefined();
+    expect(r.remediation).toBe('bogus');
   });
 
   it('resolves priority from an object form', () => {
@@ -164,9 +167,10 @@ describe('Audit.fail', () => {
     expect(r.priority).toBe('low');
   });
 
-  it('falls back to the raw string for an unknown string priority', () => {
+  it('reads an unknown string as the remediation, not as the priority', () => {
     const r = a.callFail('m', 'e', 'f', 'weird');
-    expect(r.priority).toBe('weird');
+    expect(r.priority).toBeUndefined();
+    expect(r.remediation).toBe('weird');
   });
 
   it('resolves priority from an object form', () => {
@@ -299,5 +303,41 @@ describe('Audit — structured details and per-result code', () => {
     const c = a.toCheckResult(a.callFail('m', 'e', 'f', { priority: 'high' }));
 
     expect(c.details?.code).toBe('guidance-code');
+  });
+});
+
+// ---------------------------------------------------------------------------
+// The fourth argument: priority token or remediation sentence
+// ---------------------------------------------------------------------------
+
+describe('Audit.fail / Audit.warn — the fourth argument', () => {
+  const a = new WithGuidanceAudit();
+
+  it('reads a priority token as the priority', () => {
+    expect(a.callFail('m', 'e', 'f', 'critical').priority).toBe('critical');
+    expect(a.callWarn('m', 'e', 'f', 'low').priority).toBe('low');
+  });
+
+  // Thirty audits pass a sentence here. A sentence is not a CheckPriority, and
+  // putting it in `priority` made toCheckResult throw on the schema — after the
+  // audit had already run, so the failure surfaced only in a live scan.
+  it('reads a sentence as the remediation, leaving the priority to the audit default', () => {
+    const r = a.callFail('m', 'e', 'f', 'Move the table out of the aside.');
+    expect(r.priority).toBeUndefined();
+    expect(r.remediation).toBe('Move the table out of the aside.');
+    expect(() => a.toCheckResult(r)).not.toThrow();
+    expect(a.toCheckResult(r).priority).toBe('medium');
+  });
+
+  it('lets that sentence replace the generic fix in the report', () => {
+    const check = a.toCheckResult(a.callFail('m', 'e', 'f', 'Name the section in the heading.'));
+    expect(check.fix).toBe('Name the section in the heading.');
+    expect(a.toCheckResult(a.callFail('m', 'e', 'f')).fix).toBe('Guidance fix');
+  });
+
+  it('reads an object’s description as the remediation and keeps its priority', () => {
+    const r = a.callFail('m', 'e', 'f', { priority: 'high', description: 'Add a canonical.' });
+    expect(r.priority).toBe('high');
+    expect(r.remediation).toBe('Add a canonical.');
   });
 });

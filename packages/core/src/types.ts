@@ -119,6 +119,13 @@ export interface AuditResult {
   };
   pageUrl?: string;
   priority?: CheckPriority;
+  /**
+   * A fix written from what this scan actually found.
+   *
+   * Overrides `meta.guidance.fix` in the report, so an audit can name the
+   * offending section rather than repeat the generic advice.
+   */
+  remediation?: string;
 }
 
 // ── Check Results ──────────────────────────────────────────────
