@@ -1,18 +1,19 @@
 ---
-check: synthetic-media-disclosure-is-valid-and-self-consistent
-title: "Synthetic-media disclosure is valid and self-consistent"
-domain: trust-provenance
-status: proposed
+audit: operability-safety/synthetic-media-disclosure-validity
+category: operability-safety
+source_file: packages/core/src/audits/operability-safety/synthetic-media-disclosure-validity.ts
+slug: synthetic-media-disclosure-validity
 evidence_grade: B
-uniqueness: unique
-difficulty: static-fetch
-scoring_tier: scored
+tier: scored
+disposition: "new in v2 — graduated from proposal 2026-08-23"
 reviewed: 2026-08-20
+graduated: 2026-08-23
 ---
+
 
 # Synthetic-media disclosure is valid and self-consistent
 
-> Proposed check. Evidence grade **B** · unique · implementation: `static-fetch`
+> Shipped in v2. Evidence grade **B** · scored tier · unique · implementation: `static-fetch`
 
 ## What it checks
 
@@ -52,3 +53,40 @@ Tier per evidence policy: **scored** — grade B meets the A/B bar required for 
 ## Review history
 
 - 2026-08-20 — proposed by the novel-checks research pass (10-agent evidence workflow); sources URL-verified at research time.
+
+## Implementation deviations
+
+**Renamed** from `synthetic-media-disclosure-is-valid-and-self-consistent`,
+which would make a 73-character id.
+
+Steps 1 to 6 of the sketch ship: XMP extraction from JPEG APP1 and PNG iTXt
+with a raw `<?xpacket?>` fallback, the `Iptc4xmpExt:DigitalSourceType` read in
+its attribute, element and `rdf:resource` forms, membership tested against the
+vocabulary, a separate finding for each near-miss class, the C2PA
+cross-check, `declaredCoverage` as an unscored detail, and the honest scope —
+a test asserts the audit never claims to detect undisclosed synthetic imagery.
+
+**The vocabulary is vendored, not fetched** (sketch step 3). Fetching
+`cv.iptc.org` at audit time would put a third-party outage between a site and
+its own score, for a list that changes a few times a decade. The refresh path
+is written above the constant.
+
+**The C2PA cross-check is a byte search, not a manifest parse.** The manifest
+store is searched for the synthetic and capture concept names; a store
+asserting a trained-algorithmic source while the XMP declares a camera capture
+(or the reverse) is the contradiction the sketch asks for. A full JUMBF parse
+would name the exact assertion, and needs the dependency
+`operability-safety/c2pa-signer-trust-status` also declines to add.
+
+**Evidence hygiene.** The IPTC source carries the mechanism. The dossier's
+other sources belong to the C2PA proposals and nothing here rests on them.
+
+## Deferred
+
+- **Detecting undisclosed synthetic imagery.** It needs a classifier, which is
+  an `llm-assisted` roadmap item, and the dossier says so.
+- **Video and audio containers.** The gatherer reads raster images; BMFF is
+  recognised for manifest detection but XMP in video is a different packet
+  location.
+- **`Iptc4xmpExt:DigitalSourceFileType` and the other IPTC AI properties.**
+  Only `DigitalSourceType` is the ratified interoperable disclosure.

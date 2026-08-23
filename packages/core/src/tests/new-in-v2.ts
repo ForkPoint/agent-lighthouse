@@ -70,6 +70,7 @@ export const NEW_IN_V2: readonly string[] = [
   'operability-safety/c2pa-manifest-survives-delivery',
   'operability-safety/c2pa-signer-trust-status',
   'operability-safety/organization-identifier-registry-resolution',
+  'operability-safety/synthetic-media-disclosure-validity',
 ];
 
 /** The 148 audits Plan 4 closed the v2 migration on. Never changes again. */

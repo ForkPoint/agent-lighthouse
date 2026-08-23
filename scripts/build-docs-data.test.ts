@@ -40,9 +40,25 @@ describe('renderIndexHtml', () => {
   const html = readFileSync(resolve(__dirname, '../packages/website/index.html'), 'utf8');
   const out = renderIndexHtml(html, buildAuditList());
 
-  it('leaves no v1 audit count behind', () => {
-    expect(out).not.toContain('207');
-    expect(out).toContain(`${buildAuditList().length} audits`);
+  // This guarded against the v1 count (207) surviving a regeneration. It was
+  // written as a bare literal, which stopped meaning that the day the v2
+  // registry itself reached 207 audits. Every place the page quotes a count is
+  // read instead, and all of them must agree with the live registry.
+  it('quotes one audit count, and it is the live one', () => {
+    const live = buildAuditList().length;
+    const quoted = [
+      ...out.matchAll(/(\d+) AI-agent readiness checks/g),
+      ...out.matchAll(/Audit Directory \((\d+)\)/g),
+      ...out.matchAll(/Audit Explorer \((\d+)\)/g),
+      ...out.matchAll(/Explore all (\d+) audits/g),
+      ...out.matchAll(/(\d+) pure deterministic rules/g),
+      ...out.matchAll(/(\d+)-audit scan/g),
+      ...out.matchAll(/id="audit-count-badge"[^>]*>(\d+)/g),
+    ].map((match) => Number(match[1]));
+
+    expect(quoted.length).toBeGreaterThan(0);
+    expect([...new Set(quoted)]).toEqual([live]);
+    expect(out).toContain(`${live} audits`);
   });
 
   // Guidance tags legitimately still contain words like "crawler-permissions",
