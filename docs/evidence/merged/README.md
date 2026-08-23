@@ -50,6 +50,7 @@ in [`../sunset/`](../sunset/).
 | [content-extraction/data-uri-and-inline-svg-token-bloat](./content-extraction/data-uri-and-inline-svg-token-bloat.md) | — (proposal) | [content-extraction/svg-bloat](../audits/content-extraction/svg-bloat.md) | B |
 | [content-extraction/markdown-alternate-discoverable-resolvable-faithful-cheaper](./content-extraction/markdown-alternate-discoverable-resolvable-faithful-cheaper.md) | — (proposal) | [content-extraction/markdown-alternate](../audits/content-extraction/markdown-alternate.md) | B |
 | [access-crawl-control/content-signal-coherence](./access-crawl-control/content-signal-coherence.md) | — (proposal) | [access-crawl-control/ai-usage-signal-coherence-across-channels](../audits/access-crawl-control/ai-usage-signal-coherence-across-channels.md) | B |
+| [agentic-commerce/offer-dom-price-parity](./agentic-commerce/offer-dom-price-parity.md) | — (proposal) | [agentic-commerce/offer-truth-consistency](../audits/agentic-commerce/offer-truth-consistency.md) | B |
 
 The grade column is the *absorbed* audit's own grade, not the merged audit's. A merged audit is graded
 on the strongest **proven** consumer path among its sources, which is why `ai-bot-directives` ships at
@@ -72,3 +73,9 @@ than into a shipped audit: `content-signal-coherence` read the `Content-Signal` 
 which is one of the five channels `ai-usage-signal-coherence-across-channels` normalizes. Shipping both
 would have reported one Cloudflare edge-override twice, and left a contradiction spanning two channels
 owned by neither.
+
+Plan 5b Wave D (2026-08-23) adds one row, again a merge between two proposals: `offer-dom-price-parity`
+and `offer-truth-consistency` both reconciled the Offer in a product page's markup against the price and
+stock the same page renders. Shipping both would have reported one cached-catalogue bug twice, under two
+names, with two remediations. The surviving audit carries every sub-rule of both, and its dossier records
+under `## Absorbed proposal` what the fold added.

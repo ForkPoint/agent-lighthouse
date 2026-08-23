@@ -13,7 +13,9 @@ import type { PageContext } from '../check-context';
  */
 
 /** Symbols that stand for a currency in rendered text. */
-const CURRENCY_SYMBOLS: Record<string, string[]> = {
+/** Symbols each ISO 4217 code is rendered with. Shared: the offer-truth audit
+ * reads it to tell a rendered symbol that cannot be the declared currency. */
+export const CURRENCY_SYMBOLS: Record<string, string[]> = {
   USD: ['$', 'US$'],
   EUR: ['€'],
   GBP: ['£'],

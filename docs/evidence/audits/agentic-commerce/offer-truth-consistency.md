@@ -1,18 +1,19 @@
 ---
-check: offer-truth-consistency
-title: "Offer Truth Consistency"
-domain: agentic-commerce
-status: proposed
+audit: agentic-commerce/offer-truth-consistency
+category: agentic-commerce
+source_file: packages/core/src/audits/agentic-commerce/offer-truth-consistency.ts
+slug: offer-truth-consistency
 evidence_grade: B
-uniqueness: unique
-difficulty: multi-page
-scoring_tier: scored
+tier: scored
+disposition: "new in v2 — graduated from proposal 2026-08-23"
 reviewed: 2026-08-20
+graduated: 2026-08-23
 ---
+
 
 # Offer Truth Consistency
 
-> Proposed check. Evidence grade **B** · unique · implementation: `multi-page`
+> Shipped in v2. Evidence grade **B** · scored tier · unique · implementation: `multi-page`
 
 ## What it checks
 
@@ -52,3 +53,25 @@ Tier per evidence policy: **scored** — grade B meets the A/B bar required for 
 ## Review history
 
 - 2026-08-20 — proposed by the novel-checks research pass (10-agent evidence workflow); sources URL-verified at research time.
+
+## Absorbed proposal
+
+`competitor-gap-verify/offer-dom-price-parity` was folded into this audit rather than shipped beside it. Both proposals reconcile the same two artifacts — the Offer in the markup and the price and stock the raw HTML renders — and shipping both would have reported one cached-catalogue bug twice, under two names, with two remediations. The absorbed dossier is kept verbatim at [`../../merged/agentic-commerce/offer-dom-price-parity.md`](../../merged/agentic-commerce/offer-dom-price-parity.md); it carries the Google structured-data policy quotation ("Your structured data must be a true representation of the page content") and the Vercel/Merj crawler study showing that no major AI crawler executes JavaScript, which is why the JS-only arm is reported at all.
+
+What the fold added to the rules below: the UNMACHINE-READABLE class (a price rendered with no `offers.price`), the JS-ONLY-PRICE class as a warning rather than a failure, the struck-through candidate as an acceptable non-match, and the rule that a match against *any* candidate is enough rather than against the first.
+
+## Implementation deviations
+
+- **Sub-rules are independent, and the failure reported is the first one found.** Every contradiction is counted in `details.contradictions` and the first eight are listed in `details.failures`, so a page with three defects reports three.
+- **The reverse stock contradiction is narrower than the forward one.** Markup that says InStock while the page says sold out fails on the phrase list alone. Markup that says OutOfStock fails only when the page says "in stock" or "available now" — not merely because an add-to-cart button is present, since sold-out templates routinely keep a disabled one.
+- **The prominence heuristic in the sketch is not implemented.** Rather than pick the largest-font price and compare against that one, the audit accepts a match against any non-struck candidate in the product region. Font size is not reliably knowable from raw HTML, and accepting any candidate is the conservative direction: it can miss a divergence, never invent one.
+- **`INDETERMINATE` is not a status.** The sketch escalates pages whose price is absent from the initial HTML to a headless tier. There is no headless tier, so those pages take the JS-only warning and are excluded from the price and currency comparisons entirely.
+- **Currency comparison is symbol-based and permissive.** A rendered `$` clears USD, CAD, AUD and MXN alike; the mismatch fires only when nothing rendered in the product region can stand for the declared code.
+- **Sale inversion is read from the DOM,** as the lowest live candidate against the highest struck-through one, not from a `listPrice` field. The feed spec's rule is about the feed; the page is what this audit reads.
+- **At most 3 product pages**, and the audit sends no request: everything comes from pages the scan already fetched.
+
+## Deferred
+
+- **AMBIGUOUS-OFFER across sku rather than url.** Duplicate conflicts are keyed on `url` or `@id`. Two Offer nodes carrying different prices for the same `sku` under different URLs are not reported.
+- **Microdata and RDFa prices in the rendered text.** Structured data is read through the union parse, so a microdata Offer is compared like a JSON-LD one; the rendered-price extraction is still text-based and currency-anchored.
+- **Rendered-price extraction on JavaScript-built pages**, which is the headless tier the sketch names and this scanner does not have.
