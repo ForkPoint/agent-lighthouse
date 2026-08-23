@@ -144,12 +144,20 @@ describe('buildReportView', () => {
   it('orders topFixes by priority (fail+warn) and topPasses by category weight', () => {
     const v = buildReportView(mixedReport());
     expect(v.topFixes.map((c) => c.id)).toEqual(['f1', 'w1']); // critical before high
-    // Passes sort by owning category mass, descending. Pinned as a mass
-    // ordering rather than as three literals, so it still reads true when the
-    // registry moves audits between categories.
-    expect(mass('agent-interfaces')).toBeGreaterThan(mass('machine-discovery'));
-    expect(mass('machine-discovery')).toBeGreaterThan(mass('answer-readiness'));
-    expect(v.topPasses.map((c) => c.id)).toEqual(['p1', 'cd1', 'ar1']);
+    // Passes sort by owning category mass, descending. The expected order is
+    // derived from the live masses rather than written out, so it stays true
+    // when the registry moves audits between categories or adds them.
+    const expectedOrder = (
+      [
+        ['p1', 'agent-interfaces'],
+        ['cd1', 'machine-discovery'],
+        ['ar1', 'answer-readiness'],
+      ] as const
+    )
+      .slice()
+      .sort((a, b) => mass(b[1]) - mass(a[1]))
+      .map(([id]) => id);
+    expect(v.topPasses.map((c) => c.id)).toEqual(expectedOrder);
   });
 
   it('excludes informative checks from topFixes and topPasses', () => {

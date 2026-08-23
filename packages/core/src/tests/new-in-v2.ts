@@ -54,6 +54,7 @@ export const NEW_IN_V2: readonly string[] = [
   'content-extraction/json-ld-duplication-mass',
   'answer-readiness/chunk-boundary-referent-integrity',
   'answer-readiness/extractor-survival-recall',
+  'answer-readiness/section-split-risk-profile',
 ];
 
 /** The 148 audits Plan 4 closed the v2 migration on. Never changes again. */

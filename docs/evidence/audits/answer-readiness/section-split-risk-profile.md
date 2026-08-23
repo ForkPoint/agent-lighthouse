@@ -1,18 +1,19 @@
 ---
-check: section-split-risk-profile
-title: "Section Split-Risk Profile"
-domain: answer-selection-forensics
-status: proposed
+audit: answer-readiness/section-split-risk-profile
+category: answer-readiness
+source_file: packages/core/src/audits/answer-readiness/section-split-risk-profile.ts
+slug: section-split-risk-profile
 evidence_grade: B
-uniqueness: unique
-difficulty: static-fetch
-scoring_tier: scored
+tier: scored
+disposition: "new in v2 — graduated from proposal 2026-08-23"
 reviewed: 2026-08-20
+graduated: 2026-08-23
 ---
+
 
 # Section Split-Risk Profile
 
-> Proposed check. Evidence grade **B** · unique · implementation: `static-fetch`
+> Shipped in v2. Evidence grade **B** · scored tier · unique · implementation: `static-fetch`
 
 ## What it checks
 
@@ -48,3 +49,49 @@ Tier per evidence policy: **scored** — grade B meets the A/B bar required for 
 ## Review history
 
 - 2026-08-20 — proposed by the novel-checks research pass (10-agent evidence workflow); sources URL-verified at research time.
+
+## Implementation deviations
+
+The shipped audit is `answer-readiness/section-split-risk-profile`: the
+proposal's `answer-selection-forensics` domain is a research grouping, not one
+of the eight v2 categories.
+
+Token counts are real `o200k_base` counts via `gpt-tokenizer`, as the proposal
+requires, never `chars / 4`. A test pins one section's reported count against
+the tokenizer directly.
+
+All four findings ship: `SPLIT` with its headless-tail count
+(`ceil(tokens / 512) - 1`), `BLOB` for a body over the window with fewer than
+two `h2` elements, `THIN` under 25 tokens, and `ATOMIC-SPLIT` for a single
+`table`, `ol` or `ul` whose serialization exceeds the window on its own. `ul` is
+included alongside the proposal's `ol`: an unordered list of specifications
+loses its preamble the same way.
+
+The atomic serializer is a small GFM-shaped renderer written in place — rows as
+`| cell | cell |`, list items numbered. `answer-readiness/table-markdown-round-trip-loss`
+needs a fuller one for a different question; this one only needs a length.
+
+`headingDistance` is reported as the proposal's single actionable number: the
+largest number of characters between a heading and the end of its section.
+
+Score is the share of *section* tokens living in sections at or under the
+window. A `BLOB` page scores 0 by definition — there are no sections, so none of
+its text is inside a headed chunk.
+
+Status bands: below 70% fails, below 90% or any section-level finding warns.
+Both are this implementation's; the proposal specifies the measurement, not the
+bands.
+
+A page under 512 tokens is `notApplicable`: a retriever never cuts it, so there
+is no split risk to profile.
+
+## Deferred
+
+- **The real chunker.** Every pipeline splits slightly differently — some on
+  tokens, some on sentences, some with overlap. 512 tokens with heading
+  boundaries is the common denominator, and the finding survives the variation.
+- **Per-page assessment.** Only the entry page is profiled; section length is a
+  property of how a template is written.
+- **Overlap-aware scoring.** Pipelines that carry an overlap window recover part
+  of a headless tail. Modelling that needs the pipeline's parameters, which a
+  scanner does not have.
