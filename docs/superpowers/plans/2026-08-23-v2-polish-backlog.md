@@ -72,7 +72,7 @@ The user's decision was: fix every deferred minor that changes an audit verdict,
 
 The latent bug, from the merges ledger (Task 2): `AuditResultSchema` declares `details` as a closed object, so `agent-governance.ts` sets `trainingAgents` / `realtimeAgents` / `hasCatchAll` and zod drops all three before they reach `CheckResult`. Every audit that wants structured detail has to smuggle it through `found` as prose.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Add to `packages/core/src/audit.test.ts`:
 
@@ -98,12 +98,12 @@ it('carries unknown details keys through validation into the CheckResult', () =>
 
 `BASE_META` is the meta literal already used by the other cases in that file; reuse it rather than writing a new one.
 
-- [ ] **Step 2: Run it and watch it fail**
+- [x] **Step 2: Run it and watch it fail**
 
 Run: `pnpm test packages/core/src/audit.test.ts`
 Expected: FAIL — `details` comes back with only `expected`, `found`, `code`, `docsUrl`, `effort`.
 
-- [ ] **Step 3: Open the schema**
+- [x] **Step 3: Open the schema**
 
 In `packages/core/src/schemas.ts`, replace the closed `details` object with one that keeps unknown scalar keys:
 
@@ -124,7 +124,7 @@ In `packages/core/src/schemas.ts`, replace the closed `details` object with one 
     .optional(),
 ```
 
-- [ ] **Step 4: Widen the two TypeScript types**
+- [x] **Step 4: Widen the two TypeScript types**
 
 In `packages/core/src/types.ts`, both `AuditResult['details']` and `CheckResult['details']` gain the same index signature next to their existing named fields:
 
@@ -140,12 +140,12 @@ In `packages/core/src/types.ts`, both `AuditResult['details']` and `CheckResult[
   };
 ```
 
-- [ ] **Step 5: Run the test and the suite**
+- [x] **Step 5: Run the test and the suite**
 
 Run: `pnpm test packages/core/src/audit.test.ts && pnpm typecheck`
 Expected: PASS, 0 type errors.
 
-- [ ] **Step 6: Un-work-around `agent-governance`**
+- [x] **Step 6: Un-work-around `agent-governance`**
 
 `packages/core/src/audits/access-crawl-control/agent-governance.ts` computes `trainingAgents`, `realtimeAgents` and `hasCatchAll` and currently only spells them into `found`. Keep the `found` prose exactly as it is — the report shows it — and additionally pass the three values in `details`. Add one assertion to `agent-governance.test.ts`:
 
@@ -159,7 +159,7 @@ it('exposes the agent counts as structured details', async () => {
 
 Use whichever fixture in that file already produces both agent classes; do not invent a new one.
 
-- [ ] **Step 7: Gates and commit**
+- [x] **Step 7: Gates and commit**
 
 ```bash
 pnpm test && pnpm typecheck && rtk err pnpm lint
@@ -188,7 +188,7 @@ rather than only as prose."
 
 Both methods accept `recommendationOrPriority?: { priority: CheckPriority; [key: string]: unknown } | string`, read `priority` off it and throw the rest away. `toCheckResult` then falls back to `meta.guidance.code`, so an audit that computed a site-specific fix snippet silently ships the generic one. Plan 4 Task 11 worked around it by writing `details.code` directly.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 ```ts
 it('carries a per-result code from fail() into the check details', () => {
@@ -212,12 +212,12 @@ it('carries a per-result code from fail() into the check details', () => {
 });
 ```
 
-- [ ] **Step 2: Run it and watch it fail**
+- [x] **Step 2: Run it and watch it fail**
 
 Run: `pnpm test packages/core/src/audit.test.ts`
 Expected: FAIL — `check.details.code` is `'GENERIC'`.
 
-- [ ] **Step 3: Keep the code in both builders**
+- [x] **Step 3: Keep the code in both builders**
 
 In `packages/core/src/audit.ts`, inside `warn()` and `fail()`, after the existing `priority` extraction, add:
 
@@ -239,17 +239,17 @@ and add to each returned object:
 
 `toCheckResult` already prefers `result.details?.code` over `meta.guidance?.code`, so no change is needed there.
 
-- [ ] **Step 4: Run the test**
+- [x] **Step 4: Run the test**
 
 Run: `pnpm test packages/core/src/audit.test.ts`
 Expected: PASS.
 
-- [ ] **Step 5: Check the workaround sites still behave**
+- [x] **Step 5: Check the workaround sites still behave**
 
 Run: `pnpm test packages/core/src/audits/operability-safety/`
 Expected: PASS. The Plan 4 Task 11 audits set `details.code` directly, which still wins — the new path only fills in when `details` was not set.
 
-- [ ] **Step 6: Gates and commit**
+- [x] **Step 6: Gates and commit**
 
 ```bash
 pnpm test && pnpm typecheck && rtk err pnpm lint
@@ -275,7 +275,7 @@ which toCheckResult already prefers."
 
 Today `followRedirects` hands the request to `new Agent().compose(interceptors.redirect({ maxRedirections: 5 }))`. The `isSafeUrl` gate runs once, on the URL the caller passed. A site that answers `302 Location: http://169.254.169.254/latest/meta-data/` is followed. The same code path is also why `finalUrl` is a lie today — the file says so at line 199: `finalUrl: targetUrl, // undici doesn't expose final URL after redirects easily`.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 Add to `packages/core/src/fetcher.test.ts` (that file already stands up a local server for its cases; follow its existing helper):
 
@@ -311,12 +311,12 @@ it('reports the URL that actually answered as finalUrl', async () => {
 });
 ```
 
-- [ ] **Step 2: Run them and watch them fail**
+- [x] **Step 2: Run them and watch them fail**
 
 Run: `pnpm test packages/core/src/fetcher.test.ts`
 Expected: FAIL — the first follows the redirect, the second reports `/start` as `finalUrl`.
 
-- [ ] **Step 3: Walk the chain by hand**
+- [x] **Step 3: Walk the chain by hand**
 
 Replace the `redirectAgent` dispatcher path with an explicit loop. Keep `noRedirectAgent` as the only dispatcher; `followRedirects: false` keeps its current single-request behavior.
 
@@ -357,17 +357,17 @@ Follow the file's existing conventions for building the error result and for reu
 
 Then set `finalUrl: currentUrl` where the result object is assembled, and delete the stale comment at line 199.
 
-- [ ] **Step 4: Run the tests**
+- [x] **Step 4: Run the tests**
 
 Run: `pnpm test packages/core/src/fetcher.test.ts`
 Expected: PASS, including every pre-existing case in that file.
 
-- [ ] **Step 5: Run the audits that read `finalUrl`**
+- [x] **Step 5: Run the audits that read `finalUrl`**
 
 Run: `pnpm test packages/core/src/audits/`
 Expected: PASS. `finalUrl` becoming truthful can change a canonical or redirect-chain audit's message; if a test fails, the fixture was pinning the old lie — fix the fixture, not the fetcher, and say so in the commit body.
 
-- [ ] **Step 6: Gates and commit**
+- [x] **Step 6: Gates and commit**
 
 ```bash
 pnpm test && pnpm typecheck && rtk err pnpm lint
@@ -395,7 +395,7 @@ instead of the one we asked for."
 
 The product decision (taxonomy ledger, Task 11): a blog scores 0 for `agentic-commerce` and pays that category's full evidence mass, which is a hidden penalty for not being a shop. Since the checks are all `na`, the category has nothing to say.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 ```ts
 it('drops a category whose checks are all notApplicable from the overall score', () => {
@@ -413,12 +413,12 @@ it('still counts a category that has one non-na check', () => {
 
 `naCheck()`, `passCheck(weight)` and `failCheck(weight)` are the fixture builders already in `scorer.test.ts`; reuse them and add only what is missing.
 
-- [ ] **Step 2: Run it and watch it fail**
+- [x] **Step 2: Run it and watch it fail**
 
 Run: `pnpm test packages/core/src/scorer.test.ts`
 Expected: FAIL — the first case returns 50 only after the fix; before it, the all-na category contributes score 0 at mass 4 and the answer is 25.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 ```ts
 /**
@@ -447,16 +447,16 @@ export function calculateOverallScore(categories: CategoryResult[]): number {
 }
 ```
 
-- [ ] **Step 4: Run the tests**
+- [x] **Step 4: Run the tests**
 
 Run: `pnpm test packages/core/src/scorer.test.ts && pnpm test packages/core/src/audit-runner.test.ts`
 Expected: PASS.
 
-- [ ] **Step 5: Update the doc comment above the function**
+- [x] **Step 5: Update the doc comment above the function**
 
 The existing block comment says a category with no mass drops out. Extend it with the new rule in the same voice, one sentence.
 
-- [ ] **Step 6: Gates and commit**
+- [x] **Step 6: Gates and commit**
 
 ```bash
 pnpm test && pnpm typecheck && rtk err pnpm lint
@@ -487,7 +487,7 @@ that is the intended correction, not a regression."
 
 A weight-0 informative check currently renders identically to a scored one, so `structured-data/claimreview-advisory` reads as a failed audit when it is an advisory that deliberately moves nothing.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 In `view-model.test.ts`:
 
@@ -523,12 +523,12 @@ it('marks an informative check with an advisory badge and does not badge a score
 });
 ```
 
-- [ ] **Step 2: Run them and watch them fail**
+- [x] **Step 2: Run them and watch them fail**
 
 Run: `pnpm test packages/report/src/`
 Expected: FAIL — `tier` is undefined on the view, and the badge string is absent.
 
-- [ ] **Step 3: Carry the fields through the view model**
+- [x] **Step 3: Carry the fields through the view model**
 
 Add `tier` and `evidenceGrade` to `CheckView` and copy them where the other check fields are mapped. Add `advisory` to `CheckCounts` and compute it beside the existing `pass` / `warn` / `fail` / `na` tallies:
 
@@ -539,7 +539,7 @@ Add `tier` and `evidenceGrade` to `CheckView` and copy them where the other chec
       advisory: checks.filter((c) => c.status !== 'na' && c.tier && c.tier !== 'scored').length,
 ```
 
-- [ ] **Step 4: Badge the check card**
+- [x] **Step 4: Badge the check card**
 
 In `html-generator.ts`, inside the `<div class="font-semibold …">` that already renders the title, the id and the deprecated badge, add one more badge next to them:
 
@@ -553,16 +553,16 @@ Then, in the category header row that already prints the pass/warn/fail/na count
                     ${cat.counts.advisory > 0 ? `<span>•</span><span>${cat.counts.advisory} Advisory</span>` : ''}
 ```
 
-- [ ] **Step 5: Fix the multi-line `found` collapse while you are here**
+- [x] **Step 5: Fix the multi-line `found` collapse while you are here**
 
 The merges ledger flagged `html-generator.ts:92`: a `found` string with newlines collapses to one line. The "What we found" block already renders with `whitespace-pre-line`; the `displayValue` line above it does not. Add `whitespace-pre-line` to the `displayValue` div so a multi-line `found` reads as written.
 
-- [ ] **Step 6: Run the tests**
+- [x] **Step 6: Run the tests**
 
 Run: `pnpm test packages/report/src/`
 Expected: PASS.
 
-- [ ] **Step 7: Gates and commit**
+- [x] **Step 7: Gates and commit**
 
 ```bash
 pnpm test && pnpm typecheck && rtk err pnpm lint
@@ -588,7 +588,7 @@ multi-line found value from collapsing onto one line."
 - Consumes: `CheckView.tier` from Task 5.
 - Produces: `export function tierMarker(tier?: AuditTier): string` in `packages/cli/src/main.ts`, returning `' \x1b[36m(advisory)\x1b[0m'`, `' \x1b[36m(experimental)\x1b[0m'` or `''`.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Create `packages/cli/src/tier-marker.test.ts`:
 
@@ -612,12 +612,12 @@ describe('tierMarker', () => {
 });
 ```
 
-- [ ] **Step 2: Run it and watch it fail**
+- [x] **Step 2: Run it and watch it fail**
 
 Run: `pnpm test packages/cli/src/tier-marker.test.ts`
 Expected: FAIL — `tierMarker` is not exported.
 
-- [ ] **Step 3: Implement and use it**
+- [x] **Step 3: Implement and use it**
 
 Add the function near the other formatting helpers in `main.ts`, exported so the test can reach it:
 
@@ -635,12 +635,12 @@ export function tierMarker(tier?: AuditTier): string {
 
 Append `${tierMarker(check.tier)}` to the per-check title line in the audit-debugger output (the line that prints `[${check.id}] ${check.title}`), and to any per-check line in the top-fails listing.
 
-- [ ] **Step 4: Run the test and the CLI suite**
+- [x] **Step 4: Run the test and the CLI suite**
 
 Run: `pnpm test packages/cli/`
 Expected: PASS.
 
-- [ ] **Step 5: Gates and commit**
+- [x] **Step 5: Gates and commit**
 
 ```bash
 pnpm test && pnpm typecheck && rtk err pnpm lint
@@ -662,7 +662,7 @@ as work the operator owes. Each now carries its tier inline."
 **Interfaces:**
 - Consumes: `CategoryView.counts.advisory` from Task 5.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 Create `packages/report/src/markdown-generator.test.ts`:
 
@@ -697,12 +697,12 @@ In `packages/core/src/orchestrator.test.ts`, add one assertion to the existing f
 
 Use whatever offline scan helper that file already uses; do not add a network call.
 
-- [ ] **Step 2: Run them and watch them fail**
+- [x] **Step 2: Run them and watch them fail**
 
 Run: `pnpm test packages/report/src/markdown-generator.test.ts`
 Expected: FAIL — module has no advisory line.
 
-- [ ] **Step 3: Add the line**
+- [x] **Step 3: Add the line**
 
 In `generateMarkdownSummary`, after the category table, add:
 
@@ -718,12 +718,12 @@ In `generateMarkdownSummary`, after the category table, add:
 
 and interpolate `advisoryLine` after the table in the returned template.
 
-- [ ] **Step 4: Run the tests**
+- [x] **Step 4: Run the tests**
 
 Run: `pnpm test packages/report/ && pnpm test packages/core/src/orchestrator.test.ts`
 Expected: PASS.
 
-- [ ] **Step 5: Gates and commit**
+- [x] **Step 5: Gates and commit**
 
 ```bash
 pnpm test && pnpm typecheck && rtk err pnpm lint
@@ -755,7 +755,7 @@ naming the count, and pins that every check in a scan report carries its tier."
 
 `--categories <list>` has been in the CLI help since v1 and has never been parsed.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 ```ts
 import { describe, it, expect } from 'vitest';
@@ -787,12 +787,12 @@ describe('filterConfig', () => {
 });
 ```
 
-- [ ] **Step 2: Run it and watch it fail**
+- [x] **Step 2: Run it and watch it fail**
 
 Run: `pnpm test packages/core/src/audit-config.test.ts`
 Expected: FAIL — `filterConfig` and `CATEGORY_IDS` are not exported.
 
-- [ ] **Step 3: Implement in `audit-config.ts`**
+- [x] **Step 3: Implement in `audit-config.ts`**
 
 ```ts
 /** Every registered category id, in report order. */
@@ -824,7 +824,7 @@ export function filterConfig(
 }
 ```
 
-- [ ] **Step 4: Call it from the orchestrator**
+- [x] **Step 4: Call it from the orchestrator**
 
 `ScanOptions` gains:
 
@@ -845,7 +845,7 @@ and the two `defaultConfig` uses at `orchestrator.ts:371` and `:380` become one 
   const auditPlan = planAudits(ctx, config);
 ```
 
-- [ ] **Step 5: Pin it at the orchestrator level**
+- [x] **Step 5: Pin it at the orchestrator level**
 
 In `orchestrator.test.ts`, beside the existing category-count case:
 
@@ -856,7 +856,7 @@ In `orchestrator.test.ts`, beside the existing category-count case:
   });
 ```
 
-- [ ] **Step 6: Parse the flag in the CLI**
+- [x] **Step 6: Parse the flag in the CLI**
 
 In `packages/cli/src/main.ts`, beside the other `getArgValue` calls:
 
@@ -876,7 +876,7 @@ In `packages/cli/src/main.ts`, beside the other `getArgValue` calls:
 
 and pass `categories` into the `runScan` options object.
 
-- [ ] **Step 7: Verify end to end**
+- [x] **Step 7: Verify end to end**
 
 ```bash
 pnpm --filter @forkpoint/agent-lighthouse-core build
@@ -887,7 +887,7 @@ node packages/cli/dist/main.js https://example.com --categories nonsense
 
 Expected: the first writes a report containing one category; the second exits 1 with `Unknown category: nonsense` and the valid list.
 
-- [ ] **Step 8: Gates and commit**
+- [x] **Step 8: Gates and commit**
 
 ```bash
 pnpm test && pnpm typecheck && rtk err pnpm lint
@@ -913,7 +913,7 @@ ones instead of being ignored."
 
 The registry has no experimental audit today; the tier exists in `AuditTier` and Plan 5b will land the first ones. The gate has to exist before they do, or their first release scores sites on unvalidated checks.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 ```ts
 it('excludes experimental audits by default and includes them on request', () => {
@@ -932,12 +932,12 @@ it('excludes experimental audits by default and includes them on request', () =>
 
 `SOME_META` is any registered audit's meta, read via `defaultConfig`; clone it rather than writing a full literal.
 
-- [ ] **Step 2: Run it and watch it fail**
+- [x] **Step 2: Run it and watch it fail**
 
 Run: `pnpm test packages/core/src/audit-config.test.ts`
 Expected: FAIL until Task 8's `filterConfig` handles `includeExperimental: false` with no `categories` filter — which is exactly the branch the early return must not swallow. Fix the early return if it does.
 
-- [ ] **Step 3: Add the flag**
+- [x] **Step 3: Add the flag**
 
 In `main.ts`:
 
@@ -951,7 +951,7 @@ pass it into `runScan` options, and add one line to the usage block next to `--c
   --experimental               Include experimental-tier audits (excluded by default; they do not affect scores)
 ```
 
-- [ ] **Step 4: Verify**
+- [x] **Step 4: Verify**
 
 ```bash
 pnpm --filter @forkpoint/agent-lighthouse build
@@ -960,7 +960,7 @@ node packages/cli/dist/main.js --help | grep experimental
 
 Expected: the line is printed.
 
-- [ ] **Step 5: Gates and commit**
+- [x] **Step 5: Gates and commit**
 
 ```bash
 pnpm test && pnpm typecheck && rtk err pnpm lint
@@ -990,7 +990,7 @@ either way."
 
 `audits-data.json` is v1-era: 207 records with numeric ids (`"1.1"`) and dead category names. `index.html:335` still advertises 207 audits. The page fetches the JSON at runtime, so regenerating the file is most of the work.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Create `scripts/build-docs-data.test.ts`:
 
@@ -1009,12 +1009,12 @@ describe('buildAuditList', () => {
 });
 ```
 
-- [ ] **Step 2: Run it and watch it fail**
+- [x] **Step 2: Run it and watch it fail**
 
 Run: `pnpm test scripts/build-docs-data.test.ts`
 Expected: FAIL — the script has no exported function; it runs at import time.
 
-- [ ] **Step 3: Split the script into a function plus a main**
+- [x] **Step 3: Split the script into a function plus a main**
 
 Refactor `scripts/build-docs-data.ts` so the loop that builds `auditList` becomes `export function buildAuditList()`, returning the sorted array, and the file write happens only when the module is run directly. Add the three new fields inside the record:
 
@@ -1026,7 +1026,7 @@ Refactor `scripts/build-docs-data.ts` so the loop that builds `auditList` become
 
 Drop the `any[]` annotation in favour of an explicit `AuditDoc` interface declared in the same file — `any` hides exactly the drift this test exists to catch.
 
-- [ ] **Step 4: Run the test, then regenerate**
+- [x] **Step 4: Run the test, then regenerate**
 
 ```bash
 pnpm test scripts/build-docs-data.test.ts
@@ -1035,7 +1035,7 @@ npx tsx scripts/build-docs-data.ts
 
 Expected: PASS, then `Extracted metadata for 172 audits`.
 
-- [ ] **Step 5: Fix the static copy in `index.html`**
+- [x] **Step 5: Fix the static copy in `index.html`**
 
 - Line 335: `Explore all 207 audits` → `Explore all 172 audits`.
 - Search the file for every other three-digit audit count and for v1 category names (`content-discoverability`, `answer-engine`, `technical-readiness`, `agent-tools`, `generative-engine`) and replace them with the 8 v2 category names as rendered by `CATEGORY_NAMES`.
@@ -1047,7 +1047,7 @@ Expected: PASS, then `Extracted metadata for 172 audits`.
 
 - Add a tier filter next to the existing category filter, with options `All`, `Scored`, `Advisory`, `Experimental`, filtering on the same `tier` field.
 
-- [ ] **Step 6: Verify the page against the data**
+- [x] **Step 6: Verify the page against the data**
 
 ```bash
 python3 -m http.server 8899 --directory packages/website
@@ -1055,7 +1055,7 @@ python3 -m http.server 8899 --directory packages/website
 
 Open `http://localhost:8899/`, confirm the explorer lists 172 audits, the badge renders, and the tier filter narrows the list. Stop the server.
 
-- [ ] **Step 7: Gates and commit**
+- [x] **Step 7: Gates and commit**
 
 ```bash
 pnpm test && pnpm typecheck && rtk err pnpm lint
@@ -1082,7 +1082,7 @@ scored one."
 
 Three ledger lines, all of them text a user reads and acts on.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 In `ai-bot-directives.test.ts`:
 
@@ -1121,20 +1121,20 @@ it('does not warn about relevance when the page subject is only the brand name',
 
 Match the file's existing helper signature; if it takes full HTML, pass full HTML.
 
-- [ ] **Step 2: Run them and watch them fail**
+- [x] **Step 2: Run them and watch them fail**
 
 Run: `pnpm test packages/core/src/audits/access-crawl-control/ai-bot-directives.test.ts packages/core/src/audits/answer-readiness/meta-description.test.ts`
 Expected: FAIL on all four.
 
-- [ ] **Step 3: Fix the wildcard claim**
+- [x] **Step 3: Fix the wildcard claim**
 
 At `ai-bot-directives.ts:166` the warn reads `"… are allowed only through the wildcard rule — no explicit directive."`. It fires whether or not a wildcard group exists. Branch on the parsed groups: when there is no `User-agent: *` group, say `"… have no directive of any kind in robots.txt, so they are allowed by default."`.
 
-- [ ] **Step 4: Fix the title on the warn path**
+- [x] **Step 4: Fix the title on the warn path**
 
 `meta.failureTitle` is `'A documented AI bot is blocked in robots.txt'`, and `toCheckResult` uses `failureTitle` for every non-pass status, so a warn about wildcard-only access renders under a blocked-bot headline. Give the audit a `title`/`failureTitle` pair that is true on both non-pass paths — `'AI crawler directives'` for the title and `'AI crawler directives need attention'` for the failure title — and move the specific claim into the message, where it is already conditioned correctly.
 
-- [ ] **Step 5: Fix the brand-only relevance check**
+- [x] **Step 5: Fix the brand-only relevance check**
 
 In `meta-description.ts`, guard the relevance branch:
 
@@ -1150,12 +1150,12 @@ In `meta-description.ts`, guard the relevance branch:
 
 Keep the rest of the branch as it is.
 
-- [ ] **Step 6: Run the tests**
+- [x] **Step 6: Run the tests**
 
 Run: `pnpm test packages/core/src/audits/access-crawl-control/ packages/core/src/audits/answer-readiness/`
 Expected: PASS. `_robots-consumers.differential.test.ts` pins the old wildcard sentence at line 566 — update that snapshot deliberately and note it in the commit body.
 
-- [ ] **Step 7: Gates and commit**
+- [x] **Step 7: Gates and commit**
 
 ```bash
 pnpm test && pnpm typecheck && rtk err pnpm lint
@@ -1188,7 +1188,7 @@ updates the differential snapshot for the corrected sentence."
 | 8 | `structured-data/review-signals.ts` (locate with `rg -l review-signals packages/core/src/audits`) | `"review"` truthiness | `"review": []` counts as strong social proof, and a `ratingCount`-only node is labelled `reviewCount` in `found` | An empty array is not social proof; label the field by the key that was actually present |
 | 9 | `operability-safety/trust-signals.ts` | the social-proof regex | Matches carousel counters such as `1 / 5` as review counts | Require a digit group of at least two digits or an explicit review word adjacent |
 
-- [ ] **Step 1: Write nine failing tests**
+- [x] **Step 1: Write nine failing tests**
 
 One `it` per row, in the test file beside each audit, each asserting the required behavior in the table. Follow each file's existing fixture helpers. Example for row 2:
 
@@ -1203,21 +1203,21 @@ it('counts a no-store file as uncached even when it carries an ETag', async () =
 });
 ```
 
-- [ ] **Step 2: Run them and watch them fail**
+- [x] **Step 2: Run them and watch them fail**
 
 Run: `pnpm test packages/core/src/audits/`
 Expected: nine failures, one per row.
 
-- [ ] **Step 3: Apply the nine fixes**
+- [x] **Step 3: Apply the nine fixes**
 
 Each is a one- to five-line change described in the table. Read the surrounding function before editing; keep the existing message voice.
 
-- [ ] **Step 4: Run the whole audit suite**
+- [x] **Step 4: Run the whole audit suite**
 
 Run: `pnpm test packages/core/src/audits/`
 Expected: PASS. Any differential snapshot that pinned an old message is updated deliberately.
 
-- [ ] **Step 5: Gates and commit**
+- [x] **Step 5: Gates and commit**
 
 ```bash
 pnpm test && pnpm typecheck && rtk err pnpm lint
@@ -1254,16 +1254,16 @@ is not a review count."
 | 5 | `_robots-consumers.differential.test.ts` | Pins status/score/message/found but not `details` or `priority`, so a priority regression passes | Add both fields to the pinned shape |
 | 6 | `view-model.test.ts` | Fixture uses weight 0.15 for `machine-discovery` where the real mass is 0.18, so the fixture cannot catch a mass drift | Derive the fixture weight from `CATEGORY_MASS` instead of hard-coding it |
 
-- [ ] **Step 1: Apply each fix and watch it fail first**
+- [x] **Step 1: Apply each fix and watch it fail first**
 
 For rows 1, 3 and 5, first make the test stronger and run it — it must fail against a deliberately broken input you construct in the same run (add the sixth row, the 65-character id, the changed priority), then pass once you revert the break. Record in the commit body that you verified each strengthened assertion actually bites.
 
-- [ ] **Step 2: Run the suites**
+- [x] **Step 2: Run the suites**
 
 Run: `pnpm test packages/core/ packages/report/`
 Expected: PASS.
 
-- [ ] **Step 3: Gates and commit**
+- [x] **Step 3: Gates and commit**
 
 ```bash
 pnpm test && pnpm typecheck && rtk err pnpm lint
@@ -1302,11 +1302,11 @@ deliberately broken input before being committed."
 | 14 | `docs/evidence/audits/robots-directives.md:112` | "168 → 167" — the fold removed two |
 | 15 | renamed dossiers across Plan 3 Tasks 3-6 | Body H1/subtitle still name the v1 slug — fix each to its v2 title |
 
-- [ ] **Step 1: Apply every row**
+- [x] **Step 1: Apply every row**
 
 Read each site before editing. These are prose fixes: keep each file's voice, change only what the row names.
 
-- [ ] **Step 2: Verify nothing executable moved**
+- [x] **Step 2: Verify nothing executable moved**
 
 ```bash
 pnpm test && pnpm typecheck && rtk err pnpm lint
@@ -1316,7 +1316,7 @@ git diff --stat HEAD
 
 Expected: all gates green, `check-dossiers` still 172, and the diff touches only `.md` files and comment lines.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add -A
@@ -1337,7 +1337,7 @@ executable change."
 - Create: `.changeset/v2-polish-backlog.md`
 - Modify: `.superpowers/sdd/2026-08-21-v2-taxonomy/progress.md`, `.superpowers/sdd/2026-08-22-v2-merges-rewrites/progress.md`
 
-- [ ] **Step 1: Run every gate one final time**
+- [x] **Step 1: Run every gate one final time**
 
 ```bash
 pnpm test
@@ -1349,15 +1349,15 @@ npx changeset status
 
 Expected: full suite green; `172 audits OK … no orphans`; changeset status without error.
 
-- [ ] **Step 2: Mark the ledgers**
+- [x] **Step 2: Mark the ledgers**
 
 At the end of each ledger, append one line: `Plan 6 (2026-08-23) cleared the deferred-minor backlog; the items it deliberately left are listed under "Triage record" in docs/superpowers/plans/2026-08-23-v2-polish-backlog.md.` Do not delete the ledger lines — they are the record of what was found.
 
-- [ ] **Step 3: Update the handoff**
+- [x] **Step 3: Update the handoff**
 
 Move Plan 6 into the "Executed plans" table with this plan's path. In "Remaining scope", delete the Plan 6 section, leaving Plan 5b and the endgame. Update the gate line with the final test count.
 
-- [ ] **Step 4: Write the changeset**
+- [x] **Step 4: Write the changeset**
 
 Create `.changeset/v2-polish-backlog.md`:
 
@@ -1395,7 +1395,7 @@ Also: nine audit-behavior defects, six strengthened tests, and the website
 audit explorer regenerated from the live 172-audit registry.
 ```
 
-- [ ] **Step 5: Commit and report**
+- [x] **Step 5: Commit and report**
 
 ```bash
 git add -A
