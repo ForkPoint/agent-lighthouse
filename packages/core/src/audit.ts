@@ -60,12 +60,21 @@ export abstract class Audit {
         ? recommendationOrPriority
         : (recommendationOrPriority as { priority: CheckPriority })?.priority;
 
+    // A recommendation object may also carry a fix snippet computed from what
+    // this scan actually found. It used to be dropped here, so every report
+    // showed the generic snippet from meta.guidance.code.
+    const code =
+      typeof recommendationOrPriority === 'object' && typeof recommendationOrPriority.code === 'string'
+        ? recommendationOrPriority.code
+        : undefined;
+
     return {
       status: 'warn',
       score: 0.5,
       message,
       expected,
       found,
+      ...(code ? { details: { code } } : {}),
       priority:
         (typeof priority === 'string' ? Audit.PRIORITY_MAP[priority] : undefined) ??
         (priority as CheckPriority),
@@ -88,12 +97,21 @@ export abstract class Audit {
         ? recommendationOrPriority
         : (recommendationOrPriority as { priority: CheckPriority })?.priority;
 
+    // A recommendation object may also carry a fix snippet computed from what
+    // this scan actually found. It used to be dropped here, so every report
+    // showed the generic snippet from meta.guidance.code.
+    const code =
+      typeof recommendationOrPriority === 'object' && typeof recommendationOrPriority.code === 'string'
+        ? recommendationOrPriority.code
+        : undefined;
+
     return {
       status: 'fail',
       score: 0.0,
       message,
       expected,
       found,
+      ...(code ? { details: { code } } : {}),
       priority:
         (typeof priority === 'string' ? Audit.PRIORITY_MAP[priority] : undefined) ??
         (priority as CheckPriority),

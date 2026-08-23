@@ -257,3 +257,47 @@ describe('Audit.toCheckResult', () => {
     expect(c.details?.code).toBe('guidance-code'); // no details.code → guidance.code
   });
 });
+
+describe('Audit — structured details and per-result code', () => {
+  it('carries unknown details keys through validation into the CheckResult', () => {
+    const a = new WithGuidanceAudit();
+    const result: AuditResult = {
+      status: 'pass',
+      score: 1,
+      message: 'ok',
+      expected: 'e',
+      found: 'f',
+      details: { expected: 'e', found: 'f', trainingAgents: 3, hasCatchAll: false, note: 'kept' },
+    };
+    const c = a.toCheckResult(result);
+
+    expect(c.details).toMatchObject({ trainingAgents: 3, hasCatchAll: false, note: 'kept' });
+  });
+
+  it('carries a per-result code from fail() into the check details', () => {
+    const a = new WithGuidanceAudit();
+    const c = a.toCheckResult(
+      a.callFail('m', 'e', 'f', { priority: 'high', code: 'SITE-SPECIFIC' }),
+    );
+
+    expect(c.details?.code).toBe('SITE-SPECIFIC');
+    expect(c.priority).toBe('high');
+  });
+
+  it('carries a per-result code from warn() into the check details', () => {
+    const a = new WithGuidanceAudit();
+    const c = a.toCheckResult(
+      a.callWarn('m', 'e', 'f', { priority: 'low', code: 'WARN-SNIPPET' }),
+    );
+
+    expect(c.details?.code).toBe('WARN-SNIPPET');
+    expect(c.priority).toBe('low');
+  });
+
+  it('still falls back to guidance.code when the result carries none', () => {
+    const a = new WithGuidanceAudit();
+    const c = a.toCheckResult(a.callFail('m', 'e', 'f', { priority: 'high' }));
+
+    expect(c.details?.code).toBe('guidance-code');
+  });
+});

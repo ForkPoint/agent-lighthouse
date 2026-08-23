@@ -32,6 +32,33 @@ describe('AgentGovernanceAudit', () => {
     expect(result.details?.realtimeAgents).toEqual(['ChatGPT-User', 'Claude-User']);
   });
 
+  // The details survived inside the raw AuditResult but used to be stripped by
+  // schema validation, so no report ever saw them.
+  it('exposes the agent lists as structured details on the CheckResult', () => {
+    const robots = [
+      'User-agent: GPTBot',
+      'Disallow: /',
+      '',
+      'User-agent: CCBot',
+      'Disallow: /',
+      '',
+      'User-agent: ChatGPT-User',
+      'Allow: /',
+      '',
+      'User-agent: Claude-User',
+      'Allow: /',
+      '',
+      'User-agent: *',
+      'Allow: /',
+    ].join('\n');
+    const ctx = mockCheckContext([], {
+      '/robots.txt': mockFetchResult(robots, 200),
+    });
+    const check = audit.toCheckResult(audit.audit(ctx));
+    expect(check.details?.trainingAgents).toEqual(['GPTBot', 'CCBot']);
+    expect(check.details?.hasCatchAll).toBe(true);
+  });
+
   it('passes when the two categories are explicitly treated differently', () => {
     const robots = [
       'User-agent: GPTBot',

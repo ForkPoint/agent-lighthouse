@@ -17,6 +17,21 @@ export const AuditResultSchema = z.object({
       found: z.string().max(10000).optional(),
       code: z.string().max(10000).optional(),
     })
+    // Audits attach structured evidence beside the prose — counts, booleans,
+    // ids. A closed object dropped all of it silently, which is how
+    // agent-governance's trainingAgents/realtimeAgents/hasCatchAll never
+    // reached a report. Unknown keys are kept, but only as scalars: nested
+    // objects would let an audit smuggle unbounded payloads into the JSON
+    // report. A bounded array of strings is allowed because audits report
+    // named sets (which crawlers, which endpoints) as lists.
+    .catchall(
+      z.union([
+        z.string().max(10000),
+        z.number(),
+        z.boolean(),
+        z.array(z.string().max(1000)).max(100),
+      ]),
+    )
     .optional(),
   pageUrl: z.string().max(2048).url().optional().or(z.string().max(2048).startsWith('/')).or(z.string().length(0)),
   priority: CheckPrioritySchema.optional(),
@@ -92,6 +107,16 @@ export const CheckResultSchema = z.object({
       code: z.string().max(10000).optional(),
       docsUrl: z.string().max(2048).url().optional().or(z.string().length(0)),
     })
+    // Same rule as AuditResultSchema: structured evidence survives, nested
+    // payloads do not.
+    .catchall(
+      z.union([
+        z.string().max(10000),
+        z.number(),
+        z.boolean(),
+        z.array(z.string().max(1000)).max(100),
+      ]),
+    )
     .optional(),
   tags: z.array(z.string().max(50)).max(20).optional(),
   deprecated: DeprecationNoticeSchema.optional(),
