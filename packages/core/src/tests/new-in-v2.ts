@@ -55,6 +55,7 @@ export const NEW_IN_V2: readonly string[] = [
   'answer-readiness/chunk-boundary-referent-integrity',
   'answer-readiness/extractor-survival-recall',
   'answer-readiness/section-split-risk-profile',
+  'answer-readiness/site-wide-passage-uniqueness-ratio',
 ];
 
 /** The 148 audits Plan 4 closed the v2 migration on. Never changes again. */

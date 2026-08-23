@@ -59,14 +59,27 @@ export function jaccard(a: Set<string>, b: Set<string>): number {
 }
 
 /**
+ * Where one sentence ends and the next begins.
+ *
+ * Two boundaries. Terminal punctuation followed by whitespace is the ordinary
+ * one. Terminal punctuation followed straight away by a capital is the one that
+ * matters for extracted text: an extractor concatenates block elements with no
+ * separator, so `<p>...four.</p><p>We ship...` arrives as `four.We ship` and the
+ * whitespace boundary alone would read the two paragraphs as one sentence. The
+ * character before the period must be lowercase, a digit or a closing mark, so
+ * `U.S.A` and other single-letter abbreviations stay whole.
+ */
+const SENTENCE_BOUNDARY = /(?<=[a-z0-9\u2019'")\]][.!?])(?=[A-Z])|(?<=[.!?])\s+/u;
+
+/**
  * Sentences of `text`.
  *
- * Splits on terminal punctuation followed by whitespace, then re-joins any
- * piece whose predecessor ended in a known abbreviation. A decimal never splits
- * because no whitespace follows its period.
+ * Splits on the boundaries above, then re-joins any piece whose predecessor
+ * ended in a known abbreviation. A decimal never splits because neither
+ * whitespace nor a capital follows its period.
  */
 export function sentences(text: string): string[] {
-  const pieces = text.replace(/\s+/g, ' ').trim().split(/(?<=[.!?])\s+/);
+  const pieces = text.replace(/\s+/g, ' ').trim().split(SENTENCE_BOUNDARY);
   const out: string[] = [];
   for (const piece of pieces) {
     const previous = out[out.length - 1];

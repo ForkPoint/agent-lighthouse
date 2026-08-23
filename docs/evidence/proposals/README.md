@@ -1,6 +1,6 @@
 # Proposed checks — evidence dossiers
 
-30 proposed checks from the 2026-08-20 novel-checks research pass. Each dossier states what the check verifies, the falsifiable mechanism behind it, cited evidence from the [source registry](../sources.json), competitor coverage, and an implementation sketch. Grading rubric: [evidence policy](../POLICY.md).
+29 proposed checks from the 2026-08-20 novel-checks research pass. Each dossier states what the check verifies, the falsifiable mechanism behind it, cited evidence from the [source registry](../sources.json), competitor coverage, and an implementation sketch. Grading rubric: [evidence policy](../POLICY.md).
 
 Seven dossiers left this folder on 2026-08-22 (Plan 5, Task 2): six tool
 surveys moved to [../research](../research/README.md) because their verdict is
@@ -22,7 +22,6 @@ Grades: **A** = documented consumer behavior or ratified standard · **B** = dra
 | B | [Buyable Variant Resolution](./agentic-commerce/buyable-variant-resolution.md) | agentic-commerce | unique | `multi-page` | scored |
 | B | [Cart Handoff Reachability](./agentic-commerce/cart-handoff-reachability.md) | agentic-commerce | unique | `multi-page` | scored |
 | B | [Offer Truth Consistency](./agentic-commerce/offer-truth-consistency.md) | agentic-commerce | unique | `multi-page` | scored |
-| B | [Site-Wide Passage Uniqueness Ratio](./answer-selection-forensics/site-wide-passage-uniqueness-ratio.md) | answer-selection-forensics | partial-overlap | `multi-page` | scored |
 | B | [Table Markdown Round-Trip Loss](./answer-selection-forensics/table-markdown-round-trip-loss.md) | answer-selection-forensics | partial-overlap | `static-fetch` | scored |
 | B | [AI usage signal coherence across channels](./bot-auth-access/ai-usage-signal-coherence-across-channels.md) | bot-auth-access | unique | `static-fetch` | scored |
 | B | [AIPREF Content-Usage declaration validity](./bot-auth-access/aipref-content-usage-declaration-validity.md) | bot-auth-access | unique | `static-fetch` | scored |
