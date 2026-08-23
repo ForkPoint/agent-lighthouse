@@ -1215,6 +1215,58 @@
     }
   },
   {
+    "id": "agent-interfaces/mcp-origin-validation-cors",
+    "category": "agent-interfaces",
+    "categoryTitle": "Agent Interfaces",
+    "title": "The MCP endpoint validates Origin and its CORS policy matches its auth posture",
+    "failureTitle": "This MCP endpoint’s CORS policy exposes it to any page the user visits",
+    "description": "Sends the discover call twice — once with a throwaway `Origin`, once without — and one CORS preflight, then compares. An endpoint that reflects an arbitrary Origin into `Access-Control-Allow-Origin` while also allowing credentials has authorized every page the user visits to call it on the user’s behalf. Permissive CORS on an endpoint with no auth surface is reported and not scored.",
+    "scoreDisplayMode": "ternary",
+    "weight": 0.6,
+    "priority": "high",
+    "tier": "scored",
+    "evidenceGrade": "B",
+    "dossier": "docs/evidence/audits/agent-interfaces/mcp-origin-validation-cors.md",
+    "guidance": {
+      "impact": "The transport spec is unambiguous: servers MUST validate the Origin header on all incoming connections, and answer 403 when it is present and invalid, because a server that does not is reachable from any web page the user has open. The provable defect is the CORS pairing: an endpoint that reflects the requesting Origin into `Access-Control-Allow-Origin` and returns `Access-Control-Allow-Credentials: true` has authorized any page to enumerate its tool surface and invoke tools with the user’s session.",
+      "fix": "Validate `Origin` on every request and answer 403 when it is present and not one you allow. Never reflect an arbitrary Origin while allowing credentials: return a fixed allow-list, or drop `Access-Control-Allow-Credentials`. `Access-Control-Allow-Origin: *` is only safe on an endpoint that accepts no credentials at all.",
+      "effort": "moderate",
+      "docsUrl": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/audits/agent-interfaces/mcp-origin-validation-cors.md",
+      "tags": [
+        "mcp",
+        "cors",
+        "dns-rebinding",
+        "security"
+      ]
+    }
+  },
+  {
+    "id": "agent-interfaces/mcp-registry-listing-ownership",
+    "category": "agent-interfaces",
+    "categoryTitle": "Agent Interfaces",
+    "title": "The MCP server is listed in the official registry under a namespace this domain owns",
+    "failureTitle": "This site’s MCP server is missing from the registry, or listed under a namespace it does not own",
+    "description": "Searches the official MCP Registry for servers whose `remotes[].url` lives on this domain, classifies each listing by namespace — reverse-DNS of this domain, an individual’s GitHub account, or a third-party aggregator — and checks that the domain-control proof the reverse-DNS namespace requires is actually being served at `/.well-known/mcp-registry-auth`.",
+    "scoreDisplayMode": "ternary",
+    "weight": 0.6,
+    "priority": "medium",
+    "tier": "scored",
+    "evidenceGrade": "B",
+    "dossier": "docs/evidence/audits/agent-interfaces/mcp-registry-listing-ownership.md",
+    "guidance": {
+      "impact": "The registry is the index a client resolves \"the MCP server for this domain\" against. A domain with no first-party entry is absent from it, so the only path to the server is a URL somebody pastes by hand. A listing under an aggregator’s namespace is worse than absent in one way: the brand cannot update or revoke it, and agents routed through it reach a proxy rather than the origin. The reverse-DNS namespace that fixes this is granted on proof of domain control, and that proof has to keep being served.",
+      "fix": "Publish the server under your own reverse-DNS namespace (`com.example/...`), serve the proof at `/.well-known/mcp-registry-auth` in the exact `v=MCPv1; k=ed25519; p=<base64>` form and keep serving it after DNS migrations, keep the listing’s version in step with what the server reports, and offer a `streamable-http` remote rather than only the deprecated `sse`.",
+      "effort": "moderate",
+      "docsUrl": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/audits/agent-interfaces/mcp-registry-listing-ownership.md",
+      "tags": [
+        "mcp",
+        "registry",
+        "namespace",
+        "discovery"
+      ]
+    }
+  },
+  {
     "id": "agent-interfaces/mcp-tool-contract-validity",
     "category": "agent-interfaces",
     "categoryTitle": "Agent Interfaces",
@@ -1239,6 +1291,33 @@
         "json-schema",
         "x-mcp-header",
         "agent-protocol"
+      ]
+    }
+  },
+  {
+    "id": "agent-interfaces/mcp-tool-description-coverage",
+    "category": "agent-interfaces",
+    "categoryTitle": "Agent Interfaces",
+    "title": "Tool Self-Description Coverage",
+    "failureTitle": "Tool Self-Description Coverage",
+    "description": "Counts, over the tool surface the endpoint already returned, what fraction of tools carry a description, what fraction of every input parameter carries one — walking `properties` recursively and into `items.properties` for arrays of objects — and reports the advisory ratios alongside: constrained string parameters, declared output schemas, titles and the server’s own `instructions`.",
+    "scoreDisplayMode": "ternary",
+    "weight": 0.6,
+    "priority": "medium",
+    "tier": "scored",
+    "evidenceGrade": "B",
+    "dossier": "docs/evidence/audits/agent-interfaces/mcp-tool-description-coverage.md",
+    "guidance": {
+      "impact": "A tool description and its parameter descriptions are the only prose a model ever sees about a tool — they are the whole basis on which it decides whether to call it and what to pass. A required parameter with no description, no enum and no pattern gives the model nothing to derive a legal value from, so it guesses. Guessed values come back as validation errors, and the agent spends retry turns per call until it gives up on the tool.",
+      "fix": "Describe every tool and every parameter, in prose long enough to say what a legal value looks like. Constrain string parameters with `enum`, `format` or `pattern` where the legal set is finite. Declare an `outputSchema` so a client can parse the result rather than re-reading it, give each tool a `title` for the consent prompt, and return top-level `instructions` telling a model how the tools fit together.",
+      "code": "{\n  \"name\": \"create_reservation\",\n  \"title\": \"Create a reservation\",\n  \"description\": \"Book a stay for a guest at a property, at a chosen rate plan.\",\n  \"inputSchema\": {\n    \"type\": \"object\",\n    \"properties\": {\n      \"property_id\": { \"type\": \"string\", \"description\": \"The property to book, as returned by search_properties.\" },\n      \"rate_plan\":   { \"type\": \"string\", \"description\": \"Which rate the booking uses.\", \"enum\": [\"FLEX\", \"NREF\", \"CORP\", \"GRP\"] },\n      \"line_items\":  {\n        \"type\": \"array\",\n        \"items\": {\n          \"type\": \"object\",\n          \"properties\": {\n            \"tax_code\": { \"type\": \"string\", \"description\": \"Jurisdiction tax code applied to this line.\" }\n          }\n        }\n      }\n    },\n    \"required\": [\"property_id\", \"rate_plan\"]\n  },\n  \"outputSchema\": { \"type\": \"object\", \"properties\": { \"confirmation\": { \"type\": \"string\" } } }\n}",
+      "effort": "moderate",
+      "docsUrl": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/audits/agent-interfaces/mcp-tool-description-coverage.md",
+      "tags": [
+        "mcp",
+        "tools",
+        "documentation",
+        "json-schema"
       ]
     }
   },
@@ -1597,6 +1676,64 @@
     }
   },
   {
+    "id": "agentic-commerce/buyable-variant-resolution",
+    "category": "agentic-commerce",
+    "categoryTitle": "Agentic Commerce",
+    "title": "Buyable Variant Resolution",
+    "failureTitle": "Buyable Variant Resolution",
+    "description": "Finds product pages that offer a shopper a size or colour choice but publish no per-variant purchasable identifier with its own price and availability, so an agent cannot turn \"the blue one in medium\" into a line item. Variants are established from the rendered HTML, then the structured data is required to resolve them.",
+    "scoreDisplayMode": "ternary",
+    "weight": 0.6,
+    "priority": "high",
+    "tier": "scored",
+    "evidenceGrade": "B",
+    "dossier": "docs/evidence/audits/agentic-commerce/buyable-variant-resolution.md",
+    "applicablePageTypes": [
+      "product"
+    ],
+    "guidance": {
+      "impact": "The agentic-commerce feed models a catalogue variant-first: every sellable thing is a variant with its own id, price and availability. A page that shows five sizes and three colours but publishes one Offer — or an AggregateOffer with only lowPrice and highPrice — gives an agent no purchasable unit to name and no single price to quote. The row is dropped at feed validation, or the checkout session comes back with `invalid` on the line item.",
+      "fix": "Publish a ProductGroup carrying productGroupID and variesBy, with one hasVariant entry per buyable variant. Give every entry its own sku or gtin, its own offers.price, offers.priceCurrency and offers.availability, and the colour/size values named in variesBy. One Product node per variant, each with a unique identifier and a complete Offer, works equally well.",
+      "code": "{\n  \"@context\": \"https://schema.org\",\n  \"@type\": \"ProductGroup\",\n  \"name\": \"Merino Crew\",\n  \"productGroupID\": \"MC-100\",\n  \"variesBy\": [\"https://schema.org/color\", \"https://schema.org/size\"],\n  \"hasVariant\": [\n    {\n      \"@type\": \"Product\",\n      \"sku\": \"MC-100-BLU-M\",\n      \"color\": \"Blue\",\n      \"size\": \"M\",\n      \"offers\": {\n        \"@type\": \"Offer\",\n        \"price\": \"79.00\",\n        \"priceCurrency\": \"GBP\",\n        \"availability\": \"https://schema.org/InStock\"\n      }\n    }\n  ]\n}",
+      "effort": "complex",
+      "docsUrl": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/audits/agentic-commerce/buyable-variant-resolution.md",
+      "tags": [
+        "product",
+        "variants",
+        "json-ld",
+        "acp",
+        "ecommerce"
+      ]
+    }
+  },
+  {
+    "id": "agentic-commerce/cart-handoff-reachability",
+    "category": "agentic-commerce",
+    "categoryTitle": "Agentic Commerce",
+    "title": "Cart Handoff Reachability",
+    "failureTitle": "Cart Handoff Reachability",
+    "description": "Reads the storefront cart and checkout paths — the URL an agent hands a buyer to, whether through an ACP `continue_url` or a computer-use agent driving the storefront — as a browser and as ChatGPT-User, and reports an account wall, a bot challenge on the checkout document, or a hard block. Read-only: every request is a GET, nothing is ever added to a cart.",
+    "scoreDisplayMode": "ternary",
+    "weight": 0.6,
+    "priority": "high",
+    "tier": "scored",
+    "evidenceGrade": "B",
+    "dossier": "docs/evidence/audits/agentic-commerce/cart-handoff-reachability.md",
+    "guidance": {
+      "impact": "Every upstream signal can be perfect and the purchase still dies at the last click. If the cart 302s to a login form because guest checkout is off, or Turnstile is mounted on the checkout document alone, the agent walks the buyer to a wall it cannot pass. ACP reserves a `requires_sign_in` message code for exactly this case, which is a description of the failure, not a fix for it.",
+      "fix": "Allow guest checkout, or at least let an unauthenticated buyer reach the cart and see the totals. Keep bot challenges off the cart and checkout documents — challenge the payment submission instead, where a human is present. Allow ChatGPT-User in robots.txt and at the edge on cart paths: blocking GPTBot does not block it, and the two are separately tokened.",
+      "effort": "moderate",
+      "docsUrl": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/audits/agentic-commerce/cart-handoff-reachability.md",
+      "tags": [
+        "commerce",
+        "cart",
+        "checkout",
+        "acp",
+        "chatgpt"
+      ]
+    }
+  },
+  {
     "id": "agentic-commerce/checkout-offer-field-mapping",
     "category": "agentic-commerce",
     "categoryTitle": "Agentic Commerce",
@@ -1684,6 +1821,37 @@
         "schema",
         "pricing",
         "ecommerce"
+      ]
+    }
+  },
+  {
+    "id": "agentic-commerce/offer-truth-consistency",
+    "category": "agentic-commerce",
+    "categoryTitle": "Agentic Commerce",
+    "title": "Offer Truth Consistency",
+    "failureTitle": "Offer Truth Consistency",
+    "description": "Reconciles the Offer in a product page’s structured data against what the same page actually renders: the price, the currency, whether the item can be bought, whether the offer window has closed, and whether two Product nodes describing the same URL disagree. Every rule is a value comparison, not a presence check, and extraction is confined to the product region so a related-products carousel cannot fire it.",
+    "scoreDisplayMode": "ternary",
+    "weight": 0.6,
+    "priority": "high",
+    "tier": "scored",
+    "evidenceGrade": "B",
+    "dossier": "docs/evidence/audits/agentic-commerce/offer-truth-consistency.md",
+    "applicablePageTypes": [
+      "product"
+    ],
+    "guidance": {
+      "impact": "An agent quotes from the structured data; the seller recomputes the real amount at checkout. When the two disagree the buyer has already committed, and the session comes back with `invalid` or `out_of_stock` — the most expensive moment at which a purchase can fail. Google says the same thing from the other side: structured data must be a true representation of the page content. Markup that is present and lying passes every syntax validator on the market.",
+      "fix": "Generate the Offer from the same source of truth that renders the page, at the same time. If the JSON-LD comes from a cached catalogue service, invalidate that cache on the same event that flips the button to Sold out. Keep priceValidUntil ahead of today or drop it, keep priceCurrency matching the symbol you render, and never emit two Product nodes for one URL with different prices.",
+      "code": "<!-- The button and the markup are generated from one value -->\n<script type=\"application/ld+json\">\n{\n  \"@context\": \"https://schema.org\",\n  \"@type\": \"Product\",\n  \"sku\": \"MC-100\",\n  \"offers\": {\n    \"@type\": \"Offer\",\n    \"price\": \"59.00\",\n    \"priceCurrency\": \"GBP\",\n    \"availability\": \"https://schema.org/OutOfStock\",\n    \"priceValidUntil\": \"2027-01-31\"\n  }\n}\n</script>\n<p class=\"price\">£59.00</p>\n<button disabled>Sold out</button>",
+      "effort": "complex",
+      "docsUrl": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/audits/agentic-commerce/offer-truth-consistency.md",
+      "tags": [
+        "commerce",
+        "json-ld",
+        "price",
+        "availability",
+        "acp"
       ]
     }
   },
@@ -4231,6 +4399,58 @@
     }
   },
   {
+    "id": "operability-safety/c2pa-manifest-survives-delivery",
+    "category": "operability-safety",
+    "categoryTitle": "Agent Operability & Safety",
+    "title": "Content Credentials survive the image delivery pipeline",
+    "failureTitle": "This site’s image pipeline strips Content Credentials before delivery",
+    "description": "Fetches the images a page actually serves and looks for a C2PA manifest store in the bytes. Where a served image is a transformed variant — Next.js image optimization, Cloudflare Image Resizing, a WordPress rendition — the origin asset is fetched too and the two are compared. An origin that carries a manifest whose variant does not is a pipeline stripping provenance in transit.",
+    "scoreDisplayMode": "ternary",
+    "weight": 0.6,
+    "priority": "medium",
+    "tier": "scored",
+    "evidenceGrade": "B",
+    "dossier": "docs/evidence/audits/operability-safety/c2pa-manifest-survives-delivery.md",
+    "guidance": {
+      "impact": "Signing an image at creation proves nothing if the bytes a crawler downloads are unsigned. Image transformation layers discard Content Credentials by default — Cloudflare states outright that with preservation disabled, existing Content Credentials are always discarded — so the publisher sees signed assets in their library while every consumer sees stripped ones. The provenance work is done and none of it reaches the reader.",
+      "fix": "Turn on Content Credentials preservation in the image pipeline (Cloudflare Images has an explicit setting; Next.js image optimization and most CDN resizers need the manifest copied through or the asset served unoptimized). Verify by fetching the URL the page actually renders, not the asset in the library.",
+      "effort": "moderate",
+      "docsUrl": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/audits/operability-safety/c2pa-manifest-survives-delivery.md",
+      "tags": [
+        "c2pa",
+        "provenance",
+        "content-credentials",
+        "images"
+      ]
+    }
+  },
+  {
+    "id": "operability-safety/c2pa-signer-trust-status",
+    "category": "operability-safety",
+    "categoryTitle": "Agent Operability & Safety",
+    "title": "Content Credentials are signed by a certificate that can be trusted",
+    "failureTitle": "This site’s Content Credentials are signed by a certificate no validator accepts",
+    "description": "Reads the signing certificate out of each Content Credential and reports what the certificate itself says: self-signed or CA-issued, inside its validity window or outside it, and whether a timestamp token is present. A self-signed or expired signer surfaces as untrusted in every conforming validator, however well-formed the manifest is.",
+    "scoreDisplayMode": "ternary",
+    "weight": 0.6,
+    "priority": "medium",
+    "tier": "scored",
+    "evidenceGrade": "B",
+    "dossier": "docs/evidence/audits/operability-safety/c2pa-signer-trust-status.md",
+    "guidance": {
+      "impact": "A manifest that exists is not a manifest that verifies. A conforming C2PA validator resolves the signing certificate against the published Trust List and shows the credential as untrusted when it cannot — which is what a self-signed certificate always produces, and what an expired one produces the day it lapses. The publisher sees Content Credentials on every asset; the consumer sees a warning, or nothing at all.",
+      "fix": "Sign with a certificate from a CA on the C2PA Trust List rather than a self-signed one, renew before it expires, and include an RFC 3161 timestamp so credentials stay valid past the certificate’s own expiry.",
+      "effort": "complex",
+      "docsUrl": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/audits/operability-safety/c2pa-signer-trust-status.md",
+      "tags": [
+        "c2pa",
+        "provenance",
+        "certificates",
+        "content-credentials"
+      ]
+    }
+  },
+  {
     "id": "operability-safety/contact-form",
     "category": "operability-safety",
     "categoryTitle": "Agent Operability & Safety",
@@ -4750,6 +4970,32 @@
     }
   },
   {
+    "id": "operability-safety/organization-identifier-registry-resolution",
+    "category": "operability-safety",
+    "categoryTitle": "Agent Operability & Safety",
+    "title": "The organization identifier resolves in the authoritative registry",
+    "failureTitle": "This site’s organization identifier does not resolve, or names a different organization",
+    "description": "Reads `leiCode` / `iso6523Code` off the Organization markup, checks the identifier’s shape and ISO/IEC 7064 check digits locally, then resolves it against GLEIF’s public registry: exactly one record, an active entity, an issued registration, and a registered legal name that agrees with the name in the markup.",
+    "scoreDisplayMode": "ternary",
+    "weight": 0.6,
+    "priority": "medium",
+    "tier": "scored",
+    "evidenceGrade": "B",
+    "dossier": "docs/evidence/audits/operability-safety/organization-identifier-registry-resolution.md",
+    "guidance": {
+      "impact": "A shopping or payment agent transacting with an unfamiliar merchant needs one thing no amount of markup can self-assert: a legal identity it can check against an authority. The LEI is the only schema.org organization identifier backed by a free, queryable, authoritative registry, which makes it the only one whose truth an outside party can establish. An identifier that resolves to nothing, or to a lapsed registration, or to a different legal name, is worse than none: it looks like verification and is not.",
+      "fix": "Publish the LEI as `iso6523Code: \"0199:<LEI>\"` — Google documents a preference for the prefixed form over bare `leiCode` — keep the GLEIF registration renewed so its status stays ISSUED, and make sure the `legalName` in your markup is the name GLEIF has on record, not the trading name.",
+      "effort": "moderate",
+      "docsUrl": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/audits/operability-safety/organization-identifier-registry-resolution.md",
+      "tags": [
+        "identity",
+        "lei",
+        "gleif",
+        "organization"
+      ]
+    }
+  },
+  {
     "id": "operability-safety/presentation-conflict",
     "category": "operability-safety",
     "categoryTitle": "Agent Operability & Safety",
@@ -4852,6 +5098,32 @@
     }
   },
   {
+    "id": "operability-safety/synthetic-media-disclosure-validity",
+    "category": "operability-safety",
+    "categoryTitle": "Agent Operability & Safety",
+    "title": "AI-generated-image disclosure is machine-readable and self-consistent",
+    "failureTitle": "This site’s AI disclosure is written in a form no machine reads",
+    "description": "Reads `Iptc4xmpExt:DigitalSourceType` out of each image’s XMP packet and tests it against the ratified IPTC NewsCodes vocabulary. The property is typed as a URI, so a bare token, an `https` variant of the `http` vocabulary URI, a trailing slash or free text all read as nothing to a consumer. Also compares the XMP declaration against what the asset’s own C2PA manifest says.",
+    "scoreDisplayMode": "ternary",
+    "weight": 0.6,
+    "priority": "medium",
+    "tier": "scored",
+    "evidenceGrade": "B",
+    "dossier": "docs/evidence/audits/operability-safety/synthetic-media-disclosure-validity.md",
+    "guidance": {
+      "impact": "Disclosure only counts if a machine can read it. IPTC types `DigitalSourceType` as a URI from a controlled vocabulary, so a consumer matching against that vocabulary silently ignores `AI-generated`, a bare `trainedAlgorithmicMedia`, or an `https://` spelling of the `http://` vocabulary URI. The publisher believes the image is disclosed; every machine reader sees an undisclosed image. Worse is an asset whose XMP and C2PA manifest disagree about whether a human took the photo — two provenance channels, one of them wrong.",
+      "fix": "Write the full vocabulary URI, exactly: `http://cv.iptc.org/newscodes/digitalsourcetype/trainedAlgorithmicMedia`. Keep the `http` scheme the vocabulary itself uses, no trailing slash, no free text, and make sure the value agrees with the digital source type asserted in the asset’s C2PA manifest.",
+      "effort": "moderate",
+      "docsUrl": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/audits/operability-safety/synthetic-media-disclosure-validity.md",
+      "tags": [
+        "ai-disclosure",
+        "iptc",
+        "xmp",
+        "provenance"
+      ]
+    }
+  },
+  {
     "id": "operability-safety/tabindex",
     "category": "operability-safety",
     "categoryTitle": "Agent Operability & Safety",
@@ -4923,6 +5195,31 @@
         "injection-safety",
         "csp",
         "supply-chain"
+      ]
+    }
+  },
+  {
+    "id": "operability-safety/trust-txt-reciprocity-coherence",
+    "category": "operability-safety",
+    "categoryTitle": "Agent Operability & Safety",
+    "title": "trust.txt associations are reciprocated and agree with robots.txt",
+    "failureTitle": "This site’s trust.txt claims are unreciprocated or contradict robots.txt",
+    "description": "For publishers who maintain a trust.txt: validates the attribute names, resolves each `belongto=` against that association’s own trust.txt to see whether it lists this domain back, and compares `datatrainingallowed=` against what robots.txt actually tells AI crawlers. Reported as a trust signal only — no AI engine is documented as a trust.txt consumer, so nothing here affects the score.",
+    "scoreDisplayMode": "informative",
+    "weight": 0,
+    "priority": "low",
+    "tier": "informative",
+    "evidenceGrade": "C",
+    "dossier": "docs/evidence/audits/operability-safety/trust-txt-reciprocity-coherence.md",
+    "guidance": {
+      "impact": "trust.txt association attributes are defined as reciprocal: `belongto=<association>` means something only if that association’s own trust.txt carries `member=<this domain>`. That makes the claim checkable rather than self-asserted, which is the whole point of publishing it. Separately, `datatrainingallowed=no` beside a robots.txt that leaves GPTBot and ClaudeBot free to crawl states two opposite policies, and the channel that actually gates crawlers is the one that says yes. Adoption caveat: no AI engine, answer engine or crawler is documented as reading trust.txt.",
+      "fix": "Ask each association you claim to belong to for a reciprocal `member=` line, drop the ones that will not reciprocate, and make `datatrainingallowed=` say the same thing your robots.txt AI-bot groups say.",
+      "effort": "easy",
+      "docsUrl": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/audits/operability-safety/trust-txt-reciprocity-coherence.md",
+      "tags": [
+        "trust-txt",
+        "provenance",
+        "advisory"
       ]
     }
   },
@@ -5031,6 +5328,32 @@
         "navigation",
         "pagination",
         "facets"
+      ]
+    }
+  },
+  {
+    "id": "operability-safety/wikidata-round-trip-verification",
+    "category": "operability-safety",
+    "categoryTitle": "Agent Operability & Safety",
+    "title": "The Wikidata entity this site claims points back at this site",
+    "failureTitle": "This site’s Wikidata identity claim is not reciprocated",
+    "description": "Takes the Wikidata Q-id the site claims in its Organization or Person `sameAs`, asks Wikidata what that entity gives as its official website (P856), and compares registrable domains. A `sameAs` is self-asserted and any site can claim any entity; only the round trip is evidence.",
+    "scoreDisplayMode": "ternary",
+    "weight": 0.6,
+    "priority": "medium",
+    "tier": "scored",
+    "evidenceGrade": "B",
+    "dossier": "docs/evidence/audits/operability-safety/wikidata-round-trip-verification.md",
+    "guidance": {
+      "impact": "A knowledge-graph consumer that grounds a brand to an entity needs corroboration from the authority side, because `sameAs` carries no reciprocity requirement — Google documents it as a link to a page with more information, nothing more. Wikidata publishes that corroboration for free as P856. A claim whose entity points at an unrelated domain is either the wrong entity or an unbacked identity claim, and an answer engine that resolves it grounds the brand to somebody else.",
+      "fix": "Claim the entity that really is your organization, and make sure the Wikidata item carries your domain as its official website (P856). If the item has no P856 at all, add one: until it does, the claim cannot be corroborated by anyone.",
+      "effort": "moderate",
+      "docsUrl": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/audits/operability-safety/wikidata-round-trip-verification.md",
+      "tags": [
+        "identity",
+        "wikidata",
+        "knowledge-graph",
+        "sameas"
       ]
     }
   },
