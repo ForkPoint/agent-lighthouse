@@ -111,4 +111,4 @@ All three rows graded **A** independently, on the same proven consumer path (Goo
 - 2026-08-21 — dossier generated; disposition pending final taxonomy design.
 - 2026-08-21 — evidence graded **A** (mechanism research pass).
 - 2026-08-21 — approved: 2.25 + 1.13 + 4.20 collapse into one rewritten `robots-directives` (all pages, meta + `X-Robots-Tag`, token-parsed).
-- 2026-08-22 — rewritten and merged (Plan 4, Task 5); registry 168 → 167.
+- 2026-08-22 — rewritten and merged (Plan 4, Task 5); registry 168 → 166. The fold absorbed two rows (1.13 and 4.20) into 2.25, so the registry drops by two, not one.

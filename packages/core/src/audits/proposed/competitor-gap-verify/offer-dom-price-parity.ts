@@ -10,7 +10,8 @@ import type { CheckContext } from '../../../check-context';
 // Implementation sketch (from the 2026-08-20 research pass):
 // Static per-page; reuses the JSON-LD parse our structured-data audits already perform and the raw
 // HTML the fetcher already holds. New file
-// packages/core/src/audits/structured-data/offer-dom-parity.ts, sitting alongside offer-schema.ts /
+// packages/core/src/audits/structured-data/offer-dom-price-parity.ts, sitting alongside
+// offer-schema.ts /
 // product-details.ts / product-transaction-certainty.ts, which all check PRESENCE of fields and
 // must be left alone — this audit checks AGREEMENT of values, an orthogonal axis. False-positive
 // controls that matter: restrict extraction to the main product region (nearest common ancestor of

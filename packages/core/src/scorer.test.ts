@@ -239,7 +239,9 @@ describe('calculateOverallScore', () => {
       makeCategory({ score: 80, weight: 0.5 }),
       makeCategory({ score: 60, weight: 0.5 }),
     ];
-    // (80 * 0.5) + (60 * 0.5) = 40 + 30 = 70
+    // v2 divides by the total mass rather than assuming the weights sum to 1:
+    // (80 * 0.5 + 60 * 0.5) / 1.0 = 70. These fixtures happen to sum to 1, so
+    // the old v1 phrasing gave the same number and hid the divisor.
     expect(calculateOverallScore(categories)).toBe(70);
   });
 
@@ -272,7 +274,7 @@ describe('calculateOverallScore', () => {
       makeCategory({ score: 33, weight: 0.33 }),
       makeCategory({ score: 67, weight: 0.67 }),
     ];
-    // (33 * 0.33) + (67 * 0.67) = 10.89 + 44.89 = 55.78 → 56
+    // (33 * 0.33 + 67 * 0.67) / 1.0 = 10.89 + 44.89 = 55.78 → 56
     expect(calculateOverallScore(categories)).toBe(56);
   });
 

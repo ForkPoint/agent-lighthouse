@@ -356,8 +356,14 @@ sunset; the evidence-grading pass later the same day sunset it too (see below).
 
 ## Evidence grades (2026-08-21 pass)
 
-Every registered v1 audit now carries an `evidence_grade` in its dossier under
-[`docs/evidence/audits/`](audits/). Histogram over the 189 registered audits:
+Every registered audit carries an `evidence_grade` in its dossier under
+[`docs/evidence/audits/`](audits/), and `scripts/check-dossiers.mjs` keeps the
+two in sync.
+
+The table below is the **2026-08-21 pass over the 189 v1 audits registered at
+that time** — a historical record of that grading run, not the shipping
+registry. The v2 registry is 172 audits (148 carried from v1, 24 introduced in
+v2) and grades A 96 / B 39 / C 36 / D 1.
 
 | grade | count |
 | :--- | ---: |

@@ -19,7 +19,7 @@ Use this package to let Claude Desktop, Cursor, and other MCP-compatible agentic
 
 ## What It Exposes
 
-The MCP server wraps Agent Lighthouse scans so an assistant can check `llms.txt`, robots.txt AI crawler access, Schema.org, WebMCP, OpenAPI discovery, accessibility, semantic HTML, AEO/GEO signals, and technical readiness from inside the IDE.
+The MCP server wraps Agent Lighthouse scans so an assistant can check a site across the v2 taxonomy's eight categories — access & crawl control, machine discovery, agent interfaces, agentic commerce, content extraction, structured data, answer readiness, and agent operability & safety — from inside the IDE.
 
 ## Links
 

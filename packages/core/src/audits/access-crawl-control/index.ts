@@ -1,9 +1,11 @@
 // Access & Crawl Control — v2 taxonomy category (Plan 3, Task 3).
-// Order mirrors docs/evidence/v2-audit-map.md so Task 11 can consume the list verbatim.
+// Order mirrors docs/evidence/v2-audit-map.md; audit-config.ts consumes the
+// list verbatim, so this file is the category's single source of truth.
 
 export { NoNofollowAudit } from './no-nofollow';
 export { NoRedirectChainsAudit } from './no-redirect-chains';
-// One audit in the place of the two canonical checks (v1 1.17 + 4.3).
+// access-crawl-control/canonical — one audit in the place of the two canonical
+// checks (v1 1.17 + 4.3). The class keeps its pre-fold name.
 export { CanonicalLinksAudit } from './canonical';
 export { GptbotAudit } from './gptbot';
 export { GoogleExtendedAudit } from './google-extended';
@@ -26,7 +28,9 @@ export { ClaudeSearchbotAudit } from './claude-searchbot';
 export { NoBlanketBlockAudit } from './no-blanket-block';
 export { SensitivePathsAudit } from './sensitive-paths';
 export { CrawlDelayAudit } from './crawl-delay';
-// One audit in the place of the three robots-directive checks (v1 2.25 + 1.13 + 4.20).
+// access-crawl-control/robots-directives — one audit in the place of the three
+// robots-directive checks (v1 2.25 + 1.13 + 4.20). The class keeps its
+// pre-fold name, which reads as v1 2.25 alone.
 export { MetaRobotsNotBlockingAudit } from './robots-directives';
 export { NoBotDetectionAudit } from './no-bot-detection';
 export { TdmRepAudit } from './tdm-rep';

@@ -57,7 +57,10 @@ function reg(AuditClass: AuditClass): AuditRegistration {
  * category `index.ts` registry so the registry has exactly one source of
  * truth — adding an audit to a category folder registers it here.
  *
- * Order is the canonical report order.
+ * Order here is registry order, which is what a raw scan iterates. The report's
+ * display order is owned by `SECTION_GROUPS` / `CATEGORY_ORDER` in
+ * `@forkpoint/agent-lighthouse-report`'s `sections.ts`, which groups the
+ * categories into sections; the two lists are not required to agree.
  */
 const CATEGORY_AUDITS: ReadonlyArray<readonly [id: string, audits: readonly AuditClass[]]> = [
   ['access-crawl-control', ACCESS_CRAWL_CONTROL_AUDITS],

@@ -11,7 +11,7 @@ disposition: "keep — fix required; absorbs the Product half of service-product
 reviewed: 2026-08-22
 ---
 
-# product-details (`3.22`, Product half of `3.8`)
+# advanced-product-details (`3.22`, Product half of `3.8`)
 
 > structured-data · source `advanced-product-details.ts` · review verdict **fix** · evidence grade **A** · disposition: **keep — fix required**, now also the home of 3.8's Product-shape checks
 

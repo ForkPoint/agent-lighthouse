@@ -11,9 +11,9 @@ disposition: "keep — fix required"
 reviewed: 2026-08-21
 ---
 
-# anthropic (`2.3`)
+# anthropic-ai (`2.3`)
 
-> crawler-permissions · source `anthropic.ts` · review verdict **fix** · evidence grade **A** · disposition: **keep — fix required**
+> access-crawl-control · source `anthropic-ai.ts` · review verdict **fix** · evidence grade **A** · disposition: **keep — fix required**
 
 ## What it checks
 
