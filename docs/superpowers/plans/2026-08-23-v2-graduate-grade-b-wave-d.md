@@ -131,7 +131,7 @@ Class `OrganizationIdentifierRegistryResolutionAudit` · `scoreDisplayMode: 'ter
 - No record → `fail`.
 - Registered `legalName` compared against schema `legalName`/`name` after normalizing case, punctuation and legal suffixes; below threshold → `fail` quoting both names.
 - No identifier at all → `notApplicable`.
-- With `AL_SKIP_NETWORK=1` the audit performs no lookup and reports the local checks only.
+- The lookup goes through `ctx.fetch`, so the scan's own budget and SSRF gate apply and the test suite mocks it. Audits do not read environment variables; `AL_SKIP_NETWORK` gates a live test suite, not audit code.
 
 ---
 
@@ -178,7 +178,7 @@ Class `WikidataRoundTripVerificationAudit` · `scoreDisplayMode: 'ternary'` · `
 - P856 pointing at an unrelated registrable domain → `fail`, quoting both.
 - The entity exists but declares no P856 → `warn` as unverifiable.
 - No Wikidata `sameAs` → `notApplicable`.
-- With `AL_SKIP_NETWORK=1` no lookup is performed.
+- The lookup goes through `ctx.fetch`, like every other request the scanner makes.
 
 ---
 

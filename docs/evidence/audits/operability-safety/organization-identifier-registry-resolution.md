@@ -1,18 +1,19 @@
 ---
-check: organization-identifier-resolves-in-the-authoritative-regist
-title: "Organization identifier resolves in the authoritative registry"
-domain: trust-provenance
-status: proposed
+audit: operability-safety/organization-identifier-registry-resolution
+category: operability-safety
+source_file: packages/core/src/audits/operability-safety/organization-identifier-registry-resolution.ts
+slug: organization-identifier-registry-resolution
 evidence_grade: B
-uniqueness: unique
-difficulty: static-fetch
-scoring_tier: scored
+tier: scored
+disposition: "new in v2 — graduated from proposal 2026-08-23"
 reviewed: 2026-08-20
+graduated: 2026-08-23
 ---
+
 
 # Organization identifier resolves in the authoritative registry
 
-> Proposed check. Evidence grade **B** · unique · implementation: `static-fetch`
+> Shipped in v2. Evidence grade **B** · scored tier · unique · implementation: `static-fetch`
 
 ## What it checks
 
@@ -52,3 +53,46 @@ Tier per evidence policy: **scored** — grade B meets the A/B bar required for 
 ## Review history
 
 - 2026-08-20 — proposed by the novel-checks research pass (10-agent evidence workflow); sources URL-verified at research time.
+
+## Implementation deviations
+
+**Renamed** from `organization-identifier-resolves-in-the-authoritative-regist`
+— itself a truncation — which would make a 78-character id.
+
+Steps 2 to 6 of the sketch ship in full: the `iso6523Code` prefix check, the
+advisory for a `leiCode` or `duns` published without its `0199:`/`0060:` twin,
+the local LEI shape and ISO/IEC 7064 MOD 97-10 filter, the GLEIF lookup, the
+entity- and registration-status assertions, and the legal-name comparison after
+normalizing case, punctuation and legal form.
+
+**Every Organization node on every crawled page is read**, not the homepage and
+one about page (sketch step 1). The scan already holds its pages; picking two
+of them would look at less evidence for no saving. The same LEI seen twice
+costs one lookup.
+
+**A lapsed registration warns, a wrong name fails.** The sketch marks
+LAPSED/RETIRED/ANNULLED as WARN, which this follows; a registration status
+outside both that set and `ISSUED` fails, because it is a state the audit
+cannot vouch for. A GLEIF record that does not exist fails outright.
+
+**The registry answering badly is a warning, not a failure.** A 503 from GLEIF
+says nothing about the site being audited.
+
+**The lookup goes through `ctx.fetch`**, so the scanner's SSRF gate, timeout
+and budget apply, and the test suite mocks it. Audits do not read environment
+variables.
+
+**Evidence hygiene.** All three sources support the mechanism: the GLEIF API
+is the registry queried, and Google's structured-data documentation carries the
+`iso6523Code` preference the advisory quotes.
+
+## Deferred
+
+- **The 30-day per-LEI cache** the sketch suggests. The scanner has no
+  cross-scan store; the cache here is per scan.
+- **`registration.corroborationLevel` and `nextRenewalDate`** as trust context.
+  They are read from the same record and could be surfaced later; neither
+  changes a verdict.
+- **DUNS resolution.** Dun & Bradstreet publishes no free authoritative lookup,
+  which is exactly why the dossier says the LEI is the only identifier whose
+  truth an auditor can establish. The `0060:` advisory is encoding only.
