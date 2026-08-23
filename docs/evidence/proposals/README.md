@@ -1,6 +1,6 @@
 # Proposed checks — evidence dossiers
 
-49 proposed checks from the 2026-08-20 novel-checks research pass. Each dossier states what the check verifies, the falsifiable mechanism behind it, cited evidence from the [source registry](../sources.json), competitor coverage, and an implementation sketch. Grading rubric: [evidence policy](../POLICY.md).
+48 proposed checks from the 2026-08-20 novel-checks research pass. Each dossier states what the check verifies, the falsifiable mechanism behind it, cited evidence from the [source registry](../sources.json), competitor coverage, and an implementation sketch. Grading rubric: [evidence policy](../POLICY.md).
 
 Seven dossiers left this folder on 2026-08-22 (Plan 5, Task 2): six tool
 surveys moved to [../research](../research/README.md) because their verdict is
@@ -19,7 +19,6 @@ Grades: **A** = documented consumer behavior or ratified standard · **B** = dra
 | :---- | :---- | :----- | :--------- | :------------- | :----------- |
 | A | [Overlay Interception Hazard](./agent-operability/overlay-interception-hazard.md) | agent-operability | unique | `headless-browser` | scored |
 | A | [ACP Endpoint Conformance Probe](./agentic-commerce/acp-endpoint-conformance-probe.md) | agentic-commerce | unique | `static-fetch` | informative (weight 0) |
-| B | [Drag and Slider Dependency](./agent-operability/drag-and-slider-dependency.md) | agent-operability | unique | `static-fetch` | scored |
 | B | [URL-Addressable State and Pagination Fallback](./agent-operability/url-addressable-state-and-pagination-fallback.md) | agent-operability | unique | `multi-page` | scored |
 | B | [Buyable Variant Resolution](./agentic-commerce/buyable-variant-resolution.md) | agentic-commerce | unique | `multi-page` | scored |
 | B | [Cart Handoff Reachability](./agentic-commerce/cart-handoff-reachability.md) | agentic-commerce | unique | `multi-page` | scored |

@@ -51,6 +51,7 @@ export { AriaLayerInjectionScanAudit } from './aria-layer-injection-scan';
 export { GhostClickableElementRatioAudit } from './ghost-clickable-element-ratio';
 export { StatefulControlIntrospectabilityAudit } from './stateful-control-introspectability';
 export { HoverOnlyContentAndNavigationAudit } from './hover-only-content-and-navigation';
+export { DragAndSliderDependencyAudit } from './drag-and-slider-dependency';
 
 // Not an audit: the rule-id list the orchestrator feeds to the engine. It is
 // only complete once every engine-backed audit module has been evaluated — this
@@ -88,6 +89,7 @@ import { AriaLayerInjectionScanAudit } from './aria-layer-injection-scan';
 import { GhostClickableElementRatioAudit } from './ghost-clickable-element-ratio';
 import { StatefulControlIntrospectabilityAudit } from './stateful-control-introspectability';
 import { HoverOnlyContentAndNavigationAudit } from './hover-only-content-and-navigation';
+import { DragAndSliderDependencyAudit } from './drag-and-slider-dependency';
 
 /** Every audit that lives in the operability-safety category, in map order. */
 export const OPERABILITY_SAFETY_AUDITS = [
@@ -122,4 +124,5 @@ export const OPERABILITY_SAFETY_AUDITS = [
   GhostClickableElementRatioAudit,
   StatefulControlIntrospectabilityAudit,
   HoverOnlyContentAndNavigationAudit,
+  DragAndSliderDependencyAudit,
 ] as const;

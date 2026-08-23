@@ -39,6 +39,7 @@ export const NEW_IN_V2: readonly string[] = [
   'operability-safety/ghost-clickable-element-ratio',
   'operability-safety/stateful-control-introspectability',
   'operability-safety/hover-only-content-and-navigation',
+  'operability-safety/drag-and-slider-dependency',
 ];
 
 /** The 148 audits Plan 4 closed the v2 migration on. Never changes again. */

@@ -1,18 +1,19 @@
 ---
-check: drag-and-slider-dependency
-title: "Drag and Slider Dependency"
-domain: agent-operability
-status: proposed
+audit: operability-safety/drag-and-slider-dependency
+category: operability-safety
+source_file: packages/core/src/audits/operability-safety/drag-and-slider-dependency.ts
+slug: drag-and-slider-dependency
 evidence_grade: B
-uniqueness: unique
-difficulty: static-fetch
-scoring_tier: scored
+tier: scored
+disposition: "new in v2 — graduated from proposal 2026-08-23"
 reviewed: 2026-08-20
+graduated: 2026-08-23
 ---
+
 
 # Drag and Slider Dependency
 
-> Proposed check. Evidence grade **B** · unique · implementation: `static-fetch`
+> Shipped in v2. Evidence grade **B** · scored tier · unique · implementation: `static-fetch`
 
 ## What it checks
 
@@ -52,3 +53,42 @@ Tier per evidence policy: **scored** — grade B meets the A/B bar required for 
 ## Review history
 
 - 2026-08-20 — proposed by the novel-checks research pass (10-agent evidence workflow); sources URL-verified at research time.
+
+## Implementation deviations
+
+The shipped audit is `operability-safety/drag-and-slider-dependency`, in the
+`operability-safety` category: the proposal's `agent-operability` domain is a
+research grouping, not one of the eight v2 categories.
+
+The two slider arms are counted apart. A `role="slider"` missing any of
+`aria-valuenow`, `aria-valuemin`, `aria-valuemax` or an accessible name is
+reported on the APG arm and not also on the missing-alternative arm: a value an
+agent cannot read is a different defect, with a different fix, from a value it
+cannot set discretely.
+
+"The same labelled field group" is read as the control's enclosing `<fieldset>`,
+`<form>` or `[role="group"]`, and its parent element when it has none. A numeric
+input bound to the same parameter is placed beside the slider, so a page-wide
+search would pass a slider that has an unrelated number field elsewhere.
+
+Path criticality is matched on `/cart|checkout|builder|configure|order/`. The
+wider vocabulary the sketch hints at (`seat`, `book`) matches ordinary editorial
+URLs such as `/blog/seat-tips`, which turns a criticality test into a substring
+test.
+
+The reorder finding is raised once per list, not once per item: one set of move
+buttons on the list is one fix.
+
+## Deferred
+
+- **Weighting by path criticality.** The sketch asks for weighted findings. The
+  audit is binary: a gesture-only control on a checkout path is a finding and
+  the same control on an article page is not, which is the same judgement
+  expressed as a gate rather than a weight.
+- **Listener-attached drag.** A list made sortable by a library that binds
+  pointer handlers in script carries no `draggable` attribute and no class from
+  the vocabulary. Detecting it needs the page to run, which is the
+  headless-browser tier.
+- **Value binding.** Whether the numeric input beside a slider is actually bound
+  to the same parameter is only observable by driving both. The audit checks
+  that a discrete control shares the field group, not that the two agree.
