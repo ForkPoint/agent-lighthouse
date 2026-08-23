@@ -1,0 +1,21 @@
+---
+import { getCollection, render } from 'astro:content';
+
+export async function getStaticPaths() {
+  const dossiers = await getCollection('audits');
+  return dossiers.map((entry) => {
+    const [category, slug] = entry.id.split('/');
+    return { params: { category, slug }, props: { entry } };
+  });
+}
+
+const { entry } = Astro.props;
+const { Content } = await render(entry);
+---
+<html lang="en">
+  <head><meta charset="utf-8" /><title>{entry.data.audit}</title></head>
+  <body>
+    <h1>{entry.data.audit}</h1>
+    <Content />
+  </body>
+</html>
