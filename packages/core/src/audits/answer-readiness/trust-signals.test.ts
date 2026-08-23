@@ -78,6 +78,27 @@ describe('TrustSignalsAudit', () => {
     expect(result.status).toBe('pass');
   });
 
+  // "1 / 5" is what a slider prints under its arrows. Reading it as a 1-star
+  // rating credited a site for social proof it never published.
+  it('does not read a carousel counter as a rating', () => {
+    const page = homepage(`<main>
+        <div class="carousel"><span>1 / 5</span></div>
+        ${CITATIONS}
+      </main>`);
+    const result = audit.audit(mockCheckContext([page]));
+    expect(result.status).toBe('warn');
+    expect(result.found).not.toContain('quantified social proof');
+  });
+
+  it('still counts a whole-number rating stated as a rating', () => {
+    const page = homepage(`<main>
+        <p>Rated 4 out of 5 stars by our customers.</p>
+        ${CITATIONS}
+      </main>`);
+    const result = audit.audit(mockCheckContext([page]));
+    expect(result.status).toBe('pass');
+  });
+
   it('counts a comparison table as comparison content', () => {
     const page = homepage(`<main>
         <p>Rated 4.8 out of 5 across 1,204 reviews.</p>

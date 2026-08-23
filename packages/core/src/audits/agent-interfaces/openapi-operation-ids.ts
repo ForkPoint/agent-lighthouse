@@ -174,7 +174,7 @@ export class OpenApiOperationIdsAudit extends Audit {
       return this.fail(
         `operationId issues: ${issues.join(', ')} out of ${ops.length} operation(s).`,
         EXPECTED,
-        `Illegal operationId(s): ${illegal.join(', ')}${missing > 0 ? `; ${missing} missing` : ''}${duplicates > 0 ? `; ${duplicates} duplicate(s)` : ''}`,
+        `Illegal operationId(s): ${[...new Set(illegal)].join(', ')}${missing > 0 ? `; ${missing} missing` : ''}${duplicates > 0 ? `; ${duplicates} duplicate(s)` : ''}`,
         {
           priority: 'medium',
           description:

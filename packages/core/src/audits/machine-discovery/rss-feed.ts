@@ -43,7 +43,14 @@ function autodiscoveryLinks(ctx: CheckContext): Array<{ url: string; pageUrl: st
       }
     }
   }
-  return found;
+  // A feed link lives in a shared layout, so every scanned page declares the
+  // same URL. Fetching it once per page spent N requests to learn one fact.
+  const seen = new Set<string>();
+  return found.filter((entry) => {
+    if (seen.has(entry.url)) return false;
+    seen.add(entry.url);
+    return true;
+  });
 }
 
 /** Find RSS/Atom feed result -- check head links on pages first, then root file paths */

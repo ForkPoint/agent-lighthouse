@@ -104,6 +104,20 @@ describe('AiFileDeliveryAudit', () => {
       }
     });
 
+    // A validator saves the transfer only when the client is allowed to keep
+    // the copy. `no-store` forbids that, so an ETag beside it stores nothing.
+    it('counts a no-store file as uncached even when it carries an ETag', () => {
+      for (const value of ['no-store', 'no-cache']) {
+        const ctx = mockCheckContext([], {
+          '/llms.txt': file('# Site', 'text/plain', { 'cache-control': value, etag: '"abc"' }),
+        });
+        const result = audit.audit(ctx);
+        expect(result.status, value).toBe('warn');
+        expect(result.message, value).toContain('no caching headers');
+        expect(result.message, value).toContain('llms.txt');
+      }
+    });
+
     it('reports the per-file caching state in the details', () => {
       const ctx = mockCheckContext([], {
         '/llms.txt': file('# Site', 'text/plain', cached),

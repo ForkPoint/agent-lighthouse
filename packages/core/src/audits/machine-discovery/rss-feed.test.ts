@@ -54,6 +54,29 @@ describe('RssFeedAudit', () => {
     expect(result.message).toContain('RSS/Atom feed found');
   });
 
+  // A feed link sits in a shared layout, so every scanned page declares it.
+  // Fetching it once per page spent N requests to learn one fact.
+  it('fetches a feed linked from several pages only once', async () => {
+    const html =
+      '<html><head><link rel="alternate" type="application/rss+xml" href="/rss.xml" /></head><body></body></html>';
+    const ctx = mockCheckContext([
+      mockPageContext('https://example.com/', html, 0),
+      mockPageContext('https://example.com/blog', html, 1),
+      mockPageContext('https://example.com/news', html, 2),
+    ]);
+    const requested: string[] = [];
+    ctx.fetch = async ({ url }) => {
+      requested.push(url);
+      const r = mockFetchResult('<rss><channel></channel></rss>', 200, 'application/rss+xml');
+      r.url = url;
+      r.finalUrl = url;
+      return r;
+    };
+    const result = await audit.audit(ctx);
+    expect(result.status).toBe('pass');
+    expect(requested.filter((u) => u === 'https://example.com/rss.xml')).toHaveLength(1);
+  });
+
   it('falls through to rootFiles when head-link feed fetch returns non-200', async () => {
     // isOk(result) false in headLinks loop → falls through to well-known paths
     const html =

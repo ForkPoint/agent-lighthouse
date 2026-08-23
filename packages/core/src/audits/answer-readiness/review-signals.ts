@@ -62,10 +62,15 @@ export function findReviewNodes(jsonLd: object[]): string[] {
           : false;
       if (!aggregateZero) found.push('aggregateRating');
     }
-    if (record['review']) found.push('review');
+    // `"review": []` is the shape of social proof without the proof. A
+    // storefront that ships the property empty has published nothing.
+    const review = record['review'];
+    if (Array.isArray(review) ? review.length > 0 : Boolean(review)) found.push('review');
     for (const key of ['reviewCount', 'ratingCount']) {
       const n = numericCount(record[key]);
-      if (n !== null && n > 0) found.push('reviewCount');
+      // Label by the key that was actually present: a ratingCount-only node
+      // used to be reported as carrying a reviewCount it does not have.
+      if (n !== null && n > 0) found.push(key);
     }
   }
 

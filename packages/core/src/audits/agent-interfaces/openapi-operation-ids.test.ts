@@ -18,6 +18,21 @@ describe('OpenApiOperationIdsAudit', () => {
     expect(result.message).toContain('unique, registrable operationIds');
   });
 
+  // The same bad id copied onto two operations is one naming defect. Printing
+  // it twice reads as two different ids to fix.
+  it('names a repeated illegal operationId once', () => {
+    const spec = JSON.stringify({
+      paths: {
+        '/search': { get: { operationId: 'search content' } },
+        '/contact': { post: { operationId: 'search content' } },
+      },
+    });
+    const ctx = mockCheckContext([], { '/openapi.json': mockFetchResult(spec, 200) });
+    const result = audit.audit(ctx);
+    expect(result.status).toBe('fail');
+    expect(result.found?.match(/search content/g)).toHaveLength(1);
+  });
+
   it('warns when some operationIds are missing', () => {
     const spec = JSON.stringify({
       paths: {

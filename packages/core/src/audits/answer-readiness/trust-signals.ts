@@ -15,8 +15,12 @@ import { findReviewNodes } from './review-signals';
  * never tested by any study and matched ordinary nav and legal boilerplate.
  */
 const SOCIAL_PROOF_PATTERNS: readonly RegExp[] = [
-  // "4.8/5", "4.8 out of 5"
-  /\b[0-5](?:\.\d)?\s*(?:\/|out\s+of)\s*5\b/i,
+  // "4.8/5", "4.8 out of 5". A whole number needs an adjacent rating word:
+  // a bare "1 / 5" is the counter a carousel prints under its arrows, and
+  // reading it as a one-star rating credited social proof that is not there.
+  /\b[0-5]\.\d\s*(?:\/|out\s+of)\s*5\b/i,
+  /\b(?:rated|rating|scored?|stars?|average)\b[^.\n]{0,24}?\b[0-5]\s*(?:\/|out\s+of)\s*5\b/i,
+  /\b[0-5]\s*(?:\/|out\s+of)\s*5\b[^.\n]{0,24}?\b(?:stars?|rating|ratings|reviews?)\b/i,
   // "1,204 reviews", "350+ ratings"
   /\b\d{2,}[\d,]*\+?\s*(?:reviews?|ratings?)\b/i,
   // "Trusted by 12,000", "used by 500+"

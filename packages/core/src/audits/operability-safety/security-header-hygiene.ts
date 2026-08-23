@@ -106,7 +106,9 @@ function cspRow(headers: Record<string, string>, page: PageContext | undefined):
   const label = 'Content-Security-Policy';
   const header = headers['content-security-policy'];
   const meta = metaCsp(page);
-  const enforced = header ?? meta;
+  // `??` kept an empty header, so a server that sets the field to "" shadowed
+  // a perfectly good meta policy and the site was reported as unprotected.
+  const enforced = header || meta;
   const source = header ? 'response header' : 'meta http-equiv tag';
 
   if (enforced) {

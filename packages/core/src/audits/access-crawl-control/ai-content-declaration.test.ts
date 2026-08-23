@@ -118,6 +118,17 @@ describe('AiContentDeclarationAudit', () => {
       expect(result.message).toContain('no specification');
     });
 
+    // A bare `<meta name="ai-content-declaration">` carries no content
+    // attribute, so it never reaches `page.meta` — the tag is still on the
+    // page, and it is still the invented name.
+    it('detects the tag when it carries no content attribute', () => {
+      const result = audit.audit(
+        mockCheckContext([page('<meta name="ai-content-declaration">')]),
+      );
+      expect(result.status).toBe('warn');
+      expect(result.message).toContain('no specification');
+    });
+
     // The old audit warned "not a valid URL" against the value format the real
     // aicontentdeclaration.org proposal actually uses. It no longer judges the
     // value at all, because no spec defines what a valid one would be.

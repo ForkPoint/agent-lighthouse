@@ -34,7 +34,16 @@ function coverageKey(rawUrl: string, base?: string): string | null {
   try {
     const url = new URL(rawUrl, base);
     const host = url.hostname.toLowerCase().replace(/^www\./, '');
-    let path = decodeURI(url.pathname).replace(/\/+$/, '');
+    // A stray `%` is legal in a path and throws in decodeURI. Discarding the
+    // whole key left the page permanently uncovered, however the sitemap
+    // spelled it; the raw path still compares equal on both sides.
+    let decoded: string;
+    try {
+      decoded = decodeURI(url.pathname);
+    } catch {
+      decoded = url.pathname;
+    }
+    let path = decoded.replace(/\/+$/, '');
     path = path.toLowerCase();
     return `${host}${path}`;
   } catch {

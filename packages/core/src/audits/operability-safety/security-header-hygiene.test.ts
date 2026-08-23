@@ -147,6 +147,21 @@ describe('SecurityHeaderHygieneAudit — CSP (v1 8.3)', () => {
     expect(result.found).toContain('meta');
   });
 
+  // A server that sets the header to an empty string has delivered no policy.
+  // `??` only falls through on null/undefined, so the empty string used to
+  // shadow a perfectly good meta policy and report the site as unprotected.
+  it('falls through to the meta policy when the header is empty', () => {
+    const result = audit.audit(
+      ctxWith(
+        { ...HEALTHY_HEADERS, 'content-security-policy': '' },
+        HEALTHY_ROOT_FILES,
+        '<html><head><meta http-equiv="Content-Security-Policy" content="default-src \'self\'"></head></html>',
+      ),
+    );
+    expect(result.status).toBe('pass');
+    expect(result.found).toContain('meta');
+  });
+
   it('treats report-only as partial, not as an enforced policy', () => {
     const { 'content-security-policy': _dropped, ...rest } = HEALTHY_HEADERS;
     const result = audit.audit(

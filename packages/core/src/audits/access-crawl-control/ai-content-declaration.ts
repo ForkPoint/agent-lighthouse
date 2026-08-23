@@ -85,7 +85,9 @@ function survey(ctx: CheckContext): Declaration {
       if (!result.pageUrl) result.pageUrl = page.url;
     }
 
-    if (page.meta[INVENTED_NAME] !== undefined) {
+    // A bare `<meta name="ai-content-declaration">` carries no content
+    // attribute, so it never reaches page.meta. The tag is still there.
+    if (page.$(`meta[name="${INVENTED_NAME}"]`).length > 0) {
       result.invented = true;
       if (!result.pageUrl) result.pageUrl = page.url;
     }

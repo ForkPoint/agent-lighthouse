@@ -43,6 +43,22 @@ const page = (url: string, index = 0) =>
 describe('DiscoveryIndexCoverageAudit', () => {
   const audit = new DiscoveryIndexCoverageAudit();
 
+  // A stray `%` is legal in a URL path and common in legacy CMS exports.
+  // `decodeURI` throws on it; the whole key used to be discarded, so the page
+  // could never match its own sitemap entry however the sitemap spelled it.
+  it('covers a page whose path carries a malformed percent escape', async () => {
+    const url = 'https://example.com/50%-off';
+    const ctx = mockCheckContext([page(url)], {
+      '/sitemap.xml': mockFetchResult(
+        sitemap([url, 'https://example.com/other']),
+        200,
+        'application/xml',
+      ),
+    });
+    const result = await audit.audit(ctx);
+    expect(result.status).toBe('pass');
+  });
+
   it('passes when all scanned pages are in the sitemap', async () => {
     const ctx = mockCheckContext([page('https://example.com/about')], {
       '/sitemap.xml': mockFetchResult(sitemap(['https://example.com/about']), 200, 'application/xml'),

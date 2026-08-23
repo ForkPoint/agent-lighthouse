@@ -270,10 +270,16 @@ export class CorsApiRoutesAudit extends Audit {
       );
     }
 
+    // Some probes landed and some did not. Saying "none of them" over the
+    // whole set describes endpoints that were never measured, so the two
+    // groups are counted apart.
+    const unreachable = probes.filter((p) => p.kind === 'error' || p.kind === 'refused').length;
+    const answered = probes.length - unreachable;
+
     return this.warn(
       'No endpoint declared by the OpenAPI document answers with an Access-Control-Allow-Origin header, so agent code running inside a browser origin cannot call this API. Server-side crawlers and MCP clients are unaffected.',
       EXPECTED,
-      `${probes.length} declared endpoint(s) probed, no Access-Control-Allow-Origin on any`,
+      `${answered} of ${probes.length} endpoint(s) answered, none with Access-Control-Allow-Origin${unreachable > 0 ? `; ${unreachable} unreachable` : ''}`,
       this.recommendation(),
     );
   }

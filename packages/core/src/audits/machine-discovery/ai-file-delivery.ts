@@ -49,11 +49,14 @@ function cachingState(file: FetchResult): 'cacheable' | 'validator' | 'none' {
   if (cacheControl) {
     const directives = cacheControl.split(',').map((d) => d.trim());
     const blocked = directives.some((d) => d === 'no-store' || d === 'no-cache');
+    // A validator saves the transfer only when the client may keep the copy.
+    // `no-store` forbids that outright, so an ETag beside it stores nothing.
+    if (blocked) return 'none';
     const maxAge = directives
       .map((d) => /^s?-?max-age=(\d+)$/.exec(d) ?? /^(?:s-)?maxage=(\d+)$/.exec(d))
       .find((m) => m !== null);
     const seconds = maxAge ? Number(maxAge[1]) : 0;
-    if (!blocked && seconds > 0) return 'cacheable';
+    if (seconds > 0) return 'cacheable';
   }
   if (file.headers['etag'] || file.headers['last-modified']) return 'validator';
   return 'none';

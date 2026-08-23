@@ -241,7 +241,28 @@ describe('CorsApiRoutesAudit', () => {
       ctx.fetch = fetch;
       const result = await audit.audit(ctx);
       expect(result.status).toBe('warn');
-      expect(result.found).toContain('no Access-Control-Allow-Origin');
+      expect(result.found).toContain('1 of 1 endpoint(s) answered');
+      expect(result.found).toContain('none with Access-Control-Allow-Origin');
+    });
+  });
+
+  // A finding that says "none of them" when half the probes never landed
+  // describes a site that was never measured.
+  describe('unreachable probes are not counted as answers', () => {
+    it('names how many endpoints answered and how many did not', async () => {
+      const { fetch } = corsFetch(undefined);
+      const ctx = mockCheckContext([], {
+        '/openapi.json': spec({
+          openapi: '3.1.0',
+          servers: [{ url: 'https://example.com/api' }, { url: 'http://192.168.1.10/internal' }],
+          paths: { '/products': { get: {} } },
+        }),
+      });
+      ctx.fetch = fetch;
+      const result = await audit.audit(ctx);
+      expect(result.status).toBe('warn');
+      expect(result.found).toContain('1 of 2 endpoint(s) answered');
+      expect(result.found).toContain('1 unreachable');
     });
   });
 

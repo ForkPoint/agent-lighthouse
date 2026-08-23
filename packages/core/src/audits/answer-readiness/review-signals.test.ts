@@ -182,6 +182,38 @@ describe('ReviewSignalsAudit', () => {
     expect(result.status).toBe('pass');
   });
 
+  // A storefront that ships the review property with nothing in it has
+  // published the shape of social proof, not the proof.
+  it('rejects an empty review array as social proof', () => {
+    const page = mockPageContext(
+      'https://example.com/products/widget',
+      `<html><body>
+        <script type="application/ld+json">
+        {"@context":"https://schema.org","@type":"Product","name":"Widget","review":[]}
+        </script>
+      </body></html>`,
+    );
+    const result = audit.audit(mockCheckContext([page]));
+    expect(result.status).toBe('fail');
+  });
+
+  // A ratingCount-only node was reported as `reviewCount`, naming a field the
+  // page does not carry.
+  it('names the count field that is actually present', () => {
+    const page = mockPageContext(
+      'https://example.com/products/widget',
+      `<html><body>
+        <script type="application/ld+json">
+        {"@context":"https://schema.org","@type":"Product","name":"Widget","ratingCount":42}
+        </script>
+      </body></html>`,
+    );
+    const result = audit.audit(mockCheckContext([page]));
+    expect(result.status).toBe('pass');
+    expect(result.found).toContain('ratingCount');
+    expect(result.found).not.toContain('reviewCount');
+  });
+
   it('reports the page the quotation was found on', () => {
     const plain = mockPageContext(
       'https://example.com/',
