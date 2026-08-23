@@ -1,6 +1,6 @@
 # Proposed audits — TODO stubs
 
-38 stub files for the proposed checks from the 2026-08-20 research pass. Every stub compiles, is **not** registered in any category index, and returns `notApplicable` until implemented. Each file's header carries its implementation sketch; full proof lives in [docs/evidence/proposals](../../../../../docs/evidence/proposals/README.md).
+37 stub files for the proposed checks from the 2026-08-20 research pass. Every stub compiles, is **not** registered in any category index, and returns `notApplicable` until implemented. Each file's header carries its implementation sketch; full proof lives in [docs/evidence/proposals](../../../../../docs/evidence/proposals/README.md).
 
 A stub that graduates to a shipped audit is deleted; its bullet leaves the list
 below, the count above drops by one, and the audit's id joins `NEW_IN_V2` in
@@ -77,7 +77,6 @@ the `--experimental` flag work in Plan 6.
 - [ ] TODO [`boilerplate-tax-across-the-crawl-unique-tokens-per-fetch`](./token-economics/boilerplate-tax-across-the-crawl-unique-tokens-per-fetch.ts) — Boilerplate tax across the crawl (unique tokens per fetch) (grade B, scored, `multi-page`) · [dossier](../../../../../docs/evidence/proposals/token-economics/boilerplate-tax-across-the-crawl-unique-tokens-per-fetch.md)
 - [ ] TODO [`extraction-determinism-multi-extractor-agreement`](./token-economics/extraction-determinism-multi-extractor-agreement.ts) — Extraction determinism (multi-extractor agreement) (grade B, scored, `static-fetch`) · [dossier](../../../../../docs/evidence/proposals/token-economics/extraction-determinism-multi-extractor-agreement.md)
 - [ ] TODO [`markdown-alternate-discoverable-resolvable-faithful-cheaper`](./token-economics/markdown-alternate-discoverable-resolvable-faithful-cheaper.ts) — Markdown alternate: discoverable, resolvable, faithful, cheaper (grade B, scored, `static-fetch`) · [dossier](../../../../../docs/evidence/proposals/token-economics/markdown-alternate-discoverable-resolvable-faithful-cheaper.md)
-- [ ] TODO [`preamble-tax-tokens-before-the-first-content-token`](./token-economics/preamble-tax-tokens-before-the-first-content-token.ts) — Preamble Tax (tokens before the first content token) (grade B, scored, `static-fetch`) · [dossier](../../../../../docs/evidence/proposals/token-economics/preamble-tax-tokens-before-the-first-content-token.md)
 - [ ] TODO [`json-ld-duplication-mass`](./token-economics/json-ld-duplication-mass.ts) — JSON-LD duplication mass (grade C, informative, `static-fetch`) · [dossier](../../../../../docs/evidence/proposals/token-economics/json-ld-duplication-mass.md)
 
 ## trust-provenance

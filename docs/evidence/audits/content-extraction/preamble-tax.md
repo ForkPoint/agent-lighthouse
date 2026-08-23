@@ -1,18 +1,19 @@
 ---
-check: preamble-tax-tokens-before-the-first-content-token
-title: "Preamble Tax (tokens before the first content token)"
-domain: token-economics
-status: proposed
+audit: content-extraction/preamble-tax
+category: content-extraction
+source_file: packages/core/src/audits/content-extraction/preamble-tax.ts
+slug: preamble-tax
 evidence_grade: B
-uniqueness: unique
-difficulty: static-fetch
-scoring_tier: scored
+tier: scored
+disposition: "new in v2 — graduated from proposal 2026-08-23"
 reviewed: 2026-08-20
+graduated: 2026-08-23
 ---
+
 
 # Preamble Tax (tokens before the first content token)
 
-> Proposed check. Evidence grade **B** · unique · implementation: `static-fetch`
+> Shipped in v2. Evidence grade **B** · scored tier · unique · implementation: `static-fetch`
 
 ## What it checks
 
@@ -54,3 +55,48 @@ Tier per evidence policy: **scored** — grade B meets the A/B bar required for 
 ## Review history
 
 - 2026-08-20 — proposed by the novel-checks research pass (10-agent evidence workflow); sources URL-verified at research time.
+
+## Implementation deviations
+
+The shipped audit is `content-extraction/preamble-tax`: the proposal's
+`token-economics` domain is a research grouping, not one of the eight v2
+categories, and the proposal's slug —
+`preamble-tax-tokens-before-the-first-content-token` — produced a 69-character
+id, over the 64-character cap `v2-meta.test.ts` enforces. The full name survives
+as the audit's title.
+
+The offset is found by projecting the raw body onto its visible characters while
+remembering each character's byte offset, then locating the first 200 characters
+of the extracted content in that projection. Whitespace is removed from both
+sides rather than collapsed: extractors disagree about whether a tag boundary is
+a word separator — readability concatenates `<h1>Mugs</h1><p>Sentence` into
+`MugsSentence` — so any rule about spaces would match one extractor and miss
+another.
+
+When the content cannot be located, the audit returns `notApplicable` and says
+so. The sketch's fallback to a position-tracking parser was not built: guessing
+an offset would invent the finding rather than measure it, and the honest answer is
+that this document could not be measured.
+
+A page with fewer than 200 characters of extractable content is `notApplicable`.
+Readability rarely declines a document outright; it far more often returns a
+nav-sized stub, and measuring a preamble against four characters of "Home" is
+not a measurement.
+
+Thresholds are the proposal's own: under 2,000 tokens passes, 2,000–10,000
+warns, above 10,000 fails. The offset is also reported as a share of the whole
+document, because 3,000 tokens ahead of a 4,000-token page and 3,000 ahead of a
+90,000-token page are different findings.
+
+The largest opaque block ahead of the content — `<script>`, `<style>`,
+`<template>`, `<svg>`, `<noscript>` or a comment — is named with its token cost
+and its line number, so the finding points at one edit.
+
+## Deferred
+
+- **Mid-document content islands.** The audit measures where content starts, not
+  whether it is later interrupted by a state blob. That is a second measurement
+  on the same projection and belongs in its own check.
+- **Per-page sampling.** Only the entry page is measured. The preamble is a
+  template property, and measuring five instances of one template costs five
+  tokenizer passes to report one number.
