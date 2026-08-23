@@ -60,3 +60,41 @@ The best-engineered audit in the directory — correct notApplicable, byte accou
 
 - 2026-08-20 — code review (11-agent workflow) + evidence research (12-domain workflow, 400 sources).
 - 2026-08-21 — dossier generated; disposition pending final taxonomy design.
+
+## Absorbed proposal — Data-URI and inline-SVG token bloat
+
+On 2026-08-23 the `token-economics/data-uri-and-inline-svg-token-bloat`
+proposal (evidence grade **B**, `static-fetch`) was folded into this audit
+rather than shipped beside it. Its inline-SVG half is what this audit already
+did; shipping both would have scored the same SVG twice.
+
+What the fold added here:
+
+- Base64 `data:` URIs of 200 characters or more are counted wherever they sit —
+  `src`, `srcset`, a `style` attribute, or inside a `<style>` block — because
+  the payload costs the same in every position. They are matched against the raw
+  response body, so no position is missed.
+- They are priced in real `o200k_base` tokens, not bytes. Base64 has no word
+  structure for a BPE tokenizer to exploit, so it prices far worse per byte than
+  the prose it displaces.
+- Inlined base64 above 5,000 tokens fails on its own, above 1,000 tokens warns.
+  Below 200 characters nothing is counted: a 1×1 tracking pixel is not a token
+  problem.
+- `details` reports the two buckets separately — `svgPathTokens`,
+  `unhiddenSvgBytes`, `dataUriTokens`, `dataUriCount` — because the two fixes
+  differ. An SVG is optimised or marked `aria-hidden`; a data URI is moved to a
+  real URL with descriptive alt text.
+- The recommendation states the proposal's own arithmetic: a URL plus alt text
+  costs about 15 tokens and tells a model strictly more than 4,000 tokens of
+  base64 ever will.
+
+The SVG byte thresholds did not move: 2KB per SVG and 8KB total warn, 10KB per
+SVG and 20KB total fail. Existing consumers of `content-extraction/svg-bloat`
+keep their meaning; the audit is now `notApplicable` only when neither bucket
+has anything in it.
+
+The proposal's own counter-evidence is worth keeping in view: byte-oriented
+performance advice actively recommends inlining small assets to save requests,
+which is correct for browsers and backwards for agents. That is why the floor
+exists — the audit flags payloads large enough to displace content, not every
+inlined asset.

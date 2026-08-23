@@ -1,6 +1,6 @@
 # Proposed checks — evidence dossiers
 
-39 proposed checks from the 2026-08-20 novel-checks research pass. Each dossier states what the check verifies, the falsifiable mechanism behind it, cited evidence from the [source registry](../sources.json), competitor coverage, and an implementation sketch. Grading rubric: [evidence policy](../POLICY.md).
+38 proposed checks from the 2026-08-20 novel-checks research pass. Each dossier states what the check verifies, the falsifiable mechanism behind it, cited evidence from the [source registry](../sources.json), competitor coverage, and an implementation sketch. Grading rubric: [evidence policy](../POLICY.md).
 
 Seven dossiers left this folder on 2026-08-22 (Plan 5, Task 2): six tool
 surveys moved to [../research](../research/README.md) because their verdict is
@@ -42,7 +42,6 @@ Grades: **A** = documented consumer behavior or ratified standard · **B** = dra
 | B | [Registry Listing and Namespace Ownership Proof](./mcp-server-quality/registry-listing-and-namespace-ownership-proof.md) | mcp-server-quality | partial-overlap | `multi-page` | scored |
 | B | [Tool Self-Description Coverage](./mcp-server-quality/tool-self-description-coverage.md) | mcp-server-quality | partial-overlap | `static-fetch` | scored |
 | B | [Boilerplate tax across the crawl (unique tokens per fetch)](./token-economics/boilerplate-tax-across-the-crawl-unique-tokens-per-fetch.md) | token-economics | partial-overlap | `multi-page` | scored |
-| B | [Data-URI and inline-SVG token bloat](./token-economics/data-uri-and-inline-svg-token-bloat.md) | token-economics | unique | `static-fetch` | scored |
 | B | [Extraction determinism (multi-extractor agreement)](./token-economics/extraction-determinism-multi-extractor-agreement.md) | token-economics | unique | `static-fetch` | scored |
 | B | [Markdown alternate: discoverable, resolvable, faithful, cheaper](./token-economics/markdown-alternate-discoverable-resolvable-faithful-cheaper.md) | token-economics | partial-overlap | `static-fetch` | scored |
 | B | [Preamble Tax (tokens before the first content token)](./token-economics/preamble-tax-tokens-before-the-first-content-token.md) | token-economics | unique | `static-fetch` | scored |
