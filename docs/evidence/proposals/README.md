@@ -1,6 +1,6 @@
 # Proposed checks — evidence dossiers
 
-17 proposed checks from the 2026-08-20 novel-checks research pass. Each dossier states what the check verifies, the falsifiable mechanism behind it, cited evidence from the [source registry](../sources.json), competitor coverage, and an implementation sketch. Grading rubric: [evidence policy](../POLICY.md).
+16 proposed checks from the 2026-08-20 novel-checks research pass. Each dossier states what the check verifies, the falsifiable mechanism behind it, cited evidence from the [source registry](../sources.json), competitor coverage, and an implementation sketch. Grading rubric: [evidence policy](../POLICY.md).
 
 Seven dossiers left this folder on 2026-08-22 (Plan 5, Task 2): six tool
 surveys moved to [../research](../research/README.md) because their verdict is
@@ -26,7 +26,6 @@ Grades: **A** = documented consumer behavior or ratified standard · **B** = dra
 | B | [Origin Validation and CORS Coherence](./mcp-server-quality/origin-validation-and-cors-coherence.md) | mcp-server-quality | unique | `static-fetch` | scored |
 | B | [Registry Listing and Namespace Ownership Proof](./mcp-server-quality/registry-listing-and-namespace-ownership-proof.md) | mcp-server-quality | partial-overlap | `multi-page` | scored |
 | B | [Tool Self-Description Coverage](./mcp-server-quality/tool-self-description-coverage.md) | mcp-server-quality | partial-overlap | `static-fetch` | scored |
-| B | [C2PA manifest survives the delivery pipeline](./trust-provenance/c2pa-manifest-survives-the-delivery-pipeline.md) | trust-provenance | unique | `static-fetch` | scored |
 | B | [C2PA signer chains to the live C2PA Trust List](./trust-provenance/c2pa-signer-chains-to-the-live-c2pa-trust-list.md) | trust-provenance | unique | `static-fetch` | scored |
 | B | [Organization identifier resolves in the authoritative registry](./trust-provenance/organization-identifier-resolves-in-the-authoritative-regist.md) | trust-provenance | unique | `static-fetch` | scored |
 | B | [Synthetic-media disclosure is valid and self-consistent](./trust-provenance/synthetic-media-disclosure-is-valid-and-self-consistent.md) | trust-provenance | unique | `static-fetch` | scored |

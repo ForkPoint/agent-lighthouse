@@ -1,18 +1,19 @@
 ---
-check: c2pa-manifest-survives-the-delivery-pipeline
-title: "C2PA manifest survives the delivery pipeline"
-domain: trust-provenance
-status: proposed
+audit: operability-safety/c2pa-manifest-survives-delivery
+category: operability-safety
+source_file: packages/core/src/audits/operability-safety/c2pa-manifest-survives-delivery.ts
+slug: c2pa-manifest-survives-delivery
 evidence_grade: B
-uniqueness: unique
-difficulty: static-fetch
-scoring_tier: scored
+tier: scored
+disposition: "new in v2 — graduated from proposal 2026-08-23"
 reviewed: 2026-08-20
+graduated: 2026-08-23
 ---
+
 
 # C2PA manifest survives the delivery pipeline
 
-> Proposed check. Evidence grade **B** · unique · implementation: `static-fetch`
+> Shipped in v2. Evidence grade **B** · scored tier · unique · implementation: `static-fetch`
 
 ## What it checks
 
@@ -50,3 +51,44 @@ Tier per evidence policy: **scored** — grade B meets the A/B bar required for 
 ## Review history
 
 - 2026-08-20 — proposed by the novel-checks research pass (10-agent evidence workflow); sources URL-verified at research time.
+
+## Implementation deviations
+
+**Renamed** from `c2pa-manifest-survives-the-delivery-pipeline`, which would
+make a 63-character id with the category prefix — inside the cap, but the
+shorter slug reads better beside its five siblings. The full name survives as
+the dossier title.
+
+Steps 1, 2, 4, 5 and 6 of the sketch ship: candidate collection from `<img>`,
+every `srcset` candidate, `og:image`/`twitter:image` and JSON-LD
+`image`/`logo`/`primaryImageOfPage`; a full byte fetch capped at 5MB;
+origin-vs-variant derivation for Next.js, Cloudflare and WordPress; and the
+`manifestCoverage` / `strippedInTransit` pair, with a site of zero manifests
+reported as not-applicable rather than as a failure.
+
+**Detection is structural, not a parse** (sketch step 3 without the
+c2patool dependency). The gatherer walks the container — JPEG marker
+segments, PNG chunks, RIFF chunks, BMFF boxes — and locates a manifest store
+by its own container marker: an APP11 segment opening with the `JP` JUMBF
+identifier, a PNG `caBX` chunk, a WebP `C2PA` chunk, or a `uuid` box carrying
+the C2PA UUID. Shelling out to `c2patool` would add a native binary to a pure
+TypeScript package, and reimplementing JUMBF+COSE is not needed to answer
+"did the pipeline strip it", which is what this audit asks.
+
+**An image over the read cap is skipped, not counted as unsigned.** C2PA
+allows the store to sit mid-file, so a truncated read cannot prove absence.
+The skipped URLs are reported.
+
+**The scan reads at most six images**, three per page, deduplicated, each
+fetched once through the shared cache. A stripping pipeline strips every
+image it touches; six samples find it if it is there.
+
+## Deferred
+
+- **Validating the manifest.** Whether the store parses, what it asserts, and
+  who signed it is `operability-safety/c2pa-signer-trust-status`.
+- **`c2patool` / `c2pa-rs` bindings.** They would give a real parse and real
+  validation, at the cost of a native dependency in a package that has none.
+- **Per-template sampling.** The sketch samples per page template; this audit
+  samples per page, because the scan's page set is already type-diverse and a
+  template classifier would be a second inference on top of it.
