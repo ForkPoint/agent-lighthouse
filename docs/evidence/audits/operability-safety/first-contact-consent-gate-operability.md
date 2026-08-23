@@ -1,18 +1,19 @@
 ---
-check: first-contact-consent-gate-operability
-title: "First-Contact Consent Gate Operability"
-domain: agent-operability
-status: proposed
+audit: operability-safety/first-contact-consent-gate-operability
+category: operability-safety
+source_file: packages/core/src/audits/operability-safety/first-contact-consent-gate-operability.ts
+slug: first-contact-consent-gate-operability
 evidence_grade: C
-uniqueness: unique
-difficulty: static-fetch
-scoring_tier: informative (weight 0)
+tier: informative
+disposition: "new in v2 — graduated from proposal 2026-08-23"
 reviewed: 2026-08-20
+graduated: 2026-08-23
 ---
+
 
 # First-Contact Consent Gate Operability
 
-> Proposed check. Evidence grade **C** · unique · implementation: `static-fetch`
+> Shipped in v2. Evidence grade **C** · informative tier · unique · implementation: `static-fetch`
 
 ## What it checks
 
@@ -52,3 +53,37 @@ Tier per evidence policy: **informative (weight 0)** — grade C does not meet t
 ## Review history
 
 - 2026-08-20 — proposed by the novel-checks research pass (10-agent evidence workflow); sources URL-verified at research time.
+
+## Implementation deviations
+
+The shipped audit is `operability-safety/first-contact-consent-gate-operability`,
+in the `operability-safety` category: the proposal's `agent-operability` domain
+is a research grouping, not one of the eight v2 categories.
+
+It is registered in the `informative` tier with weight 0, as grade C requires.
+The sketch already asks for "a diagnostic with an action-cost number rather than
+a pass/fail score", so the tier and the sketch agree.
+
+The consent-cookie comparison in arm (a) is not made. The sketch fetches the
+page a second time carrying a consent cookie and diffs the two. Sending a
+fabricated consent signal is a claim about a visitor's choice that a scanner has
+no standing to make, so content presence is judged from the single served
+response: a main landmark or article holding at least 200 characters, or a
+JSON-LD main entity beside shorter text.
+
+The action cost is read from the controls rendered in the top document: a
+control whose accessible name, id or class reads as a refusal costs one click, a
+"manage preferences" journey costs two, and a layer with neither is reported as
+having no refusal control at all rather than being given a number.
+
+## Deferred
+
+- **Headless verification of arms (c) and (d).** The sketch runs the dismissal
+  and counts the actions it really takes. That needs a live browser, so the
+  shipped audit counts the controls the markup declares instead.
+- **Controls inside a cross-origin iframe.** When the layer is in a third-party
+  frame, its controls cannot be read at all — which is itself the finding. No
+  action cost is attributed in that case.
+- **Scroll-inside-iframe dismissal.** Whether the dialog needs a scroll before
+  its buttons come into reach depends on layout, which does not exist before
+  rendering.
