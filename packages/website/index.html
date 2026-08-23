@@ -13,7 +13,7 @@
   <meta property="og:image:alt" content="Agent Lighthouse report preview for AI-agent readiness audits">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="Agent Lighthouse — Lighthouse, but for AI agents">
-  <meta name="twitter:description" content="184 AI-agent readiness checks for llms.txt, robots, Schema.org, OpenAPI, WebMCP, MCP, AEO/GEO, and accessibility.">
+  <meta name="twitter:description" content="193 AI-agent readiness checks for llms.txt, robots, Schema.org, OpenAPI, WebMCP, MCP, AEO/GEO, and accessibility.">
   <meta name="twitter:image" content="https://forkpoint.github.io/agent-lighthouse/og-image.svg">
   <meta name="twitter:image:alt" content="Agent Lighthouse report preview for AI-agent readiness audits">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🗼</text></svg>">
@@ -73,7 +73,7 @@
       <!-- Center Nav Links -->
       <div class="hidden md:flex items-center gap-6 text-sm font-medium text-slate-300">
         <a href="#quickstart" class="hover:text-white transition-colors">Quickstart</a>
-        <a href="#audits" class="hover:text-white transition-colors">Audit Directory (184)</a>
+        <a href="#audits" class="hover:text-white transition-colors">Audit Directory (193)</a>
         <a href="#cli" class="hover:text-white transition-colors">CLI & Config</a>
         <a href="#sdk" class="hover:text-white transition-colors">Node.js SDK</a>
         <a href="#mcp" class="hover:text-white transition-colors">MCP Server</a>
@@ -126,7 +126,7 @@
       <!-- Quick Metrics Grid -->
       <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-12 max-w-4xl mx-auto text-left">
         <div class="bg-slate-900/60 border border-slate-800 p-4 rounded-xl backdrop-blur-sm">
-          <div class="text-2xl font-extrabold text-white">184</div>
+          <div class="text-2xl font-extrabold text-white">193</div>
           <div class="text-xs text-slate-400 mt-0.5">Specialized Audits</div>
         </div>
         <div class="bg-slate-900/60 border border-slate-800 p-4 rounded-xl backdrop-blur-sm">
@@ -165,7 +165,7 @@
           <div>
             <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">Interactive Directory</h3>
             <ul class="space-y-2 border-l border-slate-800 pl-3">
-              <li><a href="#audits" class="text-indigo-400 font-semibold hover:text-indigo-300 transition-colors block py-0.5">Audit Explorer (184)</a></li>
+              <li><a href="#audits" class="text-indigo-400 font-semibold hover:text-indigo-300 transition-colors block py-0.5">Audit Explorer (193)</a></li>
               <li><a href="#categories-ref" class="text-slate-400 hover:text-white transition-colors block py-0.5">Categories Taxonomy</a></li>
             </ul>
           </div>
@@ -258,7 +258,7 @@
               </div>
               <div class="p-4 bg-slate-950/80 border border-slate-800 rounded-xl">
                 <div class="text-emerald-400 font-bold text-sm">3. Pure Audits</div>
-                <div class="text-xs text-slate-400 mt-1">184 pure deterministic rules (8 categories)</div>
+                <div class="text-xs text-slate-400 mt-1">193 pure deterministic rules (8 categories)</div>
               </div>
               <div class="p-4 bg-slate-950/80 border border-slate-800 rounded-xl">
                 <div class="text-amber-400 font-bold text-sm">4. Scoring & Vitals</div>
@@ -342,10 +342,10 @@
                 <span>🔍</span>
                 <span>Interactive Audit Directory</span>
               </h2>
-              <p class="text-slate-400 text-sm mt-1">Explore all 184 audits with evaluation rules, guidance, and remediation code snippets.</p>
+              <p class="text-slate-400 text-sm mt-1">Explore all 193 audits with evaluation rules, guidance, and remediation code snippets.</p>
             </div>
             <div class="text-xs font-semibold bg-slate-900 border border-slate-800 px-3 py-1.5 rounded-lg text-slate-300">
-              <span id="audit-count-badge" class="text-indigo-400 font-bold">184</span> audits available
+              <span id="audit-count-badge" class="text-indigo-400 font-bold">193</span> audits available
             </div>
           </div>
 
@@ -359,12 +359,12 @@
 
             <!-- Category Filter Buttons -->
             <div class="flex flex-wrap gap-1.5" id="category-filter-pills">
-              <button onclick="setCategoryFilter('all')" class="cat-pill active text-xs font-medium px-3 py-1.5 rounded-lg bg-indigo-600 text-white transition-colors" data-cat="all">All (184)</button>
+              <button onclick="setCategoryFilter('all')" class="cat-pill active text-xs font-medium px-3 py-1.5 rounded-lg bg-indigo-600 text-white transition-colors" data-cat="all">All (193)</button>
               <button onclick="setCategoryFilter('access-crawl-control')" class="cat-pill text-xs font-medium px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 transition-colors" data-cat="access-crawl-control">Access & Crawl Control (32)</button>
-              <button onclick="setCategoryFilter('content-extraction')" class="cat-pill text-xs font-medium px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 transition-colors" data-cat="content-extraction">Content Extraction (23)</button>
+              <button onclick="setCategoryFilter('content-extraction')" class="cat-pill text-xs font-medium px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 transition-colors" data-cat="content-extraction">Content Extraction (27)</button>
               <button onclick="setCategoryFilter('machine-discovery')" class="cat-pill text-xs font-medium px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 transition-colors" data-cat="machine-discovery">Machine Discovery (19)</button>
               <button onclick="setCategoryFilter('structured-data')" class="cat-pill text-xs font-medium px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 transition-colors" data-cat="structured-data">Structured Data (14)</button>
-              <button onclick="setCategoryFilter('answer-readiness')" class="cat-pill text-xs font-medium px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 transition-colors" data-cat="answer-readiness">Answer Readiness (28)</button>
+              <button onclick="setCategoryFilter('answer-readiness')" class="cat-pill text-xs font-medium px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 transition-colors" data-cat="answer-readiness">Answer Readiness (33)</button>
               <button onclick="setCategoryFilter('agent-interfaces')" class="cat-pill text-xs font-medium px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 transition-colors" data-cat="agent-interfaces">Agent Interfaces (21)</button>
               <button onclick="setCategoryFilter('agentic-commerce')" class="cat-pill text-xs font-medium px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 transition-colors" data-cat="agentic-commerce">Agentic Commerce (7)</button>
               <button onclick="setCategoryFilter('operability-safety')" class="cat-pill text-xs font-medium px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 transition-colors" data-cat="operability-safety">Agent Operability & Safety (40)</button>
@@ -527,7 +527,7 @@ console.log(markdown);</code></pre>
           <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div class="bg-slate-900/60 border border-slate-800 p-4 rounded-xl">
               <div class="code-font text-xs font-bold text-indigo-400">audit_website</div>
-              <div class="text-xs text-slate-400 mt-1">Full 184-audit scan with scores, failed audits & remediation fixes.</div>
+              <div class="text-xs text-slate-400 mt-1">Full 193-audit scan with scores, failed audits & remediation fixes.</div>
             </div>
             <div class="bg-slate-900/60 border border-slate-800 p-4 rounded-xl">
               <div class="code-font text-xs font-bold text-emerald-400">inspect_product_schema</div>
@@ -2519,6 +2519,33 @@ jobs:
     }
   },
   {
+    "id": "answer-readiness/chunk-boundary-referent-integrity",
+    "category": "answer-readiness",
+    "categoryTitle": "Answer Readiness",
+    "title": "Chunk-boundary referent integrity",
+    "failureTitle": "Sections stop making sense once retrieved on their own",
+    "description": "Splits the page into heading-led chunks, the way a retriever does, and checks each one for the three ways a chunk loses its meaning when it arrives alone: opening on a demonstrative with no referent, never naming the page's subject, and pointing at a position in the document (\"as described above\") that a retrieved chunk no longer has.",
+    "scoreDisplayMode": "ternary",
+    "weight": 0.6,
+    "priority": "high",
+    "tier": "scored",
+    "evidenceGrade": "B",
+    "dossier": "docs/evidence/audits/answer-readiness/chunk-boundary-referent-integrity.md",
+    "guidance": {
+      "impact": "An answer engine retrieves a passage, not a page. A section that opens \"This means you should...\" and never names its subject is unusable on arrival: the model either drops it or attributes it to whatever else is in the window. The fix is per-sentence and cheap, and it is invisible to a reader of the whole page — which is why it survives editing.",
+      "fix": "Open each section with its subject rather than a pronoun, name the product or topic once in every section over about forty words, and replace \"as described above\" with the name of the thing described.",
+      "code": "\u003c!-- Loses its referent when retrieved alone -->\n\u003ch2>Descaling\u003c/h2>\n\u003cp>This should be done monthly, as described above.\u003c/p>\n\n\u003c!-- Survives retrieval -->\n\u003ch2>Descaling the copper kettle\u003c/h2>\n\u003cp>Descale the copper kettle monthly with equal parts water and white vinegar.\u003c/p>",
+      "effort": "moderate",
+      "docsUrl": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/audits/answer-readiness/chunk-boundary-referent-integrity.md",
+      "tags": [
+        "retrieval",
+        "chunking",
+        "content",
+        "answer-engines"
+      ]
+    }
+  },
+  {
     "id": "answer-readiness/comparison-tables",
     "category": "answer-readiness",
     "categoryTitle": "Answer Readiness",
@@ -2706,6 +2733,32 @@ jobs:
         "e-e-a-t",
         "content-quality",
         "generative-engine"
+      ]
+    }
+  },
+  {
+    "id": "answer-readiness/extractor-survival-recall",
+    "category": "answer-readiness",
+    "categoryTitle": "Answer Readiness",
+    "title": "Extractor survival recall",
+    "failureTitle": "Facts on this page do not survive the extractors that read it",
+    "description": "Names the spans that carry the page's facts — the `h1`, each section's opening sentences, every `caption`, `dt` and `th`, and the structured-data strings the prose repeats — then runs the page through `@mozilla/readability` and through a Firecrawl/Jina-style stripper and reports which spans did not survive, and what dropped them.",
+    "scoreDisplayMode": "ternary",
+    "weight": 0.6,
+    "priority": "high",
+    "tier": "scored",
+    "evidenceGrade": "B",
+    "dossier": "docs/evidence/audits/answer-readiness/extractor-survival-recall.md",
+    "guidance": {
+      "impact": "An answer engine never sees the page; it sees whatever its extractor kept. A specification table inside `\u003caside class=\"related-specs\">` is invisible to every pipeline that strips asides, and the answer about that product gets written without it. The loss is silent: the page looks complete to its author and to every human reviewer.",
+      "fix": "Put facts inside the main content container, not in an aside, a footer, or a block whose class says \"related\" or \"promo\". Where a table must sit outside the article, repeat its facts in the prose so at least one copy survives.",
+      "effort": "moderate",
+      "docsUrl": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/audits/answer-readiness/extractor-survival-recall.md",
+      "tags": [
+        "retrieval",
+        "extraction",
+        "content",
+        "answer-engines"
       ]
     }
   },
@@ -3010,6 +3063,58 @@ jobs:
     }
   },
   {
+    "id": "answer-readiness/section-split-risk-profile",
+    "category": "answer-readiness",
+    "categoryTitle": "Answer Readiness",
+    "title": "Section split-risk profile",
+    "failureTitle": "Sections are longer than the window that will chunk them",
+    "description": "Counts each `h2`/`h3` section with a real BPE tokenizer and reports the four ways a page chunks badly: sections over the 512-token window (each producing headless tail chunks), a long page with no headings to cut on, sections too thin to embed distinctly, and single tables or lists whose serialization exceeds the window on its own.",
+    "scoreDisplayMode": "ternary",
+    "weight": 0.6,
+    "priority": "medium",
+    "tier": "scored",
+    "evidenceGrade": "B",
+    "dossier": "docs/evidence/audits/answer-readiness/section-split-risk-profile.md",
+    "guidance": {
+      "impact": "Retrieval pipelines cut pages into fixed windows. A section longer than the window becomes one chunk carrying the heading and one or more tail chunks carrying none — and a tail chunk is text with no subject, which retrieves badly and cites worse. A page with no headings at all is cut at arbitrary offsets throughout.",
+      "fix": "Add an `h2` or `h3` roughly every 400 tokens of prose, and split a specification table that runs past the window into per-topic tables so the header row stays with its rows.",
+      "effort": "moderate",
+      "docsUrl": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/audits/answer-readiness/section-split-risk-profile.md",
+      "tags": [
+        "retrieval",
+        "chunking",
+        "content",
+        "answer-engines"
+      ]
+    }
+  },
+  {
+    "id": "answer-readiness/site-wide-passage-uniqueness-ratio",
+    "category": "answer-readiness",
+    "categoryTitle": "Answer Readiness",
+    "title": "Site-wide passage uniqueness ratio",
+    "failureTitle": "The site’s pages repeat each other, so only one of them can be cited",
+    "description": "Measures two things no single-page check can see: what share of each page’s sentences are its own rather than repeated across its siblings, and which pages are near-duplicates of each other at five-gram Jaccard 0.9 or above. Near-duplicate pages that all name themselves canonical compete against each other for one slot.",
+    "scoreDisplayMode": "ternary",
+    "weight": 0.6,
+    "priority": "medium",
+    "tier": "scored",
+    "evidenceGrade": "B",
+    "dossier": "docs/evidence/audits/answer-readiness/site-wide-passage-uniqueness-ratio.md",
+    "guidance": {
+      "impact": "A search engine clusters duplicate and near-duplicate URLs and elects one canonical; the losers have their signals folded into the winner. A cluster of near-duplicate pages that each name themselves canonical therefore competes against itself, and at most one member stays citable however good the others are. Separately, a page whose sentences are mostly site-wide template produces chunks whose embeddings encode the template rather than the page, so every page built from that template lands in the same place in vector space and none is a distinctive match for any question.",
+      "fix": "Merge near-duplicate pages into one, or point the weaker members at the strongest with rel=\"canonical\" so the election has an answer. For pages that stay, raise the share of text that is theirs alone: cut the repeated intro, the repeated legal paragraph and the repeated call to action, and let each page carry the sentences only it can carry.",
+      "effort": "complex",
+      "docsUrl": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/audits/answer-readiness/site-wide-passage-uniqueness-ratio.md",
+      "tags": [
+        "duplication",
+        "canonical",
+        "retrieval",
+        "crawl"
+      ]
+    }
+  },
+  {
     "id": "answer-readiness/snippet-gate-coverage",
     "category": "answer-readiness",
     "categoryTitle": "Answer Readiness",
@@ -3058,6 +3163,32 @@ jobs:
         "content-quality",
         "copywriting",
         "answer-engine"
+      ]
+    }
+  },
+  {
+    "id": "answer-readiness/table-markdown-round-trip-loss",
+    "category": "answer-readiness",
+    "categoryTitle": "Answer Readiness",
+    "title": "Tables survive conversion to markdown",
+    "failureTitle": "Tables lose cells when converted to the markdown a model reads",
+    "description": "Converts every main-content table to GFM markdown — the representation an answer engine’s reader emits — reads it back, and diffs it cell for cell against the source grid. Reports every cell lost or displaced by coordinate, plus the tables whose numbers carry no header and whose units live only in the caption.",
+    "scoreDisplayMode": "ternary",
+    "weight": 0.6,
+    "priority": "medium",
+    "tier": "scored",
+    "evidenceGrade": "B",
+    "dossier": "docs/evidence/audits/answer-readiness/table-markdown-round-trip-loss.md",
+    "guidance": {
+      "impact": "A model does not read your table markup. Something converts it to markdown first, and GFM markdown has no merged cells, no second header row and no lists inside a cell. A header spanning two columns arrives heading one of them; the other column of numbers arrives with no header at all. The model still answers the question — with a number read from the wrong column, stated as confidently as a right one.",
+      "fix": "Flatten spanned headers into one header row of plain `th` cells, repeating the text where a span used to cover two columns. Put the unit or currency in the header cell rather than in the caption. Take paragraphs and lists out of cells. Where a table is genuinely two tables, publish it as two.",
+      "effort": "moderate",
+      "docsUrl": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/audits/answer-readiness/table-markdown-round-trip-loss.md",
+      "tags": [
+        "tables",
+        "markdown",
+        "extraction",
+        "accuracy"
       ]
     }
   },
@@ -3230,6 +3361,32 @@ jobs:
     }
   },
   {
+    "id": "content-extraction/boilerplate-tax",
+    "category": "content-extraction",
+    "categoryTitle": "Content Extraction",
+    "title": "Boilerplate tax across the crawl (unique tokens per fetch)",
+    "failureTitle": "Most of what an agent fetches from this site it has already read",
+    "description": "Samples pages across the crawl, finds the five-word windows that appear on at least 80% of them, and reports how many of the tokens an agent pays for are distinct information rather than repeated chrome. Site-level rather than page-level: the cost of boilerplate is only visible across fetches.",
+    "scoreDisplayMode": "ternary",
+    "weight": 0.6,
+    "priority": "medium",
+    "tier": "scored",
+    "evidenceGrade": "B",
+    "dossier": "docs/evidence/audits/content-extraction/boilerplate-tax.md",
+    "guidance": {
+      "impact": "An agent answering a question about a site fetches several of its pages. If each fetch delivers the same navigation, the same promotional header and the same footer around a thin body, the agent pays for those tokens once per fetch and learns nothing new from them. The cost compounds with every page, and the distinct content it came for competes for what is left of the context window.",
+      "fix": "Cut repeated chrome down to what a reader needs on every page: collapse mega-menus to a short nav, move legal and marketing boilerplate to the pages that are about it, and let each page carry more of its own content. Where the chrome must stay for humans, keeping it out of `\u003cmain>` at least lets an extractor drop it.",
+      "effort": "complex",
+      "docsUrl": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/audits/content-extraction/boilerplate-tax.md",
+      "tags": [
+        "tokens",
+        "context-window",
+        "content",
+        "crawl"
+      ]
+    }
+  },
+  {
     "id": "content-extraction/code-language",
     "category": "content-extraction",
     "categoryTitle": "Content Extraction",
@@ -3334,6 +3491,31 @@ jobs:
         "structure",
         "semantic",
         "html"
+      ]
+    }
+  },
+  {
+    "id": "content-extraction/extraction-determinism",
+    "category": "content-extraction",
+    "categoryTitle": "Content Extraction",
+    "title": "Extraction determinism (multi-extractor agreement)",
+    "failureTitle": "What an agent reads from this page depends on which extractor it uses",
+    "description": "Runs three independent main-content extractors over the page — `@mozilla/readability`, a semantic-container selector, and a text-density scorer — and compares their output pairwise with five-word shingles. Where they disagree, what an agent quotes from this page is decided by its pipeline rather than by the page.",
+    "scoreDisplayMode": "ternary",
+    "weight": 0.6,
+    "priority": "high",
+    "tier": "scored",
+    "evidenceGrade": "B",
+    "dossier": "docs/evidence/audits/content-extraction/extraction-determinism.md",
+    "guidance": {
+      "impact": "Every agent pipeline strips a page down before a model reads it, and they do not all strip the same way. When the extractors disagree, the same URL yields different answers depending on which tool fetched it — and the page cannot be tested, because there is no single thing it says. When readability declines a page outright, the most widely deployed extractor of the three hands an agent nothing at all.",
+      "fix": "Put the article in one container — `\u003cmain>` or `\u003carticle>` — with the chrome outside it, and keep the largest block of prose on the page the one you want quoted. Readability keys on paragraph density and link density, so a body split across many small wrappers, or padded with link-heavy blocks, is what makes the three disagree.",
+      "effort": "moderate",
+      "docsUrl": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/audits/content-extraction/extraction-determinism.md",
+      "tags": [
+        "content",
+        "extraction",
+        "agent-readiness"
       ]
     }
   },
@@ -3476,6 +3658,31 @@ jobs:
     }
   },
   {
+    "id": "content-extraction/json-ld-duplication-mass",
+    "category": "content-extraction",
+    "categoryTitle": "Content Extraction",
+    "title": "JSON-LD duplication mass",
+    "failureTitle": "Structured data repeats text the page already carries",
+    "description": "Counts what the page's JSON-LD costs in `o200k_base` tokens, finds nodes declared twice across blocks, and measures how much of any long prose property — `articleBody`, `description`, `reviewBody` — repeats text already present in the DOM. Reported, not scored: duplication is a cost an operator may have chosen, and no consumer path proves it changes an answer.",
+    "scoreDisplayMode": "informative",
+    "weight": 0,
+    "priority": "low",
+    "tier": "informative",
+    "evidenceGrade": "C",
+    "dossier": "docs/evidence/audits/content-extraction/json-ld-duplication-mass.md",
+    "guidance": {
+      "impact": "A non-rendering agent tokenizes the whole document, JSON-LD included. Where a block repeats the article body the DOM already carries, the page ships that text twice and the agent pays for both copies out of one context window. The same holds for a node declared identically in two blocks: the second copy adds tokens and no facts.",
+      "fix": "Keep JSON-LD to the facts a parser needs — identifiers, prices, dates, relationships — and let the prose live in the DOM. Where a schema property genuinely needs body text, a summary is usually enough. Merge blocks that declare the same `@id` into one.",
+      "effort": "easy",
+      "docsUrl": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/audits/content-extraction/json-ld-duplication-mass.md",
+      "tags": [
+        "structured-data",
+        "tokens",
+        "content"
+      ]
+    }
+  },
+  {
     "id": "content-extraction/language-attribute",
     "category": "content-extraction",
     "categoryTitle": "Content Extraction",
@@ -3533,24 +3740,53 @@ jobs:
     "id": "content-extraction/markdown-alternate",
     "category": "content-extraction",
     "categoryTitle": "Content Extraction",
-    "title": "Markdown alternate link",
-    "failureTitle": "Markdown alternate link",
-    "description": "AI agents prefer Markdown over HTML because it strips away layout noise and fits more content into limited context windows. A Markdown alternate link lets agents fetch a clean, token-efficient version of your page, improving the accuracy of AI-generated summaries.",
-    "scoreDisplayMode": "binary",
+    "title": "Markdown alternate: discoverable, resolvable, faithful, cheaper",
+    "failureTitle": "No usable markdown alternate for this page",
+    "description": "Looks for a markdown alternate of the page by the three routes agents actually try — a declared `alternate` link, `url + \".md\"`, and `Accept: text/markdown` — then checks that it resolves as `text/markdown`, still carries the page's headings and prose, and costs fewer tokens than the HTML.",
+    "scoreDisplayMode": "ternary",
     "weight": 1,
     "priority": "medium",
     "tier": "scored",
     "evidenceGrade": "A",
     "dossier": "docs/evidence/audits/content-extraction/markdown-alternate.md",
     "guidance": {
-      "impact": "AI agents prefer Markdown over HTML because it strips away layout noise and fits more content into limited context windows. Without a Markdown alternate, agents must parse full HTML, reducing the accuracy of AI-generated summaries.",
-      "fix": "Create a Markdown version of your page and add a \u003clink rel=\"alternate\"> tag in \u003chead> with type=\"text/markdown\" pointing to it.",
-      "code": "\u003clink rel=\"alternate\" type=\"text/markdown\" href=\"/page.md\">",
+      "impact": "A markdown alternate is a promise that an agent can read the page cheaply and get the same answer. A stale or partial alternate breaks that promise silently: the agent gets a document that looks authoritative, costs less, and says less than the page it claims to mirror. Serving it as `text/plain` or `text/html` is the same failure one level down — the client that negotiated for markdown cannot tell it got any.",
+      "fix": "Serve the alternate with `Content-Type: text/markdown` (a `charset` parameter is fine), generate it from the same source as the HTML so headings and prose cannot drift, and declare it with `\u003clink rel=\"alternate\" type=\"text/markdown\" href=\"...\">` so an agent does not have to guess the URL.",
+      "code": "\u003clink rel=\"alternate\" type=\"text/markdown\" href=\"/kettles.md\">\n\n# Content-Type: text/markdown; charset=utf-8",
       "effort": "moderate",
+      "docsUrl": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/audits/content-extraction/markdown-alternate.md",
       "tags": [
-        "meta-tags",
         "markdown",
-        "ai-discovery"
+        "tokens",
+        "content",
+        "llms-txt"
+      ]
+    }
+  },
+  {
+    "id": "content-extraction/preamble-tax",
+    "category": "content-extraction",
+    "categoryTitle": "Content Extraction",
+    "title": "Preamble tax: tokens before the first content token",
+    "failureTitle": "The answer sits behind thousands of tokens of preamble",
+    "description": "Measures how many `o200k_base` tokens an agent must stream past before the first sentence of the main content appears, by locating the extracted content inside the raw response body. Reports the offset in tokens and as a share of the document, and names the single heaviest block sitting in front of the content.",
+    "scoreDisplayMode": "ternary",
+    "weight": 0.6,
+    "priority": "medium",
+    "tier": "scored",
+    "evidenceGrade": "B",
+    "dossier": "docs/evidence/audits/content-extraction/preamble-tax.md",
+    "guidance": {
+      "impact": "A non-rendering agent ingests the document as a linear stream, so DOM order is context order. A page that inlines a critical-CSS block and a serialized state blob ahead of its content does two things at once: it pushes the answer into the middle of the context window, where retrieval is measurably weakest, and it guarantees the answer is what gets cut when the fetching harness truncates to a byte or token cap.",
+      "fix": "Move inline `\u003cstyle>` and `\u003cscript>` blocks below the main content or into external files, and put `\u003cmain>` as early in the body as the layout allows. Where critical CSS must be inline, keep it to the rules that paint the first screen rather than the whole stylesheet.",
+      "code": "\u003c!-- The answer arrives 40k tokens in -->\n\u003chead>\u003cstyle>/* the entire stylesheet */\u003c/style>\u003c/head>\n\u003cbody>\u003cscript>window.__STATE__ = { /* 30k tokens */ }\u003c/script>\n  \u003cmain>\u003ch1>How to descale a kettle\u003c/h1>\u003cp>Fill it with...\u003c/p>\u003c/main>\n\u003c/body>\n\n\u003c!-- The answer arrives first -->\n\u003chead>\u003clink rel=\"stylesheet\" href=\"/app.css\">\u003c/head>\n\u003cbody>\u003cmain>\u003ch1>How to descale a kettle\u003c/h1>\u003cp>Fill it with...\u003c/p>\u003c/main>\n  \u003cscript src=\"/state.js\" defer>\u003c/script>\n\u003c/body>",
+      "effort": "moderate",
+      "docsUrl": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/audits/content-extraction/preamble-tax.md",
+      "tags": [
+        "tokens",
+        "context-window",
+        "content",
+        "truncation"
       ]
     }
   },
@@ -3724,7 +3960,7 @@ jobs:
     "categoryTitle": "Content Extraction",
     "title": "SVGs not bloating agent context",
     "failureTitle": "Large inline SVGs bloating agent context",
-    "description": "When an LLM converts your HTML to Markdown or reads raw markup, every inline SVG is inlined as thousands of path-data tokens. Decorative icon sprites, charts, and complex illustrations can silently consume tens of thousands of tokens of agent context per page — \"SVG context poisoning\" — crowding out the actual content the agent should read. SVGs marked aria-hidden=\"true\" or role=\"presentation\" are stripped by most accessibility-tree extractors and do not count. Keep visible SVGs small, move decorative ones behind aria-hidden, and prefer raster images or CSS for complex graphics.",
+    "description": "When an LLM converts your HTML to Markdown or reads raw markup, every inline SVG is inlined as thousands of path-data tokens, and every base64 data URI is inlined verbatim. Decorative icon sprites, charts, and complex illustrations can silently consume tens of thousands of tokens of agent context per page — \"SVG context poisoning\" — crowding out the actual content the agent should read. SVGs marked aria-hidden=\"true\" or role=\"presentation\" are stripped by most accessibility-tree extractors and do not count. Keep visible SVGs small, move decorative ones behind aria-hidden, and prefer raster images or CSS for complex graphics. Inlined base64 assets are priced in real `o200k_base` tokens and reported separately, because their fix differs: move the asset to a real URL with descriptive alt text.",
     "scoreDisplayMode": "ternary",
     "weight": 0.6,
     "priority": "medium",
@@ -3781,7 +4017,7 @@ jobs:
     "categoryTitle": "Content Extraction",
     "title": "Lean token-to-content ratio",
     "failureTitle": "Lean token-to-content ratio",
-    "description": "AI agents pay for every token of raw HTML they download, but only the visible text carries meaning. This audit compares the character weight of the raw HTML against the extracted main-content text to produce a \"context bloat score\": the share of the page that is actual content rather than markup, scripts, and styles. The ratio is evaluated on the homepage (the first crawled page), which is the entry point agents most often fetch. A ratio under 5% means an agent parses 20 tokens of noise for every token of content; under 15% still wastes most of the context window on boilerplate. Unlike content depth (which measures text volume), this measures how efficiently that text is packaged.",
+    "description": "AI agents pay for every token of raw HTML they download, but only the main content carries meaning. This audit counts both sides with a real BPE tokenizer (`o200k_base`): the numerator is the text `@mozilla/readability` extracts — the extractor most of the industry deploys — and the denominator is the whole delivered document. The result is a signal-density index, and the report breaks the denominator into script, style, comment, content and structure tokens so the finding names the bucket to attack. A ratio under 5% means an agent parses 20 tokens of noise for every token of content; under 15% still wastes most of the context window on boilerplate.",
     "scoreDisplayMode": "ternary",
     "weight": 0.6,
     "priority": "high",
