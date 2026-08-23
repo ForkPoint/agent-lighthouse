@@ -17,6 +17,15 @@ function dossierIds(): string[] {
   return out.sort();
 }
 
+/** The route template for a dossier, read as source (see the test that uses it). */
+const DOSSIER_TEMPLATE = resolve(__dirname, 'pages/audits/[category]/[slug].astro');
+
+/** A dossier's markdown body — everything after the closing frontmatter fence. */
+function dossierBody(id: string): string {
+  const raw = readFileSync(resolve(DOSSIERS, `${id}.md`), 'utf8');
+  return raw.replace(/^---\n[\s\S]*?\n---\n/, '');
+}
+
 /**
  * The frontmatter keys `src/content.config.ts` marks required. `tier` is absent:
  * only the v2-native dossiers record one, so the schema keeps it optional and
@@ -53,6 +62,24 @@ describe('dossier content', () => {
         expect(block.includes(key), `${id} missing ${key}`).toBe(true);
       }
     }
+  });
+
+  it('opens every dossier body with a human title, never the audit id', () => {
+    for (const id of dossierIds()) {
+      const raw = readFileSync(resolve(DOSSIERS, `${id}.md`), 'utf8');
+      const audit = /^audit:\s*(\S+)/m.exec(raw)![1]!;
+      const heading = /^#\s+(.+)$/m.exec(dossierBody(id));
+      expect(heading, `${id} has no top-level heading`).not.toBeNull();
+      expect(heading![1]!.trim(), `${id} titles itself with its own id`).not.toBe(audit);
+    }
+  });
+
+  // Read as source rather than rendered: proving this needs a full Astro build, and the
+  // test suite must stay build-free. The two facts below are what the route depends on.
+  it('leaves the dossier heading to the markdown, not the route template', () => {
+    const template = readFileSync(DOSSIER_TEMPLATE, 'utf8');
+    expect(template, 'the markdown body already supplies the <h1>').not.toMatch(/<h1[\s>]/);
+    expect(template, 'the <title> comes from the body heading').toMatch(/headings/);
   });
 
   it('keeps every tier it does declare inside the schema enum', () => {

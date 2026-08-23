@@ -10,12 +10,15 @@ export async function getStaticPaths() {
 }
 
 const { entry } = Astro.props;
-const { Content } = await render(entry);
+const { Content, headings } = await render(entry);
+// The body opens with its own `# Human Title`, so the page takes its title from there
+// and renders no heading of its own. `entry.data.audit` is the machine id
+// (`category/slug`) and only stands in if a dossier ever ships without a heading.
+const title = headings.find((heading) => heading.depth === 1)?.text ?? entry.data.audit;
 ---
 <html lang="en">
-  <head><meta charset="utf-8" /><title>{entry.data.audit}</title></head>
+  <head><meta charset="utf-8" /><title>{title}</title></head>
   <body>
-    <h1>{entry.data.audit}</h1>
     <Content />
   </body>
 </html>
