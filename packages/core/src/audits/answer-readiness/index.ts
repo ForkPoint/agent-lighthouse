@@ -39,6 +39,7 @@ export { ChunkBoundaryReferentIntegrityAudit } from './chunk-boundary-referent-i
 export { ExtractorSurvivalRecallAudit } from './extractor-survival-recall';
 export { SectionSplitRiskProfileAudit } from './section-split-risk-profile';
 export { SiteWidePassageUniquenessRatioAudit } from './site-wide-passage-uniqueness-ratio';
+export { TableMarkdownRoundTripLossAudit } from './table-markdown-round-trip-loss';
 
 import { MetaDescriptionAudit } from './meta-description';
 import { MetaAuthorAudit } from './meta-author';
@@ -72,6 +73,7 @@ import { ChunkBoundaryReferentIntegrityAudit } from './chunk-boundary-referent-i
 import { ExtractorSurvivalRecallAudit } from './extractor-survival-recall';
 import { SectionSplitRiskProfileAudit } from './section-split-risk-profile';
 import { SiteWidePassageUniquenessRatioAudit } from './site-wide-passage-uniqueness-ratio';
+import { TableMarkdownRoundTripLossAudit } from './table-markdown-round-trip-loss';
 
 /** Every audit that lives in the answer-readiness category, in map order. */
 export const ANSWER_READINESS_AUDITS = [
@@ -107,4 +109,5 @@ export const ANSWER_READINESS_AUDITS = [
   ExtractorSurvivalRecallAudit,
   SectionSplitRiskProfileAudit,
   SiteWidePassageUniquenessRatioAudit,
+  TableMarkdownRoundTripLossAudit,
 ] as const;
