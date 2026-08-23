@@ -1,6 +1,6 @@
 # Proposed audits — TODO stubs
 
-42 stub files for the proposed checks from the 2026-08-20 research pass. Every stub compiles, is **not** registered in any category index, and returns `notApplicable` until implemented. Each file's header carries its implementation sketch; full proof lives in [docs/evidence/proposals](../../../../../docs/evidence/proposals/README.md).
+41 stub files for the proposed checks from the 2026-08-20 research pass. Every stub compiles, is **not** registered in any category index, and returns `notApplicable` until implemented. Each file's header carries its implementation sketch; full proof lives in [docs/evidence/proposals](../../../../../docs/evidence/proposals/README.md).
 
 A stub that graduates to a shipped audit is deleted; its bullet leaves the list
 below, the count above drops by one, and the audit's id joins `NEW_IN_V2` in
@@ -65,7 +65,6 @@ the `--experimental` flag work in Plan 6.
 ## injection-safety
 
 - [ ] TODO [`agent-ua-content-divergence-diff`](./injection-safety/agent-ua-content-divergence-diff.ts) — Agent-UA Content Divergence Diff (grade B, scored, `multi-page`) · [dossier](../../../../../docs/evidence/proposals/injection-safety/agent-ua-content-divergence-diff.md)
-- [ ] TODO [`ugc-trust-boundary-markers`](./injection-safety/ugc-trust-boundary-markers.ts) — UGC Trust-Boundary Markers (grade B, scored, `multi-page`) · [dossier](../../../../../docs/evidence/proposals/injection-safety/ugc-trust-boundary-markers.md)
 
 ## mcp-server-quality
 

@@ -58,6 +58,7 @@ export { UnicodeCovertChannelScanAudit } from './unicode-covert-channel-scan';
 export { ThirdPartyDomWriteBlastRadiusAudit } from './third-party-dom-write-blast-radius';
 export { UnsafeAgentTriggerableAffordancesAudit } from './unsafe-agent-triggerable-affordances';
 export { ReflectedParameterInjectionCanaryAudit } from './reflected-parameter-injection-canary';
+export { UgcTrustBoundaryMarkersAudit } from './ugc-trust-boundary-markers';
 
 // Not an audit: the rule-id list the orchestrator feeds to the engine. It is
 // only complete once every engine-backed audit module has been evaluated — this
@@ -102,6 +103,7 @@ import { UnicodeCovertChannelScanAudit } from './unicode-covert-channel-scan';
 import { ThirdPartyDomWriteBlastRadiusAudit } from './third-party-dom-write-blast-radius';
 import { UnsafeAgentTriggerableAffordancesAudit } from './unsafe-agent-triggerable-affordances';
 import { ReflectedParameterInjectionCanaryAudit } from './reflected-parameter-injection-canary';
+import { UgcTrustBoundaryMarkersAudit } from './ugc-trust-boundary-markers';
 
 /** Every audit that lives in the operability-safety category, in map order. */
 export const OPERABILITY_SAFETY_AUDITS = [
@@ -143,4 +145,5 @@ export const OPERABILITY_SAFETY_AUDITS = [
   ThirdPartyDomWriteBlastRadiusAudit,
   UnsafeAgentTriggerableAffordancesAudit,
   ReflectedParameterInjectionCanaryAudit,
+  UgcTrustBoundaryMarkersAudit,
 ] as const;

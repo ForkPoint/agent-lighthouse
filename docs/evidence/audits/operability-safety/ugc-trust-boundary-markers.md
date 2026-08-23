@@ -1,18 +1,19 @@
 ---
-check: ugc-trust-boundary-markers
-title: "UGC Trust-Boundary Markers"
-domain: injection-safety
-status: proposed
+audit: operability-safety/ugc-trust-boundary-markers
+category: operability-safety
+source_file: packages/core/src/audits/operability-safety/ugc-trust-boundary-markers.ts
+slug: ugc-trust-boundary-markers
 evidence_grade: B
-uniqueness: unique
-difficulty: multi-page
-scoring_tier: scored
+tier: scored
+disposition: "new in v2 — graduated from proposal 2026-08-23"
 reviewed: 2026-08-20
+graduated: 2026-08-23
 ---
+
 
 # UGC Trust-Boundary Markers
 
-> Proposed check. Evidence grade **B** · unique · implementation: `multi-page`
+> Shipped in v2. Evidence grade **B** · scored tier · unique · implementation: `multi-page`
 
 ## What it checks
 
@@ -52,3 +53,51 @@ Tier per evidence policy: **scored** — grade B meets the A/B bar required for 
 ## Review history
 
 - 2026-08-20 — proposed by the novel-checks research pass (10-agent evidence workflow); sources URL-verified at research time.
+
+## Implementation deviations
+
+The shipped audit is `operability-safety/ugc-trust-boundary-markers`, in the
+`operability-safety` category: the proposal's `injection-safety` domain is a
+research grouping, not one of the eight v2 categories.
+
+Detection is markup analysis only. The audit never submits the comment form and
+never issues a request of any kind — the test suite pins that `ctx.fetch` is
+never called. Submitting a form on a stranger's site publishes text, which a
+scanner has no standing to do.
+
+Findings are reported per region, outermost region only: a `.comment` inside a
+`#comments` container is part of that container's finding, not a second one.
+A region is the unit a fix edits, and a fix edits one template.
+
+`data-nosnippet` counts as containment only on `span`, `div` and `section` —
+the three elements Google honours it on. The attribute on any other element is
+reported as the defect it is, naming the three that work.
+
+`rel="ugc"` or `rel="nofollow"` counts as a boundary only when every outbound
+link in the region carries it. One marked link beside three unmarked ones is
+not a boundary.
+
+An instruction-shaped payload — matched against the `INSTRUCTION_LEXICON` shared
+with `invisible-instruction-scan` — escalates an unbounded region from `warn` to
+`fail`. Inside a contained region it is not escalated: containment is the
+mitigation the audit asked for.
+
+A hosted comment system (Disqus, Commento, giscus, utterances) is detected from
+its embed script and reported as a region. Its thread renders after load, so
+the served DOM carries the embed and nothing to contain.
+
+JSON-LD `Comment`, `UserComments`, `Review`, `Question`, `Answer` and
+`DiscussionForumPosting` nodes are counted as a region only when the page
+carries no DOM anchor at all. Otherwise the DOM region is the finding and the
+JSON-LD would double-report it.
+
+## Deferred
+
+- **Sanitizer behaviour on submission.** Whether the site strips markup at
+  submit time is invisible from the served page; the audit reports what actually
+  rendered, which is the state an agent reads.
+- **Script-rendered threads.** Comments injected by a hosted embed are not in
+  the served HTML, so their contents cannot be checked — only the embed's own
+  lack of containment.
+- **Per-comment attribution.** The audit does not try to name which visitor
+  wrote a flagged body. The fix is a template change either way.
