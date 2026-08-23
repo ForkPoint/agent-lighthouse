@@ -1,8 +1,13 @@
 ---
 import { getCollection, render } from 'astro:content';
+import { crossCheck } from '../../../lib/cross-check';
+import { auditList } from '../../../lib/registry';
 
 export async function getStaticPaths() {
   const dossiers = await getCollection('audits');
+  // Guard the one build step that turns the registry into public pages: an
+  // audit with no dossier, or a dossier with no audit, stops the build here.
+  crossCheck(auditList().map((audit) => audit.id), dossiers.map((entry) => entry.id));
   return dossiers.map((entry) => {
     const [category, slug] = entry.id.split('/');
     return { params: { category, slug }, props: { entry } };
