@@ -1,18 +1,19 @@
 ---
-check: origin-validation-and-cors-coherence
-title: "Origin Validation and CORS Coherence"
-domain: mcp-server-quality
-status: proposed
+audit: agent-interfaces/mcp-origin-validation-cors
+category: agent-interfaces
+source_file: packages/core/src/audits/agent-interfaces/mcp-origin-validation-cors.ts
+slug: mcp-origin-validation-cors
 evidence_grade: B
-uniqueness: unique
-difficulty: static-fetch
-scoring_tier: scored
+tier: scored
+disposition: "new in v2 — graduated from proposal 2026-08-23"
 reviewed: 2026-08-20
+graduated: 2026-08-23
 ---
+
 
 # Origin Validation and CORS Coherence
 
-> Proposed check. Evidence grade **B** · unique · implementation: `static-fetch`
+> Shipped in v2. Evidence grade **B** · scored tier · unique · implementation: `static-fetch`
 
 ## What it checks
 
@@ -53,3 +54,44 @@ Tier per evidence policy: **scored** — grade B meets the A/B bar required for 
 ## Review history
 
 - 2026-08-20 — proposed by the novel-checks research pass (10-agent evidence workflow); sources URL-verified at research time.
+
+## Implementation deviations
+
+**Renamed** from `origin-validation-and-cors-coherence` to
+`mcp-origin-validation-cors`, matching the `mcp-` prefix every other MCP audit
+in this category carries.
+
+Both probes ship as sketched: the discover POST repeated with a throwaway
+`Origin` and compared against the same call without one, and a single CORS
+preflight carrying `Access-Control-Request-Method: POST` and
+`Access-Control-Request-Headers: content-type, mcp-protocol-version,
+authorization`. The four findings keep their severity order, and the gating
+holds: an endpoint with no authentication surface is never scored on findings
+3 or 4 — permissive CORS there is a note, and the note says it is not scored.
+
+**The throwaway origin uses `.example`**, which RFC 2606 reserves, with 12
+random hex characters. It cannot belong to anyone, so the probe cannot be
+mistaken for a real third party's request.
+
+**Credential acceptance is read from what the endpoint itself does**: a 401
+carrying `WWW-Authenticate` on the baseline, or an
+`Access-Control-Allow-Headers` that admits `authorization`. The sketch reads
+the first of those from the OAuth Discovery Chain audit's result; audits have
+no channel to each other, so this one observes it directly from the response
+the shared probe already holds.
+
+**The baseline discover call is the shared probe**, so running this audit
+beside the other MCP audits costs two extra requests, not three.
+
+**`X-Accel-Buffering` is recorded as a note**, never scored, as the sketch's
+SHOULD-level status implies.
+
+## Deferred
+
+- **SSE-specific probing.** `X-Accel-Buffering` is read from whatever response
+  carries it rather than from a held-open SSE stream.
+- **A second preflight with a real Origin.** One throwaway is enough to show
+  whether the policy is reflective; a real origin would tell us only what an
+  allow-list contains.
+- **Testing whether 403 is the exact status for an invalid Origin.** The audit
+  scores differentiation, since a 400 or a 401 also proves the header is read.

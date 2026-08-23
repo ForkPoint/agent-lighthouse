@@ -73,6 +73,7 @@ export const NEW_IN_V2: readonly string[] = [
   'operability-safety/synthetic-media-disclosure-validity',
   'operability-safety/trust-txt-reciprocity-coherence',
   'operability-safety/wikidata-round-trip-verification',
+  'agent-interfaces/mcp-origin-validation-cors',
 ];
 
 /** The 148 audits Plan 4 closed the v2 migration on. Never changes again. */
