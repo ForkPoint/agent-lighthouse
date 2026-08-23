@@ -11,6 +11,9 @@ const PER_PAGE = 3;
 /** The C2PA assertion label that carries an RFC 3161 timestamp token. */
 const TIMESTAMP_LABEL = 'sigTst';
 
+/** How many candidate offsets are handed to the DER parser. */
+const MAX_PARSE_ATTEMPTS = 256;
+
 /**
  * Every DER certificate inside a manifest store.
  *
@@ -22,14 +25,20 @@ const TIMESTAMP_LABEL = 'sigTst';
 export function certificatesIn(store: Uint8Array): X509Certificate[] {
   const found: X509Certificate[] = [];
   const seen = new Set<string>();
+  let attempts = 0;
 
-  for (let at = 0; at + 4 < store.length; at += 1) {
+  for (let at = 0; at + 4 < store.length && attempts < MAX_PARSE_ATTEMPTS; at += 1) {
     // 0x30 0x82 is SEQUENCE with a two-byte length: every certificate of a
     // realistic size starts this way, and the inner TBSCertificate does too.
     if (store[at] !== 0x30 || store[at + 1] !== 0x82) continue;
     const length = ((store[at + 2] ?? 0) << 8) | (store[at + 3] ?? 0);
     const end = at + 4 + length;
     if (end > store.length) continue;
+    // Every candidate offset costs a real DER parse, and the store comes out of
+    // a site-controlled image: a blob of repeated `30 82` bytes would otherwise
+    // buy megabytes of parse attempts. A real certificate chain is 2–4 deep and
+    // sits at the front of the store.
+    attempts += 1;
     try {
       const cert = new X509Certificate(Buffer.from(store.subarray(at, end)));
       if (seen.has(cert.fingerprint256)) continue;

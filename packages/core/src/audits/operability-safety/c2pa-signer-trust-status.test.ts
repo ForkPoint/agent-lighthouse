@@ -171,4 +171,18 @@ describe('C2paSignerTrustStatusAudit', () => {
     expect(meta.weight).toBeCloseTo(0.6);
     expect(meta.id.length).toBeLessThanOrEqual(64);
   });
+
+  // The store comes out of a site-controlled image. A blob of repeated DER
+  // sequence headers used to buy one parse attempt per byte.
+  it('bounds how many candidate offsets it hands to the DER parser', () => {
+    const store = new Uint8Array(1024 * 512);
+    for (let i = 0; i < store.length; i += 4) {
+      store[i] = 0x30;
+      store[i + 1] = 0x82;
+      store[i + 3] = 0x10;
+    }
+    const started = Date.now();
+    expect(certificatesIn(store)).toEqual([]);
+    expect(Date.now() - started).toBeLessThan(1000);
+  });
 });
