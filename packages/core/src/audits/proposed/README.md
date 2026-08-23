@@ -1,6 +1,6 @@
 # Proposed audits — TODO stubs
 
-25 stub files for the proposed checks from the 2026-08-20 research pass. Every stub compiles, is **not** registered in any category index, and returns `notApplicable` until implemented. Each file's header carries its implementation sketch; full proof lives in [docs/evidence/proposals](../../../../../docs/evidence/proposals/README.md).
+24 stub files for the proposed checks from the 2026-08-20 research pass. Every stub compiles, is **not** registered in any category index, and returns `notApplicable` until implemented. Each file's header carries its implementation sketch; full proof lives in [docs/evidence/proposals](../../../../../docs/evidence/proposals/README.md).
 
 A stub that graduates to a shipped audit is deleted; its bullet leaves the list
 below, the count above drops by one, and the audit's id joins `NEW_IN_V2` in
@@ -39,7 +39,6 @@ the `--experimental` flag work in Plan 6.
 ## bot-auth-access
 
 - [ ] TODO [`machine-actionable-402-paid-access-response`](./bot-auth-access/machine-actionable-402-paid-access-response.ts) — Machine-actionable 402 paid-access response (grade B, scored, `static-fetch`) · [dossier](../../../../../docs/evidence/proposals/bot-auth-access/machine-actionable-402-paid-access-response.md)
-- [ ] TODO [`rsl-licensing-terms-discoverable-and-conformant`](./bot-auth-access/rsl-licensing-terms-discoverable-and-conformant.ts) — RSL licensing terms discoverable and conformant (grade B, scored, `static-fetch`) · [dossier](../../../../../docs/evidence/proposals/bot-auth-access/rsl-licensing-terms-discoverable-and-conformant.md)
 - [ ] TODO [`signed-agent-web-bot-auth-request-tolerance`](./bot-auth-access/signed-agent-web-bot-auth-request-tolerance.ts) — Signed-agent (Web Bot Auth) request tolerance (grade B, scored, `static-fetch`) · [dossier](../../../../../docs/evidence/proposals/bot-auth-access/signed-agent-web-bot-auth-request-tolerance.md)
 
 ## competitor-gap-verify

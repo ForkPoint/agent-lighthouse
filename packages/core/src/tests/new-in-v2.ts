@@ -59,6 +59,7 @@ export const NEW_IN_V2: readonly string[] = [
   'answer-readiness/table-markdown-round-trip-loss',
   'access-crawl-control/ai-usage-signal-coherence-across-channels',
   'access-crawl-control/aipref-content-usage-declaration-validity',
+  'access-crawl-control/rsl-licensing-terms-conformance',
 ];
 
 /** The 148 audits Plan 4 closed the v2 migration on. Never changes again. */

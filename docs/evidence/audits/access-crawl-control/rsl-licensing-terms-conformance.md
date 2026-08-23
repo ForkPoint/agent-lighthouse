@@ -1,18 +1,19 @@
 ---
-check: rsl-licensing-terms-discoverable-and-conformant
-title: "RSL licensing terms discoverable and conformant"
-domain: bot-auth-access
-status: proposed
+audit: access-crawl-control/rsl-licensing-terms-conformance
+category: access-crawl-control
+source_file: packages/core/src/audits/access-crawl-control/rsl-licensing-terms-conformance.ts
+slug: rsl-licensing-terms-conformance
 evidence_grade: B
-uniqueness: unique
-difficulty: static-fetch
-scoring_tier: scored
+tier: scored
+disposition: "new in v2 — graduated from proposal 2026-08-23"
 reviewed: 2026-08-20
+graduated: 2026-08-23
 ---
+
 
 # RSL licensing terms discoverable and conformant
 
-> Proposed check. Evidence grade **B** · unique · implementation: `static-fetch`
+> Shipped in v2. Evidence grade **B** · scored tier · unique · implementation: `static-fetch`
 
 ## What it checks
 
@@ -48,3 +49,43 @@ Tier per evidence policy: **scored** — grade B meets the A/B bar required for 
 ## Review history
 
 - 2026-08-20 — proposed by the novel-checks research pass (10-agent evidence workflow); sources URL-verified at research time.
+
+## Implementation deviations
+
+**Renamed.** The proposal's slug — `rsl-licensing-terms-discoverable-and-conformant` —
+is 46 characters, and with the `access-crawl-control/` prefix the id would be
+67, over the 64-character cap `schemas.ts` enforces. The audit ships as
+`rsl-licensing-terms-conformance`; the proposal's name survives as the title.
+
+All six steps of the sketch ship. Three decisions it leaves open.
+
+**Conventional paths are probed only when nothing advertised a licence.** The
+sketch calls the probe optional. Probing unconditionally would cost two requests
+on every scan of a site that already told us where its licence is. A document
+found only that way is reported as present but not discoverable, which is a
+warning rather than a pass: RSL mandates no default location, so no crawler is
+obliged to look there.
+
+**A relative `License:` value is reported, never resolved.** The spec says the
+value MUST be an absolute URI. Resolving it would hide the defect behind the
+scanner's own helpfulness, and a crawler that follows the spec sees nothing.
+
+**Coverage is checked against the pages this scan actually read.** The sketch
+says the prefix must cover "the audited page paths", and those are the sampled
+URLs. A licence whose `<content url>` covers a section the scan did not sample
+is neither confirmed nor faulted.
+
+The 402 cross-check the sketch's step 6 describes lives in
+`access-crawl-control/machine-actionable-402-paid-access`, which is where the
+402 responses are: that audit requires a `<payment type="crawl">` when a 402 is
+observed, rather than this one guessing whether any 402 exists.
+
+## Deferred
+
+- **`max-age` and `<legal>`.** Both are spec elements this audit does not
+  validate. Neither changes whether a crawler can read the terms.
+- **Encrypted and server-scoped content.** `<content encrypted>` and
+  `<content server>` describe delivery paths a scanner cannot exercise.
+- **More than three documents.** A site pointing at more licences than that has
+  a discovery problem this audit cannot untangle from outside; the first three
+  are read and the rest counted.

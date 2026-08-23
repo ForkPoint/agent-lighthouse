@@ -16,6 +16,7 @@ import { fetchSampledPage } from '../../gatherers/sampled-pages';
 import { parseHtml, extractJsonLd, extractMetaTags, flattenJsonLd } from '../../parser';
 import { siteSitemapTree, sampleEntries } from '../../gatherers/sitemap';
 import { gtinCheckDigit } from '../agentic-commerce/checkout-offer-field-mapping';
+import { ISO_4217 } from '../../gatherers/currency';
 
 /** How many sitemap URLs to open looking for product pages. */
 const MAX_SAMPLE = 6;
@@ -44,19 +45,6 @@ const CONDITIONS = new Set([
 /** Image media types the OpenAI product feed spec lists. */
 const FEED_IMAGE_TYPES = new Set(['image/jpeg', 'image/png']);
 
-/**
- * Active ISO 4217 codes. A list rather than /^[A-Z]{3}$/ because the regex
- * accepts XYZ, BTC and every other three-letter string a CMS might emit.
- */
-const ISO_4217 = new Set(
-  ('AED AFN ALL AMD ANG AOA ARS AUD AWG AZN BAM BBD BDT BGN BHD BIF BMD BND BOB BRL BSD BTN BWP BYN BZD ' +
-    'CAD CDF CHF CLP CNY COP CRC CUP CVE CZK DJF DKK DOP DZD EGP ERN ETB EUR FJD FKP GBP GEL GHS GIP GMD ' +
-    'GNF GTQ GYD HKD HNL HRK HTG HUF IDR ILS INR IQD IRR ISK JMD JOD JPY KES KGS KHR KMF KPW KRW KWD KYD ' +
-    'KZT LAK LBP LKR LRD LSL LYD MAD MDL MGA MKD MMK MNT MOP MRU MUR MVR MWK MXN MYR MZN NAD NGN NIO NOK ' +
-    'NPR NZD OMR PAB PEN PGK PHP PKR PLN PYG QAR RON RSD RUB RWF SAR SBD SCR SDG SEK SGD SHP SLE SOS SRD ' +
-    'SSP STN SVC SYP SZL THB TJS TMT TND TOP TRY TTD TWD TZS UAH UGX USD UYU UZS VES VND VUV WST XAF XCD ' +
-    'XOF XPF YER ZAR ZMW ZWG').split(' '),
-);
 
 /** Currency-formatted numerals in the page copy. */
 const PRICE_PATTERN =
