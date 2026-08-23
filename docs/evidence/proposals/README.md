@@ -1,6 +1,6 @@
 # Proposed checks — evidence dossiers
 
-40 proposed checks from the 2026-08-20 novel-checks research pass. Each dossier states what the check verifies, the falsifiable mechanism behind it, cited evidence from the [source registry](../sources.json), competitor coverage, and an implementation sketch. Grading rubric: [evidence policy](../POLICY.md).
+39 proposed checks from the 2026-08-20 novel-checks research pass. Each dossier states what the check verifies, the falsifiable mechanism behind it, cited evidence from the [source registry](../sources.json), competitor coverage, and an implementation sketch. Grading rubric: [evidence policy](../POLICY.md).
 
 Seven dossiers left this folder on 2026-08-22 (Plan 5, Task 2): six tool
 surveys moved to [../research](../research/README.md) because their verdict is
@@ -46,7 +46,6 @@ Grades: **A** = documented consumer behavior or ratified standard · **B** = dra
 | B | [Extraction determinism (multi-extractor agreement)](./token-economics/extraction-determinism-multi-extractor-agreement.md) | token-economics | unique | `static-fetch` | scored |
 | B | [Markdown alternate: discoverable, resolvable, faithful, cheaper](./token-economics/markdown-alternate-discoverable-resolvable-faithful-cheaper.md) | token-economics | partial-overlap | `static-fetch` | scored |
 | B | [Preamble Tax (tokens before the first content token)](./token-economics/preamble-tax-tokens-before-the-first-content-token.md) | token-economics | unique | `static-fetch` | scored |
-| B | [Signal Density Index (content tokens ÷ delivered tokens)](./token-economics/signal-density-index-content-tokens-delivered-tokens.md) | token-economics | partial-overlap | `static-fetch` | scored |
 | B | [C2PA manifest survives the delivery pipeline](./trust-provenance/c2pa-manifest-survives-the-delivery-pipeline.md) | trust-provenance | unique | `static-fetch` | scored |
 | B | [C2PA signer chains to the live C2PA Trust List](./trust-provenance/c2pa-signer-chains-to-the-live-c2pa-trust-list.md) | trust-provenance | unique | `static-fetch` | scored |
 | B | [Organization identifier resolves in the authoritative registry](./trust-provenance/organization-identifier-resolves-in-the-authoritative-regist.md) | trust-provenance | unique | `static-fetch` | scored |

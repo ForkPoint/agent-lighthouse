@@ -51,4 +51,44 @@ describe('TokenRatioAudit', () => {
     const result = audit.audit(ctx);
     expect(result.status).toBe('na');
   });
+  // The signal-density fold: BPE tokens, not characters. Base64 tokenizes far
+  // worse than prose of the same length, and the ratio must show that.
+  it('measures tokens, so base64 padding costs more than prose padding', () => {
+    const body = (padding: string) =>
+      `<html><body><main><p>${'meaningful content words '.repeat(40)}</p><!--${padding}--></main></body></html>`;
+    const base64 = 'QUJDREVGR0hJSktMTU5PUFFSU1RVVldYWVo='.repeat(150);
+    const prose = 'the quick brown fox jumps over the lazy dog again '.repeat(105);
+    const ratioOf = (html: string) => {
+      const result = audit.audit(mockCheckContext([mockPageContext('https://example.com/', html, 0)]));
+      return Number(result.details?.['contentTokens']) / Number(result.details?.['deliveredTokens']);
+    };
+    expect(Math.abs(base64.length - prose.length) / prose.length).toBeLessThan(0.05);
+    expect(ratioOf(body(base64))).toBeLessThan(ratioOf(body(prose)));
+  });
+
+  it('names the extractor it used for the numerator', () => {
+    const text = 'The mug holds three hundred millilitres of coffee. '.repeat(30);
+    const html = `<html><head><title>Mug</title></head><body><article><h1>Mug</h1><p>${text}</p></article></body></html>`;
+    const result = audit.audit(mockCheckContext([mockPageContext('https://example.com/', html, 0)]));
+    expect(result.details?.['extractor']).toBe('readability');
+    expect(result.displayValue).toContain('readability');
+  });
+
+  it('falls back to the semantic extractor when readability declines', () => {
+    const html = '<html><body></body></html>';
+    const result = audit.audit(mockCheckContext([mockPageContext('https://example.com/', html, 0)]));
+    expect(result.details?.['extractor']).toBe('semantic');
+  });
+
+  it('splits the denominator into buckets that sum to the delivered tokens', () => {
+    const html = `<html><head><style>${'.a{color:red}'.repeat(50)}</style></head><body><!-- note --><main><p>${'words here '.repeat(80)}</p></main><script>${'var x=1;'.repeat(50)}</script></body></html>`;
+    const result = audit.audit(mockCheckContext([mockPageContext('https://example.com/', html, 0)]));
+    const d = result.details as Record<string, number>;
+    expect(d['script']).toBeGreaterThan(0);
+    expect(d['style']).toBeGreaterThan(0);
+    expect(d['comment']).toBeGreaterThan(0);
+    expect(d['script'] + d['style'] + d['comment'] + d['text'] + d['structure']).toBe(
+      d['deliveredTokens'],
+    );
+  });
 });

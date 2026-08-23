@@ -72,3 +72,41 @@ Good idea, miscalibrated and internally inconsistent. The numerator is getMainCo
 
 - 2026-08-20 — code review (11-agent workflow) + evidence research (12-domain workflow, 400 sources).
 - 2026-08-21 — dossier generated; disposition pending final taxonomy design.
+
+## Absorbed proposal — Signal Density Index (content tokens ÷ delivered tokens)
+
+On 2026-08-23 the `token-economics/signal-density-index-content-tokens-delivered-tokens`
+proposal (evidence grade **B**, `static-fetch`) was folded into this audit
+rather than shipped beside it. Both measure the same quantity — how much of
+what a site delivers is content — and shipping both would have scored one
+defect twice and given `content-extraction` 1.2 evidence mass for it.
+
+What the fold changed here:
+
+- The ratio is now BPE tokens under `o200k_base`, not characters. Base64,
+  minified script and SVG path data tokenize four to eight times worse than
+  prose of the same length, which a character ratio cannot see.
+- The numerator is `@mozilla/readability` — the extractor most of the industry
+  deploys — falling back to the semantic container when readability declines.
+  `found` and `details.extractor` name which one produced the number.
+- `details` carries the denominator split into `script`, `style`, `comment`,
+  `text` and `structure` tokens. `structure` is the residual, so the buckets
+  always sum to the delivered count. The split is what makes the finding
+  actionable: it names the bucket to attack.
+
+Thresholds did not move: ≥ 15% passes, ≥ 5% warns, below 5% fails.
+
+The proposal's evidence carries over. AI crawlers do not execute JavaScript or
+apply CSS, so the whole response body is what enters the agent's context
+([Vercel, The rise of the AI crawler](https://vercel.com/blog/the-rise-of-the-ai-crawler));
+infrastructure vendors already bill and report HTML→markdown conversion in
+tokens per document ([Cloudflare Workers AI, Markdown Conversion](https://developers.cloudflare.com/workers-ai/features/markdown-conversion/usage/rest-api/));
+irrelevant context measurably degrades answer quality, so the waste is not only
+a cost ([Shi et al., ICML 2023](https://arxiv.org/abs/2302.00093)); and
+`o200k_base` makes the number reproducible offline
+([openai/tiktoken](https://github.com/openai/tiktoken)).
+
+The proposal's letter grades (A ≥ 0.20, B 0.10–0.20, C 0.04–0.10, F < 0.04) were
+**not** adopted. This audit's three-band ternary result predates them and is
+what the migration map and every consumer of `content-extraction/token-ratio`
+already expect.
