@@ -1,18 +1,19 @@
 ---
-check: root-text-file-resolution-integrity-indexnow-key-file-precon
-title: "Root text-file resolution integrity (IndexNow key-file precondition)"
-domain: feeds-indexing
-status: proposed
+audit: machine-discovery/root-text-file-resolution-integrity
+category: machine-discovery
+source_file: packages/core/src/audits/machine-discovery/root-text-file-resolution-integrity.ts
+slug: root-text-file-resolution-integrity
 evidence_grade: B
-uniqueness: unique
-difficulty: static-fetch
-scoring_tier: scored
+tier: scored
+disposition: "new in v2 — graduated from proposal 2026-08-23"
 reviewed: 2026-08-20
+graduated: 2026-08-23
 ---
+
 
 # Root text-file resolution integrity (IndexNow key-file precondition)
 
-> Proposed check. Evidence grade **B** · unique · implementation: `static-fetch`
+> Shipped in v2. Evidence grade **B** · scored tier · unique · implementation: `static-fetch`
 
 ## What it checks
 
@@ -50,3 +51,46 @@ Tier per evidence policy: **scored** — grade B meets the A/B bar required for 
 ## Review history
 
 - 2026-08-20 — proposed by the novel-checks research pass (10-agent evidence workflow); sources URL-verified at research time.
+
+## Implementation deviations
+
+**Renamed** from `root-text-file-resolution-integrity-indexnow-key-file-precon`,
+which would make a 76-character id; the schema caps an audit id at 64. The
+IndexNow precondition is stated in the title copy and the guidance instead.
+
+Steps 1–4 of the sketch ship exactly: two GETs of a 32-hex `.txt` name under
+the scanned origin with `Cache-Control: no-cache`, the 404/410 assertion, the
+three-way classification of a 2xx answer, and the `/robots.txt` positive
+control. The audit sends exactly three requests and nothing else, each one
+`isSafeUrl()`-gated.
+
+**A missing `/robots.txt` warns rather than fails.** The sketch makes
+`text/plain` a pass condition, which it remains — a warn is not a pass. But an
+origin that serves no robots.txt at all has simply not run the positive
+control, which is a different defect from one that serves the file and
+mislabels it. `access-crawl-control/robots-directives` owns what robots.txt says when it
+is there.
+
+**The redirect cap is the fetcher's five, not the sketch's three.** The fetcher
+refuses a redirect that leaves public address space and reports the final URL;
+its hop limit is shared by every audit and is not worth a second code path.
+Between three hops and five, no origin's answer for a missing `.txt` changes.
+
+**Evidence hygiene.** All three sources are IndexNow documentation and support
+the key-file mechanism. The AI-consumer link in the FAQ is a vendor claim, as
+the dossier itself records; this audit rests on the byte-comparison behaviour,
+which is documented, not on that claim.
+
+## Deferred
+
+- **Consuming `details.discoveryProbeReliable` from other audits.** The flag is
+  emitted and reported, but downgrading `llms.txt`, `ai.txt` and `security.txt`
+  verdicts to indeterminate needs a scan-level artefact bus that does not
+  exist: audits receive a `CheckContext` and return a result, with no channel
+  between them. Wiring it is a v2 engine change, not an audit change.
+- **Fetching a real IndexNow key file.** The audit never guesses a key, and a
+  key it does not know cannot be verified. The precondition is what is
+  measurable from outside.
+- **WAF challenge-page detection.** A challenge page answering 200 is caught by
+  the HTML classification arm; telling a challenge apart from an app shell
+  needs signals this audit does not collect.

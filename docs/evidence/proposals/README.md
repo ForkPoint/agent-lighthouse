@@ -1,6 +1,6 @@
 # Proposed checks — evidence dossiers
 
-20 proposed checks from the 2026-08-20 novel-checks research pass. Each dossier states what the check verifies, the falsifiable mechanism behind it, cited evidence from the [source registry](../sources.json), competitor coverage, and an implementation sketch. Grading rubric: [evidence policy](../POLICY.md).
+19 proposed checks from the 2026-08-20 novel-checks research pass. Each dossier states what the check verifies, the falsifiable mechanism behind it, cited evidence from the [source registry](../sources.json), competitor coverage, and an implementation sketch. Grading rubric: [evidence policy](../POLICY.md).
 
 Seven dossiers left this folder on 2026-08-22 (Plan 5, Task 2): six tool
 surveys moved to [../research](../research/README.md) because their verdict is
@@ -23,7 +23,6 @@ Grades: **A** = documented consumer behavior or ratified standard · **B** = dra
 | B | [Cart Handoff Reachability](./agentic-commerce/cart-handoff-reachability.md) | agentic-commerce | unique | `multi-page` | scored |
 | B | [Offer Truth Consistency](./agentic-commerce/offer-truth-consistency.md) | agentic-commerce | unique | `multi-page` | scored |
 | B | [offer-dom-price-parity](./competitor-gap-verify/offer-dom-price-parity.md) | competitor-gap-verify | unique | `multi-page` | scored |
-| B | [Root text-file resolution integrity (IndexNow key-file precondition)](./feeds-indexing/root-text-file-resolution-integrity-indexnow-key-file-precon.md) | feeds-indexing | unique | `static-fetch` | scored |
 | B | [Three-way freshness lag and orphaned fresh content](./feeds-indexing/three-way-freshness-lag-and-orphaned-fresh-content.md) | feeds-indexing | partial-overlap | `multi-page` | scored |
 | B | [Origin Validation and CORS Coherence](./mcp-server-quality/origin-validation-and-cors-coherence.md) | mcp-server-quality | unique | `static-fetch` | scored |
 | B | [Registry Listing and Namespace Ownership Proof](./mcp-server-quality/registry-listing-and-namespace-ownership-proof.md) | mcp-server-quality | partial-overlap | `multi-page` | scored |
