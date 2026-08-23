@@ -1,18 +1,19 @@
 ---
-check: c2pa-signer-chains-to-the-live-c2pa-trust-list
-title: "C2PA signer chains to the live C2PA Trust List"
-domain: trust-provenance
-status: proposed
+audit: operability-safety/c2pa-signer-trust-status
+category: operability-safety
+source_file: packages/core/src/audits/operability-safety/c2pa-signer-trust-status.ts
+slug: c2pa-signer-trust-status
 evidence_grade: B
-uniqueness: unique
-difficulty: static-fetch
-scoring_tier: scored
+tier: scored
+disposition: "new in v2 — graduated from proposal 2026-08-23"
 reviewed: 2026-08-20
+graduated: 2026-08-23
 ---
+
 
 # C2PA signer chains to the live C2PA Trust List
 
-> Proposed check. Evidence grade **B** · unique · implementation: `static-fetch`
+> Shipped in v2. Evidence grade **B** · scored tier · unique · implementation: `static-fetch`
 
 ## What it checks
 
@@ -50,3 +51,43 @@ Tier per evidence policy: **scored** — grade B meets the A/B bar required for 
 ## Review history
 
 - 2026-08-20 — proposed by the novel-checks research pass (10-agent evidence workflow); sources URL-verified at research time.
+
+## Implementation deviations
+
+**Renamed** from `c2pa-signer-chains-to-the-live-c2pa-trust-list`, which would
+make a 65-character id — one over the cap — and which promises more than this
+audit delivers.
+
+**Shipped reduced, by decision, and the finding text says so.** The audit
+reports what the signing certificate itself states: self-signed or CA-issued,
+inside its validity window or outside it, and whether a timestamp token is
+present. Sketch steps 3, 4 and 6 — resolving the chain against the vendored
+C2PA Trust List, the TRUSTED / LEGACY_ITL / UNTRUSTED classification, the TSA
+trust list, and the CAWG identity assertion — are deferred. A test asserts no
+output ever claims the certificate is trusted or chains to anything.
+
+**Certificates are located by DER shape, not by decoding COSE** (sketch step
+2 without the c2patool dependency). A COSE_Sign1 carries its chain under
+protected header label 33 in CBOR; instead of decoding CBOR, the audit scans
+the manifest store for the `30 82` SEQUENCE header a certificate begins with
+and hands each candidate to Node's `X509Certificate`, which rejects anything
+that is not one. The parser is the test.
+
+**Pass requires a timestamp.** A CA-issued certificate inside its window but
+with no RFC 3161 timestamp token warns rather than passes: without one the
+credential stops validating the day the certificate expires, which is a
+documented C2PA property and is checkable from the bytes.
+
+**It reuses Task 2's image fetches.** `gatherers/media.ts` caches per scan, so
+running both C2PA audits in one scan costs one set of image fetches.
+
+## Deferred
+
+- **Trust List membership.** Needs the C2PA Trust List, the TSA Trust List and
+  the Conforming Products List vendored as JSON with a refresh job, plus an
+  X.509 path builder. Node exposes `checkIssued` but no path building, and the
+  lists change independently of this repo's release cycle.
+- **The LEGACY_ITL classification.** It is a statement about which list a
+  certificate appears on, so it cannot exist before the lists do.
+- **CAWG identity assertions.** They need a real JUMBF parse, not a byte scan.
+- **Revocation.** No OCSP or CRL check is made.

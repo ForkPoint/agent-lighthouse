@@ -68,6 +68,7 @@ export const NEW_IN_V2: readonly string[] = [
   'machine-discovery/three-way-freshness-lag',
   'machine-discovery/websub-hub-advertisement',
   'operability-safety/c2pa-manifest-survives-delivery',
+  'operability-safety/c2pa-signer-trust-status',
 ];
 
 /** The 148 audits Plan 4 closed the v2 migration on. Never changes again. */

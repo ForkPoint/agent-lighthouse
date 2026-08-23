@@ -61,6 +61,7 @@ export { ReflectedParameterInjectionCanaryAudit } from './reflected-parameter-in
 export { UgcTrustBoundaryMarkersAudit } from './ugc-trust-boundary-markers';
 export { AgentUaContentDivergenceDiffAudit } from './agent-ua-content-divergence-diff';
 export { C2paManifestSurvivesDeliveryAudit } from './c2pa-manifest-survives-delivery';
+export { C2paSignerTrustStatusAudit } from './c2pa-signer-trust-status';
 
 // Not an audit: the rule-id list the orchestrator feeds to the engine. It is
 // only complete once every engine-backed audit module has been evaluated — this
@@ -108,6 +109,7 @@ import { ReflectedParameterInjectionCanaryAudit } from './reflected-parameter-in
 import { UgcTrustBoundaryMarkersAudit } from './ugc-trust-boundary-markers';
 import { AgentUaContentDivergenceDiffAudit } from './agent-ua-content-divergence-diff';
 import { C2paManifestSurvivesDeliveryAudit } from './c2pa-manifest-survives-delivery';
+import { C2paSignerTrustStatusAudit } from './c2pa-signer-trust-status';
 
 /** Every audit that lives in the operability-safety category, in map order. */
 export const OPERABILITY_SAFETY_AUDITS = [
@@ -152,4 +154,5 @@ export const OPERABILITY_SAFETY_AUDITS = [
   UgcTrustBoundaryMarkersAudit,
   AgentUaContentDivergenceDiffAudit,
   C2paManifestSurvivesDeliveryAudit,
+  C2paSignerTrustStatusAudit,
 ] as const;

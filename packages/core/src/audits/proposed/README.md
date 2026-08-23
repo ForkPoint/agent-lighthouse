@@ -1,6 +1,6 @@
 # Proposed audits — TODO stubs
 
-16 stub files for the proposed checks from the 2026-08-20 research pass. Every stub compiles, is **not** registered in any category index, and returns `notApplicable` until implemented. Each file's header carries its implementation sketch; full proof lives in [docs/evidence/proposals](../../../../../docs/evidence/proposals/README.md).
+15 stub files for the proposed checks from the 2026-08-20 research pass. Every stub compiles, is **not** registered in any category index, and returns `notApplicable` until implemented. Each file's header carries its implementation sketch; full proof lives in [docs/evidence/proposals](../../../../../docs/evidence/proposals/README.md).
 
 A stub that graduates to a shipped audit is deleted; its bullet leaves the list
 below, the count above drops by one, and the audit's id joins `NEW_IN_V2` in
@@ -61,7 +61,6 @@ the `--experimental` flag work in Plan 6.
 
 ## trust-provenance
 
-- [ ] TODO [`c2pa-signer-chains-to-the-live-c2pa-trust-list`](./trust-provenance/c2pa-signer-chains-to-the-live-c2pa-trust-list.ts) — C2PA signer chains to the live C2PA Trust List (grade B, scored, `static-fetch`) · [dossier](../../../../../docs/evidence/proposals/trust-provenance/c2pa-signer-chains-to-the-live-c2pa-trust-list.md)
 - [ ] TODO [`organization-identifier-resolves-in-the-authoritative-regist`](./trust-provenance/organization-identifier-resolves-in-the-authoritative-regist.ts) — Organization identifier resolves in the authoritative registry (grade B, scored, `static-fetch`) · [dossier](../../../../../docs/evidence/proposals/trust-provenance/organization-identifier-resolves-in-the-authoritative-regist.md)
 - [ ] TODO [`synthetic-media-disclosure-is-valid-and-self-consistent`](./trust-provenance/synthetic-media-disclosure-is-valid-and-self-consistent.ts) — Synthetic-media disclosure is valid and self-consistent (grade B, scored, `static-fetch`) · [dossier](../../../../../docs/evidence/proposals/trust-provenance/synthetic-media-disclosure-is-valid-and-self-consistent.md)
 - [ ] TODO [`wikidata-round-trip-entity-verification`](./trust-provenance/wikidata-round-trip-entity-verification.ts) — Wikidata round-trip entity verification (grade B, scored, `static-fetch`) · [dossier](../../../../../docs/evidence/proposals/trust-provenance/wikidata-round-trip-entity-verification.md)
