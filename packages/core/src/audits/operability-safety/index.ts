@@ -59,6 +59,7 @@ export { ThirdPartyDomWriteBlastRadiusAudit } from './third-party-dom-write-blas
 export { UnsafeAgentTriggerableAffordancesAudit } from './unsafe-agent-triggerable-affordances';
 export { ReflectedParameterInjectionCanaryAudit } from './reflected-parameter-injection-canary';
 export { UgcTrustBoundaryMarkersAudit } from './ugc-trust-boundary-markers';
+export { AgentUaContentDivergenceDiffAudit } from './agent-ua-content-divergence-diff';
 
 // Not an audit: the rule-id list the orchestrator feeds to the engine. It is
 // only complete once every engine-backed audit module has been evaluated — this
@@ -104,6 +105,7 @@ import { ThirdPartyDomWriteBlastRadiusAudit } from './third-party-dom-write-blas
 import { UnsafeAgentTriggerableAffordancesAudit } from './unsafe-agent-triggerable-affordances';
 import { ReflectedParameterInjectionCanaryAudit } from './reflected-parameter-injection-canary';
 import { UgcTrustBoundaryMarkersAudit } from './ugc-trust-boundary-markers';
+import { AgentUaContentDivergenceDiffAudit } from './agent-ua-content-divergence-diff';
 
 /** Every audit that lives in the operability-safety category, in map order. */
 export const OPERABILITY_SAFETY_AUDITS = [
@@ -146,4 +148,5 @@ export const OPERABILITY_SAFETY_AUDITS = [
   UnsafeAgentTriggerableAffordancesAudit,
   ReflectedParameterInjectionCanaryAudit,
   UgcTrustBoundaryMarkersAudit,
+  AgentUaContentDivergenceDiffAudit,
 ] as const;

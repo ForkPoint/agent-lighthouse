@@ -1,6 +1,6 @@
 # Proposed checks — evidence dossiers
 
-41 proposed checks from the 2026-08-20 novel-checks research pass. Each dossier states what the check verifies, the falsifiable mechanism behind it, cited evidence from the [source registry](../sources.json), competitor coverage, and an implementation sketch. Grading rubric: [evidence policy](../POLICY.md).
+40 proposed checks from the 2026-08-20 novel-checks research pass. Each dossier states what the check verifies, the falsifiable mechanism behind it, cited evidence from the [source registry](../sources.json), competitor coverage, and an implementation sketch. Grading rubric: [evidence policy](../POLICY.md).
 
 Seven dossiers left this folder on 2026-08-22 (Plan 5, Task 2): six tool
 surveys moved to [../research](../research/README.md) because their verdict is
@@ -38,7 +38,6 @@ Grades: **A** = documented consumer behavior or ratified standard · **B** = dra
 | B | [Feed entry identity and canonical integrity](./feeds-indexing/feed-entry-identity-and-canonical-integrity.md) | feeds-indexing | unique | `multi-page` | scored |
 | B | [Root text-file resolution integrity (IndexNow key-file precondition)](./feeds-indexing/root-text-file-resolution-integrity-indexnow-key-file-precon.md) | feeds-indexing | unique | `static-fetch` | scored |
 | B | [Three-way freshness lag and orphaned fresh content](./feeds-indexing/three-way-freshness-lag-and-orphaned-fresh-content.md) | feeds-indexing | partial-overlap | `multi-page` | scored |
-| B | [Agent-UA Content Divergence Diff](./injection-safety/agent-ua-content-divergence-diff.md) | injection-safety | partial-overlap | `multi-page` | scored |
 | B | [Origin Validation and CORS Coherence](./mcp-server-quality/origin-validation-and-cors-coherence.md) | mcp-server-quality | unique | `static-fetch` | scored |
 | B | [Registry Listing and Namespace Ownership Proof](./mcp-server-quality/registry-listing-and-namespace-ownership-proof.md) | mcp-server-quality | partial-overlap | `multi-page` | scored |
 | B | [Tool Self-Description Coverage](./mcp-server-quality/tool-self-description-coverage.md) | mcp-server-quality | partial-overlap | `static-fetch` | scored |

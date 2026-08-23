@@ -220,6 +220,7 @@ interface ProbeContext {
 interface ProbeCache {
   baselines: Map<string, Promise<FetchResult | undefined>>;
   probes: Map<string, Promise<UaProbe | undefined>>;
+  controls: Map<string, Promise<FetchResult | undefined>>;
 }
 
 const probeCache = new WeakMap<object, ProbeCache>();
@@ -227,7 +228,7 @@ const probeCache = new WeakMap<object, ProbeCache>();
 function cacheFor(ctx: object): ProbeCache {
   let cache = probeCache.get(ctx);
   if (!cache) {
-    cache = { baselines: new Map(), probes: new Map() };
+    cache = { baselines: new Map(), probes: new Map(), controls: new Map() };
     probeCache.set(ctx, cache);
   }
   return cache;
@@ -292,4 +293,38 @@ export async function sharedUaProbes(
     }
   }
   return out;
+}
+
+/**
+ * A bot UA no site has ever heard of. The control arm of a divergence test.
+ *
+ * A site that serves an unknown bot the same reduced page it serves GPTBot is
+ * running bot management, not AI-crawler branching, and the difference decides
+ * whether a divergence is a finding at all. Honest about who is asking: the
+ * point is to be unrecognised, not to be disguised.
+ */
+export const CONTROL_UA =
+  'Mozilla/5.0 (compatible; AgentLighthouseControl/1.0; +https://github.com/ForkPoint/agent-lighthouse)';
+
+/**
+ * Fetch one URL as the unrecognised control bot, at most once per scan.
+ *
+ * Shares the per-CheckContext cache with `sharedUaProbes`, so an audit that
+ * needs the control arm costs one extra request per URL for the whole scan.
+ */
+export function sharedControlProbe(
+  ctx: ProbeContext,
+  url: string,
+  opts: { signal?: AbortSignal } = {},
+): Promise<FetchResult | undefined> {
+  const cache = cacheFor(ctx);
+  let pending = cache.controls.get(url);
+  if (!pending) {
+    pending = (async () => {
+      if (!(await isSafeUrl(url))) return undefined;
+      return ctx.fetch({ url, userAgent: CONTROL_UA, followRedirects: true, signal: opts.signal });
+    })();
+    cache.controls.set(url, pending);
+  }
+  return pending;
 }

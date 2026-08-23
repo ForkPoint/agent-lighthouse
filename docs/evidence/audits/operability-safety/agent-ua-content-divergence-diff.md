@@ -1,18 +1,19 @@
 ---
-check: agent-ua-content-divergence-diff
-title: "Agent-UA Content Divergence Diff"
-domain: injection-safety
-status: proposed
+audit: operability-safety/agent-ua-content-divergence-diff
+category: operability-safety
+source_file: packages/core/src/audits/operability-safety/agent-ua-content-divergence-diff.ts
+slug: agent-ua-content-divergence-diff
 evidence_grade: B
-uniqueness: partial-overlap
-difficulty: multi-page
-scoring_tier: scored
+tier: scored
+disposition: "new in v2 — graduated from proposal 2026-08-23"
 reviewed: 2026-08-20
+graduated: 2026-08-23
 ---
+
 
 # Agent-UA Content Divergence Diff
 
-> Proposed check. Evidence grade **B** · partial overlap · implementation: `multi-page`
+> Shipped in v2. Evidence grade **B** · scored tier · partial overlap · implementation: `multi-page`
 
 ## What it checks
 
@@ -52,3 +53,50 @@ Tier per evidence policy: **scored** — grade B meets the A/B bar required for 
 ## Review history
 
 - 2026-08-20 — proposed by the novel-checks research pass (10-agent evidence workflow); sources URL-verified at research time.
+
+## Implementation deviations
+
+The shipped audit is `operability-safety/agent-ua-content-divergence-diff`, in
+the `operability-safety` category: the proposal's `injection-safety` domain is
+a research grouping, not one of the eight v2 categories.
+
+No new probe round is issued. The audit consumes `sharedUaProbes`, the per-scan
+memoised gatherer that `access-crawl-control/ai-crawler-edge-parity`,
+`access-crawl-control/bot-content-delta-declared` and
+`agentic-commerce/agent-ua-commerce-parity` already share, so a six-UA sweep of
+two URLs costs nothing this scan had not already paid.
+
+The one request this audit adds is the control arm: `sharedControlProbe` fetches
+each compared URL once as `AgentLighthouseControl/1.0`, a bot no site has heard
+of. A reduction the control bot also sees is bot management reacting to an
+unknown client, not a rule written for AI crawlers, and it is reported without
+lowering the score. The control UA names the scanner honestly; the point is to
+be unrecognised, not disguised.
+
+Similarity is Jaccard overlap of content-word sets, floor 0.85. Digits are
+stripped and tokens under three letters dropped before comparison, so a
+cache-varying timestamp or a rotating request id is not a divergence.
+
+JSON-LD is compared as a key-sorted, digit-blind fingerprint of every block, so
+block order and a changing `dateModified` do not register, and a changed price,
+name or type does.
+
+A `403`, a Cloudflare challenge, a pay-per-crawl `402`, an Anubis interstitial,
+a `429` and a transport error are access decisions. They are listed in `found`
+and in `details.blocked` and never lower the score: an operator is entitled to
+decline a crawler, and `access-crawl-control/ai-crawler-edge-parity` is where
+that decision is assessed.
+
+The sketch's "word-level diff of the largest divergent block" is a word-set
+diff of each divergent response — the words the crawler copy lost and the words
+it gained. Aligning DOM blocks between two documents that no longer share a
+structure needs a tree diff, and the word sets already name what changed.
+
+## Deferred
+
+- **Which template produced the divergence.** The audit reports the URL and the
+  UA. Mapping that to a server rule needs access the scanner does not have.
+- **Rendered-DOM comparison.** Both variants are compared as served. A
+  divergence introduced by script after load is invisible here.
+- **More than two URLs.** Each added URL costs one baseline plus one request per
+  crawler UA against a live origin.

@@ -5,6 +5,8 @@ import {
   classifyResponse,
   AI_CRAWLER_UAS,
   BASELINE_UA,
+  sharedControlProbe,
+  CONTROL_UA,
 } from './ua-parity';
 import { mockFetchResult } from '../__tests__/test-utils';
 import type { FetchOptions, FetchResult } from '../fetcher';
@@ -228,6 +230,18 @@ describe('sharedUaProbes', () => {
   it('never probes a URL that fails the SSRF gate', async () => {
     const ctx = scan();
     expect(await sharedUaProbes(ctx, ['https://localhost/'], ['gptbot'])).toEqual([]);
+    expect(ctx.calls).toEqual([]);
+  });
+  it('fetches the control bot once per URL per scan', async () => {
+    const ctx = scan();
+    await sharedControlProbe(ctx, 'https://example.com/');
+    await sharedControlProbe(ctx, 'https://example.com/');
+    expect(ctx.calls).toEqual([{ url: 'https://example.com/', ua: CONTROL_UA }]);
+  });
+
+  it('never sends the control bot to a URL that fails the SSRF gate', async () => {
+    const ctx = scan();
+    expect(await sharedControlProbe(ctx, 'https://127.0.0.1/')).toBeUndefined();
     expect(ctx.calls).toEqual([]);
   });
 });

@@ -47,6 +47,7 @@ export const NEW_IN_V2: readonly string[] = [
   'operability-safety/unsafe-agent-triggerable-affordances',
   'operability-safety/reflected-parameter-injection-canary',
   'operability-safety/ugc-trust-boundary-markers',
+  'operability-safety/agent-ua-content-divergence-diff',
 ];
 
 /** The 148 audits Plan 4 closed the v2 migration on. Never changes again. */
