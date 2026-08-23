@@ -1,18 +1,19 @@
 ---
-check: websub-hub-advertisement-and-self-link-correctness
-title: "WebSub hub advertisement and self-link correctness"
-domain: feeds-indexing
-status: proposed
+audit: machine-discovery/websub-hub-advertisement
+category: machine-discovery
+source_file: packages/core/src/audits/machine-discovery/websub-hub-advertisement.ts
+slug: websub-hub-advertisement
 evidence_grade: C
-uniqueness: unique
-difficulty: static-fetch
-scoring_tier: informative (weight 0)
+tier: informative
+disposition: "new in v2 — graduated from proposal 2026-08-23"
 reviewed: 2026-08-20
+graduated: 2026-08-23
 ---
+
 
 # WebSub hub advertisement and self-link correctness
 
-> Proposed check. Evidence grade **C** · unique · implementation: `static-fetch`
+> Shipped in v2. Evidence grade **C** · informative tier · unique · implementation: `static-fetch`
 
 ## What it checks
 
@@ -50,3 +51,47 @@ Tier per evidence policy: **informative (weight 0)** — grade C does not meet t
 ## Review history
 
 - 2026-08-20 — proposed by the novel-checks research pass (10-agent evidence workflow); sources URL-verified at research time.
+
+## Implementation deviations
+
+**Renamed** from `websub-hub-advertisement-and-self-link-correctness`, which
+would make a 68-character id. Both halves ship.
+
+All five steps of the sketch ship: `Link:` headers read before the document,
+the exactly-one absolute `rel=self` assertion with normalized comparison
+against the URL the feed was fetched from, the HTTPS `rel=hub` assertion, the
+HEAD probe accepting 2xx/400/405, and the never-a-failure rule for a feed that
+declares no hub.
+
+**Nothing here is a failure.** The sketch reserves FAIL for the conformance
+arms, but the audit ships `tier: 'informative'` with `weight: 0`, so a `fail`
+would render as a red finding that cannot move the score — which reads as a
+bug. Every finding is a `warn`, and a test asserts no input produces `fail`.
+When an AI-side WebSub subscriber is documented, the tier moves and the arms
+can be reclassified in one place.
+
+**The hub HEAD is the one cross-origin request in this wave.** A hub is by
+definition somebody else's host. The audit sends a HEAD and reads the status;
+it never subscribes, never POSTs, and never presents a callback URL.
+
+**Discovery-link parsing lives in `gatherers/feeds.ts`.** `FeedDocument` gained
+`selfLinksRaw` and `hubLinksRaw` — the hrefs exactly as declared — because the
+resolved forms cannot tell a relative href from an absolute one, which is one
+of the defects this audit reports.
+
+**Evidence hygiene.** Only the first source, the WebSub Recommendation, bears
+on this audit. The RFC 4287 entry belongs to
+`machine-discovery/feed-entry-identity-and-canonical-integrity` and the
+schema.org DataFeed entry to neither; nothing here rests on them.
+
+## Deferred
+
+- **Completing a subscription.** Verification needs a callback URL the scanner
+  would have to host and a hub POST. The audit measures the advertisement, not
+  the round trip.
+- **HTML page discovery links.** The sketch accepts `<link rel="hub">` in an
+  HTML `<head>`; this audit reads feeds, where WebSub's own examples put them.
+  An HTML topic URL is a different topic from the feed and would need its own
+  self-link comparison.
+- **More than two hubs per feed.** Each is a cross-origin request. A feed with
+  three hubs has the same advertisement defect as one with two.

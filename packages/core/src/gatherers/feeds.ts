@@ -59,8 +59,12 @@ export interface FeedDocument {
   parsed: boolean;
   /** `rel=self`, header first then document. Empty when absent. */
   selfLink: string;
+  /** Every `rel=self` href exactly as declared, unresolved. WebSub allows exactly one. */
+  selfLinksRaw: string[];
   /** `rel=hub`, header first then document. */
   hubLinks: string[];
+  /** Every `rel=hub` href exactly as declared, unresolved. */
+  hubLinksRaw: string[];
   /** Whether the self/hub links came from the response headers rather than the body. */
   linksFromHeader: boolean;
   /** `<lastBuildDate>` or feed-level `<updated>`, epoch ms. */
@@ -149,12 +153,22 @@ export function discoverFeedUrls(ctx: FeedContext): string[] {
 }
 
 /** Read `rel=self` and `rel=hub` out of the response headers. */
-function headerLinks(result: FetchResult): { self: string; hubs: string[] } {
+function headerLinks(result: FetchResult): {
+  self: string;
+  hubs: string[];
+  selfRaw: string[];
+  hubsRaw: string[];
+} {
   const header = result.headers['link'] ?? '';
-  if (header === '') return { self: '', hubs: [] };
-  const self = linksWithRel(header, 'self')[0]?.href ?? '';
-  const hubs = linksWithRel(header, 'hub').map((entry) => entry.href);
-  return { self: resolve(self, result.url), hubs: hubs.map((h) => resolve(h, result.url)) };
+  if (header === '') return { self: '', hubs: [], selfRaw: [], hubsRaw: [] };
+  const selfRaw = linksWithRel(header, 'self').map((entry) => entry.href);
+  const hubsRaw = linksWithRel(header, 'hub').map((entry) => entry.href);
+  return {
+    self: resolve(selfRaw[0] ?? '', result.url),
+    hubs: hubsRaw.map((h) => resolve(h, result.url)),
+    selfRaw,
+    hubsRaw,
+  };
 }
 
 /** Parse a JSON Feed document. */
@@ -199,7 +213,9 @@ export function parseFeed(url: string, result: FetchResult): FeedDocument {
     bomOrLeadingSpace,
     parsed: false,
     selfLink: header.self,
+    selfLinksRaw: header.selfRaw,
     hubLinks: header.hubs,
+    hubLinksRaw: header.hubsRaw,
     linksFromHeader: header.self !== '' || header.hubs.length > 0,
     lastBuild: undefined,
     entries: [],
@@ -218,14 +234,21 @@ export function parseFeed(url: string, result: FetchResult): FeedDocument {
   const isRss = $('rss').length > 0 || $('rdf\\:RDF').length > 0 || $('channel').length > 0;
   if (!isAtom && !isRss) return base;
 
-  if (base.selfLink === '') {
-    base.selfLink = resolve($('link[rel="self"]').first().attr('href') ?? '', url);
-  }
-  if (base.hubLinks.length === 0) {
-    base.hubLinks = $('link[rel="hub"]')
+  // Header links win: WebSub gives the response headers discovery precedence,
+  // and the document is read only when the headers carried nothing.
+  if (base.selfLinksRaw.length === 0) {
+    base.selfLinksRaw = $('link[rel="self"]')
       .toArray()
-      .map((el) => resolve($(el).attr('href') ?? '', url))
+      .map((el) => $(el).attr('href') ?? '')
       .filter((href) => href !== '');
+    base.selfLink = resolve(base.selfLinksRaw[0] ?? '', url);
+  }
+  if (base.hubLinksRaw.length === 0) {
+    base.hubLinksRaw = $('link[rel="hub"]')
+      .toArray()
+      .map((el) => $(el).attr('href') ?? '')
+      .filter((href) => href !== '');
+    base.hubLinks = base.hubLinksRaw.map((href) => resolve(href, url)).filter((href) => href !== '');
   }
 
   if (isAtom) {

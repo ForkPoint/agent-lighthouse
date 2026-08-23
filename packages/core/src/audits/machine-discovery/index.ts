@@ -25,6 +25,7 @@ export { ConditionalRequestSupportAudit } from './conditional-request-support';
 export { FeedEntryIdentityAndCanonicalIntegrityAudit } from './feed-entry-identity-and-canonical-integrity';
 export { RootTextFileResolutionIntegrityAudit } from './root-text-file-resolution-integrity';
 export { ThreeWayFreshnessLagAudit } from './three-way-freshness-lag';
+export { WebsubHubAdvertisementAudit } from './websub-hub-advertisement';
 
 import { LlmsTxtExistsAudit } from './llms-txt-exists';
 import { LlmsTxtStructureAudit } from './llms-txt-structure';
@@ -49,6 +50,7 @@ import { ConditionalRequestSupportAudit } from './conditional-request-support';
 import { FeedEntryIdentityAndCanonicalIntegrityAudit } from './feed-entry-identity-and-canonical-integrity';
 import { RootTextFileResolutionIntegrityAudit } from './root-text-file-resolution-integrity';
 import { ThreeWayFreshnessLagAudit } from './three-way-freshness-lag';
+import { WebsubHubAdvertisementAudit } from './websub-hub-advertisement';
 
 /** Every audit that lives in the machine-discovery category, in map order. */
 export const MACHINE_DISCOVERY_AUDITS = [
@@ -75,4 +77,5 @@ export const MACHINE_DISCOVERY_AUDITS = [
   FeedEntryIdentityAndCanonicalIntegrityAudit,
   RootTextFileResolutionIntegrityAudit,
   ThreeWayFreshnessLagAudit,
+  WebsubHubAdvertisementAudit,
 ] as const;
