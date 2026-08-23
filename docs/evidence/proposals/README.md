@@ -1,6 +1,6 @@
 # Proposed checks — evidence dossiers
 
-34 proposed checks from the 2026-08-20 novel-checks research pass. Each dossier states what the check verifies, the falsifiable mechanism behind it, cited evidence from the [source registry](../sources.json), competitor coverage, and an implementation sketch. Grading rubric: [evidence policy](../POLICY.md).
+33 proposed checks from the 2026-08-20 novel-checks research pass. Each dossier states what the check verifies, the falsifiable mechanism behind it, cited evidence from the [source registry](../sources.json), competitor coverage, and an implementation sketch. Grading rubric: [evidence policy](../POLICY.md).
 
 Seven dossiers left this folder on 2026-08-22 (Plan 5, Task 2): six tool
 surveys moved to [../research](../research/README.md) because their verdict is
@@ -49,5 +49,4 @@ Grades: **A** = documented consumer behavior or ratified standard · **B** = dra
 | C | [Question-Heading Answer Span Alignment](./answer-selection-forensics/question-heading-answer-span-alignment.md) | answer-selection-forensics | unique | `llm-assisted` | informative (weight 0) |
 | C | [WebSub hub advertisement and self-link correctness](./feeds-indexing/websub-hub-advertisement-and-self-link-correctness.md) | feeds-indexing | unique | `static-fetch` | informative (weight 0) |
 | C | [Behavior Annotation Coverage and Claim Consistency](./mcp-server-quality/behavior-annotation-coverage-and-claim-consistency.md) | mcp-server-quality | unique | `llm-assisted` | informative (weight 0) |
-| C | [JSON-LD duplication mass](./token-economics/json-ld-duplication-mass.md) | token-economics | unique | `static-fetch` | informative (weight 0) |
 | C | [trust.txt reciprocity and AI-policy coherence](./trust-provenance/trust-txt-reciprocity-and-ai-policy-coherence.md) | trust-provenance | unique | `multi-page` | informative (weight 0) |

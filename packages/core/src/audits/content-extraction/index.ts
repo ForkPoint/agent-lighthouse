@@ -4,6 +4,7 @@
 export { ServerResponsivenessAudit } from './server-responsiveness';
 export { LanguageAttributeAudit } from './language-attribute';
 export { MarkdownAlternateAudit } from './markdown-alternate';
+export { JsonLdDuplicationMassAudit } from './json-ld-duplication-mass';
 export { SingleH1Audit } from './single-h1';
 export { SequentialHeadingsAudit } from './sequential-headings';
 export { MainElementAudit } from './main-element';
@@ -33,6 +34,7 @@ export { ExtractionDeterminismAudit } from './extraction-determinism';
 import { ServerResponsivenessAudit } from './server-responsiveness';
 import { LanguageAttributeAudit } from './language-attribute';
 import { MarkdownAlternateAudit } from './markdown-alternate';
+import { JsonLdDuplicationMassAudit } from './json-ld-duplication-mass';
 import { SingleH1Audit } from './single-h1';
 import { SequentialHeadingsAudit } from './sequential-headings';
 import { MainElementAudit } from './main-element';
@@ -85,4 +87,5 @@ export const CONTENT_EXTRACTION_AUDITS = [
   PreambleTaxTokensBeforeTheFirstContentTokenAudit,
   BoilerplateTaxAudit,
   ExtractionDeterminismAudit,
+  JsonLdDuplicationMassAudit,
 ] as const;

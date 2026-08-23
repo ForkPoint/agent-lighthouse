@@ -1,18 +1,19 @@
 ---
-check: json-ld-duplication-mass
-title: "JSON-LD duplication mass"
-domain: token-economics
-status: proposed
+audit: content-extraction/json-ld-duplication-mass
+category: content-extraction
+source_file: packages/core/src/audits/content-extraction/json-ld-duplication-mass.ts
+slug: json-ld-duplication-mass
 evidence_grade: C
-uniqueness: unique
-difficulty: static-fetch
-scoring_tier: informative (weight 0)
+tier: informative
+disposition: "new in v2 — graduated from proposal 2026-08-23"
 reviewed: 2026-08-20
+graduated: 2026-08-23
 ---
+
 
 # JSON-LD duplication mass
 
-> Proposed check. Evidence grade **C** · unique · implementation: `static-fetch`
+> Shipped in v2. Evidence grade **C** · informative tier · unique · implementation: `static-fetch`
 
 ## What it checks
 
@@ -54,3 +55,41 @@ Tier per evidence policy: **informative (weight 0)** — grade C does not meet t
 ## Review history
 
 - 2026-08-20 — proposed by the novel-checks research pass (10-agent evidence workflow); sources URL-verified at research time.
+
+## Implementation deviations
+
+The shipped audit is `content-extraction/json-ld-duplication-mass`: the
+proposal's `token-economics` domain is a research grouping, not one of the eight
+v2 categories.
+
+Grade C ships at tier `informative`, weight 0, `scoreDisplayMode: 'informative'`,
+per the meta law — grade C in the scored tier is unregistrable. The audit
+reports a cost and never fails: duplication is a decision an operator may have
+made deliberately, and no documented consumer path shows it changing an answer.
+
+Duplicate nodes are found by canonicalizing each node — keys sorted, values
+rendered — and counting repeats. The proposal asks for `(@type, @id)` pairs plus
+a canonical hash; the canonical form alone catches both, including the common
+case of two blocks that carry the same node with no `@id` at all.
+
+Long prose strings are compared against the DOM's five-word windows, and only
+the properties that carry prose are considered: `articleBody`, `text`,
+`description`, `reviewBody`, `abstract`, `transcript`. `acceptedAnswer.text`
+from the sketch is covered by `text`, since the walk matches on the property name
+wherever it sits. Overlap is reported from 50% up; below that a shared sentence
+is a quotation, not a second copy.
+
+Only the entry page is measured. The block is a template property, and
+tokenizing every page's JSON-LD to report one number is a cost with no extra
+finding in it.
+
+## Deferred
+
+- **Cross-page duplication.** The same `@graph` repeated on 400 pages is a
+  crawl-level cost, which `content-extraction/boilerplate-tax` measures from the
+  other direction.
+- **Microdata and RDFa.** The proposal is about JSON-LD blocks specifically, and
+  the other two formats do not carry a separate token cost — their text is the
+  DOM's text.
+- **A dollar figure.** No per-million rate is supplied to the scanner, and
+  inventing one would put a number in the report the operator never gave.
