@@ -65,6 +65,7 @@ export { C2paSignerTrustStatusAudit } from './c2pa-signer-trust-status';
 export { OrganizationIdentifierRegistryResolutionAudit } from './organization-identifier-registry-resolution';
 export { SyntheticMediaDisclosureValidityAudit } from './synthetic-media-disclosure-validity';
 export { TrustTxtReciprocityCoherenceAudit } from './trust-txt-reciprocity-coherence';
+export { WikidataRoundTripVerificationAudit } from './wikidata-round-trip-verification';
 
 // Not an audit: the rule-id list the orchestrator feeds to the engine. It is
 // only complete once every engine-backed audit module has been evaluated — this
@@ -116,6 +117,7 @@ import { C2paSignerTrustStatusAudit } from './c2pa-signer-trust-status';
 import { OrganizationIdentifierRegistryResolutionAudit } from './organization-identifier-registry-resolution';
 import { SyntheticMediaDisclosureValidityAudit } from './synthetic-media-disclosure-validity';
 import { TrustTxtReciprocityCoherenceAudit } from './trust-txt-reciprocity-coherence';
+import { WikidataRoundTripVerificationAudit } from './wikidata-round-trip-verification';
 
 /** Every audit that lives in the operability-safety category, in map order. */
 export const OPERABILITY_SAFETY_AUDITS = [
@@ -164,4 +166,5 @@ export const OPERABILITY_SAFETY_AUDITS = [
   OrganizationIdentifierRegistryResolutionAudit,
   SyntheticMediaDisclosureValidityAudit,
   TrustTxtReciprocityCoherenceAudit,
+  WikidataRoundTripVerificationAudit,
 ] as const;

@@ -1,18 +1,19 @@
 ---
-check: wikidata-round-trip-entity-verification
-title: "Wikidata round-trip entity verification"
-domain: trust-provenance
-status: proposed
+audit: operability-safety/wikidata-round-trip-verification
+category: operability-safety
+source_file: packages/core/src/audits/operability-safety/wikidata-round-trip-verification.ts
+slug: wikidata-round-trip-verification
 evidence_grade: B
-uniqueness: unique
-difficulty: static-fetch
-scoring_tier: scored
+tier: scored
+disposition: "new in v2 — graduated from proposal 2026-08-23"
 reviewed: 2026-08-20
+graduated: 2026-08-23
 ---
+
 
 # Wikidata round-trip entity verification
 
-> Proposed check. Evidence grade **B** · unique · implementation: `static-fetch`
+> Shipped in v2. Evidence grade **B** · scored tier · unique · implementation: `static-fetch`
 
 ## What it checks
 
@@ -50,3 +51,42 @@ Tier per evidence policy: **scored** — grade B meets the A/B bar required for 
 ## Review history
 
 - 2026-08-20 — proposed by the novel-checks research pass (10-agent evidence workflow); sources URL-verified at research time.
+
+## Implementation deviations
+
+**Renamed** from `wikidata-round-trip-entity-verification` for symmetry with
+its siblings; the id was inside the cap either way.
+
+Steps 1 and 3 to 7 of the sketch ship: `sameAs` collected from Organization,
+Corporation, NewsMediaOrganization, LocalBusiness, Person and Brand nodes
+across every JSON-LD block including `@graph`; the Q-id read from both the
+`/wiki/Q…` and `/entity/Q…` forms; one `wbgetclaims` call per entity for
+P856 alone, never `Special:EntityData`; statement rank respected, with
+`preferred` winning and `deprecated` ignored; registrable-domain comparison
+rather than string equality; and the three verdicts — verified, same name
+under another domain (warn), other organization's domain (fail) — plus a warn
+when the entity carries no P856 at all.
+
+**Only Wikidata is resolved** (sketch step 2 named several authority hosts,
+step 6 added Wikipedia). Wikidata is the one with a free, documented,
+per-property endpoint and a reciprocal property. Resolving a Wikipedia article
+to its Q-id would cost a second request per claim through a different API for
+the same answer, and GLEIF round trips are
+`operability-safety/organization-identifier-registry-resolution`.
+
+**Registrable-domain comparison lives in `gatherers/domains.ts`.** Two audits
+already carried a private copy of the eTLD+1 reduction; the third is where a
+shared one earns its place. It uses a short public-suffix set rather than a
+bundled PSL snapshot, and the module says why.
+
+**At most two entities are resolved per scan.** A site claiming three
+identities has an identity problem this audit reports off two of them.
+
+## Deferred
+
+- **Wikipedia `sameAs` round trips** through the sitelinks API.
+- **The 30-day per-Q-id cache** the sketch suggests. The scanner has no
+  cross-scan store; the cache here is per scan.
+- **A configurable alias set** for organizations whose official domain
+  legitimately differs from the audited one. The same-name-different-TLD case
+  is a warning instead, which is the outcome an alias set would produce.

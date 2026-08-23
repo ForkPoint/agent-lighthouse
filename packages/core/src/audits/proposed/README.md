@@ -1,6 +1,6 @@
 # Proposed audits — TODO stubs
 
-12 stub files for the proposed checks from the 2026-08-20 research pass. Every stub compiles, is **not** registered in any category index, and returns `notApplicable` until implemented. Each file's header carries its implementation sketch; full proof lives in [docs/evidence/proposals](../../../../../docs/evidence/proposals/README.md).
+11 stub files for the proposed checks from the 2026-08-20 research pass. Every stub compiles, is **not** registered in any category index, and returns `notApplicable` until implemented. Each file's header carries its implementation sketch; full proof lives in [docs/evidence/proposals](../../../../../docs/evidence/proposals/README.md).
 
 A stub that graduates to a shipped audit is deleted; its bullet leaves the list
 below, the count above drops by one, and the audit's id joins `NEW_IN_V2` in
@@ -61,4 +61,3 @@ the `--experimental` flag work in Plan 6.
 
 ## trust-provenance
 
-- [ ] TODO [`wikidata-round-trip-entity-verification`](./trust-provenance/wikidata-round-trip-entity-verification.ts) — Wikidata round-trip entity verification (grade B, scored, `static-fetch`) · [dossier](../../../../../docs/evidence/proposals/trust-provenance/wikidata-round-trip-entity-verification.md)
