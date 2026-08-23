@@ -96,6 +96,64 @@ export function parseRobotsFile(body: string): RobotsFile {
   return { groups, sitemaps };
 }
 
+/** One non-rule directive line, with the group it was written in. */
+export interface RobotsDirective {
+  /** Directive name, lowercased. */
+  name: string;
+  value: string;
+  /** The `User-agent` value this line sits under, or `''` at file scope. */
+  group: string;
+  /** 1-based line number in the file, so a finding can point at the line. */
+  line: number;
+}
+
+/**
+ * Every occurrence of one non-rule directive, with its group and line number.
+ *
+ * `parseRobotsFile` keeps `otherDirectives` per group, which is enough to read
+ * a value but not to report one: it drops the line number, and it drops
+ * anything written above the first `User-agent` line. Both matter here —
+ * `Content-Usage` and `License` are legal at file scope, and a contradiction
+ * finding has to name the line it found.
+ */
+export function directiveLines(body: string, name: string): RobotsDirective[] {
+  const wanted = name.toLowerCase();
+  const out: RobotsDirective[] = [];
+  const text = normalizeNewlines(stripBom(body)).slice(0, MAX_BYTES);
+  let agents: string[] = [];
+  let inRules = false;
+
+  text.split('\n').forEach((rawLine, index) => {
+    const line = rawLine.replace(/#.*$/, '').trim();
+    if (!line) return;
+    const idx = line.indexOf(':');
+    if (idx === -1) return;
+    const directive = line.slice(0, idx).trim().toLowerCase();
+    const value = line.slice(idx + 1).trim();
+
+    if (directive === 'user-agent') {
+      if (inRules) agents = [];
+      agents.push(value);
+      inRules = false;
+      return;
+    }
+    if (directive === 'allow' || directive === 'disallow' || directive === 'crawl-delay') {
+      inRules = true;
+      return;
+    }
+    if (directive !== wanted || value === '') return;
+    if (agents.length === 0) {
+      out.push({ name: directive, value, group: '', line: index + 1 });
+      return;
+    }
+    for (const agent of agents) {
+      out.push({ name: directive, value, group: agent, line: index + 1 });
+    }
+  });
+
+  return out;
+}
+
 export function parseRobots(body: string): RobotsGroup[] {
   return parseRobotsFile(body).groups;
 }

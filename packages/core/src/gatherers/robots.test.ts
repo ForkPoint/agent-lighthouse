@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import {
   parseRobots, matchesUserAgent, groupsForBot, isPathAllowed, isBlanketBlocked, decidingRule,
-  parseRobotsFile, hasNamedGroup,
+  parseRobotsFile, hasNamedGroup, directiveLines,
 } from './robots';
 
 describe('parseRobots', () => {
@@ -194,5 +194,40 @@ describe('decidingRule', () => {
 
   it('returns undefined when no rule matches', () => {
     expect(decidingRule(groups, 'gptbot', '/public/x')).toBeUndefined();
+  });
+});
+
+describe('directiveLines', () => {
+  const ROBOTS = `# comment
+Content-Usage: train-ai=n
+
+User-agent: GPTBot
+Content-Signal: ai-train=no
+Disallow: /private
+
+User-agent: *
+User-agent: CCBot
+License: https://example.com/license.xml
+`;
+
+  it('keeps a directive written above the first group at file scope', () => {
+    const [line] = directiveLines(ROBOTS, 'Content-Usage');
+    expect(line).toEqual({ name: 'content-usage', value: 'train-ai=n', group: '', line: 2 });
+  });
+
+  it('attributes a directive to the group it was written in, with its line number', () => {
+    const [line] = directiveLines(ROBOTS, 'content-signal');
+    expect(line?.group).toBe('GPTBot');
+    expect(line?.line).toBe(5);
+  });
+
+  it('emits one entry per user-agent when a group names several', () => {
+    const lines = directiveLines(ROBOTS, 'License');
+    expect(lines.map((l) => l.group)).toEqual(['*', 'CCBot']);
+    expect(lines[0]?.value).toBe('https://example.com/license.xml');
+  });
+
+  it('returns nothing for a directive the file does not carry', () => {
+    expect(directiveLines(ROBOTS, 'Content-Security-Policy')).toEqual([]);
   });
 });
