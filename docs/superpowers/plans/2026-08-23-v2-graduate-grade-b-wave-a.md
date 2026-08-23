@@ -187,7 +187,7 @@ Three tasks in this wave (2, 3, 5) each need the same two answers: "does this el
   - `hasClickSignal(el, $, css): boolean` — true when the element carries an inline `onclick`/`onmousedown`/`onkeydown`, a class or `data-*` name matching `CLICKABILITY_CLASS_RE`, or a `PageCss` rule that sets `cursor: pointer` and whose selector matches it.
   - `accessibleName(el, $): string` — accname resolution in order: `aria-labelledby` target text, `aria-label`, own text content, `title`, `alt` of a child `img`, `<title>` of a child `svg`. Returns `''` when none resolve.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 ```ts
 import { describe, it, expect } from 'vitest';
@@ -230,21 +230,21 @@ describe('_agent-affordances', () => {
 });
 ```
 
-- [ ] **Step 2: Run it and watch it fail**
+- [x] **Step 2: Run it and watch it fail**
 
 Run: `pnpm test packages/core/src/audits/operability-safety/_agent-affordances.test.ts`
 Expected: FAIL — `Cannot find module './_agent-affordances'`.
 
-- [ ] **Step 3: Implement the module**
+- [x] **Step 3: Implement the module**
 
 Write the five exports above. `hasClickSignal` takes the `PageCss` shape `collectPageCss` returns so callers pass the gatherer's result straight through. Match a CSS rule to an element with cheerio's own `$(el).is(rule.selector)` inside a `try`, because a stylesheet may carry selectors cheerio cannot parse — an unparseable selector is skipped, not fatal.
 
-- [ ] **Step 4: Run it and watch it pass**
+- [x] **Step 4: Run it and watch it pass**
 
 Run: `pnpm test packages/core/src/audits/operability-safety/_agent-affordances.test.ts`
 Expected: PASS.
 
-- [ ] **Step 5: Gates and commit**
+- [x] **Step 5: Gates and commit**
 
 ```bash
 pnpm test && pnpm typecheck && rtk err pnpm lint

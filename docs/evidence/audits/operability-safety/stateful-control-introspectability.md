@@ -1,18 +1,19 @@
 ---
-check: stateful-control-introspectability
-title: "Stateful Control Introspectability"
-domain: agent-operability
-status: proposed
+audit: operability-safety/stateful-control-introspectability
+category: operability-safety
+source_file: packages/core/src/audits/operability-safety/stateful-control-introspectability.ts
+slug: stateful-control-introspectability
 evidence_grade: B
-uniqueness: unique
-difficulty: static-fetch
-scoring_tier: scored
+tier: scored
+disposition: "new in v2 — graduated from proposal 2026-08-23"
 reviewed: 2026-08-20
+graduated: 2026-08-23
 ---
+
 
 # Stateful Control Introspectability
 
-> Proposed check. Evidence grade **B** · unique · implementation: `static-fetch`
+> Shipped in v2. Evidence grade **B** · scored tier · unique · implementation: `static-fetch`
 
 ## What it checks
 
@@ -54,3 +55,39 @@ Tier per evidence policy: **scored** — grade B meets the A/B bar required for 
 ## Review history
 
 - 2026-08-20 — proposed by the novel-checks research pass (10-agent evidence workflow); sources URL-verified at research time.
+
+## Implementation deviations
+
+The shipped audit is `operability-safety/stateful-control-introspectability`, in
+the `operability-safety` category: the proposal's `agent-operability` domain is
+a research grouping, not one of the eight v2 categories.
+
+The state-class vocabulary and the click-signal test live in
+`packages/core/src/audits/operability-safety/_agent-affordances.ts`, shared with
+`ghost-clickable-element-ratio` so the two cannot drift apart.
+
+Native state is treated as introspectable without any ARIA: `<details>`,
+`<select>` and `<input type="checkbox"|"radio">` carry `open`, `selected` and
+`checked` in the DOM, and every snapshot serializer reads them. A `<summary>`
+raises no finding of its own, because its state belongs to its parent
+`<details>`.
+
+The disclosure-trigger rule fires on a clickable element that carries
+`aria-controls`, or that is immediately followed by an element whose class
+matches `/accordion|collapse|panel|details-content/`. The sketch's wider
+"sits before a collapsible panel" wording would need layout to resolve.
+
+A control that lands in more than one bucket is counted once, and an opaque
+verdict wins over an introspectable one: a control that publishes one state and
+hides another is still a control an agent cannot fully read.
+
+## Deferred
+
+- **Sort and filter controls outside tables.** The sketch names "filter chips"
+  generally. Only `<th>` sort controls are located structurally; a chip is
+  caught by the class-state rule when its class carries the state, and not at
+  all when it does not.
+- **Verifying the state is kept up to date.** Whether the handler that flips the
+  class also flips the attribute is only observable by driving the control,
+  which is the headless-browser tier. The audit checks that the attribute is
+  present, not that it is maintained.
