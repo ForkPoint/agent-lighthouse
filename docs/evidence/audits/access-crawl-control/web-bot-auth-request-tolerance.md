@@ -1,18 +1,19 @@
 ---
-check: signed-agent-web-bot-auth-request-tolerance
-title: "Signed-agent (Web Bot Auth) request tolerance"
-domain: bot-auth-access
-status: proposed
+audit: access-crawl-control/web-bot-auth-request-tolerance
+category: access-crawl-control
+source_file: packages/core/src/audits/access-crawl-control/web-bot-auth-request-tolerance.ts
+slug: web-bot-auth-request-tolerance
 evidence_grade: B
-uniqueness: unique
-difficulty: static-fetch
-scoring_tier: scored
+tier: scored
+disposition: "new in v2 — graduated from proposal 2026-08-23"
 reviewed: 2026-08-20
+graduated: 2026-08-23
 ---
+
 
 # Signed-agent (Web Bot Auth) request tolerance
 
-> Proposed check. Evidence grade **B** · unique · implementation: `static-fetch`
+> Shipped in v2. Evidence grade **B** · scored tier · unique · implementation: `static-fetch`
 
 ## What it checks
 
@@ -54,3 +55,51 @@ Tier per evidence policy: **scored** — grade B meets the A/B bar required for 
 ## Review history
 
 - 2026-08-20 — proposed by the novel-checks research pass (10-agent evidence workflow); sources URL-verified at research time.
+
+## Implementation deviations
+
+**Renamed.** `signed-agent-web-bot-auth-request-tolerance` makes a 64-character
+id — exactly at the cap, with no room for the category prefix to change. It
+ships as `web-bot-auth-request-tolerance`.
+
+**No hosted key directory.** The sketch says Agent Lighthouse should host its
+own JWKS at `/.well-known/http-message-signatures-directory` so the probe is
+resolvable. This tool is a library and a CLI, not a service: it has no origin to
+host anything at, and a URL in a `Signature-Agent` header pointing at a
+directory that does not exist would be a claim the tool cannot back.
+
+The probe therefore signs with an Ed25519 key generated for the scan and thrown
+away, and `Signature-Agent` names the repository. The question the audit asks is
+unaffected: it is whether an origin refuses a request *because* it carries
+RFC 9421 signature headers, and an edge that rejects on the presence of those
+headers rejects an unverifiable key exactly as it rejects a verifiable one. What
+the probe cannot tell you — and the guidance says so — is whether an origin that
+lets the request through would have verified the signature. That is invisible
+from outside.
+
+**The signature base is written out, not templated.** The bytes signed are the
+four lines RFC 9421 specifies for `("@authority" "@method" "@path")` plus
+`@signature-params`. A test pins the exact string, because a signature over
+almost-the-right-base is a signature no verifier accepts.
+
+**A 401 or 403 carrying `Accept-Signature` passes.** The sketch calls it
+informational positive credit. An origin asking for a signature it can verify is
+the opposite of one refusing signatures, so treating it as a failure would
+report the best-configured sites as the worst.
+
+**Statuses.** 400, 403 and 421 fail; 431 fails with its own message, because a
+header-size limit is fixed by raising a limit rather than by changing a WAF
+rule; a 2xx whose body falls under 40% of the baseline fails; a differing answer
+with no `Vary` naming the signature headers warns.
+
+## Deferred
+
+- **Verifying our own signature end to end.** `signedHeaders` throws the private
+  key away, so the test asserts the signature's shape and length rather than
+  round-tripping it. Returning the key to make that possible would put a private
+  key in an audit's return value.
+- **Probing more than the site root.** One signed request per scan. A WAF rule
+  scoped to a path this probe does not touch is not seen.
+- **`Signature-Agent` directory resolution.** RFC 9421 §5.1 lets an origin fetch
+  the agent's key directory. Nothing here hosts one, so an origin that tries
+  finds a repository page.

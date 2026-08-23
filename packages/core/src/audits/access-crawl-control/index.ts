@@ -46,6 +46,7 @@ export { AiUsageSignalCoherenceAcrossChannelsAudit } from './ai-usage-signal-coh
 export { AiprefContentUsageDeclarationValidityAudit } from './aipref-content-usage-declaration-validity';
 export { RslLicensingTermsConformanceAudit } from './rsl-licensing-terms-conformance';
 export { MachineActionable402PaidAccessAudit } from './machine-actionable-402-paid-access';
+export { WebBotAuthRequestToleranceAudit } from './web-bot-auth-request-tolerance';
 
 import { NoNofollowAudit } from './no-nofollow';
 import { NoRedirectChainsAudit } from './no-redirect-chains';
@@ -83,6 +84,7 @@ import { AiUsageSignalCoherenceAcrossChannelsAudit } from './ai-usage-signal-coh
 import { AiprefContentUsageDeclarationValidityAudit } from './aipref-content-usage-declaration-validity';
 import { RslLicensingTermsConformanceAudit } from './rsl-licensing-terms-conformance';
 import { MachineActionable402PaidAccessAudit } from './machine-actionable-402-paid-access';
+import { WebBotAuthRequestToleranceAudit } from './web-bot-auth-request-tolerance';
 
 /** Every audit that lives in the access-crawl-control category, in map order. */
 export const ACCESS_CRAWL_CONTROL_AUDITS = [
@@ -122,4 +124,5 @@ export const ACCESS_CRAWL_CONTROL_AUDITS = [
   AiprefContentUsageDeclarationValidityAudit,
   RslLicensingTermsConformanceAudit,
   MachineActionable402PaidAccessAudit,
+  WebBotAuthRequestToleranceAudit,
 ] as const;
