@@ -21,6 +21,7 @@ export { NoBrokenAiEndpointsAudit } from './no-broken-ai-endpoints';
 export { AiCrawlerSurfaceReachabilityAudit } from './ai-crawler-surface-reachability';
 export { SitemapLastmodVerifiabilityAudit } from './sitemap-lastmod-verifiability';
 export { AgentCommerceFeedParityAudit } from './agent-commerce-feed-parity';
+export { ConditionalRequestSupportAudit } from './conditional-request-support';
 
 import { LlmsTxtExistsAudit } from './llms-txt-exists';
 import { LlmsTxtStructureAudit } from './llms-txt-structure';
@@ -41,6 +42,7 @@ import { NoBrokenAiEndpointsAudit } from './no-broken-ai-endpoints';
 import { AiCrawlerSurfaceReachabilityAudit } from './ai-crawler-surface-reachability';
 import { SitemapLastmodVerifiabilityAudit } from './sitemap-lastmod-verifiability';
 import { AgentCommerceFeedParityAudit } from './agent-commerce-feed-parity';
+import { ConditionalRequestSupportAudit } from './conditional-request-support';
 
 /** Every audit that lives in the machine-discovery category, in map order. */
 export const MACHINE_DISCOVERY_AUDITS = [
@@ -63,4 +65,5 @@ export const MACHINE_DISCOVERY_AUDITS = [
   AiCrawlerSurfaceReachabilityAudit,
   SitemapLastmodVerifiabilityAudit,
   AgentCommerceFeedParityAudit,
+  ConditionalRequestSupportAudit,
 ] as const;

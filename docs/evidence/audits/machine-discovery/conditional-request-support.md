@@ -1,18 +1,19 @@
 ---
-check: conditional-request-support-on-discovery-surfaces
-title: "Conditional-request support on discovery surfaces"
-domain: feeds-indexing
-status: proposed
+audit: machine-discovery/conditional-request-support
+category: machine-discovery
+source_file: packages/core/src/audits/machine-discovery/conditional-request-support.ts
+slug: conditional-request-support
 evidence_grade: B
-uniqueness: unique
-difficulty: static-fetch
-scoring_tier: scored
+tier: scored
+disposition: "new in v2 — graduated from proposal 2026-08-23"
 reviewed: 2026-08-20
+graduated: 2026-08-23
 ---
+
 
 # Conditional-request support on discovery surfaces
 
-> Proposed check. Evidence grade **B** · unique · implementation: `static-fetch`
+> Shipped in v2. Evidence grade **B** · scored tier · unique · implementation: `static-fetch`
 
 ## What it checks
 
@@ -52,3 +53,41 @@ Tier per evidence policy: **scored** — grade B meets the A/B bar required for 
 ## Review history
 
 - 2026-08-20 — proposed by the novel-checks research pass (10-agent evidence workflow); sources URL-verified at research time.
+
+## Implementation deviations
+
+**Renamed.** `conditional-request-support-on-discovery-surfaces` under
+`machine-discovery/` makes a 66-character id, over the 64-character cap.
+
+All seven steps of the sketch ship: the paired identical GETs and the body hash,
+the unstable-validator finding with both `ETag` values, the `If-None-Match` and
+`If-Modified-Since` assertions, the no-validator finding with the bytes every
+poll costs, the `no-store`/`private` warning, the sitemap size limits, and the
+per-surface report of `validatorsPresent`, `honoursIfNoneMatch`,
+`honoursIfModifiedSince`, `validatorStable` and `bytesPerPoll`.
+
+**The probe lives in `gatherers/conditional.ts`**, so a surface probed by this
+audit is probed once for the whole scan. Four requests per surface is the cost,
+and the audit caps the surface set: robots.txt, the declared sitemaps and up to
+three children, and up to two feeds.
+
+**The 50,000-URL limit is checked only when the sitemap walk was not
+truncated.** `siteSitemapTree` caps its walk, so past that cap the audit knows
+the file is large but not how large; reporting a limit breach off a truncated
+count would be arithmetic on a number the scanner does not have.
+
+**The Googlebot caveat is in the finding text**, as the sketch requires: 304
+semantics are documented for Googlebot and generalized here by analogy, while
+the assertion itself is HTTP conformance and does not depend on that
+generalization.
+
+## Deferred
+
+- **`Content-Encoding` negotiation.** The sketch records the header; the two
+  identical requests already hold encoding constant, which is what makes the
+  body-hash comparison meaningful.
+- **Weak versus strong validators.** A `W/`-prefixed `ETag` is accepted. The
+  distinction changes what a cache may do with a range request, not whether a
+  crawler can revalidate.
+- **More than three child sitemaps.** Each costs four requests. A site whose
+  sitemap index has hundreds of children has one caching policy, not hundreds.

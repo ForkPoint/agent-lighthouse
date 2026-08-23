@@ -62,6 +62,7 @@ export const NEW_IN_V2: readonly string[] = [
   'access-crawl-control/rsl-licensing-terms-conformance',
   'access-crawl-control/machine-actionable-402-paid-access',
   'access-crawl-control/web-bot-auth-request-tolerance',
+  'machine-discovery/conditional-request-support',
 ];
 
 /** The 148 audits Plan 4 closed the v2 migration on. Never changes again. */
