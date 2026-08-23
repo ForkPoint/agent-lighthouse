@@ -1,18 +1,19 @@
 ---
-check: extractor-survival-recall
-title: "Extractor Survival Recall"
-domain: answer-selection-forensics
-status: proposed
+audit: answer-readiness/extractor-survival-recall
+category: answer-readiness
+source_file: packages/core/src/audits/answer-readiness/extractor-survival-recall.ts
+slug: extractor-survival-recall
 evidence_grade: B
-uniqueness: unique
-difficulty: static-fetch
-scoring_tier: scored
+tier: scored
+disposition: "new in v2 — graduated from proposal 2026-08-23"
 reviewed: 2026-08-20
+graduated: 2026-08-23
 ---
+
 
 # Extractor Survival Recall
 
-> Proposed check. Evidence grade **B** · unique · implementation: `static-fetch`
+> Shipped in v2. Evidence grade **B** · scored tier · unique · implementation: `static-fetch`
 
 ## What it checks
 
@@ -48,3 +49,49 @@ Tier per evidence policy: **scored** — grade B meets the A/B bar required for 
 ## Review history
 
 - 2026-08-20 — proposed by the novel-checks research pass (10-agent evidence workflow); sources URL-verified at research time.
+
+## Implementation deviations
+
+The shipped audit is `answer-readiness/extractor-survival-recall`: the
+proposal's `answer-selection-forensics` domain is a research grouping, not one
+of the eight v2 categories.
+
+Two extractors are run, not the proposal's `linkedom` plus a hand-rolled pair:
+`@mozilla/readability` over jsdom, and a Firecrawl/Jina-style stripper that
+removes `script`, `style`, `noscript`, `template`, `nav`, `aside`, `header`,
+`footer`, `form` and `iframe`, plus any element whose class or id matches
+`/comment|sidebar|promo|related|advert|ad-|banner|cookie|newsletter|share/i`.
+Both are reported separately, because their disagreement is itself the signal.
+
+Recall is the *minimum* of the two, not the average. An agent uses one pipeline
+or the other, and a fact that survives only one of them is a fact half the
+agents will not see.
+
+A span counts as surviving when its first eight normalized words appear in the
+extractor's output. Comparing whole spans would fail on reflowed whitespace;
+comparing fewer words would match by accident. Header cells — `caption`, `dt`,
+`th` — are allowed to be a single word of four characters or more, because
+"Capacity" is the fact.
+
+JSON-LD strings are key spans only when the prose also carries them, as the
+proposal specifies. Machine-only data has no reason to survive an extractor and
+counting it would manufacture failures.
+
+`textRatio` — the aggressive extractor's output over the page's whole visible
+text — is reported with its two interpretations, over-strip below 0.25 and
+chrome leakage above 0.85, but does not decide the status. Both are properties
+of the extractor as much as of the page.
+
+Thresholds: below 90% recall fails, per the proposal. The 90–97% warn band is
+this implementation's.
+
+## Deferred
+
+- **The third extractor.** `content-extraction/extraction-determinism` runs
+  three and compares them; this audit asks a different question — which named
+  facts survive — where two pipelines with opposite biases bracket the answer.
+- **Per-page assessment.** Only the entry page is measured. Where a fact lives
+  in the template is a template property.
+- **Ancestor chains for JSON-LD spans.** A structured-data string has no single
+  home element; the chain reported for one is the last node whose text contains
+  it, which is indicative rather than exact.

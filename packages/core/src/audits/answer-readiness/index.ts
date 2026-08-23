@@ -36,6 +36,7 @@ export { DescriptiveUrlsAudit } from './descriptive-urls';
 export { SnippetGateCoverageAudit } from './snippet-gate-coverage';
 export { TextFragmentAddressabilityAudit } from './text-fragment-addressability';
 export { ChunkBoundaryReferentIntegrityAudit } from './chunk-boundary-referent-integrity';
+export { ExtractorSurvivalRecallAudit } from './extractor-survival-recall';
 
 import { MetaDescriptionAudit } from './meta-description';
 import { MetaAuthorAudit } from './meta-author';
@@ -66,6 +67,7 @@ import { DescriptiveUrlsAudit } from './descriptive-urls';
 import { SnippetGateCoverageAudit } from './snippet-gate-coverage';
 import { TextFragmentAddressabilityAudit } from './text-fragment-addressability';
 import { ChunkBoundaryReferentIntegrityAudit } from './chunk-boundary-referent-integrity';
+import { ExtractorSurvivalRecallAudit } from './extractor-survival-recall';
 
 /** Every audit that lives in the answer-readiness category, in map order. */
 export const ANSWER_READINESS_AUDITS = [
@@ -98,4 +100,5 @@ export const ANSWER_READINESS_AUDITS = [
   SnippetGateCoverageAudit,
   TextFragmentAddressabilityAudit,
   ChunkBoundaryReferentIntegrityAudit,
+  ExtractorSurvivalRecallAudit,
 ] as const;
