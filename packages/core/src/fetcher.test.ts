@@ -37,6 +37,20 @@ function mockResponse(statusCode: number, body: string, headers: Record<string, 
     headers,
     body: {
       text: vi.fn().mockResolvedValue(body),
+      arrayBuffer: vi.fn().mockResolvedValue(Buffer.from(body, 'binary').buffer),
+      dump: vi.fn().mockResolvedValue(undefined),
+    },
+  };
+}
+
+/** A response whose body is real bytes rather than text. */
+function mockBinaryResponse(bytes: Uint8Array, headers: Record<string, string> = {}) {
+  return {
+    statusCode: 200,
+    headers,
+    body: {
+      text: vi.fn().mockResolvedValue(''),
+      arrayBuffer: vi.fn().mockResolvedValue(bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength)),
       dump: vi.fn().mockResolvedValue(undefined),
     },
   };
@@ -430,6 +444,42 @@ describe('fetcher.fetch — body and headers edge cases', () => {
     const result = await fetcher.fetch({ url: 'https://example.com/big' });
 
     expect(result.body.length).toBe(MAX_RESPONSE_BODY_BYTES);
+    expect(result.contentLength).toBe(MAX_RESPONSE_BODY_BYTES);
+  });
+
+  // A UTF-8 decode replaces every invalid sequence with U+FFFD, which destroys
+  // the binary metadata the provenance audits read.
+  it('returns raw bytes and an empty body when the request asks for binary', async () => {
+    const bytes = new Uint8Array([0xff, 0xd8, 0xff, 0xeb, 0x00, 0x10, 0x4a, 0x50]);
+    mockRequest.mockResolvedValue(mockBinaryResponse(bytes, { 'content-type': 'image/jpeg' }) as any);
+
+    const fetcher = createFetcher();
+    const result = await fetcher.fetch({ url: 'https://example.com/a.jpg', binary: true });
+
+    expect(result.bytes).toBeInstanceOf(Uint8Array);
+    expect(Array.from(result.bytes ?? [])).toEqual(Array.from(bytes));
+    expect(result.body).toBe('');
+    expect(result.contentLength).toBe(bytes.byteLength);
+  });
+
+  it('leaves bytes undefined for an ordinary text request', async () => {
+    mockRequest.mockResolvedValue(mockResponse(200, '<html></html>', { 'content-type': 'text/html' }) as any);
+
+    const fetcher = createFetcher();
+    const result = await fetcher.fetch({ url: 'https://example.com/' });
+
+    expect(result.bytes).toBeUndefined();
+    expect(result.body).toBe('<html></html>');
+  });
+
+  it('caps a binary response at MAX_RESPONSE_BODY_BYTES', async () => {
+    const huge = new Uint8Array(MAX_RESPONSE_BODY_BYTES + 100).fill(0x41);
+    mockRequest.mockResolvedValue(mockBinaryResponse(huge, { 'content-type': 'image/png' }) as any);
+
+    const fetcher = createFetcher();
+    const result = await fetcher.fetch({ url: 'https://example.com/big.png', binary: true });
+
+    expect(result.bytes?.byteLength).toBe(MAX_RESPONSE_BODY_BYTES);
     expect(result.contentLength).toBe(MAX_RESPONSE_BODY_BYTES);
   });
 

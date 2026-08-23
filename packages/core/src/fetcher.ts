@@ -38,6 +38,14 @@ export interface FetchOptions {
   headers?: Record<string, string>;
   /** External abort (e.g. the per-scan deadline). Combined with the per-request timeout. */
   signal?: AbortSignal;
+  /**
+   * Read the response as bytes instead of text.
+   *
+   * `body` is a UTF-8 decoded string, which replaces every invalid sequence
+   * with U+FFFD — fatal for an image, whose provenance metadata is binary. With
+   * this flag the response arrives in `bytes` and `body` stays empty.
+   */
+  binary?: boolean;
 }
 
 export interface FetchResult {
@@ -50,6 +58,8 @@ export interface FetchResult {
   totalMs: number;
   contentType: string;
   contentLength: number;
+  /** Raw response bytes. Present only when the request asked for `binary`. */
+  bytes?: Uint8Array;
   error?: string;
 }
 
@@ -129,6 +139,7 @@ export function createFetcher() {
       headers: extraHeaders,
       followRedirects = true,
       signal: externalSignal,
+      binary = false,
     } = options;
 
     // Per-request timeout, plus the caller's deadline if supplied — whichever
@@ -252,11 +263,18 @@ export function createFetcher() {
       ttfbMs = performance.now() - start;
 
       let body = '';
-      if (currentMethod !== 'OPTIONS') {
-        body = await response.body.text();
-      } else {
+      let bytes: Uint8Array | undefined;
+      if (currentMethod === 'OPTIONS') {
         // For OPTIONS requests, consume and discard the body
         await response.body.dump();
+      } else if (binary) {
+        const buffer = new Uint8Array(await response.body.arrayBuffer());
+        bytes =
+          buffer.byteLength > MAX_RESPONSE_BODY_BYTES
+            ? buffer.subarray(0, MAX_RESPONSE_BODY_BYTES)
+            : buffer;
+      } else {
+        body = await response.body.text();
       }
       const totalMs = performance.now() - start;
 
@@ -292,7 +310,8 @@ export function createFetcher() {
         ttfbMs: Math.round(ttfbMs),
         totalMs: Math.round(totalMs),
         contentType: headers['content-type'] ?? '',
-        contentLength: truncatedBody.length,
+        contentLength: bytes ? bytes.byteLength : truncatedBody.length,
+        ...(bytes ? { bytes } : {}),
       };
     } catch (err) {
       const totalMs = performance.now() - start;
