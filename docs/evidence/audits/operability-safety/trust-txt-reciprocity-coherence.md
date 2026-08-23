@@ -1,18 +1,19 @@
 ---
-check: trust-txt-reciprocity-and-ai-policy-coherence
-title: "trust.txt reciprocity and AI-policy coherence"
-domain: trust-provenance
-status: proposed
+audit: operability-safety/trust-txt-reciprocity-coherence
+category: operability-safety
+source_file: packages/core/src/audits/operability-safety/trust-txt-reciprocity-coherence.ts
+slug: trust-txt-reciprocity-coherence
 evidence_grade: C
-uniqueness: unique
-difficulty: multi-page
-scoring_tier: informative (weight 0)
+tier: informative
+disposition: "new in v2 — graduated from proposal 2026-08-23"
 reviewed: 2026-08-20
+graduated: 2026-08-23
 ---
+
 
 # trust.txt reciprocity and AI-policy coherence
 
-> Proposed check. Evidence grade **C** · unique · implementation: `multi-page`
+> Shipped in v2. Evidence grade **C** · informative tier · unique · implementation: `multi-page`
 
 ## What it checks
 
@@ -46,3 +47,39 @@ Tier per evidence policy: **informative (weight 0)** — grade C does not meet t
 ## Review history
 
 - 2026-08-20 — proposed by the novel-checks research pass (10-agent evidence workflow); sources URL-verified at research time.
+
+## Implementation deviations
+
+**Renamed** from `trust-txt-reciprocity-and-ai-policy-coherence`, which would
+make a 63-character id; the shorter slug keeps both halves of the name.
+
+Steps 1 to 4 and 6 of the sketch ship: both trust.txt locations, `name=value`
+parsing with `#` comments, attribute-name validation against the spec set, the
+reciprocity resolution for `belongto=` and `controlledby=`, the
+`datatrainingallowed=` comparison against robots.txt AI-bot groups in both
+directions, and the unscored informative tier with the adoption caveat stated
+in the guidance.
+
+**No code path returns `fail`**, and a test asserts it across every input.
+The audit is `tier: 'informative'` at `weight: 0`, so a failure could not move
+a score; rendering one would read as a defect the site must fix, and the
+dossier's own honest limitation is that no consumer for this standard is
+documented.
+
+**At most three associations are resolved**, and the finding says how many
+were skipped. Each is a GET of somebody else's host, and nothing else about
+that host is read.
+
+**The robots.txt comparison uses the shipped RFC 9309 parser** —
+`parseRobots` and `isPathAllowed` from `gatherers/robots.ts` — so "does
+robots.txt let GPTBot crawl" is answered the same way here as in the
+`access-crawl-control` audits.
+
+## Deferred
+
+- **`social=` verification.** It needs the `trust://<domain>!` string fetched
+  from a third-party social profile, which is a headless-browser roadmap item
+  and a request to a host the scanner has no business fetching.
+- **`vendor=`/`customer=` resolution.** The spec does not define those as
+  reciprocal, so there is nothing to check them against.
+- **Cross-scan caching of association documents.** The cache is per scan.
