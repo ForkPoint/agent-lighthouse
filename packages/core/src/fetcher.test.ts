@@ -465,18 +465,20 @@ describe('fetcher.fetch — body and headers edge cases', () => {
     expect(result.headers['x-content-type-options']).toBe('nosniff, nosniff');
   });
 
-  it('uses a non-following dispatcher when followRedirects is false', async () => {
+  // There is one dispatcher now — the chain is walked here, not by undici — so
+  // followRedirects is visible in how many requests are issued, not in which
+  // dispatcher is passed.
+  it('issues one request when followRedirects is false and walks the chain when it is not', async () => {
     mockRequest.mockResolvedValue(mockResponse(301, '', { location: '/next' }) as any);
 
     const fetcher = createFetcher();
-    await fetcher.fetch({ url: 'https://example.com/a' });
     await fetcher.fetch({ url: 'https://example.com/a', followRedirects: false });
+    expect(mockRequest).toHaveBeenCalledTimes(1);
 
-    const following = mockRequest.mock.calls[0][1]?.dispatcher;
-    const notFollowing = mockRequest.mock.calls[1][1]?.dispatcher;
-    expect(following).toBeDefined();
-    expect(notFollowing).toBeDefined();
-    expect(notFollowing).not.toBe(following);
+    mockRequest.mockClear();
+    await fetcher.fetch({ url: 'https://example.com/a' });
+    // The original request plus MAX_REDIRECTS hops.
+    expect(mockRequest).toHaveBeenCalledTimes(6);
   });
 
   it('ignores header values that are neither a string nor an array', async () => {
@@ -537,6 +539,14 @@ describe('isSafeUrl', () => {
     expect(await isSafeUrl('http://[::1]/')).toBe(false);
   });
 
+  // Regression: URL.hostname keeps the brackets, so the loopback comparison
+  // never matched and this only failed because the DNS mock returned nothing.
+  it('rejects an IPv6 loopback literal without a DNS lookup', async () => {
+    mockLookup.mockResolvedValue({ address: '93.184.216.34', family: 4 } as any);
+    expect(await isSafeUrl('http://[::1]/')).toBe(false);
+    expect(mockLookup).not.toHaveBeenCalled();
+  });
+
   it('rejects private IP literals without a DNS lookup', async () => {
     expect(await isSafeUrl('http://10.0.0.5/')).toBe(false);
     expect(mockLookup).not.toHaveBeenCalled();
@@ -555,5 +565,106 @@ describe('isSafeUrl', () => {
   it('returns false when DNS lookup throws', async () => {
     mockLookup.mockRejectedValue(new Error('ENOTFOUND'));
     expect(await isSafeUrl('https://nonexistent.example/')).toBe(false);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Redirect chain safety
+// ---------------------------------------------------------------------------
+
+describe('createFetcher redirect handling', () => {
+  // mockClear leaves queued mockResolvedValueOnce implementations in place, so
+  // an unconsumed queue would leak into the next case. Reset them per test.
+  beforeEach(() => {
+    mockRequest.mockReset();
+    mockLookup.mockReset();
+  });
+
+  it('refuses to follow a redirect that leaves public address space', async () => {
+    mockRequest
+      .mockResolvedValueOnce(
+        mockResponse(302, '', { location: 'http://169.254.169.254/latest/meta-data/' }) as never,
+      )
+      .mockResolvedValueOnce(mockResponse(200, 'internal secrets') as never);
+    // The starting host resolves publicly, so the gate is armed.
+    mockLookup.mockResolvedValue({ address: '93.184.216.34', family: 4 } as never);
+
+    const result = await createFetcher().fetch({ url: 'https://example.com/start' });
+
+    expect(result.error).toBe('redirect-refused');
+    expect(result.body).toBe('');
+    expect(result.finalUrl).toBe('https://example.com/start');
+    expect(mockRequest).toHaveBeenCalledTimes(1);
+  });
+
+  it('follows a same-site redirect and reports the URL that answered', async () => {
+    mockRequest
+      .mockResolvedValueOnce(mockResponse(301, '', { location: '/end' }) as never)
+      .mockResolvedValueOnce(mockResponse(200, 'arrived') as never);
+    mockLookup.mockResolvedValue({ address: '93.184.216.34', family: 4 } as never);
+
+    const result = await createFetcher().fetch({ url: 'https://example.com/start' });
+
+    expect(result.status).toBe(200);
+    expect(result.body).toBe('arrived');
+    expect(result.url).toBe('https://example.com/start');
+    expect(result.finalUrl).toBe('https://example.com/end');
+  });
+
+  it('does not follow redirects when followRedirects is false', async () => {
+    mockRequest.mockResolvedValueOnce(mockResponse(302, '', { location: '/end' }) as never);
+
+    const result = await createFetcher().fetch({
+      url: 'https://example.com/start',
+      followRedirects: false,
+    });
+
+    expect(result.status).toBe(302);
+    expect(result.finalUrl).toBe('https://example.com/start');
+    expect(mockRequest).toHaveBeenCalledTimes(1);
+  });
+
+  it('stops after five hops and returns the last response', async () => {
+    for (let i = 0; i < 6; i += 1) {
+      mockRequest.mockResolvedValueOnce(
+        mockResponse(302, '', { location: `/hop-${i + 1}` }) as never,
+      );
+    }
+    mockLookup.mockResolvedValue({ address: '93.184.216.34', family: 4 } as never);
+
+    const result = await createFetcher().fetch({ url: 'https://example.com/hop-0' });
+
+    expect(mockRequest).toHaveBeenCalledTimes(6);
+    expect(result.status).toBe(302);
+    expect(result.finalUrl).toBe('https://example.com/hop-5');
+  });
+
+  it('continues a redirected POST as a GET without the body', async () => {
+    mockRequest
+      .mockResolvedValueOnce(mockResponse(303, '', { location: '/done' }) as never)
+      .mockResolvedValueOnce(mockResponse(200, 'ok') as never);
+    mockLookup.mockResolvedValue({ address: '93.184.216.34', family: 4 } as never);
+
+    await createFetcher().fetch({
+      url: 'https://example.com/submit',
+      method: 'POST',
+      body: '{"a":1}',
+      contentType: 'application/json',
+    });
+
+    const second = mockRequest.mock.calls[1]![1] as { method: string; body?: string };
+    expect(second.method).toBe('GET');
+    expect(second.body).toBeUndefined();
+  });
+
+  it('still follows redirects when the scan target is itself a private host', async () => {
+    mockRequest
+      .mockResolvedValueOnce(mockResponse(302, '', { location: 'http://127.0.0.1:3000/app' }) as never)
+      .mockResolvedValueOnce(mockResponse(200, 'dev server') as never);
+
+    const result = await createFetcher().fetch({ url: 'http://127.0.0.1:3000/' });
+
+    expect(result.status).toBe(200);
+    expect(result.body).toBe('dev server');
   });
 });
