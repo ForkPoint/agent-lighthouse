@@ -140,3 +140,35 @@ describe('MetaDescriptionAudit', () => {
     expect(result.priority).toBe('medium');
   });
 });
+
+describe('MetaDescriptionAudit — brand-only page subject', () => {
+  const audit = new MetaDescriptionAudit();
+
+  it('does not call an accurate description irrelevant when the subject is only a brand name', () => {
+    const ctx = mockCheckContext([
+      mockPageContext(
+        'https://example.com/',
+        doc(
+          '<title>Acme</title><meta name="description" content="Refurbished espresso machines, serviced in-house and shipped within two working days.">',
+        ),
+      ),
+    ]);
+    const result = audit.audit(ctx);
+    expect(result.status).not.toBe('warn');
+  });
+
+  it('still warns when a real subject shares nothing with the description', () => {
+    const ctx = mockCheckContext([
+      mockPageContext(
+        'https://example.com/',
+        doc(
+          '<title>Refurbished espresso machines</title><meta name="description" content="Weekly newsletter about municipal bond yields and treasury auctions.">',
+          '<h1>Refurbished espresso machines</h1>',
+        ),
+      ),
+    ]);
+    const result = audit.audit(ctx);
+    expect(result.status).toBe('warn');
+    expect(result.message).toContain('shares no term');
+  });
+});

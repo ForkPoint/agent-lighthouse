@@ -107,7 +107,9 @@ export class AiBotDirectivesAudit extends Audit {
     id: 'access-crawl-control/ai-bot-directives',
     category: 'access-crawl-control',
     title: 'AI bot directives are explicit',
-    failureTitle: 'A documented AI bot is blocked in robots.txt',
+    // Both non-pass paths render under this headline, and one of them is a warn
+    // about an unstated policy, not a block. It has to be true of both.
+    failureTitle: 'AI bot directives need attention',
     description:
       'Reports your robots.txt stance on five long-tail AI bot tokens in one place. Only the bots whose operator publishes crawler documentation — YouBot (You.com) and AI2Bot (Allen Institute) — affect the score, because only those directives have a documented reader. Bytespider, cohere-ai and Diffbot are listed for information: blocking them is a legitimate operational choice that costs no AI-answer visibility.',
     scoreDisplayMode: 'ternary',
@@ -162,8 +164,16 @@ export class AiBotDirectivesAudit extends Audit {
 
     if (implicit.length > 0) {
       const names = implicit.map((r) => r.bot.displayName).join(', ');
+      const verb = implicit.length === 1 ? 'is' : 'are';
+      // "Allowed only through the wildcard rule" is false when there is no
+      // wildcard group: those bots are allowed because nothing in robots.txt
+      // mentions them at all. Both states warn, for the same reason — the
+      // policy is unstated — but they are not the same state.
+      const hasWildcard = groups.some((g) => g.userAgent === '*');
       return this.warn(
-        `${names} ${implicit.length === 1 ? 'is' : 'are'} allowed only through the wildcard rule — no explicit directive.`,
+        hasWildcard
+          ? `${names} ${verb} allowed only through the wildcard rule — no explicit directive.`
+          : `${names} ${verb} allowed by default: robots.txt has no directive for them and no wildcard rule either.`,
         EXPECTED,
         table,
         { priority: 'medium' },

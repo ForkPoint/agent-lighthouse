@@ -99,7 +99,11 @@ export class MetaDescriptionAudit extends Audit {
         const subjectTerms = contentTerms(subject);
         const descTerms = contentTerms(desc);
         const shared = [...descTerms].filter((t) => subjectTerms.has(t));
-        if (subjectTerms.size > 0 && shared.length === 0) {
+        // A brand-only title ("Acme") yields one term, and an accurate
+        // description that never repeats the brand shares nothing with it.
+        // That is a thin subject, not an irrelevant description, so there have
+        // to be at least two terms before the comparison means anything.
+        if (subjectTerms.size >= 2 && shared.length === 0) {
           return this.warn(
             'Meta description does not describe this page — it shares no term with the title or H1.',
             expected,

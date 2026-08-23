@@ -159,3 +159,32 @@ describe('AiBotDirectivesAudit — informational per-bot table', () => {
     expect(result.status).toBe('pass');
   });
 });
+
+describe('AiBotDirectivesAudit — message accuracy', () => {
+  const audit = new AiBotDirectivesAudit();
+
+  it('does not claim wildcard-only access when robots.txt has no wildcard group', () => {
+    const result = audit.audit(robots('User-agent: Googlebot\nAllow: /\n'));
+    expect(result.status).toBe('warn');
+    expect(result.message).not.toContain('allowed only through the wildcard rule');
+    expect(result.message).toContain('no directive');
+  });
+
+  it('still names the wildcard rule when there is one', () => {
+    const result = audit.audit(robots('User-agent: *\nAllow: /\n'));
+    expect(result.status).toBe('warn');
+    expect(result.message).toContain('wildcard rule');
+  });
+
+  it('does not headline a warn as a blocked bot', () => {
+    const check = audit.toCheckResult(audit.audit(robots('User-agent: *\nAllow: /\n')));
+    expect(check.title).not.toBe('A documented AI bot is blocked in robots.txt');
+  });
+
+  it('keeps the blocked-bot headline informative on the fail path', () => {
+    const result = audit.audit(robots('User-agent: YouBot\nDisallow: /\n'));
+    expect(result.status).toBe('fail');
+    expect(result.priority).toBe('medium');
+    expect(result.message).toContain('blocked by robots.txt');
+  });
+});
