@@ -1,18 +1,19 @@
 ---
-check: boilerplate-tax-across-the-crawl-unique-tokens-per-fetch
-title: "Boilerplate tax across the crawl (unique tokens per fetch)"
-domain: token-economics
-status: proposed
+audit: content-extraction/boilerplate-tax
+category: content-extraction
+source_file: packages/core/src/audits/content-extraction/boilerplate-tax.ts
+slug: boilerplate-tax
 evidence_grade: B
-uniqueness: partial-overlap
-difficulty: multi-page
-scoring_tier: scored
+tier: scored
+disposition: "new in v2 — graduated from proposal 2026-08-23"
 reviewed: 2026-08-20
+graduated: 2026-08-23
 ---
+
 
 # Boilerplate tax across the crawl (unique tokens per fetch)
 
-> Proposed check. Evidence grade **B** · partial overlap · implementation: `multi-page`
+> Shipped in v2. Evidence grade **B** · scored tier · partial overlap · implementation: `multi-page`
 
 ## What it checks
 
@@ -56,3 +57,44 @@ Tier per evidence policy: **scored** — grade B meets the A/B bar required for 
 ## Review history
 
 - 2026-08-20 — proposed by the novel-checks research pass (10-agent evidence workflow); sources URL-verified at research time.
+
+## Implementation deviations
+
+The shipped audit is `content-extraction/boilerplate-tax`: the proposal's
+`token-economics` domain is a research grouping, not one of the eight v2
+categories, and the proposal's slug —
+`boilerplate-tax-across-the-crawl-unique-tokens-per-fetch` — produced a
+73-character id, over the 64-character cap `v2-meta.test.ts` enforces. The full
+name survives as the audit's title.
+
+The sample is the scan's existing crawl, not a new one. No page is fetched for
+this audit.
+
+Stratification is by URL path depth, capped at 5 pages per depth. The proposal
+asks for stratification by detected template; depth is a cheap stand-in that is
+stable across runs and achieves the thing that matters — a site with a large
+blog cannot let its blog chrome define what "boilerplate" means for the whole
+site while the commerce templates go unmeasured.
+
+Per-page unique tokens are the page's extracted-content tokens scaled by the
+share of its five-word windows that are not site-wide boilerplate. Counting
+tokens per shingle directly would double-count the four words every pair of
+adjacent shingles shares.
+
+Thresholds are the proposal's: below 20% of fetched tokens distinct, or a median
+below 300 distinct tokens per page, fails. The 35% warn band between "failing"
+and "fine" is this implementation's, not the proposal's.
+
+Fewer than 3 pages with extractable content returns `notApplicable`. Document
+frequency over two documents is arithmetic, not a measurement.
+
+## Deferred
+
+- **A dollar figure.** The proposal offers an optional cost line at a
+  user-supplied per-million rate. `ScanOptions` carries no such rate, and
+  inventing one would put a number in the report the operator never gave.
+- **Template detection.** Grouping pages by their actual template needs a
+  structural fingerprint per page; depth buckets do the same job for this
+  measurement at a fraction of the cost.
+- **Cross-run trending.** "Unique tokens per fetch" is most useful as a series.
+  The scanner reports one run.

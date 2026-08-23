@@ -49,6 +49,7 @@ export const NEW_IN_V2: readonly string[] = [
   'operability-safety/ugc-trust-boundary-markers',
   'operability-safety/agent-ua-content-divergence-diff',
   'content-extraction/preamble-tax',
+  'content-extraction/boilerplate-tax',
 ];
 
 /** The 148 audits Plan 4 closed the v2 migration on. Never changes again. */
