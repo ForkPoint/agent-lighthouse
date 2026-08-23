@@ -98,3 +98,41 @@ export const defaultConfig: ScanConfig = {
     CATEGORY_AUDITS.map(([id, audits]) => [id, audits.map((AuditClass) => reg(AuditClass))]),
   ),
 };
+
+/** Every registered category id, in canonical report order. */
+export const CATEGORY_IDS: readonly string[] = CATEGORY_AUDITS.map(([id]) => id);
+
+/**
+ * Narrow a scan to a subset of the registry.
+ *
+ * Two independent filters: `categories` restricts which categories run at all,
+ * and `includeExperimental` decides whether experimental-tier audits are part
+ * of the run. Experimental audits are excluded unless asked for — they carry
+ * weight 0 either way, but running an unvalidated check on every scan is a
+ * decision the operator makes, not a default.
+ *
+ * Returns the same object when there is nothing to filter, so the common path
+ * allocates nothing.
+ */
+export function filterConfig(
+  config: ScanConfig,
+  opts: { categories?: string[]; includeExperimental?: boolean },
+): ScanConfig {
+  const wanted =
+    opts.categories && opts.categories.length > 0 ? new Set(opts.categories) : undefined;
+  const dropExperimental =
+    opts.includeExperimental !== true &&
+    Object.values(config.audits).some((list) => list.some((r) => r.meta.tier === 'experimental'));
+  if (!wanted && !dropExperimental) return config;
+
+  const categories = config.categories.filter((cat) => !wanted || wanted.has(cat.id));
+  const audits = Object.fromEntries(
+    categories.map((cat) => [
+      cat.id,
+      (config.audits[cat.id] ?? []).filter(
+        (registration) => !dropExperimental || registration.meta.tier !== 'experimental',
+      ),
+    ]),
+  );
+  return { categories, audits };
+}

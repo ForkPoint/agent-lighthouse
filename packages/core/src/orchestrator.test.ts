@@ -262,6 +262,32 @@ describe('runScan — evidence tier', () => {
   });
 });
 
+describe('runScan — category filter', () => {
+  it('scans only the requested categories', async () => {
+    const url = 'https://example.com/';
+    set(url, '<html><body><h1>Home</h1></body></html>');
+
+    const report = await runScan(url, { categories: ['machine-discovery'] });
+
+    expect(report.categories.map((c) => c.id)).toEqual(['machine-discovery']);
+  });
+
+  it('excludes experimental audits unless asked for them', async () => {
+    const url = 'https://example.com/';
+    set(url, '<html><body><h1>Home</h1></body></html>');
+
+    const off = await runScan(url, { categories: ['access-crawl-control'] });
+    const on = await runScan(url, {
+      categories: ['access-crawl-control'],
+      includeExperimental: true,
+    });
+
+    const ids = (r: typeof off) => r.categories.flatMap((c) => c.checks).map((c) => c.id);
+    expect(ids(off)).not.toContain('access-crawl-control/tdm-rep');
+    expect(ids(on)).toContain('access-crawl-control/tdm-rep');
+  });
+});
+
 describe('runScan — no root files', () => {
   it('discovers from internal links when there is no sitemap or llms.txt', async () => {
     const url = 'https://example.com/';

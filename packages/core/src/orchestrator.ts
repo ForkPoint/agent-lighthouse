@@ -14,7 +14,7 @@ import {
   detectPageType,
 } from './parser';
 import type { CheckContext, PageContext } from './check-context';
-import { defaultConfig } from './audit-config';
+import { defaultConfig, filterConfig } from './audit-config';
 import { planAudits, runAudits } from './audit-runner';
 import { ProgressTracker } from './progress';
 import type { ScanEvent } from './progress';
@@ -31,6 +31,17 @@ export interface ScanOptions {
   onEvent?: (event: ScanEvent) => void;
   pages?: PageOverride[] | null;
   signal?: AbortSignal;
+  /**
+   * Restrict the scan to these category ids. Unknown ids simply match nothing —
+   * validate them at the entry point so the operator hears about a typo.
+   */
+  categories?: string[];
+  /**
+   * Include audits whose tier is `experimental`. Off by default, per
+   * docs/evidence/POLICY.md: an experimental check is behind a flag and never
+   * scored.
+   */
+  includeExperimental?: boolean;
 }
 
 // Cap how many pages get the jsdom-based a11y pass. Accessibility issues are
@@ -368,7 +379,12 @@ export async function runScan(url: string, options?: ScanOptions): Promise<ScanR
     wafProtection: wafProtection ?? undefined,
   };
 
-  const auditPlan = planAudits(ctx, defaultConfig);
+  const config = filterConfig(defaultConfig, {
+    categories: options?.categories,
+    includeExperimental: options?.includeExperimental ?? false,
+  });
+
+  const auditPlan = planAudits(ctx, config);
   tracker.phaseStart('audits', auditPlan.runnable.length);
 
   const {
@@ -377,7 +393,7 @@ export async function runScan(url: string, options?: ScanOptions): Promise<ScanR
     overallScore,
   } = await runAudits(
     ctx,
-    defaultConfig,
+    config,
     (event) => {
       if (event.type === 'unit:done') tracker.unitDone(event.label);
       else tracker.unitFail(event.label, event.error);

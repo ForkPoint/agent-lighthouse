@@ -3,6 +3,7 @@ import {
   loadConfigFile,
   getPreset,
   logger,
+  CATEGORY_IDS,
   type PresetName,
   type ScanEvent,
 } from "@forkpoint/agent-lighthouse-core";
@@ -50,6 +51,11 @@ Options:
   --debug-audit <id|fails>     Print deep diagnostic breakdown for a specific audit ID
                                (e.g. structured-data/faqpage-schema) or all fails
   --categories <list>          Comma-separated list of categories to audit
+                               (access-crawl-control, content-extraction, machine-discovery,
+                               structured-data, answer-readiness, agent-interfaces,
+                               agentic-commerce, operability-safety)
+  --experimental               Also run experimental-tier audits (excluded by default;
+                               they are reported but never scored)
   -o, --output <formats>       Output formats (comma-separated: terminal, html, json, md) [default: terminal,html,json]
   -d, --output-dir <path>      Output directory for generated reports [default: ./reports]
   -v, --view                   Automatically open the generated HTML report in your browser
@@ -146,6 +152,25 @@ async function audit(targetUrl?: string) {
   const outputDir =
     getArgValue("-d", "--output-dir") || fileConfig.outputDir || "./reports";
 
+  // --categories has been in the help text since v1 and was never parsed, so a
+  // scan narrowed to one category silently ran all of them.
+  const categoriesArg = getArgValue("", "--categories");
+  const categories = categoriesArg
+    ? categoriesArg
+        .split(",")
+        .map((c) => c.trim())
+        .filter(Boolean)
+    : undefined;
+  const unknownCategories = (categories ?? []).filter((c) => !CATEGORY_IDS.includes(c));
+  if (unknownCategories.length > 0) {
+    console.error(
+      `\x1b[31mUnknown category: ${unknownCategories.join(", ")}\x1b[0m\nValid categories: ${CATEGORY_IDS.join(", ")}`,
+    );
+    process.exit(1);
+  }
+
+  const includeExperimental = args.includes("--experimental");
+
   const outputFormatArg = getArgValue("-o", "--output");
   const outputFormats = outputFormatArg
     ? outputFormatArg.split(",").map((s) => s.trim())
@@ -170,7 +195,11 @@ async function audit(targetUrl?: string) {
       ? undefined
       : createProgressRenderer({ tty: Boolean(process.stdout.isTTY) });
 
-  const report = await runScan(url, { onEvent });
+  const report = await runScan(url, {
+    onEvent,
+    ...(categories ? { categories } : {}),
+    includeExperimental,
+  });
 
   const view = buildReportView(report);
 
