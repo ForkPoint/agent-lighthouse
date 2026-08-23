@@ -81,6 +81,10 @@ export interface UaProbe {
   baselineBody: string;
   /** The raw probe body, so a caller can look for challenge fingerprints the classifier does not model. */
   probeBody: string;
+  /** Baseline response headers, so a caller can read a price or a payment challenge. */
+  baselineHeaders: Record<string, string>;
+  /** Probe response headers, for the same reason. */
+  probeHeaders: Record<string, string>;
 }
 
 /** Below this share of the baseline's text, a 200 is a block wearing a 200. */
@@ -112,6 +116,8 @@ export function classifyResponse(
   probeText: string;
   baselineBody: string;
   probeBody: string;
+  baselineHeaders: Record<string, string>;
+  probeHeaders: Record<string, string>;
 } {
   const baselineOk = baseline.status >= 200 && baseline.status < 300;
   if (!baselineOk) {
@@ -123,6 +129,8 @@ export function classifyResponse(
       probeText: '',
       baselineBody: baseline.body,
       probeBody: probe.body,
+      baselineHeaders: baseline.headers,
+      probeHeaders: probe.headers,
     };
   }
 
@@ -139,6 +147,8 @@ export function classifyResponse(
     probeText,
     baselineBody: baseline.body,
     probeBody: probe.body,
+    baselineHeaders: baseline.headers,
+    probeHeaders: probe.headers,
   });
 
   const cfMitigated = probe.headers['cf-mitigated'];

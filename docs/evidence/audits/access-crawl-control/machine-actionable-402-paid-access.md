@@ -1,18 +1,19 @@
 ---
-check: machine-actionable-402-paid-access-response
-title: "Machine-actionable 402 paid-access response"
-domain: bot-auth-access
-status: proposed
+audit: access-crawl-control/machine-actionable-402-paid-access
+category: access-crawl-control
+source_file: packages/core/src/audits/access-crawl-control/machine-actionable-402-paid-access.ts
+slug: machine-actionable-402-paid-access
 evidence_grade: B
-uniqueness: unique
-difficulty: static-fetch
-scoring_tier: scored
+tier: scored
+disposition: "new in v2 — graduated from proposal 2026-08-23"
 reviewed: 2026-08-20
+graduated: 2026-08-23
 ---
+
 
 # Machine-actionable 402 paid-access response
 
-> Proposed check. Evidence grade **B** · unique · implementation: `static-fetch`
+> Shipped in v2. Evidence grade **B** · scored tier · unique · implementation: `static-fetch`
 
 ## What it checks
 
@@ -52,3 +53,45 @@ Tier per evidence policy: **scored** — grade B meets the A/B bar required for 
 ## Review history
 
 - 2026-08-20 — proposed by the novel-checks research pass (10-agent evidence workflow); sources URL-verified at research time.
+
+## Implementation deviations
+
+**Renamed.** `machine-actionable-402-paid-access-response` would make a
+63-character id, inside the cap, but the trailing `-response` says nothing the
+rest does not; the audit ships as `machine-actionable-402-paid-access`.
+
+**It issues no request.** The sketch says the audit piggybacks on the
+edge-parity probe matrix, and it does: it calls `sharedUaProbes` with the same
+URL and token arguments `access-crawl-control/ai-crawler-edge-parity` passes, so
+the per-scan cache answers every one. To read the payment headers off those
+responses, `UaProbe` gained `baselineHeaders` and `probeHeaders` — the gatherer
+kept the bodies but not the headers, and a 402's whole meaning is in its
+headers.
+
+**RSL is read inline, not fetched.** `access-crawl-control/rsl-licensing-terms-conformance`
+fetches the licence document; fetching it again here would double the cost to
+answer a narrower question. This audit reads inline
+`<script type="application/rsl+xml">` blocks, and when a licence is advertised
+but not readable from what the scan already has, it says exactly that rather
+than assuming either way.
+
+**A `Cache-Control` that a shared cache may store is a warning, not a failure.**
+The sketch calls it a sub-finding. It is real — a stored 402 is served to a
+crawler that already paid — but it is not the defect the audit is named for, and
+a site whose 402 is otherwise machine-actionable has done the hard part.
+
+**No 402 is `notApplicable`.** The sketch asks for a distinct informational
+result so free sites are not penalised; in this codebase that verdict is
+`notApplicable`, which is excluded from the score rather than counted as a pass.
+
+## Deferred
+
+- **Completing a payment.** The audit reads the challenge and never acts on it.
+  Paying to verify the flow is a financial transaction a scanner has no standing
+  to make.
+- **`crawler-max-price` negotiation.** Cloudflare's flow has the crawler retry
+  with `crawler-exact-price`. A scanner that retried would be starting a
+  purchase.
+- **402s outside the probe matrix.** Only URLs the edge-parity probes visit are
+  seen. A paywalled section neither the sitemap nor the homepage links to is not
+  sampled.
