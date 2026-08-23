@@ -4,7 +4,7 @@ Continuation anchor for the next session. Read this first, then the ledgers.
 
 ## Where things stand
 
-- Branch: `feat/v2-engine`, pushed through `9147325` (PR #10); 44 local commits ahead, unpushed. Working tree clean.
+- Branch: `feat/v2-engine` (PR #10), fully pushed at `e4a4e13`. Working tree clean, nothing local.
 - Registry: **172 audits, 8 categories**, ids `category/slug`, evidence-mass scoring.
 - Gates at HEAD: `pnpm test` 2693 passed / 0 failed / 172 skipped · `pnpm typecheck` clean · `rtk err pnpm lint` clean · `node scripts/check-dossiers.mjs` → "172 audits OK, no orphans" · `npx changeset status` all-major (core/report/cli/mcp → 2.0.0).
 - migration-map.json: 207 entries — 26 removed, 181 renamed, **zero** merging/interim. `migration-map.test.ts` pins the census, extinction, dossier-link existence, registry cross-pin; `sunset.test.ts` pins the v1 roster; `new-in-v2.ts` carries the 24 ids added by Plan 5.
@@ -17,8 +17,8 @@ Continuation anchor for the next session. Read this first, then the ledgers.
 | 3 — v2 taxonomy | `docs/superpowers/plans/2026-08-21-v2-taxonomy.md` | complete (181 audits, map, CI dossier check) |
 | 4 — merges/rewrites | `docs/superpowers/plans/2026-08-22-v2-merges-rewrites.md` | complete + final review + fix wave |
 | — redeem wave | (no plan file; user-approved 2026-08-22) | 6 audits redeemed, commits `1681037..dc430d4` + `9147325` |
-| 5 — grade-A graduation | `docs/superpowers/plans/2026-08-22-v2-graduate-grade-a.md` | complete — 24 audits graduated, registry 148 → 172, commits `2bb2506..32955d4` (unpushed) |
-| 6 — polish + backlog | `docs/superpowers/plans/2026-08-23-v2-polish-backlog.md` | complete — 15 tasks, commits `16a4662..3a36624` (unpushed). What it deliberately did not fix is listed under "Triage record" in that file |
+| 5 — grade-A graduation | `docs/superpowers/plans/2026-08-22-v2-graduate-grade-a.md` | complete — 24 audits graduated, registry 148 → 172, commits `2bb2506..32955d4` |
+| 6 — polish + backlog | `docs/superpowers/plans/2026-08-23-v2-polish-backlog.md` | complete — 15 tasks, commits `16a4662..e4a4e13`. What it deliberately did not fix is listed under "Triage record" in that file |
 
 Ledgers (Plan 6 consumed their deferral lists and marked both; keep as the record of what was found):
 - `.superpowers/sdd/2026-08-21-v2-taxonomy/progress.md`
