@@ -1,18 +1,19 @@
 ---
-check: unsafe-agent-triggerable-affordances
-title: "Unsafe Agent-Triggerable Affordances"
-domain: injection-safety
-status: proposed
+audit: operability-safety/unsafe-agent-triggerable-affordances
+category: operability-safety
+source_file: packages/core/src/audits/operability-safety/unsafe-agent-triggerable-affordances.ts
+slug: unsafe-agent-triggerable-affordances
 evidence_grade: B
-uniqueness: unique
-difficulty: static-fetch
-scoring_tier: scored
+tier: scored
+disposition: "new in v2 — graduated from proposal 2026-08-23"
 reviewed: 2026-08-20
+graduated: 2026-08-23
 ---
+
 
 # Unsafe Agent-Triggerable Affordances
 
-> Proposed check. Evidence grade **B** · unique · implementation: `static-fetch`
+> Shipped in v2. Evidence grade **B** · scored tier · unique · implementation: `static-fetch`
 
 ## What it checks
 
@@ -52,3 +53,33 @@ Tier per evidence policy: **scored** — grade B meets the A/B bar required for 
 ## Review history
 
 - 2026-08-20 — proposed by the novel-checks research pass (10-agent evidence workflow); sources URL-verified at research time.
+
+## Implementation deviations
+
+The shipped audit is `operability-safety/unsafe-agent-triggerable-affordances`,
+in the `operability-safety` category: the proposal's `injection-safety` domain
+is a research grouping, not one of the eight v2 categories.
+
+The audit never fetches a flagged URL. Following `?action=delete&id=7` would
+perform the destructive action the finding exists to report, so detection is
+markup analysis only and the test suite pins that `ctx.fetch` is never called
+during a run.
+
+`rel="nofollow"`, a `data-confirm`/`data-turbo-confirm`/`data-method` attribute,
+an `onclick` calling `confirm(`, and membership in a `method="post"` form all
+count as guards. Any one of them stops the finding: each puts either a human
+decision or a non-safe method between an agent and the state change.
+
+A path named in a robots.txt `Disallow` rule is still reported, and the message
+states the mitigation is partial. A `Disallow: /` rule is ignored for this
+purpose, because a site-wide block says nothing about the individual path.
+
+## Deferred
+
+- **Verifying that the URL really mutates.** Proving it means fetching it, which
+  is exactly what this audit must not do. The finding is that the markup offers
+  a state change over a safe method, which is a defect on its own terms.
+- **Buttons wired by script.** A control that issues a mutating request from a
+  click handler carries no href to match. Detecting it needs the page to run.
+- **Per-crawler robots evaluation.** Whether a specific agent honours a specific
+  `Disallow` group is `access-crawl-control`'s question, not this audit's.

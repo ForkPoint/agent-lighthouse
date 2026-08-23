@@ -56,6 +56,7 @@ export { UrlAddressableStateAndPaginationFallbackAudit } from './url-addressable
 export { FirstContactConsentGateOperabilityAudit } from './first-contact-consent-gate-operability';
 export { UnicodeCovertChannelScanAudit } from './unicode-covert-channel-scan';
 export { ThirdPartyDomWriteBlastRadiusAudit } from './third-party-dom-write-blast-radius';
+export { UnsafeAgentTriggerableAffordancesAudit } from './unsafe-agent-triggerable-affordances';
 
 // Not an audit: the rule-id list the orchestrator feeds to the engine. It is
 // only complete once every engine-backed audit module has been evaluated — this
@@ -98,6 +99,7 @@ import { UrlAddressableStateAndPaginationFallbackAudit } from './url-addressable
 import { FirstContactConsentGateOperabilityAudit } from './first-contact-consent-gate-operability';
 import { UnicodeCovertChannelScanAudit } from './unicode-covert-channel-scan';
 import { ThirdPartyDomWriteBlastRadiusAudit } from './third-party-dom-write-blast-radius';
+import { UnsafeAgentTriggerableAffordancesAudit } from './unsafe-agent-triggerable-affordances';
 
 /** Every audit that lives in the operability-safety category, in map order. */
 export const OPERABILITY_SAFETY_AUDITS = [
@@ -137,4 +139,5 @@ export const OPERABILITY_SAFETY_AUDITS = [
   FirstContactConsentGateOperabilityAudit,
   UnicodeCovertChannelScanAudit,
   ThirdPartyDomWriteBlastRadiusAudit,
+  UnsafeAgentTriggerableAffordancesAudit,
 ] as const;
