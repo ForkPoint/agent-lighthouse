@@ -30,7 +30,7 @@
     "category": "access-crawl-control",
     "categoryTitle": "Access & Crawl Control",
     "title": "AI bot directives are explicit",
-    "failureTitle": "A documented AI bot is blocked in robots.txt",
+    "failureTitle": "AI bot directives need attention",
     "description": "Reports your robots.txt stance on five long-tail AI bot tokens in one place. Only the bots whose operator publishes crawler documentation — YouBot (You.com) and AI2Bot (Allen Institute) — affect the score, because only those directives have a documented reader. Bytespider, cohere-ai and Diffbot are listed for information: blocking them is a legitimate operational choice that costs no AI-answer visibility.",
     "scoreDisplayMode": "ternary",
     "weight": 0.6,
@@ -3524,6 +3524,33 @@
     }
   },
   {
+    "id": "operability-safety/agent-ua-content-divergence-diff",
+    "category": "operability-safety",
+    "categoryTitle": "Agent Operability & Safety",
+    "title": "Agent-UA Content Divergence Diff",
+    "failureTitle": "AI crawlers are served different content from browsers",
+    "description": "Compares the main content, and the JSON-LD, that each AI-crawler User-Agent receives against the same URL fetched as Chrome, and reports where they diverge. An unrecognised control bot is probed too, so bot management is told apart from deliberate agent-specific branching, and a crawler that is simply blocked is reported without lowering the score.",
+    "scoreDisplayMode": "ternary",
+    "weight": 0.6,
+    "priority": "high",
+    "tier": "scored",
+    "evidenceGrade": "B",
+    "dossier": "docs/evidence/audits/operability-safety/agent-ua-content-divergence-diff.md",
+    "guidance": {
+      "impact": "An agent that reads a different page from the one a human sees cannot be checked by the human it answers to. Where the crawler copy is thinner, the answer engine quotes a page the visitor will never find; where it carries text the browser copy does not, the site is speaking to the model privately — which is the delivery mechanism for every instruction-injection attack that does not need a compromise. A JSON-LD block that differs between variants is the same problem in the field a machine trusts most.",
+      "fix": "Serve one document to every User-Agent. Where a bot-management rule reduces the page for unknown clients, allow the published AI-crawler UAs through it rather than branching on them, and keep the JSON-LD identical across variants. If a crawler should not read the site at all, block it in robots.txt and at the edge rather than serving it a different story.",
+      "code": "# Branching on the crawler's own name is the defect\nif ($http_user_agent ~* \"GPTBot|ClaudeBot\") {\n  rewrite ^ /crawler-copy last;\n}\n\n# Serve one document, decide access separately\n# robots.txt\nUser-agent: GPTBot\nDisallow: /members/",
+      "effort": "moderate",
+      "docsUrl": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/audits/operability-safety/agent-ua-content-divergence-diff.md",
+      "tags": [
+        "injection-safety",
+        "security",
+        "agent-trust",
+        "cloaking"
+      ]
+    }
+  },
+  {
     "id": "operability-safety/aria-attributes",
     "category": "operability-safety",
     "categoryTitle": "Agent Operability & Safety",
@@ -3779,6 +3806,32 @@
     }
   },
   {
+    "id": "operability-safety/drag-and-slider-dependency",
+    "category": "operability-safety",
+    "categoryTitle": "Agent Operability & Safety",
+    "title": "Gesture-only controls with no discrete alternative",
+    "failureTitle": "Gesture-only controls with no discrete alternative",
+    "description": "Flags interactions on task-critical paths whose only operation path is a continuous pointer gesture — range sliders, drag-to-reorder lists, drag-only upload zones, swipe carousels — with no click, keyboard, or typed-value alternative. Each finding names the discrete control that is missing.",
+    "scoreDisplayMode": "binary",
+    "weight": 0.6,
+    "priority": "high",
+    "tier": "scored",
+    "evidenceGrade": "B",
+    "dossier": "docs/evidence/audits/operability-safety/drag-and-slider-dependency.md",
+    "guidance": {
+      "impact": "A continuous pointer gesture asks an agent to synthesise a pointerdown, a run of intermediate pointermove events and a pointerup at a computed pixel offset, with no feedback between steps and no way to check the interim value. Every other agent action is discrete and verifiable. WebSuite measures slider interaction at 0% success for both agents it tested — the worst primitive in its taxonomy — and Anthropic separately documents scrollbars and dropdowns as unreliable under mouse control, recommending keyboard paths instead. Pair the slider with a numeric input bound to the same value and \"set max price to 300\" stops being a gesture and becomes a fill.",
+      "fix": "Keep the gesture and add the discrete path beside it. Give every range slider a numeric input or a select bound to the same value, and give every `role=\"slider\"` the full `aria-valuenow`/`aria-valuemin`/`aria-valuemax` set plus an accessible name. Put move-up and move-down buttons, or a position select, on each item of a reorderable list that sits on a checkout or configuration path. Always render an `<input type=\"file\">` inside a drop zone — an agent sets files on an input and cannot synthesise a drop. Give a carousel real next and previous buttons rather than swipe handlers alone.",
+      "code": "<!-- The gesture stays; the discrete path is what an agent uses. -->\n<fieldset>\n  <label for=\"max-price\">Max price</label>\n  <input id=\"max-price\" type=\"range\" min=\"0\" max=\"500\" step=\"10\">\n  <input type=\"number\" min=\"0\" max=\"500\" step=\"10\" aria-label=\"Max price, exact value\">\n</fieldset>\n\n<div class=\"file-drop\">\n  Drop your CV here, or\n  <label>choose a file<input type=\"file\" name=\"cv\"></label>\n</div>",
+      "effort": "moderate",
+      "docsUrl": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/audits/operability-safety/drag-and-slider-dependency.md",
+      "tags": [
+        "agent-operability",
+        "actionability",
+        "forms"
+      ]
+    }
+  },
+  {
     "id": "operability-safety/duplicate-id",
     "category": "operability-safety",
     "categoryTitle": "Agent Operability & Safety",
@@ -3800,6 +3853,32 @@
         "aria",
         "ids",
         "agent"
+      ]
+    }
+  },
+  {
+    "id": "operability-safety/first-contact-consent-gate-operability",
+    "category": "operability-safety",
+    "categoryTitle": "Agent Operability & Safety",
+    "title": "First-contact consent gate: cost to get past it",
+    "failureTitle": "First-contact consent gate: cost to get past it",
+    "description": "Reports the cold-session consent layer an agent meets before any task work: whether the primary content exists in the served HTML behind it, whether the accept and reject controls carry accessible names and live in the top document rather than a cross-origin iframe, whether main content is hidden from the accessibility tree while the layer is open, and how many clicks a refusal costs. Diagnostic only — it never moves the score.",
+    "scoreDisplayMode": "informative",
+    "weight": 0,
+    "priority": "low",
+    "tier": "informative",
+    "evidenceGrade": "C",
+    "dossier": "docs/evidence/audits/operability-safety/first-contact-consent-gate-operability.md",
+    "guidance": {
+      "impact": "An agent arriving with no cookies spends its first actions on the consent layer, before any step of the actual task. Three properties decide whether it can. A layer rendered inside a cross-origin iframe is invisible to a DOM-text extractor that reads only the top document, so the agent's text and its screenshot disagree and it acts on content it cannot actually see. Accept and reject controls built as unroled, unnamed divs are unaddressable in a snapshot for the same reason a ghost-clickable div is. And main content set `inert` or `aria-hidden=\"true\"` while the layer is open empties every snapshot until the layer is gone — axe's own guidance is that `aria-hidden` removes the element and all its children from the accessibility API. The evidence here is convention rather than documented consumer behaviour, which is why this audit reports rather than scores.",
+      "fix": "Render the consent layer in the top document, not in a cross-origin iframe. Give the accept and reject controls real `<button>` elements with visible text, and offer a one-click refusal beside the one-click acceptance rather than sending a refusal through a preferences journey. Leave the page itself in the DOM behind the layer, and do not set `inert` or `aria-hidden=\"true\"` on main content — use a focus trap inside the dialog instead.",
+      "code": "<!-- The layer an agent can get past: named controls, top document, one click to refuse. -->\n<div id=\"cookie-banner\" role=\"dialog\" aria-label=\"Cookie preferences\">\n  <button id=\"accept-all\">Accept all cookies</button>\n  <button id=\"reject-all\">Reject all cookies</button>\n</div>\n<main><article><!-- the page is here the whole time --></article></main>",
+      "effort": "moderate",
+      "docsUrl": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/audits/operability-safety/first-contact-consent-gate-operability.md",
+      "tags": [
+        "agent-operability",
+        "consent",
+        "first-contact"
       ]
     }
   },
@@ -3933,6 +4012,58 @@
       "tags": [
         "frames",
         "agent"
+      ]
+    }
+  },
+  {
+    "id": "operability-safety/ghost-clickable-element-ratio",
+    "category": "operability-safety",
+    "categoryTitle": "Agent Operability & Safety",
+    "title": "Ghost-clickable elements: click targets an agent cannot address",
+    "failureTitle": "Ghost-clickable elements: click targets an agent cannot address",
+    "description": "Measures the share of on-page click targets that a DOM/accessibility-tree agent cannot address at all: elements that look and behave clickable to a human or a vision model but expose no native or ARIA role and no accessible name, so they never appear in a Playwright-MCP style snapshot. Reported as semantic / (semantic + ghost) over the served markup and its same-origin stylesheets, with the reason each ghost is unaddressable.",
+    "scoreDisplayMode": "ternary",
+    "weight": 0.6,
+    "priority": "high",
+    "tier": "scored",
+    "evidenceGrade": "B",
+    "dossier": "docs/evidence/audits/operability-safety/ghost-clickable-element-ratio.md",
+    "guidance": {
+      "impact": "An element whose click behaviour comes only from a JS listener on a non-interactive tag, or from cursor:pointer styling, and which carries no role and no accessible name, is omitted from the serialized accessibility snapshot that agent toolkits send to the model. Playwright MCP's default mode is the accessibility tree, not pixel input: every action tool takes an exact element reference from the snapshot, and coordinate clicking exists only behind the optional vision capability. An element absent from the snapshot is therefore unaddressable by the default toolchain — the agent cannot emit a valid click and must fail or guess a URL. The accessibility linters cannot warn about it either: axe's button-name and link-name rules only fire on elements that already declare button or link semantics, so a bare unroled div is invisible to them by construction.",
+      "fix": "Make each click target a real control. Use `<a href>` for navigation and `<button>` for actions instead of a div with a click handler; where the markup cannot change, add `role=\"button\"`, `tabindex=\"0\"` and a keyboard handler. Give every icon-only control an accessible name through `aria-label`, `aria-labelledby` or an `<svg><title>`. Never ship an `<a>` without an `href` — it has no link role and no snapshot entry, whatever it is styled to look like.",
+      "code": "<!-- A tile an agent can click: real element, real name. -->\n<a class=\"product-tile\" href=\"/p/42\">Ceramic mug, 12oz</a>\n<button class=\"icon-btn\" aria-label=\"Add to cart\"><svg aria-hidden=\"true\">…</svg></button>\n\n<!-- Not: no role, no name, no snapshot entry, no way to click it. -->\n<div class=\"product-tile\" onclick=\"goTo(42)\"><span>Ceramic mug, 12oz</span></div>\n<a class=\"product-tile\">Ceramic mug, 12oz</a>\n<button class=\"icon-btn\"><svg>…</svg></button>",
+      "effort": "moderate",
+      "docsUrl": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/audits/operability-safety/ghost-clickable-element-ratio.md",
+      "tags": [
+        "agent-operability",
+        "accessibility-tree",
+        "actionability"
+      ]
+    }
+  },
+  {
+    "id": "operability-safety/hover-only-content-and-navigation",
+    "category": "operability-safety",
+    "categoryTitle": "Agent Operability & Safety",
+    "title": "Hover-only navigation and content",
+    "failureTitle": "Hover-only navigation and content",
+    "description": "Detects navigation subtrees and information that exist in the DOM only while a pointer hovers — `:hover`-revealed submenus with no focus or `aria-expanded` equivalent, and content carried solely in `title` attributes or hover cards. Reports each destination URL an agent never discovers.",
+    "scoreDisplayMode": "binary",
+    "weight": 0.6,
+    "priority": "high",
+    "tier": "scored",
+    "evidenceGrade": "B",
+    "dossier": "docs/evidence/audits/operability-safety/hover-only-content-and-navigation.md",
+    "guidance": {
+      "impact": "A submenu revealed only by an ancestor `:hover` rule is `display:none` or `visibility:hidden` in the resting DOM, and Playwright's actionability contract defines such an element as not visible — so every Playwright-derived agent refuses to click it, and the snapshot serializer omits it entirely. The agent never learns those destinations exist: it does not fail loudly, it simply reports that the site has no page for what the user asked. WebSuite measures the information half of the same defect at 0% success for tooltip-based retrieval across both agents it tested. The fix is cheap and it is the same fix keyboard users need, which is why it is worth doing once.",
+      "fix": "Add a keyboard and ARIA path beside the pointer path. Put `:focus-within` (or a `[aria-expanded=\"true\"]` selector driven by a real toggle) on the same rule that `:hover` triggers, so the submenu is revealed by focus as well as by a pointer. Give the trigger `aria-expanded` and `aria-controls` pointing at the submenu. Move anything a `title` attribute carries into visible text or an `aria-describedby` target, and give every hover card an id that a focusable element references.",
+      "code": "/* Give the keyboard — and every agent — the same path the pointer has. */\n.nav li:hover .submenu,\n.nav li:focus-within .submenu,\n.nav li [aria-expanded=\"true\"] + .submenu { display: block }",
+      "effort": "moderate",
+      "docsUrl": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/audits/operability-safety/hover-only-content-and-navigation.md",
+      "tags": [
+        "agent-operability",
+        "navigation",
+        "discoverability"
       ]
     }
   },
@@ -4143,6 +4274,32 @@
     }
   },
   {
+    "id": "operability-safety/reflected-parameter-injection-canary",
+    "category": "operability-safety",
+    "categoryTitle": "Agent Operability & Safety",
+    "title": "Reflected-Parameter Injection Canary",
+    "failureTitle": "URL input is reflected into fields agents read as the page speaking",
+    "description": "Sends at most five read-only GET probes carrying a random per-scan token, then reports whether the site echoes that token back into its title, meta description, canonical link, JSON-LD, or rendered text — the fields an answer engine lifts verbatim, which would let any third party mint a URL on this domain that shows a visiting agent arbitrary text.",
+    "scoreDisplayMode": "ternary",
+    "weight": 0.6,
+    "priority": "critical",
+    "tier": "scored",
+    "evidenceGrade": "B",
+    "dossier": "docs/evidence/audits/operability-safety/reflected-parameter-injection-canary.md",
+    "guidance": {
+      "impact": "Agents and answer engines weight a source by domain authority, and a reflected-input URL passes human inspection because the hostname is genuine. If attacker-controlled query or path input lands in the page's own title, meta description, canonical link, or JSON-LD strings, the domain becomes a self-serve injection host: the attacker does not need to compromise anything, only to share a link. Reflection into rendered text is the same defect one step down, and it is only contained while the page stays out of an index.",
+      "fix": "Escape URL-derived input before it reaches any template, and keep it out of `<title>`, `<meta name=\"description\">`, `og:description`, `rel=\"canonical\"` and JSON-LD entirely — those fields should describe the page, not the request. Where a search page must echo the query back to the visitor, render it as escaped text inside the body and mark the page `noindex`.",
+      "code": "<!-- Reflected into the fields an answer engine quotes -->\n<title>Results for {{ query }}</title>\n<link rel=\"canonical\" href=\"/search?q={{ query }}\">\n\n<!-- Fixed: a fixed title, a self-referential canonical, escaped body echo -->\n<title>Search results</title>\n<link rel=\"canonical\" href=\"/search\">\n<meta name=\"robots\" content=\"noindex\">\n<p>Results for <span>{{ query | escape }}</span></p>",
+      "effort": "moderate",
+      "docsUrl": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/audits/operability-safety/reflected-parameter-injection-canary.md",
+      "tags": [
+        "injection-safety",
+        "security",
+        "agent-trust"
+      ]
+    }
+  },
+  {
     "id": "operability-safety/security-header-hygiene",
     "category": "operability-safety",
     "categoryTitle": "Agent Operability & Safety",
@@ -4165,6 +4322,32 @@
         "security",
         "headers",
         "hygiene"
+      ]
+    }
+  },
+  {
+    "id": "operability-safety/stateful-control-introspectability",
+    "category": "operability-safety",
+    "categoryTitle": "Agent Operability & Safety",
+    "title": "Stateful controls: current state readable by an agent",
+    "failureTitle": "Stateful controls: current state readable by an agent",
+    "description": "Checks that every control whose purpose is to hold a state — toggles, switches, checkboxes, radio groups, tabs, accordions, disclosure triggers, sort direction, filter chips — exposes that state through a machine-readable attribute rather than a CSS class alone. Reports the count of state-bearing controls whose current value an agent cannot read, each with the class that carries the state instead.",
+    "scoreDisplayMode": "ternary",
+    "weight": 0.6,
+    "priority": "high",
+    "tier": "scored",
+    "evidenceGrade": "B",
+    "dossier": "docs/evidence/audits/operability-safety/stateful-control-introspectability.md",
+    "guidance": {
+      "impact": "An agent works as observe, act, verify. If a toggle's only \"on\" signal is `class=\"is-active\"` and a colour change, the accessibility snapshot is byte-identical before and after the click, so the agent cannot verify the post-condition: it either clicks again and flips the state back, or reports success with no evidence. The accessibility linters cannot catch this, because `aria-required-attr` fires only once the element already declares `role=\"switch\"` or `role=\"checkbox\"` — the common class-only toggle declares no role and passes silently. Benchmarks put the cost high: WebSuite measures switch, accordion and dropdown primitives among the worst-performing interactions for web agents, and Operator's confirmation design assumes the agent can observe a state transition before acting on it.",
+      "fix": "Publish the state where a snapshot can read it. Give a toggle `role=\"switch\"` with `aria-checked`, a tab `role=\"tab\"` with `aria-selected`, a filter chip `aria-pressed`, a disclosure trigger `aria-expanded` alongside its `aria-controls`, and a sortable column header `aria-sort=\"ascending\"`, `\"descending\"` or `\"none\"`. Keep the class for styling and update the attribute in the same handler that updates the class. Where the markup allows it, use `<details>`/`<summary>` or a native checkbox and let the DOM carry the state for free.",
+      "code": "<!-- The state is in the attribute, so the snapshot changes when it flips. -->\n<button class=\"toggle is-on\" role=\"switch\" aria-checked=\"true\">Share my data</button>\n<button class=\"tab is-active\" aria-selected=\"true\" role=\"tab\">Overview</button>\n<button aria-controls=\"faq-1\" aria-expanded=\"false\">What is your return policy?</button>\n\n<!-- Not: the class flips, the accessibility snapshot does not. -->\n<div class=\"toggle is-on\" onclick=\"flip()\">Share my data</div>\n<button class=\"tab is-active\">Overview</button>",
+      "effort": "moderate",
+      "docsUrl": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/audits/operability-safety/stateful-control-introspectability.md",
+      "tags": [
+        "agent-operability",
+        "accessibility-tree",
+        "state"
       ]
     }
   },
@@ -4214,6 +4397,140 @@
         "tables",
         "extraction",
         "agent"
+      ]
+    }
+  },
+  {
+    "id": "operability-safety/third-party-dom-write-blast-radius",
+    "category": "operability-safety",
+    "categoryTitle": "Agent Operability & Safety",
+    "title": "Third-party DOM-write blast radius",
+    "failureTitle": "Third-party DOM-write blast radius",
+    "description": "Counts how many separate companies can write text into the DOM an agent reads: every registrable domain shipping a script or stylesheet into the page, judged against whether the Content-Security-Policy actually constrains what may run, and whether each resource is pinned with an `integrity` hash. Cross-origin frames with no `sandbox` are reported alongside. The origin list is the deliverable.",
+    "scoreDisplayMode": "ternary",
+    "weight": 0.6,
+    "priority": "high",
+    "tier": "scored",
+    "evidenceGrade": "B",
+    "dossier": "docs/evidence/audits/operability-safety/third-party-dom-write-blast-radius.md",
+    "guidance": {
+      "impact": "An agent reads the DOM as one document with one level of trust. It has no way to tell text the site wrote from text a vendor script injected after load, so every third-party origin that can write to the page can write instructions the agent will read as the site's own. The count is the risk: eleven uncontrolled origins is eleven independent companies — and their own supply chains — with the same authority over what an agent believes about the site. A Content-Security-Policy with a nonce, a hash or `strict-dynamic` is what turns that list from \"whoever\" into \"these, and only these\". A policy whose sources include `https:` or `*` is present in the response and constrains nothing.",
+      "fix": "Publish a `script-src` built on a per-response nonce, or on hashes, with `strict-dynamic` if a tag loader needs to bring its own dependencies — and drop `unsafe-inline`, `https:` and `*`, which allow every host that speaks the scheme. Add an `integrity` hash and `crossorigin=\"anonymous\"` to every third-party script and stylesheet you cannot host yourself. Cut the origin list itself: each vendor is a separate supply chain with write access to what agents read. Give every cross-origin frame a `sandbox` attribute with only the capabilities it needs.",
+      "code": "# Every script that runs is one you named. A nonce, not a scheme.\nContent-Security-Policy: script-src 'self' 'nonce-{{random}}' 'strict-dynamic'; object-src 'none'; base-uri 'none'\n\n<!-- And pin what you cannot host yourself. -->\n<script src=\"https://cdn.vendor.com/t.js\"\n        integrity=\"sha384-…\" crossorigin=\"anonymous\"></script>",
+      "effort": "moderate",
+      "docsUrl": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/audits/operability-safety/third-party-dom-write-blast-radius.md",
+      "tags": [
+        "injection-safety",
+        "csp",
+        "supply-chain"
+      ]
+    }
+  },
+  {
+    "id": "operability-safety/ugc-trust-boundary-markers",
+    "category": "operability-safety",
+    "categoryTitle": "Agent Operability & Safety",
+    "title": "UGC Trust-Boundary Markers",
+    "failureTitle": "Visitor-written regions carry no boundary an agent can see",
+    "description": "Locates visitor-contributed regions — comments, reviews, Q&A, forum posts, submission forms — and checks whether any machine-readable boundary separates them from editorial copy: `data-nosnippet` containment on a span, div or section, `rel=\"ugc\"` on their outbound links, and whether raw markup survives the sanitizer inside them.",
+    "scoreDisplayMode": "ternary",
+    "weight": 0.6,
+    "priority": "high",
+    "tier": "scored",
+    "evidenceGrade": "B",
+    "dossier": "docs/evidence/audits/operability-safety/ugc-trust-boundary-markers.md",
+    "guidance": {
+      "impact": "Attacker-controllable text sits in the same DOM as first-party copy with no boundary, so anything a visitor types reads, to a fetching agent, as a statement the domain made. Google excludes text inside a `data-nosnippet` span, div or section from snippets across web search, Discover and AI Overviews, and includes everything outside it. The sanitizer arm matters most: if a comment body can carry an inline style or an iframe, hiding an instruction inside visitor text becomes self-serve on this site.",
+      "fix": "Wrap each visitor-written region in a `<div data-nosnippet>` — the attribute is honoured on span, div and section only — and add `rel=\"ugc\"` to links inside it. Strip inline `style`, `iframe`, `script` and remote `img` from submitted markup at render time rather than at submit time, so already-stored content is covered too.",
+      "code": "<!-- Visitor text with no boundary an agent can see -->\n<section id=\"comments\">\n  <div class=\"comment\">Great mug. <a href=\"https://spam.test/\">More</a></div>\n</section>\n\n<!-- Contained and marked -->\n<div data-nosnippet>\n  <section id=\"comments\">\n    <div class=\"comment\">Great mug. <a rel=\"ugc nofollow\" href=\"https://spam.test/\">More</a></div>\n  </section>\n</div>",
+      "effort": "moderate",
+      "docsUrl": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/audits/operability-safety/ugc-trust-boundary-markers.md",
+      "tags": [
+        "injection-safety",
+        "security",
+        "agent-trust"
+      ]
+    }
+  },
+  {
+    "id": "operability-safety/unicode-covert-channel-scan",
+    "category": "operability-safety",
+    "categoryTitle": "Agent Operability & Safety",
+    "title": "Invisible codepoints carrying hidden text",
+    "failureTitle": "Invisible codepoints carrying hidden text",
+    "description": "Scans rendered text, the attributes an agent reads, every JSON-LD string value and the site’s root files for codepoints that carry information invisibly: the Unicode Tags block (U+E0000–U+E007F), bidirectional overrides and isolates (U+202A–U+202E, U+2066–U+2069), and zero-width or filler characters (U+200B–U+200D, U+2060, U+FEFF, U+00AD, U+115F, U+1160, U+3164, U+FFA0). Decodes any tag-block run back to ASCII and prints the invisible sentence sitting on the page.",
+    "scoreDisplayMode": "ternary",
+    "weight": 0.6,
+    "priority": "critical",
+    "tier": "scored",
+    "evidenceGrade": "B",
+    "dossier": "docs/evidence/audits/operability-safety/unicode-covert-channel-scan.md",
+    "guidance": {
+      "impact": "Tag-block codepoints mirror ASCII and, per Unicode, render as nothing in tag-unaware implementations — while modern LLM tokenizers process them normally. A complete instruction can therefore ride inside a product description that no human and no visual QA pass can see. Bidi controls make the rendered order differ from the logical order a text-extracting agent reads, which is the Trojan Source class (CVE-2021-42574). Zero-width characters defeat naive substring matching on both sides at once: the site’s own filters and the agent’s. None of this is visible in a screenshot, a browser, or a review — only in the bytes.",
+      "fix": "Strip these codepoints at the boundary where text enters the site: user-generated content, imported feeds, translated copy, and anything pasted from a rich-text editor. Reject the Unicode Tags block outright — it has no legitimate web use. Allow bidi controls only in balanced pairs and only around text that is actually right-to-left. Allow ZWJ and ZWNJ only inside emoji sequences and in scripts whose shaping needs them. Run the same filter over robots.txt, llms.txt and sitemap.xml, which agents ingest with high trust and humans almost never read.",
+      "code": "# Find them before shipping. Every one of these renders as nothing.\ngrep -P '[\\x{E0000}-\\x{E007F}]' page.html      # Unicode Tags block\ngrep -P '[\\x{202A}-\\x{202E}\\x{2066}-\\x{2069}]' page.html   # bidi controls\ngrep -P '[\\x{200B}-\\x{200D}\\x{2060}\\x{FEFF}\\x{00AD}]' page.html  # zero-width and soft hyphen",
+      "effort": "moderate",
+      "docsUrl": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/audits/operability-safety/unicode-covert-channel-scan.md",
+      "tags": [
+        "injection-safety",
+        "unicode",
+        "prompt-injection"
+      ]
+    }
+  },
+  {
+    "id": "operability-safety/unsafe-agent-triggerable-affordances",
+    "category": "operability-safety",
+    "categoryTitle": "Agent Operability & Safety",
+    "title": "State-changing links an agent can trigger by fetching them",
+    "failureTitle": "State-changing links an agent can trigger by fetching them",
+    "description": "Finds links and GET forms whose URL changes state on the server — delete, cancel, revoke, unsubscribe, logout, add-to-cart, confirm — with no POST, no confirmation affordance and no `rel=\"nofollow\"` in the way. Markup analysis only: a flagged URL is reported, never fetched.",
+    "scoreDisplayMode": "ternary",
+    "weight": 0.6,
+    "priority": "critical",
+    "tier": "scored",
+    "evidenceGrade": "B",
+    "dossier": "docs/evidence/audits/operability-safety/unsafe-agent-triggerable-affordances.md",
+    "guidance": {
+      "impact": "An agent exploring a site follows links, and a link that changes state changes it on the first fetch — no click, no intent, no confirmation. The same property makes the site a target for indirect prompt injection: text on a page can name the URL, and an agent that reads it as an instruction performs the action with the user's own session. Disallowing the path in robots.txt is only a partial mitigation, because a user-initiated fetch is documented as not necessarily bound by robots.txt. The underlying rule is older than agents: a GET is a safe method, meaning it must not have side effects, and everything here is a violation of that rule that agents simply make expensive.",
+      "fix": "Move every state change to a POST. Where the markup cannot change immediately, put a confirmation affordance on the link — `data-turbo-confirm`, `data-confirm`, or an `onclick` that calls `confirm()` — and add `rel=\"nofollow\"` so crawlers and agents leave it alone. Do not rely on robots.txt: it constrains well-behaved crawling, not a user-initiated fetch. A GET form whose action mutates is the same defect in a different shape, and it is replayable straight from the query string.",
+      "code": "<!-- A GET is a read. Anything that changes state takes a POST. -->\n<form method=\"post\" action=\"/items/7/delete\">\n  <button type=\"submit\">Delete item</button>\n</form>\n\n<!-- Where the markup cannot change, at minimum keep agents off it. -->\n<a href=\"/items/7?action=delete\" rel=\"nofollow\" data-turbo-confirm=\"Delete item 7?\">Delete</a>",
+      "effort": "easy",
+      "docsUrl": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/audits/operability-safety/unsafe-agent-triggerable-affordances.md",
+      "tags": [
+        "injection-safety",
+        "http-semantics",
+        "prompt-injection"
+      ]
+    }
+  },
+  {
+    "id": "operability-safety/url-addressable-state-and-pagination-fallback",
+    "category": "operability-safety",
+    "categoryTitle": "Agent Operability & Safety",
+    "title": "Listings walkable by URL: pagination and facet fallback",
+    "failureTitle": "Listings walkable by URL: pagination and facet fallback",
+    "description": "Checks that a listing exposes its later pages through real `href` pagination or a `rel=\"next\"` link rather than infinite-scroll machinery alone, and that each facet changes what the server returns rather than only what the browser shows. Reports the deepest item index reachable by URL alone, and any facet that turns out to be client-only.",
+    "scoreDisplayMode": "ternary",
+    "weight": 0.6,
+    "priority": "high",
+    "tier": "scored",
+    "evidenceGrade": "B",
+    "dossier": "docs/evidence/audits/operability-safety/url-addressable-state-and-pagination-fallback.md",
+    "applicablePageTypes": [
+      "category"
+    ],
+    "guidance": {
+      "impact": "An agent reaches a listing by URL and reads what the server sent. Items that only arrive after an IntersectionObserver fires are not in that response, so a catalogue of 5,000 products presents as the 20 that were server-rendered — and the agent answers \"we only carry 20\" without ever knowing it was wrong. A \"Load more\" button is better because it is a discrete, verifiable action, but it still costs one click per page and gives the agent no way to jump. Real `href` pagination costs nothing to add beside the scroll, and it is also what a crawler needs to index the catalogue at all. The same holds for facets: a filter applied only in the browser has no URL, so the filtered view cannot be linked, cited, or returned to.",
+      "fix": "Keep the infinite scroll and put real links underneath it. Render `<a href=\"?page=2\">` for each page, or at minimum a `<link rel=\"next\">` in the head, so the whole listing can be walked without running scripts. Make every facet a real query parameter the server honours, and have the server return the filtered set for that URL. Where a total is declared — `numberOfItems` or a \"1,240 results\" line — make sure that many items are actually reachable by following the links you rendered.",
+      "code": "<!-- The scroll can stay. The href is what an agent walks. -->\n<nav class=\"pagination\" aria-label=\"Pagination\">\n  <a href=\"/collections/mugs?page=2\" rel=\"next\">Page 2</a>\n  <a href=\"/collections/mugs?page=3\">Page 3</a>\n</nav>\n<link rel=\"next\" href=\"/collections/mugs?page=2\">\n\n<!-- Facets that the server honours, so the filtered view has its own URL. -->\n<a class=\"facet\" href=\"/collections/mugs?colour=red\">Red</a>",
+      "effort": "complex",
+      "docsUrl": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/audits/operability-safety/url-addressable-state-and-pagination-fallback.md",
+      "tags": [
+        "agent-operability",
+        "navigation",
+        "pagination",
+        "facets"
       ]
     }
   },
