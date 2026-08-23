@@ -43,6 +43,7 @@ export { RobotsAiGroupShadowingAudit } from './robots-ai-group-shadowing';
 export { AiCrawlerEdgeParityAudit } from './ai-crawler-edge-parity';
 export { BotContentDeltaDeclaredAudit } from './bot-content-delta-declared';
 export { AiUsageSignalCoherenceAcrossChannelsAudit } from './ai-usage-signal-coherence-across-channels';
+export { AiprefContentUsageDeclarationValidityAudit } from './aipref-content-usage-declaration-validity';
 
 import { NoNofollowAudit } from './no-nofollow';
 import { NoRedirectChainsAudit } from './no-redirect-chains';
@@ -77,6 +78,7 @@ import { RobotsAiGroupShadowingAudit } from './robots-ai-group-shadowing';
 import { AiCrawlerEdgeParityAudit } from './ai-crawler-edge-parity';
 import { BotContentDeltaDeclaredAudit } from './bot-content-delta-declared';
 import { AiUsageSignalCoherenceAcrossChannelsAudit } from './ai-usage-signal-coherence-across-channels';
+import { AiprefContentUsageDeclarationValidityAudit } from './aipref-content-usage-declaration-validity';
 
 /** Every audit that lives in the access-crawl-control category, in map order. */
 export const ACCESS_CRAWL_CONTROL_AUDITS = [
@@ -113,4 +115,5 @@ export const ACCESS_CRAWL_CONTROL_AUDITS = [
   AiCrawlerEdgeParityAudit,
   BotContentDeltaDeclaredAudit,
   AiUsageSignalCoherenceAcrossChannelsAudit,
+  AiprefContentUsageDeclarationValidityAudit,
 ] as const;

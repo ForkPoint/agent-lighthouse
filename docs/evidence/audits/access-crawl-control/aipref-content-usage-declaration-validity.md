@@ -1,18 +1,19 @@
 ---
-check: aipref-content-usage-declaration-validity
-title: "AIPREF Content-Usage declaration validity"
-domain: bot-auth-access
-status: proposed
+audit: access-crawl-control/aipref-content-usage-declaration-validity
+category: access-crawl-control
+source_file: packages/core/src/audits/access-crawl-control/aipref-content-usage-declaration-validity.ts
+slug: aipref-content-usage-declaration-validity
 evidence_grade: B
-uniqueness: unique
-difficulty: static-fetch
-scoring_tier: scored
+tier: scored
+disposition: "new in v2 — graduated from proposal 2026-08-23"
 reviewed: 2026-08-20
+graduated: 2026-08-23
 ---
+
 
 # AIPREF Content-Usage declaration validity
 
-> Proposed check. Evidence grade **B** · unique · implementation: `static-fetch`
+> Shipped in v2. Evidence grade **B** · scored tier · unique · implementation: `static-fetch`
 
 ## What it checks
 
@@ -54,3 +55,47 @@ Tier per evidence policy: **scored** — grade B meets the A/B bar required for 
 ## Review history
 
 - 2026-08-20 — proposed by the novel-checks research pass (10-agent evidence workflow); sources URL-verified at research time.
+
+## Implementation deviations
+
+The sketch's six steps ship: collection at file scope and per group, the leading
+path token split off before parsing, RFC 8941 parsing, category and value
+validation with a distinct message for legacy `Content-Signal` syntax, the
+attach-05 inertness rule, and the robots-versus-header cross-check.
+
+Three decisions the sketch leaves open.
+
+**`ai-input` is not an AIPREF category.** It is Cloudflare's Content-Signal
+vocabulary. Accepting it inside a `Content-Usage` line would pass exactly the
+migration mistake this audit exists to catch, so it is reported as an unknown
+category. The cross-channel audit still reads it, because there it arrives on
+the directive that defines it.
+
+**The parser is RFC 8941, not AIPREF.** `parseDictionary` in
+`gatherers/structured-fields.ts` accepts `train-ai=yes` — `yes` is a
+syntactically valid token — and this audit rejects it against the vocabulary
+with a message naming the directive it belongs to. Putting the vocabulary in
+the parser would have made a general header parser refuse a legal structured
+field.
+
+**Inertness is only reported for robots.txt declarations.** attach-05 gives the
+rule for the robots.txt attachment, where the same file carries the
+`Allow`/`Disallow` that decides it. A `Content-Usage` response header arrives
+with the resource, so a crawler that received it was allowed to fetch it.
+
+Status bands follow the sketch's verdict list: a syntax or vocabulary error, a
+channel disagreement, or every declaration inert fails; only legacy
+`Content-Signal`, or a valid declaration beside an inert one, warns; a valid,
+crawlable, consistent declaration passes. No declaration at all is
+`notApplicable` — AIPREF is a draft, and not publishing a preference is not a
+defect.
+
+## Deferred
+
+- **Longest-prefix resolution between two declarations.** attach-05 says the
+  longest matching prefix wins, so two declarations for nested paths are not a
+  contradiction. This audit compares only declarations with the same scope, which
+  under-reports rather than inventing a conflict the spec resolves.
+- **Newer registered categories.** The vocabulary draft may register more than
+  `train-ai` and `search`. Until it does, an unregistered token is more likely a
+  typo than a forward reference, and the finding says which categories exist.
