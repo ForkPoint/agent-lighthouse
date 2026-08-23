@@ -73,3 +73,50 @@ Best of the AI-specific link audits — the underlying practice is real and does
 
 - 2026-08-20 — code review (11-agent workflow) + evidence research (12-domain workflow, 400 sources).
 - 2026-08-21 — dossier generated; disposition pending final taxonomy design.
+
+## Absorbed proposal — Markdown alternate: discoverable, resolvable, faithful, cheaper
+
+On 2026-08-23 the
+`token-economics/markdown-alternate-discoverable-resolvable-faithful-cheaper`
+proposal (evidence grade **B**, `static-fetch`) was folded into this audit
+rather than shipped beside it. Both are about the same artifact, and two audits
+scoring one `<link rel="alternate">` would have double-counted it.
+
+What the fold changed here:
+
+- Discovery is no longer head-link only. Three routes are tried, in the order an
+  agent would try them: the declared `alternate` link (from the head **or** from
+  a `Link` response header), then `url + ".md"`, then the same URL with
+  `Accept: text/markdown`. A site that serves an alternate without declaring it
+  now passes discovery where it used to fail.
+- The alternate is fetched, not merely counted. At most three read-only `GET`
+  probes per scan, every URL `isSafeUrl()`-gated. A content-negotiation response
+  that comes back as `text/html` is the same page again and does not count.
+- Resolvability: the response must be `text/markdown`, with any parameter
+  allowed after it, per RFC 7763. `text/plain` and `text/html` fail — a client
+  that negotiated for markdown cannot tell it received markdown.
+- Fidelity: heading recall against the page's `h1`–`h6`, and five-word shingle
+  recall against its block-level text, both floored at 0.9. The failing message
+  names the missing headings.
+- Cost: token counts of both documents at `o200k_base`, reported absolutely and
+  as a percentage saving.
+- MDX/JSX component tags warn rather than fail: real-world alternates contain
+  them, but an unresolved component is content the agent cannot interpret.
+
+A declared link whose document cannot be read in the scan — an empty body, or a
+fetch this scanner could not complete — still passes, with `details.verified`
+false and the message saying fidelity was not assessed. A declared link that
+resolves to a 4xx or 5xx fails: that is checkable brokenness, where an
+unreadable probe would be a finding about our own fetch.
+
+What did not change: the audit's id, its grade **A** and weight 1.0, and its
+central verdict — a page with no usable markdown alternate fails. The proposal
+would have made that case `notApplicable`; this audit's grade-A evidence is
+precisely about the absence of the link, so the shipped meaning stands. The
+`scoreDisplayMode` moved from `binary` to `ternary` to carry the new warn band.
+
+The proposal's own finding about the convention is worth recording: the
+`llms.txt` draft specifies the `.md` mirror convention and the
+`type="text/markdown"` link relation, but states no requirement for the file's
+own HTTP `Content-Type`. The resolvability check therefore enforces RFC 7763,
+not `llms.txt`.
