@@ -35,7 +35,7 @@ vi.mock('./fetcher', async (importOriginal) => {
 
 // Avoid spinning up jsdom for every page; the orchestrator only needs
 // a resolved result object.
-vi.mock('./audits/accessibility/runner', () => ({
+vi.mock('./audits/operability-safety/runner', () => ({
   runA11yForHtml: async () => ({}),
   A11Y_RULES: [],
 }));
@@ -47,7 +47,7 @@ vi.mock('./audit-runner', async (importOriginal) => {
   return { ...actual, runAudits: vi.fn(actual.runAudits) };
 });
 
-import { runScan } from './orchestrator';
+import { runScan, READINESS_VITAL_IDS } from './orchestrator';
 import type { ScanEvent } from './progress';
 import { defaultConfig } from './audit-config';
 import { runAudits } from './audit-runner';
@@ -242,6 +242,52 @@ describe('runScan — homepage unreachable', () => {
 // No root files, only "other" discovery bucket
 // ---------------------------------------------------------------------------
 
+describe('runScan — evidence tier', () => {
+  // Every registered audit declares a tier, and toCheckResult stamps it. If a
+  // check ever reached a report without one, the advisory badge would silently
+  // stop rendering.
+  it('stamps a tier on every check in the report', async () => {
+    const url = 'https://example.com/';
+    set(url, '<html><body><h1>Home</h1></body></html>');
+
+    const report = await runScan(url);
+    const all = report.categories.flatMap((c) => c.checks);
+
+    expect(all.length).toBeGreaterThan(0);
+    expect(
+      all.every(
+        (c) => c.tier === 'scored' || c.tier === 'informative' || c.tier === 'experimental',
+      ),
+    ).toBe(true);
+  });
+});
+
+describe('runScan — category filter', () => {
+  it('scans only the requested categories', async () => {
+    const url = 'https://example.com/';
+    set(url, '<html><body><h1>Home</h1></body></html>');
+
+    const report = await runScan(url, { categories: ['machine-discovery'] });
+
+    expect(report.categories.map((c) => c.id)).toEqual(['machine-discovery']);
+  });
+
+  it('excludes experimental audits unless asked for them', async () => {
+    const url = 'https://example.com/';
+    set(url, '<html><body><h1>Home</h1></body></html>');
+
+    const off = await runScan(url, { categories: ['access-crawl-control'] });
+    const on = await runScan(url, {
+      categories: ['access-crawl-control'],
+      includeExperimental: true,
+    });
+
+    const ids = (r: typeof off) => r.categories.flatMap((c) => c.checks).map((c) => c.id);
+    expect(ids(off)).not.toContain('access-crawl-control/tdm-rep');
+    expect(ids(on)).toContain('access-crawl-control/tdm-rep');
+  });
+});
+
 describe('runScan — no root files', () => {
   it('discovers from internal links when there is no sitemap or llms.txt', async () => {
     const url = 'https://example.com/';
@@ -380,9 +426,204 @@ describe('runScan — report assembly fallbacks', () => {
     expect(report.recommendations).toHaveLength(2);
     // Both passes surface as top passes (sorted via the weight fallback).
     expect(report.topPasses).toHaveLength(2);
-    // No crawler-permissions / technical-readiness checks → those vitals are 0.
+    // No access-crawl-control / content-extraction checks → those vitals are 0.
     expect(report.readinessVitals?.botAccessibility).toBe(0);
     expect(report.readinessVitals?.technical).toBe(0);
+  });
+
+  it('never lets an na check move a readiness vital', async () => {
+    const url = 'https://example.com/';
+
+    const mk = (over: Record<string, unknown>) =>
+      ({
+        category: 'misc',
+        title: 't',
+        description: 'd',
+        score: 0,
+        scoreDisplayMode: 'binary',
+        impact: 'Low',
+        fix: 'f',
+        explanation: 'e',
+        details: {},
+        ...over,
+      }) as unknown;
+
+    // One passing check per vital, so each vital has real evidence to average.
+    const applicable = [
+      mk({ id: 'structured-data/service-schema', status: 'pass', priority: 'low', score: 1 }),
+      mk({ id: 'machine-discovery/llms-txt-exists', status: 'pass', priority: 'low', score: 1 }),
+      mk({ id: 'cp1', category: 'access-crawl-control', status: 'pass', priority: 'low', score: 1 }),
+      mk({ id: 'tr1', category: 'content-extraction', status: 'pass', priority: 'low', score: 1 }),
+    ];
+
+    // The na stubs a real scan emits: status 'na' with the stub score of 0.
+    const naStubs = [
+      mk({ id: 'agentic-commerce/offer-schema', status: 'na', priority: 'low', score: 0 }),
+      mk({ id: 'machine-discovery/llms-txt-structure', status: 'na', priority: 'low', score: 0 }),
+      mk({ id: 'cp2', category: 'access-crawl-control', status: 'na', priority: 'low', score: 0 }),
+      mk({ id: 'tr2', category: 'content-extraction', status: 'na', priority: 'low', score: 0 }),
+    ];
+
+    const run = async (checks: unknown[]) => {
+      h.map.clear();
+      set(url, CONTENT_HTML);
+      vi.mocked(runAudits).mockResolvedValueOnce({
+        checks: checks as AuditRunResult['checks'],
+        categories: [],
+        overallScore: 100,
+      });
+      return runScan(url);
+    };
+
+    const without = await run(applicable);
+    const withNa = await run([...applicable, ...naStubs]);
+
+    expect(without.readinessVitals).toEqual({
+      commerce: 100,
+      content: 100,
+      botAccessibility: 100,
+      technical: 100,
+    });
+    expect(withNa.readinessVitals).toEqual(without.readinessVitals);
+    expect(withNa.readinessScore).toBe(without.readinessScore);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// v2 vitals remap (Plan 3, Task 11)
+// ---------------------------------------------------------------------------
+
+describe('readiness vitals — v2 id translation', () => {
+  it('every id the vitals name is a registered audit', () => {
+    const registered = new Set(
+      Object.values(defaultConfig.audits)
+        .flat()
+        .map((reg) => reg.meta.id),
+    );
+    const dangling = [...READINESS_VITAL_IDS.commerce, ...READINESS_VITAL_IDS.content].filter(
+      (id) => !registered.has(id),
+    );
+    expect(dangling).toEqual([]);
+  });
+
+  it('commerce names exactly the v2 ids of v1 3.8/3.14/3.21/3.22/3.23/3.24', () => {
+    expect([...READINESS_VITAL_IDS.commerce].sort()).toEqual(
+      [
+        'structured-data/service-schema',
+        'agentic-commerce/offer-schema',
+        'agentic-commerce/product-identifiers',
+        'structured-data/advanced-product-details',
+        // 3.23 resolves through its Plan 4 merge target, 3.13.
+        'structured-data/review-schema',
+        'agentic-commerce/product-transaction-certainty',
+      ].sort(),
+    );
+  });
+
+  // Differential: the same evidence, once under its v1 ids and once under the
+  // v2 ids Tasks 3–10 renamed it to, must produce identical vitals. The v1
+  // column carries the v1 rules (numeric id lists, `crawler-permissions`
+  // category); the v2 column is what the scanner emits today.
+  it('a translated fixture scores the same as its pre-translation self', async () => {
+    const url = 'https://example.com/';
+
+    // v1 id → v2 id, with the score the check reports on both sides.
+    const rows = [
+      // commerce (v1 3.8 / 3.14)
+      { v1: '3.8', v2: 'structured-data/service-schema', v2Category: 'structured-data', score: 1 },
+      { v1: '3.14', v2: 'agentic-commerce/offer-schema', v2Category: 'agentic-commerce', score: 0 },
+      // content (v1 1.1 / 2.4)
+      { v1: '1.1', v2: 'machine-discovery/llms-txt-exists', v2Category: 'machine-discovery', score: 1 },
+      { v1: '2.4', v2: 'answer-readiness/faq-sections', v2Category: 'answer-readiness', score: 0.5 },
+      // botAccessibility (v1 category `crawler-permissions`)
+      { v1: '4.1', v2: 'access-crawl-control/gptbot', v2Category: 'access-crawl-control', score: 1 },
+      { v1: '4.2', v2: 'access-crawl-control/anthropic-ai', v2Category: 'access-crawl-control', score: 0 },
+    ];
+
+    // Pre-translation expectations, computed with the v1 rules over the v1 column.
+    const V1_COMMERCE = ['3.8', '3.14', '3.21', '3.22', '3.23', '3.24'];
+    const V1_CONTENT = ['1.1', '2.4'];
+    const mean = (scores: number[]) =>
+      scores.length === 0
+        ? 0
+        : Math.round((scores.reduce((s, x) => s + x, 0) / scores.length) * 100);
+    const expected = {
+      commerce: mean(rows.filter((r) => V1_COMMERCE.includes(r.v1)).map((r) => r.score)),
+      content: mean(rows.filter((r) => V1_CONTENT.includes(r.v1)).map((r) => r.score)),
+      botAccessibility: mean(
+        rows.filter((r) => r.v2Category === 'access-crawl-control').map((r) => r.score),
+      ),
+    };
+
+    h.map.clear();
+    set(url, CONTENT_HTML);
+    vi.mocked(runAudits).mockResolvedValueOnce({
+      checks: rows.map((r) => ({
+        id: r.v2,
+        category: r.v2Category,
+        title: 't',
+        description: 'd',
+        status: r.score === 1 ? 'pass' : r.score === 0 ? 'fail' : 'warn',
+        score: r.score,
+        scoreDisplayMode: 'binary',
+        priority: 'low',
+        impact: 'Low',
+        fix: 'f',
+        explanation: 'e',
+        details: {},
+      })) as unknown as AuditRunResult['checks'],
+      categories: [],
+      overallScore: 50,
+    });
+
+    const report = await runScan(url);
+    expect(report.readinessVitals?.commerce).toBe(expected.commerce);
+    expect(report.readinessVitals?.content).toBe(expected.content);
+    expect(report.readinessVitals?.botAccessibility).toBe(expected.botAccessibility);
+  });
+
+  it('technical reads the content-extraction category', async () => {
+    const url = 'https://example.com/';
+    h.map.clear();
+    set(url, CONTENT_HTML);
+    vi.mocked(runAudits).mockResolvedValueOnce({
+      checks: [
+        {
+          id: 'content-extraction/single-h1',
+          category: 'content-extraction',
+          title: 't',
+          description: 'd',
+          status: 'warn',
+          score: 0.5,
+          scoreDisplayMode: 'binary',
+          priority: 'low',
+          impact: 'Low',
+          fix: 'f',
+          explanation: 'e',
+          details: {},
+        },
+        {
+          // operability-safety no longer feeds a vital, so it must not move it.
+          id: 'operability-safety/security-header-hygiene',
+          category: 'operability-safety',
+          title: 't',
+          description: 'd',
+          status: 'fail',
+          score: 0,
+          scoreDisplayMode: 'binary',
+          priority: 'low',
+          impact: 'Low',
+          fix: 'f',
+          explanation: 'e',
+          details: {},
+        },
+      ] as unknown as AuditRunResult['checks'],
+      categories: [],
+      overallScore: 50,
+    });
+
+    const report = await runScan(url);
+    expect(report.readinessVitals?.technical).toBe(50);
   });
 });
 
@@ -496,9 +737,9 @@ describe('runScan — informative checks stay out of readiness vitals', () => {
     // Baseline: every vital-feeding check passes, so `content` (id list) and
     // `botAccessibility` (category prefix) both come out at 100.
     const baseChecks = [
-      mk({ id: '1.1', category: 'content-structure' }),
-      mk({ id: '1.2', category: 'content-structure' }),
-      mk({ id: 'cp-1', category: 'crawler-permissions' }),
+      mk({ id: 'machine-discovery/llms-txt-exists', category: 'content-structure' }),
+      mk({ id: 'machine-discovery/llms-txt-structure', category: 'content-structure' }),
+      mk({ id: 'cp-1', category: 'access-crawl-control' }),
     ];
 
     const craft = (checks: unknown[]): AuditRunResult => ({
@@ -527,7 +768,7 @@ describe('runScan — informative checks stay out of readiness vitals', () => {
     const withInformative = [
       ...baseChecks,
       mk({
-        id: '1.3',
+        id: 'machine-discovery/llms-txt-link-descriptions',
         category: 'content-structure',
         status: 'fail',
         score: 0,
@@ -535,7 +776,7 @@ describe('runScan — informative checks stay out of readiness vitals', () => {
       }),
       mk({
         id: 'cp-2',
-        category: 'crawler-permissions',
+        category: 'access-crawl-control',
         status: 'fail',
         score: 0,
         scoreDisplayMode: 'informative',
@@ -595,7 +836,7 @@ describe('runScan — progress events', () => {
     const rootUnits = events.filter((e) => e.type === 'unit:done' && e.phase === 'fetch-root');
     const rootStart = events.find((e) => e.type === 'phase:start' && e.phase === 'fetch-root')!;
     expect(rootStart).toMatchObject({ totalUnits: rootUnits.length });
-    expect(rootUnits.length).toBeGreaterThan(30);
+    expect(rootUnits.length).toBeGreaterThan(20);
 
     // audits phase: every runnable audit settles into exactly one unit event.
     const auditsStart = events.find((e) => e.type === 'phase:start' && e.phase === 'audits')!;

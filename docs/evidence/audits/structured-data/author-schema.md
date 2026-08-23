@@ -6,14 +6,14 @@ source_file: packages/core/src/audits/structured-data/author-schema.ts
 slug: author-schema
 review_verdict: fix
 severity: medium
-evidence_grade: unrated
+evidence_grade: C
 disposition: "keep — fix required"
 reviewed: 2026-08-21
 ---
 
 # author-schema (`3.15`)
 
-> structured-data · source `author-schema.ts` · review verdict **fix** · evidence grade **unrated** · disposition: **keep — fix required**
+> structured-data · source `author-schema.ts` · review verdict **fix** · evidence grade **C** · disposition: **keep — fix required**
 
 ## What it checks
 
@@ -46,7 +46,22 @@ The pass criteria (name AND jobTitle AND sameAs AND affiliation) are invented �
 
 _No dedicated evidence signal was researched for this audit in the 2026-08-20 pass. Its tier assignment falls to the taxonomy design; unproven mechanisms default to informative per the [evidence policy](../../POLICY.md)._
 
+## Graded evidence (2026-08-21)
+
+**Mechanism claim:** A `Person` author node carrying `jobTitle`, `sameAs` and `affiliation` is read by a named AI system, which cross-references the author across platforms and raises the retrieval/citation weight of the page relative to the same page marked up with `name` alone.
+
+**Grade: C** — the only documented consumer (Google Search) reads `author.name` plus `url`/`sameAs` to *disambiguate* an author, explicitly calls the whole property recommended rather than required, never states an effect on ranking or trust scoring, and no vendor documents `jobTitle` or `affiliation` being read at all; the "RAG trust scoring" mechanism the audit asserts has no source.
+
+**Evidence:**
+- Google's Article structured data doc lists `author` as **recommended**, not required: "The author of the article. To help Google best understand authors across various features, we recommend following the author markup best practices." — https://developers.google.com/search/docs/appearance/structured-data/article (verified 2026-08-21)
+- Author markup best practices: use the `Person` type for people and `Organization` for organizations ("Don't use the `Thing` type"); "Google can understand both `sameAs` and `url` when disambiguating authors"; `jobTitle` is offered only as "the appropriate property if you want to specify that information" — the stated purpose is to "best understand and represent the author of the content", with no ranking or trust claim — https://developers.google.com/search/docs/appearance/structured-data/article#author-best-practices (verified 2026-08-21)
+- schema.org defines `name`, `jobTitle`, `affiliation` and `sameAs` on `Person` but marks none of them required; `affiliation` is "An organization that this person is affiliated with" — https://schema.org/Person (verified 2026-08-21)
+- Structured data of any kind is present on 41% of pages (JSON-LD, up from 34% in 2022), but `Person` does not appear among the leading emitted types (WebSite 12.73%, Organization 7.16%, LocalBusiness 3.97%, BreadcrumbList 5.66%, Product 0.77%) — partial adoption at best — https://almanac.httparchive.org/en/2024/structured-data (verified 2026-08-21)
+
+**Counter-evidence:** Google states for its AI features: "You don't need to create new machine readable files, AI text files, or markup to appear in these features. There's also no special schema.org structured data that you need to add" (https://developers.google.com/search/docs/appearance/ai-features, verified 2026-08-21) — which directly contradicts the audit's claim that author markup boosts "RAG trust scoring". No vendor documentation was found in which any named AI agent (OpenAI, Anthropic, Perplexity, Microsoft) reads author markup, and no source requires `jobTitle` or `affiliation`; the four-property pass gate is unsupported by any consumer.
+
 ## Review history
 
 - 2026-08-20 — code review (11-agent workflow) + evidence research (12-domain workflow, 400 sources).
 - 2026-08-21 — dossier generated; disposition pending final taxonomy design.
+- 2026-08-21 — evidence graded **C** (Google reads name + url/sameAs for disambiguation only; jobTitle/affiliation and the trust-scoring mechanism have no documented consumer).

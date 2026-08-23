@@ -1,10 +1,20 @@
 # Not a factor — sunset audits
 
-18 audits shipped in Agent Lighthouse v1 claimed signals that our 2026-08-21 adversarial research could not redeem: no consumer reads them, or the only consumer publicly stopped. Per the [evidence policy](../POLICY.md) a grade-D audit may not carry score weight, and no consumer was found for any of these — so they are **removed outright** in this major release rather than lingering as informative. This page condenses why each one does not matter — with the evidence — so nobody has to re-litigate them, and so sites that were told to add these signals know they can stop.
+26 audits shipped in Agent Lighthouse v1 claimed signals that our 2026-08-21 adversarial research could not redeem: no consumer reads them, or the only consumer publicly stopped. Per the [evidence policy](../POLICY.md) a grade-D audit may not carry score weight, and no consumer was found for any of these — so they are **removed outright** in this major release rather than lingering as informative. This page condenses why each one does not matter — with the evidence — so nobody has to re-litigate them, and so sites that were told to add these signals know they can stop.
 
 Consumers that keyed on these check ids should read [`migration-map.json`](../../../packages/core/migration-map.json), which maps each removed v1 id to its slug, `status: "removed"`, and the anchor on this page.
 
 Each entry links its full research dossier (steelmanned claim, search trail, all sources).
+
+### `accessibility/marquee`
+
+**Claimed:** Steelmanned: deprecated presentational elements like `<marquee>` and `<blink>` have undefined semantics and unstable text content, so an agent parsing the DOM reads meaningless or shifting content where they appear.
+
+**Why it is not a factor:** The stated mechanism is false, and the rule's real basis is a criterion this module explicitly excludes. A `<marquee>`'s text is ordinary, stable DOM text — only its rendered position animates — and `<blink>` has not rendered in any shipping browser for over a decade. axe's own rationale for the rule is human perception, not parsing: marquee elements "increase difficulty for users with limited dexterity, and are distracting for users with cognitive or attention deficits", mapped to WCAG 2.2.2 Pause, Stop, Hide (Level A). The accessibility-tree representation agents actually consume carries role, accessible name, ARIA state and text content, none of which motion affects. In practice the audit is inapplicable on effectively 100% of modern pages, so it never discriminates between sites — and its `none: ['is-on-screen']` composition means even a real hidden `<marquee>` would pass.
+
+**Verdict:** Grade D. The parsing claim is unfounded, the genuine basis is a human-perception WCAG criterion outside this module's charter, and no consumer — agent or otherwise — is documented to read the signal.
+
+**Key sources:** [axe marquee rule](https://dequeuniversity.com/rules/axe/4.10/marquee) · [MDN `<marquee>` (deprecated)](https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Elements/marquee) · [Aria snapshots](https://playwright.dev/docs/aria-snapshots) · [chrome-devtools-mcp tool reference](https://github.com/ChromeDevTools/chrome-devtools-mcp/blob/main/docs/tool-reference.md) — full evidence: [dossier](./accessibility/marquee.md)
 
 ### `accessibility/skip-nav`
 
@@ -55,6 +65,26 @@ Each entry links its full research dossier (steelmanned claim, search trail, all
 **Verdict:** Grade D. The audit's primary evidence source, /.well-known/webmcp, is not merely unspecified — it is a design the WebMCP explainer considered and rejected by name, and Chrome's docs state WebMCP is client-side-only with the page as the tool registry, making a static manifest structurally unreadable by any agent.
 
 **Key sources:** [WebMCP explainer — Alternatives Considered §2: Static Declarative Manifests](https://raw.githubusercontent.com/webmachinelearning/webmcp/main/README.md) · [Chrome modern-web-guidance: guides/webmcp/webmcp](https://raw.githubusercontent.com/GoogleChrome/modern-web-guidance-src/main/guides/webmcp/webmcp/guide.md) · [Agentic Commerce Protocol — Agentic Checkout Spec](https://developers.openai.com/commerce/specs/checkout) — full evidence: [dossier](./agent-tools/webmcp-action-coverage.md)
+
+### `content-discoverability/commerce-links`
+
+**Claimed:** Steelmanned: exposing crawlable return, shipping and seller-identity links (and, in the wider form, machine-readable add-to-cart or deep-checkout URLs, whether as raw links or via schema.org `BuyAction`/`potentialAction` target EntryPoints) lets shopping agents discover a merchant, verify its policies, and transact — the transparency floor for "Instant Checkout" readiness.
+
+**Why it is not a factor:** Every published shopping-agent architecture in 2026 is feed-plus-API with out-of-band merchant registration, explicitly not crawl-and-deep-link. OpenAI and Stripe's Agentic Commerce Protocol defines the checkout and delegated-payment OpenAPI specs and contains no website-side discovery mechanism whatsoever — no well-known URL, no HTML link tag, no sitemap- or markup-based endpoint discovery. OpenAI's Product Feed Spec has exactly two URL fields, `url` ("Product detail page URL", which "must resolve with HTTP 200") and `seller_url` derived from it, and no add-to-cart, cart, or checkout field at all; feeds are pushed as uploaded TSV/CSV, not crawled. Google's AP2 is orthogonal — it standardises payment authorisation via signed Intent/Cart/Payment mandates and likewise defines no deep links or web-discovery affordance. schema.org `BuyAction` exists, but no AI or shopping-agent vendor documents consuming it. The implementation compounds this: English-only substring matching over the homepage's anchors fails the default Shopify store ("Refund policy" at `/policies/refund-policy` contains no "return") and every non-English storefront.
+
+**Verdict:** Grade D. No shopping agent discovers or verifies a merchant by crawling policy or cart links. The one genuinely load-bearing sub-claim — ACP requires the product-detail URL to resolve 200 — is a URL-health property, not a commerce-links property.
+
+**Key sources:** [Agentic Commerce Protocol (ACP) specification repository](https://github.com/agentic-commerce-protocol/agentic-commerce-protocol) · [Product Feed Spec — Agentic Commerce | OpenAI Developers](https://developers.openai.com/commerce/specs/feed) · [Key concepts — Agentic Commerce | OpenAI Developers](https://developers.openai.com/commerce/guides/key-concepts) · [AP2 — Agent Payments Protocol](https://github.com/google-agentic-commerce/AP2) · [BuyAction — schema.org Type](https://schema.org/BuyAction) — full evidence: [dossier](./content-discoverability/commerce-links.md)
+
+### `content-discoverability/mobile-friendly`
+
+**Claimed:** Steelmanned: a `<meta name="viewport">` tag signals mobile-friendliness, AI crawlers may prioritise mobile-friendly content, and many AI-powered searches originate from mobile devices — so the tag's absence costs visibility.
+
+**Why it is not a factor:** This is a mobile-SEO artifact with no bearing on how an AI agent ingests a page. LLM crawlers fetch and parse raw HTML and never lay out a viewport, so a viewport meta tag cannot change anything they read. The stated impact ("AI crawlers may deprioritize pages without a viewport meta tag") is speculation presented as fact, and because the tag ships in every modern framework template the check discriminates almost nothing. It also never inspects the tag's value, so `content="width=1024, user-scalable=no"` — genuinely not mobile-friendly — passes, while a fully responsive CSS-only site fails. The audit's name promises a rendering assessment that a single static meta tag cannot support.
+
+**Verdict:** Grade unrated → removed. The only audit in the v1 set for which no evidence signal could be researched at all: the claimed mechanism requires a layout engine that no AI crawler runs, and no consumer was found to name.
+
+**Key sources:** _none — no dedicated evidence signal existed to research; the removal rests on the mechanism being unavailable to non-rendering clients_ — full evidence: [dossier](./content-discoverability/mobile-friendly.md)
 
 ### `content-discoverability/navigation-json`
 
@@ -156,6 +186,36 @@ Each entry links its full research dossier (steelmanned claim, search trail, all
 
 **Key sources:** [JavaScript SEO Basics](https://developers.google.com/search/docs/crawling-indexing/javascript/javascript-seo-basics) · [Designing Agent-Ready Websites for AI Web Agents](https://arxiv.org/abs/2607.12056) · [OpenAI crawlers and user agents](https://developers.openai.com/api/docs/bots) — full evidence: [dossier](./technical-readiness/framework-detection.md)
 
+### `technical-readiness/image-dimensions`
+
+**Claimed:** Steelmanned: AI agents that work from visual screenshots (Claude computer use and peers) need stable page layouts to identify interactive elements; missing `width`/`height` on images causes layout shifts that move elements between screenshots and break coordinate-based click targeting in agentic workflows.
+
+**Why it is not a factor:** Layout stability is a rendering-path property, and the dominant consumer class has no rendering path. Vercel and MERJ measured zero JavaScript execution across GPTBot, OAI-SearchBot, ChatGPT-User, ClaudeBot, PerplexityBot, Meta and ByteDance — these clients parse the raw HTML response and never construct a render tree, so CLS is unmeasurable for them by construction. The partial exception is scoped and unhelpful: browser-resident agents (ChatGPT Atlas, Perplexity Comet, Gemini in Chrome, Claude in Chrome) and the two rendering crawlers (Gemini via Googlebot's evergreen Chromium, and Applebot, which Apple says "may render the content of your website within a browser") do experience layout cost, but only as wall-clock task latency inside the agent — not as indexing or citation effect — and no vendor documents it. The specific AI claim is also refuted by how computer-use agents operate: they re-screenshot before acting, so a shift between frames does not persist as a mis-click. The detection method compounds it by ignoring CSS `aspect-ratio`, the modern framework default, so correctly-stable pages fail.
+
+**Verdict:** Grade D. A CLS audit in an AI costume: the mechanism needs a renderer the dominant AI crawlers do not run, and the one AI-specific mechanism claimed is contradicted by agent behaviour.
+
+**Key sources:** [The rise of the AI crawler](https://vercel.com/blog/the-rise-of-the-ai-crawler) · [Large site owner's guide to managing your crawl budget](https://developers.google.com/search/docs/crawling-indexing/large-site-managing-crawl-budget) · [About Applebot](https://support.apple.com/en-us/119829) · [Google crawlers and fetchers (user agents)](https://developers.google.com/search/docs/crawling-indexing/google-common-crawlers) · [AI features and your website](https://developers.google.com/search/docs/appearance/ai-features) — full evidence: [dossier](./technical-readiness/image-dimensions.md)
+
+### `technical-readiness/lcp-not-lazy`
+
+**Claimed:** Steelmanned: agents that work from visual screenshots see a blank placeholder where a lazy-loaded hero image should be and miss critical visual context; separately, lazy-loading the LCP element degrades Core Web Vitals, which AI trust-scoring systems factor into content-quality rankings.
+
+**Why it is not a factor:** LCP is a rendering-path metric, and a client with no rendering path never produces one. Vercel and MERJ found zero JavaScript execution across GPTBot, OAI-SearchBot, ChatGPT-User, ClaudeBot, PerplexityBot, Meta and ByteDance; those clients parse raw HTML and never construct a render tree. The "AI trust-scoring systems factor Core Web Vitals into rankings" chain has no named consumer at any vendor. The only crawler-side performance variable with a documented effect is origin response latency, which Google ties directly to crawl volume ("If the site slows down… the limit goes down and Google crawls less") — that belongs to the response-time signal, not here. Even for the rendering exceptions (Gemini via Googlebot's Chromium, Applebot, and the browser-resident agents) the cost is task latency, undocumented by any vendor. The implementation adds an independent defect: `images[0]` in DOM order is the header logo or a tracking pixel on most sites, so the audit asserts a verdict about an element it never identified.
+
+**Verdict:** Grade D. The mechanism requires a renderer the dominant AI crawlers do not run, and the trust-scoring chain it invokes is undocumented by every vendor named.
+
+**Key sources:** [The rise of the AI crawler](https://vercel.com/blog/the-rise-of-the-ai-crawler) · [Large site owner's guide to managing your crawl budget](https://developers.google.com/search/docs/crawling-indexing/large-site-managing-crawl-budget) · [About Applebot](https://support.apple.com/en-us/119829) · [Google crawlers and fetchers (user agents)](https://developers.google.com/search/docs/crawling-indexing/google-common-crawlers) · [AI features and your website](https://developers.google.com/search/docs/appearance/ai-features) — full evidence: [dossier](./technical-readiness/lcp-not-lazy.md)
+
+### `technical-readiness/no-render-blocking`
+
+**Claimed:** Steelmanned: render-blocking synchronous scripts in `<head>` delay the HTML that AI crawlers extract; since AI agents do not execute JavaScript, those scripts add latency without providing any benefit, so `defer`/`async`/`type=module` unblocks HTML delivery to them.
+
+**Why it is not a factor:** The rationale is self-refuting. An HTTP crawler that does not execute JavaScript also does not fetch `<script src>` at all, so head scripts cost a non-executing AI crawler exactly nothing. Vercel and MERJ confirm zero JavaScript execution across GPTBot, OAI-SearchBot, ChatGPT-User, ClaudeBot, PerplexityBot, Meta and ByteDance — render-blocking analysis is a property of a browser's critical rendering path, and these clients have none. Only browser-resident agents and the two rendering crawlers (Gemini via Googlebot's evergreen Chromium, and Applebot) bear any cost, and only as wall-clock task latency that no vendor documents. The genuinely load-bearing crawler-side variable is origin response latency, which Google ties to crawl volume and which the fast-response-time audit already covers. The implementation also ignored the dominant render-blocking resource — `<link rel=stylesheet>` in `<head>` — entirely.
+
+**Verdict:** Grade D, with `delete` as the research's own recommended disposition. The mechanism needs a rendering path the dominant clients do not have, and the part that matters already lives in the response-time audit.
+
+**Key sources:** [The rise of the AI crawler](https://vercel.com/blog/the-rise-of-the-ai-crawler) · [Large site owner's guide to managing your crawl budget](https://developers.google.com/search/docs/crawling-indexing/large-site-managing-crawl-budget) · [About Applebot](https://support.apple.com/en-us/119829) · [Google crawlers and fetchers (user agents)](https://developers.google.com/search/docs/crawling-indexing/google-common-crawlers) · [AI features and your website](https://developers.google.com/search/docs/appearance/ai-features) — full evidence: [dossier](./technical-readiness/no-render-blocking.md)
+
 ### `technical-readiness/permissions-policy`
 
 **Claimed:** Steelmanned: AI browser agents (ChatGPT Atlas agent mode, Perplexity Comet, Claude for Chrome, Playwright/browser-use harnesses) drive a real rendering engine.
@@ -176,6 +236,16 @@ Each entry links its full research dossier (steelmanned claim, search trail, all
 
 **Key sources:** [The rise of the AI crawler](https://vercel.com/blog/the-rise-of-the-ai-crawler) · [Large site owner's guide to managing your crawl budget](https://developers.google.com/search/docs/crawling-indexing/large-site-managing-crawl-budget) · [Preconnect to required origins (uses-rel-preconnect)](https://developer.chrome.com/docs/lighthouse/performance/uses-rel-preconnect) — full evidence: [dossier](./technical-readiness/preconnect-hints.md)
 
+### `technical-readiness/privacy-policy`
+
+**Claimed:** Steelmanned: enterprise AI frameworks check for a privacy policy before recommending sites in regulated industries, so a missing policy lowers the site's trust score in AI systems that prioritise transparent data handling — especially for health, finance and legal content.
+
+**Why it is not a factor:** No AI consumer is documented to read a prose privacy policy, and the trust-scoring chain the audit describes is named by no vendor. The closest real, machine-readable mechanism in this space — the W3C TDM Reservation Protocol — fails on every practical axis: it is a Final Community Group Report (Feb 2024), not a Standards Track Recommendation; it names essentially one implementer; and no AI model provider (OpenAI, Anthropic, Perplexity, Google, Apple) documents consuming it. Neither EU AI Act Art. 53(1)(c) nor the GPAI Code of Practice Measure 1.3 names any protocol but robots.txt / RFC 9309, the Commission's opt-out consultation likewise names only "robots.txt and subsequent IETF versions of this standard", and Cloudflare's opt-out machinery is built on robots.txt and its Content Signals `use` extension. Independently, the implementation fails in both directions: a status-only path probe turns any SPA catch-all that 200s unknown paths into a false pass, while English-only anchor matching fails compliant German (Datenschutzerklärung), French, Spanish and Japanese sites.
+
+**Verdict:** Grade D. No named consumer, no documented trust-scoring mechanism, and the machine-readable alternative that would carry the signal has no AI-provider implementer either.
+
+**Key sources:** [TDM Reservation Protocol (TDMRep) — Final Community Group Report](https://www.w3.org/community/reports/tdmrep/CG-FINAL-tdmrep-20240202/) · [EU AI Act — Article 53](https://artificialintelligenceact.eu/article/53/) · [GPAI Code of Practice — Final version](https://code-of-practice.ai/) · [Commission consultation on TDM opt-out protocols](https://digital-strategy.ec.europa.eu/en/consultations/commission-launches-consultation-protocols-reserving-rights-text-and-data-mining-under-ai-act-and) · [Your site, your rules: new AI traffic options](https://blog.cloudflare.com/content-independence-day-ai-options/) — full evidence: [dossier](./technical-readiness/privacy-policy.md)
+
 ### `technical-readiness/referrer-policy`
 
 **Claimed:** Steelmanned: some AI crawler, answer engine, or agent platform inspects a site's HTTP response headers and derives a security/privacy posture score from them, and the presence of `Referrer-Policy` raises that score, making the site more likely to be crawled, trusted, or cited.
@@ -186,7 +256,18 @@ Each entry links its full research dossier (steelmanned claim, search trail, all
 
 **Key sources:** [Overview of OpenAI Crawlers](https://developers.openai.com/api/docs/bots) · [Google crawlers (user agents) overview](https://developers.google.com/search/docs/crawling-indexing/google-common-crawlers) · [Does Anthropic crawl data from the web, and how can site owners block the crawler?](https://support.claude.com/en/articles/8896518-does-anthropic-crawl-data-from-the-web-and-how-can-site-owners-block-the-crawler) — full evidence: [dossier](./technical-readiness/referrer-policy.md)
 
+### `technical-readiness/terms-of-service`
+
+**Claimed:** Steelmanned: AI agents check a site's terms of service to determine whether automated access is permitted; a missing ToS page creates legal ambiguity that may cause enterprise AI systems to avoid recommending the site, and clear terms let a publisher specify AI usage policies for its content.
+
+**Why it is not a factor:** Agents answer the automated-access question from robots.txt, not from prose. The GPAI Code of Practice Measure 1.3 commits crawlers to "read and follow instructions expressed in accordance with the Robot Exclusion Protocol (robots.txt), as specified in… RFC 9309"; robots.txt / RFC 9309 is the only protocol named in either that Measure or EU AI Act Art. 53(1)(c), and the Commission's opt-out consultation names only "robots.txt and subsequent IETF versions of this standard". No vendor documentation — OpenAI, Anthropic, Perplexity, Google, Apple — describes fetching or parsing a terms page, and even the machine-readable alternative (W3C TDM-Rep, a Community Group Report with essentially one implementer) has no AI-provider consumer. The implementation is a line-for-line twin of `privacy-policy` with the same status-only soft-404 false pass and the same English-only regexes, which fail German AGB, French CGU/CGV, Spanish Términos and Japanese 利用規約.
+
+**Verdict:** Grade D. The permission question this audit claims to answer is answered by robots.txt and TDM/AI-usage signals, both audited elsewhere; nothing reads the prose page.
+
+**Key sources:** [TDM Reservation Protocol (TDMRep) — Final Community Group Report](https://www.w3.org/community/reports/tdmrep/CG-FINAL-tdmrep-20240202/) · [EU AI Act — Article 53](https://artificialintelligenceact.eu/article/53/) · [GPAI Code of Practice — Final version](https://code-of-practice.ai/) · [Commission consultation on TDM opt-out protocols](https://digital-strategy.ec.europa.eu/en/consultations/commission-launches-consultation-protocols-reserving-rights-text-and-data-mining-under-ai-act-and) · [Your site, your rules: new AI traffic options](https://blog.cloudflare.com/content-independence-day-ai-options/) — full evidence: [dossier](./technical-readiness/terms-of-service.md)
+
 ## History
 
 - 2026-08-21 — created from the adversarial redemption research pass (8 agents, 190 sources) after user review accepted all 32 verdicts.
 - 2026-08-21 — disposition changed from graceful sunset (one informative minor, removal next major) to outright removal in this major release. All 18 audits and their dossiers moved to `docs/evidence/sunset/`.
+- 2026-08-21 — the v2 taxonomy grading pass sunset 8 more grade-D audits (`accessibility/marquee`, `content-discoverability/commerce-links`, `content-discoverability/mobile-friendly`, `technical-readiness/image-dimensions`, `technical-readiness/lcp-not-lazy`, `technical-readiness/no-render-blocking`, `technical-readiness/privacy-policy`, `technical-readiness/terms-of-service`), bringing the total to 26.

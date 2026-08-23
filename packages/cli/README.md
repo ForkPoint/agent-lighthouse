@@ -10,13 +10,16 @@ npx @forkpoint/agent-lighthouse https://yourstore.com --view
 npx @forkpoint/agent-lighthouse https://staging.yourstore.com --min-score 85
 ```
 
-The CLI generates terminal, HTML, JSON, and Markdown reports for 189 audits across:
+The CLI generates terminal, HTML, JSON, and Markdown reports for 172 audits across 8 agent-journey categories:
 
-- `llms.txt`, `llms-full.txt`, sitemaps, and RSS discovery
-- robots.txt access for GPTBot, ClaudeBot, PerplexityBot, and other AI crawlers
-- Schema.org, JSON-LD, product, offer, review, and organization markup
-- WebMCP, OpenAPI, agents.json, and action-surface discovery
-- AEO/GEO content structure, semantic HTML, accessibility, and technical readiness
+- Access & Crawl Control — robots.txt access for GPTBot, ClaudeBot, PerplexityBot, and other AI crawlers
+- Content Extraction — clean main content, semantic structure, render and response cost
+- Machine Discovery — `llms.txt`, `llms-full.txt`, sitemaps, feeds, and `.well-known` surfaces
+- Structured Data — Schema.org, JSON-LD, product, offer, review, and organization markup
+- Answer Readiness — AEO/GEO answerability, step lists, tables, unique data, and citations
+- Agent Interfaces — WebMCP, OpenAPI, agents.json, and action-surface discovery
+- Agentic Commerce — product offers, availability, checkout, and payment surfaces
+- Agent Operability & Safety — HTTPS, security.txt, tdmrep, stability, and broken agent endpoints
 
 ## CI
 

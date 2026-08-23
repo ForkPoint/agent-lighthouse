@@ -1,4 +1,4 @@
-import { request, Agent, interceptors } from 'undici';
+import { request, Agent } from 'undici';
 import dns from 'node:dns/promises';
 import {
   SCANNER_USER_AGENT,
@@ -8,18 +8,44 @@ import {
 import { isPrivateIp } from './url-utils';
 import { logger } from './logger';
 
-const redirectAgent = new Agent().compose(interceptors.redirect({ maxRedirections: 5 }));
+/**
+ * The only dispatcher. Redirects are walked by hand below rather than by
+ * undici's interceptor, so every hop passes the isSafeUrl gate.
+ */
+const noRedirectAgent = new Agent();
+
+/** How many hops a redirect chain may take before we give up. */
+const MAX_REDIRECTS = 5;
+/** Statuses that carry a Location a client is expected to follow. */
+const REDIRECT_STATUS = new Set([301, 302, 303, 307, 308]);
 
 export interface FetchOptions {
   url: string;
   timeout?: number;
   followRedirects?: boolean;
   acceptHeader?: string;
-  method?: 'GET' | 'POST' | 'OPTIONS' | 'HEAD';
+  method?: 'GET' | 'POST' | 'OPTIONS' | 'HEAD' | 'DELETE';
   body?: string;
   contentType?: string;
+  /** Override the User-Agent header (e.g. to probe a site as a specific AI bot). */
+  userAgent?: string;
+  /**
+   * Extra request headers (e.g. `MCP-Protocol-Version`). Applied before the
+   * fetcher's own headers, so a caller can add headers but cannot clobber the
+   * scanner User-Agent, the negotiated Accept, or credentials lifted out of the
+   * URL's userinfo.
+   */
+  headers?: Record<string, string>;
   /** External abort (e.g. the per-scan deadline). Combined with the per-request timeout. */
   signal?: AbortSignal;
+  /**
+   * Read the response as bytes instead of text.
+   *
+   * `body` is a UTF-8 decoded string, which replaces every invalid sequence
+   * with U+FFFD — fatal for an image, whose provenance metadata is binary. With
+   * this flag the response arrives in `bytes` and `body` stays empty.
+   */
+  binary?: boolean;
 }
 
 export interface FetchResult {
@@ -32,6 +58,8 @@ export interface FetchResult {
   totalMs: number;
   contentType: string;
   contentLength: number;
+  /** Raw response bytes. Present only when the request asked for `binary`. */
+  bytes?: Uint8Array;
   error?: string;
 }
 
@@ -85,7 +113,10 @@ export async function isSafeUrl(url: string): Promise<boolean> {
   try {
     const parsed = new URL(url);
     if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') return false;
-    const hostname = parsed.hostname;
+    // URL.hostname keeps the brackets around an IPv6 literal, so a bare
+    // comparison against '::1' never matched and http://[::1]/ was treated as
+    // safe until DNS happened to fail on it.
+    const hostname = parsed.hostname.replace(/^\[|\]$/g, '');
     if (hostname === 'localhost' || hostname === '127.0.0.1' || hostname === '::1') return false;
     if (isPrivateIp(hostname)) return false;
     const { address } = await dns.lookup(hostname);
@@ -104,7 +135,11 @@ export function createFetcher() {
       method = 'GET',
       body: requestBody,
       contentType,
+      userAgent,
+      headers: extraHeaders,
+      followRedirects = true,
       signal: externalSignal,
+      binary = false,
     } = options;
 
     // Per-request timeout, plus the caller's deadline if supplied — whichever
@@ -123,7 +158,8 @@ export function createFetcher() {
 
     try {
       const reqHeaders: Record<string, string> = {
-        'User-Agent': SCANNER_USER_AGENT,
+        ...extraHeaders,
+        'User-Agent': userAgent ?? SCANNER_USER_AGENT,
         Accept: acceptHeader,
       };
 
@@ -137,28 +173,114 @@ export function createFetcher() {
 
       logger.debug({ url: targetUrl, method }, `[fetcher] Starting fetch: ${method} ${targetUrl}`);
 
-      const response = await request(targetUrl, {
-        method,
+      let currentUrl = targetUrl;
+      let currentMethod = method;
+      let currentBody = requestBody;
+
+      let response = await request(currentUrl, {
+        method: currentMethod,
         headers: reqHeaders,
-        body: requestBody,
+        body: currentBody,
         signal,
-        dispatcher: redirectAgent,
+        dispatcher: noRedirectAgent,
       });
+
+      // Follow redirects here rather than handing the chain to undici's
+      // interceptor. The isSafeUrl gate only ever saw the URL the caller
+      // passed, so a public site could redirect the scanner into link-local or
+      // RFC 1918 space. Walking the chain means every hop is checked, and it is
+      // also the only way to report a truthful finalUrl.
+      //
+      // The gate is armed only when the starting URL is itself public: an
+      // operator who deliberately points the scanner at a dev host gains
+      // nothing from having its redirects refused.
+      let gateArmed: boolean | undefined;
+      let hops = 0;
+
+      while (
+        followRedirects &&
+        REDIRECT_STATUS.has(response.statusCode) &&
+        response.headers['location'] !== undefined &&
+        hops < MAX_REDIRECTS
+      ) {
+        const rawLocation = response.headers['location'];
+        const location = Array.isArray(rawLocation) ? rawLocation[0] : rawLocation;
+        let next: string;
+        try {
+          next = new URL(String(location), currentUrl).href;
+        } catch {
+          // An unparseable Location is not a chain we can walk. Report the
+          // redirect response itself, which is what the site actually sent.
+          break;
+        }
+
+        gateArmed ??= await isSafeUrl(targetUrl);
+        if (gateArmed && !(await isSafeUrl(next))) {
+          await response.body.dump();
+          logger.warn(
+            { url: targetUrl, refused: next },
+            `[fetcher] Refusing redirect out of public address space: ${targetUrl} -> ${next}`,
+          );
+          const refusedMs = performance.now() - start;
+          return {
+            url: targetUrl,
+            finalUrl: currentUrl,
+            status: 0,
+            headers: {},
+            body: '',
+            ttfbMs: Math.round(refusedMs),
+            totalMs: Math.round(refusedMs),
+            contentType: '',
+            contentLength: 0,
+            error: 'redirect-refused',
+          };
+        }
+
+        await response.body.dump();
+
+        // 303 always continues as a GET without a body; 301 and 302 do the same
+        // for a POST, as every browser does. 307 and 308 keep both.
+        if (
+          response.statusCode === 303 ||
+          (currentMethod === 'POST' && response.statusCode !== 307 && response.statusCode !== 308)
+        ) {
+          currentMethod = 'GET';
+          currentBody = undefined;
+        }
+
+        currentUrl = next;
+        hops += 1;
+
+        response = await request(currentUrl, {
+          method: currentMethod,
+          headers: reqHeaders,
+          body: currentBody,
+          signal,
+          dispatcher: noRedirectAgent,
+        });
+      }
 
       ttfbMs = performance.now() - start;
 
       let body = '';
-      if (method !== 'OPTIONS') {
-        body = await response.body.text();
-      } else {
+      let bytes: Uint8Array | undefined;
+      if (currentMethod === 'OPTIONS') {
         // For OPTIONS requests, consume and discard the body
         await response.body.dump();
+      } else if (binary) {
+        const buffer = new Uint8Array(await response.body.arrayBuffer());
+        bytes =
+          buffer.byteLength > MAX_RESPONSE_BODY_BYTES
+            ? buffer.subarray(0, MAX_RESPONSE_BODY_BYTES)
+            : buffer;
+      } else {
+        body = await response.body.text();
       }
       const totalMs = performance.now() - start;
 
       logger.debug(
-        { url: targetUrl, status: response.statusCode, totalMs: Math.round(totalMs) },
-        `[fetcher] Fetch complete: ${targetUrl} (${response.statusCode}) in ${Math.round(totalMs)}ms`,
+        { url: targetUrl, finalUrl: currentUrl, status: response.statusCode, totalMs: Math.round(totalMs) },
+        `[fetcher] Fetch complete: ${currentUrl} (${response.statusCode}) in ${Math.round(totalMs)}ms`,
       );
 
       const truncatedBody =
@@ -166,21 +288,30 @@ export function createFetcher() {
 
       const headers: Record<string, string> = {};
       for (const [key, value] of Object.entries(response.headers)) {
+        const name = key.toLowerCase();
         if (typeof value === 'string') {
-          headers[key.toLowerCase()] = value;
+          headers[name] = value;
+        } else if (Array.isArray(value)) {
+          // A field sent on several lines is one field value, combined with
+          // ", " (RFC 9110 §5.3). Dropping the extra lines would hide, for
+          // example, a second X-Robots-Tag naming a different crawler.
+          // Set-Cookie is the standing exception: its values may contain
+          // commas, so they are kept on separate lines.
+          headers[name] = value.join(name === 'set-cookie' ? '\n' : ', ');
         }
       }
 
       return {
         url: targetUrl,
-        finalUrl: targetUrl, // undici doesn't expose final URL after redirects easily
+        finalUrl: currentUrl,
         status: response.statusCode,
         headers,
         body: truncatedBody,
         ttfbMs: Math.round(ttfbMs),
         totalMs: Math.round(totalMs),
         contentType: headers['content-type'] ?? '',
-        contentLength: truncatedBody.length,
+        contentLength: bytes ? bytes.byteLength : truncatedBody.length,
+        ...(bytes ? { bytes } : {}),
       };
     } catch (err) {
       const totalMs = performance.now() - start;

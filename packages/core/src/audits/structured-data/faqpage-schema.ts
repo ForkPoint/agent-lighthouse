@@ -1,6 +1,7 @@
 import type { AuditMeta, AuditResult } from "../../types";
 import { Audit } from "../../audit";
 import type { CheckContext, PageContext } from '../../check-context';
+import { weightForGrade } from '../../scorer';
 import { flattenJsonLd } from '../../parser';
 
 function matchesType(schema: Record<string, unknown>, type: string): boolean {
@@ -25,14 +26,17 @@ function hasQuestionHeadings(page: PageContext): boolean {
 
 export class FaqPageSchemaAudit extends Audit {
   static override meta: AuditMeta = {
-    id: '3.7',
+    id: 'structured-data/faqpage-schema',
     category: 'structured-data',
     title: 'FAQPage schema',
     failureTitle: 'FAQPage schema',
     description:
       'AI answer engines like Perplexity and Google SGE extract FAQ-structured content with higher confidence for direct answers. FAQPage schema makes your Q&A content machine-readable, giving it priority in AI-generated responses over unstructured text.',
-    scoreDisplayMode: 'ternary',
-    weight: 1.0,
+    scoreDisplayMode: 'informative',
+    weight: weightForGrade('C', 'informative'),
+    evidenceGrade: 'C',
+    tier: 'informative',
+    dossier: 'docs/evidence/audits/structured-data/faqpage-schema.md',
     defaultPriority: 'medium',
     guidance: {
       impact:

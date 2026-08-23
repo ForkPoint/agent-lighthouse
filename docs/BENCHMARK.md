@@ -11,16 +11,20 @@ This benchmark is the promotion-friendly story for Agent Lighthouse: most stores
 | Average agent-readiness score | 53.6 / 100 |
 | Fastest practical score lift | `llms.txt`, AI catalog, accessible icon buttons |
 
+These figures come from the pre-v2 run. v2 changed the registry, the pass conditions, and the scoring formula, so the average score is not comparable to a v2 scan; re-run the script to refresh it.
+
 ## What The Benchmark Checks
 
-Agent Lighthouse evaluates 189 audits across:
+Agent Lighthouse evaluates 148 audits across 8 agent-journey categories:
 
-- Content discovery: `llms.txt`, `llms-full.txt`, sitemaps, RSS, canonical links.
-- AI crawler access: robots.txt rules for GPTBot, ClaudeBot, PerplexityBot, OAI-SearchBot, Applebot-Extended, and related crawlers.
-- Action surfaces: OpenAPI, WebMCP, MCP discovery, agents.json, ai-plugin.json, searchable forms.
-- Structured data: Schema.org Product, Offer, Review, Organization, Website SearchAction, Article, HowTo, FAQPage.
-- Agent interaction: semantic HTML, accessible names, form labels, ARIA landmarks, keyboard-safe controls.
-- Technical readiness: HTTPS, HSTS, CSP, correct content types, CORS for AI files, response times.
+- Access & Crawl Control: robots.txt rules for GPTBot, ClaudeBot, PerplexityBot, OAI-SearchBot, Applebot-Extended, and related crawlers.
+- Content Extraction: clean main content, semantic structure, render cost, response time.
+- Machine Discovery: `llms.txt`, `llms-full.txt`, sitemaps, RSS, `.well-known` surfaces, AI-file delivery.
+- Structured Data: Schema.org Product, Offer, Review, Organization, Article, FAQPage, JSON-LD validity.
+- Answer Readiness: direct answerability, step lists, comparison tables, unique data, citations, authorship.
+- Agent Interfaces: OpenAPI, WebMCP, MCP discovery, agents.json, AI catalogs, search endpoints.
+- Agentic Commerce: product offers, availability, and transaction certainty.
+- Agent Operability & Safety: HTTPS, security headers, accessible controls, forms, broken agent endpoints.
 
 ## Narrative For Promotion
 

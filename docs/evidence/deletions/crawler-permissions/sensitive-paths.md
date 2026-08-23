@@ -52,6 +52,8 @@ Grade A on the mechanism: named AI crawlers are documented to honor path-level D
 
 ## Review history
 
+- 2026-08-22 — required rework executed (Plan 4, Task 11); all four required changes landed — security framing dropped for RFC 9309 crawl hygiene, `/api/` removed from the list, user-initiated-fetcher caveat stated in the guidance, `defaultPriority` `high` → `low`. `TODO(redeem)` marker removed from the source file.
+
 - 2026-08-21 — user decision: all research verdicts accepted. Disposition by grade: **kept-rewrite** (kept, rewrite required per dossier).
 
 - 2026-08-21 — adversarial redemption research pass (8-agent workflow); URLs fetched at research time.

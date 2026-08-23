@@ -9,7 +9,7 @@ import type { CheckContext } from './check-context';
 
 const META_WITH_GUIDANCE: AuditMeta = {
   id: 'a1',
-  category: 'meta-tags',
+  category: 'machine-discovery',
   title: 'Passing Title',
   failureTitle: 'Failing Title',
   description: 'Some description',
@@ -28,7 +28,7 @@ const META_WITH_GUIDANCE: AuditMeta = {
 
 const META_NO_GUIDANCE: AuditMeta = {
   id: 'a2',
-  category: 'meta-tags',
+  category: 'machine-discovery',
   title: 'Passing Title 2',
   failureTitle: 'Failing Title 2',
   description: 'Description fallback',
@@ -133,9 +133,12 @@ describe('Audit.warn', () => {
     expect(r.priority).toBe('high');
   });
 
-  it('falls back to the raw string for an unknown string priority', () => {
+  // A string that is not one of the four tokens is a fix sentence, not a
+  // priority. It used to land in `priority` and make the result unschemable.
+  it('reads an unknown string as the remediation, not as the priority', () => {
     const r = a.callWarn('m', 'e', 'f', 'bogus');
-    expect(r.priority).toBe('bogus');
+    expect(r.priority).toBeUndefined();
+    expect(r.remediation).toBe('bogus');
   });
 
   it('resolves priority from an object form', () => {
@@ -164,9 +167,10 @@ describe('Audit.fail', () => {
     expect(r.priority).toBe('low');
   });
 
-  it('falls back to the raw string for an unknown string priority', () => {
+  it('reads an unknown string as the remediation, not as the priority', () => {
     const r = a.callFail('m', 'e', 'f', 'weird');
-    expect(r.priority).toBe('weird');
+    expect(r.priority).toBeUndefined();
+    expect(r.remediation).toBe('weird');
   });
 
   it('resolves priority from an object form', () => {
@@ -255,5 +259,85 @@ describe('Audit.toCheckResult', () => {
     expect(c.displayValue).toBe('only-message'); // no displayValue, no found → message
     expect(c.explanation).toBe('only-message');
     expect(c.details?.code).toBe('guidance-code'); // no details.code → guidance.code
+  });
+});
+
+describe('Audit — structured details and per-result code', () => {
+  it('carries unknown details keys through validation into the CheckResult', () => {
+    const a = new WithGuidanceAudit();
+    const result: AuditResult = {
+      status: 'pass',
+      score: 1,
+      message: 'ok',
+      expected: 'e',
+      found: 'f',
+      details: { expected: 'e', found: 'f', trainingAgents: 3, hasCatchAll: false, note: 'kept' },
+    };
+    const c = a.toCheckResult(result);
+
+    expect(c.details).toMatchObject({ trainingAgents: 3, hasCatchAll: false, note: 'kept' });
+  });
+
+  it('carries a per-result code from fail() into the check details', () => {
+    const a = new WithGuidanceAudit();
+    const c = a.toCheckResult(
+      a.callFail('m', 'e', 'f', { priority: 'high', code: 'SITE-SPECIFIC' }),
+    );
+
+    expect(c.details?.code).toBe('SITE-SPECIFIC');
+    expect(c.priority).toBe('high');
+  });
+
+  it('carries a per-result code from warn() into the check details', () => {
+    const a = new WithGuidanceAudit();
+    const c = a.toCheckResult(
+      a.callWarn('m', 'e', 'f', { priority: 'low', code: 'WARN-SNIPPET' }),
+    );
+
+    expect(c.details?.code).toBe('WARN-SNIPPET');
+    expect(c.priority).toBe('low');
+  });
+
+  it('still falls back to guidance.code when the result carries none', () => {
+    const a = new WithGuidanceAudit();
+    const c = a.toCheckResult(a.callFail('m', 'e', 'f', { priority: 'high' }));
+
+    expect(c.details?.code).toBe('guidance-code');
+  });
+});
+
+// ---------------------------------------------------------------------------
+// The fourth argument: priority token or remediation sentence
+// ---------------------------------------------------------------------------
+
+describe('Audit.fail / Audit.warn — the fourth argument', () => {
+  const a = new WithGuidanceAudit();
+
+  it('reads a priority token as the priority', () => {
+    expect(a.callFail('m', 'e', 'f', 'critical').priority).toBe('critical');
+    expect(a.callWarn('m', 'e', 'f', 'low').priority).toBe('low');
+  });
+
+  // Thirty audits pass a sentence here. A sentence is not a CheckPriority, and
+  // putting it in `priority` made toCheckResult throw on the schema — after the
+  // audit had already run, so the failure surfaced only in a live scan.
+  it('reads a sentence as the remediation, leaving the priority to the audit default', () => {
+    const r = a.callFail('m', 'e', 'f', 'Move the table out of the aside.');
+    expect(r.priority).toBeUndefined();
+    expect(r.remediation).toBe('Move the table out of the aside.');
+    expect(() => a.toCheckResult(r)).not.toThrow();
+    expect(a.toCheckResult(r).priority).toBe('medium');
+  });
+
+  it('lets that sentence replace the generic fix in the report', () => {
+    const check = a.toCheckResult(a.callFail('m', 'e', 'f', 'Name the section in the heading.'));
+    expect(check.fix).toBe('Name the section in the heading.');
+    expect(a.toCheckResult(a.callFail('m', 'e', 'f')).fix).toBe('Guidance fix');
+  });
+
+  it('reads an object’s description as the remediation and keeps its priority', () => {
+    const r = a.callFail('m', 'e', 'f', { priority: 'high', description: 'Add a canonical.' });
+    expect(r.priority).toBe('high');
+    expect(r.remediation).toBe('Add a canonical.');
   });
 });

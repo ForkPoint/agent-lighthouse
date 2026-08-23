@@ -3,10 +3,12 @@ import {
   loadConfigFile,
   getPreset,
   logger,
+  CATEGORY_IDS,
   type PresetName,
   type ScanEvent,
 } from "@forkpoint/agent-lighthouse-core";
 import { createProgressRenderer } from "./progress-renderer";
+import { tierMarker } from "./tier-marker";
 import {
   buildReportView,
   generateHtmlReport,
@@ -46,8 +48,14 @@ function usage(): never {
 Options:
   -p, --preset <name>          Audit preset (ecommerce, saas, content, quick, full) [default: full]
   -c, --config <path>          Path to configuration file (e.g. agent-lighthouse.config.json)
-  --debug-audit <id|fails>     Print deep diagnostic breakdown for specific audit ID (e.g. 3.2) or all fails
+  --debug-audit <id|fails>     Print deep diagnostic breakdown for a specific audit ID
+                               (e.g. structured-data/faqpage-schema) or all fails
   --categories <list>          Comma-separated list of categories to audit
+                               (access-crawl-control, content-extraction, machine-discovery,
+                               structured-data, answer-readiness, agent-interfaces,
+                               agentic-commerce, operability-safety)
+  --experimental               Also run experimental-tier audits (excluded by default;
+                               they are reported but never scored)
   -o, --output <formats>       Output formats (comma-separated: terminal, html, json, md) [default: terminal,html,json]
   -d, --output-dir <path>      Output directory for generated reports [default: ./reports]
   -v, --view                   Automatically open the generated HTML report in your browser
@@ -63,7 +71,7 @@ Options:
 Examples:
   npx @forkpoint/agent-lighthouse https://yourstore.com
   npx @forkpoint/agent-lighthouse https://yourstore.com --preset ecommerce
-  npx @forkpoint/agent-lighthouse https://yourstore.com --debug-audit 3.2
+  npx @forkpoint/agent-lighthouse https://yourstore.com --debug-audit structured-data/faqpage-schema
   npx @forkpoint/agent-lighthouse https://staging.yourstore.com --min-score 85
 `);
   process.exit(1);
@@ -144,6 +152,25 @@ async function audit(targetUrl?: string) {
   const outputDir =
     getArgValue("-d", "--output-dir") || fileConfig.outputDir || "./reports";
 
+  // --categories has been in the help text since v1 and was never parsed, so a
+  // scan narrowed to one category silently ran all of them.
+  const categoriesArg = getArgValue("", "--categories");
+  const categories = categoriesArg
+    ? categoriesArg
+        .split(",")
+        .map((c) => c.trim())
+        .filter(Boolean)
+    : undefined;
+  const unknownCategories = (categories ?? []).filter((c) => !CATEGORY_IDS.includes(c));
+  if (unknownCategories.length > 0) {
+    console.error(
+      `\x1b[31mUnknown category: ${unknownCategories.join(", ")}\x1b[0m\nValid categories: ${CATEGORY_IDS.join(", ")}`,
+    );
+    process.exit(1);
+  }
+
+  const includeExperimental = args.includes("--experimental");
+
   const outputFormatArg = getArgValue("-o", "--output");
   const outputFormats = outputFormatArg
     ? outputFormatArg.split(",").map((s) => s.trim())
@@ -168,7 +195,11 @@ async function audit(targetUrl?: string) {
       ? undefined
       : createProgressRenderer({ tty: Boolean(process.stdout.isTTY) });
 
-  const report = await runScan(url, { onEvent });
+  const report = await runScan(url, {
+    onEvent,
+    ...(categories ? { categories } : {}),
+    includeExperimental,
+  });
 
   const view = buildReportView(report);
 
@@ -222,7 +253,7 @@ async function audit(targetUrl?: string) {
             .toString()
             .padStart(
               3,
-            )}/100\x1b[0m  \x1b[90m(${c.pass}✓ ${c.warn}! ${c.fail}✗)\x1b[0m`,
+            )}/100\x1b[0m  \x1b[90m(${c.pass}✓ ${c.warn}! ${c.fail}✗${c.advisory > 0 ? ` ${c.advisory} advisory` : ""})\x1b[0m`,
         );
       }
     }
@@ -266,7 +297,7 @@ async function audit(targetUrl?: string) {
                 : "\x1b[90m[N/A]\x1b[0m";
 
         console.log(
-          `\n${statusBadge} \x1b[1m[${check.id}] ${check.title}\x1b[0m (Score: ${check.score})`,
+          `\n${statusBadge} \x1b[1m[${check.id}] ${check.title}\x1b[0m (Score: ${check.score})${tierMarker(check.tier)}`,
         );
         if (check.pageUrl)
           console.log(`  \x1b[90mPage:\x1b[0m        ${check.pageUrl}`);

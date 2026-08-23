@@ -37,30 +37,28 @@ npx @forkpoint/agent-lighthouse https://yourstore.com --view
 npx @forkpoint/agent-lighthouse https://staging.yourstore.com --min-score 85
 ```
 
-Agent Lighthouse checks 189 rules covering `llms.txt`, robots.txt crawler policy, Schema.org, OpenAPI discovery, WebMCP action surfaces, AEO/GEO content structure, accessibility, and technical readiness.
+Agent Lighthouse checks 172 audits covering `llms.txt`, robots.txt crawler policy, Schema.org, OpenAPI discovery, WebMCP action surfaces, AEO/GEO content structure, agentic commerce, and operability.
 
 ---
 
 ## 🎯 What Agent Lighthouse Checks
 
-Agent Lighthouse evaluates websites across **10 audit categories** grouped into **3 readiness pillars**:
+Agent Lighthouse evaluates websites across **8 agent-journey categories** grouped into **3 readiness pillars**:
 
 ```
 ├── 1. Agentic Readiness
-│   ├── AI Agent Tools & Action Surfaces (WebMCP manifests, OpenAPI specs, agents.json, ai-plugin.json)
-│   ├── Content Discoverability (llms.txt, llms-full.txt, sitemaps, commerce links)
-│   └── AI Crawler Permissions (robots.txt rules for GPTBot, ClaudeBot, PerplexityBot, etc.)
+│   ├── Access & Crawl Control (robots.txt rules for GPTBot, ClaudeBot, PerplexityBot, blocks, status codes)
+│   ├── Machine Discovery (llms.txt, llms-full.txt, sitemaps, feeds, .well-known surfaces)
+│   ├── Agent Interfaces (WebMCP manifests, OpenAPI specs, agents.json, search actions)
+│   └── Agentic Commerce (product offers, availability, checkout and payment surfaces)
 │
 ├── 2. AI Search Optimization
-│   ├── Answer Engine Optimization (AEO) (direct answerability, step lists, table schemas)
-│   └── Generative Engine Optimization (GEO) (unique data density, authoritative citations)
+│   ├── Content Extraction (clean main content, semantic structure, render and response cost)
+│   ├── Structured Data (Schema.org Product, Offer, SKU, GTIN, Organization, JSON-LD validity)
+│   └── Answer Readiness (direct answerability, step lists, tables, unique data, citations)
 │
 └── 3. Technical Foundation
-    ├── Structured Data & Schema Markup (Schema.org Product, Offer, SKU, GTIN, Organization)
-    ├── Meta Tags & AI Head Elements (AI content declarations, canonicals, Open Graph)
-    ├── Semantic HTML & Content Structure (Headings hierarchy, landmarks, semantic tags)
-    ├── Accessibility & Agent Interaction (Form labels, button roles, interactable elements)
-    └── Technical Readiness & Security (HTTPS, security.txt, TTFB response latency)
+    └── Agent Operability & Safety (HTTPS, security.txt, tdmrep, stability, broken agent endpoints)
 ```
 
 ---

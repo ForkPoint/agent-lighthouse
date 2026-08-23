@@ -1,6 +1,7 @@
 import type { AuditMeta, AuditResult } from "../../types";
 import { Audit } from "../../audit";
 import type { CheckContext } from '../../check-context';
+import { weightForGrade } from '../../scorer';
 import { flattenJsonLd } from '../../parser';
 
 const ORG_TYPES = [
@@ -35,14 +36,17 @@ function hasProps(obj: Record<string, unknown>, keys: string[]): string[] {
 
 export class OrganizationSchemaAudit extends Audit {
   static override meta: AuditMeta = {
-    id: '3.3',
+    id: 'structured-data/organization-schema',
     category: 'structured-data',
     title: 'Organization schema',
     failureTitle: 'Organization schema',
     description:
       'AI agents use Organization schema to identify your brand, logo, and contact info. Without it, agents cannot confidently attribute content to your organization or display your branding in AI-generated answers. Add this JSON-LD to your homepage <head>.',
     scoreDisplayMode: 'ternary',
-    weight: 1.0,
+    weight: weightForGrade('A', 'scored'),
+    evidenceGrade: 'A',
+    tier: 'scored',
+    dossier: 'docs/evidence/audits/structured-data/organization-schema.md',
     applicablePageTypes: ['homepage'],
     defaultPriority: 'high',
     guidance: {

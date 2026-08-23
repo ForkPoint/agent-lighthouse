@@ -63,26 +63,26 @@ describe('Golden Corpus Conformance Tests (False-Positive Elimination)', () => {
     const checkMap = new Map(checks.map((c) => [c.id, c]));
 
     // JSON-LD Present (3.1)
-    expect(checkMap.get('3.1')?.status).toBe('pass');
+    expect(checkMap.get('structured-data/json-ld-present')?.status).toBe('pass');
 
     // Schema Validation (3.2)
-    expect(checkMap.get('3.2')?.status).toBe('pass');
+    expect(checkMap.get('structured-data/schema-validation')?.status).toBe('pass');
 
     // Product Identifiers (SKU/GTIN) (3.21)
-    expect(checkMap.get('3.21')?.status).toBe('pass');
+    expect(checkMap.get('agentic-commerce/product-identifiers')?.status).toBe('pass');
 
     // Product Details (3.22)
-    expect(checkMap.get('3.22')?.status).toBe('pass');
+    expect(checkMap.get('structured-data/advanced-product-details')?.status).toBe('pass');
 
     // Open Graph Title, Image & Alt (4.6, 4.9)
-    expect(checkMap.get('4.6')?.status).toBe('pass');
-    expect(checkMap.get('4.9')?.status).toBe('pass');
+    expect(checkMap.get('answer-readiness/core-open-graph')?.status).toBe('pass');
+    expect(checkMap.get('answer-readiness/og-image-alt')?.status).toBe('pass');
 
     // Semantic Tables (6.9)
-    expect(checkMap.get('6.9')?.status).toBe('pass');
+    expect(checkMap.get('content-extraction/data-tables')?.status).toBe('pass');
 
-    // Form No-JS / Actionable Form (5.19)
-    expect(checkMap.get('5.19')?.status).toBe('pass');
+    // Form No-JS / Actionable Form (operability-safety)
+    expect(checkMap.get('operability-safety/forms-no-js')?.status).toBe('pass');
   });
 
   it('correctly evaluates SaaS / Documentation fixtures with OpenAPI & Code blocks', async () => {
@@ -98,16 +98,16 @@ describe('Golden Corpus Conformance Tests (False-Positive Elimination)', () => {
     const checkMap = new Map(checks.map((c) => [c.id, c]));
 
     // llms.txt exists (1.1)
-    expect(checkMap.get('1.1')?.status).toBe('pass');
+    expect(checkMap.get('machine-discovery/llms-txt-exists')?.status).toBe('pass');
 
     // OpenAPI exists (5.1)
-    expect(checkMap.get('5.1')?.status).toBe('pass');
+    expect(checkMap.get('agent-interfaces/openapi-exists')?.status).toBe('pass');
 
     // Markdown Alternate Link (4.15)
-    expect(checkMap.get('4.15')?.status).toBe('pass');
+    expect(checkMap.get('content-extraction/markdown-alternate')?.status).toBe('pass');
 
     // Code Language Specified (6.10)
-    expect(checkMap.get('6.10')?.status).toBe('pass');
+    expect(checkMap.get('content-extraction/code-language')?.status).toBe('pass');
   });
 
   it('accurately identifies Client-Side SPAs vs Server-Rendered pages', async () => {
@@ -119,6 +119,6 @@ describe('Golden Corpus Conformance Tests (False-Positive Elimination)', () => {
     const checkMap = new Map(checks.map((c) => [c.id, c]));
 
     // Server-Rendered Audit (8.13) must fail for empty CSR div
-    expect(checkMap.get('8.13')?.status).toBe('fail');
+    expect(checkMap.get('content-extraction/server-rendered')?.status).toBe('fail');
   });
 });

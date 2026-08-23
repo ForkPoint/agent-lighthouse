@@ -21,30 +21,20 @@ export const TAG_SCAN_ERROR = 'scan-error';
 
 // ── Scoring ────────────────────────────────────────────────────
 
-export const CATEGORY_WEIGHTS: Record<string, number> = {
-  'content-discoverability': 0.15,
-  'crawler-permissions': 0.08,
-  'structured-data': 0.12,
-  'meta-tags': 0.08,
-  'agent-tools': 0.18,
-  'semantic-html': 0.08,
-  accessibility: 0.07,
-  'technical-readiness': 0.09,
-  'answer-engine': 0.07,
-  'generative-engine': 0.08,
-};
+// Category weights are no longer hand-tuned percentages. A category's share of
+// the overall score is its *evidence mass* — the summed weight of its
+// registered audits — derived in `audit-config.ts` as `CATEGORY_MASS` (spec §4).
 
+/** Display names for the 8 v2 categories. */
 export const CATEGORY_NAMES: Record<string, string> = {
-  'content-discoverability': 'Content Discoverability',
-  'crawler-permissions': 'AI Crawler Permissions',
-  'structured-data': 'Structured Data & Schema Markup',
-  'meta-tags': 'Meta Tags & AI Head Elements',
-  'agent-tools': 'AI Agent Tools & Action Surfaces',
-  'semantic-html': 'Semantic HTML & Content Structure',
-  accessibility: 'Accessibility & Agent Interaction',
-  'technical-readiness': 'Technical Readiness & Security',
-  'answer-engine': 'Answer Engine Optimization',
-  'generative-engine': 'Generative Engine Optimization',
+  'access-crawl-control': 'Access & Crawl Control',
+  'content-extraction': 'Content Extraction',
+  'machine-discovery': 'Machine Discovery',
+  'structured-data': 'Structured Data',
+  'answer-readiness': 'Answer Readiness',
+  'agent-interfaces': 'Agent Interfaces',
+  'agentic-commerce': 'Agentic Commerce',
+  'operability-safety': 'Agent Operability & Safety',
 };
 
 export const READINESS_WEIGHTS = {

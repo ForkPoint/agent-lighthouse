@@ -3,6 +3,7 @@ import { logger } from './logger';
 import { TAG_SKIPPED_PAGE_TYPE, TAG_SCAN_ERROR } from './constants';
 import type { CheckContext } from './check-context';
 import type { ScanConfig, CategoryConfig, AuditRegistration } from './audit-config';
+import { calculateCategoryScore, calculateOverallScore } from './scorer';
 
 /**
  * Build a not-applicable stub for an audit that never produced a real verdict,
@@ -16,6 +17,7 @@ function stubCheck(meta: AuditMeta, tag: string, explanation: string): CheckResu
     description: meta.description,
     status: 'na',
     score: 0,
+    weight: meta.weight,
     scoreDisplayMode: meta.scoreDisplayMode,
     explanation,
     priority: meta.defaultPriority,
@@ -23,6 +25,8 @@ function stubCheck(meta: AuditMeta, tag: string, explanation: string): CheckResu
     fix: meta.guidance?.fix ?? '',
     tags: [tag],
     deprecated: meta.deprecated,
+    evidenceGrade: meta.evidenceGrade,
+    tier: meta.tier,
   };
 }
 
@@ -105,6 +109,7 @@ export async function runAudits(
         try {
           const instance = reg.create();
           const result = await instance.audit(ctx);
+          // `toCheckResult` stamps the evidence weight from the audit's meta.
           const check = instance.toCheckResult(result);
           onEvent?.({ type: 'unit:done', label });
           return check;
@@ -125,57 +130,24 @@ export async function runAudits(
   // Build category results
   const categories = config.categories.map((cat) => {
     const catChecks = allChecks.filter((c) => c.category === cat.id);
-    const catRegs = config.audits[cat.id] ?? [];
-    return buildWeightedCategoryResult(cat, catChecks, catRegs);
+    return buildWeightedCategoryResult(cat, catChecks);
   });
 
-  const overallScore = Math.round(categories.reduce((sum, cat) => sum + cat.score * cat.weight, 0));
+  // One overall-score law for the whole engine: evidence-mass weighted (spec §4).
+  const overallScore = calculateOverallScore(categories);
 
   return { checks: allChecks, categories, overallScore };
 }
 
-function buildWeightedCategoryResult(
-  cat: CategoryConfig,
-  checks: CheckResult[],
-  registrations: AuditRegistration[],
-): CategoryResult {
-  if (checks.length === 0) {
-    return {
-      id: cat.id,
-      name: cat.name,
-      weight: cat.weight,
-      score: 0,
-      checks,
-      passCount: 0,
-      warnCount: 0,
-      failCount: 0,
-    };
-  }
-
-  // Build weight map: auditId → weight
-  const weightMap = new Map<string, number>();
-  for (const reg of registrations) {
-    weightMap.set(reg.meta.id, reg.meta.weight);
-  }
-
-  // Not-applicable checks represent "nothing to assess" — exclude them from the
-  // weighted average so they don't deflate the category score.
-  let totalWeight = 0;
-  let weightedSum = 0;
-  for (const check of checks) {
-    if (check.status === 'na') continue;
-    const w = weightMap.get(check.id) ?? 1.0;
-    weightedSum += check.score * w;
-    totalWeight += w;
-  }
-
-  const score = totalWeight > 0 ? Math.round((weightedSum / totalWeight) * 100) : 0;
-
+function buildWeightedCategoryResult(cat: CategoryConfig, checks: CheckResult[]): CategoryResult {
   return {
     id: cat.id,
     name: cat.name,
     weight: cat.weight,
-    score,
+    // One scorer for the whole engine: each check carries its own weight
+    // (stamped by `toCheckResult`/`stubCheck`), and a check without one is
+    // unproven evidence that must not move the score.
+    score: calculateCategoryScore(checks),
     checks,
     passCount: checks.filter((c) => c.status === 'pass').length,
     warnCount: checks.filter((c) => c.status === 'warn').length,

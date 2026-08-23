@@ -1,6 +1,12 @@
 ---
 audit: semantic-html/address-element
 category: semantic-html
+audit_id: "6.12"
+source_file: packages/core/src/audits/semantic-html/address-element.ts
+slug: address-element
+review_verdict: delete
+severity: low
+disposition: "sunset (approved 2026-08-21)"
 status: sunset
 verdict: dead
 evidence_grade: D
@@ -48,8 +54,45 @@ Grade D. There is no consumer — not a crawler, not an extractor, not an agent.
 - **[Browser use tool](https://platform.claude.com/docs/en/docs/agents-and-tools/tool-use/browser-use-tool)** — Anthropic (vendor-doc, URL verified 2026-08-21)
   - Documents that the agent reads the page as an accessibility tree via `read_page`. Combined with the snapshot experiment, this establishes that the representation Claude receives contains no <address>-specific signal to act on.
 
+## v1 dossier — what it checked and the 2026-08-20 code review
+
+Merged in on 2026-08-22 from `docs/evidence/audits/semantic-html/address-element.md`, so a removed audit has exactly one dossier and it lives here.
+
+### What it checks
+
+AI agents use <address> elements to extract contact information (email, phone, physical address) for structured answers to "how to contact" queries. Without semantic <address> markup, agents must guess which text on your page is contact info.
+
+### Code review findings (2026-08-20, 11-agent pass)
+
+Falsy audit. It passes if a single <address> exists anywhere ('const hasAddress = pagesWithAddress > 0') and otherwise only warns, so it can never fail and never discriminates. It also cannot detect the problem it names: contact info in a <p> or a <div class="contact"> is indistinguishable from a site with no contact info. And the claimed benefit is not real — <address> is spec'd as the contact info of the nearest article/body ancestor, carries no microdata, and is not what agents read for 'how do I contact X'. A site can satisfy it with an empty <address></address>.
+
+**Required fix:** _none — audit is sound as implemented_
+
+**False-positive risks:**
+- 'pagesWithAddress > 0' — one <address> anywhere passes; an empty <address></address> passes.
+- Declares applicablePageTypes ['homepage'] but loops every page, so the reported ratio counts non-homepage pages.
+- Warns any site whose contact info lives in a footer <p> (the overwhelming majority) with a fix that changes nothing an agent sees.
+- Sites that expose contact info correctly via LocalBusiness/Organization JSON-LD — the format agents actually consume — still get warned.
+- Contact-info-free sites (personal blogs, docs) get a permanent unfixable warning.
+
+**Test gaps:**
+- Two tests only; no empty-<address> fixture.
+- No fixture with contact info in a <p> (the case the audit claims to distinguish).
+- No multi-page crawl testing the applicablePageTypes/loop mismatch.
+- No JSON-LD-contact fixture.
+
+**Overlaps with:** `6.6`, `6.13`
+
+### Evidence
+
+_No dedicated evidence signal was researched for this audit in the 2026-08-20 pass. Its tier assignment falls to the taxonomy design; unproven mechanisms default to informative per the [evidence policy](../../POLICY.md)._
+
 ## Review history
+
+- 2026-08-20 — code review (11-agent workflow) + evidence research (12-domain workflow, 400 sources).
 
 - 2026-08-21 — user decision: all research verdicts accepted. Disposition by grade: **sunset** (graceful sunset per evidence-policy deprecation process; condensed rationale kept in NOT-A-FACTOR.md).
 
 - 2026-08-21 — adversarial redemption research pass (8-agent workflow); URLs fetched at research time.
+
+- 2026-08-22 — v1 dossier merged in from `docs/evidence/audits/semantic-html/address-element.md`; that copy removed (one dossier per removed audit, under `sunset/`).

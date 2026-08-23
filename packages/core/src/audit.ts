@@ -16,6 +16,31 @@ export abstract class Audit {
     low: 'low',
   };
 
+  /**
+   * Split the fourth argument of `fail`/`warn` into a priority and a fix.
+   *
+   * The argument started as a priority token and grew a second use: audits
+   * pass a sentence describing the fix for what this scan found. A sentence is
+   * not a `CheckPriority`, and putting it there made `toCheckResult` throw on
+   * the schema — so a sentence is read as the remediation and the priority
+   * falls back to the audit's default.
+   */
+  private static splitRecommendation(
+    value?: { priority: CheckPriority; [key: string]: unknown } | string,
+  ): { priority: CheckPriority | undefined; remediation: string | undefined } {
+    if (value === undefined) return { priority: undefined, remediation: undefined };
+    if (typeof value === 'string') {
+      const known = Audit.PRIORITY_MAP[value];
+      return known
+        ? { priority: known, remediation: undefined }
+        : { priority: undefined, remediation: value };
+    }
+    return {
+      priority: Audit.PRIORITY_MAP[value.priority] ?? value.priority,
+      remediation: typeof value['description'] === 'string' ? value['description'] : undefined,
+    };
+  }
+
   /** Validate an audit result against the schema. */
   protected validate(result: AuditResult): AuditResult {
     if (result.found && result.found.length > 5000) {
@@ -55,10 +80,15 @@ export abstract class Audit {
       | string,
     pageUrl?: string,
   ): AuditResult {
-    const priority =
-      typeof recommendationOrPriority === 'string'
-        ? recommendationOrPriority
-        : (recommendationOrPriority as { priority: CheckPriority })?.priority;
+    const { priority, remediation } = Audit.splitRecommendation(recommendationOrPriority);
+
+    // A recommendation object may also carry a fix snippet computed from what
+    // this scan actually found. It used to be dropped here, so every report
+    // showed the generic snippet from meta.guidance.code.
+    const code =
+      typeof recommendationOrPriority === 'object' && typeof recommendationOrPriority.code === 'string'
+        ? recommendationOrPriority.code
+        : undefined;
 
     return {
       status: 'warn',
@@ -66,9 +96,9 @@ export abstract class Audit {
       message,
       expected,
       found,
-      priority:
-        (typeof priority === 'string' ? Audit.PRIORITY_MAP[priority] : undefined) ??
-        (priority as CheckPriority),
+      ...(code ? { details: { code } } : {}),
+      ...(remediation ? { remediation } : {}),
+      priority,
       pageUrl,
     };
   }
@@ -83,10 +113,15 @@ export abstract class Audit {
       | string,
     pageUrl?: string,
   ): AuditResult {
-    const priority =
-      typeof recommendationOrPriority === 'string'
-        ? recommendationOrPriority
-        : (recommendationOrPriority as { priority: CheckPriority })?.priority;
+    const { priority, remediation } = Audit.splitRecommendation(recommendationOrPriority);
+
+    // A recommendation object may also carry a fix snippet computed from what
+    // this scan actually found. It used to be dropped here, so every report
+    // showed the generic snippet from meta.guidance.code.
+    const code =
+      typeof recommendationOrPriority === 'object' && typeof recommendationOrPriority.code === 'string'
+        ? recommendationOrPriority.code
+        : undefined;
 
     return {
       status: 'fail',
@@ -94,9 +129,9 @@ export abstract class Audit {
       message,
       expected,
       found,
-      priority:
-        (typeof priority === 'string' ? Audit.PRIORITY_MAP[priority] : undefined) ??
-        (priority as CheckPriority),
+      ...(code ? { details: { code } } : {}),
+      ...(remediation ? { remediation } : {}),
+      priority,
       pageUrl,
     };
   }
@@ -119,6 +154,9 @@ export abstract class Audit {
       description: meta.description,
       status: result.status,
       score: result.score,
+      // Single source of truth for a check's evidence weight: stamped here, at
+      // the one place a CheckResult is built from its meta.
+      weight: meta.weight,
       scoreDisplayMode: meta.scoreDisplayMode,
       displayValue,
       explanation,
@@ -127,7 +165,7 @@ export abstract class Audit {
       // UCP guidance extensions
       priority: result.priority ?? meta.defaultPriority,
       impact: meta.guidance?.impact ?? meta.description,
-      fix: meta.guidance?.fix ?? 'No fix instructions available.',
+      fix: result.remediation ?? meta.guidance?.fix ?? 'No fix instructions available.',
 
       // Structured details
       details: {
@@ -140,6 +178,10 @@ export abstract class Audit {
       },
       tags: meta.guidance?.tags,
       deprecated: meta.deprecated,
+
+      // v2 taxonomy provenance, carried alongside the weight it justifies.
+      evidenceGrade: meta.evidenceGrade,
+      tier: meta.tier,
     };
   }
 }

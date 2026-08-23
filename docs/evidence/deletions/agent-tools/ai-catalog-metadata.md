@@ -46,7 +46,13 @@ The underlying mechanism is real and consumer-backed (hf-discover's ranking is d
 - **[ai-catalog.io specification site](https://ai-catalog.io/)** — Linux Foundation / Agent Card Working Group (spec, URL verified 2026-08-21)
   - Describes the catalog as a JSON container for MCP servers, A2A agents, Claude Code plugins, datasets and model cards with optional Trust Manifest extensions for attestation/provenance — the spec's answer to 'who owns this', in place of owner/contact fields.
 
+## Rework executed — 2026-08-22
+
+**Resolved.** The audit now reads the ARD manifest (`specVersion` + `host` + `entries[]`) and scores entry quality on `description`, `tags`, `capabilities` and `representativeQueries` — the keys hf-discover indexes — with `updatedAt`/`trustManifest` reported as optional bonuses. `owner`, `contact`, `lastUpdated` and `services` are gone from the code and the guidance. Grade stays **B**, tier `scored`, weight 0.6. Implementation record: [audits/agent-interfaces/ai-catalog-metadata.md](../../audits/agent-interfaces/ai-catalog-metadata.md#the-rewrite-plan-4-task-10-2026-08-22).
+
 ## Review history
+
+- 2026-08-22 — required rework executed (Plan 4, Task 10); `TODO(redeem)` marker removed from the source file.
 
 - 2026-08-21 — user decision: all research verdicts accepted. Disposition by grade: **kept-rewrite** (kept, rewrite required per dossier).
 

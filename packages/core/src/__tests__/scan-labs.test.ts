@@ -28,18 +28,17 @@ const LABS_URL = process.env.NEXT_PUBLIC_LABS_URL || (process.env.LABS_PORT ? `h
 // ── Known exceptions ────────────────────────────────────────────
 // Audits that cannot pass in localhost dev:
 const KNOWN_FAIL = new Set([
-  '8.1', // HTTPS — localhost is HTTP
+  'access-crawl-control/https-enabled', // HTTPS — localhost is HTTP
 ]);
 
 // Audits that warn because they are N/A or environment-dependent:
 const KNOWN_WARN = new Set([
-  '3.14', // Offer schema — no /pricing/ URL pattern detected
+  'agentic-commerce/offer-schema', // Offer schema — no /pricing/ URL pattern detected
 ]);
 
 // Audits that may fail due to dev server performance (cold compilation):
 const TIMING_SENSITIVE = new Set([
-  '1.19', // Fast page load — TTFB varies in dev
-  '8.12', // Fast response time — TTFB varies in dev
+  'content-extraction/server-responsiveness', // Server responsiveness — TTFB varies in dev
 ]);
 
 // Resolve the title suffix + assertion for a given audit id without

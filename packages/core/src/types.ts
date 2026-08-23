@@ -70,6 +70,18 @@ export interface DeprecationNotice {
   link: string;
 }
 
+/**
+ * Strength of the published evidence backing an audit, assigned in the audit's
+ * dossier per docs/evidence/POLICY.md. Only A and B carry scoring weight.
+ */
+export type EvidenceGrade = 'A' | 'B' | 'C' | 'D';
+
+/**
+ * How an audit participates in scoring. Derived from its evidence grade
+ * (spec §4): only `scored` audits move a category score.
+ */
+export type AuditTier = 'scored' | 'informative' | 'experimental';
+
 export interface AuditMeta {
   id: string;
   category: string;
@@ -83,6 +95,12 @@ export interface AuditMeta {
   guidance?: AuditGuidance;
   /** Present when the audit is sunset: shown as a notice, excluded from scores. */
   deprecated?: DeprecationNotice;
+  /** Evidence grade from the audit's dossier (docs/evidence/POLICY.md). */
+  evidenceGrade?: EvidenceGrade;
+  /** Scoring tier derived from the grade (spec §4). */
+  tier?: AuditTier;
+  /** Repo-relative path to the audit's evidence dossier. */
+  dossier?: string;
 }
 
 export interface AuditResult {
@@ -101,6 +119,13 @@ export interface AuditResult {
   };
   pageUrl?: string;
   priority?: CheckPriority;
+  /**
+   * A fix written from what this scan actually found.
+   *
+   * Overrides `meta.guidance.fix` in the report, so an audit can name the
+   * offending section rather than repeat the generic advice.
+   */
+  remediation?: string;
 }
 
 // ── Check Results ──────────────────────────────────────────────
@@ -123,6 +148,8 @@ export interface CheckResult {
   description: string;
   status: CheckStatus;
   score: number;
+  /** Evidence-derived weight copied from AuditMeta.weight (A=1.0, B=0.6, informative=0). */
+  weight?: number;
   scoreDisplayMode: ScoreDisplayMode;
   displayValue?: string;
   explanation?: string;
@@ -140,6 +167,10 @@ export interface CheckResult {
   tags?: string[];
   /** Present when the audit is sunset: shown as a notice, excluded from scores. */
   deprecated?: DeprecationNotice;
+  /** Evidence grade copied from AuditMeta.evidenceGrade. */
+  evidenceGrade?: EvidenceGrade;
+  /** Scoring tier copied from AuditMeta.tier. */
+  tier?: AuditTier;
 }
 
 // ── Category Results ───────────────────────────────────────────

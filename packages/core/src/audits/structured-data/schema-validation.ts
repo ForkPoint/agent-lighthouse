@@ -1,18 +1,22 @@
 import type { AuditMeta, AuditResult } from "../../types";
 import { Audit } from "../../audit";
 import type { CheckContext } from '../../check-context';
+import { weightForGrade } from '../../scorer';
 import { flattenJsonLd } from '../../parser';
 
 export class SchemaValidationAudit extends Audit {
   static override meta: AuditMeta = {
-    id: '3.2',
+    id: 'structured-data/schema-validation',
     category: 'structured-data',
     title: 'Schema validation',
     failureTitle: 'Schema validation',
     description:
       'AI agents parse @context and @type to identify entity types in your structured data. Blocks missing these properties are silently ignored by every schema consumer, including Google, ChatGPT plugins, and RAG pipelines. Add "@context": "https://schema.org" and a valid @type to each block.',
     scoreDisplayMode: 'binary',
-    weight: 1.0,
+    weight: weightForGrade('A', 'scored'),
+    evidenceGrade: 'A',
+    tier: 'scored',
+    dossier: 'docs/evidence/audits/structured-data/schema-validation.md',
     defaultPriority: 'critical',
     guidance: {
       impact:

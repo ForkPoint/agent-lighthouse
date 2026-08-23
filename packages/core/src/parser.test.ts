@@ -2,6 +2,8 @@ import {
   parseHtml,
   extractJsonLd,
   flattenJsonLd,
+  topLevelJsonLd,
+  allJsonLdNodes,
   extractMarkdownLinks,
   extractMicrodata,
   extractRdfa,
@@ -800,6 +802,62 @@ describe('flattenJsonLd', () => {
     ]);
     expect(flat).toHaveLength(1);
     expect((flat[0] as Record<string, unknown>)['@type']).toBe('Y');
+  });
+});
+
+// ---------------------------------------------------------------------------
+// topLevelJsonLd / allJsonLdNodes
+// ---------------------------------------------------------------------------
+
+describe('topLevelJsonLd', () => {
+  const article = {
+    '@context': 'https://schema.org',
+    '@type': 'Article',
+    headline: 'X',
+    publisher: { '@type': 'Organization', name: 'Acme' },
+  };
+  it('does not hoist nested property objects to the top level', () => {
+    const tops = topLevelJsonLd([article]);
+    expect(tops).toHaveLength(1);
+    expect((tops[0] as { '@type': string })['@type']).toBe('Article');
+  });
+  it('expands @graph members as top-level entities', () => {
+    const graph = {
+      '@context': 'https://schema.org',
+      '@graph': [
+        { '@type': 'WebSite', name: 'S' },
+        { '@type': 'Organization', name: 'Acme' },
+      ],
+    };
+    const types = topLevelJsonLd([graph]).map((o) => (o as { '@type': string })['@type']).sort();
+    expect(types).toEqual(['Organization', 'WebSite']);
+  });
+  it('expands top-level arrays', () => {
+    const tops = topLevelJsonLd([[{ '@type': 'FAQPage' }, { '@type': 'WebSite' }] as unknown as object]);
+    expect(tops).toHaveLength(2);
+  });
+  it('propagates @context onto @graph members that lack one', () => {
+    const graph = { '@context': 'https://schema.org', '@graph': [{ '@type': 'WebSite' }] };
+    const tops = topLevelJsonLd([graph]);
+    expect((tops[0] as Record<string, unknown>)['@context']).toBe('https://schema.org');
+  });
+  it('ignores null and primitive blocks', () => {
+    const tops = topLevelJsonLd([
+      null as unknown as object,
+      'str' as unknown as object,
+      42 as unknown as object,
+      { '@type': 'WebPage' },
+    ]);
+    expect(tops).toHaveLength(1);
+    expect((tops[0] as Record<string, unknown>)['@type']).toBe('WebPage');
+  });
+});
+
+describe('allJsonLdNodes', () => {
+  it('still walks nested objects for deep searches', () => {
+    const article = { '@type': 'Article', publisher: { '@type': 'Organization' } };
+    const types = allJsonLdNodes([article]).map((o) => (o as { '@type'?: string })['@type']);
+    expect(types).toContain('Organization');
   });
 });
 

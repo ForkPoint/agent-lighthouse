@@ -10,14 +10,17 @@ const NOTICE = {
 
 class DeprecatedAudit extends Audit {
   static override meta: AuditMeta = {
-    id: '99.1',
-    category: 'accessibility',
+    id: 'operability-safety/skip-nav',
+    category: 'operability-safety',
     title: 'Deprecated thing',
     failureTitle: 'Deprecated thing',
     description: 'Test audit.',
     scoreDisplayMode: 'informative',
     weight: 0,
     defaultPriority: 'low',
+    evidenceGrade: 'D',
+    tier: 'informative',
+    dossier: 'docs/evidence/sunset/NOT-A-FACTOR.md',
     deprecated: NOTICE,
   };
   audit(): AuditResult {
@@ -53,7 +56,7 @@ describe('deprecation notice flow', () => {
     class NormalAudit extends DeprecatedAudit {
       static override meta: AuditMeta = {
         ...DeprecatedAudit.meta,
-        id: '99.2',
+        id: 'operability-safety/normal-thing',
         scoreDisplayMode: 'binary',
         weight: 1.0,
         deprecated: undefined,

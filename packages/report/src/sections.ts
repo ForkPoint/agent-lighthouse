@@ -14,15 +14,20 @@ export interface SectionGroupDef {
 export const SECTION_GROUPS: SectionGroupDef[] = [
   {
     key: 'agenticReadiness',
-    categoryIds: ['agent-tools', 'content-discoverability', 'crawler-permissions'],
+    categoryIds: [
+      'access-crawl-control',
+      'machine-discovery',
+      'agent-interfaces',
+      'agentic-commerce',
+    ],
   },
   {
     key: 'aiSearchOptimization',
-    categoryIds: ['answer-engine', 'generative-engine'],
+    categoryIds: ['content-extraction', 'structured-data', 'answer-readiness'],
   },
   {
     key: 'technicalFoundation',
-    categoryIds: ['structured-data', 'meta-tags', 'semantic-html', 'accessibility', 'technical-readiness'],
+    categoryIds: ['operability-safety'],
   },
 ];
 

@@ -1,12 +1,26 @@
 import type { AuditMeta } from './types';
 import type { Audit } from './audit';
+import { CATEGORY_NAMES } from './constants';
+
+import { ACCESS_CRAWL_CONTROL_AUDITS } from './audits/access-crawl-control';
+import { CONTENT_EXTRACTION_AUDITS } from './audits/content-extraction';
+import { MACHINE_DISCOVERY_AUDITS } from './audits/machine-discovery';
+import { STRUCTURED_DATA_AUDITS } from './audits/structured-data';
+import { ANSWER_READINESS_AUDITS } from './audits/answer-readiness';
+import { AGENT_INTERFACES_AUDITS } from './audits/agent-interfaces';
+import { AGENTIC_COMMERCE_AUDITS } from './audits/agentic-commerce';
+import { OPERABILITY_SAFETY_AUDITS } from './audits/operability-safety';
 
 // ── Category Config ─────────────────────────────────────────────
 
 export interface CategoryConfig {
   id: string;
   name: string;
-  /** Weight in the overall score (all weights should sum to 1.0). */
+  /**
+   * Evidence mass: the summed weight of the category's registered audits
+   * (spec §4). Relative, not a percentage — `calculateOverallScore` normalizes
+   * by the total mass, so a category with no scored audits weighs nothing.
+   */
   weight: number;
 }
 
@@ -27,468 +41,101 @@ export interface ScanConfig {
 
 // ── Helper ──────────────────────────────────────────────────────
 
-function reg(AuditClass: typeof Audit): AuditRegistration {
+type AuditClass = typeof Audit;
+
+function reg(AuditClass: AuditClass): AuditRegistration {
   return {
     create: () => new (AuditClass as unknown as new () => Audit)(),
     meta: AuditClass.meta,
   };
 }
 
-// ── Imports ─────────────────────────────────────────────────────
+// ── The 8 v2 categories ─────────────────────────────────────────
 
-// Content Discoverability (22)
-import {
-  LlmsTxtExistsAudit,
-  LlmsTxtBlockquoteAudit,
-  LlmsTxtSectionsAudit,
-  LlmsTxtLinkDescriptionsAudit,
-  LlmsTxtLinksValidAudit,
-  LlmsFullTxtAudit,
-  SitemapExistsAudit,
-  SitemapKeyPagesAudit,
-  SitemapAbsoluteUrlsAudit,
-  SitemapLastmodAudit,
-  RssFeedAudit,
-  RssFeedContentAudit,
-  NoNoindexAudit,
-  NoNofollowAudit,
-  InternalLinkingAudit,
-  NoRedirectChainsAudit,
-  CanonicalLinksAudit,
-  MobileFriendlyAudit,
-  FastPageLoadAudit,
-  NoBrokenLinksAudit,
-  NoOrphanPagesAudit,
-  CommerceLinksAudit,
-} from './audits/content-discoverability';
+/**
+ * The v2 taxonomy (spec §3): 8 categories, each sourced verbatim from its
+ * category `index.ts` registry so the registry has exactly one source of
+ * truth — adding an audit to a category folder registers it here.
+ *
+ * Order here is registry order, which is what a raw scan iterates. The report's
+ * display order is owned by `SECTION_GROUPS` / `CATEGORY_ORDER` in
+ * `@forkpoint/agent-lighthouse-report`'s `sections.ts`, which groups the
+ * categories into sections; the two lists are not required to agree.
+ */
+const CATEGORY_AUDITS: ReadonlyArray<readonly [id: string, audits: readonly AuditClass[]]> = [
+  ['access-crawl-control', ACCESS_CRAWL_CONTROL_AUDITS],
+  ['content-extraction', CONTENT_EXTRACTION_AUDITS],
+  ['machine-discovery', MACHINE_DISCOVERY_AUDITS],
+  ['structured-data', STRUCTURED_DATA_AUDITS],
+  ['answer-readiness', ANSWER_READINESS_AUDITS],
+  ['agent-interfaces', AGENT_INTERFACES_AUDITS],
+  ['agentic-commerce', AGENTIC_COMMERCE_AUDITS],
+  ['operability-safety', OPERABILITY_SAFETY_AUDITS],
+];
 
-// Crawler Permissions (28)
-import {
-  GptbotAudit,
-  GoogleExtendedAudit,
-  AnthropicAudit,
-  PerplexitybotAudit,
-  ApplebotExtendedAudit,
-  CcbotAudit,
-  MetaExternalAgentAudit,
-  AmazonbotAudit,
-  BytespiderAudit,
-  CohereAiAudit,
-  YoubotAudit,
-  DiffbotAudit,
-  Ai2botAudit,
-  ChatgptUserAudit,
-  ClaudeUserAudit,
-  OaiSearchbotAudit,
-  MetaExternalFetcherAudit,
-  BravebotAudit,
-  DuckassistbotAudit,
-  MistralaiUserAudit,
-  ClaudeSearchbotAudit,
-  NoBlanketBlockAudit,
-  SensitivePathsAudit,
-  CrawlDelayAudit,
-  MetaRobotsNotBlockingAudit,
-  NoBotDetectionAudit,
-  TdmRepAudit,
-  AgentGovernanceAudit,
-} from './audits/crawler-permissions';
-
-// Structured Data (18)
-import {
-  JsonLdPresentAudit,
-  SchemaValidationAudit,
-  OrganizationSchemaAudit,
-  WebSiteSearchActionAudit,
-  BreadcrumbSchemaAudit,
-  ArticleSchemaAudit,
-  FaqPageSchemaAudit,
-  ServiceProductSchemaAudit,
-  SpeakableSchemaAudit,
-  HowToSchemaAudit,
-  LocalBusinessSchemaAudit,
-  ReviewSchemaAudit,
-  OfferSchemaAudit,
-  AuthorSchemaAudit,
-  ProductIdentifiersAudit,
-  ProductDetailsAudit,
-  ProductReviewsAudit,
-  ProductTransactionCertaintyAudit,
-} from './audits/structured-data';
-
-// Meta Tags (17)
-import {
-  MetaDescriptionAudit,
-  MetaAuthorAudit,
-  CanonicalUrlAudit,
-  LanguageAttributeAudit,
-  UniqueMetaAudit,
-  CoreOpenGraphAudit,
-  OgTypeAudit,
-  OgSiteNameAudit,
-  OgImageAltAudit,
-  TwitterCardAudit,
-  LlmsTxtLinkAudit,
-  AiContentDeclarationAudit,
-  MarkdownAlternateAudit,
-  RssFeedLinkAudit,
-  OpenApiLinkAudit,
-  AiCatalogLinkAudit,
-  MetaRobotsAudit,
-} from './audits/meta-tags';
-
-// Agent Tools (23)
-import {
-  OpenApiExistsAudit,
-  OpenApiEndpointsAudit,
-  OpenApiOperationIdsAudit,
-  OpenApiServersAudit,
-  OpenApiSchemasAudit,
-  AiCatalogExistsAudit,
-  AiCatalogMetadataAudit,
-  AiCatalogUrlsAudit,
-  AgentsJsonAudit,
-  McpDiscoveryAudit,
-  McpEndpointAudit,
-  McpCapabilitiesAudit,
-  ContactFormAudit,
-  SearchEndpointAudit,
-  NoBlockingCaptchaAudit,
-  FormsNoJsAudit,
-  WebmcpManifestAudit,
-  WebmcpDeclarativeFormsAudit,
-  WebmcpInputQualityAudit,
-  WebmcpToolNamingAudit,
-  WebmcpToolAnnotationsAudit,
-  OpenApiDescriptionQualityAudit,
-  FormActionabilityAudit,
-} from './audits/agent-tools';
-
-// Semantic HTML (18)
-import {
-  SingleH1Audit,
-  SequentialHeadingsAudit,
-  MainElementAudit,
-  ArticleElementAudit,
-  HeaderFooterAudit,
-  AsideElementAudit,
-  SectionHeadingsAudit,
-  SemanticListsAudit,
-  DataTablesAudit,
-  CodeLanguageAudit,
-  TimeElementAudit,
-  DefinitionElementsAudit,
-  ContentDepthAudit,
-  ImageAltTextAudit,
-  FigureFigcaptionAudit,
-  SvgBloatAudit,
-  TokenRatioAudit,
-  FakeHeadingsAudit,
-} from './audits/semantic-html';
-
-// Accessibility — hand-rolled markup audits + engine-backed tree audits (21)
-import {
-  AriaLandmarksAudit,
-  NavAriaLabelAudit,
-  FormErrorMessagesAudit,
-  A11yLandmarkUniqueAudit,
-  A11yFormLabelsAudit,
-  A11yAccessibleNamesAudit,
-  A11yDialogNameAudit,
-  A11yAriaHiddenBodyAudit,
-  A11yAriaRolesAudit,
-  A11yAriaAttributesAudit,
-  A11yAriaRelationshipsAudit,
-  A11yDuplicateIdAudit,
-  A11yAutocompleteAudit,
-  A11yNestedInteractiveAudit,
-  A11yTableHeadersAudit,
-  A11yDocumentTitleAudit,
-  A11yFrameTitleAudit,
-  A11yMetaRefreshAudit,
-  A11yTabindexAudit,
-  A11yDeprecatedElementsAudit,
-  A11yPresentationConflictAudit,
-} from './audits/accessibility';
-
-// Technical Readiness (17)
-import {
-  HttpsEnabledAudit,
-  HstsHeaderAudit,
-  CspHeaderAudit,
-  ContentTypeOptionsAudit,
-  SecurityTxtAudit,
-  CorsAiFilesAudit,
-  CorsApiRoutesAudit,
-  CorrectContentTypesAudit,
-  CacheHeadersAudit,
-  FastResponseTimeAudit,
-  ServerRenderedAudit,
-  NoRenderBlockingAudit,
-  ImageDimensionsAudit,
-  LcpNotLazyAudit,
-  NoBrokenAiEndpointsAudit,
-  PrivacyPolicyAudit,
-  TermsOfServiceAudit,
-} from './audits/technical-readiness';
-
-// Answer Engine (11)
-import {
-  FaqSectionsAudit,
-  QuestionHeadingsAudit,
-  FirstParagraphAnswersAudit,
-  DirectDefinitionsAudit,
-  ComparisonTablesAudit,
-  NumberedStepsAudit,
-  SpecificNumbersAudit,
-  DatesOnContentAudit,
-  ContentWithoutClickthroughAudit,
-  LastUpdatedIndicatorAudit,
-  MetaDescriptionAeoAudit,
-} from './audits/answer-engine';
-
-// Generative Engine (14)
-import {
-  NamedAuthorAudit,
-  AuthorSameAsAudit,
-  AuthorPageAudit,
-  AboutCredentialsAudit,
-  ExternalCitationsAudit,
-  BrandNameAudit,
-  TrustSignalsAudit,
-  ReviewSignalsAudit,
-  PublicationDateAudit,
-  LastModifiedSchemaAudit,
-  InternalCrossLinkingAudit,
-  UniqueDataAudit,
-  BlockquoteUsageAudit,
-  DescriptiveUrlsAudit,
-} from './audits/generative-engine';
+/**
+ * Evidence mass per category: Σ of the member audits' weights (spec §4).
+ *
+ * This replaces the old hand-tuned `CATEGORY_WEIGHTS` map. A category earns
+ * influence over the overall score by carrying proven audits, so moving an
+ * audit between categories moves its mass with it and nothing else changes.
+ * Categories made entirely of informative/experimental audits have mass 0 and
+ * cannot move the overall score.
+ */
+export const CATEGORY_MASS: Record<string, number> = Object.fromEntries(
+  CATEGORY_AUDITS.map(([id, audits]) => [
+    id,
+    audits.reduce((sum, AuditClass) => sum + AuditClass.meta.weight, 0),
+  ]),
+);
 
 // ── Default Config ──────────────────────────────────────────────
 
 export const defaultConfig: ScanConfig = {
-  categories: [
-    { id: 'content-discoverability', name: 'Content Discoverability', weight: 0.15 },
-    { id: 'crawler-permissions', name: 'AI Crawler Permissions', weight: 0.08 },
-    { id: 'structured-data', name: 'Structured Data & Schema Markup', weight: 0.12 },
-    { id: 'meta-tags', name: 'Meta Tags & AI Head Elements', weight: 0.08 },
-    { id: 'agent-tools', name: 'AI Agent Tools & Action Surfaces', weight: 0.18 },
-    { id: 'semantic-html', name: 'Semantic HTML & Content Structure', weight: 0.08 },
-    { id: 'accessibility', name: 'Accessibility & Agent Interaction', weight: 0.07 },
-    { id: 'technical-readiness', name: 'Technical Readiness & Security', weight: 0.09 },
-    { id: 'answer-engine', name: 'Answer Engine Optimization', weight: 0.07 },
-    { id: 'generative-engine', name: 'Generative Engine Optimization', weight: 0.08 },
-  ],
-  audits: {
-    'content-discoverability': [
-      reg(LlmsTxtExistsAudit),
-      reg(LlmsTxtBlockquoteAudit),
-      reg(LlmsTxtSectionsAudit),
-      reg(LlmsTxtLinkDescriptionsAudit),
-      reg(LlmsTxtLinksValidAudit),
-      reg(LlmsFullTxtAudit),
-      reg(SitemapExistsAudit),
-      reg(SitemapKeyPagesAudit),
-      reg(SitemapAbsoluteUrlsAudit),
-      reg(SitemapLastmodAudit),
-      reg(RssFeedAudit),
-      reg(RssFeedContentAudit),
-      reg(NoNoindexAudit),
-      reg(NoNofollowAudit),
-      reg(InternalLinkingAudit),
-      reg(NoRedirectChainsAudit),
-      reg(CanonicalLinksAudit),
-      reg(MobileFriendlyAudit),
-      reg(FastPageLoadAudit),
-      reg(NoBrokenLinksAudit),
-      reg(NoOrphanPagesAudit),
-      reg(CommerceLinksAudit),
-    ],
-    'crawler-permissions': [
-      reg(GptbotAudit),
-      reg(GoogleExtendedAudit),
-      reg(AnthropicAudit),
-      reg(PerplexitybotAudit),
-      reg(ApplebotExtendedAudit),
-      reg(CcbotAudit),
-      reg(MetaExternalAgentAudit),
-      reg(AmazonbotAudit),
-      reg(BytespiderAudit),
-      reg(CohereAiAudit),
-      reg(YoubotAudit),
-      reg(DiffbotAudit),
-      reg(Ai2botAudit),
-      reg(ChatgptUserAudit),
-      reg(ClaudeUserAudit),
-      reg(OaiSearchbotAudit),
-      reg(MetaExternalFetcherAudit),
-      reg(BravebotAudit),
-      reg(DuckassistbotAudit),
-      reg(MistralaiUserAudit),
-      reg(ClaudeSearchbotAudit),
-      reg(NoBlanketBlockAudit),
-      reg(SensitivePathsAudit),
-      reg(CrawlDelayAudit),
-      reg(MetaRobotsNotBlockingAudit),
-      reg(NoBotDetectionAudit),
-      reg(TdmRepAudit),
-      reg(AgentGovernanceAudit),
-    ],
-    'structured-data': [
-      reg(JsonLdPresentAudit),
-      reg(SchemaValidationAudit),
-      reg(OrganizationSchemaAudit),
-      reg(WebSiteSearchActionAudit),
-      reg(BreadcrumbSchemaAudit),
-      reg(ArticleSchemaAudit),
-      reg(FaqPageSchemaAudit),
-      reg(ServiceProductSchemaAudit),
-      reg(SpeakableSchemaAudit),
-      reg(HowToSchemaAudit),
-      reg(LocalBusinessSchemaAudit),
-      reg(ReviewSchemaAudit),
-      reg(OfferSchemaAudit),
-      reg(AuthorSchemaAudit),
-      reg(ProductIdentifiersAudit),
-      reg(ProductDetailsAudit),
-      reg(ProductReviewsAudit),
-      reg(ProductTransactionCertaintyAudit),
-    ],
-    'meta-tags': [
-      reg(MetaDescriptionAudit),
-      reg(MetaAuthorAudit),
-      reg(CanonicalUrlAudit),
-      reg(LanguageAttributeAudit),
-      reg(UniqueMetaAudit),
-      reg(CoreOpenGraphAudit),
-      reg(OgTypeAudit),
-      reg(OgSiteNameAudit),
-      reg(OgImageAltAudit),
-      reg(TwitterCardAudit),
-      reg(LlmsTxtLinkAudit),
-      reg(AiContentDeclarationAudit),
-      reg(MarkdownAlternateAudit),
-      reg(RssFeedLinkAudit),
-      reg(OpenApiLinkAudit),
-      reg(AiCatalogLinkAudit),
-      reg(MetaRobotsAudit),
-    ],
-    'agent-tools': [
-      reg(OpenApiExistsAudit),
-      reg(OpenApiEndpointsAudit),
-      reg(OpenApiOperationIdsAudit),
-      reg(OpenApiServersAudit),
-      reg(OpenApiSchemasAudit),
-      reg(AiCatalogExistsAudit),
-      reg(AiCatalogMetadataAudit),
-      reg(AiCatalogUrlsAudit),
-      reg(AgentsJsonAudit),
-      reg(McpDiscoveryAudit),
-      reg(McpEndpointAudit),
-      reg(McpCapabilitiesAudit),
-      reg(ContactFormAudit),
-      reg(SearchEndpointAudit),
-      reg(NoBlockingCaptchaAudit),
-      reg(FormsNoJsAudit),
-      reg(WebmcpManifestAudit),
-      reg(WebmcpDeclarativeFormsAudit),
-      reg(WebmcpInputQualityAudit),
-      reg(WebmcpToolNamingAudit),
-      reg(WebmcpToolAnnotationsAudit),
-      reg(OpenApiDescriptionQualityAudit),
-      reg(FormActionabilityAudit),
-    ],
-    'semantic-html': [
-      reg(SingleH1Audit),
-      reg(SequentialHeadingsAudit),
-      reg(MainElementAudit),
-      reg(ArticleElementAudit),
-      reg(HeaderFooterAudit),
-      reg(AsideElementAudit),
-      reg(SectionHeadingsAudit),
-      reg(SemanticListsAudit),
-      reg(DataTablesAudit),
-      reg(CodeLanguageAudit),
-      reg(TimeElementAudit),
-      reg(DefinitionElementsAudit),
-      reg(ContentDepthAudit),
-      reg(ImageAltTextAudit),
-      reg(FigureFigcaptionAudit),
-      reg(SvgBloatAudit),
-      reg(TokenRatioAudit),
-      reg(FakeHeadingsAudit),
-    ],
-    accessibility: [
-      reg(AriaLandmarksAudit),
-      reg(NavAriaLabelAudit),
-      reg(FormErrorMessagesAudit),
-      reg(A11yLandmarkUniqueAudit),
-      reg(A11yFormLabelsAudit),
-      reg(A11yAccessibleNamesAudit),
-      reg(A11yDialogNameAudit),
-      reg(A11yAriaHiddenBodyAudit),
-      reg(A11yAriaRolesAudit),
-      reg(A11yAriaAttributesAudit),
-      reg(A11yAriaRelationshipsAudit),
-      reg(A11yDuplicateIdAudit),
-      reg(A11yAutocompleteAudit),
-      reg(A11yNestedInteractiveAudit),
-      reg(A11yTableHeadersAudit),
-      reg(A11yDocumentTitleAudit),
-      reg(A11yFrameTitleAudit),
-      reg(A11yMetaRefreshAudit),
-      reg(A11yTabindexAudit),
-      reg(A11yDeprecatedElementsAudit),
-      reg(A11yPresentationConflictAudit),
-    ],
-    'technical-readiness': [
-      reg(HttpsEnabledAudit),
-      reg(HstsHeaderAudit),
-      reg(CspHeaderAudit),
-      reg(ContentTypeOptionsAudit),
-      reg(SecurityTxtAudit),
-      reg(CorsAiFilesAudit),
-      reg(CorsApiRoutesAudit),
-      reg(CorrectContentTypesAudit),
-      reg(CacheHeadersAudit),
-      reg(FastResponseTimeAudit),
-      reg(ServerRenderedAudit),
-      reg(NoRenderBlockingAudit),
-      reg(ImageDimensionsAudit),
-      reg(LcpNotLazyAudit),
-      reg(NoBrokenAiEndpointsAudit),
-      reg(PrivacyPolicyAudit),
-      reg(TermsOfServiceAudit),
-    ],
-    'answer-engine': [
-      reg(FaqSectionsAudit),
-      reg(QuestionHeadingsAudit),
-      reg(FirstParagraphAnswersAudit),
-      reg(DirectDefinitionsAudit),
-      reg(ComparisonTablesAudit),
-      reg(NumberedStepsAudit),
-      reg(SpecificNumbersAudit),
-      reg(DatesOnContentAudit),
-      reg(ContentWithoutClickthroughAudit),
-      reg(LastUpdatedIndicatorAudit),
-      reg(MetaDescriptionAeoAudit),
-    ],
-    'generative-engine': [
-      reg(NamedAuthorAudit),
-      reg(AuthorSameAsAudit),
-      reg(AuthorPageAudit),
-      reg(AboutCredentialsAudit),
-      reg(ExternalCitationsAudit),
-      reg(BrandNameAudit),
-      reg(TrustSignalsAudit),
-      reg(ReviewSignalsAudit),
-      reg(PublicationDateAudit),
-      reg(LastModifiedSchemaAudit),
-      reg(InternalCrossLinkingAudit),
-      reg(UniqueDataAudit),
-      reg(BlockquoteUsageAudit),
-      reg(DescriptiveUrlsAudit),
-    ],
-  },
+  categories: CATEGORY_AUDITS.map(([id]) => ({
+    id,
+    name: CATEGORY_NAMES[id] ?? id,
+    weight: CATEGORY_MASS[id] ?? 0,
+  })),
+  audits: Object.fromEntries(
+    CATEGORY_AUDITS.map(([id, audits]) => [id, audits.map((AuditClass) => reg(AuditClass))]),
+  ),
 };
+
+/** Every registered category id, in canonical report order. */
+export const CATEGORY_IDS: readonly string[] = CATEGORY_AUDITS.map(([id]) => id);
+
+/**
+ * Narrow a scan to a subset of the registry.
+ *
+ * Two independent filters: `categories` restricts which categories run at all,
+ * and `includeExperimental` decides whether experimental-tier audits are part
+ * of the run. Experimental audits are excluded unless asked for — they carry
+ * weight 0 either way, but running an unvalidated check on every scan is a
+ * decision the operator makes, not a default.
+ *
+ * Returns the same object when there is nothing to filter, so the common path
+ * allocates nothing.
+ */
+export function filterConfig(
+  config: ScanConfig,
+  opts: { categories?: string[]; includeExperimental?: boolean },
+): ScanConfig {
+  const wanted =
+    opts.categories && opts.categories.length > 0 ? new Set(opts.categories) : undefined;
+  const dropExperimental =
+    opts.includeExperimental !== true &&
+    Object.values(config.audits).some((list) => list.some((r) => r.meta.tier === 'experimental'));
+  if (!wanted && !dropExperimental) return config;
+
+  const categories = config.categories.filter((cat) => !wanted || wanted.has(cat.id));
+  const audits = Object.fromEntries(
+    categories.map((cat) => [
+      cat.id,
+      (config.audits[cat.id] ?? []).filter(
+        (registration) => !dropExperimental || registration.meta.tier !== 'experimental',
+      ),
+    ]),
+  );
+  return { categories, audits };
+}

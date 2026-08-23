@@ -1,4 +1,4 @@
-import type { PageOverride, PageType, ScanReport } from './types';
+import type { CheckStatus, PageOverride, PageType, ScanReport } from './types';
 import { getScoreTier, MAX_PAGES_PER_SCAN, READINESS_WEIGHTS } from './constants';
 import { logger } from './logger';
 import { createFetcher, splitCredentials } from './fetcher';
@@ -14,12 +14,12 @@ import {
   detectPageType,
 } from './parser';
 import type { CheckContext, PageContext } from './check-context';
-import { defaultConfig } from './audit-config';
+import { defaultConfig, filterConfig } from './audit-config';
 import { planAudits, runAudits } from './audit-runner';
 import { ProgressTracker } from './progress';
 import type { ScanEvent } from './progress';
-import { runA11yForHtml } from './audits/accessibility/runner';
-import { A11Y_RULES } from './audits/accessibility';
+import { runA11yForHtml } from './audits/operability-safety/runner';
+import { A11Y_RULES } from './audits/operability-safety';
 import { extractProductFieldVerification } from './product-fields';
 import { generateScanSummary } from './summary';
 import { isInformative } from './scorer';
@@ -31,6 +31,17 @@ export interface ScanOptions {
   onEvent?: (event: ScanEvent) => void;
   pages?: PageOverride[] | null;
   signal?: AbortSignal;
+  /**
+   * Restrict the scan to these category ids. Unknown ids simply match nothing —
+   * validate them at the entry point so the operator hears about a typo.
+   */
+  categories?: string[];
+  /**
+   * Include audits whose tier is `experimental`. Off by default, per
+   * docs/evidence/POLICY.md: an experimental check is behind a flag and never
+   * scored.
+   */
+  includeExperimental?: boolean;
 }
 
 // Cap how many pages get the jsdom-based a11y pass. Accessibility issues are
@@ -217,23 +228,21 @@ export async function runScan(url: string, options?: ScanOptions): Promise<ScanR
     '/feed.xml',
     '/openapi.json',
     '/openapi.yaml',
+    // RFC 9727 (June 2025): the only ratified, IANA-registered domain-level
+    // API discovery mechanism. Read by agent-interfaces/openapi-exists.
+    '/.well-known/api-catalog',
     '/.well-known/ai-catalog.json',
     '/.well-known/mcp/servers.json',
     '/.well-known/ucp',
     '/.well-known/agents.json',
     '/.well-known/ai-plugin.json',
-    '/.well-known/webmcp',
+    // '/.well-known/webmcp' was dropped 2026-08-22: the only reader was the
+    // pre-rewrite webmcp-registered-tools audit, and the path is an invented
+    // convention with no spec and no IANA registration. Real WebMCP tools are
+    // registered at runtime, so there was nothing at the end of that request.
     '/.well-known/security.txt',
     '/.well-known/tdmrep.json',
     '/navigation.json',
-    '/privacy-policy/',
-    '/privacy/',
-    '/privacy-policy',
-    '/privacy',
-    '/policies/privacy-policy',
-    '/terms/',
-    '/terms',
-    '/policies/terms-of-service',
     '/about/',
     '/about-us/',
     '/about',
@@ -370,7 +379,12 @@ export async function runScan(url: string, options?: ScanOptions): Promise<ScanR
     wafProtection: wafProtection ?? undefined,
   };
 
-  const auditPlan = planAudits(ctx, defaultConfig);
+  const config = filterConfig(defaultConfig, {
+    categories: options?.categories,
+    includeExperimental: options?.includeExperimental ?? false,
+  });
+
+  const auditPlan = planAudits(ctx, config);
   tracker.phaseStart('audits', auditPlan.runnable.length);
 
   const {
@@ -379,7 +393,7 @@ export async function runScan(url: string, options?: ScanOptions): Promise<ScanR
     overallScore,
   } = await runAudits(
     ctx,
-    defaultConfig,
+    config,
     (event) => {
       if (event.type === 'unit:done') tracker.unitDone(event.label);
       else tracker.unitFail(event.label, event.error);
@@ -409,21 +423,11 @@ export async function runScan(url: string, options?: ScanOptions): Promise<ScanR
   // Extract Top 10 Fails (already sorted by priority in recommendations)
   const topFails = recommendations.slice(0, 10);
 
-  // Extract Top 10 Passes (sorted by weight)
-  const weightMap = new Map<string, number>();
-  for (const catId in defaultConfig.audits) {
-    for (const reg of defaultConfig.audits[catId]!) {
-      weightMap.set(reg.meta.id, reg.meta.weight);
-    }
-  }
-
+  // Extract Top 10 Passes (sorted by the weight stamped on each check)
   const topPasses = allChecks
     .filter((c) => c.status === 'pass' && !isInformative(c))
     .slice()
-    .sort(
-      (a: { id: string }, b: { id: string }) =>
-        (weightMap.get(b.id) ?? 1) - (weightMap.get(a.id) ?? 1),
-    )
+    .sort((a, b) => (b.weight ?? 0) - (a.weight ?? 0))
     .slice(0, 10);
 
   // Informative checks carry no meaningful score, so they must not drag the
@@ -472,54 +476,88 @@ export async function runScan(url: string, options?: ScanOptions): Promise<ScanR
   return report;
 }
 
-function calculateReadinessVitals(checks: Array<{ id: string; category: string; score: number }>): {
+/**
+ * Readiness vitals average only the *applicable* checks. `na` checks carry a
+ * stub score of 0, so counting them deflated every vital on sites where a whole
+ * area does not apply (a blog has no commerce pages, yet scored 0% Commerce).
+ *
+ * A vital with no applicable checks reads as 0, i.e. "no data". That is the
+ * neutral value the rest of the pipeline already substitutes for absent vitals
+ * (`report.readinessVitals ?? { commerce: 0, ... }` in the report view-model and
+ * in generateScanSummary), so 0 keeps one meaning across the codebase. 100 was
+ * rejected: readinessScore is a weighted sum of the four vitals, and awarding a
+ * full 100 for zero evidence would inflate the headline score of any site that
+ * simply has nothing to measure.
+ */
+/**
+ * The audit ids each id-driven vital averages, in v2 `category/slug` form.
+ *
+ * Exported so a test can prove every id still resolves to a registered audit:
+ * a rename that misses this list would silently empty a vital.
+ */
+export const READINESS_VITAL_IDS = {
+  /** v1 3.8, 3.14, 3.21, 3.22, 3.23, 3.24 after the v2 rename. */
+  commerce: [
+    'structured-data/service-schema',
+    'agentic-commerce/offer-schema',
+    'agentic-commerce/product-identifiers',
+    'structured-data/advanced-product-details',
+    // 3.23 (product-reviews) folded into 3.13 (review-schema) in Plan 4.
+    'structured-data/review-schema',
+    'agentic-commerce/product-transaction-certainty',
+  ],
+  /** The v1 content list, minus sunsets, with merged ids mapped to survivors. */
+  content: [
+    'machine-discovery/llms-txt-exists',
+    'machine-discovery/llms-txt-structure',
+    'machine-discovery/llms-txt-link-descriptions',
+    'machine-discovery/llms-txt-links-valid',
+    'machine-discovery/llms-full-txt',
+    'machine-discovery/sitemap-exists',
+    'machine-discovery/discovery-index-coverage',
+    'machine-discovery/sitemap-absolute-urls',
+    'machine-discovery/sitemap-lastmod',
+    'answer-readiness/faq-sections',
+    'answer-readiness/question-headings',
+    'answer-readiness/first-paragraph-answers',
+    'answer-readiness/direct-definitions',
+    'answer-readiness/comparison-tables',
+    // 9.6 (numbered-steps) folded into 6.8 (semantic-lists) in Plan 4.
+    'content-extraction/semantic-lists',
+    'answer-readiness/specific-numbers',
+    'answer-readiness/dates-on-content',
+    'answer-readiness/content-without-clickthrough',
+    'answer-readiness/meta-description',
+    'answer-readiness/brand-name',
+    'answer-readiness/trust-signals',
+    'answer-readiness/review-signals',
+  ],
+} as const;
+
+function calculateReadinessVitals(
+  checks: Array<{ id: string; category: string; score: number; status: CheckStatus }>,
+): {
   commerce: number;
   content: number;
   botAccessibility: number;
   technical: number;
 } {
-  const getScore = (ids: string[]) => {
-    const matching = checks.filter((c) => ids.includes(c.id));
+  const applicable = checks.filter((c) => c.status !== 'na');
+
+  const average = (matching: Array<{ score: number }>) => {
     if (matching.length === 0) return 0;
     return Math.round((matching.reduce((sum, c) => sum + c.score, 0) / matching.length) * 100);
   };
 
-  const getCategoryScoreByPrefix = (prefix: string) => {
-    const matching = checks.filter((c) => c.id.startsWith(prefix) || c.category === prefix);
-    if (matching.length === 0) return 0;
-    return Math.round((matching.reduce((sum, c) => sum + c.score, 0) / matching.length) * 100);
-  };
+  const getScore = (ids: readonly string[]) => average(applicable.filter((c) => ids.includes(c.id)));
+
+  const getCategoryScore = (category: string) =>
+    average(applicable.filter((c) => c.category === category));
 
   return {
-    commerce: getScore(['3.8', '3.14', '3.21', '3.22', '3.23', '3.24']),
-    content: getScore([
-      '1.1',
-      '1.2',
-      '1.3',
-      '1.4',
-      '1.5',
-      '1.6',
-      '1.7',
-      '1.8',
-      '1.9',
-      '1.10',
-      '9.1',
-      '9.2',
-      '9.3',
-      '9.4',
-      '9.5',
-      '9.6',
-      '9.7',
-      '9.8',
-      '9.9',
-      '9.10',
-      '9.11',
-      '10.6',
-      '10.7',
-      '10.8',
-      '1.23',
-    ]),
-    botAccessibility: getCategoryScoreByPrefix('crawler-permissions'),
-    technical: getCategoryScoreByPrefix('technical-readiness'),
+    commerce: getScore(READINESS_VITAL_IDS.commerce),
+    content: getScore(READINESS_VITAL_IDS.content),
+    botAccessibility: getCategoryScore('access-crawl-control'),
+    technical: getCategoryScore('content-extraction'),
   };
 }
