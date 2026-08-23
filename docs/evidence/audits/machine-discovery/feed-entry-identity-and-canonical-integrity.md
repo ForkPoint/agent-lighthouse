@@ -1,18 +1,19 @@
 ---
-check: feed-entry-identity-and-canonical-integrity
-title: "Feed entry identity and canonical integrity"
-domain: feeds-indexing
-status: proposed
+audit: machine-discovery/feed-entry-identity-and-canonical-integrity
+category: machine-discovery
+source_file: packages/core/src/audits/machine-discovery/feed-entry-identity-and-canonical-integrity.ts
+slug: feed-entry-identity-and-canonical-integrity
 evidence_grade: B
-uniqueness: unique
-difficulty: multi-page
-scoring_tier: scored
+tier: scored
+disposition: "new in v2 — graduated from proposal 2026-08-23"
 reviewed: 2026-08-20
+graduated: 2026-08-23
 ---
+
 
 # Feed entry identity and canonical integrity
 
-> Proposed check. Evidence grade **B** · unique · implementation: `multi-page`
+> Shipped in v2. Evidence grade **B** · scored tier · unique · implementation: `multi-page`
 
 ## What it checks
 
@@ -48,3 +49,51 @@ Tier per evidence policy: **scored** — grade B meets the A/B bar required for 
 ## Review history
 
 - 2026-08-20 — proposed by the novel-checks research pass (10-agent evidence workflow); sources URL-verified at research time.
+
+## Implementation deviations
+
+Steps 1–5 of the sketch ship in full: autodiscovery from every crawled page's
+`<link rel="alternate">` plus the conventional paths, the `Content-Type` and
+BOM assertions, the per-entry Atom and RSS identity rules, the duplicate-id
+check, the absolute-HTTPS link rule, and the canonical comparison on the five
+newest item URLs.
+
+**Discovery is capped at two feeds and reuses `gatherers/feeds.ts`**, so the
+four Wave C feed audits fetch a given feed once between them. The sketch gates
+autodiscovery on the root-text-file integrity flag; that audit ships
+independently in this wave and nothing wires the flag into this one, because a
+feed that parses as a feed is already proof the path resolved.
+
+**One entry produces one finding.** A canonical that disagrees with the item
+link already explains the tracking parameters, so the finding names both and the
+tracking arm fires on its own only when the page declares no canonical at all
+to disagree with.
+
+**A generic `application/xml` or `text/xml` warns rather than fails.** The
+registered type is `application/atom+xml` or `application/rss+xml`, but a
+generic XML type still parses everywhere; a type that is not XML at all — most
+often `text/html` from a misconfigured catch-all — fails.
+
+**The newest-five selection uses only timezone-carrying dates.**
+`parseFeedDate` returns `undefined` for a timestamp with no offset rather than
+guessing one, so such entries sort last. Their identity is still checked; only
+their canonical is not fetched.
+
+**Evidence hygiene.** The dossier's second source is Google's sitemap
+documentation, which belongs to a different proposal and says nothing about
+feed entry identity. Nothing in this audit rests on it. RFC 4287 §4.1.2 carries
+every Atom assertion made here, and the RSS `<guid>`/`isPermaLink` rule comes
+from the RSS 2.0 specification.
+
+## Deferred
+
+- **Re-fetching the feed at the end of the run to check id stability** (sketch
+  step 6). Ids only regenerate when a deploy intervenes, so a second fetch
+  inside one scan proves nothing and costs a request.
+- **The stub-feed content-length ratio** (sketch step 7, advisory). Feed body
+  length against extracted main content is `machine-discovery/rss-feed-content`.
+- **JSON Feed identity rules.** The gatherer parses JSON Feed, and the
+  duplicate-id, missing-id and link rules apply to it, but JSON Feed has no
+  `isPermaLink` or summary-when-src requirement to assert.
+- **More than five canonical comparisons.** Each is a page fetch. Five newest
+  entries is where a publishing defect shows if it exists at all.

@@ -1,6 +1,6 @@
 # Proposed audits — TODO stubs
 
-21 stub files for the proposed checks from the 2026-08-20 research pass. Every stub compiles, is **not** registered in any category index, and returns `notApplicable` until implemented. Each file's header carries its implementation sketch; full proof lives in [docs/evidence/proposals](../../../../../docs/evidence/proposals/README.md).
+20 stub files for the proposed checks from the 2026-08-20 research pass. Every stub compiles, is **not** registered in any category index, and returns `notApplicable` until implemented. Each file's header carries its implementation sketch; full proof lives in [docs/evidence/proposals](../../../../../docs/evidence/proposals/README.md).
 
 A stub that graduates to a shipped audit is deleted; its bullet leaves the list
 below, the count above drops by one, and the audit's id joins `NEW_IN_V2` in
@@ -45,7 +45,6 @@ the `--experimental` flag work in Plan 6.
 
 ## feeds-indexing
 
-- [ ] TODO [`feed-entry-identity-and-canonical-integrity`](./feeds-indexing/feed-entry-identity-and-canonical-integrity.ts) — Feed entry identity and canonical integrity (grade B, scored, `multi-page`) · [dossier](../../../../../docs/evidence/proposals/feeds-indexing/feed-entry-identity-and-canonical-integrity.md)
 - [ ] TODO [`root-text-file-resolution-integrity-indexnow-key-file-precon`](./feeds-indexing/root-text-file-resolution-integrity-indexnow-key-file-precon.ts) — Root text-file resolution integrity (IndexNow key-file precondition) (grade B, scored, `static-fetch`) · [dossier](../../../../../docs/evidence/proposals/feeds-indexing/root-text-file-resolution-integrity-indexnow-key-file-precon.md)
 - [ ] TODO [`three-way-freshness-lag-and-orphaned-fresh-content`](./feeds-indexing/three-way-freshness-lag-and-orphaned-fresh-content.ts) — Three-way freshness lag and orphaned fresh content (grade B, scored, `multi-page`) · [dossier](../../../../../docs/evidence/proposals/feeds-indexing/three-way-freshness-lag-and-orphaned-fresh-content.md)
 - [ ] TODO [`websub-hub-advertisement-and-self-link-correctness`](./feeds-indexing/websub-hub-advertisement-and-self-link-correctness.ts) — WebSub hub advertisement and self-link correctness (grade C, informative, `static-fetch`) · [dossier](../../../../../docs/evidence/proposals/feeds-indexing/websub-hub-advertisement-and-self-link-correctness.md)

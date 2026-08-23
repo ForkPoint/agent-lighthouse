@@ -159,7 +159,10 @@ export class SectionSplitRiskProfileAudit extends Audit {
     const details = {
       bodyTokens,
       sections: sections.length,
-      sectionTokens: sections.map((section) => section.tokens),
+      // Reported as strings: the result schema keeps unknown detail keys only
+      // as scalars or as an array of strings, so a number array is dropped
+      // whole rather than coerced.
+      sectionTokens: sections.map((section) => String(section.tokens)),
       score: Number(score.toFixed(3)),
       headingDistance,
       worstSeverity,
