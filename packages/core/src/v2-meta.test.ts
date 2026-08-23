@@ -5,7 +5,7 @@ import { weightForGrade } from './scorer';
 import { Audit } from './audit';
 import { planAudits } from './audit-runner';
 import type { CheckContext } from './check-context';
-import type { ScanConfig } from './audit-config';
+import { defaultConfig, type ScanConfig } from './audit-config';
 
 // ---------------------------------------------------------------------------
 // Fixtures
@@ -109,10 +109,28 @@ describe('AuditMetaSchema v2 fields', () => {
 });
 
 describe('CheckResultSchema v2 fields', () => {
+  // The old assertion pinned the fixture's own length, which proves nothing
+  // about the schema. The cap is 64 characters, so both sides of it are tested.
   it('accepts a slug id longer than the old 20-char cap', () => {
-    expect(V2_ID.length).toBe(26);
+    expect(V2_ID.length).toBeGreaterThan(20);
     const parsed = CheckResultSchema.parse(makeCheck());
     expect(parsed.id).toBe(V2_ID);
+  });
+
+  it('accepts an id of exactly 64 characters and rejects 65', () => {
+    const slug = (n: number) => `machine-discovery/${'a'.repeat(n - 'machine-discovery/'.length)}`;
+    expect(slug(64)).toHaveLength(64);
+    expect(CheckResultSchema.safeParse(makeCheck({ id: slug(64) })).success).toBe(true);
+    expect(CheckResultSchema.safeParse(makeCheck({ id: slug(65) })).success).toBe(false);
+  });
+
+  // Every registered audit has to survive its own report schema.
+  it('keeps every registered audit id within the 64-character cap', () => {
+    const tooLong = Object.values(defaultConfig.audits)
+      .flat()
+      .map((r) => r.meta.id)
+      .filter((id) => id.length > 64);
+    expect(tooLong).toEqual([]);
   });
 
   it('accepts evidenceGrade and tier passed through from meta', () => {

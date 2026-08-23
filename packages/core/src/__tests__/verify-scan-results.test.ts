@@ -94,7 +94,13 @@ async function runAllChecks(
   return map;
 }
 
-describe('Verify scan results against real sites', () => {
+// These tests fetch live sites. On an offline machine they fail for a reason
+// that has nothing to do with the code under test, so set AL_SKIP_NETWORK=1 to
+// skip the whole block:
+//
+//   AL_SKIP_NETWORK=1 pnpm test
+//
+describe.skipIf(process.env['AL_SKIP_NETWORK'] === '1')('Verify scan results against real sites', () => {
   // Increase timeout for real HTTP requests. The budget is per describe block:
   // one block builds a whole context and runs the entire registry against a
   // live site, and that registry keeps growing — 164 audits at v2, several of

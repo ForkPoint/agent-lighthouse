@@ -65,35 +65,39 @@ const DOCUMENTED_DEFERRALS: string[] = [];
 
 // v2 audits that deliberately absorb more than one v1 row: a consolidation
 // points several `renamed` entries at a single merged audit. Every other
-// landed id stays 1:1, so this list is the allow-list for shared targets and
+// landed id stays 1:1, so this table is the allow-list for shared targets and
 // grows one line per fold as Plan 4 lands them.
-const CONSOLIDATION_TARGETS = [
-  'access-crawl-control/ai-bot-directives',
-  'operability-safety/security-header-hygiene',
-  'machine-discovery/llms-txt-structure',
-  'machine-discovery/discovery-index-coverage',
-  'machine-discovery/llms-txt-exists',
-  'machine-discovery/rss-feed',
-  'machine-discovery/ai-file-delivery',
-  'machine-discovery/in-content-links',
-  'access-crawl-control/robots-directives',
-  'access-crawl-control/canonical',
-  'answer-readiness/core-open-graph',
-  'answer-readiness/dates-on-content',
-  'answer-readiness/meta-description',
-  'answer-readiness/review-signals',
-  'agent-interfaces/search-endpoint',
-  'agent-interfaces/openapi-exists',
-  'agent-interfaces/ai-catalog-exists',
-  'agent-interfaces/mcp-endpoint',
+//
+// The value is the fold size — how many v1 rows land on that audit. Comparing
+// only the set of shared ids let a sixth accidental row point at an existing
+// target and still pass; the count is what actually pins the fold.
+const CONSOLIDATION_TARGETS: Record<string, number> = {
+  'access-crawl-control/ai-bot-directives': 5,
+  'access-crawl-control/canonical': 2,
+  'access-crawl-control/robots-directives': 3,
+  'agent-interfaces/ai-catalog-exists': 2,
+  'agent-interfaces/mcp-endpoint': 3,
+  'agent-interfaces/openapi-exists': 2,
   // 5.3 (its own row) plus 5.23, whose naming rule folded in here on 2026-08-22.
-  'agent-interfaces/openapi-operation-ids',
-  'structured-data/review-schema',
-  'content-extraction/semantic-lists',
-  'content-extraction/server-responsiveness',
-  'operability-safety/form-actionability',
-  'operability-safety/landmark-unique',
-];
+  'agent-interfaces/openapi-operation-ids': 2,
+  'agent-interfaces/search-endpoint': 2,
+  'answer-readiness/core-open-graph': 3,
+  'answer-readiness/dates-on-content': 2,
+  'answer-readiness/meta-description': 2,
+  'answer-readiness/review-signals': 2,
+  'content-extraction/semantic-lists': 3,
+  'content-extraction/server-responsiveness': 2,
+  'machine-discovery/ai-file-delivery': 2,
+  'machine-discovery/discovery-index-coverage': 2,
+  'machine-discovery/in-content-links': 2,
+  'machine-discovery/llms-txt-exists': 2,
+  'machine-discovery/llms-txt-structure': 2,
+  'machine-discovery/rss-feed': 2,
+  'operability-safety/form-actionability': 2,
+  'operability-safety/landmark-unique': 2,
+  'operability-safety/security-header-hygiene': 4,
+  'structured-data/review-schema': 2,
+};
 
 // v2 identity: `category/slug`. Slugs carry digits and dots (json-ld-1-1,
 // llms-full-txt, ai-plugin.json-style names), so the pattern is deliberately
@@ -210,8 +214,8 @@ describe('migration-map.json', () => {
     const landed = surviving.map(([, e]) => e.to!);
     const counts = new Map<string, number>();
     for (const id of landed) counts.set(id, (counts.get(id) ?? 0) + 1);
-    const shared = [...counts].filter(([, n]) => n > 1).map(([id]) => id);
-    expect(shared.sort()).toEqual([...CONSOLIDATION_TARGETS].sort());
+    const shared = Object.fromEntries([...counts].filter(([, n]) => n > 1));
+    expect(shared).toEqual(CONSOLIDATION_TARGETS);
   });
 
   it('links every surviving entry to the dossier of the audit it resolves to', () => {

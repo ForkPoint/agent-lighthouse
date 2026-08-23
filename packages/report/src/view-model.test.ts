@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import type { CategoryResult, CheckResult, ScanReport } from '@forkpoint/agent-lighthouse-core';
-import { TAG_SCAN_ERROR, TAG_SKIPPED_PAGE_TYPE } from '@forkpoint/agent-lighthouse-core';
+import { CATEGORY_MASS, TAG_SCAN_ERROR, TAG_SKIPPED_PAGE_TYPE } from '@forkpoint/agent-lighthouse-core';
 import { buildReportView } from './view-model';
 
 // ── Fixtures ────────────────────────────────────────────────────
@@ -53,12 +53,25 @@ function report(categories: CategoryResult[], over: Partial<ScanReport> = {}): S
   };
 }
 
+/**
+ * A category's real evidence mass, not a hand-written fraction.
+ *
+ * `CategoryResult.weight` carries the summed weight of the category's
+ * registered audits, so a fixture that hard-codes 0.15 pins a number the
+ * engine never produces and cannot notice when the real mass drifts.
+ */
+const mass = (id: string): number => {
+  const value = CATEGORY_MASS[id];
+  if (value === undefined) throw new Error(`no evidence mass for category ${id}`);
+  return value;
+};
+
 // A report spanning two section groups with a mix of statuses on agent-interfaces.
 function mixedReport(): ScanReport {
   return report([
     cat({
       id: 'agent-interfaces',
-      weight: 0.18,
+      weight: mass('agent-interfaces'),
       score: 80,
       checks: [
         check({ id: 'p1', status: 'pass' }),
@@ -71,13 +84,13 @@ function mixedReport(): ScanReport {
     }),
     cat({
       id: 'machine-discovery',
-      weight: 0.15,
+      weight: mass('machine-discovery'),
       score: 60,
       checks: [check({ id: 'cd1', category: 'machine-discovery', status: 'pass' })],
     }),
     cat({
       id: 'answer-readiness',
-      weight: 0.07,
+      weight: mass('answer-readiness'),
       score: 100,
       checks: [check({ id: 'ar1', category: 'answer-readiness', status: 'pass' })],
     }),
@@ -91,10 +104,13 @@ describe('buildReportView', () => {
     const v = buildReportView(mixedReport());
     // technicalFoundation has no categories present → dropped.
     expect(v.groups.map((g) => g.key)).toEqual(['agenticReadiness', 'aiSearchOptimization']);
-    // agenticReadiness = round((80*0.18 + 60*0.15) / (0.18 + 0.15)) = 71
-    expect(v.groups[0]!.score).toBe(71);
+    // agenticReadiness = the two categories' scores weighted by their real
+    // evidence mass, computed here from the same source the fixture uses.
+    const ai = mass('agent-interfaces');
+    const md = mass('machine-discovery');
+    expect(v.groups[0]!.score).toBe(Math.round((80 * ai + 60 * md) / (ai + md)));
     expect(v.groups[0]!.label).toBe('Agentic Readiness');
-    // aiSearchOptimization = round(100*0.07 / 0.07) = 100
+    // aiSearchOptimization has one category, so its roll-up is that score.
     expect(v.groups[1]!.score).toBe(100);
   });
 
@@ -128,7 +144,11 @@ describe('buildReportView', () => {
   it('orders topFixes by priority (fail+warn) and topPasses by category weight', () => {
     const v = buildReportView(mixedReport());
     expect(v.topFixes.map((c) => c.id)).toEqual(['f1', 'w1']); // critical before high
-    // passes sorted by owning category weight desc: agent-interfaces .18 > md .15 > ar .07
+    // Passes sort by owning category mass, descending. Pinned as a mass
+    // ordering rather than as three literals, so it still reads true when the
+    // registry moves audits between categories.
+    expect(mass('agent-interfaces')).toBeGreaterThan(mass('machine-discovery'));
+    expect(mass('machine-discovery')).toBeGreaterThan(mass('answer-readiness'));
     expect(v.topPasses.map((c) => c.id)).toEqual(['p1', 'cd1', 'ar1']);
   });
 
@@ -137,7 +157,7 @@ describe('buildReportView', () => {
       report([
         cat({
           id: 'agent-interfaces',
-          weight: 0.18,
+          weight: mass('agent-interfaces'),
           checks: [
             check({ id: 'inf-fail', status: 'fail', priority: 'critical', scoreDisplayMode: 'informative' }),
             check({ id: 'norm-fail', status: 'fail', priority: 'high' }),
