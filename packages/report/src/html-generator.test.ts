@@ -180,6 +180,9 @@ describe('tier badges', () => {
     );
     expect(html).toContain('Experimental — not scored');
   });
+});
+
+describe('evidence link', () => {
   it('links a check at its published evidence dossier', () => {
     const html = generateHtmlReport(
       report([
