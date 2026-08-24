@@ -1,40 +1,46 @@
 ---
 audit: operability-safety/security-header-hygiene
-audit_id: "8.2, 8.3, 8.4, 8.7"
+audit_id: "8.7"
 category: operability-safety
 source_file: packages/core/src/audits/operability-safety/security-header-hygiene.ts
 slug: security-header-hygiene
-review_verdict: consolidate
+review_verdict: narrow
 severity: low
-evidence_grade: B
-disposition: "consolidated 2026-08-22 (Plan 4, Task 3) — informative, weight 0"
-reviewed: 2026-08-22
+evidence_grade: C
+disposition: "narrowed 2026-08-24 (contradiction sweep, Part 2 Task 11) — security.txt only, informative, weight 0"
+reviewed: 2026-08-24
 ---
 
-# security-header-hygiene (`8.2`, `8.3`, `8.4`, `8.7`)
+# security-header-hygiene (`8.7`)
 
-> operability-safety · source `security-header-hygiene.ts` · consolidates hsts-header (8.2), csp-header (8.3), content-type-options (8.4), security-txt (8.7) · evidence grade **B** · tier **informative** (weight 0)
+> operability-safety · source `security-header-hygiene.ts` · v1 8.7 (security-txt) · evidence grade **C** · tier **informative** (weight 0)
+
+Narrowed on 2026-08-24 to the security.txt signal alone. The three security-header rows this audit used to report — `Strict-Transport-Security` (8.2), `Content-Security-Policy` (8.3) and `X-Content-Type-Options` (8.4) — were removed as not-a-factor; see [Narrowed to security.txt](#narrowed-to-securitytxt-contradiction-sweep-2026-08-24) below. The check id is unchanged for now, so the audit is still registered as `operability-safety/security-header-hygiene` even though it now measures one file and no headers; renaming it is a separate, central change.
 
 ## Mechanism claim
 
-**Falsifiable claim:** *none is made about AI agents.* The four signals this audit reports — `Strict-Transport-Security`, `Content-Security-Policy`, `X-Content-Type-Options: nosniff` and `/.well-known/security.txt` — are browser- and human-facing security mechanisms. The evidence review found no AI crawler, retrieval pipeline or answer engine documented to read any of them, so the audit makes no claim that adding them changes AI-agent behaviour. It reports their state as hygiene, at weight 0, and never fails the site.
+**Falsifiable claim:** *none is made about AI agents.* `/.well-known/security.txt` is a vulnerability-disclosure file whose stated consumers are human security researchers and vulnerability-notification tooling. The evidence review found no AI crawler, retrieval pipeline or answer engine documented to read it, so the audit makes no claim that publishing one changes AI-agent behaviour. It reports the file's RFC 9116 conformance at weight 0, and never fails the site.
 
-The one adjacent claim that *is* falsifiable and supported belongs to transport security rather than to the header: agent protocols mandate HTTPS outright (MCP 2025-11-25 requires HTTPS for every authorization endpoint and redirect URI; RFC 9116 requires security.txt to be served over HTTPS), and browser-resident agents inherit Chromium's mixed-content and HTTPS-First behaviour. That is the strongest evidence among the four sources and it is what sets this audit's grade — see [Grade](#grade).
+What the audit does claim, and what is testable, is narrower: RFC 9116 defines what a security.txt must contain, so a *published* file with no `Contact`, no `Expires`, an unparseable `Expires` or an `Expires` in the past does not conform, and advertises a disclosure route that no longer works. That claim is about the file, not about agents, which is why the tier is informative.
 
 ## What it checks
 
-One homepage response and one root file, four rows:
+One root file, one signal.
 
-| Signal | `ok` | `weak` | `missing` |
-| :--- | :--- | :--- | :--- |
-| `Strict-Transport-Security` | `max-age >= 31536000` | `max-age=0` (HSTS disabled), `max-age` below one year, or no `max-age` directive | header absent |
-| `Content-Security-Policy` | enforced policy via response header **or** `<meta http-equiv>` | report-only policy, or a permissive policy (`'unsafe-inline'`, `'unsafe-eval'`, `default-src *`) | neither header nor meta tag |
-| `X-Content-Type-Options` | value is exactly `nosniff` (trimmed, case-insensitive) | present with any other value | header absent |
-| `security.txt` | 200 with a `Contact` field and an `Expires` date in the future | HTML soft-404 at 200, missing `Contact`, missing/unparseable `Expires`, or expired | non-200, or never fetched |
+| State | Result |
+| :--- | :--- |
+| a 200 response whose body is not HTML, carrying a `Contact` field and an `Expires` date in the future | `pass` |
+| a published file that returns HTML at 200 (SPA soft-404), or has no `Contact`, no `Expires`, an unparseable `Expires`, or an `Expires` that has passed | `warn`, priority `low` |
+| no security.txt published (non-200 at both locations) | `na` |
+| the location was never fetched, so nothing was measured | `na` |
 
-Result semantics: `pass` when all four rows are `ok`, `warn` otherwise, `na` when no page response was captured at all. **`fail` is never returned**, and `scoreDisplayMode: 'informative'` with `weight: 0` keeps every outcome out of the category score, the readiness vitals and the top-fails list.
+`/.well-known/security.txt` is the location checked; the legacy top-level `/security.txt` is accepted as a fallback and named as such in the result. Detection is parse-not-probe by design — this dossier's own evidence records that only a minority of deployed files pass RFC validation, so presence alone proves nothing.
+
+**`fail` is never returned**, and `scoreDisplayMode: 'informative'` with `weight: 0` keeps every outcome out of the category score, the readiness vitals and the top-fails list.
 
 ## Why the four were consolidated
+
+*Historical record, 2026-08-22. Three of the four signals described below were removed on 2026-08-24 — see [Narrowed to security.txt](#narrowed-to-securitytxt-contradiction-sweep-2026-08-24).*
 
 The approved v2 map row for 8.2 rules the consolidated signal "weight 0, never fails a site" (`docs/evidence/v2-audit-map.md`, §5 consolidation, audits 8.2–8.7). The four v1 audits levied four independent penalties for one unproven mechanism:
 
@@ -46,6 +52,8 @@ The approved v2 map row for 8.2 rules the consolidated signal "weight 0, never f
 Consolidating also let each source audit's code-review fixes land in one place rather than four: `max-age` parsing, meta/report-only CSP delivery, an exact `nosniff` token compare, a parsed security.txt (Contact + unexpired Expires, legacy `/security.txt` fallback, SPA soft-404 guard), and an `na` result when no page response was captured instead of v1's confident "header is missing" failure.
 
 ## Grade
+
+*Superseded on 2026-08-24: the audit's grade is now **C**, taken from the security.txt signal it still measures. The argument below is the 2026-08-22 record of why it was B, and is kept as history — see [Narrowed to security.txt](#narrowed-to-securitytxt-contradiction-sweep-2026-08-24) for why that grade did not survive.*
 
 **B — the strongest proven consumer path among the four sources, not the average.**
 
@@ -103,8 +111,63 @@ The four absorbed dossiers are kept verbatim as the record of why each signal mo
 - [content-type-options (8.4)](../../merged/operability-safety/content-type-options.md) — grade C
 - [security-txt (8.7)](../../merged/operability-safety/security-txt.md) — grade C
 
+## Narrowed to security.txt (contradiction sweep, 2026-08-24)
+
+**Reason:** the contradiction sweep (`docs/evidence/CONTRADICTION-SWEEP.md`, Class A row `1/3 · none-known 1 · B / informative / 0`), plus a Class B pass-rule marker found while reading this file. Plan Part 2, Task 11.
+
+### What the sweep found
+
+Two things in this dossier disagreed with what shipped.
+
+The first was the grade. The audit carried `evidenceGrade: 'B'`, and the [Grade](#grade) section above explains that honestly enough — "the strongest proven consumer path among the four sources, not the average" — but the B belongs to the HTTPS/transport signal, and this dossier also says, in the same breath, that the audit does not measure it: "The scored HTTPS check itself is `access-crawl-control/https-enabled` (v1 8.1), which this audit does not duplicate." So the badge priced a signal that lives somewhere else. Of the signals the audit actually reported, HSTS, CSP and `X-Content-Type-Options` are one researched signal, graded **D**, `Consumers: none-known · Recommended tier: delete`; only security.txt was recommended for shipping, at **C**, `Recommended tier: informative`. Once these pages publish, a grade-B header sitting above an evidence block that reads "none-known / delete" refutes itself in the reader's own view.
+
+The second was the pass rule. `pass` required all four rows to be `ok`, so a site with a perfectly valid security.txt was warned for a missing `Content-Security-Policy` — a header whose researched signal recommends deletion. And a site with no security.txt at all was warned, although RFC 9116 is Informational, publishing the file is optional, and this dossier puts adoption at roughly 1.25% of the top 1M. That is a warning on about 99% of the web for not doing an optional thing that no AI agent reads.
+
+### What the audit no longer does
+
+It no longer reads any response header. The `Strict-Transport-Security`, `Content-Security-Policy` and `X-Content-Type-Options` rows are gone, along with the four-row table, the `max-age` threshold, the permissive-CSP patterns, the `<meta http-equiv>` CSP reader and the `nosniff` token compare. The homepage response is not an input at all any more: the audit reads `ctx.rootFiles` and nothing else. Nothing in the product replaces those rows, and nothing should.
+
+The `## What it checks` section above has been rewritten to describe what remains. The [Mechanism claim](#mechanism-claim) has been rewritten for the same reason. Everything under [Why the four were consolidated](#why-the-four-were-consolidated), [Grade](#grade) and [Evidence](#evidence) is left exactly as written on 2026-08-22 — it is the research record, and correcting it in place would erase the reason this change was necessary.
+
+### What changed
+
+The grade drops **B → C**, the grade the security.txt signal actually carries. The tier stays `informative` and the weight stays 0: `weightForGrade('C', 'informative')` is 0, exactly as `weightForGrade('B', 'informative')` was, so no site's score moves in either direction and the scored set is unchanged. The demonstration of "grade prices the evidence, tier prices the claim" that this audit used to provide is retired here; grade and tier now say the same thing.
+
+The security.txt detection itself is untouched. The parse-not-probe ladder — well-known location, legacy top-level fallback, SPA soft-404 guard, `Contact`, `Expires`, unparseable `Expires`, expired `Expires` — is the part this dossier justifies ("Conformity is poor — analyses find only a minority of deployed files pass RFC validation, so presence alone is weak evidence of anything. Hence the parse-not-probe detection in this audit"), and it survives intact.
+
+What changed around it is when the audit speaks. A site that publishes no security.txt is now `notApplicable`, not `warn`: RFC 9116 defines conformance for a file that exists, it does not require a site to have one. A context in which the location was never fetched is also `notApplicable`, with a different message, so "we did not look" and "there is nothing there" stay distinguishable. A published file that fails RFC 9116 still warns, at priority `low`. A valid file passes. `fail` is still never returned — the approved v2 map row for 8.2 ruled the consolidated signal "weight 0, never fails a site", and that survives the narrowing.
+
+The audit's title and description follow the measurement: `title` is now "security.txt (RFC 9116)" and `failureTitle` "security.txt does not conform to RFC 9116", which read true on `pass`, `warn` and `na` alike. The guidance covers the file only, and its `docsUrl` points at RFC 9116 rather than the MDN header index.
+
+### Why the three header signals were removed rather than kept as unscored context
+
+They follow the two headers from the same researched signal that were already removed. `technical-readiness/referrer-policy` (8.5) and `technical-readiness/permissions-policy` (8.6) are named in the same D-graded signal as HSTS, CSP and `X-Content-Type-Options`, and both were removed outright in v2 with `status: "removed", reason: "not-a-factor"`. Keeping three of the five and sunsetting two was an inconsistency, not a distinction.
+
+One line of the D-signal counter-evidence, recorded in full in the source dossiers ([hsts-header](../../merged/operability-safety/hsts-header.md), [csp-header](../../merged/operability-safety/csp-header.md), [content-type-options](../../merged/operability-safety/content-type-options.md)), reads the other way — "They remain legitimate general web-security hygiene and can be reported as unscored context, but presenting them as AI-agent signals is not defensible" — and that sentence is what produced the four-row table in the first place. It is overridden here for the same reason it was overridden for 8.5 and 8.6: `POLICY.md` gives grade D exactly two destinations, experimental behind a flag with an active draft-spec trajectory, or rejected. These have no trajectory.
+
+The counter-evidence line about CSP `frame-ancestors` preventing a page from being embedded in an agent surface is *not* part of this justification, although it was in the first draft of the proposal. It is scoped to embedding policy, and the CSP row never parsed `frame-ancestors`. The D grade and `Recommended tier: delete` carry the removal on their own.
+
+### What is deliberately not lost
+
+No signal the research recommends scoring is discarded by this narrowing, which is the test a Class A fix has to pass. The scored recommendation in this dossier is HTTPS — qualified in the tier line itself as "scored (for HTTPS itself, not for HSTS)" — and it already ships at grade A, tier `scored`, weight 1.0, as `access-crawl-control/https-enabled`. Splitting it out here would have duplicated 8.1 and double-counted TLS.
+
+The two header measurements that do have an evidenced purpose also already live elsewhere and are untouched. The one place `nosniff` changes a parsing outcome is inside `machine-discovery/ai-file-delivery`, whose dossier records it: nosniff removes a client's ability to recover from a wrong `Content-Type`, so a mis-typed file served with it is worse off. And CSP is still parsed from both the response header and `<meta http-equiv>` by `operability-safety/third-party-dom-write-blast-radius` (grade B, scored), to count how many separate companies can write into the DOM an agent reads — that audit is now the only CSP reader in the registry. What ends here is only the claim that the presence of these headers is itself an AI-readiness signal, which is the claim this dossier never supported.
+
+### What was left for a central change
+
+Three things this task deliberately did not do, because they touch shared files:
+
+- **The rename.** The natural name for what is left is `operability-safety/security-txt`, with the source file, the dossier and the class renamed to match. That moves the registry index, `migration-map.json`, the migration-map and orchestrator tests and this dossier's path, so it is handled centrally rather than here. Until then the check id reads `security-header-hygiene` while the audit measures security.txt, and the summary line at the top of this page says so.
+- **Retiring 8.2, 8.3 and 8.4.** Their rows in `migration-map.json` still read `status: "renamed"` into this audit. They should become `status: "removed", reason: "not-a-factor"` with their dossiers moved from `docs/evidence/merged/operability-safety/` to `docs/evidence/sunset/technical-readiness/` and a section each on `NOT-A-FACTOR.md`, exactly as 8.5 and 8.6 were handled. The hsts-header entry must record that only the header is removed and that the grade-B HTTPS/TLS signal in that dossier survives, scored, as `access-crawl-control/https-enabled`.
+- **The prose that cites this audit.** `docs/evidence/audits/machine-discovery/ai-file-delivery.md`, `docs/evidence/audits/agent-interfaces/openapi-exists.md` and `docs/evidence/merged/README.md` all cite `security-header-hygiene` as the precedent for a grade-B audit shipping at tier informative. That precedent no longer exists at B, and those three sentences need to stand on their own evidence.
+
+### Not done here
+
+RFC 9116 also requires the file to be served as `text/plain` with UTF-8 and to be "accessed exclusively via HTTPS". Neither is checked today and neither is added now: this task removes a contradiction, and adding checks would be an expansion. Both are candidates for a later pass if the file's conformity signal is ever worth strengthening.
+
 ## Review history
 
 - 2026-08-20 — code review (11-agent workflow) + evidence research (12-domain workflow, 400 sources) on the four source audits.
 - 2026-08-21 — dispositions approved: 8.2/8.4 merge, 8.7 informative weight 0, 8.3 fix-then-fold.
 - 2026-08-22 — consolidated into this audit (Plan 4, Task 3); registry 177 → 174.
+- 2026-08-24 — contradiction sweep: narrowed to security.txt; the HSTS, CSP and X-Content-Type-Options rows removed; grade B → C, tier and weight unchanged; a site with no security.txt became `na` instead of `warn`.
