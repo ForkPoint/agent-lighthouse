@@ -1,0 +1,55 @@
+---
+import Base from './Base.astro';
+import SidebarNav from '../components/SidebarNav.astro';
+import type { NavEntry } from '../components/SidebarNav.astro';
+import TableOfContents from '../components/TableOfContents.astro';
+import PrevNext from '../components/PrevNext.astro';
+
+/**
+ * The documentation page: sidebar, article, table of contents, and sequential
+ * links at the foot.
+ *
+ * It deliberately renders no `<h1>`. Dossier bodies open with their own title
+ * heading, and a layout heading would give every one of the 215 pages two.
+ *
+ * Slots: the default slot is the article body; `meta` is an eyebrow strip above
+ * it (the dossier route puts the audit's badges there); `search` is forwarded
+ * to the header for Task 10.
+ */
+interface Props {
+  title: string;
+  description?: string;
+  headings: Array<{ depth: number; slug: string; text: string }>;
+  nav: NavEntry[];
+  prev?: { label: string; href: string };
+  next?: { label: string; href: string };
+}
+
+const { title, description, headings, nav, prev, next } = Astro.props;
+---
+<Base title={title} description={description}>
+  <slot name="search" slot="search" />
+  <div class="mx-auto grid max-w-7xl gap-x-10 gap-y-8 px-4 py-10 sm:px-6 lg:grid-cols-[15rem_minmax(0,1fr)_13rem] lg:px-8">
+    {/* Both rails are dropped below `lg` rather than reordered: moving the
+        article above them with CSS `order` would leave the focus order reading
+        the sidebar first, which is exactly the mismatch this project audits for.
+        On narrow screens the header and the prev/next links carry navigation. */}
+    <aside class="hidden lg:block">
+      <div class="sticky top-24 max-h-[calc(100vh-7rem)] overflow-y-auto pb-6">
+        <SidebarNav nav={nav} />
+      </div>
+    </aside>
+
+    <div class="min-w-0">
+      <slot name="meta" />
+      <article class="prose"><slot /></article>
+      <PrevNext prev={prev} next={next} />
+    </div>
+
+    <aside class="hidden lg:block">
+      <div class="sticky top-24 max-h-[calc(100vh-7rem)] overflow-y-auto pb-6">
+        <TableOfContents headings={headings} />
+      </div>
+    </aside>
+  </div>
+</Base>

@@ -1,0 +1,30 @@
+---
+/**
+ * "On this page" — the depth-2 and depth-3 headings of the article beside it.
+ * Deeper headings are dropped: a dossier's h4s are field labels inside a
+ * section, and listing them buries the sections that matter.
+ */
+interface Props {
+  headings: Array<{ depth: number; slug: string; text: string }>;
+}
+
+const { headings } = Astro.props;
+const shown = headings.filter((heading) => heading.depth === 2 || heading.depth === 3);
+---
+{shown.length > 0 && (
+  <nav aria-labelledby="toc-heading" class="text-sm">
+    <h2 id="toc-heading" class="mb-3 text-xs font-bold uppercase tracking-wider text-slate-400">
+      On this page
+    </h2>
+    <ul class="space-y-2 border-l border-border-subtle pl-3">
+      {shown.map((heading) => (
+        <li class:list={[heading.depth === 3 && 'pl-3']}>
+          <a
+            href={`#${heading.slug}`}
+            class="block py-0.5 text-slate-400 transition-colors hover:text-white"
+          >{heading.text}</a>
+        </li>
+      ))}
+    </ul>
+  </nav>
+)}
