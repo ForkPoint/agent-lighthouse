@@ -8,16 +8,20 @@ review_verdict: delete
 severity: high
 evidence_grade: B
 disposition: "kept — rebuilt on the GEO-benchmark factors 2026-08-22 (Plan 4, Task 11)"
-reviewed: 2026-08-22
+reviewed: 2026-08-24
 ---
 
 # trust-signals (`10.7`)
 
-> answer-readiness · source `trust-signals.ts` · evidence grade **B** · tier **scored** (weight 0.6) · rebuilt from a 12-regex puffery scan to the three factors arXiv 2605.25517 actually measured — see below
+> answer-readiness · source `trust-signals.ts` · evidence grade **B** · tier **scored** (weight 0.6) · rebuilt from a 12-regex puffery scan onto the factors arXiv 2605.25517 actually measured — see below
 
 ## What it checks
 
-AI engines scan homepages for trust signals (client logos, testimonials, awards) as authority indicators when deciding whether to recommend your content.
+Whether the homepage carries the two page-content factors a 252,000-trial controlled study across six large language models (arXiv 2605.25517) measured as changing which source an answer engine cites: **quantified social proof** — a rating out of five, a review or rating count, or a customer count, always with a number attached — and **evidence-backed claims** — at least two outbound citation hosts with readable anchor text, or an explicit `<cite>` / `blockquote[cite]` attribution.
+
+Both must be present to pass; one is a warning and neither is a failure. When the homepage already publishes machine-readable review data (Review or AggregateRating JSON-LD carrying an actual rating), the social-proof factor is handed to `answer-readiness/review-signals`, which owns that fact, and the bar here drops to the remaining factor so that publishing correct markup can never lower the result.
+
+The audit runs only on the homepage, and reports `notApplicable` rather than a verdict when no homepage was scanned or when the page declares a non-English `lang` — the detectors are English-language patterns. It deliberately does not check client logos, testimonials, awards, certification badges or promotional phrasing: those were the v1 patterns, and the same study found promotional tone's effect too small and too inconsistent across models to guide anyone. Comparison content is not scored here either; `answer-readiness/comparison-tables` reports it, unscored.
 
 ## Code review findings (2026-08-20, 11-agent pass)
 
@@ -60,6 +64,8 @@ The [redemption dossier](../../deletions/generative-engine/trust-signals.md) fou
 | Comparison content | named in the paper's practical implications ("include comparisons") | a `<table>` with ≥3 `<th>`, or a heading framed `vs` / `versus` / `compare` / `difference between` / `alternatives to` |
 
 `warn` at exactly 1 factor, `fail` at 0, `notApplicable` when the page cannot be assessed.
+
+*Superseded 2026-08-24: the comparison row was dropped from the scored tally, and the bar is now every remaining factor rather than a majority — `pass` at both measured factors, `warn` at exactly one, `fail` at neither. See the pass-rule correction below.*
 
 ### Promotional puffery deleted
 
@@ -125,8 +131,38 @@ On the redeem note's instruction that "its weight should also be demoted relativ
 
 This audit was a delete candidate and went through dedicated adversarial research. Full dossier: [docs/evidence/deletions/generative-engine/trust-signals.md](../../deletions/generative-engine/trust-signals.md). Outcome: **redeemable**, grade B.
 
+## Pass-rule correction (contradiction sweep, 2026-08-24)
+
+The contradiction sweep flagged this audit as a Class A case: one of its two graded evidence signals recommends a lower tier than the one that shipped. Reading the file back, the mechanical count understates the problem. The contradiction is not only in the Evidence section — it is inside the 2026-08-22 rebuild's own factor table.
+
+**What the record supports.** Two of the three rebuilt factors carry a measurement. Quantified social proof is the "Weaker Social Proof" condition of arXiv 2605.25517: OR 2.14 to >10,000, significant in 4 of 6 models. Evidence-backed claims is "Claims With Evidence": OR 2.09 to >10,000, significant in 5 of 6 models, corroborated by the KDD'24 GEO paper's Cite Sources +28% and Statistics +33%. Both are exactly what POLICY's grade-B bar describes — "strong empirical evidence of effect", whose own worked example is "GEO paper citation-rate deltas".
+
+**What it does not support.** The third factor's row in that same table gives, under *Measured effect*, "named in the paper's practical implications ('include comparisons')". That is a sentence in a discussion section: no odds ratio, no significance test, no model count, sitting in a column where the other two rows carry both. The project has already researched that signal on its own terms. `docs/evidence/audits/answer-readiness/comparison-tables.md` records "**Consumers:** none-known — no vendor documents table markup as an answer-selection or citation signal · **Recommended tier:** informative", and that audit ships grade C, tier `informative`, weight 0. The same page fact was therefore being priced at two grades at once — nothing in one audit, and one third of a grade-B scored pass bar in this one.
+
+Under the "2 of 3" rule that mispricing was decisive rather than cosmetic. A homepage with a comparison table and any single measured factor passed. A homepage carrying nothing but a "Compare us to X" heading warned instead of failing. Neither outcome is supported by anything in this dossier.
+
+**The grade paragraph's second pillar is withdrawn.** The 2026-08-22 grade decision reads: "The grade rests on the 252,000-trial multi-model benchmark plus the KDD'24 GEO paper's +17% 'Authoritative' result." The E-E-A-T signal in this dossier's own Evidence section says of that result that the "Authoritative" rewrite "reached only 21.3 vs 19.3 baseline, and the authors state they 'find no significant improvement, demonstrating that Generative Engines are already somewhat robust to such changes.'" That signal records "**Recommended tier:** informative" and "none-known as an algorithmic input at any AI engine". The second pillar was refuted here before it was cited here. Grade B now rests on arXiv 2605.25517 alone — which is enough for the two factors that study measured, and for nothing beyond them.
+
+**Where the scored tier comes from, stated plainly.** Neither of the two graded `Signal:` blocks in the Evidence section below is the warrant for scoring what this audit scores. The rating-markup signal ends "**Recommended tier:** scored", but it governs the machine-readable path — Google's review rich results and OpenAI's product-feed `star_rating`/`review_count` fields — and this audit hands that path to `answer-readiness/review-signals` by deferral rather than scoring it. The E-E-A-T signal recommends `informative` and is not implemented here at all. What this audit scores is the benchmark's retrieved-text factors, which were never written up as a graded signal block, only as the rebuild narrative above. The tier therefore rests directly on arXiv 2605.25517 under POLICY's grade-B bar. Recording that openly is the point of the correction; borrowing a "scored" recommendation that belongs to a different mechanism is what the sweep exists to stop.
+
+**The change.** The comparison factor is removed from the scored tally. `COMPARISON_HEADING`, `comparisonContent()` and the Factor 3 block are deleted from the source, and the pass bar becomes `required = counted` — every factor still in the denominator must be satisfied. `pass` now means both measured factors, `warn` means exactly one, `fail` means neither. The `EXPECTED` string and the failure message move with the rule, and the description, impact and fix guidance now name two measured factors instead of three and say what the study found about promotional tone (measured, effect too small and inconsistent to guide) and about comparison content (named in the practical implications, never measured) rather than collapsing the two into one claim.
+
+The deferral to `answer-readiness/review-signals` is untouched, and with it the monotonicity rule the 2026-08-22 rework established: valid Review/AggregateRating markup still removes social proof from the numerator and the denominator together, so `counted` and `required` both fall to 1 and adding correct markup can never lower a homepage's status or score. Markup alone is still `warn`, never `pass`. All four transitions are pinned by tests, including the social-proof-only corner that the narrower denominator newly touches.
+
+Note for anyone reading the two audits together: `findReviewNodes` was tightened in `review-signals` on the same day, so hollow review vocabulary — `"aggregateRating": {}`, a bare `{"@type":"Review"}` — no longer triggers the deferral. That moves this audit's denominator from 1 back to 2 on such pages, which is the correct direction: a page with the shape of a rating and no rating has published no social proof for either audit to score. A test in this audit's file pins it.
+
+**What deliberately did not change.** Grade stays **B**, tier `scored`, weight `weightForGrade('B', 'scored')` = 0.6, `scoreDisplayMode` `ternary`, `defaultPriority` `low`, `applicablePageTypes: ['homepage']`. The 2026-08-20 review's "not salvageable as a scored audit / demote to `informative`" is declined for the same reason the 2026-08-22 rework declined it: the surviving factors have a real, quantified, multi-model measured effect. Over-narrowing a signal the evidence says to score is as much a defect as scoring one it does not.
+
+**Two alternatives considered and rejected.**
+
+1. *Split the comparison factor into a new informative audit.* Rejected — the split target already exists. `answer-readiness/comparison-tables` is the same signal at the grade and tier its own research assigned, and its `audit()` iterates `ctx.pages` rather than a single matched page, so homepage tables are reported there whenever it runs. A second audit would duplicate it for no evidential gain. One consequence is accepted and recorded here: that audit is gated to `category`/`product`/`content` pages, so on a homepage-only scan comparison content is now reported by nothing. For a signal with no documented consumer that is the right outcome, and widening that audit's page types is its own dossier's decision, not this one's.
+2. *Gate the social-proof factor to commerce pages,* following the rating-markup signal's counter-evidence that ratings should "Score only on product/offer/local pages". Rejected — that scope limit is about machine-readable rating markup and its named commerce consumers, which this audit defers away. What is scored here is the benchmark's retrieved-text factor, and 2605.25517 ran on generic RAG documents rather than commerce pages, so the homepage scope is the one its evidence covers.
+
+**What moves for real sites.** A homepage that passed on a comparison table plus one measured factor now warns. A homepage whose only signal was a comparison table or a "X vs Y" heading now fails instead of warning. Homepages that already carried a quantified rating or review count together with outbound citations or attributed sources are unaffected. This audit is a member of the content readiness vital set, so those sites' content readiness figure moves along with the category and overall score.
+
 ## Review history
 
 - 2026-08-20 — code review (11-agent workflow) + evidence research (12-domain workflow, 400 sources).
 - 2026-08-21 — adversarial redemption research; user accepted verdict (grade B, rewrite required).
 - 2026-08-22 — required rework executed (Plan 4, Task 11): rebuilt on the three arXiv 2605.25517 factors, promotional-puffery patterns deleted, social proof deferred to `answer-readiness/review-signals` when review markup is present, scoped to the homepage, non-English homepages `na`, `defaultPriority` `medium` → `low`. Grade B / tier `scored` / weight 0.6 unchanged; `TODO(redeem)` marker removed from the source file.
+- 2026-08-24 — comparison factor dropped from the scored tally (contradiction sweep); pass now requires both measured factors, `warn` one, `fail` neither. Grade B / tier `scored` / weight 0.6 / `scoreDisplayMode` `ternary` unchanged.

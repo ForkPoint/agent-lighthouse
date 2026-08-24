@@ -61,6 +61,7 @@ describe('TrustSignalsAudit', () => {
       <footer><p>Certified. As seen in the press. Awards.</p></footer>`);
     const result = audit.audit(mockCheckContext([page]));
     expect(result.status).toBe('fail');
+    expect(result.message).toContain('neither');
   });
 
   it('warns when exactly one measured factor is present', () => {
@@ -99,14 +100,47 @@ describe('TrustSignalsAudit', () => {
     expect(result.status).toBe('pass');
   });
 
-  it('counts a comparison table as comparison content', () => {
+  // Comparison content left the scored tally on 2026-08-24: the study behind
+  // this audit only names it in its practical implications and never measured
+  // it, and `answer-readiness/comparison-tables` already reports it unscored.
+  it('does not let a comparison table stand in for a measured factor', () => {
     const page = homepage(`<main>
         <p>Rated 4.8 out of 5 across 1,204 reviews.</p>
         <table><thead><tr><th>Feature</th><th>Us</th><th>Them</th></tr></thead>
           <tbody><tr><td>Price</td><td>$10</td><td>$20</td></tr></tbody></table>
       </main>`);
     const result = audit.audit(mockCheckContext([page]));
-    expect(result.status).toBe('pass');
+    expect(result.status).toBe('warn');
+    expect(result.found).not.toMatch(/comparison/i);
+    expect(result.message).toContain('1 of the 2');
+  });
+
+  it('does not let comparison content alone lift a homepage above fail', () => {
+    const page = homepage(`<main>
+        <h2>Acme vs Globex</h2>
+        <table><thead><tr><th>Feature</th><th>Us</th><th>Them</th></tr></thead>
+          <tbody><tr><td>Price</td><td>$10</td><td>$20</td></tr></tbody></table>
+      </main>`);
+    const result = audit.audit(mockCheckContext([page]));
+    expect(result.status).toBe('fail');
+    expect(result.found).toBe('None found');
+  });
+
+  it('requires both measured factors to pass', () => {
+    const both = audit.audit(
+      mockCheckContext([
+        homepage(`<main><p>Rated 4.8 out of 5 across 1,204 reviews.</p>${CITATIONS}</main>`),
+      ]),
+    );
+    const ratingOnly = audit.audit(
+      mockCheckContext([homepage('<main><p>Rated 4.8 out of 5 across 1,204 reviews.</p></main>')]),
+    );
+    const citationsOnly = audit.audit(mockCheckContext([homepage(`<main>${CITATIONS}</main>`)]));
+    expect(both.status).toBe('pass');
+    expect(ratingOnly.status).toBe('warn');
+    expect(ratingOnly.message).toContain('1 of the 2');
+    expect(citationsOnly.status).toBe('warn');
+    expect(citationsOnly.message).toContain('1 of the 2');
   });
 
   it('defers the social-proof factor to review-signals when review markup is present', () => {
@@ -120,6 +154,9 @@ describe('TrustSignalsAudit', () => {
     // The deferral is an attribution change, not a penalty: this is the same
     // page as the "quantified social proof plus evidence" case above.
     expect(result.status).toBe('pass');
+    // The deferred factor leaves the denominator as well as the numerator, so
+    // the bar drops with it. Pinned rather than inferred.
+    expect(result.message).toContain('1 of the 1');
   });
 
   it('does not let valid AggregateRating markup score worse than its absence', () => {
@@ -144,6 +181,18 @@ describe('TrustSignalsAudit', () => {
     expect(bare.status).toBe('fail');
     expect(withMarkup.status).toBe('warn');
     expect(withMarkup.score).toBeGreaterThan(bare.score);
+
+    // Same invariant at the other corner the narrowed denominator touches: a
+    // homepage whose only satisfied factor is social proof must not be
+    // penalised for publishing the markup that moves it to `review-signals`.
+    const socialBody = '<main><p>Rated 4.8 out of 5 across 1,204 reviews.</p></main>';
+    const socialBare = audit.audit(mockCheckContext([homepage(socialBody)]));
+    const socialMarkup = audit.audit(
+      mockCheckContext([homepage(`${socialBody}${REVIEW_MARKUP}`)]),
+    );
+    expect(socialBare.status).toBe('warn');
+    expect(socialMarkup.status).toBe('warn');
+    expect(socialMarkup.score).toBeGreaterThanOrEqual(socialBare.score);
   });
 
   it('still requires a second factor alongside review markup to pass', () => {
@@ -170,6 +219,12 @@ describe('TrustSignalsAudit', () => {
     expect(meta.evidenceGrade).toBe('B');
     expect(meta.tier).toBe('scored');
     expect(meta.weight).toBeCloseTo(0.6);
+    expect(meta.scoreDisplayMode).toBe('ternary');
+    // The description must claim exactly what the study measured. It may name
+    // `comparison-tables` as the owner of the dropped factor, so the pin is on
+    // the count of scored factors rather than on the absence of a word.
+    expect(meta.description).toMatch(/two page factors/);
+    expect(meta.description).not.toMatch(/three (measured )?factors/i);
   });
 
   // review-signals tightened findReviewNodes on 2026-08-24 so hollow review
