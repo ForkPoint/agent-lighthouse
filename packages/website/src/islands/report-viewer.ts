@@ -315,8 +315,10 @@ export function mountReportViewer(): void {
   const output = document.querySelector<HTMLElement>('#report-output');
   if (!input || !zone || !status || !output) return;
 
+  // Only the text changes. The region is in the document, visible and empty from
+  // first paint, so every message it is given is an actual content change to a
+  // region assistive tech is already watching.
   const say = (message: string): void => {
-    status.hidden = false;
     status.textContent = message;
   };
 

@@ -160,9 +160,13 @@ const h2 = 'text-2xl font-bold tracking-tight text-white';
         />
       </div>
 
-      {/* Present from the start so the live region is in the accessibility tree
-          before it is ever written to. */}
-      <p id="report-status" hidden aria-live="polite" class="text-sm text-slate-300"></p>
+      {/* Rendered empty rather than `hidden`, which is the whole point: preflight
+          gives `[hidden]` a `display:none`, and a `display:none` element is not in
+          the accessibility tree at all. Un-hiding it and writing its text in one
+          synchronous block is the pattern that loses the announcement — assistive
+          tech has to be observing the region before its content changes. The badge
+          status below does the same thing for the same reason. */}
+      <p id="report-status" aria-live="polite" class="min-h-5 text-sm text-slate-300"></p>
 
       <div id="report-output" hidden class={`${panel} space-y-6`}></div>
 
@@ -268,7 +272,8 @@ const h2 = 'text-2xl font-bold tracking-tight text-white';
       <div class={sectionHead}>
         <h2 id="showcase-heading" class={h2}>What scores look like</h2>
         <p class="mt-1 text-sm text-slate-400">
-          Rough shapes seen in practice, not a leaderboard. Run the scan for the real number.
+          Illustrative shapes, not measurements, and not a leaderboard. Run the scan for a
+          real number.
         </p>
       </div>
 
@@ -292,12 +297,13 @@ const h2 = 'text-2xl font-bold tracking-tight text-white';
           </p>
         </div>
         <div class={`${card} space-y-2`}>
-          <p class="font-mono text-xs text-slate-400">before / after</p>
-          <p class="text-4xl font-black text-indigo-300">+30</p>
-          <p class="text-sm font-semibold text-white">Fast lift from the foundations</p>
+          <p class="font-mono text-xs text-slate-400">what moves it</p>
+          <p class="text-4xl font-black text-indigo-300">A&nbsp;+&nbsp;B</p>
+          <p class="text-sm font-semibold text-white">Only proven signals carry weight</p>
           <p class="text-xs text-slate-400">
-            Discovery files, a clear crawler policy and accessible controls move the score
-            before anything harder is attempted.
+            A fix moves the score only where the audit's dossier grades its evidence A or B
+            and its tier is scored. Advisory and experimental checks are reported and weigh
+            nothing &mdash; see <a class="underline hover:text-white" href={docPath('scoring')}>scoring</a>.
           </p>
         </div>
       </div>

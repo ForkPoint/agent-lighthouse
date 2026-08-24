@@ -102,6 +102,16 @@ describe.skipIf(!built)('the rendered landing page', () => {
     // Status changes are announced, and the regions exist before they change.
     expect(page).toMatch(/id="report-status"[^>]*aria-live="polite"/);
     expect(page).toMatch(/id="badge-copy-status"[^>]*aria-live="polite"/);
+    // And are actually in the accessibility tree. `aria-live` on a `hidden`
+    // element announces nothing: preflight makes `[hidden]` `display:none`, and
+    // revealing the region in the same block that writes its text loses the
+    // message. Asserting the attribute alone cannot see that, so assert the
+    // absence of `hidden` on the same tag.
+    for (const id of ['report-status', 'badge-copy-status']) {
+      const tag = new RegExp(`<[a-z]+[^>]*\\bid="${id}"[^>]*>`).exec(page)?.[0];
+      expect(tag, `${id} is missing from the page`).toBeDefined();
+      expect(tag, `${id} is hidden, so its aria-live does nothing`).not.toMatch(/\bhidden\b/);
+    }
   });
 
   it('hides the controls that only work once their island has mounted', () => {

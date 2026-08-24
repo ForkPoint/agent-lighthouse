@@ -18,7 +18,7 @@ const fixture = `
       <label for="report-file">Report JSON</label>
       <input id="report-file" type="file" accept="application/json,.json" />
     </div>
-    <p id="report-status" hidden aria-live="polite"></p>
+    <p id="report-status" aria-live="polite"></p>
     <div id="report-output" hidden></div>
   </section>
 `;
@@ -78,7 +78,6 @@ describe('mountReportViewer', () => {
     expect(output().textContent).toContain('1 audit evaluated');
     expect(output().textContent).toContain('1 page scanned in 4.2s');
     expect(status()).toContain('scored 74 out of 100');
-    expect(el('#report-status').hidden).toBe(false);
   });
 
   it('accepts the same file dropped on the zone', async () => {
@@ -157,6 +156,21 @@ describe('mountReportViewer', () => {
 
     expect(output().hidden).toBe(false);
     expect(output().textContent).toContain('no category scores');
+  });
+
+  it('never hides the live region, so an announcement cannot be lost', async () => {
+    const region = el('#report-status');
+    // `display:none` takes the region out of the accessibility tree; a message
+    // written in the same block that reveals it is the announcement WAI warns
+    // is missed, because assistive tech was not observing the region yet.
+    expect(region.hidden).toBe(false);
+
+    await choose(jsonFile(JSON.stringify(REPORT)));
+    expect(region.hidden).toBe(false);
+
+    await choose(jsonFile('nonsense'));
+    expect(region.hidden).toBe(false);
+    expect(region.textContent).toContain('not valid JSON');
   });
 
   it('swaps the border colour while a file is over the zone', () => {
