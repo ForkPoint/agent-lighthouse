@@ -62,8 +62,9 @@ const { Content, headings } = await render(entry);
 // heading. Those headings are working titles — most are the audit slug with a
 // v1 numeric id after it (`og-type (4.7)`) — and every other surface that links
 // here (sidebar, prev/next, cards, category indexes) shows `audit.title`, so
-// taking the heading would name the same audit two ways. The body still renders
-// that heading, and it is still the only depth-1 heading on the page.
+// taking the heading would name the same audit two ways. The public slice
+// discards the dossier's own heading with the rest of the intro block, so this
+// is also the page's `<h1>`.
 const title = audit.title;
 
 // The audit's implementation, as it stands on the default branch.
@@ -71,6 +72,7 @@ const sourceUrl = `https://github.com/ForkPoint/agent-lighthouse/blob/main/${ent
 ---
 <Doc
   title={title}
+  heading={title}
   description={audit.description}
   headings={headings}
   nav={nav}

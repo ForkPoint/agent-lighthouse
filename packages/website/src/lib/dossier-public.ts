@@ -1,0 +1,454 @@
+/**
+ * What of an evidence dossier the site publishes.
+ *
+ * The dossiers are an internal working record. They carry the evidence a reader
+ * needs — the mechanism, the sources, the limits — interleaved with material
+ * that exists to serve the build: code-review verdicts, task numbers, merge
+ * narratives, review chronology. The published page answers one question, "why
+ * does this audit exist, and who says so?", so the rest has to come off.
+ *
+ * The split is a **whitelist**, and that is the whole design. A whitelist fails
+ * closed: a heading nobody anticipated stays unpublished until someone decides
+ * otherwise. A blacklist fails open, and with ~50 one-off narrative headings
+ * across the corpus the next new heading would leak.
+ *
+ * Two things the heading level alone cannot do, and this module also does:
+ *
+ * 1. **Labelled blocks.** `Why it matters` and `Limits` are not headings in most
+ *    dossiers. They are `**Mechanism claim:**` and `**Counter-evidence:**` lines
+ *    inside `## Evidence`. Both levels are addressed.
+ * 2. **Supersede.** 56 dossiers carry both `## Evidence` and
+ *    `## Evidence (2026-08-21)`, where the first is a placeholder sentence and
+ *    the second is the research. Publishing both would put a disclaimer above
+ *    the evidence that replaced it.
+ */
+
+/**
+ * A fenced code block's opening or closing run. Same rule as `markdown-slice`:
+ * three or more backticks or tildes, indented by at most three spaces.
+ *
+ * Every scan below is fence-aware. A `## ` line inside a fence is a shell
+ * comment or a nested markdown example, and treating it as a section boundary
+ * would silently truncate a page — the slice stays non-empty, so nothing
+ * downstream could tell.
+ */
+const FENCE = /^ {0,3}(`{3,}|~{3,})/;
+
+/** The public name of each section, in the order the page prints them. */
+export const PAGE_ORDER = [
+  'What it checks',
+  'Why it matters',
+  'Evidence',
+  'Limits',
+  'How it scores',
+  'Example failure',
+] as const;
+
+export type PublicName = (typeof PAGE_ORDER)[number];
+
+/**
+ * Raw heading → public name.
+ *
+ * The corpus was normalised onto this vocabulary first (one rename pass across
+ * 62 files), so this is a fixed list rather than a growing set of synonyms. A
+ * heading absent from it is withheld unless the dossier's `public_extra` names
+ * it.
+ */
+const PUBLIC_SECTIONS = new Map<string, PublicName>([
+  ['What it checks', 'What it checks'],
+  ['Claimed mechanism (falsifiable)', 'Why it matters'],
+  ['Evidence', 'Evidence'],
+  ['Scoring', 'How it scores'],
+  ['Example failure', 'Example failure'],
+  // `ai-bot-directives` is the one merged dossier that names its evidence and
+  // its limits after the merge rather than after the contract. The content is
+  // the reader's either way, so it is mapped rather than left to `public_extra`.
+  ['Per-bot evidence', 'Evidence'],
+  ['Counter-evidence for the merged audit', 'Limits'],
+  // 12 dossiers whose `## Evidence` is only the placeholder sentence "no
+  // dedicated evidence signal was researched in the 2026-08-20 pass". The
+  // research that answers it landed a day later under this heading, and its
+  // date is what makes the supersede rule prefer it over the placeholder.
+  ['Adversarial redemption research', 'Evidence'],
+]);
+
+/** `Evidence (2026-08-21)` and friends — a public name with a date after it. */
+const DATED_HEADING = /^(.+?)\s*\((\d{4}-\d{2}-\d{2})\)\s*$/;
+
+/**
+ * Labels withheld wherever they appear.
+ *
+ * `Consumers` and `Recommended tier` are the project's own tier deliberation.
+ * Publishing "Recommended tier: informative" beside a scored weight would read
+ * as an admission rather than as evidence; the contradiction sweep exists so
+ * that no such mismatch survives to be admitted.
+ */
+const WITHHELD_LABELS = ['Consumers', 'Recommended tier'];
+
+/** Labels promoted out of `Evidence` into their own public section. */
+const PROMOTED = [
+  { labels: ['Mechanism claim', 'Mechanism'], into: 'Why it matters' as const },
+  { labels: ['Counter-evidence'], into: 'Limits' as const },
+];
+
+/**
+ * `**Grade: A** — this is a ratified standard …`
+ *
+ * The grade reasoning is the page's "how it scores", and only 70 dossiers write
+ * it as a section. The other 145 write it as this label, where the grade letter
+ * sits *inside* the bold run rather than before the colon, so it needs its own
+ * pattern.
+ */
+const GRADE_LABEL = /^\*\*Grade:\s*([A-D])\*\*\s*(?:—\s*)?(.*)$/;
+
+/** One `## ` section of a dossier. */
+interface Section {
+  /** The heading exactly as written, without the `## `. */
+  heading: string;
+  /** Its public name, or `undefined` when it is withheld. */
+  publicName?: PublicName | string;
+  /** The date in its heading, when it carries one — drives the supersede rule. */
+  date?: string;
+  /** Everything under the heading, up to the next `## `. */
+  body: string;
+  /** Its position in the file, the supersede tie-break. */
+  index: number;
+}
+
+export interface PublicDossier {
+  /** The markdown the page renders. */
+  markdown: string;
+  /** Public section names, in printed order. */
+  published: PublicName[] | string[];
+  /** Headings that did not publish, exactly as written. */
+  withheld: string[];
+}
+
+/** Frontmatter overrides. Both are opt-outs from the default whitelist. */
+export interface DossierOverrides {
+  /** Headings to publish that the whitelist does not name. */
+  publicExtra?: readonly string[];
+  /** Public names to withhold on this dossier only. */
+  publicOmit?: readonly string[];
+}
+
+/** Drop a leading `---` frontmatter block, if the source still carries one. */
+function stripFrontmatter(markdown: string): string {
+  if (!markdown.startsWith('---')) return markdown;
+  const end = markdown.indexOf('\n---', 3);
+  if (end === -1) return markdown;
+  return markdown.slice(markdown.indexOf('\n', end + 1) + 1);
+}
+
+/**
+ * Split a dossier into its `## ` sections, discarding everything above the
+ * first one.
+ *
+ * What is discarded is the `# ` working title (`agent-governance (2.28)`) and
+ * the intro strip (`> crawler-permissions · source … · review verdict **fix**`).
+ * Neither can be filtered as a unit — the strip mixes category and grade, which
+ * belong to the reader, with review verdict and disposition, which do not — so
+ * the page emits its own strip from registry metadata instead. That also fixes
+ * the stale v1 category names several strips still carry.
+ */
+function sections(markdown: string): Section[] {
+  const lines = stripFrontmatter(markdown).split('\n');
+  const out: Section[] = [];
+  let fence: { char: string; length: number } | null = null;
+  let current: Section | null = null;
+  let body: string[] = [];
+
+  const close = () => {
+    if (current) out.push({ ...current, body: body.join('\n').trim() });
+    body = [];
+  };
+
+  for (const line of lines) {
+    const run = FENCE.exec(line)?.[1];
+
+    if (fence) {
+      const closes =
+        run !== undefined &&
+        run[0] === fence.char &&
+        run.length >= fence.length &&
+        line.slice(line.indexOf(run) + run.length).trim() === '';
+      if (closes) fence = null;
+      body.push(line);
+      continue;
+    }
+
+    if (run !== undefined) {
+      fence = { char: run[0]!, length: run.length };
+      body.push(line);
+      continue;
+    }
+
+    if (line.startsWith('## ')) {
+      close();
+      const heading = line.slice(3).trim();
+      const dated = DATED_HEADING.exec(heading);
+      current = {
+        heading,
+        date: dated?.[2],
+        publicName: PUBLIC_SECTIONS.get(dated?.[1]?.trim() ?? heading),
+        index: out.length,
+      } as Section;
+      continue;
+    }
+
+    if (current) body.push(line);
+  }
+
+  close();
+  return out;
+}
+
+/**
+ * Keep one section per public name.
+ *
+ * The later date wins; with no dates, the later position wins. Both directions
+ * matter: `## Evidence` sits *above* `## Evidence (2026-08-21)` in every file
+ * that has both, and the dated one is the research.
+ */
+function supersede(kept: Section[]): Section[] {
+  const winners = new Map<string, Section>();
+  for (const section of kept) {
+    const name = section.publicName!;
+    const held = winners.get(name);
+    if (!held) {
+      winners.set(name, section);
+      continue;
+    }
+    const better =
+      section.date && held.date
+        ? section.date > held.date
+        : (section.date ?? '') !== (held.date ?? '')
+          ? Boolean(section.date)
+          : section.index > held.index;
+    if (better) winners.set(name, section);
+  }
+  return [...winners.values()];
+}
+
+/** Strip the withheld labels from a section body, line by line. */
+function filterLabels(body: string): string {
+  const out: string[] = [];
+  for (const line of body.split('\n')) {
+    const label = /^\*\*([^:*]+):\*\*/.exec(line)?.[1]?.trim();
+    // `**Consumers:** X · **Recommended tier:** Y` is one line carrying two
+    // withheld labels, so dropping the line drops both.
+    if (label && WITHHELD_LABELS.includes(label)) continue;
+    out.push(line);
+  }
+  return out.join('\n').replace(/\n{3,}/g, '\n\n').trim();
+}
+
+/** The short name of a `### Signal: <name> — grade X (domain)` heading. */
+function signalName(heading: string): string | undefined {
+  const signal = /^###\s+Signal:\s*(.+?)(?:\s+—\s+grade\b.*)?$/.exec(heading);
+  return signal?.[1]?.trim();
+}
+
+/**
+ * Pull one family of labelled blocks out of a body into its own section.
+ *
+ * A dossier can carry several researched signals, each with its own mechanism
+ * and its own counter-evidence. Merging them into one paragraph would lose
+ * which claim belongs to which signal, so each promoted block keeps the name of
+ * the `### Signal:` heading it came from — but only when there is more than
+ * one, since a single-signal dossier reads better without the label.
+ */
+function promote(body: string, labels: readonly string[]): { promoted: string; rest: string } {
+  const lines = body.split('\n');
+  const taken: Array<{ signal?: string; text: string }> = [];
+  const rest: string[] = [];
+  let signal: string | undefined;
+  let fence: { char: string; length: number } | null = null;
+
+  for (const line of lines) {
+    const run = FENCE.exec(line)?.[1];
+    if (fence) {
+      if (
+        run !== undefined &&
+        run[0] === fence.char &&
+        run.length >= fence.length &&
+        line.slice(line.indexOf(run) + run.length).trim() === ''
+      ) {
+        fence = null;
+      }
+      rest.push(line);
+      continue;
+    }
+    if (run !== undefined) {
+      fence = { char: run[0]!, length: run.length };
+      rest.push(line);
+      continue;
+    }
+
+    if (line.startsWith('### ')) {
+      signal = signalName(line);
+      rest.push(line);
+      continue;
+    }
+
+    const label = /^\*\*([^:*]+):\*\*\s*(.*)$/.exec(line);
+    if (label && labels.includes(label[1]!.trim())) {
+      taken.push({ signal, text: label[2]!.trim() });
+      continue;
+    }
+    rest.push(line);
+  }
+
+  const named = taken.filter((entry) => entry.signal).length > 0 && taken.length > 1;
+  const promoted = taken
+    .filter((entry) => entry.text.length > 0)
+    .map((entry) => (named && entry.signal ? `**${entry.signal}** — ${entry.text}` : entry.text))
+    .join('\n\n');
+
+  return { promoted, rest: rest.join('\n').replace(/\n{3,}/g, '\n\n').trim() };
+}
+
+/**
+ * Pull the `**Grade: X** — reasoning` lines out of a body.
+ *
+ * Kept separate from `promote` because the grade letter is already printed in
+ * the page's own metadata strip, so republishing "Grade: A" would say it twice.
+ * Only the reasoning is promoted.
+ */
+function promoteGrade(body: string): { promoted: string; rest: string } {
+  const taken: Array<{ signal?: string; text: string }> = [];
+  const rest: string[] = [];
+  let signal: string | undefined;
+  let fence: { char: string; length: number } | null = null;
+
+  for (const line of body.split('\n')) {
+    const run = FENCE.exec(line)?.[1];
+    if (fence) {
+      if (
+        run !== undefined &&
+        run[0] === fence.char &&
+        run.length >= fence.length &&
+        line.slice(line.indexOf(run) + run.length).trim() === ''
+      ) {
+        fence = null;
+      }
+      rest.push(line);
+      continue;
+    }
+    if (run !== undefined) {
+      fence = { char: run[0]!, length: run.length };
+      rest.push(line);
+      continue;
+    }
+    if (line.startsWith('### ')) {
+      signal = signalName(line);
+      rest.push(line);
+      continue;
+    }
+    const grade = GRADE_LABEL.exec(line);
+    if (grade && grade[2]!.trim()) {
+      // The source reads `**Grade: A** — this is a ratified standard …`, so the
+      // reasoning is written to continue a sentence the page no longer prints.
+      const reasoning = grade[2]!.trim();
+      taken.push({ signal, text: reasoning[0]!.toUpperCase() + reasoning.slice(1) });
+      continue;
+    }
+    rest.push(line);
+  }
+
+  const named = taken.filter((entry) => entry.signal).length > 0 && taken.length > 1;
+  const promoted = taken
+    .map((entry) => (named && entry.signal ? `**${entry.signal}** — ${entry.text}` : entry.text))
+    .join('\n\n');
+  return { promoted, rest: rest.join('\n').replace(/\n{3,}/g, '\n\n').trim() };
+}
+
+/**
+ * The public markdown of one dossier, and the accounting of what was withheld.
+ *
+ * The accounting is not decoration: it is what a test asserts against, so that a
+ * new internal heading cannot start publishing itself and a public section
+ * cannot quietly disappear.
+ */
+export function publicDossier(markdown: string, overrides: DossierOverrides = {}): PublicDossier {
+  const extra = new Set(overrides.publicExtra ?? []);
+  const omit = new Set(overrides.publicOmit ?? []);
+
+  const all = sections(markdown);
+  const withheld: string[] = [];
+  const candidates: Section[] = [];
+
+  for (const section of all) {
+    // `public_extra` names the heading as written, because the whole point is
+    // that the whitelist has no public name for it.
+    if (extra.has(section.heading)) {
+      candidates.push({ ...section, publicName: section.heading });
+      continue;
+    }
+    if (section.publicName && !omit.has(section.publicName)) {
+      candidates.push(section);
+      continue;
+    }
+    withheld.push(section.heading);
+  }
+
+  const winners = supersede(candidates);
+  for (const section of candidates) {
+    if (!winners.includes(section)) withheld.push(section.heading);
+  }
+
+  const byName = new Map(winners.map((section) => [section.publicName as string, section]));
+  const bodies = new Map<string, string>();
+  for (const [name, section] of byName) bodies.set(name, filterLabels(section.body));
+
+  // Promotion runs only where the dossier has no section of its own for the
+  // target. 68 dossiers write the mechanism as a heading; the other 145 write
+  // it as a label inside the evidence, and the reader must meet it either way.
+  const evidence = bodies.get('Evidence');
+  if (evidence !== undefined) {
+    let rest = evidence;
+    for (const { labels, into } of PROMOTED) {
+      if (bodies.has(into) || omit.has(into)) continue;
+      const result = promote(rest, labels);
+      if (!result.promoted) continue;
+      bodies.set(into, result.promoted);
+      rest = result.rest;
+    }
+    // With the mechanism, the limits and the grade reasoning promoted out, a
+    // single-signal dossier's evidence section is one `**Evidence:**` label
+    // under a heading that already says Evidence. Unwrap it — but only when the
+    // section has no `### Signal:` headings, where the label is what separates
+    // one signal's evidence from its sources.
+    if (!/^### /m.test(rest)) rest = rest.replace(/^\*\*Evidence:\*\*\s*/m, '');
+    if (!bodies.has('How it scores') && !omit.has('How it scores')) {
+      const grade = promoteGrade(rest);
+      if (grade.promoted) {
+        bodies.set('How it scores', grade.promoted);
+        rest = grade.rest;
+      }
+    }
+    bodies.set('Evidence', rest);
+  }
+
+  const order = [
+    ...PAGE_ORDER.filter((name) => bodies.has(name)),
+    // Anything `public_extra` added keeps its file order, after the contract.
+    ...winners
+      .filter((section) => extra.has(section.heading))
+      .sort((a, b) => a.index - b.index)
+      .map((section) => section.heading),
+  ];
+
+  const published: string[] = [];
+  const parts: string[] = [];
+  for (const name of order) {
+    const body = bodies.get(name)?.trim();
+    // A section that filtered down to nothing is not published as an empty
+    // heading — that reads as a gap rather than as an omission.
+    if (!body) continue;
+    published.push(name);
+    parts.push(`## ${name}\n\n${body}`);
+  }
+
+  return { markdown: parts.join('\n\n'), published, withheld };
+}

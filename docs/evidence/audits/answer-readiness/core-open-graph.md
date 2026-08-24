@@ -30,7 +30,7 @@ One social-meta diagnostic for the head of `ctx.pages[0]`, with a scored half an
 
 A placeholder `og:site_name` — an unrendered template token (`{{ … }}`, `{% … %}`, `${…}`, `<% … %>`) or the audit's own sample string ("Your Site Name", "Site Name", "SiteName", "Your Website") — is treated as missing, which is the false positive 4.8's review names first.
 
-**Informational — Twitter Cards.** `twitter:card`, `twitter:title`, `twitter:description` and `twitter:image` are reported in the `found` block, each labelled with the `og:*` property it falls back to. These rows never change the status, the score or the priority — see "The twitter-card redemption" below.
+**Informational — Twitter Cards.** `twitter:card`, `twitter:title`, `twitter:description` and `twitter:image` are reported in the `found` block, each labelled with the `og:*` property it falls back to. These rows never change the status, the score or the priority: no consumer is documented to read a `twitter:*` tag that has an `og:*` equivalent.
 
 ## Code review findings (2026-08-20, 11-agent pass)
 

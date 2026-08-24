@@ -9,14 +9,19 @@ import PrevNext from '../components/PrevNext.astro';
  * The documentation page: sidebar, article, table of contents, and sequential
  * links at the foot.
  *
- * It deliberately renders no `<h1>`. Dossier bodies open with their own title
- * heading, and a layout heading would give every one of the 215 pages two.
+ * `heading` is optional and renders the page's `<h1>`. The documentation pages
+ * omit it: their source markdown opens with its own `# `, and a layout heading
+ * would give them two. The dossier pages pass it, because the public slice
+ * discards the dossier's `# ` working title (`agent-governance (2.28)`) along
+ * with the rest of the intro block, and the registry title is the better name
+ * anyway — it is what every other surface linking here already shows.
  *
  * Slots: the default slot is the article body; `meta` is an eyebrow strip above
  * it (the dossier route puts the audit's badges there).
  */
 interface Props {
   title: string;
+  heading?: string;
   description?: string;
   headings: Array<{ depth: number; slug: string; text: string }>;
   nav: NavEntry[];
@@ -24,7 +29,7 @@ interface Props {
   next?: { label: string; href: string };
 }
 
-const { title, description, headings, nav, prev, next } = Astro.props;
+const { title, heading, description, headings, nav, prev, next } = Astro.props;
 ---
 <Base title={title} description={description}>
   <div class="mx-auto grid max-w-7xl gap-x-10 gap-y-8 px-4 py-10 sm:px-6 lg:grid-cols-[15rem_minmax(0,1fr)_13rem] lg:px-8">
@@ -64,7 +69,10 @@ const { title, description, headings, nav, prev, next } = Astro.props;
         exception is inside this column, and is marked in `PrevNext.astro`. */}
     <div class="min-w-0" data-pagefind-body>
       <slot name="meta" />
-      <article class="prose"><slot /></article>
+      <article class="prose">
+        {heading && <h1>{heading}</h1>}
+        <slot />
+      </article>
       <PrevNext prev={prev} next={next} />
     </div>
 

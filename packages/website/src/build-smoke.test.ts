@@ -17,12 +17,17 @@ describe.skipIf(!built)('built site', () => {
     expect(pages.length).toBe(auditList().length);
   });
 
-  it('renders a known dossier with its mechanism section', () => {
+  it('renders a known dossier as the public page contract, not as the working record', () => {
     const page = readFileSync(
       resolve(DIST, 'audits/agentic-commerce/offer-truth-consistency/index.html'),
       'utf8',
     );
-    expect(page).toContain('Claimed mechanism');
+    expect(page).toContain('Why it matters');
+    expect(page).toContain('Evidence');
+    // The whitelist withholds the build record. If this starts appearing, the
+    // slice in `content.config.ts` has stopped being applied to the collection.
+    expect(page).not.toContain('Code review findings');
+    expect(page).not.toContain('Review history');
     expect(page).not.toContain('POLICY.md');
   });
 

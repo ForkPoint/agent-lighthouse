@@ -63,11 +63,12 @@ describe('chrome', () => {
     }
   });
 
-  // The layouts are static templates with no conditional heading anywhere, so
-  // "contains no `<h1`" is the whole invariant, not a proxy for it: the dossier
-  // body supplies the only depth-1 heading on the page.
-  it('adds no heading of its own in either layout', () => {
-    expect(template('layouts/Doc.astro')).not.toMatch(/<h1[\s>]/);
+  // `Doc` renders one `<h1>`, and only when the route passes `heading`. The
+  // documentation pages omit it because their markdown opens with its own `# `;
+  // the dossier pages pass it because the public slice discards theirs. The
+  // rendered "exactly one h1 per page" check below is what proves the pair.
+  it('renders at most the one conditional heading, and none in the shell', () => {
+    expect(template('layouts/Doc.astro')).toMatch(/\{heading && <h1>\{heading\}<\/h1>\}/);
     expect(template('layouts/Base.astro')).not.toMatch(/<h1[\s>]/);
   });
 
