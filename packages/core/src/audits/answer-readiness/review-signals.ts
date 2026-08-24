@@ -27,6 +27,61 @@ function statesZeroReviews(record: Record<string, unknown>): boolean {
 }
 
 /**
+ * Page text with script/style noise stripped, collapsed to single spaces.
+ *
+ * The "N reviews" test ran against raw `body.text()`, so an inline JSON payload
+ * carrying `"1234 reviews"` counted as visible review UI. Sibling audits in
+ * this category already clone-and-strip; this one now does too.
+ */
+function readableText(page: PageContext): string {
+  const body = page.$('body').clone();
+  body.find('script, style, noscript, template').remove();
+  return body.text().replace(/\s+/g, ' ').trim();
+}
+
+/**
+ * True when a rating node carries an actual rating rather than the vocabulary
+ * for one. Google prohibits markup that is not "sourced directly from users",
+ * so the presence of the property is not itself evidence of social proof.
+ */
+function hasRatingSubstance(record: Record<string, unknown>): boolean {
+  const counts = ['reviewCount', 'ratingCount']
+    .map((key) => numericCount(record[key]))
+    .filter((n): n is number => n !== null);
+  if (counts.some((n) => n > 0)) return true;
+  const rating = numericCount(record['ratingValue']);
+  // A ratingValue of 0 with no positive count states the same nothing that
+  // `statesZeroReviews` already rejects on the count fields.
+  return rating !== null && rating > 0;
+}
+
+/** True when a `Review` node carries a review rather than the shape of one. */
+function hasReviewSubstance(value: unknown): boolean {
+  if (typeof value === 'string') return value.trim() !== '';
+  if (typeof value !== 'object' || value === null) return false;
+  const record = value as Record<string, unknown>;
+
+  const body = record['reviewBody'];
+  if (typeof body === 'string' && body.trim() !== '') return true;
+
+  const author = record['author'];
+  if (typeof author === 'string' && author.trim() !== '') return true;
+  if (typeof author === 'object' && author !== null) {
+    const named = author as Record<string, unknown>;
+    for (const key of ['name', '@id']) {
+      const field = named[key];
+      if (typeof field === 'string' && field.trim() !== '') return true;
+    }
+  }
+
+  const rating = record['reviewRating'];
+  if (typeof rating === 'object' && rating !== null) {
+    return numericCount((rating as Record<string, unknown>)['ratingValue']) !== null;
+  }
+  return false;
+}
+
+/**
  * Scan deeply-flattened JSON-LD nodes for review evidence. Real Shopify themes
  * nest `aggregateRating`/`review` inside Product nodes (not just inside
  * @graph), so we rely on the shared `flattenJsonLd` deep recursion and then
@@ -46,26 +101,27 @@ export function findReviewNodes(jsonLd: object[]): string[] {
     if (objType) {
       const typeArr = Array.isArray(objType) ? objType : [objType];
       for (const t of typeArr) {
-        if (typeof t === 'string' && /^(?:aggregaterating|review)$/i.test(t) && !zero) {
-          found.push(t);
-        }
+        if (typeof t !== 'string' || zero) continue;
+        if (/^aggregaterating$/i.test(t) && hasRatingSubstance(record)) found.push(t);
+        if (/^review$/i.test(t) && hasReviewSubstance(record)) found.push(t);
       }
     }
 
     // Nested review properties carried on a parent node (e.g. a Product with
     // `aggregateRating`/`review`/`reviewCount` but no dedicated Review node).
+    // `"aggregateRating": true` and `"aggregateRating": {}` are the shape of a
+    // rating without a rating. Only an object carrying a value counts.
     const aggregate = record['aggregateRating'];
-    if (aggregate) {
-      const aggregateZero =
-        typeof aggregate === 'object' && aggregate !== null
-          ? statesZeroReviews(aggregate as Record<string, unknown>)
-          : false;
-      if (!aggregateZero) found.push('aggregateRating');
+    if (typeof aggregate === 'object' && aggregate !== null) {
+      const nested = aggregate as Record<string, unknown>;
+      if (!statesZeroReviews(nested) && hasRatingSubstance(nested)) found.push('aggregateRating');
     }
     // `"review": []` is the shape of social proof without the proof. A
-    // storefront that ships the property empty has published nothing.
+    // storefront that ships the property empty has published nothing, and one
+    // that ships `[{"@type":"Review"}]` has published no more.
     const review = record['review'];
-    if (Array.isArray(review) ? review.length > 0 : Boolean(review)) found.push('review');
+    const reviews = Array.isArray(review) ? review : review === undefined ? [] : [review];
+    if (reviews.some(hasReviewSubstance)) found.push('review');
     for (const key of ['reviewCount', 'ratingCount']) {
       const n = numericCount(record[key]);
       // Label by the key that was actually present: a ratingCount-only node
@@ -88,17 +144,43 @@ function countQuotations(p: PageContext): { attributed: number; unattributed: nu
   let attributed = 0;
   let unattributed = 0;
 
+  /**
+   * A `cite` attribute is attribution only where it names a document.
+   *
+   * Relative references count — `cite="/press/review"` is a real citation — but
+   * a URL reference carries no unescaped whitespace, so `cite="see our press
+   * page"` is prose in a URL slot and names nobody. Resolving it against the
+   * page would otherwise turn any sentence into a valid URL.
+   */
+  const citesADocument = (value: string | undefined): boolean => {
+    const reference = value?.trim();
+    if (!reference || /\s/.test(reference)) return false;
+    try {
+      const { protocol } = new URL(reference, p.url);
+      return protocol === 'http:' || protocol === 'https:';
+    } catch {
+      return false;
+    }
+  };
+
+  /** An empty `<cite>` or `<footer>` names nobody. */
+  const namesSomeone = (selector: string, within: ReturnType<typeof $>): boolean =>
+    within
+      .find(selector)
+      .toArray()
+      .some((el) => $(el).text().trim() !== '');
+
   $('blockquote').each((_, el) => {
     const quote = $(el);
     // An empty <blockquote> is a spacer or a lazy-loading placeholder, not a quote.
     if (!quote.text().trim()) return;
 
-    const figcaption = quote.parent().is('figure') ? quote.parent().find('figcaption').length : 0;
+    const figure = quote.parent().is('figure') ? quote.parent() : undefined;
     const hasAttribution =
-      Boolean(quote.attr('cite')) ||
-      quote.find('cite').length > 0 ||
-      quote.find('footer').length > 0 ||
-      figcaption > 0;
+      citesADocument(quote.attr('cite')) ||
+      namesSomeone('cite', quote) ||
+      namesSomeone('footer', quote) ||
+      (figure !== undefined && namesSomeone('figcaption', figure));
 
     if (hasAttribution) {
       attributed += 1;
@@ -137,23 +219,23 @@ export class ReviewSignalsAudit extends Audit {
   };
 
   audit(ctx: CheckContext): AuditResult {
-    const page = ctx.pages[0];
     const expected =
-      'JSON-LD Review/AggregateRating, or <blockquote> quotations with attribution';
+      'On a homepage or product page: JSON-LD Review/AggregateRating carrying a rating or a non-zero review count, or a <blockquote> quotation with attribution';
 
-    if (!page) {
-      return this.fail(
-        'No pages scanned.',
-        expected,
-        'No pages scanned',
-        {
-          priority: 'medium',
-          description:
-            'AI engines use reviews and testimonials as social proof signals when recommending products or services in generated answers.',
-          code: '<blockquote>\n  <p>"Great product!"</p>\n  <footer>- <cite>Jane Smith, CEO</cite></footer>\n</blockquote>',
-        },
-      );
+    if (ctx.pages.length === 0) {
+      return this.notApplicable('No pages were scanned.', expected, 'No pages scanned');
     }
+
+    // The review-vocabulary evidence is commerce-scoped: Google's review rich
+    // results are entity markup and OpenAI's review_count/star_rating are
+    // product-feed fields. A blog post's star-rating div or an inline JSON
+    // payload reading "1,234 reviews" is not evidence about either. The
+    // quotation branch is deliberately not scoped this way — its GEO
+    // measurement is about generative-answer citation on content generally, so
+    // confining it to commerce pages would narrow past its own evidence.
+    const commerce = ctx.pages.filter(
+      (p) => p.pageType === 'homepage' || p.pageType === 'product',
+    );
 
     // Machine-readable social proof: what an agent consumer can actually read.
     const strong: string[] = [];
@@ -171,26 +253,36 @@ export class ReviewSignalsAudit extends Audit {
       weakUrl ??= url;
     };
 
-    for (const p of ctx.pages) {
-      const reviewNodes = findReviewNodes(p.jsonLd);
-      if (reviewNodes.length > 0) noteStrong(`JSON-LD ${reviewNodes.join(', ')}`, p.url);
+    // Reported, never scored: nothing in any source supports counting an
+    // unattributed quotation as a review signal.
+    let unattributed = 0;
 
+    for (const p of ctx.pages) {
       const quotes = countQuotations(p);
       if (quotes.attributed > 0) {
         noteStrong(`${quotes.attributed} attributed quotation(s)`, p.url);
-      } else if (quotes.unattributed > 0) {
-        noteWeak(`${quotes.unattributed} unattributed blockquote(s)`, p.url);
       }
+      unattributed += quotes.unattributed;
+    }
+
+    for (const p of commerce) {
+      const reviewNodes = findReviewNodes(p.jsonLd);
+      if (reviewNodes.length > 0) noteStrong(`JSON-LD ${reviewNodes.join(', ')}`, p.url);
 
       // Many stores render reviews through third-party widgets (Yotpo, Okendo,
       // Judge.me, Loox, Stamped...) whose schema is injected client-side. The
       // reviews are real, but nothing on the fetched page is machine-readable.
-      const widget = p.$(
-        '[class*="yotpo"],[class*="okendo"],[class*="jdgm"],[class*="judgeme"],[class*="loox"],[class*="stamped"],[class*="star-rating"]',
-      );
+      // An empty placeholder is not review UI, so the element must carry
+      // something.
+      const widget = p
+        .$(
+          '[class*="yotpo"],[class*="okendo"],[class*="jdgm"],[class*="judgeme"],[class*="loox"],[class*="stamped"],[class*="star-rating"]',
+        )
+        .toArray()
+        .filter((el) => p.$(el).text().trim() !== '' || p.$(el).children().length > 0);
       if (widget.length > 0) {
         noteWeak('review widget markup', p.url);
-      } else if (/\b\d[\d,]*\s+reviews?\b/i.test(p.$('body').text())) {
+      } else if (/\b\d[\d,]*\s+reviews?\b/i.test(readableText(p))) {
         noteWeak('"N reviews" text', p.url);
       }
     }
@@ -204,15 +296,18 @@ export class ReviewSignalsAudit extends Audit {
       );
     }
 
+    const pullQuotes =
+      unattributed > 0 ? `${unattributed} unattributed pull-quote(s)` : undefined;
+
     if (weak.length > 0) {
       return this.warn(
         `Review signals found but not machine-readable: ${weak.join('; ')}.`,
         expected,
-        weak.join('; '),
+        [...weak, pullQuotes].filter(Boolean).join('; '),
         {
           priority: 'medium',
           description:
-            'The page shows review or quotation content, but nothing an agent can read: client-injected widget markup, a visible review count, or a quote with no attribution. Add Review/AggregateRating structured data server-side, and attribute testimonial quotes with <cite>, <footer> or a <figcaption>.',
+            'The page shows review UI, but nothing an agent can read: client-injected widget markup or a visible review count. Add Review/AggregateRating structured data server-side, and attribute testimonial quotes with <cite>, <footer> or a <figcaption>.',
           code: '<script type="application/ld+json">\n{"@context":"https://schema.org","@type":"Product","aggregateRating":{"@type":"AggregateRating","ratingValue":"4.5","reviewCount":"120"}}\n</script>',
         },
         weakUrl,
@@ -220,16 +315,18 @@ export class ReviewSignalsAudit extends Audit {
     }
 
     return this.fail(
-      'No review or testimonial signals found.',
+      pullQuotes
+        ? 'No review or testimonial signals found. Attribution is what separates a testimonial from decoration.'
+        : 'No review or testimonial signals found.',
       expected,
-      'Not found',
+      pullQuotes ? `${pullQuotes}, no attribution` : 'Not found',
       {
         priority: 'medium',
         description:
           'AI generative engines use reviews and testimonials as social proof when recommending your product or service. Attributed quotations and Review/AggregateRating schema make social proof machine-readable, giving agents concrete evidence to cite when users ask "is X any good?".',
         code: '<blockquote cite="https://example.com/review">\n  <p>"Great product — reduced our deployment time by 50%."</p>\n  <footer>- <cite>Jane Smith, CEO at Company</cite></footer>\n</blockquote>',
       },
-      page.url,
+      (commerce[0] ?? ctx.pages[0])!.url,
     );
   }
 }

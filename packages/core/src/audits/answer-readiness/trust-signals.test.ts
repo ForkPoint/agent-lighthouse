@@ -171,4 +171,19 @@ describe('TrustSignalsAudit', () => {
     expect(meta.tier).toBe('scored');
     expect(meta.weight).toBeCloseTo(0.6);
   });
+
+  // review-signals tightened findReviewNodes on 2026-08-24 so hollow review
+  // vocabulary no longer counts as machine-readable social proof. This audit
+  // defers its social-proof factor to that function, so the tightening moves
+  // this audit's `counted` denominator and therefore its pass bar. Pinned here
+  // so the arithmetic cannot drift unnoticed.
+  it('does not defer social proof to hollow review markup', () => {
+    const page = mockPageContext(
+      'https://example.com/',
+      `<html><body><script type="application/ld+json">{"@context":"https://schema.org","@type":"Product","aggregateRating":{}}</script><p>A page with nothing else on it.</p></body></html>`,
+    );
+    const result = audit.audit(mockCheckContext([page]));
+    expect(result.found).not.toContain('deferred');
+    expect(result.status).toBe('fail');
+  });
 });
