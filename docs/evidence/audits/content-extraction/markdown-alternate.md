@@ -17,7 +17,11 @@ reviewed: 2026-08-21
 
 ## What it checks
 
-AI agents prefer Markdown over HTML because it strips away layout noise and fits more content into limited context windows. A Markdown alternate link lets agents fetch a clean, token-efficient version of your page, improving the accuracy of AI-generated summaries.
+Where a site serves a markdown version of a page, this checks that the markdown is usable: that it resolves as `text/markdown`, still carries the page's headings and prose, and costs fewer tokens than the HTML. It looks on three routes — a declared `<link rel="alternate" type="text/markdown">`, the page URL plus `.md`, and the page URL with `Accept: text/markdown`.
+
+Interactive coding agents read markdown when a site offers it, and it costs them far fewer tokens than the HTML. A markdown version that has drifted from the page is worse than none: the agent gets a document that looks authoritative, costs less, and says less than the page it claims to mirror.
+
+A site that serves no markdown version is reported as not applicable rather than failed. The consumers documented for this mechanism are coding agents, and no source measures a cost to a site that offers no markdown at all.
 
 ## Code review findings (2026-08-20, 11-agent pass)
 
@@ -69,10 +73,91 @@ Best of the AI-specific link audits — the underlying practice is real and does
 
 **Sources:** [Tools reference — Claude Code docs (WebFetch behavior)](https://code.claude.com/docs/en/tools-reference) · [Introducing Markdown for Agents](https://blog.cloudflare.com/markdown-for-agents/) · [Which AI agents support Markdown content negotiation? (status matrix)](https://acceptmarkdown.com/status) · [The Current State of Content Negotiation for AI Agents (Feb 2026)](https://www.checklyhq.com/blog/state-of-ai-agent-content-negotation/) · [Which AI actually reads your site? Two months of LLM traffic, measured](https://evilmartians.com/chronicles/which-ai-actually-reads-your-site-two-months-of-llm-traffic-measured) · [Markdown, llms.txt and AI crawlers](https://dri.es/markdown-llms-txt-and-ai-crawlers) · [GEO Experiment: Markdown vs. HTML, Which Format Do AI Crawlers Prefer?](https://otterly.ai/blog/geo-experiment-html-vs-markdown/) · [Do LLMs Crawl Markdown (.md) Files? Data Analysis](https://www.longato.ch/llm-md-files/) · [The /llms.txt file, v2](https://llmstxt.org/) · [llms.txt — Mintlify documentation](https://www.mintlify.com/docs/ai/llmstxt) · [AI Features and Your Website](https://developers.google.com/search/docs/appearance/ai-features) · [Direct measurement of vendor llms.txt files and markdown content negotiation (2026-08-20)](https://llmstxt.org/)
 
+## Pass-rule correction (contradiction sweep, 2026-08-24)
+
+Two defects, both recorded in this dossier's own research, both fixed together.
+
+**The rule applied the grade to a population the evidence never covered.** The
+grade-A signal above is explicit: "Grade A applies to interactive coding agents,
+NOT to search crawlers or consumer chat — audits should say so." The audit said
+no such thing. It failed every site that served no markdown alternate, at weight
+1.0, including a retail store with no coding-agent audience. What the sources
+document is *consumption when the representation is served* — Anthropic's
+WebFetch preferring markdown, seven agents advertising `text/markdown`, Evil
+Martians' ~40,000 markdown fetches. No cited source measures a cost to a site
+that serves none, and three point the other way: ChatGPT-User takes markdown on
+0.1% of fetches, Otterly's 14-day controlled test found 0 crawler visits and 0
+citations for `.md` against 137 to matched HTML, and Google states markdown is
+not needed to appear in Search or its AI features.
+
+Absence is therefore no longer scored. A page with no markdown alternate on any
+route returns `notApplicable` and leaves the score denominator. A page that
+serves one is scored exactly as before, at grade A and weight 1.0: resolvability
+against RFC 7763, heading and shingle recall at 0.9, unresolved component tags
+as a warn, and the token saving reported.
+
+The gate is the site's own act of serving a markdown document, not a detector
+for a coding-agent audience. No such detector was built, and none should be: this
+dossier records no observable signal that distinguishes that audience, so any
+heuristic would be an invented mechanism with no consumer behind it — the exact
+defect the grading policy exists to prevent. A site that serves an alternate has
+self-selected into the documented population by observable behaviour.
+
+This reverses one sentence written on 2026-08-23 in *Absorbed proposal*: "The
+proposal would have made that case `notApplicable`; this audit's grade-A
+evidence is precisely about the absence of the link, so the shipped meaning
+stands." That reading does not survive its own counter-evidence. The absorbed
+proposal was right and the fold was wrong. The 2026-08-23 text stays above as
+the record of what was decided then.
+
+**The grade-C signal was deciding grade-A outcomes.** Two signals are graded
+here and they are not interchangeable. The link relations — `rel="alternate"
+type="text/markdown"` and `rel="describedby"` — carry `Recommended tier:
+experimental`, with one single-sourced, uncorroborated consumer for the first
+and none-known for the second. The markdown *representation*, reached by a `.md`
+URL or by `Accept: text/markdown`, carries `Recommended tier: scored` and many
+named consumers. The audit let the first decide the second: a declared link
+whose document could not be read returned a full `pass` at weight 1.0, and a
+declared link that 404'd returned a full `fail`.
+
+Both arms are gone. The declaration is now a discovery route and a reported
+detail, never an outcome. It cannot produce a pass, a fail or a warn on its own.
+Two further changes protect that boundary:
+
+- A declared link is no longer the last word. Probing continues past a declared
+  document that fails the fidelity floors, and the best document any route
+  returned is the one scored. `developers.cloudflare.com` declares a single
+  site-wide `index.md` from every page; scoring that against the page being
+  scanned would have failed a site for the alternate it actually serves.
+- "This is the HTML page again" is now decided from the body, not the content
+  type. A `.md` URL answering with the HTML document is a catch-all route and is
+  not an alternate at all; a markdown document served as `text/html` or
+  `text/plain` is a mistyped alternate and still fails, which is what RFC 7763
+  supports. The content type cannot tell those apart — only the body can. A 200
+  response that is neither typed nor shaped as markdown is treated as a soft 404.
+
+Page selection also moved, closing the homepage bias this dossier recorded as
+required fix #5: the audit now prefers a page that declares an alternate, then
+any non-homepage, before falling back to the first page.
+
+*What it checks* was rewritten to match. It described a check that no longer
+exists — it promised that a markdown alternate "improves the accuracy of
+AI-generated summaries", a claim no source here carries, and it framed the
+`<link>` as the thing being checked.
+
+Grade, tier, weight and display mode are unchanged — A, scored, 1.0, ternary.
+The scored population is now the one the grade-A evidence covers, so the grade
+needs no adjustment. One caution for anyone reading the counter-evidence as
+"crawlers do not take markdown": this dossier also records GPTBot taking
+markdown 34.8% of the time via `.md` URLs. That is consumption when served,
+which is the mechanism being scored — not a cost of absence, which is the claim
+the audit no longer makes.
+
 ## Review history
 
 - 2026-08-20 — code review (11-agent workflow) + evidence research (12-domain workflow, 400 sources).
 - 2026-08-21 — dossier generated; disposition pending final taxonomy design.
+- 2026-08-24 — contradiction sweep: pass rule narrowed to the population the grade covers, and the grade-C link relation demoted to a discovery route.
 
 ## Absorbed proposal — Markdown alternate: discoverable, resolvable, faithful, cheaper
 
