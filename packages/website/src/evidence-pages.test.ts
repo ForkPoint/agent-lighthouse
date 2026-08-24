@@ -138,11 +138,22 @@ describe.skipIf(!built)('rendered /sources/', () => {
     expect(rendered).toMatch(/<caption/);
   });
 
-  it('announces the result count from a live region', () => {
-    const region = /<[a-z]+[^>]*aria-live="polite"[^>]*>/.exec(html())?.[0];
+  it('announces the result count from a live region that is in the a11y tree', () => {
+    // Anchored on the id rather than on `aria-live`, so a `hidden` somewhere
+    // else on the page — the table shell and the controls both carry one — can
+    // neither satisfy this nor defeat it.
+    const region = new RegExp('<[a-z]+[^>]*\\bid="sources-status"[^>]*>').exec(html())?.[0];
 
     expect(region, 'no live region on the page').toBeDefined();
-    expect(region).toContain('id="sources-status"');
+    expect(region).toContain('aria-live="polite"');
+    // A `hidden` live region announces nothing: preflight makes `[hidden]`
+    // `display:none`, a `display:none` element is not in the accessibility
+    // tree, and revealing it in the same synchronous block that writes its text
+    // means assistive tech was not observing when the content changed. The
+    // region renders empty from first paint instead, with `min-h-5` reserving
+    // its line so the first message shifts nothing.
+    expect(region, 'the live region is hidden, so its aria-live does nothing').not.toMatch(/\bhidden\b/);
+    expect(region).toContain('min-h-5');
   });
 
   it('never inlines the registry into the page', () => {

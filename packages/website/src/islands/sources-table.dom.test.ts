@@ -45,7 +45,7 @@ const fixture = () => `
       <button type="button" data-filter="type" data-value="study" aria-pressed="false">study</button>
     </div>
   </section>
-  <p id="sources-status" hidden aria-live="polite"></p>
+  <p id="sources-status" aria-live="polite" class="min-h-5"></p>
   <div id="sources-table" hidden>
     <div id="sources-scroll" role="region" aria-label="Source registry" tabindex="0">
       <table>
@@ -130,7 +130,26 @@ describe('mountSourcesTable', () => {
 
     expect(document.querySelector<HTMLElement>('#sources-table')!.hidden).toBe(false);
     expect(document.querySelector<HTMLElement>('#sources-controls')!.hidden).toBe(false);
-    expect(document.querySelector<HTMLElement>('#sources-status')!.hidden).toBe(false);
+  });
+
+  it('only writes into the live region — it never toggles its visibility', async () => {
+    // The region is visible from first paint, and the mount must leave it that
+    // way: un-hiding it in the same synchronous block that writes the text
+    // means assistive tech was not observing the region when it changed. A
+    // setter that throws catches the mutation itself, not just its markup.
+    const region = document.querySelector<HTMLElement>('#sources-status')!;
+    expect(region.hidden).toBe(false);
+    Object.defineProperty(region, 'hidden', {
+      configurable: true,
+      get: () => false,
+      set: () => {
+        throw new Error('the mount toggled #sources-status, which loses the announcement');
+      },
+    });
+
+    await mount();
+
+    expect(status()).toBe('Showing 2 of 2 sources.');
   });
 
   it('announces the count from the live region', async () => {
@@ -237,6 +256,7 @@ describe('mountSourcesTable', () => {
 
     expect(status()).toContain('could not be loaded');
     expect(document.querySelector<HTMLElement>('#sources-status')!.hidden).toBe(false);
+    expect(document.querySelector<HTMLElement>('#sources-status')!.textContent).not.toBe('');
     expect(document.querySelector<HTMLElement>('#sources-table')!.hidden).toBe(true);
     expect(rows()).toHaveLength(0);
   });

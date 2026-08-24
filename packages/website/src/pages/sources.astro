@@ -71,10 +71,13 @@ const th = 'border-b border-border-subtle px-3 py-2 text-left text-xs font-bold 
       </div>
     </section>
 
-    {/* Hidden until the island has something to say — first that it is loading,
-        then the result count. Present from the start so the live region is in
-        the accessibility tree before it is ever updated. */}
-    <p id="sources-status" hidden aria-live="polite" class="mt-6 text-sm text-slate-400"></p>
+    {/* Empty, but never hidden. A live region has to be in the accessibility
+        tree *before* its content changes, and `hidden` puts it out of that tree
+        — preflight makes `[hidden]` `display:none` — so revealing it in the same
+        block that writes the text loses the announcement. That matters most on
+        the failure path: this line is how a reader learns the registry did not
+        load. `min-h-5` reserves the line so the first message shifts nothing. */}
+    <p id="sources-status" aria-live="polite" class="mt-6 min-h-5 text-sm text-slate-400"></p>
 
     <noscript>
       <div class="mt-6 rounded-xl border border-border-subtle bg-surface-raised/60 p-6 text-sm leading-relaxed text-slate-300">

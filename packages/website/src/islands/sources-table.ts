@@ -182,7 +182,10 @@ export async function mountSourcesTable(): Promise<void> {
 
   // Said before the fetch, not after: the registry is large enough that the
   // wait is visible, and a blank panel would read as a broken page.
-  status.hidden = false;
+  //
+  // The region's visibility is never touched here. It renders empty and visible
+  // from first paint, so assistive tech is already observing it when this line
+  // and every line after it is written.
   status.textContent = 'Loading the source registry…';
 
   let sources: SourceRecord[];
