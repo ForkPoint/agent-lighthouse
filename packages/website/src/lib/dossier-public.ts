@@ -245,6 +245,166 @@ function signalName(heading: string): string | undefined {
 }
 
 /**
+ * A signal name short enough to be a label.
+ *
+ * The research names a signal by describing it in full — the longest in the
+ * corpus is 175 characters — and the page prints that name once as a heading and
+ * again on every block promoted out of it, up to fifteen times on one dossier.
+ * At that length it stops being a label and becomes a paragraph the reader has
+ * to re-read on each appearance.
+ *
+ * The first clause is what tells two signals apart, so the name is cut at the
+ * first parenthesis, dash or slash and capped. The full description is not lost:
+ * it is the mechanism sentence, which the page prints under `Why it matters`.
+ */
+const CLAUSE_END = /\s+[(\u2014]|\s+\/\s+/;
+const LABEL_CAP = 60;
+
+function shortSignal(name: string): string {
+  const head = name.split(CLAUSE_END)[0]!.trim() || name.trim();
+  if (head.length <= LABEL_CAP) return head;
+  // Cut on a word boundary rather than mid-word, and never leave a trailing
+  // comma dangling in front of the ellipsis.
+  const cut = head.slice(0, LABEL_CAP);
+  return `${cut.slice(0, cut.lastIndexOf(' ')).replace(/[,;:]$/, '')}\u2026`;
+}
+
+/**
+ * Drop the falsifiability protocol from a mechanism.
+ *
+ * `FALSIFIABLE TEST: does any published spec define these relations, and does
+ * any named agent parse them?` is the instruction the research followed. It
+ * restates the mechanism above it as a question and addresses the researcher,
+ * not the reader. 80 dossiers carry one.
+ *
+ * Scoped to the line it starts on, not to the rest of the body: the clause ends
+ * the paragraph it belongs to, and a body-wide cut would take the paragraphs
+ * after it too.
+ */
+function stripFalsifiable(line: string): string {
+  return line.replace(/\s*\bFALSIFIABLE\s+(?:TEST|FORM)\b.*$/i, '').trim();
+}
+
+/** A source already stamped with the date it was last checked. */
+const SOURCE_STAMP = /\s*\((?:[^()]*\b)?verified (\d{4}-\d{2}-\d{2})\)\s*$/;
+
+/**
+ * Turn a `**Sources:**` run into a list, and hoist the verification date.
+ *
+ * The corpus writes sources as one line of up to eleven markdown links joined by
+ * `\u00b7`, each ending in its own `(verified 2026-08-20)`. Wrapped in a narrow
+ * column that is an unscannable grey block, and the stamp — identical on every
+ * entry of 67 of those lines — is most of its length.
+ *
+ * So: one bullet per source, and where every entry on the line carries the same
+ * date it is stated once in the lead. Where the dates differ each entry keeps
+ * its own, because then the date is telling the reader something.
+ */
+function compactSources(line: string): string {
+  const body = /^\*\*Sources:\*\*\s*(.*)$/.exec(line)?.[1];
+  if (body === undefined) return line;
+
+  const entries = body
+    .split(/\s+\u00b7\s+/)
+    .map((entry) => entry.trim())
+    .filter(Boolean);
+  if (entries.length === 0) return line;
+
+  const dates = entries.map((entry) => SOURCE_STAMP.exec(entry)?.[1]);
+  const shared = dates[0] && dates.every((date) => date === dates[0]) ? dates[0] : undefined;
+
+  const seen = new Set<string>();
+  const bullets: string[] = [];
+  for (const entry of entries) {
+    const text = shared ? entry.replace(SOURCE_STAMP, '') : entry;
+    // The same source is occasionally listed twice on one line.
+    const url = /\]\((https?:\/\/[^)]+)\)/.exec(entry)?.[1] ?? text;
+    if (seen.has(url)) continue;
+    seen.add(url);
+    bullets.push(`- ${text}`);
+  }
+
+  // The parentheses are load-bearing, not decorative: `evidence-bar.ts` proves a
+  // scored page carries a `(verified <date>)` stamp, and hoisting the date out
+  // of the entries has to keep that promise rather than relax the check.
+  const lead = shared ? `**Sources** (all verified ${shared}):` : '**Sources:**';
+  return [lead, '', ...bullets].join('\n');
+}
+
+/**
+ * Put bare HTML tags in code spans.
+ *
+ * The research writes `<link rel="alternate" type="text/markdown">` as prose, so
+ * markdown escapes it and the page prints an unstyled run of angle brackets and
+ * quotes mid-sentence. 55 dossiers do this. Only tags that are already outside a
+ * span are touched, and only element names — `<link>`, `<th>`, `<main>` — so a
+ * comparison such as `a < b` is left alone.
+ */
+const BARE_TAG = /<\/?[a-z][a-z0-9]*(?:\s[^<>`]*?)?\/?>/g;
+
+function fenceTags(text: string): string {
+  // Split on code spans and fences, and rewrite only the parts between them.
+  return text
+    .split(/(`{1,3}[^`]*`{1,3})/)
+    .map((part, index) => (index % 2 === 1 ? part : part.replace(BARE_TAG, (tag) => `\`${tag}\``)))
+    .join('');
+}
+
+/**
+ * Every compaction that applies to a body, whatever section it ends up in.
+ *
+ * Fence-aware by construction: `fenceTags` skips code spans, and the callers
+ * apply this per line outside fenced blocks.
+ */
+function compact(body: string): string {
+  const out: string[] = [];
+  let fence: { char: string; length: number } | null = null;
+
+  for (const line of body.split('\n')) {
+    const run = FENCE.exec(line)?.[1];
+    if (fence) {
+      if (
+        run !== undefined &&
+        run[0] === fence.char &&
+        run.length >= fence.length &&
+        line.slice(line.indexOf(run) + run.length).trim() === ''
+      ) {
+        fence = null;
+      }
+      out.push(line);
+      continue;
+    }
+    if (run !== undefined) {
+      fence = { char: run[0]!, length: run.length };
+      out.push(line);
+      continue;
+    }
+
+    // `### Signal: <175 characters> — grade C (llms-txt)` becomes `### <label>`.
+    // The grade is in the page's metadata card and the domain is an internal
+    // grouping key, so both come off with the prefix.
+    const signal = signalName(line);
+    if (line.startsWith('### ') && signal) {
+      out.push(`### ${fenceTags(shortSignal(signal))}`);
+      continue;
+    }
+
+    if (/^\*\*Sources:\*\*/.test(line)) {
+      out.push(compactSources(line));
+      continue;
+    }
+
+    // `**Evidence:**` under a heading that already says Evidence, on 92 pages.
+    const text = stripFalsifiable(line.replace(/^\*\*Evidence:\*\*\s*/, ''));
+    // A line that was nothing but the protocol clause leaves no paragraph.
+    if (line.trim() && !text) continue;
+    out.push(fenceTags(text));
+  }
+
+  return out.join('\n').replace(/\n{3,}/g, '\n\n').trim();
+}
+
+/**
  * Pull one family of labelled blocks out of a body into its own section.
  *
  * A dossier can carry several researched signals, each with its own mechanism
@@ -297,7 +457,9 @@ function promote(body: string, labels: readonly string[]): { promoted: string; r
   const named = taken.filter((entry) => entry.signal).length > 0 && taken.length > 1;
   const promoted = taken
     .filter((entry) => entry.text.length > 0)
-    .map((entry) => (named && entry.signal ? `**${entry.signal}** — ${entry.text}` : entry.text))
+    .map((entry) =>
+      named && entry.signal ? `**${shortSignal(entry.signal)}** — ${entry.text}` : entry.text,
+    )
     .join('\n\n');
 
   return { promoted, rest: rest.join('\n').replace(/\n{3,}/g, '\n\n').trim() };
@@ -353,7 +515,9 @@ function promoteGrade(body: string): { promoted: string; rest: string } {
 
   const named = taken.filter((entry) => entry.signal).length > 0 && taken.length > 1;
   const promoted = taken
-    .map((entry) => (named && entry.signal ? `**${entry.signal}** — ${entry.text}` : entry.text))
+    .map((entry) =>
+      named && entry.signal ? `**${shortSignal(entry.signal)}** — ${entry.text}` : entry.text,
+    )
     .join('\n\n');
   return { promoted, rest: rest.join('\n').replace(/\n{3,}/g, '\n\n').trim() };
 }
@@ -409,12 +573,6 @@ export function publicDossier(markdown: string, overrides: DossierOverrides = {}
       bodies.set(into, result.promoted);
       rest = result.rest;
     }
-    // With the mechanism, the limits and the grade reasoning promoted out, a
-    // single-signal dossier's evidence section is one `**Evidence:**` label
-    // under a heading that already says Evidence. Unwrap it — but only when the
-    // section has no `### Signal:` headings, where the label is what separates
-    // one signal's evidence from its sources.
-    if (!/^### /m.test(rest)) rest = rest.replace(/^\*\*Evidence:\*\*\s*/m, '');
     if (!bodies.has('How it scores') && !omit.has('How it scores')) {
       const grade = promoteGrade(rest);
       if (grade.promoted) {
@@ -437,7 +595,10 @@ export function publicDossier(markdown: string, overrides: DossierOverrides = {}
   const published: string[] = [];
   const parts: string[] = [];
   for (const name of order) {
-    const body = bodies.get(name)?.trim();
+    // Compaction runs last, on whatever each section ended up holding, so a
+    // block promoted out of the evidence is normalised the same way as the
+    // evidence it came from.
+    const body = compact(bodies.get(name) ?? '');
     // A section that filtered down to nothing is not published as an empty
     // heading — that reads as a gap rather than as an omission.
     if (!body) continue;

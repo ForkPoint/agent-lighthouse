@@ -147,6 +147,96 @@ describe('publicDossier', () => {
     });
   });
 
+  describe('compaction', () => {
+    it('shortens a signal heading to its first clause and drops the grade suffix', () => {
+      const source = [
+        '## Evidence',
+        '',
+        '### Signal: Markdown alternate representations of pages (.md URLs and Accept: text/markdown content negotiation) — grade A (llms-txt)',
+        '',
+        '**Evidence:** Anthropic documents it.',
+      ].join('\n');
+      const { markdown } = publicDossier(source);
+      expect(markdown).toContain('### Markdown alternate representations of pages');
+      // The grade is on the page's own card, and the domain is an internal key.
+      expect(markdown).not.toContain('grade A');
+      expect(markdown).not.toContain('(llms-txt)');
+      // `**Evidence:**` under a heading that already says Evidence.
+      expect(markdown).not.toContain('**Evidence:**');
+    });
+
+    it('caps a signal heading that has no clause boundary', () => {
+      const long = 'A'.repeat(40) + ' ' + 'B'.repeat(40);
+      const { markdown } = publicDossier(`## Evidence\n\n### Signal: ${long} — grade B (x)\n\ntext\n`);
+      const heading = /^### (.+)$/m.exec(markdown)![1]!;
+      expect(heading.length).toBeLessThanOrEqual(61);
+      expect(heading.endsWith('\u2026')).toBe(true);
+    });
+
+    it('drops the falsifiability protocol but keeps the mechanism before it', () => {
+      const source =
+        '## Evidence\n\n**Mechanism:** Serving markdown reduces tokens. FALSIFIABLE TEST: does any vendor say so?\n';
+      const { markdown } = publicDossier(source);
+      expect(markdown).toContain('Serving markdown reduces tokens.');
+      expect(markdown).not.toContain('FALSIFIABLE');
+    });
+
+    it('turns a sources run into a list and states a shared date once', () => {
+      const source = [
+        '## Evidence',
+        '',
+        'Body.',
+        '',
+        '**Sources:** [A](https://a.example) (verified 2026-08-20) · [B](https://b.example) (verified 2026-08-20)',
+      ].join('\n');
+      const { markdown } = publicDossier(source);
+      expect(markdown).toContain('**Sources** (all verified 2026-08-20):');
+      expect(markdown).toContain('- [A](https://a.example)');
+      expect(markdown).toContain('- [B](https://b.example)');
+      expect(markdown).not.toContain('\u00b7');
+    });
+
+    it('keeps each date when the sources were verified on different days', () => {
+      const source =
+        '## Evidence\n\nBody.\n\n**Sources:** [A](https://a.example) (verified 2026-08-20) · [B](https://b.example) (verified 2026-08-21)\n';
+      const { markdown } = publicDossier(source);
+      expect(markdown).toContain('**Sources:**');
+      expect(markdown).toContain('[A](https://a.example) (verified 2026-08-20)');
+      expect(markdown).toContain('[B](https://b.example) (verified 2026-08-21)');
+    });
+
+    it('drops a source listed twice on one line', () => {
+      const source =
+        '## Evidence\n\nBody.\n\n**Sources:** [A](https://a.example) (verified 2026-08-20) · [A again](https://a.example) (verified 2026-08-20)\n';
+      const { markdown } = publicDossier(source);
+      expect([...markdown.matchAll(/https:\/\/a\.example/g)]).toHaveLength(1);
+    });
+
+    it('puts a bare HTML tag in a code span and leaves one that already is', () => {
+      const source = '## Evidence\n\nEmitting <link rel="alternate"> next to `<th scope="col">`.\n';
+      const { markdown } = publicDossier(source);
+      expect(markdown).toContain('`<link rel="alternate">`');
+      expect(markdown).not.toContain('``<th');
+    });
+
+    it('leaves a comparison that is not a tag alone', () => {
+      const { markdown } = publicDossier('## Evidence\n\nWhen a < b and 3 > 2.\n');
+      expect(markdown).toContain('When a < b and 3 > 2.');
+    });
+
+    it('does not compact inside a code fence', () => {
+      const source = [
+        '## Evidence',
+        '',
+        '```html',
+        '<link rel="alternate">',
+        '```',
+      ].join('\n');
+      const { markdown } = publicDossier(source);
+      expect(markdown).toContain('\n<link rel="alternate">\n');
+    });
+  });
+
   describe('frontmatter overrides', () => {
     it('publishes a section named by public_extra, after the contract', () => {
       const source = '## What it checks\n\nA.\n\n## The GEO-benchmark rebuild\n\nB.\n';
@@ -227,6 +317,25 @@ describe('publicDossier', () => {
         const { markdown } = publicDossier(read(id));
         for (const phrase of banned) expect(markdown, `${id}: ${phrase}`).not.toContain(phrase);
       }
+    });
+
+    // What compaction is worth, measured on the corpus rather than asserted.
+    it('publishes no research scaffolding and no heading too long to be a label', () => {
+      let longest = 0;
+      for (const id of ids) {
+        const { markdown } = publicDossier(read(id));
+        expect(markdown, `${id}: falsifiability protocol`).not.toMatch(/FALSIFIABLE\s+(TEST|FORM)/);
+        expect(markdown, `${id}: Evidence label`).not.toContain('**Evidence:**');
+        expect(markdown, `${id}: sources run-on`).not.toMatch(/^\*\*Sources:\*\*.*·.*·.*·.*·/m);
+        // A tag outside a code span renders as a run of escaped angle brackets.
+        const outsideCode = markdown.replace(/```[\s\S]*?```|`[^`]*`/g, ' ');
+        expect(outsideCode, `${id}: bare tag`).not.toMatch(/<\/?[a-z][a-z0-9]*[ />]/);
+        for (const heading of markdown.matchAll(/^### (.+)$/gm)) {
+          longest = Math.max(longest, heading[1]!.length);
+        }
+      }
+      // The research names a signal in up to 175 characters. A label is shorter.
+      expect(longest).toBeLessThanOrEqual(66);
     });
 
     it('prints its sections in the page-contract order', () => {
