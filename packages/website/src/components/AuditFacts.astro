@@ -9,8 +9,13 @@ import type { AuditRecord } from '../lib/registry';
  *
  * These five facts decide what the audit does to a score, and a reader
  * comparing two audits is comparing exactly them. In the badge strip they read
- * as a sentence and had to be parsed left to right; as labelled rows they can be
- * scanned, and the same row sits in the same place on all 215 pages.
+ * as a sentence and had to be parsed left to right; here each fact sits in the
+ * same place on all 215 pages.
+ *
+ * Kept short on purpose. The card shares a 13rem rail with the page contents,
+ * so a row per fact — label above value — pushed the contents list off the
+ * screen. The badges label themselves, which leaves two rows for the two
+ * numbers.
  *
  * The prose stays in the article. `How it scores` runs to 369 words on the
  * longest dossier and reads as an argument, not as a field — and the card is
@@ -42,44 +47,42 @@ const WEIGHT_TITLES: Record<string, string> = {
 };
 ---
 <aside
-  class="rounded-xl border border-border-subtle bg-surface-raised/60 p-4"
+  class="rounded-lg border border-border-subtle bg-surface-raised/40 px-3.5 py-3"
   aria-labelledby={headingId}
 >
-  <h2 id={headingId} class="mb-3 text-xs font-semibold uppercase tracking-wider text-slate-400">
+  <h2 id={headingId} class="text-xs font-bold uppercase tracking-wider text-slate-400">
     At a glance
   </h2>
-  <dl class="space-y-3 text-xs">
-    <div>
-      <dt class="text-slate-400">Category</dt>
-      <dd class="mt-0.5">
-        <a
-          class="font-semibold text-slate-200 transition-colors hover:text-white"
-          href={categoryPath(audit.category)}
-        >{audit.categoryTitle}</a>
-      </dd>
-    </div>
-    <div>
-      <dt class="text-slate-400">Evidence grade</dt>
-      <dd class="mt-1"><GradeBadge grade={audit.evidenceGrade} /></dd>
-    </div>
-    <div>
-      <dt class="text-slate-400">Tier</dt>
-      <dd class="mt-1"><TierBadge tier={audit.tier} /></dd>
-    </div>
-    <div>
+
+  {/* The category is the one long value, so it gets the full width and the two
+      badges get the line under it. Both badges name their own field — `GRADE A`,
+      `SCORED` — so a `dt` beside them would print the field twice. */}
+  <a
+    class="mt-2 block text-sm font-semibold leading-snug text-slate-200 transition-colors hover:text-white"
+    href={categoryPath(audit.category)}
+  >{audit.categoryTitle}</a>
+  <div class="mt-2 flex flex-wrap items-center gap-1.5">
+    <GradeBadge grade={audit.evidenceGrade} />
+    <TierBadge tier={audit.tier} />
+  </div>
+
+  {/* The two numbers read as a field and a value, so they get rows. */}
+  <dl class="mt-3 border-t border-border-subtle pt-2 text-xs">
+    <div class="flex items-baseline justify-between gap-3 py-0.5">
       <dt class="text-slate-400">Weight</dt>
-      <dd class="mt-0.5 font-semibold text-slate-200" title={WEIGHT_TITLES[audit.tier]}>
+      <dd class="font-semibold tabular-nums text-slate-200" title={WEIGHT_TITLES[audit.tier]}>
         {audit.weight}
       </dd>
     </div>
-    <div>
+    <div class="flex items-baseline justify-between gap-3 py-0.5">
       <dt class="text-slate-400">Priority</dt>
-      <dd class="mt-0.5 font-semibold capitalize text-slate-200">{audit.priority}</dd>
+      <dd class="font-semibold capitalize text-slate-200">{audit.priority}</dd>
     </div>
   </dl>
+
   <a
     href={sourceUrl}
     rel="noopener"
-    class="mt-4 inline-block border-t border-border-subtle pt-3 text-xs text-slate-400 underline transition-colors hover:text-white"
+    class="mt-2 block border-t border-border-subtle pt-2 text-xs text-slate-400 underline decoration-slate-600 underline-offset-2 transition-colors hover:text-white"
   >Read the source</a>
 </aside>
