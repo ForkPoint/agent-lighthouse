@@ -1,0 +1,57 @@
+---
+import { getCollection } from 'astro:content';
+import Doc from '../../layouts/Doc.astro';
+import { createDocRenderer } from '../../lib/doc-markdown';
+import { DOC_SECTIONS, docSourceDir, readDocSource, type DocSection } from '../../lib/markdown-slice';
+import { docPath } from '../../lib/routes';
+
+export async function getStaticPaths() {
+  // Which dossiers have pages, so a documentation link into `docs/evidence/`
+  // lands on this site rather than on GitHub. Ids are `<category>/<slug>`.
+  const published = new Set((await getCollection('audits')).map((entry) => entry.id));
+  // One processor for all eleven pages: building it loads Shiki.
+  const render = await createDocRenderer(published);
+
+  // The sidebar lists every section, in the order the table declares them, so a
+  // reader can move between them from any page.
+  const nav = DOC_SECTIONS.map((section) => ({ label: section.title, href: docPath(section.slug) }));
+  const link = (section: DocSection | undefined) =>
+    section ? { label: section.title, href: docPath(section.slug) } : undefined;
+
+  return await Promise.all(
+    DOC_SECTIONS.map(async (section, index) => {
+      const { html, headings } = await render(readDocSource(section), docSourceDir(section));
+      return {
+        params: { slug: section.slug },
+        props: {
+          section,
+          html,
+          headings,
+          nav,
+          // Prev/next walk the table, which is the order the sidebar shows.
+          prev: link(DOC_SECTIONS[index - 1]),
+          next: link(DOC_SECTIONS[index + 1]),
+        },
+      };
+    }),
+  );
+}
+
+const { section, html, headings, nav, prev, next } = Astro.props;
+
+// A whole file opens with its own `# Title` and supplies the page's only h1; a
+// section sliced out of the README opens at `## ` and has none, so the page
+// renders one. `Doc.astro` renders no heading in either case.
+const ownHeading = headings.find((heading) => heading.depth === 1);
+---
+<Doc
+  title={ownHeading?.text ?? section.title}
+  description={`${section.title} — Agent Lighthouse documentation.`}
+  headings={headings}
+  nav={nav}
+  prev={prev}
+  next={next}
+>
+  {!ownHeading && <h1>{section.title}</h1>}
+  <Fragment set:html={html} />
+</Doc>

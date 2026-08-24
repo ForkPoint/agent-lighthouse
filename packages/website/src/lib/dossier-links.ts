@@ -5,6 +5,50 @@ const REPO = 'https://github.com/ForkPoint/agent-lighthouse';
 /** Where a dossier sits, so a relative link can be resolved against it. */
 const DOSSIER_DIR = 'docs/evidence/audits';
 
+/** A relative markdown link, normalised against the directory it was written in. */
+export interface RepoTarget {
+  /** The repository-relative path it points at, with `.` and `..` resolved. */
+  path: string;
+  /** The `#fragment` the author wrote, or an empty string. */
+  fragment: string;
+  /** GitHub serves directories under `tree/` and files under `blob/`. */
+  view: 'blob' | 'tree';
+}
+
+/**
+ * Resolve one relative markdown link against the directory of the file that
+ * carries it, returning `null` for anything that is not a relative path —
+ * absolute URLs, bare fragments and site-absolute paths are left to the caller.
+ *
+ * Kept separate from the two link resolvers below because both need exactly
+ * this: markdown in this repository is written for GitHub wherever it lives,
+ * and only the directory it is written from differs.
+ */
+export function repoTarget(href: string, fromDir: string): RepoTarget | null {
+  if (/^[a-z]+:/i.test(href) || href.startsWith('#') || href.startsWith('/')) return null;
+
+  // A fragment addresses a section of the target, not a different file: hold it
+  // aside while the path resolves, then put it back on the resolved URL.
+  const hash = href.indexOf('#');
+  const target = hash === -1 ? href : href.slice(0, hash);
+  const fragment = hash === -1 ? '' : href.slice(hash);
+
+  const stack: string[] = [];
+  for (const segment of `${fromDir}/${target}`.split('/')) {
+    if (segment === '.' || segment === '') continue;
+    if (segment === '..') stack.pop();
+    else stack.push(segment);
+  }
+
+  // The trailing slash the author wrote is the only signal of a directory.
+  return { path: stack.join('/'), fragment, view: target.endsWith('/') ? 'tree' : 'blob' };
+}
+
+/** Where GitHub serves a repository path, on the default branch. */
+export function githubUrl(target: RepoTarget): string {
+  return `${REPO}/${target.view}/main/${target.path}${target.fragment}`;
+}
+
 /**
  * Resolve one relative markdown link found inside a dossier.
  *
@@ -13,37 +57,20 @@ const DOSSIER_DIR = 'docs/evidence/audits';
  * merged, sunset, deleted and proposed dossiers stay in the repository.
  */
 export function resolveDossierLink(href: string, fromId: string, published: Set<string>): string {
-  if (/^[a-z]+:/i.test(href) || href.startsWith('#') || href.startsWith('/')) return href;
-
-  // A fragment addresses a section of the target, not a different file: hold it
-  // aside while the path resolves, then put it back on the resolved URL.
-  const hash = href.indexOf('#');
-  const target = hash === -1 ? href : href.slice(0, hash);
-  const fragment = hash === -1 ? '' : href.slice(hash);
-
   const [category] = fromId.split('/');
-  const segments = `${DOSSIER_DIR}/${category}/${target}`.split('/');
-  const stack: string[] = [];
-  for (const segment of segments) {
-    if (segment === '.' || segment === '') continue;
-    if (segment === '..') stack.pop();
-    else stack.push(segment);
-  }
-  const repoPath = stack.join('/');
+  const target = repoTarget(href, `${DOSSIER_DIR}/${category}`);
+  if (!target) return href;
 
-  if (repoPath === 'docs/evidence/POLICY.md') return withBase('policy/') + fragment;
+  if (target.path === 'docs/evidence/POLICY.md') return withBase('policy/') + target.fragment;
 
-  const dossier = /^docs\/evidence\/audits\/(.+)\.md$/.exec(repoPath);
-  if (dossier && published.has(dossier[1]!)) return auditPath(dossier[1]!) + fragment;
+  const dossier = /^docs\/evidence\/audits\/(.+)\.md$/.exec(target.path);
+  if (dossier && published.has(dossier[1]!)) return auditPath(dossier[1]!) + target.fragment;
 
-  // GitHub serves directories under `tree/` and files under `blob/`; the trailing
-  // slash the author wrote is the only signal of which one this is.
-  const view = target.endsWith('/') ? 'tree' : 'blob';
-  return `${REPO}/${view}/main/${repoPath}${fragment}`;
+  return githubUrl(target);
 }
 
 /** One entry of `satteri({ mdastPlugins })`, named without importing `satteri` itself. */
-type MdastPlugin = NonNullable<SatteriProcessorOptions['mdastPlugins']>[number];
+export type MdastPlugin = NonNullable<SatteriProcessorOptions['mdastPlugins']>[number];
 
 /**
  * Rewrite every relative link in a dossier as the page is rendered, leaving the
