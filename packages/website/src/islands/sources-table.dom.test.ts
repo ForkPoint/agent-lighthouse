@@ -228,6 +228,30 @@ describe('mountSourcesTable', () => {
     expect(empty()).toBe(false);
   });
 
+  it('lands in the error state when the body parses but is not a registry', async () => {
+    // Valid JSON with no `sources` array: the rows cannot be built, and the
+    // failure has to surface where the fetch failure does rather than throwing
+    // past the page's `void mountSourcesTable()` and stranding the reader on
+    // "Loading the source registry…" forever.
+    await mount({ $comment: 'a file, but not this one' });
+
+    expect(status()).toContain('could not be loaded');
+    expect(document.querySelector<HTMLElement>('#sources-status')!.hidden).toBe(false);
+    expect(document.querySelector<HTMLElement>('#sources-table')!.hidden).toBe(true);
+    expect(rows()).toHaveLength(0);
+  });
+
+  it('blanks one findings cell rather than losing the whole table to it', async () => {
+    const incomplete = { ...SOURCES[1]! } as Partial<SourceRecord>;
+    delete incomplete.keyFindings;
+    await mount({ accessed: '2026-08-20', sources: [incomplete, SOURCES[0]!] });
+
+    expect(rows()).toHaveLength(2);
+    expect(rows()[0]!.querySelectorAll('td')[3]!.textContent).toBe('');
+    expect(rows()[1]!.querySelectorAll('td')[3]!.querySelector('details')).not.toBeNull();
+    expect(status()).toBe('Showing 2 of 2 sources.');
+  });
+
   it('says so, and offers the raw file, when the registry cannot be fetched', async () => {
     await mount({}, false);
 

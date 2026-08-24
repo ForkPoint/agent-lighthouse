@@ -170,6 +170,12 @@ describe.skipIf(!built)('rendered /sources/', () => {
     expect(noscript, 'the page is silent without JavaScript').toBeDefined();
     expect(noscript).toContain(withBase('sources.json'));
     expect(text(noscript!).toLowerCase()).toContain('javascript');
+    // Closing the gaps rather than replacing tags with a space: HTML collapses
+    // a newline-only gap before an anchor away, and `text()` would put the
+    // missing space back and hide it.
+    const tight = noscript!.replace(/<[^>]+>/g, '').replace(/\s+/g, ' ');
+    expect(tight, 'the panel runs two words together').toContain('sources as sources.json');
+    expect(tight, 'the panel runs two words together').toContain(', or on GitHub');
     // The shell the island fills is hidden until it has been filled, so nothing
     // renders as an empty table.
     expect(html()).toMatch(/<div[^>]*id="sources-table"[^>]*\bhidden\b/);

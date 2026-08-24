@@ -84,9 +84,11 @@ const th = 'border-b border-border-subtle px-3 py-2 text-left text-xs font-bold 
           with JavaScript off there is nothing to build the rows from.
         </p>
         <p class="mt-3">
-          The registry itself needs no JavaScript. Read all {registry.sources.length} sources as
-          <a class="underline hover:text-white" href={registryUrl}>sources.json</a>, or
-          <a class="underline hover:text-white" href="https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/sources.json">on GitHub</a>,
+          {/* The space before each anchor stays on the anchor's own line: a
+              gap that is only a newline is trimmed at the element boundary, and
+              the panel renders "sources assources.json". */}
+          The registry itself needs no JavaScript. Read all {registry.sources.length} sources
+          as <a class="underline hover:text-white" href={registryUrl}>sources.json</a>, or <a class="underline hover:text-white" href="https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/sources.json">on GitHub</a>,
           where the file is rendered and searchable.
         </p>
       </div>

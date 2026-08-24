@@ -103,8 +103,12 @@ function findingsCell(source: SourceRecord): HTMLTableCellElement {
   const cell = document.createElement('td');
   cell.className = `${CELL} min-w-[18rem] max-w-prose`;
 
-  if (source.keyFindings.length <= PREVIEW_LIMIT) {
-    setProseWithCode(cell, source.keyFindings);
+  // Coalesced: a record that reaches here without its findings blanks one cell.
+  // Reading `.length` off `undefined` would throw, and one incomplete record is
+  // no reason for the reader to lose the other 646 rows.
+  const findings = source.keyFindings ?? '';
+  if (findings.length <= PREVIEW_LIMIT) {
+    setProseWithCode(cell, findings);
     return cell;
   }
 
@@ -114,10 +118,10 @@ function findingsCell(source: SourceRecord): HTMLTableCellElement {
   const details = document.createElement('details');
   const summary = document.createElement('summary');
   summary.className = 'cursor-pointer text-slate-300 marker:text-slate-500';
-  setProseWithCode(summary, previewOf(source.keyFindings));
+  setProseWithCode(summary, previewOf(findings));
   const full = document.createElement('p');
   full.className = 'mt-2 text-slate-400';
-  setProseWithCode(full, source.keyFindings);
+  setProseWithCode(full, findings);
   details.append(summary, full);
   cell.append(details);
   return cell;
@@ -182,10 +186,18 @@ export async function mountSourcesTable(): Promise<void> {
   status.textContent = 'Loading the source registry…';
 
   let sources: SourceRecord[];
+  let rows: Array<readonly [SourceRecord, HTMLTableRowElement]>;
   try {
     const response = await fetch(REGISTRY_URL);
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
     sources = ((await response.json()) as SourceRegistry).sources;
+    // The rows are built inside the `try` on purpose. A body that parses but is
+    // not this registry — no `sources` array, a record short of a field — would
+    // otherwise throw out of an async function nobody awaits (`sources.astro`
+    // calls `void mountSourcesTable()`), leaving the reader on "Loading the
+    // source registry…" with the table hidden and nothing said. Failing here
+    // puts it in the same branch a failed fetch lands in.
+    rows = sources.map((source) => [source, sourceRow(source)] as const);
   } catch {
     status.textContent = 'The source registry could not be loaded. Open sources.json directly:';
     const link = document.createElement('a');
@@ -196,7 +208,6 @@ export async function mountSourcesTable(): Promise<void> {
     return;
   }
 
-  const rows = sources.map((source) => [source, sourceRow(source)] as const);
   body.replaceChildren(...rows.map(([, row]) => row));
   wrap.hidden = false;
 
