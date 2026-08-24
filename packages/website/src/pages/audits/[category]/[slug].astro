@@ -1,8 +1,7 @@
 ---
 import { getCollection, render } from 'astro:content';
 import Doc from '../../../layouts/Doc.astro';
-import GradeBadge from '../../../components/GradeBadge.astro';
-import TierBadge from '../../../components/TierBadge.astro';
+import AuditFacts from '../../../components/AuditFacts.astro';
 import { crossCheck } from '../../../lib/cross-check';
 import { enforceEvidenceBar, publishedSections } from '../../../lib/evidence-bar';
 import { auditList, categoryList } from '../../../lib/registry';
@@ -100,6 +99,11 @@ const sourceUrl = `https://github.com/ForkPoint/agent-lighthouse/blob/main/${ent
   prev={prev}
   next={next}
 >
+  {/* The grade, tier, weight and priority moved to the card in the right rail;
+      what stays here is what the reader needs before the title and what the
+      search index needs inside the body region. The id is the second: it is
+      printed nowhere in the prose, so a reader who types
+      `agentic-commerce/offer-truth-consistency` would otherwise find nothing. */}
   <div slot="meta" class="mb-6 space-y-3">
     <nav aria-label="Breadcrumb" class="text-xs text-slate-400">
       <a class="transition-colors hover:text-white" href={withBase('audits/')}>Audits</a>
@@ -108,29 +112,23 @@ const sourceUrl = `https://github.com/ForkPoint/agent-lighthouse/blob/main/${ent
     </nav>
     {/* The two facets Pagefind records for a dossier, declared with explicit
         values — `category:Agentic Commerce`, not whatever the element happens to
-        say — so they do not shift when a badge is reworded. They hang off the
-        strip that already prints both facts rather than off markers added for
-        the index: Pagefind collects a filter wherever it sits, inside an indexed
-        region or outside it, so the useful place to put one is next to the thing
-        it describes. The dialog prints the category under each result — 215
-        dossiers is enough that "which one of these is it?" is a real
-        question. */}
-    <div class="flex flex-wrap items-center gap-2" data-pagefind-filter={`category:${audit.categoryTitle}`}>
-      <code class="rounded border border-brand/20 bg-brand/10 px-2 py-0.5 font-mono text-xs font-bold text-indigo-400">{audit.id}</code>
-      <span data-pagefind-filter={`grade:${audit.evidenceGrade}`}><GradeBadge grade={audit.evidenceGrade} /></span>
-      <TierBadge tier={audit.tier} />
-      <span class="text-xs text-slate-400">
-        Weight <span class="font-semibold text-slate-200">{audit.weight}</span>
-      </span>
-      <span class="text-xs text-slate-400">
-        Priority <span class="font-semibold text-slate-200">{audit.priority}</span>
-      </span>
-      <a
-        href={sourceUrl}
-        rel="noopener"
-        class="text-xs text-slate-400 underline transition-colors hover:text-white"
-      >Source</a>
+        say — so they do not shift when a badge is reworded. They stay on this
+        strip rather than following the badges into the card: a filter declared
+        twice on one page is collected twice, and the strip renders once while
+        the card renders in both the rail and the compact disclosure. The dialog
+        prints the category under each result — 215 dossiers is enough that
+        "which one of these is it?" is a real question. */}
+    <div
+      class="flex flex-wrap items-center gap-2"
+      data-pagefind-filter={`category:${audit.categoryTitle}`}
+    >
+      <code
+        class="rounded border border-brand/20 bg-brand/10 px-2 py-0.5 font-mono text-xs font-bold text-indigo-400"
+        data-pagefind-filter={`grade:${audit.evidenceGrade}`}
+      >{audit.id}</code>
     </div>
   </div>
+  <AuditFacts slot="aside" audit={audit} sourceUrl={sourceUrl} />
+  <AuditFacts slot="aside-compact" audit={audit} sourceUrl={sourceUrl} headingId="audit-facts-heading-compact" />
   <Content />
 </Doc>

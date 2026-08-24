@@ -31,6 +31,37 @@ describe.skipIf(!built)('built site', () => {
     expect(page).not.toContain('POLICY.md');
   });
 
+  describe('the at-a-glance card', () => {
+    const page = () =>
+      readFileSync(resolve(DIST, 'audits/content-extraction/markdown-alternate/index.html'), 'utf8');
+
+    it('prints the registry facts for the audit it names', () => {
+      const audit = auditList().find((entry) => entry.id === 'content-extraction/markdown-alternate')!;
+      const card = /<aside[^>]*aria-labelledby="audit-facts-heading"[\s\S]*?<\/aside>/.exec(page())?.[0];
+      expect(card, 'no card in the right rail').toBeTruthy();
+      expect(card).toContain('At a glance');
+      expect(card).toContain(audit.categoryTitle);
+      expect(card).toContain(`Grade ${audit.evidenceGrade}`);
+      expect(card).toContain('Scored');
+      expect(card).toContain(`>${audit.weight}`);
+      expect(card).toContain(audit.priority);
+      expect(card).toContain('/blob/main/');
+    });
+
+    // The card renders twice — the rail and the compact disclosure — and an id
+    // may be owned by one element only.
+    it('gives the compact copy its own heading id', () => {
+      const html = page();
+      const ids = [...html.matchAll(/id="(audit-facts-heading[^"]*)"/g)].map((m) => m[1]);
+      expect(ids).toEqual(['audit-facts-heading-compact', 'audit-facts-heading']);
+    });
+
+    // The reasoning is an argument, not a field: it stays where it can be read.
+    it('leaves the grade reasoning in the article', () => {
+      expect(page()).toContain('How it scores');
+    });
+  });
+
   /**
    * GitHub Pages serves `404.html` from the site root for anything it cannot
    * match. Every HTML report this tool writes carries 215 `evidenceUrl`

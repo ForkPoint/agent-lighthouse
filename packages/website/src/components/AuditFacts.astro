@@ -1,0 +1,85 @@
+---
+import GradeBadge from './GradeBadge.astro';
+import TierBadge from './TierBadge.astro';
+import { categoryPath } from '../lib/routes';
+import type { AuditRecord } from '../lib/registry';
+
+/**
+ * The registry's record of one audit, as a card beside the page.
+ *
+ * These five facts decide what the audit does to a score, and a reader
+ * comparing two audits is comparing exactly them. In the badge strip they read
+ * as a sentence and had to be parsed left to right; as labelled rows they can be
+ * scanned, and the same row sits in the same place on all 215 pages.
+ *
+ * The prose stays in the article. `How it scores` runs to 369 words on the
+ * longest dossier and reads as an argument, not as a field — and the card is
+ * named `At a glance` rather than `How it scores` so that a reader moving by
+ * heading does not meet the same name twice on one page.
+ *
+ * Deliberately carries no Pagefind filter: the strip in the content column
+ * still declares `category:` and `grade:`, and a filter declared twice on one
+ * page would be collected twice.
+ */
+interface Props {
+  audit: AuditRecord;
+  /** The audit's implementation, on the default branch. */
+  sourceUrl: string;
+  /**
+   * The heading's id, because the card renders twice on every page — once in
+   * the rail and once in the compact disclosure — and only one of the two may
+   * own a given id.
+   */
+  headingId?: string;
+}
+
+const { audit, sourceUrl, headingId = 'audit-facts-heading' } = Astro.props;
+
+const WEIGHT_TITLES: Record<string, string> = {
+  scored: 'The share of its category this audit contributes, set by its evidence grade.',
+  informative: 'Advisory audits carry no weight: the result is reported, never scored.',
+  experimental: 'Experimental audits carry no weight while the rule is validated.',
+};
+---
+<aside
+  class="rounded-xl border border-border-subtle bg-surface-raised/60 p-4"
+  aria-labelledby={headingId}
+>
+  <h2 id={headingId} class="mb-3 text-xs font-semibold uppercase tracking-wider text-slate-400">
+    At a glance
+  </h2>
+  <dl class="space-y-3 text-xs">
+    <div>
+      <dt class="text-slate-400">Category</dt>
+      <dd class="mt-0.5">
+        <a
+          class="font-semibold text-slate-200 transition-colors hover:text-white"
+          href={categoryPath(audit.category)}
+        >{audit.categoryTitle}</a>
+      </dd>
+    </div>
+    <div>
+      <dt class="text-slate-400">Evidence grade</dt>
+      <dd class="mt-1"><GradeBadge grade={audit.evidenceGrade} /></dd>
+    </div>
+    <div>
+      <dt class="text-slate-400">Tier</dt>
+      <dd class="mt-1"><TierBadge tier={audit.tier} /></dd>
+    </div>
+    <div>
+      <dt class="text-slate-400">Weight</dt>
+      <dd class="mt-0.5 font-semibold text-slate-200" title={WEIGHT_TITLES[audit.tier]}>
+        {audit.weight}
+      </dd>
+    </div>
+    <div>
+      <dt class="text-slate-400">Priority</dt>
+      <dd class="mt-0.5 font-semibold capitalize text-slate-200">{audit.priority}</dd>
+    </div>
+  </dl>
+  <a
+    href={sourceUrl}
+    rel="noopener"
+    class="mt-4 inline-block border-t border-border-subtle pt-3 text-xs text-slate-400 underline transition-colors hover:text-white"
+  >Read the source</a>
+</aside>

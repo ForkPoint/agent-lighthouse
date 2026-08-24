@@ -17,7 +17,9 @@ import PrevNext from '../components/PrevNext.astro';
  * anyway — it is what every other surface linking here already shows.
  *
  * Slots: the default slot is the article body; `meta` is an eyebrow strip above
- * it (the dossier route puts the audit's badges there).
+ * it (the dossier route puts the audit's id there); `aside` is a card in the
+ * right rail above the contents list (the dossier route puts the audit's
+ * registry facts there).
  */
 interface Props {
   title: string;
@@ -46,6 +48,7 @@ const { title, heading, description, headings, nav, prev, next } = Astro.props;
       </summary>
       <div class="space-y-8 border-t border-border-subtle px-4 py-4">
         <SidebarNav nav={nav} />
+        <slot name="aside-compact" />
         <TableOfContents headings={headings} headingId="toc-heading-compact" />
       </div>
     </details>
@@ -76,8 +79,12 @@ const { title, heading, description, headings, nav, prev, next } = Astro.props;
       <PrevNext prev={prev} next={next} />
     </div>
 
+    {/* The card renders above the contents list rather than beside it: both are
+        about the page you are on, and the rail is one scroll region. Below `lg`
+        the pair folds into the disclosure at the top, in the same order. */}
     <aside class="hidden lg:block">
-      <div class="sticky top-24 max-h-[calc(100vh-7rem)] overflow-y-auto pb-6">
+      <div class="sticky top-24 max-h-[calc(100vh-7rem)] space-y-6 overflow-y-auto pb-6">
+        <slot name="aside" />
         <TableOfContents headings={headings} />
       </div>
     </aside>
