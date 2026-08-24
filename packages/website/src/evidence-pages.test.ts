@@ -226,9 +226,9 @@ describe.skipIf(!built)('the published site', () => {
         return entry.name === 'index.html' ? [resolve(dir, entry.name)] : [];
       });
 
-    // 215 dossiers, `/audits/`, 8 category indexes, 11 docs pages, the policy
-    // and the sources browser.
-    const expected = auditList().length + 1 + categoryList().length + DOC_SECTIONS.length + 2;
+    // The home page, 215 dossiers, `/audits/`, 8 category indexes, 11 docs
+    // pages, the policy and the sources browser.
+    const expected = auditList().length + 1 + categoryList().length + DOC_SECTIONS.length + 3;
     expect(pages(DIST)).toHaveLength(expected);
   });
 });
