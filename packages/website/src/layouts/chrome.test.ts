@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { auditList } from '../lib/registry';
-import { auditPath } from '../lib/routes';
+import { auditPath, withBase } from '../lib/routes';
 
 const SRC = resolve(__dirname, '..');
 const DIST = resolve(SRC, '../dist');
@@ -31,6 +31,22 @@ function body(html: string): string {
   expect(start, 'page has no body').toBeGreaterThan(-1);
   return html.slice(start, end);
 }
+
+/**
+ * Undo the escaping the renderer applies, so an assertion can compare against
+ * the registry string. Nine audit titles name HTML elements (`<main> element
+ * present`), which is why this is needed at all.
+ */
+const decode = (value: string) =>
+  value
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/&amp;/g, '&');
+
+/** A page's `<title>`, decoded. */
+const pageTitle = (html: string) => decode(/<title>([^<]*)<\/title>/.exec(html)?.[1] ?? '');
 
 describe('chrome', () => {
   it('never hardcodes a site-absolute href', () => {
@@ -191,5 +207,98 @@ describe.skipIf(!built)('rendered dossier pages', () => {
     const href = /<link rel="icon" href="([^"]+)"/.exec(page!.full)?.[1];
     expect(href).toBeDefined();
     expect(existsSync(resolve(DIST, href!.replace('/agent-lighthouse/', '')))).toBe(true);
+  });
+});
+
+/**
+ * Every page's `<head>`, not just the dossiers'.
+ *
+ * The page this site replaced carried a full social card, and the first cut of
+ * the Astro shell carried none of it, so these assert the whole set on every
+ * built page rather than on a sample: the metadata is emitted once in
+ * `Base.astro`, and a page that stops going through the layout is exactly the
+ * regression worth catching.
+ */
+describe.skipIf(!built)('head metadata', () => {
+  const SITE = 'https://forkpoint.github.io';
+
+  /** Every built HTML page, paired with the address it is published at. */
+  function htmlPages(dir = DIST): Array<{ file: string; url: string }> {
+    return readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
+      const full = resolve(dir, entry.name);
+      // Pagefind writes its own fragments and a playground page under `dist`;
+      // none of them is a page this site renders.
+      if (entry.isDirectory()) return entry.name === 'pagefind' ? [] : htmlPages(full);
+      if (!entry.name.endsWith('.html')) return [];
+      const relative = full.slice(DIST.length + 1);
+      // `a/b/index.html` is published at `/a/b/`; `404.html` at `/404/`.
+      const route = relative.endsWith('index.html')
+        ? relative.slice(0, -'index.html'.length)
+        : `${relative.slice(0, -'.html'.length)}/`;
+      return [{ file: relative, url: `${SITE}${withBase(route)}` }];
+    });
+  }
+
+  /** The `content` of a `<meta>`, by whichever attribute names it. */
+  const meta = (html: string, name: string) =>
+    new RegExp(`<meta (?:property|name)="${name}" content="([^"]*)"`).exec(html)?.[1];
+
+  // Walked inside each test, not in the describe body: a skipped suite still
+  // evaluates its body, and on an unbuilt checkout there is no `dist` to walk.
+  it('covers every built page, dossiers included', () => {
+    const pages = htmlPages();
+    expect(pages.length).toBeGreaterThan(auditList().length);
+    for (const known of ['index.html', '404.html', 'audits/index.html', 'docs/quickstart/index.html']) {
+      expect(pages.map((page) => page.file), `${known} is missing`).toContain(known);
+    }
+  });
+
+  it('gives every page a canonical link at its own published address', () => {
+    for (const page of htmlPages()) {
+      const html = readFileSync(resolve(DIST, page.file), 'utf8');
+      const canonical = /<link rel="canonical" href="([^"]*)"/.exec(html)?.[1];
+      expect(canonical, `${page.file} has no canonical link`).toBe(page.url);
+    }
+  });
+
+  it('carries the full Open Graph and Twitter card on every page', () => {
+    const image = `${SITE}${withBase('og-image.svg')}`;
+    expect(existsSync(resolve(DIST, 'og-image.svg')), 'the card image is not published').toBe(true);
+
+    for (const page of htmlPages()) {
+      const html = readFileSync(resolve(DIST, page.file), 'utf8');
+      const title = pageTitle(html);
+      const description = decode(meta(html, 'description') ?? '');
+      expect(title, `${page.file} has no title`).not.toBe('');
+      expect(description, `${page.file} has no description`).not.toBe('');
+
+      const expected: Record<string, string> = {
+        'og:type': 'website',
+        'og:title': title,
+        'og:description': description,
+        'og:url': page.url,
+        'og:image': image,
+        'twitter:card': 'summary_large_image',
+        'twitter:title': title,
+        'twitter:description': description,
+        'twitter:image': image,
+      };
+      for (const [name, value] of Object.entries(expected)) {
+        expect(decode(meta(html, name) ?? ''), `${page.file}: ${name}`).toBe(value);
+      }
+      // The alt text describes the card image, so it is the same on every page
+      // and only has to be there and say something.
+      for (const name of ['og:image:alt', 'twitter:image:alt']) {
+        expect((meta(html, name) ?? '').length, `${page.file}: ${name}`).toBeGreaterThan(10);
+      }
+    }
+  });
+
+  it('writes no origin into the layout that emits those URLs', () => {
+    // The absolute URLs are built from `Astro.site`; a literal origin here
+    // would keep working right up until the site moves.
+    const base = read('layouts/Base.astro');
+    expect(base).toContain('Astro.site');
+    expect(base).not.toContain('https://forkpoint.github.io');
   });
 });
