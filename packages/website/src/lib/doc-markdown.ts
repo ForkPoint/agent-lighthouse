@@ -24,6 +24,9 @@ export function resolveDocLink(href: string, fromDir: string, published: Set<str
   if (slug) return docPath(slug) + target.fragment;
 
   if (target.path === 'docs/evidence/POLICY.md') return withBase('policy/') + target.fragment;
+  // The policy's one relative link. A reader following it wants the registry
+  // they can search, not 465 KB of JSON; the sources page offers the raw file.
+  if (target.path === 'docs/evidence/sources.json') return withBase('sources/') + target.fragment;
 
   const dossier = /^docs\/evidence\/audits\/(.+)\.md$/.exec(target.path);
   if (dossier && published.has(dossier[1]!)) return auditPath(dossier[1]!) + target.fragment;

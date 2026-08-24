@@ -1,0 +1,139 @@
+---
+import Base from '../layouts/Base.astro';
+import { readSourceRegistry, sourceTypeCounts } from '../lib/evidence';
+import { withBase } from '../lib/routes';
+
+/**
+ * The source registry browser.
+ *
+ * The registry is 465 KB — 647 entries, each carrying its key findings — so
+ * this page does not contain it. It renders the shell, the facets and the
+ * counts, and `islands/sources-table.ts` fetches `sources.json` and builds the
+ * rows. Server-rendering all 647 would make one ~500 KB page out of a site whose
+ * heaviest dossier is a few tens of KB, to publish data that is already
+ * published, in full, one URL away.
+ *
+ * The registry is read here only for its shape: the total, the access date and
+ * the count under each `type`. Those are the facts the filter is built from, and
+ * they come from the file rather than from a list typed out by hand, so a new
+ * source type widens the filter by itself.
+ */
+const registry = readSourceRegistry();
+const types = sourceTypeCounts(registry.sources);
+const registryUrl = withBase('sources.json');
+
+const pill =
+  'rounded-lg border border-slate-700 bg-slate-800 px-3 py-1.5 text-xs font-medium text-slate-200 transition-colors hover:bg-slate-700 aria-pressed:border-brand aria-pressed:bg-brand aria-pressed:text-white';
+const th = 'border-b border-border-subtle px-3 py-2 text-left text-xs font-bold uppercase tracking-wider text-slate-400';
+---
+<Base
+  title="Source registry"
+  description={`Every source Agent Lighthouse's evidence dossiers cite — ${registry.sources.length} specs, vendor docs, studies and datasets, verified ${registry.accessed}.`}
+>
+  <div class="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
+    <h1 class="text-3xl font-extrabold tracking-tight text-white">Source registry</h1>
+    <p class="mt-3 max-w-3xl text-sm leading-relaxed text-slate-300">
+      Every claim in an evidence dossier cites an id from this registry — one file, no
+      scattered links. It holds {registry.sources.length} sources, last accessed
+      <time datetime={registry.accessed}>{registry.accessed}</time>. <em>Verified</em> records
+      whether the URL resolved during that research pass.
+    </p>
+    <p class="mt-2 text-sm text-slate-400">
+      Read the whole registry as <a class="underline hover:text-white" href={registryUrl}>sources.json</a>,
+      or the rules it serves in the <a class="underline hover:text-white" href={withBase('policy/')}>evidence policy</a>.
+    </p>
+
+    {/* The controls ship hidden and the island reveals them once they are wired
+        up, the way `/audits/` does: an inert search box is worse than none. */}
+    <section id="sources-controls" hidden aria-label="Filter sources" class="mt-8 space-y-4">
+      <div>
+        <label for="source-search" class="block text-xs font-semibold uppercase tracking-wider text-slate-400">
+          Search sources
+        </label>
+        <input
+          id="source-search"
+          type="search"
+          autocomplete="off"
+          placeholder="Search by id, title, publisher or key findings"
+          class="mt-2 w-full max-w-xl rounded-lg border border-slate-700 bg-surface-raised px-3 py-2 text-sm text-white placeholder:text-slate-400 focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand"
+        />
+      </div>
+
+      <div class="flex flex-wrap gap-2" role="group" aria-label="Filter by source type">
+        <button type="button" class={pill} data-filter="type" data-value="all" aria-pressed="true">
+          All types ({registry.sources.length})
+        </button>
+        {types.map((entry) => (
+          <button type="button" class={pill} data-filter="type" data-value={entry.type} aria-pressed="false">
+            {entry.type} ({entry.count})
+          </button>
+        ))}
+      </div>
+    </section>
+
+    {/* Hidden until the island has something to say — first that it is loading,
+        then the result count. Present from the start so the live region is in
+        the accessibility tree before it is ever updated. */}
+    <p id="sources-status" hidden aria-live="polite" class="mt-6 text-sm text-slate-400"></p>
+
+    <noscript>
+      <div class="mt-6 rounded-xl border border-border-subtle bg-surface-raised/60 p-6 text-sm leading-relaxed text-slate-300">
+        <p>
+          <strong class="text-white">This table is built in your browser.</strong> The registry is
+          465&nbsp;KB of prose, so the page fetches it instead of carrying a second copy of it;
+          with JavaScript off there is nothing to build the rows from.
+        </p>
+        <p class="mt-3">
+          The registry itself needs no JavaScript. Read all {registry.sources.length} sources as
+          <a class="underline hover:text-white" href={registryUrl}>sources.json</a>, or
+          <a class="underline hover:text-white" href="https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/sources.json">on GitHub</a>,
+          where the file is rendered and searchable.
+        </p>
+      </div>
+    </noscript>
+
+    {/* Hidden until it has rows: an empty table with headers reads as a broken
+        page, and without JavaScript the panel above is the honest answer. */}
+    <div id="sources-table" hidden class="mt-6">
+      {/* Scrollable, and focusable so it can be scrolled from the keyboard —
+          a `tabindex="0"` scroll container is what makes an overflowing table
+          reachable without a pointer. */}
+      <div
+        id="sources-scroll"
+        role="region"
+        aria-label="Source registry"
+        tabindex="0"
+        class="overflow-x-auto rounded-xl border border-border-subtle focus:outline-none focus:ring-2 focus:ring-brand"
+      >
+        <table class="w-full border-collapse text-left">
+          <caption class="sr-only">
+            Every source cited by an evidence dossier: title, publisher, type, whether the URL
+            resolved during the {registry.accessed} research pass, and the key findings taken from it.
+          </caption>
+          <thead class="bg-surface-raised">
+            <tr>
+              <th scope="col" class={th}>Source</th>
+              <th scope="col" class={th}>Publisher</th>
+              <th scope="col" class={th}>Type</th>
+              <th scope="col" class={th}>Verified</th>
+              <th scope="col" class={th}>Key findings</th>
+            </tr>
+          </thead>
+          <tbody id="sources-rows"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <p
+      id="sources-empty"
+      hidden
+      class="mt-4 rounded-xl border border-border-subtle bg-surface-raised/50 p-8 text-center text-sm text-slate-400"
+    >No sources match your search.</p>
+  </div>
+
+  <script>
+    import { mountSourcesTable } from '../islands/sources-table';
+
+    void mountSourcesTable();
+  </script>
+</Base>

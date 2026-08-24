@@ -124,13 +124,24 @@ function repoRoot(): string {
 }
 
 /**
+ * An absolute path to a file in the repository, from its root-relative path.
+ *
+ * Exported because the docs pages are no longer the only thing reading out of
+ * the repository: the policy page and the source registry do too, and all of
+ * them need the same walk to find the root.
+ */
+export function repoPath(file: string): string {
+  return join(repoRoot(), file);
+}
+
+/**
  * The markdown one docs page renders: a whole file, or one section of one.
  *
  * The file is read where it lives and never copied into this package, so the
  * page and the repository cannot drift apart.
  */
 export function readDocSource(section: DocSection): string {
-  const source = readFileSync(join(repoRoot(), section.file), 'utf8');
+  const source = readFileSync(repoPath(section.file), 'utf8');
   if (!section.heading) return source;
   // The README separates its sections with a `---` rule. Sliced off with the
   // section it belongs to neither, and renders as a stray divider directly

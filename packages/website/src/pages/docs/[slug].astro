@@ -2,6 +2,7 @@
 import { getCollection } from 'astro:content';
 import Doc from '../../layouts/Doc.astro';
 import { createDocRenderer } from '../../lib/doc-markdown';
+import { documentationNav } from '../../lib/doc-nav';
 import { DOC_SECTIONS, docSourceDir, readDocSource, type DocSection } from '../../lib/markdown-slice';
 import { docPath } from '../../lib/routes';
 
@@ -13,8 +14,9 @@ export async function getStaticPaths() {
   const render = await createDocRenderer(published);
 
   // The sidebar lists every section, in the order the table declares them, so a
-  // reader can move between them from any page.
-  const nav = DOC_SECTIONS.map((section) => ({ label: section.title, href: docPath(section.slug) }));
+  // reader can move between them from any page — and the two evidence pages
+  // after them, which render the same layout from the same rail.
+  const nav = documentationNav();
   const link = (section: DocSection | undefined) =>
     section ? { label: section.title, href: docPath(section.slug) } : undefined;
 

@@ -29,8 +29,10 @@ const audits = defineCollection({
   }),
 });
 
-const policy = defineCollection({
-  loader: glob({ base: '../../docs/evidence', pattern: 'POLICY.md' }),
-});
-
-export const collections = { audits, policy };
+// There is no `policy` collection. `POLICY.md` carries no frontmatter, so a
+// collection entry would render through the processor in `astro.config.mjs` —
+// whose link plugin keys on `audit:` and would therefore leave the file's one
+// relative link (`./sources.json`) pointing at nothing. `pages/policy.astro`
+// renders it through `createDocRenderer`, the pipeline built for repository
+// markdown, which resolves that link.
+export const collections = { audits };
