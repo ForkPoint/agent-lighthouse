@@ -11,10 +11,10 @@ export class ChatgptUserAudit extends CrawlerBotAudit {
     failureTitle: 'ChatGPT-User allowed',
     description:
       'Without an explicit robots.txt rule, ChatGPT-User may still crawl your site but has no signal that it is welcome. Adding an explicit allow rule improves your visibility in AI-powered search and ensures consistent crawler behavior.',
-    scoreDisplayMode: 'ternary',
-    weight: weightForGrade('A', 'scored'),
-    evidenceGrade: 'A',
-    tier: 'scored',
+    scoreDisplayMode: 'informative',
+    weight: weightForGrade('C', 'informative'),
+    evidenceGrade: 'C',
+    tier: 'informative',
     dossier: 'docs/evidence/audits/access-crawl-control/chatgpt-user.md',
     defaultPriority: 'medium',
     guidance: {

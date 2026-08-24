@@ -6,7 +6,7 @@ source_file: packages/core/src/audits/agent-interfaces/ai-catalog-exists.ts
 slug: ai-catalog-exists
 review_verdict: delete
 severity: high
-evidence_grade: A
+evidence_grade: C
 disposition: "merged 2026-08-22 (Plan 4, Task 7) — absorbs ai-catalog-link (4.19); rewritten to ARD §4.1 2026-08-22 (Plan 4, Task 10)"
 reviewed: 2026-08-22
 ---

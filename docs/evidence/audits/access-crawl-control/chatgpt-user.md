@@ -6,7 +6,7 @@ source_file: packages/core/src/audits/access-crawl-control/chatgpt-user.ts
 slug: chatgpt-user
 review_verdict: fix
 severity: medium
-evidence_grade: A
+evidence_grade: C
 disposition: "keep — fix required"
 reviewed: 2026-08-21
 ---
