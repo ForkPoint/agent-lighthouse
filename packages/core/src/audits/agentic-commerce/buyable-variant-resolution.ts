@@ -169,7 +169,7 @@ export class BuyableVariantResolutionAudit extends Audit {
 }`,
       effort: 'complex',
       docsUrl:
-        'https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/audits/agentic-commerce/buyable-variant-resolution.md',
+        'https://forkpoint.github.io/agent-lighthouse/audits/agentic-commerce/buyable-variant-resolution/',
       tags: ['product', 'variants', 'json-ld', 'acp', 'ecommerce'],
     },
   };

@@ -65,7 +65,7 @@ export class ExtractionDeterminismAudit extends Audit {
       fix: 'Put the article in one container — `<main>` or `<article>` — with the chrome outside it, and keep the largest block of prose on the page the one you want quoted. Readability keys on paragraph density and link density, so a body split across many small wrappers, or padded with link-heavy blocks, is what makes the three disagree.',
       effort: 'moderate',
       docsUrl:
-        'https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/audits/content-extraction/extraction-determinism.md',
+        'https://forkpoint.github.io/agent-lighthouse/audits/content-extraction/extraction-determinism/',
       tags: ['content', 'extraction', 'agent-readiness'],
     },
   };

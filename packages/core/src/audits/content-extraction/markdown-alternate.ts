@@ -86,7 +86,7 @@ export class MarkdownAlternateAudit extends Audit {
 # Content-Type: text/markdown; charset=utf-8`,
       effort: 'moderate',
       docsUrl:
-        'https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/audits/content-extraction/markdown-alternate.md',
+        'https://forkpoint.github.io/agent-lighthouse/audits/content-extraction/markdown-alternate/',
       tags: ['markdown', 'tokens', 'content', 'llms-txt'],
     },
   };

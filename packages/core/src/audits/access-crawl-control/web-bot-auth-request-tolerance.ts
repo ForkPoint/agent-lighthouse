@@ -111,7 +111,7 @@ export class WebBotAuthRequestToleranceAudit extends Audit {
       fix: 'Let unknown request headers through: `Signature`, `Signature-Input` and `Signature-Agent` are additive and safe to ignore. If your edge enforces a header-size budget, raise it enough for an Ed25519 signature. If you do vary behaviour on those headers, list them in `Vary` so a shared cache cannot serve the rejected variant to everyone.',
       effort: 'complex',
       docsUrl:
-        'https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/audits/access-crawl-control/web-bot-auth-request-tolerance.md',
+        'https://forkpoint.github.io/agent-lighthouse/audits/access-crawl-control/web-bot-auth-request-tolerance/',
       tags: ['web-bot-auth', 'rfc9421', 'signatures', 'waf', 'crawlers'],
     },
   };

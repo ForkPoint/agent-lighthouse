@@ -229,7 +229,7 @@ export class DragAndSliderDependencyAudit extends Audit {
       code: SAMPLE,
       effort: 'moderate',
       docsUrl:
-        'https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/audits/operability-safety/drag-and-slider-dependency.md',
+        'https://forkpoint.github.io/agent-lighthouse/audits/operability-safety/drag-and-slider-dependency/',
       tags: ['agent-operability', 'actionability', 'forms'],
     },
   };

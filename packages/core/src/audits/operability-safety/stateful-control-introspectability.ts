@@ -232,7 +232,7 @@ export class StatefulControlIntrospectabilityAudit extends Audit {
       code: SAMPLE,
       effort: 'moderate',
       docsUrl:
-        'https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/audits/operability-safety/stateful-control-introspectability.md',
+        'https://forkpoint.github.io/agent-lighthouse/audits/operability-safety/stateful-control-introspectability/',
       tags: ['agent-operability', 'accessibility-tree', 'state'],
     },
   };

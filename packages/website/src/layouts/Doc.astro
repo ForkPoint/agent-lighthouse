@@ -1,0 +1,77 @@
+---
+import Base from './Base.astro';
+import SidebarNav from '../components/SidebarNav.astro';
+import type { NavEntry } from '../components/SidebarNav.astro';
+import TableOfContents from '../components/TableOfContents.astro';
+import PrevNext from '../components/PrevNext.astro';
+
+/**
+ * The documentation page: sidebar, article, table of contents, and sequential
+ * links at the foot.
+ *
+ * It deliberately renders no `<h1>`. Dossier bodies open with their own title
+ * heading, and a layout heading would give every one of the 215 pages two.
+ *
+ * Slots: the default slot is the article body; `meta` is an eyebrow strip above
+ * it (the dossier route puts the audit's badges there).
+ */
+interface Props {
+  title: string;
+  description?: string;
+  headings: Array<{ depth: number; slug: string; text: string }>;
+  nav: NavEntry[];
+  prev?: { label: string; href: string };
+  next?: { label: string; href: string };
+}
+
+const { title, description, headings, nav, prev, next } = Astro.props;
+---
+<Base title={title} description={description}>
+  <div class="mx-auto grid max-w-7xl gap-x-10 gap-y-8 px-4 py-10 sm:px-6 lg:grid-cols-[15rem_minmax(0,1fr)_13rem] lg:px-8">
+    {/* Below `lg` the two rails collapse into one disclosure at the top of the
+        page rather than being reordered around the article: moving the article
+        first with CSS `order` would leave the focus order reading the sidebar
+        first, which is exactly the mismatch this project audits for. The
+        disclosure and the rails render the same two components, and whichever
+        pair is inactive is `display: none`, so only one of each is ever in the
+        accessibility tree. `<details>` needs no script to open. */}
+    <details class="mb-2 rounded-xl border border-border-subtle bg-surface-raised/60 lg:hidden">
+      <summary class="cursor-pointer px-4 py-3 text-sm font-semibold text-slate-200 marker:text-slate-400">
+        Browse audits and page contents
+      </summary>
+      <div class="space-y-8 border-t border-border-subtle px-4 py-4">
+        <SidebarNav nav={nav} />
+        <TableOfContents headings={headings} headingId="toc-heading-compact" />
+      </div>
+    </details>
+
+    <aside class="hidden lg:block">
+      <div class="sticky top-24 max-h-[calc(100vh-7rem)] overflow-y-auto pb-6">
+        <SidebarNav nav={nav} />
+      </div>
+    </aside>
+
+    {/* The one region Pagefind indexes on all 227 pages this layout renders.
+        It is the content column rather than the `<article>` alone because the
+        `meta` strip above the article is where a dossier prints its id — and
+        `agentic-commerce/offer-truth-consistency` appears nowhere in the prose
+        of the page it names, so indexing the article alone would make the most
+        obvious thing to type unsearchable. Everything outside it is chrome
+        repeated on every page: the header, the footer, the sidebar's list of
+        sibling audits, and the contents rail. None of it is indexed, and none of
+        it needs a `data-pagefind-ignore` to stay out — declaring a body region
+        anywhere on a page excludes the rest of that page by itself. The one
+        exception is inside this column, and is marked in `PrevNext.astro`. */}
+    <div class="min-w-0" data-pagefind-body>
+      <slot name="meta" />
+      <article class="prose"><slot /></article>
+      <PrevNext prev={prev} next={next} />
+    </div>
+
+    <aside class="hidden lg:block">
+      <div class="sticky top-24 max-h-[calc(100vh-7rem)] overflow-y-auto pb-6">
+        <TableOfContents headings={headings} />
+      </div>
+    </aside>
+  </div>
+</Base>

@@ -302,7 +302,7 @@ export class InvisibleInstructionScanAudit extends Audit {
       code: SAMPLE,
       effort: 'moderate',
       docsUrl:
-        'https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/audits/operability-safety/invisible-instruction-scan.md',
+        'https://forkpoint.github.io/agent-lighthouse/audits/operability-safety/invisible-instruction-scan/',
       tags: ['injection-safety', 'prompt-injection', 'hidden-text', 'security', 'agent-safety'],
     },
   };

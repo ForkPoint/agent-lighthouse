@@ -61,7 +61,7 @@ export class RslLicensingTermsConformanceAudit extends Audit {
       fix: 'Point at the licence from robots.txt with an absolute `License:` URI, and add the `Link: <...>; rel="license"; type="application/rsl+xml"` response header so a crawler that never reads robots.txt still finds it. Serve the document as `application/rsl+xml`, keep the `https://rslstandard.org/rsl` namespace on the root element, and make every `<content url>` prefix cover the paths it licenses.',
       effort: 'moderate',
       docsUrl:
-        'https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/audits/access-crawl-control/rsl-licensing-terms-conformance.md',
+        'https://forkpoint.github.io/agent-lighthouse/audits/access-crawl-control/rsl-licensing-terms-conformance/',
       tags: ['rsl', 'licensing', 'robots', 'headers'],
     },
   };

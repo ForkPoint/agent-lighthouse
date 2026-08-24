@@ -243,7 +243,7 @@ export class AgentCommerceFeedParityAudit extends Audit {
       code: SAMPLE,
       effort: 'moderate',
       docsUrl:
-        'https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/audits/machine-discovery/agent-commerce-feed-parity.md',
+        'https://forkpoint.github.io/agent-lighthouse/audits/machine-discovery/agent-commerce-feed-parity/',
       tags: ['commerce', 'product-feed', 'structured-data', 'sitemap'],
     },
   };

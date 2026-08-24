@@ -57,7 +57,7 @@ export class FeedEntryIdentityAndCanonicalIntegrityAudit extends Audit {
       fix: 'Give every entry a stable id — an `atom:id` that never changes, or an RSS `<guid>` that is an absolute URL when `isPermaLink` is true — and never reuse one. Point item links at the canonical URL itself, with no tracking parameters and no redirect in between. Serve the feed as its registered media type, with no byte-order mark before the first element.',
       effort: 'complex',
       docsUrl:
-        'https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/audits/machine-discovery/feed-entry-identity-and-canonical-integrity.md',
+        'https://forkpoint.github.io/agent-lighthouse/audits/machine-discovery/feed-entry-identity-and-canonical-integrity/',
       tags: ['feeds', 'rss', 'atom', 'canonical'],
     },
   };

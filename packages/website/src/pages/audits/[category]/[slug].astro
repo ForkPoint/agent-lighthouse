@@ -1,0 +1,113 @@
+---
+import { getCollection, render } from 'astro:content';
+import Doc from '../../../layouts/Doc.astro';
+import GradeBadge from '../../../components/GradeBadge.astro';
+import TierBadge from '../../../components/TierBadge.astro';
+import { crossCheck } from '../../../lib/cross-check';
+import { auditList, categoryList } from '../../../lib/registry';
+import { auditPath, categoryPath, withBase } from '../../../lib/routes';
+
+export async function getStaticPaths() {
+  const dossiers = await getCollection('audits');
+  const audits = auditList();
+  // Guard the one build step that turns the registry into public pages: an
+  // audit with no dossier, or a dossier with no audit, stops the build here.
+  crossCheck(audits.map((audit) => audit.id), dossiers.map((entry) => entry.id));
+
+  const byId = new Map(audits.map((audit) => [audit.id, audit]));
+  const categories = categoryList();
+
+  return dossiers.map((entry) => {
+    const [category, slug] = entry.id.split('/');
+    // `crossCheck` above has already proven every dossier has a registry record.
+    const audit = byId.get(entry.id)!;
+
+    // The sidebar lists every category and expands the current one. Expanding
+    // all eight would put 215 links on every page for no navigational gain.
+    const nav = categories.map((group) => ({
+      label: `${group.name} (${group.count})`,
+      href: categoryPath(group.id),
+      ...(group.id === category
+        ? {
+            items: audits
+              .filter((sibling) => sibling.category === category)
+              .map((sibling) => ({ label: sibling.title, href: auditPath(sibling.id) })),
+          }
+        : {}),
+    }));
+
+    // Prev/next follow the registry order and stop at the category boundary, so
+    // the first audit of a category has no previous and the last has no next.
+    const siblings = audits.filter((sibling) => sibling.category === category);
+    const index = siblings.findIndex((sibling) => sibling.id === entry.id);
+    const link = (sibling: (typeof siblings)[number] | undefined) =>
+      sibling ? { label: sibling.title, href: auditPath(sibling.id) } : undefined;
+
+    return {
+      params: { category, slug },
+      props: {
+        entry,
+        audit,
+        nav,
+        prev: link(siblings[index - 1]),
+        next: link(siblings[index + 1]),
+      },
+    };
+  });
+}
+
+const { entry, audit, nav, prev, next } = Astro.props;
+const { Content, headings } = await render(entry);
+// The page is titled from the registry, not from the dossier's own top-level
+// heading. Those headings are working titles — most are the audit slug with a
+// v1 numeric id after it (`og-type (4.7)`) — and every other surface that links
+// here (sidebar, prev/next, cards, category indexes) shows `audit.title`, so
+// taking the heading would name the same audit two ways. The body still renders
+// that heading, and it is still the only depth-1 heading on the page.
+const title = audit.title;
+
+// The audit's implementation, as it stands on the default branch.
+const sourceUrl = `https://github.com/ForkPoint/agent-lighthouse/blob/main/${entry.data.source_file}`;
+---
+<Doc
+  title={title}
+  description={audit.description}
+  headings={headings}
+  nav={nav}
+  prev={prev}
+  next={next}
+>
+  <div slot="meta" class="mb-6 space-y-3">
+    <nav aria-label="Breadcrumb" class="text-xs text-slate-400">
+      <a class="transition-colors hover:text-white" href={withBase('audits/')}>Audits</a>
+      <span aria-hidden="true"> / </span>
+      <a class="transition-colors hover:text-white" href={categoryPath(audit.category)}>{audit.categoryTitle}</a>
+    </nav>
+    {/* The two facets Pagefind records for a dossier, declared with explicit
+        values — `category:Agentic Commerce`, not whatever the element happens to
+        say — so they do not shift when a badge is reworded. They hang off the
+        strip that already prints both facts rather than off markers added for
+        the index: Pagefind collects a filter wherever it sits, inside an indexed
+        region or outside it, so the useful place to put one is next to the thing
+        it describes. The dialog prints the category under each result — 215
+        dossiers is enough that "which one of these is it?" is a real
+        question. */}
+    <div class="flex flex-wrap items-center gap-2" data-pagefind-filter={`category:${audit.categoryTitle}`}>
+      <code class="rounded border border-brand/20 bg-brand/10 px-2 py-0.5 font-mono text-xs font-bold text-indigo-400">{audit.id}</code>
+      <span data-pagefind-filter={`grade:${audit.evidenceGrade}`}><GradeBadge grade={audit.evidenceGrade} /></span>
+      <TierBadge tier={audit.tier} />
+      <span class="text-xs text-slate-400">
+        Weight <span class="font-semibold text-slate-200">{audit.weight}</span>
+      </span>
+      <span class="text-xs text-slate-400">
+        Priority <span class="font-semibold text-slate-200">{audit.priority}</span>
+      </span>
+      <a
+        href={sourceUrl}
+        rel="noopener"
+        class="text-xs text-slate-400 underline transition-colors hover:text-white"
+      >Source</a>
+    </div>
+  </div>
+  <Content />
+</Doc>

@@ -223,7 +223,7 @@ export class HoverOnlyContentAndNavigationAudit extends Audit {
       code: SAMPLE,
       effort: 'moderate',
       docsUrl:
-        'https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/audits/operability-safety/hover-only-content-and-navigation.md',
+        'https://forkpoint.github.io/agent-lighthouse/audits/operability-safety/hover-only-content-and-navigation/',
       tags: ['agent-operability', 'navigation', 'discoverability'],
     },
   };

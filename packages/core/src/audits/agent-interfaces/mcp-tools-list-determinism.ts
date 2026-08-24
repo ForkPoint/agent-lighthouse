@@ -165,7 +165,7 @@ export class McpToolsListDeterminismAudit extends Audit {
       code: SAMPLE,
       effort: 'moderate',
       docsUrl:
-        'https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/audits/agent-interfaces/mcp-tools-list-determinism.md',
+        'https://forkpoint.github.io/agent-lighthouse/audits/agent-interfaces/mcp-tools-list-determinism/',
       tags: ['mcp', 'tools', 'caching', 'determinism', 'prompt-cache', 'agent-protocol'],
     },
   };

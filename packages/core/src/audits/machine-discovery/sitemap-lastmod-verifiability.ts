@@ -126,7 +126,7 @@ export class SitemapLastmodVerifiabilityAudit extends Audit {
       code: SAMPLE,
       effort: 'moderate',
       docsUrl:
-        'https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/audits/machine-discovery/sitemap-lastmod-verifiability.md',
+        'https://forkpoint.github.io/agent-lighthouse/audits/machine-discovery/sitemap-lastmod-verifiability/',
       tags: ['sitemap', 'lastmod', 'freshness', 'crawl-scheduling'],
     },
   };

@@ -132,7 +132,7 @@ export class ChunkBoundaryReferentIntegrityAudit extends Audit {
 <p>Descale the copper kettle monthly with equal parts water and white vinegar.</p>`,
       effort: 'moderate',
       docsUrl:
-        'https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/audits/answer-readiness/chunk-boundary-referent-integrity.md',
+        'https://forkpoint.github.io/agent-lighthouse/audits/answer-readiness/chunk-boundary-referent-integrity/',
       tags: ['retrieval', 'chunking', 'content', 'answer-engines'],
     },
   };

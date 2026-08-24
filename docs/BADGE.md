@@ -5,7 +5,7 @@ Use a badge when you want to show a current Agent Lighthouse score in a README, 
 ## Static Markdown Badge
 
 ```markdown
-[![Agent Lighthouse](https://img.shields.io/badge/Agent%20Lighthouse-87%2F100-22c55e)](https://github.com/ForkPoint/agent-lighthouse)
+[![Agent Lighthouse](https://img.shields.io/badge/Agent%20Lighthouse-87%2F100-4f46e5)](https://github.com/ForkPoint/agent-lighthouse)
 ```
 
 ## Score Colors

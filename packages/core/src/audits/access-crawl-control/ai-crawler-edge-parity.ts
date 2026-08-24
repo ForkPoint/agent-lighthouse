@@ -115,7 +115,7 @@ export class AiCrawlerEdgeParityAudit extends Audit {
       code: SAMPLE,
       effort: 'complex',
       docsUrl:
-        'https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/audits/access-crawl-control/ai-crawler-edge-parity.md',
+        'https://forkpoint.github.io/agent-lighthouse/audits/access-crawl-control/ai-crawler-edge-parity/',
       tags: ['robots', 'waf', 'cloudflare', 'crawlers', 'edge'],
     },
   };

@@ -189,7 +189,7 @@ export class ThirdPartyDomWriteBlastRadiusAudit extends Audit {
       code: SAMPLE,
       effort: 'moderate',
       docsUrl:
-        'https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/audits/operability-safety/third-party-dom-write-blast-radius.md',
+        'https://forkpoint.github.io/agent-lighthouse/audits/operability-safety/third-party-dom-write-blast-radius/',
       tags: ['injection-safety', 'csp', 'supply-chain'],
     },
   };

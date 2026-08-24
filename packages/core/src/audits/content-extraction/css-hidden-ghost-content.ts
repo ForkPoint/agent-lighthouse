@@ -231,7 +231,7 @@ export class CssHiddenGhostContentAudit extends Audit {
       code: SAMPLE,
       effort: 'moderate',
       docsUrl:
-        'https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/audits/content-extraction/css-hidden-ghost-content.md',
+        'https://forkpoint.github.io/agent-lighthouse/audits/content-extraction/css-hidden-ghost-content/',
       tags: ['token-economics', 'extraction', 'ghost-content', 'duplication'],
     },
   };

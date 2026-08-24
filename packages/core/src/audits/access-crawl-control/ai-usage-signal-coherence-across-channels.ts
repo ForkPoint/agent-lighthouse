@@ -219,7 +219,7 @@ export class AiUsageSignalCoherenceAcrossChannelsAudit extends Audit {
       fix: 'Decide the policy once, then say the same thing in every channel you publish. If you do not intend to maintain a channel, remove it rather than leaving a stale value — a contradicted signal is worse than a missing one. Where your CDN prepends its own robots.txt block, either turn that feature off or make your own declarations match it.',
       effort: 'moderate',
       docsUrl:
-        'https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/audits/access-crawl-control/ai-usage-signal-coherence-across-channels.md',
+        'https://forkpoint.github.io/agent-lighthouse/audits/access-crawl-control/ai-usage-signal-coherence-across-channels/',
       tags: ['robots', 'aipref', 'tdmrep', 'rsl', 'licensing'],
     },
   };

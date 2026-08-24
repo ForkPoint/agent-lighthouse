@@ -162,6 +162,8 @@ export interface CheckResult {
     found?: string;
     code?: string;
     docsUrl?: string;
+    /** The published evidence dossier for this check, derived from its id. */
+    evidenceUrl?: string;
     [key: string]: unknown;
   };
   tags?: string[];

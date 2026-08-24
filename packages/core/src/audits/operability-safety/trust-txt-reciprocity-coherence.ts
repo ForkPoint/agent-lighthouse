@@ -80,7 +80,7 @@ export class TrustTxtReciprocityCoherenceAudit extends Audit {
       fix: 'Ask each association you claim to belong to for a reciprocal `member=` line, drop the ones that will not reciprocate, and make `datatrainingallowed=` say the same thing your robots.txt AI-bot groups say.',
       effort: 'easy',
       docsUrl:
-        'https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/audits/operability-safety/trust-txt-reciprocity-coherence.md',
+        'https://forkpoint.github.io/agent-lighthouse/audits/operability-safety/trust-txt-reciprocity-coherence/',
       tags: ['trust-txt', 'provenance', 'advisory'],
     },
   };

@@ -323,7 +323,7 @@ export class AriaLayerInjectionScanAudit extends Audit {
       code: SAMPLE,
       effort: 'moderate',
       docsUrl:
-        'https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/audits/operability-safety/aria-layer-injection-scan.md',
+        'https://forkpoint.github.io/agent-lighthouse/audits/operability-safety/aria-layer-injection-scan/',
       tags: ['injection-safety', 'prompt-injection', 'aria', 'security', 'agent-safety'],
     },
   };

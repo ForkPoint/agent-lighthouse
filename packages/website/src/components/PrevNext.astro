@@ -1,0 +1,43 @@
+---
+/**
+ * Sequential navigation at the foot of a document. Either side may be missing —
+ * the first entry of a section has no previous, the last has no next — so the
+ * "next" link is pushed right on its own rather than relying on a filled left.
+ *
+ * It sits inside the layout's `data-pagefind-body`, and it is the one thing in
+ * there that is not the page's own content: it prints the titles of the audits
+ * on either side, which would make every dossier a match for its two
+ * neighbours' names. `data-pagefind-ignore` is applied here, once, rather than
+ * scattered across the pages that render it.
+ */
+interface Props {
+  prev?: { label: string; href: string };
+  next?: { label: string; href: string };
+}
+
+const { prev, next } = Astro.props;
+---
+{(prev || next) && (
+  <nav data-pagefind-ignore aria-label="Adjacent pages" class="mt-12 flex flex-col gap-3 border-t border-border-subtle pt-6 sm:flex-row">
+    {prev && (
+      <a
+        href={prev.href}
+        rel="prev"
+        class="flex-1 rounded-xl border border-border-subtle bg-surface-raised/60 p-4 transition-colors hover:border-brand/50"
+      >
+        <span class="block text-xs uppercase tracking-wider text-slate-400">&larr; Previous</span>
+        <span class="mt-1 block text-sm font-semibold text-slate-200">{prev.label}</span>
+      </a>
+    )}
+    {next && (
+      <a
+        href={next.href}
+        rel="next"
+        class="flex-1 rounded-xl border border-border-subtle bg-surface-raised/60 p-4 text-right transition-colors hover:border-brand/50 sm:ml-auto"
+      >
+        <span class="block text-xs uppercase tracking-wider text-slate-400">Next &rarr;</span>
+        <span class="mt-1 block text-sm font-semibold text-slate-200">{next.label}</span>
+      </a>
+    )}
+  </nav>
+)}

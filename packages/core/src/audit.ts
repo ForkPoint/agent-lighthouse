@@ -3,6 +3,17 @@ import { AuditResultSchema } from './schemas';
 import type { CheckContext } from './check-context';
 
 /**
+ * Where an audit's evidence dossier is published. A pure function of the id.
+ *
+ * Every audit id is `<category>/<slug>`, and the documentation site publishes
+ * one page per dossier at that path with a trailing slash (`trailingSlash:
+ * 'always'`), so no per-audit field is needed to reach the evidence.
+ */
+export function evidenceUrl(id: string): string {
+  return `https://forkpoint.github.io/agent-lighthouse/audits/${id}/`;
+}
+
+/**
  * Base class for all audits. Follows the Lighthouse pattern:
  * each audit is a class with a static `meta` descriptor and
  * an `audit()` method that receives the scan context.
@@ -174,6 +185,9 @@ export abstract class Audit {
         found,
         code: result.details?.code ?? meta.guidance?.code,
         docsUrl: meta.guidance?.docsUrl,
+        // The dossier behind this check, so a report reader can reach the
+        // evidence without the audit declaring a second URL.
+        evidenceUrl: evidenceUrl(meta.id),
         effort: meta.guidance?.effort,
       },
       tags: meta.guidance?.tags,

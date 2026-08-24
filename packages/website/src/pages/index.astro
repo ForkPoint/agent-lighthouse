@@ -1,0 +1,337 @@
+---
+import Base from '../layouts/Base.astro';
+import { auditList, categoryList } from '../lib/registry';
+import { readSourceRegistry } from '../lib/evidence';
+import { categoryPath, docPath, withBase } from '../lib/routes';
+import {
+  BADGE_BANDS,
+  DEFAULT_SCORE,
+  DEFAULT_URL,
+  badgeMarkdown,
+} from '../islands/badge-generator';
+
+/**
+ * The site root.
+ *
+ * Every number on this page is counted from the registry at build time. The
+ * page it replaces printed "215 audits" and "8 categories" as literals and had
+ * already drifted from both by the time it was retired; a count that is read
+ * cannot drift.
+ *
+ * The two tools are the only interactive things here, and each is a plain
+ * module under `src/islands/`. Both are imported in the frontmatter as well —
+ * for their constants, not their behaviour — which is how the badge panel can
+ * ship a correct snippet before any script runs.
+ */
+const audits = auditList();
+const categories = categoryList();
+const sources = readSourceRegistry().sources.length;
+const scored = audits.filter((audit) => audit.tier === 'scored').length;
+
+const metrics = [
+  { value: String(audits.length), label: 'Audits in the registry', href: withBase('audits/') },
+  { value: String(categories.length), label: 'Scoring categories', href: withBase('audits/') },
+  { value: String(scored), label: 'Audits that carry weight', href: docPath('scoring') },
+  { value: String(sources), label: 'Sources cited by dossiers', href: withBase('sources/') },
+];
+
+// The install line, rendered as text so it needs nothing to be readable.
+const installCommand = 'npx @forkpoint/agent-lighthouse https://yourstore.com';
+
+// Shown before any script runs, and replaced by the same function afterwards.
+const defaultBadge = badgeMarkdown(DEFAULT_SCORE, DEFAULT_URL);
+
+const card = 'rounded-xl border border-border-subtle bg-surface-raised p-5';
+const panel = 'rounded-2xl border border-border-subtle bg-surface-raised p-5 sm:p-6';
+const field =
+  'mt-2 w-full rounded-lg border border-slate-700 bg-surface px-3 py-2 text-sm text-white placeholder:text-slate-400 focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand';
+const label = 'block text-xs font-semibold uppercase tracking-wider text-slate-400';
+const sectionHead = 'border-b border-border-subtle pb-4';
+const h2 = 'text-2xl font-bold tracking-tight text-white';
+---
+<Base
+  title="Agent Lighthouse"
+  description={`Lighthouse-style audits for the agentic web: ${audits.length} checks across ${categories.length} categories, each backed by an evidence dossier.`}
+>
+  {/* The hero is what this page says for itself, and the only part of it
+      Pagefind indexes: the sections below are the badge generator and the report
+      viewer, whose text is interface, not content. */}
+  <!-- Hero -->
+  <section data-pagefind-body class="relative overflow-hidden border-b border-border-subtle">
+    <div
+      class="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(99,102,241,0.15),rgba(255,255,255,0))]"
+      aria-hidden="true"
+    ></div>
+    <div class="relative mx-auto max-w-5xl px-4 py-16 text-center sm:px-6 sm:py-20 lg:px-8">
+      <p class="inline-flex items-center rounded-full border border-brand/40 bg-brand/10 px-3.5 py-1 text-xs font-semibold text-indigo-300">
+        Open source, Apache-2.0, evidence-backed
+      </p>
+
+      <h1 class="mt-6 text-4xl font-black leading-tight tracking-tight text-white sm:text-6xl">
+        The open-source <span class="bg-gradient-to-r from-indigo-300 via-sky-300 to-emerald-300 bg-clip-text text-transparent">Lighthouse</span> for the agentic web
+      </h1>
+
+      <p class="mx-auto mt-5 max-w-3xl text-lg leading-relaxed text-slate-300">
+        Audit and score a site for the agents that read it: AI crawlers, LLM answer engines,
+        MCP clients and machine-readable commerce. Every check links to the dossier that
+        justifies it.
+      </p>
+
+      <div class="mx-auto mt-8 max-w-xl">
+        <pre class="overflow-x-auto rounded-xl border border-border-subtle bg-surface-raised p-3 text-left font-mono text-sm text-slate-200"><code>{`$ ${installCommand}`}</code></pre>
+      </div>
+
+      <div class="mt-6 flex flex-wrap items-center justify-center gap-3">
+        <a
+          href={withBase('audits/')}
+          class="rounded-lg bg-brand px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-brand-soft"
+        >Browse the {audits.length} audits</a>
+        <a
+          href={docPath('quickstart')}
+          class="rounded-lg border border-slate-700 bg-slate-800 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-slate-700"
+        >Read the quickstart</a>
+      </div>
+
+      <ul class="mx-auto mt-12 grid max-w-4xl grid-cols-2 gap-4 text-left sm:grid-cols-4">
+        {metrics.map((metric) => (
+          <li class={card}>
+            <a href={metric.href} class="block">
+              <span class="block text-2xl font-extrabold text-white">{metric.value}</span>
+              <span class="mt-0.5 block text-xs text-slate-400">{metric.label}</span>
+            </a>
+          </li>
+        ))}
+      </ul>
+    </div>
+  </section>
+
+  <div class="mx-auto max-w-7xl space-y-16 px-4 py-16 sm:px-6 lg:px-8">
+    <!-- Categories -->
+    <section aria-labelledby="categories-heading" class="space-y-6">
+      <div class={sectionHead}>
+        <h2 id="categories-heading" class={h2}>The {categories.length} categories</h2>
+        <p class="mt-1 text-sm text-slate-400">
+          Every audit belongs to one of these, and every category index lists its dossiers.
+        </p>
+      </div>
+
+      <ul class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        {categories.map((category) => (
+          <li>
+            <a
+              href={categoryPath(category.id)}
+              class={`${card} block h-full transition-colors hover:border-brand`}
+            >
+              <span class="block text-sm font-semibold text-white">{category.name}</span>
+              <span class="mt-1 block text-xs text-slate-400">
+                {category.count === 1 ? '1 audit' : `${category.count} audits`}
+              </span>
+            </a>
+          </li>
+        ))}
+      </ul>
+    </section>
+
+    <!-- Report inspector -->
+    <section aria-labelledby="viewer-heading" class="space-y-6">
+      <div class={sectionHead}>
+        <h2 id="viewer-heading" class={h2}>Report inspector</h2>
+        <p class="mt-1 text-sm text-slate-400">
+          Open a JSON report a scan wrote and read its scores. The file is read in your
+          browser and never uploaded.
+        </p>
+      </div>
+
+      {/* A real, labelled `<input type="file">` inside the drop target rather
+          than a `<div>` that only answers to a pointer: the input is what makes
+          this reachable by keyboard, and the drop handling is the enhancement. */}
+      {/* Its own border classes rather than `panel`'s: stacking `border` and
+          `border-2`, or two border colours, leaves which one wins up to the
+          order Tailwind happens to emit them in. */}
+      <div
+        id="report-dropzone"
+        class="rounded-2xl border-2 border-dashed border-border-subtle bg-surface-raised p-5 text-center transition-colors sm:p-6"
+      >
+        <label for="report-file" class="block text-sm font-semibold text-white">
+          Choose or drop an <code class="font-mono text-indigo-300">agent-lighthouse-report.json</code>
+        </label>
+        <input
+          id="report-file"
+          type="file"
+          accept="application/json,.json"
+          class="mx-auto mt-4 block max-w-md text-sm text-slate-300 file:mr-3 file:rounded-lg file:border-0 file:bg-brand file:px-4 file:py-2 file:text-sm file:font-semibold file:text-white hover:file:bg-brand-soft"
+        />
+      </div>
+
+      {/* Rendered empty rather than `hidden`, which is the whole point: preflight
+          gives `[hidden]` a `display:none`, and a `display:none` element is not in
+          the accessibility tree at all. Un-hiding it and writing its text in one
+          synchronous block is the pattern that loses the announcement — assistive
+          tech has to be observing the region before its content changes. The badge
+          status below does the same thing for the same reason. */}
+      <p id="report-status" aria-live="polite" class="min-h-5 text-sm text-slate-300"></p>
+
+      <div id="report-output" hidden class={`${panel} space-y-6`}></div>
+
+      <noscript>
+        <p class="rounded-xl border border-border-subtle bg-surface-raised/60 p-6 text-sm leading-relaxed text-slate-300">
+          <strong class="text-white">This inspector runs in your browser.</strong> With
+          scripting off there is nothing to read the file with. Run the scan
+          with <code class="font-mono text-indigo-300">--output html</code> instead and open
+          the report the CLI writes — it is a complete page on its own.
+          The <a class="underline hover:text-white" href={docPath('cli')}>CLI reference</a> lists
+          the output flags.
+        </p>
+      </noscript>
+    </section>
+
+    <!-- Badge generator -->
+    <section aria-labelledby="badge-heading" class="space-y-6">
+      <div class={sectionHead}>
+        <h2 id="badge-heading" class={h2}>Badge generator</h2>
+        <p class="mt-1 text-sm text-slate-400">
+          A README badge for a score, in the
+          form <a class="underline hover:text-white" href={docPath('badge')}>the badge doc</a> publishes.
+        </p>
+      </div>
+
+      <div class={`${panel} space-y-5`}>
+        <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
+          <div>
+            <label class={label} for="badge-score">Score</label>
+            <input id="badge-score" type="number" min="0" max="100" value={DEFAULT_SCORE} class={field} />
+          </div>
+          <div class="sm:col-span-2">
+            <label class={label} for="badge-url">Scanned URL</label>
+            <input id="badge-url" type="url" value={DEFAULT_URL} class={field} />
+          </div>
+        </div>
+
+        <div class="space-y-3 rounded-xl border border-border-subtle bg-surface p-4">
+          <div class="flex items-center justify-between gap-4">
+            <div id="badge-preview" class="min-h-5 text-sm text-slate-400"></div>
+            {/* Ships hidden and the island reveals it: a Copy button that
+                cannot reach a clipboard is worse than no button. */}
+            <button
+              type="button"
+              id="badge-copy"
+              hidden
+              class="shrink-0 rounded-lg border border-slate-700 bg-slate-800 px-3 py-1.5 text-xs font-medium text-slate-200 transition-colors hover:bg-slate-700"
+            >Copy</button>
+          </div>
+          {/* Rendered by the build, so the snippet is right before any script
+              runs. Astro escapes the expression, which is what keeps the
+              `<!-- Scanned: … -->` line visible instead of being parsed away. */}
+          <pre id="badge-markdown" class="overflow-x-auto whitespace-pre-wrap font-mono text-xs text-indigo-300">{defaultBadge}</pre>
+          {/* Announced and shown: a confirmation only a screen reader hears
+              leaves everyone else guessing whether the button did anything. */}
+          <p id="badge-copy-status" aria-live="polite" class="text-xs text-slate-400"></p>
+        </div>
+
+        <table class="w-full border-collapse text-left text-sm">
+          <caption class="pb-2 text-left text-xs text-slate-400">
+            The colour a score gets, as published in the badge doc.
+          </caption>
+          <thead>
+            <tr>
+              <th scope="col" class="border-b border-border-subtle py-2 pr-4 text-xs font-bold uppercase tracking-wider text-slate-400">Score</th>
+              <th scope="col" class="border-b border-border-subtle py-2 pr-4 text-xs font-bold uppercase tracking-wider text-slate-400">Colour</th>
+              <th scope="col" class="border-b border-border-subtle py-2 text-xs font-bold uppercase tracking-wider text-slate-400">Meaning</th>
+            </tr>
+          </thead>
+          <tbody>
+            {BADGE_BANDS.map((band) => (
+              <tr class="border-b border-border-subtle/60">
+                <td class="py-2 pr-4 text-slate-200">{band.min}&ndash;{band.max}</td>
+                <td class="py-2 pr-4">
+                  <span class="inline-flex items-center gap-2 font-mono text-xs text-slate-300">
+                    <span
+                      class="inline-block size-3 rounded-full"
+                      style={`background:#${band.color}`}
+                      aria-hidden="true"
+                    ></span>
+                    {band.color}
+                  </span>
+                </td>
+                <td class="py-2 text-slate-300">{band.meaning}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      <noscript>
+        <p class="rounded-xl border border-border-subtle bg-surface-raised/60 p-6 text-sm leading-relaxed text-slate-300">
+          <strong class="text-white">The fields above update in your browser.</strong> With
+          scripting off the snippet stays at its default. Copy it,
+          replace <code class="font-mono text-indigo-300">{DEFAULT_SCORE}</code> with your score
+          and the colour with the one its band gets in the table.
+        </p>
+      </noscript>
+    </section>
+
+    <!-- Showcase -->
+    <section aria-labelledby="showcase-heading" class="space-y-6">
+      <div class={sectionHead}>
+        <h2 id="showcase-heading" class={h2}>What scores look like</h2>
+        <p class="mt-1 text-sm text-slate-400">
+          Illustrative shapes, not measurements, and not a leaderboard. Run the scan for a
+          real number.
+        </p>
+      </div>
+
+      <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
+        <div class={`${card} space-y-2`}>
+          <p class="font-mono text-xs text-slate-400">docs platform</p>
+          <p class="text-4xl font-black text-emerald-400">90+</p>
+          <p class="text-sm font-semibold text-white">Strong discovery files</p>
+          <p class="text-xs text-slate-400">
+            A good <code class="font-mono">llms.txt</code>, semantic structure and open crawler
+            access make docs easy for coding agents to cite.
+          </p>
+        </div>
+        <div class={`${card} space-y-2`}>
+          <p class="font-mono text-xs text-slate-400">storefront</p>
+          <p class="text-4xl font-black text-amber-300">50&ndash;70</p>
+          <p class="text-sm font-semibold text-white">Classic SEO, weak agent actions</p>
+          <p class="text-xs text-slate-400">
+            Product schema is common; OpenAPI, WebMCP and machine-readable checkout paths
+            usually are not.
+          </p>
+        </div>
+        <div class={`${card} space-y-2`}>
+          <p class="font-mono text-xs text-slate-400">what moves it</p>
+          <p class="text-4xl font-black text-indigo-300">A&nbsp;+&nbsp;B</p>
+          <p class="text-sm font-semibold text-white">Only proven signals carry weight</p>
+          <p class="text-xs text-slate-400">
+            A fix moves the score only where the audit's dossier grades its evidence A or B
+            and its tier is scored. Advisory and experimental checks are reported and weigh
+            nothing &mdash; see <a class="underline hover:text-white" href={docPath('scoring')}>scoring</a>.
+          </p>
+        </div>
+      </div>
+
+      <div class={`${card} flex flex-col justify-between gap-4 sm:flex-row sm:items-center`}>
+        <div>
+          <p class="text-sm font-bold text-white">Have a public result?</p>
+          <p class="mt-1 text-xs text-slate-400">
+            Share the score and what you changed, so other teams have a real example to read.
+          </p>
+        </div>
+        <a
+          href="https://github.com/ForkPoint/agent-lighthouse/issues/new?template=site-score.yml"
+          rel="noopener"
+          class="inline-flex shrink-0 justify-center rounded-lg bg-brand px-4 py-2 text-xs font-semibold text-white transition-colors hover:bg-brand-soft"
+        >Share a site score</a>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    import { mountBadgeGenerator } from '../islands/badge-generator';
+    import { mountReportViewer } from '../islands/report-viewer';
+
+    mountBadgeGenerator();
+    mountReportViewer();
+  </script>
+</Base>

@@ -125,7 +125,7 @@ export class McpToolContractValidityAudit extends Audit {
       code: SAMPLE,
       effort: 'moderate',
       docsUrl:
-        'https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/audits/agent-interfaces/mcp-tool-contract-validity.md',
+        'https://forkpoint.github.io/agent-lighthouse/audits/agent-interfaces/mcp-tool-contract-validity/',
       tags: ['mcp', 'tools', 'json-schema', 'x-mcp-header', 'agent-protocol'],
     },
   };

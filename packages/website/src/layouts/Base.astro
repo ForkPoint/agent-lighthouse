@@ -1,0 +1,76 @@
+---
+import '../styles/global.css';
+import SiteHeader from '../components/SiteHeader.astro';
+import { withBase } from '../lib/routes';
+
+/**
+ * The document shell every page shares: head, skip link, header, main, footer.
+ * `color-scheme: dark` is declared in the stylesheet; the site has no light
+ * theme, matching the page it replaces.
+ *
+ * The social card metadata (`og:*`, `twitter:*`) and the canonical link live
+ * here rather than on each page, so every route carries them and no new page
+ * can forget. Their URLs must be absolute — crawlers and social platforms do
+ * not resolve relative ones — and they are built from `Astro.site` and the
+ * page's own path so the origin is configured in exactly one place.
+ */
+interface Props {
+  title: string;
+  description?: string;
+}
+
+const {
+  title,
+  description = 'Lighthouse-style audits for AI agents and the agentic web.',
+} = Astro.props;
+
+// `Astro.site` is `site` from `astro.config.mjs`, and `Astro.url.pathname`
+// already carries the base path, so joining the two yields the published
+// address without an origin written anywhere in this package. Dropping `site`
+// from the config would silently make every one of these URLs relative, so say
+// so instead of shipping the broken card.
+if (!Astro.site) {
+  throw new Error('`site` must be set in astro.config.mjs: the social card metadata needs absolute URLs.');
+}
+const canonical = new URL(Astro.url.pathname, Astro.site).href;
+// The favicon doubles as the social card, which is the pairing the page this
+// site replaces shipped.
+const socialImage = new URL(withBase('og-image.svg'), Astro.site).href;
+const socialImageAlt = 'Agent Lighthouse report preview for AI-agent readiness audits';
+---
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonical} />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonical} />
+    <meta property="og:image" content={socialImage} />
+    <meta property="og:image:alt" content={socialImageAlt} />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={title} />
+    <meta name="twitter:description" content={description} />
+    <meta name="twitter:image" content={socialImage} />
+    <meta name="twitter:image:alt" content={socialImageAlt} />
+    <link rel="icon" href={withBase('og-image.svg')} />
+  </head>
+  <body class="min-h-screen antialiased">
+    <a
+      href="#main"
+      class="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-[60] focus:rounded-lg focus:border focus:border-brand focus:bg-surface-raised focus:p-3 focus:text-white"
+    >Skip to content</a>
+    <SiteHeader />
+    {/* `tabindex="-1"` so the skip link actually moves focus here, not just the
+        scroll position: a plain `<main>` is not a focusable target. This is an
+        Astro expression comment, not an HTML one, so it does not ship. */}
+    <main id="main" tabindex="-1"><slot /></main>
+    <footer class="border-t border-border-subtle mt-16 py-8 text-center text-xs text-slate-400">
+      Apache-2.0 &middot; <a class="underline" href="https://github.com/ForkPoint/agent-lighthouse">Source on GitHub</a>
+    </footer>
+  </body>
+</html>

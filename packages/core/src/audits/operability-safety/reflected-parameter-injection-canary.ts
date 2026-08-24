@@ -121,7 +121,7 @@ export class ReflectedParameterInjectionCanaryAudit extends Audit {
 <p>Results for <span>{{ query | escape }}</span></p>`,
       effort: 'moderate',
       docsUrl:
-        'https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/audits/operability-safety/reflected-parameter-injection-canary.md',
+        'https://forkpoint.github.io/agent-lighthouse/audits/operability-safety/reflected-parameter-injection-canary/',
       tags: ['injection-safety', 'security', 'agent-trust'],
     },
   };

@@ -42,7 +42,7 @@ Agent Lighthouse is an open-source CLI, SDK, GitHub Action, and MCP server that 
 - Badge generator screenshot: [`docs/assets/badge-generator-screenshot.png`](assets/badge-generator-screenshot.png)
 - Generated report preview: [`docs/assets/report-preview.svg`](assets/report-preview.svg)
 - MCP setup visual: [`docs/assets/mcp-setup.svg`](assets/mcp-setup.svg)
-- GitHub Pages social preview: [`packages/website/og-image.svg`](../packages/website/og-image.svg)
+- GitHub Pages social preview: [`packages/website/public/og-image.svg`](../packages/website/public/og-image.svg)
 - Docs page: https://forkpoint.github.io/agent-lighthouse/
 - npm package: https://www.npmjs.com/package/@forkpoint/agent-lighthouse
 

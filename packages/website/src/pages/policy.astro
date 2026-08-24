@@ -1,0 +1,42 @@
+---
+import { getCollection } from 'astro:content';
+import Doc from '../layouts/Doc.astro';
+import { createDocRenderer } from '../lib/doc-markdown';
+import { documentationNav } from '../lib/doc-nav';
+import { EVIDENCE_DIR, readPolicySource } from '../lib/evidence';
+import { DOC_SECTIONS } from '../lib/markdown-slice';
+import { docPath, withBase } from '../lib/routes';
+
+/**
+ * The evidence policy — `docs/evidence/POLICY.md`, rendered where it lives.
+ *
+ * This route is load-bearing: the dossier link plugin rewrites every
+ * `../../POLICY.md` to it, and sixty published dossiers point here.
+ *
+ * The file is read and rendered rather than pulled from a content collection.
+ * A collection entry renders through the processor in `astro.config.mjs`, which
+ * carries the dossier link plugin — and that plugin keys on an `audit:` field
+ * this file does not have, so its one relative link (`./sources.json`) would
+ * ship unrewritten and 404. `createDocRenderer` is the pipeline built for
+ * repository markdown: it resolves that link, it renders the two grade tables
+ * as tables, and it hands back the headings the layout's contents rail needs.
+ */
+const published = new Set((await getCollection('audits')).map((entry) => entry.id));
+const render = await createDocRenderer(published);
+const { html, headings } = await render(readPolicySource(), EVIDENCE_DIR);
+
+// The policy opens with its own `# Evidence Policy`, which is the page's only
+// h1 and its title; the fallback is there so a retitled file cannot empty it.
+const heading = headings.find((entry) => entry.depth === 1)?.text ?? 'Evidence policy';
+const last = DOC_SECTIONS.at(-1)!;
+---
+<Doc
+  title={heading}
+  description="What counts as proof in Agent Lighthouse: evidence grades, what each grade may do to a score, and how audits are re-reviewed and retired."
+  headings={headings}
+  nav={documentationNav()}
+  prev={{ label: last.title, href: docPath(last.slug) }}
+  next={{ label: 'Source registry', href: withBase('sources/') }}
+>
+  <Fragment set:html={html} />
+</Doc>

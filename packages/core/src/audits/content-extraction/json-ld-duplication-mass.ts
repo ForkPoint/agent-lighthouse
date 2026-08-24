@@ -77,7 +77,7 @@ export class JsonLdDuplicationMassAudit extends Audit {
       fix: 'Keep JSON-LD to the facts a parser needs — identifiers, prices, dates, relationships — and let the prose live in the DOM. Where a schema property genuinely needs body text, a summary is usually enough. Merge blocks that declare the same `@id` into one.',
       effort: 'easy',
       docsUrl:
-        'https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/audits/content-extraction/json-ld-duplication-mass.md',
+        'https://forkpoint.github.io/agent-lighthouse/audits/content-extraction/json-ld-duplication-mass/',
       tags: ['structured-data', 'tokens', 'content'],
     },
   };

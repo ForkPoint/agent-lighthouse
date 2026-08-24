@@ -1,0 +1,38 @@
+---
+/**
+ * Audit tier as a pill: whether the check moves the score at all.
+ *
+ * `informative` reads "Advisory" here — the word the audit explorer on the old
+ * page showed, and the one the docs use. Class strings are spelled out for the
+ * same reason as in `GradeBadge`.
+ */
+interface Props {
+  tier: string;
+}
+
+const { tier } = Astro.props;
+
+const TIERS: Record<string, { label: string; title: string; style: string }> = {
+  scored: {
+    label: 'Scored',
+    title: 'Scored — this check moves the score, at a weight set by its evidence grade.',
+    style: 'bg-brand/10 text-indigo-400 border-brand/30',
+  },
+  informative: {
+    label: 'Advisory',
+    title: 'Advisory — reported, never scored.',
+    style: 'bg-slate-800 text-slate-400 border-slate-700',
+  },
+  experimental: {
+    label: 'Experimental',
+    title: 'Experimental — reported while it is validated, never scored.',
+    style: 'bg-amber-500/10 text-amber-400 border-amber-500/20',
+  },
+};
+
+const entry = TIERS[tier] ?? TIERS.scored;
+---
+<span
+  class:list={['inline-flex items-center rounded border px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wider', entry.style]}
+  title={entry.title}
+>{entry.label}</span>

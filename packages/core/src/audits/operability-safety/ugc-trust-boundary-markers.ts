@@ -230,7 +230,7 @@ export class UgcTrustBoundaryMarkersAudit extends Audit {
 </div>`,
       effort: 'moderate',
       docsUrl:
-        'https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/audits/operability-safety/ugc-trust-boundary-markers.md',
+        'https://forkpoint.github.io/agent-lighthouse/audits/operability-safety/ugc-trust-boundary-markers/',
       tags: ['injection-safety', 'security', 'agent-trust'],
     },
   };

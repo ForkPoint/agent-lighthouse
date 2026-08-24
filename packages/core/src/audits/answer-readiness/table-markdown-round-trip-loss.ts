@@ -197,7 +197,7 @@ export class TableMarkdownRoundTripLossAudit extends Audit {
       fix: 'Flatten spanned headers into one header row of plain `th` cells, repeating the text where a span used to cover two columns. Put the unit or currency in the header cell rather than in the caption. Take paragraphs and lists out of cells. Where a table is genuinely two tables, publish it as two.',
       effort: 'moderate',
       docsUrl:
-        'https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/audits/answer-readiness/table-markdown-round-trip-loss.md',
+        'https://forkpoint.github.io/agent-lighthouse/audits/answer-readiness/table-markdown-round-trip-loss/',
       tags: ['tables', 'markdown', 'extraction', 'accuracy'],
     },
   };

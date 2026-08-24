@@ -145,7 +145,7 @@ export class PreambleTaxTokensBeforeTheFirstContentTokenAudit extends Audit {
 </body>`,
       effort: 'moderate',
       docsUrl:
-        'https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/audits/content-extraction/preamble-tax.md',
+        'https://forkpoint.github.io/agent-lighthouse/audits/content-extraction/preamble-tax/',
       tags: ['tokens', 'context-window', 'content', 'truncation'],
     },
   };

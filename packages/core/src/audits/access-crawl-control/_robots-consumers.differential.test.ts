@@ -159,8 +159,18 @@ function runAll(): Record<string, Record<string, Row>> {
       // Every robots consumer is synchronous; the base signature is not.
       const result = audit.audit(contextFor(fixture)) as AuditResult;
       const check = audit.toCheckResult(result);
-      const { expected: _e, found: _f, code: _c, docsUrl: _d, effort: _ef, ...extra } =
-        check.details ?? {};
+      // `evidenceUrl` joins docsUrl/effort as framework-derived metadata: it is
+      // a pure function of the audit id, not scan output, so it is excluded
+      // here rather than regenerating the baseline.
+      const {
+        expected: _e,
+        found: _f,
+        code: _c,
+        docsUrl: _d,
+        effort: _ef,
+        evidenceUrl: _ev,
+        ...extra
+      } = check.details ?? {};
       perFixture[fixture.name] = {
         status: result.status,
         score: result.score,

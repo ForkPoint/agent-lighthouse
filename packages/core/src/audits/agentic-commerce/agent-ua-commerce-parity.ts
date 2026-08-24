@@ -104,7 +104,7 @@ export class AgentUaCommerceParityAudit extends Audit {
       code: SAMPLE,
       effort: 'complex',
       docsUrl:
-        'https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/audits/agentic-commerce/agent-ua-commerce-parity.md',
+        'https://forkpoint.github.io/agent-lighthouse/audits/agentic-commerce/agent-ua-commerce-parity/',
       tags: ['commerce', 'waf', 'chatgpt', 'crawlers', 'robots'],
     },
   };

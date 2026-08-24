@@ -101,7 +101,7 @@ export class McpVersionDowngradeAudit extends Audit {
       code: SAMPLE,
       effort: 'moderate',
       docsUrl:
-        'https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/audits/agent-interfaces/mcp-version-downgrade.md',
+        'https://forkpoint.github.io/agent-lighthouse/audits/agent-interfaces/mcp-version-downgrade/',
       tags: ['mcp', 'protocol-version', 'error-handling', 'compatibility', 'agent-protocol'],
     },
   };

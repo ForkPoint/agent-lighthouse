@@ -181,3 +181,47 @@ describe('tier badges', () => {
     expect(html).toContain('Experimental — not scored');
   });
 });
+
+describe('evidence link', () => {
+  it('links a check at its published evidence dossier', () => {
+    const html = generateHtmlReport(
+      report([
+        cat({
+          id: 'agent-interfaces',
+          checks: [
+            check({
+              details: {
+                evidenceUrl:
+                  'https://forkpoint.github.io/agent-lighthouse/audits/agent-interfaces/mcp-endpoint/',
+              },
+            }),
+          ],
+        }),
+      ]),
+    );
+    expect(html).toContain(
+      '<a href="https://forkpoint.github.io/agent-lighthouse/audits/agent-interfaces/mcp-endpoint/"',
+    );
+    expect(html).toContain('Why this audit exists — the evidence');
+  });
+
+  it('escapes an evidence URL rather than letting it close the attribute', () => {
+    const html = generateHtmlReport(
+      report([
+        cat({
+          id: 'agent-interfaces',
+          checks: [check({ details: { evidenceUrl: 'https://x.test/"><script>alert(1)</script>' } })],
+        }),
+      ]),
+    );
+    expect(html).not.toContain('<script>alert(1)</script>');
+    expect(html).toContain('&quot;&gt;&lt;script&gt;');
+  });
+
+  it('renders no evidence link when the check carries no evidence URL', () => {
+    const html = generateHtmlReport(
+      report([cat({ id: 'agent-interfaces', checks: [check()] })]),
+    );
+    expect(html).not.toContain('Why this audit exists');
+  });
+});

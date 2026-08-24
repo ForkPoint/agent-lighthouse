@@ -1,0 +1,36 @@
+---
+/**
+ * Evidence grade as a pill. The grade says how well an audit's rule is proven,
+ * and — for a scored audit — how much weight it carries.
+ *
+ * Colours follow the audit cards on the page this site replaces: A emerald,
+ * B indigo, C amber, D slate. Written out as whole class strings because
+ * Tailwind scans source text, so an interpolated `bg-${colour}-500/10` would
+ * never be generated.
+ */
+interface Props {
+  grade: string;
+}
+
+const { grade } = Astro.props;
+
+const STYLES: Record<string, string> = {
+  A: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20',
+  B: 'bg-indigo-500/10 text-indigo-400 border-indigo-500/20',
+  C: 'bg-amber-500/10 text-amber-400 border-amber-500/20',
+  D: 'bg-slate-800 text-slate-400 border-slate-700',
+};
+
+const TITLES: Record<string, string> = {
+  A: 'Grade A — the rule is proven by a first-party spec or published behaviour.',
+  B: 'Grade B — the rule is well supported, but the evidence is indirect.',
+  C: 'Grade C — the rule rests on convention or partial evidence.',
+  D: 'Grade D — the rule is a working assumption and carries no score.',
+};
+
+const style = STYLES[grade] ?? STYLES.D;
+---
+<span
+  class:list={['inline-flex items-center rounded border px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wider', style]}
+  title={TITLES[grade] ?? `Evidence grade ${grade}.`}
+>Grade {grade}</span>

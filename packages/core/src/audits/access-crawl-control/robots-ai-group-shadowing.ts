@@ -132,7 +132,7 @@ export class RobotsAiGroupShadowingAudit extends Audit {
       code: SAMPLE,
       effort: 'easy',
       docsUrl:
-        'https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/audits/access-crawl-control/robots-ai-group-shadowing.md',
+        'https://forkpoint.github.io/agent-lighthouse/audits/access-crawl-control/robots-ai-group-shadowing/',
       tags: ['robots', 'rfc9309', 'ai-crawlers', 'access-control'],
     },
   };

@@ -43,7 +43,7 @@ export class ConditionalRequestSupportAudit extends Audit {
       fix: 'Emit a strong `ETag` derived from the file’s content, not from the build, and a `Last-Modified` that moves only when the content does. Answer `If-None-Match` and `If-Modified-Since` with 304 and an empty body. Keep `no-store` and `private` off public discovery surfaces — they tell a crawler not to keep the copy it just paid for.',
       effort: 'moderate',
       docsUrl:
-        'https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/audits/machine-discovery/conditional-request-support.md',
+        'https://forkpoint.github.io/agent-lighthouse/audits/machine-discovery/conditional-request-support/',
       tags: ['http', 'caching', 'sitemap', 'feeds', 'robots'],
     },
   };
