@@ -46,18 +46,53 @@ An audit may be published as **scored** only if its dossier carries all of:
 
 An audit that cannot meet the bar drops to informative, exactly as `POLICY.md` already requires. The rewrite does not invent a new standard; it makes the existing one visible and enforced.
 
-## Mechanism: frontmatter plus a section whitelist
+## Mechanism: frontmatter plus a label-aware whitelist
 
 The internal sections are interleaved with the public ones, not appended, so a single divider line cannot separate them without reordering all 215 files.
 
-The renderer therefore publishes a **whitelist** of section headings. A whitelist fails closed: a heading nobody anticipated stays unpublished until someone decides otherwise. A blacklist fails open, and the ~40 one-off narrative headings across the corpus guarantee that the next new heading would leak.
+The renderer therefore publishes a **whitelist**. A whitelist fails closed: a heading nobody anticipated stays unpublished until someone decides otherwise. A blacklist fails open, and the ~40 one-off narrative headings across the corpus guarantee that the next new heading would leak.
 
-The default whitelist lives in the site code, not in 215 files:
+Prototyping the whitelist against a real file — `access-crawl-control/agent-governance.md`, 2026-08-24 — showed that heading-level slicing alone is not enough. Three corrections follow.
+
+### The unit is the labelled block, not only the heading
+
+The content the reader needs most is not stored under headings. It sits as **bold labels inside** a section:
+
+```
+**Mechanism claim:** Each major AI vendor operates separate robots.txt product tokens …
+**Evidence:** OpenAI documents the agent (UA 'ChatGPT-User/1.0' …
+**Counter-evidence:** Two independent refutations of the block mechanism …
+**Consumers:** ChatGPT-User · **Recommended tier:** informative
+```
+
+`Why it matters` and `What the evidence does not cover` — sections 2 and 4 of the page contract — exist only as `**Mechanism claim:**` and `**Counter-evidence:**`. The slicer must therefore address both levels: H2 sections, and labelled blocks within them.
+
+`**Consumers:**` and `**Recommended tier:**` are internal. They are the project's own tier deliberation, and publishing "Recommended tier: informative" beside a scored weight would read as an admission rather than as evidence. They stay withheld, and the contradiction sweep exists to make sure no such mismatch survives to be admitted.
+
+### Later sections supersede earlier ones
+
+56 dossiers carry both `## Evidence` and `## Graded evidence (<date>)`. In `agent-governance` the first is a 30-word placeholder — "No dedicated evidence signal was researched for this audit in the 2026-08-20 pass" — and the second carries the real 547 words. Publishing both would put a disclaimer above the evidence it was superseded by.
+
+Rule: when two sections normalise to the same public name, the one with the later date in its heading wins and the earlier is withheld. Where neither carries a date, the later position in the file wins.
+
+### The intro blockquote is replaced, not filtered
+
+Every dossier opens with a strip like:
+
+```
+> crawler-permissions · source `agent-governance.ts` · review verdict **fix** · evidence grade **A** · disposition: **keep — fix required**
+```
+
+Category, source file and grade belong to the reader; review verdict and disposition do not. It cannot be kept or dropped as a unit, so the renderer discards it and emits its own strip from registry metadata, which the page already has in scope. That also fixes the stale category name — this file says `crawler-permissions`, a v1 category that no longer exists.
+
+### The whitelist
+
+Public section names, after normalisation:
 
 - What it checks
-- Why it matters
-- Evidence
-- Limits
+- Why it matters — from `**Mechanism claim:**` / `**Mechanism:**` / `## Claimed mechanism`
+- Evidence — from `## Evidence` / `## Graded evidence`, later supersedes earlier
+- Limits — from `**Counter-evidence:**`
 - Scoring
 - Example failure
 
@@ -68,9 +103,11 @@ public_extra: ["The GEO-benchmark rebuild"]   # publish this non-default section
 public_omit: ["Example failure"]              # withhold a normally-public section
 ```
 
-Roughly 10 to 20 files are expected to need either key. The rest need no frontmatter change at all.
-
 Two frontmatter fields become load-bearing and are validated at build time: `evidence_grade` and the audit id. The build fails on a dossier that claims a grade its content cannot support — a scored audit with no source URL, or a source with no verification date.
+
+### Measured effect on the prototype file
+
+`access-crawl-control/agent-governance.md`, 1600 words total: 661 words publish across 3 sections, 939 words withheld across 4. The withheld set is the intro strip, `Code review findings (2026-08-20, 11-agent pass)`, `Pass-rule correction (contradiction sweep, 2026-08-24)` and `Review history`.
 
 ## Current state, measured 2026-08-24
 
