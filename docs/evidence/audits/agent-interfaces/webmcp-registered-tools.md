@@ -98,8 +98,48 @@ If this project gains a headless-browser gatherer, the audit should read `naviga
 
 **Sources:** [Only Four API Providers Publish a Real .well-known/api-catalog Right Now](https://apievangelist.com/blog/2026/05/22/four-providers-publishing-well-known-api-catalog/) · [RFC 9727 — api-catalog: A Well-Known URI and Link Relation to Help Discovery of APIs](https://www.rfc-editor.org/rfc/rfc9727.html) · [experimental-ext-server-card — docs/discovery.md](https://raw.githubusercontent.com/modelcontextprotocol/experimental-ext-server-card/main/docs/discovery.md) · [Live deployment: Vercel /.well-known/api-catalog (RFC 9727)](https://vercel.com/.well-known/api-catalog) · [Live deployment: Vercel /.well-known/ai-catalog.json](https://vercel.com/.well-known/ai-catalog.json) · [Live deployment: Zapier /.well-known/api-catalog](https://zapier.com/.well-known/api-catalog)
 
+
+## Composite check (contradiction sweep Task 10, 2026-08-24)
+
+**No split. No tier change. B / experimental / weight 0 stands.**
+
+This audit was carried on the sweep's Class A list — a composite holding two
+researched signals whose recommended tiers disagree — and separately on the
+retirement shortlist. Both were checked against the shipped code on 2026-08-24.
+Neither still describes this audit.
+
+**Signal 1, `webmcp-well-known-manifest` — grade D, `Recommended tier: delete`.**
+Discharged on 2026-08-22. The `/.well-known/webmcp` check was deleted outright,
+not demoted, and the path was removed from the orchestrator's `rootFilePaths`
+because this audit was its only reader. A test pins that a manifest at that path
+can no longer produce a pass, and another pins that the string
+`.well-known/webmcp` appears nowhere in the audit's user-facing copy.
+
+**Signal 2, `agent-surface-soft-404-validation` — grade A, `Recommended tier:
+scored`.** Not applicable here, for the same reason it was not split out in
+Task 6. It is a meta-signal — its own evidence calls it *"a meta-signal about
+how the other audits must be implemented"* — requiring that any audit reading a
+well-known path validate content-type and parseability rather than status code.
+This audit reads no well-known path. It matches `navigator.modelContext`
+registrations in inline `<script>` elements of the served document. There is no
+surface for the rule to apply to. The rule itself ships, in
+`agent-interfaces/openapi-exists`, whose `servedAsData()` rejects a `text/html`
+body at `/.well-known/api-catalog`.
+
+So the composite is not a composite any more: one signal was deleted with the
+code that carried it, and the other belongs to a different audit. The surviving
+mechanism — Lighthouse 13.3+ reading `navigator.modelContext` from an
+instrumented browser, while this scanner has no JS runtime — is what grade **B**
+and tier `experimental` already price, and `weightForGrade('B', 'experimental')`
+is 0. `packages/core/src/audits/REWORK-TODO.md` recorded the same conclusion on
+2026-08-22.
+
+**Retirement:** also off. See the [shortlist
+re-verification](../../RETIREMENT-SHORTLIST.md#re-verification-2026-08-24).
+
 ## Review history
 
 - 2026-08-20 — code review (11-agent workflow) + evidence research (12-domain workflow, 400 sources).
 - 2026-08-21 — dossier generated; disposition pending final taxonomy design.
 - 2026-08-22 — user approved the pending-triage redeem; required rework executed (Plan 4, Task 16): the `/.well-known/webmcp` manifest check is deleted and replaced by runtime `navigator.modelContext` registration detection, absence is `na` with the JS-runtime limitation stated, declarative forms defer to `webmcp-declarative-forms`, and the path was removed from the orchestrator's `rootFilePaths`. Grade **A → B**, tier `experimental`, weight 0, `defaultPriority` `high` → `low`. Class renamed `WebmcpManifestAudit` → `WebmcpRegisteredToolsAudit`. `TODO(redeem)` marker removed from the source file.
+- 2026-08-24 — contradiction sweep Task 10: checked as a composite, no split needed. The grade-D manifest signal was deleted with its code on 2026-08-22; the grade-A soft-404 signal is a meta-rule for audits that read a well-known path, which this one no longer does. B / experimental / 0 unchanged. Retirement also off.

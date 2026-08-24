@@ -131,8 +131,16 @@ Before executing, each of the six was checked against the shipped code and its c
 
 Two findings survived the check, and the user chose to act on them: `structured-data/speakable-schema` and `agent-interfaces/webmcp-declarative-forms` both scored at grade **A**, weight **1.0**, on features their own vendors label provisional — Google says speakable is "in beta and subject to change" and scopes it to U.S. English news publishers; Chrome's declarative WebMCP page carries an origin-trial badge and says the API is "under active discussion". Both are re-graded **A → B**, weight 1.0 → 0.6. Registry stays at 215; mass 134.8 → 134.0.
 
-`agent-interfaces/webmcp-registered-tools` does **not** retire, so Task 10 is back on: it remains a genuine Class A composite, one signal at `Recommended tier: delete` and another at `Recommended tier: scored`.
+`agent-interfaces/webmcp-registered-tools` does **not** retire, so Task 10 came back on. It was then checked and closed the same day — see below.
+
+### Task 10: `agent-interfaces/webmcp-registered-tools`
+
+**What landed (2026-08-24): no split, no tier change.** Like Task 6, the premise was already discharged by the Plan 4 rework of 2026-08-22.
+
+The audit's two disagreeing signals no longer both apply to it. The grade-D `webmcp-well-known-manifest` signal (`Recommended tier: delete`) was deleted with its code: the `/.well-known/webmcp` check is gone, the path was removed from the orchestrator's `rootFilePaths`, and two tests pin that a manifest there cannot pass and that the path appears nowhere in the audit's copy. The grade-A `agent-surface-soft-404-validation` signal (`Recommended tier: scored`) is the same meta-rule Task 6 resolved — validate content-type and parseability on any well-known path an audit reads — and this audit reads none; it matches `navigator.modelContext` in inline scripts. The rule ships in `agent-interfaces/openapi-exists`.
+
+What is left is one mechanism, correctly priced: Lighthouse 13.3+ reads `navigator.modelContext` from an instrumented browser, this scanner has no JS runtime and cannot distinguish "no tools" from "cannot see the tools", so B / `experimental` / weight 0. `packages/core/src/audits/REWORK-TODO.md` reached the same conclusion on 2026-08-22.
 
 ## Sequencing
 
-Tasks 1-4 are independent of each other. Task 6 must precede Task 5's fold-in. Task 13 is independent and can run any time. Tasks 14 and 15 are prerequisites for publishing and can run together. Task 17 gated the public launch and is now closed: nothing retires, two audits re-graded. Task 10 is un-blocked and still open.
+Tasks 1-4 are independent of each other. Task 6 must precede Task 5's fold-in. Task 13 is independent and can run any time. Tasks 14 and 15 are prerequisites for publishing and can run together. Task 17 gated the public launch and is now closed: nothing retires, two audits re-graded. Task 10 is closed too: checked, no split needed.
