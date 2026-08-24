@@ -1,14 +1,64 @@
 import { existsSync, readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 
-/** The body under one `## ` heading, up to the next one. */
+/**
+ * A fenced code block's opening or closing run — three or more backticks or
+ * tildes, indented by at most three spaces, which is what makes it a fence
+ * rather than an indented code block.
+ */
+const FENCE = /^ {0,3}(`{3,}|~{3,})/;
+
+/**
+ * The body under one `## ` heading, up to the next one.
+ *
+ * Both the heading and the boundary are matched outside fenced code blocks
+ * only. A `## ` line inside a fence is a shell or YAML comment, or a nested
+ * markdown example — never the start of a section — and stopping at one would
+ * silently truncate the page: the heading is still found and the slice is still
+ * non-empty, so nothing downstream can tell that the rest of the body is gone.
+ */
 export function sliceSection(markdown: string, heading: string): string {
+  const wanted = heading.trim();
   const lines = markdown.split('\n');
-  const start = lines.findIndex((line) => line.trim() === heading.trim());
+
+  // The fence currently open, as the character it is built from and the length
+  // it must be closed by: a fence closes only on a run of the same character,
+  // at least as long, with nothing else on the line.
+  let fence: { char: string; length: number } | null = null;
+  let start = -1;
+  let end = -1;
+
+  for (const [index, line] of lines.entries()) {
+    const run = FENCE.exec(line)?.[1];
+
+    if (fence) {
+      const closes =
+        run !== undefined &&
+        run[0] === fence.char &&
+        run.length >= fence.length &&
+        line.slice(line.indexOf(run) + run.length).trim() === '';
+      if (closes) fence = null;
+      continue;
+    }
+
+    if (run !== undefined) {
+      fence = { char: run[0]!, length: run.length };
+      continue;
+    }
+
+    if (start === -1) {
+      if (line.trim() === wanted) start = index;
+      continue;
+    }
+
+    if (line.startsWith('## ')) {
+      end = index;
+      break;
+    }
+  }
+
   if (start === -1) throw new Error(`Heading not found: ${heading}`);
-  const rest = lines.slice(start + 1);
-  const end = rest.findIndex((line) => line.startsWith('## '));
-  return (end === -1 ? rest : rest.slice(0, end)).join('\n');
+  return lines.slice(start + 1, end === -1 ? undefined : end).join('\n');
 }
 
 /** One documentation page, and the markdown it is rendered from. */
