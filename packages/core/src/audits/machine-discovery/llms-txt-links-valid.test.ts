@@ -33,7 +33,7 @@ describe('LlmsTxtLinksValidAudit', () => {
     expect(result.message).toContain('return HTTP 200');
   });
 
-  it('fails when a link is broken', async () => {
+  it('warns when a link is broken', async () => {
     const body =
       '# Site\n\n## Pages\n' +
       '- [Home](https://example.com/): Home\n' +
@@ -41,7 +41,7 @@ describe('LlmsTxtLinksValidAudit', () => {
     const ctx = mockCheckContext([], { '/llms.txt': mockFetchResult(body, 200) });
     ctx.fetch = fetchStub({ 'https://example.com/gone': 404 });
     const result = await audit.audit(ctx);
-    expect(result.status).toBe('fail');
+    expect(result.status).toBe('warn');
     expect(result.found).toContain('404');
   });
 
@@ -55,11 +55,14 @@ describe('LlmsTxtLinksValidAudit', () => {
     expect(result.message).toContain('No links found');
   });
 
-  it('fails when llms.txt is missing', async () => {
+  // This audit measures the links inside a published file. Whether the file
+  // exists is `machine-discovery/llms-txt-exists`, and reporting it twice made
+  // one absent file cost two rows.
+  it('is not applicable when llms.txt is missing', async () => {
     const ctx = mockCheckContext([], {});
     const result = await audit.audit(ctx);
-    expect(result.status).toBe('fail');
-    expect(result.message).toContain('llms.txt not found');
+    expect(result.status).toBe('na');
+    expect(result.message).toContain('no links to validate');
   });
 
   it('skips malformed URLs in the link list (catch branch)', async () => {

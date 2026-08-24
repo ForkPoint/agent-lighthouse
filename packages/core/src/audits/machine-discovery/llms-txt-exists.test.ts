@@ -16,13 +16,17 @@ describe('LlmsTxtExistsAudit', () => {
     expect(result.status).toBe('pass');
   });
 
-  it('fails when llms.txt is missing (404)', () => {
+  // The file is an optional community convention with no documented agent
+  // consumer, so a site that never claimed to have one has done nothing wrong.
+  // Chrome Lighthouse, the only shipping checker of llms.txt, scores a 404
+  // `notApplicable` for the same reason.
+  it('is not applicable when llms.txt is missing (404)', () => {
     const ctx = mockCheckContext([], {
       '/llms.txt': mockFetchResult('', 404),
     });
     const result = audit.audit(ctx);
-    expect(result.status).toBe('fail');
-    expect(result.message).toContain('llms.txt not found');
+    expect(result.status).toBe('na');
+    expect(result.message).toContain('No llms.txt at the site root');
   });
 
   it('warns when llms.txt exists but lacks H1 heading', () => {
@@ -34,10 +38,10 @@ describe('LlmsTxtExistsAudit', () => {
     expect(result.message).toContain('missing markdown heading');
   });
 
-  it('fails when fetch result is completely missing', () => {
+  it('is not applicable when fetch result is completely missing', () => {
     const ctx = mockCheckContext([], {});
     const result = audit.audit(ctx);
-    expect(result.status).toBe('fail');
+    expect(result.status).toBe('na');
   });
 
   describe('discovery <link> (absorbed from llms-txt-link, v1 4.11)', () => {
@@ -110,12 +114,14 @@ describe('LlmsTxtExistsAudit', () => {
       expect(audit.audit(ctx).found).toContain('no discovery <link>');
     });
 
-    it('reports a link that points at an llms.txt which is not there', () => {
+    // A site that advertises the file and does not serve it broke a promise it
+    // made itself, which is the one llms.txt state worth reporting as wrong.
+    it('warns about a link that points at an llms.txt which is not there', () => {
       const ctx = mockCheckContext([pageWithHead('<link rel="alternate" href="/llms.txt">')], {
         '/llms.txt': mockFetchResult('', 404),
       });
       const result = audit.audit(ctx);
-      expect(result.status).toBe('fail');
+      expect(result.status).toBe('warn');
       expect(result.message).toContain('links to llms.txt');
     });
   });

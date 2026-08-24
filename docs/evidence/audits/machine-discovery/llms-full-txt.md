@@ -57,7 +57,32 @@ Fails any site lacking /llms-full.txt, at HIGH priority, on the strength of a 20
 
 This audit was a delete candidate and went through dedicated adversarial research. Full dossier: [docs/evidence/deletions/content-discoverability/llms-full-txt.md](../../deletions/content-discoverability/llms-full-txt.md). Outcome: **dead-but-informative-candidate**, grade C.
 
+
+## Re-checked (evidence sweep, 2026-08-24)
+
+**No change: C / informative / weight 0. Correctly graded.**
+
+The sweep that re-graded `llms-txt-exists` and `llms-txt-links-valid` covered
+this file too and disturbed nothing. Two things reconfirm the C:
+
+- The Lighthouse gatherer source, re-read on 2026-08-24, resolves
+  `new URL('/llms.txt', …)` and nothing else. The one documented fetcher of the
+  llms.txt family in existence never fetches `llms-full.txt`.
+- llmstxt.org v2 still does not define the file, and no vendor documents
+  consuming it.
+
+One new datum, and it cuts mildly in the file's favour: Cloudflare AI Index
+generates `LLMs-full.txt` alongside `LLMs.txt` for customers. That is a
+generator, not a consumer, but it holds the audit at C — "community convention
+with partial adoption" — rather than letting it slide back toward the D its
+underlying evidence signal first assigned.
+
+**Flagged:** `https://llmstxt.org/changes.html`, cited in this dossier, returned
+HTTP 503 at access time on 2026-08-24. The changelog leg of the claim above
+could not be re-verified. CI's link checker will flag it.
+
 ## Review history
 
 - 2026-08-20 — code review (11-agent workflow) + evidence research (12-domain workflow, 400 sources).
 - 2026-08-21 — adversarial redemption research; user accepted verdict (disposition above).
+- 2026-08-24 — evidence sweep: re-checked, no change. C / informative / weight 0 stands.

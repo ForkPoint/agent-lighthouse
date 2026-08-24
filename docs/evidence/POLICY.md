@@ -14,8 +14,8 @@ Every audit must state its mechanism as a falsifiable causal claim — "GPTBot f
 | :---- | :-- | :------- |
 | **A** | Documented consumer behavior (a vendor doc states that a named agent reads the signal) or a ratified standard with known consumers | RFC 9309 robots.txt parsing; Anthropic documenting that `Claude-User` sends an `Accept` header preferring Markdown |
 | **B** | Draft standard with meaningful adoption, or strong empirical evidence of effect | GEO paper citation-rate deltas; MCP authorization via RFC 9728 discovery |
-| **C** | Community convention with partial adoption; plausible but unproven mechanism | `llms.txt` existence (published widely, no documented consumer, Google states Search ignores it) |
-| **D** | Speculative or invented; no known consumer, no adoption evidence | `ai-catalog.json`; security headers as "AI trust signals" |
+| **C** | Community convention with partial adoption; plausible but unproven mechanism | `llms.txt` existence (published widely; no documented *agent* consumer — Chrome Lighthouse fetches it as an auditor and scores a missing file `notApplicable`; [Google states Search ignores it](https://developers.google.com/search/docs/fundamentals/ai-optimization-guide)) |
+| **D** | Speculative or invented; no known consumer, no adoption evidence | security headers as "AI trust signals"; `agents.txt`; vendor-invented "AI trust score" meta tags |
 
 ## What grades are allowed to do
 
@@ -49,3 +49,5 @@ Audits die publicly, not silently:
 ## History
 
 - 2026-08-20 — policy adopted. Full review of all 207 v1 audits (11-agent code review + 12-domain evidence research, 400 sources) produced the current grade assignments.
+- 2026-08-24 — evidence re-sweep on `llms.txt` and `/.well-known/api-catalog`. The grade-C `llms.txt` example was re-verified and holds: no documented agent consumer across 11 vendors, llmstxt.org v2, the IANA Well-Known URIs and Link Relations registries, and the IETF Datatracker; Google Search Central, updated 2026-07-10, still states Search ignores it. **The policy was right and the audits were wrong** — `machine-discovery/llms-txt-exists` (A / scored / 1.0) and `machine-discovery/llms-txt-links-valid` (B / scored / 0.6) were corrected to C / informative / 0 to match this row.
+- 2026-08-24 — the grade-**D** example `ai-catalog.json` retired: it is no longer speculative or invented. Since 2026-06-17 it is the file defined by the [Agentic Resource Discovery specification](https://github.com/ards-project/ard-spec) (draft v0.9; Google, Microsoft, Hugging Face and others under a Linux Foundation working group, Apache 2.0), and it has a documented first-party consumer client in [`huggingface/hf-discover`](https://github.com/huggingface/hf-discover), which performs automatic `/.well-known/ai-catalog.json` discovery from a website. Under this table's own bars that is stronger evidence than the grade-C row above it, so keeping it as the canonical grade-D example was false on both halves.

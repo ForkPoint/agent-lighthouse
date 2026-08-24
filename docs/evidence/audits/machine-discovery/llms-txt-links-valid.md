@@ -6,14 +6,14 @@ source_file: packages/core/src/audits/machine-discovery/llms-txt-links-valid.ts
 slug: llms-txt-links-valid
 review_verdict: fix
 severity: high
-evidence_grade: B
+evidence_grade: C
 disposition: "keep — fix required"
-reviewed: 2026-08-21
+reviewed: 2026-08-24
 ---
 
 # llms-txt-links-valid (`1.5`)
 
-> content-discoverability · source `llms-txt-links-valid.ts` · review verdict **fix** · evidence grade **B** · disposition: **keep — fix required**
+> content-discoverability · source `llms-txt-links-valid.ts` · review verdict **fix** · evidence grade **C** · tier **informative** (weight 0) · disposition: **keep — fix required**
 
 ## What it checks
 
@@ -66,7 +66,47 @@ Fetches every llms.txt link and fails if any is not 200. Genuinely valuable sign
 
 **Sources:** [Lighthouse core/audits/agentic/llms-txt.js (source code)](https://github.com/GoogleChrome/lighthouse/blob/main/core/audits/agentic/llms-txt.js) · [Lighthouse core/gather/gatherers/agentic/llms-txt.js (source code)](https://github.com/GoogleChrome/lighthouse/blob/main/core/gather/gatherers/agentic/llms-txt.js) · [llms.txt | Lighthouse | Chrome for Developers](https://developer.chrome.com/docs/lighthouse/agentic-browsing/llms-txt) · [Agentic Browsing category | Lighthouse | Chrome for Developers](https://developer.chrome.com/docs/lighthouse/agentic-browsing) · [Lighthouse: llms.txt does not follow recommendations](https://www.debugbear.com/docs/agentic-browsing/llms-txt-does-not-follow-recommendations) · [Lighthouse Fails Your llms.txt Without Markdown Links](https://www.searchenginejournal.com/lighthouse-fails-your-llms-txt-without-markdown-links/577590/) · [The /llms.txt file, v2](https://llmstxt.org/) · [Direct measurement of vendor llms.txt files and markdown content negotiation (2026-08-20)](https://llmstxt.org/)
 
+
+## Re-grade (evidence sweep, 2026-08-24)
+
+**B → C. Scored → informative. Weight 0.6 → 0.**
+
+### The audit was graded on evidence for checks it does not perform
+
+The B came from the "content quality conventions" signal, whose own mechanism
+paragraph splits the checks explicitly: (a) H1 present, (b) at least one
+`[text](url)` markdown link and (c) length over 50 characters **are enforced by
+a real shipping consumer**; (d) blockquote summary, (e) per-link descriptions
+and **(f) link validity are spec-optional with no known enforcing consumer**.
+
+This audit implements (f). Its own counter-evidence already said so —
+*"Lighthouse checks **no** link validity."* The Lighthouse audit source was
+re-read on 2026-08-24 and that is still exactly true: three regex and length
+tests, no link is ever fetched.
+
+So the audit was scored at weight 0.6 on a grade earned by different checks,
+for a signal its own dossier records as having no known consumer, inside a file
+whose existence has no known consumer either — see the parallel re-grade in
+[llms-txt-exists](llms-txt-exists.md#re-grade-evidence-sweep-2026-08-24), which
+covers the eleven-vendor sweep behind that last clause.
+
+**Grade C, tier informative, weight 0.** Together with `llms-txt-exists`, 1.6 of
+weight leaves the scored set.
+
+### What the audit does now
+
+- No llms.txt at the site root → **not applicable**. Whether the file exists is
+  `machine-discovery/llms-txt-exists`; reporting it here too made one absent
+  file cost two rows, one of them a `critical` failure telling the site to go
+  create the file.
+- Broken links inside a published file → **warn** at `low`, was `fail` at
+  `high`.
+- An llms.txt with no links at all → **warn** at `low`, was `medium`.
+- Guidance no longer claims broken links waste an agent's context window or
+  degrade answers about the site. No agent is documented to read the file.
+
 ## Review history
 
 - 2026-08-20 — code review (11-agent workflow) + evidence research (12-domain workflow, 400 sources).
 - 2026-08-21 — dossier generated; disposition pending final taxonomy design.
+- 2026-08-24 — evidence sweep: grade B → C, tier scored → informative, weight 0.6 → 0. The B belonged to conformance checks this audit does not implement; link validity has no known enforcing consumer.

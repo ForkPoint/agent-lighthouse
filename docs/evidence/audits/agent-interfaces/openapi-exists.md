@@ -88,6 +88,51 @@ Tier does **not** follow the grade. 4.18's evidence names its own tier: *"Ratifi
 
 _No dedicated evidence signal was researched for this audit in the 2026-08-20 pass. Its tier assignment falls to the taxonomy design; unproven mechanisms default to informative per the [evidence policy](../../POLICY.md)._
 
+
+## Re-checked (evidence sweep, 2026-08-24)
+
+**No change: B / informative / weight 0. The recorded reasoning still holds; one
+supporting sentence is withdrawn.**
+
+The sweep asked whether any client has documented consuming
+`/.well-known/api-catalog` since this dossier was written. **No.** RFC 9727 is
+still Standards Track, the well-known suffix and the `api-catalog` link relation
+are both still IANA-registered, and every reference found is either the RFC's own
+normative text, a publisher-side generator (Fern generates the endpoint and
+advertises it via a `Link` header on every docs page), or conditional trade
+commentary. The May 2026 API Evangelist survey — 74 providers, 518 parallel
+requests across six subdomain prefixes — found four valid linksets and named no
+deployed client. The condition this audit's tier waits on, *"informative rather
+than scored until a consumer is documented"*, has not been met.
+
+### Withdrawn: the trajectory claim
+
+This dossier reads Zapier's MCP-card linkset as *"the clearest sign the mechanism
+is being adopted forward rather than fading."* As of 2026-06-17 the opposite
+reading is better supported.
+
+Google, Microsoft, Hugging Face and eight further companies published the
+**Agentic Resource Discovery** specification — a draft (v0.9) for exactly the
+problem RFC 9727 addresses, agents finding tools, APIs and agents on a domain —
+at a **different** well-known path, `/.well-known/ai-catalog.json`. The ARD
+specification does not mention RFC 9727 or `/.well-known/api-catalog` anywhere,
+and neither does Google's announcement.
+
+And ARD has the thing api-catalog still lacks: a first-party consumer client.
+Hugging Face ships `huggingface/hf-discover`, whose navigate mode performs
+*"automatic `.well-known/ai-catalog.json` discovery from a website"* and follows
+federated registries.
+
+So the ratified standard has publishers and no documented consumer, while the
+younger unratified consortium spec has a documented one. The grade and tier here
+do not move — B prices the ratified standard, informative prices the absent
+consumer, and both readings are unchanged — but the sentence claiming forward
+momentum is withdrawn, and this audit is flagged for re-review if ARD adoption
+continues. See `agent-interfaces/ai-catalog-exists`, which already scores the
+ARD path.
+
+**Sources:** [RFC 9727](https://www.rfc-editor.org/rfc/rfc9727.html) · [IANA Well-Known URIs](https://www.iana.org/assignments/well-known-uris/well-known-uris.xhtml) · [ARD specification](https://github.com/ards-project/ard-spec) · [huggingface/hf-discover](https://github.com/huggingface/hf-discover) · [Four providers publishing /.well-known/api-catalog (API Evangelist, 2026-05-22)](https://apievangelist.com/blog/2026/05/22/four-providers-publishing-well-known-api-catalog/) · [Fern api-catalog](https://buildwithfern.com/learn/docs/ai-features/api-catalog)
+
 ## Review history
 
 - 2026-08-20 — code review (11-agent workflow) + evidence research (12-domain workflow, 400 sources).
@@ -109,3 +154,4 @@ _No dedicated evidence signal was researched for this audit in the 2026-08-20 pa
 - The standards-track machine-discovery path for APIs is `/.well-known/api-catalog` (RFC 9727, June 2025), a linkset that may point at OpenAPI documents — not `/openapi.json`; no AI-agent consumer of it is documented — https://www.rfc-editor.org/rfc/rfc9727.html (verified 2026-08-21)
 
 **Counter-evidence:** No crawler or agent documentation from OpenAI, Anthropic, Google, Microsoft, or Perplexity states that any named agent fetches `/openapi.json` from a site root. The plugin-era discovery chain (`/.well-known/ai-plugin.json` pointing at a spec URL) is gone from OpenAI's current documentation, which describes pasting a schema instead. For remote tool surfaces, the documented discovery paths in 2026 are MCP's `server/discover` and the DNS-verified MCP Registry, not a root OpenAPI file. Passing this audit therefore proves an artifact exists, not that any agent will find it.
+- 2026-08-24 — evidence sweep: re-checked, no change. B / informative / weight 0 stands; the "adopted forward rather than fading" sentence is withdrawn on ARD counter-evidence.
