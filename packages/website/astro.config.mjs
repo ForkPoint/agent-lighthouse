@@ -4,6 +4,7 @@ import { defineConfig } from 'astro/config';
 import tailwind from '@tailwindcss/vite';
 import { satteri } from '@astrojs/markdown-satteri';
 import { dossierLinksPlugin } from './src/lib/dossier-links.ts';
+import { escapeRawHtmlPlugin } from './src/lib/raw-html.ts';
 
 // The dossiers this site publishes, read from disk rather than from the content
 // collection: the plugin is built here, before Astro has a collection to
@@ -28,7 +29,12 @@ export default defineConfig({
     // hang a plugin off it: dossier links are written for GitHub, and the plugin
     // rewrites them for the site. `markdown.remarkPlugins` would instead swap the
     // whole site onto the deprecated unified processor.
-    processor: satteri({ mdastPlugins: [dossierLinksPlugin(published)] }),
+    // `hastPlugins` escapes the HTML tags the dossiers mention in prose, which
+    // Markdown would otherwise pass through as markup — see `src/lib/raw-html.ts`.
+    processor: satteri({
+      mdastPlugins: [dossierLinksPlugin(published)],
+      hastPlugins: [escapeRawHtmlPlugin()],
+    }),
   },
   vite: {
     plugins: [tailwind()],

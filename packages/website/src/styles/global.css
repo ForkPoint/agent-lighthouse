@@ -1,4 +1,10 @@
-@import "tailwindcss";
+/* `source(none)` switches off Tailwind v4's automatic source detection, which
+   would otherwise walk `packages/website/` and find `index.html` — the 478 KB
+   page this site replaces, still checked in until a later task deletes it.
+   Scanning it put classes no component uses into every page's stylesheet.
+   `@source` is resolved relative to this file, so `../` is `src/`. */
+@import "tailwindcss" source(none);
+@source "../";
 
 /* Brand tokens, taken from the page this site replaces: indigo-600 accent,
    slate-950 surface, slate-900 raised, slate-800 borders. Tailwind v4 has no

@@ -30,10 +30,23 @@ const { title, description, headings, nav, prev, next } = Astro.props;
 <Base title={title} description={description}>
   <slot name="search" slot="search" />
   <div class="mx-auto grid max-w-7xl gap-x-10 gap-y-8 px-4 py-10 sm:px-6 lg:grid-cols-[15rem_minmax(0,1fr)_13rem] lg:px-8">
-    {/* Both rails are dropped below `lg` rather than reordered: moving the
-        article above them with CSS `order` would leave the focus order reading
-        the sidebar first, which is exactly the mismatch this project audits for.
-        On narrow screens the header and the prev/next links carry navigation. */}
+    {/* Below `lg` the two rails collapse into one disclosure at the top of the
+        page rather than being reordered around the article: moving the article
+        first with CSS `order` would leave the focus order reading the sidebar
+        first, which is exactly the mismatch this project audits for. The
+        disclosure and the rails render the same two components, and whichever
+        pair is inactive is `display: none`, so only one of each is ever in the
+        accessibility tree. `<details>` needs no script to open. */}
+    <details class="mb-2 rounded-xl border border-border-subtle bg-surface-raised/60 lg:hidden">
+      <summary class="cursor-pointer px-4 py-3 text-sm font-semibold text-slate-200 marker:text-slate-400">
+        Browse audits and page contents
+      </summary>
+      <div class="space-y-8 border-t border-border-subtle px-4 py-4">
+        <SidebarNav nav={nav} />
+        <TableOfContents headings={headings} headingId="toc-heading-compact" />
+      </div>
+    </details>
+
     <aside class="hidden lg:block">
       <div class="sticky top-24 max-h-[calc(100vh-7rem)] overflow-y-auto pb-6">
         <SidebarNav nav={nav} />

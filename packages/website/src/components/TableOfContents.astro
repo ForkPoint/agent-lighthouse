@@ -3,17 +3,22 @@
  * "On this page" — the depth-2 and depth-3 headings of the article beside it.
  * Deeper headings are dropped: a dossier's h4s are field labels inside a
  * section, and listing them buries the sections that matter.
+ *
+ * `headingId` exists because the layout renders this twice — once in the desktop
+ * rail, once inside the small-screen disclosure — and two elements may not share
+ * an id even when one of them is `display: none`.
  */
 interface Props {
   headings: Array<{ depth: number; slug: string; text: string }>;
+  headingId?: string;
 }
 
-const { headings } = Astro.props;
+const { headings, headingId = 'toc-heading' } = Astro.props;
 const shown = headings.filter((heading) => heading.depth === 2 || heading.depth === 3);
 ---
 {shown.length > 0 && (
-  <nav aria-labelledby="toc-heading" class="text-sm">
-    <h2 id="toc-heading" class="mb-3 text-xs font-bold uppercase tracking-wider text-slate-400">
+  <nav aria-labelledby={headingId} class="text-sm">
+    <h2 id={headingId} class="mb-3 text-xs font-bold uppercase tracking-wider text-slate-400">
       On this page
     </h2>
     <ul class="space-y-2 border-l border-border-subtle pl-3">
