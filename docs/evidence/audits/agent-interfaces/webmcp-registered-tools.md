@@ -1,14 +1,34 @@
 ---
 audit: agent-interfaces/webmcp-registered-tools
-audit_id: "5.20"
 category: agent-interfaces
 source_file: packages/core/src/audits/agent-interfaces/webmcp-registered-tools.ts
 slug: webmcp-registered-tools
-review_verdict: delete
-severity: high
 evidence_grade: B
 disposition: "kept — manifest check replaced by runtime registered-tools detection 2026-08-22 (Plan 4, Task 16)"
 reviewed: 2026-08-22
+recommended_tier: scored
+tier_rationale: "Recommended scored before the Plan 4 rewrite. Ships experimental: WebMCP is an origin-trial feature, and the rewrite left one signal whose consumer is still behind that trial (contradiction sweep Task 10, 2026-08-24)."
+consumers:
+  - all clients following RFC 8615 well-known conventions
+signals:
+  - name: webmcp-well-known-manifest
+    grade: D
+    domain: agent-action-surfaces
+  - name: agent-surface-soft-404-validation
+    grade: A
+    domain: agent-action-surfaces
+sources:
+  - iana-well-known-uris
+  - webmcp-spec-no-nav
+  - probe-zapier-webmcp-manifest
+  - probe-cloudflare-mcp-json
+  - freecodecamp-webmcp-zero-adoption
+  - apievangelist-api-catalog-adoption
+  - rfc-9727
+  - mcp-ext-server-card-discovery
+  - probe-vercel-api-catalog
+  - probe-vercel-ai-catalog
+  - probe-zapier-api-catalog
 ---
 
 # webmcp-registered-tools (`5.20`)
@@ -83,9 +103,6 @@ If this project gains a headless-browser gatherer, the audit should read `naviga
 **Evidence:** The idea is intuitively appealing — WebMCP tools are only visible after page load, so a pre-navigation index would help — and two real deployments exist: zapier.com/.well-known/webmcp (verified 2026-08-20) and cloudflare.com's mcp.json points at a /.well-known/webmcp.json. So the practice is being invented in the wild.
 
 **Counter-evidence:** There is no standard for it and every deployment is a different private schema. The WebMCP spec defines NO manifest format at all — tools are registered imperatively in JavaScript, and the declarative HTML-form path in §4.3 is marked 'entirely a TODO'. `webmcp` is not in the IANA Well-Known URIs registry. Zapier's document self-identifies as `"spec": "zapier-webmcp-discovery/1"` — a vendor-versioned format of one — and its own description concedes the tools 'are not HTTP endpoints', so the manifest cannot be acted on remotely; an agent must still navigate to the page. The freeCodeCamp author shipped exactly this manifest on citability.dev and recorded zero agent calls five days later. Auditing for an undefined file with no schema and no consumer would generate advice no one can act on correctly.
-**Consumers:** none-known · **Recommended tier:** delete
-
-**Sources:** [WebMCP — Draft Community Group Report](https://webmachinelearning.github.io/webmcp/) (verified 2026-08-20) · [Live deployment: Zapier /.well-known/webmcp](https://zapier.com/.well-known/webmcp) (verified 2026-08-20) · [Live deployment: Cloudflare /.well-known/mcp.json](https://cloudflare.com/.well-known/mcp.json) (verified 2026-08-20) · [IANA Well-Known URIs registry](https://www.iana.org/assignments/well-known-uris/well-known-uris.xhtml) (verified 2026-08-20) · [A Developer's Guide to WebMCP: Shipping a 0% Adoption Standard](https://www.freecodecamp.org/news/a-developers-guide-to-webmcp/) (verified 2026-08-20)
 
 ### Signal: agent-surface-soft-404-validation — grade A (agent-action-surfaces)
 
@@ -94,10 +111,6 @@ If this project gains a headless-browser gatherer, the audit should read `naviga
 **Evidence:** This is a meta-signal about how the other audits must be implemented, and it is the best-evidenced claim in the whole domain. The May 2026 API Evangelist study of 74 providers found that of the ~72 that did not serve a valid catalog, only TWO returned a clean 404 while SIXTY-EIGHT returned HTTP 200 with an HTML body, and concluded: 'an agent following the standard would get a 200, try to parse a LinkSet out of the body, fail, and have no useful recourse — an HTML 200 at a well-known path lies, which is worse than a 404.' My own probe on 2026-08-20 reproduced this independently across a different path set: linear.app returned 200 text/html for /openapi.json; github.com, linear.app, vercel.com and zapier.com returned 200 text/html for /mcp; zapier.com returned 200 text/html for /.well-known/ai-plugin.json. A status-code-only scanner would have reported all of these as adoption. Correct rule: require a JSON/YAML/linkset content-type, require the body to parse, and where a spec names a media type prefer it (application/ai-catalog+json for AI catalogs, application/linkset+json with the RFC 9727 profile for api-catalog, application/mcp-server-card+json for card entries) — Vercel demonstrates all of this is achievable in production.
 
 **Counter-evidence:** None found — this is a validation-correctness requirement, not a contested adoption claim. The only nuance is that content negotiation is legitimate: RFC 9727 permits additional formats beyond the mandatory Linkset, so an audit should send an explicit Accept header before concluding a publisher is non-conformant, and should not penalise a clean 404 (which is honest) the way it penalises an HTML 200 (which is a lie).
-**Consumers:** all clients following RFC 8615 well-known conventions · **Recommended tier:** scored
-
-**Sources:** [Only Four API Providers Publish a Real .well-known/api-catalog Right Now](https://apievangelist.com/blog/2026/05/22/four-providers-publishing-well-known-api-catalog/) (verified 2026-08-20) · [RFC 9727 — api-catalog: A Well-Known URI and Link Relation to Help Discovery of APIs](https://www.rfc-editor.org/rfc/rfc9727.html) (verified 2026-08-20) · [experimental-ext-server-card — docs/discovery.md](https://raw.githubusercontent.com/modelcontextprotocol/experimental-ext-server-card/main/docs/discovery.md) (verified 2026-08-20) · [Live deployment: Vercel /.well-known/api-catalog (RFC 9727)](https://vercel.com/.well-known/api-catalog) (verified 2026-08-20) · [Live deployment: Vercel /.well-known/ai-catalog.json](https://vercel.com/.well-known/ai-catalog.json) (verified 2026-08-20) · [Live deployment: Zapier /.well-known/api-catalog](https://zapier.com/.well-known/api-catalog) (verified 2026-08-20)
-
 
 ## Composite check (contradiction sweep Task 10, 2026-08-24)
 

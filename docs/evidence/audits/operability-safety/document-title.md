@@ -1,14 +1,17 @@
 ---
 audit: operability-safety/document-title
-audit_id: "7.18"
 category: operability-safety
 source_file: packages/core/src/audits/operability-safety/document-title.ts
 slug: document-title
-review_verdict: keep
-severity: low
 evidence_grade: A
 disposition: "keep"
 reviewed: 2026-08-21
+sources:
+  - google-title-link-docs
+  - mdn-title-element
+  - wcag-f41
+  - playwright-mcp-repo
+  - chrome-devtools-mcp-tools
 ---
 
 # Page has a non-empty <title> (`7.18`)

@@ -1,14 +1,25 @@
 ---
 audit: answer-readiness/comparison-tables
-audit_id: "9.5"
 category: answer-readiness
 source_file: packages/core/src/audits/answer-readiness/comparison-tables.ts
 slug: comparison-tables
-review_verdict: fix
-severity: medium
 evidence_grade: C
 disposition: "keep — fix required"
 reviewed: 2026-08-21
+recommended_tier: informative
+consumers: []
+consumers_note: no vendor documents table markup as an answer-selection or citation signal
+signals:
+  - name: Comparison tables
+    grade: C
+    domain: aeo-content
+sources:
+  - format-as-prior-arxiv
+  - geo-sfe-structural-arxiv
+  - zyppy-ai-citation-factors
+  - google-ai-features-trust
+  - google-ai-optimization-mythbusting
+  - semrush-ai-overviews-study
 ---
 
 # comparison-tables (`9.5`)
@@ -54,9 +65,6 @@ Counts `p.$('table').length` across every scanned page and passes if the total i
 **Evidence:** Tables are included in the structural bundles that measured positive: GEO-SFE's meso-structure (lists and tables at 25–35% of content) contributed 39.7% of a 17.3% citation gain (p<0.001, −3.1pp on ablation), and Zyppy's 'AI-ready Structure' factor (explicitly naming tables) scores 8.6. The mechanistic argument is decent — TableRAG-style pipelines linearize tables to Markdown, so a genuine table survives extraction as aligned rows while a div-grid comparison degrades into unlabeled text fragments. Google does require that 'important content is available in textual form', which a real table satisfies and an image-of-a-table does not.
 
 **Counter-evidence:** The strongest counter-evidence in this domain. Format as a Prior measured a cross-model preference hierarchy in which 'semantically rich formats such as texts and KGs are consistently favored over visually structured ones like infoboxes and tables' — tables scored 0.398, KGs 0.336, infoboxes 0.235 against plain text, meaning models systematically preferred prose when the same fact was available both ways. No vendor documents tables as a citation signal, and Google states there are no additional requirements or special optimizations for AI features. No study located isolates the causal effect of converting a styled div-grid into semantic table markup — the specific edit this audit would recommend. The widely circulated claim that 'pages with well-structured comparison tables have a structural advantage' traces only to SEO vendor blogs with no disclosed methodology. Keep the audit as an accessibility/extractability hygiene check (real table markup beats an image or a div grid), not as a citation-rate lever.
-**Consumers:** none-known — no vendor documents table markup as an answer-selection or citation signal · **Recommended tier:** informative
-
-**Sources:** [Format as a Prior: Quantifying and Analyzing Bias in LLMs for Heterogeneous Data](https://arxiv.org/html/2508.15793v1) (verified 2026-08-20) · [Structural Feature Engineering for Generative Engine Optimization: How Content Structure Shapes Citation Behavior](https://arxiv.org/html/2603.29979v1) (verified 2026-08-20) · [AI Citation Ranking Factors Analysis](https://signal.zyppy.com/p/ai-citation-ranking-factors) (verified 2026-08-20) · [AI Features and Your Website](https://developers.google.com/search/docs/appearance/ai-features) (verified 2026-08-20) · [Google's Guide to Optimizing for Generative AI Features on Google Search](https://developers.google.com/search/docs/fundamentals/ai-optimization-guide) (verified 2026-08-20) · [We Studied 200,000 AI Overviews: Here's What We Learned](https://www.semrush.com/blog/ai-overviews-study/) (verified 2026-08-20)
 
 ## Review history
 

@@ -1,14 +1,17 @@
 ---
 audit: answer-readiness/publication-date
-audit_id: "10.9"
 category: answer-readiness
 source_file: packages/core/src/audits/answer-readiness/publication-date.ts
 slug: publication-date
-review_verdict: keep
-severity: low
 evidence_grade: B
 disposition: "keep"
 reviewed: 2026-08-21
+sources:
+  - google-publication-dates
+  - ahrefs-freshness-17m
+  - seer-recency-study
+  - geo-critical-survey-arxiv
+  - google-helpful-content
 ---
 
 # publication-date (`10.9`)

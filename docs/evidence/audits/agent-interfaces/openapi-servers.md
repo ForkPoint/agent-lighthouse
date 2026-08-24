@@ -1,14 +1,15 @@
 ---
 audit: agent-interfaces/openapi-servers
-audit_id: "5.5"
 category: agent-interfaces
 source_file: packages/core/src/audits/agent-interfaces/openapi-servers.ts
 slug: openapi-servers
-review_verdict: fix
-severity: high
 evidence_grade: B
 disposition: "keep — fix required"
 reviewed: 2026-08-21
+sources:
+  - openai-gpt-actions-openapi
+  - ms-copilot-api-plugins
+  - openapi-31-spec
 ---
 
 # openapi-servers (`5.5`)

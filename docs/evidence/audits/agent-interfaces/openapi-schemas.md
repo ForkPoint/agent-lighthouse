@@ -1,14 +1,16 @@
 ---
 audit: agent-interfaces/openapi-schemas
-audit_id: "5.6"
 category: agent-interfaces
 source_file: packages/core/src/audits/agent-interfaces/openapi-schemas.ts
 slug: openapi-schemas
-review_verdict: fix
-severity: medium
 evidence_grade: B
 disposition: "keep — fix required"
 reviewed: 2026-08-21
+sources:
+  - anthropic-define-tools
+  - openai-function-calling
+  - ms-copilot-openapi-guidance
+  - gemini-function-calling
 ---
 
 # openapi-schemas (`5.6`)

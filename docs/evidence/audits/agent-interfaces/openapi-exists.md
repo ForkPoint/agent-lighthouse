@@ -1,14 +1,21 @@
 ---
 audit: agent-interfaces/openapi-exists
-audit_id: "5.1, 4.18"
 category: agent-interfaces
 source_file: packages/core/src/audits/agent-interfaces/openapi-exists.ts
 slug: openapi-exists
-review_verdict: fix
-severity: high
 evidence_grade: B
 disposition: "merged 2026-08-22 (Plan 4, Task 7) — absorbs openapi-link (4.18); 4.18's redeem resolves here"
 reviewed: 2026-08-22
+sources:
+  - rfc-9727
+  - iana-well-known-uris
+  - ard-spec-repo
+  - hf-discover
+  - apievangelist-api-catalog-adoption
+  - fern-api-catalog
+  - openapi-31-spec
+  - openai-gpt-actions-openapi
+  - ms-copilot-api-plugins
 ---
 
 # openapi-exists (`5.1`, `4.18`)
@@ -88,7 +95,6 @@ Tier does **not** follow the grade. 4.18's evidence names its own tier: *"Ratifi
 
 _No dedicated evidence signal was researched for this audit in the 2026-08-20 pass. Its tier assignment falls to the taxonomy design; unproven mechanisms default to informative per the [evidence policy](../../POLICY.md)._
 
-
 ## Re-checked (evidence sweep, 2026-08-24)
 
 **No change: B / informative / weight 0. The recorded reasoning still holds; one
@@ -130,8 +136,6 @@ consumer, and both readings are unchanged — but the sentence claiming forward
 momentum is withdrawn, and this audit is flagged for re-review if ARD adoption
 continues. See `agent-interfaces/ai-catalog-exists`, which already scores the
 ARD path.
-
-**Sources:** [RFC 9727](https://www.rfc-editor.org/rfc/rfc9727.html) (verified 2026-08-20) · [IANA Well-Known URIs](https://www.iana.org/assignments/well-known-uris/well-known-uris.xhtml) (verified 2026-08-20) · [ARD specification](https://github.com/ards-project/ard-spec) (verified 2026-08-24) · [huggingface/hf-discover](https://github.com/huggingface/hf-discover) (verified 2026-08-24) · [Four providers publishing /.well-known/api-catalog (API Evangelist, 2026-05-22)](https://apievangelist.com/blog/2026/05/22/four-providers-publishing-well-known-api-catalog/) (verified 2026-08-20) · [Fern api-catalog](https://buildwithfern.com/learn/docs/ai-features/api-catalog) (verified 2026-08-24)
 
 ## Review history
 

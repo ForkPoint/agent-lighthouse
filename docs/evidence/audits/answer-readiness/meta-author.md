@@ -1,14 +1,16 @@
 ---
 audit: answer-readiness/meta-author
-audit_id: "4.2"
 category: answer-readiness
 source_file: packages/core/src/audits/answer-readiness/meta-author.ts
 slug: meta-author
-review_verdict: fix
-severity: medium
 evidence_grade: C
 disposition: "keep — fix required"
 reviewed: 2026-08-21
+sources:
+  - whatwg-metadata-names
+  - google-article-structured-data
+  - google-special-tags
+  - s18
 ---
 
 # meta-author (`4.2`)

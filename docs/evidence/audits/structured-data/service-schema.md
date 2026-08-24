@@ -1,14 +1,38 @@
 ---
 audit: structured-data/service-schema
-audit_id: "3.8"
 category: structured-data
 source_file: packages/core/src/audits/structured-data/service-schema.ts
 slug: service-schema
-review_verdict: merge
-severity: medium
 evidence_grade: A
 disposition: "split 2026-08-22 (Plan 4, Task 9) — Service half kept here, Product half moved to advanced-product-details (3.22)"
 reviewed: 2026-08-22
+recommended_tier: scored
+consumers:
+  - Google Merchant Center website crawl / automated feeds
+  - "Google Shopping Graph → Google AI Mode shopping & agentic checkout"
+  - "Googlebot (product snippets, merchant listings)"
+  - "Applebot (Offers, PriceRange"
+consumers_note: archived doc)
+signals:
+  - name: "Product / Offer markup with price, priceCurrency, availability, condition and GTIN/SKU identifiers"
+    grade: A
+    domain: structured-data
+sources:
+  - google-merchant-supported-structured-data
+  - google-merchant-setup-structured-data
+  - google-merchant-automated-feeds
+  - google-product-structured-data
+  - google-shopping-graph-ai-mode
+  - google-search-updates-changelog
+  - apple-app-search-web-markup
+  - webdatacommons-2024-stats
+  - openai-product-feed-spec
+  - openai-commerce-index
+  - acp-feed-spec
+  - perplexity-merchant-program-terms
+  - amazon-science-rufus
+  - google-ai-optimization-mythbusting
+  - vercel-rise-of-ai-crawler
 ---
 
 # service-schema (`3.8`)
@@ -53,9 +77,6 @@ Checks that a Product or Service node exists with name/description/provider, whi
 **Evidence:** This is the single strongest schema.org signal in the AI era, and the strength comes entirely from Google's commerce pipeline rather than from generic "AI reads schema" claims. Google documents the exact schema.org→attribute mapping (id→sku; gtin→gtin8/12/13/14/gtin/isbn; price→price+priceCurrency; availability→availability; condition→itemCondition) and states: "If you're using automatic item updates, make sure to specify the schema.org properties price, priceCurrency, availability, and condition" (google-merchant-supported-structured-data). Setup requires a Product object with a nested Offer (google-merchant-setup-structured-data). Automated feeds are built by "website crawl", which "uses structured data and sitemap information to extract the most up-to-date information about relevant products", re-checked at least every 24 hours (google-merchant-automated-feeds). Offer-level SKU/GTIN annotation is what lets the crawler match page offers to catalog items. Google's Product doc confirms the hybrid model: "Providing both structured data on web pages and a Merchant Center feed maximizes your eligibility to experiences" and "product snippets may use pricing data from your merchant feed if it's not present in the structured data on the page" (google-product-structured-data). Downstream, AI Mode shopping "brings together Gemini capabilities with the Shopping Graph", which holds 50B+ listings with reviews, prices, colors and availability, 2B refreshed hourly (google-shopping-graph-ai-mode). Google's changelog also shows Product markup under ACTIVE development in 2026 (Product.category codes, a new "Sale duration" section, hasAdultConsideration) while FAQ and HowTo were being retired (google-search-updates-changelog). Hard audit rule from Google: "Structured data markup must be present in the HTML returned from the web server. The structured data markup can't be generated with JavaScript after the page has loaded."
 
 **Counter-evidence:** OpenAI's product feed spec is feed-only. Required fields are item_id, title, description, brand, url, image_url, availability, price, is_eligible_search, is_eligible_checkout, seller_name, target_countries; GTIN is optional; and there is NO mention of schema.org, JSON-LD or on-page markup anywhere in the spec or the wider commerce docs index (openai-product-feed-spec, openai-commerce-docs-index). The Agentic Commerce Protocol feed spec likewise defines its own taxonomy and does not reference schema.org, GTIN, or Merchant Center compatibility (acp-feed-spec). Perplexity's merchant program reportedly requires CSV/XML feeds (perplexity-merchant-program-terms — UNVERIFIED, hub returns 403). Amazon Rufus draws on the Amazon catalogue, customer reviews, community Q&A and "public information on the web", with no mention of schema.org or merchant markup crawling (amazon-science-rufus). And Google's AI guidance still says "there's no special schema.org markup you need to add", routing merchants to Merchant Center feeds and Business Profiles instead (google-ai-optimization-guide). Honest framing for the dossier: Product markup earns its A because it is a documented ingestion path into a Google system that demonstrably powers an AI shopping surface — not because any LLM reads it off the page at answer time.
-**Consumers:** Google Merchant Center website crawl / automated feeds, Google Shopping Graph → Google AI Mode shopping & agentic checkout, Googlebot (product snippets, merchant listings), Applebot (Offers, PriceRange — archived doc) · **Recommended tier:** scored
-
-**Sources:** [Supported structured data attributes and values — Merchant Center](https://support.google.com/merchants/answer/6386198) (verified 2026-08-20) · [Set up structured data for Merchant Center](https://support.google.com/merchants/answer/7331077) (verified 2026-08-20) · [Add products automatically from your online store (automated feeds / website crawl)](https://support.google.com/merchants/answer/7538732) (verified 2026-08-20) · [Product structured data (Product snippets and Merchant listings)](https://developers.google.com/search/docs/appearance/structured-data/product) (verified 2026-08-20) · [Shopping on Google: AI Mode and virtual try-on updates from I/O 2025](https://blog.google/products-and-platforms/products/shopping/google-shopping-ai-mode-virtual-try-on-update/) (verified 2026-08-20) · [Latest Google Search documentation updates (changelog)](https://developers.google.com/search/updates) (verified 2026-08-20) · [App Search Programming Guide: Mark Up Web Content](https://developer.apple.com/library/archive/documentation/General/Conceptual/AppSearch/WebContent.html) (verified 2026-08-20) · [Web Data Commons Extraction Report — October 2024 Common Crawl Corpus](https://webdatacommons.org/structureddata/2024-12/stats/stats.html) (verified 2026-08-20) · [Product Feed Spec — Products (Agentic Commerce)](https://developers.openai.com/commerce/specs/file-upload/products) (verified 2026-08-20) · [Agentic Commerce documentation index](https://developers.openai.com/commerce/) (verified 2026-08-20) · [Product Feed Specification — Agentic Commerce Protocol](https://agentic-commerce-protocol.com/docs/commerce/specs/feed) (verified 2026-08-20) · [Perplexity Merchant Program Terms of Service](https://www.perplexity.ai/hub/legal/merchant-program-terms-of-service) (verified 2026-08-20) · [The technology behind Amazon's GenAI-powered shopping assistant, Rufus](https://www.amazon.science/blog/the-technology-behind-amazons-genai-powered-shopping-assistant-rufus) (verified 2026-08-20) · [Google's Guide to Optimizing for Generative AI Features on Google Search](https://developers.google.com/search/docs/fundamentals/ai-optimization-guide) (verified 2026-08-20) · [The rise of the AI crawler](https://vercel.com/blog/the-rise-of-the-ai-crawler) (verified 2026-08-20)
 
 ## Review history
 

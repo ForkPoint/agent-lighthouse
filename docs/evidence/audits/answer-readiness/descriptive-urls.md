@@ -1,14 +1,25 @@
 ---
 audit: answer-readiness/descriptive-urls
-audit_id: "10.15"
 category: answer-readiness
 source_file: packages/core/src/audits/answer-readiness/descriptive-urls.ts
 slug: descriptive-urls
-review_verdict: fix
-severity: high
 evidence_grade: C
 disposition: "keep — fix required"
 reviewed: 2026-08-21
+recommended_tier: informative
+consumers:
+  - "Google Search (documented as a crawlability/comprehension best practice, explicitly NOT claimed as a ranking factor)"
+  - none-known for AI-citation selection
+signals:
+  - name: Descriptive URLs
+    grade: C
+    domain: geo-authority
+sources:
+  - google-url-structure
+  - semrush-technical-seo-ai
+  - google-ai-features-trust
+  - anthropic-crawlers
+  - geo-critical-survey-arxiv
 ---
 
 # descriptive-urls (`10.15`)
@@ -54,9 +65,6 @@ Real signal — readable URLs appear in AI citations and do carry pre-fetch topi
 **Evidence:** Google's URL structure doc gives clear, quotable guidance: 'When possible, use readable words rather than long ID numbers in your URLs'; 'Use words in your audience's language in the URL (and, if applicable, transliterated words)'; 'We recommend using hyphens (-) instead of underscores (_) to separate words in your URLs.' Semrush's analysis of 5 million cited URLs across ChatGPT Search and Google AI Mode found citation counts peak for 21–25 character slugs (~87K citations) with a secondary peak at 6–10 characters, and moderate slug lengths of 17–40 characters consistently outperforming very short or very long URLs. Mechanistically a descriptive slug does carry topical tokens that a retriever can match and that a synthesiser can render as meaningful anchor text, so the convention is coherent and costless to follow.
 
 **Counter-evidence:** Google's own doc frames descriptive URLs purely as crawlability and human/machine comprehension, and makes NO ranking claim whatsoever — it says only that they help 'Google Search (and your users) better understand your site'. The Semrush slug data is a distribution over already-cited URLs with no uncited control group, so it cannot separate a URL effect from the confound that well-edited sites both write good slugs and produce citable content; Semrush labels the whole study correlational. No AI vendor documents URL wording as an input to source selection — OpenAI's and Anthropic's publisher-facing docs are silent, and Anthropic's crawler doc contains no content-selection guidance at all. The GEO paper did not test URLs among its nine methods, and the 2026 critical survey does not list URL structure among replicated levers. Google's AI-features doc reiterates there are no special optimizations for AI surfaces. Plausible, conventional, cheap — and entirely unproven as a citation driver.
-**Consumers:** Google Search (documented as a crawlability/comprehension best practice, explicitly NOT claimed as a ranking factor), none-known for AI-citation selection · **Recommended tier:** informative
-
-**Sources:** [URL Structure Best Practices for Google](https://developers.google.com/search/docs/crawling-indexing/url-structure) (verified 2026-08-20) · [How Do Technical SEO Factors Impact AI Search? [Study]](https://www.semrush.com/blog/technical-seo-impact-on-ai-search-study/) · [AI Features and Your Website](https://developers.google.com/search/docs/appearance/ai-features) (verified 2026-08-20) · [Does Anthropic crawl data from the web, and how can site owners block the crawler?](https://support.claude.com/en/articles/8896518-does-anthropic-crawl-data-from-the-web-and-how-can-site-owners-block-the-crawler) (verified 2026-08-20) · [Optimizing Visibility in Generative Engines: A Critical Survey of Generative Engine Optimization (2023–2026)](https://arxiv.org/html/2607.14035v1) (verified 2026-08-20)
 
 ## Review history
 

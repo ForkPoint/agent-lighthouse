@@ -1,14 +1,24 @@
 ---
 audit: agent-interfaces/mcp-endpoint
-audit_id: "5.13, 5.14, 5.24"
 category: agent-interfaces
 source_file: packages/core/src/audits/agent-interfaces/mcp-endpoint.ts
 slug: mcp-endpoint
-review_verdict: fix
-severity: high
 evidence_grade: C
 disposition: "merged 2026-08-22 (Plan 4, Task 7) — absorbs mcp-capabilities (5.14) and webmcp-tool-annotations (5.24)"
 reviewed: 2026-08-22
+recommended_tier: informative
+consumers:
+  - "MCP clients pointed at the instance's endpoint"
+  - NLWeb-aware clients
+signals:
+  - name: nlweb-endpoint
+    grade: C
+    domain: agent-action-surfaces
+sources:
+  - microsoft-nlweb-announcement
+  - nlweb-repo-howto
+  - iana-well-known-uris
+  - probe-cloudflare-mcp-json
 ---
 
 # mcp-endpoint (`5.13`, `5.14`, `5.24`)
@@ -62,9 +72,6 @@ The most valuable audit in the category in principle — it actually speaks the 
 **Evidence:** NLWeb is a real, still-active project with unusually credible named adopters. Microsoft's launch announcement (2025-05-19, Build 2025) states 'Every NLWeb instance is also a Model Context Protocol (MCP) server, allowing websites to make their content discoverable and accessible to agents' and that it 'leverages semi-structured formats like Schema.org, RSS and other data that websites already publish.' Named early adopters: Shopify, Snowflake, Tripadvisor, Eventbrite, O'Reilly Media, Hearst (Delish), Chicago Public Media, Common Sense Media, DDM (Allrecipes/Serious Eats), Milvus, Qdrant, Inception Labs. The reference implementation has 6,249 stars and was pushed 2026-08-11, with satellite projects (nlweb-net, MSR-Web-Verbs, crawler) — so it is alive, and its schema.org dependency makes it a natural companion to structured-data audits.
 
 **Counter-evidence:** Governance has drifted: the canonical repo is no longer microsoft/NLWeb — api.github.com/repos/microsoft/NLWeb returns HTTP 301 redirecting to the nlweb-ai org — so it is no longer a Microsoft-org project even though support still routes to NLWebSup@microsoft.com. Critically for an audit, there is NO discovery mechanism: `nlweb` is not in the IANA Well-Known URIs registry, the README defines no .well-known path, and endpoint paths (/ask, /mcp) are deployment choices, so a scanner cannot reliably detect an NLWeb deployment without guessing. Probing /mcp is actively unreliable — github.com, linear.app, vercel.com and zapier.com all return HTTP 200 text/html at /mcp (marketing pages, not endpoints). Wikipedia's entry is a stub with no adoption figures, and no independent dataset measures NLWeb deployment. Treat as informative and detect only via an explicitly declared endpoint (e.g. an ai-catalog entry), never by path guessing.
-**Consumers:** MCP clients pointed at the instance's endpoint, NLWeb-aware clients · **Recommended tier:** informative
-
-**Sources:** [Introducing NLWeb: Bringing conversational interfaces directly to the web](https://news.microsoft.com/source/features/company-news/introducing-nlweb-bringing-conversational-interfaces-directly-to-the-web/) (verified 2026-08-20) · [nlweb-ai/NLWeb — reference implementation](https://github.com/nlweb-ai/NLWeb) (verified 2026-08-20) · [IANA Well-Known URIs registry](https://www.iana.org/assignments/well-known-uris/well-known-uris.xhtml) (verified 2026-08-20) · [Live deployment: Cloudflare /.well-known/mcp.json](https://cloudflare.com/.well-known/mcp.json) (verified 2026-08-20)
 
 ## The merge (Plan 4, Task 7, 2026-08-22)
 

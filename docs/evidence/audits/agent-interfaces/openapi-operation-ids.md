@@ -1,14 +1,16 @@
 ---
 audit: agent-interfaces/openapi-operation-ids
-audit_id: "5.3, 5.23 (naming rule)"
 category: agent-interfaces
 source_file: packages/core/src/audits/agent-interfaces/openapi-operation-ids.ts
 slug: openapi-operation-ids
-review_verdict: fix
-severity: medium
 evidence_grade: B
 disposition: "keep — fix required; absorbs the naming rule of webmcp-tool-naming (5.23) as of 2026-08-22"
 reviewed: 2026-08-22
+sources:
+  - ms-copilot-openapi-guidance
+  - anthropic-define-tools
+  - gemini-function-calling
+  - openapi-31-spec
 ---
 
 # openapi-operation-ids (`5.3`, naming rule of `5.23`)

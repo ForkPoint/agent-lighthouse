@@ -1,14 +1,21 @@
 ---
 audit: machine-discovery/llms-txt-structure
-audit_id: "1.2, 1.3"
 category: machine-discovery
 source_file: packages/core/src/audits/machine-discovery/llms-txt-structure.ts
 slug: llms-txt-structure
-review_verdict: merge
-severity: low
 evidence_grade: C
 disposition: "merged 2026-08-22 (Plan 4, Task 4) — informative, weight 0"
 reviewed: 2026-08-22
+sources:
+  - llmstxt-spec-link
+  - llms-txt-core-source
+  - llms-txt-pypi
+  - lighthouse-llms-txt-audit-source
+  - google-ai-optimization-mythbusting
+  - chrome-lighthouse-llms-txt-doc
+  - evil-martians-llm-traffic
+  - s18
+  - perplexity-crawlers-docs
 ---
 
 # llms-txt-structure (`1.2`, `1.3`)

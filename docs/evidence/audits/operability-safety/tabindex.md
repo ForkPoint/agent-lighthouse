@@ -1,14 +1,16 @@
 ---
 audit: operability-safety/tabindex
-audit_id: "7.21"
 category: operability-safety
 source_file: packages/core/src/audits/operability-safety/tabindex.ts
 slug: tabindex
-review_verdict: fix
-severity: low
 evidence_grade: C
 disposition: "keep — fix required"
 reviewed: 2026-08-21
+sources:
+  - whatwg-tabindex
+  - playwright-mcp-repo
+  - chrome-devtools-mcp-tools
+  - probe-aria-snapshot-images
 ---
 
 # No positive tabindex (logical focus order) (`7.21`)

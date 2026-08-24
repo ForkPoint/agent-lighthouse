@@ -1,14 +1,19 @@
 ---
 audit: machine-discovery/rss-feed-content
-audit_id: "1.12"
 category: machine-discovery
 source_file: packages/core/src/audits/machine-discovery/rss-feed-content.ts
 slug: rss-feed-content
-review_verdict: fix
-severity: medium
 evidence_grade: C
 disposition: "keep — fix required"
 reviewed: 2026-08-21
+sources:
+  - rss-content-module
+  - rfc-4287-atom
+  - google-sitemap-formats
+  - rss-2-specification
+  - s18
+  - perplexity-crawlers-docs
+  - google-ai-optimization-mythbusting
 ---
 
 # rss-feed-content (`1.12`)

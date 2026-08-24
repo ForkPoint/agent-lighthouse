@@ -1,14 +1,32 @@
 ---
 audit: content-extraction/semantic-lists
-audit_id: "6.8, 6.13, 9.6"
 category: content-extraction
 source_file: packages/core/src/audits/content-extraction/semantic-lists.ts
 slug: semantic-lists
-review_verdict: fix
-severity: high
 evidence_grade: B
 disposition: "merged 2026-08-22 (Plan 4, Task 8) — absorbs definition-elements (6.13) and numbered-steps (9.6)"
 reviewed: 2026-08-22
+recommended_tier: scored
+consumers:
+  - trafilatura
+  - Mozilla Readability
+  - Cloudflare Markdown for Agents
+  - Playwright MCP snapshot
+  - Anthropic read_page
+  - browser-use
+signals:
+  - name: Semantic lists and tables versus div soup
+    grade: B
+    domain: semantic-dom-a11y
+sources:
+  - w3c-html-aam
+  - playwright-mcp-snapshots
+  - browser-use-clickable-elements
+  - trafilatura-corefunctions
+  - readability-src
+  - cloudflare-markdown-for-agents
+  - observation-reduction-paper
+  - mozilla-readability-source
 ---
 
 # semantic-lists (`6.8`, `6.13`, `9.6`)
@@ -60,9 +78,6 @@ The description promises to catch 'content formatted as styled divs instead of s
 **Evidence:** HTML-AAM makes lists and tables first-class in the tree that agents read: table→table, th→columnheader/rowheader, with list/listitem roles for ul/ol/li [w3c-html-aam]; Playwright's snapshot contents explicitly enumerate 'lists' and table structures [playwright-mcp-snapshots]. browser-use treats role='row'/'cell'/'gridcell' as interactive targets [browser-use-clickable-elements]. On the extraction side trafilatura ships include_tables enabled by default and include_formatting renders structure 'as markdown for text formats' [trafilatura-corefunctions], and Readability applies a dedicated list-aware threshold (listLength / innerText.length > 0.9) so genuinely list-shaped ul/ol survive _cleanConditionally while div stacks of links do not [mozilla-readability-source]. Cloudflare's markdown pipeline is the mass-market version of the same conversion, delivering an 80% token reduction while keeping headings, lists and tables [cloudflare-markdown-for-agents].
 
 **Counter-evidence:** No vendor doc and no study isolates the effect of list/table markup on LLM answer accuracy — the mechanism is well documented but the magnitude is not measured anywhere I could verify. ARIA is an accepted substitute: a div grid carrying role='table'/'row'/'cell' maps to the same accessibility tree nodes, so 'div soup' with correct roles is not penalised by a11y-tree consumers, and an audit that only looks for literal <table>/<ul> tags will produce false positives. Conversely raw-HTML consumers (which the observation-reduction study shows strong models sometimes prefer [observation-reduction-paper]) see the div tags either way. Definition lists (dl/dt/dd) in particular have no documented agent consumer beyond generic role mapping.
-**Consumers:** trafilatura, Mozilla Readability, Cloudflare Markdown for Agents, Playwright MCP snapshot, Anthropic read_page, browser-use · **Recommended tier:** scored
-
-**Sources:** [HTML Accessibility API Mappings 1.0](https://www.w3.org/TR/html-aam-1.0/) (verified 2026-08-20) · [Snapshots — Playwright MCP](https://playwright.dev/mcp/snapshots) (verified 2026-08-20) · [browser-use ClickableElementDetector source](https://raw.githubusercontent.com/browser-use/browser-use/main/browser_use/dom/serializer/clickable_elements.py) (verified 2026-08-20) · [trafilatura core functions documentation](https://trafilatura.readthedocs.io/en/latest/corefunctions.html) (verified 2026-08-20) · [mozilla/readability Readability.js source](https://raw.githubusercontent.com/mozilla/readability/main/Readability.js) (verified 2026-08-20) · [Introducing Markdown for Agents](https://blog.cloudflare.com/markdown-for-agents/) (verified 2026-08-20) · [Read More, Think More: Revisiting Observation Reduction for Web Agents](https://arxiv.org/abs/2604.01535) (verified 2026-08-20)
 
 ## Review history
 

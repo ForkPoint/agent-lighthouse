@@ -1,14 +1,15 @@
 ---
 audit: agent-interfaces/openapi-endpoints
-audit_id: "5.2"
 category: agent-interfaces
 source_file: packages/core/src/audits/agent-interfaces/openapi-endpoints.ts
 slug: openapi-endpoints
-review_verdict: fix
-severity: medium
 evidence_grade: B
 disposition: "keep — fix required"
 reviewed: 2026-08-21
+sources:
+  - ms-copilot-openapi-guidance
+  - openai-gpt-actions-openapi
+  - openapi-31-spec
 ---
 
 # openapi-endpoints (`5.2`)

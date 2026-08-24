@@ -1,14 +1,30 @@
 ---
 audit: machine-discovery/rss-feed
-audit_id: "1.11, 4.16"
 category: machine-discovery
 source_file: packages/core/src/audits/machine-discovery/rss-feed.ts
 slug: rss-feed
-review_verdict: fix
-severity: medium
 evidence_grade: B
 disposition: "merged 2026-08-22 (Plan 4, Task 4) — absorbs rss-feed-link (4.16)"
 reviewed: 2026-08-22
+recommended_tier: scored
+consumers:
+  - Googlebot (accepts RSS 2.0 and Atom 1.0 as sitemap formats)
+  - Applebot (per archived Apple documentation)
+  - NLWeb / MCP-exposed site agents
+signals:
+  - name: RSS/Atom feed published (with autodiscovery link) as an AI content-ingestion surface
+    grade: B
+    domain: discovery-infra
+sources:
+  - google-sitemap-formats
+  - apple-applebot-archived-2025
+  - nlweb-repo-howto
+  - rfc-4287-atom
+  - google-pagination-ecommerce
+  - openai-feed-spec-confirm
+  - applebot-doc
+  - s18
+  - anthropic-crawler-docs
 ---
 
 # rss-feed (`1.11`)
@@ -55,9 +71,6 @@ Looks for a feed via <link rel=alternate> then /rss.xml, /feed.xml, /atom.xml. F
 **Evidence:** Google's sitemap documentation states outright that 'Google accepts RSS 2.0 and Atom 1.0 feeds' as valid sitemap formats alongside XML and mRSS — meaning a feed is not merely a syndication artifact but a first-class, vendor-documented URL-discovery channel into the index that gates AI Overviews and AI Mode eligibility. Apple's archived Applebot page independently listed 'RSS feeds' among the resources Applebot accesses. Microsoft's NLWeb project builds its ingestion layer directly on feeds, arguing that 'Schema.org and related semi-structured formats like RSS — used by over 100 million websites — have become not just de facto syndication mechanisms, but also a semantic layer for the web', and its tooling consumes RSS alongside JSON-LD and XML sitemaps while exposing the result over MCP. Atom itself is a ratified IETF Standards Track specification (RFC 4287), so the format carries no interoperability risk. Google's own pagination guidance also recommends 'sitemaps or feeds' as the fallback when JavaScript-driven navigation is not crawlable.
 
 **Counter-evidence:** No LLM vendor — OpenAI, Anthropic, or Perplexity — documents consuming RSS or Atom feeds anywhere. Apple's current June 2026 Applebot page dropped the RSS mention entirely. OpenAI's Agentic Commerce product feed spec goes further and explicitly excludes syndication formats: 'JSON, spreadsheet, XML, RSS, and Atom sources are not part of this compatibility path.' NLWeb adoption remains negligible in absolute terms. RFC 4287 does not itself define HTML <link rel=alternate> autodiscovery, so the autodiscovery half of this audit rests on convention rather than the ratified spec. Net: the feed is a documented discovery input for Google and (historically) Apple, but there is no evidence any LLM ingests feeds directly.
-**Consumers:** Googlebot (accepts RSS 2.0 and Atom 1.0 as sitemap formats), Applebot (per archived Apple documentation), NLWeb / MCP-exposed site agents · **Recommended tier:** scored
-
-**Sources:** [Build and Submit a Sitemap | Google Search Central](https://developers.google.com/search/docs/crawling-indexing/sitemaps/build-sitemap) (verified 2026-08-20) · [About Applebot — archived snapshot, 2 March 2025 (Wayback Machine)](https://web.archive.org/web/20250302012726/https://support.apple.com/en-us/119829) (verified 2026-08-20) · [NLWeb — reference implementation](https://github.com/nlweb-ai/NLWeb) (verified 2026-08-20) · [RFC 4287 — The Atom Syndication Format](https://www.rfc-editor.org/rfc/rfc4287.html) (verified 2026-08-20) · [Ecommerce Pagination and Incremental Page Loading | Google Search Central](https://developers.google.com/search/docs/specialty/ecommerce/pagination-and-incremental-page-loading) (verified 2026-08-20) · [Product Feed Spec — Agentic Commerce | OpenAI Developers](https://developers.openai.com/commerce/specs/feed) (verified 2026-08-20) · [About Applebot](https://support.apple.com/en-us/119829) (verified 2026-08-20) · [Overview of OpenAI Crawlers](https://developers.openai.com/api/docs/bots) (verified 2026-08-20) · [Does Anthropic crawl data from the web, and how can site owners block the crawler?](https://support.claude.com/en/articles/8896518) (verified 2026-08-20)
 
 ## Absorbed evidence — rss-feed-link (4.16)
 

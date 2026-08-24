@@ -1,14 +1,32 @@
 ---
 audit: agent-interfaces/agents-json
-audit_id: "5.10"
 category: agent-interfaces
 source_file: packages/core/src/audits/agent-interfaces/agents-json.ts
 slug: agents-json
-review_verdict: delete
-severity: low
 evidence_grade: C
 disposition: "informative, weight 0 (approved 2026-08-21)"
 reviewed: 2026-08-24
+recommended_tier: scored
+tier_rationale: "Recommended scored on the strength of the published spec; ships informative because the 2026-08-21 redemption pass returned \"confirmed dead\" for the site-facing signal and no consumer was found (contradiction sweep, 2026-08-24)."
+consumers:
+  - all clients following RFC 8615 well-known conventions
+signals:
+  - name: agents-json
+    grade: D
+    domain: agent-action-surfaces
+  - name: agent-surface-soft-404-validation
+    grade: A
+    domain: agent-action-surfaces
+sources:
+  - agents-json-com-dead
+  - wildcard-agents-json-repo
+  - iana-well-known-uris
+  - apievangelist-api-catalog-adoption
+  - rfc-9727
+  - mcp-ext-server-card-discovery
+  - probe-vercel-api-catalog
+  - probe-vercel-ai-catalog
+  - probe-zapier-api-catalog
 ---
 
 # agents-json (`5.10`)
@@ -64,9 +82,6 @@ Checks a real-but-stillborn convention, and checks it wrong: it validates nothin
 **Evidence:** agents.json was a genuine 2025 proposal — an open spec layered on OpenAPI adding flows (chains of calls), links between actions, and agent-facing metadata — and it accumulated 1,314 stars and 66 forks, so it was not fringe at its peak.
 
 **Counter-evidence:** The project is dead by every measurable signal, checked 2026-08-20. The repository wild-card-ai/agents-json has not been pushed since 2025-08-21 — twelve months stale — and its description field is now empty. Its declared homepage https://agents-json.com FAILS TO RESOLVE entirely (curl exit code 6 / HTTP 000). The documentation host docs.wild-card.ai serves an EXPIRED TLS certificate (valid 2026-01-09 to 2026-04-09, i.e. expired four months ago) so the spec itself is unreachable over HTTPS without an error. The spec version never advanced past 0.1.0. No agent vendor has ever documented consuming it, and there is no IANA registration. Auditing for agents.json would tell site owners to implement a specification whose own documentation site has been broken since April.
-**Consumers:** none-known · **Recommended tier:** delete
-
-**Sources:** [wild-card-ai/agents-json](https://github.com/wild-card-ai/agents-json) (verified 2026-08-20) · [IANA Well-Known URIs registry](https://www.iana.org/assignments/well-known-uris/well-known-uris.xhtml) (verified 2026-08-20)
 
 ### Signal: agent-surface-soft-404-validation — grade A (agent-action-surfaces)
 
@@ -75,9 +90,6 @@ Checks a real-but-stillborn convention, and checks it wrong: it validates nothin
 **Evidence:** This is a meta-signal about how the other audits must be implemented, and it is the best-evidenced claim in the whole domain. The May 2026 API Evangelist study of 74 providers found that of the ~72 that did not serve a valid catalog, only TWO returned a clean 404 while SIXTY-EIGHT returned HTTP 200 with an HTML body, and concluded: 'an agent following the standard would get a 200, try to parse a LinkSet out of the body, fail, and have no useful recourse — an HTML 200 at a well-known path lies, which is worse than a 404.' My own probe on 2026-08-20 reproduced this independently across a different path set: linear.app returned 200 text/html for /openapi.json; github.com, linear.app, vercel.com and zapier.com returned 200 text/html for /mcp; zapier.com returned 200 text/html for /.well-known/ai-plugin.json. A status-code-only scanner would have reported all of these as adoption. Correct rule: require a JSON/YAML/linkset content-type, require the body to parse, and where a spec names a media type prefer it (application/ai-catalog+json for AI catalogs, application/linkset+json with the RFC 9727 profile for api-catalog, application/mcp-server-card+json for card entries) — Vercel demonstrates all of this is achievable in production.
 
 **Counter-evidence:** None found — this is a validation-correctness requirement, not a contested adoption claim. The only nuance is that content negotiation is legitimate: RFC 9727 permits additional formats beyond the mandatory Linkset, so an audit should send an explicit Accept header before concluding a publisher is non-conformant, and should not penalise a clean 404 (which is honest) the way it penalises an HTML 200 (which is a lie).
-**Consumers:** all clients following RFC 8615 well-known conventions · **Recommended tier:** scored
-
-**Sources:** [Only Four API Providers Publish a Real .well-known/api-catalog Right Now](https://apievangelist.com/blog/2026/05/22/four-providers-publishing-well-known-api-catalog/) (verified 2026-08-20) · [RFC 9727 — api-catalog: A Well-Known URI and Link Relation to Help Discovery of APIs](https://www.rfc-editor.org/rfc/rfc9727.html) (verified 2026-08-20) · [experimental-ext-server-card — docs/discovery.md](https://raw.githubusercontent.com/modelcontextprotocol/experimental-ext-server-card/main/docs/discovery.md) (verified 2026-08-20) · [Live deployment: Vercel /.well-known/api-catalog (RFC 9727)](https://vercel.com/.well-known/api-catalog) (verified 2026-08-20) · [Live deployment: Vercel /.well-known/ai-catalog.json](https://vercel.com/.well-known/ai-catalog.json) (verified 2026-08-20) · [Live deployment: Zapier /.well-known/api-catalog](https://zapier.com/.well-known/api-catalog) (verified 2026-08-20)
 
 ## Adversarial redemption research (2026-08-21)
 

@@ -72,6 +72,30 @@ function parseFrontmatter(source) {
   return out;
 }
 
+/**
+ * Every source id the registry defines.
+ *
+ * A dossier stores `sources:` as ids and nothing else, so an id that resolves
+ * to no record would publish a page with a missing citation. Caught here rather
+ * than in the website build, because the registry and the dossiers are both
+ * repository data and this is the script that proves they agree.
+ */
+const registryIds = new Set(
+  JSON.parse(readFileSync(resolve(repoRoot, 'docs/evidence/sources.json'), 'utf8')).sources.map(
+    (source) => source.id,
+  ),
+);
+
+/** The `sources:` ids of one dossier, read off the raw frontmatter block. */
+function sourceIds(text) {
+  const block = /^sources:\n((?:\s+- .*\n)+)/m.exec(text)?.[1];
+  if (!block) return [];
+  return block
+    .trimEnd()
+    .split('\n')
+    .map((line) => line.replace(/^\s*- /, '').trim());
+}
+
 /** @type {string[]} */
 const violations = [];
 let checked = 0;
@@ -99,6 +123,29 @@ for (const registrations of Object.values(defaultConfig.audits)) {
     if (!front) {
       violations.push(`${id}: dossier has no YAML frontmatter — ${meta.dossier}`);
       continue;
+    }
+
+    const unknown = sourceIds(readFileSync(dossierPath, 'utf8')).filter(
+      (sourceId) => !registryIds.has(sourceId),
+    );
+    if (unknown.length > 0) {
+      violations.push(
+        `${id}: sources: names ${unknown.length} id(s) the registry does not define — ` +
+          `${unknown.join(', ')} (${meta.dossier})`,
+      );
+    }
+
+    // The research's own recommendation, and the tier that actually shipped.
+    // They are allowed to differ — the contradiction sweep overrode eight of
+    // them on purpose — but a difference has to be written down, or the next
+    // reader cannot tell a decision from a drift.
+    const recommended = front.recommended_tier;
+    const tier = meta.tier ?? 'scored';
+    if (recommended && recommended !== tier && !front.tier_rationale) {
+      violations.push(
+        `${id}: ships tier "${tier}" but its dossier recommends "${recommended}" ` +
+          `with no tier_rationale to say why (${meta.dossier})`,
+      );
     }
 
     if (front.evidence_grade !== meta.evidenceGrade) {

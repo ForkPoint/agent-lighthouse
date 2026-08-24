@@ -1,4 +1,6 @@
 import { describe, it, expect } from 'vitest';
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { defaultConfig } from '../audit-config';
 import { AuditMetaSchema } from '../schemas';
 import { weightForGrade } from '../scorer';
@@ -88,5 +90,29 @@ describe('registry-wide meta invariants', () => {
       .filter((m) => m.tier !== 'scored' && m.scoreDisplayMode !== 'informative')
       .map((m) => `${m.id} (tier=${m.tier}, scoreDisplayMode=${m.scoreDisplayMode})`);
     expect(divergent).toEqual([]);
+  });
+
+  /**
+   * The bug class the 2026-08-24 contradiction sweep found by hand: an audit
+   * shipping at a tier its own research never recommended, with nothing in the
+   * repository saying who decided otherwise.
+   *
+   * The two are allowed to differ — the sweep overrode eight recommendations
+   * deliberately — so the invariant is not equality. It is that a difference is
+   * written down. `tier_rationale` is that record.
+   */
+  it('records a rationale wherever the shipped tier overrides the researched one', () => {
+    const root = resolve(__dirname, '../../../..');
+    const undocumented = allMetas
+      .filter((m) => m.dossier)
+      .flatMap((m) => {
+        const front = readFileSync(resolve(root, m.dossier!), 'utf8').split('\n---')[0]!;
+        const recommended = /^recommended_tier:\s*"?([a-z]+)"?/m.exec(front)?.[1];
+        const tier = m.tier ?? 'scored';
+        if (!recommended || recommended === tier) return [];
+        if (/^tier_rationale:/m.test(front)) return [];
+        return [`${m.id} (ships ${tier}, dossier recommends ${recommended})`];
+      });
+    expect(undocumented).toEqual([]);
   });
 });

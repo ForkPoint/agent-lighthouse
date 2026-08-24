@@ -1,14 +1,23 @@
 ---
 audit: access-crawl-control/sensitive-paths
-audit_id: "2.23"
 category: access-crawl-control
 source_file: packages/core/src/audits/access-crawl-control/sensitive-paths.ts
 slug: sensitive-paths
-review_verdict: delete
-severity: high
 evidence_grade: A
 disposition: "kept — rewritten to crawl hygiene 2026-08-22 (Plan 4, Task 11)"
 reviewed: 2026-08-22
+signals:
+  - name: path-level robots.txt Disallow honoured by named AI crawlers
+    grade: A
+    domain: crawler-permissions
+sources:
+  - rfc9309
+  - applebot-doc
+  - meta-web-crawlers-docs
+  - anthropic-crawlers
+  - s18
+  - perplexity-bots-docs
+  - google-common-crawlers
 ---
 
 # sensitive-paths (`2.23`)
@@ -107,8 +116,6 @@ Neither the redeem note nor the REWORK-TODO row asks for a tier change — the r
 - OpenAI directs publishers to robots.txt for GPTBot and OAI-SearchBot opt-outs — https://developers.openai.com/api/docs/bots (verified 2026-08-21)
 
 **Counter-evidence:** The mechanism is real; the audit's original *benefit* — security and privacy, keeping internal endpoints out of training data — is contradicted by the standard it rests on. RFC 9309 states outright that "The Robots Exclusion Protocol is not a substitute for valid content security measures", and warns that listing paths makes them publicly discoverable, directing operators to HTTP authentication instead. The old guidance therefore told site owners to publish a map of their admin surface. The agent traffic most likely to reach `/admin/` or `/api/` is also exempt: OpenAI states that for `ChatGPT-User` "Because these actions are initiated by a user, robots.txt rules may not apply", and Perplexity states that `Perplexity-User` "generally ignores robots.txt rules" (https://docs.perplexity.ai/guides/bots, verified 2026-08-21). Finally there is a domain-fit limit that shaped the rewrite: `/api/` is precisely the surface an agent wants, so a high-priority failure telling every site to disallow it works against the outcome this project exists to improve. All four points are why the audit was rewritten to crawl hygiene over observed URL families, at low priority, rather than kept as a security check.
-
-**Sources:** [RFC 9309: Robots Exclusion Protocol](https://www.rfc-editor.org/rfc/rfc9309.html) (verified 2026-08-21) · [About Applebot](https://support.apple.com/en-us/119829) (verified 2026-08-21) · [Meta web crawlers](https://developers.facebook.com/docs/sharing/webmasters/web-crawlers/) (verified 2026-08-21) · [OpenAI crawlers and user agents](https://developers.openai.com/api/docs/bots) (verified 2026-08-21) · [Does Anthropic crawl data from the web?](https://support.claude.com/en/articles/8896518-does-anthropic-crawl-data-from-the-web-and-how-can-site-owners-block-the-crawler) (verified 2026-08-21) · [PerplexityBot and Perplexity-User](https://docs.perplexity.ai/guides/bots) (verified 2026-08-21) · [Google crawlers and fetchers overview](https://developers.google.com/search/docs/crawling-indexing/google-common-crawlers) (verified 2026-08-21)
 
 ## Adversarial redemption research (2026-08-21)
 

@@ -8,6 +8,13 @@ tier: scored
 disposition: "new in v2 — graduated from proposal 2026-08-23"
 reviewed: 2026-08-20
 graduated: 2026-08-23
+sources:
+  - lost-in-the-middle-arxiv
+  - vercel-rise-of-ai-crawler
+  - s18
+  - openai-searchbot-ips
+  - tiktoken
+  - readability-repo
 ---
 
 

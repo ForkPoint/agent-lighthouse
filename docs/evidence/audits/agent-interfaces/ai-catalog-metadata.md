@@ -1,14 +1,19 @@
 ---
 audit: agent-interfaces/ai-catalog-metadata
-audit_id: "5.8"
 category: agent-interfaces
 source_file: packages/core/src/audits/agent-interfaces/ai-catalog-metadata.ts
 slug: ai-catalog-metadata
-review_verdict: delete
-severity: high
 evidence_grade: B
 disposition: "kept — rewritten to ARD §4.2 metadata 2026-08-22 (Plan 4, Task 10)"
 reviewed: 2026-08-22
+signals:
+  - name: ARD entry metadata read by a discovery client
+    grade: B
+    domain: agent-tools
+sources:
+  - hf-discover
+  - ard-spec-repo
+  - google-ard-announcement
 ---
 
 # ai-catalog-metadata (`5.8`)
@@ -87,8 +92,6 @@ Source: the [redemption dossier's verdict](../../deletions/agent-tools/ai-catalo
 - ARD is a Linux Foundation working-group specification with Google, Microsoft and Hugging Face among its contributors, published 2026-06-17 under Apache 2.0 — https://developers.googleblog.com/announcing-the-agentic-resource-discovery-specification/ (verified 2026-08-24)
 
 **Counter-evidence:** No crawler is documented to downrank a site for thin catalog metadata. The consequence is mechanical — the client matches less text — not a published ranking signal, and the hosted Hugging Face server does not fetch arbitrary well-known files at all: "Navigation is intentionally not exposed by the hosted server", so the consuming path is a user-driven CLI rather than a background crawler. The specification is also a draft and says so. Historically this audit scored an invented field list (`owner`, `contact`, `lastUpdated`, `services`) that appears in no revision of the spec and in none of the four live manifests checked — the ARD conformance example, neon.com, weaviate.io and the Shopware core template — so a spec-perfect manifest scored zero until the 2026-08-22 rewrite.
-
-**Sources:** [ARD specification](https://github.com/ards-project/ard-spec) (verified 2026-08-24) · [huggingface/hf-discover](https://github.com/huggingface/hf-discover) (verified 2026-08-24) · [Announcing the Agentic Resource Discovery specification](https://developers.googleblog.com/announcing-the-agentic-resource-discovery-specification/) (verified 2026-08-24)
 
 ## Adversarial redemption research (2026-08-21)
 

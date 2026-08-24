@@ -1,14 +1,18 @@
 ---
 audit: agent-interfaces/ai-catalog-urls
-audit_id: "5.9"
 category: agent-interfaces
 source_file: packages/core/src/audits/agent-interfaces/ai-catalog-urls.ts
 slug: ai-catalog-urls
-review_verdict: delete
-severity: high
 evidence_grade: B
 disposition: "kept — rewritten to ARD entries[].url liveness 2026-08-22 (Plan 4, Task 10)"
 reviewed: 2026-08-22
+signals:
+  - name: "ARD `entries[].url` dereferenced by real clients"
+    grade: B
+    domain: agent-tools
+sources:
+  - hf-discover
+  - ard-spec-repo
 ---
 
 # ai-catalog-urls (`5.9`)
@@ -85,8 +89,6 @@ Source: the [redemption dossier's verdict](../../deletions/agent-tools/ai-catalo
 - ARD §4.2 requires exactly one of `url` or `data` per entry, so an entry that embeds its artifact has no endpoint to dereference and is fully conformant — https://github.com/ards-project/ard-spec (verified 2026-08-24)
 
 **Counter-evidence:** No vendor document states that a crawler penalises or downranks a site for a dead catalog url. The consequence is mechanical — traversal stops, the tool call fails — rather than a published ranking signal, and the federation-following behaviour lives in a user-driven client: Hugging Face's hosted server states that "Navigation is intentionally not exposed by the hosted server". ARD itself is a draft (v0.9). The inline-`data` case above is also a live false-positive risk that any liveness check must respect, and the pre-2026-08-22 implementation was unreachable on real sites for the opposite reason: it aborted unless the manifest exposed a `services` array, which no spec or deployment uses.
-
-**Sources:** [ARD specification](https://github.com/ards-project/ard-spec) (verified 2026-08-24) · [huggingface/hf-discover](https://github.com/huggingface/hf-discover) (verified 2026-08-24)
 
 ## Adversarial redemption research (2026-08-21)
 

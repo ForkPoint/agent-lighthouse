@@ -1,14 +1,16 @@
 ---
 audit: operability-safety/form-actionability
-audit_id: "5.27, 5.22"
 category: operability-safety
 source_file: packages/core/src/audits/operability-safety/form-actionability.ts
 slug: form-actionability
-review_verdict: keep
-severity: medium
 evidence_grade: A
 disposition: "merged 2026-08-22 (Plan 4, Task 8) — absorbs webmcp-input-quality (5.22)"
 reviewed: 2026-08-22
+sources:
+  - anthropic-browser-use-tool
+  - playwright-mcp-repo
+  - w3c-accname-12
+  - webmcp-declarative-explainer
 ---
 
 # form-actionability (`5.27`, `5.22`)

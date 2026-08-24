@@ -8,6 +8,11 @@ tier: scored
 disposition: "new in v2 — graduated from proposal 2026-08-22"
 reviewed: 2026-08-20
 graduated: 2026-08-22
+sources:
+  - openai-feed-spec-confirm
+  - openai-commerce-index
+  - google-merchant-spec
+  - google-auto-item-updates
 ---
 
 

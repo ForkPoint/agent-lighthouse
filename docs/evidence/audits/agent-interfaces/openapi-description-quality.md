@@ -1,14 +1,17 @@
 ---
 audit: agent-interfaces/openapi-description-quality
-audit_id: "5.26"
 category: agent-interfaces
 source_file: packages/core/src/audits/agent-interfaces/openapi-description-quality.ts
 slug: openapi-description-quality
-review_verdict: fix
-severity: low
 evidence_grade: A
 disposition: "keep — fix required"
 reviewed: 2026-08-21
+sources:
+  - fastmcp-openapi
+  - openai-gpt-actions-intro
+  - anthropic-tool-use-overview
+  - mcp-server-tools
+  - openapi-31-spec
 ---
 
 # openapi-description-quality (`5.26`)

@@ -1,14 +1,34 @@
 ---
 audit: answer-readiness/trust-signals
-audit_id: "10.7"
 category: answer-readiness
 source_file: packages/core/src/audits/answer-readiness/trust-signals.ts
 slug: trust-signals
-review_verdict: delete
-severity: high
 evidence_grade: B
 disposition: "kept — rebuilt on the GEO-benchmark factors 2026-08-22 (Plan 4, Task 11)"
 reviewed: 2026-08-24
+recommended_tier: informative
+tier_rationale: "Recommended informative on the pre-rebuild evidence. Ships scored on the 2026-08-22 rebuild, which kept only the factors carrying a measurement and dropped the unmeasured comparison factor (contradiction sweep, 2026-08-24)."
+consumers:
+  - "Google Search human quality raters (documented, calibration only)"
+  - none-known as an algorithmic input at any AI engine
+signals:
+  - name: Review and rating signals (AggregateRating / reviewCount)
+    grade: B
+    domain: geo-authority
+  - name: E-E-A-T applicability to AI engines
+    grade: C
+    domain: geo-authority
+sources:
+  - openai-product-feed-spec
+  - google-review-snippet-doc
+  - google-qrg-2025
+  - google-ai-features-trust
+  - google-helpful-content
+  - geo-paper-arxiv
+  - geo-critical-survey-arxiv
+  - ahrefs-aio-top10
+  - semrush-most-cited-domains
+  - anthropic-crawlers
 ---
 
 # trust-signals (`10.7`)
@@ -114,9 +134,6 @@ On the redeem note's instruction that "its weight should also be demoted relativ
 **Evidence:** This is the one authority signal in the domain with a named AI consumer that explicitly enumerates the fields. OpenAI's Product Feed Spec for Agentic Commerce documents review_count ('Number of product reviews'), star_rating ('Average review score', 0–5), store_review_count ('Number of brand or store reviews') and store_star_rating as Optional fields, and marks reviews (entries with title, content, ratings) and q_and_a (FAQ pairs) as RECOMMENDED — establishing that ChatGPT's shopping surface consumes rating data as a first-class input. brand is a REQUIRED field. Google's review-snippet doc documents AggregateRating for Product, LocalBusiness, Recipe, Course, Event, SoftwareApplication, Book, Movie and Organization, requiring ratingValue plus at least one of ratingCount or reviewCount. Google's Quality Rater Guidelines devote §3.3.2 to 'Customer Reviews as Reputation Information'. For a commerce page, exposing correct rating markup is documented, actionable and low-risk.
 
 **Counter-evidence:** Three important scoping limits. First, OpenAI ingests ratings via a pushed merchant FEED over an allow-listed HTTPS endpoint — not by scraping on-page schema — so an on-page AggregateRating audit does not actually feed ChatGPT shopping, and every rating field in that spec is marked Optional. Second, Google's review snippet is a SERP appearance feature; Google's AI-features doc states there is 'no special schema.org structured data that you need to add' for AI Overviews or AI Mode, so no documented path from on-page ratings to AI citation exists. Third and most serious for an auditing tool: Google prohibits review structured data 'if the entity that's being reviewed controls the reviews about itself' (LocalBusiness and Organization), plus fake or undisclosed incentivized reviews and reviews aggregated from other sites. An audit that awards points for the mere presence of self-hosted AggregateRating actively pushes sites toward a documented policy violation and a manual action. There is no evidence at all that rating markup affects citation of non-commerce editorial content. Score only on product/offer/local pages, and pair the check with a self-serving-review guard.
-**Consumers:** ChatGPT shopping (documented: OpenAI Product Feed Spec ingests review_count, star_rating, store_review_count, store_star_rating, reviews), Google Search rich results (documented: Review / AggregateRating review snippets) · **Recommended tier:** scored
-
-**Sources:** [Product Feed Spec — Products (Agentic Commerce)](https://developers.openai.com/commerce/specs/file-upload/products) (verified 2026-08-20) · [Review Snippet (Review, AggregateRating) Structured Data](https://developers.google.com/search/docs/appearance/structured-data/review-snippet) (verified 2026-08-20) · [Google Search Quality Rater Guidelines (General Guidelines), September 11, 2025](https://guidelines.raterhub.com/searchqualityevaluatorguidelines.pdf) (verified 2026-08-20) · [AI Features and Your Website](https://developers.google.com/search/docs/appearance/ai-features) (verified 2026-08-20)
 
 ### Signal: E-E-A-T applicability to AI engines — grade C (geo-authority)
 
@@ -127,9 +144,6 @@ On the redeem note's instruction that "its weight should also be demoted relativ
 **Evidence:** E-E-A-T is real, well-documented, and worth surfacing as guidance — the auditable proxies map onto genuine Google documentation. The Search Quality Rater Guidelines of 11 September 2025 (verified by direct PDF read) devote §3.4 to E-E-A-T, §3.3 to reputation of the website and content creators, §5.1 to 'Lacking E-E-A-T', §7.3 to 'High Level of E-E-A-T' and §8.3 to 'Very High Level', alongside §2.5.3 on finding About Us and contact information and §4.5.1/§5.5 on inadequate information about the website or content creator. Google's helpful-content doc adds that 'trust is most important' among the four. Since Google states AI Overviews and AI Mode require no optimization beyond core Search, E-E-A-T-aligned quality plausibly reaches AIO source selection transitively. Presenting these as trust hygiene is defensible.
 
 **Counter-evidence:** Decisive against SCORING it. Google states verbatim: 'While E-E-A-T itself isn't a specific ranking factor, using a mix of factors that can identify content with good E-E-A-T is useful' — there is no E-E-A-T score to measure, and the QRG is a human-rater calibration document, not an algorithm specification (its verified table of contents contains no AI Overviews rating section, contrary to widespread secondary claims). No non-Google engine references E-E-A-T anywhere: Anthropic's crawler documentation contains zero content-selection guidance of any kind. The GEO paper's 'Authoritative' rewrite — the closest experimental analogue — reached only 21.3 vs 19.3 baseline, and the authors state they 'find no significant improvement, demonstrating that Generative Engines are already somewhat robust to such changes.' The 2026 critical survey finds authority signals 'weak and unstable' and warns they 'may conflict with credibility'. Ahrefs shows only 38% of AI Overview citations come from top-10 ranking pages (down from 76% in July 2025), so even Google's own ranking quality is now a weak predictor of AIO citation. Semrush's 100M-citation study shows source selection is dominated by platform-level rebalancing, not page-level trust attributes. Report E-E-A-T proxies as advice; never award or deduct points for an 'E-E-A-T score'.
-**Consumers:** Google Search human quality raters (documented, calibration only), none-known as an algorithmic input at any AI engine · **Recommended tier:** informative
-
-**Sources:** [Creating Helpful, Reliable, People-First Content](https://developers.google.com/search/docs/fundamentals/creating-helpful-content) (verified 2026-08-20) · [Google Search Quality Rater Guidelines (General Guidelines), September 11, 2025](https://guidelines.raterhub.com/searchqualityevaluatorguidelines.pdf) (verified 2026-08-20) · [AI Features and Your Website](https://developers.google.com/search/docs/appearance/ai-features) (verified 2026-08-20) · [GEO: Generative Engine Optimization (Aggarwal, Murahari, Rajpurohit, Kalyan, Narasimhan, Deshpande)](https://arxiv.org/abs/2311.09735) (verified 2026-08-20) · [Optimizing Visibility in Generative Engines: A Critical Survey of Generative Engine Optimization (2023–2026)](https://arxiv.org/html/2607.14035v1) (verified 2026-08-20) · [Update: 38% of AI Overview Citations Pull From The Top 10](https://ahrefs.com/blog/ai-overview-citations-top-10/) (verified 2026-08-20) · [The Most-Cited Domains in AI: A 3-Month Study](https://www.semrush.com/blog/most-cited-domains-ai/) (verified 2026-08-20) · [Does Anthropic crawl data from the web, and how can site owners block the crawler?](https://support.claude.com/en/articles/8896518-does-anthropic-crawl-data-from-the-web-and-how-can-site-owners-block-the-crawler) (verified 2026-08-20)
 
 ## Adversarial redemption research (2026-08-21)
 

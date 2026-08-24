@@ -1,14 +1,16 @@
 ---
 audit: operability-safety/no-blocking-captcha
-audit_id: "5.18"
 category: operability-safety
 source_file: packages/core/src/audits/operability-safety/no-blocking-captcha.ts
 slug: no-blocking-captcha
-review_verdict: fix
-severity: high
 evidence_grade: A
 disposition: "keep — fix required"
 reviewed: 2026-08-21
+sources:
+  - openai-computer-use-guide
+  - hcaptcha-docs
+  - google-recaptcha-display
+  - anthropic-browser-use-tool
 ---
 
 # no-blocking-captcha (`5.18`)

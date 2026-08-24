@@ -1,14 +1,30 @@
 ---
 audit: content-extraction/server-responsiveness
-audit_id: "1.19, 8.12"
 category: content-extraction
 source_file: packages/core/src/audits/content-extraction/server-responsiveness.ts
 slug: server-responsiveness
-review_verdict: fix
-severity: medium
 evidence_grade: B
 disposition: "merged + rewritten 2026-08-22 (Plan 4, Task 8) — absorbs fast-response-time (8.12)"
 reviewed: 2026-08-22
+recommended_tier: scored
+consumers:
+  - "Googlebot / Google AI Overviews & AI Mode"
+  - OAI-SearchBot
+  - ChatGPT-User
+  - GPTBot
+  - ClaudeBot
+  - PerplexityBot
+signals:
+  - name: TTFB / server response time effect on AI crawl rate and agent abandonment
+    grade: B
+    domain: technical-infra
+sources:
+  - google-crawl-budget-docs
+  - google-http-status-codes
+  - anthropic-crawlers
+  - ipullrank-page-speed-ai
+  - implicator-chatgpt-499-report
+  - vercel-rise-of-ai-crawler
 ---
 
 # server-responsiveness (`1.19`, `8.12`)
@@ -63,9 +79,6 @@ Fails when any page's TTFB exceeds 1800ms, warns above an 800ms average. The und
 **Evidence:** Documented first-party for the Google side: 'If the site slows down (latency increases or response times become longer)... the limit goes down and Google crawls less', with the crawl capacity limit explicitly described as hostload. Google also documents that 5xx and 429 responses 'prompt Google's crawlers to temporarily slow down with crawling', proportional to the share of erroring URLs — which matters for AI because AI Overviews/AI Mode eligibility flows through that same index. Anthropic corroborates load-sensitivity indirectly by being the one AI vendor that explicitly supports robots.txt Crawl-delay. On the AI-specific side the evidence is empirical but second-party: Profound's April 2026 analysis of a random 700K-page sample found pages with >75% fetch-failure rates received roughly 18x fewer citation events, many zero; log-based reporting attributes clusters of HTTP 499s to OAI-SearchBot/ChatGPT-User/GPTBot on slow origins.
 
 **Counter-evidence:** No AI vendor publishes a timeout threshold — not OpenAI, not Anthropic, not Perplexity — so any specific number (the widely repeated '1–5 second' budget) is unsourced folklore and must not be cited as vendor guidance. The 499 research is reported second-hand with no published sample size or methodology, and the Profound figure is a correlation between failure rate and citation count that is plausibly confounded by site quality and authority. Note also the direction is not purely 'faster is better for the publisher': Vercel's data shows GPTBot and ClaudeBot generating 569M and 370M requests/month respectively on one network, so a faster origin also invites more uncompensated crawl.
-**Consumers:** Googlebot / Google AI Overviews & AI Mode, OAI-SearchBot, ChatGPT-User, GPTBot, ClaudeBot, PerplexityBot · **Recommended tier:** scored
-
-**Sources:** [Large site owner's guide to managing your crawl budget](https://developers.google.com/search/docs/crawling-indexing/large-site-managing-crawl-budget) (verified 2026-08-20) · [How HTTP status codes, and network and DNS errors affect Google Search](https://developers.google.com/search/docs/crawling-indexing/http-network-errors) (verified 2026-08-20) · [Does Anthropic crawl data from the web, and how can site owners block the crawler?](https://support.claude.com/en/articles/8896518-does-anthropic-crawl-data-from-the-web-and-how-can-site-owners-block-the-crawler) (verified 2026-08-20) · [Quick Tip: How Page Speed Impacts ChatGPT and Perplexity Visibility](https://ipullrank.com/page-speed-impacts) (verified 2026-08-20) · [ChatGPT Search Abandons Slow Sites With 499 Timeout Errors](https://www.implicator.ai/is-chatgpt-quietly-reshaping-the-web-by-penalizing-slow-sites/) (verified 2026-08-20) · [The rise of the AI crawler](https://vercel.com/blog/the-rise-of-the-ai-crawler) (verified 2026-08-20)
 
 ## Review history
 

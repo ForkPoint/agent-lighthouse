@@ -1,14 +1,17 @@
 ---
 audit: content-extraction/language-attribute
-audit_id: "4.4"
 category: content-extraction
 source_file: packages/core/src/audits/content-extraction/language-attribute.ts
 slug: language-attribute
-review_verdict: fix
-severity: medium
 evidence_grade: A
 disposition: "keep — fix required"
 reviewed: 2026-08-21
+sources:
+  - wcag-22
+  - wcag-language-of-page
+  - w3c-i18n-lang-declarations
+  - google-multi-regional
+  - s18
 ---
 
 # language-attribute (`4.4`)

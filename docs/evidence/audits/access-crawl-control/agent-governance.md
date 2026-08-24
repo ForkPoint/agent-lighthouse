@@ -1,14 +1,18 @@
 ---
 audit: access-crawl-control/agent-governance
-audit_id: "2.28"
 category: access-crawl-control
 source_file: packages/core/src/audits/access-crawl-control/agent-governance.ts
 slug: agent-governance
-review_verdict: fix
-severity: high
 evidence_grade: A
 disposition: "keep — fix required"
 reviewed: 2026-08-21
+sources:
+  - rfc9309
+  - s18
+  - anthropic-crawlers
+  - perplexity-bots-docs
+  - google-robots-meta-tag
+  - cloudflare-block-ai-bots
 ---
 
 # agent-governance (`2.28`)

@@ -1,14 +1,19 @@
 ---
 audit: structured-data/speakable-schema
-audit_id: "3.9"
 category: structured-data
 source_file: packages/core/src/audits/structured-data/speakable-schema.ts
 slug: speakable-schema
-review_verdict: delete
-severity: high
 evidence_grade: B
 disposition: "kept — rewritten to a news/article-gated check 2026-08-22 (Plan 4, Task 12)"
 reviewed: 2026-08-22
+signals:
+  - name: "`speakable` selects the sentences an assistant reads aloud"
+    grade: B
+    domain: structured-data
+sources:
+  - applebot-doc
+  - google-speakable-doc
+  - schemaorg-speakable
 ---
 
 # speakable-schema (`3.9`)
@@ -92,12 +97,9 @@ Google announced on 2025-08-20 that "Over time, Gemini for Home will replace Goo
 
 **Counter-evidence:** The same Google page states "This feature is in beta and subject to change", and scopes it to "users in the U.S. that have Google Home devices set to English, and publishers that publish content in English", news content only. No other consumer exists: Apple's Applebot documentation names exactly one schema.org property, `isAccessibleForFree`, and no `speakable` (https://support.apple.com/en-us/119829, verified 2026-08-21); Amazon publishes no `speakable` documentation at all. The widely repeated claim that Alexa and Siri read `speakable` has no primary source, and a regression test now asserts that neither name appears in this audit's copy. The consumer is also on a stated migration path: Google announced on 2025-08-20 that "Over time, Gemini for Home will replace Google Assistant on existing speakers and displays", with no successor statement about `speakable`. If that transition completes without one, this audit loses its consumer entirely rather than one grade.
 
-**Sources:** [Speakable structured data](https://developers.google.com/search/docs/appearance/structured-data/speakable) (verified 2026-08-24) · [schema.org/speakable](https://schema.org/speakable) (verified 2026-08-21) · [About Applebot](https://support.apple.com/en-us/119829) (verified 2026-08-21)
-
 ## Adversarial redemption research (2026-08-21)
 
 This audit was a delete candidate and went through dedicated adversarial research. Full dossier: [docs/evidence/deletions/structured-data/speakable-schema.md](../../deletions/structured-data/speakable-schema.md). Outcome: **redeemable**, grade A.
-
 
 ## Re-grade (2026-08-24): **A → B**, tier `scored`, weight 1.0 → 0.6
 
@@ -127,8 +129,6 @@ article page still returns `notApplicable`. The audit's re-check trigger — Gem
 for Home replacing Google Assistant with no speakable successor statement —
 stands, and if it fires the audit loses its consumer entirely rather than one
 grade.
-
-**Sources:** [Speakable structured data (Google Search Central, last updated 2025-12-10)](https://developers.google.com/search/docs/appearance/structured-data/speakable) (verified 2026-08-20) · [Retirement shortlist re-verification](../../RETIREMENT-SHORTLIST.md#re-verification-2026-08-24)
 
 ## Review history
 

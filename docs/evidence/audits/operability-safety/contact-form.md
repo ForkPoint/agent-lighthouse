@@ -1,14 +1,27 @@
 ---
 audit: operability-safety/contact-form
-audit_id: "5.15"
 category: operability-safety
 source_file: packages/core/src/audits/operability-safety/contact-form.ts
 slug: contact-form
-review_verdict: fix
-severity: medium
 evidence_grade: C
 disposition: "keep — fix required"
 reviewed: 2026-08-21
+recommended_tier: informative
+consumers:
+  - Google Search (Organization contactPoint/telephone/email influence knowledge panel and merchant brand profile
+consumers_note: "not an AI feature), browsers and OS dialers (tel: per RFC 3966), none-known for any AI agent as a documented task-completion affordance"
+signals:
+  - name: "Contact and service endpoint discoverability (tel:/mailto: links, server-rendered contact forms, schema.org ContactPoint) for agent task completion"
+    grade: C
+    domain: discovery-infra
+sources:
+  - schema-contactpoint
+  - google-organization-structured-data
+  - rfc-3966-tel-uri
+  - vercel-rise-of-ai-crawler
+  - browserarena-arxiv
+  - google-ai-features-trust
+  - google-ai-optimization-mythbusting
 ---
 
 # contact-form (`5.15`)
@@ -51,9 +64,6 @@ Real user-facing signal — 'contact this company for a quote' is a genuine agen
 **Evidence:** The specification layer is solid: ContactPoint is a core schema.org type with telephone, email, contactType, areaServed and hoursAvailable, reported on 1M–10M domains, and Google explicitly documents supporting contactPoint ('The best way for a user to contact your business'), telephone, email and address on Organization. tel: is a ratified IETF Standards Track URI scheme (RFC 3966). The strongest AI-specific argument is derivative rather than direct, and it comes from the rendering gap: Vercel and MERJ established that GPTBot and ClaudeBot fetch but never execute JavaScript, so a phone number or contact form injected client-side is simply absent from what those crawlers see, while a server-rendered tel: link is trivially extractable. Google's generative-AI guide separately notes that 'Google Business Profiles can help your products and services be visible' — an off-site contact/service surface with a documented AI-adjacent role.
 
 **Counter-evidence:** No AI vendor documents consuming ContactPoint, tel:, or mailto: for task completion. Google's AI-features page states outright that no special schema.org structured data is needed for AI features, and its Organization page ties contact properties to knowledge-panel display with no AI claim. Architecturally the premise is questionable for the leading agent: ChatGPT agent operates over screenshots of a virtual browser and interacts via simulated mouse and keyboard, so it engages the RENDERED form visually rather than parsing machine-readable endpoints — machine-readable contact metadata is not on its execution path at all. BrowserArena's live-web evaluation finds agent failures concentrated in CAPTCHAs, pop-up banners and direct URL navigation, i.e. in interaction friction rather than in missing contact metadata, so removing modals and keeping forms server-rendered likely matters far more than adding ContactPoint JSON-LD. Keep this informative: the markup is cheap and correct, but no measured agent-completion lift exists.
-**Consumers:** Google Search (Organization contactPoint/telephone/email influence knowledge panel and merchant brand profile — not an AI feature), browsers and OS dialers (tel: per RFC 3966), none-known for any AI agent as a documented task-completion affordance · **Recommended tier:** informative
-
-**Sources:** [ContactPoint — schema.org Type](https://schema.org/ContactPoint) (verified 2026-08-20) · [Organization schema markup](https://developers.google.com/search/docs/appearance/structured-data/organization) (verified 2026-08-20) · [RFC 3966 — The tel URI for Telephone Numbers](https://www.rfc-editor.org/rfc/rfc3966.html) (verified 2026-08-20) · [The rise of the AI crawler](https://vercel.com/blog/the-rise-of-the-ai-crawler) (verified 2026-08-20) · [BrowserArena: Evaluating LLM Agents on Real-World Web Navigation Tasks](https://arxiv.org/abs/2510.02418) (verified 2026-08-20) · [AI Features and Your Website](https://developers.google.com/search/docs/appearance/ai-features) (verified 2026-08-20) · [Google's Guide to Optimizing for Generative AI Features on Google Search](https://developers.google.com/search/docs/fundamentals/ai-optimization-guide) (verified 2026-08-20)
 
 ## Review history
 

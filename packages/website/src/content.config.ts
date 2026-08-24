@@ -1,7 +1,27 @@
 import { defineCollection } from 'astro:content';
 import { glob } from 'astro/loaders';
 import { z } from 'astro/zod';
-import { publicDossier } from './lib/dossier-public';
+import { publicDossier, type SourceRef } from './lib/dossier-public';
+import { readSourceRegistry, SOURCES_FILE } from './lib/evidence';
+
+/**
+ * The source registry, by id.
+ *
+ * Read once for the whole collection rather than per dossier: 215 entries share
+ * 715 records, and the ids are the only thing a dossier stores.
+ */
+const registry = new Map<string, SourceRef>(
+  readSourceRegistry().sources.map((source) => [
+    source.id,
+    {
+      title: source.title,
+      url: source.url,
+      type: source.type,
+      publisher: source.publisher,
+      verified: source.verified,
+    },
+  ]),
+);
 
 // `*/*.md` — one level down only, so `audits/README.md` (the v1 index, which
 // carries no frontmatter and is not a dossier) stays out of the collection.
@@ -29,10 +49,22 @@ const audits = defineCollection({
     async load(context) {
       await files.load(context);
       for (const [id, entry] of context.store.entries()) {
-        const data = entry.data as { public_extra?: string[]; public_omit?: string[] };
+        const data = entry.data as {
+          public_extra?: string[];
+          public_omit?: string[];
+          sources?: string[];
+        };
         const { markdown } = publicDossier(entry.body ?? '', {
           publicExtra: data.public_extra,
           publicOmit: data.public_omit,
+          // Resolved here rather than inside the slicer so that module stays a
+          // pure function of its markdown. An unknown id is a build error;
+          // `check-dossiers.mjs` proves the whole set resolves before this runs.
+          sources: (data.sources ?? []).map((id) => {
+            const record = registry.get(id);
+            if (!record) throw new Error(`unknown source id \`${id}\` in ${entry.id}`);
+            return record;
+          }),
         });
         // The glob loader has already rendered the whole file, so the slice has
         // to be re-rendered rather than assigned: `render(entry)` reads
@@ -64,6 +96,32 @@ const audits = defineCollection({
     // name for it; `public_omit` names a public section to withhold here only.
     public_extra: z.array(z.string()).optional(),
     public_omit: z.array(z.string()).optional(),
+    // The structured half of the record. Each of these was prose in the body
+    // until it was lifted out, so the dossier states each fact once and the
+    // page, the tests and `check-dossiers.mjs` read the same copy.
+    //
+    // `sources` are ids into `docs/evidence/sources.json`, which is where the
+    // title, publisher, type and verification date live. The dossiers used to
+    // re-type all four beside every link.
+    sources: z.array(z.string()).optional(),
+    signals: z
+      .array(
+        z.object({
+          name: z.string(),
+          grade: z.enum(['A', 'B', 'C', 'D']),
+          domain: z.string().optional(),
+        }),
+      )
+      .optional(),
+    consumers: z.array(z.string()).optional(),
+    non_consumers: z.array(z.string()).optional(),
+    consumers_note: z.string().optional(),
+    // What the research recommended, which is not always what shipped. `delete`
+    // is in the vocabulary because the research could recommend retiring the
+    // audit outright. Where this disagrees with the registry, `tier_rationale`
+    // has to say why — see `sunset.test.ts`.
+    recommended_tier: z.enum(['scored', 'informative', 'experimental', 'delete']).optional(),
+    tier_rationale: z.string().optional(),
     // Unquoted YAML dates arrive as `Date`, quoted ones as strings; coerce both.
     reviewed: z.coerce.date(),
     graduated: z.coerce.date().optional(),

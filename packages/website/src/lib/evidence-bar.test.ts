@@ -1,11 +1,28 @@
 import { describe, it, expect } from 'vitest';
 import { readFileSync, readdirSync } from 'node:fs';
 import { barViolations, enforceEvidenceBar, publishedSections } from './evidence-bar';
-import { publicDossier } from './dossier-public';
+import { publicDossier, type SourceRef } from './dossier-public';
 import { repoPath } from './markdown-slice';
 import { auditList } from './registry';
+import { readSourceRegistry } from './evidence';
 
 const DOSSIER_DIR = repoPath('docs/evidence/audits');
+
+/** The registry the loader resolves each dossier's `sources:` ids against. */
+const REGISTRY = new Map<string, SourceRef>(
+  readSourceRegistry().sources.map((source) => [source.id, source as unknown as SourceRef]),
+);
+
+/** The `sources:` ids of one dossier's frontmatter, in file order. */
+function frontmatterSources(source: string): SourceRef[] {
+  const block = /^sources:\n((?:\s+- .*\n)+)/m.exec(source)?.[1];
+  if (!block) return [];
+  return block
+    .trimEnd()
+    .split('\n')
+    .map((line) => REGISTRY.get(line.replace(/^\s*- /, '').trim()))
+    .filter((record): record is SourceRef => record !== undefined);
+}
 
 /** A page that clears every rule, to be broken one rule at a time. */
 function goodPage() {
@@ -88,7 +105,9 @@ describe('the whole corpus', () => {
     for (const audit of auditList()) {
       const source = readFileSync(`${DOSSIER_DIR}/${audit.id}.md`, 'utf8');
       const grade = /^evidence_grade:\s*['"]?([A-D])/m.exec(source)?.[1] ?? '';
-      const { markdown } = publicDossier(source);
+      // The same resolution the loader does, so the bar sees the page a reader
+      // gets rather than a slice with its sources still unresolved.
+      const { markdown } = publicDossier(source, { sources: frontmatterSources(source) });
       const problems = barViolations(
         {
           id: audit.id,

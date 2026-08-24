@@ -1,14 +1,17 @@
 ---
 audit: answer-readiness/external-citations
-audit_id: "10.5"
 category: answer-readiness
 source_file: packages/core/src/audits/answer-readiness/external-citations.ts
 slug: external-citations
-review_verdict: fix
-severity: medium
 evidence_grade: B
 disposition: "keep — fix required"
 reviewed: 2026-08-21
+sources:
+  - geo-paper-arxiv
+  - geo-paper
+  - geo-critical-survey-arxiv
+  - google-helpful-content
+  - google-ai-features-trust
 ---
 
 # external-citations (`10.5`)

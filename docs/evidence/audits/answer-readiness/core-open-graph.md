@@ -1,14 +1,18 @@
 ---
 audit: answer-readiness/core-open-graph
-audit_id: "4.6, 4.8, 4.10"
 category: answer-readiness
 source_file: packages/core/src/audits/answer-readiness/core-open-graph.ts
 slug: core-open-graph
-review_verdict: fix
-severity: medium
 evidence_grade: A
 disposition: "merged 2026-08-22 (Plan 4, Task 6) — absorbs og-site-name (4.8) and twitter-card (4.10)"
 reviewed: 2026-08-22
+sources:
+  - meta-sharing-webmasters
+  - slack-link-unfurling
+  - ogp-me-spec
+  - s18
+  - google-ai-features-trust
+  - google-special-tags
 ---
 
 # core-open-graph (`4.6`, `4.8`, `4.10`)

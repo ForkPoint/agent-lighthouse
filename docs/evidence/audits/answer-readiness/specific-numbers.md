@@ -1,14 +1,15 @@
 ---
 audit: answer-readiness/specific-numbers
-audit_id: "9.7"
 category: answer-readiness
 source_file: packages/core/src/audits/answer-readiness/specific-numbers.ts
 slug: specific-numbers
-review_verdict: fix
-severity: medium
 evidence_grade: B
 disposition: "keep — fix required"
 reviewed: 2026-08-21
+sources:
+  - geo-paper-arxiv
+  - cseo-bench-arxiv
+  - google-ai-optimization-mythbusting
 ---
 
 # specific-numbers (`9.7`)

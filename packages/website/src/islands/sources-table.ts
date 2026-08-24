@@ -22,7 +22,14 @@ export interface SourceRecord {
   type: string;
   publisher: string;
   /** Whether the URL resolved during the research pass. */
-  verified: boolean;
+  /**
+   * The date the URL was last resolved, `YYYY-MM-DD`.
+   *
+   * Was a boolean, and every one of the 715 records was `true` — a column of
+   * 715 identical "Yes" cells. The date is what a reader of an evidence-first
+   * site actually wants to know.
+   */
+  verified: string;
   keyFindings: string;
   /** A handful of entries date themselves; the file dates the rest. */
   accessed?: string;
@@ -156,8 +163,7 @@ function sourceRow(source: SourceRecord): HTMLTableRowElement {
 
   const verified = document.createElement('td');
   verified.className = `${CELL} whitespace-nowrap`;
-  verified.textContent = source.verified ? 'Yes' : 'No';
-  if (!source.verified) verified.classList.add('text-amber-300');
+  verified.textContent = source.verified;
 
   row.append(head, publisher, type, verified, findingsCell(source));
   return row;

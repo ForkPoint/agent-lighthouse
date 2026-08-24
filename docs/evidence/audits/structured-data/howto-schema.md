@@ -1,14 +1,20 @@
 ---
 audit: structured-data/howto-schema
-audit_id: "3.11"
 category: structured-data
 source_file: packages/core/src/audits/structured-data/howto-schema.ts
 slug: howto-schema
-review_verdict: delete
-severity: medium
 evidence_grade: C
 disposition: "informative, weight 0 (approved 2026-08-21)"
 reviewed: 2026-08-21
+signals:
+  - name: HowTo JSON-LD as an ingestion-quality hint
+    grade: C
+    domain: structured-data
+sources:
+  - schemaorg-howto
+  - geo-16-study
+  - google-howto-faq-changes-2023
+  - google-search-updates-howto
 ---
 
 # howto-schema (`3.11`)
@@ -54,8 +60,6 @@ Detects step content with an English-only regex that requires the number to be t
 - Pillar-level empirical support, not type-level: the GEO-16 study audited 1,702 citations across Brave Summary, Google AI Overviews and Perplexity and found that "pillars related to Metadata and Freshness, Semantic HTML, and Structured Data showed the strongest associations with citation" — https://arxiv.org/abs/2509.10762 (verified 2026-08-21)
 
 **Counter-evidence:** Explicit and strong. Google deprecated the rich result: "As of September 13, Google Search no longer shows How-to rich results on desktop, which means this result type is now deprecated" (https://developers.google.com/search/blog/2023/08/howto-faq-changes, verified 2026-08-21). It then removed the documentation — "Removed the How-to structured data documentation, as this rich result is no longer shown in search results" — and the old documentation URL now 301-redirects to an anchor Google named `#how-to-deprecation` (https://developers.google.com/search/updates#how-to-deprecation, verified 2026-08-21). Google also states that unused markup is inert: "Structured data that's not being used does not cause problems for Search, but also has no visible effects in Google Search." The assistant path is gone as well: `developers.google.com/assistant/content/howto` returns HTTP 404, and the surviving "Actions from web content" overview lists only FAQs, Media, News and Podcasts. Beyond Google: Microsoft's NLWeb codebase contains zero mentions of HowTo, Apple's Applebot documentation names only `isAccessibleForFree`, and OpenAI's commerce specification excludes JSON-LD sources entirely. The GEO-16 finding supports emitting structured data in general; it does not isolate this type.
-
-**Sources:** [Changes to HowTo and FAQ rich results](https://developers.google.com/search/blog/2023/08/howto-faq-changes) (verified 2026-08-21) · [Google Search documentation updates — how-to deprecation](https://developers.google.com/search/updates#how-to-deprecation) (verified 2026-08-21) · [schema.org/HowTo](https://schema.org/HowTo) (verified 2026-08-21) · [GEO-16: a framework for generative-engine citation](https://arxiv.org/abs/2509.10762) (verified 2026-08-21)
 
 ## Adversarial redemption research (2026-08-21)
 

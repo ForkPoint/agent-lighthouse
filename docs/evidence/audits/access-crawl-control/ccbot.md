@@ -1,14 +1,21 @@
 ---
 audit: access-crawl-control/ccbot
-audit_id: "2.6"
 category: access-crawl-control
 source_file: packages/core/src/audits/access-crawl-control/ccbot.ts
 slug: ccbot
-review_verdict: fix
-severity: medium
 evidence_grade: A
 disposition: "keep — fix required"
 reviewed: 2026-08-21
+recommended_tier: scored
+consumers:
+  - CCBot
+signals:
+  - name: CCBot allow/block state in robots.txt
+    grade: A
+    domain: robots-ai-crawlers
+sources:
+  - commoncrawl-ccbot
+  - consent-in-crisis-arxiv
 ---
 
 # ccbot (`2.6`)
@@ -47,9 +54,6 @@ CCBot is still active and Common Crawl still feeds many downstream training sets
 **Evidence:** Common Crawl publishes UA 'CCBot/2.0 (https://commoncrawl.org/faq/)' and the canonical opt-out snippet 'User-agent: CCBot / Disallow: /'. The training-corpus leverage is quantified by the Data Provenance Initiative's 'Consent in Crisis' (14,000 domains audited): robots.txt restrictions rendered '~5%+ of all tokens in C4, or 28%+ of the most actively maintained, critical sources in C4, fully restricted from use' within a single year (2023-2024). CCBot is therefore the highest-leverage single token for training-data opt-out.
 
 **Counter-evidence:** Blocking CCBot is retroactively useless — historical Common Crawl snapshots are already published and permanently redistributable, so a block only affects future crawls. Common Crawl warns that 'crawlers falsely identifying themselves as CCBot' exist, so a disallow does not stop spoofers; operators should verify by reverse DNS against published IP ranges. Common Crawl's own page states no crawl-delay position and does not frame itself as AI training infrastructure.
-**Consumers:** CCBot · **Recommended tier:** scored
-
-**Sources:** [CCBot — Common Crawl](https://commoncrawl.org/ccbot) (verified 2026-08-20) · [Consent in Crisis: The Rapid Decline of the AI Data Commons](https://arxiv.org/abs/2407.14933) (verified 2026-08-20)
 
 ## Review history
 

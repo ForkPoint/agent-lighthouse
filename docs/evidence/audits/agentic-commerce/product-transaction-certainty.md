@@ -1,14 +1,20 @@
 ---
 audit: agentic-commerce/product-transaction-certainty
-audit_id: "3.24"
 category: agentic-commerce
 source_file: packages/core/src/audits/agentic-commerce/product-transaction-certainty.ts
 slug: product-transaction-certainty
-review_verdict: fix
-severity: medium
 evidence_grade: A
 disposition: "keep — fix required"
 reviewed: 2026-08-21
+sources:
+  - google-merchant-listing
+  - google-auto-item-updates
+  - google-product-snippet
+  - openai-feed-spec-confirm
+  - agentic-commerce-protocol
+  - google-merchant-spec
+  - openai-commerce-index
+  - google-ai-features-trust
 ---
 
 # product-transaction-certainty (`3.24`)

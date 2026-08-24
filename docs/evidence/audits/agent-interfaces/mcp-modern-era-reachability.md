@@ -8,6 +8,12 @@ tier: scored
 disposition: "new in v2 — graduated from proposal 2026-08-22"
 reviewed: 2026-08-20
 graduated: 2026-08-22
+sources:
+  - S1
+  - S2
+  - S3
+  - S13
+  - mcp-spec-2025-06-18-transports
 ---
 
 

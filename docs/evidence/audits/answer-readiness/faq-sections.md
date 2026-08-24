@@ -1,14 +1,20 @@
 ---
 audit: answer-readiness/faq-sections
-audit_id: "9.1"
 category: answer-readiness
 source_file: packages/core/src/audits/answer-readiness/faq-sections.ts
 slug: faq-sections
-review_verdict: fix
-severity: medium
 evidence_grade: C
 disposition: "keep — fix required"
 reviewed: 2026-08-21
+sources:
+  - schema-faqpage
+  - semrush-ai-overviews-study
+  - geo-sfe-structural-arxiv
+  - google-faqpage-structured-data
+  - google-ai-features-trust
+  - google-ai-optimization-mythbusting
+  - s18
+  - cseo-bench-arxiv
 ---
 
 # faq-sections (`9.1`)

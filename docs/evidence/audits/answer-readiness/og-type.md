@@ -1,14 +1,19 @@
 ---
 audit: answer-readiness/og-type
-audit_id: "4.7"
 category: answer-readiness
 source_file: packages/core/src/audits/answer-readiness/og-type.ts
 slug: og-type
-review_verdict: fix
-severity: medium
 evidence_grade: B
 disposition: "keep — fix required"
 reviewed: 2026-08-21
+sources:
+  - ogp-me-spec
+  - ogp-types
+  - meta-sharing-webmasters
+  - s18
+  - google-ai-features-trust
+  - google-special-tags
+  - google-article-structured-data
 ---
 
 # og-type (`4.7`)

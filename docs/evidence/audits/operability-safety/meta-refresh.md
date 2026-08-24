@@ -1,14 +1,17 @@
 ---
 audit: operability-safety/meta-refresh
-audit_id: "7.20"
 category: operability-safety
 source_file: packages/core/src/audits/operability-safety/meta-refresh.ts
 slug: meta-refresh
-review_verdict: keep
-severity: low
 evidence_grade: A
 disposition: "keep"
 reviewed: 2026-08-21
+sources:
+  - whatwg-declarative-refresh
+  - mdn-meta-http-equiv
+  - wcag-f41
+  - playwright-mcp-repo
+  - chrome-devtools-mcp-tools
 ---
 
 # No time-based auto-refresh/redirect (`7.20`)

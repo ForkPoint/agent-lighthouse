@@ -1,14 +1,19 @@
 ---
 audit: structured-data/faqpage-schema
-audit_id: "3.7"
 category: structured-data
 source_file: packages/core/src/audits/structured-data/faqpage-schema.ts
 slug: faqpage-schema
-review_verdict: fix
-severity: high
 evidence_grade: C
 disposition: "keep — fix required"
 reviewed: 2026-08-21
+sources:
+  - google-faqpage-structured-data
+  - google-search-gallery
+  - webalmanac-2024-structured-data
+  - microsoft-ads-ai-search-optimization
+  - google-ai-features-trust
+  - searchviu-schema-ai-fetch-test
+  - ahrefs-schema-ai-citations
 ---
 
 # faqpage-schema (`3.7`)

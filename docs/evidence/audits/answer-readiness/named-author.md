@@ -1,14 +1,16 @@
 ---
 audit: answer-readiness/named-author
-audit_id: "10.1"
 category: answer-readiness
 source_file: packages/core/src/audits/answer-readiness/named-author.ts
 slug: named-author
-review_verdict: fix
-severity: high
 evidence_grade: C
 disposition: "keep — fix required"
 reviewed: 2026-08-21
+sources:
+  - google-article-structured-data
+  - google-helpful-content
+  - geo-critical-survey-arxiv
+  - google-ai-features-trust
 ---
 
 # named-author (`10.1`)

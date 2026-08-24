@@ -1,14 +1,19 @@
 ---
 audit: structured-data/organization-schema
-audit_id: "3.3"
 category: structured-data
 source_file: packages/core/src/audits/structured-data/organization-schema.ts
 slug: organization-schema
-review_verdict: fix
-severity: high
 evidence_grade: A
 disposition: "keep — fix required"
 reviewed: 2026-08-21
+sources:
+  - google-organization-structured-data
+  - google-search-gallery
+  - apple-app-search-web-markup
+  - webdatacommons-2024-stats
+  - webalmanac-2024-structured-data
+  - google-ai-features-trust
+  - ahrefs-schema-ai-citations
 ---
 
 # organization-schema (`3.3`)

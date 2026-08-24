@@ -1,14 +1,18 @@
 ---
 audit: structured-data/advanced-product-details
-audit_id: "3.22, 3.8 (Product half)"
 category: structured-data
 source_file: packages/core/src/audits/structured-data/advanced-product-details.ts
 slug: advanced-product-details
-review_verdict: fix
-severity: medium
 evidence_grade: A
 disposition: "keep — fix required; absorbs the Product half of service-product-schema (3.8) as of 2026-08-22"
 reviewed: 2026-08-22
+sources:
+  - google-merchant-listing
+  - google-auto-item-updates
+  - google-merchant-structured-data
+  - openai-feed-spec-confirm
+  - google-product-snippet
+  - google-ai-features-trust
 ---
 
 # advanced-product-details (`3.22`, Product half of `3.8`)

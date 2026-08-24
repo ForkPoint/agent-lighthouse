@@ -1,14 +1,16 @@
 ---
 audit: answer-readiness/unique-data
-audit_id: "10.13"
 category: answer-readiness
 source_file: packages/core/src/audits/answer-readiness/unique-data.ts
 slug: unique-data
-review_verdict: fix
-severity: medium
 evidence_grade: B
 disposition: "keep — fix required"
 reviewed: 2026-08-21
+sources:
+  - geo-paper-arxiv
+  - geo-paper
+  - geo-critical-survey-arxiv
+  - google-helpful-content
 ---
 
 # unique-data (`10.13`)

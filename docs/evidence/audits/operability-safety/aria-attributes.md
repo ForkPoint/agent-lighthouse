@@ -1,14 +1,18 @@
 ---
 audit: operability-safety/aria-attributes
-audit_id: "7.12"
 category: operability-safety
 source_file: packages/core/src/audits/operability-safety/aria-attributes.ts
 slug: aria-attributes
-review_verdict: keep
-severity: medium
 evidence_grade: A
 disposition: "keep"
 reviewed: 2026-08-21
+sources:
+  - w3c-aria-12-states
+  - probe-aria-snapshot-images
+  - playwright-mcp-repo
+  - chrome-devtools-mcp-tools
+  - axe-aria-valid-attr-value
+  - w3c-accname-11
 ---
 
 # Valid ARIA attributes (`7.12`)

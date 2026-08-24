@@ -1,14 +1,15 @@
 ---
 audit: content-extraction/code-language
-audit_id: "6.10"
 category: content-extraction
 source_file: packages/core/src/audits/content-extraction/code-language.ts
 slug: code-language
-review_verdict: fix
-severity: medium
 evidence_grade: C
 disposition: "keep — fix required"
 reviewed: 2026-08-21
+sources:
+  - whatwg-code-element
+  - turndown-commonmark-rules
+  - jina-reader-repo
 ---
 
 # code-language (`6.10`)

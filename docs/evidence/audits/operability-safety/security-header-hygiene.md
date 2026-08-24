@@ -1,14 +1,40 @@
 ---
 audit: operability-safety/security-header-hygiene
-audit_id: "8.7"
 category: operability-safety
 source_file: packages/core/src/audits/operability-safety/security-header-hygiene.ts
 slug: security-header-hygiene
-review_verdict: narrow
-severity: low
 evidence_grade: C
 disposition: "narrowed 2026-08-24 (contradiction sweep, Part 2 Task 11) — security.txt only, informative, weight 0"
 reviewed: 2026-08-24
+recommended_tier: informative
+consumers:
+  - security researchers
+  - vulnerability-disclosure scanners
+  - none-known among AI agents
+signals:
+  - name: "Security headers (HSTS, CSP, X-Content-Type-Options, Referrer-Policy, Permissions-Policy) as AI-readiness signals"
+    grade: D
+    domain: technical-infra
+  - name: "HTTPS requirement (TLS, valid certificate, HTTP→HTTPS redirect)"
+    grade: B
+    domain: technical-infra
+  - name: security.txt (/.well-known/security.txt)
+    grade: C
+    domain: technical-infra
+  - name: Correct Content-Type for llms.txt and .md files
+    grade: C
+    domain: technical-infra
+sources:
+  - s18
+  - anthropic-crawlers
+  - perplexity-crawlers-docs
+  - google-ai-features-trust
+  - s21
+  - openai-apps-sdk-security
+  - mcp-spec-authorization
+  - rfc9116
+  - security-txt-prevalence-study
+  - llmstxt-spec-link
 ---
 
 # security-header-hygiene (`8.7`)
@@ -70,9 +96,6 @@ Grade B therefore prices the evidence, and `tier: informative` prices the *claim
 **Evidence:** No supporting evidence was found. An exhaustive read of the AI crawler documentation from OpenAI, Anthropic, Perplexity, Apple and Google turned up not a single reference to any of these headers. Google's AI-features guidance goes further and states there are 'no additional technical requirements' for AI Overviews / AI Mode beyond ordinary Search snippet eligibility. Cloudflare's AI Crawl Control — the product that actually sits between AI crawlers and origins — makes decisions on user agent, IP, signature and robots.txt, never on the origin's security headers.
 
 **Counter-evidence:** These are browser-enforced defence-in-depth mechanisms with human users and browsers as their consumers; server-side crawlers do not implement any of them. The only genuine adjacencies run in the OPPOSITE direction from the v1 audits: (1) CSP `frame-ancestors` / `X-Frame-Options` can PREVENT a page being embedded in an agent surface, so a strict policy is an agent-readiness negative, not a positive; (2) OpenAI's Apps SDK shows CSP being imposed BY the agent host on its own widget iframe, which is a property of the app, not of the publisher's site; (3) `X-Content-Type-Options: nosniff` only matters in a browser and only makes a wrong `Content-Type` more fatal — it belongs to the content-type signal, not here.
-**Consumers:** none-known · **Recommended tier:** delete → reported as informative
-
-**Sources:** [Overview of OpenAI Crawlers](https://developers.openai.com/api/docs/bots) (verified 2026-08-20) · [Does Anthropic crawl data from the web, and how can site owners block the crawler?](https://support.claude.com/en/articles/8896518-does-anthropic-crawl-data-from-the-web-and-how-can-site-owners-block-the-crawler) (verified 2026-08-20) · [Perplexity Crawlers](https://docs.perplexity.ai/docs/resources/perplexity-crawlers) (verified 2026-08-20) · [AI features and your website — Google Search Central](https://developers.google.com/search/docs/appearance/ai-features) (verified 2026-08-20) · [AI Crawl Control overview](https://developers.cloudflare.com/ai-crawl-control/) (verified 2026-08-20) · [Security & Privacy — Apps SDK](https://developers.openai.com/apps-sdk/guides/security-privacy) (verified 2026-08-20)
 
 ### Signal: HTTPS requirement (TLS, valid certificate, HTTP→HTTPS redirect) — grade B (technical-infra)
 
@@ -81,9 +104,6 @@ Grade B therefore prices the evidence, and `tier: informative` prices the *claim
 **Evidence:** MCP (2025-11-25) states plainly: 'All authorization server endpoints MUST be served over HTTPS' and 'All redirect URIs MUST be either localhost or use HTTPS'. RFC 9116 requires security.txt to be 'accessed exclusively via HTTPS'. Browser-resident agents (ChatGPT Atlas, Comet, Gemini-in-Chrome, Claude in Chrome) run on Chromium and inherit mixed-content blocking, so an HTTP-only page degrades for the fastest-growing agent class.
 
 **Counter-evidence:** No AI crawler vendor documents HTTPS as a requirement, and HSTS specifically has no documented AI consumer at all — the header is a browser-state mechanism layered on top of the TLS the agents actually need. This is why the B grade lives on the transport signal while the audit that reports the header stays informative. The scored HTTPS check itself is `access-crawl-control/https-enabled` (v1 8.1), which this audit does not duplicate.
-**Consumers:** MCP clients (Claude, ChatGPT, VS Code, Cursor), ChatGPT Atlas, Perplexity Comet, Gemini in Chrome, Claude in Chrome, security.txt tooling · **Recommended tier:** scored (for HTTPS itself, not for HSTS)
-
-**Sources:** [Model Context Protocol Specification (2025-11-25) — Authorization](https://modelcontextprotocol.io/specification/2025-11-25/basic/authorization) (verified 2026-08-20) · [RFC 9116 — A File Format to Aid in Security Vulnerability Disclosure](https://www.rfc-editor.org/rfc/rfc9116.html) (verified 2026-08-20) · [AI features and your website — Google Search Central](https://developers.google.com/search/docs/appearance/ai-features) (verified 2026-08-20)
 
 ### Signal: security.txt (/.well-known/security.txt) — grade C (technical-infra)
 
@@ -92,15 +112,10 @@ Grade B therefore prices the evidence, and `tier: informative` prices the *claim
 **Evidence:** security.txt is a real, published IETF document (RFC 9116) with a well-defined location, media type (text/plain, UTF-8, HTTPS-only) and required fields (Contact, Expires), and it has genuine — if small — adoption: roughly 0.7% of the top 1M domains in April 2024 rising to about 1.25% in 2025, with a broader count of ~573,000 domains by 2026.
 
 **Counter-evidence:** RFC 9116 is INFORMATIONAL, explicitly 'not an Internet Standards Track specification'. Its stated consumers are human security researchers and vulnerability-notification tooling; no AI vendor documentation mentions security.txt at all. Conformity is poor — analyses find only a minority of deployed files pass RFC validation, so presence alone is weak evidence of anything. Hence the parse-not-probe detection in this audit, and the informative tier.
-**Consumers:** security researchers, vulnerability-disclosure scanners, none-known among AI agents · **Recommended tier:** informative
-
-**Sources:** [RFC 9116 — A File Format to Aid in Security Vulnerability Disclosure](https://www.rfc-editor.org/rfc/rfc9116.html) (verified 2026-08-20) · [security.txt Revisited: Analysis of Prevalence and Conformity in 2022](https://seclab.cs.hm.edu/assets/pdf/th-sectxt-2023.pdf) (verified 2026-08-20)
 
 ### Signal: Correct Content-Type for llms.txt and .md files — grade C (technical-infra)
 
 Carried here only to record where the `nosniff` sub-signal belongs. `X-Content-Type-Options: nosniff` removes a browser's ability to recover from a wrong `Content-Type`; what an agent actually needs is the correct type, which `machine-discovery/ai-file-delivery` (v1 8.10) measures on the AI files themselves. This audit reports `nosniff` on the homepage response as hygiene and makes no parsing claim.
-
-**Sources:** [The /llms.txt file](https://llmstxt.org/) (verified 2026-08-20) · [RFC 9116 — A File Format to Aid in Security Vulnerability Disclosure](https://www.rfc-editor.org/rfc/rfc9116.html) (verified 2026-08-20)
 
 ## Source dossiers
 

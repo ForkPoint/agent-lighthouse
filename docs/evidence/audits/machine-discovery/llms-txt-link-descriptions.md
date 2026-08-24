@@ -1,14 +1,20 @@
 ---
 audit: machine-discovery/llms-txt-link-descriptions
-audit_id: "1.4"
 category: machine-discovery
 source_file: packages/core/src/audits/machine-discovery/llms-txt-link-descriptions.ts
 slug: llms-txt-link-descriptions
-review_verdict: fix
-severity: high
 evidence_grade: C
 disposition: "keep — fix required"
 reviewed: 2026-08-21
+sources:
+  - llmstxt-spec-link
+  - llms-txt-core-source
+  - llms-txt-pypi
+  - lighthouse-llms-txt-audit-source
+  - google-ai-optimization-mythbusting
+  - evil-martians-llm-traffic
+  - s18
+  - perplexity-crawlers-docs
 ---
 
 # llms-txt-link-descriptions (`1.4`)

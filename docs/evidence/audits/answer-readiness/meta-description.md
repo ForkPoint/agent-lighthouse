@@ -1,14 +1,17 @@
 ---
 audit: answer-readiness/meta-description
-audit_id: "4.1, 9.11"
 category: answer-readiness
 source_file: packages/core/src/audits/answer-readiness/meta-description.ts
 slug: meta-description
-review_verdict: fix
-severity: medium
 evidence_grade: B
 disposition: "merged 2026-08-22 (Plan 4, Task 6) — absorbs meta-description-aeo (9.11)"
 reviewed: 2026-08-22
+sources:
+  - google-snippet-docs
+  - google-special-tags
+  - whatwg-metadata-names
+  - google-ai-features-trust
+  - s18
 ---
 
 # meta-description (`4.1`, `9.11`)

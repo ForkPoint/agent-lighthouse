@@ -1,14 +1,21 @@
 ---
 audit: access-crawl-control/perplexitybot
-audit_id: "2.4"
 category: access-crawl-control
 source_file: packages/core/src/audits/access-crawl-control/perplexitybot.ts
 slug: perplexitybot
-review_verdict: fix
-severity: medium
 evidence_grade: A
 disposition: "keep — fix required"
 reviewed: 2026-08-21
+recommended_tier: scored
+consumers:
+  - PerplexityBot
+signals:
+  - name: PerplexityBot allow/block state in robots.txt
+    grade: A
+    domain: robots-ai-crawlers
+sources:
+  - perplexity-bots-docs
+  - cloudflare-ai-crawler-purpose-industry
 ---
 
 # perplexitybot (`2.4`)
@@ -49,9 +56,6 @@ Perplexity is a genuinely high-value citation surface, so the signal is worth ke
 **Evidence:** Perplexity documents an explicit allow-side recommendation: 'To ensure your site appears in search results, we recommend allowing PerplexityBot in your site's robots.txt file', with UA 'PerplexityBot/1.0; +https://perplexity.ai/perplexitybot' and IPs at perplexity.com/perplexitybot.json, and states it is 'not used for AI model training'. Perplexity also has by far the best crawl-to-refer ratio of the major AI operators in Cloudflare Radar's data — 118:1 overall and 32.7:1 in News & Publications, versus OpenAI 887:1 and Anthropic ~50,000:1 — meaning an allow here returns more actual referral traffic per page crawled than any other AI operator.
 
 **Counter-evidence:** Perplexity has been publicly accused of crawling from undeclared user agents and rotating IPs to evade blocks (a widely reported 2025 dispute), so a PerplexityBot disallow may not be sufficient to prevent access. Independent 2026 reporting also indicates Perplexity's crawl-to-refer ratio has worsened (~225:1), eroding the referral argument. The 'not used for training' claim is vendor-asserted and unverifiable externally.
-**Consumers:** PerplexityBot · **Recommended tier:** scored
-
-**Sources:** [Perplexity Crawlers](https://docs.perplexity.ai/guides/bots) (verified 2026-08-20) · [A deeper look at AI crawlers: breaking down traffic by purpose and industry](https://blog.cloudflare.com/ai-crawler-traffic-by-purpose-and-industry/) (verified 2026-08-20)
 
 ## Review history
 

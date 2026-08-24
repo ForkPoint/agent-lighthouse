@@ -1,14 +1,21 @@
 ---
 audit: access-crawl-control/duckassistbot
-audit_id: "2.19"
 category: access-crawl-control
 source_file: packages/core/src/audits/access-crawl-control/duckassistbot.ts
 slug: duckassistbot
-review_verdict: fix
-severity: low
 evidence_grade: A
 disposition: "keep — fix required"
 reviewed: 2026-08-21
+recommended_tier: scored
+consumers:
+  - DuckAssistBot
+signals:
+  - name: DuckAssistBot allow/block state in robots.txt
+    grade: A
+    domain: robots-ai-crawlers
+sources:
+  - duckduckgo-duckassistbot
+  - knownagents-directory
 ---
 
 # duckassistbot (`2.19`)
@@ -48,9 +55,6 @@ Real, active token behind DuckDuckGo's DuckAssist answers — a legitimate keep,
 **Evidence:** DuckDuckGo publishes an unusually precise help page: token 'DuckAssistBot/1.2; (+http://duckduckgo.com/duckassistbot.html)'; 'DuckAssistBot is a web crawler for DuckDuckGo Search that crawls pages in real-time for our AI-assisted answers'; 'This data is not used in any way to train AI models'; a disallow 'will take effect after 72 hours and DuckAssistBot will stop crawling your site'; and the decoupling guarantee 'Opting out of DuckAssistBot does not impact organic search rankings.' All three of the audit-relevant facts (compliance, latency, non-training use) are vendor-stated and falsifiable.
 
 **Counter-evidence:** DuckAssistBot does not appear in Cloudflare Radar's named AI-crawler top-five breakdowns, so its traffic volume — and therefore the practical stakes of allowing or blocking it — is small relative to GPTBot/ClaudeBot/ChatGPT-User. The 72-hour enforcement lag means a disallow is not immediate.
-**Consumers:** DuckAssistBot · **Recommended tier:** scored
-
-**Sources:** [DuckAssistBot — DuckDuckGo Help Pages](https://duckduckgo.com/duckduckgo-help-pages/results/duckassistbot/) (verified 2026-08-20) · [Known Agents — AI agent user-agent directory (formerly Dark Visitors)](https://knownagents.com/agents) (verified 2026-08-20)
 
 ## Review history
 

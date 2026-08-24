@@ -1,14 +1,17 @@
 ---
 audit: access-crawl-control/robots-directives
-audit_id: "2.25, 1.13, 4.20"
 category: access-crawl-control
 source_file: packages/core/src/audits/access-crawl-control/robots-directives.ts
 slug: robots-directives
-review_verdict: rewrite
-severity: high
 evidence_grade: A
 disposition: "rewritten + merged 2026-08-22 (Plan 4, Task 5) — absorbs no-noindex (1.13) and meta-robots (4.20)"
 reviewed: 2026-08-22
+sources:
+  - google-robots-meta-tag
+  - google-ai-features-trust
+  - rfc9309
+  - s18
+  - perplexity-bots-docs
 ---
 
 # robots-directives (`2.25`, `1.13`, `4.20`)

@@ -1,14 +1,23 @@
 ---
 audit: access-crawl-control/mistralai-user
-audit_id: "2.20"
 category: access-crawl-control
 source_file: packages/core/src/audits/access-crawl-control/mistralai-user.ts
 slug: mistralai-user
-review_verdict: fix
-severity: low
 evidence_grade: A
 disposition: "keep — fix required"
 reviewed: 2026-08-21
+recommended_tier: scored
+consumers:
+  - MistralAI-User
+  - MistralAI-Index
+  - MistralAI-Training
+signals:
+  - name: MistralAI-User allow/block state in robots.txt (and MistralAI-Index / MistralAI-Training)
+    grade: A
+    domain: robots-ai-crawlers
+sources:
+  - mistral-robots-docs
+  - cloudflare-ai-crawler-purpose-industry
 ---
 
 # mistralai-user (`2.20`)
@@ -49,9 +58,6 @@ Legitimate but small: MistralAI-User backs Le Chat's web access, a real though l
 **Evidence:** Mistral's robots page documents all three UAs, each carrying '+https://docs.mistral.ai/robots'. MistralAI-User/1.0: 'When users ask Vibe a question, it may visit a web page to help answer', robots.txt 'governs which sites user requests can access', and it is 'not used for crawling the web in any automatic fashion, nor to crawl content for generative AI training'. MistralAI-Index/1.0: 'It indexes content for Mistral search, which helps answer user questions in Vibe', content 'not used for generative AI training of any kind'. MistralAI-Training/1.0: 'Webmasters can disallow this user agent in their robots.txt file.' The clean training/index/user separation makes per-token scoring straightforward and MistralAI-User is notably the only major user-initiated agent whose vendor does NOT claim a robots.txt exemption.
 
 **Counter-evidence:** Mistral is the most extractive operator by 2026 crawl-to-refer measurement (reported at ~3,389 pages crawled per referral sent, worse than Anthropic and far worse than OpenAI), so the allow-side referral argument for MistralAI-Index is weak. Mistral bots do not appear in Cloudflare Radar's Aug 2025 named top-five breakdowns, so historical volume was small. Audits keyed only to 'MistralAI-User' will miss the two higher-impact tokens.
-**Consumers:** MistralAI-User, MistralAI-Index, MistralAI-Training · **Recommended tier:** scored
-
-**Sources:** [Mistral AI crawlers and robots.txt](https://docs.mistral.ai/robots/) (verified 2026-08-20) · [A deeper look at AI crawlers: breaking down traffic by purpose and industry](https://blog.cloudflare.com/ai-crawler-traffic-by-purpose-and-industry/) (verified 2026-08-20)
 
 ## Review history
 

@@ -1,14 +1,18 @@
 ---
 audit: agentic-commerce/product-identifiers
-audit_id: "3.21"
 category: agentic-commerce
 source_file: packages/core/src/audits/agentic-commerce/product-identifiers.ts
 slug: product-identifiers
-review_verdict: fix
-severity: high
 evidence_grade: A
 disposition: "keep — fix required"
 reviewed: 2026-08-21
+sources:
+  - google-merchant-listing
+  - google-merchant-identifiers
+  - openai-feed-spec-confirm
+  - google-product-snippet
+  - google-auto-item-updates
+  - webalmanac-2024-structured-data
 ---
 
 # product-identifiers (`3.21`)

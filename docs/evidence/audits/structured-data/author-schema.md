@@ -1,14 +1,17 @@
 ---
 audit: structured-data/author-schema
-audit_id: "3.15"
 category: structured-data
 source_file: packages/core/src/audits/structured-data/author-schema.ts
 slug: author-schema
-review_verdict: fix
-severity: medium
 evidence_grade: C
 disposition: "keep — fix required"
 reviewed: 2026-08-21
+sources:
+  - google-article-structured-data
+  - google-article-author
+  - schema-person
+  - webalmanac-2024-structured-data
+  - google-ai-features-trust
 ---
 
 # author-schema (`3.15`)

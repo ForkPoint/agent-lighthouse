@@ -1,14 +1,19 @@
 ---
 audit: access-crawl-control/canonical
-audit_id: "1.17, 4.3"
 category: access-crawl-control
 source_file: packages/core/src/audits/access-crawl-control/canonical.ts
 slug: canonical
-review_verdict: rewrite
-severity: medium
 evidence_grade: A
 disposition: "rewritten + merged 2026-08-22 (Plan 4, Task 5) — absorbs canonical-url (4.3)"
 reviewed: 2026-08-22
+sources:
+  - google-consolidate-duplicate-urls
+  - rfc-6596-canonical
+  - google-crawl-budget-docs
+  - google-ai-features-trust
+  - s18
+  - perplexity-crawlers-docs
+  - google-ai-optimization-mythbusting
 ---
 
 # canonical (`1.17`, `4.3`)

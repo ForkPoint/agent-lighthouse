@@ -1,14 +1,23 @@
 ---
 audit: answer-readiness/about-credentials
-audit_id: "10.4"
 category: answer-readiness
 source_file: packages/core/src/audits/answer-readiness/about-credentials.ts
 slug: about-credentials
-review_verdict: delete
-severity: high
 evidence_grade: C
 disposition: "informative, weight 0 (approved 2026-08-21)"
 reviewed: 2026-08-21
+signals:
+  - name: an About page identifying who is responsible for the site
+    grade: C
+    domain: generative-engine
+sources:
+  - google-quality-rater-guidelines
+  - google-organization-structured-data
+  - google-helpful-content
+  - google-ai-features-trust
+  - geo-paper-arxiv
+  - igaming-notability
+  - s18
 ---
 
 # about-credentials (`10.4`)
@@ -59,8 +68,6 @@ Falsy. No AI system keyword-matches "team"/"certified"/"specializ" on /about to 
 - Google's Organization structured-data reference recommends placing the markup "on your home page, or a single page that describes your organization, for example the about us page" — https://developers.google.com/search/docs/appearance/structured-data/organization (verified 2026-08-21)
 
 **Counter-evidence:** The vendor document closest to this audit inverts its original rule. The rater guidelines §5.6 warn about "claims of personal experience or expertise that seem overstated or included just to impress website visitors", and instruct that "E-E-A-T assessments should be based on the MC itself, the information you find during reputation research, verifiable credentials, etc, not just website or content creator claims of 'I'm an expert!'" A check that rewarded credential keywords on an About page rewarded exactly what raters are told to discount. Four further limits: Google states plainly that "While E-E-A-T itself isn't a specific ranking factor" (https://developers.google.com/search/docs/fundamentals/creating-helpful-content, verified 2026-08-21); Google's AI-features page states "There are no additional requirements to appear in AI Overviews or AI Mode, nor other special optimizations necessary" (https://developers.google.com/search/docs/appearance/ai-features, verified 2026-08-21); the KDD'24 GEO study, the strongest controlled evidence in this area, is explicitly confined to "textual modifications to website content" and tests neither about pages nor site-level authority (https://arxiv.org/abs/2311.09735, verified 2026-08-21); and a 2026 citation audit finds "a systematic and overwhelming bias towards Earned media (third-party, authoritative sources) over Brand-owned content", ~78% of citations, which is the opposite of a mechanism where self-authored credential text drives trust (https://arxiv.org/abs/2603.12282, verified 2026-08-21). The rater guidelines' own consumer is a human contractor, not an agent parsing the page. OpenAI's, Anthropic's and Perplexity's crawler documents mention neither About pages nor credentials.
-
-**Sources:** [Search Quality Rater Guidelines (2025-09-11)](https://static.googleusercontent.com/media/guidelines.raterhub.com/en//searchqualityevaluatorguidelines.pdf) (verified 2026-08-21) · [Creating helpful, reliable, people-first content](https://developers.google.com/search/docs/fundamentals/creating-helpful-content) (verified 2026-08-21) · [AI features and your website](https://developers.google.com/search/docs/appearance/ai-features) (verified 2026-08-21) · [Organization structured data](https://developers.google.com/search/docs/appearance/structured-data/organization) (verified 2026-08-21) · [GEO: Generative Engine Optimization](https://arxiv.org/abs/2311.09735) (verified 2026-08-21) · [Benchmarking Brand Notability for UK iGaming Entities](https://arxiv.org/abs/2603.12282) (verified 2026-08-21) · [OpenAI crawlers and user agents](https://developers.openai.com/api/docs/bots) (verified 2026-08-21)
 
 ## Adversarial redemption research (2026-08-21)
 

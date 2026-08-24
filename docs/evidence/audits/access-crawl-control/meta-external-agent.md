@@ -1,14 +1,25 @@
 ---
 audit: access-crawl-control/meta-external-agent
-audit_id: "2.7"
 category: access-crawl-control
 source_file: packages/core/src/audits/access-crawl-control/meta-external-agent.ts
 slug: meta-external-agent
-review_verdict: fix
-severity: medium
 evidence_grade: A
 disposition: "keep — fix required"
 reviewed: 2026-08-21
+recommended_tier: scored
+consumers:
+  - meta-externalagent
+  - meta-externalfetcher
+  - Meta-WebIndexer
+  - Meta-ExternalAds
+  - facebookexternalhit
+signals:
+  - name: Meta-ExternalAgent allow/block state in robots.txt (and meta-externalfetcher / Meta-WebIndexer)
+    grade: A
+    domain: robots-ai-crawlers
+sources:
+  - meta-web-crawlers-docs
+  - cloudflare-ai-crawler-purpose-industry
 ---
 
 # meta-external-agent (`2.7`)
@@ -51,9 +62,6 @@ Meta-ExternalAgent is a live token (Llama training and Meta AI corpora) so the s
 **Evidence:** Meta's web crawlers page documents meta-externalagent as crawling 'for use cases such as training foundation AI models or improving products by indexing content directly' with no stated robots.txt exemption; Meta-WebIndexer (new) 'navigates the web to improve Meta AI search result quality for users' and helps 'cite and link to your content in Meta AI's responses' — making Meta-WebIndexer the allow-side visibility token and meta-externalagent the training-side block token. Cloudflare Radar confirms Meta-ExternalAgent among the top five AI crawlers overall and at 13.9% share in the Computer & Electronics vertical (Aug 2025), so it is documented ACTIVE at scale.
 
 **Counter-evidence:** Two documented robots.txt exemptions in the same family that audits must not conflate with meta-externalagent: meta-externalfetcher 'fetches individual links at a user's request' and 'may bypass robots.txt rules'; and facebookexternalhit may bypass robots.txt for 'security or integrity checks, such as checking for malware or malicious content'. A meta-externalfetcher disallow should therefore be reported informatively, not scored as an effective control.
-**Consumers:** meta-externalagent, meta-externalfetcher, Meta-WebIndexer, Meta-ExternalAds, facebookexternalhit · **Recommended tier:** scored
-
-**Sources:** [Meta Web Crawlers](https://developers.facebook.com/docs/sharing/webmasters/web-crawlers/) (verified 2026-08-20) · [A deeper look at AI crawlers: breaking down traffic by purpose and industry](https://blog.cloudflare.com/ai-crawler-traffic-by-purpose-and-industry/) (verified 2026-08-20)
 
 ## Pass-rule correction (contradiction sweep, 2026-08-24)
 

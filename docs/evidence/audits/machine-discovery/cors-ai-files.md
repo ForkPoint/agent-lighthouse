@@ -1,14 +1,26 @@
 ---
 audit: machine-discovery/cors-ai-files
-audit_id: "8.8"
 category: machine-discovery
 source_file: packages/core/src/audits/machine-discovery/cors-ai-files.ts
 slug: cors-ai-files
-review_verdict: fix
-severity: high
 evidence_grade: C
 disposition: "keep — fix required"
 reviewed: 2026-08-21
+recommended_tier: informative
+consumers:
+  - OpenAI Apps SDK widgets (browser-sandboxed)
+  - in-browser agent JS
+  - none-known among server-side crawlers
+signals:
+  - name: CORS headers on public AI files and API routes
+    grade: C
+    domain: technical-infra
+sources:
+  - mdn-cors
+  - openai-apps-sdk-security
+  - llmstxt-spec-link
+  - s18
+  - anthropic-crawlers
 ---
 
 # cors-ai-files (`8.8`)
@@ -51,9 +63,6 @@ Right idea, wrong probe. It sends `method: 'OPTIONS'` to /llms.txt and /.well-kn
 **Evidence:** The mechanism is real but its scope is much narrower than the audit implies. CORS matters only for code running inside a browser origin: MDN states 'browsers restrict cross-origin HTTP requests initiated from scripts', and the server merely opts in via ACAO. The genuine AI consumer class is browser-sandboxed agent code — OpenAI's Apps SDK widgets run in an isolated iframe under a strict CSP and must declare connect_domains (mapped to connect-src) for every origin they will fetch from; such a widget fetching a publisher's JSON or llms.txt cross-origin WILL be blocked without ACAO. That class is small today but growing.
 
 **Counter-evidence:** Decisive counter-evidence for the general case: GPTBot, OAI-SearchBot, ChatGPT-User, ClaudeBot, Claude-User, PerplexityBot and every server-side agent backend are non-browser HTTP clients. They do not implement the same-origin policy and are completely unaffected by a missing Access-Control-Allow-Origin header. Browser extensions with host permissions (the Claude-in-Chrome / sidebar class) also bypass CORS. No AI vendor doc requires CORS on publisher resources, and the llms.txt spec says nothing about it. Therefore 'missing CORS blocks AI agents' is FALSE as a general claim. Recommend rewording the audit to target only browser-embedded agent consumption and demoting it out of the score.
-**Consumers:** OpenAI Apps SDK widgets (browser-sandboxed), in-browser agent JS, none-known among server-side crawlers · **Recommended tier:** informative
-
-**Sources:** [Cross-Origin Resource Sharing (CORS)](https://developer.mozilla.org/en-US/docs/Web/HTTP/Guides/CORS) (verified 2026-08-20) · [Security & Privacy — Apps SDK](https://developers.openai.com/apps-sdk/guides/security-privacy) (verified 2026-08-20) · [The /llms.txt file](https://llmstxt.org/) (verified 2026-08-20) · [Overview of OpenAI Crawlers](https://developers.openai.com/api/docs/bots) (verified 2026-08-20) · [Does Anthropic crawl data from the web, and how can site owners block the crawler?](https://support.claude.com/en/articles/8896518-does-anthropic-crawl-data-from-the-web-and-how-can-site-owners-block-the-crawler) (verified 2026-08-20)
 
 ## Review history
 

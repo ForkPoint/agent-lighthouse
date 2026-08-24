@@ -7,7 +7,7 @@ import { filterSources, sourceTypes, type SourceRecord } from './sources-table';
  * The registry as it is on disk — `docs/evidence/sources.json` is read, never
  * written, and it is the shape these tests hold the island to: one `accessed`
  * date for the whole file and a `sources` array whose facet field is `type`
- * and whose `verified` is a boolean.
+ * and whose `verified` is an ISO date.
  */
 const REGISTRY = resolve(__dirname, '../../../../docs/evidence/sources.json');
 const raw = JSON.parse(readFileSync(REGISTRY, 'utf8')) as {
@@ -20,7 +20,7 @@ const record = (over: Partial<SourceRecord> & { id: string }): SourceRecord => (
   url: 'https://example.test/',
   type: 'spec',
   publisher: 'Example',
-  verified: true,
+  verified: '2026-08-20',
   keyFindings: '',
   ...over,
 });
@@ -38,7 +38,7 @@ describe('filterSources', () => {
       title: 'The rise of the AI crawler',
       publisher: 'Vercel',
       type: 'study',
-      verified: false,
+      verified: '2026-08-21',
       keyFindings: 'GPTBot made 569 million requests in one month.',
     }),
   ];
@@ -104,7 +104,11 @@ describe('the registry on disk', () => {
       expect(source.url, source.id).toMatch(/^https?:\/\//);
       expect(source.type.length, source.id).toBeGreaterThan(0);
       expect(source.publisher.length, source.id).toBeGreaterThan(0);
-      expect(typeof source.verified, `${source.id} verified is not a boolean`).toBe('boolean');
+      // The date the URL was last resolved. It was a boolean, and all 715
+      // records were `true`; a date is the fact a reader can act on.
+      expect(source.verified, `${source.id} verified is not an ISO date`).toMatch(
+        /^\d{4}-\d{2}-\d{2}$/,
+      );
       expect(source.keyFindings.length, source.id).toBeGreaterThan(0);
     }
   });

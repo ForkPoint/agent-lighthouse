@@ -1,14 +1,20 @@
 ---
 audit: structured-data/review-schema
-audit_id: "3.13, 3.23"
 category: structured-data
 source_file: packages/core/src/audits/structured-data/review-schema.ts
 slug: review-schema
-review_verdict: fix
-severity: high
 evidence_grade: A
 disposition: "merged 2026-08-22 (Plan 4, Task 8) — absorbs product-reviews (3.23)"
 reviewed: 2026-08-22
+sources:
+  - google-review-snippet-doc
+  - google-search-gallery
+  - apple-app-search-web-markup
+  - webdatacommons-2024-stats
+  - google-ai-features-trust
+  - ahrefs-schema-ai-citations
+  - google-product-snippet
+  - google-merchant-listing
 ---
 
 # review-schema (`3.13`, `3.23`)

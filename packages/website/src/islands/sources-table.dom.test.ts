@@ -21,7 +21,7 @@ const SOURCES: SourceRecord[] = [
     url: 'https://a2a-protocol.org/latest/topics/agent-discovery/',
     type: 'spec',
     publisher: 'Linux Foundation / A2A Project',
-    verified: true,
+    verified: '2026-08-20',
     keyFindings: LONG,
   },
   {
@@ -30,7 +30,7 @@ const SOURCES: SourceRecord[] = [
     url: 'https://vercel.com/blog/the-rise-of-the-ai-crawler',
     type: 'study',
     publisher: 'Vercel',
-    verified: false,
+    verified: '2026-08-21',
     keyFindings: 'GPTBot made 569 million requests in one month.',
   },
 ];
@@ -169,12 +169,14 @@ describe('mountSourcesTable', () => {
     expect(head.querySelector('code')!.textContent).toBe(SOURCES[0]!.id);
   });
 
-  it('spells out the verified flag rather than printing a raw boolean', async () => {
+  // Was a Yes/No rendering of a boolean that every record set to `true`. The
+  // column now carries the date the URL was last resolved.
+  it('prints the date each source was last verified', async () => {
     await mount();
 
     const cells = (index: number) => [...rows()[index]!.querySelectorAll('td')].map((c) => c.textContent);
-    expect(cells(0)![2]).toBe('Yes');
-    expect(cells(1)![2]).toBe('No');
+    expect(cells(0)![2]).toBe('2026-08-20');
+    expect(cells(1)![2]).toBe('2026-08-21');
   });
 
   it('collapses a long finding behind a preview and keeps a short one plain', async () => {

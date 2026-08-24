@@ -42,6 +42,10 @@ export const PAGE_ORDER = [
   'Limits',
   'How it scores',
   'Example failure',
+  // Built from the registry rather than from the body: the dossier names ids,
+  // and `docs/evidence/sources.json` holds the title, publisher, type and the
+  // date the URL was last resolved.
+  'Sources',
 ] as const;
 
 export type PublicName = (typeof PAGE_ORDER)[number];
@@ -125,6 +129,34 @@ export interface DossierOverrides {
   publicExtra?: readonly string[];
   /** Public names to withhold on this dossier only. */
   publicOmit?: readonly string[];
+  /**
+   * The registry records this dossier's `sources:` ids resolve to.
+   *
+   * Passed in rather than read here so this module stays a pure function of its
+   * markdown, which is what lets the tests run it over the corpus without a
+   * registry on disk.
+   */
+  sources?: readonly SourceRef[];
+}
+
+/** One row of `docs/evidence/sources.json`, as the page prints it. */
+export interface SourceRef {
+  title: string;
+  url: string;
+  type: string;
+  publisher: string;
+  /** The date the URL was last resolved. */
+  verified: string;
+}
+
+/** The `## Sources` section, one line per registry record. */
+function renderSources(sources: readonly SourceRef[]): string {
+  return sources
+    .map(
+      (source) =>
+        `- [${source.title}](${source.url}) — ${source.publisher}, ${source.type} (verified ${source.verified})`,
+    )
+    .join('\n');
 }
 
 /** Drop a leading `---` frontmatter block, if the source still carries one. */
@@ -394,6 +426,7 @@ function compact(body: string): string {
       continue;
     }
 
+
     // `**Evidence:**` under a heading that already says Evidence, on 92 pages.
     const text = stripFalsifiable(line.replace(/^\*\*Evidence:\*\*\s*/, ''));
     // A line that was nothing but the protocol clause leaves no paragraph.
@@ -581,6 +614,11 @@ export function publicDossier(markdown: string, overrides: DossierOverrides = {}
       }
     }
     bodies.set('Evidence', rest);
+  }
+
+  // The registry's records, appended as the last contract section.
+  if (overrides.sources?.length && !omit.has('Sources')) {
+    bodies.set('Sources', renderSources(overrides.sources));
   }
 
   const order = [

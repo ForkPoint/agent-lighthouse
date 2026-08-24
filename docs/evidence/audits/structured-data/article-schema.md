@@ -1,14 +1,18 @@
 ---
 audit: structured-data/article-schema
-audit_id: "3.6"
 category: structured-data
 source_file: packages/core/src/audits/structured-data/article-schema.ts
 slug: article-schema
-review_verdict: fix
-severity: high
 evidence_grade: A
 disposition: "keep — fix required"
 reviewed: 2026-08-21
+sources:
+  - google-article-structured-data
+  - google-search-gallery
+  - webdatacommons-2024-stats
+  - webalmanac-2024-structured-data
+  - google-ai-features-trust
+  - ahrefs-schema-ai-citations
 ---
 
 # article-schema (`3.6`)

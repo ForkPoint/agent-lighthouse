@@ -1,14 +1,63 @@
 ---
 audit: machine-discovery/llms-txt-exists
-audit_id: "1.1, 4.11"
 category: machine-discovery
 source_file: packages/core/src/audits/machine-discovery/llms-txt-exists.ts
 slug: llms-txt-exists
-review_verdict: fix
-severity: medium
 evidence_grade: C
 disposition: "merged 2026-08-22 (Plan 4, Task 4) — absorbs llms-txt-link (4.11)"
 reviewed: 2026-08-24
+recommended_tier: scored
+tier_rationale: "Recommended scored; ships informative. The A was never argued: the frontmatter carried grade A while the file's own research signal read grade C, verdict REFUTED. Re-graded C / informative / weight 0 (evidence sweep, 2026-08-24)."
+consumers:
+  - "Google Lighthouse 13.3+ agentic-browsing audit (an auditor, not an agent)"
+  - Dataprovider.com and SEO audit tools (observed in logs)
+  - none-known among answer engines or LLM crawlers
+  - "Google Lighthouse 13.3+ (llms-txt audit: H1, markdown-link, 50-char checks)"
+  - DebugBear agentic-browsing suite
+  - none-known for blockquote
+  - descriptions
+  - or link validity
+  - Googlebot / Google AI Overviews
+  - GPTBot
+  - OAI-SearchBot
+  - ClaudeBot
+  - PerplexityBot
+  - Agent Lighthouse itself (audit correctness precondition)
+signals:
+  - name: /llms.txt existence at domain root (llmstxt.org proposal)
+    grade: C
+    domain: llms-txt
+  - name: "llms.txt content quality conventions (H1, blockquote summary, sectioned links with descriptions, link validity)"
+    grade: B
+    domain: llms-txt
+  - name: Soft-404 / SPA catch-all rewrite (HTTP 200 for everything) as a false-result source
+    grade: A
+    domain: technical-infra
+sources:
+  - llmstxt-spec-link
+  - llmstxt-repo
+  - lighthouse-llms-txt-audit-source
+  - lighthouse-llms-txt-gatherer-source
+  - chrome-lighthouse-llms-txt-doc
+  - google-ai-optimization-mythbusting
+  - google-ai-features-trust
+  - sej-google-llms-txt-speculative
+  - sel-google-llms-txt-no-effect
+  - perplexity-crawlers-docs
+  - s18
+  - rankability-adoption-tracker
+  - otterly-llmstxt-experiment
+  - evil-martians-llm-traffic
+  - dries-buytaert-markdown-llmstxt
+  - wislr-48day-log-study
+  - maxaeo-citation-study
+  - chrome-lighthouse-agentic-browsing
+  - debugbear-llms-txt-audit-doc
+  - sej-lighthouse-markdown-links
+  - google-fix-search-javascript
+  - google-http-status-codes
+  - google-crawl-budget-docs
+  - vercel-rise-of-ai-crawler
 ---
 
 # llms-txt-exists (`1.1`)
@@ -57,9 +106,6 @@ Checks GET /llms.txt returns 200 and the body starts with '#'. The signal is def
 **Evidence:** REFUTED on the retrieval mechanism; SUPPORTED only as a compliance/convention signal. The spec is real and actively maintained (llmstxt.org v2, 2026-08-10, ~2.6k GitHub stars) and adoption is non-trivial: 8.7% of Tranco top-1,000 (15.8% of the 549 reachable), ~10.13% across a 300k-domain SE Ranking sample, and all four major AI labs publish one (I verified HTTP 200 on Anthropic, OpenAI, Perplexity, Cloudflare, Stripe, GitHub, Vercel). Google Chrome ships a real llms-txt audit in Lighthouse 13.3's Agentic Browsing category — I read the audit and gatherer source directly. BUT no vendor anywhere documents an agent consuming it, and four independent log studies converge on near-zero AI-crawler interest: Otterly 84/62,100 requests over 90 days (0.1%); Evil Martians ~770 fetches of which only 37 came from named AI assistants across 268k agent requests; Dries Buytaert 52 requests in a month, 'every one came from SEO audit tools'; Wislr 48 days/19 bots, 'zero hits from GPTBot, ClaudeBot, PerplexityBot, or any other AI crawler.' MaxAEO's 2,400-domain matched-pair study found citation rates of 11.8% (with) vs 11.6% (without) — +0.2pp, inside the noise band.
 
 **Counter-evidence:** Google Search Central explicitly names the file: 'LLMS.txt files and other special markup: You don't need to create new machine readable files... Doing so will neither harm nor help your site's visibility or rankings in Google Search, as Google Search ignores them.' John Mueller: 'it's purely speculative for now (the file has existed for years, yet none of the AI systems use it).' Gary Illyes: Google does not support it and has no plans to. Perplexity's crawler doc names only robots.txt. OpenAI's crawler doc never mentions it. No W3C or IETF standing — I searched w3.org and found only unrelated AI groups; the widely-repeated 'June 2026 W3C proposal to standardize llms.txt' appears to be SEO blogspam with no primary source. Crucially, Lighthouse itself returns notApplicable (score 1) on HTTP 404 — even Google does not penalize absence. Beware the vendor-incentive trap: the main pro-adoption data comes from Mintlify and Profound, who sell llms.txt tooling, with no published methodology.
-**Consumers:** Google Lighthouse 13.3+ agentic-browsing audit (an auditor, not an agent), Dataprovider.com and SEO audit tools (observed in logs), none-known among answer engines or LLM crawlers · **Recommended tier:** informative
-
-**Sources:** [The /llms.txt file, v2](https://llmstxt.org/) (verified 2026-08-20) · [AnswerDotAI/llms-txt repository](https://github.com/AnswerDotAI/llms-txt) (verified 2026-08-20) · [Lighthouse core/audits/agentic/llms-txt.js (source code)](https://github.com/GoogleChrome/lighthouse/blob/main/core/audits/agentic/llms-txt.js) (verified 2026-08-20) · [Lighthouse core/gather/gatherers/agentic/llms-txt.js (source code)](https://github.com/GoogleChrome/lighthouse/blob/main/core/gather/gatherers/agentic/llms-txt.js) (verified 2026-08-20) · [llms.txt | Lighthouse | Chrome for Developers](https://developer.chrome.com/docs/lighthouse/agentic-browsing/llms-txt) (verified 2026-08-20) · [AI features and your website — AI optimization guide (mythbusting section)](https://developers.google.com/search/docs/fundamentals/ai-optimization-guide) (verified 2026-08-20) · [AI Features and Your Website](https://developers.google.com/search/docs/appearance/ai-features) (verified 2026-08-20) · [Google Confirms LLMs.txt Has No Current Implementation / 'purely speculative for now'](https://www.searchenginejournal.com/google-says-llms-txt-is-purely-speculative-for-now/577576/) (verified 2026-08-20) · [Google says llms.txt files won't harm or help your search rankings](https://searchengineland.com/google-says-llms-txt-files-wont-harm-or-help-your-search-rankings-480264) (verified 2026-08-20) · [Perplexity Crawlers](https://docs.perplexity.ai/docs/resources/perplexity-crawlers) (verified 2026-08-20) · [Overview of OpenAI Crawlers](https://developers.openai.com/api/docs/bots) (verified 2026-08-20) · [LLMS.txt Adoption Tracker (Tranco top 1,000)](https://www.rankability.com/data/llms-txt-adoption/) (verified 2026-08-20) · [llms.txt and AI Visibility: Results from OtterlyAI's GEO Study](https://otterly.ai/blog/the-llms-txt-experiment/) (verified 2026-08-20) · [Which AI actually reads your site? Two months of LLM traffic, measured](https://evilmartians.com/chronicles/which-ai-actually-reads-your-site-two-months-of-llm-traffic-measured) (verified 2026-08-20) · [Markdown, llms.txt and AI crawlers](https://dri.es/markdown-llms-txt-and-ai-crawlers) (verified 2026-08-20) · [AI Bot Traffic Is Accelerating Fast. 48 Days of Server Logs Expose What GPTBot, ChatGPT, ClaudeBot, and 16 Others Are Doing](https://www.wislr.com/articles/ai-bot-behavior-log-analysis/) (verified 2026-08-20) · [Does llms.txt Work? Evidence From AI Citation Data](https://maxaeo.ai/blog/does-llms-txt-work/) (verified 2026-08-20) · [Direct measurement of vendor llms.txt files and markdown content negotiation (2026-08-20)](https://llmstxt.org/) (verified 2026-08-20)
 
 ### Signal: llms.txt content quality conventions (H1, blockquote summary, sectioned links with descriptions, link validity) — grade B (llms-txt)
 
@@ -68,9 +114,6 @@ Checks GET /llms.txt returns 200 and the body starts with '#'. The signal is def
 **Evidence:** This is the best-evidenced llms.txt signal because it has an exact, documented, shipping consumer whose rules I read in source rather than inferring. Lighthouse core/audits/agentic/llms-txt.js (Copyright 2026 Google LLC) applies precisely: hasH1 = /^\s*#\s+.+/m, hasLink = /\[.+\]\(.+\)/, isTooShort = content.length < 50, scoring 1 only if all three pass, with failure strings 'File is missing a required H1 header', 'File does not appear to contain any links', 'File is suspiciously short'. This is verifiable and reproducible, independently corroborated by DebugBear and by an SEJ case where a file with working bare URLs failed until links were wrapped in markdown syntax. The spec backs (a): the H1 is 'the only required section'. Auditing conformance is therefore defensible even though the underlying file's value to agents is not — this signal grades the parseability claim, which is true, not the retrieval claim, which is refuted.
 
 **Counter-evidence:** Sharply scope this signal. The blockquote convention is optional in the spec, unchecked by Lighthouse, and not universally followed even by exemplars: in my measurement of 7 major vendor files, 7/7 had an H1 and markdown links but only 5/7 had a blockquote — Anthropic and Stripe both omit it, so failing sites for a missing blockquote would fail Anthropic's own file. Lighthouse checks NO link validity, NO per-link descriptions, and NO section structure. SEJ's caveat is the honest frame: 'The audit checks whether your file is mechanically parseable. It does not check whether the file describes your website usefully.' And parseability is worth little when the consumer population is near-empty — Lighthouse is an auditor, not an agent, and it scores a 404 as notApplicable. Link-validity checking is also expensive at scale (Vercel's file has 1,872 links).
-**Consumers:** Google Lighthouse 13.3+ (llms-txt audit: H1, markdown-link, 50-char checks), DebugBear agentic-browsing suite, none-known for blockquote, descriptions, or link validity · **Recommended tier:** scored
-
-**Sources:** [Lighthouse core/audits/agentic/llms-txt.js (source code)](https://github.com/GoogleChrome/lighthouse/blob/main/core/audits/agentic/llms-txt.js) (verified 2026-08-20) · [Lighthouse core/gather/gatherers/agentic/llms-txt.js (source code)](https://github.com/GoogleChrome/lighthouse/blob/main/core/gather/gatherers/agentic/llms-txt.js) (verified 2026-08-20) · [llms.txt | Lighthouse | Chrome for Developers](https://developer.chrome.com/docs/lighthouse/agentic-browsing/llms-txt) (verified 2026-08-20) · [Agentic Browsing category | Lighthouse | Chrome for Developers](https://developer.chrome.com/docs/lighthouse/agentic-browsing) (verified 2026-08-20) · [Lighthouse: llms.txt does not follow recommendations](https://www.debugbear.com/docs/agentic-browsing/llms-txt-does-not-follow-recommendations) (verified 2026-08-20) · [Lighthouse Fails Your llms.txt Without Markdown Links](https://www.searchenginejournal.com/lighthouse-fails-your-llms-txt-without-markdown-links/577590/) (verified 2026-08-20) · [The /llms.txt file, v2](https://llmstxt.org/) (verified 2026-08-20) · [Direct measurement of vendor llms.txt files and markdown content negotiation (2026-08-20)](https://llmstxt.org/) (verified 2026-08-20)
 
 ### Signal: Soft-404 / SPA catch-all rewrite (HTTP 200 for everything) as a false-result source — grade A (technical-infra)
 
@@ -79,9 +122,6 @@ Checks GET /llms.txt returns 200 and the body starts with '#'. The signal is def
 **Evidence:** Documented vendor behaviour, and additionally verifiable by construction. Google names the exact failure mode: 'When a SPA is using client-side JavaScript to handle errors they often report a 200 HTTP status code instead of the appropriate status code. This can lead to error pages being indexed and possibly shown in search results', with the prescribed fixes being a redirect to a URL that genuinely returns 404, or a robots noindex. Google's status-code reference defines a soft 404 as content that 'suggests an error... an empty page or an error message' returned with a 2xx code, and the crawl-budget guide states flatly that 'Soft 404 pages will continue to be crawled, and waste your budget.' Vercel's measurements show AI crawlers are far more exposed to this waste than Googlebot: 34.82% of ChatGPT fetches and 34.16% of Claude fetches land on 404s versus 8.22% for Googlebot. For the audit tool itself the mechanism is not probabilistic at all — a 200-for-everything origin defeats status-based existence probes deterministically, so soft-404 detection must run as a precondition gate before any other file-presence audit is trusted.
 
 **Counter-evidence:** No AI vendor publishes its own soft-404 heuristic, so the specific detection thresholds are Google-derived and the claim that GPTBot or ClaudeBot penalise soft 404s is not directly documented — what IS documented is that they waste a third of their fetches on error responses. Detection also has a false-positive risk of its own: a legitimately-configured site may return 200 for a probe path that happens to exist, and some CDNs return 200 with a custom error body by design. The audit should therefore verify via body content (shell fingerprint, absence of expected markers) and not by status code alone, and should report soft-404 as a confidence-degrading condition rather than a page-quality failure.
-**Consumers:** Googlebot / Google AI Overviews, GPTBot, OAI-SearchBot, ClaudeBot, PerplexityBot, Agent Lighthouse itself (audit correctness precondition) · **Recommended tier:** scored
-
-**Sources:** [Fix Search-related JavaScript problems](https://developers.google.com/search/docs/crawling-indexing/javascript/fix-search-javascript) (verified 2026-08-20) · [How HTTP status codes, and network and DNS errors affect Google Search](https://developers.google.com/search/docs/crawling-indexing/http-network-errors) (verified 2026-08-20) · [Large site owner's guide to managing your crawl budget](https://developers.google.com/search/docs/crawling-indexing/large-site-managing-crawl-budget) (verified 2026-08-20) · [The rise of the AI crawler](https://vercel.com/blog/the-rise-of-the-ai-crawler) (verified 2026-08-20)
 
 ## Absorbed evidence — llms-txt-link (4.11)
 
@@ -106,7 +146,6 @@ v1 failed at priority `high` on a site that correctly served /llms.txt at the we
 - **No cross-file false positive.** `includes('llms')` matched `title="LLMs-full.txt"`, so a site publishing only llms-full.txt passed the llms.txt link check. The filename anchor removes it.
 - **Normalized `rel`.** `rel === 'alternate'` was an exact, case-sensitive compare; `rel` is now lower-cased and split into tokens, and the spec's `describedby` is accepted alongside `alternate`.
 - **The well-known path is consulted first.** The file's own status drives the result; the link is reported against it.
-
 
 ## Re-grade (evidence sweep, 2026-08-24)
 

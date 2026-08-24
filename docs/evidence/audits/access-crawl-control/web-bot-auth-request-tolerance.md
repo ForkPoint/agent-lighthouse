@@ -8,6 +8,12 @@ tier: scored
 disposition: "new in v2 — graduated from proposal 2026-08-23"
 reviewed: 2026-08-20
 graduated: 2026-08-23
+sources:
+  - s1
+  - s3
+  - s4
+  - s16
+  - s2
 ---
 
 

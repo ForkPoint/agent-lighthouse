@@ -1,14 +1,20 @@
 ---
 audit: access-crawl-control/claude-searchbot
-audit_id: "2.21"
 category: access-crawl-control
 source_file: packages/core/src/audits/access-crawl-control/claude-searchbot.ts
 slug: claude-searchbot
-review_verdict: fix
-severity: medium
 evidence_grade: A
 disposition: "keep — fix required"
 reviewed: 2026-08-21
+recommended_tier: scored
+consumers:
+  - Claude-SearchBot
+signals:
+  - name: Claude-SearchBot allow/block state in robots.txt
+    grade: A
+    domain: robots-ai-crawlers
+sources:
+  - anthropic-crawlers
 ---
 
 # claude-searchbot (`2.21`)
@@ -59,9 +65,6 @@ vendor-level audit was not done and remains open.
 **Evidence:** Documented by Anthropic: Claude-SearchBot 'navigates the web to improve search result quality for users. It analyzes online content specifically to enhance the relevance and accuracy of search responses', covered by the same robots.txt-compliance statement and the claude.com/crawling/bots.json IP list. As a search/citation-side agent it is the Anthropic analogue of OAI-SearchBot and PerplexityBot, so an allow is the visibility-positive state.
 
 **Counter-evidence:** Anthropic does not state the consequence of blocking as explicitly as OpenAI does for OAI-SearchBot ('will not be shown in ChatGPT search answers') — the exclusion-from-answers link is inferred from the agent's stated purpose, not asserted. No published per-bot citation-impact study isolates Claude-SearchBot.
-**Consumers:** Claude-SearchBot · **Recommended tier:** scored
-
-**Sources:** [Does Anthropic crawl data from the web, and how can site owners block the crawler?](https://support.claude.com/en/articles/8896518-does-anthropic-crawl-data-from-the-web-and-how-can-site-owners-block-the-crawler) (verified 2026-08-20)
 
 ## Review history
 

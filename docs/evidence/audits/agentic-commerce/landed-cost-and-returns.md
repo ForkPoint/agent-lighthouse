@@ -8,6 +8,13 @@ tier: scored
 disposition: "new in v2 — graduated from proposal 2026-08-22"
 reviewed: 2026-08-20
 graduated: 2026-08-22
+sources:
+  - acp-openapi-checkout
+  - acp-sellers
+  - openai-feed-spec-confirm
+  - google-return-policy
+  - schemaorg-shipping
+  - google-merchant-listing
 ---
 
 

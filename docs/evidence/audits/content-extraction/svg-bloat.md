@@ -1,14 +1,29 @@
 ---
 audit: content-extraction/svg-bloat
-audit_id: "6.18"
 category: content-extraction
 source_file: packages/core/src/audits/content-extraction/svg-bloat.ts
 slug: svg-bloat
-review_verdict: fix
-severity: medium
 evidence_grade: B
 disposition: "keep — fix required"
 reviewed: 2026-08-21
+recommended_tier: scored
+consumers:
+  - "Anthropic read_page (50,000-char cap, depth 15 default)"
+  - Playwright MCP snapshot
+  - Chrome DevTools MCP
+  - browser-use DOM serializer
+  - Cloudflare Markdown for Agents
+signals:
+  - name: Inline SVG and DOM bloat consuming LLM context
+    grade: B
+    domain: semantic-dom-a11y
+sources:
+  - anthropic-browser-use-tool
+  - dom-downsampling-paper
+  - observation-reduction-paper
+  - cloudflare-markdown-for-agents
+  - playwright-mcp-snapshots
+  - browser-use-clickable-elements
 ---
 
 # svg-bloat (`6.18`)
@@ -54,9 +69,6 @@ The best-engineered audit in the directory — correct notApplicable, byte accou
 **Evidence:** Truncation is documented first-party: Anthropic's read_page caps output at 50,000 characters, truncates at a line boundary, and offers depth (default 15) and ref-scoping as the remedy — an explicit admission that page size forces partial reads [anthropic-browser-use-tool]. Scale of the problem: 'Some real world DOMs surpass the size of a megabyte' ≈ 1e6 tokens, versus 1e3–1e4 after downsampling; the D2Snap ablation found DOM hierarchy 'the strongest among those features' for LLM performance, and its attribute filter preserves alt, href and aria-* while discarding the rest [dom-downsampling-paper]. Token magnitudes corroborated at ~56,653 HTML tokens per step [observation-reduction-paper] and by Cloudflare's 80% markdown reduction attributed to semantically empty wrappers and scripts [cloudflare-markdown-for-agents].
 
 **Counter-evidence:** The SVG-specific half is materially weaker than the DOM-size half and should be graded C on its own. No vendor doc, spec, or study I could verify singles out inline SVG as an agent problem. Mechanically the cost is asymmetric: an inline <svg> without a title/aria-label collapses to a single unnamed node (or is omitted) in the accessibility tree, so its bloat lands on raw-HTML and markdown consumers, not on the a11y-tree agents that dominate this domain — meaning an SVG-bloat audit is really a payload-weight audit, not an agent-perception audit. And bigger is not uniformly worse: strong models gained double-digit points from the LARGER HTML observation [observation-reduction-paper]. Recommend scoring total serialized DOM size / node depth with the truncation cap as the documented anchor, and demoting the SVG-specific rule to an informative sub-check unless the SVG is also unnamed where it acts as a control.
-**Consumers:** Anthropic read_page (50,000-char cap, depth 15 default), Playwright MCP snapshot, Chrome DevTools MCP, browser-use DOM serializer, Cloudflare Markdown for Agents · **Recommended tier:** scored
-
-**Sources:** [Browser use tool (browser_toolset_20260801)](https://platform.claude.com/docs/en/agents-and-tools/tool-use/browser-use-tool) (verified 2026-08-20) · [Beyond Pixels: Exploring DOM Downsampling for LLM-Based Web Agents](https://arxiv.org/html/2508.04412v1) (verified 2026-08-20) · [Read More, Think More: Revisiting Observation Reduction for Web Agents](https://arxiv.org/abs/2604.01535) (verified 2026-08-20) · [Introducing Markdown for Agents](https://blog.cloudflare.com/markdown-for-agents/) (verified 2026-08-20) · [Snapshots — Playwright MCP](https://playwright.dev/mcp/snapshots) (verified 2026-08-20) · [browser-use ClickableElementDetector source](https://raw.githubusercontent.com/browser-use/browser-use/main/browser_use/dom/serializer/clickable_elements.py) (verified 2026-08-20)
 
 ## Review history
 

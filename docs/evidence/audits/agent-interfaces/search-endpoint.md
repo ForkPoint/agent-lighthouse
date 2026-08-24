@@ -1,14 +1,15 @@
 ---
 audit: agent-interfaces/search-endpoint
-audit_id: "5.16, 3.4"
 category: agent-interfaces
 source_file: packages/core/src/audits/agent-interfaces/search-endpoint.ts
 slug: search-endpoint
-review_verdict: fix
-severity: high
 evidence_grade: C
 disposition: "merged 2026-08-22 (Plan 4, Task 7) — absorbs website-search-action (3.4)"
 reviewed: 2026-08-22
+sources:
+  - schema-searchaction
+  - google-sitelinks-searchbox-farewell
+  - openai-gpt-actions-openapi
 ---
 
 # search-endpoint (`5.16`, `3.4`)

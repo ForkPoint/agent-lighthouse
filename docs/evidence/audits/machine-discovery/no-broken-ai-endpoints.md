@@ -1,14 +1,39 @@
 ---
 audit: machine-discovery/no-broken-ai-endpoints
-audit_id: "8.18"
 category: machine-discovery
 source_file: packages/core/src/audits/machine-discovery/no-broken-ai-endpoints.ts
 slug: no-broken-ai-endpoints
-review_verdict: fix
-severity: high
 evidence_grade: A
 disposition: "keep — fix required"
 reviewed: 2026-08-21
+recommended_tier: scored
+consumers:
+  - Cloudflare AI Crawl Control / Bot Management
+  - site-operator WAF rules
+  - GPTBot
+  - ClaudeBot
+  - PerplexityBot (as blocked parties)
+signals:
+  - name: Soft-404 / SPA catch-all rewrite (HTTP 200 for everything) as a false-result source
+    grade: A
+    domain: technical-infra
+  - name: "WAF / bot-management blocking AI agents (Cloudflare AI Crawl Control, default blocks, pay-per-crawl 402)"
+    grade: A
+    domain: technical-infra
+sources:
+  - google-fix-search-javascript
+  - google-http-status-codes
+  - google-crawl-budget-docs
+  - vercel-rise-of-ai-crawler
+  - s21
+  - cloudflare-pay-per-crawl
+  - cloudflare-content-independence-day
+  - cloudflare-ai-options-2026
+  - cloudflare-googlebot-to-gptbot-2025
+  - cloudflare-perplexity-stealth-crawlers
+  - cloudflare-web-bot-auth
+  - cloudflare-crawl-refer-ratio
+  - s2
 ---
 
 # no-broken-ai-endpoints (`8.18`)
@@ -56,9 +81,6 @@ Genuinely valuable signal — a llms.txt full of 404s does degrade agent trust �
 **Evidence:** Documented vendor behaviour, and additionally verifiable by construction. Google names the exact failure mode: 'When a SPA is using client-side JavaScript to handle errors they often report a 200 HTTP status code instead of the appropriate status code. This can lead to error pages being indexed and possibly shown in search results', with the prescribed fixes being a redirect to a URL that genuinely returns 404, or a robots noindex. Google's status-code reference defines a soft 404 as content that 'suggests an error... an empty page or an error message' returned with a 2xx code, and the crawl-budget guide states flatly that 'Soft 404 pages will continue to be crawled, and waste your budget.' Vercel's measurements show AI crawlers are far more exposed to this waste than Googlebot: 34.82% of ChatGPT fetches and 34.16% of Claude fetches land on 404s versus 8.22% for Googlebot. For the audit tool itself the mechanism is not probabilistic at all — a 200-for-everything origin defeats status-based existence probes deterministically, so soft-404 detection must run as a precondition gate before any other file-presence audit is trusted.
 
 **Counter-evidence:** No AI vendor publishes its own soft-404 heuristic, so the specific detection thresholds are Google-derived and the claim that GPTBot or ClaudeBot penalise soft 404s is not directly documented — what IS documented is that they waste a third of their fetches on error responses. Detection also has a false-positive risk of its own: a legitimately-configured site may return 200 for a probe path that happens to exist, and some CDNs return 200 with a custom error body by design. The audit should therefore verify via body content (shell fingerprint, absence of expected markers) and not by status code alone, and should report soft-404 as a confidence-degrading condition rather than a page-quality failure.
-**Consumers:** Googlebot / Google AI Overviews, GPTBot, OAI-SearchBot, ClaudeBot, PerplexityBot, Agent Lighthouse itself (audit correctness precondition) · **Recommended tier:** scored
-
-**Sources:** [Fix Search-related JavaScript problems](https://developers.google.com/search/docs/crawling-indexing/javascript/fix-search-javascript) (verified 2026-08-20) · [How HTTP status codes, and network and DNS errors affect Google Search](https://developers.google.com/search/docs/crawling-indexing/http-network-errors) (verified 2026-08-20) · [Large site owner's guide to managing your crawl budget](https://developers.google.com/search/docs/crawling-indexing/large-site-managing-crawl-budget) (verified 2026-08-20) · [The rise of the AI crawler](https://vercel.com/blog/the-rise-of-the-ai-crawler) (verified 2026-08-20)
 
 ### Signal: WAF / bot-management blocking AI agents (Cloudflare AI Crawl Control, default blocks, pay-per-crawl 402) — grade A (technical-infra)
 
@@ -69,9 +91,6 @@ Genuinely valuable signal — a llms.txt full of 404s does degrade agent trust �
 **Evidence:** Fully documented vendor behaviour at large scale. Cloudflare began blocking AI crawlers by default for new domains on 1 July 2025, making permission the default posture across a very large share of the web. It has since announced that from 15 September 2026 new domains will block 'Training' and 'Agent' class bots by default on ad-displaying pages while leaving 'Search' allowed, and has extended managed robots.txt with a `use` signal (immediate / reference / full). Pay-per-crawl operationalises the gate in HTTP: crawlers 'either present payment intent via request headers for successful HTTP 200 access, or receive an HTTP 402 Payment Required response with pricing', minimum $0.001 per crawl — and critically, an existing WAF or Bot Management block rule OVERRIDES pay-per-crawl's charge behaviour, silently converting a monetizable crawl into a hard block. Adoption context: of 3,816 top-10k domains with robots.txt, ~14% carried AI-bot directives; GPTBot was the most-disallowed at 312 domains. Verification is moving to cryptography — Cloudflare's Web Bot Auth implements RFC 9421 HTTP Message Signatures with Signature-Input / Signature / Signature-Agent headers and a JWKS key directory at /.well-known/http-message-signatures-directory.
 
 **Counter-evidence:** Two caveats that shape how this must be audited. (1) User-Agent-based probing is unreliable in BOTH directions: Cloudflare documented Perplexity using a Chrome-impersonating stealth crawler on unlisted IPs across rotating ASNs at 3–6M requests/day to evade no-crawl directives, and conversely malicious scrapers routinely spoof GPTBot. An audit that merely sets a UA header measures the WAF's UA rules, not real agent access — genuine verification requires the vendors' published IP ranges (openai.com/gptbot.json, claude.com/crawling/bots.json, perplexity.com/perplexitybot.json) or Web Bot Auth signatures. (2) Blocking is often a deliberate, rational business decision, not a defect: Cloudflare's crawl-to-refer data (Anthropic ~71,000 crawls per HTML referral in the June 2025 window, with the caveat that Claude's native app sends no Referer) makes uncompensated crawl a real cost. The audit should REPORT the gate neutrally as 'AI agents are blocked here' rather than scoring it as a failure, since the site owner may have chosen it.
-**Consumers:** Cloudflare AI Crawl Control / Bot Management, site-operator WAF rules, GPTBot, ClaudeBot, PerplexityBot (as blocked parties) · **Recommended tier:** scored
-
-**Sources:** [AI Crawl Control overview](https://developers.cloudflare.com/ai-crawl-control/) (verified 2026-08-20) · [What is pay per crawl?](https://developers.cloudflare.com/ai-crawl-control/features/pay-per-crawl/what-is-pay-per-crawl/) (verified 2026-08-20) · [Content Independence Day: no AI crawl without compensation](https://blog.cloudflare.com/content-independence-day-no-ai-crawl-without-compensation/) (verified 2026-08-20) · [Your site, your rules: new AI traffic options for all customers](https://blog.cloudflare.com/content-independence-day-ai-options/) (verified 2026-08-20) · [From Googlebot to GPTBot: who's crawling your site in 2025](https://blog.cloudflare.com/from-googlebot-to-gptbot-whos-crawling-your-site-in-2025/) (verified 2026-08-20) · [Perplexity is using stealth, undeclared crawlers to evade website no-crawl directives](https://blog.cloudflare.com/perplexity-is-using-stealth-undeclared-crawlers-to-evade-website-no-crawl-directives/) (verified 2026-08-20) · [Web Bot Auth — Cloudflare bot verification](https://developers.cloudflare.com/bots/reference/bot-verification/web-bot-auth/) (verified 2026-08-20) · [The crawl before the fall… of referrals: understanding AI's impact on content providers](https://blog.cloudflare.com/ai-search-crawl-refer-ratio-on-radar/) (verified 2026-08-20) · [HTTP Message Signatures for automated traffic Architecture (draft-meunier-web-bot-auth-architecture)](https://datatracker.ietf.org/doc/draft-meunier-web-bot-auth-architecture/) (verified 2026-08-20)
 
 ## Review history
 

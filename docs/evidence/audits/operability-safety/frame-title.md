@@ -1,14 +1,18 @@
 ---
 audit: operability-safety/frame-title
-audit_id: "7.19"
 category: operability-safety
 source_file: packages/core/src/audits/operability-safety/frame-title.ts
 slug: frame-title
-review_verdict: fix
-severity: medium
 evidence_grade: C
 disposition: "keep — fix required"
 reviewed: 2026-08-21
+sources:
+  - mdn-iframe
+  - axe-frame-title
+  - w3c-html-aam
+  - w3c-accname-11
+  - probe-aria-snapshot-images
+  - chrome-devtools-mcp-tools
 ---
 
 # Frames are titled (`7.19`)

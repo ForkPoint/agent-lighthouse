@@ -1,14 +1,30 @@
 ---
 audit: operability-safety/table-headers
-audit_id: "7.17"
 category: operability-safety
 source_file: packages/core/src/audits/operability-safety/table-headers.ts
 slug: table-headers
-review_verdict: keep
-severity: low
 evidence_grade: B
 disposition: "keep"
 reviewed: 2026-08-21
+recommended_tier: scored
+consumers:
+  - Mozilla Readability
+  - trafilatura
+  - Playwright MCP / Chrome DevTools MCP snapshots
+  - Anthropic read_page
+  - browser-use
+signals:
+  - name: Data tables with th (and scope) header semantics
+    grade: B
+    domain: semantic-dom-a11y
+sources:
+  - readability-src
+  - w3c-html-aam
+  - w3c-wai-aria-1-2
+  - trafilatura-corefunctions
+  - browser-use-clickable-elements
+  - web-almanac-2025-accessibility
+  - mozilla-readability-source
 ---
 
 # Data tables have header associations (`7.17`)
@@ -51,9 +67,6 @@ Bundles `td-has-header`, `th-has-data-cells`, `td-headers-attr`, `scope-attr-val
 **Evidence:** Source-level: Readability's dataTableDescendants = ['col','colgroup','tfoot','thead','th'], with caption and summary as additional data-table markers, and _cleanConditionally short-circuits with 'if (tag === "table" && isDataTable(node)) return false' [mozilla-readability-source]. HTML-AAM maps th to columnheader or rowheader roles [w3c-html-aam] over the WAI-ARIA 1.2 role set [w3c-wai-aria-1-2]. trafilatura keeps tables by default via include_tables and renders them as markdown under include_formatting [trafilatura-corefunctions]; markdown table syntax itself requires a header row, so a th-less table converts to a header-less or arbitrarily-headed markdown table. browser-use exposes role='row'/'cell'/'gridcell' as addressable [browser-use-clickable-elements].
 
 **Counter-evidence:** Two real caveats. First, th is sufficient but not necessary in Readability: the same function also classifies by size (roughly ≥10 cells, or ≥10 rows and ≥4 columns), so a large th-less table survives anyway — the deletion risk is concentrated in small tables. Second, the `scope` attribute specifically is a weaker signal than `th` and should be graded C on its own: none of the extractors examined (Readability, trafilatura, htmldate) reads @scope, and no agent harness doc mentions it; scope matters for the HTML header-association algorithm and screen readers, and only indirectly for agents via the a11y tree on complex multi-level tables. Caption adoption is tiny (1.6% of desktop sites [web-almanac-2025-accessibility]) so caption should be advisory, not required. Recommend scoring th/thead presence, and treating scope and caption as informative sub-checks.
-**Consumers:** Mozilla Readability, trafilatura, Playwright MCP / Chrome DevTools MCP snapshots, Anthropic read_page, browser-use · **Recommended tier:** scored
-
-**Sources:** [mozilla/readability Readability.js source](https://raw.githubusercontent.com/mozilla/readability/main/Readability.js) (verified 2026-08-20) · [HTML Accessibility API Mappings 1.0](https://www.w3.org/TR/html-aam-1.0/) (verified 2026-08-20) · [Accessible Rich Internet Applications (WAI-ARIA) 1.2](https://www.w3.org/TR/wai-aria-1.2/) (verified 2026-08-20) · [trafilatura core functions documentation](https://trafilatura.readthedocs.io/en/latest/corefunctions.html) (verified 2026-08-20) · [browser-use ClickableElementDetector source](https://raw.githubusercontent.com/browser-use/browser-use/main/browser_use/dom/serializer/clickable_elements.py) (verified 2026-08-20) · [Web Almanac 2025 — Accessibility chapter](https://almanac.httparchive.org/en/2025/accessibility) (verified 2026-08-20)
 
 ## Review history
 

@@ -1,14 +1,22 @@
 ---
 audit: access-crawl-control/google-extended
-audit_id: "2.2"
 category: access-crawl-control
 source_file: packages/core/src/audits/access-crawl-control/google-extended.ts
 slug: google-extended
-review_verdict: fix
-severity: high
 evidence_grade: A
 disposition: "keep — fix required"
 reviewed: 2026-08-21
+recommended_tier: scored
+consumers:
+  - Google-Extended (robots.txt token consumed by Google; not a fetching UA)
+signals:
+  - name: Google-Extended allow/block state in robots.txt
+    grade: A
+    domain: robots-ai-crawlers
+sources:
+  - google-common-crawlers
+  - google-ai-features-trust
+  - pebblous-blocking-citation-gap
 ---
 
 # google-extended (`2.2`)
@@ -48,9 +56,6 @@ Inherits every base-class defect, and its guidance text is factually wrong in a 
 **Evidence:** Google documents Google-Extended as 'a standalone product token that web publishers can use to manage whether content Google crawls from their sites may be used for training future generations of Gemini models that power Gemini Apps and Vertex AI API for Gemini and for grounding ... in Gemini Apps and Grounding with Google Search on Vertex AI', and states it 'does not impact a site's inclusion in Google Search nor is it used as a ranking signal'. It is a robots.txt token only — no crawler fetches with that UA — so it is safe to block without traffic loss.
 
 **Counter-evidence:** Critical, widely-misreported limitation: Google-Extended does NOT control AI Overviews or AI Mode. Google's AI-features page states 'robots.txt directives for Googlebot is the control for site owners to manage access to how their sites are crawled for Search' and directs publishers to nosnippet / data-nosnippet / max-snippet / noindex for AI feature control. Any audit implying a Google-Extended disallow keeps content out of AI Overviews is wrong. Also, BuzzStream measured 92.3% citation retention among sites blocking Google-Extended — the highest of any bot studied.
-**Consumers:** Google-Extended (robots.txt token consumed by Google; not a fetching UA) · **Recommended tier:** scored
-
-**Sources:** [Google crawlers and fetchers (user agents) — Common crawlers](https://developers.google.com/search/docs/crawling-indexing/google-common-crawlers) (verified 2026-08-20) · [Google Search's AI features and your website](https://developers.google.com/search/docs/appearance/ai-features) (verified 2026-08-20) · [The Paradox of Blocking AI Crawlers: You Lose Visitors, Not Citations](https://blog.pebblous.ai/report/ai-crawler-blocking-citation-gap/en/) (verified 2026-08-20)
 
 ## Review history
 

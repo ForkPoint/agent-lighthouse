@@ -1,14 +1,34 @@
 ---
 audit: content-extraction/image-alt-text
-audit_id: "6.15"
 category: content-extraction
 source_file: packages/core/src/audits/content-extraction/image-alt-text.ts
 slug: image-alt-text
-review_verdict: fix
-severity: medium
 evidence_grade: A
 disposition: "keep — fix required"
 reviewed: 2026-08-21
+recommended_tier: scored
+consumers:
+  - Google Search / Google Images
+  - Playwright MCP snapshot
+  - Anthropic read_page / Claude-in-Chrome
+  - Chrome DevTools MCP take_snapshot
+  - browser-use
+  - screen readers (accname consumers)
+signals:
+  - name: Image alt text as the machine-readable representation of images
+    grade: A
+    domain: semantic-dom-a11y
+sources:
+  - google-image-seo-docs
+  - w3c-accname
+  - w3c-html-aam
+  - vercel-rise-of-ai-crawler
+  - machine-readable-ads-paper
+  - web-almanac-2025-accessibility
+  - web-almanac-2024-accessibility
+  - google-ai-features-trust
+  - vercel-ai-crawler-study
+  - google-ai-features-docs
 ---
 
 # image-alt-text (`6.15`)
@@ -60,9 +80,6 @@ The decorative-exclusion logic is careful and correct (it properly distinguishes
 **Evidence:** Direct vendor statement: 'Google uses alt text along with computer vision algorithms and the contents of the page to understand the subject matter of the image' [google-image-seo-docs]. The mechanism is standardised: accname (W3C Recommendation, 2018) lists HTML alt among the native host-language text-alternative sources ranked below aria-labelledby/aria-label [w3c-accname], and HTML-AAM maps img[alt] to the image role and img[alt=''] to none/presentation [w3c-html-aam]. Vercel's crawler-log data shows the AI crawlers that matter here do not execute JavaScript at all [vercel-ai-crawler-study], so server-rendered alt is what they get. The ads experiment gives the behavioural corollary: agents across GPT-4o, Claude 3.7 Sonnet, Gemini 2.0 Flash and OpenAI Operator 'ignore purely visual calls to action, clicking banners only when semantic button overlays or off-screen text labels are present' [machine-readable-ads-paper]. Baseline: 69% of images pass the alt audit and ~8.5% of alt values are just filenames [web-almanac-2025-accessibility].
 
 **Counter-evidence:** The 'multimodal AI' framing is where this overreaches. Neither OpenAI nor Anthropic documents consuming alt text anywhere, and Google's AI-features page says no special optimizations are needed for AI Overviews [google-ai-features-docs]. Vercel's data shows ClaudeBot spends 35.17% of its fetches on images [vercel-ai-crawler-study], meaning image bytes are being retrieved and can plausibly be captioned by a vision model without any alt at all — capable multimodal systems can substitute for alt in a way they cannot substitute for a missing heading. So grade A rests on Google's explicit statement, not on a general 'all AI reads alt' claim; the audit should say so. Also note alt='' is correct, not a failure, for decorative images (30% of alt attributes are legitimately empty [web-almanac-2024-accessibility]) — an audit that flags empty alt as missing alt is wrong.
-**Consumers:** Google Search / Google Images, Playwright MCP snapshot, Anthropic read_page / Claude-in-Chrome, Chrome DevTools MCP take_snapshot, browser-use, screen readers (accname consumers) · **Recommended tier:** scored
-
-**Sources:** [Image SEO Best Practices — Google Search Central](https://developers.google.com/search/docs/appearance/google-images) (verified 2026-08-20) · [Accessible Name and Description Computation 1.1](https://www.w3.org/TR/accname/) (verified 2026-08-20) · [HTML Accessibility API Mappings 1.0](https://www.w3.org/TR/html-aam-1.0/) (verified 2026-08-20) · [The rise of the AI crawler](https://vercel.com/blog/the-rise-of-the-ai-crawler) (verified 2026-08-20) · [Machine-Readable Ads: Accessibility and Trust Patterns for AI Web Agents interacting with Online Advertisements](https://arxiv.org/abs/2507.12844) (verified 2026-08-20) · [Web Almanac 2025 — Accessibility chapter](https://almanac.httparchive.org/en/2025/accessibility) (verified 2026-08-20) · [Web Almanac 2024 — Accessibility chapter](https://almanac.httparchive.org/en/2024/accessibility) (verified 2026-08-20) · [AI features and your website — Google Search Central](https://developers.google.com/search/docs/appearance/ai-features) (verified 2026-08-20)
 
 ## Pass-rule correction (contradiction sweep, 2026-08-24)
 

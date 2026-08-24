@@ -1,14 +1,17 @@
 ---
 audit: structured-data/schema-validation
-audit_id: "3.2"
 category: structured-data
 source_file: packages/core/src/audits/structured-data/schema-validation.ts
 slug: schema-validation
-review_verdict: fix
-severity: high
 evidence_grade: A
 disposition: "keep — fix required"
 reviewed: 2026-08-21
+sources:
+  - w3c-json-ld-11
+  - w3c-jsonld-api
+  - google-intro-structured-data
+  - webdatacommons-2024-stats
+  - searchviu-schema-ai-fetch-test
 ---
 
 # schema-validation (`3.2`)

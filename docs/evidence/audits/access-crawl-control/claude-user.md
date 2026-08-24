@@ -1,14 +1,21 @@
 ---
 audit: access-crawl-control/claude-user
-audit_id: "2.15"
 category: access-crawl-control
 source_file: packages/core/src/audits/access-crawl-control/claude-user.ts
 slug: claude-user
-review_verdict: fix
-severity: medium
 evidence_grade: A
 disposition: "keep — fix required"
 reviewed: 2026-08-21
+recommended_tier: scored
+consumers:
+  - Claude-User
+signals:
+  - name: Claude-User allow/block state in robots.txt
+    grade: A
+    domain: robots-ai-crawlers
+sources:
+  - anthropic-crawlers
+  - tollbit-robots-noncompliance
 ---
 
 # claude-user (`2.15`)
@@ -50,9 +57,6 @@ Genuinely valuable signal — Claude-User is the live fetcher behind Claude's we
 **Evidence:** Anthropic documents Claude-User as: 'supports Claude AI users. When individuals ask questions to Claude, it may access websites using a Claude-User agent', under the same statement that 'Anthropic's Bots respect do not crawl signals by honoring industry standard directives in robots.txt'. This makes Claude-User a rare case where blocking a user-initiated agent is documented to actually work — which also means blocking it is a real self-inflicted visibility cost. TollBit measured real-world blocking at 9% of European sites vs 26% of North American sites, confirming active field presence and operator awareness.
 
 **Counter-evidence:** Anthropic does not publish a separate per-agent compliance statement, only a blanket one, so the Claude-User guarantee is weaker than a dedicated sentence. No independent audit has specifically measured Claude-User disallow compliance the way TollBit did for ChatGPT-User, so the honoring claim is vendor-asserted and untested.
-**Consumers:** Claude-User · **Recommended tier:** scored
-
-**Sources:** [Does Anthropic crawl data from the web, and how can site owners block the crawler?](https://support.claude.com/en/articles/8896518-does-anthropic-crawl-data-from-the-web-and-how-can-site-owners-block-the-crawler) (verified 2026-08-20) · [15% of AI page fetchers in Europe reached disallowed URLs, TollBit finds](https://ppc.land/15-of-ai-page-fetchers-in-europe-reached-disallowed-urls-tollbit-finds/) (verified 2026-08-20)
 
 ## Review history
 

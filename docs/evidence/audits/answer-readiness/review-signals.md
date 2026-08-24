@@ -1,14 +1,16 @@
 ---
 audit: answer-readiness/review-signals
-audit_id: "10.8, 10.14"
 category: answer-readiness
 source_file: packages/core/src/audits/answer-readiness/review-signals.ts
 slug: review-signals
-review_verdict: fix
-severity: high
 evidence_grade: B
 disposition: "merged 2026-08-22 (Plan 4, Task 6) — absorbs blockquote-usage (10.14)"
 reviewed: 2026-08-24
+sources:
+  - google-review-snippet-doc
+  - openai-feed-spec-confirm
+  - schema-aggregaterating
+  - google-ai-features-trust
 ---
 
 # review-signals (`10.8`, `10.14`)

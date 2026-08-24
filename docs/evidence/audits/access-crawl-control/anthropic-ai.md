@@ -1,14 +1,26 @@
 ---
 audit: access-crawl-control/anthropic-ai
-audit_id: "2.3"
 category: access-crawl-control
 source_file: packages/core/src/audits/access-crawl-control/anthropic-ai.ts
 slug: anthropic-ai
-review_verdict: fix
-severity: high
 evidence_grade: A
 disposition: "keep — fix required"
 reviewed: 2026-08-24
+recommended_tier: informative
+tier_rationale: "The recommendation graded the retired `anthropic-ai` token. The audit now scores the live `ClaudeBot` token, which Anthropic documents by name, so the grade-A signal it rests on is not the one the recommendation weighed (contradiction sweep, 2026-08-24)."
+consumers: []
+signals:
+  - name: ClaudeBot allow/block state in robots.txt
+    grade: A
+    domain: robots-ai-crawlers
+  - name: anthropic-ai (legacy token) present in robots.txt
+    grade: C
+    domain: robots-ai-crawlers
+sources:
+  - anthropic-crawlers
+  - cloudflare-ai-crawler-purpose-industry
+  - knownagents-claudebot
+  - knownagents-anthropic-ai
 ---
 
 # anthropic-ai (`2.3`)
@@ -57,9 +69,6 @@ The only bot audit with custom alias logic, and that logic can invert the result
 **Evidence:** Anthropic documents ClaudeBot as 'collecting web content that could potentially contribute to their training' and states 'Anthropic's Bots respect do not crawl signals by honoring industry standard directives in robots.txt', with IP verification at claude.com/crawling/bots.json. Very much active in 2026 and often the #1 AI crawler by volume: Cloudflare Radar had ClaudeBot and GPTBot together at nearly half of all AI crawl activity, and Known Agents records 21% of top websites blocking ClaudeBot as of 2026-08-19 — the highest block rate of any Anthropic token.
 
 **Counter-evidence:** Anthropic has by far the worst crawl-to-refer ratio measured by Cloudflare Radar (~50,000:1 overall, 2,500:1 in News & Publications), so allowing ClaudeBot buys essentially no referral traffic — the allow-side case is about training/corpus inclusion, not visibility. Note the canonical support URL moved from support.anthropic.com to support.claude.com; audits hard-coding the old host will 301.
-**Consumers:** ClaudeBot · **Recommended tier:** scored
-
-**Sources:** [Does Anthropic crawl data from the web, and how can site owners block the crawler?](https://support.claude.com/en/articles/8896518-does-anthropic-crawl-data-from-the-web-and-how-can-site-owners-block-the-crawler) (verified 2026-08-20) · [A deeper look at AI crawlers: breaking down traffic by purpose and industry](https://blog.cloudflare.com/ai-crawler-traffic-by-purpose-and-industry/) (verified 2026-08-20) · [ClaudeBot — Known Agents](https://knownagents.com/agents/claudebot) (verified 2026-08-20)
 
 ### Signal: anthropic-ai (legacy token) present in robots.txt — grade C (robots-ai-crawlers)
 
@@ -70,9 +79,6 @@ The only bot audit with custom alias logic, and that logic can invert the result
 **Evidence:** Known Agents classifies anthropic-ai as an 'Undocumented AI Agent' — 'Crawls websites without disclosing its purpose, collecting data for an unknown AI use case' — while attributing it to Anthropic. Adoption is nevertheless substantial: 16% of top websites block anthropic-ai, evidence of how deeply it is embedded in circulated robots.txt templates. Claude-Web is in the same category: 'currently unclear exactly what it's used for, since there's no official documentation.'
 
 **Counter-evidence:** Decisive negative: Anthropic's current, canonical crawler support article names only ClaudeBot, Claude-User and Claude-SearchBot. Neither 'anthropic-ai' nor 'Claude-Web' appears anywhere on it. There is no vendor doc, no published IP range, and no Cloudflare Radar breakout for anthropic-ai. Treat its presence as harmless legacy cruft — never as evidence a site has configured Anthropic access, and never award or deduct points for it. The same applies to Claude-Web.
-**Consumers:** none-known · **Recommended tier:** informative
-
-**Sources:** [anthropic-ai — Known Agents](https://knownagents.com/agents/anthropic-ai) (verified 2026-08-20) · [Does Anthropic crawl data from the web, and how can site owners block the crawler?](https://support.claude.com/en/articles/8896518-does-anthropic-crawl-data-from-the-web-and-how-can-site-owners-block-the-crawler) (verified 2026-08-20)
 
 ## Pass-rule correction (contradiction sweep, 2026-08-24)
 

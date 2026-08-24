@@ -1,14 +1,18 @@
 ---
 audit: operability-safety/dialog-name
-audit_id: "7.9"
 category: operability-safety
 source_file: packages/core/src/audits/operability-safety/dialog-name.ts
 slug: dialog-name
-review_verdict: fix
-severity: medium
 evidence_grade: A
 disposition: "keep — fix required"
 reviewed: 2026-08-21
+sources:
+  - probe-aria-snapshot-images
+  - playwright-mcp-repo
+  - chrome-devtools-mcp-tools
+  - w3c-accname-11
+  - aria-apg-dialog-modal
+  - axe-aria-dialog-name
 ---
 
 # Dialogs have accessible names (`7.9`)

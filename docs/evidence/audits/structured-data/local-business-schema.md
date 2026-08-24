@@ -1,14 +1,18 @@
 ---
 audit: structured-data/local-business-schema
-audit_id: "3.12"
 category: structured-data
 source_file: packages/core/src/audits/structured-data/local-business-schema.ts
 slug: local-business-schema
-review_verdict: fix
-severity: medium
 evidence_grade: A
 disposition: "keep — fix required"
 reviewed: 2026-08-21
+sources:
+  - google-localbusiness-doc
+  - google-search-gallery
+  - webdatacommons-2024-stats
+  - webalmanac-2024-structured-data
+  - apple-app-search-web-markup
+  - google-ai-features-trust
 ---
 
 # local-business-schema (`3.12`)

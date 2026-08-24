@@ -1,14 +1,27 @@
 ---
 audit: access-crawl-control/ai-content-declaration
-audit_id: "4.13"
 category: access-crawl-control
 source_file: packages/core/src/audits/access-crawl-control/ai-content-declaration.ts
 slug: ai-content-declaration
-review_verdict: delete
-severity: high
 evidence_grade: D
 disposition: "kept — rewritten to the real directive names 2026-08-22 (Plan 4, Task 16)"
 reviewed: 2026-08-22
+recommended_tier: experimental
+consumers: []
+consumers_note: "no AI vendor documents recognizing noai, noimageai, or tdm-reservation"
+signals:
+  - name: "AI content declaration meta tags (noai, noimageai, tdm-reservation, ai-generated)"
+    grade: D
+    domain: meta-head
+sources:
+  - s18
+  - anthropic-crawlers
+  - ietf-aipref-attach-draft
+  - w3c-tdmrep-final-report
+  - s10
+  - originality-noai-adoption
+  - google-special-tags
+  - iptc-synthetic-media-guidance
 ---
 
 # ai-content-declaration (`4.13`)
@@ -84,9 +97,6 @@ AIPREF is chartered with an IESG submission target of 31 August 2026. If `Conten
 **Evidence:** Two distinct things live here and both are pre-consumer. (1) Opt-out declarations: the W3C TDMRep Community Group Final Report (2 Feb 2024) does formally define <meta name="tdm-reservation" content="1|0"> and <meta name="tdm-policy" content="URL">, positioned as a technical answer to EU DSM Article 4 — but it is explicitly "not a W3C Standard" and names no implementing consumer. The DeviantArt-origin noai/noimageai convention has measurable adoption: 88,000+ domains as of June 2026, 87.8% of them via the meta-tag placement, meta adoption up 26.5% month-over-month (Originality.AI). (2) AI-generated declarations: there is no HTML head standard at all — IPTC's Digital Source Type (trainedAlgorithmicMedia) targets the XMP packet embedded in image/video files or a C2PA manifest, not the page head.
 
 **Counter-evidence:** Decisive. The IETF AIPREF attachment draft (19 Aug 2026, Standards Track, authored by Google and Mozilla, updating RFC 9309) defines exactly two attachment mechanisms — the Content-Usage HTTP response header and a Content-Usage rule in robots.txt — and does not define any HTML meta element or link relation; 'Embedded Preferences' is acknowledged and left out of scope. So the standards trajectory is running away from the head, not toward it. Google's supported-meta-tags list omits noai and tdm-reservation; Originality.AI's own study concludes "Major AI companies point elsewhere ... rather than honoring the noai meta tag specifically." OpenAI's and Anthropic's crawler docs document robots.txt only. Keep as experimental with a plainly worded caveat that these tags currently express intent with no known enforcing consumer, and track AIPREF for the header/robots.txt path — do not present them to users as protection.
-**Consumers:** none-known — no AI vendor documents recognizing noai, noimageai, or tdm-reservation · **Recommended tier:** experimental
-
-**Sources:** [TDM Reservation Protocol (TDMRep) — Final Community Group Report](https://www.w3.org/community/reports/tdmrep/CG-FINAL-tdmrep-20240202/) (verified 2026-08-20) · [Associating AI Usage Preferences with Content in HTTP (draft-ietf-aipref-attach)](https://ietf-wg-aipref.github.io/drafts/draft-ietf-aipref-attach.html) (verified 2026-08-20) · [A Vocabulary For Expressing AI Usage Preferences (draft-ietf-aipref-vocab)](https://datatracker.ietf.org/doc/draft-ietf-aipref-vocab/) (verified 2026-08-20) · [Noai and noimageai Tag Adoption: Study and Live Dashboard](https://originality.ai/blog/noai-noimageai-adoption-dashboard) (verified 2026-08-20) · [Meta tags and HTML attributes that Google supports](https://developers.google.com/search/docs/crawling-indexing/special-tags) (verified 2026-08-20) · [IPTC publishes metadata guidance for AI-generated "synthetic media"](https://iptc.org/news/iptc-publishes-metadata-guidance-for-ai-generated-synthetic-media/) (verified 2026-08-20) · [Overview of OpenAI Crawlers](https://developers.openai.com/api/docs/bots) (verified 2026-08-20) · [Does Anthropic crawl data from the web, and how can site owners block the crawler?](https://support.claude.com/en/articles/8896518-does-anthropic-crawl-data-from-the-web-and-how-can-site-owners-block-the-crawler) (verified 2026-08-20)
 
 ## Review history
 

@@ -1,14 +1,19 @@
 ---
 audit: operability-safety/duplicate-id
-audit_id: "7.14"
 category: operability-safety
 source_file: packages/core/src/audits/operability-safety/duplicate-id.ts
 slug: duplicate-id
-review_verdict: fix
-severity: high
 evidence_grade: A
 disposition: "keep — fix required"
 reviewed: 2026-08-21
+sources:
+  - mdn-getelementbyid
+  - w3c-accname-11
+  - w3c-accname-12
+  - probe-aria-snapshot-images
+  - playwright-mcp-repo
+  - chrome-devtools-mcp-tools
+  - axe-duplicate-id-aria
 ---
 
 # Unique IDs for ARIA references (`7.14`)

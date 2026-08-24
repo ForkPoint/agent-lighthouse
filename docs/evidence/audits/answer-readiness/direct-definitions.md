@@ -1,14 +1,19 @@
 ---
 audit: answer-readiness/direct-definitions
-audit_id: "9.4"
 category: answer-readiness
 source_file: packages/core/src/audits/answer-readiness/direct-definitions.ts
 slug: direct-definitions
-review_verdict: delete
-severity: medium
 evidence_grade: C
 disposition: "kept — rewritten to an intent-gated, language-neutral check 2026-08-22 (Plan 4, Task 16)"
 reviewed: 2026-08-22
+sources:
+  - whatwg-html-dfn
+  - w3c-html-aam
+  - trafilatura-corefunctions
+  - geo-sfe-structural-arxiv
+  - cloudflare-markdown-for-agents
+  - google-ai-optimization-mythbusting
+  - cseo-bench-arxiv
 ---
 
 # direct-definitions (`9.4`)

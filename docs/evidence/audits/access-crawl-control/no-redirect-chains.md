@@ -1,14 +1,17 @@
 ---
 audit: access-crawl-control/no-redirect-chains
-audit_id: "1.16"
 category: access-crawl-control
 source_file: packages/core/src/audits/access-crawl-control/no-redirect-chains.ts
 slug: no-redirect-chains
-review_verdict: fix
-severity: high
 evidence_grade: A
 disposition: "keep — fix required"
 reviewed: 2026-08-21
+sources:
+  - google-http-status-codes
+  - google-crawl-budget-docs
+  - google-ai-features-trust
+  - s18
+  - perplexity-crawlers-docs
 ---
 
 # no-redirect-chains (`1.16`)

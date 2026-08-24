@@ -1,14 +1,16 @@
 ---
 audit: answer-readiness/first-paragraph-answers
-audit_id: "9.3"
 category: answer-readiness
 source_file: packages/core/src/audits/answer-readiness/first-paragraph-answers.ts
 slug: first-paragraph-answers
-review_verdict: fix
-severity: high
 evidence_grade: C
 disposition: "keep — fix required"
 reviewed: 2026-08-21
+sources:
+  - indig-chatgpt-citation-study-sel
+  - geo-sfe-structural-arxiv
+  - google-ai-optimization-mythbusting
+  - cseo-bench-arxiv
 ---
 
 # first-paragraph-answers (`9.3`)

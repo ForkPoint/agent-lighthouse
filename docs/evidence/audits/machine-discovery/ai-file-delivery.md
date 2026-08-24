@@ -1,14 +1,31 @@
 ---
 audit: machine-discovery/ai-file-delivery
-audit_id: "8.10, 8.11"
 category: machine-discovery
 source_file: packages/core/src/audits/machine-discovery/ai-file-delivery.ts
 slug: ai-file-delivery
-review_verdict: fix
-severity: medium
 evidence_grade: B
 disposition: "merged 2026-08-22 (Plan 4, Task 4) — absorbs cache-headers (8.11); informative, weight 0"
 reviewed: 2026-08-22
+recommended_tier: informative
+consumers:
+  - browser-based agents (download vs parse behaviour)
+  - none-known among server-side crawlers
+signals:
+  - name: Correct Content-Type for llms.txt and .md files
+    grade: C
+    domain: technical-infra
+  - name: "Cache headers and conditional requests for crawlers (ETag, Last-Modified, 304)"
+    grade: B
+    domain: technical-infra
+sources:
+  - llmstxt-spec-link
+  - rfc9116
+  - s18
+  - anthropic-crawlers
+  - google-http-caching-blog
+  - google-crawl-budget-docs
+  - mcp-spec-authorization
+  - vercel-rise-of-ai-crawler
 ---
 
 # ai-file-delivery (`8.10`, `8.11`)
@@ -69,9 +86,6 @@ The most defensible audit in the category — an llms.txt served as `application
 **Evidence:** Convention with sensible precedent, not a documented requirement. RFC 9116 does establish the pattern for well-known plain-text files — security.txt 'must be served as plain text (MIME type text/plain) with UTF-8 encoding'. The llms.txt spec uses type="text/markdown" when describing link relations, so text/markdown is the intent-consistent choice. Two real failure modes are mechanically certain rather than speculative: application/octet-stream triggers download-rather-than-parse behaviour in browser-based consumers, and a Content-Type of text/html on a Markdown file will lead HTML-oriented extraction pipelines to run an HTML parser over Markdown. X-Content-Type-Options: nosniff, where present, removes the browser's ability to recover from a wrong type.
 
 **Counter-evidence:** The llmstxt.org specification states NO requirement for the file's own HTTP Content-Type — it only mentions text/markdown in the context of link relations. No AI vendor documentation (OpenAI, Anthropic, Perplexity, Google, Apple) specifies a Content-Type requirement for any AI-facing file. LLM ingestion pipelines are in practice tolerant text extractors; there is no published case of a named crawler rejecting a correctly-named llms.txt on Content-Type grounds. The widely repeated claim that 'some crawlers will refuse application/octet-stream' traces only to SEO blogs, not to any primary source. Grade C: plausible mechanism, partial adoption, unproven effect.
-**Consumers:** browser-based agents (download vs parse behaviour), none-known among server-side crawlers · **Recommended tier:** informative
-
-**Sources:** [The /llms.txt file](https://llmstxt.org/) (verified 2026-08-20) · [RFC 9116 — A File Format to Aid in Security Vulnerability Disclosure](https://www.rfc-editor.org/rfc/rfc9116.html) (verified 2026-08-20) · [Overview of OpenAI Crawlers](https://developers.openai.com/api/docs/bots) (verified 2026-08-20) · [Does Anthropic crawl data from the web, and how can site owners block the crawler?](https://support.claude.com/en/articles/8896518-does-anthropic-crawl-data-from-the-web-and-how-can-site-owners-block-the-crawler) (verified 2026-08-20)
 
 ## Absorbed evidence — cache-headers (8.11)
 
@@ -86,8 +100,6 @@ Its dossier is kept verbatim at [merged/machine-discovery/cache-headers.md](../.
 **Evidence:** Documented first-party by Google, whose crawling infrastructure feeds both Search and Gemini/AI-Overviews grounding: it supports both mechanisms "exactly as defined in the HTTP Caching standard", prefers ETag, and states that a 304 "tells Google to reuse the cached version, saving your server bandwidth and resources". MCP's authorization spec independently instructs clients to "cache metadata respecting HTTP cache headers".
 
 **Counter-evidence:** Google hedges — "individual Google crawlers and fetchers may or may not make use of caching" — and *no* AI-specific crawler vendor documents conditional-request support: OpenAI's, Anthropic's and Perplexity's crawler docs are silent on caching. Vercel observed ChatGPT and Claude often not fetching at all when asked for fresh docs, implying reliance on cached or training data rather than well-behaved revalidation. The benefit is therefore best stated as efficiency/hygiene evidenced through Google, not as an AI-agent outcome.
-
-**Sources:** [Crawling December: HTTP caching](https://developers.google.com/search/blog/2024/12/crawling-december-caching) (verified 2026-08-20) · [Large site owner's guide to managing your crawl budget](https://developers.google.com/search/docs/crawling-indexing/large-site-managing-crawl-budget) (verified 2026-08-20) · [Model Context Protocol Specification (2025-11-25) — Authorization](https://modelcontextprotocol.io/specification/2025-11-25/basic/authorization) (verified 2026-08-20) · [The rise of the AI crawler](https://vercel.com/blog/the-rise-of-the-ai-crawler) (verified 2026-08-20)
 
 ### Grade decision: raised **C → B**, tier stays informative (weight 0)
 

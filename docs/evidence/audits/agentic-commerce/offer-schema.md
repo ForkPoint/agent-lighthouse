@@ -1,14 +1,21 @@
 ---
 audit: agentic-commerce/offer-schema
-audit_id: "3.14"
 category: agentic-commerce
 source_file: packages/core/src/audits/agentic-commerce/offer-schema.ts
 slug: offer-schema
-review_verdict: fix
-severity: high
 evidence_grade: A
 disposition: "keep — fix required"
 reviewed: 2026-08-21
+sources:
+  - google-merchant-listing
+  - google-auto-item-updates
+  - google-merchant-structured-data
+  - google-merchant-spec
+  - google-product-snippet
+  - schema-aggregateoffer
+  - google-ai-features-trust
+  - openai-commerce-index
+  - openai-feed-spec-confirm
 ---
 
 # offer-schema (`3.14`)

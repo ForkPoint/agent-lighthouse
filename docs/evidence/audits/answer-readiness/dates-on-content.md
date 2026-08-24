@@ -1,14 +1,18 @@
 ---
 audit: answer-readiness/dates-on-content
-audit_id: "9.8, 9.10"
 category: answer-readiness
 source_file: packages/core/src/audits/answer-readiness/dates-on-content.ts
 slug: dates-on-content
-review_verdict: fix
-severity: medium
 evidence_grade: A
 disposition: "merged 2026-08-22 (Plan 4, Task 6) — absorbs last-updated-indicator (9.10)"
 reviewed: 2026-08-22
+sources:
+  - google-publication-dates
+  - google-ai-features-trust
+  - htmldate-docs
+  - trafilatura-corefunctions
+  - bing-sitemaps-ai-search
+  - s18
 ---
 
 # dates-on-content (`9.8`, `9.10`)

@@ -1,14 +1,17 @@
 ---
 audit: access-crawl-control/no-bot-detection
-audit_id: "2.26"
 category: access-crawl-control
 source_file: packages/core/src/audits/access-crawl-control/no-bot-detection.ts
 slug: no-bot-detection
-review_verdict: fix
-severity: high
 evidence_grade: A
 disposition: "keep — fix required"
 reviewed: 2026-08-21
+sources:
+  - cloudflare-block-ai-bots
+  - cloudflare-content-independence-day
+  - perplexity-bots-docs
+  - s18
+  - anthropic-crawlers
 ---
 
 # no-bot-detection (`2.26`)

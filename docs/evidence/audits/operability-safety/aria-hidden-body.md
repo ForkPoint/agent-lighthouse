@@ -1,14 +1,17 @@
 ---
 audit: operability-safety/aria-hidden-body
-audit_id: "7.10"
 category: operability-safety
 source_file: packages/core/src/audits/operability-safety/aria-hidden-body.ts
 slug: aria-hidden-body
-review_verdict: fix
-severity: low
 evidence_grade: A
 disposition: "keep — fix required"
 reviewed: 2026-08-21
+sources:
+  - w3c-aria-12-hidden
+  - probe-aria-snapshot-images
+  - playwright-mcp-repo
+  - chrome-devtools-mcp-tools
+  - axe-aria-hidden-body
 ---
 
 # Page exposed to the accessibility tree (`7.10`)

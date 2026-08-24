@@ -8,6 +8,14 @@ tier: scored
 disposition: "new in v2 — graduated from proposal 2026-08-23"
 reviewed: 2026-08-20
 graduated: 2026-08-23
+sources:
+  - playwright-mcp-repo
+  - S15
+  - lh-a11ytree
+  - S9
+  - S1
+  - S18
+  - S8
 ---
 
 

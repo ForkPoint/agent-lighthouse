@@ -1,14 +1,23 @@
 ---
 audit: access-crawl-control/gptbot
-audit_id: "2.1"
 category: access-crawl-control
 source_file: packages/core/src/audits/access-crawl-control/gptbot.ts
 slug: gptbot
-review_verdict: fix
-severity: high
 evidence_grade: A
 disposition: "keep — fix required"
 reviewed: 2026-08-21
+recommended_tier: scored
+consumers:
+  - GPTBot
+signals:
+  - name: GPTBot allow/block state in robots.txt
+    grade: A
+    domain: robots-ai-crawlers
+sources:
+  - s18
+  - cloudflare-ai-crawler-purpose-industry
+  - pebblous-blocking-citation-gap
+  - consent-in-crisis-arxiv
 ---
 
 # gptbot (`2.1`)
@@ -53,9 +62,6 @@ GPTBot is the single most valuable token in the category and detecting a real Di
 **Evidence:** OpenAI's bot documentation states verbatim: 'Disallowing GPTBot indicates a site's content should not be used in training generative AI foundation models.' UA 'GPTBot/1.4; +https://openai.com/gptbot', IP ranges published at openai.com/gptbot.json for verification. Activity confirmed at network scale: Cloudflare Radar found ClaudeBot and GPTBot together 'account for nearly half of the observed crawling activity' (Aug 2025), and GPTBot was 17.4% of AI crawl traffic in News & Publications. Documented ACTIVE in 2026.
 
 **Counter-evidence:** Blocking GPTBot has a measurably small effect on downstream visibility: BuzzStream/XOFU found sites blocking GPTBot still retained 88.2% citation presence in AI answers, because already-ingested and third-party-mirrored content persists. Consent in Crisis found OpenAI is the single most-blocked developer, so a GPTBot block is not differentiating. Auditors must not conflate a GPTBot block with an OAI-SearchBot block — they have opposite visibility consequences.
-**Consumers:** GPTBot · **Recommended tier:** scored
-
-**Sources:** [OpenAI Bots / Crawlers documentation](https://developers.openai.com/api/docs/bots) (verified 2026-08-20) · [A deeper look at AI crawlers: breaking down traffic by purpose and industry](https://blog.cloudflare.com/ai-crawler-traffic-by-purpose-and-industry/) (verified 2026-08-20) · [The Paradox of Blocking AI Crawlers: You Lose Visitors, Not Citations](https://blog.pebblous.ai/report/ai-crawler-blocking-citation-gap/en/) (verified 2026-08-20) · [Consent in Crisis: The Rapid Decline of the AI Data Commons](https://arxiv.org/abs/2407.14933) (verified 2026-08-20)
 
 ## Review history
 

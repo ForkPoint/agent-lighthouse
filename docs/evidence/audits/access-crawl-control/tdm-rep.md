@@ -1,14 +1,20 @@
 ---
 audit: access-crawl-control/tdm-rep
-audit_id: "2.27"
 category: access-crawl-control
 source_file: packages/core/src/audits/access-crawl-control/tdm-rep.ts
 slug: tdm-rep
-review_verdict: delete
-severity: medium
 evidence_grade: C
 disposition: "kept — internal incoherence fixed, moved to experimental 2026-08-22 (Plan 4, Task 16)"
 reviewed: 2026-08-22
+sources:
+  - tdmrep-cg-final
+  - tdmrep-community-group
+  - s18
+  - anthropic-crawlers
+  - perplexity-bots-docs
+  - rfc-8615
+  - rfc9309
+  - ietf-aipref-wg
 ---
 
 # tdm-rep (`2.27`)

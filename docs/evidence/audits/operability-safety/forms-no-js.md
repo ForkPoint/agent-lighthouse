@@ -1,14 +1,15 @@
 ---
 audit: operability-safety/forms-no-js
-audit_id: "5.19"
 category: operability-safety
 source_file: packages/core/src/audits/operability-safety/forms-no-js.ts
 slug: forms-no-js
-review_verdict: fix
-severity: medium
 evidence_grade: C
 disposition: "keep — fix required"
 reviewed: 2026-08-21
+sources:
+  - vercel-rise-of-ai-crawler
+  - anthropic-browser-use-tool
+  - playwright-mcp-repo
 ---
 
 # forms-no-js (`5.19`)

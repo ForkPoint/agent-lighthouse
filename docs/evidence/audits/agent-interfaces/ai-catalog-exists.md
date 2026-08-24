@@ -1,14 +1,28 @@
 ---
 audit: agent-interfaces/ai-catalog-exists
-audit_id: "5.7, 4.19"
 category: agent-interfaces
 source_file: packages/core/src/audits/agent-interfaces/ai-catalog-exists.ts
 slug: ai-catalog-exists
-review_verdict: delete
-severity: high
 evidence_grade: C
 disposition: "merged 2026-08-22 (Plan 4, Task 7) — absorbs ai-catalog-link (4.19); rewritten to ARD §4.1 2026-08-22 (Plan 4, Task 10)"
 reviewed: 2026-08-22
+recommended_tier: informative
+consumers:
+  - none-known (no shipping MCP client documents fetching this path)
+signals:
+  - name: mcp-discovery-ai-catalog-well-known
+    grade: C
+    domain: agent-action-surfaces
+sources:
+  - mcp-sep-2127
+  - mcp-ext-server-card-discovery
+  - ai-catalog-repo
+  - iana-well-known-uris
+  - mcp-spec-versioning
+  - anthropic-claude-custom-connectors
+  - openai-apps-sdk-deploy
+  - probe-vercel-ai-catalog
+  - probe-zapier-ai-catalog
 ---
 
 # ai-catalog-exists (`5.7`, `4.19`)
@@ -104,9 +118,6 @@ Task 7 recorded that the A/`scored`/1.0 meta was only defensible once this rewri
 **Evidence:** This is the path the MCP project itself is converging on. SEP-2127 (opened 2026-01-21, label 'in-review', still OPEN and unmerged as of 2026-08-11) delegates domain-level discovery to an 'AI Catalog' and its extension repo's docs/discovery.md states: 'An AI Catalog MAY be served from any URL. For automated domain-level discovery, hosts MAY publish one at: /.well-known/ai-catalog.json. Clients performing domain-level discovery SHOULD attempt to retrieve this well-known URL.' Media type SHOULD be application/ai-catalog+json; MCP entries use type application/mcp-server-card+json and urn:air: identifiers. Real conformant deployments exist and I verified them live on 2026-08-20: vercel.com serves it with the exact application/ai-catalog+json media type and specVersion 1.0; zapier.com serves specVersion 1.0 with a trustManifest and an entry pointing at its MCP server card. The underlying AI Catalog repo (Agent-Card/ai-catalog, 210 stars) was pushed the same day I checked, so the work is live. Audit guidance: check /.well-known/ai-catalog.json, validate specVersion + entries[].type + entries[].url, require a JSON content-type (reject HTML 200 soft-404s), and prefer application/ai-catalog+json.
 
 **Counter-evidence:** The SEP is NOT merged — nothing about this is in the ratified spec (current revision 2026-07-28). `ai-catalog.json` is NOT in the IANA Well-Known URIs registry (152 entries checked; mcp, mcp.json, ai-catalog.json, webmcp, openapi are all absent). The MCP extension repo carrying the discovery text has 5 stars. No MCP client vendor documents consuming it: Anthropic's own docs say 'You can manually add any third-party connector to Claude as long as you have the URL of that remote MCP server' and OpenAI's Apps SDK routes through developer-mode URL paste plus 'public plugin submission' with 'domain verification'. My probe of 19 major domains found only 2 publishers (Vercel, Zapier). SEP-2127 itself lists 'No Domain-Level Discovery' as an *unsolved* pain point, which is an admission that the mechanism does not yet work.
-**Consumers:** none-known (no shipping MCP client documents fetching this path) · **Recommended tier:** informative
-
-**Sources:** [SEP-2127: MCP Server Cards — HTTP Server Discovery (pull request)](https://github.com/modelcontextprotocol/modelcontextprotocol/pull/2127) (verified 2026-08-20) · [experimental-ext-server-card — docs/discovery.md](https://raw.githubusercontent.com/modelcontextprotocol/experimental-ext-server-card/main/docs/discovery.md) (verified 2026-08-20) · [Agent-Card/ai-catalog — working repository for common AI Card standard](https://github.com/Agent-Card/ai-catalog) (verified 2026-08-20) · [IANA Well-Known URIs registry](https://www.iana.org/assignments/well-known-uris/well-known-uris.xhtml) (verified 2026-08-20) · [Model Context Protocol — Versioning (current revision 2026-07-28)](https://modelcontextprotocol.io/specification/versioning) (verified 2026-08-20) · [Third party connectors with remote MCP — Claude Docs](https://claude.com/docs/connectors/custom/remote-mcp) (verified 2026-08-20) · [OpenAI Apps SDK — Deploy](https://developers.openai.com/apps-sdk/deploy/) (verified 2026-08-20) · [Live deployment: Vercel /.well-known/ai-catalog.json](https://vercel.com/.well-known/ai-catalog.json) (verified 2026-08-20) · [Live deployment: Zapier /.well-known/ai-catalog.json](https://zapier.com/.well-known/ai-catalog.json) (verified 2026-08-20)
 
 ## Adversarial redemption research (2026-08-21)
 

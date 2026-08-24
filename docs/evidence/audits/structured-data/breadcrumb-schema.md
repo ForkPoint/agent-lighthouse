@@ -1,14 +1,18 @@
 ---
 audit: structured-data/breadcrumb-schema
-audit_id: "3.5"
 category: structured-data
 source_file: packages/core/src/audits/structured-data/breadcrumb-schema.ts
 slug: breadcrumb-schema
-review_verdict: fix
-severity: medium
 evidence_grade: A
 disposition: "keep — fix required"
 reviewed: 2026-08-21
+sources:
+  - google-breadcrumb-structured-data
+  - google-search-gallery
+  - webdatacommons-2024-stats
+  - webalmanac-2024-structured-data
+  - google-ai-features-trust
+  - searchviu-schema-ai-fetch-test
 ---
 
 # breadcrumb-schema (`3.5`)

@@ -1,14 +1,34 @@
 ---
 audit: machine-discovery/no-broken-links
-audit_id: "1.20"
 category: machine-discovery
 source_file: packages/core/src/audits/machine-discovery/no-broken-links.ts
 slug: no-broken-links
-review_verdict: fix
-severity: high
 evidence_grade: A
 disposition: "keep — fix required"
 reviewed: 2026-08-21
+recommended_tier: scored
+consumers:
+  - GPTBot / ChatGPT-User / OAI-SearchBot
+  - ClaudeBot
+  - Applebot (documented to throttle on errors)
+  - "browsing agents (ChatGPT agent, Operator-class CUA agents)"
+signals:
+  - name: Soft-404 / SPA catch-all rewrite (HTTP 200 for everything) as a false-result source
+    grade: A
+    domain: technical-infra
+  - name: Broken links / high 4xx-5xx rate on internally linked URLs
+    grade: B
+    domain: discovery-infra
+sources:
+  - google-fix-search-javascript
+  - google-http-status-codes
+  - google-crawl-budget-docs
+  - vercel-rise-of-ai-crawler
+  - oncrawl-ai-bot-logs
+  - applebot-doc
+  - cloudflare-crawl-refer-ratio
+  - browserarena-arxiv
+  - google-rel-ugc
 ---
 
 # no-broken-links (`1.20`)
@@ -56,9 +76,6 @@ Fetches up to 20 internal links and reports any non-200 as broken. Valuable in p
 **Evidence:** Documented vendor behaviour, and additionally verifiable by construction. Google names the exact failure mode: 'When a SPA is using client-side JavaScript to handle errors they often report a 200 HTTP status code instead of the appropriate status code. This can lead to error pages being indexed and possibly shown in search results', with the prescribed fixes being a redirect to a URL that genuinely returns 404, or a robots noindex. Google's status-code reference defines a soft 404 as content that 'suggests an error... an empty page or an error message' returned with a 2xx code, and the crawl-budget guide states flatly that 'Soft 404 pages will continue to be crawled, and waste your budget.' Vercel's measurements show AI crawlers are far more exposed to this waste than Googlebot: 34.82% of ChatGPT fetches and 34.16% of Claude fetches land on 404s versus 8.22% for Googlebot. For the audit tool itself the mechanism is not probabilistic at all — a 200-for-everything origin defeats status-based existence probes deterministically, so soft-404 detection must run as a precondition gate before any other file-presence audit is trusted.
 
 **Counter-evidence:** No AI vendor publishes its own soft-404 heuristic, so the specific detection thresholds are Google-derived and the claim that GPTBot or ClaudeBot penalise soft 404s is not directly documented — what IS documented is that they waste a third of their fetches on error responses. Detection also has a false-positive risk of its own: a legitimately-configured site may return 200 for a probe path that happens to exist, and some CDNs return 200 with a custom error body by design. The audit should therefore verify via body content (shell fingerprint, absence of expected markers) and not by status code alone, and should report soft-404 as a confidence-degrading condition rather than a page-quality failure.
-**Consumers:** Googlebot / Google AI Overviews, GPTBot, OAI-SearchBot, ClaudeBot, PerplexityBot, Agent Lighthouse itself (audit correctness precondition) · **Recommended tier:** scored
-
-**Sources:** [Fix Search-related JavaScript problems](https://developers.google.com/search/docs/crawling-indexing/javascript/fix-search-javascript) (verified 2026-08-20) · [How HTTP status codes, and network and DNS errors affect Google Search](https://developers.google.com/search/docs/crawling-indexing/http-network-errors) (verified 2026-08-20) · [Large site owner's guide to managing your crawl budget](https://developers.google.com/search/docs/crawling-indexing/large-site-managing-crawl-budget) (verified 2026-08-20) · [The rise of the AI crawler](https://vercel.com/blog/the-rise-of-the-ai-crawler) (verified 2026-08-20)
 
 ### Signal: Broken links / high 4xx-5xx rate on internally linked URLs — grade B (discovery-infra)
 
@@ -69,9 +86,6 @@ Fetches up to 20 internal links and reports any non-200 as broken. Valuable in p
 **Evidence:** This is the best-measured signal in the domain. Vercel and MERJ found ChatGPT spends 34.82% of its fetches on 404 pages and 14.36% following redirects, and Claude 34.16% on 404s — against Googlebot's 8.22% and 1.49%. Roughly a third of all LLM-crawler effort on a site is landing on nothing. Apple documents the consequence as vendor policy: "Applebot's crawl rate adjusts automatically when a site slows down or returns errors", and adds that 'Identifying content that doesn't need to be crawled lowers infrastructure costs for site owners' — i.e. error rate directly throttles how much of your site Apple fetches. Oncrawl's production logs show the acute form: 988 ChatGPT-User requests returning 404 concentrated over a few hours on a single retailer. Cloudflare's crawl-to-refer data establishes why the waste matters economically — AI platforms already fetch orders of magnitude more HTML than they refer back, so every dead fetch is pure cost. On the agent side, BrowserArena's live-web evaluation identifies direct URL navigation as one of three consistent failure categories, concluding that current web agents are brittle on real-world navigation.
 
 **Counter-evidence:** Important attribution caveat that must be published with the claim: the Vercel 404 rates measure URLs the crawlers REQUESTED, and Oncrawl shows a large share of those are model-hallucinated or stale-memory paths that the site never linked — 'ChatGPT inventing URLs'. So the headline 34.82% figure does not isolate the effect of on-site broken links, and fixing every internal 404 would not bring it near Googlebot's 8.22%. No study demonstrates that repairing internal broken links raises AI citation rate. Google's nofollow guidance separately notes pages 'may be found through other means', reinforcing that the crawler's URL set is not solely derived from your link graph. The correct scored claim is crawl-efficiency and agent-navigation reliability, not citation lift; serving a proper 404/410 and maintaining redirects is the actionable core.
-**Consumers:** GPTBot / ChatGPT-User / OAI-SearchBot, ClaudeBot, Applebot (documented to throttle on errors), browsing agents (ChatGPT agent, Operator-class CUA agents) · **Recommended tier:** scored
-
-**Sources:** [The rise of the AI crawler](https://vercel.com/blog/the-rise-of-the-ai-crawler) (verified 2026-08-20) · [What AI bots are really doing on your site (production server-log analysis)](https://www.oncrawl.com/ai/what-ai-bots-really-doing-your-site/) (verified 2026-08-20) · [About Applebot](https://support.apple.com/en-us/119829) (verified 2026-08-20) · [The crawl before the fall… of referrals: understanding AI's impact on content providers](https://blog.cloudflare.com/ai-search-crawl-refer-ratio-on-radar/) (verified 2026-08-20) · [BrowserArena: Evaluating LLM Agents on Real-World Web Navigation Tasks](https://arxiv.org/abs/2510.02418) (verified 2026-08-20) · [Qualify Your Outbound Links to Google (nofollow, sponsored, ugc)](https://developers.google.com/search/docs/crawling-indexing/qualify-outbound-links) (verified 2026-08-20)
 
 ## Review history
 

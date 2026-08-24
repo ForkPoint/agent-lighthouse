@@ -1,14 +1,27 @@
 ---
 audit: machine-discovery/discovery-index-coverage
-audit_id: "1.8, 1.22"
 category: machine-discovery
 source_file: packages/core/src/audits/machine-discovery/discovery-index-coverage.ts
 slug: discovery-index-coverage
-review_verdict: fix
-severity: high
 evidence_grade: B
 disposition: "merged 2026-08-22 (Plan 4, Task 4) — absorbs no-orphan-pages (1.22)"
 reviewed: 2026-08-22
+recommended_tier: scored
+consumers:
+  - "Googlebot / Google AI Overviews & AI Mode"
+  - Bingbot / Microsoft Copilot grounding
+  - "GPTBot and ClaudeBot (observed in logs, undocumented)"
+signals:
+  - name: sitemap.xml for AI crawler discovery
+    grade: B
+    domain: technical-infra
+sources:
+  - sitemaps-protocol
+  - google-crawl-budget-docs
+  - google-ai-features-trust
+  - vercel-rise-of-ai-crawler
+  - s18
+  - perplexity-crawlers-docs
 ---
 
 # discovery-index-coverage (`1.8`, `1.22`)
@@ -63,9 +76,6 @@ Compares scanned page URLs against sitemap <loc> values. Two disqualifying flaws
 **Evidence:** Sitemaps are a stable, universally-implemented de facto standard (protocol 0.9, 50k URLs / 50MB limits, robots.txt `Sitemap:` discovery). Google documents consuming them directly — 'Google reads your sitemap regularly, so be sure to include all the content that you want Google to crawl' and recommends <lastmod> — and Google's AI-features guidance makes AI Overviews / AI Mode eligibility conditional on ordinary Search indexing, so sitemap-driven discovery transitively feeds an AI surface. The same applies through Bing's index, which grounds Copilot. Vercel's crawl-waste data supplies an indirect argument: ChatGPT wastes 34.82% of fetches on 404s and Claude 34.16% (versus Googlebot's 8.22%), which is the signature of crawlers working from stale link graphs — precisely the failure a current sitemap with accurate lastmod mitigates.
 
 **Counter-evidence:** No AI crawler vendor documents sitemap consumption. OpenAI's bots page, Anthropic's crawler article and Perplexity's docs never mention sitemaps, and Google's own AI-features page insists there are 'no additional technical requirements' for AI features. Server-log reports that GPTBot and ClaudeBot request /sitemap.xml exist but are single-site blog analyses, not controlled experiments — treat as suggestive only. The defensible framing is: sitemaps are proven for the Google/Bing indexes that ground several AI answer surfaces, and unproven-but-plausible for the direct AI crawlers. Note also that <lastmod> must be the page's real modification date, not the generation date, or the signal is actively misleading.
-**Consumers:** Googlebot / Google AI Overviews & AI Mode, Bingbot / Microsoft Copilot grounding, GPTBot and ClaudeBot (observed in logs, undocumented) · **Recommended tier:** scored
-
-**Sources:** [Sitemaps XML format (protocol 0.9)](https://www.sitemaps.org/protocol.html) (verified 2026-08-20) · [Large site owner's guide to managing your crawl budget](https://developers.google.com/search/docs/crawling-indexing/large-site-managing-crawl-budget) (verified 2026-08-20) · [AI features and your website — Google Search Central](https://developers.google.com/search/docs/appearance/ai-features) (verified 2026-08-20) · [The rise of the AI crawler](https://vercel.com/blog/the-rise-of-the-ai-crawler) (verified 2026-08-20) · [Overview of OpenAI Crawlers](https://developers.openai.com/api/docs/bots) (verified 2026-08-20) · [Perplexity Crawlers](https://docs.perplexity.ai/docs/resources/perplexity-crawlers) (verified 2026-08-20)
 
 ## Absorbed evidence — no-orphan-pages (1.22)
 

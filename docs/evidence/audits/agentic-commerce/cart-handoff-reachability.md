@@ -8,6 +8,12 @@ tier: scored
 disposition: "new in v2 — graduated from proposal 2026-08-23"
 reviewed: 2026-08-20
 graduated: 2026-08-23
+sources:
+  - acp-openapi-cart
+  - acp-openapi-checkout
+  - s18
+  - openai-searchbot-ips
+  - acp-architecture
 ---
 
 

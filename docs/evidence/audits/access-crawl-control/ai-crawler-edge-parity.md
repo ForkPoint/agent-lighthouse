@@ -8,6 +8,13 @@ tier: scored
 disposition: "new in v2 — graduated from proposal 2026-08-22"
 reviewed: 2026-08-20
 graduated: 2026-08-22
+sources:
+  - s14
+  - s18
+  - openai-searchbot-ips
+  - s4
+  - s20
+  - s21
 ---
 
 

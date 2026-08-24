@@ -1,14 +1,17 @@
 ---
 audit: answer-readiness/content-without-clickthrough
-audit_id: "9.9"
 category: answer-readiness
 source_file: packages/core/src/audits/answer-readiness/content-without-clickthrough.ts
 slug: content-without-clickthrough
-review_verdict: fix
-severity: high
 evidence_grade: B
 disposition: "keep — fix required"
 reviewed: 2026-08-21
+sources:
+  - google-ai-optimization-mythbusting
+  - google-ai-features-trust
+  - vercel-rise-of-ai-crawler
+  - s18
+  - s15
 ---
 
 # content-without-clickthrough (`9.9`)

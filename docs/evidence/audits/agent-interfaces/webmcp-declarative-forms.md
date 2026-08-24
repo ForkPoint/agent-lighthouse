@@ -1,14 +1,18 @@
 ---
 audit: agent-interfaces/webmcp-declarative-forms
-audit_id: "5.21"
 category: agent-interfaces
 source_file: packages/core/src/audits/agent-interfaces/webmcp-declarative-forms.ts
 slug: webmcp-declarative-forms
-review_verdict: delete
-severity: high
 evidence_grade: B
 disposition: "kept — rewritten to the W3C/Baseline declarative-webmcp attributes 2026-08-22 (Plan 4, Task 10)"
 reviewed: 2026-08-22
+signals:
+  - name: declarative WebMCP attributes read by the browser
+    grade: B
+    domain: agent-tools
+sources:
+  - chrome-docs-declarative-api
+  - webmcp-spec-no-nav
 ---
 
 # webmcp-declarative-forms (`5.21`)
@@ -84,12 +88,9 @@ Source: the [redemption dossier's verdict](../../deletions/agent-tools/webmcp-de
 
 **Counter-evidence:** The page carries an origin-trial badge and states that "WebMCP is under active discussion and subject to change in the future", so both the attribute names and the registration behaviour can move. The declarative path is also the younger of the two: the imperative `navigator.modelContext` registration is what Lighthouse reports on, and this project's own `agent-interfaces/webmcp-registered-tools` covers it at `experimental` precisely because a scanner with no JavaScript runtime cannot observe it. No adoption measurement exists for the declarative attributes on the public web, and a site that implements WebMCP imperatively will carry none of them while being fully agent-callable — which is why a page with no form at all is not applicable rather than a failure here.
 
-**Sources:** [Declarative WebMCP API](https://developer.chrome.com/docs/ai/webmcp/declarative-api) (verified 2026-08-24) · [WebMCP — Draft Community Group Report](https://webmachinelearning.github.io/webmcp/) (verified 2026-08-21)
-
 ## Adversarial redemption research (2026-08-21)
 
 This audit was a delete candidate and went through dedicated adversarial research. Full dossier: [docs/evidence/deletions/agent-tools/webmcp-declarative-forms.md](../../deletions/agent-tools/webmcp-declarative-forms.md). Outcome: **redeemable**, grade A.
-
 
 ## Re-grade (2026-08-24): **A → B**, tier `scored`, weight 1.0 → 0.6
 
@@ -116,8 +117,6 @@ Nothing else moves. `scoreDisplayMode` stays `ternary`, the attribute set and
 the `toolname`-required rule are unchanged, and a page with no form still
 returns `notApplicable`. If the origin trial graduates to a shipped API, or the
 W3C work reaches a ratified stage, this returns to a grade-A candidate.
-
-**Sources:** [Declarative WebMCP API (Chrome for Developers, published 2026-05-18)](https://developer.chrome.com/docs/ai/webmcp/declarative-api) (verified 2026-08-20) · [Retirement shortlist re-verification](../../RETIREMENT-SHORTLIST.md#re-verification-2026-08-24)
 
 ## Review history
 
