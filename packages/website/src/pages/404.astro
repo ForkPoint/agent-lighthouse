@@ -1,0 +1,57 @@
+---
+import Base from '../layouts/Base.astro';
+import { auditList } from '../lib/registry';
+import { docPath, withBase } from '../lib/routes';
+
+/**
+ * The page GitHub Pages serves for any address under the site that does not
+ * exist. It matters more here than on most sites: every HTML report this tool
+ * generates bakes an `evidenceUrl` for each of its audits, so a reader who
+ * follows a link written by an older release lands here. It therefore carries
+ * the full site chrome — header, search, footer — plus the two routes worth
+ * offering by hand.
+ *
+ * Astro emits this route as `dist/404.html` at the site root, which is the one
+ * file GitHub Pages looks for; `trailingSlash: 'always'` does not apply to it.
+ */
+const audits = auditList();
+
+const action =
+  'rounded-lg px-4 py-2 text-sm font-semibold text-white transition-colors';
+---
+<Base
+  title="Page not found"
+  description="This address is not part of the Agent Lighthouse documentation site. Browse the audit index or start from the home page."
+>
+  <section class="mx-auto max-w-3xl px-4 py-20 text-center sm:px-6 lg:px-8">
+    <p class="text-sm font-semibold uppercase tracking-wider text-indigo-300">404</p>
+
+    <h1 class="mt-4 text-4xl font-black tracking-tight text-white sm:text-5xl">
+      This page is not here
+    </h1>
+
+    <p class="mx-auto mt-5 max-w-xl text-lg leading-relaxed text-slate-300">
+      The address you followed does not match anything this site publishes. If it came
+      from an Agent Lighthouse report, the audit it named may have been renamed or
+      retired since that report was generated — the audit index below lists all {audits.length} of
+      them, and site search is in the header.
+    </p>
+
+    <div class="mt-8 flex flex-wrap items-center justify-center gap-3">
+      <a href={withBase('audits/')} class:list={[action, 'bg-brand hover:bg-brand-soft']}>
+        Browse all {audits.length} audits
+      </a>
+      <a
+        href={withBase('')}
+        class:list={[action, 'border border-slate-700 bg-slate-800 hover:bg-slate-700']}
+      >Go to the home page</a>
+    </div>
+
+    <p class="mt-8 text-sm text-slate-400">
+      Looking for how to run a scan? Start with the <a
+        class="underline transition-colors hover:text-white"
+        href={docPath('quickstart')}
+      >quickstart</a>.
+    </p>
+  </section>
+</Base>

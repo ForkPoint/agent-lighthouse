@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { auditList } from './lib/registry';
+import { withBase } from './lib/routes';
 
 const DIST = resolve(__dirname, '../dist');
 const built = existsSync(DIST);
@@ -23,6 +24,27 @@ describe.skipIf(!built)('built site', () => {
     );
     expect(page).toContain('Claimed mechanism');
     expect(page).not.toContain('POLICY.md');
+  });
+
+  /**
+   * GitHub Pages serves `404.html` from the site root for anything it cannot
+   * match. Every HTML report this tool writes carries 215 `evidenceUrl`
+   * addresses, so a stale one has to land somewhere navigable rather than on
+   * GitHub's generic page.
+   */
+  it('publishes a 404 page with the site chrome', () => {
+    expect(existsSync(resolve(DIST, '404.html')), 'GitHub Pages needs dist/404.html').toBe(true);
+    const html = readFileSync(resolve(DIST, '404.html'), 'utf8');
+
+    expect(html).toContain('<title>Page not found</title>');
+    // The same chrome as every other page: skip link, header nav, search, footer.
+    expect(html).toContain('href="#main"');
+    expect(html).toContain('aria-label="Main"');
+    expect(html).toContain('id="search-trigger"');
+    expect(html).toMatch(/<footer[\s>]/);
+    // The two routes it offers by hand, both through the base path.
+    expect(html).toContain(`href="${withBase('audits/')}"`);
+    expect(html).toContain(`href="${withBase('')}"`);
   });
 
   it('ships a search index', () => {
