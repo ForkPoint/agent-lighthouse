@@ -33,7 +33,7 @@
 | `packages/website/src/lib/registry.ts` | Reads `defaultConfig` from core; exports `auditList()`, `categoryList()` |
 | `packages/website/src/lib/cross-check.ts` | Registry ↔ dossier reconciliation, throws on mismatch |
 | `packages/website/src/lib/routes.ts` | `auditPath(id)`, `categoryPath(id)`, `docPath(slug)`, `withBase(path)` |
-| `packages/website/src/lib/remark-dossier-links.ts` | Rewrites relative markdown links at render time |
+| `packages/website/src/lib/dossier-links.ts` | Rewrites relative markdown links at render time |
 | `packages/website/src/lib/markdown-slice.ts` | Extracts a named `##` section out of a repo markdown file |
 | `packages/website/src/layouts/Base.astro` | html/head/body shell, theme, header, footer |
 | `packages/website/src/layouts/Doc.astro` | sidebar + article + table of contents + prev/next |
@@ -435,6 +435,16 @@ git commit -m "feat(website): read the live registry and fail the build on dossi
 ---
 
 ## Task 3: Relative-link resolution inside dossiers
+
+> **Implemented differently, verified forced.** Astro 7.2.4 throws on a non-empty
+> `markdown.remarkPlugins` (`astro/dist/core/config/validate.js:38-56`) because
+> Sätteri is the default processor and `@astrojs/markdown-remark` is an
+> unfulfilled peer dependency. The plugin therefore lives in
+> `src/lib/dossier-links.ts` as `dossierLinksPlugin`, registered through
+> `markdown.processor: satteri({ mdastPlugins: [...] })`, and mutates nodes with
+> `ctx.setProperty(node, 'url', …)` — mdast nodes are readonly under Sätteri, so
+> the direct assignment below would not have worked. `resolveDossierLink` keeps
+> the name and signature written here. The steps below are the original plan text.
 
 **Files:**
 - Create: `packages/website/src/lib/remark-dossier-links.ts`
