@@ -23,24 +23,36 @@ const pill =
   description="Every audit Agent Lighthouse runs, with the evidence grade and tier it carries."
 >
   <div class="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
-    <h1 id="audits-heading" class="text-3xl font-extrabold tracking-tight text-white">Audits</h1>
-    <p class="mt-3 max-w-3xl text-sm leading-relaxed text-slate-300">
-      Every check the engine runs, in registry order. Each one links to the dossier that
-      states its rule, the evidence behind it, and how the check is implemented.
-    </p>
+{/* This page's one indexed region. Pagefind reads built HTML, and what is
+      declared here is all it reads: the heading and the prose that introduce the
+      page. The listing below is deliberately outside it — every card is a link
+      to a page that is indexed in its own right, and indexing the list as well
+      would make this page a weak match for all 215 of them at once, on every
+      query. */}
+    <div data-pagefind-body>
+      <h1 id="audits-heading" class="text-3xl font-extrabold tracking-tight text-white">Audits</h1>
+      <p class="mt-3 max-w-3xl text-sm leading-relaxed text-slate-300">
+        Every check the engine runs, in registry order. Each one links to the dossier that
+        states its rule, the evidence behind it, and how the check is implemented.
+      </p>
+    </div>
 
     {/* The controls ship hidden and the island reveals them: with JavaScript off
-        they would be inert, while the list below is complete either way. */}
+        they would be inert, while the list below is complete either way.
+        This box and the header's search dialog are different tools and now say
+        so: this one narrows the list on this page and never leaves it, while
+        the dialog searches the full text of all 238 pages. The wording is the
+        only thing keeping them apart, so it is explicit on both sides. */}
     <section id="audit-controls" hidden aria-label="Filter audits" class="mt-8 space-y-4">
       <div>
         <label for="audit-search" class="block text-xs font-semibold uppercase tracking-wider text-slate-400">
-          Search audits
+          Filter this list
         </label>
         <input
           id="audit-search"
           type="search"
           autocomplete="off"
-          placeholder="Search by id, title, description or tag"
+          placeholder="Narrow the list by id, title, description or tag"
           class="mt-2 w-full max-w-xl rounded-lg border border-slate-700 bg-surface-raised px-3 py-2 text-sm text-white placeholder:text-slate-400 focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand"
         />
       </div>

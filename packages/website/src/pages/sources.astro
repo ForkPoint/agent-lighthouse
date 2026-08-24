@@ -31,8 +31,16 @@ const th = 'border-b border-border-subtle px-3 py-2 text-left text-xs font-bold 
   description={`Every source Agent Lighthouse's evidence dossiers cite — ${registry.sources.length} specs, vendor docs, studies and datasets, verified ${registry.accessed}.`}
 >
   <div class="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
-    <h1 class="text-3xl font-extrabold tracking-tight text-white">Source registry</h1>
-    <p class="mt-3 max-w-3xl text-sm leading-relaxed text-slate-300">
+    {/* The indexed region, and the honest limit of site search: the 647 records
+        are fetched in the browser, so the built HTML Pagefind reads holds this
+        prose and nothing else. A reader searching for a source finds this page —
+        which says how many sources there are and links the raw file — and then
+        searches the registry with the box below, which has all 647. Rendering
+        them server-side to feed the index would undo the reason this page is
+        3.7 KB gzipped instead of 162 KB. The search dialog says so too. */}
+    <div data-pagefind-body>
+      <h1 class="text-3xl font-extrabold tracking-tight text-white">Source registry</h1>
+      <p class="mt-3 max-w-3xl text-sm leading-relaxed text-slate-300">
       Every claim in an evidence dossier cites an id from this registry — one file, no
       scattered links. It holds {registry.sources.length} sources, last accessed
       <time datetime={registry.accessed}>{registry.accessed}</time>. <em>Verified</em> records
@@ -42,6 +50,7 @@ const th = 'border-b border-border-subtle px-3 py-2 text-left text-xs font-bold 
       Read the whole registry as <a class="underline hover:text-white" href={registryUrl}>sources.json</a>,
       or the rules it serves in the <a class="underline hover:text-white" href={withBase('policy/')}>evidence policy</a>.
     </p>
+    </div>
 
     {/* The controls ship hidden and the island reveals them once they are wired
         up, the way `/audits/` does: an inert search box is worse than none. */}

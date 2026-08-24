@@ -80,9 +80,18 @@ const sourceUrl = `https://github.com/ForkPoint/agent-lighthouse/blob/main/${ent
       <span aria-hidden="true"> / </span>
       <a class="transition-colors hover:text-white" href={categoryPath(audit.category)}>{audit.categoryTitle}</a>
     </nav>
-    <div class="flex flex-wrap items-center gap-2">
+    {/* The two facets Pagefind records for a dossier, declared with explicit
+        values — `category:Agentic Commerce`, not whatever the element happens to
+        say — so they do not shift when a badge is reworded. They hang off the
+        strip that already prints both facts rather than off markers added for
+        the index: Pagefind collects a filter wherever it sits, inside an indexed
+        region or outside it, so the useful place to put one is next to the thing
+        it describes. The dialog prints the category under each result — 215
+        dossiers is enough that "which one of these is it?" is a real
+        question. */}
+    <div class="flex flex-wrap items-center gap-2" data-pagefind-filter={`category:${audit.categoryTitle}`}>
       <code class="rounded border border-brand/20 bg-brand/10 px-2 py-0.5 font-mono text-xs font-bold text-indigo-400">{audit.id}</code>
-      <GradeBadge grade={audit.evidenceGrade} />
+      <span data-pagefind-filter={`grade:${audit.evidenceGrade}`}><GradeBadge grade={audit.evidenceGrade} /></span>
       <TierBadge tier={audit.tier} />
       <span class="text-xs text-slate-400">
         Weight <span class="font-semibold text-slate-200">{audit.weight}</span>

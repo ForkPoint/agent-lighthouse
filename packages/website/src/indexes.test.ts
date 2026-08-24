@@ -47,10 +47,17 @@ describe.skipIf(!built)('rendered /audits/', () => {
 
   it('announces the result count from a live region', () => {
     const html = page('audits');
-    const region = /<[a-z]+[^>]*aria-live="polite"[^>]*>([\s\S]*?)<\/[a-z]+>/.exec(html)?.[0];
+    // Every page now carries a second polite region — the search dialog's status
+    // line, in the header — so this looks for the one that holds the count
+    // rather than for the first one on the page. Two live regions coexist here
+    // because only one is ever in the accessibility tree: the dialog's sits
+    // inside a closed `<dialog>`, which is `display: none` until it is opened.
+    const regions = [...html.matchAll(/<[a-z]+[^>]*aria-live="polite"[^>]*>([\s\S]*?)<\/[a-z]+>/g)].map(
+      (match) => match[0],
+    );
+    const region = regions.find((candidate) => candidate.includes('id="audit-count"'));
 
-    expect(region, 'no polite live region on the page').toBeDefined();
-    expect(region).toContain('id="audit-count"');
+    expect(region, 'no polite live region holds the count').toBeDefined();
     // The server-rendered count is the unfiltered total, which is what a reader
     // with JavaScript off sees below it.
     expect(region).toContain(String(auditList().length));

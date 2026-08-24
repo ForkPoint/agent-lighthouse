@@ -3,6 +3,12 @@
  * Sequential navigation at the foot of a document. Either side may be missing —
  * the first entry of a section has no previous, the last has no next — so the
  * "next" link is pushed right on its own rather than relying on a filled left.
+ *
+ * It sits inside the layout's `data-pagefind-body`, and it is the one thing in
+ * there that is not the page's own content: it prints the titles of the audits
+ * on either side, which would make every dossier a match for its two
+ * neighbours' names. `data-pagefind-ignore` is applied here, once, rather than
+ * scattered across the pages that render it.
  */
 interface Props {
   prev?: { label: string; href: string };
@@ -12,7 +18,7 @@ interface Props {
 const { prev, next } = Astro.props;
 ---
 {(prev || next) && (
-  <nav aria-label="Adjacent pages" class="mt-12 flex flex-col gap-3 border-t border-border-subtle pt-6 sm:flex-row">
+  <nav data-pagefind-ignore aria-label="Adjacent pages" class="mt-12 flex flex-col gap-3 border-t border-border-subtle pt-6 sm:flex-row">
     {prev && (
       <a
         href={prev.href}

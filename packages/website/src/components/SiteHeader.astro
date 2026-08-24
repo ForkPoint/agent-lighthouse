@@ -1,9 +1,12 @@
 ---
+import SearchDialog from './SearchDialog.astro';
 import { docPath, withBase } from '../lib/routes';
 
 /**
- * The sticky site header: wordmark, primary sections, and the slot Task 10's
- * search trigger drops into. Styling follows the navbar on the page this site
+ * The sticky site header: wordmark, primary sections, and site search. The
+ * search trigger lives here rather than in a slot each page fills: it belongs on
+ * all 238 pages, and a slot only every page passes the same thing to is a way
+ * for one page to forget. Styling follows the navbar on the page this site
  * replaces — slate-950 at 80% behind a blur, a slate-800 hairline underneath,
  * and the wordmark as white-to-indigo gradient text.
  */
@@ -45,7 +48,7 @@ const currentState = (href: string): 'page' | 'true' | undefined => {
     </nav>
 
     <div class="flex items-center gap-3">
-      <slot name="search" />
+      <SearchDialog />
       <a
         href="https://github.com/ForkPoint/agent-lighthouse"
         rel="noopener"

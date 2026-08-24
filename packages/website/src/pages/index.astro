@@ -53,8 +53,11 @@ const h2 = 'text-2xl font-bold tracking-tight text-white';
   title="Agent Lighthouse"
   description={`Lighthouse-style audits for the agentic web: ${audits.length} checks across ${categories.length} categories, each backed by an evidence dossier.`}
 >
+  {/* The hero is what this page says for itself, and the only part of it
+      Pagefind indexes: the sections below are the badge generator and the report
+      viewer, whose text is interface, not content. */}
   <!-- Hero -->
-  <section class="relative overflow-hidden border-b border-border-subtle">
+  <section data-pagefind-body class="relative overflow-hidden border-b border-border-subtle">
     <div
       class="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(99,102,241,0.15),rgba(255,255,255,0))]"
       aria-hidden="true"
