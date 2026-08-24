@@ -5,10 +5,17 @@
 // Evidence dossier: docs/evidence/audits/structured-data/speakable-schema.md
 // Research: docs/evidence/deletions/structured-data/speakable-schema.md
 //
+// Re-graded A -> B on 2026-08-24. Google's speakable page is live and still
+// names Google Assistant as the consumer, but it says verbatim "This feature is
+// in beta and subject to change" and scopes the feature to U.S. English Google
+// Home users and English-language news publishers. POLICY.md reserves grade A
+// for a ratified standard or documented shipped behaviour; a beta feature with
+// a stated scope limit is a grade-B mechanism.
+//
 // RE-CHECK TRIGGER: the only documented consumer is Google Assistant, which
 // Google announced on 2025-08-20 will be replaced by Gemini for Home on
 // existing speakers and displays. If that transition completes with no
-// speakable successor statement, this audit loses its grade-A consumer and
+// speakable successor statement, this audit loses its consumer entirely and
 // must be re-graded (candidate: informative) or sunset.
 
 import type { AuditMeta, AuditResult } from "../../types";
@@ -116,8 +123,8 @@ export class SpeakableSchemaAudit extends Audit {
     description:
       'Google Assistant uses the speakable property to pick which sentences of a news article it reads aloud on Assistant-enabled devices. Without it, the assistant has to guess, and often vocalizes navigation or boilerplate instead of your headline and summary. Mark the headline and summary with cssSelector on your Article or WebPage node.',
     scoreDisplayMode: 'ternary',
-    weight: weightForGrade('A', 'scored'),
-    evidenceGrade: 'A',
+    weight: weightForGrade('B', 'scored'),
+    evidenceGrade: 'B',
     tier: 'scored',
     dossier: 'docs/evidence/audits/structured-data/speakable-schema.md',
     // News and article publishing is the whole documented scope of the

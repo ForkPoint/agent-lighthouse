@@ -100,18 +100,18 @@ If no category has any mass, the overall score is 0.
 
 ### Evidence mass in the current registry
 
-The mass distribution is derived from the registry, not written down anywhere, so it shifts whenever audits are added, re-graded or moved. As of the current registry — 215 audits, of which 164 are scored, 48 informative and 3 experimental — the total mass is 134.8 and it is distributed like this:
+The mass distribution is derived from the registry, not written down anywhere, so it shifts whenever audits are added, re-graded or moved. As of the current registry — 215 audits, of which 164 are scored, 48 informative and 3 experimental — the total mass is 134.0 and it is distributed like this:
 
 | Category                  | Audits | Scored | Mass | Share of the overall score |
 | :------------------------ | -----: | -----: | ---: | -------------------------: |
-| Agent Operability & Safety |    46 |     39 | 32.2 |                     23.9 % |
-| Access & Crawl Control     |    37 |     32 | 29.2 |                     21.7 % |
-| Content Extraction         |    27 |     23 | 17.0 |                     12.6 % |
-| Answer Readiness           |    33 |     19 | 13.0 |                      9.6 % |
-| Agent Interfaces           |    24 |     16 | 12.4 |                      9.2 % |
+| Agent Operability & Safety |    46 |     39 | 32.2 |                     24.0 % |
+| Access & Crawl Control     |    37 |     32 | 29.2 |                     21.8 % |
+| Content Extraction         |    27 |     23 | 17.0 |                     12.7 % |
+| Answer Readiness           |    33 |     19 | 13.0 |                      9.7 % |
 | Machine Discovery          |    24 |     15 | 12.2 |                      9.1 % |
-| Structured Data            |    14 |     10 | 10.0 |                      7.4 % |
-| Agentic Commerce           |    10 |     10 |  8.8 |                      6.5 % |
+| Agent Interfaces           |    24 |     16 | 12.0 |                      9.0 % |
+| Structured Data            |    14 |     10 |  9.6 |                      7.2 % |
+| Agentic Commerce           |    10 |     10 |  8.8 |                      6.6 % |
 
 Every scan reports the live figure rather than this snapshot: each category in the JSON report carries its own `weight`, which is its evidence mass for that run.
 

@@ -6,14 +6,14 @@ source_file: packages/core/src/audits/agent-interfaces/webmcp-declarative-forms.
 slug: webmcp-declarative-forms
 review_verdict: delete
 severity: high
-evidence_grade: A
+evidence_grade: B
 disposition: "kept — rewritten to the W3C/Baseline declarative-webmcp attributes 2026-08-22 (Plan 4, Task 10)"
 reviewed: 2026-08-22
 ---
 
 # webmcp-declarative-forms (`5.21`)
 
-> agent-interfaces · source `webmcp-declarative-forms.ts` · evidence grade **A** · tier **scored** (weight 1.0) · disposition: **kept — rewritten 2026-08-22 (Plan 4, Task 10)**
+> agent-interfaces · source `webmcp-declarative-forms.ts` · evidence grade **B** · tier **scored** (weight 0.6) · disposition: **kept — rewritten 2026-08-22 (Plan 4, Task 10)**
 
 ## What it checks
 
@@ -77,8 +77,38 @@ _No dedicated evidence signal was researched for this audit in the 2026-08-20 pa
 
 This audit was a delete candidate and went through dedicated adversarial research. Full dossier: [docs/evidence/deletions/agent-tools/webmcp-declarative-forms.md](../../deletions/agent-tools/webmcp-declarative-forms.md). Outcome: **redeemable**, grade A.
 
+
+## Re-grade (2026-08-24): **A → B**, tier `scored`, weight 1.0 → 0.6
+
+This audit reached the retirement shortlist under the bar "own dossier records
+no known consumer **and** conflicts with a written position in `POLICY.md`". It
+does not meet that bar, and it is not retired. Chrome's declarative-API page was
+re-fetched on 2026-08-24: **live**, published 2026-05-18, documenting `toolname`,
+`tooldescription`, `toolparamdescription` and `toolautosubmit`, and stating that
+the browser interprets an annotated form as a tool and, when an agent calls it,
+brings the form into focus and populates its fields. The consumer is real.
+
+What the re-fetch also confirmed is that the page carries an **origin trial**
+badge and says, verbatim:
+
+> WebMCP is under active discussion and subject to change in the future.
+
+`POLICY.md` reserves grade **A** for documented consumer behaviour or a ratified
+standard with known consumers, and gives grade **B** to a draft standard with
+meaningful adoption. An origin trial is the definition of the second: shipping
+behind a registration, explicitly provisional, explicitly subject to change.
+`weightForGrade('B', 'scored')` is **0.6**.
+
+Nothing else moves. `scoreDisplayMode` stays `ternary`, the attribute set and
+the `toolname`-required rule are unchanged, and a page with no form still
+returns `notApplicable`. If the origin trial graduates to a shipped API, or the
+W3C work reaches a ratified stage, this returns to a grade-A candidate.
+
+**Sources:** [Declarative WebMCP API (Chrome for Developers, published 2026-05-18)](https://developer.chrome.com/docs/ai/webmcp/declarative-api) · [Retirement shortlist re-verification](../../RETIREMENT-SHORTLIST.md#re-verification-2026-08-24)
+
 ## Review history
 
 - 2026-08-20 — code review (11-agent workflow) + evidence research (12-domain workflow, 400 sources).
 - 2026-08-21 — adversarial redemption research; user accepted verdict (disposition above).
 - 2026-08-22 — rewritten (Plan 4, Task 10): `toolname` required to register a tool, `toolparamdescription`/`toolautosubmit` documented, dead `webmcp.link` docsUrl replaced with the Chrome declarative-API docs, `defaultPriority` softened `high` → `medium`, form-less pages `na` instead of `warn`. Grade **A**, tier `scored`, weight 1.0 — unchanged. `TODO(redeem)` header removed; entry dropped from REWORK-TODO.md.
+- 2026-08-24 — re-graded A → B, weight 1.0 → 0.6. Chrome documents the browser reading the attributes, but the API is an origin trial and "subject to change". Not retired.

@@ -33,10 +33,14 @@ describe('SpeakableSchemaAudit', () => {
       expect(SpeakableSchemaAudit.meta.applicablePageTypes).toEqual(['content']);
     });
 
-    it('keeps grade A / tier scored / weight 1.0 per the approved dossier', () => {
-      expect(SpeakableSchemaAudit.meta.evidenceGrade).toBe('A');
+    // Re-graded A -> B on 2026-08-24: Google's speakable page is live and still
+    // names Google Assistant, but calls the feature "in beta and subject to
+    // change" and scopes it to U.S. English Google Home users and
+    // English-language news publishers.
+    it('carries grade B / tier scored / weight 0.6', () => {
+      expect(SpeakableSchemaAudit.meta.evidenceGrade).toBe('B');
       expect(SpeakableSchemaAudit.meta.tier).toBe('scored');
-      expect(SpeakableSchemaAudit.meta.weight).toBe(1.0);
+      expect(SpeakableSchemaAudit.meta.weight).toBe(0.6);
       expect(SpeakableSchemaAudit.meta.scoreDisplayMode).toBe('ternary');
     });
 

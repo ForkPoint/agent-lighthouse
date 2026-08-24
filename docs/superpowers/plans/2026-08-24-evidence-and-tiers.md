@@ -125,6 +125,14 @@ Decided 2026-08-24: the **narrow bar** — six audits, `agent-interfaces/ai-cata
 
 This decision overtakes Task 10: `agent-interfaces/webmcp-registered-tools` retires, so it is not split or re-tiered. Fold it into this task.
 
+**What landed (2026-08-24): nothing retires. Two audits re-graded instead.**
+
+Before executing, each of the six was checked against the shipped code and its current dossier rather than the shortlist note. **None still meets the bar.** The shortlist was built from the redemption dossiers under `docs/evidence/deletions/`, which describe the audits *before* the Plan 4 rework of 2026-08-22 — and all six were rebuilt in that pass. Each now names a documented consumer: ARD plus `huggingface/hf-discover` for the three `ai-catalog` audits (both re-verified live on 2026-08-24), a live Google Search Central page for `speakable-schema`, a live Chrome declarative-API page for `webmcp-declarative-forms`. The policy conflict behind the three `ai-catalog` entries also disappeared when Task 13 corrected `POLICY.md`'s grade-D row on the same day. The per-audit findings are in [`RETIREMENT-SHORTLIST.md`](../../evidence/RETIREMENT-SHORTLIST.md#re-verification-2026-08-24).
+
+Two findings survived the check, and the user chose to act on them: `structured-data/speakable-schema` and `agent-interfaces/webmcp-declarative-forms` both scored at grade **A**, weight **1.0**, on features their own vendors label provisional — Google says speakable is "in beta and subject to change" and scopes it to U.S. English news publishers; Chrome's declarative WebMCP page carries an origin-trial badge and says the API is "under active discussion". Both are re-graded **A → B**, weight 1.0 → 0.6. Registry stays at 215; mass 134.8 → 134.0.
+
+`agent-interfaces/webmcp-registered-tools` does **not** retire, so Task 10 is back on: it remains a genuine Class A composite, one signal at `Recommended tier: delete` and another at `Recommended tier: scored`.
+
 ## Sequencing
 
-Tasks 1-4 are independent of each other. Task 6 must precede Task 5's fold-in. Task 13 is independent and can run any time. Tasks 14 and 15 are prerequisites for publishing and can run together. Task 17 gates the public launch.
+Tasks 1-4 are independent of each other. Task 6 must precede Task 5's fold-in. Task 13 is independent and can run any time. Tasks 14 and 15 are prerequisites for publishing and can run together. Task 17 gated the public launch and is now closed: nothing retires, two audits re-graded. Task 10 is un-blocked and still open.

@@ -3,6 +3,13 @@ import { Audit } from '../../audit';
 import { weightForGrade } from '../../scorer';
 import type { CheckContext } from '../../check-context';
 
+// Re-graded A -> B on 2026-08-24. Chrome's declarative-API page is live and
+// states that the browser reads an annotated form as a tool, but it carries an
+// origin-trial badge and says "WebMCP is under active discussion and subject to
+// change in the future". POLICY.md reserves grade A for a ratified standard or
+// documented shipped behaviour; an origin trial is a draft standard with
+// meaningful adoption, which is grade B.
+
 /**
  * The Declarative WebMCP attributes, exactly as the W3C Web Machine Learning CG
  * explainer and Chrome's own documentation spell them (all lower-case, no
@@ -104,8 +111,8 @@ export class WebmcpDeclarativeFormsAudit extends Audit {
     description:
       "WebMCP's Declarative API turns an HTML <form> into an agent-callable tool: add toolname and tooldescription and the browser synthesizes a JSON Schema from the form's controls, which an in-browser agent can discover and invoke without any JavaScript. toolname is what registers the tool — a description on its own registers nothing.",
     scoreDisplayMode: 'ternary',
-    weight: weightForGrade('A', 'scored'),
-    evidenceGrade: 'A',
+    weight: weightForGrade('B', 'scored'),
+    evidenceGrade: 'B',
     tier: 'scored',
     dossier: 'docs/evidence/audits/agent-interfaces/webmcp-declarative-forms.md',
     // Softened from 'high': the feature is Baseline "limited" (Chrome 149 /
