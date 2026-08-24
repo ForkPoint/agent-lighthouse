@@ -210,6 +210,14 @@ describe('robots.txt consumers — shared-gatherer differential', () => {
 // `details`, which were unpinned before — a priority regression used to pass
 // this test.
 
+// Regenerated a second time, deliberately, in the contradiction sweep
+// (2026-08-24): agent-governance stopped failing sites whose robots.txt has an
+// open catch-all. RFC 9309 §2.2.1 makes the fallback grant every named agent
+// the same access the explicit groups would, so there was nothing to separate
+// and no vendor rewards the groups being present. Those fixtures move from
+// `fail` to `na`; the two blanket-block fixtures now carry the only failure
+// the evidence supports. No other audit's rows moved.
+
 const BASELINE: Record<string, Record<string, Row>> =  {
   "no-blanket-block": {
     "missing": {
@@ -377,7 +385,7 @@ const BASELINE: Record<string, Record<string, Row>> =  {
     "missing": {
       "status": "na",
       "score": 0,
-      "message": "No robots.txt found — agentic governance cannot be evaluated.",
+      "message": "No robots.txt found \u2014 agentic governance cannot be evaluated.",
       "found": "No robots.txt found",
       "priority": "medium",
       "details": "{}"
@@ -385,7 +393,7 @@ const BASELINE: Record<string, Record<string, Row>> =  {
     "non-200": {
       "status": "na",
       "score": 0,
-      "message": "No robots.txt found — agentic governance cannot be evaluated.",
+      "message": "No robots.txt found \u2014 agentic governance cannot be evaluated.",
       "found": "No robots.txt found",
       "priority": "medium",
       "details": "{}"
@@ -393,48 +401,48 @@ const BASELINE: Record<string, Record<string, Row>> =  {
     "empty": {
       "status": "na",
       "score": 0,
-      "message": "No robots.txt found — agentic governance cannot be evaluated.",
+      "message": "No robots.txt found \u2014 agentic governance cannot be evaluated.",
       "found": "No robots.txt found",
       "priority": "medium",
       "details": "{}"
     },
     "html-error-page": {
-      "status": "fail",
+      "status": "na",
       "score": 0,
-      "message": "robots.txt contains no AI-agent-specific rules.",
-      "found": "No AI crawler user-agents named",
+      "message": "robots.txt names no AI agents and blocks nothing, so every agent is already allowed.",
+      "found": "No restrictions in robots.txt",
       "priority": "medium",
       "details": "{\"trainingAgents\":[],\"realtimeAgents\":[],\"hasCatchAll\":false}"
     },
     "wildcard-allow": {
-      "status": "fail",
+      "status": "na",
       "score": 0,
-      "message": "robots.txt only defines a catch-all User-agent: * — no AI-agent-specific rules found.",
-      "found": "Only User-agent: * present",
+      "message": "robots.txt grants every agent access through the catch-all group, so training crawlers and live agents already have the same policy and there is nothing to separate.",
+      "found": "Catch-all grants access",
       "priority": "medium",
       "details": "{\"trainingAgents\":[],\"realtimeAgents\":[],\"hasCatchAll\":true}"
     },
     "wildcard-blanket-block": {
       "status": "fail",
       "score": 0,
-      "message": "robots.txt only defines a catch-all User-agent: * — no AI-agent-specific rules found.",
-      "found": "Only User-agent: * present",
+      "message": "robots.txt blocks every agent through the catch-all group. Under the RFC 9309 fallback that block also applies to live conversational agents, so the site is closed to the agents that cite and link back to it, not only to dataset crawlers.",
+      "found": "Catch-all blocks all agents, no per-agent exceptions",
       "priority": "medium",
       "details": "{\"trainingAgents\":[],\"realtimeAgents\":[],\"hasCatchAll\":true}"
     },
     "blanket-block-countered": {
-      "status": "fail",
+      "status": "na",
       "score": 0,
-      "message": "robots.txt only defines a catch-all User-agent: * — no AI-agent-specific rules found.",
-      "found": "Only User-agent: * present",
+      "message": "robots.txt grants every agent access through the catch-all group, so training crawlers and live agents already have the same policy and there is nothing to separate.",
+      "found": "Catch-all grants access",
       "priority": "medium",
       "details": "{\"trainingAgents\":[],\"realtimeAgents\":[],\"hasCatchAll\":true}"
     },
     "wildcard-star-disallow": {
       "status": "fail",
       "score": 0,
-      "message": "robots.txt only defines a catch-all User-agent: * — no AI-agent-specific rules found.",
-      "found": "Only User-agent: * present",
+      "message": "robots.txt blocks every agent through the catch-all group. Under the RFC 9309 fallback that block also applies to live conversational agents, so the site is closed to the agents that cite and link back to it, not only to dataset crawlers.",
+      "found": "Catch-all blocks all agents, no per-agent exceptions",
       "priority": "medium",
       "details": "{\"trainingAgents\":[],\"realtimeAgents\":[],\"hasCatchAll\":true}"
     },
@@ -447,17 +455,17 @@ const BASELINE: Record<string, Record<string, Row>> =  {
       "details": "{\"trainingAgents\":[\"GPTBot\",\"CCBot\"],\"realtimeAgents\":[\"ChatGPT-User\",\"Claude-User\"],\"hasCatchAll\":true}"
     },
     "versioned-product-token": {
-      "status": "fail",
+      "status": "na",
       "score": 0,
-      "message": "robots.txt only defines a catch-all User-agent: * — no AI-agent-specific rules found.",
-      "found": "Only User-agent: * present",
+      "message": "robots.txt grants every agent access through the catch-all group, so training crawlers and live agents already have the same policy and there is nothing to separate.",
+      "found": "Catch-all grants access",
       "priority": "medium",
       "details": "{\"trainingAgents\":[],\"realtimeAgents\":[],\"hasCatchAll\":true}"
     },
     "mixed-case-tokens": {
       "status": "warn",
       "score": 0.5,
-      "message": "Only training crawlers are explicitly governed in robots.txt — no rules for live conversational agents.",
+      "message": "Only training crawlers are explicitly governed in robots.txt \u2014 no rules for live conversational agents.",
       "found": "Training: GPTBot, anthropic-ai / ClaudeBot; Realtime: none",
       "priority": "medium",
       "details": "{\"trainingAgents\":[\"GPTBot\",\"anthropic-ai / ClaudeBot\"],\"realtimeAgents\":[],\"hasCatchAll\":false}"
@@ -465,39 +473,39 @@ const BASELINE: Record<string, Record<string, Row>> =  {
     "anthropic-alias-only": {
       "status": "warn",
       "score": 0.5,
-      "message": "Only training crawlers are explicitly governed in robots.txt — no rules for live conversational agents.",
+      "message": "Only training crawlers are explicitly governed in robots.txt \u2014 no rules for live conversational agents.",
       "found": "Training: anthropic-ai / ClaudeBot; Realtime: none",
       "priority": "medium",
       "details": "{\"trainingAgents\":[\"anthropic-ai / ClaudeBot\"],\"realtimeAgents\":[],\"hasCatchAll\":true}"
     },
     "comments-and-crlf": {
-      "status": "fail",
+      "status": "na",
       "score": 0,
-      "message": "robots.txt only defines a catch-all User-agent: * — no AI-agent-specific rules found.",
-      "found": "Only User-agent: * present",
+      "message": "robots.txt grants every agent access through the catch-all group, so training crawlers and live agents already have the same policy and there is nothing to separate.",
+      "found": "Catch-all grants access",
       "priority": "medium",
       "details": "{\"trainingAgents\":[],\"realtimeAgents\":[],\"hasCatchAll\":true}"
     },
     "bom-prefixed": {
-      "status": "fail",
+      "status": "na",
       "score": 0,
-      "message": "robots.txt only defines a catch-all User-agent: * — no AI-agent-specific rules found.",
-      "found": "Only User-agent: * present",
+      "message": "robots.txt grants every agent access through the catch-all group, so training crawlers and live agents already have the same policy and there is nothing to separate.",
+      "found": "Catch-all grants access",
       "priority": "medium",
       "details": "{\"trainingAgents\":[],\"realtimeAgents\":[],\"hasCatchAll\":true}"
     },
     "crawl-delay-reasonable": {
-      "status": "fail",
+      "status": "na",
       "score": 0,
-      "message": "robots.txt only defines a catch-all User-agent: * — no AI-agent-specific rules found.",
-      "found": "Only User-agent: * present",
+      "message": "robots.txt grants every agent access through the catch-all group, so training crawlers and live agents already have the same policy and there is nothing to separate.",
+      "found": "Catch-all grants access",
       "priority": "medium",
       "details": "{\"trainingAgents\":[],\"realtimeAgents\":[],\"hasCatchAll\":true}"
     },
     "crawl-delay-excessive": {
       "status": "warn",
       "score": 0.5,
-      "message": "Only training crawlers are explicitly governed in robots.txt — no rules for live conversational agents.",
+      "message": "Only training crawlers are explicitly governed in robots.txt \u2014 no rules for live conversational agents.",
       "found": "Training: GPTBot; Realtime: none",
       "priority": "medium",
       "details": "{\"trainingAgents\":[\"GPTBot\"],\"realtimeAgents\":[],\"hasCatchAll\":true}"
@@ -505,23 +513,23 @@ const BASELINE: Record<string, Record<string, Row>> =  {
     "grouped-agents": {
       "status": "warn",
       "score": 0.5,
-      "message": "Only training crawlers are explicitly governed in robots.txt — no rules for live conversational agents.",
+      "message": "Only training crawlers are explicitly governed in robots.txt \u2014 no rules for live conversational agents.",
       "found": "Training: GPTBot, CCBot; Realtime: none",
       "priority": "medium",
       "details": "{\"trainingAgents\":[\"GPTBot\",\"CCBot\"],\"realtimeAgents\":[],\"hasCatchAll\":true}"
     },
     "sensitive-paths-disallowed": {
-      "status": "fail",
+      "status": "na",
       "score": 0,
-      "message": "robots.txt only defines a catch-all User-agent: * — no AI-agent-specific rules found.",
-      "found": "Only User-agent: * present",
+      "message": "robots.txt grants every agent access through the catch-all group, so training crawlers and live agents already have the same policy and there is nothing to separate.",
+      "found": "Catch-all grants access",
       "priority": "medium",
       "details": "{\"trainingAgents\":[],\"realtimeAgents\":[],\"hasCatchAll\":true}"
     },
     "youbot-and-ai2bot-explicit": {
       "status": "warn",
       "score": 0.5,
-      "message": "Only training crawlers are explicitly governed in robots.txt — no rules for live conversational agents.",
+      "message": "Only training crawlers are explicitly governed in robots.txt \u2014 no rules for live conversational agents.",
       "found": "Training: YouBot, AI2Bot; Realtime: none",
       "priority": "medium",
       "details": "{\"trainingAgents\":[\"YouBot\",\"AI2Bot\"],\"realtimeAgents\":[],\"hasCatchAll\":true}"
@@ -529,7 +537,7 @@ const BASELINE: Record<string, Record<string, Row>> =  {
     "youbot-blocked": {
       "status": "warn",
       "score": 0.5,
-      "message": "Only training crawlers are explicitly governed in robots.txt — no rules for live conversational agents.",
+      "message": "Only training crawlers are explicitly governed in robots.txt \u2014 no rules for live conversational agents.",
       "found": "Training: YouBot, AI2Bot; Realtime: none",
       "priority": "medium",
       "details": "{\"trainingAgents\":[\"YouBot\",\"AI2Bot\"],\"realtimeAgents\":[],\"hasCatchAll\":false}"

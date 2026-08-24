@@ -57,7 +57,7 @@ export class AgentGovernanceAudit extends Audit {
     id: 'access-crawl-control/agent-governance',
     category: 'access-crawl-control',
     title: 'AI crawler vs conversational agent separation',
-    failureTitle: 'No separation between training crawlers and live agents',
+    failureTitle: 'Blanket robots.txt block also shuts out live AI agents',
     description:
       'Not all AI bots are the same. Training crawlers like GPTBot, CCBot, and Google-Extended scrape your content to build datasets, while conversational and retrieval agents like ChatGPT-User, Claude-User, and OAI-SearchBot fetch pages live to answer real user questions and can send referral traffic back to you. Many sites want to block the former while welcoming the latter — but a single catch-all User-agent: * cannot express that distinction. Granular robots.txt governance names both categories explicitly so each gets the access policy you actually intend.',
     scoreDisplayMode: 'ternary',
@@ -102,14 +102,36 @@ export class AgentGovernanceAudit extends Audit {
     const expected =
       'Explicit User-agent groups for both training crawlers (GPTBot, CCBot, ...) and live conversational agents (ChatGPT-User, Claude-User, ...)';
 
-    // No AI-agent-specific rules at all — pure catch-all (or empty) robots.txt.
+    // No AI-agent-specific rules at all. What that means depends entirely on
+    // what the catch-all says, because of RFC 9309 §2.2.1: a crawler obeys the
+    // group matching its own product token and falls back to `*` only when no
+    // such group exists. So an open catch-all already grants every named agent
+    // full access — there is no distinction left to express, and no vendor
+    // documentation rewards writing the groups out. Only a blanket block has a
+    // consequence the site may not intend: it takes the live retrieval agents
+    // down with the training crawlers, and those are the ones that cite and
+    // link back.
     if (trainingNamed.length === 0 && realtimeNamed.length === 0) {
+      const catchAllRules = groups
+        .filter((g) => g.userAgent === '*')
+        .flatMap((g) => g.rules);
+
+      if (!isBlanketBlocked(catchAllRules)) {
+        const result = this.notApplicable(
+          hasCatchAll
+            ? 'robots.txt grants every agent access through the catch-all group, so training crawlers and live agents already have the same policy and there is nothing to separate.'
+            : 'robots.txt names no AI agents and blocks nothing, so every agent is already allowed.',
+          expected,
+          hasCatchAll ? 'Catch-all grants access' : 'No restrictions in robots.txt',
+        );
+        result.details = details;
+        return result;
+      }
+
       const result = this.fail(
-        hasCatchAll
-          ? 'robots.txt only defines a catch-all User-agent: * — no AI-agent-specific rules found.'
-          : 'robots.txt contains no AI-agent-specific rules.',
+        'robots.txt blocks every agent through the catch-all group. Under the RFC 9309 fallback that block also applies to live conversational agents, so the site is closed to the agents that cite and link back to it, not only to dataset crawlers.',
         expected,
-        hasCatchAll ? 'Only User-agent: * present' : 'No AI crawler user-agents named',
+        'Catch-all blocks all agents, no per-agent exceptions',
         { priority: 'medium' },
       );
       result.details = details;
