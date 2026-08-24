@@ -222,6 +222,21 @@ describe('Audit.toCheckResult', () => {
     expect(c.tags).toEqual(['tag-a', 'tag-b']);
   });
 
+  // `failureTitle` names what went wrong. A not-applicable check did not go
+  // wrong — its precondition was absent — so it keeps the plain title.
+  it('titles a not-applicable result with the plain title, not the failure title', () => {
+    const a = new NoGuidanceAudit();
+    const c = a.toCheckResult({
+      status: 'na',
+      score: 0,
+      found: 'nothing to evaluate',
+      expected: 'something to evaluate',
+      message: 'MSG',
+    });
+    expect(c.title).toBe('Passing Title 2');
+    expect(c.status).toBe('na');
+  });
+
   it('falls back to found/message/meta when optional fields absent (fail, no guidance)', () => {
     const a = new NoGuidanceAudit();
     const result: AuditResult = {
@@ -233,7 +248,7 @@ describe('Audit.toCheckResult', () => {
     };
     const c = a.toCheckResult(result);
 
-    expect(c.title).toBe('Failing Title 2'); // non-pass → failureTitle
+    expect(c.title).toBe('Failing Title 2'); // fail → failureTitle
     expect(c.displayValue).toBe('top-found'); // no displayValue → found
     expect(c.explanation).toBe('MSG'); // no explanation → message
     expect(c.details?.expected).toBe('top-expected'); // no details → result.expected

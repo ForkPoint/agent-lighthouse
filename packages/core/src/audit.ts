@@ -161,7 +161,11 @@ export abstract class Audit {
     return {
       id: meta.id,
       category: meta.category,
-      title: result.status === 'pass' ? meta.title : meta.failureTitle,
+      // `failureTitle` names what went wrong, so only a result that went wrong
+      // may carry it. A not-applicable check did not fail: the audit's
+      // precondition was absent, and printing "… blocked by robots.txt" over a
+      // site that serves no robots.txt states something untrue.
+      title: result.status === 'pass' || result.status === 'na' ? meta.title : meta.failureTitle,
       description: meta.description,
       status: result.status,
       score: result.score,
