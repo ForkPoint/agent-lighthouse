@@ -11,6 +11,13 @@ const page = (relative: string) => readFileSync(resolve(DIST, relative, 'index.h
 /** The audit ids a page renders a card for, in document order. */
 const cardIds = (html: string) => [...html.matchAll(/data-audit-id="([^"]+)"/g)].map((m) => m[1]!);
 
+/** Every heading on a page, in document order, as depths. */
+const headingDepths = (html: string) =>
+  [...html.matchAll(/<h([1-6])[\s>]/g)].map((m) => Number(m[1]));
+
+/** The `id` an element's `aria-labelledby` points at, if it has one. */
+const labelledBy = (tag: string) => /aria-labelledby="([^"]+)"/.exec(tag)?.[1];
+
 /**
  * These assert against `dist/` for the reason `layouts/chrome.test.ts` records:
  * `experimental_AstroContainer` needs Vite 8 and Vitest pins Vite 5, so a page
@@ -86,6 +93,41 @@ describe.skipIf(!built)('rendered /audits/', () => {
       expect(code, `${where} reaches for the registry`).not.toContain('defaultConfig');
     }
   });
+
+  it('carries each card\u2019s facets on the card, not in a second copy of the registry', () => {
+    const html = page('audits');
+    const cards = [...html.matchAll(/<li[^>]*data-audit-id="[^"]*"[^>]*>/g)].map((m) => m[0]);
+    const byId = new Map(auditList().map((audit) => [audit.id, audit]));
+
+    expect(cards).toHaveLength(byId.size);
+    for (const card of cards) {
+      const id = /data-audit-id="([^"]+)"/.exec(card)![1]!;
+      const audit = byId.get(id)!;
+      expect(card, id).toContain(`data-category="${audit.category}"`);
+      expect(card, id).toContain(`data-tier="${audit.tier}"`);
+    }
+    // The explorer reads those attributes and the card text. A serialized copy
+    // of the registry in the page would be the same text twice.
+    expect(html, 'the page ships a serialized data blob').not.toMatch(
+      /<script[^>]*type="application\/json"/,
+    );
+  });
+
+  it('nests its headings without skipping a level, and names the list', () => {
+    const html = page('audits');
+    const depths = headingDepths(html);
+
+    expect(depths[0]).toBe(1);
+    for (const [index, depth] of depths.entries()) {
+      const previous = depths[index - 1] ?? depth;
+      expect(depth - previous, `heading ${index} jumps from h${previous} to h${depth}`)
+        .toBeLessThanOrEqual(1);
+    }
+
+    const list = /<ul[^>]*aria-labelledby="[^"]+"[^>]*>/.exec(html)?.[0];
+    expect(list, 'the card list has no accessible name').toBeDefined();
+    expect(html).toContain(`id="${labelledBy(list!)}"`);
+  });
 });
 
 describe.skipIf(!built)('rendered category indexes', () => {
@@ -121,6 +163,23 @@ describe.skipIf(!built)('rendered category indexes', () => {
       for (const other of categories) {
         expect(html, `${category.id} → ${other.id}`).toContain(`href="${categoryPath(other.id)}"`);
       }
+    }
+  });
+
+  it('nests its headings without skipping a level, and names the list', () => {
+    for (const category of categories) {
+      const html = page(`categories/${category.id}`);
+      const depths = headingDepths(html);
+
+      expect(depths[0], category.id).toBe(1);
+      for (const [index, depth] of depths.entries()) {
+        const previous = depths[index - 1] ?? depth;
+        expect(depth - previous, `${category.id}: h${previous} \u2192 h${depth}`).toBeLessThanOrEqual(1);
+      }
+
+      const list = /<ul[^>]*aria-labelledby="[^"]+"[^>]*>/.exec(html)?.[0];
+      expect(list, `${category.id}: the card list has no accessible name`).toBeDefined();
+      expect(html, category.id).toContain(`id="${labelledBy(list!)}"`);
     }
   });
 });

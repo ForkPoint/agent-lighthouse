@@ -8,7 +8,14 @@ import { auditPath } from '../lib/routes';
  * One audit in a list: its id, badges, title and description.
  *
  * It renders the `<li>` itself, and carries `data-audit-id` there, so the
- * explorer hides a whole list item rather than leaving an empty one behind.
+ * explorer hides a whole list item rather than leaving an empty one behind. The
+ * facets it filters on ride along as data attributes, and `data-tags` carries
+ * the words a card matches on but does not print — together they are all the
+ * explorer needs, so the page ships no second copy of the registry.
+ *
+ * The title is an `<h2>`: it sits directly under the page's `<h1>`, and a level
+ * skip is one of the things this product audits other sites for.
+ *
  * `showCategory` is off on a category index, where the label would repeat on
  * every card.
  */
@@ -21,6 +28,9 @@ const { audit, showCategory = true } = Astro.props;
 ---
 <li
   data-audit-id={audit.id}
+  data-category={audit.category}
+  data-tier={audit.tier}
+  data-tags={audit.tags.join(' ')}
   class="rounded-xl border border-border-subtle bg-surface-raised/50 p-4 transition-colors hover:border-brand/50 hover:bg-surface-raised sm:p-5"
 >
   <div class="flex flex-wrap items-center gap-2">
@@ -28,9 +38,9 @@ const { audit, showCategory = true } = Astro.props;
     <GradeBadge grade={audit.evidenceGrade} />
     <TierBadge tier={audit.tier} />
   </div>
-  <h3 class="mt-2.5 text-sm font-bold text-white sm:text-base">
+  <h2 class="mt-2.5 text-sm font-bold text-white sm:text-base">
     <a class="transition-colors hover:text-brand-soft" href={auditPath(audit.id)}>{audit.title}</a>
-  </h3>
+  </h2>
   <p class="mt-1.5 text-xs leading-relaxed text-slate-300">{audit.description}</p>
   {showCategory && (
     <p class="mt-2.5 text-xs text-slate-400">{audit.categoryTitle}</p>

@@ -1,22 +1,39 @@
 import { describe, it, expect } from 'vitest';
-import { filterAudits } from './audit-explorer';
-import type { AuditRecord } from '../lib/registry';
+import { filterAudits, type SearchableAudit } from './audit-explorer';
 
-const record = (over: Partial<AuditRecord>): AuditRecord => ({
-  id: 'a/b', category: 'a', categoryTitle: 'A', title: 'Title', description: 'Description',
-  evidenceGrade: 'B', tier: 'scored', weight: 0.6, priority: 'medium', tags: [], ...over,
+/**
+ * `filterAudits` takes what a card can tell the explorer about itself: its id,
+ * its two facets, and the text it matches on. The haystack here is built the
+ * way `mountExplorer` builds it from a card — card text plus tags, lowercased.
+ */
+const record = (over: Partial<SearchableAudit> & { id: string }): SearchableAudit => ({
+  category: over.id.split('/')[0]!,
+  tier: 'scored',
+  haystack: '',
+  ...over,
 });
 
 describe('filterAudits', () => {
   const audits = [
-    record({ id: 'agentic-commerce/offer-truth-consistency', title: 'Offer Truth Consistency', category: 'agentic-commerce', tags: ['price'] }),
-    record({ id: 'access-crawl-control/robots-directives', title: 'Robots Directives', category: 'access-crawl-control', tier: 'informative' }),
+    record({
+      id: 'agentic-commerce/offer-truth-consistency',
+      haystack: 'agentic-commerce/offer-truth-consistency offer truth consistency agentic commerce price',
+    }),
+    record({
+      id: 'access-crawl-control/robots-directives',
+      tier: 'informative',
+      haystack: 'access-crawl-control/robots-directives robots directives access & crawl control',
+    }),
   ];
 
   it('matches on title, id and tag', () => {
     expect(filterAudits(audits, { text: 'offer', category: 'all', tier: 'all' })).toHaveLength(1);
     expect(filterAudits(audits, { text: 'robots-directives', category: 'all', tier: 'all' })).toHaveLength(1);
     expect(filterAudits(audits, { text: 'price', category: 'all', tier: 'all' })).toHaveLength(1);
+  });
+
+  it('ignores the case and the surrounding whitespace of a query', () => {
+    expect(filterAudits(audits, { text: '  ROBOTS  ', category: 'all', tier: 'all' })).toHaveLength(1);
   });
 
   it('filters by category and tier independently', () => {

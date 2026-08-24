@@ -17,18 +17,13 @@ const tiers = [
 
 const pill =
   'rounded-lg border border-slate-700 bg-slate-800 px-3 py-1.5 text-xs font-medium text-slate-200 transition-colors hover:bg-slate-700 aria-pressed:border-brand aria-pressed:bg-brand aria-pressed:text-white';
-
-// The explorer's copy of the registry, handed to the client as data. `<` is
-// escaped because a `</script` sequence inside the JSON would end the element
-// early; the browser unescapes it before `JSON.parse` sees it.
-const payload = JSON.stringify(audits).replace(/</g, '\\u003c');
 ---
 <Base
   title="Audits"
   description="Every audit Agent Lighthouse runs, with the evidence grade and tier it carries."
 >
   <div class="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
-    <h1 class="text-3xl font-extrabold tracking-tight text-white">Audits</h1>
+    <h1 id="audits-heading" class="text-3xl font-extrabold tracking-tight text-white">Audits</h1>
     <p class="mt-3 max-w-3xl text-sm leading-relaxed text-slate-300">
       Every check the engine runs, in registry order. Each one links to the dossier that
       states its rule, the evidence behind it, and how the check is implemented.
@@ -78,7 +73,7 @@ const payload = JSON.stringify(audits).replace(/</g, '\\u003c');
       Showing <span id="audit-count" class="font-semibold text-slate-200">{audits.length}</span> of {audits.length} audits
     </p>
 
-    <ul class="mt-4 grid gap-3 lg:grid-cols-2">
+    <ul aria-labelledby="audits-heading" class="mt-4 grid gap-3 lg:grid-cols-2">
       {audits.map((audit) => <AuditCard audit={audit} />)}
     </ul>
 
@@ -103,14 +98,10 @@ const payload = JSON.stringify(audits).replace(/</g, '\\u003c');
     </nav>
   </div>
 
-  <script id="audit-explorer-data" type="application/json" is:inline set:html={payload}></script>
+  {/* The explorer reads the cards above — the page hands it no data of its own. */}
   <script>
     import { mountExplorer } from '../../islands/audit-explorer';
 
-    const raw = document.querySelector('#audit-explorer-data')?.textContent;
-    const audits = raw ? JSON.parse(raw) : [];
-    // Mount only with records in hand: an empty list would match nothing and
-    // hide all 215 server-rendered cards, which is worse than no filtering.
-    if (audits.length > 0) mountExplorer(audits);
+    mountExplorer();
   </script>
 </Base>

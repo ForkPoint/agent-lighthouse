@@ -1,13 +1,11 @@
-import type { AuditRecord } from '../lib/registry';
-
 /**
  * The audit explorer's client half.
  *
- * It never imports the registry or core: `vite.resolve.external` is declared at
- * the top level of the Astro config, so a bare specifier here would survive into
- * the browser bundle and fail at load. The records arrive from the server as a
- * serialized prop instead — see `pages/audits/index.astro`. The only import is a
- * type, which TypeScript erases.
+ * It imports nothing at all — not even a type from `registry.ts`. The page it
+ * runs on has already rendered every audit as a card, so the explorer reads its
+ * data back out of those cards instead of being handed a serialized copy of the
+ * registry: the same 215 titles and descriptions would otherwise ship twice,
+ * once as HTML and once as JSON (127 KB of it, a third of the page gzipped).
  */
 export interface ExplorerQuery {
   text: string;
@@ -15,17 +13,22 @@ export interface ExplorerQuery {
   tier: string;
 }
 
+/** One audit as the explorer needs it: two facets and the text to search. */
+export interface SearchableAudit {
+  id: string;
+  category: string;
+  tier: string;
+  /** Lowercased text this audit matches on — its card's text, plus its tags. */
+  haystack: string;
+}
+
 /** The filter behind the explorer. Pure, so it is tested without a DOM. */
-export function filterAudits(audits: AuditRecord[], query: ExplorerQuery): AuditRecord[] {
+export function filterAudits(audits: SearchableAudit[], query: ExplorerQuery): SearchableAudit[] {
   const text = query.text.trim().toLowerCase();
   return audits.filter((audit) => {
     if (query.category !== 'all' && audit.category !== query.category) return false;
     if (query.tier !== 'all' && audit.tier !== query.tier) return false;
-    if (text === '') return true;
-    const haystack = [audit.id, audit.title, audit.description, ...audit.tags]
-      .join(' ')
-      .toLowerCase();
-    return haystack.includes(text);
+    return text === '' || audit.haystack.includes(text);
   });
 }
 
@@ -36,9 +39,18 @@ export function filterAudits(audits: AuditRecord[], query: ExplorerQuery): Audit
  * match. Hiding uses the `hidden` property rather than a utility class so a
  * filtered-out card leaves the accessibility tree as well as the layout.
  */
-export function mountExplorer(audits: AuditRecord[]): void {
-  const input = document.querySelector<HTMLInputElement>('#audit-search');
+export function mountExplorer(): void {
   const cards = [...document.querySelectorAll<HTMLElement>('[data-audit-id]')];
+  // A card prints its id, title, description and category, which is most of
+  // what the old explorer searched; `data-tags` carries the rest.
+  const audits: SearchableAudit[] = cards.map((card) => ({
+    id: card.dataset['auditId'] ?? '',
+    category: card.dataset['category'] ?? '',
+    tier: card.dataset['tier'] ?? '',
+    haystack: `${card.textContent ?? ''} ${card.dataset['tags'] ?? ''}`.toLowerCase(),
+  }));
+
+  const input = document.querySelector<HTMLInputElement>('#audit-search');
   const count = document.querySelector('#audit-count');
   const empty = document.querySelector<HTMLElement>('#audit-empty');
   const state: ExplorerQuery = { text: '', category: 'all', tier: 'all' };
