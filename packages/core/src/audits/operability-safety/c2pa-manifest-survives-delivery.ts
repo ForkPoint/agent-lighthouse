@@ -34,7 +34,7 @@ export class C2paManifestSurvivesDeliveryAudit extends Audit {
       fix: 'Turn on Content Credentials preservation in the image pipeline (Cloudflare Images has an explicit setting; Next.js image optimization and most CDN resizers need the manifest copied through or the asset served unoptimized). Verify by fetching the URL the page actually renders, not the asset in the library.',
       effort: 'moderate',
       docsUrl:
-        'https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/audits/operability-safety/c2pa-manifest-survives-delivery.md',
+        'https://forkpoint.github.io/agent-lighthouse/audits/operability-safety/c2pa-manifest-survives-delivery/',
       tags: ['c2pa', 'provenance', 'content-credentials', 'images'],
     },
   };

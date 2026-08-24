@@ -80,7 +80,7 @@ export class BoilerplateTaxAudit extends Audit {
       fix: 'Cut repeated chrome down to what a reader needs on every page: collapse mega-menus to a short nav, move legal and marketing boilerplate to the pages that are about it, and let each page carry more of its own content. Where the chrome must stay for humans, keeping it out of `<main>` at least lets an extractor drop it.',
       effort: 'complex',
       docsUrl:
-        'https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/audits/content-extraction/boilerplate-tax.md',
+        'https://forkpoint.github.io/agent-lighthouse/audits/content-extraction/boilerplate-tax/',
       tags: ['tokens', 'context-window', 'content', 'crawl'],
     },
   };

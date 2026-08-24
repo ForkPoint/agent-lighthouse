@@ -236,7 +236,7 @@ export class UrlAddressableStateAndPaginationFallbackAudit extends Audit {
       code: SAMPLE,
       effort: 'complex',
       docsUrl:
-        'https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/audits/operability-safety/url-addressable-state-and-pagination-fallback.md',
+        'https://forkpoint.github.io/agent-lighthouse/audits/operability-safety/url-addressable-state-and-pagination-fallback/',
       tags: ['agent-operability', 'navigation', 'pagination', 'facets'],
     },
   };

@@ -116,7 +116,7 @@ User-agent: GPTBot
 Disallow: /members/`,
       effort: 'moderate',
       docsUrl:
-        'https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/audits/operability-safety/agent-ua-content-divergence-diff.md',
+        'https://forkpoint.github.io/agent-lighthouse/audits/operability-safety/agent-ua-content-divergence-diff/',
       tags: ['injection-safety', 'security', 'agent-trust', 'cloaking'],
     },
   };

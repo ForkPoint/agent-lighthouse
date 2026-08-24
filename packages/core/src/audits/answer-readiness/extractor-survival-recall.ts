@@ -151,7 +151,7 @@ export class ExtractorSurvivalRecallAudit extends Audit {
       fix: 'Put facts inside the main content container, not in an aside, a footer, or a block whose class says "related" or "promo". Where a table must sit outside the article, repeat its facts in the prose so at least one copy survives.',
       effort: 'moderate',
       docsUrl:
-        'https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/audits/answer-readiness/extractor-survival-recall.md',
+        'https://forkpoint.github.io/agent-lighthouse/audits/answer-readiness/extractor-survival-recall/',
       tags: ['retrieval', 'extraction', 'content', 'answer-engines'],
     },
   };

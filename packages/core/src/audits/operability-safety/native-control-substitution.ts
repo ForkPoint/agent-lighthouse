@@ -96,7 +96,7 @@ export class NativeControlSubstitutionAudit extends Audit {
       code: SAMPLE,
       effort: 'moderate',
       docsUrl:
-        'https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/audits/operability-safety/native-control-substitution.md',
+        'https://forkpoint.github.io/agent-lighthouse/audits/operability-safety/native-control-substitution/',
       tags: ['forms', 'aria', 'agent-operability', 'controls', 'accessibility'],
     },
   };

@@ -87,7 +87,7 @@ export class ThreeWayFreshnessLagAudit extends Audit {
       fix: 'Regenerate the sitemap and the feed when content changes, not on a nightly cron that can fail silently. Stamp `<lastBuildDate>` (or the Atom feed-level `<updated>`) from the newest item at generation time. Order feed items newest-first, since many consumers read only the head. Remove sitemap entries whose URLs 404 or are noindex.',
       effort: 'moderate',
       docsUrl:
-        'https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/audits/machine-discovery/three-way-freshness-lag.md',
+        'https://forkpoint.github.io/agent-lighthouse/audits/machine-discovery/three-way-freshness-lag/',
       tags: ['freshness', 'sitemap', 'feeds', 'discovery'],
     },
   };

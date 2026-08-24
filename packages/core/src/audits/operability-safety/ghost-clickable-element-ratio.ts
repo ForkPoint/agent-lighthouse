@@ -177,7 +177,7 @@ export class GhostClickableElementRatioAudit extends Audit {
       code: SAMPLE,
       effort: 'moderate',
       docsUrl:
-        'https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/audits/operability-safety/ghost-clickable-element-ratio.md',
+        'https://forkpoint.github.io/agent-lighthouse/audits/operability-safety/ghost-clickable-element-ratio/',
       tags: ['agent-operability', 'accessibility-tree', 'actionability'],
     },
   };

@@ -104,7 +104,7 @@ export class ClaimreviewAdvisoryAudit extends Audit {
       code: SAMPLE,
       effort: 'trivial',
       docsUrl:
-        'https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/audits/structured-data/claimreview-advisory.md',
+        'https://forkpoint.github.io/agent-lighthouse/audits/structured-data/claimreview-advisory/',
       tags: ['schema', 'claimreview', 'fact-check', 'advisory', 'trust-provenance'],
     },
   };

@@ -108,7 +108,7 @@ export class SyntheticMediaDisclosureValidityAudit extends Audit {
       fix: 'Write the full vocabulary URI, exactly: `http://cv.iptc.org/newscodes/digitalsourcetype/trainedAlgorithmicMedia`. Keep the `http` scheme the vocabulary itself uses, no trailing slash, no free text, and make sure the value agrees with the digital source type asserted in the asset’s C2PA manifest.',
       effort: 'moderate',
       docsUrl:
-        'https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/audits/operability-safety/synthetic-media-disclosure-validity.md',
+        'https://forkpoint.github.io/agent-lighthouse/audits/operability-safety/synthetic-media-disclosure-validity/',
       tags: ['ai-disclosure', 'iptc', 'xmp', 'provenance'],
     },
   };

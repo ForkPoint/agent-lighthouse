@@ -96,7 +96,7 @@
       "fix": "Decide the policy once, and make the edge say what robots.txt says. On Cloudflare, add the AI crawlers you admit to the verified-bot allowance (Security > Bots) or a WAF skip rule so managed challenges, bot fight mode and rate limiting do not apply to them; on other CDNs, allowlist the published crawler IP ranges. Then verify from outside with curl -A using each published User-Agent, because the dashboard shows the rule, not the answer. Where you mean to block a crawler, say so in robots.txt too — a consistent no is a legitimate posture, and this audit scores it as one.",
       "code": "# Cloudflare: allow the verified AI crawlers you admit in robots.txt\n# Security > Bots > Verified bots, or a WAF skip rule:\n(cf.verified_bot_category in {\"AI Crawler\" \"Search Engine Crawler\"})\n  -> Skip: managed challenge, rate limiting, bot fight mode\n\n# Then confirm from outside, per crawler:\ncurl -sI -A 'Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko); compatible; GPTBot/1.4; +https://openai.com/gptbot' https://example.com/",
       "effort": "complex",
-      "docsUrl": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/audits/access-crawl-control/ai-crawler-edge-parity.md",
+      "docsUrl": "https://forkpoint.github.io/agent-lighthouse/audits/access-crawl-control/ai-crawler-edge-parity/",
       "tags": [
         "robots",
         "waf",
@@ -123,7 +123,7 @@
       "impact": "No standard defines precedence between these channels; each specifies only its own parsing. A crawler that reads TDM-Rep and a crawler that reads AIPREF therefore read disjoint inputs, and when those inputs disagree the two reach opposite conclusions about the same page. Whichever one you did not mean to publish is the one some operator will act on. The documented worst case is not even yours to make: Cloudflare’s managed robots.txt prepends its own Content-Signal block above your file, so your stated policy can be contradicted at the edge without you knowing.",
       "fix": "Decide the policy once, then say the same thing in every channel you publish. If you do not intend to maintain a channel, remove it rather than leaving a stale value — a contradicted signal is worse than a missing one. Where your CDN prepends its own robots.txt block, either turn that feature off or make your own declarations match it.",
       "effort": "moderate",
-      "docsUrl": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/audits/access-crawl-control/ai-usage-signal-coherence-across-channels.md",
+      "docsUrl": "https://forkpoint.github.io/agent-lighthouse/audits/access-crawl-control/ai-usage-signal-coherence-across-channels/",
       "tags": [
         "robots",
         "aipref",
@@ -150,7 +150,7 @@
       "impact": "AIPREF is the one AI-usage vocabulary on the IETF standards track, so a declaration written in it is the one a future crawler is most likely to read. A crawler that cannot parse the line ignores it, and the site is then treated as having no preference at all — the same outcome as publishing nothing, after the work of publishing something. The costliest version is invisible: a preference attached to a path robots.txt disallows is discarded by the spec itself, so the line looks right and does nothing.",
       "fix": "Write `Content-Usage: train-ai=n` — an RFC 8941 dictionary of `y`/`n` values against the `train-ai` and `search` categories. Use `yes`/`no` only in a Cloudflare `Content-Signal:` line, which is a different directive. Attach preferences to paths a crawler is allowed to fetch, and keep the robots.txt line and the response header saying the same thing for the same path.",
       "effort": "moderate",
-      "docsUrl": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/audits/access-crawl-control/aipref-content-usage-declaration-validity.md",
+      "docsUrl": "https://forkpoint.github.io/agent-lighthouse/audits/access-crawl-control/aipref-content-usage-declaration-validity/",
       "tags": [
         "aipref",
         "robots",
@@ -254,7 +254,7 @@
       "fix": "Decide which of the two you mean. If the crawler should see the whole page, stop conditioning the response on the User-Agent — serve the same main content and let robots.txt carry the policy. If part of the page is genuinely restricted, declare it: put isAccessibleForFree: false on the Article (or other CreativeWork) and add a hasPart WebPageElement with isAccessibleForFree: false and a cssSelector, then verify that selector matches the element in the HTML you actually serve. A selector that matches nothing is markup with no effect. Never serve a crawler a longer, keyword-heavy variant of the page: that is the case the spam policies name outright.",
       "code": "<script type=\"application/ld+json\">\n{\n  \"@context\": \"https://schema.org\",\n  \"@type\": \"Article\",\n  \"headline\": \"How resoling works\",\n  \"isAccessibleForFree\": false,\n  \"hasPart\": {\n    \"@type\": \"WebPageElement\",\n    \"isAccessibleForFree\": false,\n    \"cssSelector\": \".paywalled-body\"\n  }\n}\n</script>\n\n<!-- and the selector must match the element the crawler does not get: -->\n<div class=\"paywalled-body\">…the restricted body…</div>",
       "effort": "complex",
-      "docsUrl": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/audits/access-crawl-control/bot-content-delta-declared.md",
+      "docsUrl": "https://forkpoint.github.io/agent-lighthouse/audits/access-crawl-control/bot-content-delta-declared/",
       "tags": [
         "cloaking",
         "paywall",
@@ -566,7 +566,7 @@
       "impact": "Charging for crawler access is a legitimate choice, and 402 is the status code for it. But a crawler is a program: it can pay only what it can parse. A 402 whose body is an HTML page explaining your licensing terms reads, to the client, as an unexplained refusal — the same outcome as a 403, after you built a paywall meant to earn revenue. A 402 that a shared cache is allowed to store is worse: the next crawler gets a stored refusal even after paying.",
       "fix": "Send one of the machine-readable forms with the 402: Cloudflare’s `crawler-price: USD 0.01`, an x402 `PAYMENT-REQUIRED` challenge listing what you accept, or a `Link: rel=license` pointing at an RSL document whose `<payment type=\"crawl\">` covers the path. Mark the response `Cache-Control: no-store` so a proxy cannot hand your 402 to a crawler that already paid.",
       "effort": "moderate",
-      "docsUrl": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/audits/access-crawl-control/machine-actionable-402-paid-access.md",
+      "docsUrl": "https://forkpoint.github.io/agent-lighthouse/audits/access-crawl-control/machine-actionable-402-paid-access/",
       "tags": [
         "402",
         "pay-per-crawl",
@@ -826,7 +826,7 @@
       "fix": "Repeat every wildcard rule inside each named AI-bot group. A named group replaces the wildcard group for that crawler — it does not extend it — so a group holding only Crawl-delay opens the entire site to that bot, and a group missing one Disallow reopens exactly that path. If you meant to block the bot outright, keep the group but know the wildcard rules no longer apply to it.",
       "code": "# The wildcard group is NOT consulted for a bot that has its own group,\n# so every rule it needs must be repeated inside that group.\nUser-agent: *\nDisallow: /admin\nDisallow: /checkout\n\nUser-agent: GPTBot\nDisallow: /admin\nDisallow: /checkout",
       "effort": "easy",
-      "docsUrl": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/audits/access-crawl-control/robots-ai-group-shadowing.md",
+      "docsUrl": "https://forkpoint.github.io/agent-lighthouse/audits/access-crawl-control/robots-ai-group-shadowing/",
       "tags": [
         "robots",
         "rfc9309",
@@ -878,7 +878,7 @@
       "impact": "RSL is the machine-readable form of \"here are my terms\". A crawler that cannot find the document applies its own defaults instead, and a document it finds but cannot parse is worth no more than one it never found. The specification mandates no default location, so a licence reachable only at a guessed path is one no crawler is obliged to look for. The quiet failure is a `<content url>` prefix that does not cover the pages the licence was written for: the terms load, parse, and apply to nothing.",
       "fix": "Point at the licence from robots.txt with an absolute `License:` URI, and add the `Link: <...>; rel=\"license\"; type=\"application/rsl+xml\"` response header so a crawler that never reads robots.txt still finds it. Serve the document as `application/rsl+xml`, keep the `https://rslstandard.org/rsl` namespace on the root element, and make every `<content url>` prefix cover the paths it licenses.",
       "effort": "moderate",
-      "docsUrl": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/audits/access-crawl-control/rsl-licensing-terms-conformance.md",
+      "docsUrl": "https://forkpoint.github.io/agent-lighthouse/audits/access-crawl-control/rsl-licensing-terms-conformance/",
       "tags": [
         "rsl",
         "licensing",
@@ -958,7 +958,7 @@
       "impact": "Web Bot Auth is how an agent says who it is in a way an origin can check, and the operators building it are the ones whose traffic you would most want to identify. An edge that answers a signed request with 400 or 403 turns that identification into a reason for refusal: the agents willing to declare themselves are the ones you turn away, and the ones that lie carry no signature headers at all and sail through. A 431 is the same outcome from a different cause — a header-size limit — and it is fixed differently.",
       "fix": "Let unknown request headers through: `Signature`, `Signature-Input` and `Signature-Agent` are additive and safe to ignore. If your edge enforces a header-size budget, raise it enough for an Ed25519 signature. If you do vary behaviour on those headers, list them in `Vary` so a shared cache cannot serve the rejected variant to everyone.",
       "effort": "complex",
-      "docsUrl": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/audits/access-crawl-control/web-bot-auth-request-tolerance.md",
+      "docsUrl": "https://forkpoint.github.io/agent-lighthouse/audits/access-crawl-control/web-bot-auth-request-tolerance/",
       "tags": [
         "web-bot-auth",
         "rfc9421",
@@ -1175,7 +1175,7 @@
       "fix": "Implement `server/discover` and answer it without authentication, returning `supportedVersions` that include 2026-07-28, your real `capabilities`, an `instructions` string and `serverInfo`. Read the protocol revision from the `MCP-Protocol-Version` header and from `params._meta`, and reject an unsupported one with JSON-RPC error -32022 carrying `data.supported`, rather than with a bare 400 or a demand for `initialize`. Retire the 2024-11-05 HTTP+SSE transport: a GET that opens a stream with an `endpoint` event has been deprecated since 2025-03-26. On a Streamable HTTP endpoint, GET and DELETE answer 405 and no `Mcp-Session-Id` is minted.",
       "code": "POST /mcp HTTP/1.1\nContent-Type: application/json\nAccept: application/json, text/event-stream\nMCP-Protocol-Version: 2026-07-28\n\n{\"jsonrpc\":\"2.0\",\"id\":\"1\",\"method\":\"server/discover\",\"params\":{\"_meta\":{\n  \"io.modelcontextprotocol/protocolVersion\":\"2026-07-28\",\n  \"io.modelcontextprotocol/clientInfo\":{\"name\":\"acme-agent\",\"version\":\"1.0.0\"},\n  \"io.modelcontextprotocol/clientCapabilities\":{}}}}\n\n// 200 — the DiscoverResult is what a client reads before any consent prompt\n{\"jsonrpc\":\"2.0\",\"id\":\"1\",\"result\":{\n  \"supportedVersions\":[\"2025-11-25\",\"2026-07-28\"],\n  \"capabilities\":{\"tools\":{},\"resources\":{}},\n  \"instructions\":\"Call searchProducts before addToCart.\",\n  \"serverInfo\":{\"name\":\"acme-shop\",\"version\":\"2.1.0\"}}}\n\n// GET and DELETE on the same path answer 405 — there is no session to resume\n// and no stream to open in the current transport.",
       "effort": "moderate",
-      "docsUrl": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/audits/agent-interfaces/mcp-modern-era-reachability.md",
+      "docsUrl": "https://forkpoint.github.io/agent-lighthouse/audits/agent-interfaces/mcp-modern-era-reachability/",
       "tags": [
         "mcp",
         "json-rpc",
@@ -1203,7 +1203,7 @@
       "fix": "Answer an unauthenticated request with 401 and a `WWW-Authenticate: Bearer` header carrying `resource_metadata=\"…\"`, so the client does not have to guess. Publish the PRM at that URL with `resource` set to the exact canonical server URI — same scheme, same host case, same path, no trailing slash — and with `authorization_servers` holding at least one public https issuer. Give the PRM a `resource_name` and a `scopes_supported` list of named, least-privilege scopes; do not advertise `offline_access`, and never advertise `*`, `all` or `full-access`. At the authorization server, publish RFC 8414 metadata whose `issuer` is string-identical to the issuer string in the PRM, advertise `S256` in `code_challenge_methods_supported`, and set `authorization_response_iss_parameter_supported` to true.",
       "code": "HTTP/1.1 401 Unauthorized\nWWW-Authenticate: Bearer resource_metadata=\"https://api.example.com/.well-known/oauth-protected-resource/mcp\", scope=\"mcp:tools\"\n\n// GET https://api.example.com/.well-known/oauth-protected-resource/mcp\n{\n  \"resource\": \"https://api.example.com/mcp\",\n  \"resource_name\": \"Acme MCP\",\n  \"authorization_servers\": [\"https://auth.example.com\"],\n  \"scopes_supported\": [\"mcp:tools\", \"mcp:resources\"],\n  \"bearer_methods_supported\": [\"header\"]\n}\n\n// GET https://auth.example.com/.well-known/oauth-authorization-server\n{\n  \"issuer\": \"https://auth.example.com\",\n  \"authorization_endpoint\": \"https://auth.example.com/authorize\",\n  \"token_endpoint\": \"https://auth.example.com/token\",\n  \"code_challenge_methods_supported\": [\"S256\"],\n  \"authorization_response_iss_parameter_supported\": true\n}",
       "effort": "complex",
-      "docsUrl": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/audits/agent-interfaces/mcp-oauth-discovery-chain.md",
+      "docsUrl": "https://forkpoint.github.io/agent-lighthouse/audits/agent-interfaces/mcp-oauth-discovery-chain/",
       "tags": [
         "mcp",
         "oauth",
@@ -1231,7 +1231,7 @@
       "impact": "The transport spec is unambiguous: servers MUST validate the Origin header on all incoming connections, and answer 403 when it is present and invalid, because a server that does not is reachable from any web page the user has open. The provable defect is the CORS pairing: an endpoint that reflects the requesting Origin into `Access-Control-Allow-Origin` and returns `Access-Control-Allow-Credentials: true` has authorized any page to enumerate its tool surface and invoke tools with the user’s session.",
       "fix": "Validate `Origin` on every request and answer 403 when it is present and not one you allow. Never reflect an arbitrary Origin while allowing credentials: return a fixed allow-list, or drop `Access-Control-Allow-Credentials`. `Access-Control-Allow-Origin: *` is only safe on an endpoint that accepts no credentials at all.",
       "effort": "moderate",
-      "docsUrl": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/audits/agent-interfaces/mcp-origin-validation-cors.md",
+      "docsUrl": "https://forkpoint.github.io/agent-lighthouse/audits/agent-interfaces/mcp-origin-validation-cors/",
       "tags": [
         "mcp",
         "cors",
@@ -1257,7 +1257,7 @@
       "impact": "The registry is the index a client resolves \"the MCP server for this domain\" against. A domain with no first-party entry is absent from it, so the only path to the server is a URL somebody pastes by hand. A listing under an aggregator’s namespace is worse than absent in one way: the brand cannot update or revoke it, and agents routed through it reach a proxy rather than the origin. The reverse-DNS namespace that fixes this is granted on proof of domain control, and that proof has to keep being served.",
       "fix": "Publish the server under your own reverse-DNS namespace (`com.example/...`), serve the proof at `/.well-known/mcp-registry-auth` in the exact `v=MCPv1; k=ed25519; p=<base64>` form and keep serving it after DNS migrations, keep the listing’s version in step with what the server reports, and offer a `streamable-http` remote rather than only the deprecated `sse`.",
       "effort": "moderate",
-      "docsUrl": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/audits/agent-interfaces/mcp-registry-listing-ownership.md",
+      "docsUrl": "https://forkpoint.github.io/agent-lighthouse/audits/agent-interfaces/mcp-registry-listing-ownership/",
       "tags": [
         "mcp",
         "registry",
@@ -1284,7 +1284,7 @@
       "fix": "Give every tool an `inputSchema` that is a real JSON Schema object with `\"type\": \"object\"`, and make sure every string in `required` is a key of `properties` — a dangling entry fails validation in the client before the call is ever made. Keep names inside `/^[A-Za-z0-9_.\\-]+$/`, at most 128 characters, unique within the server, and inside printable ASCII, so no client has to fall back to the `=?base64?…?=` sentinel encoding of the Mcp-Name header. For `x-mcp-header`: use a non-empty RFC 9110 token with no space, colon or CR/LF; keep the values unique case-insensitively inside one schema; annotate only properties of type string, integer or boolean — `number` is not allowed; and put the annotated property directly under `properties`, never behind `items`, `oneOf`, `allOf` or a `$ref`. If you publish `outputSchema`, it must be a JSON Schema object too, and your results must conform to it.",
       "code": "{\"jsonrpc\":\"2.0\",\"id\":2,\"result\":{\"tools\":[{\n  \"name\": \"searchProducts\",\n  \"description\": \"Search the catalogue.\",\n  \"inputSchema\": {\n    \"type\": \"object\",\n    \"properties\": {\n      \"query\":  { \"type\": \"string\" },\n      \"locale\": { \"type\": \"string\", \"x-mcp-header\": \"Accept-Language\" }\n    },\n    \"required\": [\"query\"]\n  },\n  \"outputSchema\": { \"type\": \"object\", \"properties\": { \"results\": { \"type\": \"array\" } } }\n}]}}\n\n// x-mcp-header rules, all statically checkable:\n//   value is a non-empty RFC 9110 token — no space, no CR/LF, no \":\"\n//   values are unique case-insensitively within one inputSchema\n//   the annotated property is type string, integer or boolean — never number\n//   the path to it is properties-only: no items, oneOf, allOf, $ref hop",
       "effort": "moderate",
-      "docsUrl": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/audits/agent-interfaces/mcp-tool-contract-validity.md",
+      "docsUrl": "https://forkpoint.github.io/agent-lighthouse/audits/agent-interfaces/mcp-tool-contract-validity/",
       "tags": [
         "mcp",
         "tools",
@@ -1312,7 +1312,7 @@
       "fix": "Describe every tool and every parameter, in prose long enough to say what a legal value looks like. Constrain string parameters with `enum`, `format` or `pattern` where the legal set is finite. Declare an `outputSchema` so a client can parse the result rather than re-reading it, give each tool a `title` for the consent prompt, and return top-level `instructions` telling a model how the tools fit together.",
       "code": "{\n  \"name\": \"create_reservation\",\n  \"title\": \"Create a reservation\",\n  \"description\": \"Book a stay for a guest at a property, at a chosen rate plan.\",\n  \"inputSchema\": {\n    \"type\": \"object\",\n    \"properties\": {\n      \"property_id\": { \"type\": \"string\", \"description\": \"The property to book, as returned by search_properties.\" },\n      \"rate_plan\":   { \"type\": \"string\", \"description\": \"Which rate the booking uses.\", \"enum\": [\"FLEX\", \"NREF\", \"CORP\", \"GRP\"] },\n      \"line_items\":  {\n        \"type\": \"array\",\n        \"items\": {\n          \"type\": \"object\",\n          \"properties\": {\n            \"tax_code\": { \"type\": \"string\", \"description\": \"Jurisdiction tax code applied to this line.\" }\n          }\n        }\n      }\n    },\n    \"required\": [\"property_id\", \"rate_plan\"]\n  },\n  \"outputSchema\": { \"type\": \"object\", \"properties\": { \"confirmation\": { \"type\": \"string\" } } }\n}",
       "effort": "moderate",
-      "docsUrl": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/audits/agent-interfaces/mcp-tool-description-coverage.md",
+      "docsUrl": "https://forkpoint.github.io/agent-lighthouse/audits/agent-interfaces/mcp-tool-description-coverage/",
       "tags": [
         "mcp",
         "tools",
@@ -1339,7 +1339,7 @@
       "fix": "Return `ttlMs` and `cacheScope` on every complete tools/list result, on every page of a paginated one, with the same `cacheScope` across all pages of a request. Set `ttlMs` to a real refetch cadence — zero, or omitting it, tells clients the list is stale on arrival. Use `cacheScope: \"private\"` whenever the tool list depends on who is asking; `\"public\"` allows the result to be shared across access tokens. Then make the serialization deterministic: build the array in a fixed order rather than from a map or a database scan without ORDER BY, keep object key order stable, and keep timestamps, request ids and counters out of tool definitions.",
       "code": "{\"jsonrpc\":\"2.0\",\"id\":2,\"result\":{\n  \"tools\":[ /* stable order, stable key order, every call */ ],\n  \"resultType\":\"complete\",\n  \"ttlMs\": 300000,\n  \"cacheScope\": \"private\"\n}}\n\n// ttlMs absent means \"assume 0\" to a client: every access becomes a round-trip.\n// cacheScope \"public\" means the result may be shared across access tokens —\n// only correct when the tool list does not depend on who is asking.\n// Serialize tools deterministically: same order, same key order, no timestamps,\n// no per-request ids inside inputSchema.",
       "effort": "moderate",
-      "docsUrl": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/audits/agent-interfaces/mcp-tools-list-determinism.md",
+      "docsUrl": "https://forkpoint.github.io/agent-lighthouse/audits/agent-interfaces/mcp-tools-list-determinism/",
       "tags": [
         "mcp",
         "tools",
@@ -1368,7 +1368,7 @@
       "fix": "Reject an unsupported protocol version with HTTP 400 and JSON-RPC error -32022, and put `data.supported` — every revision you accept, as `YYYY-MM-DD` strings — and `data.requested` in the error, so the client can pick a common revision and retry instead of failing permanently. Keep that list identical to the `supportedVersions` your `server/discover` result advertises. Validate the `MCP-Protocol-Version` header against `params._meta` on every request and reject a disagreement with -32020, rather than silently trusting one of them. When the header is absent, treat the request as 2025-03-26 as the spec says, or reject it — do not answer it as if it were the current revision.",
       "code": "// A client one revision ahead sends what it prefers:\nPOST /mcp\nMCP-Protocol-Version: 1900-01-01\n{\"jsonrpc\":\"2.0\",\"id\":\"1\",\"method\":\"server/discover\",\"params\":{\"_meta\":{\n  \"io.modelcontextprotocol/protocolVersion\":\"1900-01-01\"}}}\n\n// The only answer that lets it recover — 400, with the list to choose from:\n{\"jsonrpc\":\"2.0\",\"id\":\"1\",\"error\":{\n  \"code\":-32022,\n  \"message\":\"Unsupported protocol version\",\n  \"data\":{\"supported\":[\"2025-11-25\",\"2026-07-28\"],\"requested\":\"1900-01-01\"}}}\n\n// Header and body must agree; when they do not, say so rather than picking one:\n{\"jsonrpc\":\"2.0\",\"id\":\"1\",\"error\":{\n  \"code\":-32020,\n  \"message\":\"MCP-Protocol-Version header does not match params._meta\"}}",
       "effort": "moderate",
-      "docsUrl": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/audits/agent-interfaces/mcp-version-downgrade.md",
+      "docsUrl": "https://forkpoint.github.io/agent-lighthouse/audits/agent-interfaces/mcp-version-downgrade/",
       "tags": [
         "mcp",
         "protocol-version",
@@ -1638,7 +1638,7 @@
       "fix": "Publish all 8 policy pages on your own domain over HTTPS, link them from the site footer with plain <a href> markup, and serve their text in the initial HTML rather than rendering it client-side. Keep each URL stable — one redirect is tolerable, a four-hop chain is not — and make sure a missing policy returns 404 rather than a 200 \"page not found\" shell. Then paste the resolved URLs straight into the `links` array of your CheckoutSession response.",
       "code": "{\n  \"links\": [\n    { \"type\": \"terms_of_use\",    \"url\": \"https://example.com/terms\" },\n    { \"type\": \"privacy_policy\",  \"url\": \"https://example.com/privacy\" },\n    { \"type\": \"return_policy\",   \"url\": \"https://example.com/returns\" },\n    { \"type\": \"shipping_policy\", \"url\": \"https://example.com/shipping\" }\n  ]\n}",
       "effort": "easy",
-      "docsUrl": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/audits/agentic-commerce/acp-policy-link-surface.md",
+      "docsUrl": "https://forkpoint.github.io/agent-lighthouse/audits/agentic-commerce/acp-policy-link-surface/",
       "tags": [
         "acp",
         "instant-checkout",
@@ -1665,7 +1665,7 @@
       "fix": "Separate the four OpenAI tokens instead of treating 'OpenAI' as one switch: Disallow GPTBot if you do not want your catalogue in training, and keep OAI-SearchBot and ChatGPT-User allowed, since those two are what put your product in an answer and let the shopper's agent read the page. At the edge, allowlist the published address ranges from https://openai.com/searchbot.json and https://openai.com/chatgpt-user.json — UA-string rules are both spoofable and, when they misfire, invisible from the dashboard. Then verify from outside with curl -A on a product page, the cart and the policy pages, and check you get the whole page rather than a stub.",
       "code": "# robots.txt — opt out of training without leaving search or the shopper's agent\nUser-agent: GPTBot\nDisallow: /\n\nUser-agent: OAI-SearchBot\nAllow: /\n\nUser-agent: ChatGPT-User\nAllow: /\n\n# At the edge, allowlist by address, not by User-Agent:\n#   https://openai.com/searchbot.json\n#   https://openai.com/chatgpt-user.json",
       "effort": "complex",
-      "docsUrl": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/audits/agentic-commerce/agent-ua-commerce-parity.md",
+      "docsUrl": "https://forkpoint.github.io/agent-lighthouse/audits/agentic-commerce/agent-ua-commerce-parity/",
       "tags": [
         "commerce",
         "waf",
@@ -1696,7 +1696,7 @@
       "fix": "Publish a ProductGroup carrying productGroupID and variesBy, with one hasVariant entry per buyable variant. Give every entry its own sku or gtin, its own offers.price, offers.priceCurrency and offers.availability, and the colour/size values named in variesBy. One Product node per variant, each with a unique identifier and a complete Offer, works equally well.",
       "code": "{\n  \"@context\": \"https://schema.org\",\n  \"@type\": \"ProductGroup\",\n  \"name\": \"Merino Crew\",\n  \"productGroupID\": \"MC-100\",\n  \"variesBy\": [\"https://schema.org/color\", \"https://schema.org/size\"],\n  \"hasVariant\": [\n    {\n      \"@type\": \"Product\",\n      \"sku\": \"MC-100-BLU-M\",\n      \"color\": \"Blue\",\n      \"size\": \"M\",\n      \"offers\": {\n        \"@type\": \"Offer\",\n        \"price\": \"79.00\",\n        \"priceCurrency\": \"GBP\",\n        \"availability\": \"https://schema.org/InStock\"\n      }\n    }\n  ]\n}",
       "effort": "complex",
-      "docsUrl": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/audits/agentic-commerce/buyable-variant-resolution.md",
+      "docsUrl": "https://forkpoint.github.io/agent-lighthouse/audits/agentic-commerce/buyable-variant-resolution/",
       "tags": [
         "product",
         "variants",
@@ -1723,7 +1723,7 @@
       "impact": "Every upstream signal can be perfect and the purchase still dies at the last click. If the cart 302s to a login form because guest checkout is off, or Turnstile is mounted on the checkout document alone, the agent walks the buyer to a wall it cannot pass. ACP reserves a `requires_sign_in` message code for exactly this case, which is a description of the failure, not a fix for it.",
       "fix": "Allow guest checkout, or at least let an unauthenticated buyer reach the cart and see the totals. Keep bot challenges off the cart and checkout documents — challenge the payment submission instead, where a human is present. Allow ChatGPT-User in robots.txt and at the edge on cart paths: blocking GPTBot does not block it, and the two are separately tokened.",
       "effort": "moderate",
-      "docsUrl": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/audits/agentic-commerce/cart-handoff-reachability.md",
+      "docsUrl": "https://forkpoint.github.io/agent-lighthouse/audits/agentic-commerce/cart-handoff-reachability/",
       "tags": [
         "commerce",
         "cart",
@@ -1754,7 +1754,7 @@
       "fix": "Publish the feed values on the PDP itself so the row is derived rather than hand-authored: a sku or mpn under 100 characters, a name under 150, a brand name under 70, an absolute HTTPS image URL, a bare decimal price with a 3-letter ISO 4217 priceCurrency, and an availability value from InStock / OutOfStock / PreOrder / BackOrder. Replace AggregateOffer with a per-variant Offer so the price resolves to one number. Add availabilityStarts whenever the offer is a pre-order or backorder, and check the GTIN check digit before publishing.",
       "code": "{\n  \"@type\": \"Product\",\n  \"name\": \"Alpine Resole Kit\",\n  \"sku\": \"ARK-001\",\n  \"gtin13\": \"1234567890128\",\n  \"brand\": { \"@type\": \"Brand\", \"name\": \"Alpine\" },\n  \"image\": \"https://example.com/img/ark-001.jpg\",\n  \"url\": \"https://example.com/products/alpine-resole-kit\",\n  \"offers\": {\n    \"@type\": \"Offer\",\n    \"price\": 29.99,\n    \"priceCurrency\": \"USD\",\n    \"availability\": \"https://schema.org/InStock\"\n  }\n}",
       "effort": "moderate",
-      "docsUrl": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/audits/agentic-commerce/checkout-offer-field-mapping.md",
+      "docsUrl": "https://forkpoint.github.io/agent-lighthouse/audits/agentic-commerce/checkout-offer-field-mapping/",
       "tags": [
         "acp",
         "feed",
@@ -1784,7 +1784,7 @@
       "fix": "Add OfferShippingDetails to every offer: shippingRate as a MonetaryAmount with a numeric value and a currency, shippingDestination.addressCountry, and handlingTime plus transitTime as QuantitativeValue nested under deliveryTime — not directly on OfferShippingDetails, which is the common mistake. Add hasMerchantReturnPolicy with applicableCountry and returnPolicyCategory, and for a finite window a positive integer merchantReturnDays. Where you genuinely do not ship, say so with doesNotShip: true; an explicit answer is an answer. A merchantReturnLink alone is not enough: an agent cannot compare a URL.",
       "code": "{\n  \"@type\": \"Offer\",\n  \"shippingDetails\": {\n    \"@type\": \"OfferShippingDetails\",\n    \"shippingRate\": { \"@type\": \"MonetaryAmount\", \"value\": 5.99, \"currency\": \"USD\" },\n    \"shippingDestination\": { \"@type\": \"DefinedRegion\", \"addressCountry\": \"US\" },\n    \"deliveryTime\": {\n      \"@type\": \"ShippingDeliveryTime\",\n      \"handlingTime\": { \"@type\": \"QuantitativeValue\", \"minValue\": 0, \"maxValue\": 1, \"unitCode\": \"DAY\" },\n      \"transitTime\": { \"@type\": \"QuantitativeValue\", \"minValue\": 1, \"maxValue\": 3, \"unitCode\": \"DAY\" }\n    }\n  },\n  \"hasMerchantReturnPolicy\": {\n    \"@type\": \"MerchantReturnPolicy\",\n    \"applicableCountry\": \"US\",\n    \"returnPolicyCategory\": \"https://schema.org/MerchantReturnFiniteReturnWindow\",\n    \"merchantReturnDays\": 30\n  }\n}",
       "effort": "moderate",
-      "docsUrl": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/audits/agentic-commerce/landed-cost-and-returns.md",
+      "docsUrl": "https://forkpoint.github.io/agent-lighthouse/audits/agentic-commerce/landed-cost-and-returns/",
       "tags": [
         "acp",
         "shipping",
@@ -1845,7 +1845,7 @@
       "fix": "Generate the Offer from the same source of truth that renders the page, at the same time. If the JSON-LD comes from a cached catalogue service, invalidate that cache on the same event that flips the button to Sold out. Keep priceValidUntil ahead of today or drop it, keep priceCurrency matching the symbol you render, and never emit two Product nodes for one URL with different prices.",
       "code": "<!-- The button and the markup are generated from one value -->\n<script type=\"application/ld+json\">\n{\n  \"@context\": \"https://schema.org\",\n  \"@type\": \"Product\",\n  \"sku\": \"MC-100\",\n  \"offers\": {\n    \"@type\": \"Offer\",\n    \"price\": \"59.00\",\n    \"priceCurrency\": \"GBP\",\n    \"availability\": \"https://schema.org/OutOfStock\",\n    \"priceValidUntil\": \"2027-01-31\"\n  }\n}\n</script>\n<p class=\"price\">£59.00</p>\n<button disabled>Sold out</button>",
       "effort": "complex",
-      "docsUrl": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/audits/agentic-commerce/offer-truth-consistency.md",
+      "docsUrl": "https://forkpoint.github.io/agent-lighthouse/audits/agentic-commerce/offer-truth-consistency/",
       "tags": [
         "commerce",
         "json-ld",
@@ -2044,7 +2044,7 @@
       "fix": "Open each section with its subject rather than a pronoun, name the product or topic once in every section over about forty words, and replace \"as described above\" with the name of the thing described.",
       "code": "<!-- Loses its referent when retrieved alone -->\n<h2>Descaling</h2>\n<p>This should be done monthly, as described above.</p>\n\n<!-- Survives retrieval -->\n<h2>Descaling the copper kettle</h2>\n<p>Descale the copper kettle monthly with equal parts water and white vinegar.</p>",
       "effort": "moderate",
-      "docsUrl": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/audits/answer-readiness/chunk-boundary-referent-integrity.md",
+      "docsUrl": "https://forkpoint.github.io/agent-lighthouse/audits/answer-readiness/chunk-boundary-referent-integrity/",
       "tags": [
         "retrieval",
         "chunking",
@@ -2261,7 +2261,7 @@
       "impact": "An answer engine never sees the page; it sees whatever its extractor kept. A specification table inside `<aside class=\"related-specs\">` is invisible to every pipeline that strips asides, and the answer about that product gets written without it. The loss is silent: the page looks complete to its author and to every human reviewer.",
       "fix": "Put facts inside the main content container, not in an aside, a footer, or a block whose class says \"related\" or \"promo\". Where a table must sit outside the article, repeat its facts in the prose so at least one copy survives.",
       "effort": "moderate",
-      "docsUrl": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/audits/answer-readiness/extractor-survival-recall.md",
+      "docsUrl": "https://forkpoint.github.io/agent-lighthouse/audits/answer-readiness/extractor-survival-recall/",
       "tags": [
         "retrieval",
         "extraction",
@@ -2587,7 +2587,7 @@
       "impact": "Retrieval pipelines cut pages into fixed windows. A section longer than the window becomes one chunk carrying the heading and one or more tail chunks carrying none — and a tail chunk is text with no subject, which retrieves badly and cites worse. A page with no headings at all is cut at arbitrary offsets throughout.",
       "fix": "Add an `h2` or `h3` roughly every 400 tokens of prose, and split a specification table that runs past the window into per-topic tables so the header row stays with its rows.",
       "effort": "moderate",
-      "docsUrl": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/audits/answer-readiness/section-split-risk-profile.md",
+      "docsUrl": "https://forkpoint.github.io/agent-lighthouse/audits/answer-readiness/section-split-risk-profile/",
       "tags": [
         "retrieval",
         "chunking",
@@ -2613,7 +2613,7 @@
       "impact": "A search engine clusters duplicate and near-duplicate URLs and elects one canonical; the losers have their signals folded into the winner. A cluster of near-duplicate pages that each name themselves canonical therefore competes against itself, and at most one member stays citable however good the others are. Separately, a page whose sentences are mostly site-wide template produces chunks whose embeddings encode the template rather than the page, so every page built from that template lands in the same place in vector space and none is a distinctive match for any question.",
       "fix": "Merge near-duplicate pages into one, or point the weaker members at the strongest with rel=\"canonical\" so the election has an answer. For pages that stay, raise the share of text that is theirs alone: cut the repeated intro, the repeated legal paragraph and the repeated call to action, and let each page carry the sentences only it can carry.",
       "effort": "complex",
-      "docsUrl": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/audits/answer-readiness/site-wide-passage-uniqueness-ratio.md",
+      "docsUrl": "https://forkpoint.github.io/agent-lighthouse/audits/answer-readiness/site-wide-passage-uniqueness-ratio/",
       "tags": [
         "duplication",
         "canonical",
@@ -2640,7 +2640,7 @@
       "fix": "Drop nosnippet and noindex from any page you want quoted, and set max-snippet:-1 rather than a short numeric budget. Keep data-nosnippet for material that must not be reused — trade pricing, licensed quotations — and off the sentence that answers a heading, the FAQ answers and the main-content tables. Where a per-bot X-Robots-Tag header contradicts the page meta, remove one of them: the most restrictive value wins, so the header silently overrides the markup.",
       "code": "<!-- Let the answer be quoted. Suppress only what must not be reused. -->\n<meta name=\"robots\" content=\"index, follow, max-snippet:-1, max-image-preview:large\">\n<h2>What is resoling?</h2>\n<p>Resoling replaces the outsole and midsole of a welted boot.</p>\n<p data-nosnippet>Prices shown are for logged-in trade accounts only.</p>",
       "effort": "easy",
-      "docsUrl": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/audits/answer-readiness/snippet-gate-coverage.md",
+      "docsUrl": "https://forkpoint.github.io/agent-lighthouse/audits/answer-readiness/snippet-gate-coverage/",
       "tags": [
         "snippet",
         "robots",
@@ -2691,7 +2691,7 @@
       "impact": "A model does not read your table markup. Something converts it to markdown first, and GFM markdown has no merged cells, no second header row and no lists inside a cell. A header spanning two columns arrives heading one of them; the other column of numbers arrives with no header at all. The model still answers the question — with a number read from the wrong column, stated as confidently as a right one.",
       "fix": "Flatten spanned headers into one header row of plain `th` cells, repeating the text where a span used to cover two columns. Put the unit or currency in the header cell rather than in the caption. Take paragraphs and lists out of cells. Where a table is genuinely two tables, publish it as two.",
       "effort": "moderate",
-      "docsUrl": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/audits/answer-readiness/table-markdown-round-trip-loss.md",
+      "docsUrl": "https://forkpoint.github.io/agent-lighthouse/audits/answer-readiness/table-markdown-round-trip-loss/",
       "tags": [
         "tables",
         "markdown",
@@ -2718,7 +2718,7 @@
       "fix": "Remove `force-load-at-top` from the `Document-Policy` response header; it is header-only, so there is nothing to remove in the markup. Keep each answer sentence inside one block-level element rather than splitting it across sibling paragraphs, spans-in-divs or table cells. Strip soft hyphens and zero-width characters from body copy. Where an answer sentence repeats verbatim across the page, give at least one occurrence some same-block context so a citing surface can pin it.",
       "code": "<!-- Keep the answer sentence inside one block element. -->\n<h2>What is resoling?</h2>\n<p>Resoling replaces the outsole and midsole of a welted boot.</p>\n\n<!-- Not: the sentence is split across two blocks, so no fragment can match it -->\n<h2>What is resoling?</h2>\n<div><p>Resoling replaces the outsole</p><p>and midsole of a welted boot.</p></div>",
       "effort": "moderate",
-      "docsUrl": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/audits/answer-readiness/text-fragment-addressability.md",
+      "docsUrl": "https://forkpoint.github.io/agent-lighthouse/audits/answer-readiness/text-fragment-addressability/",
       "tags": [
         "citation",
         "text-fragment",
@@ -2885,7 +2885,7 @@
       "impact": "An agent answering a question about a site fetches several of its pages. If each fetch delivers the same navigation, the same promotional header and the same footer around a thin body, the agent pays for those tokens once per fetch and learns nothing new from them. The cost compounds with every page, and the distinct content it came for competes for what is left of the context window.",
       "fix": "Cut repeated chrome down to what a reader needs on every page: collapse mega-menus to a short nav, move legal and marketing boilerplate to the pages that are about it, and let each page carry more of its own content. Where the chrome must stay for humans, keeping it out of `<main>` at least lets an extractor drop it.",
       "effort": "complex",
-      "docsUrl": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/audits/content-extraction/boilerplate-tax.md",
+      "docsUrl": "https://forkpoint.github.io/agent-lighthouse/audits/content-extraction/boilerplate-tax/",
       "tags": [
         "tokens",
         "context-window",
@@ -2966,7 +2966,7 @@
       "fix": "Stop shipping parallel copies of the same content behind a hiding class. Render one copy and let CSS reposition or restyle it, or load the alternate view on demand. Where a hidden block must stay in the markup — a collapsed tab panel, an off-canvas menu — add the `hidden` attribute or an inline `display:none` alongside the class, because those are the markers a non-rendering extractor does honour. Keep the visually-hidden idiom for short assistive strings only.",
       "code": "<!-- Do not ship parallel copies behind display:none. Render one copy and\n     let CSS reposition it, or load the alternate view on demand. -->\n<nav class=\"site-nav\">...</nav>\n<!-- Not: -->\n<nav class=\"site-nav desktop-only\">...</nav>\n<nav class=\"site-nav mobile-only\">...</nav>   <!-- .mobile-only{display:none} -->",
       "effort": "moderate",
-      "docsUrl": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/audits/content-extraction/css-hidden-ghost-content.md",
+      "docsUrl": "https://forkpoint.github.io/agent-lighthouse/audits/content-extraction/css-hidden-ghost-content/",
       "tags": [
         "token-economics",
         "extraction",
@@ -3019,7 +3019,7 @@
       "impact": "Every agent pipeline strips a page down before a model reads it, and they do not all strip the same way. When the extractors disagree, the same URL yields different answers depending on which tool fetched it — and the page cannot be tested, because there is no single thing it says. When readability declines a page outright, the most widely deployed extractor of the three hands an agent nothing at all.",
       "fix": "Put the article in one container — `<main>` or `<article>` — with the chrome outside it, and keep the largest block of prose on the page the one you want quoted. Readability keys on paragraph density and link density, so a body split across many small wrappers, or padded with link-heavy blocks, is what makes the three disagree.",
       "effort": "moderate",
-      "docsUrl": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/audits/content-extraction/extraction-determinism.md",
+      "docsUrl": "https://forkpoint.github.io/agent-lighthouse/audits/content-extraction/extraction-determinism/",
       "tags": [
         "content",
         "extraction",
@@ -3129,7 +3129,7 @@
       "fix": "Return identifiers and view-model fields from the server data function, not the rendered body — the HTML already carries the text. Move large lists behind a client fetch or a route segment, drop GraphQL cache normalization metadata from the serialized store, and keep image variant tables out of props. Where a framework inlines the payload unconditionally, split the route so the heavy data loads on interaction instead of on first paint.",
       "code": "// Ship identifiers, not the rendered body: the HTML already carries it.\nexport async function getServerSideProps() {\n  const article = await getArticle(id);\n  return { props: { id: article.id, title: article.title } }; // not article.body\n}",
       "effort": "moderate",
-      "docsUrl": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/audits/content-extraction/hydration-payload-share.md",
+      "docsUrl": "https://forkpoint.github.io/agent-lighthouse/audits/content-extraction/hydration-payload-share/",
       "tags": [
         "token-economics",
         "hydration",
@@ -3182,7 +3182,7 @@
       "impact": "A non-rendering agent tokenizes the whole document, JSON-LD included. Where a block repeats the article body the DOM already carries, the page ships that text twice and the agent pays for both copies out of one context window. The same holds for a node declared identically in two blocks: the second copy adds tokens and no facts.",
       "fix": "Keep JSON-LD to the facts a parser needs — identifiers, prices, dates, relationships — and let the prose live in the DOM. Where a schema property genuinely needs body text, a summary is usually enough. Merge blocks that declare the same `@id` into one.",
       "effort": "easy",
-      "docsUrl": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/audits/content-extraction/json-ld-duplication-mass.md",
+      "docsUrl": "https://forkpoint.github.io/agent-lighthouse/audits/content-extraction/json-ld-duplication-mass/",
       "tags": [
         "structured-data",
         "tokens",
@@ -3262,7 +3262,7 @@
       "fix": "Serve the alternate with `Content-Type: text/markdown` (a `charset` parameter is fine), generate it from the same source as the HTML so headings and prose cannot drift, and declare it with `<link rel=\"alternate\" type=\"text/markdown\" href=\"...\">` so an agent does not have to guess the URL.",
       "code": "<link rel=\"alternate\" type=\"text/markdown\" href=\"/kettles.md\">\n\n# Content-Type: text/markdown; charset=utf-8",
       "effort": "moderate",
-      "docsUrl": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/audits/content-extraction/markdown-alternate.md",
+      "docsUrl": "https://forkpoint.github.io/agent-lighthouse/audits/content-extraction/markdown-alternate/",
       "tags": [
         "markdown",
         "tokens",
@@ -3289,7 +3289,7 @@
       "fix": "Move inline `<style>` and `<script>` blocks below the main content or into external files, and put `<main>` as early in the body as the layout allows. Where critical CSS must be inline, keep it to the rules that paint the first screen rather than the whole stylesheet.",
       "code": "<!-- The answer arrives 40k tokens in -->\n<head><style>/* the entire stylesheet */</style></head>\n<body><script>window.__STATE__ = { /* 30k tokens */ }</script>\n  <main><h1>How to descale a kettle</h1><p>Fill it with...</p></main>\n</body>\n\n<!-- The answer arrives first -->\n<head><link rel=\"stylesheet\" href=\"/app.css\"></head>\n<body><main><h1>How to descale a kettle</h1><p>Fill it with...</p></main>\n  <script src=\"/state.js\" defer></script>\n</body>",
       "effort": "moderate",
-      "docsUrl": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/audits/content-extraction/preamble-tax.md",
+      "docsUrl": "https://forkpoint.github.io/agent-lighthouse/audits/content-extraction/preamble-tax/",
       "tags": [
         "tokens",
         "context-window",
@@ -3563,7 +3563,7 @@
       "fix": "Publish the feed row on the page. Add brand.name, offers.seller.name, an itemCondition from the three schema.org condition URLs, and a country signal (offers.shippingDetails.shippingDestination.addressCountry is the most portable) — none of these are required for a Google rich result, and all of them are required for an agent-commerce feed. Write availability as the full https://schema.org/InStock URL, not the bare token. Keep the description plain text. Serve the primary image as JPEG or PNG. Where a page exposes sibling variants, add inProductGroupWithID or isVariantOf so the feed can group them. Above all, render the same number the JSON-LD publishes: one price, one currency, one page.",
       "code": "{\n  \"@type\": \"Product\",\n  \"sku\": \"ARK-001\",\n  \"brand\": { \"@type\": \"Brand\", \"name\": \"Alpine\" },\n  \"description\": \"Plain text only — no markup, under 5000 characters.\",\n  \"image\": \"https://example.com/img/ark-001.jpg\",\n  \"itemCondition\": \"https://schema.org/NewCondition\",\n  \"inProductGroupWithID\": \"ARK\",\n  \"offers\": {\n    \"@type\": \"Offer\",\n    \"price\": 29.99,\n    \"priceCurrency\": \"USD\",\n    \"availability\": \"https://schema.org/InStock\",\n    \"seller\": { \"@type\": \"Organization\", \"name\": \"Alpine Store\" },\n    \"shippingDetails\": {\n      \"@type\": \"OfferShippingDetails\",\n      \"shippingDestination\": { \"@type\": \"DefinedRegion\", \"addressCountry\": \"US\" }\n    },\n    \"url\": \"https://example.com/products/alpine-resole-kit\"\n  }\n}",
       "effort": "moderate",
-      "docsUrl": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/audits/machine-discovery/agent-commerce-feed-parity.md",
+      "docsUrl": "https://forkpoint.github.io/agent-lighthouse/audits/machine-discovery/agent-commerce-feed-parity/",
       "tags": [
         "commerce",
         "product-feed",
@@ -3590,7 +3590,7 @@
       "fix": "Read robots.txt as each named AI crawler reads it. For every group that names an AI crawler, add an explicit Allow for the sitemap and feed paths you advertise, and keep the group's Disallow patterns off the content the sitemap lists — narrow /*.xml$ and /feed/ style patterns to the paths you actually mean to protect. A named group replaces the '*' group rather than adding to it, so anything the wildcard allowed has to be restated inside the named group. If you intend to block a crawler entirely, keep Disallow: / as the whole group: a deliberate opt-out is a policy, and this audit reports it as one.",
       "code": "# robots.txt — advertise nothing you forbid\nUser-agent: *\nAllow: /\n\nUser-agent: GPTBot\nAllow: /sitemap.xml\nAllow: /feed.xml\nDisallow: /cart\nDisallow: /checkout\n\nSitemap: https://example.com/sitemap.xml",
       "effort": "easy",
-      "docsUrl": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/audits/machine-discovery/ai-crawler-surface-reachability.md",
+      "docsUrl": "https://forkpoint.github.io/agent-lighthouse/audits/machine-discovery/ai-crawler-surface-reachability/",
       "tags": [
         "robots",
         "sitemap",
@@ -3644,7 +3644,7 @@
       "impact": "A crawler that wants to know what changed re-reads your sitemap and your feed on a schedule. If those responses carry no `ETag` and no `Last-Modified`, it cannot ask \"has this changed?\" — it can only download the file again, every time, forever. The cost is yours as much as theirs: bandwidth you serve for no new information, and a crawl budget spent re-reading a list instead of fetching the pages on it. A validator that changes on every build is the same cost wearing a correct-looking header.",
       "fix": "Emit a strong `ETag` derived from the file’s content, not from the build, and a `Last-Modified` that moves only when the content does. Answer `If-None-Match` and `If-Modified-Since` with 304 and an empty body. Keep `no-store` and `private` off public discovery surfaces — they tell a crawler not to keep the copy it just paid for.",
       "effort": "moderate",
-      "docsUrl": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/audits/machine-discovery/conditional-request-support.md",
+      "docsUrl": "https://forkpoint.github.io/agent-lighthouse/audits/machine-discovery/conditional-request-support/",
       "tags": [
         "http",
         "caching",
@@ -3723,7 +3723,7 @@
       "impact": "A feed is how a consumer tracks what changed without re-crawling the site, and identity is what makes that possible: the id says \"this is the same item you saw last time\". An entry with no id, or with an id that repeats, forces the consumer to guess — usually by URL, which is exactly the thing that changes. A link that carries `utm_` parameters or redirects somewhere else creates a second address for one page, so the item the consumer stores is not the page the site considers canonical.",
       "fix": "Give every entry a stable id — an `atom:id` that never changes, or an RSS `<guid>` that is an absolute URL when `isPermaLink` is true — and never reuse one. Point item links at the canonical URL itself, with no tracking parameters and no redirect in between. Serve the feed as its registered media type, with no byte-order mark before the first element.",
       "effort": "complex",
-      "docsUrl": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/audits/machine-discovery/feed-entry-identity-and-canonical-integrity.md",
+      "docsUrl": "https://forkpoint.github.io/agent-lighthouse/audits/machine-discovery/feed-entry-identity-and-canonical-integrity/",
       "tags": [
         "feeds",
         "rss",
@@ -3950,7 +3950,7 @@
       "impact": "IndexNow proves ownership by fetching `https://host/{key}.txt` and byte-comparing the body to the key, and six engines discard the submission when that comparison fails. The same property decides whether any other root `.txt` file means anything: if an origin answers 200 for a path that does not exist, then a 200 for `/llms.txt` is not evidence the file is there. A catch-all rewrite ahead of static file serving turns every one of those signals into noise, with no visible symptom on the site itself.",
       "fix": "Serve root-level `.txt` paths from static files and let a missing one answer 404. Order the static-file handler ahead of any SPA or catch-all rewrite, and make sure the rewrite does not cover `*.txt`. Serve `/robots.txt` as `text/plain`, not as `text/html` or `application/octet-stream`.",
       "effort": "easy",
-      "docsUrl": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/audits/machine-discovery/root-text-file-resolution-integrity.md",
+      "docsUrl": "https://forkpoint.github.io/agent-lighthouse/audits/machine-discovery/root-text-file-resolution-integrity/",
       "tags": [
         "indexnow",
         "llms-txt",
@@ -4105,7 +4105,7 @@
       "fix": "Stamp lastmod from the content record, not from the build. Emit the timestamp of the last substantive edit to that document, and leave it alone when a deploy only rebuilds the page. Publish the same instant on the page — JSON-LD dateModified is the most widely read of the three signals — so the value is checkable; a lastmod nothing on the page supports is a lastmod the crawler drops. Never emit a future date, and use W3C Datetime (YYYY-MM-DD or a full RFC 3339 timestamp) for every value.",
       "code": "<url>\n  <loc>https://example.com/blog/agent-readiness</loc>\n  <!-- the date the CONTENT changed, not the date the site was deployed -->\n  <lastmod>2026-08-14T09:12:00+00:00</lastmod>\n</url>\n\n<!-- and on the page itself, so the value is verifiable: -->\n<script type=\"application/ld+json\">\n{ \"@context\": \"https://schema.org\", \"@type\": \"Article\",\n  \"dateModified\": \"2026-08-14T09:12:00+00:00\" }\n</script>",
       "effort": "moderate",
-      "docsUrl": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/audits/machine-discovery/sitemap-lastmod-verifiability.md",
+      "docsUrl": "https://forkpoint.github.io/agent-lighthouse/audits/machine-discovery/sitemap-lastmod-verifiability/",
       "tags": [
         "sitemap",
         "lastmod",
@@ -4131,7 +4131,7 @@
       "impact": "A pull-based crawler fetches the sitemap and the feed on a schedule and reads nothing else. When those two surfaces trail the site, everything published in between is discoverable only by link-following, which is the slow path the site published a sitemap to avoid. A feed whose `lastBuildDate` is older than its own newest item is worse than stale: consumers that poll conditionally on that timestamp skip the feed entirely, so the new items are never read at all.",
       "fix": "Regenerate the sitemap and the feed when content changes, not on a nightly cron that can fail silently. Stamp `<lastBuildDate>` (or the Atom feed-level `<updated>`) from the newest item at generation time. Order feed items newest-first, since many consumers read only the head. Remove sitemap entries whose URLs 404 or are noindex.",
       "effort": "moderate",
-      "docsUrl": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/audits/machine-discovery/three-way-freshness-lag.md",
+      "docsUrl": "https://forkpoint.github.io/agent-lighthouse/audits/machine-discovery/three-way-freshness-lag/",
       "tags": [
         "freshness",
         "sitemap",
@@ -4157,7 +4157,7 @@
       "impact": "A hub subscription is verified against the feed’s own `rel=self`. When that link is missing, relative, or points at a different URL than the one the feed is served from, verification cannot complete, and the push path degrades to whatever polling cadence subscribers happen to use. The publisher sees a hub that looks configured and no error anywhere. The benefit side is unproven: WebSub is a W3C Recommendation, but no AI answer engine is documented as a subscriber, which is why this audit reports and does not score.",
       "fix": "Advertise the hub and the canonical topic URL in the feed’s `Link:` response headers, which is where a subscriber looks first. Emit exactly one `rel=self` with an absolute URL identical to the address the feed is served from, and at least one `rel=hub` over HTTPS. If you run no hub, a hosted one (Google’s pubsubhubbub, Superfeedr, websub.rocks) needs only the two link relations.",
       "effort": "easy",
-      "docsUrl": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/audits/machine-discovery/websub-hub-advertisement.md",
+      "docsUrl": "https://forkpoint.github.io/agent-lighthouse/audits/machine-discovery/websub-hub-advertisement/",
       "tags": [
         "websub",
         "feeds",
@@ -4209,7 +4209,7 @@
       "fix": "Serve one document to every User-Agent. Where a bot-management rule reduces the page for unknown clients, allow the published AI-crawler UAs through it rather than branching on them, and keep the JSON-LD identical across variants. If a crawler should not read the site at all, block it in robots.txt and at the edge rather than serving it a different story.",
       "code": "# Branching on the crawler's own name is the defect\nif ($http_user_agent ~* \"GPTBot|ClaudeBot\") {\n  rewrite ^ /crawler-copy last;\n}\n\n# Serve one document, decide access separately\n# robots.txt\nUser-agent: GPTBot\nDisallow: /members/",
       "effort": "moderate",
-      "docsUrl": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/audits/operability-safety/agent-ua-content-divergence-diff.md",
+      "docsUrl": "https://forkpoint.github.io/agent-lighthouse/audits/operability-safety/agent-ua-content-divergence-diff/",
       "tags": [
         "injection-safety",
         "security",
@@ -4313,7 +4313,7 @@
       "fix": "Remove any instruction-shaped text from alt, aria-label, title, placeholder, option labels, hidden input values, the document title and og:* metadata. Keep accessible names short and descriptive, and make each one agree with the element it names — an aria-label reading \"Confirm payment\" on a button labelled \"Cancel\" fires the wrong action for every agent that selects by accessible name. Keep hidden inputs to identifiers, tokens and ids rather than prose.",
       "code": "<!-- The accessible name describes the element and agrees with its label. -->\n<img src=\"/shoe.png\" alt=\"A blue running shoe on a white background\">\n<button aria-label=\"Add to cart\">Add to cart</button>\n<input type=\"hidden\" name=\"nonce\" value=\"a7f3-9c21\">",
       "effort": "moderate",
-      "docsUrl": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/audits/operability-safety/aria-layer-injection-scan.md",
+      "docsUrl": "https://forkpoint.github.io/agent-lighthouse/audits/operability-safety/aria-layer-injection-scan/",
       "tags": [
         "injection-safety",
         "prompt-injection",
@@ -4415,7 +4415,7 @@
       "impact": "Signing an image at creation proves nothing if the bytes a crawler downloads are unsigned. Image transformation layers discard Content Credentials by default — Cloudflare states outright that with preservation disabled, existing Content Credentials are always discarded — so the publisher sees signed assets in their library while every consumer sees stripped ones. The provenance work is done and none of it reaches the reader.",
       "fix": "Turn on Content Credentials preservation in the image pipeline (Cloudflare Images has an explicit setting; Next.js image optimization and most CDN resizers need the manifest copied through or the asset served unoptimized). Verify by fetching the URL the page actually renders, not the asset in the library.",
       "effort": "moderate",
-      "docsUrl": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/audits/operability-safety/c2pa-manifest-survives-delivery.md",
+      "docsUrl": "https://forkpoint.github.io/agent-lighthouse/audits/operability-safety/c2pa-manifest-survives-delivery/",
       "tags": [
         "c2pa",
         "provenance",
@@ -4441,7 +4441,7 @@
       "impact": "A manifest that exists is not a manifest that verifies. A conforming C2PA validator resolves the signing certificate against the published Trust List and shows the credential as untrusted when it cannot — which is what a self-signed certificate always produces, and what an expired one produces the day it lapses. The publisher sees Content Credentials on every asset; the consumer sees a warning, or nothing at all.",
       "fix": "Sign with a certificate from a CA on the C2PA Trust List rather than a self-signed one, renew before it expires, and include an RFC 3161 timestamp so credentials stay valid past the certificate’s own expiry.",
       "effort": "complex",
-      "docsUrl": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/audits/operability-safety/c2pa-signer-trust-status.md",
+      "docsUrl": "https://forkpoint.github.io/agent-lighthouse/audits/operability-safety/c2pa-signer-trust-status/",
       "tags": [
         "c2pa",
         "provenance",
@@ -4543,7 +4543,7 @@
       "fix": "Keep the gesture and add the discrete path beside it. Give every range slider a numeric input or a select bound to the same value, and give every `role=\"slider\"` the full `aria-valuenow`/`aria-valuemin`/`aria-valuemax` set plus an accessible name. Put move-up and move-down buttons, or a position select, on each item of a reorderable list that sits on a checkout or configuration path. Always render an `<input type=\"file\">` inside a drop zone — an agent sets files on an input and cannot synthesise a drop. Give a carousel real next and previous buttons rather than swipe handlers alone.",
       "code": "<!-- The gesture stays; the discrete path is what an agent uses. -->\n<fieldset>\n  <label for=\"max-price\">Max price</label>\n  <input id=\"max-price\" type=\"range\" min=\"0\" max=\"500\" step=\"10\">\n  <input type=\"number\" min=\"0\" max=\"500\" step=\"10\" aria-label=\"Max price, exact value\">\n</fieldset>\n\n<div class=\"file-drop\">\n  Drop your CV here, or\n  <label>choose a file<input type=\"file\" name=\"cv\"></label>\n</div>",
       "effort": "moderate",
-      "docsUrl": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/audits/operability-safety/drag-and-slider-dependency.md",
+      "docsUrl": "https://forkpoint.github.io/agent-lighthouse/audits/operability-safety/drag-and-slider-dependency/",
       "tags": [
         "agent-operability",
         "actionability",
@@ -4594,7 +4594,7 @@
       "fix": "Render the consent layer in the top document, not in a cross-origin iframe. Give the accept and reject controls real `<button>` elements with visible text, and offer a one-click refusal beside the one-click acceptance rather than sending a refusal through a preferences journey. Leave the page itself in the DOM behind the layer, and do not set `inert` or `aria-hidden=\"true\"` on main content — use a focus trap inside the dialog instead.",
       "code": "<!-- The layer an agent can get past: named controls, top document, one click to refuse. -->\n<div id=\"cookie-banner\" role=\"dialog\" aria-label=\"Cookie preferences\">\n  <button id=\"accept-all\">Accept all cookies</button>\n  <button id=\"reject-all\">Reject all cookies</button>\n</div>\n<main><article><!-- the page is here the whole time --></article></main>",
       "effort": "moderate",
-      "docsUrl": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/audits/operability-safety/first-contact-consent-gate-operability.md",
+      "docsUrl": "https://forkpoint.github.io/agent-lighthouse/audits/operability-safety/first-contact-consent-gate-operability/",
       "tags": [
         "agent-operability",
         "consent",
@@ -4648,7 +4648,7 @@
       "fix": "Give every field that maps to a standard autofill concept its WHATWG token (email, tel, postal-code, address-level1/2, cc-number, one-time-code, new-password on signup, current-password on sign-in), plus a stable name or id and the matching input type. Express required-ness with the required attribute rather than an asterisk in the label, and point each field at its error element with aria-describedby or aria-errormessage.",
       "code": "<!-- The token is the contract: an agent maps profile data to it by lookup. -->\n<label for=\"email\">Email *</label>\n<input id=\"email\" name=\"email\" type=\"email\"\n       autocomplete=\"email\" required\n       aria-invalid=\"true\" aria-describedby=\"email-error\">\n<span id=\"email-error\" role=\"alert\">Enter a valid email address.</span>\n\n<label for=\"zip\">ZIP</label>\n<input id=\"zip\" name=\"zip\" type=\"text\" autocomplete=\"postal-code\">",
       "effort": "easy",
-      "docsUrl": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/audits/operability-safety/form-autofill-token-coverage.md",
+      "docsUrl": "https://forkpoint.github.io/agent-lighthouse/audits/operability-safety/form-autofill-token-coverage/",
       "tags": [
         "forms",
         "autocomplete",
@@ -4753,7 +4753,7 @@
       "fix": "Make each click target a real control. Use `<a href>` for navigation and `<button>` for actions instead of a div with a click handler; where the markup cannot change, add `role=\"button\"`, `tabindex=\"0\"` and a keyboard handler. Give every icon-only control an accessible name through `aria-label`, `aria-labelledby` or an `<svg><title>`. Never ship an `<a>` without an `href` — it has no link role and no snapshot entry, whatever it is styled to look like.",
       "code": "<!-- A tile an agent can click: real element, real name. -->\n<a class=\"product-tile\" href=\"/p/42\">Ceramic mug, 12oz</a>\n<button class=\"icon-btn\" aria-label=\"Add to cart\"><svg aria-hidden=\"true\">…</svg></button>\n\n<!-- Not: no role, no name, no snapshot entry, no way to click it. -->\n<div class=\"product-tile\" onclick=\"goTo(42)\"><span>Ceramic mug, 12oz</span></div>\n<a class=\"product-tile\">Ceramic mug, 12oz</a>\n<button class=\"icon-btn\"><svg>…</svg></button>",
       "effort": "moderate",
-      "docsUrl": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/audits/operability-safety/ghost-clickable-element-ratio.md",
+      "docsUrl": "https://forkpoint.github.io/agent-lighthouse/audits/operability-safety/ghost-clickable-element-ratio/",
       "tags": [
         "agent-operability",
         "accessibility-tree",
@@ -4779,7 +4779,7 @@
       "fix": "Add a keyboard and ARIA path beside the pointer path. Put `:focus-within` (or a `[aria-expanded=\"true\"]` selector driven by a real toggle) on the same rule that `:hover` triggers, so the submenu is revealed by focus as well as by a pointer. Give the trigger `aria-expanded` and `aria-controls` pointing at the submenu. Move anything a `title` attribute carries into visible text or an `aria-describedby` target, and give every hover card an id that a focusable element references.",
       "code": "/* Give the keyboard — and every agent — the same path the pointer has. */\n.nav li:hover .submenu,\n.nav li:focus-within .submenu,\n.nav li [aria-expanded=\"true\"] + .submenu { display: block }",
       "effort": "moderate",
-      "docsUrl": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/audits/operability-safety/hover-only-content-and-navigation.md",
+      "docsUrl": "https://forkpoint.github.io/agent-lighthouse/audits/operability-safety/hover-only-content-and-navigation/",
       "tags": [
         "agent-operability",
         "navigation",
@@ -4805,7 +4805,7 @@
       "fix": "Remove the hidden text. If it exists for assistive technology, keep it short, keep it free of anything that reads as an instruction, and use the visually-hidden idiom (class=\"sr-only\") so it is announced rather than concealed. If a third party injected it, treat the page as compromised: hidden instruction text is how the disclosed Comet and Opera Neon attacks worked.",
       "code": "<!-- Remove the payload. If the text is for assistive tech, keep it short,\n     keep it free of instructions, and use the sr-only idiom. -->\n<span class=\"sr-only\">Search products</span>",
       "effort": "moderate",
-      "docsUrl": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/audits/operability-safety/invisible-instruction-scan.md",
+      "docsUrl": "https://forkpoint.github.io/agent-lighthouse/audits/operability-safety/invisible-instruction-scan/",
       "tags": [
         "injection-safety",
         "prompt-injection",
@@ -4909,7 +4909,7 @@
       "fix": "Use the native element wherever the choice fits it: <select> for a list, <input type=\"date\"> for a date, <input type=\"file\"> for an upload — an agent drives each in one call. Where a custom widget is unavoidable, give it the complete APG combobox contract: role=\"combobox\", aria-expanded, aria-controls pointing at an element that exists and carries role=\"listbox\", options carrying role=\"option\", and an aria-activedescendant that resolves.",
       "code": "<!-- One agent call: selectOption('NL'). -->\n<label for=\"country\">Country</label>\n<select id=\"country\" name=\"country\"><option value=\"NL\">Netherlands</option></select>\n\n<!-- If a custom widget is unavoidable, ship the whole APG contract. -->\n<div role=\"combobox\" aria-expanded=\"false\"\n     aria-controls=\"country-list\" aria-activedescendant=\"country-nl\">Country</div>\n<ul id=\"country-list\" role=\"listbox\">\n  <li id=\"country-nl\" role=\"option\">Netherlands</li>\n</ul>",
       "effort": "moderate",
-      "docsUrl": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/audits/operability-safety/native-control-substitution.md",
+      "docsUrl": "https://forkpoint.github.io/agent-lighthouse/audits/operability-safety/native-control-substitution/",
       "tags": [
         "forms",
         "aria",
@@ -4986,7 +4986,7 @@
       "impact": "A shopping or payment agent transacting with an unfamiliar merchant needs one thing no amount of markup can self-assert: a legal identity it can check against an authority. The LEI is the only schema.org organization identifier backed by a free, queryable, authoritative registry, which makes it the only one whose truth an outside party can establish. An identifier that resolves to nothing, or to a lapsed registration, or to a different legal name, is worse than none: it looks like verification and is not.",
       "fix": "Publish the LEI as `iso6523Code: \"0199:<LEI>\"` — Google documents a preference for the prefixed form over bare `leiCode` — keep the GLEIF registration renewed so its status stays ISSUED, and make sure the `legalName` in your markup is the name GLEIF has on record, not the trading name.",
       "effort": "moderate",
-      "docsUrl": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/audits/operability-safety/organization-identifier-registry-resolution.md",
+      "docsUrl": "https://forkpoint.github.io/agent-lighthouse/audits/operability-safety/organization-identifier-registry-resolution/",
       "tags": [
         "identity",
         "lei",
@@ -5037,7 +5037,7 @@
       "fix": "Escape URL-derived input before it reaches any template, and keep it out of `<title>`, `<meta name=\"description\">`, `og:description`, `rel=\"canonical\"` and JSON-LD entirely — those fields should describe the page, not the request. Where a search page must echo the query back to the visitor, render it as escaped text inside the body and mark the page `noindex`.",
       "code": "<!-- Reflected into the fields an answer engine quotes -->\n<title>Results for {{ query }}</title>\n<link rel=\"canonical\" href=\"/search?q={{ query }}\">\n\n<!-- Fixed: a fixed title, a self-referential canonical, escaped body echo -->\n<title>Search results</title>\n<link rel=\"canonical\" href=\"/search\">\n<meta name=\"robots\" content=\"noindex\">\n<p>Results for <span>{{ query | escape }}</span></p>",
       "effort": "moderate",
-      "docsUrl": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/audits/operability-safety/reflected-parameter-injection-canary.md",
+      "docsUrl": "https://forkpoint.github.io/agent-lighthouse/audits/operability-safety/reflected-parameter-injection-canary/",
       "tags": [
         "injection-safety",
         "security",
@@ -5089,7 +5089,7 @@
       "fix": "Publish the state where a snapshot can read it. Give a toggle `role=\"switch\"` with `aria-checked`, a tab `role=\"tab\"` with `aria-selected`, a filter chip `aria-pressed`, a disclosure trigger `aria-expanded` alongside its `aria-controls`, and a sortable column header `aria-sort=\"ascending\"`, `\"descending\"` or `\"none\"`. Keep the class for styling and update the attribute in the same handler that updates the class. Where the markup allows it, use `<details>`/`<summary>` or a native checkbox and let the DOM carry the state for free.",
       "code": "<!-- The state is in the attribute, so the snapshot changes when it flips. -->\n<button class=\"toggle is-on\" role=\"switch\" aria-checked=\"true\">Share my data</button>\n<button class=\"tab is-active\" aria-selected=\"true\" role=\"tab\">Overview</button>\n<button aria-controls=\"faq-1\" aria-expanded=\"false\">What is your return policy?</button>\n\n<!-- Not: the class flips, the accessibility snapshot does not. -->\n<div class=\"toggle is-on\" onclick=\"flip()\">Share my data</div>\n<button class=\"tab is-active\">Overview</button>",
       "effort": "moderate",
-      "docsUrl": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/audits/operability-safety/stateful-control-introspectability.md",
+      "docsUrl": "https://forkpoint.github.io/agent-lighthouse/audits/operability-safety/stateful-control-introspectability/",
       "tags": [
         "agent-operability",
         "accessibility-tree",
@@ -5114,7 +5114,7 @@
       "impact": "Disclosure only counts if a machine can read it. IPTC types `DigitalSourceType` as a URI from a controlled vocabulary, so a consumer matching against that vocabulary silently ignores `AI-generated`, a bare `trainedAlgorithmicMedia`, or an `https://` spelling of the `http://` vocabulary URI. The publisher believes the image is disclosed; every machine reader sees an undisclosed image. Worse is an asset whose XMP and C2PA manifest disagree about whether a human took the photo — two provenance channels, one of them wrong.",
       "fix": "Write the full vocabulary URI, exactly: `http://cv.iptc.org/newscodes/digitalsourcetype/trainedAlgorithmicMedia`. Keep the `http` scheme the vocabulary itself uses, no trailing slash, no free text, and make sure the value agrees with the digital source type asserted in the asset’s C2PA manifest.",
       "effort": "moderate",
-      "docsUrl": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/audits/operability-safety/synthetic-media-disclosure-validity.md",
+      "docsUrl": "https://forkpoint.github.io/agent-lighthouse/audits/operability-safety/synthetic-media-disclosure-validity/",
       "tags": [
         "ai-disclosure",
         "iptc",
@@ -5190,7 +5190,7 @@
       "fix": "Publish a `script-src` built on a per-response nonce, or on hashes, with `strict-dynamic` if a tag loader needs to bring its own dependencies — and drop `unsafe-inline`, `https:` and `*`, which allow every host that speaks the scheme. Add an `integrity` hash and `crossorigin=\"anonymous\"` to every third-party script and stylesheet you cannot host yourself. Cut the origin list itself: each vendor is a separate supply chain with write access to what agents read. Give every cross-origin frame a `sandbox` attribute with only the capabilities it needs.",
       "code": "# Every script that runs is one you named. A nonce, not a scheme.\nContent-Security-Policy: script-src 'self' 'nonce-{{random}}' 'strict-dynamic'; object-src 'none'; base-uri 'none'\n\n<!-- And pin what you cannot host yourself. -->\n<script src=\"https://cdn.vendor.com/t.js\"\n        integrity=\"sha384-…\" crossorigin=\"anonymous\"></script>",
       "effort": "moderate",
-      "docsUrl": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/audits/operability-safety/third-party-dom-write-blast-radius.md",
+      "docsUrl": "https://forkpoint.github.io/agent-lighthouse/audits/operability-safety/third-party-dom-write-blast-radius/",
       "tags": [
         "injection-safety",
         "csp",
@@ -5215,7 +5215,7 @@
       "impact": "trust.txt association attributes are defined as reciprocal: `belongto=<association>` means something only if that association’s own trust.txt carries `member=<this domain>`. That makes the claim checkable rather than self-asserted, which is the whole point of publishing it. Separately, `datatrainingallowed=no` beside a robots.txt that leaves GPTBot and ClaudeBot free to crawl states two opposite policies, and the channel that actually gates crawlers is the one that says yes. Adoption caveat: no AI engine, answer engine or crawler is documented as reading trust.txt.",
       "fix": "Ask each association you claim to belong to for a reciprocal `member=` line, drop the ones that will not reciprocate, and make `datatrainingallowed=` say the same thing your robots.txt AI-bot groups say.",
       "effort": "easy",
-      "docsUrl": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/audits/operability-safety/trust-txt-reciprocity-coherence.md",
+      "docsUrl": "https://forkpoint.github.io/agent-lighthouse/audits/operability-safety/trust-txt-reciprocity-coherence/",
       "tags": [
         "trust-txt",
         "provenance",
@@ -5241,7 +5241,7 @@
       "fix": "Wrap each visitor-written region in a `<div data-nosnippet>` — the attribute is honoured on span, div and section only — and add `rel=\"ugc\"` to links inside it. Strip inline `style`, `iframe`, `script` and remote `img` from submitted markup at render time rather than at submit time, so already-stored content is covered too.",
       "code": "<!-- Visitor text with no boundary an agent can see -->\n<section id=\"comments\">\n  <div class=\"comment\">Great mug. <a href=\"https://spam.test/\">More</a></div>\n</section>\n\n<!-- Contained and marked -->\n<div data-nosnippet>\n  <section id=\"comments\">\n    <div class=\"comment\">Great mug. <a rel=\"ugc nofollow\" href=\"https://spam.test/\">More</a></div>\n  </section>\n</div>",
       "effort": "moderate",
-      "docsUrl": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/audits/operability-safety/ugc-trust-boundary-markers.md",
+      "docsUrl": "https://forkpoint.github.io/agent-lighthouse/audits/operability-safety/ugc-trust-boundary-markers/",
       "tags": [
         "injection-safety",
         "security",
@@ -5267,7 +5267,7 @@
       "fix": "Strip these codepoints at the boundary where text enters the site: user-generated content, imported feeds, translated copy, and anything pasted from a rich-text editor. Reject the Unicode Tags block outright — it has no legitimate web use. Allow bidi controls only in balanced pairs and only around text that is actually right-to-left. Allow ZWJ and ZWNJ only inside emoji sequences and in scripts whose shaping needs them. Run the same filter over robots.txt, llms.txt and sitemap.xml, which agents ingest with high trust and humans almost never read.",
       "code": "# Find them before shipping. Every one of these renders as nothing.\ngrep -P '[\\x{E0000}-\\x{E007F}]' page.html      # Unicode Tags block\ngrep -P '[\\x{202A}-\\x{202E}\\x{2066}-\\x{2069}]' page.html   # bidi controls\ngrep -P '[\\x{200B}-\\x{200D}\\x{2060}\\x{FEFF}\\x{00AD}]' page.html  # zero-width and soft hyphen",
       "effort": "moderate",
-      "docsUrl": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/audits/operability-safety/unicode-covert-channel-scan.md",
+      "docsUrl": "https://forkpoint.github.io/agent-lighthouse/audits/operability-safety/unicode-covert-channel-scan/",
       "tags": [
         "injection-safety",
         "unicode",
@@ -5293,7 +5293,7 @@
       "fix": "Move every state change to a POST. Where the markup cannot change immediately, put a confirmation affordance on the link — `data-turbo-confirm`, `data-confirm`, or an `onclick` that calls `confirm()` — and add `rel=\"nofollow\"` so crawlers and agents leave it alone. Do not rely on robots.txt: it constrains well-behaved crawling, not a user-initiated fetch. A GET form whose action mutates is the same defect in a different shape, and it is replayable straight from the query string.",
       "code": "<!-- A GET is a read. Anything that changes state takes a POST. -->\n<form method=\"post\" action=\"/items/7/delete\">\n  <button type=\"submit\">Delete item</button>\n</form>\n\n<!-- Where the markup cannot change, at minimum keep agents off it. -->\n<a href=\"/items/7?action=delete\" rel=\"nofollow\" data-turbo-confirm=\"Delete item 7?\">Delete</a>",
       "effort": "easy",
-      "docsUrl": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/audits/operability-safety/unsafe-agent-triggerable-affordances.md",
+      "docsUrl": "https://forkpoint.github.io/agent-lighthouse/audits/operability-safety/unsafe-agent-triggerable-affordances/",
       "tags": [
         "injection-safety",
         "http-semantics",
@@ -5322,7 +5322,7 @@
       "fix": "Keep the infinite scroll and put real links underneath it. Render `<a href=\"?page=2\">` for each page, or at minimum a `<link rel=\"next\">` in the head, so the whole listing can be walked without running scripts. Make every facet a real query parameter the server honours, and have the server return the filtered set for that URL. Where a total is declared — `numberOfItems` or a \"1,240 results\" line — make sure that many items are actually reachable by following the links you rendered.",
       "code": "<!-- The scroll can stay. The href is what an agent walks. -->\n<nav class=\"pagination\" aria-label=\"Pagination\">\n  <a href=\"/collections/mugs?page=2\" rel=\"next\">Page 2</a>\n  <a href=\"/collections/mugs?page=3\">Page 3</a>\n</nav>\n<link rel=\"next\" href=\"/collections/mugs?page=2\">\n\n<!-- Facets that the server honours, so the filtered view has its own URL. -->\n<a class=\"facet\" href=\"/collections/mugs?colour=red\">Red</a>",
       "effort": "complex",
-      "docsUrl": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/audits/operability-safety/url-addressable-state-and-pagination-fallback.md",
+      "docsUrl": "https://forkpoint.github.io/agent-lighthouse/audits/operability-safety/url-addressable-state-and-pagination-fallback/",
       "tags": [
         "agent-operability",
         "navigation",
@@ -5348,7 +5348,7 @@
       "impact": "A knowledge-graph consumer that grounds a brand to an entity needs corroboration from the authority side, because `sameAs` carries no reciprocity requirement — Google documents it as a link to a page with more information, nothing more. Wikidata publishes that corroboration for free as P856. A claim whose entity points at an unrelated domain is either the wrong entity or an unbacked identity claim, and an answer engine that resolves it grounds the brand to somebody else.",
       "fix": "Claim the entity that really is your organization, and make sure the Wikidata item carries your domain as its official website (P856). If the item has no P856 at all, add one: until it does, the claim cannot be corroborated by anyone.",
       "effort": "moderate",
-      "docsUrl": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/audits/operability-safety/wikidata-round-trip-verification.md",
+      "docsUrl": "https://forkpoint.github.io/agent-lighthouse/audits/operability-safety/wikidata-round-trip-verification/",
       "tags": [
         "identity",
         "wikidata",
@@ -5499,7 +5499,7 @@
       "fix": "Do not add ClaimReview markup for Google Search: support is being withdrawn. If you already publish it, keep it well-formed for the Fact Check Explorer — claimReviewed, url, and a reviewRating carrying a human-readable alternateName such as \"Mostly false\" — and keep exactly one ClaimReview node per page, since only one has ever qualified. Spend new effort on the schema types AI systems actually consume rather than on extending fact-check coverage.",
       "code": "<script type=\"application/ld+json\">\n{\n  \"@context\": \"https://schema.org\",\n  \"@type\": \"ClaimReview\",\n  \"claimReviewed\": \"The mayor doubled the city budget in one year.\",\n  \"url\": \"https://example.com/fact-checks/city-budget\",\n  \"reviewRating\": {\n    \"@type\": \"Rating\",\n    \"ratingValue\": 2,\n    \"bestRating\": 5,\n    \"alternateName\": \"Mostly false\"\n  }\n}\n</script>",
       "effort": "trivial",
-      "docsUrl": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/audits/structured-data/claimreview-advisory.md",
+      "docsUrl": "https://forkpoint.github.io/agent-lighthouse/audits/structured-data/claimreview-advisory/",
       "tags": [
         "schema",
         "claimreview",

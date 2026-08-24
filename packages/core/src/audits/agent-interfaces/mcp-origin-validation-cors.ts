@@ -41,7 +41,7 @@ export class McpOriginValidationCorsAudit extends Audit {
       fix: 'Validate `Origin` on every request and answer 403 when it is present and not one you allow. Never reflect an arbitrary Origin while allowing credentials: return a fixed allow-list, or drop `Access-Control-Allow-Credentials`. `Access-Control-Allow-Origin: *` is only safe on an endpoint that accepts no credentials at all.',
       effort: 'moderate',
       docsUrl:
-        'https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/audits/agent-interfaces/mcp-origin-validation-cors.md',
+        'https://forkpoint.github.io/agent-lighthouse/audits/agent-interfaces/mcp-origin-validation-cors/',
       tags: ['mcp', 'cors', 'dns-rebinding', 'security'],
     },
   };

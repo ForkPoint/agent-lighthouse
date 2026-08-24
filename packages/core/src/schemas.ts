@@ -108,6 +108,9 @@ export const CheckResultSchema = z.object({
       found: z.string().max(10000).optional(),
       code: z.string().max(10000).optional(),
       docsUrl: z.string().max(2048).url().optional().or(z.string().length(0)),
+      // Derived in `toCheckResult` from the audit id; kept in the schema so it
+      // survives validation as a declared field rather than a catchall scalar.
+      evidenceUrl: z.string().max(2048).url().optional(),
     })
     // Same rule as AuditResultSchema: structured evidence survives, nested
     // payloads do not.

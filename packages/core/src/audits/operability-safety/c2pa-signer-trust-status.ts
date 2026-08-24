@@ -72,7 +72,7 @@ export class C2paSignerTrustStatusAudit extends Audit {
       fix: 'Sign with a certificate from a CA on the C2PA Trust List rather than a self-signed one, renew before it expires, and include an RFC 3161 timestamp so credentials stay valid past the certificate’s own expiry.',
       effort: 'complex',
       docsUrl:
-        'https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/audits/operability-safety/c2pa-signer-trust-status.md',
+        'https://forkpoint.github.io/agent-lighthouse/audits/operability-safety/c2pa-signer-trust-status/',
       tags: ['c2pa', 'provenance', 'certificates', 'content-credentials'],
     },
   };

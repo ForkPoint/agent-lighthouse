@@ -270,7 +270,7 @@ export class FormAutofillTokenCoverageAudit extends Audit {
       code: SAMPLE,
       effort: 'easy',
       docsUrl:
-        'https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/audits/operability-safety/form-autofill-token-coverage.md',
+        'https://forkpoint.github.io/agent-lighthouse/audits/operability-safety/form-autofill-token-coverage/',
       tags: ['forms', 'autocomplete', 'autofill', 'agent-operability', 'accessibility'],
     },
   };

@@ -70,7 +70,7 @@ export class SectionSplitRiskProfileAudit extends Audit {
       fix: 'Add an `h2` or `h3` roughly every 400 tokens of prose, and split a specification table that runs past the window into per-topic tables so the header row stays with its rows.',
       effort: 'moderate',
       docsUrl:
-        'https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/audits/answer-readiness/section-split-risk-profile.md',
+        'https://forkpoint.github.io/agent-lighthouse/audits/answer-readiness/section-split-risk-profile/',
       tags: ['retrieval', 'chunking', 'content', 'answer-engines'],
     },
   };

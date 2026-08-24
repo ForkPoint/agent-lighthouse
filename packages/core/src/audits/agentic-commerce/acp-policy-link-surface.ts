@@ -225,7 +225,7 @@ export class AcpPolicyLinkSurfaceAudit extends Audit {
       code: SAMPLE,
       effort: 'easy',
       docsUrl:
-        'https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/audits/agentic-commerce/acp-policy-link-surface.md',
+        'https://forkpoint.github.io/agent-lighthouse/audits/agentic-commerce/acp-policy-link-surface/',
       tags: ['acp', 'instant-checkout', 'policy', 'commerce'],
     },
   };

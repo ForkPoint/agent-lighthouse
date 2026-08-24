@@ -63,7 +63,7 @@ export class AiprefContentUsageDeclarationValidityAudit extends Audit {
       fix: 'Write `Content-Usage: train-ai=n` — an RFC 8941 dictionary of `y`/`n` values against the `train-ai` and `search` categories. Use `yes`/`no` only in a Cloudflare `Content-Signal:` line, which is a different directive. Attach preferences to paths a crawler is allowed to fetch, and keep the robots.txt line and the response header saying the same thing for the same path.',
       effort: 'moderate',
       docsUrl:
-        'https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/audits/access-crawl-control/aipref-content-usage-declaration-validity.md',
+        'https://forkpoint.github.io/agent-lighthouse/audits/access-crawl-control/aipref-content-usage-declaration-validity/',
       tags: ['aipref', 'robots', 'headers', 'licensing'],
     },
   };

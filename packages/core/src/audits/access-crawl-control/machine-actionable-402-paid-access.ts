@@ -107,7 +107,7 @@ export class MachineActionable402PaidAccessAudit extends Audit {
       fix: 'Send one of the machine-readable forms with the 402: Cloudflare’s `crawler-price: USD 0.01`, an x402 `PAYMENT-REQUIRED` challenge listing what you accept, or a `Link: rel=license` pointing at an RSL document whose `<payment type="crawl">` covers the path. Mark the response `Cache-Control: no-store` so a proxy cannot hand your 402 to a crawler that already paid.',
       effort: 'moderate',
       docsUrl:
-        'https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/audits/access-crawl-control/machine-actionable-402-paid-access.md',
+        'https://forkpoint.github.io/agent-lighthouse/audits/access-crawl-control/machine-actionable-402-paid-access/',
       tags: ['402', 'pay-per-crawl', 'x402', 'rsl', 'crawlers'],
     },
   };
