@@ -48,7 +48,7 @@ Amazonbot is live (Alexa+ and Rufus grounding) and for commerce sites it is a ge
 **Counter-evidence:** Explicit vendor negative on a related directive: 'They do not support the crawl-delay directive' — so any audit that recommends crawl-delay for Amazonbot is recommending a no-op. Amazon publishes no consequence statement for blocking (no equivalent of OpenAI's search-exclusion warning), so the visibility cost of a block is undocumented.
 **Consumers:** Amazonbot, Amzn-SearchBot · **Recommended tier:** scored
 
-**Sources:** [Amazonbot](https://developer.amazon.com/amazonbot) · [A deeper look at AI crawlers: breaking down traffic by purpose and industry](https://blog.cloudflare.com/ai-crawler-traffic-by-purpose-and-industry/)
+**Sources:** [Amazonbot](https://developer.amazon.com/amazonbot) (verified 2026-08-20) · [A deeper look at AI crawlers: breaking down traffic by purpose and industry](https://blog.cloudflare.com/ai-crawler-traffic-by-purpose-and-industry/) (verified 2026-08-20)
 
 ## Review history
 

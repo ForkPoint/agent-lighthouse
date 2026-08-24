@@ -47,7 +47,7 @@ CCBot is still active and Common Crawl still feeds many downstream training sets
 **Counter-evidence:** Blocking CCBot is retroactively useless — historical Common Crawl snapshots are already published and permanently redistributable, so a block only affects future crawls. Common Crawl warns that 'crawlers falsely identifying themselves as CCBot' exist, so a disallow does not stop spoofers; operators should verify by reverse DNS against published IP ranges. Common Crawl's own page states no crawl-delay position and does not frame itself as AI training infrastructure.
 **Consumers:** CCBot · **Recommended tier:** scored
 
-**Sources:** [CCBot — Common Crawl](https://commoncrawl.org/ccbot) · [Consent in Crisis: The Rapid Decline of the AI Data Commons](https://arxiv.org/abs/2407.14933)
+**Sources:** [CCBot — Common Crawl](https://commoncrawl.org/ccbot) (verified 2026-08-20) · [Consent in Crisis: The Rapid Decline of the AI Data Commons](https://arxiv.org/abs/2407.14933) (verified 2026-08-20)
 
 ## Review history
 

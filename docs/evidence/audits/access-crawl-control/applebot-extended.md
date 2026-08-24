@@ -48,7 +48,7 @@ Live signal, correct-in-kind guidance, but the same base-class defects and one s
 **Counter-evidence:** HONESTY CAVEAT ON OUR OWN VERIFICATION: both Apple support pages are client-side rendered and our automated fetcher recovered only the document titles, not the body text. The URLs resolve and are unambiguously Apple's canonical Applebot documentation, but we could not quote Apple's exact sentences; the specifics above are corroborated by secondary sources rather than by our own extraction. A human should confirm the wording before publishing verbatim quotes. Additionally, because Applebot-Extended emits no requests, its effect is entirely unobservable from server logs — publishers cannot verify Apple honors it.
 **Consumers:** Applebot-Extended (robots.txt token consumed by Apple; not a fetching UA) · **Recommended tier:** scored
 
-**Sources:** [About Applebot](https://support.apple.com/en-us/119829) · [Applebot model training and individual privacy rights](https://support.apple.com/en-us/120320)
+**Sources:** [About Applebot](https://support.apple.com/en-us/119829) (verified 2026-08-20) · [Applebot model training and individual privacy rights](https://support.apple.com/en-us/120320) (verified 2026-08-20)
 
 ## Review history
 

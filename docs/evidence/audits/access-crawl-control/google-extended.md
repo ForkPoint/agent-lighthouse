@@ -48,7 +48,7 @@ Inherits every base-class defect, and its guidance text is factually wrong in a 
 **Counter-evidence:** Critical, widely-misreported limitation: Google-Extended does NOT control AI Overviews or AI Mode. Google's AI-features page states 'robots.txt directives for Googlebot is the control for site owners to manage access to how their sites are crawled for Search' and directs publishers to nosnippet / data-nosnippet / max-snippet / noindex for AI feature control. Any audit implying a Google-Extended disallow keeps content out of AI Overviews is wrong. Also, BuzzStream measured 92.3% citation retention among sites blocking Google-Extended — the highest of any bot studied.
 **Consumers:** Google-Extended (robots.txt token consumed by Google; not a fetching UA) · **Recommended tier:** scored
 
-**Sources:** [Google crawlers and fetchers (user agents) — Common crawlers](https://developers.google.com/search/docs/crawling-indexing/google-common-crawlers) · [Google Search's AI features and your website](https://developers.google.com/search/docs/appearance/ai-features) · [The Paradox of Blocking AI Crawlers: You Lose Visitors, Not Citations](https://blog.pebblous.ai/report/ai-crawler-blocking-citation-gap/en/)
+**Sources:** [Google crawlers and fetchers (user agents) — Common crawlers](https://developers.google.com/search/docs/crawling-indexing/google-common-crawlers) (verified 2026-08-20) · [Google Search's AI features and your website](https://developers.google.com/search/docs/appearance/ai-features) (verified 2026-08-20) · [The Paradox of Blocking AI Crawlers: You Lose Visitors, Not Citations](https://blog.pebblous.ai/report/ai-crawler-blocking-citation-gap/en/) (verified 2026-08-20)
 
 ## Review history
 

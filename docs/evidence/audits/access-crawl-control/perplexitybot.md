@@ -49,7 +49,7 @@ Perplexity is a genuinely high-value citation surface, so the signal is worth ke
 **Counter-evidence:** Perplexity has been publicly accused of crawling from undeclared user agents and rotating IPs to evade blocks (a widely reported 2025 dispute), so a PerplexityBot disallow may not be sufficient to prevent access. Independent 2026 reporting also indicates Perplexity's crawl-to-refer ratio has worsened (~225:1), eroding the referral argument. The 'not used for training' claim is vendor-asserted and unverifiable externally.
 **Consumers:** PerplexityBot · **Recommended tier:** scored
 
-**Sources:** [Perplexity Crawlers](https://docs.perplexity.ai/guides/bots) · [A deeper look at AI crawlers: breaking down traffic by purpose and industry](https://blog.cloudflare.com/ai-crawler-traffic-by-purpose-and-industry/)
+**Sources:** [Perplexity Crawlers](https://docs.perplexity.ai/guides/bots) (verified 2026-08-20) · [A deeper look at AI crawlers: breaking down traffic by purpose and industry](https://blog.cloudflare.com/ai-crawler-traffic-by-purpose-and-industry/) (verified 2026-08-20)
 
 ## Review history
 

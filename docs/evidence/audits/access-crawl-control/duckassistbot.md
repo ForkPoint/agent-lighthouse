@@ -48,7 +48,7 @@ Real, active token behind DuckDuckGo's DuckAssist answers — a legitimate keep,
 **Counter-evidence:** DuckAssistBot does not appear in Cloudflare Radar's named AI-crawler top-five breakdowns, so its traffic volume — and therefore the practical stakes of allowing or blocking it — is small relative to GPTBot/ClaudeBot/ChatGPT-User. The 72-hour enforcement lag means a disallow is not immediate.
 **Consumers:** DuckAssistBot · **Recommended tier:** scored
 
-**Sources:** [DuckAssistBot — DuckDuckGo Help Pages](https://duckduckgo.com/duckduckgo-help-pages/results/duckassistbot/) · [Known Agents — AI agent user-agent directory (formerly Dark Visitors)](https://knownagents.com/agents)
+**Sources:** [DuckAssistBot — DuckDuckGo Help Pages](https://duckduckgo.com/duckduckgo-help-pages/results/duckassistbot/) (verified 2026-08-20) · [Known Agents — AI agent user-agent directory (formerly Dark Visitors)](https://knownagents.com/agents) (verified 2026-08-20)
 
 ## Review history
 

@@ -59,7 +59,7 @@ vendor-level audit was not done and remains open.
 **Counter-evidence:** Anthropic does not state the consequence of blocking as explicitly as OpenAI does for OAI-SearchBot ('will not be shown in ChatGPT search answers') — the exclusion-from-answers link is inferred from the agent's stated purpose, not asserted. No published per-bot citation-impact study isolates Claude-SearchBot.
 **Consumers:** Claude-SearchBot · **Recommended tier:** scored
 
-**Sources:** [Does Anthropic crawl data from the web, and how can site owners block the crawler?](https://support.claude.com/en/articles/8896518-does-anthropic-crawl-data-from-the-web-and-how-can-site-owners-block-the-crawler)
+**Sources:** [Does Anthropic crawl data from the web, and how can site owners block the crawler?](https://support.claude.com/en/articles/8896518-does-anthropic-crawl-data-from-the-web-and-how-can-site-owners-block-the-crawler) (verified 2026-08-20)
 
 ## Review history
 

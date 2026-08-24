@@ -49,7 +49,7 @@ Legitimate but small: MistralAI-User backs Le Chat's web access, a real though l
 **Counter-evidence:** Mistral is the most extractive operator by 2026 crawl-to-refer measurement (reported at ~3,389 pages crawled per referral sent, worse than Anthropic and far worse than OpenAI), so the allow-side referral argument for MistralAI-Index is weak. Mistral bots do not appear in Cloudflare Radar's Aug 2025 named top-five breakdowns, so historical volume was small. Audits keyed only to 'MistralAI-User' will miss the two higher-impact tokens.
 **Consumers:** MistralAI-User, MistralAI-Index, MistralAI-Training · **Recommended tier:** scored
 
-**Sources:** [Mistral AI crawlers and robots.txt](https://docs.mistral.ai/robots/) · [A deeper look at AI crawlers: breaking down traffic by purpose and industry](https://blog.cloudflare.com/ai-crawler-traffic-by-purpose-and-industry/)
+**Sources:** [Mistral AI crawlers and robots.txt](https://docs.mistral.ai/robots/) (verified 2026-08-20) · [A deeper look at AI crawlers: breaking down traffic by purpose and industry](https://blog.cloudflare.com/ai-crawler-traffic-by-purpose-and-industry/) (verified 2026-08-20)
 
 ## Review history
 

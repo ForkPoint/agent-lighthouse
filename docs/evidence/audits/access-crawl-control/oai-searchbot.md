@@ -49,7 +49,7 @@ High-value and correctly scoped — OAI-SearchBot builds the ChatGPT Search inde
 **Counter-evidence:** BuzzStream/XOFU measured 82.4% citation retention even among sites blocking OAI-SearchBot, suggesting either lagged enforcement, citation via other surfaces, or content reached through ChatGPT-User. The vendor claim and the field measurement are in tension; the vendor claim is the stated policy and should be scored, but the audit copy should not promise total disappearance.
 **Consumers:** OAI-SearchBot · **Recommended tier:** scored
 
-**Sources:** [OpenAI Bots / Crawlers documentation](https://developers.openai.com/api/docs/bots) · [The Paradox of Blocking AI Crawlers: You Lose Visitors, Not Citations](https://blog.pebblous.ai/report/ai-crawler-blocking-citation-gap/en/)
+**Sources:** [OpenAI Bots / Crawlers documentation](https://developers.openai.com/api/docs/bots) (verified 2026-08-20) · [The Paradox of Blocking AI Crawlers: You Lose Visitors, Not Citations](https://blog.pebblous.ai/report/ai-crawler-blocking-citation-gap/en/) (verified 2026-08-20)
 
 ## Review history
 

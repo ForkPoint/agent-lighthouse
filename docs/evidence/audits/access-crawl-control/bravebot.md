@@ -48,7 +48,7 @@ Token is real (Brave Search's crawler) but the value is thin: Brave Search build
 **Counter-evidence:** DIRECT VENDOR REFUTATION: Brave's own crawler help page states 'The Brave Search crawler does not advertise a differentiated user agent because we must avoid discrimination from websites that allow only Google to crawl them.' Brave further states 'robots.txt is not used to prevent a page from being indexed. A site owner can delist a page by using the robots noindex directive' — i.e. Brave directs publishers to noindex, not to a robots.txt token. Brave's page makes no mention of AI training, data licensing, or Brave Leo in connection with the crawler. Given the vendor contradicts the token's existence and blocking adoption is 2%, this should never be scored; consider demoting the audit toward deletion unless a Brave-published token is confirmed.
 **Consumers:** none-confirmed (Brave states its crawler uses no differentiated UA; a Bravebot/1.0 UA is observed in third-party directories) · **Recommended tier:** informative
 
-**Sources:** [Brave Search crawler](https://search.brave.com/help/brave-search-crawler) · [Bravebot — Known Agents](https://knownagents.com/agents/bravebot)
+**Sources:** [Brave Search crawler](https://search.brave.com/help/brave-search-crawler) (verified 2026-08-20) · [Bravebot — Known Agents](https://knownagents.com/agents/bravebot) (verified 2026-08-20)
 
 ## Review history
 

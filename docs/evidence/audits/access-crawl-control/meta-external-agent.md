@@ -51,7 +51,7 @@ Meta-ExternalAgent is a live token (Llama training and Meta AI corpora) so the s
 **Counter-evidence:** Two documented robots.txt exemptions in the same family that audits must not conflate with meta-externalagent: meta-externalfetcher 'fetches individual links at a user's request' and 'may bypass robots.txt rules'; and facebookexternalhit may bypass robots.txt for 'security or integrity checks, such as checking for malware or malicious content'. A meta-externalfetcher disallow should therefore be reported informatively, not scored as an effective control.
 **Consumers:** meta-externalagent, meta-externalfetcher, Meta-WebIndexer, Meta-ExternalAds, facebookexternalhit · **Recommended tier:** scored
 
-**Sources:** [Meta Web Crawlers](https://developers.facebook.com/docs/sharing/webmasters/web-crawlers/) · [A deeper look at AI crawlers: breaking down traffic by purpose and industry](https://blog.cloudflare.com/ai-crawler-traffic-by-purpose-and-industry/)
+**Sources:** [Meta Web Crawlers](https://developers.facebook.com/docs/sharing/webmasters/web-crawlers/) (verified 2026-08-20) · [A deeper look at AI crawlers: breaking down traffic by purpose and industry](https://blog.cloudflare.com/ai-crawler-traffic-by-purpose-and-industry/) (verified 2026-08-20)
 
 ## Pass-rule correction (contradiction sweep, 2026-08-24)
 

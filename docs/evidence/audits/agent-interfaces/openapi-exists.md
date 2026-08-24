@@ -131,7 +131,7 @@ momentum is withdrawn, and this audit is flagged for re-review if ARD adoption
 continues. See `agent-interfaces/ai-catalog-exists`, which already scores the
 ARD path.
 
-**Sources:** [RFC 9727](https://www.rfc-editor.org/rfc/rfc9727.html) · [IANA Well-Known URIs](https://www.iana.org/assignments/well-known-uris/well-known-uris.xhtml) · [ARD specification](https://github.com/ards-project/ard-spec) · [huggingface/hf-discover](https://github.com/huggingface/hf-discover) · [Four providers publishing /.well-known/api-catalog (API Evangelist, 2026-05-22)](https://apievangelist.com/blog/2026/05/22/four-providers-publishing-well-known-api-catalog/) · [Fern api-catalog](https://buildwithfern.com/learn/docs/ai-features/api-catalog)
+**Sources:** [RFC 9727](https://www.rfc-editor.org/rfc/rfc9727.html) (verified 2026-08-20) · [IANA Well-Known URIs](https://www.iana.org/assignments/well-known-uris/well-known-uris.xhtml) (verified 2026-08-20) · [ARD specification](https://github.com/ards-project/ard-spec) (verified 2026-08-24) · [huggingface/hf-discover](https://github.com/huggingface/hf-discover) (verified 2026-08-24) · [Four providers publishing /.well-known/api-catalog (API Evangelist, 2026-05-22)](https://apievangelist.com/blog/2026/05/22/four-providers-publishing-well-known-api-catalog/) (verified 2026-08-20) · [Fern api-catalog](https://buildwithfern.com/learn/docs/ai-features/api-catalog) (verified 2026-08-24)
 
 ## Review history
 

@@ -53,7 +53,7 @@ GPTBot is the single most valuable token in the category and detecting a real Di
 **Counter-evidence:** Blocking GPTBot has a measurably small effect on downstream visibility: BuzzStream/XOFU found sites blocking GPTBot still retained 88.2% citation presence in AI answers, because already-ingested and third-party-mirrored content persists. Consent in Crisis found OpenAI is the single most-blocked developer, so a GPTBot block is not differentiating. Auditors must not conflate a GPTBot block with an OAI-SearchBot block — they have opposite visibility consequences.
 **Consumers:** GPTBot · **Recommended tier:** scored
 
-**Sources:** [OpenAI Bots / Crawlers documentation](https://developers.openai.com/api/docs/bots) · [A deeper look at AI crawlers: breaking down traffic by purpose and industry](https://blog.cloudflare.com/ai-crawler-traffic-by-purpose-and-industry/) · [The Paradox of Blocking AI Crawlers: You Lose Visitors, Not Citations](https://blog.pebblous.ai/report/ai-crawler-blocking-citation-gap/en/) · [Consent in Crisis: The Rapid Decline of the AI Data Commons](https://arxiv.org/abs/2407.14933)
+**Sources:** [OpenAI Bots / Crawlers documentation](https://developers.openai.com/api/docs/bots) (verified 2026-08-20) · [A deeper look at AI crawlers: breaking down traffic by purpose and industry](https://blog.cloudflare.com/ai-crawler-traffic-by-purpose-and-industry/) (verified 2026-08-20) · [The Paradox of Blocking AI Crawlers: You Lose Visitors, Not Citations](https://blog.pebblous.ai/report/ai-crawler-blocking-citation-gap/en/) (verified 2026-08-20) · [Consent in Crisis: The Rapid Decline of the AI Data Commons](https://arxiv.org/abs/2407.14933) (verified 2026-08-20)
 
 ## Review history
 

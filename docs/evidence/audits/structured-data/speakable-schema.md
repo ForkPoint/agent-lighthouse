@@ -116,7 +116,7 @@ for Home replacing Google Assistant with no speakable successor statement —
 stands, and if it fires the audit loses its consumer entirely rather than one
 grade.
 
-**Sources:** [Speakable structured data (Google Search Central, last updated 2025-12-10)](https://developers.google.com/search/docs/appearance/structured-data/speakable) · [Retirement shortlist re-verification](../../RETIREMENT-SHORTLIST.md#re-verification-2026-08-24)
+**Sources:** [Speakable structured data (Google Search Central, last updated 2025-12-10)](https://developers.google.com/search/docs/appearance/structured-data/speakable) (verified 2026-08-20) · [Retirement shortlist re-verification](../../RETIREMENT-SHORTLIST.md#re-verification-2026-08-24)
 
 ## Review history
 

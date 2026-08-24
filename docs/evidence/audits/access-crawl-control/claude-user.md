@@ -50,7 +50,7 @@ Genuinely valuable signal — Claude-User is the live fetcher behind Claude's we
 **Counter-evidence:** Anthropic does not publish a separate per-agent compliance statement, only a blanket one, so the Claude-User guarantee is weaker than a dedicated sentence. No independent audit has specifically measured Claude-User disallow compliance the way TollBit did for ChatGPT-User, so the honoring claim is vendor-asserted and untested.
 **Consumers:** Claude-User · **Recommended tier:** scored
 
-**Sources:** [Does Anthropic crawl data from the web, and how can site owners block the crawler?](https://support.claude.com/en/articles/8896518-does-anthropic-crawl-data-from-the-web-and-how-can-site-owners-block-the-crawler) · [15% of AI page fetchers in Europe reached disallowed URLs, TollBit finds](https://ppc.land/15-of-ai-page-fetchers-in-europe-reached-disallowed-urls-tollbit-finds/)
+**Sources:** [Does Anthropic crawl data from the web, and how can site owners block the crawler?](https://support.claude.com/en/articles/8896518-does-anthropic-crawl-data-from-the-web-and-how-can-site-owners-block-the-crawler) (verified 2026-08-20) · [15% of AI page fetchers in Europe reached disallowed URLs, TollBit finds](https://ppc.land/15-of-ai-page-fetchers-in-europe-reached-disallowed-urls-tollbit-finds/) (verified 2026-08-20)
 
 ## Review history
 

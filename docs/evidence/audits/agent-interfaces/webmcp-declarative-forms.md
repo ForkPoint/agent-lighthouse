@@ -104,7 +104,7 @@ the `toolname`-required rule are unchanged, and a page with no form still
 returns `notApplicable`. If the origin trial graduates to a shipped API, or the
 W3C work reaches a ratified stage, this returns to a grade-A candidate.
 
-**Sources:** [Declarative WebMCP API (Chrome for Developers, published 2026-05-18)](https://developer.chrome.com/docs/ai/webmcp/declarative-api) · [Retirement shortlist re-verification](../../RETIREMENT-SHORTLIST.md#re-verification-2026-08-24)
+**Sources:** [Declarative WebMCP API (Chrome for Developers, published 2026-05-18)](https://developer.chrome.com/docs/ai/webmcp/declarative-api) (verified 2026-08-20) · [Retirement shortlist re-verification](../../RETIREMENT-SHORTLIST.md#re-verification-2026-08-24)
 
 ## Review history
 

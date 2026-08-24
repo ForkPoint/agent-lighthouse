@@ -43,7 +43,7 @@ That is also the disposition of YouBot inside this audit: **YouBot's own contrib
 
 **Counter-evidence:** Major contradiction between vendor claim and field measurement (TollBit H1 2026, above). Volume is also small — AI data providers are ~0.4% of all traffic — and You.com has pivoted from consumer answer search to enterprise agent APIs, which shrinks the citation surface further. The audit copy carries the contradiction rather than repeating the vendor claim at face value.
 
-**Sources:** [YouBot — You.com documentation](https://you.com/docs/youbot) · [YouBot — Known Agents](https://knownagents.com/agents/youbot) · [15% of AI page fetchers in Europe reached disallowed URLs, TollBit finds](https://ppc.land/15-of-ai-page-fetchers-in-europe-reached-disallowed-urls-tollbit-finds/)
+**Sources:** [YouBot — You.com documentation](https://you.com/docs/youbot) (verified 2026-08-20) · [YouBot — Known Agents](https://knownagents.com/agents/youbot) (verified 2026-08-20) · [15% of AI page fetchers in Europe reached disallowed URLs, TollBit finds](https://ppc.land/15-of-ai-page-fetchers-in-europe-reached-disallowed-urls-tollbit-finds/) (verified 2026-08-20)
 
 ### AI2Bot — scored · grade B
 
@@ -53,7 +53,7 @@ That is also the disposition of YouBot inside this audit: **YouBot's own contrib
 
 **Counter-evidence:** Capped at B — the AI2 page as fetched contains no explicit robots.txt-compliance sentence and no canonical disallow snippet. AI2Bot appears in no Cloudflare Radar top-five breakdown, so volume is very low. Blocking it specifically removes content from open, research-transparent corpora while leaving closed commercial crawlers unaffected — an outcome many publishers would not intend, which is why the audit's guidance frames the directive as a deliberate policy statement rather than a "more allow is better" instruction.
 
-**Sources:** [AI2Bot — Allen Institute for AI crawler](https://allenai.org/crawler) · [Consent in Crisis: The Rapid Decline of the AI Data Commons](https://arxiv.org/abs/2407.14933) · [Known Agents — AI agent user-agent directory (formerly Dark Visitors)](https://knownagents.com/agents)
+**Sources:** [AI2Bot — Allen Institute for AI crawler](https://allenai.org/crawler) (verified 2026-08-20) · [Consent in Crisis: The Rapid Decline of the AI Data Commons](https://arxiv.org/abs/2407.14933) (verified 2026-08-20) · [Known Agents — AI agent user-agent directory (formerly Dark Visitors)](https://knownagents.com/agents) (verified 2026-08-20)
 
 ### Bytespider — informational · grade C
 
@@ -63,7 +63,7 @@ That is also the disposition of YouBot inside this audit: **YouBot's own contrib
 
 **Counter-evidence:** Two strong negatives. (1) No vendor documentation comparable to OpenAI/Anthropic/Perplexity — the only operator reference is a Chinese-language webmaster portal (zhanzhang.toutiao.com); ByteDance publishes no English bot page, purpose statement or verifiable IP range list. (2) Documented non-compliance (TollBit H1 2026). The v1 audit additionally *recommended allowing it*, so a site that had blocked Bytespider for origin load — a mainstream ops decision — received a high-priority FAIL telling it to undo the block. The consolidated audit never penalises a Bytespider block and advises enforcement at the edge (WAF/rate-limit) rather than via robots.txt.
 
-**Sources:** [Bytespider — Known Agents](https://knownagents.com/agents/bytespider) · [A deeper look at AI crawlers: breaking down traffic by purpose and industry](https://blog.cloudflare.com/ai-crawler-traffic-by-purpose-and-industry/) · [15% of AI page fetchers in Europe reached disallowed URLs, TollBit finds](https://ppc.land/15-of-ai-page-fetchers-in-europe-reached-disallowed-urls-tollbit-finds/)
+**Sources:** [Bytespider — Known Agents](https://knownagents.com/agents/bytespider) (verified 2026-08-20) · [A deeper look at AI crawlers: breaking down traffic by purpose and industry](https://blog.cloudflare.com/ai-crawler-traffic-by-purpose-and-industry/) (verified 2026-08-20) · [15% of AI page fetchers in Europe reached disallowed URLs, TollBit finds](https://ppc.land/15-of-ai-page-fetchers-in-europe-reached-disallowed-urls-tollbit-finds/) (verified 2026-08-20)
 
 ### cohere-ai — informational · grade C
 
@@ -73,7 +73,7 @@ That is also the disposition of YouBot inside this audit: **YouBot's own contrib
 
 **Counter-evidence:** No Cohere vendor crawler documentation was locatable — no crawler page, UA reference, IP range list or compliance statement. `cohere-ai` is separately classified as an "Undocumented AI Agent" — "an unconfirmed agent possibly dispatched by Cohere's AI chat products". Cohere does not appear in Cloudflare Radar's named top-five breakdowns, so volume is negligible, and there is no consumer answer surface where a site could be cited. Informational only.
 
-**Sources:** [cohere-training-data-crawler — Known Agents](https://knownagents.com/agents/cohere-training-data-crawler) · [Known Agents — AI agent user-agent directory (formerly Dark Visitors)](https://knownagents.com/agents)
+**Sources:** [cohere-training-data-crawler — Known Agents](https://knownagents.com/agents/cohere-training-data-crawler) (verified 2026-08-20) · [Known Agents — AI agent user-agent directory (formerly Dark Visitors)](https://knownagents.com/agents) (verified 2026-08-20)
 
 ### Diffbot — informational · grade C
 
@@ -83,7 +83,7 @@ That is also the disposition of YouBot inside this audit: **YouBot's own contrib
 
 **Counter-evidence:** No vendor documentation was reachable (docs.diffbot.com's crawler guide 301s to diffbot.com/docs/). Diffbot does not appear in Cloudflare Radar's named AI-crawler breakdowns, and its crawl product has historically offered customers an option to disregard robots.txt for their own crawls, so token behaviour may vary by job. End users do not query Diffbot and it produces no citations or referral traffic, so blocking it costs nothing in ChatGPT/Claude/Gemini/Perplexity visibility — the v1 audit's high-priority FAIL for blocking it was net-misleading.
 
-**Sources:** [Diffbot — Known Agents](https://knownagents.com/agents/diffbot)
+**Sources:** [Diffbot — Known Agents](https://knownagents.com/agents/diffbot) (verified 2026-08-20)
 
 ## Counter-evidence for the merged audit
 
