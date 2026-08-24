@@ -111,7 +111,11 @@ Bring the corpus onto the whitelist vocabulary so the list stays short. Mechanic
 
 ### Task 17: retirement decisions
 
-The audits whose own evidence records no known consumer. Carried from the separate audit-value review; the shortlist and the two candidate bars are in that conversation's summary, not yet written to a file.
+The audits whose own evidence records no known consumer. Carried from the separate audit-value review. The shortlist, the two candidate bars and the decision are now recorded in [`docs/evidence/RETIREMENT-SHORTLIST.md`](../../evidence/RETIREMENT-SHORTLIST.md).
+
+Decided 2026-08-24: the **narrow bar** — six audits, `agent-interfaces/ai-catalog-exists`, `ai-catalog-metadata`, `ai-catalog-urls`, `structured-data/speakable-schema`, `agent-interfaces/webmcp-registered-tools` and `webmcp-declarative-forms`. The 39 grade-C informative audits stay. Retirement means moving the audit out of the registry and its dossier into `docs/evidence/sunset/`, as the 26 v1 audits were, not deleting either. `major` changeset. Registry 215 → 209, and `check-dossiers` must balance at the new count.
+
+This decision overtakes Task 10: `agent-interfaces/webmcp-registered-tools` retires, so it is not split or re-tiered. Fold it into this task.
 
 ## Sequencing
 
