@@ -1,0 +1,38 @@
+---
+import type { AuditRecord } from '../lib/registry';
+import GradeBadge from './GradeBadge.astro';
+import TierBadge from './TierBadge.astro';
+import { auditPath } from '../lib/routes';
+
+/**
+ * One audit in a list: its id, badges, title and description.
+ *
+ * It renders the `<li>` itself, and carries `data-audit-id` there, so the
+ * explorer hides a whole list item rather than leaving an empty one behind.
+ * `showCategory` is off on a category index, where the label would repeat on
+ * every card.
+ */
+interface Props {
+  audit: AuditRecord;
+  showCategory?: boolean;
+}
+
+const { audit, showCategory = true } = Astro.props;
+---
+<li
+  data-audit-id={audit.id}
+  class="rounded-xl border border-border-subtle bg-surface-raised/50 p-4 transition-colors hover:border-brand/50 hover:bg-surface-raised sm:p-5"
+>
+  <div class="flex flex-wrap items-center gap-2">
+    <code class="rounded border border-brand/20 bg-brand/10 px-2 py-0.5 font-mono text-xs font-bold text-indigo-400">{audit.id}</code>
+    <GradeBadge grade={audit.evidenceGrade} />
+    <TierBadge tier={audit.tier} />
+  </div>
+  <h3 class="mt-2.5 text-sm font-bold text-white sm:text-base">
+    <a class="transition-colors hover:text-brand-soft" href={auditPath(audit.id)}>{audit.title}</a>
+  </h3>
+  <p class="mt-1.5 text-xs leading-relaxed text-slate-300">{audit.description}</p>
+  {showCategory && (
+    <p class="mt-2.5 text-xs text-slate-400">{audit.categoryTitle}</p>
+  )}
+</li>
