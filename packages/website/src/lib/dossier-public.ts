@@ -65,11 +65,6 @@ const PUBLIC_SECTIONS = new Map<string, PublicName>([
   // the reader's either way, so it is mapped rather than left to `public_extra`.
   ['Per-bot evidence', 'Evidence'],
   ['Counter-evidence for the merged audit', 'Limits'],
-  // 12 dossiers whose `## Evidence` is only the placeholder sentence "no
-  // dedicated evidence signal was researched in the 2026-08-20 pass". The
-  // research that answers it landed a day later under this heading, and its
-  // date is what makes the supersede rule prefer it over the placeholder.
-  ['Adversarial redemption research', 'Evidence'],
 ]);
 
 /** `Evidence (2026-08-21)` and friends — a public name with a date after it. */

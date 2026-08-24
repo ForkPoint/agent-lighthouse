@@ -4,6 +4,7 @@ import Doc from '../../../layouts/Doc.astro';
 import GradeBadge from '../../../components/GradeBadge.astro';
 import TierBadge from '../../../components/TierBadge.astro';
 import { crossCheck } from '../../../lib/cross-check';
+import { enforceEvidenceBar, publishedSections } from '../../../lib/evidence-bar';
 import { auditList, categoryList } from '../../../lib/registry';
 import { auditPath, categoryPath, withBase } from '../../../lib/routes';
 
@@ -15,6 +16,26 @@ export async function getStaticPaths() {
   crossCheck(audits.map((audit) => audit.id), dossiers.map((entry) => entry.id));
 
   const byId = new Map(audits.map((audit) => [audit.id, audit]));
+
+  // The second build-time gate, and the one that decides what may ship as
+  // scored. It reads the collection body, which the loader has already sliced,
+  // so the bar is applied to the page the reader gets rather than to the
+  // working record behind it.
+  enforceEvidenceBar(
+    dossiers.map((entry) => {
+      const audit = byId.get(entry.id)!;
+      const markdown = entry.body ?? '';
+      return {
+        subject: {
+          id: entry.id,
+          tier: audit.tier,
+          dossierGrade: entry.data.evidence_grade,
+          registryGrade: audit.evidenceGrade,
+        },
+        page: { markdown, published: publishedSections(markdown) },
+      };
+    }),
+  );
   const categories = categoryList();
 
   return dossiers.map((entry) => {

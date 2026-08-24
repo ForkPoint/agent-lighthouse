@@ -191,9 +191,17 @@ describe('publicDossier', () => {
   describe('the whole corpus', () => {
     const ids = dossierIds();
 
-    it('publishes something for every dossier', () => {
+    it('publishes the three unconditional sections for every dossier', () => {
       for (const id of ids) {
-        expect(publicDossier(read(id)).markdown.trim(), id).not.toBe('');
+        const { published, markdown } = publicDossier(read(id));
+        expect(markdown.trim(), id).not.toBe('');
+        for (const name of ['What it checks', 'Why it matters', 'Evidence']) {
+          expect(published, id).toContain(name);
+        }
+        // The 2026-08-20 research pass left this sentence in dossiers whose
+        // evidence had not been written yet. None survives; if one reappears,
+        // an audit is publishing an evidence section that says there is none.
+        expect(markdown, id).not.toContain('No dedicated evidence signal');
       }
     });
 
@@ -242,11 +250,15 @@ describe('publicDossier', () => {
         }
       }
       expect(counts).toEqual({
-        'What it checks': 213,
-        'Why it matters': 203,
+        // The page contract's first three are unconditional: every audit says
+        // what it looks for, why that matters, and on whose evidence.
+        'What it checks': 215,
+        'Why it matters': 215,
         Evidence: 215,
-        Limits: 136,
-        'How it scores': 126,
+        Limits: 148,
+        // Every scored audit publishes its grade reasoning; the shortfall is
+        // in the informative and experimental tiers, which the bar exempts.
+        'How it scores': 190,
         'Example failure': 66,
       });
     });
