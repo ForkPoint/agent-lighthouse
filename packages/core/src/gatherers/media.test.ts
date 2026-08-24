@@ -214,4 +214,17 @@ describe('media gatherer', () => {
       expect(await fetchImage(ctx, 'https://example.com/missing.jpg')).toBeUndefined();
     });
   });
+
+  // A chunk size with the high bit set used to read as a negative number, which
+  // walked the cursor backwards for ever and hung the scan on one bad image.
+  it('does not hang on a WebP chunk whose size has the high bit set', () => {
+    const bytes = new Uint8Array(64);
+    Buffer.from('RIFF').copy(bytes, 0);
+    Buffer.from('WEBP').copy(bytes, 8);
+    Buffer.from('VP8 ').copy(bytes, 12);
+    bytes[19] = 0x80; // little-endian 0x80000000
+    const started = Date.now();
+    expect(findC2paManifest(bytes)).toBeUndefined();
+    expect(Date.now() - started).toBeLessThan(1000);
+  });
 });

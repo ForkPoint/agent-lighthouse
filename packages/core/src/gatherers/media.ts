@@ -94,12 +94,14 @@ function* riffChunks(bytes: Uint8Array): Generator<[string, number, number]> {
   let at = 12;
   while (at + 8 <= bytes.length) {
     const type = ascii(bytes.subarray(at, at + 4));
-    // RIFF sizes are little-endian, unlike every other container here.
+    // RIFF sizes are little-endian, unlike every other container here. Read as
+    // an unsigned 32-bit value: `<< 24` produces a *negative* number once the
+    // high bit is set, and a negative length walks `at` backwards for ever.
     const length =
-      (bytes[at + 4] ?? 0) |
-      ((bytes[at + 5] ?? 0) << 8) |
-      ((bytes[at + 6] ?? 0) << 16) |
-      ((bytes[at + 7] ?? 0) << 24);
+      (bytes[at + 4] ?? 0) +
+      (bytes[at + 5] ?? 0) * 0x100 +
+      (bytes[at + 6] ?? 0) * 0x10000 +
+      (bytes[at + 7] ?? 0) * 0x1000000;
     yield [type, at + 8, length];
     at += 8 + length + (length % 2);
   }
