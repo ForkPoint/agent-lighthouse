@@ -135,6 +135,9 @@ importers:
 
   packages/website:
     dependencies:
+      '@astrojs/markdown-satteri':
+        specifier: 0.3.7
+        version: 0.3.7
       '@forkpoint/agent-lighthouse-core':
         specifier: workspace:*
         version: link:../core
