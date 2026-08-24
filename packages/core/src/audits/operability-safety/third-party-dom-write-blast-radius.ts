@@ -1,11 +1,11 @@
 // Graduated from proposal 2026-08-23 (Plan 5b, Wave A, Task 8).
 // Evidence dossier: docs/evidence/audits/operability-safety/third-party-dom-write-blast-radius.md
 //
-// Scope note (non-double-counting): `security-header-hygiene` asks whether the
-// security headers a site sends are present and well-formed. This audit asks a
-// different question with one of the same inputs: how many separate companies
-// can write text into the DOM an agent reads. A site with a perfect header
-// grade and eleven uncontrolled script origins fails here and passes there.
+// Scope note: this is the only audit that reads a Content-Security-Policy.
+// `security-header-hygiene` used to report one too, until the contradiction
+// sweep of 2026-08-24 narrowed it to security.txt on grade-D evidence. The
+// question here was never the header's well-formedness: it is how many separate
+// companies can write text into the DOM an agent reads.
 import type { AuditMeta, AuditResult } from '../../types';
 import { Audit } from '../../audit';
 import { weightForGrade } from '../../scorer';

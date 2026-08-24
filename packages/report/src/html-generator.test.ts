@@ -82,9 +82,9 @@ describe('generateHtmlReport', () => {
     expect(html).toContain('No consumer reads this signal.');
   });
 
-  // Final-review finding I2: the ai-bot-directives per-bot table and the
-  // security-header-hygiene weak-vs-missing breakdown live entirely in `found`,
-  // so the report must keep its newlines and must render `details.found`.
+  // Final-review finding I2: the ai-bot-directives per-bot table lives entirely
+  // in `found`, so the report must keep its newlines and must render
+  // `details.found`.
   it('preserves newlines in a multi-line found value and renders details.found', () => {
     const table = 'GPTBot: allowed\nClaudeBot: allowed\nPerplexityBot: blocked';
     const html = generateHtmlReport(
