@@ -54,6 +54,8 @@ vendor-level audit was not done and remains open.
 
 **Mechanism:** Disallowing Claude-SearchBot removes the site from the index Anthropic uses to improve Claude's search result quality, reducing the chance of being surfaced/cited in Claude search answers.
 
+**Grade: A** — Anthropic names the token and its purpose — it "analyzes online content specifically to enhance the relevance and accuracy of search responses" — under the same robots.txt-compliance statement and IP list that cover its other bots. That is a named agent reading a named directive, which is grade A. The exclusion-from-answers consequence is inferred from the stated purpose rather than asserted the way OpenAI asserts it for OAI-SearchBot, which is why the audit's copy states the purpose and not a promise.
+
 **Evidence:** Documented by Anthropic: Claude-SearchBot 'navigates the web to improve search result quality for users. It analyzes online content specifically to enhance the relevance and accuracy of search responses', covered by the same robots.txt-compliance statement and the claude.com/crawling/bots.json IP list. As a search/citation-side agent it is the Anthropic analogue of OAI-SearchBot and PerplexityBot, so an allow is the visibility-positive state.
 
 **Counter-evidence:** Anthropic does not state the consequence of blocking as explicitly as OpenAI does for OAI-SearchBot ('will not be shown in ChatGPT search answers') — the exclusion-from-answers link is inferred from the agent's stated purpose, not asserted. No published per-bot citation-impact study isolates Claude-SearchBot.

@@ -15,6 +15,25 @@ reviewed: 2026-08-22
 
 > crawler-permissions · source `ai-bot-directives.ts` · consolidates bytespider (2.9), cohere-ai (2.10), youbot (2.11), diffbot (2.12), ai2bot (2.13) · evidence grade **B** · tier **scored** (weight 0.6)
 
+## What it checks
+
+Your robots.txt stance on five long-tail AI bot tokens, reported in one place.
+Two of them affect the result — **YouBot** (You.com) and **AI2Bot** (Allen
+Institute) — because only those two have an operator who publishes crawler
+documentation naming the token, which is what makes the directive readable by
+anyone.
+
+For those two, an explicit `User-agent` group with `Allow: /` passes: it keeps a
+documented consumer path open and pins the policy against a later blanket block.
+Leaving them to the catch-all `*` warns, because the policy is unstated and will
+flip the day a blanket block is added. An explicit `Disallow: /` is reported as a
+failure — a legitimate publisher decision, but one that closes a documented
+consumer path, and this check records that cost rather than hiding it.
+
+**Bytespider**, **cohere-ai** and **Diffbot** are listed for information only and
+never change the result. Blocking them is a reasonable operational choice that
+costs no AI-answer visibility.
+
 ## Claimed mechanism (falsifiable)
 
 **Falsifiable claim:** For AI bots whose operator publishes crawler documentation naming the product token — YouBot (You.com) and AI2Bot (Allen Institute) — a `User-agent:` group in `robots.txt` is read by that operator and determines whether the site enters that operator's corpus or index. A `Disallow: /` for those tokens therefore closes a documented consumer path; an explicit `Allow: /` keeps it open and pins the policy against a later blanket block.

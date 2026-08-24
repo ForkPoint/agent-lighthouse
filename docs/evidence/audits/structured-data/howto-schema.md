@@ -43,7 +43,19 @@ Detects step content with an English-only regex that requires the number to be t
 
 ## Evidence
 
-_No dedicated evidence signal was researched for this audit in the 2026-08-20 pass. Its tier assignment falls to the taxonomy design; unproven mechanisms default to informative per the [evidence policy](../../POLICY.md)._
+### Signal: HowTo JSON-LD as an ingestion-quality hint — grade C (structured-data)
+
+**Mechanism:** A page with sequential instructions that emits `HowTo` JSON-LD hands a reader an unambiguous ordered `step[]` array instead of making it infer step boundaries and ordering from headings and prose — an ingestion-quality benefit that would survive the loss of any rich result.
+
+**Grade: C** — the type is genuinely widely deployed and still first-class in the schema.org vocabulary, and structured data as a class is associated with citation, but no vendor documents any consumer reading `HowTo` today and Google explicitly deprecated the only consumer that ever existed.
+
+**Evidence:**
+- The type is alive and broadly deployed: schema.org/HowTo carries no deprecated, attic or pending marker and reports 100K–1M domains (Google web index, July 2026) — https://schema.org/HowTo (verified 2026-08-21)
+- Pillar-level empirical support, not type-level: the GEO-16 study audited 1,702 citations across Brave Summary, Google AI Overviews and Perplexity and found that "pillars related to Metadata and Freshness, Semantic HTML, and Structured Data showed the strongest associations with citation" — https://arxiv.org/abs/2509.10762 (verified 2026-08-21)
+
+**Counter-evidence:** Explicit and strong. Google deprecated the rich result: "As of September 13, Google Search no longer shows How-to rich results on desktop, which means this result type is now deprecated" (https://developers.google.com/search/blog/2023/08/howto-faq-changes, verified 2026-08-21). It then removed the documentation — "Removed the How-to structured data documentation, as this rich result is no longer shown in search results" — and the old documentation URL now 301-redirects to an anchor Google named `#how-to-deprecation` (https://developers.google.com/search/updates#how-to-deprecation, verified 2026-08-21). Google also states that unused markup is inert: "Structured data that's not being used does not cause problems for Search, but also has no visible effects in Google Search." The assistant path is gone as well: `developers.google.com/assistant/content/howto` returns HTTP 404, and the surviving "Actions from web content" overview lists only FAQs, Media, News and Podcasts. Beyond Google: Microsoft's NLWeb codebase contains zero mentions of HowTo, Apple's Applebot documentation names only `isAccessibleForFree`, and OpenAI's commerce specification excludes JSON-LD sources entirely. The GEO-16 finding supports emitting structured data in general; it does not isolate this type.
+
+**Sources:** [Changes to HowTo and FAQ rich results](https://developers.google.com/search/blog/2023/08/howto-faq-changes) (verified 2026-08-21) · [Google Search documentation updates — how-to deprecation](https://developers.google.com/search/updates#how-to-deprecation) (verified 2026-08-21) · [schema.org/HowTo](https://schema.org/HowTo) (verified 2026-08-21) · [GEO-16: a framework for generative-engine citation](https://arxiv.org/abs/2509.10762) (verified 2026-08-21)
 
 ## Adversarial redemption research (2026-08-21)
 

@@ -80,7 +80,19 @@ Google announced on 2025-08-20 that "Over time, Gemini for Home will replace Goo
 
 ## Evidence
 
-_No dedicated evidence signal was researched for this audit in the 2026-08-20 pass, which is why its tier initially fell to the taxonomy default. The 2026-08-21 adversarial pass below supplied the missing evidence — a live vendor doc naming Google Assistant as the consumer — and the grade-A assignment supersedes that default._
+### Signal: `speakable` selects the sentences an assistant reads aloud — grade B (structured-data)
+
+**Mechanism:** Google Assistant answers a spoken news query by reading article text aloud with text-to-speech, and `speakable` names the sections it reads — so an article without it has its excerpt chosen for it, often from navigation or boilerplate rather than from the headline and summary.
+
+**Grade: B** — Google names the consuming agent on a live page, which is documented consumer behaviour, but the same page calls the feature beta and limits it to one country, one language and one content type. A vendor feature its own vendor labels provisional is a grade-B mechanism, not a grade-A one.
+
+**Evidence:**
+- Google Search Central's speakable page (last updated 2025-12-10) names the consumer and the behaviour: "When users ask for news about a specific topic, the Google Assistant returns up to three articles from around the web and supports audio playback using TTS for sections in the article with speakable structured data" — https://developers.google.com/search/docs/appearance/structured-data/speakable (verified 2026-08-24)
+- The property is defined by schema.org on `Article` and `WebPage`, with `cssSelector` and `xpath` as the two addressing forms, both valid as a single string or an array — https://schema.org/speakable (verified 2026-08-21)
+
+**Counter-evidence:** The same Google page states "This feature is in beta and subject to change", and scopes it to "users in the U.S. that have Google Home devices set to English, and publishers that publish content in English", news content only. No other consumer exists: Apple's Applebot documentation names exactly one schema.org property, `isAccessibleForFree`, and no `speakable` (https://support.apple.com/en-us/119829, verified 2026-08-21); Amazon publishes no `speakable` documentation at all. The widely repeated claim that Alexa and Siri read `speakable` has no primary source, and a regression test now asserts that neither name appears in this audit's copy. The consumer is also on a stated migration path: Google announced on 2025-08-20 that "Over time, Gemini for Home will replace Google Assistant on existing speakers and displays", with no successor statement about `speakable`. If that transition completes without one, this audit loses its consumer entirely rather than one grade.
+
+**Sources:** [Speakable structured data](https://developers.google.com/search/docs/appearance/structured-data/speakable) (verified 2026-08-24) · [schema.org/speakable](https://schema.org/speakable) (verified 2026-08-21) · [About Applebot](https://support.apple.com/en-us/119829) (verified 2026-08-21)
 
 ## Adversarial redemption research (2026-08-21)
 

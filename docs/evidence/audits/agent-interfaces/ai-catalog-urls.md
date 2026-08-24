@@ -72,7 +72,21 @@ Source: the [redemption dossier's verdict](../../deletions/agent-tools/ai-catalo
 
 ## Evidence
 
-_No dedicated evidence signal was researched for this audit in the 2026-08-20 pass; the grade comes from the adversarial redemption research below._
+### Signal: ARD `entries[].url` dereferenced by real clients — grade B (agent-tools)
+
+**Mechanism:** A discovery client follows an entry's `url` to reach the artifact it advertises, and for catalog- or registry-typed entries it follows that url into a nested catalog — so one dead url does not degrade a listing, it truncates a whole branch of discovery.
+
+**Grade: B** — the dereferencing is done by real, readable code in more than one implementation, which is stronger than a convention; it is not A because no vendor documents a penalty for a dead url, and the traversing client is user-driven rather than a hosted crawler.
+
+**Evidence:**
+- `hf-discover`'s `navigate()` uses an entry's `url` to traverse into nested catalogs and federated registries, fetching entries whose `type` is a catalog or registry media type — https://github.com/huggingface/hf-discover (verified 2026-08-24)
+- Independent implementations check liveness explicitly: `HelgeSverre/ardvark` ships `internal/crawler` and `internal/probe`, and `iFurySt/OpenARD` ships `internal/cli/verify.go`.
+- Live manifests point at operational endpoints an agent would call immediately: Neon's ten entries are MCP servers and skills, Weaviate's nine are docs, agent skills, an OpenAPI description and a sitemap, and Shopware's is a Store-API MCP server url.
+- ARD §4.2 requires exactly one of `url` or `data` per entry, so an entry that embeds its artifact has no endpoint to dereference and is fully conformant — https://github.com/ards-project/ard-spec (verified 2026-08-24)
+
+**Counter-evidence:** No vendor document states that a crawler penalises or downranks a site for a dead catalog url. The consequence is mechanical — traversal stops, the tool call fails — rather than a published ranking signal, and the federation-following behaviour lives in a user-driven client: Hugging Face's hosted server states that "Navigation is intentionally not exposed by the hosted server". ARD itself is a draft (v0.9). The inline-`data` case above is also a live false-positive risk that any liveness check must respect, and the pre-2026-08-22 implementation was unreachable on real sites for the opposite reason: it aborted unless the manifest exposed a `services` array, which no spec or deployment uses.
+
+**Sources:** [ARD specification](https://github.com/ards-project/ard-spec) (verified 2026-08-24) · [huggingface/hf-discover](https://github.com/huggingface/hf-discover) (verified 2026-08-24)
 
 ## Adversarial redemption research (2026-08-21)
 

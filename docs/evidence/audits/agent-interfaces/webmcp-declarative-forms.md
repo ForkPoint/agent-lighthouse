@@ -71,7 +71,20 @@ Source: the [redemption dossier's verdict](../../deletions/agent-tools/webmcp-de
 
 ## Evidence
 
-_No dedicated evidence signal was researched for this audit in the 2026-08-20 pass; the grade comes from the adversarial redemption research below._
+### Signal: declarative WebMCP attributes read by the browser — grade B (agent-tools)
+
+**Mechanism:** A form annotated with the declarative WebMCP attributes is registered by the browser as an agent-callable tool, so an agent that wants to act on the page gets a described tool with typed parameters instead of having to infer a form's purpose from its markup.
+
+**Grade: B** — Chrome documents its own browser reading the attributes, which is documented consumer behaviour; the API is an origin trial rather than a shipped one, and Chrome says it is "under active discussion and subject to change", which is a draft standard with adoption rather than a ratified one.
+
+**Evidence:**
+- Chrome's declarative-API page (published 2026-05-18) documents `toolname` and `tooldescription` on `<form>`, `toolparamdescription` on individual form elements, and `toolautosubmit` — https://developer.chrome.com/docs/ai/webmcp/declarative-api (verified 2026-08-24)
+- The same page states the consuming behaviour directly: "The browser interprets this form as a tool", and "When an agent calls `toolname`, the browser brings the form into focus and populates its field."
+- The attribute set is the W3C Web Machine Learning Community Group's, so the browser is implementing a group specification rather than a private vendor extension — https://webmachinelearning.github.io/webmcp/ (verified 2026-08-21)
+
+**Counter-evidence:** The page carries an origin-trial badge and states that "WebMCP is under active discussion and subject to change in the future", so both the attribute names and the registration behaviour can move. The declarative path is also the younger of the two: the imperative `navigator.modelContext` registration is what Lighthouse reports on, and this project's own `agent-interfaces/webmcp-registered-tools` covers it at `experimental` precisely because a scanner with no JavaScript runtime cannot observe it. No adoption measurement exists for the declarative attributes on the public web, and a site that implements WebMCP imperatively will carry none of them while being fully agent-callable — which is why a page with no form at all is not applicable rather than a failure here.
+
+**Sources:** [Declarative WebMCP API](https://developer.chrome.com/docs/ai/webmcp/declarative-api) (verified 2026-08-24) · [WebMCP — Draft Community Group Report](https://webmachinelearning.github.io/webmcp/) (verified 2026-08-21)
 
 ## Adversarial redemption research (2026-08-21)
 

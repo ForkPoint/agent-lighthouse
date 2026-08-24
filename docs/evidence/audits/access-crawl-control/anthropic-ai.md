@@ -52,6 +52,8 @@ The only bot audit with custom alias logic, and that logic can invert the result
 
 **Mechanism:** Disallowing ClaudeBot stops Anthropic from collecting the site's content for potential model training; Anthropic states its bots honor robots.txt.
 
+**Grade: A** — Anthropic's current crawler article names ClaudeBot, describes it as "collecting web content that could potentially contribute to their training", asserts that "Anthropic's Bots respect do not crawl signals by honoring industry standard directives in robots.txt", and publishes an IP list for verification. A named agent, a named directive and a stated behaviour is the grade-A bar.
+
 **Evidence:** Anthropic documents ClaudeBot as 'collecting web content that could potentially contribute to their training' and states 'Anthropic's Bots respect do not crawl signals by honoring industry standard directives in robots.txt', with IP verification at claude.com/crawling/bots.json. Very much active in 2026 and often the #1 AI crawler by volume: Cloudflare Radar had ClaudeBot and GPTBot together at nearly half of all AI crawl activity, and Known Agents records 21% of top websites blocking ClaudeBot as of 2026-08-19 — the highest block rate of any Anthropic token.
 
 **Counter-evidence:** Anthropic has by far the worst crawl-to-refer ratio measured by Cloudflare Radar (~50,000:1 overall, 2,500:1 in News & Publications), so allowing ClaudeBot buys essentially no referral traffic — the allow-side case is about training/corpus inclusion, not visibility. Note the canonical support URL moved from support.anthropic.com to support.claude.com; audits hard-coding the old host will 301.
@@ -62,6 +64,8 @@ The only bot audit with custom alias logic, and that logic can invert the result
 ### Signal: anthropic-ai (legacy token) present in robots.txt — grade C (robots-ai-crawlers)
 
 **Mechanism:** 'anthropic-ai' is a legacy/undocumented token widely copy-pasted into robots.txt boilerplate; it appears in no current Anthropic documentation, so blocking or allowing it has no vendor-confirmed consequence.
+
+**Grade: C** — The token is genuinely widespread — 16% of top sites carry it — but that is adoption by publishers, not consumption by an agent. It appears in no current Anthropic documentation, has no published IP range and no traffic breakout, so nothing confirms any consequence of allowing or blocking it. Wide adoption plus an unproven mechanism is grade C, which is why this signal is reported and never scored.
 
 **Evidence:** Known Agents classifies anthropic-ai as an 'Undocumented AI Agent' — 'Crawls websites without disclosing its purpose, collecting data for an unknown AI use case' — while attributing it to Anthropic. Adoption is nevertheless substantial: 16% of top websites block anthropic-ai, evidence of how deeply it is embedded in circulated robots.txt templates. Claude-Web is in the same category: 'currently unclear exactly what it's used for, since there's no official documentation.'
 

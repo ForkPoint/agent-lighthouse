@@ -30,9 +30,9 @@ tools sources of a different proposal, none of which touch duplication or
 canonical election. It is replaced here by the sources this audit's mechanism
 actually rests on.
 
-- **[Consolidate duplicate URLs](https://developers.google.com/search/docs/crawling-indexing/consolidate-duplicate-urls)** — Google Search Central (documentation, URL verified 2026-08-21 for `access-crawl-control/canonical`)
+- **[Consolidate duplicate URLs](https://developers.google.com/search/docs/crawling-indexing/consolidate-duplicate-urls)** — Google Search Central (documentation, carried over from the canonical-URL research, URL verified 2026-08-21)
   - Google selects one canonical URL per duplicate cluster and consolidates the signals of the other members onto it: "It helps search engines to be able to consolidate the signals they have for the individual URLs (such as links to them) into a single, preferred URL." Google may pick a canonical other than the declared one. This is the half of the mechanism this audit tests directly — a cluster whose members all self-canonicalize gives the election no answer, and only one member stays eligible to be shown.
-- **[AI features and your website](https://developers.google.com/search/docs/appearance/ai-features)** — Google Search Central (documentation, URL verified 2026-08-21 for `answer-readiness/faq-answer-blocks`)
+- **[AI features and your website](https://developers.google.com/search/docs/appearance/ai-features)** — Google Search Central (documentation, carried over from the answer-block research, URL verified 2026-08-21)
   - AI Overviews and AI Mode draw on pages that are indexed and snippet-eligible. A cluster member that loses canonical election is not the indexed URL, so however well written it is, it is not the page a generative surface can cite.
 
 **Not carried over.** The proposal's second mechanism — that a page made mostly

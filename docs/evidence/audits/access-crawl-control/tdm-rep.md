@@ -15,6 +15,25 @@ reviewed: 2026-08-22
 
 > access-crawl-control · source `tdm-rep.ts` · evidence grade **C** · tier **experimental** (weight 0) · rewritten so the two reservation directions are distinct outcomes, absence is `na`, and the file is validated against the spec shape — see below
 
+## What it checks
+
+Whether your site publishes a **TDM-Rep** declaration — a machine-readable
+text-and-data-mining reservation — and, if so, in which direction it points.
+
+The declaration lives in one of two places: a `<meta name="tdm-reservation">`
+tag, or a `/.well-known/tdmrep.json` policy file, which is validated against the
+shape the specification defines (an array of objects, each carrying `location`
+and `tdm-reservation`, optionally `tdm-policy`).
+
+The two directions are reported as distinct outcomes, never as the same one:
+`tdm-reservation="1"` reserves your mining rights, `"0"` permits mining. A site
+that publishes no declaration is **not applicable**, not a failure — nothing is
+documented to read the file, so its absence is not a defect.
+
+Nothing here changes your score. TDM-Rep is a W3C Community Group Final Report,
+explicitly not a W3C Standard, and its value is legal evidence of an opt-out
+rather than a change in any agent's behaviour.
+
 ## What it checked before the rewrite
 
 The TDM-Rep (Text and Data Mining Reservation) protocol is the emerging machine-readable standard for declaring whether your content may be used for text and data mining, anchored in EU DSM Directive Article 4. Without an explicit declaration — either a <meta name="tdm-reservation"> tag or a /.well-known/tdmrep.json policy file — AI crawlers and licensing agents cannot tell whether you reserve your mining rights, leaving your content in a legal gray zone where well-behaved agents guess and the rest assume permission. Declaring your terms explicitly puts you in control of how AI systems may use your content.

@@ -74,7 +74,21 @@ Source: the [redemption dossier's verdict](../../deletions/agent-tools/ai-catalo
 
 ## Evidence
 
-_No dedicated evidence signal was researched for this audit in the 2026-08-20 pass; the grade comes from the adversarial redemption research below._
+### Signal: ARD entry metadata read by a discovery client — grade B (agent-tools)
+
+**Mechanism:** A discovery client picks which catalog entry answers a query by matching text drawn from named entry fields, so an entry that omits those fields is present in the manifest and invisible to the query — the manifest lists it, and no search surfaces it.
+
+**Grade: B** — the consuming code is first-party, public and readable, and the fields it matches on are exactly the ones this audit scores. It is not grade A because ARD is a draft (v0.9) rather than a ratified standard, and because the behaviour is documented in a client's source rather than in a vendor statement about a hosted crawler.
+
+**Evidence:**
+- Hugging Face ships `hf-discover`, an ARD-compliant client whose navigate mode performs "automatic `.well-known/ai-catalog.json` discovery from a website" and follows federated registries — https://github.com/huggingface/hf-discover (verified 2026-08-24)
+- Its `_entry_haystack()` in `navigation.py` builds the match text from `displayName`, `description`, `tags`, `capabilities` and `representativeQueries`. `displayName` is already mandatory under ARD §4.2, so the four this audit scores are exactly the optional keys that decide whether a query surfaces an entry at all.
+- ARD §4.1 makes `specVersion`, `host` and `entries` the required top-level fields, and defines `version`, `updatedAt`, `tags`, `metadata` and `trustManifest` as optional enrichment; identity is expressed through `host.identifier` (a DID) and the optional `trustManifest` — https://github.com/ards-project/ard-spec (verified 2026-08-24)
+- ARD is a Linux Foundation working-group specification with Google, Microsoft and Hugging Face among its contributors, published 2026-06-17 under Apache 2.0 — https://developers.googleblog.com/announcing-the-agentic-resource-discovery-specification/ (verified 2026-08-24)
+
+**Counter-evidence:** No crawler is documented to downrank a site for thin catalog metadata. The consequence is mechanical — the client matches less text — not a published ranking signal, and the hosted Hugging Face server does not fetch arbitrary well-known files at all: "Navigation is intentionally not exposed by the hosted server", so the consuming path is a user-driven CLI rather than a background crawler. The specification is also a draft and says so. Historically this audit scored an invented field list (`owner`, `contact`, `lastUpdated`, `services`) that appears in no revision of the spec and in none of the four live manifests checked — the ARD conformance example, neon.com, weaviate.io and the Shopware core template — so a spec-perfect manifest scored zero until the 2026-08-22 rewrite.
+
+**Sources:** [ARD specification](https://github.com/ards-project/ard-spec) (verified 2026-08-24) · [huggingface/hf-discover](https://github.com/huggingface/hf-discover) (verified 2026-08-24) · [Announcing the Agentic Resource Discovery specification](https://developers.googleblog.com/announcing-the-agentic-resource-discovery-specification/) (verified 2026-08-24)
 
 ## Adversarial redemption research (2026-08-21)
 
