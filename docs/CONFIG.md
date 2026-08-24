@@ -30,13 +30,15 @@ All three are parsed as **JSON**. An auto-discovered file that fails to parse is
 }
 ```
 
-With that file in place, `agent-lighthouse` with no arguments scans the declared URL and enforces the declared budgets.
+With that file in place, `agent-lighthouse audit` — the sub-command with no URL after it — scans the declared URL and enforces the declared budgets. Any invocation whose first argument is a flag reads the file too, so `agent-lighthouse --silent` and `agent-lighthouse --config ./ci/staging.json` also pick the URL up from it.
+
+A bare `agent-lighthouse` with no arguments at all does **not**: it prints the usage block and exits 1 before the config file is opened. See [CLI.md](./CLI.md#invocation).
 
 ### Keys
 
 | Key                | Type                                              | Default              | Effect                                                                 |
 | :----------------- | :------------------------------------------------ | :------------------- | :--------------------------------------------------------------------- |
-| `url`              | `string`                                          | none                 | Target URL, used when none is given on the command line.                |
+| `url`              | `string`                                          | none                 | Target URL, used when the invocation gives none — see [CLI.md](./CLI.md#invocation) for which forms read it. |
 | `preset`           | `"ecommerce" \| "saas" \| "content" \| "quick" \| "full"` | `"full"`      | Preset name shown in the run header.                                    |
 | `minScore`         | `number` (0–100)                                  | `0`                  | Overall-score budget; the run exits 1 below it.                         |
 | `assertCategories` | `Record<string, number>`                          | `{}`                 | Per-category budgets, keyed by category id.                             |

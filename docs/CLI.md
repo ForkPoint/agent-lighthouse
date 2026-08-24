@@ -34,14 +34,18 @@ agent-lighthouse --help
 
 The first two forms do the same thing; the `audit` sub-command exists so scripts can read more explicitly. The third is not a flag on a scan: help is recognised only when `-h` or `--help` is the **first** argument, so `agent-lighthouse --help` prints usage while `agent-lighthouse https://example.com --help` ignores it and scans the URL. The URL must be absolute and include its scheme (`https://example.com`, not `example.com`) — anything the `URL` constructor rejects exits with code 1.
 
-The URL may also come from a [config file](./CONFIG.md#the-config-file) instead of the command line. If neither supplies one, the CLI prints its usage and exits 1.
+The URL may also come from a [config file](./CONFIG.md#the-config-file) instead of the command line, but only from an invocation that gets as far as reading one. Two forms do: `agent-lighthouse audit` — the sub-command with no URL after it — and anything whose first argument is a flag, such as `agent-lighthouse --silent`. A bare `agent-lighthouse` with no arguments does **not**: it prints usage and exits 1 before the config file is opened. If a form that does read the file finds no URL there either, the CLI prints its usage and exits 1.
 
 ```bash
 # scan a staging site and open the HTML report when it is done
 agent-lighthouse https://staging.yourstore.com --view
 
-# scan the URL declared in agent-lighthouse.config.json
-agent-lighthouse
+# scan the URL declared in agent-lighthouse.config.json:
+# the audit sub-command with no URL after it ...
+agent-lighthouse audit
+
+# ... or any invocation whose first argument is a flag
+agent-lighthouse --config ./ci/agent-lighthouse.staging.json
 ```
 
 ### How flag values are read
