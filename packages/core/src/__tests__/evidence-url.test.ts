@@ -28,6 +28,40 @@ describe('evidenceUrl', () => {
       }
     }
   });
+
+  /**
+   * The pin the spec asks for: a docsUrl that points into the site's published
+   * evidence pages must be *this* audit's page, not merely some page under
+   * `/audits/` — which is all the tests above can tell. Without the
+   * equality, renaming an audit's id leaves its guidance link pointing at
+   * whatever used to live at the old address — a link that still resolves, so
+   * nothing else in the suite notices.
+   *
+   * Only site-pointing values are pinned. The rest cite external
+   * specifications (`schema.org`, RFCs, vendor docs); those are not derivable
+   * from an id and are left alone.
+   */
+  it('pins every site-pointing docsUrl to that audit’s own evidence page', () => {
+    const prefix = evidenceUrl('').replace(/\/$/, '');
+    let pinned = 0;
+
+    for (const registrations of Object.values(defaultConfig.audits)) {
+      for (const reg of registrations) {
+        const docsUrl = reg.meta.guidance?.docsUrl;
+        if (!docsUrl?.startsWith(prefix)) continue;
+        pinned += 1;
+        expect(
+          docsUrl,
+          `${reg.meta.id}: docsUrl points at a published evidence page that is not its own`,
+        ).toBe(evidenceUrl(reg.meta.id));
+      }
+    }
+
+    // A guard on the guard: if the migration were reverted wholesale, every
+    // docsUrl would stop matching the prefix and the loop above would assert
+    // nothing at all.
+    expect(pinned, 'no audit links its own evidence page any more').toBeGreaterThan(50);
+  });
 });
 
 /**
