@@ -29,9 +29,10 @@ Once installed the binary is called `agent-lighthouse`.
 ```
 agent-lighthouse <url> [options]
 agent-lighthouse audit <url> [options]
+agent-lighthouse --help
 ```
 
-Both forms do the same thing; the `audit` sub-command exists so scripts can read more explicitly. The URL must be absolute and include its scheme (`https://example.com`, not `example.com`) — anything the `URL` constructor rejects exits with code 1.
+The first two forms do the same thing; the `audit` sub-command exists so scripts can read more explicitly. The third is not a flag on a scan: help is recognised only when `-h` or `--help` is the **first** argument, so `agent-lighthouse --help` prints usage while `agent-lighthouse https://example.com --help` ignores it and scans the URL. The URL must be absolute and include its scheme (`https://example.com`, not `example.com`) — anything the `URL` constructor rejects exits with code 1.
 
 The URL may also come from a [config file](./CONFIG.md#the-config-file) instead of the command line. If neither supplies one, the CLI prints its usage and exits 1.
 
@@ -60,7 +61,7 @@ The one exception is `--assert-category`, which is read by a separate pass that 
 
 | Flag                        | Value              | Default              | What it does                                                        |
 | :-------------------------- | :----------------- | :------------------- | :------------------------------------------------------------------ |
-| `-h`, `--help`              | —                  | —                    | Print usage and exit.                                                |
+| `-h`, `--help`              | —                  | —                    | Print usage and exit. Recognised only as the first argument.          |
 | `-p`, `--preset <name>`     | preset name        | `full`               | Names the audit profile shown in the report header.                  |
 | `-c`, `--config <path>`     | file path          | auto-discovered      | Load configuration from an explicit file.                            |
 | `--categories <list>`       | comma-separated ids | all eight           | Restrict the scan to these categories.                               |
@@ -76,7 +77,11 @@ The one exception is `--assert-category`, which is read by a separate pass that 
 
 ### `-h`, `--help`
 
-Prints the usage block and exits. Note that the exit code is **1**, not 0 — the same code as a missing URL, since both mean "nothing was scanned". Do not use `agent-lighthouse --help` as a health check in a script that treats a non-zero exit as a failure.
+Prints the usage block and exits.
+
+Unlike every other entry in this table, help is not an option on a scan: it is read only when it is the **first** argument. `agent-lighthouse --help` and `agent-lighthouse -h` print usage; `agent-lighthouse https://example.com --help` runs a full scan of that URL and never prints anything about usage. Running the command with no arguments at all prints the same usage block.
+
+Note also that the exit code is **1**, not 0 — the same code as a missing URL, since both mean "nothing was scanned". Do not use `agent-lighthouse --help` as a health check in a script that treats a non-zero exit as a failure.
 
 ### `-p`, `--preset <name>`
 
