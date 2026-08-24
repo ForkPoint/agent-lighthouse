@@ -218,6 +218,16 @@ describe('robots.txt consumers — shared-gatherer differential', () => {
 // `fail` to `na`; the two blanket-block fixtures now carry the only failure
 // the evidence supports. No other audit's rows moved.
 
+// Regenerated a third time, deliberately, in the contradiction sweep
+// (2026-08-24): anthropic-ai now scores the live `ClaudeBot` token alone. The
+// retired `anthropic-ai` and `Claude-Web` aliases became a non-scoring note, so
+// the audit no longer awards half a point for a group Anthropic's crawlers stop
+// reading. Four fixtures with no readable robots.txt (`missing`, `non-200`,
+// `empty`, `html-error-page`) move from `warn`/0.5 to `na`/0; twelve fixtures
+// that leave ClaudeBot able to fetch `/` move from `warn`/0.5 to `pass`/1; the
+// three that disallow it stay `fail`/0 with new text at priority `medium`. No
+// other audit's rows moved.
+
 const BASELINE: Record<string, Record<string, Row>> =  {
   "no-blanket-block": {
     "missing": {
@@ -1031,164 +1041,164 @@ const BASELINE: Record<string, Record<string, Row>> =  {
   },
   "anthropic-ai": {
     "missing": {
-      "status": "warn",
-      "score": 0.5,
-      "message": "robots.txt not found — anthropic-ai / ClaudeBot is allowed by default but not explicitly.",
+      "status": "na",
+      "score": 0,
+      "message": "No robots.txt to read, so there are no crawl rules to evaluate for ClaudeBot.",
       "found": "No robots.txt found",
       "priority": "medium",
       "details": "{}"
     },
     "non-200": {
-      "status": "warn",
-      "score": 0.5,
-      "message": "robots.txt not found — anthropic-ai / ClaudeBot is allowed by default but not explicitly.",
+      "status": "na",
+      "score": 0,
+      "message": "No robots.txt to read, so there are no crawl rules to evaluate for ClaudeBot.",
       "found": "No robots.txt found",
       "priority": "medium",
       "details": "{}"
     },
     "empty": {
-      "status": "warn",
-      "score": 0.5,
-      "message": "robots.txt not found — anthropic-ai / ClaudeBot is allowed by default but not explicitly.",
+      "status": "na",
+      "score": 0,
+      "message": "No robots.txt to read, so there are no crawl rules to evaluate for ClaudeBot.",
       "found": "No robots.txt found",
       "priority": "medium",
       "details": "{}"
     },
     "html-error-page": {
-      "status": "warn",
-      "score": 0.5,
-      "message": "anthropic-ai / ClaudeBot is allowed by default (no specific rules), but not explicitly allowed.",
-      "found": "No explicit rules for anthropic-ai — allowed via wildcard or default",
+      "status": "na",
+      "score": 0,
+      "message": "The response at /robots.txt carries no crawl rules, so there is nothing to evaluate for ClaudeBot.",
+      "found": "robots.txt contains no user-agent groups and no directives",
       "priority": "medium",
       "details": "{}"
     },
     "wildcard-allow": {
-      "status": "warn",
-      "score": 0.5,
-      "message": "anthropic-ai / ClaudeBot is allowed by default (no specific rules), but not explicitly allowed.",
-      "found": "No explicit rules for anthropic-ai — allowed via wildcard or default",
+      "status": "pass",
+      "score": 1,
+      "message": "ClaudeBot is allowed. No group names it, so under RFC 9309 §2.2.1 it obeys the catch-all group, which permits /.",
+      "found": "Allowed through the catch-all group",
       "priority": "medium",
-      "details": "{}"
+      "details": "{\"namedGroup\":false,\"hasCatchAll\":true,\"allowed\":true,\"legacyTokens\":[]}"
     },
     "wildcard-blanket-block": {
       "status": "fail",
       "score": 0,
-      "message": "anthropic-ai / ClaudeBot is blocked by robots.txt.",
-      "found": "anthropic-ai is disallowed (Disallow: /)",
-      "priority": "high",
-      "details": "{}"
+      "message": "ClaudeBot is disallowed at the site root. Anthropic states its bots honour robots.txt, so the block takes effect: the site is excluded from the web content Anthropic collects for potential model training.",
+      "found": "The catch-all group disallows / and no group names ClaudeBot",
+      "priority": "medium",
+      "details": "{\"namedGroup\":false,\"hasCatchAll\":true,\"allowed\":false,\"legacyTokens\":[]}"
     },
     "blanket-block-countered": {
-      "status": "warn",
-      "score": 0.5,
-      "message": "anthropic-ai / ClaudeBot is allowed by default (no specific rules), but not explicitly allowed.",
-      "found": "No explicit rules for anthropic-ai — allowed via wildcard or default",
+      "status": "pass",
+      "score": 1,
+      "message": "ClaudeBot is allowed. No group names it, so under RFC 9309 §2.2.1 it obeys the catch-all group, which permits /.",
+      "found": "Allowed through the catch-all group",
       "priority": "medium",
-      "details": "{}"
+      "details": "{\"namedGroup\":false,\"hasCatchAll\":true,\"allowed\":true,\"legacyTokens\":[]}"
     },
     "wildcard-star-disallow": {
       "status": "fail",
       "score": 0,
-      "message": "anthropic-ai / ClaudeBot is blocked by robots.txt.",
-      "found": "anthropic-ai is disallowed (Disallow: /)",
-      "priority": "high",
-      "details": "{}"
+      "message": "ClaudeBot is disallowed at the site root. Anthropic states its bots honour robots.txt, so the block takes effect: the site is excluded from the web content Anthropic collects for potential model training.",
+      "found": "The catch-all group disallows / and no group names ClaudeBot",
+      "priority": "medium",
+      "details": "{\"namedGroup\":false,\"hasCatchAll\":true,\"allowed\":false,\"legacyTokens\":[]}"
     },
     "both-categories": {
-      "status": "warn",
-      "score": 0.5,
-      "message": "anthropic-ai / ClaudeBot is allowed by default (no specific rules), but not explicitly allowed.",
-      "found": "No explicit rules for anthropic-ai — allowed via wildcard or default",
+      "status": "pass",
+      "score": 1,
+      "message": "ClaudeBot is allowed. No group names it, so under RFC 9309 §2.2.1 it obeys the catch-all group, which permits /.",
+      "found": "Allowed through the catch-all group",
       "priority": "medium",
-      "details": "{}"
+      "details": "{\"namedGroup\":false,\"hasCatchAll\":true,\"allowed\":true,\"legacyTokens\":[]}"
     },
     "versioned-product-token": {
-      "status": "warn",
-      "score": 0.5,
-      "message": "anthropic-ai / ClaudeBot is allowed by default (no specific rules), but not explicitly allowed.",
-      "found": "No explicit rules for anthropic-ai — allowed via wildcard or default",
+      "status": "pass",
+      "score": 1,
+      "message": "ClaudeBot is allowed. No group names it, so under RFC 9309 §2.2.1 it obeys the catch-all group, which permits /.",
+      "found": "Allowed through the catch-all group",
       "priority": "medium",
-      "details": "{}"
+      "details": "{\"namedGroup\":false,\"hasCatchAll\":true,\"allowed\":true,\"legacyTokens\":[]}"
     },
     "mixed-case-tokens": {
       "status": "pass",
       "score": 1,
-      "message": "anthropic-ai / ClaudeBot is explicitly allowed in robots.txt.",
-      "found": "Explicit rules found for anthropic-ai — access allowed",
+      "message": "ClaudeBot is allowed. No group in robots.txt applies to it, so nothing restricts its crawl.",
+      "found": "No group applies to ClaudeBot · legacy anthropic-ai group present — Anthropic's current crawler documentation names only ClaudeBot, Claude-User and Claude-SearchBot, so this group is not a documented Anthropic access control and does not affect this result.",
       "priority": "medium",
-      "details": "{}"
+      "details": "{\"namedGroup\":false,\"hasCatchAll\":false,\"allowed\":true,\"legacyTokens\":[\"anthropic-ai\"]}"
     },
     "anthropic-alias-only": {
       "status": "fail",
       "score": 0,
-      "message": "anthropic-ai / ClaudeBot is blocked by robots.txt.",
-      "found": "anthropic-ai is disallowed (Disallow: /)",
-      "priority": "high",
-      "details": "{}"
+      "message": "ClaudeBot is disallowed at the site root. Anthropic states its bots honour robots.txt, so the block takes effect: the site is excluded from the web content Anthropic collects for potential model training.",
+      "found": "Its own group disallows /",
+      "priority": "medium",
+      "details": "{\"namedGroup\":true,\"hasCatchAll\":true,\"allowed\":false,\"legacyTokens\":[]}"
     },
     "comments-and-crlf": {
-      "status": "warn",
-      "score": 0.5,
-      "message": "anthropic-ai / ClaudeBot is allowed by default (no specific rules), but not explicitly allowed.",
-      "found": "No explicit rules for anthropic-ai — allowed via wildcard or default",
+      "status": "pass",
+      "score": 1,
+      "message": "ClaudeBot is allowed. No group names it, so under RFC 9309 §2.2.1 it obeys the catch-all group, which permits /.",
+      "found": "Allowed through the catch-all group",
       "priority": "medium",
-      "details": "{}"
+      "details": "{\"namedGroup\":false,\"hasCatchAll\":true,\"allowed\":true,\"legacyTokens\":[]}"
     },
     "bom-prefixed": {
-      "status": "warn",
-      "score": 0.5,
-      "message": "anthropic-ai / ClaudeBot is allowed by default (no specific rules), but not explicitly allowed.",
-      "found": "No explicit rules for anthropic-ai — allowed via wildcard or default",
+      "status": "pass",
+      "score": 1,
+      "message": "ClaudeBot is allowed. No group names it, so under RFC 9309 §2.2.1 it obeys the catch-all group, which permits /.",
+      "found": "Allowed through the catch-all group",
       "priority": "medium",
-      "details": "{}"
+      "details": "{\"namedGroup\":false,\"hasCatchAll\":true,\"allowed\":true,\"legacyTokens\":[]}"
     },
     "crawl-delay-reasonable": {
-      "status": "warn",
-      "score": 0.5,
-      "message": "anthropic-ai / ClaudeBot is allowed by default (no specific rules), but not explicitly allowed.",
-      "found": "No explicit rules for anthropic-ai — allowed via wildcard or default",
+      "status": "pass",
+      "score": 1,
+      "message": "ClaudeBot is allowed. No group names it, so under RFC 9309 §2.2.1 it obeys the catch-all group, which permits /.",
+      "found": "Allowed through the catch-all group",
       "priority": "medium",
-      "details": "{}"
+      "details": "{\"namedGroup\":false,\"hasCatchAll\":true,\"allowed\":true,\"legacyTokens\":[]}"
     },
     "crawl-delay-excessive": {
-      "status": "warn",
-      "score": 0.5,
-      "message": "anthropic-ai / ClaudeBot is allowed by default (no specific rules), but not explicitly allowed.",
-      "found": "No explicit rules for anthropic-ai — allowed via wildcard or default",
+      "status": "pass",
+      "score": 1,
+      "message": "ClaudeBot is allowed. No group names it, so under RFC 9309 §2.2.1 it obeys the catch-all group, which permits /.",
+      "found": "Allowed through the catch-all group",
       "priority": "medium",
-      "details": "{}"
+      "details": "{\"namedGroup\":false,\"hasCatchAll\":true,\"allowed\":true,\"legacyTokens\":[]}"
     },
     "grouped-agents": {
-      "status": "warn",
-      "score": 0.5,
-      "message": "anthropic-ai / ClaudeBot is allowed by default (no specific rules), but not explicitly allowed.",
-      "found": "No explicit rules for anthropic-ai — allowed via wildcard or default",
+      "status": "pass",
+      "score": 1,
+      "message": "ClaudeBot is allowed. No group names it, so under RFC 9309 §2.2.1 it obeys the catch-all group, which permits /.",
+      "found": "Allowed through the catch-all group",
       "priority": "medium",
-      "details": "{}"
+      "details": "{\"namedGroup\":false,\"hasCatchAll\":true,\"allowed\":true,\"legacyTokens\":[]}"
     },
     "sensitive-paths-disallowed": {
-      "status": "warn",
-      "score": 0.5,
-      "message": "anthropic-ai / ClaudeBot is allowed by default (no specific rules), but not explicitly allowed.",
-      "found": "No explicit rules for anthropic-ai — allowed via wildcard or default",
+      "status": "pass",
+      "score": 1,
+      "message": "ClaudeBot is allowed. No group names it, so under RFC 9309 §2.2.1 it obeys the catch-all group, which permits /.",
+      "found": "Allowed through the catch-all group",
       "priority": "medium",
-      "details": "{}"
+      "details": "{\"namedGroup\":false,\"hasCatchAll\":true,\"allowed\":true,\"legacyTokens\":[]}"
     },
     "youbot-and-ai2bot-explicit": {
-      "status": "warn",
-      "score": 0.5,
-      "message": "anthropic-ai / ClaudeBot is allowed by default (no specific rules), but not explicitly allowed.",
-      "found": "No explicit rules for anthropic-ai — allowed via wildcard or default",
+      "status": "pass",
+      "score": 1,
+      "message": "ClaudeBot is allowed. No group names it, so under RFC 9309 §2.2.1 it obeys the catch-all group, which permits /.",
+      "found": "Allowed through the catch-all group",
       "priority": "medium",
-      "details": "{}"
+      "details": "{\"namedGroup\":false,\"hasCatchAll\":true,\"allowed\":true,\"legacyTokens\":[]}"
     },
     "youbot-blocked": {
-      "status": "warn",
-      "score": 0.5,
-      "message": "anthropic-ai / ClaudeBot is allowed by default (no specific rules), but not explicitly allowed.",
-      "found": "No explicit rules for anthropic-ai — allowed via wildcard or default",
+      "status": "pass",
+      "score": 1,
+      "message": "ClaudeBot is allowed. No group in robots.txt applies to it, so nothing restricts its crawl.",
+      "found": "No group applies to ClaudeBot",
       "priority": "medium",
-      "details": "{}"
+      "details": "{\"namedGroup\":false,\"hasCatchAll\":false,\"allowed\":true,\"legacyTokens\":[]}"
     }
   },
   "sensitive-paths": {

@@ -69,7 +69,7 @@ export class AgentGovernanceAudit extends Audit {
     guidance: {
       impact:
         'Without separate rules for training crawlers and live conversational agents, you cannot block dataset scraping while still appearing in ChatGPT, Claude, and Perplexity answers. A blanket policy either locks you out of AI-powered discovery entirely or leaves your content open to bulk training crawls you never agreed to.',
-      fix: 'Add explicit User-agent groups in robots.txt for both categories: name training crawlers (GPTBot, CCBot, Google-Extended, anthropic-ai) with the policy you want, and separately name live agents (ChatGPT-User, Claude-User, OAI-SearchBot) — typically with Allow: / so your site stays visible in AI answers.',
+      fix: 'Add explicit User-agent groups in robots.txt for both categories: name training crawlers (GPTBot, CCBot, Google-Extended, ClaudeBot) with the policy you want, and separately name live agents (ChatGPT-User, Claude-User, OAI-SearchBot) — typically with Allow: / so your site stays visible in AI answers.',
       code: '# Block dataset-training crawlers\nUser-agent: GPTBot\nDisallow: /\n\nUser-agent: CCBot\nDisallow: /\n\n# Welcome live conversational agents\nUser-agent: ChatGPT-User\nAllow: /\n\nUser-agent: Claude-User\nAllow: /\n\nUser-agent: *\nAllow: /',
       effort: 'easy',
       docsUrl: 'https://platform.openai.com/docs/bots',
