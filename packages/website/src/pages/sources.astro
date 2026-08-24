@@ -41,15 +41,15 @@ const th = 'border-b border-border-subtle px-3 py-2 text-left text-xs font-bold 
     <div data-pagefind-body>
       <h1 class="text-3xl font-extrabold tracking-tight text-white">Source registry</h1>
       <p class="mt-3 max-w-3xl text-sm leading-relaxed text-slate-300">
-      Every claim in an evidence dossier cites an id from this registry — one file, no
-      scattered links. It holds {registry.sources.length} sources, last accessed
-      <time datetime={registry.accessed}>{registry.accessed}</time>. <em>Verified</em> records
-      whether the URL resolved during that research pass.
-    </p>
-    <p class="mt-2 text-sm text-slate-400">
-      Read the whole registry as <a class="underline hover:text-white" href={registryUrl}>sources.json</a>,
-      or the rules it serves in the <a class="underline hover:text-white" href={withBase('policy/')}>evidence policy</a>.
-    </p>
+        Every claim in an evidence dossier cites an id from this registry — one file, no
+        scattered links. It holds {registry.sources.length} sources, last accessed
+        <time datetime={registry.accessed}>{registry.accessed}</time>. <em>Verified</em> records
+        whether the URL resolved during that research pass.
+      </p>
+      <p class="mt-2 text-sm text-slate-400">
+        Read the whole registry as <a class="underline hover:text-white" href={registryUrl}>sources.json</a>,
+        or the rules it serves in the <a class="underline hover:text-white" href={withBase('policy/')}>evidence policy</a>.
+      </p>
     </div>
 
     {/* The controls ship hidden and the island reveals them once they are wired
