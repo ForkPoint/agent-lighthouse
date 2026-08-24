@@ -162,6 +162,26 @@ the audit no longer makes.
 - 2026-08-20 — code review (11-agent workflow) + evidence research (12-domain workflow, 400 sources).
 - 2026-08-21 — dossier generated; disposition pending final taxonomy design.
 - 2026-08-24 — contradiction sweep: pass rule narrowed to the population the grade covers, and the grade-C link relation demoted to a discovery route.
+- 2026-08-24 — component detection stopped reading quoted JSX out of code fences and inline spans.
+
+## Component-detection correction (2026-08-24)
+
+`MDX_COMPONENT` scanned the raw markdown document, so any capitalised tag the
+document *quoted* counted as a component the renderer had failed to resolve. A
+markdown alternate of a documentation page is the likeliest place in the corpus
+to quote JSX — in a fenced example, or in an inline span such as `` `<Button />` ``
+— so the check reported the faithful case as the broken one, at rank 2 (`warn`,
+score 0.5).
+
+The scan now runs over the document with its fenced blocks and inline code spans
+removed. Indented code blocks are deliberately left in: four leading spaces is
+also how a list item continues, and dropping list bodies would hide real
+unresolved components in order to fix a rarer false positive.
+
+No evidence, grade, tier or weight changes. The signal being measured is
+unchanged — a component tag surviving into the served markdown means the
+alternate was not rendered — and this only stops the audit from reading one out
+of the page's own prose.
 
 ## Absorbed proposal — Markdown alternate: discoverable, resolvable, faithful, cheaper
 

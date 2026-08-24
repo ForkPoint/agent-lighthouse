@@ -36,6 +36,37 @@ const HEADING_FLOOR = 0.9;
 const MDX_COMPONENT = /<([A-Z][A-Za-z0-9]*)[\s/>]/g;
 
 /**
+ * The document with its code removed: fenced blocks and inline spans.
+ *
+ * Component detection reads raw markdown, so `<Button />` quoted inside a code
+ * span or a fence is indistinguishable from a component the renderer left
+ * unresolved. Documentation that shows JSX is the ordinary case for a markdown
+ * alternate, not the exotic one, so the code comes out before the scan.
+ *
+ * Only these two forms are removed. An indented code block is not, because four
+ * leading spaces is also how a list continues, and dropping list bodies would
+ * hide real components to fix a rarer false positive.
+ */
+function withoutCode(markdown: string): string {
+  const kept: string[] = [];
+  let fence = '';
+  for (const line of markdown.split('\n')) {
+    const marker = /^ {0,3}(`{3,}|~{3,})/.exec(line)?.[1];
+    if (fence) {
+      // A fence closes on the same character, at the same length or longer.
+      if (marker && marker[0] === fence[0] && marker.length >= fence.length) fence = '';
+      continue;
+    }
+    if (marker) {
+      fence = marker;
+      continue;
+    }
+    kept.push(line.replace(/(`+)[^\n]*?\1/g, ' '));
+  }
+  return kept.join('\n');
+}
+
+/**
  * Block-level text of the HTML, one block per string.
  *
  * cheerio's `.text()` concatenates block elements with no separator, so a
@@ -167,7 +198,9 @@ export class MarkdownAlternateAudit extends Audit {
     const shared = [...htmlShingles].filter((s) => mdShingles.has(s)).length;
     const recall = htmlShingles.size === 0 ? 1 : shared / htmlShingles.size;
 
-    const components = [...new Set([...markdown.matchAll(MDX_COMPONENT)].map((m) => m[1] ?? ''))];
+    const components = [
+      ...new Set([...withoutCode(markdown).matchAll(MDX_COMPONENT)].map((m) => m[1] ?? '')),
+    ];
 
     const rank: Assessment['rank'] = !MARKDOWN_TYPE.test(result.contentType)
       ? RANK_WRONG_TYPE

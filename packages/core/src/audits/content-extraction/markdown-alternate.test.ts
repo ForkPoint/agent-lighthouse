@@ -141,6 +141,19 @@ describe('MarkdownAlternateAudit', () => {
     expect(result.found).toContain('KettleCard');
   });
 
+  // The audit used to read raw markdown, so a page documenting its own JSX was
+  // reported as having unresolved components — the alternate was faithful and
+  // the quoted tag was the content.
+  it('does not read a component tag out of a code fence or an inline span', async () => {
+    const { ctx } = site(
+      `${FAITHFUL_MD}\nUse \`<KettleCard />\` here.\n\n\`\`\`jsx\n<Boiler sku="A1" />\n\`\`\`\n`,
+    );
+    const result = await audit.audit(ctx);
+    expect(result.status).toBe('pass');
+    expect(result.found).not.toContain('KettleCard');
+    expect(result.found).not.toContain('Boiler');
+  });
+
   it('finds an alternate declared by a link element', async () => {
     const { ctx, calls } = site(FAITHFUL_MD, {
       head: '<link rel="alternate" type="text/markdown" href="/kettles.md">',
