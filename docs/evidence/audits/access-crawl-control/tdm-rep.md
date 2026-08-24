@@ -86,7 +86,7 @@ The IETF AIPREF working group targeted IESG submission for 2026-08-31 and its ch
 
 _No dedicated evidence signal was researched for this audit in the 2026-08-20 pass. Its tier assignment falls to the taxonomy design; unproven mechanisms default to informative per the [evidence policy](../../POLICY.md)._
 
-## Graded evidence (2026-08-21)
+## Evidence (2026-08-21)
 
 **Mechanism claim:** An AI crawler fetches `/.well-known/tdmrep.json` or reads `<meta name="tdm-reservation">` and changes whether it collects or uses the page's content as a result.
 

@@ -63,7 +63,7 @@ Genuinely valuable signal: Review/AggregateRating in structured data is consumed
 
 _No dedicated evidence signal was researched for this audit in the 2026-08-20 pass. Its tier assignment falls to the taxonomy design; unproven mechanisms default to informative per the [evidence policy](../../POLICY.md)._
 
-## Graded evidence (2026-08-21)
+## Evidence (2026-08-21)
 
 **Mechanism claim:** Machine-readable review data is read by named consumers — Google Search parses schema.org `Review`/`AggregateRating` to render review rich results, and OpenAI ingests `review_count`/`star_rating` to build ChatGPT product results — so a product page that exposes ratings only as pixels is invisible to both, while one that exposes them structurally is not.
 

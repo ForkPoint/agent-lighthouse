@@ -50,7 +50,7 @@ _No dedicated evidence signal was researched for this audit in the 2026-08-20 pa
 - 2026-08-20 — code review (11-agent workflow) + evidence research (12-domain workflow, 400 sources).
 - 2026-08-21 — dossier generated; disposition pending final taxonomy design.
 
-## Graded evidence (2026-08-21)
+## Evidence (2026-08-21)
 
 **Mechanism claim:** An interactive CAPTCHA gating a form (reCAPTCHA v2 checkbox/challenge, an hCaptcha visual challenge, or Cloudflare Turnstile in managed/interactive mode) stops an autonomous browsing agent from submitting that form on its own — the agent must hand control back to a human.
 

@@ -15,7 +15,7 @@ reviewed: 2026-08-22
 
 > machine-discovery · source `llms-txt-structure.ts` · merges llms-txt-blockquote (1.2) + llms-txt-sections (1.3) · evidence grade **C** · tier **informative** (weight 0)
 
-## Mechanism claim
+## Claimed mechanism (falsifiable)
 
 An agent that fetches `/llms.txt` parses the blockquote under the H1 as the site summary and the H2 headings as the addressable sections of the link list, so a file carrying both can be consumed selectively — read the summary, pick a section — instead of end to end.
 
@@ -55,7 +55,7 @@ The merge is also where each source review's required fixes land:
 - **Absent file ⇒ `na`.** v1 returned `fail` at priority `critical` from both audits when `/llms.txt` was missing, asserting a malformed file where there was none.
 - **Priority.** The spec makes both elements optional ("zero or more" sections; the H1 is "the only required section"), so a missing element can no longer be reported above `low`.
 
-## Grade
+## Scoring
 
 **C — the strongest proven path for the merged signal, unchanged from both sources.**
 

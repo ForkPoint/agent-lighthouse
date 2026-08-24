@@ -53,7 +53,7 @@ _No dedicated evidence signal was researched for this audit in the 2026-08-20 pa
 - 2026-08-20 — code review (11-agent workflow) + evidence research (12-domain workflow, 400 sources).
 - 2026-08-21 — dossier generated; disposition pending final taxonomy design.
 
-## Graded evidence (2026-08-21)
+## Evidence (2026-08-21)
 
 **Mechanism claim:** Open Graph consumers read `og:type` to decide which object vocabulary applies to the page (`article`, `website`, `product`, `video.*`, …) and therefore which additional properties they will look for and render; a page declaring the wrong type is interpreted as the wrong kind of object.
 

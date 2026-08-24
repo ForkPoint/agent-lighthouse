@@ -47,7 +47,7 @@ The most thoughtfully-built product audit in the category — it correctly retur
 
 _No dedicated evidence signal was researched for this audit in the 2026-08-20 pass. Its tier assignment falls to the taxonomy design; unproven mechanisms default to informative per the [evidence policy](../../POLICY.md)._
 
-## Graded evidence (2026-08-21)
+## Evidence (2026-08-21)
 
 **Mechanism claim:** Each of the four measured Offer properties — `price` + `priceCurrency`, `availability`, `priceValidUntil`, `hasMerchantReturnPolicy` — is named in Google's merchant-listing structured-data spec as a property its extractors read from the page, and Google acts on them (price/availability are pulled into Merchant Center by automatic item updates; a `priceValidUntil` date in the past suppresses the product snippet), so an Offer missing them yields a listing whose stock state, price validity and return terms cannot be machine-read.
 

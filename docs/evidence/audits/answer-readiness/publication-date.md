@@ -48,7 +48,7 @@ The best-built audit in this category and a real signal: dates drive recency wei
 
 _No dedicated evidence signal was researched for this audit in the 2026-08-20 pass. Its tier assignment falls to the taxonomy design; unproven mechanisms default to informative per the [evidence policy](../../POLICY.md)._
 
-## Graded evidence (2026-08-21)
+## Evidence (2026-08-21)
 
 **Mechanism claim:** A page that exposes a determinable publication date — visible text agreeing with a machine-readable value — is date-attributable to consumers that act on dates (Google displays it as a byline date; AI assistants cite measurably fresher pages), whereas an undated page cannot be placed on the recency axis at all.
 

@@ -60,7 +60,7 @@ The strongest audit in the category: it prefers machine-readable sources (<time 
 
 _No dedicated evidence signal was researched for this audit in the 2026-08-20 pass. Its tier assignment falls to the taxonomy design; unproven mechanisms default to informative per the [evidence policy](../../POLICY.md)._
 
-## Graded evidence (2026-08-21)
+## Evidence (2026-08-21)
 
 **Mechanism claim:** A content page carrying a machine-readable date — `<time datetime>`, `datePublished`/`dateModified` in JSON-LD, an `article:published_time` meta tag, or a clearly labeled visible date — yields a byline date to Google's date extractor and to the htmldate/trafilatura extraction stack; a page carrying none of these yields no date at all, so no downstream consumer can attach a publication time to the document.
 

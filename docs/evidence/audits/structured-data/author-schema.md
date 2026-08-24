@@ -46,7 +46,7 @@ The pass criteria (name AND jobTitle AND sameAs AND affiliation) are invented â€
 
 _No dedicated evidence signal was researched for this audit in the 2026-08-20 pass. Its tier assignment falls to the taxonomy design; unproven mechanisms default to informative per the [evidence policy](../../POLICY.md)._
 
-## Graded evidence (2026-08-21)
+## Evidence (2026-08-21)
 
 **Mechanism claim:** A `Person` author node carrying `jobTitle`, `sameAs` and `affiliation` is read by a named AI system, which cross-references the author across platforms and raises the retrieval/citation weight of the page relative to the same page marked up with `name` alone.
 

@@ -49,7 +49,7 @@ _No dedicated evidence signal was researched for this audit in the 2026-08-20 pa
 - 2026-08-21 — dossier generated; disposition pending final taxonomy design.
 - 2026-08-21 — evidence graded (see below).
 
-## Graded evidence (2026-08-21)
+## Evidence (2026-08-21)
 
 **Mechanism claim:** A tool-calling runtime creates one callable function per OpenAPI path operation, so a document whose `paths` object contains no operations exposes zero actions to the agent that ingests it.
 

@@ -50,7 +50,7 @@ _No dedicated evidence signal was researched for this audit in the 2026-08-20 pa
 - 2026-08-20 — code review (11-agent workflow) + evidence research (12-domain workflow, 400 sources).
 - 2026-08-21 — dossier generated; disposition pending final taxonomy design.
 
-## Graded evidence (2026-08-21)
+## Evidence (2026-08-21)
 
 **Mechanism claim:** A URL reachable only through more redirect hops than the crawler's limit (Googlebot: 10 hops) is never fetched, and long chains consume crawl capacity that would otherwise be spent on real content — so the page is not indexed and, since indexing is a precondition for Google's AI surfaces, cannot be cited there.
 

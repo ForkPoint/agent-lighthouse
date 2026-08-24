@@ -50,7 +50,7 @@ _No dedicated evidence signal was researched for this audit in the 2026-08-20 pa
 - 2026-08-21 — evidence graded (see below).
 - 2026-08-22 — absorbs the naming rule of 5.23 (Plan 4, Task 9); `webmcp-tool-naming` is deleted and its runtime half is deferred out of v2.0. Registry 149 → 148.
 
-## Graded evidence (2026-08-21)
+## Evidence (2026-08-21)
 
 **Mechanism claim:** A tool-calling runtime uses `operationId` as the function name it exposes to the model, so duplicate ids collide into one name and ids that violate the runtime's function-name pattern (`^[a-zA-Z0-9_-]{1,64}$`) are rejected at tool-registration time.
 

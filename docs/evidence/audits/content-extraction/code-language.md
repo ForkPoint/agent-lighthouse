@@ -46,7 +46,7 @@ Recognizes exactly one convention — 'classList.includes('language-')' on the <
 
 _No dedicated evidence signal was researched for this audit in the 2026-08-20 pass. Its tier assignment falls to the taxonomy design; unproven mechanisms default to informative per the [evidence policy](../../POLICY.md)._
 
-## Graded evidence (2026-08-21)
+## Evidence (2026-08-21)
 
 **Mechanism claim:** An HTML-to-Markdown converter of the kind that feeds page text to LLMs emits a fenced code block whose info string names the language only when the `<code>` element carries a `language-*` class; without that class the fence is emitted unlabeled, and the language must be inferred from the code text itself.
 

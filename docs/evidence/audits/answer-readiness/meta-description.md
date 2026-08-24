@@ -59,7 +59,7 @@ Genuinely valuable signal, but the length gate is naive: the value is never trim
 
 _No dedicated evidence signal was researched for this audit in the 2026-08-20 pass. Its tier assignment falls to the taxonomy design; unproven mechanisms default to informative per the [evidence policy](../../POLICY.md)._
 
-## Graded evidence (2026-08-21)
+## Evidence (2026-08-21)
 
 **Mechanism claim:** A search engine or answer engine that indexes the page reads `<meta name="description">` and may reproduce its text verbatim as the page's summary/snippet instead of generating one from body text.
 

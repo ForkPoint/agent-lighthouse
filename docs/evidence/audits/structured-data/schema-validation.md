@@ -51,7 +51,7 @@ _No dedicated evidence signal was researched for this audit in the 2026-08-20 pa
 - 2026-08-20 — code review (11-agent workflow) + evidence research (12-domain workflow, 400 sources).
 - 2026-08-21 — dossier generated; disposition pending final taxonomy design.
 
-## Graded evidence (2026-08-21)
+## Evidence (2026-08-21)
 
 **Mechanism claim:** A top-level JSON-LD node object with no active `@context` has its terms dropped during JSON-LD expansion and therefore produces zero schema.org statements, so Google's structured-data parser records no entity for that block and the block is ineligible for any feature that consumes structured data.
 

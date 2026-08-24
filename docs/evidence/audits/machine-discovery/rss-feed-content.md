@@ -53,7 +53,7 @@ _No dedicated evidence signal was researched for this audit in the 2026-08-20 pa
 - 2026-08-20 — code review (11-agent workflow) + evidence research (12-domain workflow, 400 sources).
 - 2026-08-21 — dossier generated; disposition pending final taxonomy design.
 
-## Graded evidence (2026-08-21)
+## Evidence (2026-08-21)
 
 **Mechanism claim:** A crawler that fetches a site's RSS/Atom feed ingests each item's `<content:encoded>` / `<atom:content>` as the article body and therefore does not request the article page; when items carry only a truncated excerpt, the crawler must fetch every article individually.
 

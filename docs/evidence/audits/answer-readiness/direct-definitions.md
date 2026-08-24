@@ -77,7 +77,7 @@ The code review's sharpest finding was that a genuinely well-written prose gloss
 
 ### Grade and tier decision: **C**, tier `informative`, weight 0 — target tier `scored` not reachable
 
-The REWORK-TODO row proposed `scored`. It cannot land: the [graded evidence below](#graded-evidence-2026-08-21) assigns **C**, and under the §4 weight law `weightForGrade('C', 'scored') = 0`, while `sunset.test.ts` enforces `tier !== 'scored' ⟺ weight === 0`. A grade-C audit in the `scored` tier is therefore not a registrable state, and `informative` is where the grade puts it — the same resolution recorded for `openapi-link`, where a proposed `scored` target lost to the tier the evidence named. Nothing in the required rework depends on the tier: it asks for a better detector and an `na` path, both of which landed. `scoreDisplayMode` stays `informative`; `defaultPriority` drops `medium` → `low`, since the audit now reports upside rather than a defect.
+The REWORK-TODO row proposed `scored`. It cannot land: the [graded evidence below](#evidence-2026-08-21) assigns **C**, and under the §4 weight law `weightForGrade('C', 'scored') = 0`, while `sunset.test.ts` enforces `tier !== 'scored' ⟺ weight === 0`. A grade-C audit in the `scored` tier is therefore not a registrable state, and `informative` is where the grade puts it — the same resolution recorded for `openapi-link`, where a proposed `scored` target lost to the tier the evidence named. Nothing in the required rework depends on the tier: it asks for a better detector and an `na` path, both of which landed. `scoreDisplayMode` stays `informative`; `defaultPriority` drops `medium` → `low`, since the audit now reports upside rather than a defect.
 
 Re-grading to A or B would need a documented consumer acting on the term/definition roles. The dossier records that none exists, and this project's own semantic-html research says the same of `<dl>`/`<dt>`/`<dd>`.
 
@@ -91,7 +91,7 @@ _No dedicated evidence signal was researched for this audit in the 2026-08-20 pa
 - 2026-08-21 — dossier generated; disposition pending final taxonomy design.
 - 2026-08-22 — user approved the pending-triage redeem; required rework executed (Plan 4, Task 16): bold-colon branch deleted, definitional-intent gate replaces `isArticleContentPage`, substantiveness measured character-wise as well as word-wise so CJK counts, per-language intent and prose-copula patterns for 11 languages, prose definitions reported rather than failed, `na` when no page has definitional intent, and the audit can no longer fail. Grade C, tier `informative`, weight 0 — the row's proposed `scored` target is unreachable for a grade-C audit under the §4 weight law and the registry invariant; rationale in the rewrite section. `defaultPriority` `medium` → `low`. `TODO(redeem)` marker removed from the source file.
 
-## Graded evidence (2026-08-21)
+## Evidence (2026-08-21)
 
 **Mechanism claim:** Marking a term and its definition with `<dfn>` or `<dl>`/`<dt>`/`<dd>` exposes explicit term/definition roles in the accessibility tree and keeps the pairing intact through extraction, so an answer engine can return the definition for a "what is X?" query without inferring it from surrounding prose.
 

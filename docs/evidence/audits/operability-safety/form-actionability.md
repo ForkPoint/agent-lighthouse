@@ -57,7 +57,7 @@ _No dedicated evidence signal was researched for this audit in the 2026-08-20 pa
 - 2026-08-21 — approved: 5.22 merges away into 5.27 (§5).
 - 2026-08-22 — merged (Plan 4, Task 8); registry 151 → 150 for this fold.
 
-## Graded evidence (2026-08-21)
+## Evidence (2026-08-21)
 
 **Mechanism claim:** Agents that act on a page through its accessibility tree identify a field by its accessible name, computed from `<label>`, `aria-label` or `aria-labelledby`; a fillable control that is not a native form element, or that has no accessible name, cannot be reliably targeted or filled by such an agent.
 

@@ -15,7 +15,7 @@ reviewed: 2026-08-22
 
 > crawler-permissions · source `ai-bot-directives.ts` · consolidates bytespider (2.9), cohere-ai (2.10), youbot (2.11), diffbot (2.12), ai2bot (2.13) · evidence grade **B** · tier **scored** (weight 0.6)
 
-## Mechanism claim
+## Claimed mechanism (falsifiable)
 
 **Falsifiable claim:** For AI bots whose operator publishes crawler documentation naming the product token — YouBot (You.com) and AI2Bot (Allen Institute) — a `User-agent:` group in `robots.txt` is read by that operator and determines whether the site enters that operator's corpus or index. A `Disallow: /` for those tokens therefore closes a documented consumer path; an explicit `Allow: /` keeps it open and pins the policy against a later blanket block.
 
@@ -23,7 +23,7 @@ reviewed: 2026-08-22
 
 This is the whole reason the five v1 audits collapse into one. Each shipped as a standalone check at weight 1.0, equal to GPTBot, so a site that deliberately blocked a commercial scraper lost as much score as one that blocked the largest AI platform. The consolidated audit parses `robots.txt` once, prints all five stances as an informational table, and scores only the documented-active pair.
 
-## Grade
+## Scoring
 
 **B — the strongest *proven* consumer path among the five.**
 

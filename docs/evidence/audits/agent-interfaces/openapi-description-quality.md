@@ -52,7 +52,7 @@ _No dedicated evidence signal was researched for this audit in the 2026-08-20 pa
 - 2026-08-20 — code review (11-agent workflow) + evidence research (12-domain workflow, 400 sources).
 - 2026-08-21 — dossier generated; disposition pending final taxonomy design.
 
-## Graded evidence (2026-08-21)
+## Evidence (2026-08-21)
 
 **Mechanism claim:** When an OpenAPI document is converted into LLM-callable tools, the operation's and parameters' `description` text becomes the tool and argument descriptions the model reads when deciding which endpoint to call and what to pass; an operation with no human-readable text leaves the model with only the operationId to reason from.
 

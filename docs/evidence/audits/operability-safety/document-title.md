@@ -46,7 +46,7 @@ _No dedicated evidence signal was researched for this audit in the 2026-08-20 pa
 - 2026-08-20 — code review (11-agent workflow) + evidence research (12-domain workflow, 400 sources).
 - 2026-08-21 — dossier generated; disposition pending final taxonomy design.
 
-## Graded evidence (2026-08-21)
+## Evidence (2026-08-21)
 
 **Mechanism claim:** The `<title>` element is the document's name — it is what a browser tab list exposes, what assistive technology announces on page load, and what Google uses as a source for the title link in search results — so a page with a missing or empty title is unnamed in every consumer that identifies a page by name rather than by URL.
 

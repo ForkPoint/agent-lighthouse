@@ -44,7 +44,7 @@ _No dedicated evidence signal was researched for this audit in the 2026-08-20 pa
 - 2026-08-20 — code review (11-agent workflow) + evidence research (12-domain workflow, 400 sources).
 - 2026-08-21 — dossier generated; disposition pending final taxonomy design.
 
-## Graded evidence (2026-08-21)
+## Evidence (2026-08-21)
 
 **Mechanism claim:** `aria-hidden="true"` on `<body>` excludes the element and all descendants from the accessibility tree per WAI-ARIA 1.2 §7.1, so an agent whose page representation is built from that tree (Playwright MCP `browser_snapshot`, chrome-devtools-mcp `take_snapshot`) receives an empty snapshot and can neither read nor act on any page content.
 

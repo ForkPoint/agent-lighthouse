@@ -45,7 +45,7 @@ Price and currency in structured data is one of the few schema signals with clea
 
 _No dedicated evidence signal was researched for this audit in the 2026-08-20 pass. Its tier assignment falls to the taxonomy design; unproven mechanisms default to informative per the [evidence policy](../../POLICY.md)._
 
-## Graded evidence (2026-08-21)
+## Evidence (2026-08-21)
 
 **Mechanism claim:** Google's product data extractors parse `price` and `priceCurrency` out of the schema.org `Offer` in a product page's markup and use those exact values for merchant listing eligibility and for Merchant Center automatic item updates, so a page without them cannot supply a machine-read price to that pipeline.
 

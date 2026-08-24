@@ -52,7 +52,7 @@ _No dedicated evidence signal was researched for this audit in the 2026-08-20 pa
 - 2026-08-20 — code review (11-agent workflow) + evidence research (12-domain workflow, 400 sources).
 - 2026-08-21 — dossier generated; disposition pending final taxonomy design.
 
-## Graded evidence (2026-08-21)
+## Evidence (2026-08-21)
 
 **Mechanism claim:** An agent reading `/llms.txt` uses the `: description` note after each link to decide which of the linked pages to fetch, so links without a note cause the agent to fetch pages it would otherwise skip.
 

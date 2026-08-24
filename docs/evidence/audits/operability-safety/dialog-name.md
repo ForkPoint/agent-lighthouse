@@ -49,7 +49,7 @@ _No dedicated evidence signal was researched for this audit in the 2026-08-20 pa
 - 2026-08-20 — code review (11-agent workflow) + evidence research (12-domain workflow, 400 sources).
 - 2026-08-21 — dossier generated; disposition pending final taxonomy design.
 
-## Graded evidence (2026-08-21)
+## Evidence (2026-08-21)
 
 **Mechanism claim:** An element with `role="dialog"`/`role="alertdialog"` is emitted into the accessibility tree that agent snapshot tools read (Playwright MCP `browser_snapshot`, chrome-devtools-mcp `take_snapshot`) as a `dialog` node whose accessible name is computed per accname; with no `aria-label`/`aria-labelledby` the node is emitted unnamed, so an agent that selects targets by role + accessible name cannot identify the modal it is blocked by.
 

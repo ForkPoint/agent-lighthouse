@@ -47,7 +47,7 @@ GTIN/SKU/MPN is a genuinely important agentic-commerce signal, but the audit col
 
 _No dedicated evidence signal was researched for this audit in the 2026-08-20 pass. Its tier assignment falls to the taxonomy design; unproven mechanisms default to informative per the [evidence policy](../../POLICY.md)._
 
-## Graded evidence (2026-08-21)
+## Evidence (2026-08-21)
 
 **Mechanism claim:** Product-matching systems that ingest a page's Product markup (Google's merchant listing pipeline, and feed-based agent catalogues such as OpenAI's ChatGPT shopping index) key on `gtin*`/`mpn`/`sku` to match the page's item to the same item from other sources, so an item published without any unique identifier cannot be matched with confidence and loses eligibility for identifier-dependent surfaces.
 

@@ -141,7 +141,7 @@ ARD path.
 - 2026-08-21 — approved: 4.18 merges away into 5.1, resolving its TODO(redeem) (v2 audit map).
 - 2026-08-22 — merged (Plan 4, Task 7); grade C → B, tier stays informative; registry 159 → 158 for this fold.
 
-## Graded evidence (2026-08-21)
+## Evidence (2026-08-21)
 
 **Mechanism claim:** An AI agent given only a site's origin fetches `/openapi.json` or `/openapi.yaml`, and converts the operations it finds into callable tools, without a developer having registered the document with the agent first.
 

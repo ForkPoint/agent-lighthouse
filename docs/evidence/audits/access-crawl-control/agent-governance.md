@@ -48,7 +48,7 @@ The idea is the most genuinely 2026-relevant one in the category — separating 
 
 _No dedicated evidence signal was researched for this audit in the 2026-08-20 pass. Its tier assignment falls to the taxonomy design; unproven mechanisms default to informative per the [evidence policy](../../POLICY.md)._
 
-## Graded evidence (2026-08-21)
+## Evidence (2026-08-21)
 
 **Mechanism claim:** Each major AI vendor operates separate robots.txt product tokens for dataset-training crawling and for live retrieval/search grounding, and per RFC 9309 a crawler obeys the group matching its own token and falls back to `*` only when no such group exists — so a robots.txt that names the two categories separately produces different access outcomes for training versus live retrieval, which a catch-all group alone cannot express.
 

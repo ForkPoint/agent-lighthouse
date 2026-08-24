@@ -56,7 +56,7 @@ _No dedicated evidence signal was researched for this audit in the 2026-08-20 pa
 - 2026-08-20 — code review (11-agent workflow) + evidence research (12-domain workflow, 400 sources).
 - 2026-08-21 — dossier generated; disposition pending final taxonomy design.
 
-## Graded evidence (2026-08-21)
+## Evidence (2026-08-21)
 
 **Mechanism claim:** On a content page, a first substantive paragraph written as a direct declarative answer (rather than "In this article…" preamble) is more likely to be the passage an AI answer engine extracts and cites than a paragraph further down the page.
 

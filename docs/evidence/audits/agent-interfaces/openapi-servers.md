@@ -52,7 +52,7 @@ _No dedicated evidence signal was researched for this audit in the 2026-08-20 pa
 - 2026-08-21 — dossier generated; disposition pending final taxonomy design.
 - 2026-08-21 — evidence graded (see below).
 
-## Graded evidence (2026-08-21)
+## Evidence (2026-08-21)
 
 **Mechanism claim:** An agent runtime builds each request URL by joining a `servers[].url` entry with the operation path, so a spec whose servers entries yield no resolvable base URL produces requests the agent cannot address.
 

@@ -54,7 +54,7 @@ _No dedicated evidence signal was researched for this audit in the 2026-08-20 pa
 - 2026-08-20 — code review (11-agent workflow) + evidence research (12-domain workflow, 400 sources).
 - 2026-08-21 — dossier generated; disposition pending final taxonomy design.
 
-## Graded evidence (2026-08-21)
+## Evidence (2026-08-21)
 
 **Mechanism claim:** Adding concrete statistics to a source document raises the prominence of that source's citations in a generative engine's answer, relative to the same document carrying the same claims in vague quantitative language.
 

@@ -51,7 +51,7 @@ _No dedicated evidence signal was researched for this audit in the 2026-08-20 pa
 - 2026-08-20 — code review (11-agent workflow) + evidence research (12-domain workflow, 400 sources).
 - 2026-08-21 — dossier generated; disposition pending final taxonomy design.
 
-## Graded evidence (2026-08-21)
+## Evidence (2026-08-21)
 
 **Mechanism claim:** User agents read the `lang` attribute on `<html>` to programmatically determine the page's natural language; screen readers select pronunciation rules from it, visual browsers select scripts/characters, and media players select captions accordingly — so a page without it cannot have its language programmatically determined and fails WCAG 2.2 SC 3.1.1.
 

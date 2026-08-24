@@ -51,7 +51,7 @@ _No dedicated evidence signal was researched for this audit in the 2026-08-20 pa
 - 2026-08-20 — code review (11-agent workflow) + evidence research (12-domain workflow, 400 sources).
 - 2026-08-21 — dossier generated; disposition pending final taxonomy design.
 
-## Graded evidence (2026-08-21)
+## Evidence (2026-08-21)
 
 **Mechanism claim:** An AI client that does not execute JavaScript cannot submit a form whose only submission path is a JS event handler; giving the form a server-side HTML submission path makes it actionable over plain HTTP.
 

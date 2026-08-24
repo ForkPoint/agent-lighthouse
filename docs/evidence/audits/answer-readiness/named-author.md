@@ -52,7 +52,7 @@ Signal is real — schema.org `author` on a Person is genuinely consumed by sear
 
 _No dedicated evidence signal was researched for this audit in the 2026-08-20 pass. Its tier assignment falls to the taxonomy design; unproven mechanisms default to informative per the [evidence policy](../../POLICY.md)._
 
-## Graded evidence (2026-08-21)
+## Evidence (2026-08-21)
 
 **Mechanism claim:** Replacing a generic author label ("Staff", "Admin", "Team") with a named person in schema.org `author` / the visible byline raises the page's confidence or citation rate in generative answer engines.
 

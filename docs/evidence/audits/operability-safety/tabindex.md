@@ -47,7 +47,7 @@ _No dedicated evidence signal was researched for this audit in the 2026-08-20 pa
 - 2026-08-20 — code review (11-agent workflow) + evidence research (12-domain workflow, 400 sources).
 - 2026-08-21 — dossier generated; disposition pending final taxonomy design.
 
-## Graded evidence (2026-08-21)
+## Evidence (2026-08-21)
 
 **Mechanism claim:** A `tabindex` greater than 0 places the element in a tabindex-ordered focus navigation scope ahead of every `tabindex="0"` element, so a consumer that reaches controls by pressing Tab visits them in a non-DOM order.
 

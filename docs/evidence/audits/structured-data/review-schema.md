@@ -62,7 +62,7 @@ _No dedicated evidence signal was researched for this audit in the 2026-08-20 pa
 - 2026-08-21 — approved: 3.23 merges away into 3.13 (§5).
 - 2026-08-22 — merged (Plan 4, Task 8); registry 155 → 154 for this fold.
 
-## Graded evidence (2026-08-21)
+## Evidence (2026-08-21)
 
 **Mechanism claim:** Google Search parses `AggregateRating`/`Review` markup on a supported host type and renders a star review snippet in the search result, for which `ratingValue` plus at least one of `ratingCount` or `reviewCount` is required; Applebot extracts `AggregateRating` for Siri and Spotlight Suggestions.
 

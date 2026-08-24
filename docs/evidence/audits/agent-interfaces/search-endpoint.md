@@ -94,7 +94,7 @@ _No dedicated evidence signal was researched for this audit in the 2026-08-20 pa
 - 2026-08-21 — approved: 3.4 merges away into 5.16 (v2 audit map).
 - 2026-08-22 — merged (Plan 4, Task 7); registry 160 → 159 for this fold.
 
-## Graded evidence (2026-08-21)
+## Evidence (2026-08-21)
 
 **Mechanism claim:** An AI agent reads a site's `WebSite` → `potentialAction` → `SearchAction` `urlTemplate` (or a `GET /search` operation in its OpenAPI spec), substitutes the query term, and fetches results instead of crawling the site.
 

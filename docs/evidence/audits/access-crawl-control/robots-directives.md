@@ -62,7 +62,7 @@ The underlying signal is real and important — `noindex` genuinely removes a pa
 
 _No dedicated evidence signal was researched for this audit in the 2026-08-20 pass. Its tier assignment falls to the taxonomy design; unproven mechanisms default to informative per the [evidence policy](../../POLICY.md)._
 
-## Graded evidence (2026-08-21)
+## Evidence (2026-08-21)
 
 **Mechanism claim:** A page carrying `noindex` in a robots meta tag (or the equivalent `X-Robots-Tag` header) is excluded from Google's Search index, and Google documents that the same family of robots directives governs whether the page can be shown or used as a direct input in AI Overviews and AI Mode.
 

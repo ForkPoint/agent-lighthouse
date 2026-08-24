@@ -48,7 +48,7 @@ Two audits in one file with opposite quality. The WAF branch (`ctx.wafProtection
 
 _No dedicated evidence signal was researched for this audit in the 2026-08-20 pass. Its tier assignment falls to the taxonomy design; unproven mechanisms default to informative per the [evidence policy](../../POLICY.md)._
 
-## Graded evidence (2026-08-21)
+## Evidence (2026-08-21)
 
 **Mechanism claim:** An edge bot-management rule that blocks or challenges requests carrying a named AI agent's user-agent or IP causes that agent to receive a non-200 / challenge response instead of the page, so the content cannot be fetched, indexed or cited — and AI vendors publish per-agent IP ranges specifically so operators can allowlist them past those rules.
 

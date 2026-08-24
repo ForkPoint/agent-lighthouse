@@ -48,7 +48,7 @@ _No dedicated evidence signal was researched for this audit in the 2026-08-20 pa
 - 2026-08-20 — code review (11-agent workflow) + evidence research (12-domain workflow, 400 sources).
 - 2026-08-21 — dossier generated; disposition pending final taxonomy design.
 
-## Graded evidence (2026-08-21)
+## Evidence (2026-08-21)
 
 **Mechanism claim:** ARIA states and properties are exposed to the accessibility tree only when the attribute name and its value are valid for the element's role (WAI-ARIA 1.2 defines the allowed value type per state/property); an invalid attribute or token — `aria-expanded="yes"`, a misspelled `aria-*` name, an `aria-controls` idref that resolves to nothing — is not exposed, so the `expanded`/`checked`/`disabled`/`selected` fields that agent snapshots print are simply absent and the agent reads no state where state exists.
 
