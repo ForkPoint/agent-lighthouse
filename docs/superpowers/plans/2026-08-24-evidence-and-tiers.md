@@ -70,6 +70,12 @@ Split the RFC 9727 linkset validation into its own audit with its own id, dossie
 
 Also fold in the Class B pass-rule marker recorded against this audit.
 
+**Resolved 2026-08-24 — no split was made, and none was needed.** The RFC 9727 linkset validation already ships, inside `agent-interfaces/openapi-exists`: `servedAsData()` rejects a `text/html` body at `/.well-known/api-catalog`, the linkset must parse and carry a non-empty array, and its tests pin the HTML-200 case. It was built on 2026-08-22 from the same API Evangelist survey the signal cites.
+
+The signal describes itself as "a meta-signal about how the other audits must be implemented" — a validation rule, not an adoption claim — so implementing it once, in the audit that owns the path, discharges it. A second audit would have duplicated a live check, contradicted the tier `openapi-exists` deliberately carries (its own evidence: "informative rather than scored until a consumer is documented"), and required a pass condition under which serving `{}` at a well-known path bought a weight-1.0 win.
+
+What landed instead: `mcp-discovery` drops to C / informative / 0, absence becomes `notApplicable`, and the two vacuous passes (`{}` at `/.well-known/ucp`, `{"servers": []}`) are removed. Registry unchanged at 215. Whether `/.well-known/api-catalog` has since acquired a documented consumer is folded into Task 13.
+
 ### Tasks 7-12: the remaining six composites
 
 One task each, same judgement as Task 6 — split the sound signal, or narrow the audit to it, then set grade, tier, weight and display mode together.
@@ -90,6 +96,8 @@ Three audits are held pending fresh evidence: `machine-discovery/llms-txt-exists
 `POLICY.md` uses llms.txt as its worked example of grade **C** — "published widely, no documented consumer, Google states Search ignores it" — while `llms-txt-exists` ships grade A. One of the two is wrong. The user's decision was to re-research before re-tiering, not to demote on the policy text alone.
 
 Research question: has any AI vendor documented a consumer of `/llms.txt` since the policy example was written? Primary sources only — vendor documentation or a ratified specification. Then either re-grade the three audits or correct the policy example, and say which in the dossier.
+
+Folded in on 2026-08-24, from Task 6: ask the same question of `/.well-known/api-catalog`. `agent-interfaces/openapi-exists` ships it at B / informative / 0 on the recorded reasoning "informative rather than scored until a consumer is documented". If a consumer has since been documented, that tier moves with llms.txt's.
 
 ## Part 3 — the public surface
 
