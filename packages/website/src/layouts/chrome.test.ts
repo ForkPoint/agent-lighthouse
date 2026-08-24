@@ -202,6 +202,22 @@ describe.skipIf(!built)('rendered dossier pages', () => {
     expect(page!.html.match(/id="toc-heading-compact"/g) ?? []).toHaveLength(1);
   });
 
+  /**
+   * The title is the registry's, not the dossier heading's. Most dossier
+   * headings are still the working title the audit was drafted under — the slug
+   * with a v1 numeric id after it, `og-type (4.7)` — and every list that links
+   * here shows `audit.title`, so the heading would name the same audit twice.
+   */
+  it('titles every dossier page with the registry title', () => {
+    const titles = new Map(auditList().map((audit) => [audit.id, audit.title]));
+    const all = pages();
+    expect(all).toHaveLength(titles.size);
+
+    for (const page of all) {
+      expect(pageTitle(page.full), page.id).toBe(titles.get(page.id));
+    }
+  });
+
   it('links the favicon at a path the build actually emits', () => {
     const [page] = pages();
     const href = /<link rel="icon" href="([^"]+)"/.exec(page!.full)?.[1];

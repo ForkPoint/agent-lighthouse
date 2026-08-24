@@ -58,10 +58,13 @@ export async function getStaticPaths() {
 
 const { entry, audit, nav, prev, next } = Astro.props;
 const { Content, headings } = await render(entry);
-// The body opens with its own `# Human Title`, so the page takes its title from there
-// and renders no heading of its own. `entry.data.audit` is the machine id
-// (`category/slug`) and only stands in if a dossier ever ships without a heading.
-const title = headings.find((heading) => heading.depth === 1)?.text ?? entry.data.audit;
+// The page is titled from the registry, not from the dossier's own top-level
+// heading. Those headings are working titles — most are the audit slug with a
+// v1 numeric id after it (`og-type (4.7)`) — and every other surface that links
+// here (sidebar, prev/next, cards, category indexes) shows `audit.title`, so
+// taking the heading would name the same audit two ways. The body still renders
+// that heading, and it is still the only depth-1 heading on the page.
+const title = audit.title;
 
 // The audit's implementation, as it stands on the default branch.
 const sourceUrl = `https://github.com/ForkPoint/agent-lighthouse/blob/main/${entry.data.source_file}`;

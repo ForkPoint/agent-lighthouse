@@ -76,10 +76,15 @@ describe('dossier content', () => {
 
   // Read as source rather than rendered: proving this needs a full Astro build, and the
   // test suite must stay build-free. The two facts below are what the route depends on.
-  it('leaves the dossier heading to the markdown, not the route template', () => {
+  it('leaves the dossier heading to the markdown and takes its title from the registry', () => {
     const template = readFileSync(DOSSIER_TEMPLATE, 'utf8');
-    expect(template, 'the markdown body already supplies the <h1>').not.toMatch(/<h1[\s>]/);
-    expect(template, 'the <title> comes from the body heading').toMatch(/headings/);
+    expect(template, 'the markdown body already supplies the heading').not.toMatch(/<h1[\s>]/);
+    // The body heading is a working title on most dossiers (`og-type (4.7)`),
+    // while every list that links here shows the registry title. The rendered
+    // check over all 215 built pages is in `layouts/chrome.test.ts`.
+    expect(template, 'the title comes from the registry, not the body heading').toMatch(
+      /const title = audit\.title;/,
+    );
   });
 
   it('keeps every tier it does declare inside the schema enum', () => {
