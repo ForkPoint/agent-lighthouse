@@ -31,7 +31,7 @@ Without an explicit robots.txt rule, Google-Extended may still crawl your site b
 
 Inherits every base-class defect, and its guidance text is factually wrong in a way that will make users act against their interests. `impact` states 'Blocking Google-Extended prevents your content from being used in Google's AI features like Gemini and AI Overviews.' Google has stated the opposite since 2023: Google-Extended controls Gemini training and grounding only, and has no effect on inclusion in Search, AI Overviews, or AI Mode — those are governed by Googlebot. A publisher who reads this and unblocks Google-Extended believes they are buying AI Overview visibility they already had, and gives up training-data opt-out for nothing. Meanwhile `Googlebot`, the token that actually gates AI Overviews and AI Mode, is not audited anywhere in the category.
 
-**Required fix:** Rewrite `impact` to state accurately that Google-Extended governs Gemini training and grounding only and does NOT affect Search, AI Overviews or AI Mode inclusion. Add a separate `Googlebot allowed` audit — that is the token that actually gates AI Overviews. Apply the shared helper fixes from 2.1.
+**Required fix:** Rewrite `impact` to state accurately that Google-Extended governs Gemini training and grounding only and does not affect Search, AI Overviews or AI Mode inclusion. Add a separate `Googlebot allowed` audit — that is the token that actually gates AI Overviews. Apply the shared helper fixes from 2.1.
 
 **False-positive risks:**
 - Same exact-match/BOM/soft-404/`Disallow: /*` misreads as 2.1, from the shared `CrawlerBotAudit` + `isAllowed` path.
@@ -55,7 +55,7 @@ Inherits every base-class defect, and its guidance text is factually wrong in a 
 
 **Evidence:** Google documents Google-Extended as 'a standalone product token that web publishers can use to manage whether content Google crawls from their sites may be used for training future generations of Gemini models that power Gemini Apps and Vertex AI API for Gemini and for grounding ... in Gemini Apps and Grounding with Google Search on Vertex AI', and states it 'does not impact a site's inclusion in Google Search nor is it used as a ranking signal'. It is a robots.txt token only — no crawler fetches with that UA — so it is safe to block without traffic loss.
 
-**Counter-evidence:** Critical, widely-misreported limitation: Google-Extended does NOT control AI Overviews or AI Mode. Google's AI-features page states 'robots.txt directives for Googlebot is the control for site owners to manage access to how their sites are crawled for Search' and directs publishers to nosnippet / data-nosnippet / max-snippet / noindex for AI feature control. Any audit implying a Google-Extended disallow keeps content out of AI Overviews is wrong. Also, BuzzStream measured 92.3% citation retention among sites blocking Google-Extended — the highest of any bot studied.
+**Counter-evidence:** Critical, widely-misreported limitation: Google-Extended does not control AI Overviews or AI Mode. Google's AI-features page states 'robots.txt directives for Googlebot is the control for site owners to manage access to how their sites are crawled for Search' and directs publishers to nosnippet / data-nosnippet / max-snippet / noindex for AI feature control. Any audit implying a Google-Extended disallow keeps content out of AI Overviews is wrong. Also, BuzzStream measured 92.3% citation retention among sites blocking Google-Extended — the highest of any bot studied.
 
 ## Review history
 

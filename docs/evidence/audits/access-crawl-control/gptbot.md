@@ -55,7 +55,7 @@ GPTBot is the single most valuable token in the category and detecting a real Di
 
 ### Signal: GPTBot allow/block state in robots.txt — grade A (robots-ai-crawlers)
 
-**Mechanism:** Disallowing GPTBot removes the site's content from OpenAI foundation-model training corpora; allowing it permits training use. It does NOT affect ChatGPT search visibility (that is OAI-SearchBot).
+**Mechanism:** Disallowing GPTBot removes the site's content from OpenAI foundation-model training corpora; allowing it permits training use. It does not affect ChatGPT search visibility (that is OAI-SearchBot).
 
 **Grade: A** — OpenAI states the effect of the directive verbatim: "Disallowing GPTBot indicates a site's content should not be used in training generative AI foundation models." The token, the user agent and a published IP list for verification all come from the vendor, which is the grade-A bar. Two things the grade does not cover, and the audit's copy says so: blocking GPTBot has a small measured effect on downstream visibility (sites blocking it retained 88.2% citation presence, because ingested and mirrored content persists), and it is not a ChatGPT search control — that is OAI-SearchBot.
 

@@ -75,7 +75,7 @@ _No dedicated evidence signal was researched for this audit in the 2026-08-20 pa
 
 ## The merge (Plan 4, Task 8, 2026-08-22)
 
-5.22 checked the same three things this audit checks — native controls, names, labels — but only inside `form[toolname]`, an attribute no deployed site carries, so it returned `na` on every real scan while consuming runtime and report space. Its required fix is unusually short: *"Merge into 5.27 form-actionability, which already evaluates native elements, label association, and autocomplete on ALL forms rather than only WebMCP-tagged ones. Carry over nothing but the concept; drop the placeholder-as-label rule, which 5.27 correctly rejects."*
+5.22 checked the same three things this audit checks — native controls, names, labels — but only inside `form[toolname]`, an attribute no deployed site carries, so it returned `na` on every real scan while consuming runtime and report space. Its required fix is unusually short: *"Merge into 5.27 form-actionability, which already evaluates native elements, label association, and autocomplete on all forms rather than only WebMCP-tagged ones. Carry over nothing but the concept; drop the placeholder-as-label rule, which 5.27 correctly rejects."*
 
 **The concept that carries over is the `name` attribute.** Every fillable field is now required to have one, for two independent reasons: a control with no `name` is not submitted by a plain form at all, and — 5.22's own graded mechanism — WebMCP's declarative API takes each control's `name` as the property name in the tool input schema it generates, so a nameless control is not a callable parameter. When the field sits in a `<form toolname=…>`, the reported reason says so.
 

@@ -55,7 +55,7 @@ Meta-ExternalAgent is a live token (Llama training and Meta AI corpora) so the s
 
 ### Signal: Meta-ExternalAgent allow/block state in robots.txt (and meta-externalfetcher / Meta-WebIndexer) — grade A (robots-ai-crawlers)
 
-**Mechanism:** Disallowing meta-externalagent stops Meta collecting the site for foundation-model training and direct product indexing, and Meta states the agent respects robots.txt. Disallowing meta-externalfetcher does NOT reliably stop fetches, because Meta reserves a user-request exemption.
+**Mechanism:** Disallowing meta-externalagent stops Meta collecting the site for foundation-model training and direct product indexing, and Meta states the agent respects robots.txt. Disallowing meta-externalfetcher does not reliably stop fetches, because Meta reserves a user-request exemption.
 
 **Grade: A** — Meta's web-crawlers page documents `meta-externalagent` as crawling "for use cases such as training foundation AI models or improving products by indexing content directly", with no stated robots.txt exemption, and gives a literal per-directory example. A vendor naming its own token, its purpose and the directive that governs it is the grade-A bar. The grade attaches to this token specifically: the same page reserves a user-request exemption for `meta-externalfetcher`, which "may bypass robots.txt rules", and a security exemption for `facebookexternalhit`. Conflating the three would spend an A on two agents that do not honour the directive.
 

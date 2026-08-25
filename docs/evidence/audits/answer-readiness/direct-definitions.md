@@ -45,7 +45,7 @@ Looks for <dfn>, a <dl> with a ≥6-word <dd>, or a <strong>/<b> label ending in
 - No test with '<strong>Note:</strong> ...' or '<strong>Tip:</strong> ...' — the dominant real-world false pass.
 - No test where the same label string occurs twice in the parent, or where <strong> and its 'definition' are in different sibling elements.
 - No CJK full-width colon or CJK <dd>.
-- No prose-definition page (the important false NEGATIVE: 'Unified content preparation is the process of...' with no markup fails).
+- No prose-definition page (the important false negative: 'Unified content preparation is the process of...' with no markup fails).
 - No test proving /contact-style pages reach this audit through isArticleContentPage.
 
 **Overlaps with:** _none_

@@ -237,6 +237,46 @@ describe('publicDossier', () => {
     });
   });
 
+  describe('voice and shape', () => {
+    it('breaks a paragraph that has run past 120 words', () => {
+      const sentence = 'The vendor documents the behaviour for a named agent and states the consequence. ';
+      const { markdown } = publicDossier(`## Evidence\n\n${sentence.repeat(12).trim()}\n`);
+      const paragraphs = markdown.split('\n\n').filter((p) => !p.startsWith('#'));
+      expect(paragraphs.length).toBeGreaterThan(1);
+      for (const paragraph of paragraphs) {
+        expect(paragraph.trim().split(/\s+/).length).toBeLessThanOrEqual(120);
+      }
+    });
+
+    it('leaves a paragraph that is already short alone', () => {
+      const source = '## Evidence\n\nGoogle states it plainly. That is the whole case.\n';
+      expect(publicDossier(source).markdown).toContain(
+        'Google states it plainly. That is the whole case.',
+      );
+    });
+
+    it('never breaks inside a citation or a quotation', () => {
+      const filler = 'The vendor documents this behaviour for one named agent today. ';
+      const source = `## Evidence\n\n${filler.repeat(11)}It says "One sentence. And a second." (verified 2026-08-20). ${filler.repeat(4)}\n`;
+      const { markdown } = publicDossier(source);
+      expect(markdown).toContain('"One sentence. And a second."');
+      expect(markdown).toContain('(verified 2026-08-20)');
+    });
+
+    it('puts a bare attribute in a code span so smart quotes cannot reach it', () => {
+      const { markdown } = publicDossier('## Evidence\n\nEmit rel="alternate" on the link.\n');
+      expect(markdown).toContain('`rel="alternate"`');
+    });
+
+    it('wraps a whole tag once rather than nesting spans inside it', () => {
+      const { markdown } = publicDossier('## Evidence\n\nEmit <link rel="alternate" href="/a.md"> here.\n');
+      expect(markdown).toContain('`<link rel="alternate" href="/a.md">`');
+      // The nesting bug this guards: the tag wrapped, then its attributes
+      // wrapped again inside the span that had just been created.
+      expect(markdown).not.toMatch(/`[^`\n]*`[^`\n]*`[^`\n]*`/);
+    });
+  });
+
   describe('frontmatter overrides', () => {
     it('publishes a section named by public_extra, after the contract', () => {
       const source = '## What it checks\n\nA.\n\n## The GEO-benchmark rebuild\n\nB.\n';
@@ -336,6 +376,21 @@ describe('publicDossier', () => {
       }
       // The research names a signal in up to 175 characters. A label is shorter.
       expect(longest).toBeLessThanOrEqual(66);
+    });
+
+    // The research wrote to itself: capitals for emphasis and "I verified…" for
+    // provenance. Neither belongs on a page addressed to a reader.
+    it('publishes no shouting and no first person', () => {
+      for (const id of ids) {
+        const { markdown } = publicDossier(read(id));
+        const prose = markdown.replace(/```[\s\S]*?```|`[^`]*`/g, ' ');
+        expect(prose, `${id}: first person`).not.toMatch(
+          /(?:^|[^A-Za-z])I (?:confirmed|verified|fetched|sampled|checked|found|read|ran|tested)/,
+        );
+        for (const phrase of ['REAL, NOT INVENTED', 'THE ONLY', 'HONESTY CAVEAT', 'CLAIM UNDER TEST']) {
+          expect(prose, `${id}: ${phrase}`).not.toContain(phrase);
+        }
+      }
     });
 
     it('prints its sections in the page-contract order', () => {

@@ -41,7 +41,7 @@ robots.txt (RFC 9309) is advisory metadata parsed by the crawler; the edge acces
 - **[Anubis (proof-of-work interstitial)](https://anubis.techaro.lol/docs/design/why-proof-of-work/)** — Techaro (vendor-doc, URL verified 2026-08-20)
   - URL resolves but served an Anubis deny page rather than the doc — which itself confirmed the fingerprints an auditor needs: asset paths under `/.within.website/x/cmd/anubis/`, body text "Access Denied: error code <hex>", footer "Protected by Anubis From Techaro", and a version banner (v1.27.1-…). Treat as a fingerprint source, not as a cited spec; re-verify the doc URL before shipping it in remediation copy.
 - **[AI Crawl Control — Cloudflare](https://developers.cloudflare.com/ai-crawl-control/)** — Cloudflare (vendor-doc, URL verified 2026-08-20)
-  - "Works automatically on all Cloudflare plans"; operators "Set allow or block rules for individual crawlers" and monitor AI access. Default-block posture and blocked-crawler response codes are NOT documented on this page — so an auditor must not assert Cloudflare's default behaviour, only measure the observed response.
+  - "Works automatically on all Cloudflare plans"; operators "Set allow or block rules for individual crawlers" and monitor AI access. Default-block posture and blocked-crawler response codes are not documented on this page — so an auditor must not assert Cloudflare's default behaviour, only measure the observed response.
 
 ## Competitor coverage
 

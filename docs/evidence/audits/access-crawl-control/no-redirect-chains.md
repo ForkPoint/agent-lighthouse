@@ -36,7 +36,7 @@ BROKEN — always passes. It compares `page.fetchResult.url` with `page.fetchRes
 - The tests set `p.fetchResult.finalUrl` manually, so the suite is green while the audit is inert — the coverage gives false confidence.
 
 **Test gaps:**
-- Any test exercising the REAL fetcher — the entire suite fakes finalUrl, concealing that the audit cannot fail
+- Any test exercising the real fetcher — the entire suite fakes finalUrl, concealing that the audit cannot fail
 - Multi-hop chain (the audit's stated subject) vs a single hop
 - http→https and trailing-slash normalization (should not be a defect)
 - Cross-host redirect (bare → www)

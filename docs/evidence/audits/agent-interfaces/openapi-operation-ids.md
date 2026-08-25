@@ -87,7 +87,7 @@ The verdict shape:
 
 Illegal is a `fail` while missing is a `warn`, and the asymmetry is the evidence: an id outside the pattern is *rejected at tool-registration time*, so the operation is unreachable, whereas a missing id is synthesized from method + path by every converter — degraded naming, not a broken call. The offending ids are named in `found` rather than counted, because a count gives the operator no way to locate them.
 
-### What did NOT land, and why
+### What did not land, and why
 
 - **The English-verb allowlist.** 5.23's `VERB_PATTERN` was a ~100-word hardcoded allowlist that rejected `search_products`, `search-products`, `products.search`, and any non-English or domain verb (`provision`, `ingest`, `annotate`). 5.23's own graded evidence rates the style rule **C** and states plainly that *"no spec or vendor doc constrains the naming style"* — MCP's own example tool is `get_weather`, snake_case, which the allowlist rejected. Porting it would import a false positive with no consumer. Tests lock snake_case, kebab-case and domain verbs as passing.
 - **The 20-character description floor.** Same reasoning (*"sets any description length … this project's own convention"*), and OpenAPI description quality is already a separate audit (`agent-interfaces/openapi-description-quality`), so there was nowhere for it to land that is not already occupied.

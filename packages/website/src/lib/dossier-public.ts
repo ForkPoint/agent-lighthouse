@@ -372,14 +372,95 @@ function compactSources(line: string): string {
  * span are touched, and only element names — `<link>`, `<th>`, `<main>` — so a
  * comparison such as `a < b` is left alone.
  */
-const BARE_TAG = /<\/?[a-z][a-z0-9]*(?:\s[^<>`]*?)?\/?>/g;
+const BARE_TAG = /<\/?[a-z][a-z0-9]*(?:\s[^<>`]*?)?\/?>/;
+
+/**
+ * A bare HTML attribute written as prose: `rel="alternate"`.
+ *
+ * Markdown's smart quotes turn the straight quotes into curly ones, so the page
+ * prints rel=“alternate” — which is not what a reader would type, and not what
+ * the audit matches on. Wrapping the pair in a span keeps the quotes literal.
+ */
+const BARE_ATTRIBUTE = /\b[a-z][a-z0-9-]*="[^"`\n]*"/;
+
+/**
+ * One pass, not two.
+ *
+ * The tag alternative comes first so a whole `<link rel="alternate">` is
+ * consumed as a tag; running the two patterns in sequence instead would wrap
+ * the tag, then wrap the attributes *inside* the span it had just created, and
+ * the nested backticks would break the span.
+ */
+const BARE_CODE = new RegExp(`${BARE_TAG.source}|${BARE_ATTRIBUTE.source}`, 'g');
 
 function fenceTags(text: string): string {
   // Split on code spans and fences, and rewrite only the parts between them.
   return text
     .split(/(`{1,3}[^`]*`{1,3})/)
-    .map((part, index) => (index % 2 === 1 ? part : part.replace(BARE_TAG, (tag) => `\`${tag}\``)))
+    .map((part, index) => (index % 2 === 1 ? part : part.replace(BARE_CODE, (hit) => `\`${hit}\``)))
     .join('');
+}
+
+/**
+ * Break a paragraph that has run too long into paragraphs a reader can hold.
+ *
+ * The research writes an evidence block as one unbroken run — the longest in
+ * the corpus is 247 words, and 186 paragraphs across 117 dossiers pass 120. On
+ * a page that is a wall, and the reader loses their place in it.
+ *
+ * Splitting is done here rather than in the dossiers because it changes no
+ * words: the break goes at a sentence boundary that already existed. A boundary
+ * is only taken outside code spans, outside brackets and outside quotes, so a
+ * citation such as `(verified 2026-08-20)` or a quoted sentence is never cut.
+ */
+const TARGET_WORDS = 70;
+
+function breakParagraph(line: string): string {
+  const words = (text: string) => text.trim().split(/\s+/).filter(Boolean).length;
+  if (words(line) <= 120) return line;
+
+  // `**Label** — ` opens a promoted block and stays with the first sentence.
+  const sentences: string[] = [];
+  let buffer = '';
+  let depth = 0;
+  let quoted = false;
+  let ticks = false;
+  for (let i = 0; i < line.length; i++) {
+    const ch = line[i]!;
+    buffer += ch;
+    if (ch === '`') ticks = !ticks;
+    if (ticks) continue;
+    if (ch === '(' || ch === '[') depth++;
+    else if (ch === ')' || ch === ']') depth = Math.max(0, depth - 1);
+    else if (ch === '“') quoted = true;
+    else if (ch === '”') quoted = false;
+    else if (ch === '"') quoted = !quoted;
+    const next = line.slice(i + 1);
+    const ends = /^[.?!]$/.test(ch) && /^ +[“"(]?[A-Z]/.test(next);
+    if (ends && depth === 0 && !quoted) {
+      sentences.push(buffer.trim());
+      buffer = '';
+      i++; // consume the space the boundary sits on
+    }
+  }
+  if (buffer.trim()) sentences.push(buffer.trim());
+  if (sentences.length < 2) return line;
+
+  const out: string[] = [];
+  let para = '';
+  for (const sentence of sentences) {
+    para = para ? `${para} ${sentence}` : sentence;
+    if (words(para) >= TARGET_WORDS) {
+      out.push(para);
+      para = '';
+    }
+  }
+  if (para) {
+    // A short tail reads as an orphan; fold it back into the paragraph above.
+    if (out.length > 0 && words(para) < 25) out[out.length - 1] += ` ${para}`;
+    else out.push(para);
+  }
+  return out.join('\n\n');
 }
 
 /**
@@ -431,7 +512,7 @@ function compact(body: string): string {
     const text = stripFalsifiable(line.replace(/^\*\*Evidence:\*\*\s*/, ''));
     // A line that was nothing but the protocol clause leaves no paragraph.
     if (line.trim() && !text) continue;
-    out.push(fenceTags(text));
+    out.push(breakParagraph(fenceTags(text)));
   }
 
   return out.join('\n').replace(/\n{3,}/g, '\n\n').trim();

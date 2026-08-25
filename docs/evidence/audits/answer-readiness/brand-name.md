@@ -48,7 +48,7 @@ The signal — the Organization schema name actually appears in rendered copy so
 - `getBodyText` reads server HTML. On a client-rendered SPA whose shell is `<div id="root"></div>`, body text is empty and every brand FAILS even though the schema in the shell supplies the name.
 
 **Test gaps:**
-- No test asserting that an Article/WebPage `name` must NOT satisfy the brand check — the dominant false-pass path. The existing test 'handles Article JSON-LD without publisher gracefully' actively asserts the false-pass behavior as correct.
+- No test asserting that an Article/WebPage `name` must not satisfy the brand check — the dominant false-pass path. The existing test 'handles Article JSON-LD without publisher gracefully' actively asserts the false-pass behavior as correct.
 - No test for a non-Latin-script brand (the `\b` failure).
 - No test for diacritics or curly-vs-straight apostrophe mismatch between schema and copy.
 - No test for non-English legal suffixes (S.L., B.V., AB, 株式会社).

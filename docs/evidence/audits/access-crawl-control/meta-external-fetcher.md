@@ -53,7 +53,7 @@ Live token backing Meta AI's link fetching; a reasonable check to keep, though i
 
 ### Signal: Meta-ExternalAgent allow/block state in robots.txt (and meta-externalfetcher / Meta-WebIndexer) — grade A (robots-ai-crawlers)
 
-**Mechanism:** Disallowing meta-externalagent stops Meta collecting the site for foundation-model training and direct product indexing, and Meta states the agent respects robots.txt. Disallowing meta-externalfetcher does NOT reliably stop fetches, because Meta reserves a user-request exemption.
+**Mechanism:** Disallowing meta-externalagent stops Meta collecting the site for foundation-model training and direct product indexing, and Meta states the agent respects robots.txt. Disallowing meta-externalfetcher does not reliably stop fetches, because Meta reserves a user-request exemption.
 
 **Grade: A** — The grade-A material in this signal belongs to `meta-externalagent`, whose robots.txt compliance Meta documents without exemption. It transfers to this audit only as far as the token being real and documented: Meta states that `meta-externalfetcher` "fetches individual links at a user's request" and "may bypass robots.txt rules". A directive the vendor says its agent may ignore cannot carry a pass or a failure, which is why this audit reports the declaration's presence and its stated unreliability rather than scoring compliance.
 

@@ -46,7 +46,7 @@ Falsy. No AI system keyword-matches "team"/"certified"/"specializ" on /about to 
 
 **Test gaps:**
 - No test with a realistic full HTML page — every test uses a bare sentence, hiding the raw-HTML/class-name matching defect entirely.
-- No test proving keywords are NOT matched inside `<script>`/`<style>`/class attributes.
+- No test proving keywords are not matched inside `<script>`/`<style>`/class attributes.
 - No test for a non-English about page or a non-English about path.
 - No test for a soft-404 (200 + 'not found' body).
 - No test for an SPA shell body.

@@ -54,7 +54,7 @@ Claims to verify that form validation errors are programmatically linked, but it
 - Only inputs inside `<form>` are counted (`$('form input, form select, form textarea')`) — React/modern sites frequently render fieldsets with no `<form>` wrapper and submit via JS → 'na' (no forms) on pages full of inputs.
 - CSR SPA → 'na' with the message 'No form inputs found', masking rather than reporting missing coverage.
 - `$(`[id="${id.replace(/"/g, '\\"')}"]`)` builds a selector from untrusted page content; ids containing `]`, backslashes or newlines produce a malformed selector — cheerio throws or silently matches nothing, turning a valid reference into a miss.
-- Counts across ALL pages but reports a single global ratio with no page attribution (no `pageUrl` passed on pass/warn).
+- Counts across all pages but reports a single global ratio with no page attribution (no `pageUrl` passed on pass/warn).
 
 **Test gaps:**
 - No fixture with `aria-invalid` + `role="alert"` + `aria-errormessage` (correct modern error wiring that this audit warns about).

@@ -42,7 +42,7 @@ AI agents use <header> and <footer> landmarks to identify and exclude boilerplat
 
 ## Code review findings (2026-08-20, 11-agent pass)
 
-Counts any <header> or <footer> anywhere in the document — 'page.$('header').length > 0' — but <header>/<footer> nested inside <article>, <section>, or <aside> are sectioning-content headers, NOT banner/contentinfo landmarks. A blog post whose cards each use <article><header><h2>…</h2></header></article> is credited with a site banner it does not have, so the audit passes exactly the pages whose chrome an agent cannot identify. The premise it is meant to verify is therefore inverted for a common markup pattern.
+Counts any <header> or <footer> anywhere in the document — 'page.$('header').length > 0' — but <header>/<footer> nested inside <article>, <section>, or <aside> are sectioning-content headers, not banner/contentinfo landmarks. A blog post whose cards each use <article><header><h2>…</h2></header></article> is credited with a site banner it does not have, so the audit passes exactly the pages whose chrome an agent cannot identify. The premise it is meant to verify is therefore inverted for a common markup pattern.
 
 **Required fix:** Restrict to landmark scope: 'body > header, body > footer' plus 'header:not(article header, section header, aside header, main header)' and equivalently for footer, or accept [role=banner]/[role=contentinfo]. Guard ctx.pages.length === 0 with notApplicable(). Report which pages are missing which landmark rather than only aggregate counts.
 

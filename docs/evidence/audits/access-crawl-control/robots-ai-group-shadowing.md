@@ -53,11 +53,11 @@ Nobody. Lighthouse's SEO category has is-crawlable (meta robots + X-Robots-Tag f
 
 ## Implementation sketch
 
-Pure robots.txt parse, no extra network beyond the sitemap we already fetch. Reuse packages/core/src/audits/crawler-permissions/_robots-txt-helpers.ts — but note its current categoryBlocked() flattens rules across DIFFERENT bots' groups, which is a convenience for governance reporting and must NOT be reused here; this audit needs strict per-token group isolation. Add a longest-match evaluator: for path p, select the rule with the longest pattern matching p (with '*' and '$' expanded); on equal length, Allow wins. New file packages/core/src/audits/crawler-permissions/ai-group-shadowing.ts, category crawler-permissions.
+Pure robots.txt parse, no extra network beyond the sitemap we already fetch. Reuse packages/core/src/audits/crawler-permissions/_robots-txt-helpers.ts — but note its current categoryBlocked() flattens rules across DIFFERENT bots' groups, which is a convenience for governance reporting and must not be reused here; this audit needs strict per-token group isolation. Add a longest-match evaluator: for path p, select the rule with the longest pattern matching p (with '*' and '$' expanded); on equal length, Allow wins. New file packages/core/src/audits/crawler-permissions/ai-group-shadowing.ts, category crawler-permissions.
 
 ## Example failure
 
-A retailer's robots.txt reads `User-agent: *` / `Disallow: /checkout/` / `Disallow: /account/` / `Disallow: /admin/`, and further down someone added `User-agent: GPTBot` / `Crawl-delay: 10` to slow the crawler. Per RFC 9309, GPTBot now matches its own group, that group has no path rules, and the wildcard is never read — so GPTBot is fully permitted to crawl /checkout/, /account/ and /admin/. Every existing robots.txt checker reports this file as valid, and our own per-bot audits report GPTBot as 'allowed', which is technically true and exactly the problem.
+A retailer's robots.txt reads `User-agent: *` / `Disallow: /checkout/` / `Disallow: /account/` / `Disallow: /admin/`, and further down someone added `User-agent: GPTBot` / `Crawl-delay: 10` to slow the crawler. Per RFC 9309, GPTBot now matches its own group, that group has no path rules, and the wildcard is never read — so GPTBot is fully permitted to crawl /checkout/, /account/ and /admin/. Every existing robots.txt checker reports this file as valid, and this tool's own per-bot audits report GPTBot as 'allowed', which is technically true and exactly the problem.
 
 ## Scoring
 

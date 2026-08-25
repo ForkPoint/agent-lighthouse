@@ -43,7 +43,7 @@ AI agents use <thead> and <th> elements to understand column headers and interpr
 
 ## Code review findings (2026-08-20, 11-agent pass)
 
-Correct core logic (I verified parse5 auto-inserts <tbody>, so the '<table><tr><th>' pattern is handled), but three problems. The zero-table branch returns 'this.pass('No data tables found — check not applicable')' — a scored 1.0 for absence, when audit.ts explicitly provides notApplicable() for this. The counters descend into nested tables ('$(el).find('th')'), so a layout table wrapping a data table inherits its headers and is scored proper. And a layout table (still common in legacy/govt/email-style pages) is counted in the denominator, dragging pages to fail for a table that carries no data to label.
+Correct core logic (parse5 auto-inserts <tbody>, so the '<table><tr><th>' pattern is handled), but three problems. The zero-table branch returns 'this.pass('No data tables found — check not applicable')' — a scored 1.0 for absence, when audit.ts explicitly provides notApplicable() for this. The counters descend into nested tables ('$(el).find('th')'), so a layout table wrapping a data table inherits its headers and is scored proper. And a layout table (still common in legacy/govt/email-style pages) is counted in the denominator, dragging pages to fail for a table that carries no data to label.
 
 **Required fix:** Swap the zero-table pass() for notApplicable(). Scope the header lookups to the immediate table using ':scope' semantics or by filtering out th/thead whose closest('table') is not this element. Skip probable layout tables (role=presentation/none, or no th anywhere and single row/column) instead of counting them as failures. Include page URLs in `found`.
 

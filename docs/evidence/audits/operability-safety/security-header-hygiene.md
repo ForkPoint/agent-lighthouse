@@ -91,7 +91,7 @@ Grade B therefore prices the evidence, and `tier: informative` prices the *claim
 
 ### Signal: Security headers (HSTS, CSP, X-Content-Type-Options, Referrer-Policy, Permissions-Policy) as AI-readiness signals — grade D (technical-infra)
 
-**Mechanism:** CLAIM UNDER TEST: the presence of HSTS / CSP / X-Content-Type-Options / Referrer-Policy / Permissions-Policy response headers changes whether or how an AI crawler or agent retrieves, parses, trusts or cites the page. FALSIFIABLE FORM: adding these headers measurably changes AI-crawler fetch behaviour or citation rate on otherwise identical content.
+**Mechanism:** The claim under test: the presence of HSTS / CSP / X-Content-Type-Options / Referrer-Policy / Permissions-Policy response headers changes whether or how an AI crawler or agent retrieves, parses, trusts or cites the page. FALSIFIABLE FORM: adding these headers measurably changes AI-crawler fetch behaviour or citation rate on otherwise identical content.
 
 **Evidence:** No supporting evidence was found. An exhaustive read of the AI crawler documentation from OpenAI, Anthropic, Perplexity, Apple and Google turned up not a single reference to any of these headers. Google's AI-features guidance goes further and states there are 'no additional technical requirements' for AI Overviews / AI Mode beyond ordinary Search snippet eligibility. Cloudflare's AI Crawl Control — the product that actually sits between AI crawlers and origins — makes decisions on user agent, IP, signature and robots.txt, never on the origin's security headers.
 
@@ -107,7 +107,7 @@ Grade B therefore prices the evidence, and `tier: informative` prices the *claim
 
 ### Signal: security.txt (/.well-known/security.txt) — grade C (technical-infra)
 
-**Mechanism:** CLAIM UNDER TEST: AI agents read /.well-known/security.txt to identify the site operator or a disclosure contact, and its presence improves how agents treat the site.
+**Mechanism:** The claim under test: AI agents read /.well-known/security.txt to identify the site operator or a disclosure contact, and its presence improves how agents treat the site.
 
 **Evidence:** security.txt is a real, published IETF document (RFC 9116) with a well-defined location, media type (text/plain, UTF-8, HTTPS-only) and required fields (Contact, Expires), and it has genuine — if small — adoption: roughly 0.7% of the top 1M domains in April 2024 rising to about 1.25% in 2025, with a broader count of ~573,000 domains by 2026.
 

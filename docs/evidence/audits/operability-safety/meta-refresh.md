@@ -31,7 +31,7 @@ Wraps `meta-refresh`. Rare but a real hazard: a timed `<meta http-equiv="refresh
 **False-positive risks:**
 - `excludeHidden: false` with selector `meta[http-equiv="refresh"][content]` — a meta refresh present inside a `<noscript>` block (a legacy no-JS fallback that a JS-capable agent never follows) is still flagged.
 - Only the first 3 scanned pages are evaluated; a legacy sub-page with a refresh on a large site is missed while the report reads site-wide.
-- Selector is an exact attribute-value match, so `http-equiv="Refresh"` (capital R, valid HTML and case-insensitive in browsers) is NOT matched → false negative on a real occurrence.
+- Selector is an exact attribute-value match, so `http-equiv="Refresh"` (capital R, valid HTML and case-insensitive in browsers) is not matched → false negative on a real occurrence.
 - CSR SPA → the rule is inapplicable, `na`.
 
 **Test gaps:**

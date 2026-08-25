@@ -92,7 +92,7 @@ That asymmetry drives the verdict shape, which is otherwise unchanged:
 
 The wider type list (`Product`, `IndividualProduct`, `ProductModel`) is this audit's, and the ported requirement applies across all of it — 3.8's narrower `['Service','Product']` list was itself one of its recorded defects.
 
-### What did NOT port, and why
+### What did not port, and why
 
 - **3.8's `description` requirement.** Its own review recorded this as invented: *"schema.org does not require it and Google's Product guidance does not either. Well-formed Product blocks that omit description are permanently warned for a non-issue."* Porting it would import a known false positive. A test asserts a complete Product without `description` still passes.
 - **3.8's `brand || manufacturer || provider || offers` fallback.** 3.8 accepted an Offer or a provider in place of a brand. `brand` is the property Google's table names, and an Offer is not a brand; accepting one would weaken a check this audit already has right. A test asserts `offers` alone still warns for a missing brand. (`manufacturer` remains accepted — that was already this audit's behaviour, and it is a brand-equivalent.)

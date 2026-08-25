@@ -50,7 +50,7 @@ Genuinely valuable signal: Review/AggregateRating in structured data is consumed
 - `signals` accumulates across all pages before the single `signals.length > 0` test, while the widget/N-reviews fallback is guarded by `if (signals.length === 0)` — already non-zero from page one. The fallback therefore silently stops running after the first productive page, making per-page detection order-dependent.
 
 **Test gaps:**
-- No test asserting that an unattributed decorative blockquote should NOT count — the current test asserts the opposite.
+- No test asserting that an unattributed decorative blockquote should not count — the current test asserts the opposite.
 - No test for `reviewCount: "0"` / zero-review products.
 - No test for a non-English review count string.
 - No test for `"1234 reviews"` inside an inline `<script>` payload.

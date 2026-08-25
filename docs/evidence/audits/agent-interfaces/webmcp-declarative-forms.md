@@ -31,7 +31,7 @@ Checks for `toolname`/`tooldescription` HTML attributes that do not exist in any
 
 **False-positive risks:**
 - Universal false fail: `toolname`/`tooldescription` are not part of the WebMCP proposal, HTML, or any registered microsyntax. Every real site with forms gets 'Found N form(s) but none have WebMCP toolname/tooldescription attributes' at high priority — a top-level recommendation to add invalid, inert markup.
-- Logic hole: a form with `tooldescription` but NO `toolname` increments `webmcpForms` (lines 58-62). With one such form, `webmcpForms === totalForms` → PASS, message 'All 1 form(s) have WebMCP attributes' with an empty tools list. The test at line 82 codifies this as expected behavior. A nameless tool is not callable by anything.
+- Logic hole: a form with `tooldescription` but no `toolname` increments `webmcpForms` (lines 58-62). With one such form, `webmcpForms === totalForms` → PASS, message 'All 1 form(s) have WebMCP attributes' with an empty tools list. The test at line 82 codifies this as expected behavior. A nameless tool is not callable by anything.
 - `warn` (not `na`) when a page has no forms at all — a documentation site or blog is penalized for not having forms to annotate, muddying the score with a non-signal.
 - Would-be positives are unattainable: a site implementing real WebMCP via JS registers tools at runtime and has no such attributes, so correct implementations also fail.
 

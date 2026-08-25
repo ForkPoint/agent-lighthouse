@@ -36,7 +36,7 @@ Detects step content with an English-only regex that requires the number to be t
 - It over-triggers on numeric headings that are not steps: `[.):\s]` after `\d+` means headings like '2023 in review' then '2024 in review', or '1 000 customers' / '2 000 customers', satisfy the sequence and force a HowTo requirement on a changelog, an annual-report page, or a pricing table. The audit then hard-fails them.
 - The no-stepped-pages branch returns `this.warn(...)` (score 0.5) instead of `notApplicable`, so a site with no procedural content is docked on every scan.
 - `matchesType(obj,'HowTo') && Array.isArray(obj['step'])` rejects the valid single-step form (`"step": {"@type":"HowToStep"}`) and the `HowToSection` grouping form, failing correct markup.
-- `hasSequentialNumberedHeadings` counts across ALL heading levels mixed together, so an h2 '1. Overview' followed by an unrelated h4 '2 year warranty' registers as a sequence.
+- `hasSequentialNumberedHeadings` counts across all heading levels mixed together, so an h2 '1. Overview' followed by an unrelated h4 '2 year warranty' registers as a sequence.
 
 **Test gaps:**
 - No test for step numbers rendered outside the heading text (span/CSS counter) — the normal real-world pattern the regex misses
