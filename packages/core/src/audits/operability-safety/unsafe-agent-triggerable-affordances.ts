@@ -139,7 +139,7 @@ export class UnsafeAgentTriggerableAffordancesAudit extends Audit {
       code: SAMPLE,
       effort: 'easy',
       docsUrl:
-        'https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/audits/operability-safety/unsafe-agent-triggerable-affordances.md',
+        'https://forkpoint.github.io/agent-lighthouse/audits/operability-safety/unsafe-agent-triggerable-affordances/',
       tags: ['injection-safety', 'http-semantics', 'prompt-injection'],
     },
   };

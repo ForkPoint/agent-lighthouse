@@ -72,6 +72,67 @@ function parseFrontmatter(source) {
   return out;
 }
 
+/**
+ * Every source id the registry defines.
+ *
+ * A dossier stores `sources:` as ids and nothing else, so an id that resolves
+ * to no record would publish a page with a missing citation. Caught here rather
+ * than in the website build, because the registry and the dossiers are both
+ * repository data and this is the script that proves they agree.
+ */
+const registryIds = new Set(
+  JSON.parse(readFileSync(resolve(repoRoot, 'docs/evidence/sources.json'), 'utf8')).sources.map(
+    (source) => source.id,
+  ),
+);
+
+/** The `sources:` ids of one dossier, read off the raw frontmatter block. */
+function sourceIds(text) {
+  const block = /^sources:\n((?:\s+- .*\n)+)/m.exec(text)?.[1];
+  if (!block) return [];
+  return block
+    .trimEnd()
+    .split('\n')
+    .map((line) => line.replace(/^\s*- /, '').trim());
+}
+
+/**
+ * The `consumers:` entries of one dossier, read off the raw frontmatter block.
+ *
+ * Same minimal reader as `sourceIds`: a flat list of scalars, so a YAML
+ * dependency would buy nothing.
+ */
+function consumerEntries(text) {
+  const block = /^consumers:\n((?:\s+- .*\n)+)/m.exec(text)?.[1];
+  if (!block) return [];
+  return block
+    .trimEnd()
+    .split('\n')
+    .map((line) => line.replace(/^\s*- /, '').trim().replace(/^["'](.*)["']$/, '$1'));
+}
+
+/**
+ * Names that were split at a comma when the frontmatter was written.
+ *
+ * One consumer is one name. Four dossiers had a single quoted string chopped
+ * into several list entries at its commas — "none-known for blockquote" /
+ * "descriptions" / "or link validity" — and in two of them the tail landed
+ * under a fabricated `consumers_note:` key, which the website schema does
+ * define but for a different purpose. Both halves of that damage are visible
+ * without knowing the intended text: a fragment either opens a parenthesis it
+ * never closes, or begins with the conjunction that joined it to the entry
+ * above.
+ *
+ * @param {string[]} entries one dossier's consumers list
+ * @returns {string[]} the entries that cannot stand as a name on their own
+ */
+function splitConsumerNames(entries) {
+  return entries.filter((entry, index) => {
+    const unclosed = (entry.match(/\(/g)?.length ?? 0) !== (entry.match(/\)/g)?.length ?? 0);
+    return unclosed || (index > 0 && /^(?:or|and)\b/.test(entry));
+  });
+}
+
 /** @type {string[]} */
 const violations = [];
 let checked = 0;
@@ -99,6 +160,38 @@ for (const registrations of Object.values(defaultConfig.audits)) {
     if (!front) {
       violations.push(`${id}: dossier has no YAML frontmatter — ${meta.dossier}`);
       continue;
+    }
+
+    const unknown = sourceIds(readFileSync(dossierPath, 'utf8')).filter(
+      (sourceId) => !registryIds.has(sourceId),
+    );
+    if (unknown.length > 0) {
+      violations.push(
+        `${id}: sources: names ${unknown.length} id(s) the registry does not define — ` +
+          `${unknown.join(', ')} (${meta.dossier})`,
+      );
+    }
+
+    const fragments = splitConsumerNames(consumerEntries(readFileSync(dossierPath, 'utf8')));
+    if (fragments.length > 0) {
+      violations.push(
+        `${id}: consumers: has ${fragments.length} ` +
+          `${fragments.length === 1 ? 'entry' : 'entries'} split mid-name — ` +
+          `${fragments.map((f) => JSON.stringify(f)).join(', ')} (${meta.dossier})`,
+      );
+    }
+
+    // The research's own recommendation, and the tier that actually shipped.
+    // They are allowed to differ — the contradiction sweep overrode eight of
+    // them on purpose — but a difference has to be written down, or the next
+    // reader cannot tell a decision from a drift.
+    const recommended = front.recommended_tier;
+    const tier = meta.tier ?? 'scored';
+    if (recommended && recommended !== tier && !front.tier_rationale) {
+      violations.push(
+        `${id}: ships tier "${tier}" but its dossier recommends "${recommended}" ` +
+          `with no tier_rationale to say why (${meta.dossier})`,
+      );
     }
 
     if (front.evidence_grade !== meta.evidenceGrade) {

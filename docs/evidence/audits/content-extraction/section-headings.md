@@ -1,14 +1,34 @@
 ---
 audit: content-extraction/section-headings
-audit_id: "6.7"
 category: content-extraction
 source_file: packages/core/src/audits/content-extraction/section-headings.ts
 slug: section-headings
-review_verdict: fix
-severity: medium
 evidence_grade: B
 disposition: "keep — fix required"
 reviewed: 2026-08-21
+recommended_tier: scored
+consumers:
+  - LangChain HTMLHeaderTextSplitter / HTMLSectionSplitter
+  - Playwright MCP browser_snapshot
+  - Chrome DevTools MCP take_snapshot
+  - Anthropic browser use / Claude-in-Chrome read_page
+  - Mozilla Readability (Firefox Reader Mode and derived reader pipelines)
+  - Cloudflare Markdown for Agents
+signals:
+  - name: Heading hierarchy (h1–h6) for LLM parsing and chunking
+    grade: B
+    domain: semantic-dom-a11y
+sources:
+  - langchain-html-splitters
+  - playwright-mcp-snapshots
+  - anthropic-browser-use-tool
+  - w3c-html-aam
+  - readability-src
+  - cloudflare-markdown-for-agents
+  - web-almanac-2025-accessibility
+  - google-ai-features-trust
+  - mozilla-readability-source
+  - google-ai-features-docs
 ---
 
 # section-headings (`6.7`)
@@ -46,14 +66,13 @@ Two defects make it close to vacuous, plus one that penalizes correct markup. Th
 
 ### Signal: Heading hierarchy (h1–h6) for LLM parsing and chunking — grade B (semantic-dom-a11y)
 
-**Mechanism:** Real h1–h6 elements (as opposed to visually-styled div/span/p pseudo-headings) are the boundary markers that heading-aware chunkers and accessibility-tree serializers use to segment a page: LangChain's HTMLHeaderTextSplitter/HTMLSectionSplitter split on header tags and attach the enclosing header chain as chunk metadata, Readability scores h2–h6 and uses a lone h1 to recover the article title, and a11y snapshots emit heading nodes with an explicit level. If a page has no true heading elements, these consumers produce either one undifferentiated blob (no heading metadata to attach) or fall back to guessing (HTMLSectionSplitter infers sections from font size).
+**Mechanism:** Real h1–h6 elements are the boundary markers that heading-aware chunkers and accessibility-tree serializers use to segment a page; visually-styled div, span or p pseudo-headings are not. LangChain's HTMLHeaderTextSplitter and HTMLSectionSplitter split on header tags, and attach the enclosing header chain as chunk metadata. Readability scores h2–h6, and uses a lone h1 to recover the article title. a11y snapshots emit heading nodes with an explicit level. If a page has no true heading elements, these consumers produce either one undifferentiated blob (no heading metadata to attach) or fall back to guessing (HTMLSectionSplitter infers sections from font size).
 
-**Evidence:** Documented consumer behaviour on the RAG side: LangChain's splitter docs state it operates on <h1>,<h2>,<h3> and 'adds metadata for each header "relevant" to any given chunk', with the stated goal of 'keeping related text grouped (more or less) semantically and preserving context-rich information encoded in document structures' [langchain-html-splitters]. On the agent side, HTML-AAM maps h1–h6 to the heading role with aria-level [w3c-html-aam], and Playwright MCP snapshots explicitly include 'headings with levels' [playwright-mcp-snapshots]; Anthropic's read_page returns the same tree [anthropic-browser-use-tool]. Extraction-side: Readability's DEFAULT_TAGS_TO_SCORE is 'section,h2,h3,h4,h5,h6,p,td,pre' and _getArticleTitle prefers the single h1 when <title> is ambiguous [mozilla-readability-source]. Cloudflare's markdown conversion maps headings to '##', costing ~3 tokens vs 12-15 for the HTML form [cloudflare-markdown-for-agents]. Baseline: 59% of mobile sites pass the ordered-headings audit [web-almanac-2025-accessibility].
+**Grade: B** — Documented consumer behaviour, on the retrieval side rather than the vendor side. LangChain's `HTMLHeaderTextSplitter` operates on `<h1>`, `<h2>` and `<h3>` and "adds metadata for each header 'relevant' to any given chunk", with the stated goal of "keeping related text grouped (more or less) semantically". A named library acting on the element is real evidence; a library in someone's pipeline is not a vendor statement, and no measurement attaches a magnitude — hence B, not A. The claim the grade covers is the narrow one this audit makes: sections need real heading elements to be segmented on.
 
-**Counter-evidence:** The falsifiable claim that survives is 'headings must exist and be real elements'. The stricter claim audited by sequential-headings — that levels must never skip (h2→h4) — has no documented consumer: every splitter and snapshot cited tolerates skipped levels and simply records whatever level it finds; no vendor doc or study shows a measured penalty for skipped levels in LLM parsing. Google states outright that 'there are no additional requirements to appear in AI Overviews or AI Mode, nor other special optimizations necessary' [google-ai-features-docs], so no AI-search vendor endorses heading structure as an extraction or ranking requirement. LangChain is a library used by site owners' own pipelines, not a public crawler of third-party sites — treat it as mechanism evidence, not proof that ChatGPT chunks your page this way.
-**Consumers:** LangChain HTMLHeaderTextSplitter / HTMLSectionSplitter, Playwright MCP browser_snapshot, Chrome DevTools MCP take_snapshot, Anthropic browser use / Claude-in-Chrome read_page, Mozilla Readability (Firefox Reader Mode and derived reader pipelines), Cloudflare Markdown for Agents · **Recommended tier:** scored
+**Evidence:** Consumer behaviour on the RAG side is documented. LangChain's splitter docs state that it operates on <h1>, <h2> and <h3>, and 'adds metadata for each header "relevant" to any given chunk'. The stated goal is 'keeping related text grouped (more or less) semantically and preserving context-rich information encoded in document structures' [langchain-html-splitters]. On the agent side, HTML-AAM maps h1–h6 to the heading role with aria-level [w3c-html-aam], and Playwright MCP snapshots explicitly include 'headings with levels' [playwright-mcp-snapshots]; Anthropic's read_page returns the same tree [anthropic-browser-use-tool]. On the extraction side, Readability scores section, h2 to h6, p, td and pre when it looks for the article body, and prefers the single h1 as the title when <title> is ambiguous [mozilla-readability-source]. Cloudflare's markdown conversion maps headings to '##', costing ~3 tokens vs 12-15 for the HTML form [cloudflare-markdown-for-agents]. Baseline: 59% of mobile sites pass the ordered-headings audit [web-almanac-2025-accessibility].
 
-**Sources:** [Split HTML — LangChain text splitter integrations](https://docs.langchain.com/oss/python/integrations/splitters/split_html) · [Snapshots — Playwright MCP](https://playwright.dev/mcp/snapshots) · [Browser use tool (browser_toolset_20260801)](https://platform.claude.com/docs/en/agents-and-tools/tool-use/browser-use-tool) · [HTML Accessibility API Mappings 1.0](https://www.w3.org/TR/html-aam-1.0/) · [mozilla/readability Readability.js source](https://raw.githubusercontent.com/mozilla/readability/main/Readability.js) · [Introducing Markdown for Agents](https://blog.cloudflare.com/markdown-for-agents/) · [Web Almanac 2025 — Accessibility chapter](https://almanac.httparchive.org/en/2025/accessibility) · [AI features and your website — Google Search Central](https://developers.google.com/search/docs/appearance/ai-features)
+**Counter-evidence:** The falsifiable claim that survives is 'headings must exist and be real elements'. The stricter claim audited by sequential-headings is that levels must never skip, as in h2 to h4. That claim has no documented consumer. Every splitter and snapshot cited tolerates skipped levels, and simply records whatever level it finds. No vendor doc or study shows a measured penalty for skipped levels in LLM parsing. Google states outright that 'there are no additional requirements to appear in AI Overviews or AI Mode, nor other special optimizations necessary' [google-ai-features-docs], so no AI-search vendor endorses heading structure as an extraction or ranking requirement. LangChain is a library used by site owners' own pipelines, not a public crawler of third-party sites — treat it as mechanism evidence, not proof that ChatGPT chunks your page this way.
 
 ## Review history
 

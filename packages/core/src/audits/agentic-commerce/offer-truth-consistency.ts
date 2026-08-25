@@ -139,7 +139,7 @@ export class OfferTruthConsistencyAudit extends Audit {
 <button disabled>Sold out</button>`,
       effort: 'complex',
       docsUrl:
-        'https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/audits/agentic-commerce/offer-truth-consistency.md',
+        'https://forkpoint.github.io/agent-lighthouse/audits/agentic-commerce/offer-truth-consistency/',
       tags: ['commerce', 'json-ld', 'price', 'availability', 'acp'],
     },
   };

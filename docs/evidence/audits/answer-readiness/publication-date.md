@@ -1,14 +1,17 @@
 ---
 audit: answer-readiness/publication-date
-audit_id: "10.9"
 category: answer-readiness
 source_file: packages/core/src/audits/answer-readiness/publication-date.ts
 slug: publication-date
-review_verdict: keep
-severity: low
 evidence_grade: B
 disposition: "keep"
 reviewed: 2026-08-21
+sources:
+  - google-publication-dates
+  - ahrefs-freshness-17m
+  - seer-recency-study
+  - geo-critical-survey-arxiv
+  - google-helpful-content
 ---
 
 # publication-date (`10.9`)
@@ -46,21 +49,21 @@ The best-built audit in this category and a real signal: dates drive recency wei
 
 ## Evidence
 
-_No dedicated evidence signal was researched for this audit in the 2026-08-20 pass. Its tier assignment falls to the taxonomy design; unproven mechanisms default to informative per the [evidence policy](../../POLICY.md)._
+_No dedicated evidence signal was researched for this audit in the 2026-08-20 pass. Its tier assignment falls to the taxonomy design; unproven mechanisms default to informative per the [evidence policy](../../policy.md)._
 
-## Graded evidence (2026-08-21)
+## Evidence (2026-08-21)
 
-**Mechanism claim:** A page that exposes a determinable publication date — visible text agreeing with a machine-readable value — is date-attributable to consumers that act on dates (Google displays it as a byline date; AI assistants cite measurably fresher pages), whereas an undated page cannot be placed on the recency axis at all.
+**Mechanism claim:** A page that exposes a determinable publication date — visible text agreeing with a machine-readable value — is date-attributable to consumers that act on dates. Google displays it as a byline date, and AI assistants cite measurably fresher pages. An undated page cannot be placed on the recency axis at all.
 
 **Grade: B** — Google is a documented consumer of the date fields and two independent large-scale datasets measure a recency skew in AI citations, but the citation evidence is correlational and the platforms disagree with each other.
 
 **Evidence:**
-- Google documents reading the date and acting on it: "When Google can determine the byline date of your page or video, it can expose this information in Search results, if this information is considered to be useful to the user", and it requires that "the date (and optional time and timezone) match between the equivalent user-visible and structured values" — which is precisely the visible-plus-machine-readable pairing this audit checks — https://developers.google.com/search/docs/appearance/publication-dates (verified 2026-08-21)
-- Ahrefs analysed 16.975M cited URLs across AI surfaces and organic results: AI-cited pages average 1,064 days since publication vs 1,432 for organic SERP results (~25.7% fresher), with ChatGPT citations strongest at 958 days, Copilot 1,056, Gemini 1,118, Perplexity 1,166 — https://ahrefs.com/blog/do-ai-assistants-prefer-to-cite-fresh-content (verified 2026-08-21)
+- Google documents reading the date and acting on it: "When Google can determine the byline date of your page or video, it can expose this information in Search results, if this information is considered to be useful to the user". It also requires that "the date (and optional time and timezone) match between the equivalent user-visible and structured values" — precisely the visible-plus-machine-readable pairing this audit checks — https://developers.google.com/search/docs/appearance/publication-dates (verified 2026-08-21)
+- Ahrefs analysed 16.975M cited URLs across AI surfaces and organic results. AI-cited pages average 1,064 days since publication, against 1,432 for organic SERP results — about 25.7% fresher. ChatGPT citations are the strongest at 958 days, then Copilot at 1,056, Gemini at 1,118 and Perplexity at 1,166 — https://ahrefs.com/blog/do-ai-assistants-prefer-to-cite-fresh-content (verified 2026-08-21)
 - Seer Interactive's ChatGPT bot log-file study over 5,000+ dated URLs: "Nearly 65% of log hits were for content published within the past year", 79% within two years, 89% within three — https://www.seerinteractive.com/insights/study-ai-brand-visibility-and-content-recency (verified 2026-08-21)
 - The 2026 critical survey rates recency as moderately supported, with effects for "time-sensitive or commercial queries" — https://arxiv.org/html/2607.14035v1 (verified 2026-08-21)
 
-**Counter-evidence:** The two largest datasets contradict each other on Google AI Overviews — Ahrefs measures AIO citing pages averaging 1,432 days, statistically indistinguishable from the 1,416-day organic baseline, while Seer reports "About 85% of AIO's citations are from 2023–2025", the strongest recency bias it found — so platform-specific recency claims are unsafe. Both datasets are correlational: fresher pages may simply cover fresher topics, and the average AI-cited page is still 2.9 years old, making recency a tilt rather than a gate. The survey calls dates "useful but non-universal signals". Google's guidance also treats date manipulation as an anti-pattern, asking whether site owners are "changing the date of pages to make them seem fresh when the content has not substantially changed?" (https://developers.google.com/search/docs/fundamentals/creating-helpful-content, verified 2026-08-21). The defensible scored property is therefore date *presence and visible/structured agreement*, which is what this audit measures — not recency.
+**Counter-evidence:** The two largest datasets contradict each other on Google AI Overviews. Ahrefs measures AI Overviews citing pages averaging 1,432 days, statistically indistinguishable from the 1,416-day organic baseline. Seer reports that "About 85% of AIO's citations are from 2023–2025", the strongest recency bias it found. Platform-specific recency claims are therefore unsafe. Both datasets are correlational: fresher pages may simply cover fresher topics, and the average AI-cited page is still 2.9 years old, making recency a tilt rather than a gate. The survey calls dates "useful but non-universal signals". Google's guidance also treats date manipulation as an anti-pattern, asking whether site owners are "changing the date of pages to make them seem fresh when the content has not substantially changed?" (https://developers.google.com/search/docs/fundamentals/creating-helpful-content, verified 2026-08-21). The defensible scored property is therefore date *presence and visible/structured agreement*, which is what this audit measures — not recency.
 
 ## Review history
 

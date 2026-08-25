@@ -1,14 +1,29 @@
 ---
 audit: answer-readiness/last-modified-schema
-audit_id: "10.10"
 category: answer-readiness
 source_file: packages/core/src/audits/answer-readiness/last-modified-schema.ts
 slug: last-modified-schema
-review_verdict: fix
-severity: medium
 evidence_grade: B
 disposition: "keep — fix required"
 reviewed: 2026-08-21
+recommended_tier: scored
+consumers:
+  - Google Search (documented consumer of datePublished/dateModified structured data)
+  - ChatGPT / OAI-SearchBot (empirically strongest recency bias)
+  - Perplexity
+  - Gemini
+  - Copilot
+signals:
+  - name: Publication and updated dates (datePublished / dateModified) effect on AI citation
+    grade: B
+    domain: geo-authority
+sources:
+  - ahrefs-freshness-17m
+  - seer-recency-study
+  - google-publication-dates
+  - google-article-structured-data
+  - google-helpful-content
+  - geo-critical-survey-arxiv
 ---
 
 # last-modified-schema (`10.10`)
@@ -49,12 +64,11 @@ AI engines use dateModified in JSON-LD to determine content freshness. Content t
 
 **Mechanism:** Exposing accurate, machine-readable datePublished/dateModified (in structured data and matching visible text) makes a page eligible for the measurable recency preference that AI answer engines exhibit, raising citation probability relative to pages with no discoverable date.
 
-**Evidence:** This is the best-evidenced signal in the domain on the empirical side, at large scale and across independent datasets. Ahrefs analysed 16.975M cited URLs across six surfaces: AI-cited pages average 1,064 days old vs 1,432 for organic results — 25.7% fresher; ChatGPT is strongest at 958 days. Seer Interactive analysed 5,000+ dated URLs using ChatGPT bot log files: ~65% of hits went to past-year content, 79% to the last two years, 89% to the last three, and only 6% to content older than six years. Google's publication-dates doc confirms Google is a documented consumer of these fields, requires that 'the date... match between the equivalent user-visible and structured values', and notes 'Google doesn't depend on a single date factor because all factors can be prone to issues' — which is exactly why supplying an unambiguous machine-readable date is the actionable part. The 2026 critical survey rates dates/recency as having moderate replicated support. Scoring the PRESENCE and consistency of a correct date is well-founded.
+**Grade: B** — The empirical case is the strongest in its domain and the vendor case is absent, which is exactly what grade B describes. Ahrefs analysed 16.975M cited URLs across six surfaces and found AI-cited pages average 1,064 days old against 1,432 for organic results — 25.7% fresher — and Seer Interactive reproduced a recency preference on an independent dataset. No vendor documents reading `datePublished` or `dateModified` for answer selection, so nothing here reaches A. The two largest datasets also disagree about Google AI Overviews: Ahrefs found no freshness advantage there at all, Seer found the strongest one. At least one is wrong, so the audit makes no platform-specific claim.
 
-**Counter-evidence:** The two largest datasets disagree on Google AI Overviews: Ahrefs found AIO cites pages averaging 1,432 days — no fresher than organic and the weakest recency bias of all platforms — while Seer reported AIO had the strongest bias (~85% from 2023–2025). At least one is wrong, so platform-specific recency claims are unsafe. The average AI-cited page is still 2.9 years old, so recency is a tilt, not a gate. Seer's own caveat: Energy and instructional/decking content showed 10–15-year-old pages still drawing AI bot traffic, and the study concludes query intent matters more than mechanical recency optimization. The critical survey finds recency helps time-sensitive queries but 'lacks universality'. Critically, all of this is correlational — fresh pages may simply cover fresher topics. And Google explicitly names date-churn as an anti-pattern: 'Are you changing the date of pages to make them seem fresh when the content has not substantially changed?', with Ahrefs' author adding that 'low-quality, irrelevant content that's updated every day will not have a magic positive effect.' RECOMMENDATION: score date presence, correctness and visible/structured agreement; do NOT score date recency, which rewards exactly the manipulation Google penalises.
-**Consumers:** Google Search (documented consumer of datePublished/dateModified structured data), ChatGPT / OAI-SearchBot (empirically strongest recency bias), Perplexity, Gemini, Copilot · **Recommended tier:** scored
+**Evidence:** This is the best-evidenced signal in the domain on the empirical side, at large scale and across independent datasets. Ahrefs analysed 16.975M cited URLs across six surfaces: AI-cited pages average 1,064 days old vs 1,432 for organic results — 25.7% fresher; ChatGPT is strongest at 958 days. Seer Interactive analysed 5,000+ dated URLs using ChatGPT bot log files: ~65% of hits went to past-year content, 79% to the last two years, 89% to the last three, and only 6% to content older than six years. Google's publication-dates doc confirms Google is a documented consumer of these fields, and requires that 'the date... match between the equivalent user-visible and structured values'. It also notes that 'Google doesn't depend on a single date factor because all factors can be prone to issues' — which is exactly why supplying an unambiguous machine-readable date is the actionable part. The 2026 critical survey rates dates/recency as having moderate replicated support. Scoring the PRESENCE and consistency of a correct date is well-founded.
 
-**Sources:** [Do AI Assistants Prefer to Cite Fresh Content?](https://ahrefs.com/blog/do-ai-assistants-prefer-to-cite-fresh-content) · [Study: AI Brand Visibility and Content Recency](https://www.seerinteractive.com/insights/study-ai-brand-visibility-and-content-recency) · [Add a Byline Date to Google Search Results](https://developers.google.com/search/docs/appearance/publication-dates) · [Article (Article, NewsArticle, BlogPosting) Structured Data](https://developers.google.com/search/docs/appearance/structured-data/article) · [Creating Helpful, Reliable, People-First Content](https://developers.google.com/search/docs/fundamentals/creating-helpful-content) · [Optimizing Visibility in Generative Engines: A Critical Survey of Generative Engine Optimization (2023–2026)](https://arxiv.org/html/2607.14035v1)
+**Counter-evidence:** The two largest datasets disagree on Google AI Overviews. Ahrefs found AIO cites pages averaging 1,432 days, no fresher than organic, and the weakest recency bias of all platforms. Seer reported that AIO had the strongest bias, at about 85% from 2023–2025. At least one is wrong, so platform-specific recency claims are unsafe. The average AI-cited page is still 2.9 years old, so recency is a tilt, not a gate. Seer's own caveat: Energy and instructional/decking content showed 10–15-year-old pages still drawing AI bot traffic, and the study concludes query intent matters more than mechanical recency optimization. The critical survey finds recency helps time-sensitive queries but 'lacks universality'. Critically, all of this is correlational — fresh pages may simply cover fresher topics. And Google explicitly names date-churn as an anti-pattern: 'Are you changing the date of pages to make them seem fresh when the content has not substantially changed?' Ahrefs' author adds that 'low-quality, irrelevant content that's updated every day will not have a magic positive effect.' The recommendation follows: score date presence, correctness and visible-to-structured agreement, and do not score date recency — recency rewards exactly the manipulation Google penalises.
 
 ## Review history
 

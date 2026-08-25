@@ -8,6 +8,10 @@ tier: scored
 disposition: "new in v2 — graduated from proposal 2026-08-23"
 reviewed: 2026-08-20
 graduated: 2026-08-23
+sources:
+  - indexnow-doc
+  - indexnow-faq
+  - bing-indexnow
 ---
 
 
@@ -21,12 +25,12 @@ Proves the origin can actually serve and correctly 404 root-level .txt resources
 
 ## Claimed mechanism (falsifiable)
 
-IndexNow proves ownership by fetching https://host/{key}.txt and byte-comparing the body to {key}; a non-matching body yields HTTP 403 ('key not found in file') and the submission is discarded by every participating engine (Bing, Yandex, Naver, Seznam, Yep, Amazon). Falsifiable claim: if GET https://host/<random-32-hex>.txt returns 200 rather than 404, the origin has a catch-all that returns non-key content for arbitrary root .txt paths — so key rotation, key removal, and key-file health are undetectable, and the same catch-all makes every probe-based discovery file (llms.txt, ai.txt, security.txt) indistinguishable from a soft-404. Predicts: sites failing this probe cannot be given a trustworthy 'llms.txt present' verdict either, because a 200 response there carries no information.
+IndexNow proves ownership by fetching https://host/{key}.txt and byte-comparing the body to {key}; a non-matching body yields HTTP 403 ('key not found in file') and the submission is discarded by every participating engine (Bing, Yandex, Naver, Seznam, Yep, Amazon). Falsifiable claim: if GET https://host/<random-32-hex>.txt returns 200 rather than 404, the origin has a catch-all that returns non-key content for arbitrary root .txt paths. Key rotation, key removal and key-file health are then undetectable. The same catch-all makes every probe-based discovery file — llms.txt, ai.txt, security.txt — indistinguishable from a soft-404. Predicts: sites failing this probe cannot be given a trustworthy 'llms.txt present' verdict either, because a 200 response there carries no information.
 
 ## Evidence
 
 - **[IndexNow Protocol Documentation](https://www.indexnow.org/documentation)** — IndexNow (Microsoft/Yandex) (spec, URL verified 2026-08-20)
-  - Ownership is proven by hosting a UTF-8 text file at the host root named {key}.txt whose body is the key. Key must be 8-128 chars from [a-zA-Z0-9-]. Verification is a byte comparison: HTTP 403 is returned when the key is 'not found in the key file' or invalid; 422 on host/schema mismatch; 429 on rate limit; 202 means 'key validation pending'. keyLocation restricts submittable URLs to the key file's directory and deeper. Batch POST accepts up to 10,000 URLs.
+  - Ownership is proven by hosting a UTF-8 text file at the host root named {key}.txt whose body is the key. Key must be 8-128 chars from [a-zA-Z0-9-]. Verification is a byte comparison. HTTP 403 is returned when the key is 'not found in the key file' or invalid. 422 signals a host or schema mismatch, 429 a rate limit, and 202 means 'key validation pending'. keyLocation restricts submittable URLs to the key file's directory and deeper. Batch POST accepts up to 10,000 URLs.
 - **[IndexNow FAQ — participating search engines](https://www.indexnow.org/faq)** — IndexNow (vendor-doc, URL verified 2026-08-20)
   - Participating engines: Amazon, Bing, Naver, Seznam.cz, Yandex, Yep. Submissions to the global endpoint are shared with all participants. States IndexNow 'helps keep your content current in AI-powered search results' but names no specific LLM/Copilot consumer — the AI-consumer link is a vendor claim, not a documented pipeline.
 - **[IndexNow: Instantly Index your Web Content in Search Engines](https://blogs.bing.com/webmaster/october-2021/IndexNow-Instantly-Index-your-web-content-in-Search-Engines)** — Microsoft Bing Webmaster Blog (vendor-doc, URL verified 2026-08-20)
@@ -42,7 +46,7 @@ No evidence any tool probes for root .txt soft-404 as a discovery precondition. 
 
 ## Example failure
 
-A Next.js site deployed on a host with a catch-all rewrite `/(.*) -> /index.html` returns 200 text/html for `/a3f2c9d1e4b70856.txt`. The owner's real IndexNow key file also 200s, so Bing Webmaster shows 'key verified' — but after a framework upgrade reorders the rewrite ahead of static file serving, every key fetch returns the app shell, IndexNow starts answering 403 to all submissions, and the site loses push indexing across six engines with no visible symptom. The same origin returns 200 for /llms.txt, so an 'llms.txt present' badge from any auditor is a false positive.
+A Next.js site deployed on a host with a catch-all rewrite `/(.*) -> /index.html` returns 200 text/html for `/a3f2c9d1e4b70856.txt`. The owner's real IndexNow key file also 200s, so Bing Webmaster shows 'key verified'. Then a framework upgrade reorders the rewrite ahead of static file serving. Every key fetch now returns the app shell, IndexNow starts answering 403 to all submissions, and the site loses push indexing across six engines with no visible symptom. The same origin returns 200 for /llms.txt, so an 'llms.txt present' badge from any auditor is a false positive.
 
 ## Scoring
 

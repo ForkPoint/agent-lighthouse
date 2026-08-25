@@ -36,12 +36,22 @@ describe('ReviewSignalsAudit', () => {
   it('warns rather than passes on a review widget class fallback', () => {
     const page = mockPageContext(
       'https://example.com/products/widget',
-      `<html><body><div class="yotpo-reviews-stars"></div></body></html>`,
+      `<html><body><div class="yotpo-reviews-stars">4.8 out of 5</div></body></html>`,
     );
     const result = audit.audit(mockCheckContext([page]));
     expect(result.status).toBe('warn');
     expect(result.message).toContain('review widget markup');
     expect(result.message).toContain('not machine-readable');
+  });
+
+  // Presence of the class is not evidence of a rating, on the same reasoning
+  // that rejects `"aggregateRating": {}`. An empty div may never populate.
+  it('does not treat an empty widget placeholder as review UI', () => {
+    const page = mockPageContext(
+      'https://example.com/products/widget',
+      `<html><body><div class="star-rating"></div></body></html>`,
+    );
+    expect(audit.audit(mockCheckContext([page])).status).toBe('fail');
   });
 
   it('warns rather than passes on visible "N reviews" text', () => {
@@ -64,10 +74,10 @@ describe('ReviewSignalsAudit', () => {
     expect(result.message).toContain('No review or testimonial signals found');
   });
 
-  it('fails when no pages scanned', () => {
+  it('reports na when no pages were scanned', () => {
     const result = audit.audit(mockCheckContext([]));
-    expect(result.status).toBe('fail');
-    expect(result.message).toContain('No pages scanned');
+    expect(result.status).toBe('na');
+    expect(result.message).toContain('No pages were scanned');
   });
 
   it('passes via attributed blockquote with a <cite> child element', () => {
@@ -134,7 +144,10 @@ describe('ReviewSignalsAudit', () => {
 
   it('does not treat an unattributed pull-quote as a review signal', () => {
     // v1 10.8 passed here ("blockquote(s) (no attribution)") and v1 10.14
-    // passed on the bare presence of the element. Neither is social proof.
+    // passed on the bare presence of the element. The 2026-08-22 fold demoted
+    // it to a scored warn; the dossier's own counter-evidence says "nothing in
+    // any source supports counting an unattributed blockquote as a review
+    // signal", so it now sets no status at all and is reported only.
     const page = mockPageContext(
       'https://example.com/',
       `<html><body>
@@ -142,8 +155,8 @@ describe('ReviewSignalsAudit', () => {
       </body></html>`,
     );
     const result = audit.audit(mockCheckContext([page]));
-    expect(result.status).toBe('warn');
-    expect(result.message).toContain('unattributed');
+    expect(result.status).toBe('fail');
+    expect(result.found).toContain('1 unattributed pull-quote(s)');
   });
 
   it('ignores an empty blockquote entirely', () => {
@@ -245,5 +258,94 @@ describe('ReviewSignalsAudit', () => {
     );
     const result = audit.audit(mockCheckContext([widgetOnly, structured]));
     expect(result.status).toBe('pass');
+  });
+
+  // Google prohibits markup not "sourced directly from users", so the presence
+  // of the vocabulary is not itself evidence of social proof.
+  it('does not count hollow review vocabulary', () => {
+    for (const payload of [
+      '{"@context":"https://schema.org","@type":"Product","aggregateRating":{}}',
+      '{"@context":"https://schema.org","@type":"Product","aggregateRating":true}',
+      '{"@context":"https://schema.org","@type":"Review"}',
+      '{"@context":"https://schema.org","@type":"Product","review":[{"@type":"Review"}]}',
+      '{"@context":"https://schema.org","@type":"AggregateRating"}',
+    ]) {
+      const page = mockPageContext(
+        'https://example.com/products/thing',
+        `<html><body><script type="application/ld+json">${payload}</script></body></html>`,
+      );
+      expect(audit.audit(mockCheckContext([page])).status, payload).toBe('fail');
+    }
+  });
+
+  it('counts a Review node that carries an author or a body', () => {
+    const page = mockPageContext(
+      'https://example.com/products/thing',
+      `<html><body><script type="application/ld+json">{"@context":"https://schema.org","@type":"Product","review":[{"@type":"Review","author":{"@type":"Person","name":"Jane Smith"}}]}</script></body></html>`,
+    );
+    expect(audit.audit(mockCheckContext([page])).status).toBe('pass');
+  });
+
+  it('counts an AggregateRating that carries a rating value', () => {
+    const page = mockPageContext(
+      'https://example.com/products/thing',
+      `<html><body><script type="application/ld+json">{"@context":"https://schema.org","@type":"Product","aggregateRating":{"@type":"AggregateRating","ratingValue":"4.5"}}</script></body></html>`,
+    );
+    expect(audit.audit(mockCheckContext([page])).status).toBe('pass');
+  });
+
+  // The regex used to run against raw body text, so an inline JSON payload
+  // carrying "1234 reviews" read as visible review UI.
+  it('ignores an "N reviews" string that only appears inside a script', () => {
+    const page = mockPageContext(
+      'https://example.com/products/thing',
+      `<html><body><script>window.__DATA__ = {"label":"1234 reviews"};</script></body></html>`,
+    );
+    expect(audit.audit(mockCheckContext([page])).status).toBe('fail');
+  });
+
+  // The review-vocabulary evidence is commerce-scoped. A blog page's markup
+  // must not decide a commerce verdict in a mixed scan.
+  it('reads review vocabulary only from homepage and product pages', () => {
+    const home = mockPageContext('https://example.com/', '<html><body><p>Home</p></body></html>', 0);
+    const blog = mockPageContext(
+      'https://example.com/blog/post',
+      `<html><body><div class="star-rating">4.9</div></body></html>`,
+      1,
+    );
+    expect(blog.pageType).not.toBe('product');
+    expect(audit.audit(mockCheckContext([home, blog])).status).toBe('fail');
+  });
+
+  it('accepts a relative cite attribute as attribution', () => {
+    const page = mockPageContext(
+      'https://example.com/',
+      `<html><body><blockquote cite="/press/review"><p>"Excellent."</p></blockquote></body></html>`,
+    );
+    expect(audit.audit(mockCheckContext([page])).status).toBe('pass');
+  });
+
+  it('rejects a cite attribute that names no document', () => {
+    const page = mockPageContext(
+      'https://example.com/',
+      `<html><body><blockquote cite="see our press page"><p>"Excellent."</p></blockquote></body></html>`,
+    );
+    expect(audit.audit(mockCheckContext([page])).status).toBe('fail');
+  });
+
+  it('rejects an empty cite element as attribution', () => {
+    const page = mockPageContext(
+      'https://example.com/',
+      `<html><body><blockquote><p>"Excellent."</p><cite></cite></blockquote></body></html>`,
+    );
+    expect(audit.audit(mockCheckContext([page])).status).toBe('fail');
+  });
+
+  it('keeps the grade-B scored registration', () => {
+    const { meta } = ReviewSignalsAudit;
+    expect(meta.evidenceGrade).toBe('B');
+    expect(meta.tier).toBe('scored');
+    expect(meta.weight).toBeCloseTo(0.6);
+    expect(meta.scoreDisplayMode).toBe('ternary');
   });
 });

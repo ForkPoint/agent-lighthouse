@@ -351,6 +351,9 @@ export function extractImages($: CheerioAPI): Array<{
   loading?: string;
   role?: string;
   ariaHidden?: string;
+  ariaLabel?: string;
+  ariaLabelledby?: string;
+  title?: string;
 }> {
   const images: Array<{
     src: string;
@@ -361,6 +364,9 @@ export function extractImages($: CheerioAPI): Array<{
     loading?: string;
     role?: string;
     ariaHidden?: string;
+    ariaLabel?: string;
+    ariaLabelledby?: string;
+    title?: string;
   }> = [];
   $('img').each((_, el) => {
     const alt = $(el).attr('alt');
@@ -375,6 +381,11 @@ export function extractImages($: CheerioAPI): Array<{
       loading: $(el).attr('loading') ?? undefined,
       role: $(el).attr('role') ?? undefined,
       ariaHidden: $(el).attr('aria-hidden') ?? undefined,
+      // The accname 1.1 text-alternative sources that outrank `alt`, plus the
+      // `title` fallback HTML-AAM maps below it.
+      ariaLabel: $(el).attr('aria-label') ?? undefined,
+      ariaLabelledby: $(el).attr('aria-labelledby') ?? undefined,
+      title: $(el).attr('title') ?? undefined,
     });
   });
   return images;

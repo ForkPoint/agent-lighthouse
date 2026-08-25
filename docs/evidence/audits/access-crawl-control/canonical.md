@@ -1,14 +1,19 @@
 ---
 audit: access-crawl-control/canonical
-audit_id: "1.17, 4.3"
 category: access-crawl-control
 source_file: packages/core/src/audits/access-crawl-control/canonical.ts
 slug: canonical
-review_verdict: rewrite
-severity: medium
 evidence_grade: A
 disposition: "rewritten + merged 2026-08-22 (Plan 4, Task 5) — absorbs canonical-url (4.3)"
 reviewed: 2026-08-22
+sources:
+  - google-consolidate-duplicate-urls
+  - rfc-6596-canonical
+  - google-crawl-budget-docs
+  - google-ai-features-trust
+  - s18
+  - perplexity-crawlers-docs
+  - google-ai-optimization-mythbusting
 ---
 
 # canonical (`1.17`, `4.3`)
@@ -60,16 +65,16 @@ Checks each page for a <link rel="canonical"> with a non-empty href. Presence-on
 
 ## Evidence
 
-_No dedicated evidence signal was researched for this audit in the 2026-08-20 pass. Its tier assignment falls to the taxonomy design; unproven mechanisms default to informative per the [evidence policy](../../POLICY.md)._
-## Graded evidence (2026-08-21)
+_No dedicated evidence signal was researched for this audit in the 2026-08-20 pass. Its tier assignment falls to the taxonomy design; unproven mechanisms default to informative per the [evidence policy](../../policy.md)._
+## Evidence (2026-08-21)
 
-**Mechanism claim:** Googlebot reads `<link rel="canonical">` and uses it as a strong signal when choosing which of a set of duplicate URLs to index and consolidate signals onto; the URL it selects is the one eligible to be shown in Search and, consequently, as a supporting link in AI Overviews and AI Mode.
+**Mechanism claim:** Googlebot reads `<link rel="canonical">`, and uses it as a strong signal when choosing which of a set of duplicate URLs to index and consolidate signals onto. The URL it selects is the one eligible to be shown in Search — and so, in turn, as a supporting link in AI Overviews and AI Mode.
 
 **Grade: A** — a named crawler's use of the signal is stated in vendor documentation, and the link relation itself is a registered, published standard.
 
 **Evidence:**
-- Google describes `rel="canonical"` as "a strong signal that the specified URL should become canonical" and explains the effect: "It helps search engines to be able to consolidate the signals they have for the individual URLs (such as links to them) into a single, preferred URL." It also recommends a self-referential canonical on the canonical page — https://developers.google.com/search/docs/crawling-indexing/consolidate-duplicate-urls (verified 2026-08-21)
-- RFC 6596, "The Canonical Link Relation" (Informational, April 2012), defines the relation type: it designates "an Internationalized Resource Identifier (IRI) as preferred over resources with duplicative content" — a published specification behind the attribute, with known consumers — https://www.rfc-editor.org/rfc/rfc6596.html (verified 2026-08-21)
+- Google describes `rel="canonical"` as "a strong signal that the specified URL should become canonical". It explains the effect: "It helps search engines to be able to consolidate the signals they have for the individual URLs (such as links to them) into a single, preferred URL." It also recommends a self-referential canonical on the canonical page — https://developers.google.com/search/docs/crawling-indexing/consolidate-duplicate-urls (verified 2026-08-21)
+- RFC 6596, "The Canonical Link Relation" (Informational, April 2012), defines the relation type. It designates "an Internationalized Resource Identifier (IRI) as preferred over resources with duplicative content". That is a published specification behind the attribute, with known consumers — https://www.rfc-editor.org/rfc/rfc6596.html (verified 2026-08-21)
 - Google's crawl-budget guidance corroborates the crawling-side effect: "Consolidate duplicate content" to "focus crawling on unique content rather than unique URLs", because otherwise duplicate URLs waste "a lot of Google crawling time on your site" — https://developers.google.com/search/docs/crawling-indexing/large-site-managing-crawl-budget (verified 2026-08-21)
 - The link from indexing to AI surfaces is documented: "To be eligible to be shown as a supporting link in AI Overviews or AI Mode, a page must be indexed and eligible to be shown in Google Search with a snippet" — https://developers.google.com/search/docs/appearance/ai-features (verified 2026-08-21)
 

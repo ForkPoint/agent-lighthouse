@@ -190,7 +190,7 @@ export class HydrationPayloadShareAudit extends Audit {
       code: SAMPLE,
       effort: 'moderate',
       docsUrl:
-        'https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/audits/content-extraction/hydration-payload-share.md',
+        'https://forkpoint.github.io/agent-lighthouse/audits/content-extraction/hydration-payload-share/',
       tags: ['token-economics', 'hydration', 'framework', 'duplication'],
     },
   };

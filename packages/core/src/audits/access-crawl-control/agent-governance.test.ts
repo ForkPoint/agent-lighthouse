@@ -96,15 +96,43 @@ describe('AgentGovernanceAudit', () => {
     expect(result.details?.realtimeAgents).toEqual([]);
   });
 
-  it('fails when robots.txt only has a catch-all User-agent: *', () => {
+  // RFC 9309 §2.2.1: a crawler falls back to `*` only when no group matches its
+  // own token, so an open catch-all already grants every named agent the same
+  // full access that writing the groups out would. Nothing to separate, and no
+  // vendor rewards the groups being present, so this is `na` rather than a
+  // failure the site owner is asked to fix.
+  it('is not applicable when an open catch-all already allows every agent', () => {
     const robots = 'User-agent: *\nAllow: /\nDisallow: /api/';
     const ctx = mockCheckContext([], {
       '/robots.txt': mockFetchResult(robots, 200),
     });
     const result = audit.audit(ctx);
-    expect(result.status).toBe('fail');
-    expect(result.message).toContain('catch-all');
+    expect(result.status).toBe('na');
     expect(result.details?.hasCatchAll).toBe(true);
+  });
+
+  // The one case the evidence does support: the fallback carries a blanket
+  // block onto the live retrieval agents too, which is the outcome a site
+  // blocking dataset crawlers usually does not intend.
+  it('fails when a blanket catch-all block shuts out the live agents as well', () => {
+    const robots = 'User-agent: *\nDisallow: /';
+    const ctx = mockCheckContext([], {
+      '/robots.txt': mockFetchResult(robots, 200),
+    });
+    const result = audit.audit(ctx);
+    expect(result.status).toBe('fail');
+    expect(result.message).toContain('live conversational agents');
+  });
+
+  // A blanket block with a named exception is exactly the differentiation the
+  // audit exists to reward, so it must not be caught by the blanket-block arm.
+  it('does not fail a blanket block that carves out a named live agent', () => {
+    const robots = 'User-agent: *\nDisallow: /\n\nUser-agent: ChatGPT-User\nAllow: /';
+    const ctx = mockCheckContext([], {
+      '/robots.txt': mockFetchResult(robots, 200),
+    });
+    const result = audit.audit(ctx);
+    expect(result.status).not.toBe('fail');
   });
 
   it('is not applicable when robots.txt is missing', () => {

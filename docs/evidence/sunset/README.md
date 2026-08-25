@@ -1,10 +1,10 @@
 # Sunset — removed audits and the proof they were not a factor
 
-26 audits shipped in Agent Lighthouse v1 were **removed** in the v2 major release. Each one claimed a signal that the 2026-08-21 adversarial redemption research could not redeem: no named consumer reads it, or the only consumer publicly stopped. Under the [evidence policy](../POLICY.md) a grade-D audit may carry no score weight, so rather than keep them running as informative noise they were deleted outright.
+26 audits shipped in Agent Lighthouse v1 were **removed** in the v2 major release. Each one claimed a signal that the 2026-08-21 adversarial redemption research could not redeem: no named consumer reads it, or the only consumer publicly stopped. Under the [evidence policy](../policy.md) a grade-D audit may carry no score weight, so rather than keep them running as informative noise they were deleted outright.
 
 This folder is the permanent record of that decision, so the checks are not reinvented later:
 
-- [NOT-A-FACTOR.md](./NOT-A-FACTOR.md) — the condensed public rationale: per audit, the steelmanned claim, why it is not a factor, the verdict, and the key sources.
+- [not-a-factor.md](./not-a-factor.md) — the condensed public rationale: per audit, the steelmanned claim, why it is not a factor, the verdict, and the key sources.
 - One full research dossier per audit (steelmanned claim, search trail, every source), linked below.
 
 Consumers that keyed on these check ids should read [`packages/core/migration-map.json`](../../../packages/core/migration-map.json): every entry carries `status: "removed"` and a link to its rationale anchor.

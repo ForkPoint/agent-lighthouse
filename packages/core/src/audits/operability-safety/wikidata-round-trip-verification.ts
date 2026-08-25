@@ -93,7 +93,7 @@ export class WikidataRoundTripVerificationAudit extends Audit {
       fix: 'Claim the entity that really is your organization, and make sure the Wikidata item carries your domain as its official website (P856). If the item has no P856 at all, add one: until it does, the claim cannot be corroborated by anyone.',
       effort: 'moderate',
       docsUrl:
-        'https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/audits/operability-safety/wikidata-round-trip-verification.md',
+        'https://forkpoint.github.io/agent-lighthouse/audits/operability-safety/wikidata-round-trip-verification/',
       tags: ['identity', 'wikidata', 'knowledge-graph', 'sameas'],
     },
   };

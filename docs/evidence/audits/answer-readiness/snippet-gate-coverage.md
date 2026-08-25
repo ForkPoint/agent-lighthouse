@@ -8,6 +8,8 @@ tier: scored
 disposition: "new in v2 — graduated from proposal 2026-08-22"
 reviewed: 2026-08-20
 graduated: 2026-08-22
+sources:
+  - S4
 ---
 
 
@@ -17,11 +19,11 @@ graduated: 2026-08-22
 
 ## What it checks
 
-Computes the site's effective snippet permissions per crawler — merging <meta name="robots">, per-bot meta tags, and X-Robots-Tag response headers — then measures those permissions against the page's actual answer content: is max-snippet numerically smaller than the primary answer span, and does data-nosnippet coverage overlap the answer span, the FAQ answers, or the main-content tables. Reports the specific suppressed text, not just the directive.
+Computes the site's effective snippet permissions per crawler, by merging <meta name="robots">, per-bot meta tags and X-Robots-Tag response headers. It then measures those permissions against the page's actual answer content. Is max-snippet numerically smaller than the primary answer span? And does data-nosnippet coverage overlap the answer span, the FAQ answers, or the main-content tables? Reports the specific suppressed text, not just the directive.
 
 ## Claimed mechanism (falsifiable)
 
-Google states the eligibility gate directly: to appear as a supporting link a page 'must be indexed and eligible to be shown in Google Search with a snippet', and names nosnippet, data-nosnippet, max-snippet and noindex as the controls that limit what AI Overviews and AI Mode can show (S4). This makes the causal chain fully documented rather than inferred: a max-snippet value shorter than the answer sentence truncates the answer below usefulness, and data-nosnippet wrapping the answer removes it from AI surfaces entirely while leaving it visible to humans — an invisible failure that page-level SEO reports do not surface because the directive itself is technically 'valid'.
+Google states the eligibility gate directly: to appear as a supporting link, a page 'must be indexed and eligible to be shown in Google Search with a snippet'. It names nosnippet, data-nosnippet, max-snippet and noindex as the controls that limit what AI Overviews and AI Mode can show (S4). This makes the causal chain fully documented rather than inferred. A max-snippet value shorter than the answer sentence truncates the answer below usefulness. data-nosnippet wrapping the answer removes it from AI surfaces entirely, while leaving it visible to humans. That failure is invisible to page-level SEO reports, because the directive itself is technically 'valid'.
 
 ## Evidence
 
@@ -38,7 +40,7 @@ Static fetch, one request. 1) Parse every <meta name="robots">, <meta name="goog
 
 ## Example failure
 
-A publisher sets `<meta name="robots" content="max-snippet:80">` site-wide to discourage scraping, then invests in FAQPage markup. Every answer span on the site runs 150-250 characters, so the AI-surface snippet budget cuts each answer roughly at its midpoint, mid-clause. Separately, a support site wraps its answer bodies in `<div data-nosnippet>` inherited from an old 'prevent snippet theft' template — nosnippetCoverage is 0.71 and every acceptedAnswer is inside it, so the pages are indexed, visibly correct to humans, and structurally invisible to AI Overviews.
+A publisher sets `<meta name="robots" content="max-snippet:80">` site-wide to discourage scraping, then invests in FAQPage markup. Every answer span on the site runs 150-250 characters, so the AI-surface snippet budget cuts each answer roughly at its midpoint, mid-clause. Separately, a support site wraps its answer bodies in `<div data-nosnippet>`, inherited from an old 'prevent snippet theft' template. nosnippetCoverage is 0.71, and every acceptedAnswer is inside it. The pages are therefore indexed, visibly correct to humans, and structurally invisible to AI Overviews.
 
 ## Scoring
 

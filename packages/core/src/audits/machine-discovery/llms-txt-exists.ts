@@ -41,17 +41,17 @@ export class LlmsTxtExistsAudit extends Audit {
     title: 'llms.txt exists',
     failureTitle: 'llms.txt exists',
     description:
-      'llms.txt is the primary way AI agents discover your site content. Without it, LLMs must crawl your entire site to understand what you offer. Create this file at your site root; a <link> in <head> pointing at it is reported as an optional discovery hint.',
-    scoreDisplayMode: 'ternary',
-    weight: weightForGrade('A', 'scored'),
-    evidenceGrade: 'A',
-    tier: 'scored',
+      'llms.txt is a community convention: a markdown index of your site at /llms.txt. No AI vendor documents a crawler or agent that reads it, and Google states Search ignores it, so this check is reported and never scored. Chrome Lighthouse checks the same three conformance rules and treats a missing file as not applicable.',
+    scoreDisplayMode: 'informative',
+    weight: weightForGrade('C', 'informative'),
+    evidenceGrade: 'C',
+    tier: 'informative',
     dossier: 'docs/evidence/audits/machine-discovery/llms-txt-exists.md',
-    defaultPriority: 'critical',
+    defaultPriority: 'low',
     guidance: {
       impact:
-        'llms.txt is the primary entry point for AI agents discovering your site. Without it, LLMs like ChatGPT, Perplexity, and Claude must crawl your entire site blindly, often missing key pages and providing incomplete or inaccurate answers about your business.',
-      fix: 'Create a /llms.txt file at your site root in markdown format. Include an H1 heading with your site name, a blockquote summary, and organized sections with links to your key pages. Optionally advertise it with <link rel="alternate" href="/llms.txt"> in <head>.',
+        'Thousands of sites publish an llms.txt, including every major AI lab, but as publishers rather than readers. No vendor documentation names an agent that fetches it, and Google Search Central states Search ignores it. Publishing one is cheap and harmless; it is not a documented path to any AI answer.',
+      fix: 'Optional. If you publish one, create /llms.txt in markdown with an H1 heading, at least one [text](url) link and more than 50 characters — the three rules the one shipping checker enforces. Optionally advertise it with <link rel="alternate" href="/llms.txt"> in <head>.',
       code: '# Your Site Name\n\n> Brief description of your site for AI agents.\n\n## Pages\n- [Home](/): Main landing page\n- [About](/about/): Company information\n\n## Resources\n- [Sitemap](/sitemap.xml): Full URL list\n- [RSS](/rss.xml): Content feed\n\n<!-- optional discovery hint in <head> -->\n<link rel="alternate" type="text/markdown" href="/llms.txt" title="llms.txt">',
       effort: 'easy',
       docsUrl: 'https://llmstxt.org/',
@@ -69,13 +69,23 @@ export class LlmsTxtExistsAudit extends Audit {
 
     if (!result || !isOk(result)) {
       const status = result ? `HTTP ${result.status}` : 'No response';
-      return this.fail(
-        link
-          ? 'The page links to llms.txt but the file is not served at the site root.'
-          : 'llms.txt not found at site root.',
+      // A site that links to llms.txt and does not serve it has a broken
+      // promise of its own making, which is worth a warning. A site that never
+      // claimed to have one has done nothing wrong: the file is optional, and
+      // the only shipping checker of it scores a 404 not-applicable.
+      if (!link) {
+        return this.notApplicable(
+          'No llms.txt at the site root. The file is an optional community convention with no documented agent consumer, so its absence is not a defect.',
+          'GET /llms.txt returns 200 with markdown starting with #',
+          `${status}; ${linkNote}`,
+          page?.url,
+        );
+      }
+      return this.warn(
+        'The page links to llms.txt but the file is not served at the site root.',
         'GET /llms.txt returns 200 with markdown starting with #',
         `${status}; ${linkNote}`,
-        'critical',
+        'low',
         page?.url,
       );
     }
@@ -85,7 +95,7 @@ export class LlmsTxtExistsAudit extends Audit {
         'llms.txt missing markdown heading.',
         'Body starts with # (H1 heading)',
         `Body starts with "${result.body.trimStart().slice(0, 40)}..."; ${linkNote}`,
-        'high',
+        'low',
         page?.url,
       );
     }

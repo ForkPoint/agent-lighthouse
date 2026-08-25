@@ -36,7 +36,7 @@ export class RootTextFileResolutionIntegrityAudit extends Audit {
       fix: 'Serve root-level `.txt` paths from static files and let a missing one answer 404. Order the static-file handler ahead of any SPA or catch-all rewrite, and make sure the rewrite does not cover `*.txt`. Serve `/robots.txt` as `text/plain`, not as `text/html` or `application/octet-stream`.',
       effort: 'easy',
       docsUrl:
-        'https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/audits/machine-discovery/root-text-file-resolution-integrity.md',
+        'https://forkpoint.github.io/agent-lighthouse/audits/machine-discovery/root-text-file-resolution-integrity/',
       tags: ['indexnow', 'llms-txt', 'discovery', 'soft-404'],
     },
   };

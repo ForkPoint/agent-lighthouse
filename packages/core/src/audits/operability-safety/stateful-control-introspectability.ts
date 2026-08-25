@@ -65,6 +65,12 @@ interface Finding {
   hint: string;
 }
 
+/** One finding as a single line, short enough for the 1000-char details cap. */
+function describeFinding(finding: Finding): string {
+  const where = finding.stateClass ? ` [class "${finding.stateClass}"]` : '';
+  return `${finding.pageUrl} — ${finding.missing}${where}: ${finding.hint}`.slice(0, 1000);
+}
+
 interface Survey {
   introspectable: number;
   opaque: Finding[];
@@ -232,7 +238,7 @@ export class StatefulControlIntrospectabilityAudit extends Audit {
       code: SAMPLE,
       effort: 'moderate',
       docsUrl:
-        'https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/audits/operability-safety/stateful-control-introspectability.md',
+        'https://forkpoint.github.io/agent-lighthouse/audits/operability-safety/stateful-control-introspectability/',
       tags: ['agent-operability', 'accessibility-tree', 'state'],
     },
   };
@@ -274,7 +280,10 @@ export class StatefulControlIntrospectabilityAudit extends Audit {
       opaqueCount: s.opaque.length,
       introspectableCount: s.introspectable,
       ratio: Number(ratio.toFixed(4)),
-      opaque: s.opaque.slice(0, 20),
+      // One line per finding, not the Finding objects: `details` admits scalars
+      // and string arrays only, and an array of objects failed validation, so
+      // every scan of a page with a state-bearing control errored out.
+      opaque: s.opaque.slice(0, 20).map(describeFinding),
     };
 
     if (s.opaque.length === 0) {

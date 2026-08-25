@@ -160,7 +160,7 @@ export class FirstContactConsentGateOperabilityAudit extends Audit {
       code: SAMPLE,
       effort: 'moderate',
       docsUrl:
-        'https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/audits/operability-safety/first-contact-consent-gate-operability.md',
+        'https://forkpoint.github.io/agent-lighthouse/audits/operability-safety/first-contact-consent-gate-operability/',
       tags: ['agent-operability', 'consent', 'first-contact'],
     },
   };

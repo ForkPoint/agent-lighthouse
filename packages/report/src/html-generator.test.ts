@@ -53,7 +53,7 @@ function report(categories: CategoryResult[], over: Partial<ScanReport> = {}): S
 }
 
 const NOT_A_FACTOR_LINK =
-  'https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/sunset/NOT-A-FACTOR.md#accessibilityskip-nav';
+  'https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/sunset/not-a-factor.md#accessibilityskip-nav';
 
 // ── Tests ───────────────────────────────────────────────────────
 
@@ -78,13 +78,13 @@ describe('generateHtmlReport', () => {
     );
 
     expect(html).toContain('Deprecated — no longer a factor');
-    expect(html).toContain('docs/evidence/sunset/NOT-A-FACTOR.md#accessibilityskip-nav');
+    expect(html).toContain('docs/evidence/sunset/not-a-factor.md#accessibilityskip-nav');
     expect(html).toContain('No consumer reads this signal.');
   });
 
-  // Final-review finding I2: the ai-bot-directives per-bot table and the
-  // security-header-hygiene weak-vs-missing breakdown live entirely in `found`,
-  // so the report must keep its newlines and must render `details.found`.
+  // Final-review finding I2: the ai-bot-directives per-bot table lives entirely
+  // in `found`, so the report must keep its newlines and must render
+  // `details.found`.
   it('preserves newlines in a multi-line found value and renders details.found', () => {
     const table = 'GPTBot: allowed\nClaudeBot: allowed\nPerplexityBot: blocked';
     const html = generateHtmlReport(
@@ -140,7 +140,7 @@ describe('generateHtmlReport', () => {
     );
 
     expect(html).not.toContain('Deprecated — no longer a factor');
-    expect(html).not.toContain('NOT-A-FACTOR.md');
+    expect(html).not.toContain('not-a-factor.md');
   });
 });
 
@@ -179,5 +179,49 @@ describe('tier badges', () => {
       ]),
     );
     expect(html).toContain('Experimental — not scored');
+  });
+});
+
+describe('evidence link', () => {
+  it('links a check at its published evidence dossier', () => {
+    const html = generateHtmlReport(
+      report([
+        cat({
+          id: 'agent-interfaces',
+          checks: [
+            check({
+              details: {
+                evidenceUrl:
+                  'https://forkpoint.github.io/agent-lighthouse/audits/agent-interfaces/mcp-endpoint/',
+              },
+            }),
+          ],
+        }),
+      ]),
+    );
+    expect(html).toContain(
+      '<a href="https://forkpoint.github.io/agent-lighthouse/audits/agent-interfaces/mcp-endpoint/"',
+    );
+    expect(html).toContain('Why this audit exists — the evidence');
+  });
+
+  it('escapes an evidence URL rather than letting it close the attribute', () => {
+    const html = generateHtmlReport(
+      report([
+        cat({
+          id: 'agent-interfaces',
+          checks: [check({ details: { evidenceUrl: 'https://x.test/"><script>alert(1)</script>' } })],
+        }),
+      ]),
+    );
+    expect(html).not.toContain('<script>alert(1)</script>');
+    expect(html).toContain('&quot;&gt;&lt;script&gt;');
+  });
+
+  it('renders no evidence link when the check carries no evidence URL', () => {
+    const html = generateHtmlReport(
+      report([cat({ id: 'agent-interfaces', checks: [check()] })]),
+    );
+    expect(html).not.toContain('Why this audit exists');
   });
 });

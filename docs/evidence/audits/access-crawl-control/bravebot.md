@@ -1,14 +1,21 @@
 ---
 audit: access-crawl-control/bravebot
-audit_id: "2.18"
 category: access-crawl-control
 source_file: packages/core/src/audits/access-crawl-control/bravebot.ts
 slug: bravebot
-review_verdict: fix
-severity: low
 evidence_grade: C
 disposition: "keep — fix required"
 reviewed: 2026-08-21
+recommended_tier: informative
+consumers:
+  - none-confirmed (Brave states its crawler uses no differentiated UA; a Bravebot/1.0 UA is observed in third-party directories)
+signals:
+  - name: BraveBot / Bravebot allow/block state in robots.txt
+    grade: C
+    domain: robots-ai-crawlers
+sources:
+  - brave-search-crawler
+  - knownagents-bravebot
 ---
 
 # bravebot (`2.18`)
@@ -41,14 +48,11 @@ Token is real (Brave Search's crawler) but the value is thin: Brave Search build
 
 ### Signal: BraveBot / Bravebot allow/block state in robots.txt — grade C (robots-ai-crawlers)
 
-**Mechanism:** A 'Bravebot' disallow is intended to block Brave Search's crawler, but Brave's own documentation states its crawler deliberately does not advertise a differentiated user agent — so the token has no vendor-confirmed consumer and the rule is likely a no-op.
+**Mechanism:** A 'Bravebot' disallow is intended to block Brave Search's crawler. But Brave's own documentation states its crawler deliberately does not advertise a differentiated user agent. The token therefore has no vendor-confirmed consumer and the rule is likely a no-op.
 
 **Evidence:** Known Agents lists a Bravebot entry with UA 'Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko; compatible; Bravebot/1.0; +https://search.brave.com/help/brave-search-crawler) Chrome/W.X.Y.Z Safari/537.36' and only 2% top-website blocking as of 2026-08-19 — the lowest of any token in this set, indicating near-zero operator recognition.
 
-**Counter-evidence:** DIRECT VENDOR REFUTATION: Brave's own crawler help page states 'The Brave Search crawler does not advertise a differentiated user agent because we must avoid discrimination from websites that allow only Google to crawl them.' Brave further states 'robots.txt is not used to prevent a page from being indexed. A site owner can delist a page by using the robots noindex directive' — i.e. Brave directs publishers to noindex, not to a robots.txt token. Brave's page makes no mention of AI training, data licensing, or Brave Leo in connection with the crawler. Given the vendor contradicts the token's existence and blocking adoption is 2%, this should never be scored; consider demoting the audit toward deletion unless a Brave-published token is confirmed.
-**Consumers:** none-confirmed (Brave states its crawler uses no differentiated UA; a Bravebot/1.0 UA is observed in third-party directories) · **Recommended tier:** informative
-
-**Sources:** [Brave Search crawler](https://search.brave.com/help/brave-search-crawler) · [Bravebot — Known Agents](https://knownagents.com/agents/bravebot)
+**Counter-evidence:** The vendor refutes this directly: Brave's own crawler help page states 'The Brave Search crawler does not advertise a differentiated user agent because we must avoid discrimination from websites that allow only Google to crawl them.' Brave further states 'robots.txt is not used to prevent a page from being indexed. A site owner can delist a page by using the robots noindex directive' — i.e. Brave directs publishers to noindex, not to a robots.txt token. Brave's page makes no mention of AI training, data licensing, or Brave Leo in connection with the crawler. Given the vendor contradicts the token's existence and blocking adoption is 2%, this should never be scored; consider demoting the audit toward deletion unless a Brave-published token is confirmed.
 
 ## Review history
 

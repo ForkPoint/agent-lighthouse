@@ -8,6 +8,9 @@ tier: scored
 disposition: "new in v2 — graduated from proposal 2026-08-22"
 reviewed: 2026-08-20
 graduated: 2026-08-22
+sources:
+  - google-sitemap-formats
+  - sitemaps-protocol
 ---
 
 
@@ -21,14 +24,14 @@ Cross-validates every sampled sitemap <lastmod> against three independent page-l
 
 ## Claimed mechanism (falsifiable)
 
-Google states it uses <lastmod> 'if it's consistently and verifiably (for example by comparing to the last modification of the page) accurate' — i.e. lastmod is a conditional signal that engines silently discard on divergence, and lastmod is the only freshness hint a pull-based AI crawler gets from a sitemap. Falsifiable claim: if sampled lastmod values disagree with all available page-level evidence (HTTP Last-Modified, JSON-LD dateModified, article:modified_time) for a material fraction of URLs, the sitemap's freshness channel is inert and re-crawl scheduling degrades to organic rediscovery. Two specific detectable pathologies: (a) >90% of URLs share one identical lastmod equal to the last deploy date — a build stamp, not a content date, which per Google's 'copyright date is not significant' rule is exactly the disqualifying pattern; (b) lastmod in the future relative to crawl time — always invalid.
+Google states it uses <lastmod> 'if it's consistently and verifiably (for example by comparing to the last modification of the page) accurate'. lastmod is therefore a conditional signal, which engines silently discard on divergence. It is also the only freshness hint a pull-based AI crawler gets from a sitemap. Falsifiable claim: if sampled lastmod values disagree with all available page-level evidence (HTTP Last-Modified, JSON-LD dateModified, article:modified_time) for a material fraction of URLs, the sitemap's freshness channel is inert and re-crawl scheduling degrades to organic rediscovery. Two pathologies are specifically detectable. First, more than 90% of URLs share one identical lastmod equal to the last deploy date. That is a build stamp rather than a content date, and per Google's 'copyright date is not significant' rule it is exactly the disqualifying pattern. Second, a lastmod in the future relative to crawl time, which is always invalid.
 
 ## Evidence
 
 - **[Build and submit a sitemap](https://developers.google.com/search/docs/crawling-indexing/sitemaps/build-sitemap)** — Google Search Central (vendor-doc, URL verified 2026-08-20)
-  - Direct quote: 'Google uses the <lastmod> value if it's consistently and verifiably (for example by comparing to the last modification of the page) accurate.' lastmod 'should reflect the date and time of the last significant update to the page… an update to the copyright date is not [significant].' priority and changefreq are ignored. 50MB uncompressed / 50,000 URL limit per sitemap file.
+  - Direct quote: 'Google uses the <lastmod> value if it's consistently and verifiably (for example by comparing to the last modification of the page) accurate.' The value 'should reflect the date and time of the last significant update to the page… an update to the copyright date is not [significant].' priority and changefreq are ignored. The limit per sitemap file is 50MB uncompressed and 50,000 URLs.
 - **[Sitemaps XML format — protocol](https://www.sitemaps.org/protocol.html)** — sitemaps.org (spec, URL verified 2026-08-20)
-  - lastmod must be W3C Datetime (YYYY-MM-DD or full timestamp). Path-scope rule: a sitemap at /catalog/sitemap.xml may only list URLs under /catalog/; all URLs must share protocol and host with the sitemap. 50,000 URLs / 50MB (52,428,800 bytes) per file; index files limited to 50,000 sitemaps and may only reference sitemaps on the same site.
+  - lastmod must be W3C Datetime (YYYY-MM-DD or full timestamp). Path-scope rule. A sitemap at /catalog/sitemap.xml may only list URLs under /catalog/. All URLs must share protocol and host with the sitemap. A file is capped at 50,000 URLs and 50MB (52,428,800 bytes). An index file is capped at 50,000 sitemaps, and may only reference sitemaps on the same site.
 
 ## Competitor coverage
 
@@ -40,7 +43,7 @@ Screaming Frog, Sitebulb, Semrush and Ahrefs surface lastmod presence and can fl
 
 ## Example failure
 
-A Hugo site regenerates every page on each deploy, so sitemap.xml lists 4,000 URLs all with lastmod=2026-08-19T04:11:00Z. The JSON-LD dateModified on those pages ranges from 2019 to 2026. Google and every pull crawler downweight the sitemap's lastmod entirely, so a genuinely revised pricing page published 2026-08-18 gets no priority over 4,000 unchanged archive pages and is re-fetched weeks later — while the site owner's SEO tool reports '100% of URLs have lastmod' as a pass.
+A Hugo site regenerates every page on each deploy, so sitemap.xml lists 4,000 URLs all with lastmod=2026-08-19T04:11:00Z. The JSON-LD dateModified on those pages ranges from 2019 to 2026. Google and every pull crawler downweight the sitemap's lastmod entirely. A genuinely revised pricing page published 2026-08-18 therefore gets no priority over 4,000 unchanged archive pages, and is re-fetched weeks later. Meanwhile the site owner's SEO tool reports '100% of URLs have lastmod' as a pass.
 
 ## Scoring
 

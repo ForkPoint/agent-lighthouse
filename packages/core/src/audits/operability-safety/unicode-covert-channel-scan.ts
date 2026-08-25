@@ -253,7 +253,7 @@ export class UnicodeCovertChannelScanAudit extends Audit {
       code: SAMPLE,
       effort: 'moderate',
       docsUrl:
-        'https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/audits/operability-safety/unicode-covert-channel-scan.md',
+        'https://forkpoint.github.io/agent-lighthouse/audits/operability-safety/unicode-covert-channel-scan/',
       tags: ['injection-safety', 'unicode', 'prompt-injection'],
     },
   };

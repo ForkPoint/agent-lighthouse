@@ -1,14 +1,17 @@
 ---
 audit: agent-interfaces/openapi-description-quality
-audit_id: "5.26"
 category: agent-interfaces
 source_file: packages/core/src/audits/agent-interfaces/openapi-description-quality.ts
 slug: openapi-description-quality
-review_verdict: fix
-severity: low
 evidence_grade: A
 disposition: "keep — fix required"
 reviewed: 2026-08-21
+sources:
+  - fastmcp-openapi
+  - openai-gpt-actions-intro
+  - anthropic-tool-use-overview
+  - mcp-server-tools
+  - openapi-31-spec
 ---
 
 # openapi-description-quality (`5.26`)
@@ -45,16 +48,16 @@ The best-constructed audit in the category — correct `na` semantics, structure
 
 ## Evidence
 
-_No dedicated evidence signal was researched for this audit in the 2026-08-20 pass. Its tier assignment falls to the taxonomy design; unproven mechanisms default to informative per the [evidence policy](../../POLICY.md)._
+_No dedicated evidence signal was researched for this audit in the 2026-08-20 pass. Its tier assignment falls to the taxonomy design; unproven mechanisms default to informative per the [evidence policy](../../policy.md)._
 
 ## Review history
 
 - 2026-08-20 — code review (11-agent workflow) + evidence research (12-domain workflow, 400 sources).
 - 2026-08-21 — dossier generated; disposition pending final taxonomy design.
 
-## Graded evidence (2026-08-21)
+## Evidence (2026-08-21)
 
-**Mechanism claim:** When an OpenAPI document is converted into LLM-callable tools, the operation's and parameters' `description` text becomes the tool and argument descriptions the model reads when deciding which endpoint to call and what to pass; an operation with no human-readable text leaves the model with only the operationId to reason from.
+**Mechanism claim:** When an OpenAPI document is converted into LLM-callable tools, the `description` text on the operation and its parameters becomes the tool and argument descriptions the model reads. It reads them when deciding which endpoint to call and what to pass. An operation with no human-readable text leaves the model with only the operationId to reason from.
 
 **Grade: A** — every link in the chain is documented by a vendor: named converters map OpenAPI descriptions onto tool descriptions, and both OpenAI and Anthropic state that the model picks the call from those descriptions.
 
@@ -64,4 +67,4 @@ _No dedicated evidence signal was researched for this audit in the 2026-08-20 pa
 - Anthropic states the consuming behavior plainly: "Claude determines when to call a tool based on the user's request and the tool's description" — https://platform.claude.com/docs/en/agents-and-tools/tool-use/overview (verified 2026-08-21)
 - MCP's tool shape confirms where that text lands: `description` is the "Human-readable description of functionality", and per-property descriptions live in the `inputSchema` — https://modelcontextprotocol.io/specification/2025-06-18/server/tools (verified 2026-08-21)
 
-**Counter-evidence:** The mechanism is proven for the *described text*, not for the `description` key specifically. OpenAPI 3.1 defines `summary` as "A short summary of what the operation does" alongside `description`, "A verbose explanation of the operation behavior", and many specs carry only the former; the same document confirms that path-level `parameters` are inherited by operations ("can be overridden at the operation level, but cannot be removed there") and that parameters may be `$ref`-ed into `components/parameters` — https://spec.openapis.org/oas/v3.1.0.html (verified 2026-08-21). A spec that is perfectly legible to a converter can therefore score 0% here. Nothing in any source supports the specific 15-character threshold, which measures length rather than informativeness.
+**Counter-evidence:** The mechanism is proven for the *described text*, not for the `description` key specifically. OpenAPI 3.1 defines `summary` as "A short summary of what the operation does", alongside `description`, "A verbose explanation of the operation behavior"; many specs carry only the former. The same document confirms that path-level `parameters` are inherited by operations — they "can be overridden at the operation level, but cannot be removed there" — and that parameters may be `$ref`-ed into `components/parameters` — https://spec.openapis.org/oas/v3.1.0.html (verified 2026-08-21). A spec that is perfectly legible to a converter can therefore score 0% here. Nothing in any source supports the specific 15-character threshold, which measures length rather than informativeness.

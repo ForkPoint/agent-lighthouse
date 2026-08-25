@@ -69,7 +69,7 @@ describe('filterConfig', () => {
     );
   });
 
-  // docs/evidence/POLICY.md: an experimental audit is "behind a flag, unscored".
+  // docs/evidence/policy.md: an experimental audit is "behind a flag, unscored".
   // The registry carries three; they were running on every scan regardless.
   it('drops exactly the experimental audits from the live registry by default', () => {
     const count = (c: ScanConfig) =>

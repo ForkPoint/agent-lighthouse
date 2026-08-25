@@ -1,0 +1,107 @@
+---
+import { auditList } from '../lib/registry';
+import { withBase } from '../lib/routes';
+
+/**
+ * Site search: the trigger in the header and the dialog it opens.
+ *
+ * The dialog is a native `<dialog>`, opened with `showModal()`. That is what
+ * keeps Tab inside it, dims and blocks the page behind it, and closes it on
+ * Escape — none of which is reimplemented in `islands/search.ts`.
+ *
+ * Everything here is chrome: it renders on all 239 pages and sits outside every
+ * `data-pagefind-body` region, so none of this text is in the index it searches.
+ *
+ * The trigger ships `hidden` and `islands/search.ts` reveals it, the way
+ * `/audits/` and `/sources/` reveal their controls: without JavaScript there is
+ * no index to query, and a button that opens nothing is worse than no button.
+ * Note what it must *not* carry: a `flex`/`inline-flex` utility would beat
+ * Tailwind's `[hidden]` rule — that rule is wrapped in `:where()` and has zero
+ * specificity — and the button would ship visible and inert.
+ */
+const audits = auditList();
+---
+<button
+  id="search-trigger"
+  type="button"
+  hidden
+  aria-haspopup="dialog"
+  class="rounded-lg border border-slate-700 bg-slate-800 px-3 py-1.5 text-sm font-medium text-slate-300 transition-colors hover:bg-slate-700 hover:text-white"
+>
+  <span aria-hidden="true">&#128269;</span>
+  <span>Search</span>
+  {/* Decorative: the chord is announced by the dialog's own label, and a `kbd`
+      read out mid-sentence as "command k" helps nobody navigating by button. */}
+  <kbd
+    aria-hidden="true"
+    class="ml-1 hidden rounded border border-slate-600 px-1.5 py-0.5 font-mono text-[0.7rem] text-slate-400 sm:inline"
+  >&#8984;K</kbd>
+</button>
+
+{/* No display utility on the dialog itself: `dialog:not([open])` is what makes a
+    closed dialog invisible, and any `block`/`flex` class would override it and
+    leave the panel on the page. Preflight zeroes the UA's `margin: auto`, so the
+    centring is restored here. */}
+<dialog
+  id="search-dialog"
+  aria-label="Search this site"
+  class="mx-auto mt-[8vh] w-[min(40rem,92vw)] rounded-2xl border border-border-subtle bg-surface p-0 text-slate-200 backdrop:bg-slate-950/80 backdrop:backdrop-blur-sm"
+>
+  <div class="p-4 sm:p-5">
+    <div class="border-b border-border-subtle pb-4">
+      <label for="search-input" class="block text-xs font-semibold uppercase tracking-wider text-slate-400">
+        Search {audits.length} dossiers, the documentation and every page
+      </label>
+      {/* Deliberately in no `<form>`: the only form here is the one that closes
+          the dialog, and an input inside it would submit — and so close the
+          dialog — on Enter. Results follow the typing; there is nothing to
+          submit. */}
+      <input
+        id="search-input"
+        type="search"
+        autocomplete="off"
+        placeholder="Try “llms.txt”, “robots”, or an audit id"
+        class="mt-2 w-full rounded-lg border border-slate-700 bg-surface-raised px-3 py-2 text-sm text-white placeholder:text-slate-400 focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand"
+      />
+    </div>
+
+    {/* Empty, but never hidden. A live region has to be in the accessibility
+        tree before its content changes; the dialog is opened before the index is
+        asked for, so this line is already being observed when the result count —
+        or the failure notice — is written into it. `min-h-5` reserves the line so
+        the first message shifts nothing below it. */}
+    <p id="search-status" aria-live="polite" class="mt-3 min-h-5 text-xs text-slate-400"></p>
+
+    <ul id="search-results" class="mt-1 max-h-[50vh] space-y-1 overflow-y-auto"></ul>
+
+    {/* The one thing site search does not cover, said where a reader searching
+        for a source will see it. `/sources/` fetches its 647 records in the
+        browser, so the built HTML Pagefind indexes holds the page's prose and
+        none of the registry — the page is findable, the records in it are not.
+        Server-rendering them to feed the index would put 465 KB back on a page
+        that is 3.7 KB gzipped, to duplicate a search the page already has. */}
+    <p class="mt-4 border-t border-border-subtle pt-3 text-xs leading-relaxed text-slate-400">
+      Searches the text of every published page. The evidence sources themselves are not in this
+      index &mdash; search all of them on the <a
+        class="underline hover:text-white"
+        href={withBase('sources/')}
+      >source registry</a>.
+    </p>
+
+    {/* `method="dialog"` closes the dialog with no script at all. */}
+    <form method="dialog" class="mt-3 text-right">
+      <button
+        type="submit"
+        class="rounded-lg border border-slate-700 px-3 py-1.5 text-xs font-medium text-slate-300 transition-colors hover:bg-slate-800 hover:text-white"
+      >Close <kbd aria-hidden="true" class="ml-1 font-mono">Esc</kbd></button>
+    </form>
+  </div>
+</dialog>
+
+{/* Hoisted and bundled once for the whole site: the module attaches listeners
+    and nothing else, and the index itself is only fetched on first open. */}
+<script>
+  import { mountSearch } from '../islands/search';
+
+  mountSearch();
+</script>

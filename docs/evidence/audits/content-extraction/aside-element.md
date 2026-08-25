@@ -1,14 +1,35 @@
 ---
 audit: content-extraction/aside-element
-audit_id: "6.6"
 category: content-extraction
 source_file: packages/core/src/audits/content-extraction/aside-element.ts
 slug: aside-element
-review_verdict: delete
-severity: medium
 evidence_grade: B
 disposition: "kept — rewritten to a conditional extraction check 2026-08-22 (Plan 4, Task 11)"
 reviewed: 2026-08-22
+recommended_tier: scored
+consumers:
+  - trafilatura
+  - Mozilla Readability / Firefox Reader Mode
+  - Anthropic get_page_text
+  - Playwright MCP accessibility snapshot
+  - Chrome DevTools MCP take_snapshot
+  - Cloudflare Markdown for Agents
+signals:
+  - name: "Landmark elements (main, nav, header, footer, article, aside) as extraction boundaries"
+    grade: A
+    domain: semantic-dom-a11y
+sources:
+  - trafilatura-xpaths
+  - trafilatura-corefunctions
+  - readability-src
+  - w3c-html-aam
+  - w3c-wai-aria-1-2
+  - anthropic-browser-use-tool
+  - playwright-mcp-snapshots
+  - web-almanac-2025-accessibility
+  - google-ai-features-trust
+  - mozilla-readability-source
+  - google-ai-features-docs
 ---
 
 # aside-element (`6.6`)
@@ -76,7 +97,7 @@ The redeem note's last requirement was that the guidance say out loud what marki
 
 ### Grade decision: stays **B**, tier `scored`, weight 0.6
 
-Source: the [redemption dossier's verdict](../../deletions/semantic-html/aside-element.md) — "redeemed — keep with rewrite (grade B)" — and the [REWORK-TODO entry](../../../../packages/core/src/audits/REWORK-TODO.md). Grade B rests on two independent consumers acting on the element by name (Readability's `_clean(articleContent, "aside")`; trafilatura's `MANUALLY_CLEANED`) plus an empirically verified a11y-tree path (a live Chromium snapshot surfacing both a top-level and a nested `<aside>` as `complementary`). It is B rather than A because no AI vendor documents `<aside>` as a requirement and both extractors also work without landmarks — the signal degrades a page, it does not gate it.
+Source: the [redemption dossier's verdict](../../deletions/semantic-html/aside-element.md) — "redeemed — keep with rewrite (grade B)" — and the [REWORK-TODO entry](../../../../packages/core/src/audits/rework-todo.md). Grade B rests on two independent consumers acting on the element by name (Readability's `_clean(articleContent, "aside")`; trafilatura's `MANUALLY_CLEANED`) plus an empirically verified a11y-tree path (a live Chromium snapshot surfacing both a top-level and a nested `<aside>` as `complementary`). It is B rather than A because no AI vendor documents `<aside>` as a requirement and both extractors also work without landmarks — the signal degrades a page, it does not gate it.
 
 Neither the redeem note nor the REWORK-TODO row asks for a grade or tier change; the required rework is to the check and the guidance. Per the §4 weight law `weightForGrade('B', 'scored') = 0.6`; `defaultPriority` stays `low`.
 
@@ -90,14 +111,13 @@ Neither the redeem note nor the REWORK-TODO row asks for a grade or tier change;
 
 ### Signal: Landmark elements (main, nav, header, footer, article, aside) as extraction boundaries — grade A (semantic-dom-a11y)
 
-**Mechanism:** Wrapping primary content in <main>/<article> and chrome in <nav>/<header>/<footer>/<aside> changes what boilerplate-removal extractors keep and drop: content inside landmark containers matching the extractor's body selectors is retained, and subtrees whose element or ARIA role resolves to navigation/banner/contentinfo/complementary are deleted before the text ever reaches the model. On a page built from undifferentiated divs, the same extractors fall back to class/id string heuristics and text-density guesses, so nav and footer text leaks into the extracted body and body text can be discarded.
+**Mechanism:** Wrapping primary content in <main> or <article>, and chrome in <nav>, <header>, <footer> or <aside>, changes what boilerplate-removal extractors keep and drop. Content inside landmark containers matching the extractor's body selectors is retained. Subtrees whose element or ARIA role resolves to navigation, banner, contentinfo or complementary are deleted before the text ever reaches the model. On a page built from undifferentiated divs, the same extractors fall back to class/id string heuristics and text-density guesses, so nav and footer text leaks into the extracted body and body text can be discarded.
 
-**Evidence:** Source-level proof in the two dominant extractors. trafilatura's BODY_XPATH selects on 'self::article or self::div or self::main or self::section' plus @itemprop='articleBody' and @role='article', while OVERALL_DISCARD_XPATH deletes nodes whose @role contains 'nav', plus footer/header markers and @aria-hidden='true' [trafilatura-xpaths]; its documented baseline ladder tries 'article tags' before falling back to 'the raw text of the whole page body' [trafilatura-corefunctions]. Mozilla Readability consults ARIA landmark roles directly: UNLIKELY_ROLES = ['menu','menubar','complementary','navigation','alert','alertdialog','dialog'] triggers subtree removal, and its unlikelyCandidates regex penalises footer|header|menu|sidebar|related|social while okMaybeItsACandidate rescues article|body|content|main [mozilla-readability-source]. HTML-AAM makes the element→role mapping normative: main→main, nav→navigation, header→banner, footer→contentinfo, article→article, aside→complementary [w3c-html-aam], over WAI-ARIA 1.2's ratified landmark role set [w3c-wai-aria-1-2]. Anthropic's own get_page_text is documented to 'return the page's visible text as plain text, prioritizing the main article content' [anthropic-browser-use-tool], and Playwright snapshots list 'roles and landmarks… contentinfo sections' as snapshot contents [playwright-mcp-snapshots].
+**Grade: A** — The proof is in the source of the two dominant extractors, not in a claim about them. trafilatura's body selector keeps `article`, `div`, `main` and `section`, and its discard pass deletes navigation, footer and header subtrees outright. Readable, shipping code that acts on the element is documented consumer behaviour, which is the grade-A bar. The grade is about direction, not sufficiency. trafilatura also matches bare divs by id and class, and falls back to justext and readability. Readability gives `<main>` no special boost at all, so a landmark-free page is degraded rather than invisible.
 
-**Counter-evidence:** Landmarks are one path among several, not a gate. trafilatura also matches bare divs by id/class and falls back to justext/readability; Readability gives no special boost to <main> at all and can extract a landmark-free page perfectly well via text density. So a page with zero landmarks is degraded, not invisible. Adoption is partial — only 40.72% of pages use <main> [web-almanac-2025-accessibility] — which means extractors cannot depend on landmarks and have been tuned to work without them. No AI-search vendor documents landmarks as a requirement, and Google explicitly disclaims special optimizations for AI features [google-ai-features-docs]. Over-nesting also backfires: multiple <main> or a <nav> wrapping real content will actively delete content, so this signal is bidirectional and an audit should penalise misuse as well as absence.
-**Consumers:** trafilatura, Mozilla Readability / Firefox Reader Mode, Anthropic get_page_text, Playwright MCP accessibility snapshot, Chrome DevTools MCP take_snapshot, Cloudflare Markdown for Agents · **Recommended tier:** scored
+**Evidence:** Both dominant extractors act on the landmark, and the behaviour is readable in their source. trafilatura keeps `article`, `div`, `main` and `section` nodes, and nodes marked as the article body by `itemprop` or `role`. It deletes subtrees whose role is navigation, along with footer and header markers and anything hidden from assistive technology [trafilatura-xpaths]. Its documented fallback ladder tries 'article tags' before dropping back to 'the raw text of the whole page body' [trafilatura-corefunctions]. Mozilla Readability consults ARIA landmark roles directly. Its `UNLIKELY_ROLES` list — menu, menubar, complementary, navigation, alert, alertdialog and dialog — triggers subtree removal. Its candidate scoring penalises footer, header, menu, sidebar, related and social, and rescues article, body, content and main [mozilla-readability-source]. HTML-AAM makes the element→role mapping normative: main→main, nav→navigation, header→banner, footer→contentinfo, article→article, aside→complementary [w3c-html-aam], over WAI-ARIA 1.2's ratified landmark role set [w3c-wai-aria-1-2]. Anthropic's own get_page_text is documented to 'return the page's visible text as plain text, prioritizing the main article content' [anthropic-browser-use-tool], and Playwright snapshots list 'roles and landmarks… contentinfo sections' as snapshot contents [playwright-mcp-snapshots].
 
-**Sources:** [trafilatura/xpaths.py (BODY_XPATH, OVERALL_DISCARD_XPATH)](https://raw.githubusercontent.com/adbar/trafilatura/master/trafilatura/xpaths.py) · [trafilatura core functions documentation](https://trafilatura.readthedocs.io/en/latest/corefunctions.html) · [mozilla/readability Readability.js source](https://raw.githubusercontent.com/mozilla/readability/main/Readability.js) · [HTML Accessibility API Mappings 1.0](https://www.w3.org/TR/html-aam-1.0/) · [Accessible Rich Internet Applications (WAI-ARIA) 1.2](https://www.w3.org/TR/wai-aria-1.2/) · [Browser use tool (browser_toolset_20260801)](https://platform.claude.com/docs/en/agents-and-tools/tool-use/browser-use-tool) · [Snapshots — Playwright MCP](https://playwright.dev/mcp/snapshots) · [Web Almanac 2025 — Accessibility chapter](https://almanac.httparchive.org/en/2025/accessibility) · [AI features and your website — Google Search Central](https://developers.google.com/search/docs/appearance/ai-features)
+**Counter-evidence:** Landmarks are one path among several, not a gate. trafilatura also matches bare divs by id and class, and falls back to justext or readability. Readability gives no special boost to <main> at all, and can extract a landmark-free page perfectly well via text density. So a page with zero landmarks is degraded, not invisible. Adoption is partial — only 40.72% of pages use <main> [web-almanac-2025-accessibility] — which means extractors cannot depend on landmarks and have been tuned to work without them. No AI-search vendor documents landmarks as a requirement, and Google explicitly disclaims special optimizations for AI features [google-ai-features-docs]. Over-nesting also backfires: multiple <main> or a <nav> wrapping real content will actively delete content, so this signal is bidirectional and an audit should penalise misuse as well as absence.
 
 ## Adversarial redemption research (2026-08-21)
 

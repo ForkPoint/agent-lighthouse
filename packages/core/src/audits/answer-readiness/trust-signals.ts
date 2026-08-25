@@ -37,10 +37,6 @@ const SOCIAL_PROOF_PATTERNS: readonly RegExp[] = [
 const NON_CITATION_HOSTS =
   /(^|\.)(facebook|twitter|x|instagram|linkedin|youtube|tiktok|pinterest|threads|snapchat|whatsapp|t|telegram|reddit|discord|medium|substack)\.(com|co|me|be|org)$/i;
 
-/** Headings that carry comparison intent when no comparison table exists. */
-const COMPARISON_HEADING =
-  /\bvs\.?\b|\bversus\b|\bcompar(?:e|ed|ing|ison)\b|\bdifference between\b|\balternatives? to\b/i;
-
 /** Whether a page declares a non-English language. The detectors are English. */
 function isNonEnglish(page: PageContext): boolean {
   const lang = (page.$('html').attr('lang') ?? '').trim().toLowerCase();
@@ -104,29 +100,8 @@ function evidenceBackedClaims(page: PageContext): string[] {
   return found;
 }
 
-/**
- * Comparison content — named in arXiv 2605.25517's practical implications
- * ("include comparisons"). `answer-readiness/comparison-tables` is scoped to
- * category/product/content pages, so the homepage is uncontested here.
- */
-function comparisonContent(page: PageContext): string[] {
-  const $ = page.$;
-  const found: string[] = [];
-
-  const tables = $('table').filter((_, el) => $(el).find('th').length >= 3).length;
-  if (tables > 0) found.push(`${tables} comparison table(s)`);
-
-  const headings = $('h1, h2, h3, h4')
-    .toArray()
-    .map((el) => $(el).text().trim())
-    .filter((t) => COMPARISON_HEADING.test(t));
-  if (headings.length > 0) found.push(`comparison heading "${headings[0]}"`);
-
-  return found;
-}
-
 const EXPECTED =
-  'Homepage carries at least 2 of the 3 GEO-measured factors: quantified social proof, evidence-backed claims, comparison content';
+  'Homepage carries every GEO-measured factor still in scope: quantified social proof (deferred to answer-readiness/review-signals when review markup is present) and evidence-backed claims';
 
 export class TrustSignalsAudit extends Audit {
   static override meta: AuditMeta = {
@@ -135,7 +110,7 @@ export class TrustSignalsAudit extends Audit {
     title: 'Trust and evidence signals on homepage',
     failureTitle: 'Trust and evidence signals on homepage',
     description:
-      'A 252,000-trial controlled study across six LLMs (arXiv 2605.25517) found that quantified social proof, evidence-backed claims and comparison content shift which source an AI answer engine cites; promotional tone does not. This audit checks the homepage for those three measured factors and nothing else.',
+      'A 252,000-trial controlled study across six LLMs (arXiv 2605.25517) measured two page factors that shift which source an AI answer engine cites: quantified social proof (OR 2.14, significant in 4 of 6 models) and claims paired with evidence (OR 2.09, 5 of 6 models). The same study found promotional tone\'s effect too small and inconsistent to guide, and it named comparison content in its practical implications without measuring it. This audit scores those two page factors and nothing else.',
     scoreDisplayMode: 'ternary',
     weight: weightForGrade('B', 'scored'),
     evidenceGrade: 'B',
@@ -145,9 +120,9 @@ export class TrustSignalsAudit extends Audit {
     defaultPriority: 'low',
     guidance: {
       impact:
-        'Trust cues in retrieved page text change which source an answer engine cites, but only the measured ones: quantified ratings/review counts (OR 2.14 to >10,000, significant in 4 of 6 models), claims paired with evidence (OR 2.09 to >10,000, 5 of 6 models), and comparison content. The same study found "Overly Promotional" tone significant in only 3 of 6 models with mixed direction — neutral phrasing won where the effect was significant — so puffery earns nothing. These are the "smaller gains" tier: topic match, price, recency and list position dwarf them.',
-      fix: 'Put a number on your social proof ("Rated 4.8/5 across 1,204 reviews", "Trusted by 12,000 teams"), back factual claims with outbound citations or attributed sources instead of hedging, and add a comparison table or a comparison-framed section. Delete promotional adjectives — they do not move citation.',
-      code: '<section>\n  <p>Rated <strong>4.8 out of 5</strong> across <strong>1,204 reviews</strong>.</p>\n  <p>Independent testing confirms a 40% reduction in latency\n     (<a href="https://example.org/benchmark">2026 benchmark report</a>).</p>\n  <table>\n    <thead><tr><th>Feature</th><th>Us</th><th>Alternative</th></tr></thead>\n    <tbody><tr><td>Setup time</td><td>5 min</td><td>2 hours</td></tr></tbody>\n  </table>\n</section>',
+        'Trust cues in retrieved page text change which source an answer engine cites, but only the measured ones: quantified ratings/review counts (OR 2.14 to >10,000, significant in 4 of 6 models) and claims paired with evidence (OR 2.09 to >10,000, 5 of 6 models). The same study found "Overly Promotional" tone significant in only 3 of 6 models with mixed direction — neutral phrasing won where the effect was significant — so puffery earns nothing. It named comparison content only in its practical implications and never measured it, so comparison content is reported unscored by answer-readiness/comparison-tables rather than counted here. These are the "smaller gains" tier: topic match, price, recency and list position dwarf them.',
+      fix: 'Put a number on your social proof ("Rated 4.8/5 across 1,204 reviews", "Trusted by 12,000 teams"), and back factual claims with outbound citations or attributed sources instead of hedging. Delete promotional adjectives — they do not move citation. Comparison content is reported separately and unscored by answer-readiness/comparison-tables — the same study only names it in its practical implications and never measured it.',
+      code: '<section>\n  <p>Rated <strong>4.8 out of 5</strong> across <strong>1,204 reviews</strong>.</p>\n  <p>Independent testing confirms a 40% reduction in latency\n     (<a href="https://example.org/benchmark">2026 benchmark report</a>),\n     and <cite>NIST SP 800-90B</cite> documents the method.</p>\n</section>',
       effort: 'moderate',
       docsUrl: 'https://arxiv.org/abs/2605.25517',
       tags: ['trust', 'social-proof', 'generative-engine', 'geo'],
@@ -204,21 +179,18 @@ export class TrustSignalsAudit extends Audit {
     if (evidence.length > 0) satisfied.push(`evidence-backed claims (${evidence.join('; ')})`);
     else missing.push('evidence-backed claims (outbound citations or attributed sources)');
 
-    // ── Factor 3: comparison content ────────────────────────────
-    counted += 1;
-    const comparison = comparisonContent(page);
-    if (comparison.length > 0) satisfied.push(`comparison content (${comparison.join('; ')})`);
-    else missing.push('comparison content (a comparison table or comparison-framed section)');
-
     const found = [...satisfied, ...(deferred ? [deferred] : [])].join('; ') || 'None found';
 
-    // Two of the three factors carry a pass. A deferred factor removes itself
-    // from the denominator, so the bar moves with it: requiring 2 out of a
-    // 2-factor denominator would mean adding correct review markup could flip
-    // a passing page to `warn`, penalising the very signal the evidence says
-    // to strengthen. The deferred factor is *known present* — it is simply
-    // scored by review-signals — so it also lifts the floor off `fail`.
-    const required = counted >= 3 ? 2 : 1;
+    // Every factor still in the denominator must be satisfied. There is no
+    // longer an unmeasured third factor to take a majority against — both
+    // survivors carry their own odds ratio, so a pass means both. A deferred
+    // factor removes itself from the numerator and the denominator together,
+    // which is what keeps the bar monotonic: adding correct review markup
+    // could otherwise flip a passing page to `warn`, penalising the very
+    // signal the evidence says to strengthen. The deferred factor is *known
+    // present* — it is simply scored by review-signals — so it also lifts the
+    // floor off `fail`.
+    const required = counted;
     const tally = `${satisfied.length} of the ${counted} GEO-measured trust factor(s)`;
     const deferNote = deferred
       ? ' Social proof is scored by answer-readiness/review-signals.'
@@ -240,7 +212,7 @@ export class TrustSignalsAudit extends Audit {
         found,
         {
           priority: 'low',
-          description: `Missing: ${missing.join('; ')}. These are the factors a 252,000-trial study measured as moving AI citation; add at least one more. Promotional adjectives are not among them.`,
+          description: `Missing: ${missing.join('; ')}. These are the factors a 252,000-trial study measured as moving AI citation, and a pass needs every one still in scope here. Promotional adjectives are not among them.`,
           code: TrustSignalsAudit.meta.guidance?.code,
         },
         page.url,
@@ -248,12 +220,12 @@ export class TrustSignalsAudit extends Audit {
     }
 
     return this.fail(
-      'Homepage carries none of the GEO-measured trust factors.',
+      'Homepage carries neither of the GEO-measured trust factors.',
       EXPECTED,
       found,
       {
         priority: 'low',
-        description: `Missing: ${missing.join('; ')}. A 252,000-trial controlled study across six LLMs found these shift which source an answer engine cites; promotional tone did not. Quantify your social proof, cite evidence for factual claims, and add comparison content.`,
+        description: `Missing: ${missing.join('; ')}. A 252,000-trial controlled study across six LLMs measured both as shifting which source an answer engine cites. Quantify your social proof and cite evidence for factual claims. Comparison content is reported separately and unscored by answer-readiness/comparison-tables.`,
         code: TrustSignalsAudit.meta.guidance?.code,
       },
       page.url,

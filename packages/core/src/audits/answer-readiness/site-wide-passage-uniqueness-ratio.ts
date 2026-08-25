@@ -124,7 +124,7 @@ export class SiteWidePassageUniquenessRatioAudit extends Audit {
       fix: 'Merge near-duplicate pages into one, or point the weaker members at the strongest with rel="canonical" so the election has an answer. For pages that stay, raise the share of text that is theirs alone: cut the repeated intro, the repeated legal paragraph and the repeated call to action, and let each page carry the sentences only it can carry.',
       effort: 'complex',
       docsUrl:
-        'https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/audits/answer-readiness/site-wide-passage-uniqueness-ratio.md',
+        'https://forkpoint.github.io/agent-lighthouse/audits/answer-readiness/site-wide-passage-uniqueness-ratio/',
       tags: ['duplication', 'canonical', 'retrieval', 'crawl'],
     },
   };

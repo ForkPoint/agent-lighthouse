@@ -257,7 +257,7 @@ export class LandedCostAndReturnsAudit extends Audit {
       code: SAMPLE,
       effort: 'moderate',
       docsUrl:
-        'https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/audits/agentic-commerce/landed-cost-and-returns.md',
+        'https://forkpoint.github.io/agent-lighthouse/audits/agentic-commerce/landed-cost-and-returns/',
       tags: ['acp', 'shipping', 'returns', 'feed', 'commerce'],
     },
   };

@@ -8,6 +8,10 @@ tier: scored
 disposition: "new in v2 — graduated from proposal 2026-08-23"
 reviewed: 2026-08-20
 graduated: 2026-08-23
+sources:
+  - S4
+  - S8
+  - mcp-spec-2025-06-18-transports
 ---
 
 
@@ -38,7 +42,7 @@ Every SEO tool validates that sameAs is a well-formed URL array; none dereferenc
 
 ## Implementation sketch
 
-1) Parse all JSON-LD blocks including @graph, collect Organization/Person/NewsMediaOrganization nodes and their sameAs values. 2) Filter to authority hosts: wikidata.org, *.wikipedia.org, gleif.org, LinkedIn company pages, GitHub orgs. 3) Wikidata: extract the Q-id from /wiki/Q\d+ or /entity/Q\d+, then GET https://www.wikidata.org/w/api.php?action=wbgetclaims&entity=<Qid>&property=P856&format=json and read claims.P856[*].mainsnak.datavalue.value — use the per-property endpoint, not Special:EntityData, whose full export is enormous for popular entities. 4) Respect statement rank: prefer 'preferred', ignore 'deprecated'. 5) Compare using the Public Suffix List registrable domain, NOT string equality — Q95 (Google) resolves to https://about.google/, so also accept a configured alias set and treat a same-organization-different-TLD result as WARN rather than FAIL. 6) Wikipedia sameAs: resolve the article to its Q-id via the Wikipedia API sitelinks, then run the same round trip. 7) Verdicts: PASS = P856 registrable domain matches; WARN = entity exists but has no P856 (unverifiable); FAIL = P856 points at a different organization's domain. Cache per Q-id for 30 days.
+1) Parse all JSON-LD blocks including @graph, collect Organization/Person/NewsMediaOrganization nodes and their sameAs values. 2) Filter to authority hosts: wikidata.org, *.wikipedia.org, gleif.org, LinkedIn company pages, GitHub orgs. 3) Wikidata: extract the Q-id from /wiki/Q\d+ or /entity/Q\d+, then GET https://www.wikidata.org/w/api.php?action=wbgetclaims&entity=<Qid>&property=P856&format=json and read claims.P856[*].mainsnak.datavalue.value — use the per-property endpoint, not Special:EntityData, whose full export is enormous for popular entities. 4) Respect statement rank: prefer 'preferred', ignore 'deprecated'. 5) Compare using the Public Suffix List registrable domain, not string equality — Q95 (Google) resolves to https://about.google/, so also accept a configured alias set and treat a same-organization-different-TLD result as WARN rather than FAIL. 6) Wikipedia sameAs: resolve the article to its Q-id via the Wikipedia API sitelinks, then run the same round trip. 7) Verdicts: PASS = P856 registrable domain matches; WARN = entity exists but has no P856 (unverifiable); FAIL = P856 points at a different organization's domain. Cache per Q-id for 30 days.
 
 ## Example failure
 

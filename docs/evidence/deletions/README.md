@@ -2,7 +2,7 @@
 
 32 audits marked for deletion by the 2026-08-20 quality review were re-researched on 2026-08-21 by an adversarial 8-agent workflow (each researcher's task: **redeem** the audit by finding a named consumer with grade A/B evidence). The user reviewed and accepted all 32 verdicts on 2026-08-21, with disposition set by evidence grade:
 
-- **Grade D (18) → removed.** Deleted outright in the v2 major release, since the [evidence policy](../POLICY.md) allows a grade-D audit no score weight and no consumer was found. Their dossiers and the condensed public rationale moved to [sunset/](../sunset/README.md) — [NOT-A-FACTOR.md](../sunset/NOT-A-FACTOR.md) — and stay published as the record.
+- **Grade D (18) → removed.** Deleted outright in the v2 major release, since the [evidence policy](../policy.md) allows a grade-D audit no score weight and no consumer was found. Their dossiers and the condensed public rationale moved to [sunset/](../sunset/README.md) — [not-a-factor.md](../sunset/not-a-factor.md) — and stay published as the record.
 - **Grade C (5) → kept as informative (weight 0)**, documented.
 - **Grade A/B (9) → kept, rewrite required** per dossier (the research overturned the delete verdict — most notably the `ai-catalog` family, saved by the ARD draft spec and Hugging Face's `hf-discover` client).
 

@@ -1,14 +1,27 @@
 ---
 audit: answer-readiness/brand-name
-audit_id: "10.6"
 category: answer-readiness
 source_file: packages/core/src/audits/answer-readiness/brand-name.ts
 slug: brand-name
-review_verdict: fix
-severity: high
 evidence_grade: C
 disposition: "keep — fix required"
 reviewed: 2026-08-21
+recommended_tier: informative
+consumers:
+  - "Google Search (documented: site-name selection and Knowledge Panel)"
+  - none-known for AI-citation selection specifically
+signals:
+  - name: "Brand name consistency across page, markup, and metadata"
+    grade: C
+    domain: geo-authority
+sources:
+  - google-site-names-docs
+  - google-organization-structured-data
+  - ahrefs-brand-correlation
+  - semrush-technical-seo-ai
+  - semrush-most-cited-domains
+  - google-ai-features-trust
+  - geo-critical-survey-arxiv
 ---
 
 # brand-name (`10.6`)
@@ -35,7 +48,7 @@ The signal — the Organization schema name actually appears in rendered copy so
 - `getBodyText` reads server HTML. On a client-rendered SPA whose shell is `<div id="root"></div>`, body text is empty and every brand FAILS even though the schema in the shell supplies the name.
 
 **Test gaps:**
-- No test asserting that an Article/WebPage `name` must NOT satisfy the brand check — the dominant false-pass path. The existing test 'handles Article JSON-LD without publisher gracefully' actively asserts the false-pass behavior as correct.
+- No test asserting that an Article/WebPage `name` must not satisfy the brand check — the dominant false-pass path. The existing test 'handles Article JSON-LD without publisher gracefully' actively asserts the false-pass behavior as correct.
 - No test for a non-Latin-script brand (the `\b` failure).
 - No test for diacritics or curly-vs-straight apostrophe mismatch between schema and copy.
 - No test for non-English legal suffixes (S.L., B.V., AB, 株式会社).
@@ -51,12 +64,9 @@ The signal — the Organization schema name actually appears in rendered copy so
 
 **Mechanism:** Using one consistent brand/organization name across the page title, visible content, og:site_name and Organization/WebSite structured data improves machine entity resolution and thereby increases the likelihood of the brand being cited by AI answer engines.
 
-**Evidence:** The entity-resolution half is documented, precisely and verbatim, by Google — just for a different outcome than AI citation. Google's site-names doc gives a ranked signal list (WebSite structured data > og:site_name > <title> > headings > other home page text) and instructs: 'Use your site name consistently across your home page. Make sure whatever you use as the site name in structured data is consistent with how you refer to your site in other sources on your home page that our system considers.' The Organization doc reinforces it — 'Use the same name and alternateName that you're using for your site name' — and confirms these properties influence the Knowledge Panel. On the AI side, Ahrefs' 75,000-brand study found off-site brand signals dominate AI Overview visibility: brand web mentions 0.664 Spearman, brand anchors 0.527, brand search volume 0.392 — roughly 3x backlinks at 0.218 — and brands in the top mention quartile earn far more AIO mentions. Semrush found Organization schema on 25% (ChatGPT) / 34% (AI Mode) of cited pages. So entity clarity is plausibly load-bearing; the on-page consistency check is cheap and standards-conformant.
+**Evidence:** The entity-resolution half is documented, precisely and verbatim, by Google — just for a different outcome than AI citation. Google's site-names doc gives a ranked signal list (WebSite structured data > og:site_name > <title> > headings > other home page text) and instructs: 'Use your site name consistently across your home page. Make sure whatever you use as the site name in structured data is consistent with how you refer to your site in other sources on your home page that our system considers.' The Organization doc reinforces it: 'Use the same name and alternateName that you're using for your site name.' It also confirms that these properties influence the Knowledge Panel. On the AI side, Ahrefs' 75,000-brand study found that off-site brand signals dominate AI Overview visibility. Brand web mentions score 0.664 Spearman, brand anchors 0.527 and brand search volume 0.392 — roughly 3x backlinks at 0.218. Brands in the top mention quartile earn far more AI Overview mentions. Semrush found Organization schema on 25% (ChatGPT) / 34% (AI Mode) of cited pages. So entity clarity is plausibly load-bearing; the on-page consistency check is cheap and standards-conformant.
 
-**Counter-evidence:** The evidence measures a different variable than the audit does. Ahrefs measured off-site brand MENTIONS — a reputation quantity built over years — not on-page name consistency, which no study has isolated; Ahrefs explicitly states 'correlation ≠ causation' and that 'all the factors we studied revealed moderate to very weak correlations'. Google's documented use of name consistency is for site-name DISPLAY and Knowledge Panel, not AI citation, and Google's AI-features doc says outright there is 'no special schema.org structured data that you need to add' for AI Overviews or AI Mode. The 2026 critical survey states brand signals are 'not independently evaluated' in the GEO literature. Most damaging: Semrush's 100M-citation study shows citation share is governed by platform-level source-mix policy, not brand attributes — Reddit collapsed from ~60% of ChatGPT responses in early August 2025 to ~10% by mid-September, and Wikipedia from ~55% to under 20%, in weeks, with no change in either brand's on-page markup. Correlational, unisolated, and swamped by platform policy: informative only.
-**Consumers:** Google Search (documented: site-name selection and Knowledge Panel), none-known for AI-citation selection specifically · **Recommended tier:** informative
-
-**Sources:** [Site Names in Google Search](https://developers.google.com/search/docs/appearance/site-names) · [Organization (Organization) Structured Data](https://developers.google.com/search/docs/appearance/structured-data/organization) · [An Analysis of AI Overview Brand Visibility Factors (75K Brands Studied)](https://ahrefs.com/blog/ai-overview-brand-correlation/) · [How Do Technical SEO Factors Impact AI Search? [Study]](https://www.semrush.com/blog/technical-seo-impact-on-ai-search-study/) · [The Most-Cited Domains in AI: A 3-Month Study](https://www.semrush.com/blog/most-cited-domains-ai/) · [AI Features and Your Website](https://developers.google.com/search/docs/appearance/ai-features) · [Optimizing Visibility in Generative Engines: A Critical Survey of Generative Engine Optimization (2023–2026)](https://arxiv.org/html/2607.14035v1)
+**Counter-evidence:** The evidence measures a different variable than the audit does. Ahrefs measured off-site brand mentions, a reputation quantity built over years. It did not measure on-page name consistency, which no study has isolated. Ahrefs explicitly states 'correlation ≠ causation', and that 'all the factors we studied revealed moderate to very weak correlations'. Google's documented use of name consistency is for site-name DISPLAY and Knowledge Panel, not AI citation, and Google's AI-features doc says outright there is 'no special schema.org structured data that you need to add' for AI Overviews or AI Mode. The 2026 critical survey states brand signals are 'not independently evaluated' in the GEO literature. Most damaging of all, Semrush's 100M-citation study shows citation share is governed by platform-level source-mix policy rather than by brand attributes. Reddit collapsed from about 60% of ChatGPT responses in early August 2025 to about 10% by mid-September, and Wikipedia from about 55% to under 20%. Both moves took weeks, with no change in either brand's on-page markup. Correlational, unisolated, and swamped by platform policy: informative only.
 
 ## Review history
 

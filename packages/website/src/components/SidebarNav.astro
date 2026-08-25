@@ -1,0 +1,54 @@
+---
+/**
+ * The documentation sidebar: a one-level-deep tree of links. Entries come in as
+ * a prop rather than being read here, so the sidebar has no opinion about where
+ * its contents live and never touches the registry.
+ */
+export interface NavEntry {
+  label: string;
+  href: string;
+  items?: Array<{ label: string; href: string }>;
+}
+
+interface Props {
+  nav: NavEntry[];
+}
+
+const { nav } = Astro.props;
+
+// Astro is configured with `trailingSlash: 'always'` and every href comes from
+// the route helpers, so a plain comparison is enough to find the current page.
+const here = Astro.url.pathname;
+---
+<nav aria-label="Documentation" class="text-sm">
+  <ul class="space-y-6">
+    {nav.map((entry) => (
+      <li>
+        <a
+          href={entry.href}
+          aria-current={here === entry.href ? 'page' : undefined}
+          class:list={[
+            'block text-xs font-bold uppercase tracking-wider transition-colors hover:text-white',
+            here === entry.href ? 'text-brand-soft' : 'text-slate-400',
+          ]}
+        >{entry.label}</a>
+        {entry.items && entry.items.length > 0 && (
+          <ul class="mt-3 space-y-2 border-l border-border-subtle pl-3">
+            {entry.items.map((item) => (
+              <li>
+                <a
+                  href={item.href}
+                  aria-current={here === item.href ? 'page' : undefined}
+                  class:list={[
+                    'block py-0.5 transition-colors hover:text-white',
+                    here === item.href ? 'font-semibold text-brand-soft' : 'text-slate-400',
+                  ]}
+                >{item.label}</a>
+              </li>
+            ))}
+          </ul>
+        )}
+      </li>
+    ))}
+  </ul>
+</nav>

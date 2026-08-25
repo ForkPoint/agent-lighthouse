@@ -117,7 +117,7 @@ export function defineA11yAudit(spec: A11yAuditSpec): typeof Audit {
 }
 
 // 7.22 (deprecated <marquee>/<blink> elements) was sunset — grade D, no
-// consumer reads it. See docs/evidence/sunset/NOT-A-FACTOR.md#accessibilitymarquee.
+// consumer reads it. See docs/evidence/sunset/not-a-factor.md#accessibilitymarquee.
 
 export const base = {
   category: 'operability-safety' as const,

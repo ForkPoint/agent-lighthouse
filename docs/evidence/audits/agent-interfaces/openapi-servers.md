@@ -1,14 +1,15 @@
 ---
 audit: agent-interfaces/openapi-servers
-audit_id: "5.5"
 category: agent-interfaces
 source_file: packages/core/src/audits/agent-interfaces/openapi-servers.ts
 slug: openapi-servers
-review_verdict: fix
-severity: high
 evidence_grade: B
 disposition: "keep — fix required"
 reviewed: 2026-08-21
+sources:
+  - openai-gpt-actions-openapi
+  - ms-copilot-api-plugins
+  - openapi-31-spec
 ---
 
 # openapi-servers (`5.5`)
@@ -44,7 +45,7 @@ Correct premise (agents need a base URL) wrecked by liveness probing that misrea
 
 ## Evidence
 
-_No dedicated evidence signal was researched for this audit in the 2026-08-20 pass. Its tier assignment falls to the taxonomy design; unproven mechanisms default to informative per the [evidence policy](../../POLICY.md)._
+_No dedicated evidence signal was researched for this audit in the 2026-08-20 pass. Its tier assignment falls to the taxonomy design; unproven mechanisms default to informative per the [evidence policy](../../policy.md)._
 
 ## Review history
 
@@ -52,15 +53,15 @@ _No dedicated evidence signal was researched for this audit in the 2026-08-20 pa
 - 2026-08-21 — dossier generated; disposition pending final taxonomy design.
 - 2026-08-21 — evidence graded (see below).
 
-## Graded evidence (2026-08-21)
+## Evidence (2026-08-21)
 
 **Mechanism claim:** An agent runtime builds each request URL by joining a `servers[].url` entry with the operation path, so a spec whose servers entries yield no resolvable base URL produces requests the agent cannot address.
 
-**Grade: B** — that agents resolve requests against the declared server URL is documented at named consumers, but the specification supplies a legal default (`/`) when the array is absent, and the liveness probe this audit performs has no documented consumer at all.
+**Grade: B** — that agents resolve requests against the declared server URL is documented at named consumers. But the specification supplies a legal default, `/`, when the array is absent. The liveness probe this audit performs has no documented consumer at all.
 
 **Evidence:**
 - OpenAI GPT Actions schemas declare the API location in the servers array (`servers: - url: https://api.weather.gov`), which is where the built action sends its calls — https://developers.openai.com/api/docs/actions/getting-started (verified 2026-08-21)
-- Microsoft 365 Copilot treats the servers section as the domains an API plugin declares: "the Copilot runtime … doesn't evaluate it against any domains the plugin declares (such as the `servers` section of an API plugin's OpenAPI description)" — https://learn.microsoft.com/en-us/microsoft-365-copilot/extensibility/overview-api-plugins (verified 2026-08-21)
+- Microsoft 365 Copilot treats the servers section as the domains an API plugin declares. "The Copilot runtime … doesn't evaluate it against any domains the plugin declares (such as the `servers` section of an API plugin's OpenAPI description)" — https://learn.microsoft.com/en-us/microsoft-365-copilot/extensibility/overview-api-plugins (verified 2026-08-21)
 - OpenAPI 3.1 Server Object defines `url` as the base URL for the API, supports relative URLs and `{variable}` templating with `variables` defaults — https://spec.openapis.org/oas/v3.1.0.html (verified 2026-08-21)
 
-**Counter-evidence:** Strong, on the half of the signal the code actually weights. OpenAPI 3.1 states "If the `servers` property is not provided, or is an empty array, the default value would be a Server Object with a `url` value of `/`" — an absent servers array is legal and resolvable against the document's own location, so it is not the fatal condition the audit's copy claims. No vendor documentation treats a bare `GET` on the base URL as a validity test; `401`, `403`, `404`, and `405` are ordinary healthy responses at an API root, and templated (`https://{region}.api.example.com`) or relative (`/api`) server URLs are legal forms that cannot be fetched literally. The reachability leg of this signal is therefore unsupported; only the structural leg (a parseable base URL is declared or derivable) carries the B.
+**Counter-evidence:** Strong, on the half of the signal the code actually weights. OpenAPI 3.1 states: "If the `servers` property is not provided, or is an empty array, the default value would be a Server Object with a `url` value of `/`." An absent servers array is therefore legal, and resolvable against the document's own location. It is not the fatal condition the audit's copy claims. No vendor documentation treats a bare `GET` on the base URL as a validity test. `401`, `403`, `404` and `405` are ordinary healthy responses at an API root. Templated server URLs such as `https://{region}.api.example.com`, and relative ones such as `/api`, are legal forms that cannot be fetched literally. The reachability leg of this signal is therefore unsupported; only the structural leg (a parseable base URL is declared or derivable) carries the B.

@@ -8,6 +8,11 @@ tier: scored
 disposition: "new in v2 — graduated from proposal 2026-08-23"
 reviewed: 2026-08-20
 graduated: 2026-08-23
+sources:
+  - s5
+  - s6
+  - s19
+  - s12
 ---
 
 
@@ -21,7 +26,7 @@ When a site charges for crawler access, this verifies the 402 response carries a
 
 ## Claimed mechanism (falsifiable)
 
-Every deployed paid-crawl scheme puts the price in a machine-readable slot, never in the body prose. Cloudflare pay-per-crawl returns 402 with `crawler-price: USD XX.XX`, and the crawler retries with `crawler-exact-price` (or pre-declares `crawler-max-price`), receiving 200 + `crawler-charged` on success (s5). x402 v2 puts a base64-encoded PaymentRequired payload in the `PAYMENT-REQUIRED` response header, carrying `x402Version: 2` and an `accepts[]` array of {scheme, network, amount, asset, payTo, maxTimeoutSeconds, extra} (s19). RSL expresses it declaratively as `<payment type="crawl"><amount currency="USD">0.015</amount></payment>` (s12). Falsifiable: a 402 carrying none of these three signals contains no price any client can parse, so no retry is constructible.
+Every deployed paid-crawl scheme puts the price in a machine-readable slot, never in the body prose. Cloudflare pay-per-crawl returns 402 with `crawler-price: USD XX.XX`. The crawler then retries with `crawler-exact-price`, or pre-declares `crawler-max-price`, and receives 200 plus `crawler-charged` on success (s5). x402 v2 works differently. It puts a base64-encoded PaymentRequired payload in the `PAYMENT-REQUIRED` response header, carrying `x402Version: 2` and an `accepts[]` array of {scheme, network, amount, asset, payTo, maxTimeoutSeconds, extra} (s19). RSL expresses it declaratively as `<payment type="crawl"><amount currency="USD">0.015</amount></payment>` (s12). Falsifiable: a 402 carrying none of these three signals contains no price any client can parse, so no retry is constructible.
 
 ## Evidence
 
@@ -32,7 +37,7 @@ Every deployed paid-crawl scheme puts the price in a machine-readable slot, neve
 - **[x402 Specification v2](https://github.com/x402-foundation/x402/blob/main/specs/x402-specification-v2.md)** — x402 Foundation (spec, URL verified 2026-08-20)
   - PaymentRequired payload carries `"x402Version": 2` and an `accepts` array whose items have `scheme`, `network`, `amount`, `asset`, `payTo`, `maxTimeoutSeconds`, `extra`. "For HTTP, the canonical wire location is the base64-encoded `PAYMENT-REQUIRED` response header"; a `PAYMENT-SIGNATURE` header appears in examples. Protocol is transport-agnostic; HTTP binding lives in specs/transports-v2/http.md. Note the older repo path coinbase/x402 and specs/x402-specification.md are now 404.
 - **[RSL 1.0 Standard Specification](https://rslstandard.org/rsl)** — RSL Collective (spec, URL verified 2026-08-20)
-  - robots.txt directive `License: https://example.com/license.xml` — "The value MUST be an absolute URI"; may be global or inside a User-agent group; multiple allowed. HTTP discovery: `Link: <https://example.com/license.xml>; rel="license"; type="application/rsl+xml"`. HTML: `<link rel="license" type="application/rsl+xml" href="...">` or inline `<script type="application/rsl+xml">`. NO default/well-known location is mandated. XML: root `<rsl xmlns="https://rslstandard.org/rsl" max-age>`, `<content url required, server, encrypted>`, `<license>`, `<permits|prohibits type="usage|user|geo">`, `<payment type="purchase|subscription|crawl|use|attribution|free">`, `<amount currency=ISO4217>`, `<standard>`, `<copyright type contactEmail contactUrl>`, `<legal type="warranty|disclaimer|attestation|contact|proof">`.
+  - robots.txt directive `License: https://example.com/license.xml` — "The value MUST be an absolute URI"; may be global or inside a User-agent group; multiple allowed. HTTP discovery: `Link: <https://example.com/license.xml>; rel="license"; type="application/rsl+xml"`. HTML: `<link rel="license" type="application/rsl+xml" href="...">` or inline `<script type="application/rsl+xml">`. no default/well-known location is mandated. XML: root `<rsl xmlns="https://rslstandard.org/rsl" max-age>`, `<content url required, server, encrypted>`, `<license>`, `<permits|prohibits type="usage|user|geo">`, `<payment type="purchase|subscription|crawl|use|attribution|free">`, `<amount currency=ISO4217>`, `<standard>`, `<copyright type contactEmail contactUrl>`, `<legal type="warranty|disclaimer|attestation|contact|proof">`.
 
 ## Competitor coverage
 

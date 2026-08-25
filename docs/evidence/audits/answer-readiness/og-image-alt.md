@@ -1,14 +1,31 @@
 ---
 audit: answer-readiness/og-image-alt
-audit_id: "4.9"
 category: answer-readiness
 source_file: packages/core/src/audits/answer-readiness/og-image-alt.ts
 slug: og-image-alt
-review_verdict: fix
-severity: medium
 evidence_grade: C
 disposition: "keep — fix required"
 reviewed: 2026-08-21
+recommended_tier: informative
+consumers:
+  - Facebook/Meta
+  - LinkedIn
+  - Slack
+  - Discord
+  - iMessage unfurlers (per OGP spec)
+  - none-known for any AI answer engine
+signals:
+  - name: "Open Graph og:description and og:image"
+    grade: C
+    domain: meta-head
+sources:
+  - ogp-me-spec
+  - google-title-link-docs
+  - google-site-names-docs
+  - applebot-doc
+  - s18
+  - anthropic-crawlers
+  - perplexity-crawlers-docs
 ---
 
 # og-image-alt (`4.9`)
@@ -51,9 +68,6 @@ Modest accessibility value at best, and the not-applicable path is mis-modeled: 
 **Evidence:** The OGP spec establishes og:description and og:image as standard, near-universally deployed properties with real social-unfurler consumers. Their mechanism is well understood and cheap to satisfy. AI answer surfaces do render thumbnails and blurbs alongside citations, which makes the claim plausible.
 
 **Counter-evidence:** Plausible is all it is. Google names only og:title and og:site_name in its documentation — og:description is conspicuously absent from the snippet-sources doc, and og:image is absent from image-appearance docs. Apple's Applebot page describes "a representative image" for snippet-enabled pages without attributing it to og:image. OpenAI, Anthropic and Perplexity say nothing about Open Graph at all. Treat these as social-sharing hygiene reported for completeness, not as AI-readiness scoring inputs.
-**Consumers:** Facebook/Meta, LinkedIn, Slack, Discord, iMessage unfurlers (per OGP spec), none-known for any AI answer engine · **Recommended tier:** informative
-
-**Sources:** [The Open Graph protocol](https://ogp.me/) · [Control your title links in search results](https://developers.google.com/search/docs/appearance/title-link) · [Site names in Google Search](https://developers.google.com/search/docs/appearance/site-names) · [About Applebot](https://support.apple.com/en-us/119829) · [Overview of OpenAI Crawlers](https://developers.openai.com/api/docs/bots) · [Does Anthropic crawl data from the web, and how can site owners block the crawler?](https://support.claude.com/en/articles/8896518-does-anthropic-crawl-data-from-the-web-and-how-can-site-owners-block-the-crawler) · [Perplexity Crawlers](https://docs.perplexity.ai/docs/resources/perplexity-crawlers)
 
 ## Review history
 

@@ -82,7 +82,7 @@ export class CartHandoffReachabilityAudit extends Audit {
       fix: 'Allow guest checkout, or at least let an unauthenticated buyer reach the cart and see the totals. Keep bot challenges off the cart and checkout documents — challenge the payment submission instead, where a human is present. Allow ChatGPT-User in robots.txt and at the edge on cart paths: blocking GPTBot does not block it, and the two are separately tokened.',
       effort: 'moderate',
       docsUrl:
-        'https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/audits/agentic-commerce/cart-handoff-reachability.md',
+        'https://forkpoint.github.io/agent-lighthouse/audits/agentic-commerce/cart-handoff-reachability/',
       tags: ['commerce', 'cart', 'checkout', 'acp', 'chatgpt'],
     },
   };

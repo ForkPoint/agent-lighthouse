@@ -8,6 +8,12 @@ tier: scored
 disposition: "new in v2 — graduated from proposal 2026-08-23"
 reviewed: 2026-08-20
 graduated: 2026-08-23
+sources:
+  - s18
+  - openai-searchbot-ips
+  - google-spam
+  - brave-comet
+  - anthropic-claude-for-chrome
 ---
 
 
@@ -21,14 +27,14 @@ Fetch each sampled URL with a real browser UA and with each major AI fetcher UA,
 
 ## Claimed mechanism (falsifiable)
 
-AI fetchers identify themselves (GPTBot, OAI-SearchBot, ChatGPT-User, ClaudeBot, PerplexityBot) and no vendor documents JavaScript execution for them, so server-side or edge logic can trivially branch on user agent. Any such branch — a compromised plugin, a rogue ad or tag-manager container, or a 'GEO optimization' vendor — creates content the owner will never see in their own browser, which is the ideal place to park injected instructions or manipulative claims. Google already classifies UA-conditional content divergence as cloaking and penalizes it, so the check carries a second, independent consequence. Falsifier: main-content text equivalence across UAs proves no agent-only channel exists.
+AI fetchers identify themselves (GPTBot, OAI-SearchBot, ChatGPT-User, ClaudeBot, PerplexityBot) and no vendor documents JavaScript execution for them, so server-side or edge logic can trivially branch on user agent. Any such branch creates content the owner will never see in their own browser: a compromised plugin, a rogue ad or tag-manager container, or a 'GEO optimization' vendor. That is the ideal place to park injected instructions or manipulative claims. Google already classifies UA-conditional content divergence as cloaking and penalizes it, so the check carries a second, independent consequence. Falsifier: main-content text equivalence across UAs proves no agent-only channel exists.
 
 ## Evidence
 
 - **[OpenAI Bots / Crawler documentation](https://developers.openai.com/api/docs/bots)** — OpenAI (vendor-doc, URL verified 2026-08-20)
-  - Four distinct user agents with separate robots.txt tokens and separate published IP-range files: OAI-SearchBot (surfaces sites in ChatGPT search — https://openai.com/searchbot.json), OAI-AdsBot (validates ad landing pages — https://openai.com/adsbot.json), GPTBot (model training — https://openai.com/gptbot.json), ChatGPT-User (user-initiated actions: web visits and GPT Actions — https://openai.com/chatgpt-user.json). ChatGPT-User is the agent that fetches on a shopper's behalf. Crucially these are separately controllable: blocking GPTBot does not block OAI-SearchBot or ChatGPT-User, and vice versa.
+  - Four distinct user agents, with separate robots.txt tokens and separate published IP-range files. OAI-SearchBot surfaces sites in ChatGPT search — https://openai.com/searchbot.json. OAI-AdsBot validates ad landing pages — https://openai.com/adsbot.json. GPTBot handles model training — https://openai.com/gptbot.json, ChatGPT-User (user-initiated actions: web visits and GPT Actions — https://openai.com/chatgpt-user.json). ChatGPT-User is the agent that fetches on a shopper's behalf. Crucially these are separately controllable: blocking GPTBot does not block OAI-SearchBot or ChatGPT-User, and vice versa.
 - **[Spam policies for Google web search — cloaking, hidden text and links](https://developers.google.com/search/docs/essentials/spam-policies)** — Google Search Central (vendor-doc, URL verified 2026-08-20)
-  - Cloaking = 'presenting different content to users and search engines'. Hidden text/links = 'placing content on a page in a way solely to manipulate search engines and not to be easily viewable by human visitors', with an enumerated technique list: white text on white background, text behind images, CSS off-screen positioning, font size or opacity set to 0, single-character links. Also names the legitimate exceptions (accordions, tabs, sliders, tooltips, screen-reader-only text) — which is exactly the false-positive allowlist a detector needs.
+  - Cloaking = 'presenting different content to users and search engines'. Hidden text and links are 'placing content on a page in a way solely to manipulate search engines and not to be easily viewable by human visitors'. The technique list is enumerated: white text on a white background, text behind images, CSS off-screen positioning, font size or opacity set to 0, and single-character links. Also names the legitimate exceptions (accordions, tabs, sliders, tooltips, screen-reader-only text) — which is exactly the false-positive allowlist a detector needs.
 - **[Comet Prompt Injection: Agentic Browser Security](https://brave.com/blog/comet-prompt-injection/)** — Brave Software (article, URL verified 2026-08-20)
   - Perplexity Comet fed page content to its LLM without separating user instructions from page data. Injection was hidden in a Reddit comment behind a spoiler tag; Brave explicitly names 'white text on white backgrounds, HTML comments, or other invisible elements' as the hiding techniques. PoC chain: agent read hidden instructions from UGC, pulled the user's email from their Perplexity account, triggered an OTP, read the OTP from the already-logged-in Gmail tab, and posted both back to Reddit. Establishes UGC on a third-party site as a live injection surface.
 - **[Piloting Claude for Chrome](https://claude.com/blog/claude-for-chrome)** — Anthropic (vendor-doc, URL verified 2026-08-20)

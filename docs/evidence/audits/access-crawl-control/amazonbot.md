@@ -1,14 +1,22 @@
 ---
 audit: access-crawl-control/amazonbot
-audit_id: "2.8"
 category: access-crawl-control
 source_file: packages/core/src/audits/access-crawl-control/amazonbot.ts
 slug: amazonbot
-review_verdict: fix
-severity: medium
 evidence_grade: A
 disposition: "keep — fix required"
 reviewed: 2026-08-21
+recommended_tier: scored
+consumers:
+  - Amazonbot
+  - Amzn-SearchBot
+signals:
+  - name: Amazonbot allow/block state in robots.txt
+    grade: A
+    domain: robots-ai-crawlers
+sources:
+  - amazonbot-docs
+  - cloudflare-ai-crawler-purpose-industry
 ---
 
 # amazonbot (`2.8`)
@@ -43,12 +51,11 @@ Amazonbot is live (Alexa+ and Rufus grounding) and for commerce sites it is a ge
 
 **Mechanism:** Disallowing Amazonbot stops Amazon crawling the site for product/service improvement and possible Amazon AI model training; Amazon states the bot honors user-agent and allow/disallow directives but ignores crawl-delay.
 
-**Evidence:** Amazon documents UA 'Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko; compatible; Amazonbot/0.1) Chrome/W.X.Y.Z Safari/537.36', purpose 'Amazonbot is used to improve our products and services', that it 'may be used to train Amazon AI models', and compliance: 'Automated crawling from these listed user agents respects the Robots Exclusion Protocol, honoring the user-agent and the allow/disallow directives.' Active at scale — Cloudflare Radar ranked Amazonbot second only to GPTBot in the Computer & Electronics vertical (Aug 2025). Amazon also now documents a separate Amzn-SearchBot which 'does not crawl content for generative AI model training', so audits should treat the two tokens distinctly.
+**Grade: A** — Amazon publishes a crawler page naming the exact product token. It states the purpose: "Amazonbot is used to improve our products and services", and content "may be used to train Amazon AI models". It asserts robots.txt compliance for that user agent. That is documented consumer behaviour for the directive this audit reads, which is the grade-A bar. What Amazon does *not* publish is any statement of what blocking costs, so the audit reports the directive's state and does not argue a visibility case.
+
+**Evidence:** Amazon documents the UA as 'Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko; compatible; Amazonbot/0.1) Chrome/W.X.Y.Z Safari/537.36'. It states the purpose — 'Amazonbot is used to improve our products and services' — and that the data 'may be used to train Amazon AI models'. It states compliance too: 'Automated crawling from these listed user agents respects the Robots Exclusion Protocol, honoring the user-agent and the allow/disallow directives.' The bot is active at scale: Cloudflare Radar ranked Amazonbot second only to GPTBot in the Computer & Electronics vertical (Aug 2025). Amazon also now documents a separate Amzn-SearchBot which 'does not crawl content for generative AI model training', so audits should treat the two tokens distinctly.
 
 **Counter-evidence:** Explicit vendor negative on a related directive: 'They do not support the crawl-delay directive' — so any audit that recommends crawl-delay for Amazonbot is recommending a no-op. Amazon publishes no consequence statement for blocking (no equivalent of OpenAI's search-exclusion warning), so the visibility cost of a block is undocumented.
-**Consumers:** Amazonbot, Amzn-SearchBot · **Recommended tier:** scored
-
-**Sources:** [Amazonbot](https://developer.amazon.com/amazonbot) · [A deeper look at AI crawlers: breaking down traffic by purpose and industry](https://blog.cloudflare.com/ai-crawler-traffic-by-purpose-and-industry/)
 
 ## Review history
 

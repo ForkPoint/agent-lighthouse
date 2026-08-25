@@ -1,14 +1,16 @@
 ---
 audit: answer-readiness/unique-data
-audit_id: "10.13"
 category: answer-readiness
 source_file: packages/core/src/audits/answer-readiness/unique-data.ts
 slug: unique-data
-review_verdict: fix
-severity: medium
 evidence_grade: B
 disposition: "keep — fix required"
 reviewed: 2026-08-21
+sources:
+  - geo-paper-arxiv
+  - geo-paper
+  - geo-critical-survey-arxiv
+  - google-helpful-content
 ---
 
 # unique-data (`10.13`)
@@ -47,9 +49,9 @@ There is thin published support for 'statistics make content more citable in gen
 
 ## Evidence
 
-_No dedicated evidence signal was researched for this audit in the 2026-08-20 pass. Its tier assignment falls to the taxonomy design; unproven mechanisms default to informative per the [evidence policy](../../POLICY.md)._
+_No dedicated evidence signal was researched for this audit in the 2026-08-20 pass. Its tier assignment falls to the taxonomy design; unproven mechanisms default to informative per the [evidence policy](../../policy.md)._
 
-## Graded evidence (2026-08-21)
+## Evidence (2026-08-21)
 
 **Mechanism claim:** Adding quantitative statistics to a page's body raises that page's visibility in generative-engine answers — position-adjusted word count and subjective impression — relative to the same page carrying only qualitative claims.
 

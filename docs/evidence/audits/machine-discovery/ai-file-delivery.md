@@ -1,14 +1,31 @@
 ---
 audit: machine-discovery/ai-file-delivery
-audit_id: "8.10, 8.11"
 category: machine-discovery
 source_file: packages/core/src/audits/machine-discovery/ai-file-delivery.ts
 slug: ai-file-delivery
-review_verdict: fix
-severity: medium
 evidence_grade: B
 disposition: "merged 2026-08-22 (Plan 4, Task 4) — absorbs cache-headers (8.11); informative, weight 0"
 reviewed: 2026-08-22
+recommended_tier: informative
+consumers:
+  - browser-based agents (download vs parse behaviour)
+  - none-known among server-side crawlers
+signals:
+  - name: Correct Content-Type for llms.txt and .md files
+    grade: C
+    domain: technical-infra
+  - name: "Cache headers and conditional requests for crawlers (ETag, Last-Modified, 304)"
+    grade: B
+    domain: technical-infra
+sources:
+  - llmstxt-spec-link
+  - rfc9116
+  - s18
+  - anthropic-crawlers
+  - google-http-caching-blog
+  - google-crawl-budget-docs
+  - mcp-spec-authorization
+  - vercel-rise-of-ai-crawler
 ---
 
 # ai-file-delivery (`8.10`, `8.11`)
@@ -64,14 +81,11 @@ The most defensible audit in the category — an llms.txt served as `application
 
 ### Signal: Correct Content-Type for llms.txt and .md files — grade C (technical-infra)
 
-**Mechanism:** CLAIM UNDER TEST: serving /llms.txt and .md mirrors as text/plain or text/markdown (rather than text/html, application/octet-stream or a wrong charset) is required for AI consumers to parse them correctly. FALSIFIABLE FORM: a named AI consumer that parses the file when served as text/plain fails to parse the byte-identical file served as application/octet-stream or text/html.
+**Mechanism:** The claim under test: serving /llms.txt and .md mirrors as text/plain or text/markdown (rather than text/html, application/octet-stream or a wrong charset) is required for AI consumers to parse them correctly. Falsifiable form: a named AI consumer that parses the file when served as text/plain fails to parse the byte-identical file served as application/octet-stream or text/html.
 
 **Evidence:** Convention with sensible precedent, not a documented requirement. RFC 9116 does establish the pattern for well-known plain-text files — security.txt 'must be served as plain text (MIME type text/plain) with UTF-8 encoding'. The llms.txt spec uses type="text/markdown" when describing link relations, so text/markdown is the intent-consistent choice. Two real failure modes are mechanically certain rather than speculative: application/octet-stream triggers download-rather-than-parse behaviour in browser-based consumers, and a Content-Type of text/html on a Markdown file will lead HTML-oriented extraction pipelines to run an HTML parser over Markdown. X-Content-Type-Options: nosniff, where present, removes the browser's ability to recover from a wrong type.
 
-**Counter-evidence:** The llmstxt.org specification states NO requirement for the file's own HTTP Content-Type — it only mentions text/markdown in the context of link relations. No AI vendor documentation (OpenAI, Anthropic, Perplexity, Google, Apple) specifies a Content-Type requirement for any AI-facing file. LLM ingestion pipelines are in practice tolerant text extractors; there is no published case of a named crawler rejecting a correctly-named llms.txt on Content-Type grounds. The widely repeated claim that 'some crawlers will refuse application/octet-stream' traces only to SEO blogs, not to any primary source. Grade C: plausible mechanism, partial adoption, unproven effect.
-**Consumers:** browser-based agents (download vs parse behaviour), none-known among server-side crawlers · **Recommended tier:** informative
-
-**Sources:** [The /llms.txt file](https://llmstxt.org/) · [RFC 9116 — A File Format to Aid in Security Vulnerability Disclosure](https://www.rfc-editor.org/rfc/rfc9116.html) · [Overview of OpenAI Crawlers](https://developers.openai.com/api/docs/bots) · [Does Anthropic crawl data from the web, and how can site owners block the crawler?](https://support.claude.com/en/articles/8896518-does-anthropic-crawl-data-from-the-web-and-how-can-site-owners-block-the-crawler)
+**Counter-evidence:** The llmstxt.org specification states no requirement for the file's own HTTP Content-Type — it only mentions text/markdown in the context of link relations. No AI vendor documentation (OpenAI, Anthropic, Perplexity, Google, Apple) specifies a Content-Type requirement for any AI-facing file. LLM ingestion pipelines are in practice tolerant text extractors; there is no published case of a named crawler rejecting a correctly-named llms.txt on Content-Type grounds. The widely repeated claim that 'some crawlers will refuse application/octet-stream' traces only to SEO blogs, not to any primary source. Grade C: plausible mechanism, partial adoption, unproven effect.
 
 ## Absorbed evidence — cache-headers (8.11)
 
@@ -87,13 +101,11 @@ Its dossier is kept verbatim at [merged/machine-discovery/cache-headers.md](../.
 
 **Counter-evidence:** Google hedges — "individual Google crawlers and fetchers may or may not make use of caching" — and *no* AI-specific crawler vendor documents conditional-request support: OpenAI's, Anthropic's and Perplexity's crawler docs are silent on caching. Vercel observed ChatGPT and Claude often not fetching at all when asked for fresh docs, implying reliance on cached or training data rather than well-behaved revalidation. The benefit is therefore best stated as efficiency/hygiene evidenced through Google, not as an AI-agent outcome.
 
-**Sources:** [Crawling December: HTTP caching](https://developers.google.com/search/blog/2024/12/crawling-december-caching) · [Large site owner's guide to managing your crawl budget](https://developers.google.com/search/docs/crawling-indexing/large-site-managing-crawl-budget) · [Model Context Protocol Specification (2025-11-25) — Authorization](https://modelcontextprotocol.io/specification/2025-11-25/basic/authorization) · [The rise of the AI crawler](https://vercel.com/blog/the-rise-of-the-ai-crawler)
-
 ### Grade decision: raised **C → B**, tier stays informative (weight 0)
 
 The meta law grades a merged audit on the strongest **proven** path for the merged signal. That signal is now *delivery headers on AI files*, and the caching half is the better-evidenced of the two: the Content-Type claim grades **C** (plausible mechanism, no vendor requirement, "none-known among server-side crawlers"), while the conditional-request claim grades **B** on Google's own first-party documentation of the mechanism it implements — the same transitive Google-index path that earns `discovery-index-coverage` its B.
 
-The tier does **not** follow the grade. As with `security-header-hygiene`, the grade prices the evidence and the tier prices the claim: 8.11's review is explicit that the benefit is "to the site owner's bandwidth, not to any AI agent outcome", and that standalone the audit "should at minimum … drop to informational weight". `weightForGrade('B', 'informative') === 0`, so absorbing a `scored`/0.6 audit into an informative one removes 0.6 of machine-discovery's evidence mass — deliberately. A later task that finds an AI consumer documenting conditional requests can promote the tier without re-grading.
+The tier does **not** follow the grade: the grade prices the evidence and the tier prices the claim. 8.11's review is explicit that the benefit is "to the site owner's bandwidth, not to any AI agent outcome", and that standalone the audit "should at minimum … drop to informational weight". `weightForGrade('B', 'informative') === 0`, so absorbing a `scored`/0.6 audit into an informative one removes 0.6 of machine-discovery's evidence mass — deliberately. A later task that finds an AI consumer documenting conditional requests can promote the tier without re-grading.
 
 ### Required fixes — landed 2026-08-22
 

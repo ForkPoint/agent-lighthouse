@@ -8,6 +8,9 @@ tier: scored
 disposition: "new in v2 — graduated from proposal 2026-08-23"
 reviewed: 2026-08-20
 graduated: 2026-08-23
+sources:
+  - lh-a11ytree
+  - S11
 ---
 
 
@@ -21,12 +24,12 @@ Runs the boilerplate-stripping, HTML-to-markdown pipeline that agent readers act
 
 ## Claimed mechanism (falsifiable)
 
-Answer engines and agent readers do not embed raw HTML; they strip boilerplate and convert main content to markdown — Jina Reader states 'Boilerplate such as navigation, headers, footers, and ads is stripped, and the main content is converted to Markdown' (S10), and Firecrawl exposes the same only-main-content path (S11). These extractors use structural and class-name heuristics. Content placed in <aside>, <footer>, a role=complementary region, or a container whose class matches a stripper blocklist is deleted before embedding, so it can never be retrieved or cited regardless of its quality. Falsifiable and cheap to verify: fetch the same URL through r.jina.ai and check whether the fact is present in the returned markdown.
+Answer engines and agent readers do not embed raw HTML. They strip boilerplate and convert main content to markdown. Jina Reader states that 'Boilerplate such as navigation, headers, footers, and ads is stripped, and the main content is converted to Markdown' (S10), and Firecrawl exposes the same only-main-content path (S11). These extractors use structural and class-name heuristics. Content placed in <aside>, <footer>, a role=complementary region, or a container whose class matches a stripper blocklist is deleted before embedding, so it can never be retrieved or cited regardless of its quality. Falsifiable and cheap to verify: fetch the same URL through r.jina.ai and check whether the fact is present in the returned markdown.
 
 ## Evidence
 
 - **[Lighthouse audit source: agent-accessibility-tree.js](https://raw.githubusercontent.com/GoogleChrome/lighthouse/main/core/audits/agentic/agent-accessibility-tree.js)** — Google Chrome / Lighthouse (repo, URL verified 2026-08-20)
-  - Implementation is a filter over artifacts.Accessibility.violations against ~37 TARGET_RULES from axe (button-name, link-name, input-button-name, label, autocomplete-valid, aria-allowed-attr, aria-required-attr, aria-valid-attr-value, tabindex, table/definition-list rules). Binary score: any violation scores 0. Crucially it inherits axe's blind spots — axe cannot fail an element that has no interactive semantics at all, and autocomplete-valid only validates tokens that are already present, never their absence.
+  - It filters the accessibility violations Lighthouse already collects down to about 37 axe rules: button-name, link-name, input-button-name, label, autocomplete-valid, aria-allowed-attr, aria-required-attr, aria-valid-attr-value, tabindex, and the table and definition-list rules. Binary score: any violation scores 0. Crucially it inherits axe's blind spots — axe cannot fail an element that has no interactive semantics at all, and autocomplete-valid only validates tokens that are already present, never their absence.
 - **[WebSuite: Systematically Evaluating Why Web Agents Fail](https://arxiv.org/html/2406.01623v1)** — arXiv (study, URL verified 2026-08-20)
   - Per-UI-primitive success rates for natbot and SeeAct. Worst patterns: slider interaction 0% for both agents; tooltip-based information retrieval 0% for both; complex form filling 12.5% (natbot) / 0% (SeeAct). Aggregate: operational actions 85.2%/76.2%, menu navigation 93.8%/81.3%, informational actions 43.8%/40.6%. Taxonomy covers click (button, link, icon button, slider, switch, accordion, dropdown menu, dialog button, snackbar), type (text/date/phone), select (checkbox, multicheck, select, datagrid row).
 
@@ -40,7 +43,7 @@ Static fetch, parse with linkedom or jsdom. 1) Run @mozilla/readability to get a
 
 ## Example failure
 
-A product page renders its full specification table inside <aside class="product-sidebar">. Readability and every only-main-content extractor drop the aside wholesale. The markdown an answer engine ingests contains marketing prose and no dimensions, weight, or materials — so the page can never be cited for the spec questions it is uniquely qualified to answer, while a retailer's thinner page that keeps specs in <main> wins the citation.
+A product page renders its full specification table inside <aside class="product-sidebar">. Readability and every only-main-content extractor drop the aside wholesale. The markdown an answer engine ingests contains marketing prose, and no dimensions, weight or materials. The page can therefore never be cited for the spec questions it is uniquely qualified to answer. A retailer's thinner page that keeps specs in <main> wins the citation instead.
 
 ## Scoring
 

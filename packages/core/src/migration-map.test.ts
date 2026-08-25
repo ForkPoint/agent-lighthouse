@@ -136,7 +136,7 @@ describe('migration-map.json', () => {
     expect(entry.status).toBe('removed');
     expect(entry.reason).toBe('not-a-factor');
     expect(entry.slug).toMatch(ID_RE);
-    expect(entry.link).toContain('docs/evidence/sunset/NOT-A-FACTOR.md#');
+    expect(entry.link).toContain('docs/evidence/sunset/not-a-factor.md#');
   });
 
   // The anchor is what a consumer follows to read why their check disappeared;

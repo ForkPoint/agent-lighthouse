@@ -178,7 +178,7 @@ export class AiCrawlerSurfaceReachabilityAudit extends Audit {
       code: SAMPLE,
       effort: 'easy',
       docsUrl:
-        'https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/audits/machine-discovery/ai-crawler-surface-reachability.md',
+        'https://forkpoint.github.io/agent-lighthouse/audits/machine-discovery/ai-crawler-surface-reachability/',
       tags: ['robots', 'sitemap', 'feeds', 'crawlers', 'discovery'],
     },
   };

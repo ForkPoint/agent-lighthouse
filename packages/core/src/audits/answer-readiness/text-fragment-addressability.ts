@@ -197,7 +197,7 @@ export class TextFragmentAddressabilityAudit extends Audit {
       code: SAMPLE,
       effort: 'moderate',
       docsUrl:
-        'https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/audits/answer-readiness/text-fragment-addressability.md',
+        'https://forkpoint.github.io/agent-lighthouse/audits/answer-readiness/text-fragment-addressability/',
       tags: ['citation', 'text-fragment', 'deep-link', 'answer-selection'],
     },
   };

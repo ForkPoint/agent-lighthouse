@@ -8,6 +8,11 @@ tier: scored
 disposition: "new in v2 — graduated from proposal 2026-08-23"
 reviewed: 2026-08-20
 graduated: 2026-08-23
+sources:
+  - mdn-sri
+  - mdn-csp
+  - brave-comet
+  - anthropic-claude-for-chrome
 ---
 
 
@@ -17,7 +22,7 @@ graduated: 2026-08-23
 
 ## What it checks
 
-Quantify how many independent parties can inject text into the DOM that an agent will read: count distinct third-party script origins lacking integrity= pinning, evaluate whether a CSP script-src actually constrains them, and enumerate cross-origin iframes lacking sandbox whose text contributes to page reads.
+Quantify how many independent parties can inject text into the DOM that an agent will read. Count distinct third-party script origins lacking integrity= pinning. Evaluate whether a CSP script-src actually constrains them. Enumerate cross-origin iframes lacking sandbox whose text contributes to page reads.
 
 ## Claimed mechanism (falsifiable)
 
@@ -61,9 +66,11 @@ the `operability-safety` category: the proposal's `injection-safety` domain is a
 research grouping, not one of the eight v2 categories.
 
 The CSP is read from the response header first and from `<meta http-equiv>`
-second — the same two delivery paths `security-header-hygiene` accepts. Nothing
-is imported from that audit: it answers whether the headers are well-formed,
-this one answers how many companies can write to the page.
+second. `security-header-hygiene` used to accept the same two delivery paths;
+since the contradiction sweep of 2026-08-24 narrowed it to security.txt, this
+audit is the only CSP reader in the registry. Nothing was ever imported from
+that audit: it asked whether the headers were well-formed, this one asks how
+many companies can write to the page.
 
 "Constraining" is decided as CSP3 decides it: a nonce, a hash or
 `strict-dynamic` constrains, and so does a plain host allowlist. A source list

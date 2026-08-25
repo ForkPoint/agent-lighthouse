@@ -13,7 +13,7 @@ badge attached, so they were deleted outright.
 The full rationale — steelmanned claim, why it is not a factor, verdict and
 sources, one section per audit, plus the complete research dossiers — lives in
 [docs/evidence/sunset/](docs/evidence/sunset/README.md), condensed in
-[NOT-A-FACTOR.md](docs/evidence/sunset/NOT-A-FACTOR.md).
+[not-a-factor.md](docs/evidence/sunset/not-a-factor.md).
 
 Removed ids: 1.18, 1.21, 1.23, 3.10, 3.16, 4.12, 4.14, 4.17, 5.4, 5.11, 5.17,
 5.25, 6.12, 6.16, 7.1, 7.22, 8.5, 8.6, 8.14, 8.15, 8.16, 8.17, 8.19, 8.20, 8.21,
@@ -35,7 +35,7 @@ The map ships with the core package as
         "slug": "accessibility/skip-nav",
         "status": "removed",
         "reason": "not-a-factor",
-        "link": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/sunset/NOT-A-FACTOR.md#accessibilityskip-nav"
+        "link": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/sunset/not-a-factor.md#accessibilityskip-nav"
       }
     }
 
@@ -46,7 +46,7 @@ Semantics:
   keeps land in the same file with `"renamed"` and a `to` field (see
   [Numeric ids are gone](#numeric-ids-are-gone) below).
 - `reason` — why. `"not-a-factor"` means the evidence review found no consumer.
-- `link` — for a removed audit, the anchor on NOT-A-FACTOR.md holding its proof;
+- `link` — for a removed audit, the anchor on not-a-factor.md holding its proof;
   for a surviving audit, the repo-relative path of its evidence dossier.
 
 Report consumers that key on v1 check ids should look each missing id up here

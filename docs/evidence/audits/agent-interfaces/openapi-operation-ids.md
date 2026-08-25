@@ -1,14 +1,16 @@
 ---
 audit: agent-interfaces/openapi-operation-ids
-audit_id: "5.3, 5.23 (naming rule)"
 category: agent-interfaces
 source_file: packages/core/src/audits/agent-interfaces/openapi-operation-ids.ts
 slug: openapi-operation-ids
-review_verdict: fix
-severity: medium
 evidence_grade: B
 disposition: "keep — fix required; absorbs the naming rule of webmcp-tool-naming (5.23) as of 2026-08-22"
 reviewed: 2026-08-22
+sources:
+  - ms-copilot-openapi-guidance
+  - anthropic-define-tools
+  - gemini-function-calling
+  - openapi-31-spec
 ---
 
 # openapi-operation-ids (`5.3`, naming rule of `5.23`)
@@ -41,7 +43,7 @@ Genuinely useful signal — LLM tool-calling maps operationId to the function na
 
 ## Evidence
 
-_No dedicated evidence signal was researched for this audit in the 2026-08-20 pass. Its tier assignment falls to the taxonomy design; unproven mechanisms default to informative per the [evidence policy](../../POLICY.md)._
+_No dedicated evidence signal was researched for this audit in the 2026-08-20 pass. Its tier assignment falls to the taxonomy design; unproven mechanisms default to informative per the [evidence policy](../../policy.md)._
 
 ## Review history
 
@@ -50,19 +52,19 @@ _No dedicated evidence signal was researched for this audit in the 2026-08-20 pa
 - 2026-08-21 — evidence graded (see below).
 - 2026-08-22 — absorbs the naming rule of 5.23 (Plan 4, Task 9); `webmcp-tool-naming` is deleted and its runtime half is deferred out of v2.0. Registry 149 → 148.
 
-## Graded evidence (2026-08-21)
+## Evidence (2026-08-21)
 
 **Mechanism claim:** A tool-calling runtime uses `operationId` as the function name it exposes to the model, so duplicate ids collide into one name and ids that violate the runtime's function-name pattern (`^[a-zA-Z0-9_-]{1,64}$`) are rejected at tool-registration time.
 
-**Grade: B** — a named agent is documented to turn operationIds into the functions it calls, and the function-name constraint is published API contract, but the specification makes operationId optional and generators synthesize one from method + path, so absence degrades naming rather than breaking the call.
+**Grade: B** — a named agent is documented to turn operationIds into the functions it calls, and the function-name constraint is published API contract. But the specification makes operationId optional, and generators synthesize one from the method and path. Absence therefore degrades naming rather than breaking the call.
 
 **Evidence:**
-- Microsoft 365 Copilot: "Operation IDs are unique identifiers for an operation in the API and are used by Copilot to create functions that are executed when responding to a user's prompt … Operation IDs are shown during debugging as functions to indicate which operations Copilot is attempting to execute" — https://learn.microsoft.com/en-us/microsoft-365-copilot/extensibility/openapi-document-guidance (verified 2026-08-21)
+- Microsoft 365 Copilot states: "Operation IDs are unique identifiers for an operation in the API and are used by Copilot to create functions that are executed when responding to a user's prompt". It adds that "Operation IDs are shown during debugging as functions to indicate which operations Copilot is attempting to execute" — https://learn.microsoft.com/en-us/microsoft-365-copilot/extensibility/openapi-document-guidance (verified 2026-08-21)
 - Anthropic tool definitions: `name` "Must match the regex `^[a-zA-Z0-9_-]{1,64}$`" — an operationId carrying spaces, punctuation, or more than 64 characters cannot be registered verbatim as a tool name — https://platform.claude.com/docs/en/agents-and-tools/tool-use/define-tools (verified 2026-08-21)
 - Gemini function calling consumes only "a subset of the OpenAPI schema" and instructs "Use descriptive names without spaces or special characters" for function names — https://ai.google.dev/gemini-api/docs/function-calling (verified 2026-08-21)
 - OpenAPI 3.1 on operationId: "Unique string used to identify the operation. The id MUST be unique among all operations described in the API", and "Tools and libraries MAY use the operationId to uniquely identify an operation, therefore, it is RECOMMENDED to follow common programming naming conventions" — https://spec.openapis.org/oas/v3.1.0.html (verified 2026-08-21)
 
-**Counter-evidence:** `operationId` is optional in OpenAPI, and spec-to-tool converters routinely synthesize a name from the method and path when it is absent, so a spec without operationIds is degraded rather than unusable — which weakens the audit's `warn` on missing ids. Conversely the constraint that genuinely breaks registration (character legality and length) is documented at grade A yet is not measured by this audit at all, so the check is graded on a mechanism it only partially exercises. *(That last sentence is no longer true as of 2026-08-22 — see the fold below.)*
+**Counter-evidence:** `operationId` is optional in OpenAPI, and spec-to-tool converters routinely synthesize a name from the method and path when it is absent. A spec without operationIds is therefore degraded rather than unusable. That weakens the audit's `warn` on missing ids. Conversely the constraint that genuinely breaks registration (character legality and length) is documented at grade A yet is not measured by this audit at all, so the check is graded on a mechanism it only partially exercises. *(That last sentence is no longer true as of 2026-08-22 — see the fold below.)*
 
 ## The fold (Plan 4, Task 9, 2026-08-22)
 
@@ -85,7 +87,7 @@ The verdict shape:
 
 Illegal is a `fail` while missing is a `warn`, and the asymmetry is the evidence: an id outside the pattern is *rejected at tool-registration time*, so the operation is unreachable, whereas a missing id is synthesized from method + path by every converter — degraded naming, not a broken call. The offending ids are named in `found` rather than counted, because a count gives the operator no way to locate them.
 
-### What did NOT land, and why
+### What did not land, and why
 
 - **The English-verb allowlist.** 5.23's `VERB_PATTERN` was a ~100-word hardcoded allowlist that rejected `search_products`, `search-products`, `products.search`, and any non-English or domain verb (`provision`, `ingest`, `annotate`). 5.23's own graded evidence rates the style rule **C** and states plainly that *"no spec or vendor doc constrains the naming style"* — MCP's own example tool is `get_weather`, snake_case, which the allowlist rejected. Porting it would import a false positive with no consumer. Tests lock snake_case, kebab-case and domain verbs as passing.
 - **The 20-character description floor.** Same reasoning (*"sets any description length … this project's own convention"*), and OpenAPI description quality is already a separate audit (`agent-interfaces/openapi-description-quality`), so there was nowhere for it to land that is not already occupied.

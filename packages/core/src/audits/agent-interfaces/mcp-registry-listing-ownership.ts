@@ -98,7 +98,7 @@ export class McpRegistryListingOwnershipAudit extends Audit {
       fix: 'Publish the server under your own reverse-DNS namespace (`com.example/...`), serve the proof at `/.well-known/mcp-registry-auth` in the exact `v=MCPv1; k=ed25519; p=<base64>` form and keep serving it after DNS migrations, keep the listing’s version in step with what the server reports, and offer a `streamable-http` remote rather than only the deprecated `sse`.',
       effort: 'moderate',
       docsUrl:
-        'https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/audits/agent-interfaces/mcp-registry-listing-ownership.md',
+        'https://forkpoint.github.io/agent-lighthouse/audits/agent-interfaces/mcp-registry-listing-ownership/',
       tags: ['mcp', 'registry', 'namespace', 'discovery'],
     },
   };

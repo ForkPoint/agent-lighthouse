@@ -8,6 +8,10 @@ tier: scored
 disposition: "new in v2 — graduated from proposal 2026-08-23"
 reviewed: 2026-08-20
 graduated: 2026-08-23
+sources:
+  - S6
+  - S2
+  - S12
 ---
 
 
@@ -17,7 +21,7 @@ graduated: 2026-08-23
 
 ## What it checks
 
-A manifest that exists is not a manifest that verifies. Grades the signing certificate behind each Content Credential: trusted (on the official C2PA Trust List), legacy (Interim Trust List, frozen 2026-01-01), or untrusted (self-signed, expired, or unknown CA) — and separately reports whether a CAWG identity assertion binds a real named creator.
+A manifest that exists is not a manifest that verifies. Grades the signing certificate behind each Content Credential as one of three states: trusted, meaning it is on the official C2PA Trust List; legacy, meaning the Interim Trust List, frozen 2026-01-01; or untrusted, meaning self-signed, expired, or an unknown CA. Separately reports whether a CAWG identity assertion binds a real named creator.
 
 ## Claimed mechanism (falsifiable)
 

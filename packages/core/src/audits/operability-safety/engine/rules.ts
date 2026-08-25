@@ -200,7 +200,7 @@ const RULES: RuleDef[] = [
   { id: 'meta-refresh', selector: 'meta[http-equiv="refresh"][content]', excludeHidden: false, all: [], any: ['meta-refresh'], none: [] },
   { id: 'tabindex', selector: '[tabindex]', excludeHidden: true, all: [], any: ['tabindex'], none: [] },
   // 'marquee' and 'blink' rules removed with the 7.22 audit they exclusively
-  // backed (sunset, grade D): docs/evidence/sunset/NOT-A-FACTOR.md#accessibilitymarquee.
+  // backed (sunset, grade D): docs/evidence/sunset/not-a-factor.md#accessibilitymarquee.
   { id: 'presentation-role-conflict', selector: "img[alt=''], [role=\"none\"], [role=\"presentation\"]", matches: hasImplicitChromiumRoleMatch, excludeHidden: true, all: [], any: [], none: ['is-element-focusable', 'has-global-aria-attribute'] },
   // ── name/label/landmark rules (replace the hand-rolled cheerio audits) ──
   { id: 'button-name', selector: 'button', matches: noExplicitNameRequiredMatch, excludeHidden: true, all: [], any: ['button-has-visible-text', 'aria-label', 'aria-labelledby', 'non-empty-title', 'implicit-label', 'explicit-label', 'presentational-role'], none: [] },

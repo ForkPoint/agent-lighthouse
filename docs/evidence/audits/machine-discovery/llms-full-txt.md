@@ -1,14 +1,25 @@
 ---
 audit: machine-discovery/llms-full-txt
-audit_id: "1.6"
 category: machine-discovery
 source_file: packages/core/src/audits/machine-discovery/llms-full-txt.ts
 slug: llms-full-txt
-review_verdict: fix
-severity: medium
 evidence_grade: C
 disposition: "informative, weight 0 (approved 2026-08-21)"
 reviewed: 2026-08-21
+recommended_tier: delete
+tier_rationale: "Recommended delete; ships informative. The retirement was re-verified on 2026-08-24 and withdrawn — the file is a documented community convention with no consumer, which is what informative reports (evidence sweep, 2026-08-24)."
+consumers: []
+signals:
+  - name: /llms-full.txt (full concatenated documentation file)
+    grade: D
+    domain: llms-txt
+sources:
+  - llmstxt-spec-link
+  - llmstxt-org-changes
+  - mintlify-llmstxt-docs
+  - mintlify-value-of-llmstxt
+  - rankability-adoption-tracker
+  - lighthouse-llms-txt-gatherer-source
 ---
 
 # llms-full-txt (`1.6`)
@@ -46,18 +57,39 @@ Fails any site lacking /llms-full.txt, at HIGH priority, on the strength of a 20
 
 **Mechanism:** Publishing /llms-full.txt containing the site's complete documentation as one markdown file causes AI agents to ingest the full corpus in a single fetch, improving answer accuracy versus llms.txt alone. FALSIFIABLE TEST: presence in any published spec; AI-agent fetch rate; whether file size is ingestible within production context windows.
 
-**Evidence:** WEAKEST SIGNAL IN THE DOMAIN. It is not in the spec at all — I read both llmstxt.org v2 and its changes page and llms-full.txt appears in neither; it is a community extension popularized when Mintlify enabled it platform-wide in Nov 2024. Adoption is marginal and purely derivative: 15 of the Tranco top 1,000 (1.5%), and tellingly ZERO sites publish llms-full.txt without also publishing llms.txt, meaning no one adopts it on its own merits. Google's Lighthouse gatherer does not fetch it (source verified: root /llms.txt only). No vendor documentation from OpenAI, Anthropic, Google or Perplexity references consuming it. The single pro-claim is Mintlify relaying Profound's assertion that 'LLMs are accessing llms-full.txt even more frequently than the original llms.txt' — with no sample size, no methodology, and no dataset, from a vendor that sells the feature.
+**Evidence:** This is the weakest signal in the domain. It is not in the spec at all — both llmstxt.org v2 and its changes page and llms-full.txt appears in neither; it is a community extension popularized when Mintlify enabled it platform-wide in Nov 2024. Adoption is marginal and purely derivative: 15 of the Tranco top 1,000 (1.5%), and tellingly zero sites publish llms-full.txt without also publishing llms.txt, meaning no one adopts it on its own merits. Google's Lighthouse gatherer does not fetch it (source verified: root /llms.txt only). No vendor documentation from OpenAI, Anthropic, Google or Perplexity references consuming it. The single pro-claim is Mintlify relaying Profound's assertion that 'LLMs are accessing llms-full.txt even more frequently than the original llms.txt' — with no sample size, no methodology, and no dataset, from a vendor that sells the feature.
 
-**Counter-evidence:** My own measurement is close to disqualifying: Anthropic's llms-full.txt is 33.5 MB, Cloudflare's is 57.3 MB, OpenAI's 6.1 MB, Perplexity's 4.1 MB. At roughly 4 chars/token these are ~8M, ~14M, ~1.5M and ~1M tokens — one to two orders of magnitude beyond any production context window, so the stated mechanism (single-fetch full ingestion) is physically impossible for the very sites held up as exemplars. Stripe returns 404 for it while maintaining a 92 KB llms.txt, suggesting deliberate rejection. Mintlify caps auto-generated llms.txt at 100,000 characters but applies no cap to llms-full.txt, which is how these files reach absurd sizes. Serving a 57 MB file to any agent that requests it is also a real bandwidth and abuse liability.
-**Consumers:** none-known · **Recommended tier:** delete
-
-**Sources:** [The /llms.txt file, v2](https://llmstxt.org/) · [llms.txt v2 changes page](https://llmstxt.org/changes.html) · [llms.txt — Mintlify documentation](https://www.mintlify.com/docs/ai/llmstxt) · [The value of llms.txt: Hype or real?](https://www.mintlify.com/blog/the-value-of-llms-txt-hype-or-real) · [LLMS.txt Adoption Tracker (Tranco top 1,000)](https://www.rankability.com/data/llms-txt-adoption/) · [Lighthouse core/gather/gatherers/agentic/llms-txt.js (source code)](https://github.com/GoogleChrome/lighthouse/blob/main/core/gather/gatherers/agentic/llms-txt.js) · [Direct measurement of vendor llms.txt files and markdown content negotiation (2026-08-20)](https://llmstxt.org/)
+**Counter-evidence:** A measurement taken for this dossier is close to disqualifying. Anthropic's llms-full.txt is 33.5 MB, Cloudflare's is 57.3 MB, OpenAI's 6.1 MB, Perplexity's 4.1 MB. At roughly 4 characters per token these are about 8M, 14M, 1.5M and 1M tokens. That is one to two orders of magnitude beyond any production context window. The stated mechanism, single-fetch full ingestion, is therefore physically impossible for the very sites held up as exemplars. Stripe returns 404 for it while maintaining a 92 KB llms.txt, suggesting deliberate rejection. Mintlify caps auto-generated llms.txt at 100,000 characters but applies no cap to llms-full.txt, which is how these files reach absurd sizes. Serving a 57 MB file to any agent that requests it is also a real bandwidth and abuse liability.
 
 ## Adversarial redemption research (2026-08-21)
 
 This audit was a delete candidate and went through dedicated adversarial research. Full dossier: [docs/evidence/deletions/content-discoverability/llms-full-txt.md](../../deletions/content-discoverability/llms-full-txt.md). Outcome: **dead-but-informative-candidate**, grade C.
 
+## Re-checked (evidence sweep, 2026-08-24)
+
+**No change: C / informative / weight 0. Correctly graded.**
+
+The sweep that re-graded `llms-txt-exists` and `llms-txt-links-valid` covered
+this file too and disturbed nothing. Two things reconfirm the C:
+
+- The Lighthouse gatherer source, re-read on 2026-08-24, resolves
+  `new URL('/llms.txt', …)` and nothing else. The one documented fetcher of the
+  llms.txt family in existence never fetches `llms-full.txt`.
+- llmstxt.org v2 still does not define the file, and no vendor documents
+  consuming it.
+
+One new datum, and it cuts mildly in the file's favour: Cloudflare AI Index
+generates `LLMs-full.txt` alongside `LLMs.txt` for customers. That is a
+generator, not a consumer, but it holds the audit at C — "community convention
+with partial adoption" — rather than letting it slide back toward the D its
+underlying evidence signal first assigned.
+
+**Flagged:** `https://llmstxt.org/changes.html`, cited in this dossier, returned
+HTTP 503 at access time on 2026-08-24. The changelog leg of the claim above
+could not be re-verified. CI's link checker will flag it.
+
 ## Review history
 
 - 2026-08-20 — code review (11-agent workflow) + evidence research (12-domain workflow, 400 sources).
 - 2026-08-21 — adversarial redemption research; user accepted verdict (disposition above).
+- 2026-08-24 — evidence sweep: re-checked, no change. C / informative / weight 0 stands.

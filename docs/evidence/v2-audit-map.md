@@ -1,8 +1,8 @@
 # v1 → v2 audit map
 
-Draft mapping of every registered v1 audit to its v2 home, per the approved taxonomy in
-[`docs/superpowers/specs/2026-08-21-audit-restructure-design.md`](../superpowers/specs/2026-08-21-audit-restructure-design.md)
-(§3 categories, §5 merges/splits/consolidations, §6 `category/slug` identity).
+Draft mapping of every registered v1 audit to its v2 home, under the taxonomy this
+release ships: eight categories, `category/slug` identity, and the merges, splits
+and consolidations recorded per audit in its dossier.
 
 - **Rows in this table: 189** (unchanged — the 8 sunset rows stay as rows, with `—` for their v2 category/slug)
 - **Registered v1 audits when this map was drafted: 189**, all listed in a single `packages/core/src/audit-config.ts`. That is no longer how the registry is built: `audit-config.ts` now assembles it from the eight category `index.ts` files, and it holds **148** audits. See [Incoming audits per v2 category](#incoming-audits-per-v2-category) below for the per-category breakdown.
@@ -18,7 +18,7 @@ Action legend:
 | `merge-away` | audit disappears into another audit (§5 merge list, or the C3 file+discovery-link collapse) |
 | `split` | §5 split — audit's halves land in two places |
 | `consolidate` | §5 security-header hygiene consolidation (weight 0) |
-| `rewrite` | carries a `TODO(redeem)` header in `packages/core/src/audits/REWORK-TODO.md`, or is rewritten as part of a decided merge — still gets a v2 home |
+| `rewrite` | carries a `TODO(redeem)` header in `packages/core/src/audits/rework-todo.md`, or is rewritten as part of a decided merge — still gets a v2 home |
 | `sunset` | retired — no v2 `category/slug`; the row stays for traceability |
 
 All 20 open `REVIEW:` flags are resolved — **0 open**. Every row carrying a resolved call says so with a

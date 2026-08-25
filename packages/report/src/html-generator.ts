@@ -129,6 +129,11 @@ export function generateHtmlReport(report: ScanReport): string {
                         </div>
                       ` : ''}
 
+                      ${c.details?.evidenceUrl ? `
+                        <a href="${escapeHtml(c.details.evidenceUrl)}" target="_blank" rel="noopener"
+                           class="inline-block underline text-indigo-600 dark:text-indigo-400">Why this audit exists — the evidence</a>
+                      ` : ''}
+
                       ${c.details?.code ? `
                         <div class="mt-2">
                           <div class="flex items-center justify-between text-[11px] font-mono text-slate-400 mb-1">

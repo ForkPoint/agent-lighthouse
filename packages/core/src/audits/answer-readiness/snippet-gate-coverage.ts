@@ -272,7 +272,7 @@ export class SnippetGateCoverageAudit extends Audit {
       code: SAMPLE,
       effort: 'easy',
       docsUrl:
-        'https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/audits/answer-readiness/snippet-gate-coverage.md',
+        'https://forkpoint.github.io/agent-lighthouse/audits/answer-readiness/snippet-gate-coverage/',
       tags: ['snippet', 'robots', 'ai-overviews', 'answer-selection'],
     },
   };

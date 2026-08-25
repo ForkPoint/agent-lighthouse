@@ -274,7 +274,7 @@ export class CheckoutOfferFieldMappingAudit extends Audit {
       code: SAMPLE,
       effort: 'moderate',
       docsUrl:
-        'https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/audits/agentic-commerce/checkout-offer-field-mapping.md',
+        'https://forkpoint.github.io/agent-lighthouse/audits/agentic-commerce/checkout-offer-field-mapping/',
       tags: ['acp', 'feed', 'product-schema', 'commerce'],
     },
   };

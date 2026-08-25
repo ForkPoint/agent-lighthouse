@@ -37,7 +37,7 @@ npx @forkpoint/agent-lighthouse https://yourstore.com --view
 npx @forkpoint/agent-lighthouse https://staging.yourstore.com --min-score 85
 ```
 
-Agent Lighthouse checks 172 audits covering `llms.txt`, robots.txt crawler policy, Schema.org, OpenAPI discovery, WebMCP action surfaces, AEO/GEO content structure, agentic commerce, and operability.
+Agent Lighthouse checks 215 audits covering `llms.txt`, robots.txt crawler policy, Schema.org, OpenAPI discovery, WebMCP action surfaces, AEO/GEO content structure, agentic commerce, and operability.
 
 ---
 
@@ -101,7 +101,7 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
 ```
 
-The action generates terminal, HTML, JSON, and Markdown reports. Set `comment-on-pr: true` with `github-token` to post the Markdown summary on pull requests. See the [marketplace setup guide](docs/ACTION_MARKETPLACE.md) for release-ready examples.
+The action generates terminal, HTML, JSON, and Markdown reports. Set `comment-on-pr: true` with `github-token` to post the Markdown summary on pull requests. See the [marketplace setup guide](docs/github-action.md) for release-ready examples.
 
 ---
 
@@ -152,13 +152,11 @@ Generated reports are standalone files, so teams can attach them to pull request
 
 If you run Agent Lighthouse on a public site, share the result through the [site score template](https://github.com/ForkPoint/agent-lighthouse/issues/new?template=site-score.yml). Good examples help other developers learn what agent-ready sites look like.
 
-More launch material lives in:
+More material lives in:
 
-- [Promotion kit](docs/PROMOTION.md)
-- [Benchmark report](docs/BENCHMARK.md)
-- [Badge generator notes](docs/BADGE.md)
-- [Launch post drafts](docs/launch-posts/)
-- [Outreach templates](docs/outreach/)
+- [Media kit](docs/media-kit.md)
+- [Benchmark report](docs/benchmark.md)
+- [Badge generator notes](docs/badge.md)
 - [Terminal demo transcript](docs/assets/terminal-demo.txt)
 - [Docs homepage screenshot](docs/assets/docs-home-screenshot.png)
 - [Generated report screenshot](docs/assets/report-screenshot.png)

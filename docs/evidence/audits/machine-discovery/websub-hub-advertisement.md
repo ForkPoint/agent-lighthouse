@@ -8,6 +8,10 @@ tier: informative
 disposition: "new in v2 — graduated from proposal 2026-08-23"
 reviewed: 2026-08-20
 graduated: 2026-08-23
+sources:
+  - websub
+  - rfc4287
+  - schema-datafeed
 ---
 
 
@@ -17,18 +21,18 @@ graduated: 2026-08-23
 
 ## What it checks
 
-Checks whether feeds advertise a push hub per the WebSub Recommendation, and — more importantly — whether the mandatory rel=self link is present, absolute, and equal to the URL the feed was actually fetched from, since a wrong self-link breaks hub verification even when a hub is configured.
+Checks whether feeds advertise a push hub per the WebSub Recommendation. More importantly, it checks that the mandatory rel=self link is present, absolute, and equal to the URL the feed was actually fetched from. A wrong self-link breaks hub verification even when a hub is configured.
 
 ## Claimed mechanism (falsifiable)
 
-WebSub is a W3C Recommendation requiring publishers to advertise at least one rel=hub and exactly one rel=self via Link headers or embedded link elements, with Link headers taking discovery precedence. Falsifiable claim: a feed declaring a hub but carrying a missing, relative, or non-canonical rel=self cannot complete hub subscription verification, so the push path silently degrades to whatever polling cadence subscribers happen to use — the failure is invisible to the publisher because the hub appears configured. This check is scored as advisory only: the WebSub conformance assertion is exact and standards-backed, but no AI answer engine is documented as a WebSub subscriber, so the consumer-side benefit is a plausible convention rather than documented behaviour.
+WebSub is a W3C Recommendation requiring publishers to advertise at least one rel=hub and exactly one rel=self via Link headers or embedded link elements, with Link headers taking discovery precedence. Falsifiable claim: a feed that declares a hub, but carries a missing, relative or non-canonical rel=self, cannot complete hub subscription verification. The push path then silently degrades to whatever polling cadence subscribers happen to use. The failure is invisible to the publisher, because the hub appears configured. This check is scored as advisory only: the WebSub conformance assertion is exact and standards-backed, but no AI answer engine is documented as a WebSub subscriber, so the consumer-side benefit is a plausible convention rather than documented behaviour.
 
 ## Evidence
 
 - **[WebSub (W3C Recommendation)](https://www.w3.org/TR/websub/)** — W3C (spec, URL verified 2026-08-20)
   - W3C Recommendation. Publishers 'MUST implement at least one' of Link Headers or embedded link elements, advertising at least one rel=hub and exactly one rel=self (the canonical topic URL). Discovery checks Link headers first, then embedded link elements; for HTML, link elements are recommended in <head> only.
 - **[RFC 4287 — The Atom Syndication Format](https://www.rfc-editor.org/rfc/rfc4287)** — IETF (spec, URL verified 2026-08-20)
-  - Sec 4.1.2: atom:entry MUST contain exactly one atom:id (permanent, universally unique IRI that 'must not change across different instantiations of the entry') and exactly one atom:updated ('most recent modification time that the publisher considers significant'). atom:entry MUST contain atom:summary when atom:content carries a src attribute (and is thus empty), or when content is Base64-encoded. MUST NOT contain more than one atom:summary.
+  - Sec 4.1.2: atom:entry MUST contain exactly one atom:id and exactly one atom:updated. The id is a permanent, universally unique IRI that 'must not change across different instantiations of the entry'. The updated time is the 'most recent modification time that the publisher considers significant'. atom:entry MUST also contain atom:summary in two cases: when atom:content carries a src attribute, and is thus empty, and when content is Base64-encoded. MUST NOT contain more than one atom:summary.
 - **[schema.org DataFeed](https://schema.org/DataFeed)** — schema.org (spec, URL verified 2026-08-20)
   - DataFeed = 'a single feed providing structured information about one or more entities or topics'; hierarchy Thing > CreativeWork > Dataset > DataFeed; primary property dataFeedElement accepting DataFeedItem/Text/Thing; DataFeedItem examples use dateCreated, dateModified, item. Adoption is only 1K-10K domains per Google's web index (July 2026 aggregation) — too thin to score against.
 

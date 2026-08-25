@@ -1,23 +1,30 @@
 ---
 audit: machine-discovery/llms-txt-structure
-audit_id: "1.2, 1.3"
 category: machine-discovery
 source_file: packages/core/src/audits/machine-discovery/llms-txt-structure.ts
 slug: llms-txt-structure
-review_verdict: merge
-severity: low
 evidence_grade: C
 disposition: "merged 2026-08-22 (Plan 4, Task 4) — informative, weight 0"
 reviewed: 2026-08-22
+sources:
+  - llmstxt-spec-link
+  - llms-txt-core-source
+  - llms-txt-pypi
+  - lighthouse-llms-txt-audit-source
+  - google-ai-optimization-mythbusting
+  - chrome-lighthouse-llms-txt-doc
+  - evil-martians-llm-traffic
+  - s18
+  - perplexity-crawlers-docs
 ---
 
 # llms-txt-structure (`1.2`, `1.3`)
 
 > machine-discovery · source `llms-txt-structure.ts` · merges llms-txt-blockquote (1.2) + llms-txt-sections (1.3) · evidence grade **C** · tier **informative** (weight 0)
 
-## Mechanism claim
+## Claimed mechanism (falsifiable)
 
-An agent that fetches `/llms.txt` parses the blockquote under the H1 as the site summary and the H2 headings as the addressable sections of the link list, so a file carrying both can be consumed selectively — read the summary, pick a section — instead of end to end.
+An agent that fetches `/llms.txt` parses the blockquote under the H1 as the site summary, and the H2 headings as the addressable sections of the link list. A file carrying both can therefore be consumed selectively — read the summary, pick a section — instead of end to end.
 
 The claim is real but unproven at the consumer end: the format's reference parser exposes exactly these two fields, and no vendor documents an agent behaving differently when either is absent. Hence grade C and tier `informative` — the audit reports the shape of the file and never moves a score.
 
@@ -55,7 +62,7 @@ The merge is also where each source review's required fixes land:
 - **Absent file ⇒ `na`.** v1 returned `fail` at priority `critical` from both audits when `/llms.txt` was missing, asserting a malformed file where there was none.
 - **Priority.** The spec makes both elements optional ("zero or more" sections; the H1 is "the only required section"), so a missing element can no longer be reported above `low`.
 
-## Grade
+## Scoring
 
 **C — the strongest proven path for the merged signal, unchanged from both sources.**
 
@@ -77,7 +84,7 @@ The grade is additionally capped by that of `llms-txt-exists` (1.1): a formattin
 ### H2 sections (from 1.3, grade C)
 
 **Evidence:**
-- The spec defines "Zero or more markdown sections delimited by H2 headers, containing 'file lists'", and attaches behaviour to one heading: the "'Optional' section is used, by convention, for secondary information: links an agent can skip when a shorter context is needed" — the only agent-visible semantics the format assigns to a heading — https://llmstxt.org/ (verified 2026-08-21)
+- The spec defines "Zero or more markdown sections delimited by H2 headers, containing 'file lists'". It attaches behaviour to exactly one heading: the "'Optional' section is used, by convention, for secondary information: links an agent can skip when a shorter context is needed". That is the only agent-visible semantics the format assigns to a heading — https://llmstxt.org/ (verified 2026-08-21)
 - The reference implementation returns `sections` as a dict mapping section names to their parsed link lists, so an H2 heading is a real addressable key — https://raw.githubusercontent.com/AnswerDotAI/llms-txt/main/llms_txt/core.py (verified 2026-08-21)
 - Chrome ships an agentic-browsing Lighthouse audit for llms.txt, giving the format vendor-tool recognition — https://developer.chrome.com/docs/lighthouse/agentic-browsing/llms-txt (verified 2026-08-21)
 

@@ -1,14 +1,21 @@
 ---
 audit: access-crawl-control/oai-searchbot
-audit_id: "2.16"
 category: access-crawl-control
 source_file: packages/core/src/audits/access-crawl-control/oai-searchbot.ts
 slug: oai-searchbot
-review_verdict: fix
-severity: medium
 evidence_grade: A
 disposition: "keep — fix required"
 reviewed: 2026-08-21
+recommended_tier: scored
+consumers:
+  - OAI-SearchBot
+signals:
+  - name: OAI-SearchBot allow/block state in robots.txt
+    grade: A
+    domain: robots-ai-crawlers
+sources:
+  - s18
+  - pebblous-blocking-citation-gap
 ---
 
 # oai-searchbot (`2.16`)
@@ -44,12 +51,11 @@ High-value and correctly scoped — OAI-SearchBot builds the ChatGPT Search inde
 
 **Mechanism:** Disallowing OAI-SearchBot causes the site to be excluded from ChatGPT search answers. This is the single strongest documented allow-side signal in the whole domain: blocking it directly destroys AI answer visibility.
 
+**Grade: A** — This is the strongest allow-side statement in the category, and it is causal rather than descriptive: "Sites that are opted out of OAI-SearchBot will not be shown in ChatGPT search answers." OpenAI names the token, publishes the user agent and an IP list, and states the consequence itself. That is well past the grade-A bar. One tension is on the record: an independent measurement found 82.4% citation retention among sites blocking the token, which suggests lagged enforcement or citation through other surfaces. The vendor's stated policy is what the audit scores, and the copy states the measurement rather than hiding it.
+
 **Evidence:** OpenAI documents this as a direct causal consequence: 'Sites that are opted out of OAI-SearchBot will not be shown in ChatGPT search answers.' UA 'OAI-SearchBot/1.4; +https://openai.com/searchbot', IPs at openai.com/searchbot.json. This is a vendor-stated, falsifiable behavioral claim, not an inference — grade A, and it justifies scoring an OAI-SearchBot disallow as a negative for any site that wants AI answer visibility.
 
 **Counter-evidence:** BuzzStream/XOFU measured 82.4% citation retention even among sites blocking OAI-SearchBot, suggesting either lagged enforcement, citation via other surfaces, or content reached through ChatGPT-User. The vendor claim and the field measurement are in tension; the vendor claim is the stated policy and should be scored, but the audit copy should not promise total disappearance.
-**Consumers:** OAI-SearchBot · **Recommended tier:** scored
-
-**Sources:** [OpenAI Bots / Crawlers documentation](https://developers.openai.com/api/docs/bots) · [The Paradox of Blocking AI Crawlers: You Lose Visitors, Not Citations](https://blog.pebblous.ai/report/ai-crawler-blocking-citation-gap/en/)
 
 ## Review history
 

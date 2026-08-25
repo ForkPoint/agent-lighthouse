@@ -1,14 +1,16 @@
 ---
 audit: answer-readiness/review-signals
-audit_id: "10.8, 10.14"
 category: answer-readiness
 source_file: packages/core/src/audits/answer-readiness/review-signals.ts
 slug: review-signals
-review_verdict: fix
-severity: high
 evidence_grade: B
 disposition: "merged 2026-08-22 (Plan 4, Task 6) — absorbs blockquote-usage (10.14)"
-reviewed: 2026-08-22
+reviewed: 2026-08-24
+sources:
+  - google-review-snippet-doc
+  - openai-feed-spec-confirm
+  - schema-aggregaterating
+  - google-ai-features-trust
 ---
 
 # review-signals (`10.8`, `10.14`)
@@ -17,15 +19,19 @@ reviewed: 2026-08-22
 
 ## What it checks
 
-Social proof an agent can actually read, across the scanned pages.
+Social proof an agent can actually read.
 
 | State | Result |
 | :--- | :--- |
-| JSON-LD `Review`/`AggregateRating` (or a non-zero `reviewCount`/`ratingCount`), or a `<blockquote>` with attribution — `cite` attribute, `<cite>`, `<footer>`, or a `<figcaption>` in a wrapping `<figure>` | `pass` |
-| review UI with nothing machine-readable behind it — client-injected widget markup, visible "N reviews" text, or quotations with no attribution | `warn`, priority `medium` |
+| JSON-LD `Review`/`AggregateRating` carrying a rating value or a non-zero `reviewCount`/`ratingCount`, on a homepage or product page; or a `<blockquote>` with attribution on any scanned page | `pass` |
+| review UI with nothing machine-readable behind it — client-injected widget markup, or visible "N reviews" text — on a homepage or product page | `warn`, priority `medium` |
 | none of the above | `fail`, priority `medium` |
 
-An empty `<blockquote>` is ignored, and a node stating `reviewCount`/`ratingCount` of `0` is not social proof.
+Attribution means a `cite` attribute naming a document, or a non-empty `<cite>`, `<footer>`, or `<figcaption>` in a wrapping `<figure>`.
+
+The review vocabulary is read only from homepage and product pages: that is the population Google's review rich results and OpenAI's `review_count`/`star_rating` cover. The quotation branch is not scoped that way, because its GEO measurement is about generative-answer citation on content generally.
+
+An empty `<blockquote>` is ignored. A node stating `reviewCount`/`ratingCount` of `0` is not social proof, and neither is the vocabulary without a value behind it — `"aggregateRating": {}`, `"aggregateRating": true` and a bare `{"@type":"Review"}` all count for nothing. An unattributed pull-quote is reported but sets no status.
 
 ## Code review findings (2026-08-20, 11-agent pass)
 
@@ -44,7 +50,7 @@ Genuinely valuable signal: Review/AggregateRating in structured data is consumed
 - `signals` accumulates across all pages before the single `signals.length > 0` test, while the widget/N-reviews fallback is guarded by `if (signals.length === 0)` — already non-zero from page one. The fallback therefore silently stops running after the first productive page, making per-page detection order-dependent.
 
 **Test gaps:**
-- No test asserting that an unattributed decorative blockquote should NOT count — the current test asserts the opposite.
+- No test asserting that an unattributed decorative blockquote should not count — the current test asserts the opposite.
 - No test for `reviewCount: "0"` / zero-review products.
 - No test for a non-English review count string.
 - No test for `"1234 reviews"` inside an inline `<script>` payload.
@@ -57,20 +63,20 @@ Genuinely valuable signal: Review/AggregateRating in structured data is consumed
 
 ## Evidence
 
-_No dedicated evidence signal was researched for this audit in the 2026-08-20 pass. Its tier assignment falls to the taxonomy design; unproven mechanisms default to informative per the [evidence policy](../../POLICY.md)._
+_No dedicated evidence signal was researched for this audit in the 2026-08-20 pass. Its tier assignment falls to the taxonomy design; unproven mechanisms default to informative per the [evidence policy](../../policy.md)._
 
-## Graded evidence (2026-08-21)
+## Evidence (2026-08-21)
 
-**Mechanism claim:** Machine-readable review data is read by named consumers — Google Search parses schema.org `Review`/`AggregateRating` to render review rich results, and OpenAI ingests `review_count`/`star_rating` to build ChatGPT product results — so a product page that exposes ratings only as pixels is invisible to both, while one that exposes them structurally is not.
+**Mechanism claim:** Machine-readable review data is read by named consumers. Google Search parses schema.org `Review` and `AggregateRating` to render review rich results, and OpenAI ingests `review_count` and `star_rating` to build ChatGPT product results. A product page that exposes ratings only as pixels is therefore invisible to both, while one that exposes them structurally is not.
 
-**Grade: B** — consumption of the review vocabulary is documented on both a search surface and an AI surface, but the ChatGPT path runs through a submitted product feed rather than the on-page markup this audit inspects, and no study measures a citation delta for review markup.
+**Grade: B** — consumption of the review vocabulary is documented on both a search surface and an AI surface. But the ChatGPT path runs through a submitted product feed, not the on-page markup this audit inspects. And no study measures a citation delta for review markup.
 
 **Evidence:**
-- Google documents parsing the markup and the feature it drives: "When Google finds valid reviews or ratings markup, we may show a rich snippet that includes stars and other summary info from reviews or ratings", supported on Book, Course, Event, Local business, Movie, Product, Recipe, Software App and further schema.org types — https://developers.google.com/search/docs/appearance/structured-data/review-snippet (verified 2026-08-21)
+- Google documents parsing the markup and the feature it drives: "When Google finds valid reviews or ratings markup, we may show a rich snippet that includes stars and other summary info from reviews or ratings". The feature is supported on Book, Course, Event, Local business, Movie, Product, Recipe, Software App and further schema.org types — https://developers.google.com/search/docs/appearance/structured-data/review-snippet (verified 2026-08-21)
 - OpenAI's commerce specification carries first-class review fields for ChatGPT product results — `review_count` ("Number of product reviews"), `star_rating` ("Average review score"), `store_review_count`, `store_star_rating`, `reviews` — introduced as: "Supply aggregated review statistics and frequently asked questions. User-generated insights strengthen credibility and help shoppers make informed decisions." — https://developers.openai.com/commerce/specs/feed/ (verified 2026-08-21)
-- `AggregateRating` is core, ratified schema.org vocabulary ("The average rating based on multiple ratings or reviews") with `ratingValue`, `reviewCount` and `ratingCount`, deployed on 1M–10M domains per the Google July 2026 web index sample shown on the type page — https://schema.org/AggregateRating (verified 2026-08-21)
+- `AggregateRating` is core, ratified schema.org vocabulary: "The average rating based on multiple ratings or reviews". It carries `ratingValue`, `reviewCount` and `ratingCount`, deployed on 1M–10M domains per the Google July 2026 web index sample shown on the type page — https://schema.org/AggregateRating (verified 2026-08-21)
 
-**Counter-evidence:** The OpenAI spec "does not address how OpenAI/ChatGPT obtains product data outside of feed submissions" — it says nothing about crawling merchant pages or reading on-page schema.org, so the ChatGPT consumer path does not directly validate the on-page signal (https://developers.openai.com/commerce/specs/feed/, verified 2026-08-21). Google states that for AI Overviews and AI Mode "There's also no special schema.org structured data that you need to add" (https://developers.google.com/search/docs/appearance/ai-features, verified 2026-08-21). Google also constrains what presence can mean: it prohibits "fake or undisclosed incentivized reviews on your page or in your structured data markup" and requires that "Ratings must be sourced directly from users", so the existence of review markup is not itself evidence of social proof (https://developers.google.com/search/docs/appearance/structured-data/review-snippet, verified 2026-08-21). No published measurement links review markup to generative-answer citation rates, and nothing in any source supports counting an unattributed blockquote as a review signal.
+**Counter-evidence:** The OpenAI spec "does not address how OpenAI/ChatGPT obtains product data outside of feed submissions". It says nothing about crawling merchant pages, or about reading on-page schema.org. The ChatGPT consumer path therefore does not directly validate the on-page signal (https://developers.openai.com/commerce/specs/feed/, verified 2026-08-21). Google states that for AI Overviews and AI Mode "There's also no special schema.org structured data that you need to add" (https://developers.google.com/search/docs/appearance/ai-features, verified 2026-08-21). Google also constrains what presence can mean. It prohibits "fake or undisclosed incentivized reviews on your page or in your structured data markup", and requires that "Ratings must be sourced directly from users". The existence of review markup is not itself evidence of social proof (https://developers.google.com/search/docs/appearance/structured-data/review-snippet, verified 2026-08-21). No published measurement links review markup to generative-answer citation rates, and nothing in any source supports counting an unattributed blockquote as a review signal.
 
 ## The merge (Plan 4, Task 6, 2026-08-22)
 
@@ -103,9 +109,84 @@ Both sources grade **B**, for different mechanisms: 10.8 on documented consumpti
 - **One ordering fix did land**: v1 gated the widget/text fallback on the global `signals.length === 0`, so it silently stopped running after the first productive page. Detection is now per page, and the reported `pageUrl` is the page the signal was found on rather than `ctx.pages[0]`.
 - **`<aside>`, `<div class="callout">` and admonition markup are still not detected.** 10.14's review notes that its own title promised callouts; that check belongs in a semantic-HTML audit, as the same review says, not in a social-proof one.
 
+## Pass-rule correction (contradiction sweep, 2026-08-24)
+
+Four narrowings. The grade is not what was wrong here — what was wrong is where
+the audit fired and what it accepted as proof.
+
+**Presence of the vocabulary was treated as proof.** This dossier's own
+counter-evidence says otherwise: Google prohibits "fake or undisclosed
+incentivized reviews on your page or in your structured data markup" and
+requires that "Ratings must be sourced directly from users", "so the existence
+of review markup is not itself evidence of social proof". The audit already
+rejected `"review": []` and a zero `reviewCount` on exactly that reasoning, but
+stopped there. `"aggregateRating": {}`, `"aggregateRating": true`, a bare
+`{"@type":"Review"}` and `[{"@type":"Review"}]` all passed a scored audit about
+social proof. A rating node now needs a rating value or a positive count; a
+review node needs a body, a named author, or a rating.
+
+**The commerce branches fired outside the commerce population.** The meta
+declares `applicablePageTypes: ['homepage', 'product']`, but the loop ran over
+every scanned page, so in a mixed scan a blog post's `star-rating` div or a
+category page's footer text decided a commerce verdict. Both evidence paths are
+commerce-scoped — Google's review rich results are entity markup, and OpenAI's
+`review_count`/`star_rating` are product-feed fields. The review vocabulary, the
+widget fallback and the "N reviews" text are now read only from homepage and
+product pages.
+
+The quotation branch is deliberately **not** scoped that way. Its evidence is
+10.14's GEO-BENCH measurement of generative-answer citation, which is not about
+commerce pages, so confining it to homepage and product would narrow it past its
+own evidence — the same defect as scoring past it, in the other direction. The
+audit's *firing* scope stays commerce-only because `applicablePageTypes` is
+unchanged, which means a content-only scan still gets no quotation scoring at
+all. That is a limit of the 10.14 half inherited from the merge, and it is
+recorded here rather than fixed: widening where an audit fires is an expansion,
+not a narrowing, and it needs its own decision.
+
+**An unattributed pull-quote set a scored status.** The 2026-08-22 fold demoted
+it from `pass` to a `warn` — score 0.5 on a weight-0.6 scored audit — under the
+message "Review signals found but not machine-readable". This dossier states
+flatly that "nothing in any source supports counting an unattributed blockquote
+as a review signal". It now sets no status at all. It is reported in `found`, on
+the warn branch and on the fail branch, so a site owner still sees it, and the
+warn copy no longer asserts that review signals were found on a page that has
+none. An editorial pull-quote alone now fails where it used to warn.
+
+**Attribution had to be real attribution.** Any `cite` attribute counted,
+including `cite="see our press page"`, and an empty `<cite></cite>` or
+`<footer></footer>` counted as naming someone. A `cite` value now has to name a
+document — relative references count, prose does not, on the ground that a URL
+reference carries no unescaped whitespace — and the attribution elements have to
+carry text.
+
+Two smaller corrections came with these. The "N reviews" test ran against raw
+`body.text()`, so an inline JSON payload carrying `"1234 reviews"` read as
+visible review UI; it now runs against text with `script`, `style`, `noscript`
+and `template` stripped, which is what the sibling audits in this category
+already did. And `[class*="star-rating"]` matched an empty placeholder div that
+may never populate — recorded in the 2026-08-20 review as a false pass — so a
+widget element now has to carry text or children. That is the same "presence is
+not proof" reasoning applied to the DOM branch.
+
+`findReviewNodes` is exported and `answer-readiness/trust-signals` defers its
+social-proof factor to it, so the substance rule moves that audit's denominator
+and its pass bar too. That is intended — trust-signals should not defer to
+markup that carries nothing — and a test there pins the arithmetic.
+
+Grade, tier and weight are unchanged at B, scored, 0.6.
+
+Still open, and still not claimed: non-English review-count vocabulary, the
+vendor-specific and case-sensitive widget selector, and the absence of a
+rating-quality gate — `{"ratingValue":"1.0","reviewCount":"2"}` still reads
+identically to 4.8 out of 12,000. Those are expansions of detection or new
+scoring rules, and neither belongs in a sweep that exists to bring the rule back
+inside the evidence.
+
 ## Review history
 
 - 2026-08-20 — code review (11-agent workflow) + evidence research (12-domain workflow, 400 sources).
 - 2026-08-21 — dossier generated; disposition pending final taxonomy design.
 - 2026-08-21 — approved: 10.14 folds into 10.8 (§5).
 - 2026-08-22 — merged (Plan 4, Task 6); registry 161 → 160 for this fold.
+- 2026-08-24 — contradiction sweep: pass rule narrowed (population gate, substance rule, attribution rule, unattributed quotes demoted); grade and tier unchanged.

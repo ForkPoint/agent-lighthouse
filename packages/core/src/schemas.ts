@@ -58,7 +58,7 @@ export const DeprecationNoticeSchema = z.object({
   link: z.string().url(),
 });
 
-/** Evidence strength from the audit's dossier (docs/evidence/POLICY.md). */
+/** Evidence strength from the audit's dossier (docs/evidence/policy.md). */
 export const EvidenceGradeSchema = z.enum(['A', 'B', 'C', 'D']);
 /** Scoring participation tier (spec §4). */
 export const AuditTierSchema = z.enum(['scored', 'informative', 'experimental']);
@@ -108,6 +108,11 @@ export const CheckResultSchema = z.object({
       found: z.string().max(10000).optional(),
       code: z.string().max(10000).optional(),
       docsUrl: z.string().max(2048).url().optional().or(z.string().length(0)),
+      // Derived in `toCheckResult` from the audit id. The catchall below would
+      // already admit it as a plain string; declaring it here buys the checks
+      // the catchall does not make — that it parses as a URL, and that it fits
+      // the same 2048 budget as docsUrl.
+      evidenceUrl: z.string().max(2048).url().optional(),
     })
     // Same rule as AuditResultSchema: structured evidence survives, nested
     // payloads do not.

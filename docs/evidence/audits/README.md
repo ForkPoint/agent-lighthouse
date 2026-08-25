@@ -1,6 +1,6 @@
 # Audit dossiers — the v1 index
 
-One dossier per audit: what it checks, the 2026-08-20 code-review findings, graded evidence signals with sources, and current disposition. Companion documents: [evidence policy](../POLICY.md) · [deletion research](../deletions/README.md) · [sunset audits](../sunset/README.md) · [proposed new checks](../proposals/README.md).
+One dossier per audit: what it checks, the 2026-08-20 code-review findings, graded evidence signals with sources, and current disposition. Companion documents: [evidence policy](../policy.md) · [deletion research](../deletions/README.md) · [sunset audits](../sunset/README.md) · [proposed new checks](../proposals/README.md).
 
 207 v1 audits are indexed here. The registry ships 172 audits: the 148 that survive from v1, plus 24 introduced in v2 that have no v1 row and so appear in no table below — their dossiers sit beside the rest under this folder, and `docs/evidence/v2-audit-map.md` is the map keyed on v2 identity. A row whose dossier moved links out of the folder: `../sunset/` for the 26 removed audits, `../merged/` for a signal folded into another audit. Dispositions marked "pending triage" await the merge/fix review — the six of them (2.27, 4.13, 5.20, 7.6, 8.9, 9.4) were deliberately deferred out of v2.0 and ship byte-unchanged. "Approved 2026-08-21" reflects the accepted deletion-research verdicts.
 

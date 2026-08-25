@@ -1,14 +1,15 @@
 ---
 audit: content-extraction/code-language
-audit_id: "6.10"
 category: content-extraction
 source_file: packages/core/src/audits/content-extraction/code-language.ts
 slug: code-language
-review_verdict: fix
-severity: medium
 evidence_grade: C
 disposition: "keep — fix required"
 reviewed: 2026-08-21
+sources:
+  - whatwg-code-element
+  - turndown-commonmark-rules
+  - jina-reader-repo
 ---
 
 # code-language (`6.10`)
@@ -44,20 +45,20 @@ Recognizes exactly one convention — 'classList.includes('language-')' on the <
 
 ## Evidence
 
-_No dedicated evidence signal was researched for this audit in the 2026-08-20 pass. Its tier assignment falls to the taxonomy design; unproven mechanisms default to informative per the [evidence policy](../../POLICY.md)._
+_No dedicated evidence signal was researched for this audit in the 2026-08-20 pass. Its tier assignment falls to the taxonomy design; unproven mechanisms default to informative per the [evidence policy](../../policy.md)._
 
-## Graded evidence (2026-08-21)
+## Evidence (2026-08-21)
 
-**Mechanism claim:** An HTML-to-Markdown converter of the kind that feeds page text to LLMs emits a fenced code block whose info string names the language only when the `<code>` element carries a `language-*` class; without that class the fence is emitted unlabeled, and the language must be inferred from the code text itself.
+**Mechanism claim:** An HTML-to-Markdown converter of the kind that feeds page text to LLMs emits a fenced code block whose info string names the language only when the `<code>` element carries a `language-*` class. Without that class the fence is emitted unlabeled, and the language must be inferred from the code text itself.
 
-**Grade: C** — the convention is explicitly described in the HTML Standard and is mechanically consumed by the Markdown converter behind common LLM-facing readers, but no vendor documents an AI agent reading it and no study measures an effect on answer quality, so the mechanism is plausible and unproven.
+**Grade: C** — the convention is explicitly described in the HTML Standard, and mechanically consumed by the Markdown converter behind common LLM-facing readers. But no vendor documents an AI agent reading it, and no study measures an effect on answer quality. The mechanism is plausible and unproven.
 
 **Evidence:**
 - WHATWG HTML Standard §4.5.15 (`code` element): "There is no formal way to indicate the language of computer code being marked up. Authors who wish to mark `code` elements with the language used, e.g. so that syntax highlighting scripts can use the right rules, can use the `class` attribute, e.g. by adding a class prefixed with "`language-`" to the element." The spec's own example is `<pre><code class="language-pascal">…</code></pre>` — the exact `pre > code` idiom the audit queries. Note the named consumer is "syntax highlighting scripts", not AI agents — https://html.spec.whatwg.org/multipage/text-level-semantics.html#the-code-element (verified 2026-08-21)
 - Turndown, the widely used HTML→Markdown library, derives the fence language from precisely this class in its `fencedCodeBlock` rule: `const className = node.firstChild.getAttribute('class') || ''` then `const language = (className.match(/language-(\S+)/) || [null, ''])[1]` — https://raw.githubusercontent.com/mixmark-io/turndown/master/src/commonmark-rules.js (verified 2026-08-21)
-- Jina Reader, an HTML→Markdown service built for LLM consumption, uses Turndown as its conversion engine (it exposes `x-md-*` headers to "fine-tune markdown output" via `src/dto/turndown-tweakable-options.ts`) and returns markdown/frontmatter/chunked output for language models — so the `language-*` class is a real, traceable input to at least one production agent-facing pipeline — https://github.com/jina-ai/reader (verified 2026-08-21)
+- Jina Reader, an HTML-to-Markdown service built for LLM consumption, uses Turndown as its conversion engine; it exposes `x-md-*` headers to "fine-tune markdown output" via `src/dto/turndown-tweakable-options.ts`. It returns markdown, frontmatter and chunked output for language models. The `language-*` class is therefore a real, traceable input to at least one production agent-facing pipeline — https://github.com/jina-ai/reader (verified 2026-08-21)
 
-**Counter-evidence:** No AI vendor documentation states that any agent reads code-block language classes, and no published study measures a change in AI answer quality attributable to them; the causal step from "fence is labeled" to "agent explains the code correctly" is untested, and modern LLMs identify programming languages from source text without an annotation. The convention is also not the only one in use — the HTML Standard itself concedes "there is no formal way", and the code review above documents Shiki's `data-language` on `<pre>`, GitHub-style `lang-*`, and Prism's class-on-`<pre>` variants, all of which Turndown's `language-` regex on `node.firstChild` likewise misses. That weakens the practical reach of the one traceable consumer path as much as it weakens the audit's detector.
+**Counter-evidence:** No AI vendor documentation states that any agent reads code-block language classes, and no published study measures a change in AI answer quality attributable to them. The causal step from "fence is labeled" to "agent explains the code correctly" is untested. Modern LLMs also identify programming languages from source text without an annotation. The convention is also not the only one in use. The HTML Standard itself concedes "there is no formal way". Shiki's `data-language` on `<pre>`, GitHub-style `lang-*` and Prism's class-on-`<pre>` are all in live use. Turndown's `language-` regex on `node.firstChild` matches none of them. That weakens the practical reach of the one traceable consumer path as much as it weakens the audit's detector.
 
 ## Review history
 

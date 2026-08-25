@@ -122,7 +122,7 @@ export class OrganizationIdentifierRegistryResolutionAudit extends Audit {
       fix: 'Publish the LEI as `iso6523Code: "0199:<LEI>"` — Google documents a preference for the prefixed form over bare `leiCode` — keep the GLEIF registration renewed so its status stays ISSUED, and make sure the `legalName` in your markup is the name GLEIF has on record, not the trading name.',
       effort: 'moderate',
       docsUrl:
-        'https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/audits/operability-safety/organization-identifier-registry-resolution.md',
+        'https://forkpoint.github.io/agent-lighthouse/audits/operability-safety/organization-identifier-registry-resolution/',
       tags: ['identity', 'lei', 'gleif', 'organization'],
     },
   };

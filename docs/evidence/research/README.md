@@ -18,5 +18,4 @@ existing tooling.
 | [open-source-agent-readiness-tooling-on-github-generators-not.md](./open-source-agent-readiness-tooling-on-github-generators-not.md) | Open-source agent-readiness generators |
 | [profound-agent-analytics-ai-visibility-passive-bot-telemetry.md](./profound-agent-analytics-ai-visibility-passive-bot-telemetry.md) | Profound agent analytics |
 
-Archived 2026-08-22 by Plan 5, Task 2
-([plan](../../superpowers/plans/2026-08-22-v2-graduate-grade-a.md)).
+Archived 2026-08-22.

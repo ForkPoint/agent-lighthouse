@@ -161,7 +161,7 @@ export class McpToolDescriptionCoverageAudit extends Audit {
 }`,
       effort: 'moderate',
       docsUrl:
-        'https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/audits/agent-interfaces/mcp-tool-description-coverage.md',
+        'https://forkpoint.github.io/agent-lighthouse/audits/agent-interfaces/mcp-tool-description-coverage/',
       tags: ['mcp', 'tools', 'documentation', 'json-schema'],
     },
   };

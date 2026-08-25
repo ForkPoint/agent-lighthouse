@@ -8,6 +8,11 @@ tier: scored
 disposition: "new in v2 — graduated from proposal 2026-08-23"
 reviewed: 2026-08-20
 graduated: 2026-08-23
+sources:
+  - gfm-tables-extension
+  - whatwg-tables
+  - jina-reader
+  - firecrawl-docs
 ---
 
 
@@ -27,18 +32,15 @@ Production ingestion pipelines convert HTML to markdown before embedding (S10 Ji
 
 The proposal's evidence block was mis-pasted: it carried MCP authorization and
 web-agent sources, none of which touch tables or markdown conversion. The
-sources the mechanism paragraph actually names are restated here. Their quotes
-are carried verbatim from that paragraph; the URLs were not re-fetched in this
-pass, and `content-extraction/markdown-alternate` and
-`answer-readiness/extractor-survival-recall` carry the Jina and Firecrawl
-quotes with their own verification dates.
+sources the mechanism paragraph actually names are restated here, and each was
+re-fetched on 2026-08-24 except where a date is given.
 
-- **[GitHub Flavored Markdown Spec — tables extension](https://github.github.com/gfm/#tables-extension-)** (S8)
-  - GFM tables have one header row, no column or row spans, and no nesting. "Block-level elements cannot be inserted in a table." A row with more cells than the header has: "the excess is ignored." Neither case is an error — the parser produces a well-formed table with the extra data gone, which is why the loss is silent.
-- **[HTML Standard — tabular data](https://html.spec.whatwg.org/multipage/tables.html)** (S7)
+- **[GitHub Flavored Markdown Spec — tables extension](https://github.github.com/gfm/#tables-extension-)** (S8, verified 2026-08-24)
+  - GFM tables have one header row, no column or row spans, and no nesting: "Block-level elements cannot be inserted in a table." For a row carrying more cells than the header, "If there are greater, the excess is ignored." Neither case is an error. The parser produces a well-formed table with the extra data gone, and that is why the loss is silent.
+- **[HTML Standard — tabular data](https://html.spec.whatwg.org/multipage/tables.html)** (S7, verified 2026-08-24)
   - Header association is defined through `th`, `scope` and `headers`. A table built only from `td` has no header association at all, so nothing machine-readable names its columns.
-- **[Jina Reader](https://jina.ai/reader/)** (S10) and **[Firecrawl](https://docs.firecrawl.dev/)** (S11)
-  - Both convert main content to markdown before it reaches a model. That conversion is the step this audit reproduces: the markdown is what the model reads, not the table markup.
+- **[Jina Reader](https://jina.ai/reader/)** (S10, verified 2026-08-21) and **[Firecrawl](https://docs.firecrawl.dev/)** (S11, verified 2026-08-24)
+  - Both convert main content to markdown before it reaches a model — Firecrawl's own framing is "Turn any website into LLM-ready data", with "Clean markdown" named as the output. That conversion is the step this audit reproduces: the markdown is what the model reads, not the table markup.
 
 **Falsifiable by construction.** The round trip is deterministic — serialize,
 re-parse, diff — so a disputed finding is settled by running it, not by

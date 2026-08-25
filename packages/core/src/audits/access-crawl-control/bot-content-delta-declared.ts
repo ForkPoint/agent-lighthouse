@@ -189,7 +189,7 @@ export class BotContentDeltaDeclaredAudit extends Audit {
       code: SAMPLE,
       effort: 'complex',
       docsUrl:
-        'https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/audits/access-crawl-control/bot-content-delta-declared.md',
+        'https://forkpoint.github.io/agent-lighthouse/audits/access-crawl-control/bot-content-delta-declared/',
       tags: ['cloaking', 'paywall', 'crawlers', 'structured-data'],
     },
   };

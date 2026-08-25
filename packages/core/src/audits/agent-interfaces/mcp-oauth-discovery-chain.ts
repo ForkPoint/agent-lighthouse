@@ -153,7 +153,7 @@ export class McpOauthDiscoveryChainAudit extends Audit {
       code: SAMPLE,
       effort: 'complex',
       docsUrl:
-        'https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/audits/agent-interfaces/mcp-oauth-discovery-chain.md',
+        'https://forkpoint.github.io/agent-lighthouse/audits/agent-interfaces/mcp-oauth-discovery-chain/',
       tags: ['mcp', 'oauth', 'rfc-9728', 'rfc-8414', 'authorization', 'agent-protocol'],
     },
   };

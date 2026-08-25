@@ -1,14 +1,21 @@
 ---
 audit: access-crawl-control/applebot-extended
-audit_id: "2.5"
 category: access-crawl-control
 source_file: packages/core/src/audits/access-crawl-control/applebot-extended.ts
 slug: applebot-extended
-review_verdict: fix
-severity: medium
 evidence_grade: A
 disposition: "keep — fix required"
 reviewed: 2026-08-21
+recommended_tier: scored
+consumers:
+  - Applebot-Extended (robots.txt token consumed by Apple; not a fetching UA)
+signals:
+  - name: Applebot-Extended allow/block state in robots.txt
+    grade: A
+    domain: robots-ai-crawlers
+sources:
+  - applebot-doc
+  - apple-applebot-training-privacy
 ---
 
 # applebot-extended (`2.5`)
@@ -43,12 +50,11 @@ Live signal, correct-in-kind guidance, but the same base-class defects and one s
 
 **Mechanism:** Applebot-Extended is a robots.txt-only token: disallowing it opts the site's already-crawled content out of training Apple's foundation models (Apple Intelligence) without removing the site from Siri, Spotlight or Safari search results. Allowing Applebot while disallowing Applebot-Extended is the documented way to keep search presence and refuse training.
 
+**Grade: A** — Apple maintains two dedicated support pages for this token and documents the split it enables: disallowing Applebot-Extended opts already-crawled content out of foundation-model training while leaving Applebot, and therefore Siri, Spotlight and Safari search presence, untouched. A vendor documenting its own token and the exact effect of the directive is the grade-A bar. The one honesty caveat is on the verification, not the claim: both Apple pages are client-side rendered, and the fetcher recovered titles rather than body text, so the sentences are corroborated rather than quoted.
+
 **Evidence:** Apple maintains two dedicated support pages for this: 'About Applebot' (support.apple.com/en-us/119829) and 'Applebot model training and individual privacy rights' (support.apple.com/en-us/120320). Apple's stated position is that web publishers can use standard robots.txt directives either to stop Applebot crawling, or separately to direct Apple not to use their content to train Apple's foundation models. The two tokens are independent — an Applebot allow does not imply an Applebot-Extended allow. Because it is not a fetching crawler, no traffic-share data exists or should be expected.
 
-**Counter-evidence:** HONESTY CAVEAT ON OUR OWN VERIFICATION: both Apple support pages are client-side rendered and our automated fetcher recovered only the document titles, not the body text. The URLs resolve and are unambiguously Apple's canonical Applebot documentation, but we could not quote Apple's exact sentences; the specifics above are corroborated by secondary sources rather than by our own extraction. A human should confirm the wording before publishing verbatim quotes. Additionally, because Applebot-Extended emits no requests, its effect is entirely unobservable from server logs — publishers cannot verify Apple honors it.
-**Consumers:** Applebot-Extended (robots.txt token consumed by Apple; not a fetching UA) · **Recommended tier:** scored
-
-**Sources:** [About Applebot](https://support.apple.com/en-us/119829) · [Applebot model training and individual privacy rights](https://support.apple.com/en-us/120320)
+**Counter-evidence:** One caveat on this verification: both Apple support pages are client-side rendered, and the automated fetcher recovered only the document titles, not the body text. The URLs resolve and are unambiguously Apple's canonical Applebot documentation, but Apple's exact sentences could not be quoted; the specifics above are corroborated by secondary sources rather than by direct extraction. The wording should be confirmed before any of it is published as a verbatim quote. Additionally, because Applebot-Extended emits no requests, its effect is entirely unobservable from server logs — publishers cannot verify Apple honors it.
 
 ## Review history
 

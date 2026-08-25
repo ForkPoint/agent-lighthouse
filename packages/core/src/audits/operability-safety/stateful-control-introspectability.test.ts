@@ -3,6 +3,7 @@ import { StatefulControlIntrospectabilityAudit } from './stateful-control-intros
 import { mockCheckContext, mockPageContext } from '../../__tests__/test-utils';
 import { expectNotApplicableOnEmpty } from '../../tests/na-contract';
 import type { CheckContext } from '../../check-context';
+import { AuditResultSchema } from '../../schemas';
 
 /** A homepage carrying `body`. */
 function page(body: string): CheckContext {
@@ -89,6 +90,17 @@ describe('StatefulControlIntrospectabilityAudit', () => {
   it('is notApplicable when the page carries no state-bearing control', async () => {
     const result = await audit.audit(page('<p>Just prose.</p><a href="/x">Link</a>'));
     expect(result.status).toBe('na');
+  });
+
+  // Regression for #15: `details.opaque` held Finding objects, which
+  // AuditResultSchema rejects, so the audit threw on every page that had a
+  // state-bearing control and the runner reported an error instead of a result.
+  it('returns details the result schema accepts', async () => {
+    const result = await audit.audit(page('<div role="switch">Share data</div>'));
+    expect(() => AuditResultSchema.parse(result)).not.toThrow();
+    expect(result.details?.['opaque']).toEqual([
+      'https://example.com/ — aria-checked: <div role="switch">',
+    ]);
   });
 
   it('registers as a scored grade-B audit', () => {

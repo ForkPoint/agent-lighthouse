@@ -1,14 +1,21 @@
 ---
 audit: agent-interfaces/openapi-exists
-audit_id: "5.1, 4.18"
 category: agent-interfaces
 source_file: packages/core/src/audits/agent-interfaces/openapi-exists.ts
 slug: openapi-exists
-review_verdict: fix
-severity: high
 evidence_grade: B
 disposition: "merged 2026-08-22 (Plan 4, Task 7) — absorbs openapi-link (4.18); 4.18's redeem resolves here"
 reviewed: 2026-08-22
+sources:
+  - rfc-9727
+  - iana-well-known-uris
+  - ard-spec-repo
+  - hf-discover
+  - apievangelist-api-catalog-adoption
+  - fern-api-catalog
+  - openapi-31-spec
+  - openai-gpt-actions-openapi
+  - ms-copilot-api-plugins
 ---
 
 # openapi-exists (`5.1`, `4.18`)
@@ -73,7 +80,7 @@ Its counter-evidence is equally clear: adoption is in single digits (four valid 
 
 The grade rises because the merged audit now *implements* a materially stronger mechanism than the one it was graded on. 5.1's **C** was pinned by its own discovery leg being pure convention: OpenAPI 3.1 defines no discovery path, only that it is "RECOMMENDED that the root OpenAPI document be named `openapi.json` or `openapi.yaml`", and every documented consumer (GPT Actions, Microsoft 365 Copilot API plugins) is handed the document by a developer. RFC 9727 is a ratified standard with IANA registration and verified production deployments — 4.18's **B** — and it is checked first, so B is the strongest path the audit actually exercises.
 
-Tier does **not** follow the grade. 4.18's evidence names its own tier: *"Ratified standard + no known agent consumers = B, and informative rather than scored until a consumer is documented"*, with `Recommended tier: informative`. 4.18 shipped at `tier: scored` (weight 0.6) against that recommendation, on a proposal explicitly marked *pending triage approval*; the merged audit corrects that rather than inheriting it. `tier: informative` and `weightForGrade('B', 'informative')` = **0** — the same grade/tier split already used by `security-header-hygiene`. Net effect on scoring: one 0.6-weight audit leaves the scored set, and no site is scored on a mechanism no agent is documented to read.
+Tier does **not** follow the grade. 4.18's evidence names its own tier: *"Ratified standard + no known agent consumers = B, and informative rather than scored until a consumer is documented"*, with `Recommended tier: informative`. 4.18 shipped at `tier: scored` (weight 0.6) against that recommendation, on a proposal explicitly marked *pending triage approval*; the merged audit corrects that rather than inheriting it. `tier: informative` and `weightForGrade('B', 'informative')` = **0**, exactly what 4.18's own recorded recommendation asks for. Net effect on scoring: one 0.6-weight audit leaves the scored set, and no site is scored on a mechanism no agent is documented to read.
 
 `scoreDisplayMode` stays `informative` (the ledger law requires it for a non-`scored` tier). `defaultPriority` drops from `high` to `medium`.
 
@@ -86,7 +93,49 @@ Tier does **not** follow the grade. 4.18's evidence names its own tier: *"Ratifi
 
 ## Evidence
 
-_No dedicated evidence signal was researched for this audit in the 2026-08-20 pass. Its tier assignment falls to the taxonomy design; unproven mechanisms default to informative per the [evidence policy](../../POLICY.md)._
+_No dedicated evidence signal was researched for this audit in the 2026-08-20 pass. Its tier assignment falls to the taxonomy design; unproven mechanisms default to informative per the [evidence policy](../../policy.md)._
+
+## Re-checked (evidence sweep, 2026-08-24)
+
+**No change: B / informative / weight 0. The recorded reasoning still holds; one
+supporting sentence is withdrawn.**
+
+The sweep asked whether any client has documented consuming
+`/.well-known/api-catalog` since this dossier was written. **No.** RFC 9727 is
+still Standards Track, the well-known suffix and the `api-catalog` link relation
+are both still IANA-registered, and every reference found is either the RFC's own
+normative text, a publisher-side generator (Fern generates the endpoint and
+advertises it via a `Link` header on every docs page), or conditional trade
+commentary. The May 2026 API Evangelist survey — 74 providers, 518 parallel
+requests across six subdomain prefixes — found four valid linksets and named no
+deployed client. The condition this audit's tier waits on, *"informative rather
+than scored until a consumer is documented"*, has not been met.
+
+### Withdrawn: the trajectory claim
+
+This dossier reads Zapier's MCP-card linkset as *"the clearest sign the mechanism
+is being adopted forward rather than fading."* As of 2026-06-17 the opposite
+reading is better supported.
+
+Google, Microsoft, Hugging Face and eight further companies published the
+**Agentic Resource Discovery** specification — a draft (v0.9) for exactly the
+problem RFC 9727 addresses, agents finding tools, APIs and agents on a domain —
+at a **different** well-known path, `/.well-known/ai-catalog.json`. The ARD
+specification does not mention RFC 9727 or `/.well-known/api-catalog` anywhere,
+and neither does Google's announcement.
+
+And ARD has the thing api-catalog still lacks: a first-party consumer client.
+Hugging Face ships `huggingface/hf-discover`, whose navigate mode performs
+*"automatic `.well-known/ai-catalog.json` discovery from a website"* and follows
+federated registries.
+
+So the ratified standard has publishers and no documented consumer, while the
+younger unratified consortium spec has a documented one. The grade and tier here
+do not move — B prices the ratified standard, informative prices the absent
+consumer, and both readings are unchanged — but the sentence claiming forward
+momentum is withdrawn, and this audit is flagged for re-review if ARD adoption
+continues. See `agent-interfaces/ai-catalog-exists`, which already scores the
+ARD path.
 
 ## Review history
 
@@ -96,16 +145,17 @@ _No dedicated evidence signal was researched for this audit in the 2026-08-20 pa
 - 2026-08-21 — approved: 4.18 merges away into 5.1, resolving its TODO(redeem) (v2 audit map).
 - 2026-08-22 — merged (Plan 4, Task 7); grade C → B, tier stays informative; registry 159 → 158 for this fold.
 
-## Graded evidence (2026-08-21)
+## Evidence (2026-08-21)
 
 **Mechanism claim:** An AI agent given only a site's origin fetches `/openapi.json` or `/openapi.yaml`, and converts the operations it finds into callable tools, without a developer having registered the document with the agent first.
 
-**Grade: C** — OpenAPI is unambiguously the format documented consumers ingest, but every documented consumer receives the document from a developer at build time; no vendor documents a named agent that discovers a spec by probing a site root, so the discovery leg this audit actually measures is convention, not proven behavior.
+**Grade: C** — OpenAPI is unambiguously the format documented consumers ingest. But every documented consumer receives the document from a developer at build time, and no vendor documents a named agent that discovers a spec by probing a site root. The discovery leg this audit actually measures is convention, not proven behavior.
 
 **Evidence:**
 - OpenAPI 3.1 defines no discovery path or well-known URI; it only states "It is RECOMMENDED that the root OpenAPI document be named: `openapi.json` or `openapi.yaml`", which is the sole basis for probing those two paths — https://spec.openapis.org/oas/v3.1.0.html (verified 2026-08-21)
-- OpenAI GPT Actions are built by pasting the OpenAPI schema into the Action editor, not by ChatGPT retrieving it from the site: "ChatGPT uses those names and descriptions to understand (a) which API action should be called and (b) which parameter should be used" — https://developers.openai.com/api/docs/actions/getting-started (verified 2026-08-21)
+- OpenAI GPT Actions are built by pasting the OpenAPI schema into the Action editor, not by ChatGPT retrieving it from the site. The doc describes what happens next: "ChatGPT uses those names and descriptions to understand (a) which API action should be called and (b) which parameter should be used" — https://developers.openai.com/api/docs/actions/getting-started (verified 2026-08-21)
 - Microsoft 365 Copilot plugins "interact with … REST APIs that have an OpenAPI description", supplied inside a plugin manifest that the developer packages and publishes — https://learn.microsoft.com/en-us/microsoft-365-copilot/extensibility/overview-api-plugins (verified 2026-08-21)
 - The standards-track machine-discovery path for APIs is `/.well-known/api-catalog` (RFC 9727, June 2025), a linkset that may point at OpenAPI documents — not `/openapi.json`; no AI-agent consumer of it is documented — https://www.rfc-editor.org/rfc/rfc9727.html (verified 2026-08-21)
 
 **Counter-evidence:** No crawler or agent documentation from OpenAI, Anthropic, Google, Microsoft, or Perplexity states that any named agent fetches `/openapi.json` from a site root. The plugin-era discovery chain (`/.well-known/ai-plugin.json` pointing at a spec URL) is gone from OpenAI's current documentation, which describes pasting a schema instead. For remote tool surfaces, the documented discovery paths in 2026 are MCP's `server/discover` and the DNS-verified MCP Registry, not a root OpenAPI file. Passing this audit therefore proves an artifact exists, not that any agent will find it.
+- 2026-08-24 — evidence sweep: re-checked, no change. B / informative / weight 0 stands; the "adopted forward rather than fading" sentence is withdrawn on ARD counter-evidence.

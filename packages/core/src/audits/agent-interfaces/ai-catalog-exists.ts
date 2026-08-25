@@ -78,10 +78,10 @@ export class AiCatalogExistsAudit extends Audit {
     failureTitle: 'AI Catalog exists',
     description:
       'The AI catalog is the ARD discovery manifest that tells AI agents which MCP servers, agent cards, skills and API descriptions your site offers. Hugging Face\'s hf-discover resolves it at /.well-known/ai-catalog.json and reads its entries; without it, agents must probe endpoints to work out what your site can do.',
-    scoreDisplayMode: 'ternary',
-    weight: weightForGrade('A', 'scored'),
-    evidenceGrade: 'A',
-    tier: 'scored',
+    scoreDisplayMode: 'informative',
+    weight: weightForGrade('C', 'informative'),
+    evidenceGrade: 'C',
+    tier: 'informative',
     dossier: 'docs/evidence/audits/agent-interfaces/ai-catalog-exists.md',
     defaultPriority: 'medium',
     guidance: {

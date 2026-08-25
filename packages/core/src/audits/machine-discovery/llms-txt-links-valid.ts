@@ -16,17 +16,17 @@ export class LlmsTxtLinksValidAudit extends Audit {
     title: 'llms.txt links are valid',
     failureTitle: 'llms.txt links are valid',
     description:
-      'Valid links in llms.txt ensure AI agents can navigate to your content without encountering dead ends.',
-    scoreDisplayMode: 'ternary',
-    weight: weightForGrade('B', 'scored'),
-    evidenceGrade: 'B',
-    tier: 'scored',
+      'Reports whether the links inside a published llms.txt resolve. Link validity is spec-optional and no known consumer enforces it — Chrome Lighthouse, the only shipping checker, fetches no link at all — so this check is reported and never scored.',
+    scoreDisplayMode: 'informative',
+    weight: weightForGrade('C', 'informative'),
+    evidenceGrade: 'C',
+    tier: 'informative',
     dossier: 'docs/evidence/audits/machine-discovery/llms-txt-links-valid.md',
-    defaultPriority: 'high',
+    defaultPriority: 'low',
     guidance: {
       impact:
-        'Broken links in llms.txt send AI agents to dead ends, wasting their context window and degrading the quality of answers about your site. Users asking AI about your products or services will get error messages instead of useful information.',
-      fix: 'Verify all links in your llms.txt resolve to HTTP 200. Remove links to deleted pages and update any URLs that have changed. Run this check after every site deployment.',
+        'A broken link inside llms.txt points at nothing, the same as a broken link anywhere else. No documented agent consumer reads the file, so the cost is to any human or tool that follows it, not to a measured AI outcome.',
+      fix: 'Optional. If you publish an llms.txt, check that its links resolve to HTTP 200 and drop the ones that do not.',
       code: '- [Page Name](/correct-path): Description of the page content',
       effort: 'easy',
       docsUrl: 'https://llmstxt.org/',
@@ -38,16 +38,12 @@ export class LlmsTxtLinksValidAudit extends Audit {
     const result = ctx.rootFiles['/llms.txt'];
 
     if (!result || !isOk(result)) {
-      return this.fail(
-        'llms.txt not found; cannot validate links.',
+      // No file, nothing to validate. This audit measures the links inside a
+      // published llms.txt; it is not a second vote on whether the file exists.
+      return this.notApplicable(
+        'No llms.txt at the site root, so there are no links to validate.',
         'All links return HTTP 200',
         'File not found',
-        {
-          priority: 'critical',
-          description:
-            'First, create your llms.txt file (see check 1.1). Valid links in llms.txt ensure AI agents can navigate to your content without encountering dead ends.',
-          code: `# Your Site Name\n\n> Brief description of your site for AI agents.\n\n## Pages\n- [Home](/): Main landing page\n- [About](/about/): Company information`,
-        },
       );
     }
 
@@ -59,9 +55,9 @@ export class LlmsTxtLinksValidAudit extends Audit {
         'All links return HTTP 200',
         'No links found',
         {
-          priority: 'medium',
+          priority: 'low',
           description:
-            'llms.txt should contain links to your key pages. Without links, the file does not help AI agents discover your content.',
+            'An llms.txt with no links is an index of nothing. If you publish the file, list your key pages in it.',
           code: `- [Home](/): Main landing page\n- [About](/about/): Company information`,
         },
       );
@@ -85,12 +81,12 @@ export class LlmsTxtLinksValidAudit extends Audit {
     if (broken.length > 0) {
       const topBroken = broken.slice(0, 10).map((r) => `${r.url} (${r.status})`).join(', ');
       const brokenSummary = broken.length > 10 ? `${topBroken} (+${broken.length - 10} more)` : topBroken;
-      return this.fail(
+      return this.warn(
         `${broken.length}/${links.length} link(s) are broken.`,
         'All links return HTTP 200',
         `Broken: ${brokenSummary}`,
         {
-          priority: 'high',
+          priority: 'low',
           description:
             'Broken links in llms.txt cause AI agents to hit dead ends, wasting their context window and degrading user experience. Fix the URLs to point to valid pages or remove links to pages that no longer exist.',
           code: `- [Page Name](/correct-path): Description of the page`,

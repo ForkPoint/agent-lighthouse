@@ -1,14 +1,30 @@
 ---
 audit: operability-safety/table-headers
-audit_id: "7.17"
 category: operability-safety
 source_file: packages/core/src/audits/operability-safety/table-headers.ts
 slug: table-headers
-review_verdict: keep
-severity: low
 evidence_grade: B
 disposition: "keep"
 reviewed: 2026-08-21
+recommended_tier: scored
+consumers:
+  - Mozilla Readability
+  - trafilatura
+  - Playwright MCP / Chrome DevTools MCP snapshots
+  - Anthropic read_page
+  - browser-use
+signals:
+  - name: Data tables with th (and scope) header semantics
+    grade: B
+    domain: semantic-dom-a11y
+sources:
+  - readability-src
+  - w3c-html-aam
+  - w3c-wai-aria-1-2
+  - trafilatura-corefunctions
+  - browser-use-clickable-elements
+  - web-almanac-2025-accessibility
+  - mozilla-readability-source
 ---
 
 # Data tables have header associations (`7.17`)
@@ -44,14 +60,13 @@ Bundles `td-has-header`, `th-has-data-cells`, `td-headers-attr`, `scope-attr-val
 
 ### Signal: Data tables with th (and scope) header semantics — grade B (semantic-dom-a11y)
 
-**Mechanism:** The presence of <th>/<thead> is what causes an extractor to classify a table as a DATA table rather than a layout table, and data-table classification is what exempts it from boilerplate deletion. Concretely, in Mozilla Readability a table containing none of col/colgroup/tfoot/thead/th and no caption/summary is treated as layout and becomes eligible for removal by _cleanConditionally, so a th-less pricing or spec table can be deleted outright before the content reaches the model. In the accessibility tree, th additionally resolves to columnheader/rowheader so header-to-cell association survives.
+**Mechanism:** The presence of <th>/<thead> is what causes an extractor to classify a table as a DATA table rather than a layout table, and data-table classification is what exempts it from boilerplate deletion. In Mozilla Readability, a table carrying none of col, colgroup, tfoot, thead or th, and no caption or summary, is treated as layout. Its cleanup pass then becomes free to remove it, so a th-less pricing or spec table can be deleted outright before the content reaches the model. In the accessibility tree, th additionally resolves to columnheader/rowheader so header-to-cell association survives.
 
-**Evidence:** Source-level: Readability's dataTableDescendants = ['col','colgroup','tfoot','thead','th'], with caption and summary as additional data-table markers, and _cleanConditionally short-circuits with 'if (tag === "table" && isDataTable(node)) return false' [mozilla-readability-source]. HTML-AAM maps th to columnheader or rowheader roles [w3c-html-aam] over the WAI-ARIA 1.2 role set [w3c-wai-aria-1-2]. trafilatura keeps tables by default via include_tables and renders them as markdown under include_formatting [trafilatura-corefunctions]; markdown table syntax itself requires a header row, so a th-less table converts to a header-less or arbitrarily-headed markdown table. browser-use exposes role='row'/'cell'/'gridcell' as addressable [browser-use-clickable-elements].
+**Grade: B** — Specific, and readable in Mozilla Readability's own source. A table counts as a data table when it carries `col`, `colgroup`, `tfoot`, `thead` or `th`. Its `_cleanConditionally` pass then skips that table. So `th` is literally what saves a table from boilerplate deletion. HTML-AAM then maps it to columnheader or rowheader in the tree agents read. Two caveats keep it at B. `th` is sufficient but not necessary: the same function also classifies by size, roughly ten or more cells, so the deletion risk is concentrated in small tables. And `scope` specifically is a weaker signal than `th`, which is why the audit does not weight the two alike.
 
-**Counter-evidence:** Two real caveats. First, th is sufficient but not necessary in Readability: the same function also classifies by size (roughly ≥10 cells, or ≥10 rows and ≥4 columns), so a large th-less table survives anyway — the deletion risk is concentrated in small tables. Second, the `scope` attribute specifically is a weaker signal than `th` and should be graded C on its own: none of the extractors examined (Readability, trafilatura, htmldate) reads @scope, and no agent harness doc mentions it; scope matters for the HTML header-association algorithm and screen readers, and only indirectly for agents via the a11y tree on complex multi-level tables. Caption adoption is tiny (1.6% of desktop sites [web-almanac-2025-accessibility]) so caption should be advisory, not required. Recommend scoring th/thead presence, and treating scope and caption as informative sub-checks.
-**Consumers:** Mozilla Readability, trafilatura, Playwright MCP / Chrome DevTools MCP snapshots, Anthropic read_page, browser-use · **Recommended tier:** scored
+**Evidence:** Readability classifies a table as a data table when it carries col, colgroup, tfoot, thead or th, or a caption or summary. Its `_cleanConditionally` pass then skips it, and a table with none of those is treated as layout and deleted [mozilla-readability-source]. HTML-AAM maps th to the columnheader or rowheader roles [w3c-html-aam], over the WAI-ARIA 1.2 role set [w3c-wai-aria-1-2]. trafilatura keeps tables by default via include_tables, and renders them as markdown under include_formatting [trafilatura-corefunctions]. Markdown table syntax itself requires a header row, so a th-less table converts to a header-less or arbitrarily-headed markdown table. browser-use exposes the row, cell and gridcell roles as addressable [browser-use-clickable-elements].
 
-**Sources:** [mozilla/readability Readability.js source](https://raw.githubusercontent.com/mozilla/readability/main/Readability.js) · [HTML Accessibility API Mappings 1.0](https://www.w3.org/TR/html-aam-1.0/) · [Accessible Rich Internet Applications (WAI-ARIA) 1.2](https://www.w3.org/TR/wai-aria-1.2/) · [trafilatura core functions documentation](https://trafilatura.readthedocs.io/en/latest/corefunctions.html) · [browser-use ClickableElementDetector source](https://raw.githubusercontent.com/browser-use/browser-use/main/browser_use/dom/serializer/clickable_elements.py) · [Web Almanac 2025 — Accessibility chapter](https://almanac.httparchive.org/en/2025/accessibility)
+**Counter-evidence:** Two real caveats. First, th is sufficient but not necessary in Readability. The same function also classifies by size: roughly 10 or more cells, or 10 or more rows and 4 or more columns. So a large th-less table survives anyway — the deletion risk is concentrated in small tables. Second, the `scope` attribute is a weaker signal than `th`, and should be graded C on its own. None of the extractors examined — Readability, trafilatura, htmldate — reads @scope, and no agent harness doc mentions it. scope matters for the HTML header-association algorithm, and for screen readers. It reaches agents only indirectly, through the a11y tree on complex multi-level tables. Caption adoption is tiny (1.6% of desktop sites [web-almanac-2025-accessibility]) so caption should be advisory, not required. Recommend scoring th/thead presence, and treating scope and caption as informative sub-checks.
 
 ## Review history
 

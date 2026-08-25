@@ -8,6 +8,9 @@ tier: scored
 disposition: "new in v2 — graduated from proposal 2026-08-23"
 reviewed: 2026-08-20
 graduated: 2026-08-23
+sources:
+  - S2
+  - S4
 ---
 
 
@@ -17,11 +20,11 @@ graduated: 2026-08-23
 
 ## What it checks
 
-Deterministic coverage metrics over the tool surface: what fraction of tools carry a description, what fraction of every input parameter (walked recursively through properties) carries a description, what fraction declare an outputSchema and a title, and whether the server ships top-level `instructions`. No LLM judging — pure presence and length counting against declared thresholds.
+Deterministic coverage metrics over the tool surface. What fraction of tools carry a description. What fraction of every input parameter, walked recursively through properties, carries a description. What fraction declare an outputSchema and a title, and whether the server ships top-level `instructions`. No LLM judging — pure presence and length counting against declared thresholds.
 
 ## Claimed mechanism (falsifiable)
 
-A tool description and its parameter descriptions are the entire basis on which a model decides whether and how to call it — they are the only prose the model ever sees about the tool. The spec states the documented purpose of outputSchema directly ('Guiding clients and LLMs to properly parse and utilize the returned data', 'Enabling strict schema validation of responses') and defines `instructions` as 'natural-language guidance for LLMs on how to use this server effectively'. The falsifiable claim is narrow and structural rather than aesthetic: a parameter with no `description` and no `enum`/`format`/`pattern` gives the model no way to derive a legal value, so it must guess, and guessed values surface as tool-execution errors and retry loops. Coverage is measured, not judged; only the pass thresholds are our convention, which is why this is graded B rather than A.
+A tool description and its parameter descriptions are the entire basis on which a model decides whether and how to call it — they are the only prose the model ever sees about the tool. The spec states the documented purpose of outputSchema directly: 'Guiding clients and LLMs to properly parse and utilize the returned data', and 'Enabling strict schema validation of responses'. It defines `instructions` as 'natural-language guidance for LLMs on how to use this server effectively'. The falsifiable claim is narrow and structural, not aesthetic. A parameter with no `description`, and no `enum`, `format` or `pattern`, gives the model no way to derive a legal value. It must guess, and guessed values surface as tool-execution errors and retry loops. Coverage is measured, not judged; only the pass thresholds are this project's convention, which is why this is graded B rather than A.
 
 ## Evidence
 
@@ -60,7 +63,7 @@ Tier per evidence policy: **scored** — grade B meets the A/B bar required for 
 
 ## Implementation deviations
 
-- **One of the two Evidence sources does not belong to this check.** The Playwright actionability entry is about browser click gating and says nothing about MCP tool metadata; it was mis-pasted during the proposal pass. The second source — the MCP 2026-07-28 tools specification — is the one the mechanism rests on, and it is accurate. The grade stays **B**: the metrics are counts of directly observable fields, and only the pass thresholds are our convention.
+- **One of the two Evidence sources does not belong to this check.** The Playwright actionability entry is about browser click gating and says nothing about MCP tool metadata; it was mis-pasted during the proposal pass. The second source — the MCP 2026-07-28 tools specification — is the one the mechanism rests on, and it is accurate. The grade stays **B**: the metrics are counts of directly observable fields, and only the pass thresholds are this project's convention.
 - **Slug renamed** from `tool-self-description-coverage` to `mcp-tool-description-coverage`, grouping it with the other MCP audits in `agent-interfaces`.
 - **Container parameters are not counted.** The sketch says "leaf parameters"; the implementation counts only leaves and walks through object and array-of-object containers, so `line_items` itself is not a parameter but `line_items[].tax_code` is. Counting containers would let a server raise its coverage by describing wrappers rather than fields.
 - **Required-ness is read from the enclosing schema.** A leaf counts as required only when its own immediate parent names it in `required`. A required container whose children are optional does not make those children required.

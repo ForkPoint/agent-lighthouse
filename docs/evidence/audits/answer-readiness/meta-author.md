@@ -1,14 +1,16 @@
 ---
 audit: answer-readiness/meta-author
-audit_id: "4.2"
 category: answer-readiness
 source_file: packages/core/src/audits/answer-readiness/meta-author.ts
 slug: meta-author
-review_verdict: fix
-severity: medium
 evidence_grade: C
 disposition: "keep — fix required"
 reviewed: 2026-08-21
+sources:
+  - whatwg-metadata-names
+  - google-article-structured-data
+  - google-special-tags
+  - s18
 ---
 
 # meta-author (`4.2`)
@@ -43,14 +45,14 @@ Borderline falsy, and wired to the wrong page. `applicablePageTypes: ['content']
 
 ## Evidence
 
-_No dedicated evidence signal was researched for this audit in the 2026-08-20 pass. Its tier assignment falls to the taxonomy design; unproven mechanisms default to informative per the [evidence policy](../../POLICY.md)._
+_No dedicated evidence signal was researched for this audit in the 2026-08-20 pass. Its tier assignment falls to the taxonomy design; unproven mechanisms default to informative per the [evidence policy](../../policy.md)._
 
 ## Review history
 
 - 2026-08-20 — code review (11-agent workflow) + evidence research (12-domain workflow, 400 sources).
 - 2026-08-21 — dossier generated; disposition pending final taxonomy design.
 
-## Graded evidence (2026-08-21)
+## Evidence (2026-08-21)
 
 **Mechanism claim:** A named ranking or answer system reads `<meta name="author">` and uses it to attribute the page to a person or organization, raising the page's trust/authority weighting relative to an otherwise identical page without the tag.
 
@@ -60,4 +62,4 @@ _No dedicated evidence signal was researched for this audit in the 2026-08-20 pa
 - WHATWG HTML defines `author` as a standard metadata name: "The value must be a free-form string giving the name of one of the page's authors." The spec assigns no consumer behavior to it — https://html.spec.whatwg.org/multipage/semantics.html#standard-metadata-names (verified 2026-08-21)
 - Convention is real but consumer-less: the tag predates and is superseded by schema.org `author`, which is the form Google documents for authorship — https://developers.google.com/search/docs/appearance/structured-data/article (verified 2026-08-21)
 
-**Counter-evidence:** Google's list of meta tags Google Search supports does not include `author`, and the same page states "Google will ignore `meta` tags that it doesn't support" — https://developers.google.com/search/docs/crawling-indexing/special-tags (verified 2026-08-21). Google's Article structured-data guidance handles authorship exclusively through schema.org (`author.name`, `author.url`, `Person`/`Organization`) and never mentions the meta tag — https://developers.google.com/search/docs/appearance/structured-data/article (verified 2026-08-21). OpenAI's crawler documentation mentions no HTML metadata of any kind — https://developers.openai.com/api/docs/bots (verified 2026-08-21). The audit's "E-E-A-T scoring" framing is therefore D-grade on its own terms: no shipping AI system is documented to derive a trust signal from this tag, and the page it is currently measured on (the homepage, per the wrong-page bug above) would not carry a byline even on a site that marks up authorship correctly.
+**Counter-evidence:** Google's list of meta tags Google Search supports does not include `author`, and the same page states "Google will ignore `meta` tags that it doesn't support" — https://developers.google.com/search/docs/crawling-indexing/special-tags (verified 2026-08-21). Google's Article structured-data guidance handles authorship exclusively through schema.org (`author.name`, `author.url`, `Person`/`Organization`) and never mentions the meta tag — https://developers.google.com/search/docs/appearance/structured-data/article (verified 2026-08-21). OpenAI's crawler documentation mentions no HTML metadata of any kind — https://developers.openai.com/api/docs/bots (verified 2026-08-21). The audit's "E-E-A-T scoring" framing is therefore D-grade on its own terms. No shipping AI system is documented to derive a trust signal from this tag. And the page it is currently measured on — the homepage, per the wrong-page bug above — would not carry a byline even on a site that marks up authorship correctly.

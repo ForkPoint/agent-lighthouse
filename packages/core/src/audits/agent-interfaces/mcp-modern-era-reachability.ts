@@ -117,7 +117,7 @@ export class McpModernEraReachabilityAudit extends Audit {
       code: SAMPLE,
       effort: 'moderate',
       docsUrl:
-        'https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/audits/agent-interfaces/mcp-modern-era-reachability.md',
+        'https://forkpoint.github.io/agent-lighthouse/audits/agent-interfaces/mcp-modern-era-reachability/',
       tags: ['mcp', 'json-rpc', 'protocol-version', 'transport', 'agent-protocol'],
     },
   };

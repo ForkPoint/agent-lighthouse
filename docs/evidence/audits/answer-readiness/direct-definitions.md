@@ -1,14 +1,19 @@
 ---
 audit: answer-readiness/direct-definitions
-audit_id: "9.4"
 category: answer-readiness
 source_file: packages/core/src/audits/answer-readiness/direct-definitions.ts
 slug: direct-definitions
-review_verdict: delete
-severity: medium
 evidence_grade: C
 disposition: "kept — rewritten to an intent-gated, language-neutral check 2026-08-22 (Plan 4, Task 16)"
 reviewed: 2026-08-22
+sources:
+  - whatwg-html-dfn
+  - w3c-html-aam
+  - trafilatura-corefunctions
+  - geo-sfe-structural-arxiv
+  - cloudflare-markdown-for-agents
+  - google-ai-optimization-mythbusting
+  - cseo-bench-arxiv
 ---
 
 # direct-definitions (`9.4`)
@@ -40,7 +45,7 @@ Looks for <dfn>, a <dl> with a ≥6-word <dd>, or a <strong>/<b> label ending in
 - No test with '<strong>Note:</strong> ...' or '<strong>Tip:</strong> ...' — the dominant real-world false pass.
 - No test where the same label string occurs twice in the parent, or where <strong> and its 'definition' are in different sibling elements.
 - No CJK full-width colon or CJK <dd>.
-- No prose-definition page (the important false NEGATIVE: 'Unified content preparation is the process of...' with no markup fails).
+- No prose-definition page (the important false negative: 'Unified content preparation is the process of...' with no markup fails).
 - No test proving /contact-style pages reach this audit through isArticleContentPage.
 
 **Overlaps with:** _none_
@@ -77,13 +82,13 @@ The code review's sharpest finding was that a genuinely well-written prose gloss
 
 ### Grade and tier decision: **C**, tier `informative`, weight 0 — target tier `scored` not reachable
 
-The REWORK-TODO row proposed `scored`. It cannot land: the [graded evidence below](#graded-evidence-2026-08-21) assigns **C**, and under the §4 weight law `weightForGrade('C', 'scored') = 0`, while `sunset.test.ts` enforces `tier !== 'scored' ⟺ weight === 0`. A grade-C audit in the `scored` tier is therefore not a registrable state, and `informative` is where the grade puts it — the same resolution recorded for `openapi-link`, where a proposed `scored` target lost to the tier the evidence named. Nothing in the required rework depends on the tier: it asks for a better detector and an `na` path, both of which landed. `scoreDisplayMode` stays `informative`; `defaultPriority` drops `medium` → `low`, since the audit now reports upside rather than a defect.
+The REWORK-TODO row proposed `scored`. It cannot land: the [graded evidence below](#evidence-2026-08-21) assigns **C**, and under the §4 weight law `weightForGrade('C', 'scored') = 0`, while `sunset.test.ts` enforces `tier !== 'scored' ⟺ weight === 0`. A grade-C audit in the `scored` tier is therefore not a registrable state, and `informative` is where the grade puts it — the same resolution recorded for `openapi-link`, where a proposed `scored` target lost to the tier the evidence named. Nothing in the required rework depends on the tier: it asks for a better detector and an `na` path, both of which landed. `scoreDisplayMode` stays `informative`; `defaultPriority` drops `medium` → `low`, since the audit now reports upside rather than a defect.
 
 Re-grading to A or B would need a documented consumer acting on the term/definition roles. The dossier records that none exists, and this project's own semantic-html research says the same of `<dl>`/`<dt>`/`<dd>`.
 
 ## Evidence
 
-_No dedicated evidence signal was researched for this audit in the 2026-08-20 pass. Its tier assignment falls to the taxonomy design; unproven mechanisms default to informative per the [evidence policy](../../POLICY.md)._
+_No dedicated evidence signal was researched for this audit in the 2026-08-20 pass. Its tier assignment falls to the taxonomy design; unproven mechanisms default to informative per the [evidence policy](../../policy.md)._
 
 ## Review history
 
@@ -91,16 +96,16 @@ _No dedicated evidence signal was researched for this audit in the 2026-08-20 pa
 - 2026-08-21 — dossier generated; disposition pending final taxonomy design.
 - 2026-08-22 — user approved the pending-triage redeem; required rework executed (Plan 4, Task 16): bold-colon branch deleted, definitional-intent gate replaces `isArticleContentPage`, substantiveness measured character-wise as well as word-wise so CJK counts, per-language intent and prose-copula patterns for 11 languages, prose definitions reported rather than failed, `na` when no page has definitional intent, and the audit can no longer fail. Grade C, tier `informative`, weight 0 — the row's proposed `scored` target is unreachable for a grade-C audit under the §4 weight law and the registry invariant; rationale in the rewrite section. `defaultPriority` `medium` → `low`. `TODO(redeem)` marker removed from the source file.
 
-## Graded evidence (2026-08-21)
+## Evidence (2026-08-21)
 
-**Mechanism claim:** Marking a term and its definition with `<dfn>` or `<dl>`/`<dt>`/`<dd>` exposes explicit term/definition roles in the accessibility tree and keeps the pairing intact through extraction, so an answer engine can return the definition for a "what is X?" query without inferring it from surrounding prose.
+**Mechanism claim:** Marking a term and its definition with `<dfn>`, or with `<dl>`, `<dt>` and `<dd>`, exposes explicit term and definition roles in the accessibility tree. It also keeps the pairing intact through extraction. An answer engine can then return the definition for a "what is X?" query without inferring it from surrounding prose.
 
-**Grade: C** — the markup is ratified and carries a spec-defined term/definition role mapping, but no vendor doc, agent harness or study shows any consumer acting on that mapping, and the audit's third detector branch (bold-colon) is a typographic convention with no spec basis at all.
+**Grade: C** — the markup is ratified, and carries a spec-defined term-to-definition role mapping. But no vendor doc, agent harness or study shows any consumer acting on that mapping. The audit's third detector branch, bold-colon, is a typographic convention with no spec basis at all.
 
 **Evidence:**
-- WHATWG HTML defines the element precisely: `dfn` "represents the defining instance of a term", and "The paragraph, description list group, or section that is the nearest ancestor of the `dfn` element must also contain the definition(s) for the term given by the `dfn` element" — the pairing is a conformance requirement, not a convention — https://html.spec.whatwg.org/multipage/text-level-semantics.html#the-dfn-element (verified 2026-08-21)
+- WHATWG HTML defines the element precisely. `dfn` "represents the defining instance of a term". The spec adds: "The paragraph, description list group, or section that is the nearest ancestor of the `dfn` element must also contain the definition(s) for the term given by the `dfn` element". The pairing is therefore a conformance requirement, not a convention — https://html.spec.whatwg.org/multipage/text-level-semantics.html#the-dfn-element (verified 2026-08-21)
 - HTML-AAM maps the markup to first-class roles in the tree agents read: `dfn` → `term`, `dt` → `term`, `dd` → `definition`, `dl` → `list` — https://www.w3.org/TR/html-aam-1.0/ (verified 2026-08-21)
 - Extraction pipelines preserve structural markup rather than flattening it: trafilatura's `include_formatting` keeps "structural elements related to formatting (kept in XML, rendered as markdown for text formats)" — https://trafilatura.readthedocs.io/en/latest/corefunctions.html (verified 2026-08-21)
 - Structured formats extract better than prose in general: GEO-SFE reports "structured formats (lists, tables) demonstrate 43% higher extraction accuracy than equivalent prose" — https://arxiv.org/html/2603.29979v1 (verified 2026-08-21)
 
-**Counter-evidence:** No vendor documentation and no agent harness documents acting on `role="term"` or `role="definition"`; this repository's own semantic-html research records that "Definition lists (dl/dt/dd) in particular have no documented agent consumer beyond generic role mapping" (`docs/evidence/audits/semantic-html/definition-elements.md`). The markdown conversion path that the mechanism relies on actually weakens it: CommonMark has no definition-list syntax, so a `<dl>` passing through a markdown pipeline such as Cloudflare's Markdown for Agents (https://blog.cloudflare.com/markdown-for-agents/) or trafilatura's markdown output flattens to ordinary lines and loses the term/definition distinction that HTML-AAM preserves. GEO-SFE isolates lists and tables, never definition markup. Google states there is no special markup needed and "You don't need to write in a specific way just for generative AI search" (https://developers.google.com/search/docs/fundamentals/ai-optimization-guide), and C-SEO Bench found "Most current C-SEO methods are not only largely ineffective but also frequently have a negative impact on document ranking" (https://arxiv.org/abs/2506.11097). The `<strong>Term:</strong> …` branch has no spec, no role mapping and no consumer — graded on its own it is D. All URLs verified 2026-08-21.
+**Counter-evidence:** No vendor documentation and no agent harness documents acting on `role="term"` or `role="definition"`; this repository's own semantic-html research records that "Definition lists (dl/dt/dd) in particular have no documented agent consumer beyond generic role mapping" (`docs/evidence/audits/semantic-html/definition-elements.md`). The markdown conversion path that the mechanism relies on actually weakens it. CommonMark has no definition-list syntax. A `<dl>` passing through a markdown pipeline — Cloudflare's Markdown for Agents (https://blog.cloudflare.com/markdown-for-agents/), or trafilatura's markdown output — flattens to ordinary lines, and loses the term-to-definition distinction that HTML-AAM preserves. GEO-SFE isolates lists and tables, never definition markup. Google states that no special markup is needed, and that "You don't need to write in a specific way just for generative AI search" (https://developers.google.com/search/docs/fundamentals/ai-optimization-guide). C-SEO Bench found that "Most current C-SEO methods are not only largely ineffective but also frequently have a negative impact on document ranking" (https://arxiv.org/abs/2506.11097). The `<strong>Term:</strong> …` branch has no spec, no role mapping and no consumer — graded on its own it is D. All URLs verified 2026-08-21.

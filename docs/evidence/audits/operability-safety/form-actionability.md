@@ -1,14 +1,16 @@
 ---
 audit: operability-safety/form-actionability
-audit_id: "5.27, 5.22"
 category: operability-safety
 source_file: packages/core/src/audits/operability-safety/form-actionability.ts
 slug: form-actionability
-review_verdict: keep
-severity: medium
 evidence_grade: A
 disposition: "merged 2026-08-22 (Plan 4, Task 8) — absorbs webmcp-input-quality (5.22)"
 reviewed: 2026-08-22
+sources:
+  - anthropic-browser-use-tool
+  - playwright-mcp-repo
+  - w3c-accname-12
+  - webmcp-declarative-explainer
 ---
 
 # form-actionability (`5.27`, `5.22`)
@@ -48,7 +50,7 @@ The strongest audit in the category and the one whose passing genuinely improves
 
 ## Evidence
 
-_No dedicated evidence signal was researched for this audit in the 2026-08-20 pass. Its tier assignment falls to the taxonomy design; unproven mechanisms default to informative per the [evidence policy](../../POLICY.md)._
+_No dedicated evidence signal was researched for this audit in the 2026-08-20 pass. Its tier assignment falls to the taxonomy design; unproven mechanisms default to informative per the [evidence policy](../../policy.md)._
 
 ## Review history
 
@@ -57,9 +59,9 @@ _No dedicated evidence signal was researched for this audit in the 2026-08-20 pa
 - 2026-08-21 — approved: 5.22 merges away into 5.27 (§5).
 - 2026-08-22 — merged (Plan 4, Task 8); registry 151 → 150 for this fold.
 
-## Graded evidence (2026-08-21)
+## Evidence (2026-08-21)
 
-**Mechanism claim:** Agents that act on a page through its accessibility tree identify a field by its accessible name, computed from `<label>`, `aria-label` or `aria-labelledby`; a fillable control that is not a native form element, or that has no accessible name, cannot be reliably targeted or filled by such an agent.
+**Mechanism claim:** Agents that act on a page through its accessibility tree identify a field by its accessible name, computed from `<label>`, `aria-label` or `aria-labelledby`. A fillable control that is not a native form element, or that has no accessible name, cannot be reliably targeted or filled by such an agent.
 
 **Grade: A** — two named agent stacks document that they perceive and act on pages via the accessibility tree, and the accessible name they consume is computed from exactly the label mechanisms this audit checks.
 
@@ -69,11 +71,11 @@ _No dedicated evidence signal was researched for this audit in the 2026-08-20 pa
 - The accessible name computation draws on host-language labelling (HTML `<label>`), `aria-label` and `aria-labelledby` — https://www.w3.org/TR/accname-1.2/ (verified 2026-08-21)
 - Native form semantics are also what the emerging agent-facing form standard builds on: WebMCP's declarative API compiles `<form>` and its form-associated elements into a tool input schema, using the control's `name` attribute for each schema property — https://raw.githubusercontent.com/webmachinelearning/webmcp/main/declarative-api-explainer.md (verified 2026-08-21)
 
-**Counter-evidence:** Two qualifications. First, the same Anthropic doc shows the agent also has screenshots and viewport coordinates, so a missing accessible name degrades reliability rather than making a field strictly unreachable. Second, the `autocomplete`-token half of this audit is weaker than the label half: the HTML Standard defines autofill detail tokens as a browser autofill feature (https://html.spec.whatwg.org/multipage/form-control-infrastructure.html, verified 2026-08-21), and no vendor doc found states that an AI agent reads `autocomplete` to decide what value to enter — that sub-check is a plausible convention (C) riding on an A-grade label mechanism. `placeholder` is correctly excluded here: it is not part of the accessible name computation (https://www.w3.org/TR/accname-1.2/, verified 2026-08-21).
+**Counter-evidence:** Two qualifications. First, the same Anthropic doc shows the agent also has screenshots and viewport coordinates, so a missing accessible name degrades reliability rather than making a field strictly unreachable. Second, the `autocomplete`-token half of this audit is weaker than the label half. The HTML Standard defines autofill detail tokens as a browser autofill feature (https://html.spec.whatwg.org/multipage/form-control-infrastructure.html, verified 2026-08-21), and no vendor doc found states that an AI agent reads `autocomplete` to decide what value to enter. That sub-check is a plausible convention (C) riding on an A-grade label mechanism. `placeholder` is correctly excluded here: it is not part of the accessible name computation (https://www.w3.org/TR/accname-1.2/, verified 2026-08-21).
 
 ## The merge (Plan 4, Task 8, 2026-08-22)
 
-5.22 checked the same three things this audit checks — native controls, names, labels — but only inside `form[toolname]`, an attribute no deployed site carries, so it returned `na` on every real scan while consuming runtime and report space. Its required fix is unusually short: *"Merge into 5.27 form-actionability, which already evaluates native elements, label association, and autocomplete on ALL forms rather than only WebMCP-tagged ones. Carry over nothing but the concept; drop the placeholder-as-label rule, which 5.27 correctly rejects."*
+5.22 checked the same three things this audit checks — native controls, names, labels — but only inside `form[toolname]`, an attribute no deployed site carries, so it returned `na` on every real scan while consuming runtime and report space. Its required fix is unusually short: *"Merge into 5.27 form-actionability, which already evaluates native elements, label association, and autocomplete on all forms rather than only WebMCP-tagged ones. Carry over nothing but the concept; drop the placeholder-as-label rule, which 5.27 correctly rejects."*
 
 **The concept that carries over is the `name` attribute.** Every fillable field is now required to have one, for two independent reasons: a control with no `name` is not submitted by a plain form at all, and — 5.22's own graded mechanism — WebMCP's declarative API takes each control's `name` as the property name in the tool input schema it generates, so a nameless control is not a callable parameter. When the field sits in a `<form toolname=…>`, the reported reason says so.
 

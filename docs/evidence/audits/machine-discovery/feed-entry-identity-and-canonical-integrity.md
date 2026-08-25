@@ -8,6 +8,9 @@ tier: scored
 disposition: "new in v2 — graduated from proposal 2026-08-23"
 reviewed: 2026-08-20
 graduated: 2026-08-23
+sources:
+  - rfc4287
+  - google-sitemap-formats
 ---
 
 
@@ -21,14 +24,14 @@ Validates that RSS/Atom entries carry stable, unique identifiers and that the UR
 
 ## Claimed mechanism (falsifiable)
 
-RFC 4287 makes atom:id mandatory, exactly one per entry, 'permanent, universally unique' and unchanging 'across different instantiations of the entry'; atom:updated is likewise mandatory and must mark the last significant modification. Ingestion pipelines dedupe and diff on these values. Falsifiable claim: when ids are unstable (regenerated per build, or derived from a URL that includes tracking parameters), every poll re-emits the whole feed as new, and consumers either re-ingest duplicates or rate-limit the feed away; and when an entry's <link>/atom:link href differs from the target page's rel=canonical, an agent quoting the feed cites a URL that redirects or is consolidated away, breaking attribution. Both are directly measurable without knowing anything about the consumer.
+RFC 4287 makes atom:id mandatory, exactly one per entry, 'permanent, universally unique' and unchanging 'across different instantiations of the entry'; atom:updated is likewise mandatory and must mark the last significant modification. Ingestion pipelines dedupe and diff on these values. Falsifiable claim, in two parts. When ids are unstable — regenerated per build, or derived from a URL that includes tracking parameters — every poll re-emits the whole feed as new, and consumers either re-ingest duplicates or rate-limit the feed away. And when an entry's <link> or atom:link href differs from the target page's rel=canonical, an agent quoting the feed cites a URL that redirects or is consolidated away, which breaks attribution. Both are directly measurable without knowing anything about the consumer.
 
 ## Evidence
 
 - **[RFC 4287 — The Atom Syndication Format](https://www.rfc-editor.org/rfc/rfc4287)** — IETF (spec, URL verified 2026-08-20)
-  - Sec 4.1.2: atom:entry MUST contain exactly one atom:id (permanent, universally unique IRI that 'must not change across different instantiations of the entry') and exactly one atom:updated ('most recent modification time that the publisher considers significant'). atom:entry MUST contain atom:summary when atom:content carries a src attribute (and is thus empty), or when content is Base64-encoded. MUST NOT contain more than one atom:summary.
+  - Sec 4.1.2: atom:entry MUST contain exactly one atom:id and exactly one atom:updated. The id is a permanent, universally unique IRI that 'must not change across different instantiations of the entry'. The updated time is the 'most recent modification time that the publisher considers significant'. atom:entry MUST also contain atom:summary in two cases: when atom:content carries a src attribute, and is thus empty, and when content is Base64-encoded. MUST NOT contain more than one atom:summary.
 - **[Build and submit a sitemap](https://developers.google.com/search/docs/crawling-indexing/sitemaps/build-sitemap)** — Google Search Central (vendor-doc, URL verified 2026-08-20)
-  - Direct quote: 'Google uses the <lastmod> value if it's consistently and verifiably (for example by comparing to the last modification of the page) accurate.' lastmod 'should reflect the date and time of the last significant update to the page… an update to the copyright date is not [significant].' priority and changefreq are ignored. 50MB uncompressed / 50,000 URL limit per sitemap file.
+  - Direct quote: 'Google uses the <lastmod> value if it's consistently and verifiably (for example by comparing to the last modification of the page) accurate.' The value 'should reflect the date and time of the last significant update to the page… an update to the copyright date is not [significant].' priority and changefreq are ignored. The limit per sitemap file is 50MB uncompressed and 50,000 URLs.
 
 ## Competitor coverage
 

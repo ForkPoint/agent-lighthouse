@@ -1,0 +1,117 @@
+/* `source(none)` switches off Tailwind v4's automatic source detection, which
+   would otherwise walk `packages/website/` and find `index.html` — the 478 KB
+   page this site replaces, still checked in until a later task deletes it.
+   Scanning it put classes no component uses into every page's stylesheet.
+   `@source` is resolved relative to this file, so `../` is `src/`. */
+@import "tailwindcss" source(none);
+@source "../";
+
+/* Brand tokens, taken from the page this site replaces: indigo-600 accent,
+   slate-950 surface, slate-900 raised, slate-800 borders. Tailwind v4 has no
+   config file — `@theme` is where tokens live, and each `--color-*` entry also
+   becomes a utility (`bg-surface`, `border-border-subtle`, `text-brand`). */
+@theme {
+  --color-brand: #4f46e5;
+  --color-brand-soft: #6366f1;
+  --color-surface: #020617;
+  --color-surface-raised: #0f172a;
+  --color-border-subtle: #1e293b;
+
+  /* The old page pulled Inter and JetBrains Mono from Google Fonts. A site that
+     audits other sites for third-party weight ships neither: system stacks
+     render immediately and cost no request. */
+  --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: ui-monospace, "JetBrains Mono", Menlo, monospace;
+}
+
+/* The reference site is dark-only (`<html class="dark">` with no toggle) and so
+   is this one. Declaring the scheme lets the UA paint form controls, scrollbars
+   and the canvas to match instead of flashing white before the CSS lands. */
+:root { color-scheme: dark; }
+
+html { scroll-behavior: smooth; }
+body { background: var(--color-surface); color: #e2e8f0; }
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+}
+
+@layer components {
+  /* Hand-rolled article typography. `@tailwindcss/typography` would do this, but
+     the markdown here is one narrow, known shape (dossiers), so a ~40-line layer
+     beats a dependency. Kept in the components layer so utilities still win. */
+  .prose {
+    color: #cbd5e1;
+    line-height: 1.7;
+  }
+  .prose > * + * { margin-top: 1rem; }
+  .prose h1, .prose h2, .prose h3, .prose h4 {
+    color: #f8fafc;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    scroll-margin-top: 5rem;
+  }
+  .prose h1 { font-size: 1.875rem; }
+  .prose h2 {
+    font-size: 1.375rem;
+    margin-top: 2.5rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid var(--color-border-subtle);
+  }
+  .prose h3 { font-size: 1.125rem; margin-top: 2rem; }
+  .prose h4 { font-size: 1rem; margin-top: 1.5rem; }
+  /* brand-soft clears 4.5:1 against the surface. The two places it sat on a 10%
+     brand wash did not, and use indigo-400 there instead. */
+  .prose a {
+    color: var(--color-brand-soft);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+  .prose a:hover { color: #a5b4fc; }
+  .prose strong { color: #f1f5f9; font-weight: 600; }
+  .prose ul, .prose ol { padding-left: 1.5rem; }
+  .prose ul { list-style: disc; }
+  .prose ol { list-style: decimal; }
+  .prose li + li { margin-top: 0.375rem; }
+  .prose code {
+    font-family: var(--font-mono);
+    font-size: 0.85em;
+    color: #a5b4fc;
+    background: var(--color-surface-raised);
+    border: 1px solid var(--color-border-subtle);
+    border-radius: 0.25rem;
+    padding: 0.1rem 0.35rem;
+  }
+  .prose pre {
+    font-family: var(--font-mono);
+    font-size: 0.8125rem;
+    background: var(--color-surface-raised);
+    border: 1px solid var(--color-border-subtle);
+    border-radius: 0.75rem;
+    padding: 1rem;
+    overflow-x: auto;
+  }
+  /* A code span inside a block is already framed by the block. */
+  .prose pre code { background: none; border: 0; padding: 0; color: inherit; }
+  .prose blockquote {
+    border-left: 3px solid var(--color-brand);
+    padding-left: 1rem;
+    color: #94a3b8;
+  }
+  .prose hr { border-color: var(--color-border-subtle); margin: 2rem 0; }
+  /* Wide dossier tables scroll inside the article rather than the page. */
+  .prose table {
+    display: block;
+    overflow-x: auto;
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.875rem;
+  }
+  .prose th, .prose td {
+    border: 1px solid var(--color-border-subtle);
+    padding: 0.5rem 0.75rem;
+    text-align: left;
+    vertical-align: top;
+  }
+  .prose th { background: var(--color-surface-raised); color: #e2e8f0; font-weight: 600; }
+}

@@ -8,6 +8,11 @@ tier: scored
 disposition: "new in v2 — graduated from proposal 2026-08-23"
 reviewed: 2026-08-20
 graduated: 2026-08-23
+sources:
+  - greshake-ipi
+  - google-robots-meta-tag
+  - google-spam
+  - eia-iclr25
 ---
 
 
@@ -17,7 +22,7 @@ graduated: 2026-08-23
 
 ## What it checks
 
-Probe whether the site renders unescaped URL input back into its own page text, title, meta description, canonical link, or JSON-LD — which would let any third party mint a URL on the audited domain that shows arbitrary attacker instructions to a visiting agent.
+Probe whether the site renders unescaped URL input back into its own page text, title, meta description, canonical link or JSON-LD. That would let any third party mint a URL on the audited domain which shows arbitrary attacker instructions to a visiting agent.
 
 ## Claimed mechanism (falsifiable)
 
@@ -28,9 +33,9 @@ Agents and answer engines weight a source by domain authority, and a reflected-i
 - **[Not what you've signed up for: Compromising Real-World LLM-Integrated Applications with Indirect Prompt Injection](https://arxiv.org/abs/2302.12173)** — arXiv / ACM AISec (study, URL verified 2026-08-20)
   - Foundational indirect prompt injection paper: adversaries 'remotely exploit LLM-integrated applications by strategically injecting prompts into data likely to be retrieved.' Demonstrated against Bing Chat (GPT-4) and code-completion engines. Establishes retrieved web content as the threat channel.
 - **[Robots meta tag, data-nosnippet, and X-Robots-Tag specifications](https://developers.google.com/search/docs/crawling-indexing/robots-meta-tag)** — Google Search Central (vendor-doc, URL verified 2026-08-20)
-  - data-nosnippet marks textual parts of a page as excluded from snippets across web search, Images, Discover AND AI Overviews. Valid only on <span>, <div>, <section>; boolean (any value, including 'false', means on); must be present at DOM creation, not added by JS. This is the documented consumer behavior linking a page-level marker to an AI answer surface.
+  - data-nosnippet marks textual parts of a page as excluded from snippets across web search, Images, Discover and AI Overviews. Valid only on <span>, <div>, <section>; boolean (any value, including 'false', means on); must be present at DOM creation, not added by JS. This is the documented consumer behavior linking a page-level marker to an AI answer surface.
 - **[Spam policies for Google web search — cloaking, hidden text and links](https://developers.google.com/search/docs/essentials/spam-policies)** — Google Search Central (vendor-doc, URL verified 2026-08-20)
-  - Cloaking = 'presenting different content to users and search engines'. Hidden text/links = 'placing content on a page in a way solely to manipulate search engines and not to be easily viewable by human visitors', with an enumerated technique list: white text on white background, text behind images, CSS off-screen positioning, font size or opacity set to 0, single-character links. Also names the legitimate exceptions (accordions, tabs, sliders, tooltips, screen-reader-only text) — which is exactly the false-positive allowlist a detector needs.
+  - Cloaking = 'presenting different content to users and search engines'. Hidden text and links are 'placing content on a page in a way solely to manipulate search engines and not to be easily viewable by human visitors'. The technique list is enumerated: white text on a white background, text behind images, CSS off-screen positioning, font size or opacity set to 0, and single-character links. Also names the legitimate exceptions (accordions, tabs, sliders, tooltips, screen-reader-only text) — which is exactly the false-positive allowlist a detector needs.
 - **[EIA: Environmental Injection Attack on Generalist Web Agents](https://arxiv.org/abs/2409.11295)** — arXiv / ICLR 2025 (study, URL verified 2026-08-20)
   - Injects content into the page environment that blends into the surrounding site. Up to 70% ASR for stealing specific PII, 16% for extracting the full user request, over 177 Mind2Web action steps. Authors report EIA is hard to detect and that well-adapted injections survive human inspection — i.e. detection has to be mechanical, not eyeballed.
 

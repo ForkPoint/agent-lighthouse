@@ -42,7 +42,7 @@ export class WebsubHubAdvertisementAudit extends Audit {
       fix: 'Advertise the hub and the canonical topic URL in the feed’s `Link:` response headers, which is where a subscriber looks first. Emit exactly one `rel=self` with an absolute URL identical to the address the feed is served from, and at least one `rel=hub` over HTTPS. If you run no hub, a hosted one (Google’s pubsubhubbub, Superfeedr, websub.rocks) needs only the two link relations.',
       effort: 'easy',
       docsUrl:
-        'https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/audits/machine-discovery/websub-hub-advertisement.md',
+        'https://forkpoint.github.io/agent-lighthouse/audits/machine-discovery/websub-hub-advertisement/',
       tags: ['websub', 'feeds', 'push', 'advisory'],
     },
   };

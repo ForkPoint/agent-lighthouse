@@ -5,7 +5,7 @@ import { AuditMetaSchema } from './schemas';
 
 const NOTICE = {
   notice: 'No consumer reads this signal.',
-  link: 'https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/sunset/NOT-A-FACTOR.md#accessibilityskip-nav',
+  link: 'https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/sunset/not-a-factor.md#accessibilityskip-nav',
 };
 
 class DeprecatedAudit extends Audit {
@@ -20,7 +20,7 @@ class DeprecatedAudit extends Audit {
     defaultPriority: 'low',
     evidenceGrade: 'D',
     tier: 'informative',
-    dossier: 'docs/evidence/sunset/NOT-A-FACTOR.md',
+    dossier: 'docs/evidence/sunset/not-a-factor.md',
     deprecated: NOTICE,
   };
   audit(): AuditResult {

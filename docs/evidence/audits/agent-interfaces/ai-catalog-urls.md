@@ -1,14 +1,18 @@
 ---
 audit: agent-interfaces/ai-catalog-urls
-audit_id: "5.9"
 category: agent-interfaces
 source_file: packages/core/src/audits/agent-interfaces/ai-catalog-urls.ts
 slug: ai-catalog-urls
-review_verdict: delete
-severity: high
 evidence_grade: B
 disposition: "kept — rewritten to ARD entries[].url liveness 2026-08-22 (Plan 4, Task 10)"
 reviewed: 2026-08-22
+signals:
+  - name: "ARD `entries[].url` dereferenced by real clients"
+    grade: B
+    domain: agent-tools
+sources:
+  - hf-discover
+  - ard-spec-repo
 ---
 
 # ai-catalog-urls (`5.9`)
@@ -62,7 +66,7 @@ Closing the false-positive risks listed above:
 
 ### Grade decision: stays **B**, tier `scored`, weight 0.6
 
-Source: the [redemption dossier's verdict](../../deletions/agent-tools/ai-catalog-urls.md) — "redeemed — keep with rewrite (grade B)" — carried into the [REWORK-TODO entry](../../../../packages/core/src/audits/REWORK-TODO.md). `entries[].url` is dereferenced by real code (hf-discover's `navigate()` follows entry urls into nested catalogs and federated registries; HelgeSverre/ardvark and iFurySt/OpenARD probe and verify them), which makes the consequence of a dead url mechanical and immediate. But no vendor documents penalizing a site for one, and the federation-following consumer is user-driven rather than a hosted crawler — grade B, not A. Per the §4 weight law `weightForGrade('B', 'scored') = 0.6`; `scoreDisplayMode` stays `ternary`; `defaultPriority` stays `medium`.
+Source: the [redemption dossier's verdict](../../deletions/agent-tools/ai-catalog-urls.md) — "redeemed — keep with rewrite (grade B)" — carried into the [REWORK-TODO entry](../../../../packages/core/src/audits/rework-todo.md). `entries[].url` is dereferenced by real code (hf-discover's `navigate()` follows entry urls into nested catalogs and federated registries; HelgeSverre/ardvark and iFurySt/OpenARD probe and verify them), which makes the consequence of a dead url mechanical and immediate. But no vendor documents penalizing a site for one, and the federation-following consumer is user-driven rather than a hosted crawler — grade B, not A. Per the §4 weight law `weightForGrade('B', 'scored') = 0.6`; `scoreDisplayMode` stays `ternary`; `defaultPriority` stays `medium`.
 
 ### Deviations
 
@@ -72,7 +76,19 @@ Source: the [redemption dossier's verdict](../../deletions/agent-tools/ai-catalo
 
 ## Evidence
 
-_No dedicated evidence signal was researched for this audit in the 2026-08-20 pass; the grade comes from the adversarial redemption research below._
+### Signal: ARD `entries[].url` dereferenced by real clients — grade B (agent-tools)
+
+**Mechanism:** A discovery client follows an entry's `url` to reach the artifact it advertises. For catalog- or registry-typed entries, it follows that url into a nested catalog. One dead url therefore does not degrade a listing. It truncates a whole branch of discovery.
+
+**Grade: B** — the dereferencing is done by real, readable code in more than one implementation, which is stronger than a convention. It is not A for two reasons: no vendor documents a penalty for a dead url, and the traversing client is user-driven rather than a hosted crawler.
+
+**Evidence:**
+- `hf-discover`'s `navigate()` uses an entry's `url` to traverse into nested catalogs and federated registries, fetching entries whose `type` is a catalog or registry media type — https://github.com/huggingface/hf-discover (verified 2026-08-24)
+- Independent implementations check liveness explicitly: `HelgeSverre/ardvark` ships `internal/crawler` and `internal/probe`, and `iFurySt/OpenARD` ships `internal/cli/verify.go`.
+- Live manifests point at operational endpoints an agent would call immediately: Neon's ten entries are MCP servers and skills, Weaviate's nine are docs, agent skills, an OpenAPI description and a sitemap, and Shopware's is a Store-API MCP server url.
+- ARD §4.2 requires exactly one of `url` or `data` per entry, so an entry that embeds its artifact has no endpoint to dereference and is fully conformant — https://github.com/ards-project/ard-spec (verified 2026-08-24)
+
+**Counter-evidence:** No vendor document states that a crawler penalises or downranks a site for a dead catalog url. The consequence is mechanical rather than a published ranking signal: traversal stops, and the tool call fails. The federation-following behaviour also lives in a user-driven client. Hugging Face's hosted server states that "Navigation is intentionally not exposed by the hosted server". ARD itself is a draft (v0.9). The inline-`data` case above is also a live false-positive risk that any liveness check must respect. The pre-2026-08-22 implementation was unreachable on real sites for the opposite reason. It aborted unless the manifest exposed a `services` array, which no spec or deployment uses.
 
 ## Adversarial redemption research (2026-08-21)
 
@@ -82,4 +98,4 @@ This audit was a delete candidate and went through dedicated adversarial researc
 
 - 2026-08-20 — code review (11-agent workflow) + evidence research (12-domain workflow, 400 sources).
 - 2026-08-21 — adversarial redemption research; user accepted verdict (disposition above).
-- 2026-08-22 — rewritten (Plan 4, Task 10): probes `entries[].url` (inline `data` entries skipped), accepts auth-gated 401/403/405/429 as reachable, `isSafeUrl()`-gated, concurrency capped at 5, absence downgraded from `fail` to `na`. Grade **B**, tier `scored`, weight 0.6 — unchanged. `TODO(redeem)` header removed; entry dropped from REWORK-TODO.md.
+- 2026-08-22 — rewritten (Plan 4, Task 10): probes `entries[].url` (inline `data` entries skipped), accepts auth-gated 401/403/405/429 as reachable, `isSafeUrl()`-gated, concurrency capped at 5, absence downgraded from `fail` to `na`. Grade **B**, tier `scored`, weight 0.6 — unchanged. `TODO(redeem)` header removed; entry dropped from rework-todo.md.

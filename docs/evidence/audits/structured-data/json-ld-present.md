@@ -1,14 +1,39 @@
 ---
 audit: structured-data/json-ld-present
-audit_id: "3.1"
 category: structured-data
 source_file: packages/core/src/audits/structured-data/json-ld-present.ts
 slug: json-ld-present
-review_verdict: fix
-severity: high
 evidence_grade: A
 disposition: "keep — fix required"
 reviewed: 2026-08-21
+recommended_tier: scored
+consumers:
+  - Googlebot / Google Search
+  - Google Merchant Center website crawl
+  - Applebot (archived doc)
+  - Microsoft NLWeb (MCP server)
+  - "Bingbot (recommended, mechanism unstated)"
+signals:
+  - name: JSON-LD structured data presence and its effect on AI citation / visibility
+    grade: A
+    domain: structured-data
+sources:
+  - google-intro-structured-data
+  - w3c-json-ld-11
+  - schemaorg-about
+  - webdatacommons-2024-stats
+  - ahrefs-schema-ai-citations
+  - searchviu-schema-ai-fetch-test
+  - arxiv-structured-linked-data-memory-layer
+  - vercel-rise-of-ai-crawler
+  - google-ai-features-trust
+  - google-ai-optimization-mythbusting
+  - web-dev-agent-friendly-sites
+  - ahrefs-brand-visibility-correlations
+  - nlweb-repo-howto
+  - apple-app-search-web-markup
+  - microsoft-ads-ai-search-optimization
+  - google-merchant-automated-feeds
 ---
 
 # json-ld-present (`3.1`)
@@ -45,14 +70,13 @@ The presence check for JSON-LD is the right foundation audit, but it is the only
 
 ### Signal: JSON-LD structured data presence and its effect on AI citation / visibility — grade A (structured-data)
 
-**Mechanism:** Machine-parseable schema.org JSON-LD embedded in the server-returned HTML is extracted and used by named consumers (Googlebot for rich results and knowledge understanding, Google Merchant Center's website crawl, Applebot for Spotlight/Siri, Microsoft NLWeb as its MCP data layer). The SEPARATE claim that adding JSON-LD raises a page's citation rate in AI answer engines is FALSE for pages already in the index. A third claim — that JSON-LD injected only by client-side JavaScript reaches AI consumers — is also FALSE.
+**Mechanism:** Machine-parseable schema.org JSON-LD embedded in the server-returned HTML is extracted and used by named consumers (Googlebot for rich results and knowledge understanding, Google Merchant Center's website crawl, Applebot for Spotlight/Siri, Microsoft NLWeb as its MCP data layer). The SEPARATE claim that adding JSON-LD raises a page's citation rate in AI answer engines is false for pages already in the index. A third claim — that JSON-LD injected only by client-side JavaScript reaches AI consumers — is also false.
 
-**Evidence:** Consumption is A-documented: Google states plainly that "Google uses structured data that it finds on the web to understand the content of the page" (google-intro-structured-data); Merchant Center's automated feeds are literally built by crawling schema.org markup (google-merchant-automated-feeds); Apple's Applebot doc enumerates supported schema.org types (apple-app-search-web-markup); NLWeb is built on "Schema.org and related semi-structured formats" and exposes them over MCP (nlweb-github). JSON-LD 1.1 is a W3C Recommendation (w3c-json-ld-11) and adoption is enormous — 834M URLs across 11.6M domains, 51.25% of crawled pages carry some structured data (webdatacommons-2024-stats). The CITATION-UPLIFT claim, however, is refuted by the best available experiment: Ahrefs' matched difference-in-differences on 1,885 pages adding JSON-LD vs ~4,000 controls found AI Mode +2.4% and ChatGPT +2.2% (both indistinguishable from zero) and AI Overviews −4.6% (significant, ~1-in-2,500 by chance) (ahrefs-schema-ai-citations). searchVIU's controlled fetch test found a price present only in JSON-LD was retrieved by 0 of 5 systems (ChatGPT, Claude, Gemini, Perplexity, AI Mode) (searchviu-schema-ai-fetch-test). arXiv 2603.10700 found "JSON-LD markup alone provides only modest improvements" to RAG, while purpose-built entity pages gave ~+29.6%. The rendering constraint is critical and audit-actionable: Googlebot CAN read JS-injected JSON-LD (google-intro-structured-data), but Merchant Center explicitly cannot ("can't be generated with JavaScript after the page has loaded") and no major AI crawler executes JavaScript at all (vercel-ai-crawler-rendering). SCORE this as machine-readability hygiene — presence, validity, server-rendering, and agreement with visible text — and never as an AI-citation lever.
+**Grade: A** — Consumption is documented, and that is the only half the grade covers. Google states plainly that "Google uses structured data that it finds on the web to understand the content of the page", Merchant Center's automated feeds are built by crawling schema.org markup, and Applebot's documentation enumerates the types it supports. Named consumers reading the format is the grade-A bar. A separate and much weaker claim — that adding JSON-LD raises a page's citation rate — is not what is graded here. Google contradicts that one directly: "Structured data isn't required for generative AI search, and there's no special schema.org markup you need to add." So the audit checks that machine-readable markup exists and parses, not that it buys visibility.
 
-**Counter-evidence:** Google's own AI docs are unambiguous: "Structured data isn't required for generative AI search, and there's no special schema.org markup you need to add" and "You don't need to create new machine readable files, AI text files, or markup to appear in these features" (google-ai-optimization-guide, google-ai-features-doc). Google's agent-facing guidance (web-dev-agent-friendly-sites) never mentions schema.org, naming screenshots, DOM and the accessibility tree instead. The largest AI-visibility correlation study (75k brands) did not even measure schema as a factor (ahrefs-brand-visibility-correlations). The widely-repeated "53% of AI-cited pages have schema, ~3x the rate of uncited pages" statistic is confounded — the Ahrefs authors attribute it to site quality, not markup. Note the honest limit on the null result: Ahrefs sampled only pages already receiving 100+ AI Overview citations, so it cannot rule out an effect on first-time discovery, parsing or indexing.
-**Consumers:** Googlebot / Google Search, Google Merchant Center website crawl, Applebot (archived doc), Microsoft NLWeb (MCP server), Bingbot (recommended, mechanism unstated) · **Recommended tier:** scored
+**Evidence:** Consumption is A-documented. Google states plainly that "Google uses structured data that it finds on the web to understand the content of the page" (google-intro-structured-data). Merchant Center's automated feeds are built by crawling schema.org markup (google-merchant-automated-feeds). Apple's Applebot doc enumerates the supported schema.org types (apple-app-search-web-markup). And NLWeb is built on "Schema.org and related semi-structured formats", which it exposes over MCP (nlweb-github). JSON-LD 1.1 is a W3C Recommendation (w3c-json-ld-11) and adoption is enormous — 834M URLs across 11.6M domains, 51.25% of crawled pages carry some structured data (webdatacommons-2024-stats). The citation-uplift claim, however, is refuted by the best available experiment. Ahrefs ran a matched difference-in-differences on 1,885 pages that added JSON-LD against about 4,000 controls. AI Mode came out at +2.4% and ChatGPT at +2.2%, both indistinguishable from zero. AI Overviews came out at −4.6%, which is significant at about 1-in-2,500 by chance (ahrefs-schema-ai-citations). searchVIU's controlled fetch test found that a price present only in JSON-LD was retrieved by 0 of 5 systems: ChatGPT, Claude, Gemini, Perplexity and AI Mode (searchviu-schema-ai-fetch-test). arXiv 2603.10700 found "JSON-LD markup alone provides only modest improvements" to RAG, while purpose-built entity pages gave about +29.6%. The rendering constraint is critical, and audit-actionable. Googlebot can read JS-injected JSON-LD (google-intro-structured-data). Merchant Center explicitly cannot: markup "can't be generated with JavaScript after the page has loaded". No major AI crawler executes JavaScript at all (vercel-ai-crawler-rendering). Score this as machine-readability hygiene — presence, validity, server-rendering, and agreement with visible text — and never as an AI-citation lever.
 
-**Sources:** [Intro to how structured data markup works](https://developers.google.com/search/docs/appearance/structured-data/intro-structured-data) · [JSON-LD 1.1 — A JSON-based Serialization for Linked Data](https://www.w3.org/TR/json-ld11/) · [About schema.org](https://schema.org/docs/about.html) · [Web Data Commons Extraction Report — October 2024 Common Crawl Corpus](https://webdatacommons.org/structureddata/2024-12/stats/stats.html) · [We Tracked 1,885 Pages Adding Schema. AI Citations Barely Moved.](https://ahrefs.com/blog/schema-ai-citations/) · [Schema Markup and AI in 2025: What ChatGPT, Claude, Perplexity & Gemini Really See](https://www.searchviu.com/en/schema-markup-and-ai-in-2025-what-chatgpt-claude-perplexity-gemini-really-see/) · [Structured Linked Data as a Memory Layer for Agent-Orchestrated Retrieval](https://arxiv.org/abs/2603.10700) · [The rise of the AI crawler](https://vercel.com/blog/the-rise-of-the-ai-crawler) · [AI Features and Your Website](https://developers.google.com/search/docs/appearance/ai-features) · [Google's Guide to Optimizing for Generative AI Features on Google Search](https://developers.google.com/search/docs/fundamentals/ai-optimization-guide) · [Build agent-friendly websites](https://web.dev/articles/ai-agent-site-ux) · [Top Brand Visibility Factors in ChatGPT, AI Mode, and AI Overviews (75k Brands Studied)](https://ahrefs.com/blog/ai-brand-visibility-correlations/) · [NLWeb — reference implementation](https://github.com/nlweb-ai/NLWeb) · [App Search Programming Guide: Mark Up Web Content](https://developer.apple.com/library/archive/documentation/General/Conceptual/AppSearch/WebContent.html) · [Optimizing Your Content for Inclusion in AI Search Answers](https://about.ads.microsoft.com/en/blog/post/october-2025/optimizing-your-content-for-inclusion-in-ai-search-answers) · [Add products automatically from your online store (automated feeds / website crawl)](https://support.google.com/merchants/answer/7538732)
+**Counter-evidence:** Google's own AI docs are unambiguous. "Structured data isn't required for generative AI search, and there's no special schema.org markup you need to add." And: "You don't need to create new machine readable files, AI text files, or markup to appear in these features" (google-ai-optimization-guide, google-ai-features-doc). Google's agent-facing guidance (web-dev-agent-friendly-sites) never mentions schema.org, naming screenshots, DOM and the accessibility tree instead. The largest AI-visibility correlation study (75k brands) did not even measure schema as a factor (ahrefs-brand-visibility-correlations). The widely-repeated "53% of AI-cited pages have schema, ~3x the rate of uncited pages" statistic is confounded — the Ahrefs authors attribute it to site quality, not markup. Note the honest limit on the null result: Ahrefs sampled only pages already receiving 100+ AI Overview citations, so it cannot rule out an effect on first-time discovery, parsing or indexing.
 
 ## Review history
 

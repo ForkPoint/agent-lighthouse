@@ -1,14 +1,26 @@
 ---
 audit: access-crawl-control/crawl-delay
-audit_id: "2.24"
 category: access-crawl-control
 source_file: packages/core/src/audits/access-crawl-control/crawl-delay.ts
 slug: crawl-delay
-review_verdict: fix
-severity: high
 evidence_grade: C
 disposition: "keep — fix required"
 reviewed: 2026-08-21
+recommended_tier: informative
+consumers:
+  - ClaudeBot / Claude-User / Claude-SearchBot (Anthropic)
+  - YouBot
+  - Bingbot (historical)
+signals:
+  - name: Crawl-delay directive in robots.txt
+    grade: C
+    domain: robots-ai-crawlers
+sources:
+  - rfc9309
+  - google-robots-txt-spec
+  - amazonbot-docs
+  - anthropic-crawlers
+  - youbot-docs
 ---
 
 # crawl-delay (`2.24`)
@@ -46,14 +58,11 @@ Produces frequent, confident, high-priority FAILs on correctly configured sites.
 
 ### Signal: Crawl-delay directive in robots.txt — grade C (robots-ai-crawlers)
 
-**Mechanism:** A Crawl-delay line throttles fetch rate only for the specific crawlers that implement it; it is not part of RFC 9309, and the largest consumers explicitly do not support it, so its presence cannot be scored as a general readiness improvement.
+**Mechanism:** A Crawl-delay line throttles fetch rate only for the specific crawlers that implement it. It is not part of RFC 9309, and the largest consumers explicitly do not support it. Its presence cannot be scored as a general readiness improvement.
 
-**Evidence:** Support is genuinely split and each side is vendor-documented. SUPPORTING: Anthropic explicitly names support for the 'Crawl-delay extension to robots.txt' for its bots; You.com states 'YouBot fully respects robots.txt directives, including user-agent specific rules and crawl-delay settings'. NOT SUPPORTING: Google states 'Google supports the following fields (other fields such as crawl-delay aren't supported)' — only user-agent, allow, disallow and sitemap; Amazon states of Amazonbot 'They do not support the crawl-delay directive.'
+**Evidence:** Support is genuinely split and each side is vendor-documented. Supporting: Anthropic explicitly names support for the 'Crawl-delay extension to robots.txt' for its bots; You.com states 'YouBot fully respects robots.txt directives, including user-agent specific rules and crawl-delay settings'. Not supporting: Google states 'Google supports the following fields (other fields such as crawl-delay aren't supported)' — only user-agent, allow, disallow and sitemap; Amazon states of Amazonbot 'They do not support the crawl-delay directive.'
 
 **Counter-evidence:** RFC 9309 defines no crawl-delay directive at all — the only accommodation is §2.2.4, which merely permits crawlers to 'interpret other records that are not part of the robots.txt protocol'. There is no interoperable value semantics (seconds vs. requests-per-second is unspecified), no vendor consensus, and the two highest-volume AI crawlers in Cloudflare's data (GPTBot, ClaudeBot's operator aside) publish no crawl-delay commitment. OpenAI, Perplexity, Meta, Mistral and DuckDuckGo document no crawl-delay support in either direction. A crawl-delay line is at best a per-vendor hint; never score its presence or absence.
-**Consumers:** ClaudeBot / Claude-User / Claude-SearchBot (Anthropic), YouBot, Bingbot (historical) · **Recommended tier:** informative
-
-**Sources:** [RFC 9309: Robots Exclusion Protocol](https://www.rfc-editor.org/rfc/rfc9309.html) · [Robots.txt Specifications (How Google interprets the robots.txt specification)](https://developers.google.com/search/docs/crawling-indexing/robots/robots_txt) · [Amazonbot](https://developer.amazon.com/amazonbot) · [Does Anthropic crawl data from the web, and how can site owners block the crawler?](https://support.claude.com/en/articles/8896518-does-anthropic-crawl-data-from-the-web-and-how-can-site-owners-block-the-crawler) · [YouBot — You.com documentation](https://you.com/docs/youbot)
 
 ## Review history
 

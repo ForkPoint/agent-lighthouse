@@ -1,0 +1,88 @@
+---
+import GradeBadge from './GradeBadge.astro';
+import TierBadge from './TierBadge.astro';
+import { categoryPath } from '../lib/routes';
+import type { AuditRecord } from '../lib/registry';
+
+/**
+ * The registry's record of one audit, as a card beside the page.
+ *
+ * These five facts decide what the audit does to a score, and a reader
+ * comparing two audits is comparing exactly them. In the badge strip they read
+ * as a sentence and had to be parsed left to right; here each fact sits in the
+ * same place on all 215 pages.
+ *
+ * Kept short on purpose. The card shares a 13rem rail with the page contents,
+ * so a row per fact — label above value — pushed the contents list off the
+ * screen. The badges label themselves, which leaves two rows for the two
+ * numbers.
+ *
+ * The prose stays in the article. `How it scores` runs to 369 words on the
+ * longest dossier and reads as an argument, not as a field — and the card is
+ * named `At a glance` rather than `How it scores` so that a reader moving by
+ * heading does not meet the same name twice on one page.
+ *
+ * Deliberately carries no Pagefind filter: the strip in the content column
+ * still declares `category:` and `grade:`, and a filter declared twice on one
+ * page would be collected twice.
+ */
+interface Props {
+  audit: AuditRecord;
+  /** The audit's implementation, on the default branch. */
+  sourceUrl: string;
+  /**
+   * The heading's id, because the card renders twice on every page — once in
+   * the rail and once in the compact disclosure — and only one of the two may
+   * own a given id.
+   */
+  headingId?: string;
+}
+
+const { audit, sourceUrl, headingId = 'audit-facts-heading' } = Astro.props;
+
+const WEIGHT_TITLES: Record<string, string> = {
+  scored: 'The share of its category this audit contributes, set by its evidence grade.',
+  informative: 'Advisory audits carry no weight: the result is reported, never scored.',
+  experimental: 'Experimental audits carry no weight while the rule is validated.',
+};
+---
+<aside
+  class="rounded-lg border border-border-subtle bg-surface-raised/40 px-3.5 py-3"
+  aria-labelledby={headingId}
+>
+  <h2 id={headingId} class="text-xs font-bold uppercase tracking-wider text-slate-400">
+    At a glance
+  </h2>
+
+  {/* The category is the one long value, so it gets the full width and the two
+      badges get the line under it. Both badges name their own field — `GRADE A`,
+      `SCORED` — so a `dt` beside them would print the field twice. */}
+  <a
+    class="mt-2 block text-sm font-semibold leading-snug text-slate-200 transition-colors hover:text-white"
+    href={categoryPath(audit.category)}
+  >{audit.categoryTitle}</a>
+  <div class="mt-2 flex flex-wrap items-center gap-1.5">
+    <GradeBadge grade={audit.evidenceGrade} />
+    <TierBadge tier={audit.tier} />
+  </div>
+
+  {/* The two numbers read as a field and a value, so they get rows. */}
+  <dl class="mt-3 border-t border-border-subtle pt-2 text-xs">
+    <div class="flex items-baseline justify-between gap-3 py-0.5">
+      <dt class="text-slate-400">Weight</dt>
+      <dd class="font-semibold tabular-nums text-slate-200" title={WEIGHT_TITLES[audit.tier]}>
+        {audit.weight}
+      </dd>
+    </div>
+    <div class="flex items-baseline justify-between gap-3 py-0.5">
+      <dt class="text-slate-400">Priority</dt>
+      <dd class="font-semibold capitalize text-slate-200">{audit.priority}</dd>
+    </div>
+  </dl>
+
+  <a
+    href={sourceUrl}
+    rel="noopener"
+    class="mt-2 block border-t border-border-subtle pt-2 text-xs text-slate-400 underline decoration-slate-600 underline-offset-2 transition-colors hover:text-white"
+  >Read the source</a>
+</aside>

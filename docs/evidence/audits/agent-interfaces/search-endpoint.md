@@ -1,14 +1,15 @@
 ---
 audit: agent-interfaces/search-endpoint
-audit_id: "5.16, 3.4"
 category: agent-interfaces
 source_file: packages/core/src/audits/agent-interfaces/search-endpoint.ts
 slug: search-endpoint
-review_verdict: fix
-severity: high
 evidence_grade: C
 disposition: "merged 2026-08-22 (Plan 4, Task 7) — absorbs website-search-action (3.4)"
 reviewed: 2026-08-22
+sources:
+  - schema-searchaction
+  - google-sitelinks-searchbox-farewell
+  - openai-gpt-actions-openapi
 ---
 
 # search-endpoint (`5.16`, `3.4`)
@@ -84,7 +85,7 @@ That is textbook zombie adoption, and it is why this audit is `informative` and 
 
 ## Evidence
 
-_No dedicated evidence signal was researched for this audit in the 2026-08-20 pass. Its tier assignment falls to the taxonomy design; unproven mechanisms default to informative per the [evidence policy](../../POLICY.md)._
+_No dedicated evidence signal was researched for this audit in the 2026-08-20 pass. Its tier assignment falls to the taxonomy design; unproven mechanisms default to informative per the [evidence policy](../../policy.md)._
 
 ## Review history
 
@@ -94,15 +95,15 @@ _No dedicated evidence signal was researched for this audit in the 2026-08-20 pa
 - 2026-08-21 — approved: 3.4 merges away into 5.16 (v2 audit map).
 - 2026-08-22 — merged (Plan 4, Task 7); registry 160 → 159 for this fold.
 
-## Graded evidence (2026-08-21)
+## Evidence (2026-08-21)
 
 **Mechanism claim:** An AI agent reads a site's `WebSite` → `potentialAction` → `SearchAction` `urlTemplate` (or a `GET /search` operation in its OpenAPI spec), substitutes the query term, and fetches results instead of crawling the site.
 
-**Grade: C** — `SearchAction` is a ratified schema.org term with very large adoption, but its one documented consumer was retired by Google in 2024 and no vendor documents a named AI agent that reads it; the OpenAPI fallback inherits the unproven discovery leg graded in `5.1`.
+**Grade: C** — `SearchAction` is a ratified schema.org term with very large adoption. But its one documented consumer was retired by Google in 2024, and no vendor documents a named AI agent that reads it. The OpenAPI fallback inherits the unproven discovery leg graded in `5.1`.
 
 **Evidence:**
 - `SearchAction` is a stable schema.org type ("The act of searching for an object"), used as a `potentialAction` on `WebSite` with an `EntryPoint` `urlTemplate` carrying the query placeholder; schema.org's Google-index aggregation reports adoption on 10M+ domains — https://schema.org/SearchAction (verified 2026-08-21)
 - Google retired the only documented consumer of that markup, the sitelinks search box, in October 2024 ("Farewell, Sitelinks Search Box"); the feature no longer appears in Search results and its documentation was archived — https://developers.google.com/search/blog/2024/10/sitelinks-search-box (verified 2026-08-21)
 - The OpenAPI half of the signal depends on an agent obtaining the spec at all, which is documented only for developer-registered documents (GPT Actions, Copilot API plugins) — https://developers.openai.com/api/docs/actions/getting-started (verified 2026-08-21)
 
-**Counter-evidence:** No crawler or agent documentation from OpenAI, Anthropic, Google, Microsoft, or Perplexity states that a named agent reads `SearchAction` to query a site rather than crawling or using a general web-search tool; the documented server-side tools those vendors ship (for example Anthropic's `web_search`/`web_fetch`) query the open web, not a site's declared search template. High markup adoption therefore reflects legacy SEO practice, not proven agent consumption — a community convention with a plausible but unverified mechanism.
+**Counter-evidence:** No crawler or agent documentation from OpenAI, Anthropic, Google, Microsoft or Perplexity states that a named agent reads `SearchAction` to query a site, rather than crawling it or using a general web-search tool. The documented server-side tools those vendors ship — Anthropic's `web_search` and `web_fetch`, for example — query the open web, not a site's declared search template. High markup adoption therefore reflects legacy SEO practice, not proven agent consumption — a community convention with a plausible but unverified mechanism.

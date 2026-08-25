@@ -32,7 +32,7 @@
 
   Full rationale — steelmanned claim, why it is not a factor, verdict and sources
   per audit, plus the complete research dossiers — lives in
-  `docs/evidence/sunset/NOT-A-FACTOR.md`.
+  `docs/evidence/sunset/not-a-factor.md`.
 
   Also in this release: the exported `calculateCategoryScore` now excludes
   informative checks from its mean, so its return value changes for any input

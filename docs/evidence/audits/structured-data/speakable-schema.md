@@ -1,19 +1,24 @@
 ---
 audit: structured-data/speakable-schema
-audit_id: "3.9"
 category: structured-data
 source_file: packages/core/src/audits/structured-data/speakable-schema.ts
 slug: speakable-schema
-review_verdict: delete
-severity: high
-evidence_grade: A
+evidence_grade: B
 disposition: "kept — rewritten to a news/article-gated check 2026-08-22 (Plan 4, Task 12)"
 reviewed: 2026-08-22
+signals:
+  - name: "`speakable` selects the sentences an assistant reads aloud"
+    grade: B
+    domain: structured-data
+sources:
+  - applebot-doc
+  - google-speakable-doc
+  - schemaorg-speakable
 ---
 
 # speakable-schema (`3.9`)
 
-> structured-data · source `speakable-schema.ts` · evidence grade **A** · tier **scored** (weight 1.0) · rewritten from a site-wide binary check to a news/article-gated coverage check — see below
+> structured-data · source `speakable-schema.ts` · evidence grade **B** · tier **scored** (weight 0.6) · rewritten from a site-wide binary check to a news/article-gated coverage check — see below
 
 ## What it checks
 
@@ -72,7 +77,7 @@ The shipped description and impact text used to read: *"Voice-based AI agents (G
 
 ### Grade decision: stays **A**, tier `scored`, weight 1.0
 
-Source: the [redemption dossier's verdict](../../deletions/structured-data/speakable-schema.md) — "redeemed — keep with rewrite (grade A)" — and the [REWORK-TODO entry](../../../../packages/core/src/audits/REWORK-TODO.md) carrying it. Neither asks for a tier change; the required changes are to applicability and copy. Per the §4 weight law `weightForGrade('A', 'scored') = 1.0`. `scoreDisplayMode` moves `binary` → `ternary` to carry the new partial-coverage verdict (weight is nonzero, so `informative` would be wrong), and `defaultPriority` stays `low` — the feature is beta, US-English-only and news-only, which is upside rather than a deficiency anywhere else.
+Source: the [redemption dossier's verdict](../../deletions/structured-data/speakable-schema.md) — "redeemed — keep with rewrite (grade A)" — and the [REWORK-TODO entry](../../../../packages/core/src/audits/rework-todo.md) carrying it. Neither asks for a tier change; the required changes are to applicability and copy. Per the §4 weight law `weightForGrade('A', 'scored') = 1.0`. `scoreDisplayMode` moves `binary` → `ternary` to carry the new partial-coverage verdict (weight is nonzero, so `informative` would be wrong), and `defaultPriority` stays `low` — the feature is beta, US-English-only and news-only, which is upside rather than a deficiency anywhere else.
 
 ### Re-check trigger
 
@@ -80,14 +85,54 @@ Google announced on 2025-08-20 that "Over time, Gemini for Home will replace Goo
 
 ## Evidence
 
-_No dedicated evidence signal was researched for this audit in the 2026-08-20 pass, which is why its tier initially fell to the taxonomy default. The 2026-08-21 adversarial pass below supplied the missing evidence — a live vendor doc naming Google Assistant as the consumer — and the grade-A assignment supersedes that default._
+### Signal: `speakable` selects the sentences an assistant reads aloud — grade B (structured-data)
+
+**Mechanism:** Google Assistant answers a spoken news query by reading article text aloud with text-to-speech, and `speakable` names the sections it reads. An article without it has its excerpt chosen for it — often from navigation or boilerplate, rather than from the headline and summary.
+
+**Grade: B** — Google names the consuming agent on a live page, which is documented consumer behaviour, but the same page calls the feature beta and limits it to one country, one language and one content type. A vendor feature its own vendor labels provisional is a grade-B mechanism, not a grade-A one.
+
+**Evidence:**
+- Google Search Central's speakable page, last updated 2025-12-10, names the consumer and the behaviour. "When users ask for news about a specific topic, the Google Assistant returns up to three articles from around the web and supports audio playback using TTS for sections in the article with speakable structured data" — https://developers.google.com/search/docs/appearance/structured-data/speakable (verified 2026-08-24)
+- The property is defined by schema.org on `Article` and `WebPage`, with `cssSelector` and `xpath` as the two addressing forms, both valid as a single string or an array — https://schema.org/speakable (verified 2026-08-21)
+
+**Counter-evidence:** The same Google page states "This feature is in beta and subject to change", and scopes it to "users in the U.S. that have Google Home devices set to English, and publishers that publish content in English", news content only. No other consumer exists: Apple's Applebot documentation names exactly one schema.org property, `isAccessibleForFree`, and no `speakable` (https://support.apple.com/en-us/119829, verified 2026-08-21); Amazon publishes no `speakable` documentation at all. The widely repeated claim that Alexa and Siri read `speakable` has no primary source, and a regression test now asserts that neither name appears in this audit's copy. The consumer is also on a stated migration path: Google announced on 2025-08-20 that "Over time, Gemini for Home will replace Google Assistant on existing speakers and displays", with no successor statement about `speakable`. If that transition completes without one, this audit loses its consumer entirely rather than one grade.
 
 ## Adversarial redemption research (2026-08-21)
 
 This audit was a delete candidate and went through dedicated adversarial research. Full dossier: [docs/evidence/deletions/structured-data/speakable-schema.md](../../deletions/structured-data/speakable-schema.md). Outcome: **redeemable**, grade A.
+
+## Re-grade (2026-08-24): **A → B**, tier `scored`, weight 1.0 → 0.6
+
+This audit reached the retirement shortlist under the bar "own dossier records
+no known consumer **and** conflicts with a written position in `policy.md`". It
+does not meet that bar, and it is not retired. Google Search Central's speakable
+page was re-fetched on 2026-08-24: **live**, last updated 2025-12-10, and still
+naming Google Assistant as the agent that reads the marked sections aloud with
+TTS. The consumer this audit's grade rests on is real and documented.
+
+What the re-fetch also confirmed is that the same page says, verbatim:
+
+> This feature is in beta and subject to change.
+
+and scopes it to *"users in the U.S. that have Google Home devices set to
+English, and publishers that publish content in English"*, news content only.
+
+`policy.md` reserves grade **A** for documented consumer behaviour or a ratified
+standard with known consumers, and gives grade **B** to a draft standard with
+meaningful adoption or strong empirical evidence of effect. A vendor feature the
+vendor itself labels beta, limited to one country, one language and one content
+type, is a B mechanism, not an A one. `weightForGrade('B', 'scored')` is **0.6**.
+
+Nothing else moves. `scoreDisplayMode` stays `ternary`, `defaultPriority` stays
+`low`, `applicablePageTypes` stays `['content']`, and a scan with no news or
+article page still returns `notApplicable`. The audit's re-check trigger — Gemini
+for Home replacing Google Assistant with no speakable successor statement —
+stands, and if it fires the audit loses its consumer entirely rather than one
+grade.
 
 ## Review history
 
 - 2026-08-20 — code review (11-agent workflow) + evidence research (12-domain workflow, 400 sources).
 - 2026-08-21 — adversarial redemption research; user accepted verdict (disposition above).
 - 2026-08-22 — required rework executed (Plan 4, Task 12): page-type gate to news/article publishers, Alexa/Siri claim deleted, single-string `cssSelector` and `xpath` accepted, host type enforced, coverage judged per page, `binary` → `ternary`. Grade A, tier `scored`, weight 1.0 unchanged. `TODO(redeem)` marker removed from the source file.
+- 2026-08-24 — re-graded A → B, weight 1.0 → 0.6. The Google Assistant consumer is live and documented, but Google labels the feature beta and scopes it to U.S. English news publishers. Not retired.

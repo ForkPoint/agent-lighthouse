@@ -1,14 +1,17 @@
 ---
 audit: content-extraction/language-attribute
-audit_id: "4.4"
 category: content-extraction
 source_file: packages/core/src/audits/content-extraction/language-attribute.ts
 slug: language-attribute
-review_verdict: fix
-severity: medium
 evidence_grade: A
 disposition: "keep — fix required"
 reviewed: 2026-08-21
+sources:
+  - wcag-22
+  - wcag-language-of-page
+  - w3c-i18n-lang-declarations
+  - google-multi-regional
+  - s18
 ---
 
 # language-attribute (`4.4`)
@@ -44,16 +47,16 @@ Cheap and worth keeping, but the check is presence-only: `if (lang.trim().length
 
 ## Evidence
 
-_No dedicated evidence signal was researched for this audit in the 2026-08-20 pass. Its tier assignment falls to the taxonomy design; unproven mechanisms default to informative per the [evidence policy](../../POLICY.md)._
+_No dedicated evidence signal was researched for this audit in the 2026-08-20 pass. Its tier assignment falls to the taxonomy design; unproven mechanisms default to informative per the [evidence policy](../../policy.md)._
 
 ## Review history
 
 - 2026-08-20 — code review (11-agent workflow) + evidence research (12-domain workflow, 400 sources).
 - 2026-08-21 — dossier generated; disposition pending final taxonomy design.
 
-## Graded evidence (2026-08-21)
+## Evidence (2026-08-21)
 
-**Mechanism claim:** User agents read the `lang` attribute on `<html>` to programmatically determine the page's natural language; screen readers select pronunciation rules from it, visual browsers select scripts/characters, and media players select captions accordingly — so a page without it cannot have its language programmatically determined and fails WCAG 2.2 SC 3.1.1.
+**Mechanism claim:** User agents read the `lang` attribute on `<html>` to programmatically determine the page's natural language. Screen readers select pronunciation rules from it, visual browsers select scripts and characters, and media players select captions. A page without it cannot have its language programmatically determined, and fails WCAG 2.2 SC 3.1.1.
 
 **Grade: A** — ratified W3C Recommendation (WCAG 2.2, SC 3.1.1 Language of Page, Level A) plus WHATWG HTML, with named consumer classes whose behavior W3C documents explicitly.
 

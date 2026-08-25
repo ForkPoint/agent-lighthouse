@@ -1,14 +1,20 @@
 ---
 audit: answer-readiness/faq-sections
-audit_id: "9.1"
 category: answer-readiness
 source_file: packages/core/src/audits/answer-readiness/faq-sections.ts
 slug: faq-sections
-review_verdict: fix
-severity: medium
 evidence_grade: C
 disposition: "keep — fix required"
 reviewed: 2026-08-21
+sources:
+  - schema-faqpage
+  - semrush-ai-overviews-study
+  - geo-sfe-structural-arxiv
+  - google-faqpage-structured-data
+  - google-ai-features-trust
+  - google-ai-optimization-mythbusting
+  - s18
+  - cseo-bench-arxiv
 ---
 
 # faq-sections (`9.1`)
@@ -46,18 +52,18 @@ Detects FAQ structure via FAQPage JSON-LD, FAQ-ish heading/summary text, or any 
 
 ## Evidence
 
-_No dedicated evidence signal was researched for this audit in the 2026-08-20 pass. Its tier assignment falls to the taxonomy design; unproven mechanisms default to informative per the [evidence policy](../../POLICY.md)._
+_No dedicated evidence signal was researched for this audit in the 2026-08-20 pass. Its tier assignment falls to the taxonomy design; unproven mechanisms default to informative per the [evidence policy](../../policy.md)._
 
 ## Review history
 
 - 2026-08-20 — code review (11-agent workflow) + evidence research (12-domain workflow, 400 sources).
 - 2026-08-21 — dossier generated; disposition pending final taxonomy design.
 
-## Graded evidence (2026-08-21)
+## Evidence (2026-08-21)
 
 **Mechanism claim:** A page carrying `FAQPage` JSON-LD or an on-page question/answer block has its Q&A pairs extracted as discrete units and cited by AI answer engines more often than the same content written as continuous prose.
 
-**Grade: C** — `FAQPage` is a ratified schema.org type with very wide adoption, but its one documented consumer withdrew the feature for almost every site, no AI answer-engine vendor documents reading it, and the "Q&A blocks are the top extraction target" claim is nowhere measured.
+**Grade: C** — `FAQPage` is a ratified schema.org type with very wide adoption. But its one documented consumer withdrew the feature for almost every site, and no AI answer-engine vendor documents reading it. The "Q&A blocks are the top extraction target" claim is nowhere measured.
 
 **Evidence:**
 - schema.org defines the type — "A FAQPage is a WebPage presenting one or more 'Frequently asked questions' (see also QAPage)" — and reports adoption of 1M–10M domains in the July 2026 aggregation of Google's web index — https://schema.org/FAQPage (verified 2026-08-21)

@@ -1,14 +1,23 @@
 ---
 audit: access-crawl-control/chatgpt-user
-audit_id: "2.14"
 category: access-crawl-control
 source_file: packages/core/src/audits/access-crawl-control/chatgpt-user.ts
 slug: chatgpt-user
-review_verdict: fix
-severity: medium
-evidence_grade: A
+evidence_grade: C
 disposition: "keep — fix required"
 reviewed: 2026-08-21
+recommended_tier: informative
+consumers:
+  - ChatGPT-User
+signals:
+  - name: ChatGPT-User allow/block state in robots.txt
+    grade: A
+    domain: robots-ai-crawlers
+sources:
+  - s18
+  - cloudflare-ai-crawler-purpose-industry
+  - tollbit-robots-noncompliance
+  - pebblous-blocking-citation-gap
 ---
 
 # chatgpt-user (`2.14`)
@@ -43,14 +52,11 @@ One of the four checks in this category that genuinely matter — ChatGPT-User i
 
 ### Signal: ChatGPT-User allow/block state in robots.txt — grade A (robots-ai-crawlers)
 
-**Mechanism:** Disallowing ChatGPT-User is intended to stop user-initiated ChatGPT fetches of the site, but OpenAI reserves an exemption and field measurement shows the disallow is frequently not honored — so the directive's presence does not reliably predict agent behavior in either direction.
+**Mechanism:** Disallowing ChatGPT-User is intended to stop user-initiated ChatGPT fetches of the site. But OpenAI reserves an exemption, and field measurement shows the disallow is frequently not honored. The directive's presence therefore does not reliably predict agent behavior in either direction.
 
 **Evidence:** OpenAI documents the agent (UA 'ChatGPT-User/1.0; +https://openai.com/bot', IPs at openai.com/chatgpt-user.json) as handling 'user-initiated actions in ChatGPT and Custom GPTs'. It is the dominant user-action agent by volume: Cloudflare Radar attributes 'nearly three quarters of the request traffic' in the user-action category to ChatGPT-User (July 2025), and 14.9% of News & Publications AI traffic.
 
-**Counter-evidence:** Two independent refutations of the block mechanism. (1) Vendor exemption, stated verbatim: 'Because these actions are initiated by a user, robots.txt rules may not apply.' (2) Field measurement — TollBit's H1 2026 'State of the Bots' found ChatGPT-User 'reached disallowed pages on more sites than any other bot', and that ChatGPT-User, Bytespider and Youbot 'each accessed disallowed pages on nearly half of the European sites that had explicitly listed them'. Blocking also costs visibility: BuzzStream found the lowest citation retention of any bot studied (70.6%) among sites blocking ChatGPT-User. Do not score a ChatGPT-User disallow as a positive; report it as informative with this caveat.
-**Consumers:** ChatGPT-User · **Recommended tier:** informative
-
-**Sources:** [OpenAI Bots / Crawlers documentation](https://developers.openai.com/api/docs/bots) · [A deeper look at AI crawlers: breaking down traffic by purpose and industry](https://blog.cloudflare.com/ai-crawler-traffic-by-purpose-and-industry/) · [15% of AI page fetchers in Europe reached disallowed URLs, TollBit finds](https://ppc.land/15-of-ai-page-fetchers-in-europe-reached-disallowed-urls-tollbit-finds/) · [The Paradox of Blocking AI Crawlers: You Lose Visitors, Not Citations](https://blog.pebblous.ai/report/ai-crawler-blocking-citation-gap/en/)
+**Counter-evidence:** Two independent refutations of the block mechanism. (1) Vendor exemption, stated verbatim: 'Because these actions are initiated by a user, robots.txt rules may not apply.' (2) Field measurement. TollBit's H1 2026 'State of the Bots' found that ChatGPT-User 'reached disallowed pages on more sites than any other bot'. It also found that ChatGPT-User, Bytespider and Youbot 'each accessed disallowed pages on nearly half of the European sites that had explicitly listed them'. Blocking also costs visibility: BuzzStream found the lowest citation retention of any bot studied (70.6%) among sites blocking ChatGPT-User. Do not score a ChatGPT-User disallow as a positive; report it as informative with this caveat.
 
 ## Review history
 

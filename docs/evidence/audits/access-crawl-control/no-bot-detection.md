@@ -1,14 +1,17 @@
 ---
 audit: access-crawl-control/no-bot-detection
-audit_id: "2.26"
 category: access-crawl-control
 source_file: packages/core/src/audits/access-crawl-control/no-bot-detection.ts
 slug: no-bot-detection
-review_verdict: fix
-severity: high
 evidence_grade: A
 disposition: "keep — fix required"
 reviewed: 2026-08-21
+sources:
+  - cloudflare-block-ai-bots
+  - cloudflare-content-independence-day
+  - perplexity-bots-docs
+  - s18
+  - anthropic-crawlers
 ---
 
 # no-bot-detection (`2.26`)
@@ -46,22 +49,22 @@ Two audits in one file with opposite quality. The WAF branch (`ctx.wafProtection
 
 ## Evidence
 
-_No dedicated evidence signal was researched for this audit in the 2026-08-20 pass. Its tier assignment falls to the taxonomy design; unproven mechanisms default to informative per the [evidence policy](../../POLICY.md)._
+_No dedicated evidence signal was researched for this audit in the 2026-08-20 pass. Its tier assignment falls to the taxonomy design; unproven mechanisms default to informative per the [evidence policy](../../policy.md)._
 
-## Graded evidence (2026-08-21)
+## Evidence (2026-08-21)
 
-**Mechanism claim:** An edge bot-management rule that blocks or challenges requests carrying a named AI agent's user-agent or IP causes that agent to receive a non-200 / challenge response instead of the page, so the content cannot be fetched, indexed or cited — and AI vendors publish per-agent IP ranges specifically so operators can allowlist them past those rules.
+**Mechanism claim:** An edge bot-management rule that blocks or challenges requests carrying a named AI agent's user-agent or IP hands that agent a non-200 or challenge response instead of the page. The content then cannot be fetched, indexed or cited. AI vendors publish per-agent IP ranges specifically so operators can allowlist them past those rules.
 
 **Grade: A** — the blocking behavior is a documented product feature of the largest CDN, and multiple AI vendors document per-agent IP endpoints plus explicit WAF allowlisting instructions, which only make sense because bot defense demonstrably intercepts their agents.
 
 **Evidence:**
-- Cloudflare, Block AI bots: the feature blocks AI bots by behavior category — **Search** (content indexing), **Agent** (real-time automated activity) and **Training** (model development) — covering "Verified bots classified with that behavior, plus additional unverified bots that fall under these classifications". From **15 September 2026** the platform default becomes: bots classified as Training or as Agent are blocked on pages that display ads, Search remains allowed — https://developers.cloudflare.com/bots/additional-configurations/block-ai-bots/ (verified 2026-08-21)
+- Cloudflare, Block AI bots. The feature blocks AI bots by behavior category: **Search** for content indexing, **Agent** for real-time automated activity, and **Training** (model development) — covering "Verified bots classified with that behavior, plus additional unverified bots that fall under these classifications". From **15 September 2026** the platform default becomes: bots classified as Training or as Agent are blocked on pages that display ads, Search remains allowed — https://developers.cloudflare.com/bots/additional-configurations/block-ai-bots/ (verified 2026-08-21)
 - Cloudflare, "Content Independence Day" (1 July 2025): "Cloudflare, along with a majority of the world's leading publishers and AI companies, is changing the default to block AI crawlers unless they pay creators for their content." Establishes that default-deny at the edge, not site-authored robots.txt, is now the dominant blocking mechanism — https://blog.cloudflare.com/content-independence-day-no-ai-crawl-without-compensation/ (verified 2026-08-21)
 - Perplexity crawler docs give operators explicit Cloudflare and AWS WAF allowlisting guidance and recommend combining "both User-Agent and IP address conditions", with published endpoints `https://www.perplexity.com/perplexitybot.json` and `https://www.perplexity.com/perplexity-user.json` — https://docs.perplexity.ai/guides/bots (verified 2026-08-21)
 - OpenAI publishes per-agent IP ranges (`openai.com/searchbot.json`, `openai.com/gptbot.json`, `openai.com/chatgpt-user.json`, `openai.com/adsbot.json`) for exactly this allowlisting purpose — https://developers.openai.com/api/docs/bots (verified 2026-08-21)
 - Anthropic publishes verified crawler IPs at `https://claude.com/crawling/bots.json` and warns that "blocking IP address(es)…may not work correctly or persistently guarantee an opt-out" — https://support.claude.com/en/articles/8896518-does-anthropic-crawl-data-from-the-web-and-how-can-site-owners-block-the-crawler (verified 2026-08-21)
 
-**Counter-evidence:** The A grade attaches to the `ctx.wafProtection.isBlocked` branch — observed blocking of the actual fetch. The second branch, scanning page HTML for the substrings `recaptcha`, `challenges.cloudflare.com`, `hcaptcha.com`, `datadome.co`, has **no documented consumer link**: none of the vendor docs above state that the presence of a CAPTCHA widget on a page affects crawler access, and the page was by definition retrievable (the scanner parsed it). Graded on its own, that sub-signal is D — presence of a form-scoped challenge widget is not evidence of agent blocking. Note also that the dominant 2026 mechanism the Cloudflare docs describe is UA/IP classification at the edge, which is invisible to a same-UA page scan — so the audit's proven half is the half the implementation barely exercises.
+**Counter-evidence:** The A grade attaches to the `ctx.wafProtection.isBlocked` branch — observed blocking of the actual fetch. The second branch scans page HTML for the substrings `recaptcha`, `challenges.cloudflare.com`, `hcaptcha.com` and `datadome.co`. It has **no documented consumer link**. None of the vendor docs above state that the presence of a CAPTCHA widget on a page affects crawler access — and the page was by definition retrievable, since the scanner parsed it. Graded on its own, that sub-signal is D — presence of a form-scoped challenge widget is not evidence of agent blocking. Note also that the dominant 2026 mechanism the Cloudflare docs describe is UA/IP classification at the edge, which is invisible to a same-UA page scan — so the audit's proven half is the half the implementation barely exercises.
 
 ## Review history
 
