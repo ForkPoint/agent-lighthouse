@@ -5,6 +5,7 @@ import {
   logger,
   CATEGORY_IDS,
   type ScanEvent,
+  type AuditTrace,
 } from "@forkpoint/agent-lighthouse-core";
 import { createProgressRenderer } from "./progress-renderer";
 import {
@@ -22,7 +23,7 @@ import {
   generateHtmlReport,
   generateMarkdownSummary,
 } from "@forkpoint/agent-lighthouse-report";
-import { writeFileSync, mkdirSync, readFileSync } from "node:fs";
+import { writeFileSync, mkdirSync, readFileSync, appendFileSync, rmSync } from "node:fs";
 import { resolve } from "node:path";
 import { exec } from "node:child_process";
 
@@ -57,6 +58,10 @@ Options:
   -c, --config <path>          Path to configuration file (e.g. agent-lighthouse.config.json)
   --debug-audit <id|fails>     Print deep diagnostic breakdown for a specific audit ID
                                (e.g. structured-data/faqpage-schema) or all fails
+  --trace [path]               Write one NDJSON record per audit — outcome, status, score,
+                               duration and the evidence behind it — including the audits
+                               that were skipped or errored. Defaults to
+                               ./agent-lighthouse-trace.ndjson
   --categories <list>          Comma-separated list of categories to audit
                                (access-crawl-control, content-extraction, machine-discovery,
                                structured-data, answer-readiness, agent-interfaces,
@@ -104,7 +109,7 @@ async function audit(targetUrl?: string) {
     process.exit(1);
   }
 
-  const { isSilent, progressJson, shouldView, debugAudit, minScore, outputDir } = opts;
+  const { isSilent, progressJson, shouldView, debugAudit, minScore, outputDir, tracePath } = opts;
   // Keep the NDJSON stream clean: scanner logs also go to stderr.
   if (progressJson) logger.level = "silent";
 
@@ -138,10 +143,20 @@ async function audit(targetUrl?: string) {
       ? undefined
       : createProgressRenderer({ tty: Boolean(process.stdout.isTTY) });
 
+  // One NDJSON record per audit, appended as the scan runs so a crash still
+  // leaves the trace up to the point it stopped. Truncated first: a trace that
+  // silently appended to the previous run's would read as one impossible scan.
+  const traceFile = tracePath ? resolve(tracePath) : undefined;
+  if (traceFile) rmSync(traceFile, { force: true });
+  const onAuditTrace = traceFile
+    ? (trace: AuditTrace) => appendFileSync(traceFile, `${JSON.stringify(trace)}\n`)
+    : undefined;
+
   const report = await runScan(url, {
     onEvent,
     ...(categories ? { categories } : {}),
     includeExperimental,
+    ...(onAuditTrace ? { onAuditTrace } : {}),
   });
 
   const view = buildReportView(report);
@@ -292,6 +307,10 @@ async function audit(targetUrl?: string) {
     const mdContent = generateMarkdownSummary(report);
     writeFileSync(mdPath, mdContent);
     if (!isSilent) console.log(`  \x1b[90m• Markdown Report:\x1b[0m ${mdPath}`);
+  }
+
+  if (traceFile && !isSilent) {
+    console.log(`  \x1b[90m• Audit trace:\x1b[0m    ${traceFile}`);
   }
 
   if (shouldView && htmlPath) {

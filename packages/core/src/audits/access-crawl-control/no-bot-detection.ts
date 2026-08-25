@@ -38,6 +38,18 @@ export class NoBotDetectionAudit extends Audit {
   };
 
   audit(ctx: CheckContext): AuditResult {
+    // A throttled scan proves nothing about who the site admits. HTTP 429 is a
+    // statement about this scan's request rate, and failing on it told a
+    // storefront that serves GPTBot perfectly well that its firewall blocks AI
+    // crawlers.
+    if (ctx.wafProtection?.isRateLimit) {
+      return this.notApplicable(
+        'The scan was rate-limited (HTTP 429), so it never saw enough of the site to judge bot defenses. Re-run the scan after a pause.',
+        'No JavaScript-based bot challenges that would block legitimate AI agents',
+        'Scan rate-limited',
+      );
+    }
+
     // If active WAF protection or aggressive connection dropping was detected
     if (ctx.wafProtection?.isBlocked) {
       return this.fail(

@@ -66,6 +66,9 @@ interface Finding {
   hint: string;
 }
 
+/** How many state classes the summary line names before it counts the rest. */
+const MAX_NAMED_CLASSES = 3;
+
 /** One finding as a single line. `detailLines` applies the schema's caps. */
 function describeFinding(finding: Finding): string {
   const where = finding.stateClass ? ` [class "${finding.stateClass}"]` : '';
@@ -270,9 +273,17 @@ export class StatefulControlIntrospectabilityAudit extends Audit {
     }
 
     const ratio = s.introspectable / total;
+    // Named, but bounded: the class list comes from the page, and a storefront
+    // whose components each carry their own state class produced a summary
+    // line past the schema's 1000-character cap, which errored the whole audit
+    // out. Three names identify the pattern; the rest is a count.
     const classes = [...new Set(s.opaque.map((f) => f.stateClass).filter(Boolean))];
+    const shown = classes.slice(0, MAX_NAMED_CLASSES).map((c) => `"${c}"`);
+    const rest = classes.length - shown.length;
     const classClause =
-      classes.length > 0 ? ` (state in class ${classes.map((c) => `"${c}"`).join(', ')} only)` : '';
+      classes.length > 0
+        ? ` (state in class ${shown.join(', ')}${rest > 0 ? ` and ${rest} more` : ''} only)`
+        : '';
     const found =
       s.opaque.length === 0
         ? `ratio ${ratio.toFixed(2)} — 0 opaque of ${total} state-bearing control(s)${partial}`

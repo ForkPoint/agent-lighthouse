@@ -103,6 +103,52 @@ const RAW_STORES = [
   'purnatur.be',
   'unitedbyblue.com',
   'lunchskins.com',
+
+  // Shopify's own "best Shopify stores" roundup, added 2026-08-25:
+  // https://www.shopify.com/blog/shopify-stores
+  // Ten of its picks were already on the list above and are not repeated.
+  // The roundup spans more of the platform than a bestseller list does —
+  // single-product brands, wholesale catalogues, magazines, subscription
+  // boxes — which is the point: an audit that only ever meets a large
+  // apparel storefront is not covered.
+  'tentree.com',
+  'maguireshoes.com',
+  'the-outrage.com',
+  'kirrinfinch.com',
+  'rothys.com',
+  'beefcakeswimwear.com',
+  'suta.in',
+  'uppercasemagazine.com',
+  'terrebleu.ca',
+  'silkandwillow.com',
+  'goodeeworld.com',
+  'bruvi.com',
+  'pelacase.ca',
+  'cowboy.com',
+  'cocofloss.com',
+  'lootcrate.com',
+  'potgang.co.uk',
+  'manitobah.com',
+  'camillebrinch.com',
+  'troubadourgoods.com',
+  'blkandbold.com',
+  'flybyjing.com',
+  'vervecoffee.com',
+  'tazachocolate.com',
+  'yeungmancooking.com',
+  'flourist.com',
+  'thehoneypot.co',
+  'beautybakerie.com',
+  'cheekbonebeauty.com',
+  'meowmeowtweet.com',
+  'beneathyourmask.com',
+  'freshheritage.com',
+  'thenimetyou.com',
+  'lastobject.com',
+  'tofinosoapcompany.com',
+  'satyaorganics.com',
+  'givemetap.com',
+  'bebemoss.com',
 ];
 
 function normalizeUrl(raw: string): string {
@@ -121,6 +167,28 @@ function normalizeUrl(raw: string): string {
  * two hours.
  */
 const ARG_URLS = process.argv.slice(2).filter((arg) => !arg.startsWith('-'));
+
+/** Read a `--name=value` flag, falling back to a default. */
+function numericFlag(name: string, fallback: number): number {
+  const arg = process.argv.slice(2).find((a) => a.startsWith(`--${name}=`));
+  const value = arg ? Number(arg.slice(name.length + 3)) : NaN;
+  return Number.isFinite(value) && value >= 0 ? value : fallback;
+}
+
+/**
+ * How hard to push, and how long to wait between stores.
+ *
+ * Most Shopify storefronts sit behind Cloudflare, whose rate limit is scoped to
+ * the source IP rather than to the site. One scan opens up to
+ * `MAX_CONCURRENT_REQUESTS` connections, so four stores at once put forty in
+ * flight from one address: a run at the old defaults had 36 of 48 stores answer
+ * HTTP 429, while a single `curl` carrying the same user-agent got 200 from
+ * every one of them. The benchmark was measuring its own throttling.
+ */
+const CONCURRENCY = numericFlag('concurrency', 2);
+const DELAY_MS = numericFlag('delay', 3000);
+
+const pause = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 const UNIQUE_URLS = Array.from(
   new Set((ARG_URLS.length > 0 ? ARG_URLS : RAW_STORES).map(normalizeUrl)),
 );
@@ -144,7 +212,7 @@ if (!fs.existsSync(outDir)) {
 // file is the published benchmark, and a five-store re-check is not that.
 const outPath = path.join(
   outDir,
-  ARG_URLS.length > 0 ? 'benchmark-subset-data.json' : 'benchmark-100-stores-data.json',
+  ARG_URLS.length > 0 ? 'benchmark-subset-data.json' : 'benchmark-stores-data.json',
 );
 
 async function auditStore(targetUrl: string, index: number, total: number): Promise<StoreResult> {
@@ -196,10 +264,10 @@ async function auditStore(targetUrl: string, index: number, total: number): Prom
 async function runBatch() {
   console.log(`\n======================================================`);
   console.log(`LAUNCHING BENCHMARK AUDIT ON ${UNIQUE_URLS.length} E-COMMERCE STORES`);
+  console.log(`concurrency ${CONCURRENCY}, ${DELAY_MS}ms between stores per worker`);
   console.log(`======================================================\n`);
 
   const results: Record<string, StoreResult> = {};
-  const CONCURRENCY = 4;
   const queue = [...UNIQUE_URLS];
   let completed = 0;
 
@@ -214,6 +282,8 @@ async function runBatch() {
 
       // Save incremental results
       fs.writeFileSync(outPath, JSON.stringify(results, null, 2));
+
+      if (queue.length > 0) await pause(DELAY_MS);
     }
   }
 

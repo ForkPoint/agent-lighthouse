@@ -69,4 +69,37 @@ describe('NoBotDetectionAudit', () => {
     expect(result.message).toContain('reCAPTCHA');
     expect(result.message).toContain('2 page(s)');
   });
+
+  describe('when the scan hit a wall', () => {
+    it('fails on a genuine bot defense and names it', () => {
+      const ctx = mockCheckContext([mockPageContext('https://example.com/', '<html><body></body></html>')]);
+      ctx.wafProtection = {
+        isBlocked: true,
+        provider: 'cloudflare',
+        name: 'Cloudflare Turnstile / Managed Challenge',
+        reason: 'Cloudflare bot challenge detected',
+      };
+      const result = audit.audit(ctx);
+      expect(result.status).toBe('fail');
+      expect(result.message).toContain('Cloudflare');
+    });
+
+    // HTTP 429 says "too many requests" — a statement about this scan's rate,
+    // not about who the site admits. Failing on it told storefronts that serve
+    // GPTBot perfectly well that their firewall blocks AI crawlers.
+    it('is notApplicable when the scan was rate-limited', () => {
+      const ctx = mockCheckContext([mockPageContext('https://example.com/', '<html><body></body></html>')]);
+      ctx.wafProtection = {
+        isBlocked: true,
+        isRateLimit: true,
+        provider: 'rate-limited',
+        name: 'Rate limit (HTTP 429)',
+        reason: 'too many requests',
+        statusCode: 429,
+      };
+      const result = audit.audit(ctx);
+      expect(result.status).toBe('na');
+      expect(result.message).toMatch(/rate-limited/i);
+    });
+  });
 });

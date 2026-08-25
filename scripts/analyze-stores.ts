@@ -2,7 +2,7 @@ import * as fs from 'node:fs';
 import * as path from 'node:path';
 import type { ScanReport } from '../packages/core/src';
 
-const dataPath = path.resolve(__dirname, '../reports/investigation/benchmark-100-stores-data.json');
+const dataPath = path.resolve(__dirname, '../reports/investigation/benchmark-stores-data.json');
 const rawData = JSON.parse(fs.readFileSync(dataPath, 'utf-8'));
 
 interface StoreResult {

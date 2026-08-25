@@ -49,7 +49,13 @@ const TORTURE_BODY = [
   `<h1>${LONG_TEXT}</h1>`,
   repeat((i) => `<div onclick="go(${i})" class="btn-primary">${LONG_TEXT}</div>`),
   repeat((i) => `<a class="link-${i}">${LONG_TEXT}</a>`),
-  repeat((i) => `<div role="switch" class="toggle-${i}">Option ${i}</div>`),
+  // Distinct class names per element, not one shared class. An audit that
+  // names what it found in its summary line reads these straight into
+  // `displayValue`, which the schema caps at 1000 characters — and a real
+  // storefront whose components each carry their own state class is what
+  // found that.
+  repeat((i) => `<div role="switch" class="is-open-variant-${i}-toggle">Option ${i}</div>`),
+  repeat((i) => `<div class="ui-state-active-panel-${i}" aria-expanded="false">Panel ${i}</div>`),
   repeat((i) => `<input type="text" id="f${i}" autocomplete="not-a-term">`),
   repeat((i) => `<h2>Section ${i}</h2><p>${LONG_TEXT}</p>`),
   `<table>${repeat((i) => `<tr><td>${i}</td><td>${LONG_TEXT}</td></tr>`)}</table>`,

@@ -11,10 +11,34 @@ export interface WafProtection {
     | 'kasada'
     | 'aws-waf'
     | 'generic-waf'
-    | 'connection-drop';
+    | 'connection-drop'
+    | 'rate-limited';
   name: string;
   reason: string;
   statusCode?: number;
+  /**
+   * The scan was throttled, not refused.
+   *
+   * An HTTP 429 says "too many requests", which is a statement about this
+   * scan's request rate and not about who the site admits. An audit that
+   * cannot tell the two apart must not report a bot wall on the strength of
+   * one — a storefront that serves GPTBot perfectly well would be told its
+   * firewall is blocking AI crawlers.
+   */
+  isRateLimit?: boolean;
+}
+
+/** How the scan should describe a throttled response. */
+function rateLimited(statusCode: number): WafProtection {
+  return {
+    isBlocked: true,
+    isRateLimit: true,
+    provider: 'rate-limited',
+    name: 'Rate limit (HTTP 429)',
+    reason:
+      'The site answered HTTP 429 — too many requests. The scan asked for pages faster than this origin allows, so it saw no content. This says nothing about whether AI agents are welcome; re-run the scan after a pause.',
+    statusCode,
+  };
 }
 
 /**
@@ -34,7 +58,14 @@ export function detectWafProtection(
     if (res) allResults.push(res);
   }
 
-  // 1. Check HTTP response headers & body across all responses
+  // 1. A throttled scan is diagnosed before any provider is, because every
+  // provider serves 429 for rate limiting and the provider branches below
+  // would each report it as that provider's bot challenge.
+  for (const res of allResults) {
+    if (res.status === 429) return rateLimited(429);
+  }
+
+  // 2. Check HTTP response headers & body across all responses
   for (const res of allResults) {
     const headers = res.headers || {};
     const server = (headers['server'] || '').toLowerCase();
@@ -141,7 +172,7 @@ export function detectWafProtection(
     }
   }
 
-  // 2. Check if the homepage or initial page completely failed to load (0 pages accessible)
+  // 3. Check if the homepage or initial page completely failed to load (0 pages accessible)
   if (scannedPagesCount === 0 && homepageResult) {
     const errorMsg = (homepageResult.error || '').toLowerCase();
     
@@ -158,7 +189,7 @@ export function detectWafProtection(
       };
     }
 
-    if (homepageResult.status === 403 || homepageResult.status === 429) {
+    if (homepageResult.status === 403) {
       return {
         isBlocked: true,
         provider: 'generic-waf',

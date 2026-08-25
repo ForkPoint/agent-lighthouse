@@ -13,6 +13,9 @@ import { CATEGORY_IDS, type PresetName } from "@forkpoint/agent-lighthouse-core"
  * calls `process.exit`.
  */
 
+/** Where `--trace` writes when it is given no path of its own. */
+export const DEFAULT_TRACE_FILE = "agent-lighthouse-trace.ndjson";
+
 /** The subset of a config file that the flags override. */
 export interface FileConfig {
   url?: string;
@@ -37,6 +40,8 @@ export interface CliOptions {
   progressJson: boolean;
   shouldView: boolean;
   debugAudit: string | undefined;
+  /** Where to write the per-audit NDJSON trace, if `--trace` was given. */
+  tracePath: string | undefined;
 }
 
 /**
@@ -124,6 +129,11 @@ export function parseCliOptions(
     progressJson: args.includes("--progress-json"),
     shouldView: args.includes("-v") || args.includes("--view"),
     debugAudit: getArgValue(args, "", "--debug-audit"),
+    // A bare `--trace` with no path is still a request to trace, so it gets
+    // the default file rather than being read as "no trace".
+    tracePath: args.includes("--trace")
+      ? (getArgValue(args, "", "--trace") ?? DEFAULT_TRACE_FILE)
+      : getArgValue(args, "", "--trace"),
   };
 }
 

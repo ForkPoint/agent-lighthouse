@@ -38,7 +38,9 @@ export { Audit, evidenceUrl } from './audit';
 export { runAudits, planAudits } from './audit-runner';
 export { defaultConfig, CATEGORY_MASS, CATEGORY_IDS, filterConfig } from './audit-config';
 export type { ScanConfig, CategoryConfig, AuditRegistration } from './audit-config';
-export type { AuditProgressEvent, AuditPlan, AuditRunResult } from './audit-runner';
+export type { AuditProgressEvent, AuditPlan, AuditRunResult, AuditTraceHandler } from './audit-runner';
+export { traceFromCheck, outcomeOf, formatTrace } from './audit-trace';
+export type { AuditTrace } from './audit-trace';
 export {
   parseHtml,
   extractJsonLd,

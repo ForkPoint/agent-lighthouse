@@ -33,13 +33,13 @@ Traditional ecommerce sites are optimized for human browsing and Google search. 
 ## Reproduce
 
 ```bash
-pnpm tsx scripts/benchmark-100-stores.ts
+pnpm tsx scripts/benchmark-stores.ts
 ```
 
 The script writes incremental output to:
 
 ```text
-reports/investigation/benchmark-100-stores-data.json
+reports/investigation/benchmark-stores-data.json
 ```
 
 ## Post Copy
