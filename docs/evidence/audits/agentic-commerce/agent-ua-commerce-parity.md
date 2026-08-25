@@ -25,7 +25,7 @@ Issues paired live requests to PDPs, cart and policy URLs with a baseline browse
 
 ## Claimed mechanism (falsifiable)
 
-Falsifiable claim: OpenAI operates four separately-tokened agents with separately published IP ranges — OAI-SearchBot (ChatGPT search indexing), ChatGPT-User (user-initiated fetches, i.e. the shopper's agent), GPTBot (training), OAI-AdsBot (ad landing-page validation). If a PDP returns 403/429/503 or a bot-challenge interstitial to ChatGPT-User or OAI-SearchBot while returning 200 to a browser UA, ChatGPT cannot read live price and availability nor follow the buy link, so the product cannot be surfaced or transacted regardless of feed quality. This block lives at the WAF/CDN edge and is therefore invisible to any audit that only parses robots.txt. Disproof condition: a site 403ing ChatGPT-User on its PDPs still showing live, accurate prices in ChatGPT.
+Falsifiable claim: OpenAI operates four separately-tokened agents with separately published IP ranges — OAI-SearchBot (ChatGPT search indexing), ChatGPT-User (user-initiated fetches, i.e. the shopper's agent), GPTBot (training), OAI-AdsBot (ad landing-page validation). A PDP may return 403, 429, 503 or a bot-challenge interstitial to ChatGPT-User or OAI-SearchBot, while returning 200 to a browser UA. ChatGPT then cannot read live price and availability, and cannot follow the buy link. The product cannot be surfaced or transacted, whatever the feed quality. This block lives at the WAF/CDN edge and is therefore invisible to any audit that only parses robots.txt. Disproof condition: a site 403ing ChatGPT-User on its PDPs still showing live, accurate prices in ChatGPT.
 
 ## Evidence
 

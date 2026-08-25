@@ -22,7 +22,7 @@ sources:
 
 ## What it checks
 
-Quantify how many independent parties can inject text into the DOM that an agent will read: count distinct third-party script origins lacking integrity= pinning, evaluate whether a CSP script-src actually constrains them, and enumerate cross-origin iframes lacking sandbox whose text contributes to page reads.
+Quantify how many independent parties can inject text into the DOM that an agent will read. Count distinct third-party script origins lacking integrity= pinning. Evaluate whether a CSP script-src actually constrains them. Enumerate cross-origin iframes lacking sandbox whose text contributes to page reads.
 
 ## Claimed mechanism (falsifiable)
 

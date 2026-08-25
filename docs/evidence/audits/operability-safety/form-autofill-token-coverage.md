@@ -23,7 +23,12 @@ sources:
 
 ## What it checks
 
-Per-form score for whether every field an agent must populate carries the machine-readable identity an agent needs: a stable name/id, a correct input type, a WHATWG autocomplete token when the field maps to a standard autofill concept, programmatic constraints, and error wiring via aria-invalid/aria-describedby. Scored as covered-fields / autofillable-fields per form.
+Per-form score for whether every field an agent must populate carries the machine-readable identity an agent needs:
+  - a stable name or id;
+  - a correct input type;
+  - a WHATWG autocomplete token, when the field maps to a standard autofill concept;
+  - programmatic constraints;
+  - error wiring via aria-invalid and aria-describedby. Scored as covered-fields / autofillable-fields per form.
 
 ## Claimed mechanism (falsifiable)
 

@@ -20,7 +20,7 @@ sources:
 
 ## What it checks
 
-Static validation of every tool definition returned by tools/list against the MUST/SHOULD-level structural rules in the 2026-07-28 tools spec — with special weight on x-mcp-header violations, which oblige conforming clients to silently remove the offending tool from the list they show the model.
+Static validation of every tool definition returned by tools/list, against the MUST and SHOULD-level structural rules in the 2026-07-28 tools spec. Special weight falls on x-mcp-header violations. Those oblige conforming clients to silently remove the offending tool from the list they show the model.
 
 ## Claimed mechanism (falsifiable)
 

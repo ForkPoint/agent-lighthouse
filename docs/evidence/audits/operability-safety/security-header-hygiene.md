@@ -99,7 +99,7 @@ Grade B therefore prices the evidence, and `tier: informative` prices the *claim
 
 ### Signal: HTTPS requirement (TLS, valid certificate, HTTP→HTTPS redirect) — grade B (technical-infra)
 
-**Mechanism:** Serving the site over HTTPS with a valid certificate is a precondition for AI-agent surfaces to retrieve or act on the site: agent-protocol specs mandate HTTPS outright, well-known agent/security files are defined as HTTPS-only, and browser-based agents inherit Chromium's mixed-content and HTTPS-First behaviour.
+**Mechanism:** Serving the site over HTTPS with a valid certificate is a precondition for AI-agent surfaces to retrieve or act on the site. Agent-protocol specs mandate HTTPS outright. Well-known agent and security files are defined as HTTPS-only. Browser-based agents inherit Chromium's mixed-content and HTTPS-First behaviour.
 
 **Evidence:** MCP (2025-11-25) states plainly: 'All authorization server endpoints MUST be served over HTTPS' and 'All redirect URIs MUST be either localhost or use HTTPS'. RFC 9116 requires security.txt to be 'accessed exclusively via HTTPS'. Browser-resident agents (ChatGPT Atlas, Comet, Gemini-in-Chrome, Claude in Chrome) run on Chromium and inherit mixed-content blocking, so an HTTP-only page degrades for the fastest-growing agent class.
 

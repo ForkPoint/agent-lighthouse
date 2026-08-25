@@ -54,9 +54,9 @@ _No dedicated evidence signal was researched for this audit in the 2026-08-20 pa
 
 ## Evidence (2026-08-21)
 
-**Mechanism claim:** An interactive CAPTCHA gating a form (reCAPTCHA v2 checkbox/challenge, an hCaptcha visual challenge, or Cloudflare Turnstile in managed/interactive mode) stops an autonomous browsing agent from submitting that form on its own — the agent must hand control back to a human.
+**Mechanism claim:** An interactive CAPTCHA can gate a form: a reCAPTCHA v2 checkbox or challenge, an hCaptcha visual challenge, or Cloudflare Turnstile in managed or interactive mode. It stops an autonomous browsing agent from submitting that form on its own. The agent must hand control back to a human.
 
-**Grade: A** — OpenAI's computer-use guide names "Solving CAPTCHA challenges" as an action the agent must not perform unattended, and the CAPTCHA vendors document that their interactive modes exist precisely to require a human response; the blocking path is documented consumer behavior, not inference.
+**Grade: A** — OpenAI's computer-use guide names "Solving CAPTCHA challenges" as an action the agent must not perform unattended. The CAPTCHA vendors document that their interactive modes exist precisely to require a human response. The blocking path is documented consumer behavior, not inference.
 
 **Evidence:**
 - OpenAI's computer-use agent guide lists "Solving CAPTCHA challenges" among the actions that require explicit user confirmation immediately before execution, and treats bypassing a site's safety barrier as requiring full human takeover — https://developers.openai.com/api/docs/guides/tools-computer-use (verified 2026-08-21)

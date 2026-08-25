@@ -20,7 +20,10 @@ sources:
 
 ## What it checks
 
-Repeatedly fetches tools/list and asserts three things the spec ties directly to agent cost and latency: caching hints are present and well-formed (ttlMs >= 0, cacheScope in {public, private}), tool ordering is stable across calls, and the tool set does not vary per connection.
+Repeatedly fetches tools/list, and asserts three things the spec ties directly to agent cost and latency:
+  - caching hints are present and well-formed — ttlMs >= 0, cacheScope in {public, private};
+  - tool ordering is stable across calls;
+  - the tool set does not vary per connection.
 
 ## Claimed mechanism (falsifiable)
 

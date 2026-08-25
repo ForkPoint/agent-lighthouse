@@ -30,7 +30,7 @@ Detects the RFC 9309 group-precedence trap: adding any named group for an AI pro
 
 ## Claimed mechanism (falsifiable)
 
-RFC 9309 §2.2.1 states the wildcard group is consulted only 'if no matching group exists'. Therefore, for any site with a named AI-bot group, the wildcard group's Disallow rules provably do not apply to that bot, and the operator's stated intent (expressed once in `*`) diverges from the enforced policy by exactly the symmetric difference of the two rule sets. Falsifiable by construction: given robots.txt R and token T, the set of paths where R_T and R_star disagree is computable and either empty or not.
+RFC 9309 §2.2.1 states the wildcard group is consulted only 'if no matching group exists'. For any site with a named AI-bot group, the wildcard group's Disallow rules therefore provably do not apply to that bot. The operator's stated intent, expressed once in `*`, diverges from the enforced policy by exactly the symmetric difference of the two rule sets. Falsifiable by construction: given robots.txt R and token T, the set of paths where R_T and R_star disagree is computable and either empty or not.
 
 ## Evidence
 

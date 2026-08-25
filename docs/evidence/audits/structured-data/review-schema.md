@@ -70,7 +70,7 @@ _No dedicated evidence signal was researched for this audit in the 2026-08-20 pa
 
 ## Evidence (2026-08-21)
 
-**Mechanism claim:** Google Search parses `AggregateRating`/`Review` markup on a supported host type and renders a star review snippet in the search result, for which `ratingValue` plus at least one of `ratingCount` or `reviewCount` is required; Applebot extracts `AggregateRating` for Siri and Spotlight Suggestions.
+**Mechanism claim:** Google Search parses `AggregateRating` and `Review` markup on a supported host type, and renders a star review snippet in the search result. That snippet requires `ratingValue`, plus at least one of `ratingCount` or `reviewCount`. Applebot extracts `AggregateRating` for Siri and Spotlight Suggestions.
 
 **Grade: A** — two vendor docs name a consumer and state what it does with the signal, and Google specifies the exact required properties.
 

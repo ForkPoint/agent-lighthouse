@@ -49,7 +49,7 @@ Static parse. Flag (a) <input type="range"> or role="slider" that is not accompa
 
 ## Example failure
 
-A hotel search gates results behind a dual-thumb price range slider (two divs with no role and no aria-value*) and a drag-only date range. Asked to find rooms under 200 EUR, the agent has no readable current value, no keyboard path, and no numeric input; it drags approximately, cannot read where it landed, and returns results for the wrong range while asserting the filter was applied.
+A hotel search gates results behind a dual-thumb price range slider (two divs with no role and no aria-value*) and a drag-only date range. Asked to find rooms under 200 EUR, the agent has no readable current value, no keyboard path and no numeric input. It drags approximately, and cannot read where it landed. It returns results for the wrong range, while asserting the filter was applied.
 
 ## Scoring
 

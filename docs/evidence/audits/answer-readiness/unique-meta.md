@@ -62,7 +62,7 @@ _No dedicated evidence signal was researched for this audit in the 2026-08-20 pa
 
 **Mechanism claim:** A crawler or answer engine keys pages on their `<title>` + `<meta name="description">` pair, so two pages sharing that pair are merged or one of them is dropped, making the dropped page unreachable in generated answers.
 
-**Grade: C** — Google documents that identical titles/descriptions across pages degrade how those pages are presented, which supports the *convention*; but no vendor documents title+description as a deduplication or merge key, and the "invisible in AI-generated answers" step of the claim has no source.
+**Grade: C** — Google documents that identical titles and descriptions across pages degrade how those pages are presented, which supports the *convention*. But no vendor documents title plus description as a deduplication or merge key. The "invisible in AI-generated answers" step of the claim has no source.
 
 **Evidence:**
 - Google on duplicated descriptions: "Identical or similar descriptions on every page of a site aren't helpful when individual pages appear in search results." — https://developers.google.com/search/docs/appearance/snippet (verified 2026-08-21)

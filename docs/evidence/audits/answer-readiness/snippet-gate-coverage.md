@@ -40,7 +40,7 @@ Static fetch, one request. 1) Parse every <meta name="robots">, <meta name="goog
 
 ## Example failure
 
-A publisher sets `<meta name="robots" content="max-snippet:80">` site-wide to discourage scraping, then invests in FAQPage markup. Every answer span on the site runs 150-250 characters, so the AI-surface snippet budget cuts each answer roughly at its midpoint, mid-clause. Separately, a support site wraps its answer bodies in `<div data-nosnippet>` inherited from an old 'prevent snippet theft' template — nosnippetCoverage is 0.71 and every acceptedAnswer is inside it, so the pages are indexed, visibly correct to humans, and structurally invisible to AI Overviews.
+A publisher sets `<meta name="robots" content="max-snippet:80">` site-wide to discourage scraping, then invests in FAQPage markup. Every answer span on the site runs 150-250 characters, so the AI-surface snippet budget cuts each answer roughly at its midpoint, mid-clause. Separately, a support site wraps its answer bodies in `<div data-nosnippet>`, inherited from an old 'prevent snippet theft' template. nosnippetCoverage is 0.71, and every acceptedAnswer is inside it. The pages are therefore indexed, visibly correct to humans, and structurally invisible to AI Overviews.
 
 ## Scoring
 

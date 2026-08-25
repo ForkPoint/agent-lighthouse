@@ -27,7 +27,7 @@ Fetch each sampled URL with a real browser UA and with each major AI fetcher UA,
 
 ## Claimed mechanism (falsifiable)
 
-AI fetchers identify themselves (GPTBot, OAI-SearchBot, ChatGPT-User, ClaudeBot, PerplexityBot) and no vendor documents JavaScript execution for them, so server-side or edge logic can trivially branch on user agent. Any such branch — a compromised plugin, a rogue ad or tag-manager container, or a 'GEO optimization' vendor — creates content the owner will never see in their own browser, which is the ideal place to park injected instructions or manipulative claims. Google already classifies UA-conditional content divergence as cloaking and penalizes it, so the check carries a second, independent consequence. Falsifier: main-content text equivalence across UAs proves no agent-only channel exists.
+AI fetchers identify themselves (GPTBot, OAI-SearchBot, ChatGPT-User, ClaudeBot, PerplexityBot) and no vendor documents JavaScript execution for them, so server-side or edge logic can trivially branch on user agent. Any such branch creates content the owner will never see in their own browser: a compromised plugin, a rogue ad or tag-manager container, or a 'GEO optimization' vendor. That is the ideal place to park injected instructions or manipulative claims. Google already classifies UA-conditional content divergence as cloaking and penalizes it, so the check carries a second, independent consequence. Falsifier: main-content text equivalence across UAs proves no agent-only channel exists.
 
 ## Evidence
 

@@ -25,7 +25,7 @@ sources:
 
 ## What it checks
 
-Site-level rather than page-level: sample 10-30 URLs across templates, identify shingles present on ≥80% of sampled pages (the repeated chrome), and report boilerplate token share, unique tokens per fetch, and total tokens an agent must spend to acquire the site's distinct information. Fail if unique content is < 20% of tokens fetched, or if median unique tokens per page < 300 (thin pages that force many fetches for little yield). Emit a cost line in tokens and, optionally, dollars at a user-supplied per-million rate.
+Site-level rather than page-level. Sample 10-30 URLs across templates. Identify shingles present on 80% or more of the sampled pages — the repeated chrome. Report boilerplate token share, unique tokens per fetch, and the total tokens an agent must spend to acquire the site's distinct information. Fail if unique content is < 20% of tokens fetched, or if median unique tokens per page < 300 (thin pages that force many fetches for little yield). Emit a cost line in tokens and, optionally, dollars at a user-supplied per-million rate.
 
 ## Claimed mechanism (falsifiable)
 
@@ -44,7 +44,7 @@ An agent answering a question rarely fetches one page; it fetches several and pa
 - **[Web Almanac 2024 — Markup](https://almanac.httparchive.org/en/2024/markup)** — HTTP Archive (dataset, URL verified 2026-08-20)
   - The median mobile page carries 594 elements, and the 90th percentile 1,716. Median HTML transfer size is 33 kB on desktop and 32 kB on mobile, and 10.5% of mobile pages serve HTML uncompressed. 86% of mobile pages contain at least one HTML comment, and 26% still ship IE conditional comments. SVG is present on 51.6% of pages. Population baseline for calibrating per-page token budgets and for the claim that dead markup ships at scale.
 - **[OpenAI Bots / Crawler documentation](https://developers.openai.com/api/docs/bots)** — OpenAI (vendor-doc, URL verified 2026-08-20)
-  - Four distinct user agents with separate robots.txt tokens and separate published IP-range files: OAI-SearchBot (surfaces sites in ChatGPT search — https://openai.com/searchbot.json), OAI-AdsBot (validates ad landing pages — https://openai.com/adsbot.json), GPTBot (model training — https://openai.com/gptbot.json), ChatGPT-User (user-initiated actions: web visits and GPT Actions — https://openai.com/chatgpt-user.json). ChatGPT-User is the agent that fetches on a shopper's behalf. Crucially these are separately controllable: blocking GPTBot does not block OAI-SearchBot or ChatGPT-User, and vice versa.
+  - Four distinct user agents, with separate robots.txt tokens and separate published IP-range files. OAI-SearchBot surfaces sites in ChatGPT search — https://openai.com/searchbot.json. OAI-AdsBot validates ad landing pages — https://openai.com/adsbot.json. GPTBot handles model training — https://openai.com/gptbot.json, ChatGPT-User (user-initiated actions: web visits and GPT Actions — https://openai.com/chatgpt-user.json). ChatGPT-User is the agent that fetches on a shopper's behalf. Crucially these are separately controllable: blocking GPTBot does not block OAI-SearchBot or ChatGPT-User, and vice versa.
 
 ## Competitor coverage
 

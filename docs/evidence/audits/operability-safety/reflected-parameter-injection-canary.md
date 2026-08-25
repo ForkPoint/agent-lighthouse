@@ -22,7 +22,7 @@ sources:
 
 ## What it checks
 
-Probe whether the site renders unescaped URL input back into its own page text, title, meta description, canonical link, or JSON-LD — which would let any third party mint a URL on the audited domain that shows arbitrary attacker instructions to a visiting agent.
+Probe whether the site renders unescaped URL input back into its own page text, title, meta description, canonical link or JSON-LD. That would let any third party mint a URL on the audited domain which shows arbitrary attacker instructions to a visiting agent.
 
 ## Claimed mechanism (falsifiable)
 

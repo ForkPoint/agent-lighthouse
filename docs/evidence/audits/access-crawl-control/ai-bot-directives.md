@@ -44,7 +44,7 @@ costs no AI-answer visibility.
 
 ## Claimed mechanism (falsifiable)
 
-**Falsifiable claim:** For AI bots whose operator publishes crawler documentation naming the product token — YouBot (You.com) and AI2Bot (Allen Institute) — a `User-agent:` group in `robots.txt` is read by that operator and determines whether the site enters that operator's corpus or index. A `Disallow: /` for those tokens therefore closes a documented consumer path; an explicit `Allow: /` keeps it open and pins the policy against a later blanket block.
+**Falsifiable claim:** Two AI bots have operators who publish crawler documentation naming the product token: YouBot (You.com) and AI2Bot (Allen Institute). For those, a `User-agent:` group in `robots.txt` is read by the operator. It determines whether the site enters that operator's corpus or index. A `Disallow: /` for those tokens therefore closes a documented consumer path; an explicit `Allow: /` keeps it open and pins the policy against a later blanket block.
 
 **Falsifiable the other way:** for the three remaining tokens (Bytespider, cohere-ai, Diffbot) no such documented reader could be located, and for Bytespider the directive is measured being ignored. Those rows are therefore reported but never scored — blocking them is a legitimate operational choice with no measurable AI-answer cost.
 

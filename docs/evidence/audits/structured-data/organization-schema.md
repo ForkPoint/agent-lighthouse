@@ -57,7 +57,7 @@ _No dedicated evidence signal was researched for this audit in the 2026-08-20 pa
 
 ## Evidence (2026-08-21)
 
-**Mechanism claim:** Google Search parses Organization markup on a site's home page and uses its `logo`, `name` and `url` to choose the logo and organization details rendered in Search results and in the knowledge panel; Applebot extracts Organization markup for Siri and Spotlight Suggestions.
+**Mechanism claim:** Google Search parses Organization markup on a site's home page. It uses the `logo`, `name` and `url` to choose the logo and organization details rendered in Search results and in the knowledge panel. Applebot extracts Organization markup for Siri and Spotlight Suggestions.
 
 **Grade: A** — two vendor docs name a consumer and state what it does with the signal, and adoption is at web scale.
 

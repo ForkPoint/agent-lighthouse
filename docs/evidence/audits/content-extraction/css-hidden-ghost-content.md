@@ -52,7 +52,7 @@ Fetch HTML plus every same-origin <link rel=stylesheet> and inline <style>. Pars
 
 ## Example failure
 
-A SaaS pricing page ships desktop nav, mobile nav and a hidden search-overlay menu, plus all four collapsed FAQ answers and a `.legacy-pricing` block kept in the DOM behind display:none. 3,900 of the page's 5,600 text tokens are never seen by a human. An agent asked 'how much is the Pro plan' reads the legacy $29 from the hidden block alongside the live $49, and reports the wrong price with confidence.
+A SaaS pricing page ships desktop nav, mobile nav and a hidden search-overlay menu. It also ships all four collapsed FAQ answers, and a `.legacy-pricing` block kept in the DOM behind display:none. 3,900 of the page's 5,600 text tokens are never seen by a human. An agent asked 'how much is the Pro plan' reads the legacy $29 from the hidden block alongside the live $49, and reports the wrong price with confidence.
 
 ## Scoring
 

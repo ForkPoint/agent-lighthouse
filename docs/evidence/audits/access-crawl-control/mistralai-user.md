@@ -51,7 +51,12 @@ Legitimate but small: MistralAI-User backs Le Chat's web access, a real though l
 
 ### Signal: MistralAI-User allow/block state in robots.txt (and MistralAI-Index / MistralAI-Training) — grade A (robots-ai-crawlers)
 
-**Mechanism:** Mistral publishes three separate tokens with distinct consequences: MistralAI-Training disallow blocks training-corpus collection; MistralAI-Index disallow removes the site from Mistral search (and thus Vibe answers); MistralAI-User governs which sites user-initiated Vibe requests may access — and, unusually, Mistral asserts no user-initiated robots.txt exemption.
+**Mechanism:** Mistral publishes three separate tokens with distinct consequences:
+  - a MistralAI-Training disallow blocks training-corpus collection;
+  - a MistralAI-Index disallow removes the site from Mistral search, and therefore from Vibe answers;
+  - MistralAI-User governs which sites user-initiated Vibe requests may access.
+
+Unusually, Mistral asserts no user-initiated robots.txt exemption.
 
 **Grade: A** — Mistral publishes all three tokens on one page, with distinct stated consequences. For this one it says the thing that matters: robots.txt "governs which sites user requests can access", and the agent is "not used for crawling the web in any automatic fashion". Like Anthropic and unlike OpenAI, Perplexity and Meta, Mistral asserts no user-initiated exemption — so the directive is expected to be honoured. Named agent, named directive, stated behaviour: grade A. The referral case for the sibling index token is weak, at a reported ~3,389 pages crawled per referral sent, but that is an argument about worth rather than about evidence.
 

@@ -31,7 +31,7 @@ A discovery surface is only useful if it is fresher than organic rediscovery —
 ## Evidence
 
 - **[IndexNow Protocol Documentation](https://www.indexnow.org/documentation)** — IndexNow (Microsoft/Yandex) (spec, URL verified 2026-08-20)
-  - Ownership is proven by hosting a UTF-8 text file at the host root named {key}.txt whose body is the key. Key must be 8-128 chars from [a-zA-Z0-9-]. Verification is a byte comparison: HTTP 403 is returned when the key is 'not found in the key file' or invalid; 422 on host/schema mismatch; 429 on rate limit; 202 means 'key validation pending'. keyLocation restricts submittable URLs to the key file's directory and deeper. Batch POST accepts up to 10,000 URLs.
+  - Ownership is proven by hosting a UTF-8 text file at the host root named {key}.txt whose body is the key. Key must be 8-128 chars from [a-zA-Z0-9-]. Verification is a byte comparison. HTTP 403 is returned when the key is 'not found in the key file' or invalid. 422 signals a host or schema mismatch, 429 a rate limit, and 202 means 'key validation pending'. keyLocation restricts submittable URLs to the key file's directory and deeper. Batch POST accepts up to 10,000 URLs.
 - **[IndexNow: Instantly Index your Web Content in Search Engines](https://blogs.bing.com/webmaster/october-2021/IndexNow-Instantly-Index-your-web-content-in-Search-Engines)** — Microsoft Bing Webmaster Blog (vendor-doc, URL verified 2026-08-20)
   - Confirms the key-file-at-root verification flow and the motivation (organic discovery 'can take days or even weeks'). No published crawl-latency SLA.
 - **[Build and submit a sitemap](https://developers.google.com/search/docs/crawling-indexing/sitemaps/build-sitemap)** — Google Search Central (vendor-doc, URL verified 2026-08-20)
@@ -49,7 +49,7 @@ Screaming Frog and Sitebulb compute orphan URLs against a sitemap, and both list
 
 ## Example failure
 
-A news site migrates to a new CMS. The homepage lists 12 articles from the last 48 hours; sitemap.xml is regenerated nightly by a cron job that silently started failing 11 days ago, and the RSS feed is served from a CDN cache with a 30-day TTL and no purge hook. Every article of the last 11 days is an orphan in both surfaces. Link-following crawlers eventually find them; polling agents that fetch only sitemap.xml and /feed see a site that stopped publishing 11 days ago, and the site disappears from freshness-weighted answer surfaces while every page individually passes SEO audits.
+A news site migrates to a new CMS. The homepage lists 12 articles from the last 48 hours. sitemap.xml is regenerated nightly by a cron job that silently started failing 11 days ago. The RSS feed is served from a CDN cache with a 30-day TTL and no purge hook. Every article of the last 11 days is an orphan in both surfaces. Link-following crawlers eventually find them; polling agents that fetch only sitemap.xml and /feed see a site that stopped publishing 11 days ago, and the site disappears from freshness-weighted answer surfaces while every page individually passes SEO audits.
 
 ## Scoring
 

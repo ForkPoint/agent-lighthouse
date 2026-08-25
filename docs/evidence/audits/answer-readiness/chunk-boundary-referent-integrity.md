@@ -24,7 +24,7 @@ Splits the page the way a real RAG pipeline does, at h2 and h3, then measures ea
 
 ## Claimed mechanism (falsifiable)
 
-Retrieval systems embed and retrieve chunks, not pages. A chunk whose subject is only recoverable from a preceding chunk has an embedding that does not encode the entity, so it fails to match entity-bearing queries, and if retrieved it is unciteable because the generator cannot attribute the claim. Anthropic measured this exact failure and showed that injecting the missing context cut retrieval failure rate by 35-49% (S1). Falsifiable prediction: for two pages with identical facts, the one whose h2 sections each re-state the primary entity and avoid chunk-initial anaphora will be retrieved for entity+attribute queries at a strictly higher rate; the other's tail sections will be retrieved only for generic queries.
+Retrieval systems embed and retrieve chunks, not pages. A chunk whose subject is only recoverable from a preceding chunk has an embedding that does not encode the entity, so it fails to match entity-bearing queries, and if retrieved it is unciteable because the generator cannot attribute the claim. Anthropic measured this exact failure and showed that injecting the missing context cut retrieval failure rate by 35-49% (S1). Falsifiable prediction. Take two pages with identical facts. The one whose h2 sections each re-state the primary entity, and avoid chunk-initial anaphora, will be retrieved for entity-plus-attribute queries at a strictly higher rate. The other's tail sections will be retrieved only for generic queries.
 
 ## Evidence
 

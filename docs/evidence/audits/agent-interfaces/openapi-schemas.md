@@ -55,7 +55,7 @@ _No dedicated evidence signal was researched for this audit in the 2026-08-20 pa
 
 ## Evidence (2026-08-21)
 
-**Mechanism claim:** The JSON Schema under an operation's `requestBody`/`responses` `content` is what a tool-calling runtime turns into the tool's input schema and what the model uses to interpret the reply, so an operation with no schema forces the model to guess the payload shape.
+**Mechanism claim:** The JSON Schema under an operation's `requestBody` and `responses` `content` is what a tool-calling runtime turns into the tool's input schema, and what the model uses to interpret the reply. An operation with no schema therefore forces the model to guess the payload shape.
 
 **Grade: B** — every documented tool-calling runtime defines its parameters as JSON Schema, and one named agent, Microsoft 365 Copilot, is documented to read the spec's parameters and responses for exactly this purpose. The response-side half is documented as an aid to interpretation, rather than a requirement for the call to succeed.
 

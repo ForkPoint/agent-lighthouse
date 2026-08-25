@@ -78,7 +78,7 @@ Source: the [redemption dossier's verdict](../../deletions/agent-tools/ai-catalo
 
 ### Signal: ARD `entries[].url` dereferenced by real clients — grade B (agent-tools)
 
-**Mechanism:** A discovery client follows an entry's `url` to reach the artifact it advertises, and for catalog- or registry-typed entries it follows that url into a nested catalog — so one dead url does not degrade a listing, it truncates a whole branch of discovery.
+**Mechanism:** A discovery client follows an entry's `url` to reach the artifact it advertises. For catalog- or registry-typed entries, it follows that url into a nested catalog. One dead url therefore does not degrade a listing. It truncates a whole branch of discovery.
 
 **Grade: B** — the dereferencing is done by real, readable code in more than one implementation, which is stronger than a convention. It is not A for two reasons: no vendor documents a penalty for a dead url, and the traversing client is user-driven rather than a hosted crawler.
 
@@ -88,7 +88,7 @@ Source: the [redemption dossier's verdict](../../deletions/agent-tools/ai-catalo
 - Live manifests point at operational endpoints an agent would call immediately: Neon's ten entries are MCP servers and skills, Weaviate's nine are docs, agent skills, an OpenAPI description and a sitemap, and Shopware's is a Store-API MCP server url.
 - ARD §4.2 requires exactly one of `url` or `data` per entry, so an entry that embeds its artifact has no endpoint to dereference and is fully conformant — https://github.com/ards-project/ard-spec (verified 2026-08-24)
 
-**Counter-evidence:** No vendor document states that a crawler penalises or downranks a site for a dead catalog url. The consequence is mechanical — traversal stops, the tool call fails — rather than a published ranking signal, and the federation-following behaviour lives in a user-driven client: Hugging Face's hosted server states that "Navigation is intentionally not exposed by the hosted server". ARD itself is a draft (v0.9). The inline-`data` case above is also a live false-positive risk that any liveness check must respect, and the pre-2026-08-22 implementation was unreachable on real sites for the opposite reason: it aborted unless the manifest exposed a `services` array, which no spec or deployment uses.
+**Counter-evidence:** No vendor document states that a crawler penalises or downranks a site for a dead catalog url. The consequence is mechanical — traversal stops, the tool call fails — rather than a published ranking signal, and the federation-following behaviour lives in a user-driven client: Hugging Face's hosted server states that "Navigation is intentionally not exposed by the hosted server". ARD itself is a draft (v0.9). The inline-`data` case above is also a live false-positive risk that any liveness check must respect. The pre-2026-08-22 implementation was unreachable on real sites for the opposite reason. It aborted unless the manifest exposed a `services` array, which no spec or deployment uses.
 
 ## Adversarial redemption research (2026-08-21)
 
