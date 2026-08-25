@@ -11,6 +11,25 @@ export default defineConfig({
     // suites, and orchestrator/corpus tests that finish in under a second
     // locally were timing out at the 5s default.
     testTimeout: 30_000,
+    coverage: {
+      provider: 'v8',
+      reporter: ['text-summary', 'json-summary', 'html'],
+      reportsDirectory: 'coverage',
+      // Source only. Tests, build output, fixtures and the Astro pages (which
+      // vitest never renders) would otherwise dilute the figure.
+      include: ['packages/*/src/**/*.ts'],
+      exclude: [
+        '**/*.test.ts',
+        '**/*.d.ts',
+        '**/__tests__/**',
+        '**/__fixtures__/**',
+        '**/test-utils.ts',
+        '**/_test-utils.ts',
+        'packages/core/src/tests/**',
+        'packages/core/src/audits/proposed/**',
+        'packages/website/src/pages/**',
+      ],
+    },
     alias: {
       '@forkpoint/agent-lighthouse-core': resolve(__dirname, 'packages/core/src/index.ts'),
       '@forkpoint/agent-lighthouse-report': resolve(__dirname, 'packages/report/src/index.ts'),

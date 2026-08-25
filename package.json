@@ -16,14 +16,17 @@
     "format:check": "prettier --check \"**/*.{ts,tsx,js,json,md}\"",
     "changeset": "changeset",
     "version-packages": "changeset version",
-    "release": "pnpm build && changeset publish"
+    "release": "pnpm build && changeset publish",
+    "test:coverage": "vitest run --coverage"
   },
   "devDependencies": {
     "@changesets/cli": "^2.27.12",
     "@types/node": "^22.10.5",
+    "@vitest/coverage-v8": "2.1.9",
     "oxlint": "^0.15.10",
     "prettier": "^3.4.2",
     "tsup": "^8.3.5",
+    "tsx": "^4.23.12",
     "typescript": "^5.7.3",
     "vitest": "^2.1.8"
   },
