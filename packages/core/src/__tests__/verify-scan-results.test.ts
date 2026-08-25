@@ -124,10 +124,12 @@ describe.skipIf(process.env['AL_SKIP_NETWORK'] === '1')('Verify scan results aga
     it('1.1: example.com should NOT have llms.txt', () => {
       // Independently verify
       expect(ctx.rootFiles['/llms.txt']!.status).not.toBe(200);
-      // Check agrees
+      // Check agrees. The audit is informative since 5f95782: a site that
+      // never linked to an llms.txt has done nothing wrong, so a missing file
+      // is not-applicable rather than a failure.
       const result = allResults.get('machine-discovery/llms-txt-exists');
       expect(result).toBeDefined();
-      expect(result!.status).toBe('fail');
+      expect(result!.status).toBe('na');
     });
 
     it('1.8: example.com should NOT have a sitemap', () => {
