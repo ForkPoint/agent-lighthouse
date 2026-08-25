@@ -88,7 +88,7 @@ The grade is **B**, not A, and the tier is `experimental`, because of how the co
 
 ### Grade decision: **A → B**, tier `experimental`, weight 0
 
-Source: the [REWORK-TODO redemption note](../../../../packages/core/src/audits/REWORK-TODO.md) — "the .well-known manifest file is invented (grade D) — but runtime-registered WebMCP tools are grade B … Replace manifest-file audit with registered-tools detection, experimental tier." The frontmatter `evidence_grade` moves `A` → `B` to match: the A on this dossier came from the `agent-surface-soft-404-validation` signal, which is a validation rule for how *any* well-known audit must be implemented, not a grade for this audit's mechanism — and with the well-known path gone, it no longer applies here at all. `weightForGrade('B', 'experimental') = 0`, so `scoreDisplayMode` stays `informative`, and `defaultPriority` drops `high` → `low`. The pre-rewrite meta carried an explicit comment that its `A` was a placeholder pending this rewrite; that comment is now resolved rather than deferred.
+Source: the [REWORK-TODO redemption note](../../../../packages/core/src/audits/rework-todo.md) — "the .well-known manifest file is invented (grade D) — but runtime-registered WebMCP tools are grade B … Replace manifest-file audit with registered-tools detection, experimental tier." The frontmatter `evidence_grade` moves `A` → `B` to match: the A on this dossier came from the `agent-surface-soft-404-validation` signal, which is a validation rule for how *any* well-known audit must be implemented, not a grade for this audit's mechanism — and with the well-known path gone, it no longer applies here at all. `weightForGrade('B', 'experimental') = 0`, so `scoreDisplayMode` stays `informative`, and `defaultPriority` drops `high` → `low`. The pre-rewrite meta carried an explicit comment that its `A` was a placeholder pending this rewrite; that comment is now resolved rather than deferred.
 
 ### Re-check trigger
 
@@ -144,7 +144,7 @@ code that carried it, and the other belongs to a different audit. The surviving
 mechanism — Lighthouse 13.3+ reading `navigator.modelContext` from an
 instrumented browser, while this scanner has no JS runtime — is what grade **B**
 and tier `experimental` already price, and `weightForGrade('B', 'experimental')`
-is 0. `packages/core/src/audits/REWORK-TODO.md` recorded the same conclusion on
+is 0. `packages/core/src/audits/rework-todo.md` recorded the same conclusion on
 2026-08-22.
 
 **Retirement:** also off. The shortlist was assembled from the redemption

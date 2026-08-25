@@ -1,6 +1,6 @@
 # Not a factor — sunset audits
 
-26 audits shipped in Agent Lighthouse v1 claimed signals that our 2026-08-21 adversarial research could not redeem: no consumer reads them, or the only consumer publicly stopped. Per the [evidence policy](../POLICY.md) a grade-D audit may not carry score weight, and no consumer was found for any of these — so they are **removed outright** in this major release rather than lingering as informative. This page condenses why each one does not matter — with the evidence — so nobody has to re-litigate them, and so sites that were told to add these signals know they can stop.
+26 audits shipped in Agent Lighthouse v1 claimed signals that our 2026-08-21 adversarial research could not redeem: no consumer reads them, or the only consumer publicly stopped. Per the [evidence policy](../policy.md) a grade-D audit may not carry score weight, and no consumer was found for any of these — so they are **removed outright** in this major release rather than lingering as informative. This page condenses why each one does not matter — with the evidence — so nobody has to re-litigate them, and so sites that were told to add these signals know they can stop.
 
 Consumers that keyed on these check ids should read [`migration-map.json`](../../../packages/core/migration-map.json), which maps each removed v1 id to its slug, `status: "removed"`, and the anchor on this page.
 

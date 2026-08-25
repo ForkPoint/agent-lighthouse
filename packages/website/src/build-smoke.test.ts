@@ -28,7 +28,7 @@ describe.skipIf(!built)('built site', () => {
     // slice in `content.config.ts` has stopped being applied to the collection.
     expect(page).not.toContain('Code review findings');
     expect(page).not.toContain('Review history');
-    expect(page).not.toContain('POLICY.md');
+    expect(page).not.toContain('policy.md');
   });
 
   describe('the at-a-glance card', () => {

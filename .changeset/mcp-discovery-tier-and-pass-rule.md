@@ -32,5 +32,5 @@ was never published.
 
 Every site previously failing this check gains weight 1.0 back in the Agent
 Interfaces category. The scored set drops from 167 audits to 166 and the total
-evidence mass from 137.4 to 136.4; `docs/SCORING.md` is refreshed to match. No
+evidence mass from 137.4 to 136.4; `docs/scoring.md` is refreshed to match. No
 audit is added or removed — the registry stays at 215.

@@ -7,16 +7,16 @@ const published = new Set(['structured-data/service-schema']);
 
 describe('resolveDocLink', () => {
   it('sends a README link to a page this site publishes', () => {
-    expect(resolveDocLink('docs/BADGE.md', '', published)).toBe('/agent-lighthouse/docs/badge/');
+    expect(resolveDocLink('docs/badge.md', '', published)).toBe('/agent-lighthouse/docs/badge/');
   });
 
   it('sends a sibling docs link to its page and keeps the fragment', () => {
-    expect(resolveDocLink('./CLI.md#--experimental', 'docs', published))
+    expect(resolveDocLink('./cli.md#--experimental', 'docs', published))
       .toBe('/agent-lighthouse/docs/cli/#--experimental');
   });
 
   it('sends the evidence policy to the published policy page', () => {
-    expect(resolveDocLink('./evidence/POLICY.md', 'docs', published)).toBe('/agent-lighthouse/policy/');
+    expect(resolveDocLink('./evidence/policy.md', 'docs', published)).toBe('/agent-lighthouse/policy/');
   });
 
   it('sends a published dossier to its page', () => {
@@ -30,8 +30,8 @@ describe('resolveDocLink', () => {
   });
 
   it('sends a markdown file this site does not publish to GitHub', () => {
-    expect(resolveDocLink('docs/PROMOTION.md', '', published))
-      .toBe('https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/PROMOTION.md');
+    expect(resolveDocLink('docs/promotion.md', '', published))
+      .toBe('https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/promotion.md');
   });
 
   it('sends a directory to GitHub as a tree URL', () => {
@@ -48,11 +48,11 @@ describe('resolveDocLink', () => {
 describe('createDocRenderer', () => {
   it('rewrites the relative links the prose was written with', async () => {
     const render = await createDocRenderer(published);
-    const { html } = await render('See [the CLI](./CLI.md) and [the policy](./evidence/POLICY.md).', 'docs');
+    const { html } = await render('See [the CLI](./cli.md) and [the policy](./evidence/policy.md).', 'docs');
 
     expect(html).toContain('href="/agent-lighthouse/docs/cli/"');
     expect(html).toContain('href="/agent-lighthouse/policy/"');
-    expect(html).not.toContain('CLI.md');
+    expect(html).not.toContain('cli.md');
   });
 
   it('reports the headings the page builds its table of contents from', async () => {

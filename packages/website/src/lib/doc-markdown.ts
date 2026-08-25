@@ -23,7 +23,7 @@ export function resolveDocLink(href: string, fromDir: string, published: Set<str
   const slug = PUBLISHED_FILES.get(target.path);
   if (slug) return docPath(slug) + target.fragment;
 
-  if (target.path === 'docs/evidence/POLICY.md') return withBase('policy/') + target.fragment;
+  if (target.path === 'docs/evidence/policy.md') return withBase('policy/') + target.fragment;
   // The policy's one relative link. A reader following it wants the registry
   // they can search, not 465 KB of JSON; the sources page offers the raw file.
   if (target.path === 'docs/evidence/sources.json') return withBase('sources/') + target.fragment;

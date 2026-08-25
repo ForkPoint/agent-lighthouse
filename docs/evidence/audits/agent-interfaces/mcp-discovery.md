@@ -194,7 +194,7 @@ speculatively, by design.
 
 Registry effect: none. No audit added or removed; 215 audits, 215 dossiers. The
 scored set drops by one, from 167 to 166, and the evidence mass in
-[`docs/SCORING.md`](../../../SCORING.md) is refreshed to match.
+[`docs/scoring.md`](../../../scoring.md) is refreshed to match.
 
 ## Review history
 

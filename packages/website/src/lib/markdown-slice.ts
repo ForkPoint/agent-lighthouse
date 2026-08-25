@@ -88,11 +88,11 @@ export const DOC_SECTIONS: readonly DocSection[] = [
   { slug: 'mcp', title: 'MCP server', file: 'README.md', heading: '## 🤖 Model Context Protocol (MCP) Server' },
   { slug: 'ci', title: 'GitHub Actions CI', file: 'README.md', heading: '## 🛡️ GitHub Actions CI' },
   { slug: 'share', title: 'Share your score', file: 'README.md', heading: '## 📣 Share Your Score' },
-  { slug: 'badge', title: 'Badge', file: 'docs/BADGE.md' },
-  { slug: 'benchmark', title: 'Benchmark', file: 'docs/BENCHMARK.md' },
-  { slug: 'scoring', title: 'Scoring', file: 'docs/SCORING.md' },
-  { slug: 'cli', title: 'CLI reference', file: 'docs/CLI.md' },
-  { slug: 'config', title: 'Configuration', file: 'docs/CONFIG.md' },
+  { slug: 'badge', title: 'Badge', file: 'docs/badge.md' },
+  { slug: 'benchmark', title: 'Benchmark', file: 'docs/benchmark.md' },
+  { slug: 'scoring', title: 'Scoring', file: 'docs/scoring.md' },
+  { slug: 'cli', title: 'CLI reference', file: 'docs/cli.md' },
+  { slug: 'config', title: 'Configuration', file: 'docs/config.md' },
 ];
 
 /**

@@ -15,7 +15,7 @@ import { repoPath } from './markdown-slice';
  * Server-side only: this touches the filesystem. The browser gets the JSON.
  */
 export const EVIDENCE_DIR = 'docs/evidence';
-export const POLICY_FILE = `${EVIDENCE_DIR}/POLICY.md`;
+export const POLICY_FILE = `${EVIDENCE_DIR}/policy.md`;
 export const SOURCES_FILE = `${EVIDENCE_DIR}/sources.json`;
 
 /** The evidence policy, as the markdown it is on disk. */

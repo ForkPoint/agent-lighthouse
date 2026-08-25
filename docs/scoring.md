@@ -32,7 +32,7 @@ The weight is stamped onto every check result at the single place a result is bu
 
 ## Evidence grades
 
-Grades are assigned in each audit's dossier under [`docs/evidence/`](./evidence/) and are governed by the [evidence policy](./evidence/POLICY.md). In short:
+Grades are assigned in each audit's dossier under [`docs/evidence/`](./evidence/) and are governed by the [evidence policy](./evidence/policy.md). In short:
 
 | Grade | Bar                                                                                                       |
 | :---- | :-------------------------------------------------------------------------------------------------------- |
@@ -51,7 +51,7 @@ Every registered audit carries exactly one tier.
 
 **`informative`** — the audit runs and its result appears in the report, but its weight is 0 and it is filtered out of every ranking surface: category scores, the overall score, top passes, top fails, recommendations and the readiness vitals. A check is treated as advisory when its `scoreDisplayMode` is `informative`, which is the single predicate `isInformative()` that every surface calls, so the rule cannot drift between packages.
 
-**`experimental`** — the audit is behind a flag. It does not run at all unless the scan is started with `--experimental` (CLI) or `includeExperimental: true` (SDK). When it does run it is reported and never scored. See [CLI.md](./CLI.md#--experimental) and [CONFIG.md](./CONFIG.md#experimental-audits).
+**`experimental`** — the audit is behind a flag. It does not run at all unless the scan is started with `--experimental` (CLI) or `includeExperimental: true` (SDK). When it does run it is reported and never scored. See [cli.md](./cli.md#--experimental) and [config.md](./config.md#experimental-audits).
 
 ## From a check result to a category score
 
@@ -126,7 +126,7 @@ The headline score is also labelled, using fixed bands:
 | 50 – 69  | `needs-work`       | Needs Work       |
 | 0 – 49   | `not-ready`        | Not Ready        |
 
-These bands are also what the [score badge](./BADGE.md) colours itself by.
+These bands are also what the [score badge](./badge.md) colours itself by.
 
 ## Readiness vitals
 
@@ -181,6 +181,6 @@ If this category carried mass 30.2 out of a total of 139.4, and every other cate
 | Evidence mass per category                 | [`packages/core/src/audit-config.ts`](../packages/core/src/audit-config.ts)                 |
 | Score-tier bands and vital weights         | [`packages/core/src/constants.ts`](../packages/core/src/constants.ts)                       |
 | Readiness vitals                           | [`packages/core/src/orchestrator.ts`](../packages/core/src/orchestrator.ts)                 |
-| What a grade is allowed to do              | [`docs/evidence/POLICY.md`](./evidence/POLICY.md)                                           |
+| What a grade is allowed to do              | [`docs/evidence/policy.md`](./evidence/policy.md)                                           |
 
-See also: [CLI.md](./CLI.md) for running a scan and asserting on its score in CI, and [CONFIG.md](./CONFIG.md) for narrowing a scan to specific categories.
+See also: [cli.md](./cli.md) for running a scan and asserting on its score in CI, and [config.md](./config.md) for narrowing a scan to specific categories.

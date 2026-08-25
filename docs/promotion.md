@@ -53,10 +53,10 @@ Agent Lighthouse is an open-source CLI, SDK, GitHub Action, and MCP server that 
 - Reddit/community: [`docs/launch-posts/reddit.md`](launch-posts/reddit.md)
 - Dev.to tutorial: [`docs/launch-posts/devto.md`](launch-posts/devto.md)
 - Outreach templates: [`docs/outreach/`](outreach/)
-- Awesome list snippets: [`docs/AWESOME_LIST_SUBMISSIONS.md`](AWESOME_LIST_SUBMISSIONS.md)
-- GitHub Action setup: [`docs/ACTION_MARKETPLACE.md`](ACTION_MARKETPLACE.md)
-- Badge generator notes: [`docs/BADGE.md`](BADGE.md)
-- Benchmark story: [`docs/BENCHMARK.md`](BENCHMARK.md)
+- Awesome list snippets: [`docs/awesome-list-submissions.md`](awesome-list-submissions.md)
+- GitHub Action setup: [`docs/github-action.md`](github-action.md)
+- Badge generator notes: [`docs/badge.md`](badge.md)
+- Benchmark story: [`docs/benchmark.md`](benchmark.md)
 
 ## Show HN Draft
 

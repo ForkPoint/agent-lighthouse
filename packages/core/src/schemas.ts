@@ -58,7 +58,7 @@ export const DeprecationNoticeSchema = z.object({
   link: z.string().url(),
 });
 
-/** Evidence strength from the audit's dossier (docs/evidence/POLICY.md). */
+/** Evidence strength from the audit's dossier (docs/evidence/policy.md). */
 export const EvidenceGradeSchema = z.enum(['A', 'B', 'C', 'D']);
 /** Scoring participation tier (spec §4). */
 export const AuditTierSchema = z.enum(['scored', 'informative', 'experimental']);

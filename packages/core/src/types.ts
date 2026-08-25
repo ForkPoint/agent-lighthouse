@@ -62,17 +62,17 @@ export interface AuditGuidance {
 
 export type ScoreDisplayMode = 'binary' | 'ternary' | 'informative';
 
-/** Public sunset notice for a deprecated audit (see docs/evidence/sunset/NOT-A-FACTOR.md). */
+/** Public sunset notice for a deprecated audit (see docs/evidence/sunset/not-a-factor.md). */
 export interface DeprecationNotice {
   /** One sentence: why this signal is not a factor. */
   notice: string;
-  /** Public rationale URL (NOT-A-FACTOR.md anchor). */
+  /** Public rationale URL (not-a-factor.md anchor). */
   link: string;
 }
 
 /**
  * Strength of the published evidence backing an audit, assigned in the audit's
- * dossier per docs/evidence/POLICY.md. Only A and B carry scoring weight.
+ * dossier per docs/evidence/policy.md. Only A and B carry scoring weight.
  */
 export type EvidenceGrade = 'A' | 'B' | 'C' | 'D';
 
@@ -95,7 +95,7 @@ export interface AuditMeta {
   guidance?: AuditGuidance;
   /** Present when the audit is sunset: shown as a notice, excluded from scores. */
   deprecated?: DeprecationNotice;
-  /** Evidence grade from the audit's dossier (docs/evidence/POLICY.md). */
+  /** Evidence grade from the audit's dossier (docs/evidence/policy.md). */
   evidenceGrade?: EvidenceGrade;
   /** Scoring tier derived from the grade (spec §4). */
   tier?: AuditTier;

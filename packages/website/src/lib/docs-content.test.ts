@@ -6,9 +6,9 @@ import { defaultConfig } from '@forkpoint/agent-lighthouse-core';
 const REPO = resolve(__dirname, '../../../..');
 const read = (file: string) => readFileSync(resolve(REPO, file), 'utf8');
 
-describe('docs/SCORING.md', () => {
+describe('docs/scoring.md', () => {
   it('states the weight law and every tier', () => {
-    const scoring = read('docs/SCORING.md');
+    const scoring = read('docs/scoring.md');
     expect(scoring).toContain('weightForGrade');
     // The two weights the law can produce (packages/core/src/scorer.ts).
     for (const weight of ['1.0', '0.6']) expect(scoring).toContain(weight);
@@ -17,9 +17,9 @@ describe('docs/SCORING.md', () => {
   });
 });
 
-describe('docs/CLI.md', () => {
+describe('docs/cli.md', () => {
   it('documents every flag the CLI accepts', () => {
-    const cli = read('docs/CLI.md');
+    const cli = read('docs/cli.md');
     // The entry point is main.ts, and it quotes flags with double quotes — the
     // pattern accepts either quote style so a restyle cannot silently empty it.
     const source = read('packages/cli/src/main.ts');
@@ -29,9 +29,9 @@ describe('docs/CLI.md', () => {
   });
 });
 
-describe('docs/CONFIG.md', () => {
+describe('docs/config.md', () => {
   it('names every category id', () => {
-    const config = read('docs/CONFIG.md');
+    const config = read('docs/config.md');
     for (const category of defaultConfig.categories) expect(config).toContain(category.id);
   });
 });

@@ -2,7 +2,7 @@
 
 `@forkpoint/agent-lighthouse` audits a live URL for agent readiness and writes a terminal, HTML, JSON and/or Markdown report. This page is the complete reference for the command and its flags.
 
-For what the resulting numbers mean, see [SCORING.md](./SCORING.md). For the config file, environment variables and the programmatic API, see [CONFIG.md](./CONFIG.md).
+For what the resulting numbers mean, see [scoring.md](./scoring.md). For the config file, environment variables and the programmatic API, see [config.md](./config.md).
 
 ## Install
 
@@ -34,7 +34,7 @@ agent-lighthouse --help
 
 The first two forms do the same thing; the `audit` sub-command exists so scripts can read more explicitly. The third is not a flag on a scan: help is recognised only when `-h` or `--help` is the **first** argument, so `agent-lighthouse --help` prints usage while `agent-lighthouse https://example.com --help` ignores it and scans the URL. The URL must be absolute and include its scheme (`https://example.com`, not `example.com`) — anything the `URL` constructor rejects exits with code 1.
 
-The URL may also come from a [config file](./CONFIG.md#the-config-file) instead of the command line, but only from an invocation that gets as far as reading one. Two forms do: `agent-lighthouse audit` — the sub-command with no URL after it — and anything whose first argument is a flag, such as `agent-lighthouse --silent`. A bare `agent-lighthouse` with no arguments does **not**: it prints usage and exits 1 before the config file is opened. If a form that does read the file finds no URL there either, the CLI prints its usage and exits 1.
+The URL may also come from a [config file](./config.md#the-config-file) instead of the command line, but only from an invocation that gets as far as reading one. Two forms do: `agent-lighthouse audit` — the sub-command with no URL after it — and anything whose first argument is a flag, such as `agent-lighthouse --silent`. A bare `agent-lighthouse` with no arguments does **not**: it prints usage and exits 1 before the config file is opened. If a form that does read the file finds no URL there either, the CLI prints its usage and exits 1.
 
 ```bash
 # scan a staging site and open the HTML report when it is done
@@ -95,7 +95,7 @@ Accepted names: `ecommerce`, `saas`, `content`, `quick`, `full`. Default `full`.
 agent-lighthouse https://yourstore.com --preset ecommerce
 ```
 
-The preset name is recorded and printed in the run header. **In the current release it does not change which audits run or how they are scored** — v2 replaced hand-tuned category weights with evidence mass (see [SCORING.md](./SCORING.md#category-scores-to-the-overall-score)), and the preset's category filter and page limit are not applied. To actually narrow a scan, use `--categories`.
+The preset name is recorded and printed in the run header. **In the current release it does not change which audits run or how they are scored** — v2 replaced hand-tuned category weights with evidence mass (see [scoring.md](./scoring.md#category-scores-to-the-overall-score)), and the preset's category filter and page limit are not applied. To actually narrow a scan, use `--categories`.
 
 ### `-c`, `--config <path>`
 
@@ -103,7 +103,7 @@ The preset name is recorded and printed in the run header. **In the current rele
 agent-lighthouse --config ./ci/agent-lighthouse.staging.json
 ```
 
-Without this flag the CLI looks for `agent-lighthouse.config.json`, `.agent-lighthouserc.json` and `.agent-lighthouserc` in the working directory, in that order, and uses the first one that exists. With this flag, the named file must exist — a missing path is a fatal error, not a fallback to auto-discovery. See [CONFIG.md](./CONFIG.md) for the file's keys.
+Without this flag the CLI looks for `agent-lighthouse.config.json`, `.agent-lighthouserc.json` and `.agent-lighthouserc` in the working directory, in that order, and uses the first one that exists. With this flag, the named file must exist — a missing path is a fatal error, not a fallback to auto-discovery. See [config.md](./config.md) for the file's keys.
 
 ### `--categories <list>`
 
@@ -113,7 +113,7 @@ A comma-separated list of category ids. Only the named categories are scanned, a
 agent-lighthouse https://yourstore.com --categories structured-data,agentic-commerce
 ```
 
-The valid ids are `access-crawl-control`, `content-extraction`, `machine-discovery`, `structured-data`, `answer-readiness`, `agent-interfaces`, `agentic-commerce` and `operability-safety`. An unknown id is rejected before the scan starts, with the valid list printed and exit code 1 — a typo narrows nothing silently. Each id is described in [CONFIG.md](./CONFIG.md#the-eight-categories).
+The valid ids are `access-crawl-control`, `content-extraction`, `machine-discovery`, `structured-data`, `answer-readiness`, `agent-interfaces`, `agentic-commerce` and `operability-safety`. An unknown id is rejected before the scan starts, with the valid list printed and exit code 1 — a typo narrows nothing silently. Each id is described in [config.md](./config.md#the-eight-categories).
 
 ### `--experimental`
 
@@ -121,7 +121,7 @@ The valid ids are `access-crawl-control`, `content-extraction`, `machine-discove
 agent-lighthouse https://yourstore.com --experimental
 ```
 
-Experimental-tier audits are excluded from every scan by default. They carry weight 0 either way, so this flag never changes a score; it only adds their results to the report. Running an unvalidated check is a decision the operator makes rather than a default. See the [evidence policy](./evidence/POLICY.md) for what puts an audit in that tier.
+Experimental-tier audits are excluded from every scan by default. They carry weight 0 either way, so this flag never changes a score; it only adds their results to the report. Running an unvalidated check is a decision the operator makes rather than a default. See the [evidence policy](./evidence/policy.md) for what puts an audit in that tier.
 
 ### `-o`, `--output <formats>`
 
@@ -251,4 +251,4 @@ jobs:
           path: ./reports/
 ```
 
-A ready-made GitHub Action wrapper is documented in [ACTION_MARKETPLACE.md](./ACTION_MARKETPLACE.md), and [BADGE.md](./BADGE.md) covers turning a score into a README badge.
+A ready-made GitHub Action wrapper is documented in [github-action.md](./github-action.md), and [badge.md](./badge.md) covers turning a score into a README badge.

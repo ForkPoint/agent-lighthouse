@@ -70,7 +70,7 @@ Closing the false-positive risks listed above:
 
 ### Grade decision: stays **B**, tier `scored`, weight 0.6
 
-Source: the [redemption dossier's verdict](../../deletions/agent-tools/ai-catalog-metadata.md) — "redeemed — keep with rewrite (grade B)" — carried verbatim into the [REWORK-TODO entry](../../../../packages/core/src/audits/REWORK-TODO.md). The mechanism is consumer-backed (hf-discover's ranking is driven entirely by manifest metadata richness) but no vendor documents downranking on missing metadata — a consumer simply matches less text. That is grade B, not A. Per the §4 weight law `weightForGrade('B', 'scored') = 0.6`; `scoreDisplayMode` stays `ternary`; `defaultPriority` stays `medium`.
+Source: the [redemption dossier's verdict](../../deletions/agent-tools/ai-catalog-metadata.md) — "redeemed — keep with rewrite (grade B)" — carried verbatim into the [REWORK-TODO entry](../../../../packages/core/src/audits/rework-todo.md). The mechanism is consumer-backed (hf-discover's ranking is driven entirely by manifest metadata richness) but no vendor documents downranking on missing metadata — a consumer simply matches less text. That is grade B, not A. Per the §4 weight law `weightForGrade('B', 'scored') = 0.6`; `scoreDisplayMode` stays `ternary`; `defaultPriority` stays `medium`.
 
 ### Deviations
 
@@ -101,5 +101,5 @@ This audit was a delete candidate and went through dedicated adversarial researc
 
 - 2026-08-20 — code review (11-agent workflow) + evidence research (12-domain workflow, 400 sources).
 - 2026-08-21 — adversarial redemption research; user accepted verdict (disposition above).
-- 2026-08-22 — rewritten (Plan 4, Task 10): scores ARD §4.2's real metadata keys, `owner`/`contact`/`lastUpdated`/`services` dropped, absence downgraded from `fail` to `na`. Grade **B**, tier `scored`, weight 0.6 — unchanged. `TODO(redeem)` header removed; entry dropped from REWORK-TODO.md.
+- 2026-08-22 — rewritten (Plan 4, Task 10): scores ARD §4.2's real metadata keys, `owner`/`contact`/`lastUpdated`/`services` dropped, absence downgraded from `fail` to `na`. Grade **B**, tier `scored`, weight 0.6 — unchanged. `TODO(redeem)` header removed; entry dropped from rework-todo.md.
 - 2026-08-22 — review fix (Task 10, round 1): the first cut read `updatedAt` and `trustManifest` at the manifest root, which the ARD schema does not define. Both are now read at their spec-defined levels — `updatedAt` per entry (§4.2), `trustManifest` on the entry (§4.2) or the host (§4.3) — in `_ard.ts`, in the code sample and in the fix guidance, with tests pinning that a root-level copy does not count.

@@ -53,7 +53,7 @@ function report(categories: CategoryResult[], over: Partial<ScanReport> = {}): S
 }
 
 const NOT_A_FACTOR_LINK =
-  'https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/sunset/NOT-A-FACTOR.md#accessibilityskip-nav';
+  'https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/sunset/not-a-factor.md#accessibilityskip-nav';
 
 // ── Tests ───────────────────────────────────────────────────────
 
@@ -78,7 +78,7 @@ describe('generateHtmlReport', () => {
     );
 
     expect(html).toContain('Deprecated — no longer a factor');
-    expect(html).toContain('docs/evidence/sunset/NOT-A-FACTOR.md#accessibilityskip-nav');
+    expect(html).toContain('docs/evidence/sunset/not-a-factor.md#accessibilityskip-nav');
     expect(html).toContain('No consumer reads this signal.');
   });
 
@@ -140,7 +140,7 @@ describe('generateHtmlReport', () => {
     );
 
     expect(html).not.toContain('Deprecated — no longer a factor');
-    expect(html).not.toContain('NOT-A-FACTOR.md');
+    expect(html).not.toContain('not-a-factor.md');
   });
 });
 

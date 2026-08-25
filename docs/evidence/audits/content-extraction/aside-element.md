@@ -97,7 +97,7 @@ The redeem note's last requirement was that the guidance say out loud what marki
 
 ### Grade decision: stays **B**, tier `scored`, weight 0.6
 
-Source: the [redemption dossier's verdict](../../deletions/semantic-html/aside-element.md) — "redeemed — keep with rewrite (grade B)" — and the [REWORK-TODO entry](../../../../packages/core/src/audits/REWORK-TODO.md). Grade B rests on two independent consumers acting on the element by name (Readability's `_clean(articleContent, "aside")`; trafilatura's `MANUALLY_CLEANED`) plus an empirically verified a11y-tree path (a live Chromium snapshot surfacing both a top-level and a nested `<aside>` as `complementary`). It is B rather than A because no AI vendor documents `<aside>` as a requirement and both extractors also work without landmarks — the signal degrades a page, it does not gate it.
+Source: the [redemption dossier's verdict](../../deletions/semantic-html/aside-element.md) — "redeemed — keep with rewrite (grade B)" — and the [REWORK-TODO entry](../../../../packages/core/src/audits/rework-todo.md). Grade B rests on two independent consumers acting on the element by name (Readability's `_clean(articleContent, "aside")`; trafilatura's `MANUALLY_CLEANED`) plus an empirically verified a11y-tree path (a live Chromium snapshot surfacing both a top-level and a nested `<aside>` as `complementary`). It is B rather than A because no AI vendor documents `<aside>` as a requirement and both extractors also work without landmarks — the signal degrades a page, it does not gate it.
 
 Neither the redeem note nor the REWORK-TODO row asks for a grade or tier change; the required rework is to the check and the guidance. Per the §4 weight law `weightForGrade('B', 'scored') = 0.6`; `defaultPriority` stays `low`.
 

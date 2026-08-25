@@ -33,14 +33,14 @@ describe('badgeMarkdown', () => {
 });
 
 /**
- * `docs/BADGE.md` is the published contract, so it is read here rather than
+ * `docs/badge.md` is the published contract, so it is read here rather than
  * transcribed: the bands the site renders and the snippet it generates are
  * compared against the file itself. If the doc changes, this fails, which is
  * the point — the site must not teach a badge the doc does not.
  */
-const BADGE_DOC = readFileSync(resolve(__dirname, '../../../../docs/BADGE.md'), 'utf8');
+const BADGE_DOC = readFileSync(resolve(__dirname, '../../../../docs/badge.md'), 'utf8');
 
-describe('docs/BADGE.md', () => {
+describe('docs/badge.md', () => {
   it('is the source of the bands the site renders', () => {
     const rows = [...BADGE_DOC.matchAll(/^\|\s*(\d+)-(\d+)\s*\|\s*`([0-9a-f]{6})`\s*\|\s*([^|]+?)\s*\|$/gm)];
 

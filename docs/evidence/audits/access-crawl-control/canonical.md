@@ -65,7 +65,7 @@ Checks each page for a <link rel="canonical"> with a non-empty href. Presence-on
 
 ## Evidence
 
-_No dedicated evidence signal was researched for this audit in the 2026-08-20 pass. Its tier assignment falls to the taxonomy design; unproven mechanisms default to informative per the [evidence policy](../../POLICY.md)._
+_No dedicated evidence signal was researched for this audit in the 2026-08-20 pass. Its tier assignment falls to the taxonomy design; unproven mechanisms default to informative per the [evidence policy](../../policy.md)._
 ## Evidence (2026-08-21)
 
 **Mechanism claim:** Googlebot reads `<link rel="canonical">`, and uses it as a strong signal when choosing which of a set of duplicate URLs to index and consolidate signals onto. The URL it selects is the one eligible to be shown in Search — and so, in turn, as a supporting link in AI Overviews and AI Mode.

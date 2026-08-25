@@ -100,7 +100,7 @@ Four of the false-positive risks listed above are closed by the same change:
 
 ### Grade decision: stays **A**, tier `scored`, weight 1.0
 
-Source: the [redemption dossier's verdict](../../deletions/agent-tools/ai-catalog-exists.md) — "redeemed — keep with rewrite (grade A)" — and the [REWORK-TODO entry](../../../../packages/core/src/audits/REWORK-TODO.md) that carries it. The grade rests on a named vendor tool (Hugging Face `hf-discover`) that resolves exactly `https://{domain}/.well-known/ai-catalog.json` and reads `entries[]`, the path being normative in the ARD draft co-authored by Google, Microsoft and Hugging Face, and verifiable production adoption (Neon, Weaviate, Shopware core, specification.website).
+Source: the [redemption dossier's verdict](../../deletions/agent-tools/ai-catalog-exists.md) — "redeemed — keep with rewrite (grade A)" — and the [REWORK-TODO entry](../../../../packages/core/src/audits/rework-todo.md) that carries it. The grade rests on a named vendor tool (Hugging Face `hf-discover`) that resolves exactly `https://{domain}/.well-known/ai-catalog.json` and reads `entries[]`, the path being normative in the ARD draft co-authored by Google, Microsoft and Hugging Face, and verifiable production adoption (Neon, Weaviate, Shopware core, specification.website).
 
 Task 7 recorded that the A/`scored`/1.0 meta was only defensible once this rewrite landed, because the audit as written could not pass on a conformant site. It now checks the shape those consumers actually read, so the grade stands as researched. Per the §4 weight law `weightForGrade('A', 'scored') = 1.0`; `scoreDisplayMode` stays `ternary`; `defaultPriority` stays `medium`.
 
@@ -129,4 +129,4 @@ This audit was a delete candidate and went through dedicated adversarial researc
 - 2026-08-21 — adversarial redemption research; user accepted verdict (grade A, rewrite required).
 - 2026-08-21 — approved: 4.19 merges away into 5.7 (v2 audit map).
 - 2026-08-22 — merged (Plan 4, Task 7): 4.19 folded in, grade and tier unchanged; registry 158 → 157 for this fold. The ARD §4.1 rewrite remained open for Task 10.
-- 2026-08-22 — rewritten (Plan 4, Task 10): pass condition is ARD §4.1 (`specVersion` + `host` + non-empty `entries[]`), guidance and code sample replaced with the real schema, parsing extracted to `_ard.ts`. Grade **A**, tier `scored`, weight 1.0 — unchanged, and now defensible on a conformant site. `TODO(redeem)` header removed; entry dropped from REWORK-TODO.md.
+- 2026-08-22 — rewritten (Plan 4, Task 10): pass condition is ARD §4.1 (`specVersion` + `host` + non-empty `entries[]`), guidance and code sample replaced with the real schema, parsing extracted to `_ard.ts`. Grade **A**, tier `scored`, weight 1.0 — unchanged, and now defensible on a conformant site. `TODO(redeem)` header removed; entry dropped from rework-todo.md.

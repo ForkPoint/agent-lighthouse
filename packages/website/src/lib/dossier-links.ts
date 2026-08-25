@@ -61,7 +61,7 @@ export function resolveDossierLink(href: string, fromId: string, published: Set<
   const target = repoTarget(href, `${DOSSIER_DIR}/${category}`);
   if (!target) return href;
 
-  if (target.path === 'docs/evidence/POLICY.md') return withBase('policy/') + target.fragment;
+  if (target.path === 'docs/evidence/policy.md') return withBase('policy/') + target.fragment;
 
   const dossier = /^docs\/evidence\/audits\/(.+)\.md$/.exec(target.path);
   if (dossier && published.has(dossier[1]!)) return auditPath(dossier[1]!) + target.fragment;

@@ -77,7 +77,7 @@ The shipped description and impact text used to read: *"Voice-based AI agents (G
 
 ### Grade decision: stays **A**, tier `scored`, weight 1.0
 
-Source: the [redemption dossier's verdict](../../deletions/structured-data/speakable-schema.md) — "redeemed — keep with rewrite (grade A)" — and the [REWORK-TODO entry](../../../../packages/core/src/audits/REWORK-TODO.md) carrying it. Neither asks for a tier change; the required changes are to applicability and copy. Per the §4 weight law `weightForGrade('A', 'scored') = 1.0`. `scoreDisplayMode` moves `binary` → `ternary` to carry the new partial-coverage verdict (weight is nonzero, so `informative` would be wrong), and `defaultPriority` stays `low` — the feature is beta, US-English-only and news-only, which is upside rather than a deficiency anywhere else.
+Source: the [redemption dossier's verdict](../../deletions/structured-data/speakable-schema.md) — "redeemed — keep with rewrite (grade A)" — and the [REWORK-TODO entry](../../../../packages/core/src/audits/rework-todo.md) carrying it. Neither asks for a tier change; the required changes are to applicability and copy. Per the §4 weight law `weightForGrade('A', 'scored') = 1.0`. `scoreDisplayMode` moves `binary` → `ternary` to carry the new partial-coverage verdict (weight is nonzero, so `informative` would be wrong), and `defaultPriority` stays `low` — the feature is beta, US-English-only and news-only, which is upside rather than a deficiency anywhere else.
 
 ### Re-check trigger
 
@@ -104,7 +104,7 @@ This audit was a delete candidate and went through dedicated adversarial researc
 ## Re-grade (2026-08-24): **A → B**, tier `scored`, weight 1.0 → 0.6
 
 This audit reached the retirement shortlist under the bar "own dossier records
-no known consumer **and** conflicts with a written position in `POLICY.md`". It
+no known consumer **and** conflicts with a written position in `policy.md`". It
 does not meet that bar, and it is not retired. Google Search Central's speakable
 page was re-fetched on 2026-08-24: **live**, last updated 2025-12-10, and still
 naming Google Assistant as the agent that reads the marked sections aloud with
@@ -117,7 +117,7 @@ What the re-fetch also confirmed is that the same page says, verbatim:
 and scopes it to *"users in the U.S. that have Google Home devices set to
 English, and publishers that publish content in English"*, news content only.
 
-`POLICY.md` reserves grade **A** for documented consumer behaviour or a ratified
+`policy.md` reserves grade **A** for documented consumer behaviour or a ratified
 standard with known consumers, and gives grade **B** to a draft standard with
 meaningful adoption or strong empirical evidence of effect. A vendor feature the
 vendor itself labels beta, limited to one country, one language and one content

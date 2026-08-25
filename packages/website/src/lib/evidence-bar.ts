@@ -1,7 +1,7 @@
 /**
  * The bar an audit must clear before its page ships as scored.
  *
- * `docs/evidence/POLICY.md` already says what counts as proof and what each
+ * `docs/evidence/policy.md` already says what counts as proof and what each
  * grade is allowed to do to a score. This is the same rule made enforceable at
  * the moment a page is generated: a scored audit whose dossier cannot show its
  * work stops the build rather than publishing a claim the reader cannot check.
@@ -126,7 +126,7 @@ export function enforceEvidenceBar(
     .map((entry) => `  ${entry.id}: ${entry.problems.join('; ')}`)
     .join('\n');
   throw new Error(
-    `${failures.length} dossier(s) fall short of the evidence bar in docs/evidence/POLICY.md:\n${detail}\n\n` +
+    `${failures.length} dossier(s) fall short of the evidence bar in docs/evidence/policy.md:\n${detail}\n\n` +
       'Either write the missing evidence, or drop the audit to informative — which is what the policy already requires.',
   );
 }

@@ -65,7 +65,7 @@ A named form with no `tooldescription` is now a `warn`: it is registered but an 
 
 ### Grade decision: stays **A**, tier `scored`, weight 1.0
 
-Source: the [redemption dossier's verdict](../../deletions/agent-tools/webmcp-declarative-forms.md) — "redeemed — keep with rewrite (grade A)" — carried into the [REWORK-TODO entry](../../../../packages/core/src/audits/REWORK-TODO.md). The grade rests on a W3C CG explainer, a named Baseline feature with live Chrome WPT scores and a usage counter, first-party Chrome documentation with the identical attribute names, and named agent consumers (Brave Leo experimental support, Chrome 149 and Edge 150 origin trials). No tier change was recommended by the research and none is made here. Per the §4 weight law `weightForGrade('A', 'scored') = 1.0`; `scoreDisplayMode` stays `ternary`.
+Source: the [redemption dossier's verdict](../../deletions/agent-tools/webmcp-declarative-forms.md) — "redeemed — keep with rewrite (grade A)" — carried into the [REWORK-TODO entry](../../../../packages/core/src/audits/rework-todo.md). The grade rests on a W3C CG explainer, a named Baseline feature with live Chrome WPT scores and a usage counter, first-party Chrome documentation with the identical attribute names, and named agent consumers (Brave Leo experimental support, Chrome 149 and Edge 150 origin trials). No tier change was recommended by the research and none is made here. Per the §4 weight law `weightForGrade('A', 'scored') = 1.0`; `scoreDisplayMode` stays `ternary`.
 
 ### Deviations
 
@@ -95,7 +95,7 @@ This audit was a delete candidate and went through dedicated adversarial researc
 ## Re-grade (2026-08-24): **A → B**, tier `scored`, weight 1.0 → 0.6
 
 This audit reached the retirement shortlist under the bar "own dossier records
-no known consumer **and** conflicts with a written position in `POLICY.md`". It
+no known consumer **and** conflicts with a written position in `policy.md`". It
 does not meet that bar, and it is not retired. Chrome's declarative-API page was
 re-fetched on 2026-08-24: **live**, published 2026-05-18, documenting `toolname`,
 `tooldescription`, `toolparamdescription` and `toolautosubmit`, and stating that
@@ -107,7 +107,7 @@ badge and says, verbatim:
 
 > WebMCP is under active discussion and subject to change in the future.
 
-`POLICY.md` reserves grade **A** for documented consumer behaviour or a ratified
+`policy.md` reserves grade **A** for documented consumer behaviour or a ratified
 standard with known consumers, and gives grade **B** to a draft standard with
 meaningful adoption. An origin trial is the definition of the second: shipping
 behind a registration, explicitly provisional, explicitly subject to change.
@@ -122,5 +122,5 @@ W3C work reaches a ratified stage, this returns to a grade-A candidate.
 
 - 2026-08-20 — code review (11-agent workflow) + evidence research (12-domain workflow, 400 sources).
 - 2026-08-21 — adversarial redemption research; user accepted verdict (disposition above).
-- 2026-08-22 — rewritten (Plan 4, Task 10): `toolname` required to register a tool, `toolparamdescription`/`toolautosubmit` documented, dead `webmcp.link` docsUrl replaced with the Chrome declarative-API docs, `defaultPriority` softened `high` → `medium`, form-less pages `na` instead of `warn`. Grade **A**, tier `scored`, weight 1.0 — unchanged. `TODO(redeem)` header removed; entry dropped from REWORK-TODO.md.
+- 2026-08-22 — rewritten (Plan 4, Task 10): `toolname` required to register a tool, `toolparamdescription`/`toolautosubmit` documented, dead `webmcp.link` docsUrl replaced with the Chrome declarative-API docs, `defaultPriority` softened `high` → `medium`, form-less pages `na` instead of `warn`. Grade **A**, tier `scored`, weight 1.0 — unchanged. `TODO(redeem)` header removed; entry dropped from rework-todo.md.
 - 2026-08-24 — re-graded A → B, weight 1.0 → 0.6. Chrome documents the browser reading the attributes, but the API is an origin trial and "subject to change". Not retired.

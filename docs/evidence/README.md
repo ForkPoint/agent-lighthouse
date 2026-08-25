@@ -4,7 +4,7 @@ Agent Lighthouse scores websites on AI-agent readiness. Every audit here must ea
 
 | Document | What it holds |
 | :------- | :------------ |
-| [POLICY.md](./POLICY.md) | The grading rubric (A–D) and what each grade may contribute to a score |
+| [policy.md](./policy.md) | The grading rubric (A–D) and what each grade may contribute to a score |
 | [audits/](./audits/README.md) | One dossier per registered v2 audit (148): what it checks, code-review findings, graded evidence with sources, disposition. Indexes all 207 v1 audits, linking out to `sunset/` or `merged/` for the ones that left |
 | [merged/](./merged/README.md) | Dossiers of audits folded into another audit in v2 — kept as the record of why each signal moved |
 | [deletions/](./deletions/README.md) | Adversarial redemption research on the 32 delete candidates — final dispositions |

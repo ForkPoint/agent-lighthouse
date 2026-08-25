@@ -8,7 +8,7 @@ import { NEW_IN_V2, MIGRATED_COUNT } from '../tests/new-in-v2';
 
 // The 26 v1 audits removed in this major release: the first 18 in the v1.0.0
 // sunset wave, plus the 8 added by the 2026-08-21 grading pass. Rationale and
-// per-audit evidence: docs/evidence/sunset/NOT-A-FACTOR.md. Consumers migrate
+// per-audit evidence: docs/evidence/sunset/not-a-factor.md. Consumers migrate
 // via packages/core/migration-map.json.
 const REMOVED_IDS = [
   '7.1', '5.11', '5.17', '5.4', '5.25', '1.21', '10.12', '4.14', '4.12',

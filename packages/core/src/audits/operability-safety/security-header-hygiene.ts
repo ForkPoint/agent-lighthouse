@@ -12,7 +12,7 @@ import type { CheckContext } from '../../check-context';
  * `X-Content-Type-Options: nosniff` (v1 8.4) and security.txt (v1 8.7). The
  * three header rows were removed on 2026-08-24: the researched signal behind
  * them grades **D** with `Consumers: none-known` and `Recommended tier: delete`,
- * and `POLICY.md` gives grade D exactly two destinations — experimental behind a
+ * and `policy.md` gives grade D exactly two destinations — experimental behind a
  * flag with a live draft-spec trajectory, or rejected. They have no trajectory.
  * The two other headers in the same researched signal (Referrer-Policy 8.5,
  * Permissions-Policy 8.6) were already removed outright in v2 for that reason,

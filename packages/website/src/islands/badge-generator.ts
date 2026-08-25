@@ -1,7 +1,7 @@
 /**
  * The README badge generator's client half.
  *
- * The colour bands and the markdown form are `docs/BADGE.md`'s published
+ * The colour bands and the markdown form are `docs/badge.md`'s published
  * contract, restated here as code so the page and the doc cannot drift: the
  * bands are a single exported table that the page renders and the test pins.
  *
@@ -10,7 +10,7 @@
  * with `createElement`/`textContent`, never from an HTML string.
  */
 
-/** One row of `docs/BADGE.md`'s score table. */
+/** One row of `docs/badge.md`'s score table. */
 export interface BadgeBand {
   /** The lowest score in the band. */
   min: number;
@@ -18,7 +18,7 @@ export interface BadgeBand {
   max: number;
   /** The shields.io colour, without the `#`. */
   color: string;
-  /** The label `docs/BADGE.md` gives the band. */
+  /** The label `docs/badge.md` gives the band. */
   meaning: string;
 }
 
@@ -35,10 +35,10 @@ export const BADGE_BANDS: readonly BadgeBand[] = [
   { min: 0, max: 49, color: 'ef4444', meaning: 'Blocked' },
 ];
 
-/** Where the badge links, exactly as `docs/BADGE.md` writes it. */
+/** Where the badge links, exactly as `docs/badge.md` writes it. */
 export const BADGE_LINK = 'https://github.com/ForkPoint/agent-lighthouse';
 
-/** The score the generator opens on, and the one `docs/BADGE.md` illustrates. */
+/** The score the generator opens on, and the one `docs/badge.md` illustrates. */
 export const DEFAULT_SCORE = 87;
 
 /** The site the generator opens on, a placeholder rather than a real target. */
@@ -56,7 +56,7 @@ export function clampScore(value: number): number {
   return Math.min(100, Math.max(0, Math.round(value)));
 }
 
-/** The shields.io colour for a score, per `docs/BADGE.md`'s table. */
+/** The shields.io colour for a score, per `docs/badge.md`'s table. */
 export function badgeColor(score: number): string {
   const clamped = clampScore(score);
   // `BADGE_BANDS` is descending and its last band starts at 0, so the fallback
@@ -65,7 +65,7 @@ export function badgeColor(score: number): string {
   return BADGE_BANDS.find((band) => clamped >= band.min)?.color ?? 'ef4444';
 }
 
-/** The shields.io image URL for a score — the form `docs/BADGE.md` publishes. */
+/** The shields.io image URL for a score — the form `docs/badge.md` publishes. */
 export function badgeImageUrl(score: number): string {
   const clamped = clampScore(score);
   return `https://img.shields.io/badge/Agent%20Lighthouse-${clamped}%2F100-${badgeColor(clamped)}`;
@@ -86,7 +86,7 @@ function commentSafe(url: string): string {
 /**
  * The badge, as markdown.
  *
- * The badge line is `docs/BADGE.md`'s form character for character: the same
+ * The badge line is `docs/badge.md`'s form character for character: the same
  * shields.io URL, the same alt text, and the same link to the repository, which
  * is what tells a reader of somebody else's README what the number means. The
  * scanned site follows as a comment, so the copied snippet records what was

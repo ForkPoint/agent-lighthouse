@@ -82,7 +82,7 @@ The old `value.startsWith('http://') || value.startsWith('https://')` test rejec
 
 ### Grade decision: stays **D**, tier `experimental`, weight 0
 
-Source: the [REWORK-TODO redemption note](../../../../packages/core/src/audits/REWORK-TODO.md) — "noai/noimageai/tdm-reservation declaration meta tags graded D/experimental — real emerging opt-out ecosystem, no ratified consumer yet. Experimental, unscored, rework to check the real directive names" — and the graded signal below, whose recommended tier is `experimental` with the instruction to "keep as experimental with a plainly worded caveat that these tags currently express intent with no known enforcing consumer … do not present them to users as protection." Both the tier and the caveat are implemented literally. Per the §4 weight law `weightForGrade('D', 'experimental') = 0`, so `scoreDisplayMode` stays `informative`; `defaultPriority` drops `medium` → `low`.
+Source: the [REWORK-TODO redemption note](../../../../packages/core/src/audits/rework-todo.md) — "noai/noimageai/tdm-reservation declaration meta tags graded D/experimental — real emerging opt-out ecosystem, no ratified consumer yet. Experimental, unscored, rework to check the real directive names" — and the graded signal below, whose recommended tier is `experimental` with the instruction to "keep as experimental with a plainly worded caveat that these tags currently express intent with no known enforcing consumer … do not present them to users as protection." Both the tier and the caveat are implemented literally. Per the §4 weight law `weightForGrade('D', 'experimental') = 0`, so `scoreDisplayMode` stays `informative`; `defaultPriority` drops `medium` → `low`.
 
 ### Re-check trigger
 

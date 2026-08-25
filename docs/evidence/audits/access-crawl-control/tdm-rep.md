@@ -101,7 +101,7 @@ The required fix asks to "move it to a compliance category". Not done, deliberat
 
 ### Grade decision: stays **C**, tier `informative` → `experimental`, weight 0
 
-Source: the [REWORK-TODO redemption note](../../../../packages/core/src/audits/REWORK-TODO.md) — "TDM Reservation Protocol is a real W3C CG spec with EU AI Act relevance. Experimental flag, unscored, fix internal incoherence" — and the graded evidence above, which assigns **C** on the reasoning that TDM-Rep is genuinely published with real publisher-side participation and one named partial implementer (Spawning AI), but no major crawler operator documents consuming it. The target tier `experimental` is met; `weightForGrade('C', 'experimental') = 0`, so `scoreDisplayMode` stays `informative`. `defaultPriority` drops `medium` → `low`.
+Source: the [REWORK-TODO redemption note](../../../../packages/core/src/audits/rework-todo.md) — "TDM Reservation Protocol is a real W3C CG spec with EU AI Act relevance. Experimental flag, unscored, fix internal incoherence" — and the graded evidence above, which assigns **C** on the reasoning that TDM-Rep is genuinely published with real publisher-side participation and one named partial implementer (Spawning AI), but no major crawler operator documents consuming it. The target tier `experimental` is met; `weightForGrade('C', 'experimental') = 0`, so `scoreDisplayMode` stays `informative`. `defaultPriority` drops `medium` → `low`.
 
 ### Re-check trigger
 
@@ -109,7 +109,7 @@ The IETF AIPREF working group targeted IESG submission for 2026-08-31 and its ch
 
 ## Evidence
 
-_No dedicated evidence signal was researched for this audit in the 2026-08-20 pass. Its tier assignment falls to the taxonomy design; unproven mechanisms default to informative per the [evidence policy](../../POLICY.md)._
+_No dedicated evidence signal was researched for this audit in the 2026-08-20 pass. Its tier assignment falls to the taxonomy design; unproven mechanisms default to informative per the [evidence policy](../../policy.md)._
 
 ## Evidence (2026-08-21)
 

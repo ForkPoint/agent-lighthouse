@@ -157,7 +157,7 @@ the retrieval mechanism**, `Consumers: none-known`, `Recommended tier:
 informative`. The "Grade decision: stays A" section above does not defend the A
 either — it only argues that the absorbed 4.11 link signal is too weak to
 *raise* the grade. The A was inherited from the pre-review v1 audit and survived
-the merge unexamined. `POLICY.md` meanwhile used llms.txt existence as its
+the merge unexamined. `policy.md` meanwhile used llms.txt existence as its
 worked example of grade **C**.
 
 ### The re-sweep, 2026-08-24

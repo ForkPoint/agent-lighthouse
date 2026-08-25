@@ -6,7 +6,7 @@ import type { CheckContext } from '../../check-context';
 // Re-graded A -> B on 2026-08-24. Chrome's declarative-API page is live and
 // states that the browser reads an annotated form as a tool, but it carries an
 // origin-trial badge and says "WebMCP is under active discussion and subject to
-// change in the future". POLICY.md reserves grade A for a ratified standard or
+// change in the future". policy.md reserves grade A for a ratified standard or
 // documented shipped behaviour; an origin trial is a draft standard with
 // meaningful adoption, which is grade B.
 

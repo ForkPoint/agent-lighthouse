@@ -8,7 +8,7 @@
 // Re-graded A -> B on 2026-08-24. Google's speakable page is live and still
 // names Google Assistant as the consumer, but it says verbatim "This feature is
 // in beta and subject to change" and scopes the feature to U.S. English Google
-// Home users and English-language news publishers. POLICY.md reserves grade A
+// Home users and English-language news publishers. policy.md reserves grade A
 // for a ratified standard or documented shipped behaviour; a beta feature with
 // a stated scope limit is a grade-B mechanism.
 //

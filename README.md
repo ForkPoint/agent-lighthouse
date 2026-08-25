@@ -101,7 +101,7 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
 ```
 
-The action generates terminal, HTML, JSON, and Markdown reports. Set `comment-on-pr: true` with `github-token` to post the Markdown summary on pull requests. See the [marketplace setup guide](docs/ACTION_MARKETPLACE.md) for release-ready examples.
+The action generates terminal, HTML, JSON, and Markdown reports. Set `comment-on-pr: true` with `github-token` to post the Markdown summary on pull requests. See the [marketplace setup guide](docs/github-action.md) for release-ready examples.
 
 ---
 
@@ -154,9 +154,9 @@ If you run Agent Lighthouse on a public site, share the result through the [site
 
 More launch material lives in:
 
-- [Promotion kit](docs/PROMOTION.md)
-- [Benchmark report](docs/BENCHMARK.md)
-- [Badge generator notes](docs/BADGE.md)
+- [Promotion kit](docs/promotion.md)
+- [Benchmark report](docs/benchmark.md)
+- [Badge generator notes](docs/badge.md)
 - [Launch post drafts](docs/launch-posts/)
 - [Outreach templates](docs/outreach/)
 - [Terminal demo transcript](docs/assets/terminal-demo.txt)

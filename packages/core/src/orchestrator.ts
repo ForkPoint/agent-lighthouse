@@ -38,7 +38,7 @@ export interface ScanOptions {
   categories?: string[];
   /**
    * Include audits whose tier is `experimental`. Off by default, per
-   * docs/evidence/POLICY.md: an experimental check is behind a flag and never
+   * docs/evidence/policy.md: an experimental check is behind a flag and never
    * scored.
    */
   includeExperimental?: boolean;

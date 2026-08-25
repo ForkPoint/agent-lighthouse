@@ -105,7 +105,7 @@
     "slug": "content-discoverability/mobile-friendly",
     "status": "removed",
     "reason": "not-a-factor",
-    "link": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/sunset/NOT-A-FACTOR.md#content-discoverabilitymobile-friendly"
+    "link": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/sunset/not-a-factor.md#content-discoverabilitymobile-friendly"
   },
   "1.19": {
     "slug": "content-discoverability/fast-page-load",
@@ -123,7 +123,7 @@
     "slug": "content-discoverability/navigation-json",
     "status": "removed",
     "reason": "not-a-factor",
-    "link": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/sunset/NOT-A-FACTOR.md#content-discoverabilitynavigation-json"
+    "link": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/sunset/not-a-factor.md#content-discoverabilitynavigation-json"
   },
   "1.22": {
     "slug": "content-discoverability/no-orphan-pages",
@@ -135,7 +135,7 @@
     "slug": "content-discoverability/commerce-links",
     "status": "removed",
     "reason": "not-a-factor",
-    "link": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/sunset/NOT-A-FACTOR.md#content-discoverabilitycommerce-links"
+    "link": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/sunset/not-a-factor.md#content-discoverabilitycommerce-links"
   },
   "2.1": {
     "slug": "crawler-permissions/gptbot",
@@ -364,7 +364,7 @@
     "slug": "structured-data/potential-action",
     "status": "removed",
     "reason": "not-a-factor",
-    "link": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/sunset/NOT-A-FACTOR.md#structured-datapotential-action"
+    "link": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/sunset/not-a-factor.md#structured-datapotential-action"
   },
   "3.11": {
     "slug": "structured-data/howto-schema",
@@ -400,7 +400,7 @@
     "slug": "structured-data/action-schema",
     "status": "removed",
     "reason": "not-a-factor",
-    "link": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/sunset/NOT-A-FACTOR.md#structured-dataaction-schema"
+    "link": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/sunset/not-a-factor.md#structured-dataaction-schema"
   },
   "3.21": {
     "slug": "structured-data/product-identifiers",
@@ -496,7 +496,7 @@
     "slug": "meta-tags/llms-full-txt-link",
     "status": "removed",
     "reason": "not-a-factor",
-    "link": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/sunset/NOT-A-FACTOR.md#meta-tagsllms-full-txt-link"
+    "link": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/sunset/not-a-factor.md#meta-tagsllms-full-txt-link"
   },
   "4.13": {
     "slug": "meta-tags/ai-content-declaration",
@@ -508,7 +508,7 @@
     "slug": "meta-tags/ai-instructions",
     "status": "removed",
     "reason": "not-a-factor",
-    "link": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/sunset/NOT-A-FACTOR.md#meta-tagsai-instructions"
+    "link": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/sunset/not-a-factor.md#meta-tagsai-instructions"
   },
   "4.15": {
     "slug": "meta-tags/markdown-alternate",
@@ -526,7 +526,7 @@
     "slug": "meta-tags/mcp-discovery-link",
     "status": "removed",
     "reason": "not-a-factor",
-    "link": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/sunset/NOT-A-FACTOR.md#meta-tagsmcp-discovery-link"
+    "link": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/sunset/not-a-factor.md#meta-tagsmcp-discovery-link"
   },
   "4.18": {
     "slug": "meta-tags/openapi-link",
@@ -568,7 +568,7 @@
     "slug": "agent-tools/openapi-ai-instructions",
     "status": "removed",
     "reason": "not-a-factor",
-    "link": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/sunset/NOT-A-FACTOR.md#agent-toolsopenapi-ai-instructions"
+    "link": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/sunset/not-a-factor.md#agent-toolsopenapi-ai-instructions"
   },
   "5.5": {
     "slug": "agent-tools/openapi-servers",
@@ -610,7 +610,7 @@
     "slug": "agent-tools/ai-plugin-json",
     "status": "removed",
     "reason": "not-a-factor",
-    "link": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/sunset/NOT-A-FACTOR.md#agent-toolsai-plugin-json"
+    "link": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/sunset/not-a-factor.md#agent-toolsai-plugin-json"
   },
   "5.12": {
     "slug": "agent-tools/mcp-discovery",
@@ -646,7 +646,7 @@
     "slug": "agent-tools/data-action-ctas",
     "status": "removed",
     "reason": "not-a-factor",
-    "link": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/sunset/NOT-A-FACTOR.md#agent-toolsdata-action-ctas"
+    "link": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/sunset/not-a-factor.md#agent-toolsdata-action-ctas"
   },
   "5.18": {
     "slug": "agent-tools/no-blocking-captcha",
@@ -695,7 +695,7 @@
     "slug": "agent-tools/webmcp-action-coverage",
     "status": "removed",
     "reason": "not-a-factor",
-    "link": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/sunset/NOT-A-FACTOR.md#agent-toolswebmcp-action-coverage"
+    "link": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/sunset/not-a-factor.md#agent-toolswebmcp-action-coverage"
   },
   "5.26": {
     "slug": "agent-tools/openapi-description-quality",
@@ -779,7 +779,7 @@
     "slug": "semantic-html/address-element",
     "status": "removed",
     "reason": "not-a-factor",
-    "link": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/sunset/NOT-A-FACTOR.md#semantic-htmladdress-element"
+    "link": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/sunset/not-a-factor.md#semantic-htmladdress-element"
   },
   "6.13": {
     "slug": "semantic-html/definition-elements",
@@ -803,7 +803,7 @@
     "slug": "semantic-html/decorative-images",
     "status": "removed",
     "reason": "not-a-factor",
-    "link": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/sunset/NOT-A-FACTOR.md#semantic-htmldecorative-images"
+    "link": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/sunset/not-a-factor.md#semantic-htmldecorative-images"
   },
   "6.17": {
     "slug": "semantic-html/figure-figcaption",
@@ -833,7 +833,7 @@
     "slug": "accessibility/skip-nav",
     "status": "removed",
     "reason": "not-a-factor",
-    "link": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/sunset/NOT-A-FACTOR.md#accessibilityskip-nav"
+    "link": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/sunset/not-a-factor.md#accessibilityskip-nav"
   },
   "7.2": {
     "slug": "accessibility/aria-landmarks",
@@ -953,7 +953,7 @@
     "slug": "accessibility/marquee",
     "status": "removed",
     "reason": "not-a-factor",
-    "link": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/sunset/NOT-A-FACTOR.md#accessibilitymarquee"
+    "link": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/sunset/not-a-factor.md#accessibilitymarquee"
   },
   "7.23": {
     "slug": "accessibility/presentation-conflict",
@@ -989,13 +989,13 @@
     "slug": "technical-readiness/referrer-policy",
     "status": "removed",
     "reason": "not-a-factor",
-    "link": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/sunset/NOT-A-FACTOR.md#technical-readinessreferrer-policy"
+    "link": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/sunset/not-a-factor.md#technical-readinessreferrer-policy"
   },
   "8.6": {
     "slug": "technical-readiness/permissions-policy",
     "status": "removed",
     "reason": "not-a-factor",
-    "link": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/sunset/NOT-A-FACTOR.md#technical-readinesspermissions-policy"
+    "link": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/sunset/not-a-factor.md#technical-readinesspermissions-policy"
   },
   "8.7": {
     "slug": "technical-readiness/security-txt",
@@ -1043,25 +1043,25 @@
     "slug": "technical-readiness/no-render-blocking",
     "status": "removed",
     "reason": "not-a-factor",
-    "link": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/sunset/NOT-A-FACTOR.md#technical-readinessno-render-blocking"
+    "link": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/sunset/not-a-factor.md#technical-readinessno-render-blocking"
   },
   "8.15": {
     "slug": "technical-readiness/image-dimensions",
     "status": "removed",
     "reason": "not-a-factor",
-    "link": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/sunset/NOT-A-FACTOR.md#technical-readinessimage-dimensions"
+    "link": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/sunset/not-a-factor.md#technical-readinessimage-dimensions"
   },
   "8.16": {
     "slug": "technical-readiness/lcp-not-lazy",
     "status": "removed",
     "reason": "not-a-factor",
-    "link": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/sunset/NOT-A-FACTOR.md#technical-readinesslcp-not-lazy"
+    "link": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/sunset/not-a-factor.md#technical-readinesslcp-not-lazy"
   },
   "8.17": {
     "slug": "technical-readiness/preconnect-hints",
     "status": "removed",
     "reason": "not-a-factor",
-    "link": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/sunset/NOT-A-FACTOR.md#technical-readinesspreconnect-hints"
+    "link": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/sunset/not-a-factor.md#technical-readinesspreconnect-hints"
   },
   "8.18": {
     "slug": "technical-readiness/no-broken-ai-endpoints",
@@ -1073,19 +1073,19 @@
     "slug": "technical-readiness/privacy-policy",
     "status": "removed",
     "reason": "not-a-factor",
-    "link": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/sunset/NOT-A-FACTOR.md#technical-readinessprivacy-policy"
+    "link": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/sunset/not-a-factor.md#technical-readinessprivacy-policy"
   },
   "8.20": {
     "slug": "technical-readiness/terms-of-service",
     "status": "removed",
     "reason": "not-a-factor",
-    "link": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/sunset/NOT-A-FACTOR.md#technical-readinessterms-of-service"
+    "link": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/sunset/not-a-factor.md#technical-readinessterms-of-service"
   },
   "8.21": {
     "slug": "technical-readiness/framework-detection",
     "status": "removed",
     "reason": "not-a-factor",
-    "link": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/sunset/NOT-A-FACTOR.md#technical-readinessframework-detection"
+    "link": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/sunset/not-a-factor.md#technical-readinessframework-detection"
   },
   "9.1": {
     "slug": "answer-engine/faq-sections",
@@ -1224,7 +1224,7 @@
     "slug": "generative-engine/pagination-links",
     "status": "removed",
     "reason": "not-a-factor",
-    "link": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/sunset/NOT-A-FACTOR.md#generative-enginepagination-links"
+    "link": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/sunset/not-a-factor.md#generative-enginepagination-links"
   },
   "10.13": {
     "slug": "generative-engine/unique-data",

@@ -8,7 +8,7 @@ A / scored / 1.0 and `machine-discovery/llms-txt-links-valid` from
 B / scored / 0.6, so 1.6 of weight leaves the scored set and every site's
 machine-discovery and overall score is recomputed against it.
 
-`docs/evidence/POLICY.md` already used llms.txt existence as its worked example
+`docs/evidence/policy.md` already used llms.txt existence as its worked example
 of grade **C** — "published widely, no documented consumer, Google states Search
 ignores it" — while the audit shipped grade A. The sweep asked which of the two
 was wrong. It was the audits.
@@ -37,7 +37,7 @@ C / informative / 0. `agent-interfaces/openapi-exists` was re-checked and is
 unchanged at B / informative / 0; `/.well-known/api-catalog` still has no
 documented consumer.
 
-`POLICY.md`'s grade-**D** example changes too. `ai-catalog.json` is no longer
+`policy.md`'s grade-**D** example changes too. `ai-catalog.json` is no longer
 speculative: since 2026-06-17 it is the file defined by the Agentic Resource
 Discovery specification, and it has a documented first-party consumer client in
 `huggingface/hf-discover`. The D row now cites security headers as "AI trust

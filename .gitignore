@@ -12,3 +12,7 @@ reports/
 # Local review/browser artifacts — never commit
 .lavish/
 .playwright-mcp/
+
+# Local agent/session artifacts — never commit
+.claude/
+.superpowers/

@@ -20,7 +20,7 @@ U.S. English Google Home users and English-language news publishers. Chrome: an
 origin-trial badge, and "WebMCP is under active discussion and subject to change
 in the future."
 
-`docs/evidence/POLICY.md` reserves grade A for documented consumer behaviour or
+`docs/evidence/policy.md` reserves grade A for documented consumer behaviour or
 a ratified standard with known consumers, and gives grade B to a draft standard
 with meaningful adoption. A beta feature with a one-country, one-language,
 one-content-type scope and an origin trial are both grade B.

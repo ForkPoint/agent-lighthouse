@@ -128,7 +128,7 @@ const audits = defineCollection({
   }),
 });
 
-// There is no `policy` collection. `POLICY.md` carries no frontmatter, so a
+// There is no `policy` collection. `policy.md` carries no frontmatter, so a
 // collection entry would render through the processor in `astro.config.mjs` —
 // whose link plugin keys on `audit:` and would therefore leave the file's one
 // relative link (`./sources.json`) pointing at nothing. `pages/policy.astro`

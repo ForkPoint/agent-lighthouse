@@ -47,7 +47,7 @@ describe('sourceTypeCounts', () => {
 
 describe('the policy source', () => {
   it('is read from the repository, not copied into this package', () => {
-    expect(POLICY_FILE).toBe('docs/evidence/POLICY.md');
+    expect(POLICY_FILE).toBe('docs/evidence/policy.md');
     expect(readPolicySource()).toBe(onDisk(POLICY_FILE));
   });
 

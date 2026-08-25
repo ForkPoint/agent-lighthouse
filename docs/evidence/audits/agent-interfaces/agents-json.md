@@ -195,7 +195,7 @@ reasoning that they already carry weight 0, so no scanned site's score depends o
 observation a site owner may still want reported is not the same defect as a scored weight with no
 consumer behind it. On re-verification none of the six retired either.
 
-No deprecation notice was attached, and the frontmatter was not marked `deprecated`. `POLICY.md`'s
+No deprecation notice was attached, and the frontmatter was not marked `deprecated`. `policy.md`'s
 deprecation process starts by changing the dossier's status to `deprecated` with the evidence for
 removal cited, and ends with removal in the next major release. Starting that process here would
 contradict a decision taken the same day to keep the audit. It would also have been ineffective for
@@ -209,7 +209,7 @@ The `## Evidence` section heads the site-facing signal "grade D", while the fron
 recorded disposition and the adversarial verdict all say grade C. The audit keeps **C**, which is
 the grade the 2026-08-21 decision approved and the one `check-dossiers` asserts against the
 frontmatter. Resolving the discrepancy is a re-grade, not a pass-rule fix, and it belongs to the
-retirement stream: if the signal is re-graded to D, `POLICY.md` puts the audit in the "Rejected —
+retirement stream: if the signal is re-graded to D, `policy.md` puts the audit in the "Rejected —
 not shipped" row and it is removed rather than re-tiered.
 
 ### Registry effect

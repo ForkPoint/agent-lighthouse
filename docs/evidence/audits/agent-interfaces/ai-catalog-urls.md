@@ -66,7 +66,7 @@ Closing the false-positive risks listed above:
 
 ### Grade decision: stays **B**, tier `scored`, weight 0.6
 
-Source: the [redemption dossier's verdict](../../deletions/agent-tools/ai-catalog-urls.md) — "redeemed — keep with rewrite (grade B)" — carried into the [REWORK-TODO entry](../../../../packages/core/src/audits/REWORK-TODO.md). `entries[].url` is dereferenced by real code (hf-discover's `navigate()` follows entry urls into nested catalogs and federated registries; HelgeSverre/ardvark and iFurySt/OpenARD probe and verify them), which makes the consequence of a dead url mechanical and immediate. But no vendor documents penalizing a site for one, and the federation-following consumer is user-driven rather than a hosted crawler — grade B, not A. Per the §4 weight law `weightForGrade('B', 'scored') = 0.6`; `scoreDisplayMode` stays `ternary`; `defaultPriority` stays `medium`.
+Source: the [redemption dossier's verdict](../../deletions/agent-tools/ai-catalog-urls.md) — "redeemed — keep with rewrite (grade B)" — carried into the [REWORK-TODO entry](../../../../packages/core/src/audits/rework-todo.md). `entries[].url` is dereferenced by real code (hf-discover's `navigate()` follows entry urls into nested catalogs and federated registries; HelgeSverre/ardvark and iFurySt/OpenARD probe and verify them), which makes the consequence of a dead url mechanical and immediate. But no vendor documents penalizing a site for one, and the federation-following consumer is user-driven rather than a hosted crawler — grade B, not A. Per the §4 weight law `weightForGrade('B', 'scored') = 0.6`; `scoreDisplayMode` stays `ternary`; `defaultPriority` stays `medium`.
 
 ### Deviations
 
@@ -98,4 +98,4 @@ This audit was a delete candidate and went through dedicated adversarial researc
 
 - 2026-08-20 — code review (11-agent workflow) + evidence research (12-domain workflow, 400 sources).
 - 2026-08-21 — adversarial redemption research; user accepted verdict (disposition above).
-- 2026-08-22 — rewritten (Plan 4, Task 10): probes `entries[].url` (inline `data` entries skipped), accepts auth-gated 401/403/405/429 as reachable, `isSafeUrl()`-gated, concurrency capped at 5, absence downgraded from `fail` to `na`. Grade **B**, tier `scored`, weight 0.6 — unchanged. `TODO(redeem)` header removed; entry dropped from REWORK-TODO.md.
+- 2026-08-22 — rewritten (Plan 4, Task 10): probes `entries[].url` (inline `data` entries skipped), accepts auth-gated 401/403/405/429 as reachable, `isSafeUrl()`-gated, concurrency capped at 5, absence downgraded from `fail` to `na`. Grade **B**, tier `scored`, weight 0.6 — unchanged. `TODO(redeem)` header removed; entry dropped from rework-todo.md.

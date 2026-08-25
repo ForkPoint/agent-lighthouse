@@ -6,7 +6,7 @@ const published = new Set(['agentic-commerce/offer-truth-consistency', 'structur
 
 describe('resolveDossierLink', () => {
   it('sends the policy link to the published policy page', () => {
-    expect(resolveDossierLink('../../POLICY.md', 'agentic-commerce/offer-truth-consistency', published))
+    expect(resolveDossierLink('../../policy.md', 'agentic-commerce/offer-truth-consistency', published))
       .toBe('/agent-lighthouse/policy/');
   });
 
@@ -21,8 +21,8 @@ describe('resolveDossierLink', () => {
   });
 
   it('sends a repo path outside docs to GitHub', () => {
-    expect(resolveDossierLink('../../../../packages/core/src/audits/REWORK-TODO.md', 'access-crawl-control/robots-directives', published))
-      .toBe('https://github.com/ForkPoint/agent-lighthouse/blob/main/packages/core/src/audits/REWORK-TODO.md');
+    expect(resolveDossierLink('../../../../packages/core/src/audits/rework-todo.md', 'access-crawl-control/robots-directives', published))
+      .toBe('https://github.com/ForkPoint/agent-lighthouse/blob/main/packages/core/src/audits/rework-todo.md');
   });
 
   it('leaves an absolute link alone', () => {
@@ -50,7 +50,7 @@ describe('resolveDossierLink', () => {
   });
 
   it('keeps the fragment when the policy link carries one', () => {
-    expect(resolveDossierLink('../../POLICY.md#grade', 'agentic-commerce/offer-truth-consistency', published))
+    expect(resolveDossierLink('../../policy.md#grade', 'agentic-commerce/offer-truth-consistency', published))
       .toBe('/agent-lighthouse/policy/#grade');
   });
 
@@ -83,14 +83,14 @@ async function renderDossier(markdown: string, frontmatter: Record<string, unkno
 describe('dossierLinksPlugin', () => {
   it('rewrites every link in a dossier and leaves absolute ones alone', async () => {
     const html = await renderDossier(
-      'See [schema](./service-schema.md), the [policy](../../POLICY.md) and [Google](https://developers.google.com/).',
+      'See [schema](./service-schema.md), the [policy](../../policy.md) and [Google](https://developers.google.com/).',
       { audit: 'structured-data/advanced-product-details' },
     );
 
     expect(html).toContain('href="/agent-lighthouse/audits/structured-data/service-schema/"');
     expect(html).toContain('href="/agent-lighthouse/policy/"');
     expect(html).toContain('href="https://developers.google.com/"');
-    expect(html).not.toContain('POLICY.md');
+    expect(html).not.toContain('policy.md');
   });
 
   it('leaves a link inside a code span alone, because it is not a link', async () => {

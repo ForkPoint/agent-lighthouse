@@ -8,10 +8,10 @@ import { DOC_SECTIONS } from '../lib/markdown-slice';
 import { docPath, withBase } from '../lib/routes';
 
 /**
- * The evidence policy — `docs/evidence/POLICY.md`, rendered where it lives.
+ * The evidence policy — `docs/evidence/policy.md`, rendered where it lives.
  *
  * This route is load-bearing: the dossier link plugin rewrites every
- * `../../POLICY.md` to it, and sixty published dossiers point here.
+ * `../../policy.md` to it, and sixty published dossiers point here.
  *
  * The file is read and rendered rather than pulled from a content collection.
  * A collection entry renders through the processor in `astro.config.mjs`, which
