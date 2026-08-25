@@ -128,7 +128,7 @@ The four absorbed dossiers are kept verbatim as the record of why each signal mo
 
 ## Narrowed to security.txt (contradiction sweep, 2026-08-24)
 
-**Reason:** the contradiction sweep (`docs/evidence/CONTRADICTION-SWEEP.md`, Class A row `1/3 · none-known 1 · B / informative / 0`), plus a Class B pass-rule marker found while reading this file. Plan Part 2, Task 11.
+**Reason:** the contradiction sweep flagged this audit on both of its passes. One of the three researched signals recommended a tier below the `B / informative / 0` that shipped, and a pass-rule marker turned up while reading the file. Plan Part 2, Task 11.
 
 ### What the sweep found
 

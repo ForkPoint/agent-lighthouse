@@ -188,11 +188,12 @@ honestly carry: an unscored, weight-0 description of what is actually served at
 ### Why the audit still ships
 
 The retirement review that ran alongside this sweep considered exactly this question and answered
-it on 2026-08-24 in [`RETIREMENT-SHORTLIST.md`](../../RETIREMENT-SHORTLIST.md): the narrow bar
-applies, six audits retire on a policy-conflict test, and `agent-interfaces/agents-json` is not one
-of them. The 39 grade-C informative audits stay, on the reasoning that "they already carry weight 0,
-so no scanned site's score depends on them, and a cheap observation a site owner may still want
-reported is not the same defect as a scored weight with no consumer behind it."
+it on 2026-08-24. Two bars were weighed: a narrow policy-conflict test over six named audits, and a
+wide one that would have retired every grade-C informative audit. The narrow bar was chosen, and
+`agent-interfaces/agents-json` is not one of the six. The 39 grade-C informative audits stay, on the
+reasoning that they already carry weight 0, so no scanned site's score depends on them, and a cheap
+observation a site owner may still want reported is not the same defect as a scored weight with no
+consumer behind it. On re-verification none of the six retired either.
 
 No deprecation notice was attached, and the frontmatter was not marked `deprecated`. `POLICY.md`'s
 deprecation process starts by changing the dossier's status to `deprecated` with the evidence for

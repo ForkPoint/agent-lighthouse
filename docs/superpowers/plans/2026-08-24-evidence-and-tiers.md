@@ -1,7 +1,6 @@
 # Evidence rework and tier corrections — implementation plan
 
 **Spec:** [`docs/superpowers/specs/2026-08-24-evidence-public-surface-design.md`](../specs/2026-08-24-evidence-public-surface-design.md)
-**Sweep results:** [`docs/evidence/CONTRADICTION-SWEEP.md`](../../evidence/CONTRADICTION-SWEEP.md)
 **Branch:** `feat/site-and-evidence-sweep`
 
 Two bodies of work, in this order. Part 1 corrects audits whose tier or pass rule outruns their evidence. Part 2 rebuilds what the audit pages publish. Part 1 gates Part 2: a page that prints an audit's own "Recommended tier: informative" beside a scored weight refutes itself, so the mismatches must be gone before the pages ship.
@@ -119,7 +118,7 @@ Bring the corpus onto the whitelist vocabulary so the list stays short. Mechanic
 
 ### Task 17: retirement decisions
 
-The audits whose own evidence records no known consumer. Carried from the separate audit-value review. The shortlist, the two candidate bars and the decision are now recorded in [`docs/evidence/RETIREMENT-SHORTLIST.md`](../../evidence/RETIREMENT-SHORTLIST.md).
+The audits whose own evidence records no known consumer. Carried from the separate audit-value review. Two bars were weighed: a narrow policy-conflict test over six named audits, and a wide one that would have retired all 39 grade-C informative audits.
 
 Decided 2026-08-24: the **narrow bar** — six audits, `agent-interfaces/ai-catalog-exists`, `ai-catalog-metadata`, `ai-catalog-urls`, `structured-data/speakable-schema`, `agent-interfaces/webmcp-registered-tools` and `webmcp-declarative-forms`. The 39 grade-C informative audits stay. Retirement means moving the audit out of the registry and its dossier into `docs/evidence/sunset/`, as the 26 v1 audits were, not deleting either. `major` changeset. Registry 215 → 209, and `check-dossiers` must balance at the new count.
 
@@ -127,7 +126,7 @@ This decision overtakes Task 10: `agent-interfaces/webmcp-registered-tools` reti
 
 **What landed (2026-08-24): nothing retires. Two audits re-graded instead.**
 
-Before executing, each of the six was checked against the shipped code and its current dossier rather than the shortlist note. **None still meets the bar.** The shortlist was built from the redemption dossiers under `docs/evidence/deletions/`, which describe the audits *before* the Plan 4 rework of 2026-08-22 — and all six were rebuilt in that pass. Each now names a documented consumer: ARD plus `huggingface/hf-discover` for the three `ai-catalog` audits (both re-verified live on 2026-08-24), a live Google Search Central page for `speakable-schema`, a live Chrome declarative-API page for `webmcp-declarative-forms`. The policy conflict behind the three `ai-catalog` entries also disappeared when Task 13 corrected `POLICY.md`'s grade-D row on the same day. The per-audit findings are in [`RETIREMENT-SHORTLIST.md`](../../evidence/RETIREMENT-SHORTLIST.md#re-verification-2026-08-24).
+Before executing, each of the six was checked against the shipped code and its current dossier rather than the shortlist note. **None still meets the bar.** The shortlist was built from the redemption dossiers under `docs/evidence/deletions/`, which describe the audits *before* the Plan 4 rework of 2026-08-22 — and all six were rebuilt in that pass. Each now names a documented consumer: ARD plus `huggingface/hf-discover` for the three `ai-catalog` audits (both re-verified live on 2026-08-24), a live Google Search Central page for `speakable-schema`, a live Chrome declarative-API page for `webmcp-declarative-forms`. The policy conflict behind the three `ai-catalog` entries also disappeared when Task 13 corrected `POLICY.md`'s grade-D row on the same day. Each audit's own dossier records the finding that cleared it.
 
 Two findings survived the check, and the user chose to act on them: `structured-data/speakable-schema` and `agent-interfaces/webmcp-declarative-forms` both scored at grade **A**, weight **1.0**, on features their own vendors label provisional — Google says speakable is "in beta and subject to change" and scopes it to U.S. English news publishers; Chrome's declarative WebMCP page carries an origin-trial badge and says the API is "under active discussion". Both are re-graded **A → B**, weight 1.0 → 0.6. Registry stays at 215; mass 134.8 → 134.0.
 

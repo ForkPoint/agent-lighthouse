@@ -147,8 +147,10 @@ and tier `experimental` already price, and `weightForGrade('B', 'experimental')`
 is 0. `packages/core/src/audits/REWORK-TODO.md` recorded the same conclusion on
 2026-08-22.
 
-**Retirement:** also off. See the [shortlist
-re-verification](../../RETIREMENT-SHORTLIST.md#re-verification-2026-08-24).
+**Retirement:** also off. The shortlist was assembled from the redemption
+dossiers under `docs/evidence/deletions/`, which describe this audit before the
+Plan 4 rework of 2026-08-22 rebuilt it. Re-checked against the shipped code on
+2026-08-24, it no longer meets the bar.
 
 ## Review history
 
