@@ -52,8 +52,8 @@ describe('detectWafProtection', () => {
       expect(onHomepage({ headers: { 'cf-ray': 'abc' }, status: 403 })?.provider).toBe('cloudflare');
     });
 
-    it('detects a 429 behind the cloudflare server header', () => {
-      expect(onHomepage({ headers: { server: 'cloudflare' }, status: 429 })?.provider).toBe(
+    it('detects a 503 behind the cloudflare server header', () => {
+      expect(onHomepage({ headers: { server: 'cloudflare' }, status: 503 })?.provider).toBe(
         'cloudflare',
       );
     });
@@ -118,8 +118,8 @@ describe('detectWafProtection', () => {
       expect(waf).toMatchObject({ provider: 'generic-waf', statusCode: 403 });
     });
 
-    it('reports a generic WAF on a 429', () => {
-      expect(onHomepage({ status: 429 }, 0)?.provider).toBe('generic-waf');
+    it('reports a rate limit on a 429, not a firewall', () => {
+      expect(onHomepage({ status: 429 }, 0)?.provider).toBe('rate-limited');
     });
 
     it('reports a dropped connection on status 0', () => {
@@ -153,6 +153,43 @@ describe('detectWafProtection', () => {
       expect(
         detectWafProtection(URL, result({ body: 'Shop' }), { '/robots.txt': result() }, 3),
       ).toBeNull();
+    });
+  });
+
+  // A 429 means "too many requests" — a statement about this scan's request
+  // rate, not about who the site admits. Reporting it as a bot wall told a
+  // storefront that serves GPTBot perfectly well that its firewall blocks AI
+  // crawlers. Every provider serves 429 for throttling, so this is decided
+  // before any provider is.
+  describe('rate limiting', () => {
+    it('reports a 429 as a rate limit, whatever fronts the site', () => {
+      const fronts: Record<string, string>[] = [
+        {},
+        { server: 'cloudflare', 'cf-ray': 'abc' },
+        { server: 'AkamaiGHost' },
+      ];
+      for (const headers of fronts) {
+        const waf = onHomepage({ status: 429, headers });
+        expect(waf).toMatchObject({ provider: 'rate-limited', isRateLimit: true, statusCode: 429 });
+      }
+    });
+
+    it('reports a 429 on a root file, not only on the homepage', () => {
+      const waf = detectWafProtection(
+        URL,
+        result({ body: '<html>Shop</html>' }),
+        { '/robots.txt': result({ status: 429 }) },
+        3,
+      );
+      expect(waf?.isRateLimit).toBe(true);
+    });
+
+    it('tells the operator to re-run rather than to change their firewall', () => {
+      expect(onHomepage({ status: 429 })?.reason).toMatch(/re-run/i);
+    });
+
+    it('leaves isRateLimit unset on a genuine bot wall', () => {
+      expect(onHomepage({ headers: { 'cf-mitigated': 'challenge' } })?.isRateLimit).toBeUndefined();
     });
   });
 

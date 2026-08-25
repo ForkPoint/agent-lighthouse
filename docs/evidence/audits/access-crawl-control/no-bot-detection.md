@@ -66,8 +66,20 @@ _No dedicated evidence signal was researched for this audit in the 2026-08-20 pa
 
 **Counter-evidence:** The A grade attaches to the `ctx.wafProtection.isBlocked` branch — observed blocking of the actual fetch. The second branch scans page HTML for the substrings `recaptcha`, `challenges.cloudflare.com`, `hcaptcha.com` and `datadome.co`. It has **no documented consumer link**. None of the vendor docs above state that the presence of a CAPTCHA widget on a page affects crawler access — and the page was by definition retrievable, since the scanner parsed it. Graded on its own, that sub-signal is D — presence of a form-scoped challenge widget is not evidence of agent blocking. Note also that the dominant 2026 mechanism the Cloudflare docs describe is UA/IP classification at the edge, which is invisible to a same-UA page scan — so the audit's proven half is the half the implementation barely exercises.
 
+## Limits
+
+A throttled scan proves nothing. HTTP 429 means "too many requests" — a
+statement about the rate this scan asked at, not about who the site admits. The
+audit returns not-applicable on a 429 rather than reporting a bot defense, and
+`waf-detector.ts` diagnoses it as a rate limit before it considers any provider,
+because every provider serves 429 for throttling. Until 2026-08-25 the audit
+failed at critical priority on a 429, which told storefronts that serve GPTBot
+perfectly well that their firewall blocks AI crawlers. Re-running the scan after
+a pause is the only way to get a verdict from a rate-limited origin.
+
 ## Review history
 
 - 2026-08-20 — code review (11-agent workflow) + evidence research (12-domain workflow, 400 sources).
 - 2026-08-21 — dossier generated; disposition pending final taxonomy design.
 - 2026-08-21 — evidence graded **A** (mechanism research pass); grade applies to the WAF-observation branch only.
+- 2026-08-25 — HTTP 429 separated from bot defense. Found by scanning 48 live storefronts back to back: 36 came back reported as a Cloudflare managed challenge, and a single-request `curl` with the same user-agent got HTTP 200 from every one of them. The scan was being throttled, and the audit was reading throttling as a firewall.
