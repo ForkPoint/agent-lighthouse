@@ -40,7 +40,7 @@ draft-ietf-aipref-attach-05 defines the only two attachment points a conformant 
 - **[Content Signals (AIPREF guide)](https://contentsignals.org/)** — Cloudflare / contentsignals.org (article, URL verified 2026-08-20)
   - Resolves HTTP 200. Page now self-describes as "An up-to-date guide to the IETF's proposed new AI Preferences (aipref)" — i.e. the Content-Signal vocabulary is being folded into the IETF AIPREF work (s10/s11). Body is JS-rendered behind Cloudflare, so scrape the meta description or the drafts directly.
 - **[Managed robots.txt — Cloudflare Bots](https://developers.cloudflare.com/bots/additional-configurations/managed-robots-txt/)** — Cloudflare (vendor-doc, URL verified 2026-08-20)
-  - Cloudflare PREPENDS its own block to the origin's robots.txt: `User-Agent: *` / `Content-signal: search=yes, ai-train=no, use=reference` / `Allow: /`. When the origin already serves robots.txt it combines both files, Cloudflare's block first. This is the mechanism by which a site's own AI policy gets silently overridden at the edge — directly auditable by diffing declared vs. served robots.txt.
+  - Cloudflare prepends its own block to the origin's robots.txt: `User-Agent: *` / `Content-signal: search=yes, ai-train=no, use=reference` / `Allow: /`. When the origin already serves robots.txt it combines both files, Cloudflare's block first. This is the mechanism by which a site's own AI policy gets silently overridden at the edge — directly auditable by diffing declared vs. served robots.txt.
 
 ## Competitor coverage
 

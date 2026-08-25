@@ -24,7 +24,7 @@ Validates that a site publishing content-licensing terms does so in a form an AI
 
 ## Claimed mechanism (falsifiable)
 
-RSL 1.0 mandates explicit association — it defines no default or well-known location, so a valid rsl.xml sitting at an unreferenced URL is undiscoverable by specification (s12). Each discovery channel has exact conformance requirements that silently break the chain when violated: robots.txt `License:` 'value MUST be an absolute URI'; the HTTP `Link` header and the HTML `<link>` both require `rel="license"` AND `type="application/rsl+xml"`. A licensing crawler filtering Link headers on the media type will not follow a link served as `text/xml`. Falsifiable: given a site with licensing intent, either at least one conformant channel resolves to a parseable RSL document whose `<content url>` prefix covers the audited URL, or the terms are unreachable.
+RSL 1.0 mandates explicit association — it defines no default or well-known location, so a valid rsl.xml sitting at an unreferenced URL is undiscoverable by specification (s12). Each discovery channel has exact conformance requirements that silently break the chain when violated: robots.txt `License:` 'value MUST be an absolute URI'; the HTTP `Link` header and the HTML `<link>` both require `rel="license"` and `type="application/rsl+xml"`. A licensing crawler filtering Link headers on the media type will not follow a link served as `text/xml`. Falsifiable: given a site with licensing intent, either at least one conformant channel resolves to a parseable RSL document whose `<content url>` prefix covers the audited URL, or the terms are unreachable.
 
 ## Evidence
 

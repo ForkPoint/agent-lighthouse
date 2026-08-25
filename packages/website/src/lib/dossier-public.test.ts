@@ -165,6 +165,15 @@ describe('publicDossier', () => {
       expect(markdown).not.toContain('**Evidence:**');
     });
 
+    it('trims a signal heading that would be cut on a dangling word', () => {
+      const long = `${'A'.repeat(46)} and ${'B'.repeat(40)}`;
+      const { markdown } = publicDossier(`## Evidence\n\n### Signal: ${long} — grade B (x)\n\ntext\n`);
+      const heading = /^### (.+)$/m.exec(markdown)![1]!;
+      // The cut lands after "and"; a label must not end on a conjunction.
+      expect(heading).not.toMatch(/\band\u2026$/);
+      expect(heading.endsWith('\u2026')).toBe(true);
+    });
+
     it('caps a signal heading that has no clause boundary', () => {
       const long = 'A'.repeat(40) + ' ' + 'B'.repeat(40);
       const { markdown } = publicDossier(`## Evidence\n\n### Signal: ${long} — grade B (x)\n\ntext\n`);
@@ -217,6 +226,42 @@ describe('publicDossier', () => {
       const { markdown } = publicDossier(source);
       expect(markdown).toContain('`<link rel="alternate">`');
       expect(markdown).not.toContain('``<th');
+    });
+
+    it('turns a bare URL into a labelled link', () => {
+      const { markdown } = publicDossier(
+        '## Evidence\n\nOpenAI documents it at https://openai.com/searchbot.json (verified 2026-08-21).\n',
+      );
+      expect(markdown).toContain('[openai.com/searchbot.json](https://openai.com/searchbot.json)');
+      // Trailing sentence punctuation stays outside the link.
+      expect(markdown).toContain('.json) (verified 2026-08-21).');
+    });
+
+    it('shortens a deep path into a readable label', () => {
+      const { markdown } = publicDossier(
+        '## Evidence\n\nSee https://developers.google.com/search/docs/appearance/ai-features here.\n',
+      );
+      expect(markdown).toContain('[developers.google.com/\u2026/ai-features](');
+    });
+
+    it('leaves a markdown link and a robots user-agent URL alone', () => {
+      const source =
+        '## Evidence\n\n[Bots](https://developers.openai.com/api/docs/bots) and `GPTBot/1.4; +https://openai.com/gptbot`.\n';
+      const { markdown } = publicDossier(source);
+      expect(markdown).toContain('[Bots](https://developers.openai.com/api/docs/bots)');
+      expect(markdown).not.toContain('[openai.com/gptbot]');
+    });
+
+    it('fences a single-quoted attribute so smart quotes cannot reach it', () => {
+      const { markdown } = publicDossier(
+        "## Evidence\n\nReadability keeps a div carrying role='table' in the tree.\n",
+      );
+      expect(markdown).toContain("`role='table'`");
+    });
+
+    it('leaves an ordinary quoted word unfenced', () => {
+      const { markdown } = publicDossier("## Evidence\n\nThe 'menu' is not markup.\n");
+      expect(markdown).not.toContain("`'menu'`");
     });
 
     it('leaves a comparison that is not a tag alone', () => {
@@ -380,13 +425,30 @@ describe('publicDossier', () => {
 
     // The research wrote to itself: capitals for emphasis and "I verified…" for
     // provenance. Neither belongs on a page addressed to a reader.
+    //
+    // The word lists are deliberately closed rather than a general "any run of
+    // capitals" rule. The corpus is full of legitimate capitals — RFC 2119
+    // keywords, audit statuses, enum values, hyphenated identifiers, and a long
+    // tail of acronyms — and a rule broad enough to catch shouting catches all
+    // of those too. These are the words the research actually shouted.
+    const SHOUTED_EMPHASIS =
+      /\b(?:SCORE|PREPENDS|WEAKEST|REFUTED|SUPPORTED|UNPROVEN|OPPOSITE|EVERY|ANY|SAME|BUT|AND|OR|WILL|CAN|BY|FAILS|PASSES|REMOVED|NAME|DESKTOP|IS|WAS|ONLY|NEVER|ALWAYS|MORE|LESS|BOTH|EACH|THIS|THAT|THESE)\b/;
+    // Counting in capitals — "only TWO … while SIXTY-EIGHT" — is the other half.
+    const SHOUTED_NUMBER =
+      /\b(?:ZERO|ONE|TWO|THREE|FOUR|FIVE|SIX|SEVEN|EIGHT|NINE|TEN|TWENTY|THIRTY|FORTY|FIFTY|SIXTY|SEVENTY|EIGHTY|NINETY|HUNDRED|THOUSAND)[A-Z-]*\b/;
+    // Likewise closed: `we` and `our` appear constantly inside vendor quotations
+    // ("we recommend allowing PerplexityBot"), so only the author's own voice is
+    // banned, in the forms the research actually used.
+    const FIRST_PERSON =
+      /(?:^|[^A-Za-z])I (?:confirmed|verified|fetched|sampled|checked|found|read|ran|tested|searched|could)|\bMy (?:own|probe|measurement|reading)\b|\bin my (?:probe|measurement|testing|reading)\b|\bour (?:fetcher|automated fetcher|probe|measurement)\b/;
+
     it('publishes no shouting and no first person', () => {
       for (const id of ids) {
         const { markdown } = publicDossier(read(id));
         const prose = markdown.replace(/```[\s\S]*?```|`[^`]*`/g, ' ');
-        expect(prose, `${id}: first person`).not.toMatch(
-          /(?:^|[^A-Za-z])I (?:confirmed|verified|fetched|sampled|checked|found|read|ran|tested)/,
-        );
+        expect(prose, `${id}: first person`).not.toMatch(FIRST_PERSON);
+        expect(prose, `${id}: shouted emphasis`).not.toMatch(SHOUTED_EMPHASIS);
+        expect(prose, `${id}: shouted number`).not.toMatch(SHOUTED_NUMBER);
         for (const phrase of ['REAL, NOT INVENTED', 'THE ONLY', 'HONESTY CAVEAT', 'CLAIM UNDER TEST']) {
           expect(prose, `${id}: ${phrase}`).not.toContain(phrase);
         }
