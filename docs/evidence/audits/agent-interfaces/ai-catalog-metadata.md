@@ -87,7 +87,7 @@ Source: the [redemption dossier's verdict](../../deletions/agent-tools/ai-catalo
 
 **Evidence:**
 - Hugging Face ships `hf-discover`, an ARD-compliant client whose navigate mode performs "automatic `.well-known/ai-catalog.json` discovery from a website" and follows federated registries — https://github.com/huggingface/hf-discover (verified 2026-08-24)
-- Its `_entry_haystack()` in `navigation.py` builds the match text from `displayName`, `description`, `tags`, `capabilities` and `representativeQueries`. `displayName` is already mandatory under ARD §4.2, so the four this audit scores are exactly the optional keys that decide whether a query surfaces an entry at all.
+- Its navigation code builds the text it matches a query against from five entry fields: `displayName`, `description`, `tags`, `capabilities` and `representativeQueries`. `displayName` is already mandatory under ARD §4.2, so the four this audit scores are exactly the optional keys that decide whether a query surfaces an entry at all.
 - ARD §4.1 makes `specVersion`, `host` and `entries` the required top-level fields, and defines `version`, `updatedAt`, `tags`, `metadata` and `trustManifest` as optional enrichment; identity is expressed through `host.identifier` (a DID) and the optional `trustManifest` — https://github.com/ards-project/ard-spec (verified 2026-08-24)
 - ARD is a Linux Foundation working-group specification with Google, Microsoft and Hugging Face among its contributors, published 2026-06-17 under Apache 2.0 — https://developers.googleblog.com/announcing-the-agentic-resource-discovery-specification/ (verified 2026-08-24)
 

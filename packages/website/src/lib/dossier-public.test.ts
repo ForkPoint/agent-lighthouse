@@ -442,6 +442,24 @@ describe('publicDossier', () => {
     const FIRST_PERSON =
       /(?:^|[^A-Za-z])I (?:confirmed|verified|fetched|sampled|checked|found|read|ran|tested|searched|could)|\bMy (?:own|probe|measurement|reading)\b|\bin my (?:probe|measurement|testing|reading)\b|\bour (?:fetcher|automated fetcher|probe|measurement)\b/;
 
+    // The record is a working document, so it quotes source at the level the
+    // researcher was reading it: pasted statements, array literals, and a
+    // "Source-level:" label. A reader of the page wants the behaviour, not the
+    // listing. One library symbol per claim survives, because it is what makes
+    // the claim checkable — the pasted code around it does not.
+    const PASTED_CODE = /\b(?:if|return|const|let|function)\s*\(?[^\n]{0,50}(?:===|=>|\)\s*(?:;|\{))/;
+    const ARRAY_LITERAL = /=\s*\[\s*['"][^\]\n]{4,}\]/;
+    const SOURCE_LABEL = /\bSource-level\b/;
+
+    it('publishes the behaviour of a library, not its listing', () => {
+      for (const id of ids) {
+        const { markdown } = publicDossier(read(id));
+        expect(markdown, `${id}: pasted code`).not.toMatch(PASTED_CODE);
+        expect(markdown, `${id}: array literal`).not.toMatch(ARRAY_LITERAL);
+        expect(markdown, `${id}: source-level label`).not.toMatch(SOURCE_LABEL);
+      }
+    });
+
     it('publishes no shouting and no first person', () => {
       for (const id of ids) {
         const { markdown } = publicDossier(read(id));
