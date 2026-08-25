@@ -30,7 +30,7 @@ jobs:
 For production repositories, pin a tag instead of `main` after the release is cut:
 
 ```yaml
-- uses: ForkPoint/agent-lighthouse@v0.2.1
+- uses: ForkPoint/agent-lighthouse@v2.0.0
 ```
 
 ## Marketplace Copy

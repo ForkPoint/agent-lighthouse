@@ -15,7 +15,7 @@ These figures come from the pre-v2 run. v2 changed the registry, the pass condit
 
 ## What The Benchmark Checks
 
-Agent Lighthouse evaluates 148 audits across 8 agent-journey categories:
+Agent Lighthouse evaluates 215 audits across 8 agent-journey categories:
 
 - Access & Crawl Control: robots.txt rules for GPTBot, ClaudeBot, PerplexityBot, OAI-SearchBot, Applebot-Extended, and related crawlers.
 - Content Extraction: clean main content, semantic structure, render cost, response time.
