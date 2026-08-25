@@ -4,10 +4,18 @@ import {
   getPreset,
   logger,
   CATEGORY_IDS,
-  type PresetName,
   type ScanEvent,
 } from "@forkpoint/agent-lighthouse-core";
 import { createProgressRenderer } from "./progress-renderer";
+import {
+  parseCliOptions,
+  resolveCommand,
+  isValidUrl,
+  parseCategoryAssertions,
+  failedAssertion,
+  selectDebugChecks,
+  openCommand,
+} from "./options";
 import { tierMarker } from "./tier-marker";
 import {
   buildReportView,
@@ -19,7 +27,6 @@ import { resolve } from "node:path";
 import { exec } from "node:child_process";
 
 const args = process.argv.slice(2);
-const command = args[0];
 
 function getPackageVersion() {
   try {
@@ -78,103 +85,39 @@ Examples:
 }
 
 function openInBrowser(filePath: string) {
-  const cmd =
-    process.platform === "darwin"
-      ? `open "${filePath}"`
-      : process.platform === "win32"
-        ? `start "" "${filePath}"`
-        : `xdg-open "${filePath}"`;
-  exec(cmd, () => {});
-}
-
-function getArgValue(shortFlag: string, longFlag: string): string | undefined {
-  for (const arg of args) {
-    if (shortFlag && arg.startsWith(`${shortFlag}=`)) {
-      return arg.slice(shortFlag.length + 1);
-    }
-    if (longFlag && arg.startsWith(`${longFlag}=`)) {
-      return arg.slice(longFlag.length + 1);
-    }
-  }
-  const shortIdx = shortFlag ? args.indexOf(shortFlag) : -1;
-  if (
-    shortIdx !== -1 &&
-    args[shortIdx + 1] &&
-    !args[shortIdx + 1].startsWith("-")
-  ) {
-    return args[shortIdx + 1];
-  }
-  const longIdx = longFlag ? args.indexOf(longFlag) : -1;
-  if (
-    longIdx !== -1 &&
-    args[longIdx + 1] &&
-    !args[longIdx + 1].startsWith("-")
-  ) {
-    return args[longIdx + 1];
-  }
-  return undefined;
+  exec(openCommand(process.platform, filePath), () => {});
 }
 
 async function audit(targetUrl?: string) {
-  const customConfigPath = getArgValue("-c", "--config");
-  const fileConfig = loadConfigFile(customConfigPath);
+  const configPath = parseCliOptions(args, targetUrl).configPath;
+  const fileConfig = loadConfigFile(configPath);
+  const opts = parseCliOptions(args, targetUrl, fileConfig);
 
-  const url = targetUrl || fileConfig.url;
+  const url = opts.url;
   if (!url) {
     console.error("\x1b[31mError:\x1b[0m No target URL specified.");
     usage();
   }
 
-  try {
-    new URL(url);
-  } catch {
+  if (!isValidUrl(url)) {
     console.error(`\x1b[31mInvalid URL:\x1b[0m ${url}`);
     process.exit(1);
   }
 
-  const isSilent = args.includes("--silent");
-  const progressJson = args.includes("--progress-json");
+  const { isSilent, progressJson, shouldView, debugAudit, minScore, outputDir } = opts;
   // Keep the NDJSON stream clean: scanner logs also go to stderr.
   if (progressJson) logger.level = "silent";
-  const shouldView = args.includes("-v") || args.includes("--view");
-  const debugAudit = getArgValue("", "--debug-audit");
 
-  const presetName = (getArgValue("-p", "--preset") ||
-    fileConfig.preset ||
-    "full") as PresetName;
+  const presetName = opts.presetName;
   const preset = getPreset(presetName);
 
-  const minScoreArg = getArgValue("", "--min-score");
-  const minScore = minScoreArg
-    ? Number(minScoreArg)
-    : (fileConfig.minScore ?? 0);
-
-  const outputDir =
-    getArgValue("-d", "--output-dir") || fileConfig.outputDir || "./reports";
-
-  // --categories has been in the help text since v1 and was never parsed, so a
-  // scan narrowed to one category silently ran all of them.
-  const categoriesArg = getArgValue("", "--categories");
-  const categories = categoriesArg
-    ? categoriesArg
-        .split(",")
-        .map((c) => c.trim())
-        .filter(Boolean)
-    : undefined;
-  const unknownCategories = (categories ?? []).filter((c) => !CATEGORY_IDS.includes(c));
+  const { categories, unknownCategories, includeExperimental, outputFormats } = opts;
   if (unknownCategories.length > 0) {
     console.error(
       `\x1b[31mUnknown category: ${unknownCategories.join(", ")}\x1b[0m\nValid categories: ${CATEGORY_IDS.join(", ")}`,
     );
     process.exit(1);
   }
-
-  const includeExperimental = args.includes("--experimental");
-
-  const outputFormatArg = getArgValue("-o", "--output");
-  const outputFormats = outputFormatArg
-    ? outputFormatArg.split(",").map((s) => s.trim())
-    : (fileConfig.output ?? ["terminal", "html", "json"]);
 
   if (!isSilent) {
     printBanner();
@@ -265,14 +208,7 @@ async function audit(targetUrl?: string) {
     const allChecks = view.groups.flatMap((g) =>
       g.categories.flatMap((c) => [...c.checks, ...c.notApplicable]),
     );
-    const targetChecks =
-      debugAudit === "fails"
-        ? allChecks.filter((c) => c.status === "fail" || c.status === "warn")
-        : allChecks.filter(
-            (c) =>
-              c.id === debugAudit ||
-              c.title.toLowerCase().includes(debugAudit.toLowerCase()),
-          );
+    const targetChecks = selectDebugChecks(allChecks, debugAudit);
 
     if (targetChecks.length === 0) {
       console.log(
@@ -371,44 +307,22 @@ async function audit(targetUrl?: string) {
   }
 
   // Per-category Assertions
-  const categoryAssertions = fileConfig.assertCategories ?? {};
-  for (let i = 0; i < args.length; i++) {
-    if (args[i] === "--assert-category" && args[i + 1]) {
-      const [catId, min] = args[i + 1].split(":");
-      if (catId && min) categoryAssertions[catId] = Number(min);
-    }
-  }
-
-  for (const [catId, threshold] of Object.entries(categoryAssertions)) {
-    const matchedCategory = view.groups
-      .flatMap((g) => g.categories)
-      .find(
-        (c) =>
-          c.id === catId || c.name.toLowerCase().includes(catId.toLowerCase()),
-      );
-
-    if (matchedCategory && matchedCategory.score < threshold) {
-      console.error(
-        `\n\x1b[31m✖ Category Assertion Failed:\x1b[0m Category '${matchedCategory.name}' scored ${matchedCategory.score} (threshold: ${threshold})`,
-      );
-      process.exit(1);
-    }
+  const failed = failedAssertion(
+    view.groups.flatMap((g) => g.categories),
+    parseCategoryAssertions(args, fileConfig),
+  );
+  if (failed) {
+    console.error(
+      `\n\x1b[31m✖ Category Assertion Failed:\x1b[0m Category '${failed.name}' scored ${failed.score} (threshold: ${failed.threshold})`,
+    );
+    process.exit(1);
   }
 }
 
 async function main() {
-  if (!command || command === "-h" || command === "--help") {
-    usage();
-  }
-
-  if (command === "audit") {
-    const url = args[1];
-    await audit(url);
-  } else if (!command.startsWith("-")) {
-    await audit(command);
-  } else {
-    await audit();
-  }
+  const resolved = resolveCommand(args);
+  if (resolved.action === "help") usage();
+  await audit(resolved.url);
 }
 
 main().catch((err) => {

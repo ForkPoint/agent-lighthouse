@@ -20,9 +20,11 @@ describe('docs/scoring.md', () => {
 describe('docs/cli.md', () => {
   it('documents every flag the CLI accepts', () => {
     const cli = read('docs/cli.md');
-    // The entry point is main.ts, and it quotes flags with double quotes — the
-    // pattern accepts either quote style so a restyle cannot silently empty it.
-    const source = read('packages/cli/src/main.ts');
+    // Flags are parsed in options.ts and consumed in main.ts, so both are read:
+    // scanning only the entry point missed every flag once parsing moved out.
+    // The pattern accepts either quote style so a restyle cannot empty it.
+    const source =
+      read('packages/cli/src/options.ts') + read('packages/cli/src/main.ts');
     const flags = [...source.matchAll(/["']--([a-z-]+)["']/g)].map((m) => `--${m[1]}`);
     expect(flags.length).toBeGreaterThan(0);
     for (const flag of new Set(flags)) expect(cli, `undocumented flag ${flag}`).toContain(flag);

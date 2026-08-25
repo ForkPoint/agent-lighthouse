@@ -12,6 +12,7 @@ import { Audit } from '../../audit';
 import { weightForGrade } from '../../scorer';
 import type { CheckContext } from '../../check-context';
 import { INSTRUCTION_LEXICON } from './invisible-instruction-scan';
+import { idSelector } from './_agent-affordances';
 
 /** Long values are the canonical smuggling slot, since long alt is already an anti-pattern. */
 const LONG_VALUE_CHARS = 250;
@@ -197,10 +198,6 @@ function decodeUrlText(href: string): string {
   }
 }
 
-function cssEscape(value: string): string {
-  return value.replace(/["\\]/g, '\\$&');
-}
-
 function survey(ctx: CheckContext): Survey {
   const result: Survey = {
     valuesSeen: 0,
@@ -242,7 +239,7 @@ function survey(ctx: CheckContext): Survey {
     for (const attr of ['aria-labelledby', 'aria-describedby'] as const) {
       $(`[${attr}]`).each((_, el) => {
         for (const id of ($(el).attr(attr) ?? '').split(/\s+/).filter(Boolean)) {
-          const target = $(`#${cssEscape(id)}`);
+          const target = $(idSelector(id));
           if (target.length > 0) {
             record(
               attr === 'aria-labelledby' ? 'aria-labelledby target' : 'aria-describedby target',

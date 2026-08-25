@@ -3,6 +3,7 @@ import { Audit } from '../../audit';
 import type { CheckContext } from '../../check-context';
 import { isSafeUrl } from '../../fetcher';
 import { parseRobots, isPathAllowed } from '../../gatherers/robots';
+import { detailLines } from '../../detail-lines';
 
 /** Where a trust.txt may live, in the order the spec added them. */
 const TRUST_TXT_PATHS = ['/trust.txt', '/.well-known/trust.txt'];
@@ -187,7 +188,10 @@ export class TrustTxtReciprocityCoherenceAudit extends Audit {
       reciprocated: reciprocated.slice(0, 10),
       datatrainingallowed: declared ?? '',
       aiCrawlersAllowed: allowedCrawlers,
-      observations: observations.slice(0, 20),
+      // Truncated per line as well as capped in count: an observation quotes
+      // a remote trust.txt attribute value, which is as long as that site
+      // chose to make it, and one over-long line failed the whole audit.
+      observations: detailLines(observations, (line) => line, 20),
     };
     const expected =
       'Every association is reciprocated by the other domain, and datatrainingallowed agrees with robots.txt';

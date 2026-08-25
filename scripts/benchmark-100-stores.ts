@@ -113,7 +113,17 @@ function normalizeUrl(raw: string): string {
   return url.replace(/\/+$/, '');
 }
 
-const UNIQUE_URLS = Array.from(new Set(RAW_STORES.map(normalizeUrl)));
+/**
+ * The stores to scan: the built-in list, or the URLs given on the command line.
+ *
+ * Re-running only the stores that exposed a defect is the fastest way to
+ * confirm a fix against the site that found it, and the full list takes about
+ * two hours.
+ */
+const ARG_URLS = process.argv.slice(2).filter((arg) => !arg.startsWith('-'));
+const UNIQUE_URLS = Array.from(
+  new Set((ARG_URLS.length > 0 ? ARG_URLS : RAW_STORES).map(normalizeUrl)),
+);
 
 interface StoreResult {
   url: string;
@@ -130,7 +140,12 @@ const outDir = path.resolve(__dirname, '../reports/investigation');
 if (!fs.existsSync(outDir)) {
   fs.mkdirSync(outDir, { recursive: true });
 }
-const outPath = path.join(outDir, 'benchmark-100-stores-data.json');
+// A subset run writes beside the full run rather than over it: the full data
+// file is the published benchmark, and a five-store re-check is not that.
+const outPath = path.join(
+  outDir,
+  ARG_URLS.length > 0 ? 'benchmark-subset-data.json' : 'benchmark-100-stores-data.json',
+);
 
 async function auditStore(targetUrl: string, index: number, total: number): Promise<StoreResult> {
   const startTime = Date.now();
@@ -142,7 +157,7 @@ async function auditStore(targetUrl: string, index: number, total: number): Prom
 
     const durationMs = Date.now() - startTime;
     const isBlocked = report.wafProtection?.isBlocked;
-    const wafName = report.wafProtection?.wafName;
+    const wafName = report.wafProtection?.name;
 
     if (isBlocked) {
       console.log(`  🛑 [${index + 1}/${total}] ${domain}: BOT WALL DETECTED (${wafName}) in ${(durationMs / 1000).toFixed(1)}s`);

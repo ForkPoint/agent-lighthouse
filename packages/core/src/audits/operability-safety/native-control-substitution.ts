@@ -11,6 +11,7 @@ import type { AuditMeta, AuditResult } from '../../types';
 import { Audit } from '../../audit';
 import { weightForGrade } from '../../scorer';
 import type { CheckContext, PageContext } from '../../check-context';
+import { idSelector } from './_agent-affordances';
 
 /**
  * Controls a mainstream agent toolkit drives in one call — `selectOption`,
@@ -54,14 +55,6 @@ function collectIds(page: PageContext): Set<string> {
     if (id) ids.add(id);
   });
   return ids;
-}
-
-/**
- * Escape an id for an attribute selector. Ids come out of page content, so an
- * unescaped quote or backslash produces a selector cheerio cannot match.
- */
-function cssEscape(value: string): string {
-  return value.replace(/["\\]/g, '\\$&');
 }
 
 const SAMPLE = `<!-- One agent call: selectOption('NL'). -->
@@ -191,7 +184,7 @@ function contractDefect(
   if (!target) {
     return `aria-controls points at "${controls}", and no element with that id exists`;
   }
-  const $popup = $(`#${cssEscape(target)}`);
+  const $popup = $(idSelector(target));
   const popupRole = ($popup.attr('role') ?? '').toLowerCase();
   if (!POPUP_ROLES.has(popupRole)) {
     return `aria-controls points at "${target}", whose role is "${popupRole || 'none'}" rather than a popup role`;

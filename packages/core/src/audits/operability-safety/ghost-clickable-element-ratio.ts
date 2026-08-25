@@ -11,6 +11,7 @@ import { Audit } from '../../audit';
 import { weightForGrade } from '../../scorer';
 import type { CheckContext } from '../../check-context';
 import { collectPageCss } from '../../gatherers/css-rules';
+import { detailLines } from '../../detail-lines';
 import { NATIVE_INTERACTIVE, accessibleName, hasClickSignal, isElement } from './_agent-affordances';
 
 /** Below this share of addressable click targets the page fails. */
@@ -80,6 +81,11 @@ function hintFor(tag: string, attribs: Record<string, string>): string {
   const id = attribs['id'] ? `#${attribs['id']}` : '';
   const cls = attribs['class'] ? `.${attribs['class'].split(/\s+/).filter(Boolean).join('.')}` : '';
   return `<${tag}${id}${cls}>`;
+}
+
+/** One ghost as a single report line. */
+function describeGhost(ghost: Ghost): string {
+  return `${ghost.pageUrl} — ${ghost.hint}: ${ghost.reason}`;
 }
 
 async function survey(ctx: CheckContext): Promise<Survey> {
@@ -217,7 +223,10 @@ export class GhostClickableElementRatioAudit extends Audit {
       ghostCount: s.ghosts.length,
       semanticCount: s.semantic,
       ratio: Number(ratio.toFixed(4)),
-      ghosts: s.ghosts.slice(0, 20),
+      // One line per ghost, not the Ghost objects: `details` admits scalars
+      // and string arrays only, so an array of objects failed validation and
+      // the audit reported nothing on every page that had ghosts to report.
+      ghosts: detailLines(s.ghosts, describeGhost, 20),
     };
 
     if (s.ghosts.length === 0) {

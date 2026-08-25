@@ -12,6 +12,7 @@ import { Audit } from '../../audit';
 import { weightForGrade } from '../../scorer';
 import type { CheckContext } from '../../check-context';
 import { collectPageCss } from '../../gatherers/css-rules';
+import { detailLines } from '../../detail-lines';
 import { NATIVE_INTERACTIVE, STATE_CLASS_RE, hasClickSignal, isElement } from './_agent-affordances';
 
 /** Below this share of introspectable controls the page fails. */
@@ -65,10 +66,10 @@ interface Finding {
   hint: string;
 }
 
-/** One finding as a single line, short enough for the 1000-char details cap. */
+/** One finding as a single line. `detailLines` applies the schema's caps. */
 function describeFinding(finding: Finding): string {
   const where = finding.stateClass ? ` [class "${finding.stateClass}"]` : '';
-  return `${finding.pageUrl} — ${finding.missing}${where}: ${finding.hint}`.slice(0, 1000);
+  return `${finding.pageUrl} — ${finding.missing}${where}: ${finding.hint}`;
 }
 
 interface Survey {
@@ -283,7 +284,7 @@ export class StatefulControlIntrospectabilityAudit extends Audit {
       // One line per finding, not the Finding objects: `details` admits scalars
       // and string arrays only, and an array of objects failed validation, so
       // every scan of a page with a state-bearing control errored out.
-      opaque: s.opaque.slice(0, 20).map(describeFinding),
+      opaque: detailLines(s.opaque, describeFinding, 20),
     };
 
     if (s.opaque.length === 0) {
