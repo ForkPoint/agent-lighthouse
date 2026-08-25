@@ -11,8 +11,7 @@ consumers:
   - Google Merchant Center website crawl / automated feeds
   - "Google Shopping Graph → Google AI Mode shopping & agentic checkout"
   - "Googlebot (product snippets, merchant listings)"
-  - "Applebot (Offers, PriceRange"
-consumers_note: archived doc)
+  - "Applebot (Offers, PriceRange — archived doc)"
 signals:
   - name: "Product / Offer markup with price, priceCurrency, availability, condition and GTIN/SKU identifiers"
     grade: A

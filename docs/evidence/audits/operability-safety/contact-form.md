@@ -8,8 +8,9 @@ disposition: "keep — fix required"
 reviewed: 2026-08-21
 recommended_tier: informative
 consumers:
-  - Google Search (Organization contactPoint/telephone/email influence knowledge panel and merchant brand profile
-consumers_note: "not an AI feature), browsers and OS dialers (tel: per RFC 3966), none-known for any AI agent as a documented task-completion affordance"
+  - "Google Search (Organization contactPoint/telephone/email influence the knowledge panel and the merchant brand profile — not an AI feature)"
+  - "Browsers and OS dialers (tel: per RFC 3966)"
+  - none-known for any AI agent as a documented task-completion affordance
 signals:
   - name: "Contact and service endpoint discoverability (tel:/mailto: links, server-rendered contact forms, schema.org ContactPoint) for agent task completion"
     grade: C

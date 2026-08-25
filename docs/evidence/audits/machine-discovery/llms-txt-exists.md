@@ -14,9 +14,7 @@ consumers:
   - none-known among answer engines or LLM crawlers
   - "Google Lighthouse 13.3+ (llms-txt audit: H1, markdown-link, 50-char checks)"
   - DebugBear agentic-browsing suite
-  - none-known for blockquote
-  - descriptions
-  - or link validity
+  - "none-known for blockquote, descriptions, or link validity"
   - Googlebot / Google AI Overviews
   - GPTBot
   - OAI-SearchBot

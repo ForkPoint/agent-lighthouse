@@ -11,9 +11,7 @@ tier_rationale: "Recommended scored; ships informative. The B rested on a signal
 consumers:
   - "Google Lighthouse 13.3+ (llms-txt audit: H1, markdown-link, 50-char checks)"
   - DebugBear agentic-browsing suite
-  - none-known for blockquote
-  - descriptions
-  - or link validity
+  - "none-known for blockquote, descriptions, or link validity"
 signals:
   - name: /llms.txt existence at domain root (llmstxt.org proposal)
     grade: C
