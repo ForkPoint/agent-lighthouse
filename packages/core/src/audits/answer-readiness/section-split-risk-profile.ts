@@ -5,6 +5,7 @@ import { Audit } from '../../audit';
 import type { CheckContext } from '../../check-context';
 import { weightForGrade } from '../../scorer';
 import { countTokens } from '../../gatherers/tokens';
+import { detailLines } from '../../detail-lines';
 
 /**
  * The retrieval window most pipelines chunk to.
@@ -162,7 +163,9 @@ export class SectionSplitRiskProfileAudit extends Audit {
       // Reported as strings: the result schema keeps unknown detail keys only
       // as scalars or as an array of strings, so a number array is dropped
       // whole rather than coerced.
-      sectionTokens: sections.map((section) => String(section.tokens)),
+      // Capped: `details` arrays hold at most 100 entries, and a long guide
+      // page splits into more sections than that.
+      sectionTokens: detailLines(sections, (section) => String(section.tokens)),
       score: Number(score.toFixed(3)),
       headingDistance,
       worstSeverity,
