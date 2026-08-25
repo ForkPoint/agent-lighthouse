@@ -103,6 +103,52 @@ const RAW_STORES = [
   'purnatur.be',
   'unitedbyblue.com',
   'lunchskins.com',
+
+  // Shopify's own "best Shopify stores" roundup, added 2026-08-25:
+  // https://www.shopify.com/blog/shopify-stores
+  // Ten of its picks were already on the list above and are not repeated.
+  // The roundup spans more of the platform than a bestseller list does —
+  // single-product brands, wholesale catalogues, magazines, subscription
+  // boxes — which is the point: an audit that only ever meets a large
+  // apparel storefront is not covered.
+  'tentree.com',
+  'maguireshoes.com',
+  'the-outrage.com',
+  'kirrinfinch.com',
+  'rothys.com',
+  'beefcakeswimwear.com',
+  'suta.in',
+  'uppercasemagazine.com',
+  'terrebleu.ca',
+  'silkandwillow.com',
+  'goodeeworld.com',
+  'bruvi.com',
+  'pelacase.ca',
+  'cowboy.com',
+  'cocofloss.com',
+  'lootcrate.com',
+  'potgang.co.uk',
+  'manitobah.com',
+  'camillebrinch.com',
+  'troubadourgoods.com',
+  'blkandbold.com',
+  'flybyjing.com',
+  'vervecoffee.com',
+  'tazachocolate.com',
+  'yeungmancooking.com',
+  'flourist.com',
+  'thehoneypot.co',
+  'beautybakerie.com',
+  'cheekbonebeauty.com',
+  'meowmeowtweet.com',
+  'beneathyourmask.com',
+  'freshheritage.com',
+  'thenimetyou.com',
+  'lastobject.com',
+  'tofinosoapcompany.com',
+  'satyaorganics.com',
+  'givemetap.com',
+  'bebemoss.com',
 ];
 
 function normalizeUrl(raw: string): string {
@@ -144,7 +190,7 @@ if (!fs.existsSync(outDir)) {
 // file is the published benchmark, and a five-store re-check is not that.
 const outPath = path.join(
   outDir,
-  ARG_URLS.length > 0 ? 'benchmark-subset-data.json' : 'benchmark-100-stores-data.json',
+  ARG_URLS.length > 0 ? 'benchmark-subset-data.json' : 'benchmark-stores-data.json',
 );
 
 async function auditStore(targetUrl: string, index: number, total: number): Promise<StoreResult> {
