@@ -121,4 +121,20 @@ describe('AriaLayerInjectionScanAudit', () => {
     const result = run(`<img src="/a.png" alt="${INJECTION}">`);
     expect(result.pageUrl).toBe('https://example.test/');
   });
+
+  // A framework id is any non-whitespace string: React's `useId` emits `:r0:`,
+  // and `#:r0:` parses as a pseudo-class. A live storefront killed this audit
+  // outright with `Unknown pseudo-class :-tab-0`.
+  it('reads an aria-labelledby target whose id the CSS grammar rejects', () => {
+    const result = run(
+      `<span id=":r0:-tab-0">${INJECTION}</span><div aria-labelledby=":r0:-tab-0">Panel</div>`,
+    );
+    expect(result.status).toBe('fail');
+  });
+
+  it('does not throw on an id carrying a quote or a backslash', () => {
+    expect(() =>
+      run(`<span id='a"b\\c'>Hi</span><div aria-describedby='a"b\\c'>Panel</div>`),
+    ).not.toThrow();
+  });
 });

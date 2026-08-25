@@ -130,3 +130,17 @@ export function accessibleName(el: Element, $: CheerioAPI): string {
 export function isElement(node: AnyNode): node is Element {
   return node.type === 'tag';
 }
+
+/**
+ * A selector matching one element by id, whatever characters the id uses.
+ *
+ * `#${id}` is not safe: an id is any non-whitespace string, and frameworks emit
+ * ids the CSS identifier grammar cannot express. React's `useId` produces
+ * `:r0:`, which parses as a pseudo-class and makes the selector engine throw —
+ * a live storefront killed a whole audit with `Unknown pseudo-class :-tab-0`.
+ * An attribute selector sidesteps the identifier grammar entirely, so only the
+ * quote and the backslash need escaping.
+ */
+export function idSelector(id: string): string {
+  return `[id="${id.replace(/["\\]/g, '\\$&')}"]`;
+}

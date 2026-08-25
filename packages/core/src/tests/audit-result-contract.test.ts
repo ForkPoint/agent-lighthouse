@@ -6,17 +6,18 @@ import type { CheckContext } from '../check-context';
 import type { AuditResult } from '../types';
 
 /**
- * Every audit's `details` must survive `AuditResultSchema`.
+ * Every audit must return a result `AuditResultSchema` accepts, on a page
+ * built to be as hostile as a real storefront.
  *
- * The runner validates each result and turns a rejection into a `scan-error`
- * stub, so an audit that attaches its own finding objects reports nothing —
- * and only on the pages where it found the most to say. That is invisible to a
- * per-audit test built on a three-element fixture: four audits shipped this way
- * and were caught by scanning real storefronts, not by the suite.
+ * The runner validates each result and turns a rejection — or a throw — into a
+ * `scan-error` stub, so a failing audit reports nothing at all, and only on the
+ * pages where it found the most to say. A per-audit test built on a
+ * three-element fixture cannot see that: five audits shipped broken this way
+ * and were caught by scanning 43 live Shopify stores, not by the suite.
  *
- * The fixture below is deliberately hostile: enough elements to outrun the
- * 100-entry array cap, and strings long enough to outrun the 1000-character
- * entry cap.
+ * The fixture is deliberately hostile on three axes: enough elements to outrun
+ * the 100-entry array cap, strings long enough to outrun the 1000-character
+ * entry cap, and ids the CSS identifier grammar rejects.
  */
 
 /** More sections, rows and controls than any `details` array may hold. */
@@ -30,9 +31,19 @@ function repeat(build: (i: number) => string): string {
 }
 
 /**
+ * An id no CSS identifier grammar accepts. React's `useId` emits exactly this
+ * shape, and `#:r0:` parses as a pseudo-class: an audit that builds an id
+ * selector by interpolation throws on it rather than returning a result. A
+ * live storefront killed `aria-layer-injection-scan` with
+ * `Unknown pseudo-class :-tab-0`.
+ */
+const HOSTILE_ID = ':r0:-tab-0';
+
+/**
  * A page that trips every list-shaped audit at once: unnamed click targets,
- * unlabelled inputs, a headerless table, a long section run, and text long
- * enough that any quoted excerpt overflows on its own.
+ * unlabelled inputs, a headerless table, a long section run, ids the selector
+ * grammar rejects, and text long enough that any quoted excerpt overflows on
+ * its own.
  */
 const TORTURE_BODY = [
   `<h1>${LONG_TEXT}</h1>`,
@@ -45,6 +56,10 @@ const TORTURE_BODY = [
   repeat((i) => `<img src="/i${i}.png">`),
   repeat((i) => `<iframe src="/f${i}"></iframe>`),
   repeat(() => `<button></button>`),
+  `<span id="${HOSTILE_ID}">${LONG_TEXT}</span>`,
+  `<div aria-labelledby="${HOSTILE_ID}" aria-describedby="${HOSTILE_ID}">Labelled</div>`,
+  `<div role="combobox" aria-controls="${HOSTILE_ID}" aria-expanded="false">Pick</div>`,
+  `<label for="${HOSTILE_ID}">Hostile</label><input id="${HOSTILE_ID}" type="text">`,
 ].join('');
 
 function tortureContext(): CheckContext {
@@ -58,7 +73,7 @@ function tortureContext(): CheckContext {
 
 const registrations = Object.values(defaultConfig.audits).flat();
 
-describe('details contract', () => {
+describe('audit result contract', () => {
   it('registers audits to check', () => {
     expect(registrations.length).toBeGreaterThan(200);
   });
@@ -70,13 +85,13 @@ describe('details contract', () => {
   for (const registration of registrations) {
     const { id } = registration.meta;
 
-    it(`${id}: emits details the schema accepts`, async () => {
+    it(`${id}: returns a result the schema accepts`, async () => {
       let result: AuditResult;
       try {
         result = await registration.create().audit(ctx);
       } catch (err) {
-        // An audit that throws is a separate defect; the runner already stubs
-        // it, and the per-audit suites cover behaviour. Only shape is in scope.
+        // A throw reaches the operator the same way a schema rejection does:
+        // the runner stubs it as `scan-error` and the audit reports nothing.
         expect.fail(`threw instead of returning a result: ${String(err)}`);
       }
 

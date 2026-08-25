@@ -151,4 +151,14 @@ describe('NativeControlSubstitutionAudit', () => {
     const result = run(`<form><div class="file-drop">Drop here</div></form>`);
     expect(result.pageUrl).toBe('https://example.test/page');
   });
+
+  // A framework id is any non-whitespace string: React's `useId` emits `:r0:`,
+  // and `#:r0:` parses as a pseudo-class, so an interpolated id selector throws
+  // and the whole audit reports nothing.
+  // `warn`, not `fail`: the contract is complete, so the id resolved. Before
+  // the fix the audit threw on the selector and reported nothing at all.
+  it('resolves an aria-controls id the CSS grammar rejects', () => {
+    const result = run(COMPLETE_COMBOBOX.replace(/"opts"/g, '":r0:-tab-0"'));
+    expect(result.status).toBe('warn');
+  });
 });
