@@ -24,7 +24,7 @@ Cross-validates every sampled sitemap <lastmod> against three independent page-l
 
 ## Claimed mechanism (falsifiable)
 
-Google states it uses <lastmod> 'if it's consistently and verifiably (for example by comparing to the last modification of the page) accurate' — i.e. lastmod is a conditional signal that engines silently discard on divergence, and lastmod is the only freshness hint a pull-based AI crawler gets from a sitemap. Falsifiable claim: if sampled lastmod values disagree with all available page-level evidence (HTTP Last-Modified, JSON-LD dateModified, article:modified_time) for a material fraction of URLs, the sitemap's freshness channel is inert and re-crawl scheduling degrades to organic rediscovery. Two pathologies are specifically detectable. First, more than 90% of URLs share one identical lastmod equal to the last deploy date. That is a build stamp rather than a content date, and per Google's 'copyright date is not significant' rule it is exactly the disqualifying pattern. Second, a lastmod in the future relative to crawl time, which is always invalid.
+Google states it uses <lastmod> 'if it's consistently and verifiably (for example by comparing to the last modification of the page) accurate'. lastmod is therefore a conditional signal, which engines silently discard on divergence. It is also the only freshness hint a pull-based AI crawler gets from a sitemap. Falsifiable claim: if sampled lastmod values disagree with all available page-level evidence (HTTP Last-Modified, JSON-LD dateModified, article:modified_time) for a material fraction of URLs, the sitemap's freshness channel is inert and re-crawl scheduling degrades to organic rediscovery. Two pathologies are specifically detectable. First, more than 90% of URLs share one identical lastmod equal to the last deploy date. That is a build stamp rather than a content date, and per Google's 'copyright date is not significant' rule it is exactly the disqualifying pattern. Second, a lastmod in the future relative to crawl time, which is always invalid.
 
 ## Evidence
 
@@ -43,7 +43,7 @@ Screaming Frog, Sitebulb, Semrush and Ahrefs surface lastmod presence and can fl
 
 ## Example failure
 
-A Hugo site regenerates every page on each deploy, so sitemap.xml lists 4,000 URLs all with lastmod=2026-08-19T04:11:00Z. The JSON-LD dateModified on those pages ranges from 2019 to 2026. Google and every pull crawler downweight the sitemap's lastmod entirely, so a genuinely revised pricing page published 2026-08-18 gets no priority over 4,000 unchanged archive pages and is re-fetched weeks later — while the site owner's SEO tool reports '100% of URLs have lastmod' as a pass.
+A Hugo site regenerates every page on each deploy, so sitemap.xml lists 4,000 URLs all with lastmod=2026-08-19T04:11:00Z. The JSON-LD dateModified on those pages ranges from 2019 to 2026. Google and every pull crawler downweight the sitemap's lastmod entirely. A genuinely revised pricing page published 2026-08-18 therefore gets no priority over 4,000 unchanged archive pages, and is re-fetched weeks later. Meanwhile the site owner's SEO tool reports '100% of URLs have lastmod' as a pass.
 
 ## Scoring
 

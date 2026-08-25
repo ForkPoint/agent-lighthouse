@@ -99,7 +99,7 @@ _No dedicated evidence signal was researched for this audit in the 2026-08-20 pa
 
 **Mechanism claim:** An AI agent reads a site's `WebSite` → `potentialAction` → `SearchAction` `urlTemplate` (or a `GET /search` operation in its OpenAPI spec), substitutes the query term, and fetches results instead of crawling the site.
 
-**Grade: C** — `SearchAction` is a ratified schema.org term with very large adoption, but its one documented consumer was retired by Google in 2024 and no vendor documents a named AI agent that reads it; the OpenAPI fallback inherits the unproven discovery leg graded in `5.1`.
+**Grade: C** — `SearchAction` is a ratified schema.org term with very large adoption. But its one documented consumer was retired by Google in 2024, and no vendor documents a named AI agent that reads it. The OpenAPI fallback inherits the unproven discovery leg graded in `5.1`.
 
 **Evidence:**
 - `SearchAction` is a stable schema.org type ("The act of searching for an object"), used as a `potentialAction` on `WebSite` with an `EntryPoint` `urlTemplate` carrying the query placeholder; schema.org's Google-index aggregation reports adoption on 10M+ domains — https://schema.org/SearchAction (verified 2026-08-21)

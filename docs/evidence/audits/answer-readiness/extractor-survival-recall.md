@@ -24,7 +24,7 @@ Runs the boilerplate-stripping, HTML-to-markdown pipeline that agent readers act
 
 ## Claimed mechanism (falsifiable)
 
-Answer engines and agent readers do not embed raw HTML; they strip boilerplate and convert main content to markdown — Jina Reader states 'Boilerplate such as navigation, headers, footers, and ads is stripped, and the main content is converted to Markdown' (S10), and Firecrawl exposes the same only-main-content path (S11). These extractors use structural and class-name heuristics. Content placed in <aside>, <footer>, a role=complementary region, or a container whose class matches a stripper blocklist is deleted before embedding, so it can never be retrieved or cited regardless of its quality. Falsifiable and cheap to verify: fetch the same URL through r.jina.ai and check whether the fact is present in the returned markdown.
+Answer engines and agent readers do not embed raw HTML. They strip boilerplate and convert main content to markdown. Jina Reader states that 'Boilerplate such as navigation, headers, footers, and ads is stripped, and the main content is converted to Markdown' (S10), and Firecrawl exposes the same only-main-content path (S11). These extractors use structural and class-name heuristics. Content placed in <aside>, <footer>, a role=complementary region, or a container whose class matches a stripper blocklist is deleted before embedding, so it can never be retrieved or cited regardless of its quality. Falsifiable and cheap to verify: fetch the same URL through r.jina.ai and check whether the fact is present in the returned markdown.
 
 ## Evidence
 
@@ -43,7 +43,7 @@ Static fetch, parse with linkedom or jsdom. 1) Run @mozilla/readability to get a
 
 ## Example failure
 
-A product page renders its full specification table inside <aside class="product-sidebar">. Readability and every only-main-content extractor drop the aside wholesale. The markdown an answer engine ingests contains marketing prose and no dimensions, weight, or materials — so the page can never be cited for the spec questions it is uniquely qualified to answer, while a retailer's thinner page that keeps specs in <main> wins the citation.
+A product page renders its full specification table inside <aside class="product-sidebar">. Readability and every only-main-content extractor drop the aside wholesale. The markdown an answer engine ingests contains marketing prose, and no dimensions, weight or materials. The page can therefore never be cited for the spec questions it is uniquely qualified to answer. A retailer's thinner page that keeps specs in <main> wins the citation instead.
 
 ## Scoring
 

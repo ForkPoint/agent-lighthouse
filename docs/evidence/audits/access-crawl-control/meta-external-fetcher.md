@@ -59,7 +59,7 @@ Live token backing Meta AI's link fetching; a reasonable check to keep, though i
 
 **Evidence:** Meta's web crawlers page documents meta-externalagent as crawling 'for use cases such as training foundation AI models or improving products by indexing content directly', with no stated robots.txt exemption. The newer Meta-WebIndexer 'navigates the web to improve Meta AI search result quality for users' and helps 'cite and link to your content in Meta AI's responses'. That makes Meta-WebIndexer the allow-side visibility token and meta-externalagent the training-side block token. Cloudflare Radar confirms Meta-ExternalAgent among the top five AI crawlers overall and at 13.9% share in the Computer & Electronics vertical (Aug 2025), so it is documented ACTIVE at scale.
 
-**Counter-evidence:** Two documented robots.txt exemptions in the same family that audits must not conflate with meta-externalagent: meta-externalfetcher 'fetches individual links at a user's request' and 'may bypass robots.txt rules'; and facebookexternalhit may bypass robots.txt for 'security or integrity checks, such as checking for malware or malicious content'. A meta-externalfetcher disallow should therefore be reported informatively, not scored as an effective control.
+**Counter-evidence:** Two documented robots.txt exemptions in the same family must not be conflated with meta-externalagent. meta-externalfetcher 'fetches individual links at a user's request', and 'may bypass robots.txt rules'. facebookexternalhit may bypass robots.txt for 'security or integrity checks, such as checking for malware or malicious content'. A meta-externalfetcher disallow should therefore be reported informatively, not scored as an effective control.
 
 ## Review history
 

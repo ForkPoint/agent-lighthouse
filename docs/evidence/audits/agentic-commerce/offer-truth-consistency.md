@@ -26,7 +26,7 @@ Hunts for internal contradictions between what a page's structured data claims a
 
 ## Claimed mechanism (falsifiable)
 
-Falsifiable claim: the agent quotes from indexed structured data or the feed, while the ACP checkout session recomputes authoritative amounts seller-side; ACP defines dedicated message codes `invalid`, `out_of_stock` and `low_stock` for exactly this divergence, and totals are recomputed by the seller before status can reach ready_for_payment. A page whose markup says InStock at 49.00 while its DOM says Sold out at 59.00 therefore produces a quote-to-checkout mismatch, which surfaces to the buyer as a price change or a failed purchase. Disproof condition: contradictory pages transacting without a mismatch message.
+Falsifiable claim. The agent quotes from indexed structured data or the feed, while the ACP checkout session recomputes authoritative amounts seller-side. ACP defines dedicated message codes `invalid`, `out_of_stock` and `low_stock` for exactly this divergence. Totals are recomputed by the seller before status can reach ready_for_payment. A page whose markup says InStock at 49.00 while its DOM says Sold out at 59.00 therefore produces a quote-to-checkout mismatch, which surfaces to the buyer as a price change or a failed purchase. Disproof condition: contradictory pages transacting without a mismatch message.
 
 ## Evidence
 

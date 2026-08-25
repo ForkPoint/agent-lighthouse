@@ -45,7 +45,15 @@ RFC 9309 §2.2.1 states the wildcard group is consulted only 'if no matching gro
 - **[Lighthouse PR #17168 — new_audit(ard-schema): add Agent Resource Discovery gatherer and schema audit](https://github.com/GoogleChrome/lighthouse/pull/17168)** — GoogleChrome/lighthouse (repo, URL verified 2026-08-20)
   - OPEN PR (created 2026-08-10, branch agentic-resource-discovery). Adds core/audits/agentic/ard-schema.js + core/gather/gatherers/agentic/ard.js + vendored third-party/ard/ard.js ConformanceTester. Discovery precedence implemented: robots.txt 'Agentmap:' > <link rel="ai-catalog"> > Link: <...>; rel=ai-catalog HTTP header > /.well-known/ai-catalog.json fallback. Scores 1 / 0.5 (warnings) / 0 (errors); adds a Lighthouse-only warning for entries missing representativeQueries. This is the single biggest false-uniqueness risk for any ai-catalog.json check.
 - **[GitHub repository census — llms.txt / MCP / agent-readiness auditing tools](https://github.com/search?q=llms.txt+validator&type=repositories)** — GitHub (queried via GitHub REST search API) (dataset, URL verified 2026-08-20)
-  - Enumerated via gh api search/repositories. The field is generators, not auditors: AnswerDotAI/llms-txt (2575*, the spec itself), firecrawl/llmstxt-generator (537*), delucis/starlight-llms-txt (109*), thedaviddias/mcp-llms-txt-explorer (76*). Auditor-shaped projects are all <5 stars: hanselhansel/context-cli (robots+llms.txt+Schema.org+content density, 0-100), agentmarkup/agentmarkup (22*, build-time generation+validation), portdeveloper/llms-txt-check (1*, validates llms.txt against what the site actually serves), mikiships/agent-trust-scan (1*, A2A+MCP+llms.txt endpoint validation), abhi725/growth-mcp (1*), JerryZhi/AI-Crawler-Detector (5*, detects server-side AI crawler blocking beyond robots.txt), arturseo-geo/mcp-crawl-parity (1*, Googlebot vs AI crawler parity from Nginx logs). No project combines active differential fetching with robots.txt policy reconciliation.
+  - Enumerated via gh api search/repositories. The field is generators, not auditors: AnswerDotAI/llms-txt (2575*, the spec itself), firecrawl/llmstxt-generator (537*), delucis/starlight-llms-txt (109*), thedaviddias/mcp-llms-txt-explorer (76*). Every auditor-shaped project has fewer than 5 stars.
+  - hanselhansel/context-cli — robots, llms.txt, Schema.org and content density, scored 0-100.
+  - agentmarkup/agentmarkup (22 stars) — build-time generation and validation.
+  - portdeveloper/llms-txt-check (1 star) — validates llms.txt against what the site actually serves.
+  - mikiships/agent-trust-scan (1 star) — A2A, MCP and llms.txt endpoint validation.
+  - abhi725/growth-mcp (1 star).
+  - JerryZhi/AI-Crawler-Detector (5 stars) — detects server-side AI crawler blocking beyond robots.txt.
+  - arturseo-geo/mcp-crawl-parity (1 star) — Googlebot against AI crawler parity, from Nginx logs.
+  - No project combines active differential fetching with robots.txt policy reconciliation.
 
 ## Competitor coverage
 

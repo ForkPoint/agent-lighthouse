@@ -60,7 +60,7 @@ _No dedicated evidence signal was researched for this audit in the 2026-08-20 pa
 
 ## Evidence (2026-08-21)
 
-**Mechanism claim:** Open Graph consumers read `og:type` to decide which object vocabulary applies to the page (`article`, `website`, `product`, `video.*`, …) and therefore which additional properties they will look for and render; a page declaring the wrong type is interpreted as the wrong kind of object.
+**Mechanism claim:** Open Graph consumers read `og:type` to decide which object vocabulary applies to the page — `article`, `website`, `product`, `video.*` and so on. That choice decides which additional properties they look for and render. A page declaring the wrong type is interpreted as the wrong kind of object.
 
 **Grade: B** — `og:type` is one of the four required properties in the de-facto Open Graph protocol, and adoption is enormous. Meta names it as a tag that changes distribution handling. But the type-selects-behavior effect is documented only in spec terms, and no vendor documents the value-appropriateness effect this audit actually scores.
 

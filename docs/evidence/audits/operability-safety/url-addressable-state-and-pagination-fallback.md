@@ -22,11 +22,11 @@ sources:
 
 ## What it checks
 
-Checks that every distinct content state a task might need to reach — page N of a listing, an applied filter set, a selected tab, an opened detail view — is reachable by navigating to a URL, and that infinitely-scrolled collections expose a crawlable/enumerable alternative.
+Checks that every distinct content state a task might need to reach is reachable by navigating to a URL: page N of a listing, an applied filter set, a selected tab, an opened detail view. Also checks that infinitely-scrolled collections expose a crawlable or enumerable alternative.
 
 ## Claimed mechanism (falsifiable)
 
-Falsifiable claim: an agent's dominant recovery primitive is re-navigation. When a step fails, context is truncated, or a fresh session resumes a task, the agent re-enters the state by going to a URL; if the state lives only in JS memory, recovery requires replaying the entire interaction sequence from the homepage, consuming the step budget. WebVoyager attributes 44.4% of all failures to navigation-stuck, explicitly citing exhausted step budgets and difficulty locating the correct scrollable area. Test: expose ?page=N and filter params on the same listing; the number of actions to reach item #180 drops from ~30 scroll-and-wait cycles to one navigation.
+Falsifiable claim: an agent's dominant recovery primitive is re-navigation. A step may fail, context may be truncated, or a fresh session may resume a task. The agent then re-enters the state by going to a URL. If the state lives only in JS memory, recovery requires replaying the entire interaction sequence from the homepage, which consumes the step budget. WebVoyager attributes 44.4% of all failures to navigation-stuck, explicitly citing exhausted step budgets and difficulty locating the correct scrollable area. Test: expose ?page=N and filter params on the same listing; the number of actions to reach item #180 drops from ~30 scroll-and-wait cycles to one navigation.
 
 ## Evidence
 
@@ -49,7 +49,7 @@ Multi-page crawl. For each listing/collection page: (1) count items present in t
 
 ## Example failure
 
-A jobs board renders 15 of 400 listings and appends more via an IntersectionObserver, with filters held in React state and no query parameters. Asked to 'find the remote Rust role in Berlin', the agent must scroll roughly 26 times with a network wait each, cannot deep-link the filtered view, and blows its step budget — and if it does find the role, it cannot hand the user a link to it.
+A jobs board renders 15 of 400 listings and appends more via an IntersectionObserver, with filters held in React state and no query parameters. Asked to 'find the remote Rust role in Berlin', the agent must scroll roughly 26 times, with a network wait on each. It cannot deep-link the filtered view, and it blows its step budget. If it does find the role, it cannot hand the user a link to it.
 
 ## Scoring
 

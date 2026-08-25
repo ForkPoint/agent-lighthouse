@@ -57,7 +57,7 @@ _No dedicated evidence signal was researched for this audit in the 2026-08-20 pa
 
 ## Evidence (2026-08-21)
 
-**Mechanism claim:** When an OpenAPI document is converted into LLM-callable tools, the operation's and parameters' `description` text becomes the tool and argument descriptions the model reads when deciding which endpoint to call and what to pass; an operation with no human-readable text leaves the model with only the operationId to reason from.
+**Mechanism claim:** When an OpenAPI document is converted into LLM-callable tools, the `description` text on the operation and its parameters becomes the tool and argument descriptions the model reads. It reads them when deciding which endpoint to call and what to pass. An operation with no human-readable text leaves the model with only the operationId to reason from.
 
 **Grade: A** — every link in the chain is documented by a vendor: named converters map OpenAPI descriptions onto tool descriptions, and both OpenAI and Anthropic state that the model picks the call from those descriptions.
 

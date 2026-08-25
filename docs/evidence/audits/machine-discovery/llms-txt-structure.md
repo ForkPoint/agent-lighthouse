@@ -24,7 +24,7 @@ sources:
 
 ## Claimed mechanism (falsifiable)
 
-An agent that fetches `/llms.txt` parses the blockquote under the H1 as the site summary and the H2 headings as the addressable sections of the link list, so a file carrying both can be consumed selectively — read the summary, pick a section — instead of end to end.
+An agent that fetches `/llms.txt` parses the blockquote under the H1 as the site summary, and the H2 headings as the addressable sections of the link list. A file carrying both can therefore be consumed selectively — read the summary, pick a section — instead of end to end.
 
 The claim is real but unproven at the consumer end: the format's reference parser exposes exactly these two fields, and no vendor documents an agent behaving differently when either is absent. Hence grade C and tier `informative` — the audit reports the shape of the file and never moves a score.
 

@@ -66,7 +66,7 @@ _No dedicated evidence signal was researched for this audit in the 2026-08-20 pa
 
 **Mechanism claim:** A search engine or answer engine that indexes the page reads `<meta name="description">` and may reproduce its text verbatim as the page's summary/snippet instead of generating one from body text.
 
-**Grade: B** — Google documents that Search reads the tag and may use it as the snippet, and the tag is a WHATWG-standard metadata name with near-universal adoption; but the consumption is explicitly conditional ("sometimes"), no AI-agent vendor documents reading it, and the audit's 50-300 character window has no primary support.
+**Grade: B** — Google documents that Search reads the tag and may use it as the snippet, and the tag is a WHATWG-standard metadata name with near-universal adoption. But the consumption is explicitly conditional — "sometimes" — no AI-agent vendor documents reading it, and the audit's 50-300 character window has no primary support.
 
 **Evidence:**
 - Google Search Central states the tag is a snippet source: "Google sometimes uses the meta description HTML element if it might give users a more accurate description of the page than content taken directly from the page." — https://developers.google.com/search/docs/appearance/snippet (verified 2026-08-21)

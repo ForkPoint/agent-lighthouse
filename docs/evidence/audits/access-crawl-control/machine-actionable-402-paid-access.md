@@ -26,7 +26,7 @@ When a site charges for crawler access, this verifies the 402 response carries a
 
 ## Claimed mechanism (falsifiable)
 
-Every deployed paid-crawl scheme puts the price in a machine-readable slot, never in the body prose. Cloudflare pay-per-crawl returns 402 with `crawler-price: USD XX.XX`, and the crawler retries with `crawler-exact-price` (or pre-declares `crawler-max-price`), receiving 200 + `crawler-charged` on success (s5). x402 v2 puts a base64-encoded PaymentRequired payload in the `PAYMENT-REQUIRED` response header, carrying `x402Version: 2` and an `accepts[]` array of {scheme, network, amount, asset, payTo, maxTimeoutSeconds, extra} (s19). RSL expresses it declaratively as `<payment type="crawl"><amount currency="USD">0.015</amount></payment>` (s12). Falsifiable: a 402 carrying none of these three signals contains no price any client can parse, so no retry is constructible.
+Every deployed paid-crawl scheme puts the price in a machine-readable slot, never in the body prose. Cloudflare pay-per-crawl returns 402 with `crawler-price: USD XX.XX`. The crawler then retries with `crawler-exact-price`, or pre-declares `crawler-max-price`, and receives 200 plus `crawler-charged` on success (s5). x402 v2 works differently. It puts a base64-encoded PaymentRequired payload in the `PAYMENT-REQUIRED` response header, carrying `x402Version: 2` and an `accepts[]` array of {scheme, network, amount, asset, payTo, maxTimeoutSeconds, extra} (s19). RSL expresses it declaratively as `<payment type="crawl"><amount currency="USD">0.015</amount></payment>` (s12). Falsifiable: a 402 carrying none of these three signals contains no price any client can parse, so no retry is constructible.
 
 ## Evidence
 

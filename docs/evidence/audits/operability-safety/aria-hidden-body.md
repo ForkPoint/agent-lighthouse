@@ -49,7 +49,7 @@ _No dedicated evidence signal was researched for this audit in the 2026-08-20 pa
 
 ## Evidence (2026-08-21)
 
-**Mechanism claim:** `aria-hidden="true"` on `<body>` excludes the element and all descendants from the accessibility tree per WAI-ARIA 1.2 §7.1, so an agent whose page representation is built from that tree (Playwright MCP `browser_snapshot`, chrome-devtools-mcp `take_snapshot`) receives an empty snapshot and can neither read nor act on any page content.
+**Mechanism claim:** `aria-hidden="true"` on `<body>` excludes the element and all its descendants from the accessibility tree, per WAI-ARIA 1.2 §7.1. An agent whose page representation is built from that tree — Playwright MCP `browser_snapshot`, chrome-devtools-mcp `take_snapshot` — receives an empty snapshot. It can then neither read nor act on any page content.
 
 **Grade: A** — WAI-ARIA 1.2 is a ratified W3C Recommendation whose accessibility-tree exclusion is implemented by every browser, and the two documented agent snapshot tools state their representation *is* that tree, so the empty-page outcome is deterministic rather than inferred.
 
@@ -60,4 +60,4 @@ _No dedicated evidence signal was researched for this audit in the 2026-08-20 pa
 - Chrome DevTools MCP `take_snapshot` gives the model "a text snapshot of the currently selected page based on the a11y tree", and interaction tools address elements only by uids from that snapshot — https://github.com/ChromeDevTools/chrome-devtools-mcp/blob/main/docs/tool-reference.md (verified 2026-08-21)
 - axe rule: "Document content is not accessible to assistive technology if `<body aria-hidden="true">`" (impact: critical) — https://dequeuniversity.com/rules/axe/4.10/aria-hidden-body (verified 2026-08-21)
 
-**Counter-evidence:** Screenshot/pixel-driven agents (computer-use style) are unaffected — they never consult the accessibility tree, so the failure is total for tree-based agents and invisible to vision-based ones. The condition is also vanishingly rare in static HTML: its realistic occurrence (a modal library setting `aria-hidden` on the root at open time) happens only after JS runs, which this pipeline never observes, so a high grade for the signal coexists with a near-zero hit rate for the audit as implemented.
+**Counter-evidence:** Screenshot/pixel-driven agents (computer-use style) are unaffected — they never consult the accessibility tree, so the failure is total for tree-based agents and invisible to vision-based ones. The condition is also vanishingly rare in static HTML. Its realistic occurrence is a modal library setting `aria-hidden` on the root at open time, which happens only after JS runs — and this pipeline never observes that. A high grade for the signal therefore coexists with a near-zero hit rate for the audit as implemented.

@@ -25,11 +25,11 @@ sources:
 
 ## What it checks
 
-Measures the share of on-page click targets that a DOM/accessibility-tree agent cannot address at all: elements that look and behave clickable to a human or a vision model but expose no native or ARIA role and no accessible name, so they never appear in a Playwright-MCP style snapshot. Reported as ghost / (ghost + semantic) with a per-element evidence table.
+Measures the share of on-page click targets that a DOM or accessibility-tree agent cannot address at all. These are elements that look and behave clickable to a human or a vision model, but expose no native role, no ARIA role and no accessible name. They never appear in a Playwright-MCP style snapshot. Reported as ghost / (ghost + semantic) with a per-element evidence table.
 
 ## Claimed mechanism (falsifiable)
 
-Falsifiable claim: an element is omitted from the serialized accessibility snapshot that agent toolkits send to the model when its click behaviour comes only from a JS listener on a non-interactive tag, or from cursor:pointer styling, and it carries no role and no accessible name. Every action tool in those toolkits addresses elements by snapshot reference, so the agent cannot emit a valid click for such an element. It must either fail or fall back to coordinate clicking. Test: take a working <button aria-label="Add to cart">, replace it with an equivalently-styled <div onclick>, re-run browser_snapshot — the ref disappears and browser_click has no valid target. Reverse the change and the ref returns.
+Falsifiable claim. An element is omitted from the serialized accessibility snapshot that agent toolkits send to the model when two things hold. Its click behaviour comes only from a JS listener on a non-interactive tag, or from cursor:pointer styling. And it carries no role and no accessible name. Every action tool in those toolkits addresses elements by snapshot reference, so the agent cannot emit a valid click for such an element. It must either fail or fall back to coordinate clicking. Test: take a working <button aria-label="Add to cart">, replace it with an equivalently-styled <div onclick>, re-run browser_snapshot — the ref disappears and browser_click has no valid target. Reverse the change and the ref returns.
 
 ## Evidence
 

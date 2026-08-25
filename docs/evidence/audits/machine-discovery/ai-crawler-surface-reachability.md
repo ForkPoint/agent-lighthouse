@@ -22,18 +22,18 @@ sources:
 
 ## What it checks
 
-Evaluates robots.txt per named AI user-agent against the exact URLs the site advertises for indexing — the Sitemap: targets, the autodiscovered RSS/Atom feeds, and a sample of URLs listed inside the sitemap — and flags the self-contradiction of advertising a discovery surface that the same file forbids.
+Evaluates robots.txt per named AI user-agent against the exact URLs the site advertises for indexing: the Sitemap: targets, the autodiscovered RSS and Atom feeds, and a sample of URLs listed inside the sitemap. It flags the self-contradiction of advertising a discovery surface that the same file forbids.
 
 ## Claimed mechanism (falsifiable)
 
-The robots.txt Sitemap: directive is host-global and user-agent independent, but the sitemap file itself, the feed files, and every URL they list are subject to per-UA Disallow rules, and under the group-matching rule a crawler that matches a named group ignores the '*' group entirely. OpenAI documents the consequence at the extreme: 'Sites that are opted out of OAI-SearchBot will not be shown in ChatGPT search answers.' Falsifiable claim: take any UA whose named group disallows the advertised sitemap or feed path, or a majority of the URLs it lists. The site's entire pull-indexing surface is then unreachable by that agent, however good the sitemap is. The high-frequency real-world trigger is a broad pattern (Disallow: /*.xml$, Disallow: /feed/, Disallow: /) added to an AI-bot group by a bot-blocking plugin while the site simultaneously advertises those exact paths.
+The robots.txt Sitemap: directive is host-global and user-agent independent. But the sitemap file itself, the feed files, and every URL they list are subject to per-UA Disallow rules. Under the group-matching rule, a crawler that matches a named group ignores the '*' group entirely. OpenAI documents the consequence at the extreme: 'Sites that are opted out of OAI-SearchBot will not be shown in ChatGPT search answers.' Falsifiable claim: take any UA whose named group disallows the advertised sitemap or feed path, or a majority of the URLs it lists. The site's entire pull-indexing surface is then unreachable by that agent, however good the sitemap is. The high-frequency real-world trigger is a broad pattern (Disallow: /*.xml$, Disallow: /feed/, Disallow: /) added to an AI-bot group by a bot-blocking plugin while the site simultaneously advertises those exact paths.
 
 ## Evidence
 
 - **[OpenAI Bots / Crawler documentation](https://developers.openai.com/api/docs/bots)** — OpenAI (vendor-doc, URL verified 2026-08-20)
   - Four distinct user agents with separate robots.txt tokens and separate published IP-range files: OAI-SearchBot (surfaces sites in ChatGPT search — https://openai.com/searchbot.json), OAI-AdsBot (validates ad landing pages — https://openai.com/adsbot.json), GPTBot (model training — https://openai.com/gptbot.json), ChatGPT-User (user-initiated actions: web visits and GPT Actions — https://openai.com/chatgpt-user.json). ChatGPT-User is the agent that fetches on a shopper's behalf. Crucially these are separately controllable: blocking GPTBot does not block OAI-SearchBot or ChatGPT-User, and vice versa.
 - **[Sitemaps XML format — protocol](https://www.sitemaps.org/protocol.html)** — sitemaps.org (spec, URL verified 2026-08-20)
-  - lastmod must be W3C Datetime (YYYY-MM-DD or full timestamp). Path-scope rule: a sitemap at /catalog/sitemap.xml may only list URLs under /catalog/; all URLs must share protocol and host with the sitemap. 50,000 URLs / 50MB (52,428,800 bytes) per file; index files limited to 50,000 sitemaps and may only reference sitemaps on the same site.
+  - lastmod must be W3C Datetime (YYYY-MM-DD or full timestamp). Path-scope rule. A sitemap at /catalog/sitemap.xml may only list URLs under /catalog/. All URLs must share protocol and host with the sitemap. A file is capped at 50,000 URLs and 50MB (52,428,800 bytes). An index file is capped at 50,000 sitemaps, and may only reference sitemaps on the same site.
 - **[RFC 9309 — Robots Exclusion Protocol](https://www.rfc-editor.org/rfc/rfc9309.html)** — IETF (spec, URL verified 2026-08-20)
   - §2.2.1: 'Crawlers MUST use case-insensitive matching to find the group that matches the product token and then obey the rules of the group.' Groups matching the same token are combined. Critically: 'If no matching group exists, crawlers MUST obey the group with a user-agent line with the "*" value, if present.' The wildcard group is a fallback only — it is never merged with a named group. A named AI-bot group therefore fully shadows every wildcard rule.
 
@@ -47,7 +47,7 @@ SEO crawlers evaluate robots.txt against Googlebot/Bingbot and report AI-bot dir
 
 ## Example failure
 
-A WordPress site installs a bot-blocking plugin that appends `User-agent: GPTBot\nUser-agent: PerplexityBot\nDisallow: /*.xml$`. robots.txt still ends with `Sitemap: https://example.com/sitemap_index.xml`. The site owner believes AI crawlers are only blocked from training. In fact both agents are barred from the one file the site points them at, and because a named group matched, the permissive '*' group is ignored — so 100% of sitemap URL discovery is lost for those agents while every conventional SEO audit reports robots.txt and sitemap as healthy.
+A WordPress site installs a bot-blocking plugin that appends `User-agent: GPTBot\nUser-agent: PerplexityBot\nDisallow: /*.xml$`. robots.txt still ends with `Sitemap: https://example.com/sitemap_index.xml`. The site owner believes AI crawlers are only blocked from training. In fact both agents are barred from the one file the site points them at. Because a named group matched, the permissive '*' group is ignored. All sitemap URL discovery is lost for those agents — while every conventional SEO audit reports robots.txt and sitemap as healthy.
 
 ## Scoring
 

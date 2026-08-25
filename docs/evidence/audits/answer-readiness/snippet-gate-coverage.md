@@ -23,7 +23,7 @@ Computes the site's effective snippet permissions per crawler, by merging <meta 
 
 ## Claimed mechanism (falsifiable)
 
-Google states the eligibility gate directly: to appear as a supporting link a page 'must be indexed and eligible to be shown in Google Search with a snippet', and names nosnippet, data-nosnippet, max-snippet and noindex as the controls that limit what AI Overviews and AI Mode can show (S4). This makes the causal chain fully documented rather than inferred. A max-snippet value shorter than the answer sentence truncates the answer below usefulness. data-nosnippet wrapping the answer removes it from AI surfaces entirely, while leaving it visible to humans. That failure is invisible to page-level SEO reports, because the directive itself is technically 'valid'.
+Google states the eligibility gate directly: to appear as a supporting link, a page 'must be indexed and eligible to be shown in Google Search with a snippet'. It names nosnippet, data-nosnippet, max-snippet and noindex as the controls that limit what AI Overviews and AI Mode can show (S4). This makes the causal chain fully documented rather than inferred. A max-snippet value shorter than the answer sentence truncates the answer below usefulness. data-nosnippet wrapping the answer removes it from AI surfaces entirely, while leaving it visible to humans. That failure is invisible to page-level SEO reports, because the directive itself is technically 'valid'.
 
 ## Evidence
 

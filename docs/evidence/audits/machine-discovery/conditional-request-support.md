@@ -37,7 +37,7 @@ Google documents that on a 304 'Google crawlers signal the next processing syste
 - **[Sitemaps XML format — protocol](https://www.sitemaps.org/protocol.html)** — sitemaps.org (spec, URL verified 2026-08-20)
   - lastmod must be W3C Datetime (YYYY-MM-DD or full timestamp). Path-scope rule: a sitemap at /catalog/sitemap.xml may only list URLs under /catalog/; all URLs must share protocol and host with the sitemap. 50,000 URLs / 50MB (52,428,800 bytes) per file; index files limited to 50,000 sitemaps and may only reference sitemaps on the same site.
 - **[IndexNow Protocol Documentation](https://www.indexnow.org/documentation)** — IndexNow (Microsoft/Yandex) (spec, URL verified 2026-08-20)
-  - Ownership is proven by hosting a UTF-8 text file at the host root named {key}.txt whose body is the key. Key must be 8-128 chars from [a-zA-Z0-9-]. Verification is a byte comparison: HTTP 403 is returned when the key is 'not found in the key file' or invalid; 422 on host/schema mismatch; 429 on rate limit; 202 means 'key validation pending'. keyLocation restricts submittable URLs to the key file's directory and deeper. Batch POST accepts up to 10,000 URLs.
+  - Ownership is proven by hosting a UTF-8 text file at the host root named {key}.txt whose body is the key. Key must be 8-128 chars from [a-zA-Z0-9-]. Verification is a byte comparison. HTTP 403 is returned when the key is 'not found in the key file' or invalid. 422 signals a host or schema mismatch, 429 a rate limit, and 202 means 'key validation pending'. keyLocation restricts submittable URLs to the key file's directory and deeper. Batch POST accepts up to 10,000 URLs.
 
 ## Competitor coverage
 
@@ -49,7 +49,7 @@ For each of /robots.txt, every Sitemap: target, each child sitemap (cap 3), and 
 
 ## Example failure
 
-A 38MB sitemap index tree is served through a CDN configured with `Cache-Control: no-store` and dynamic Brotli compression that generates a fresh weak ETag per request. Six AI crawlers polling hourly each re-download the full tree every time; the origin's WAF starts issuing 429s to the noisiest agents, which — per Google's documented handling of 429/5xx — throttles crawling of the whole host, including the product pages the owner actually cares about. Every existing audit reports the sitemap as valid and reachable.
+A 38MB sitemap index tree is served through a CDN configured with `Cache-Control: no-store` and dynamic Brotli compression that generates a fresh weak ETag per request. Six AI crawlers polling hourly each re-download the full tree every time. The origin's WAF starts issuing 429s to the noisiest agents. Per Google's documented handling of 429 and 5xx, that throttles crawling of the whole host — including the product pages the owner actually cares about. Every existing audit reports the sitemap as valid and reachable.
 
 ## Scoring
 

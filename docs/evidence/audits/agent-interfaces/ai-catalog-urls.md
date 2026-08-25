@@ -80,7 +80,7 @@ Source: the [redemption dossier's verdict](../../deletions/agent-tools/ai-catalo
 
 **Mechanism:** A discovery client follows an entry's `url` to reach the artifact it advertises, and for catalog- or registry-typed entries it follows that url into a nested catalog — so one dead url does not degrade a listing, it truncates a whole branch of discovery.
 
-**Grade: B** — the dereferencing is done by real, readable code in more than one implementation, which is stronger than a convention; it is not A because no vendor documents a penalty for a dead url, and the traversing client is user-driven rather than a hosted crawler.
+**Grade: B** — the dereferencing is done by real, readable code in more than one implementation, which is stronger than a convention. It is not A for two reasons: no vendor documents a penalty for a dead url, and the traversing client is user-driven rather than a hosted crawler.
 
 **Evidence:**
 - `hf-discover`'s `navigate()` uses an entry's `url` to traverse into nested catalogs and federated registries, fetching entries whose `type` is a catalog or registry media type — https://github.com/huggingface/hf-discover (verified 2026-08-24)

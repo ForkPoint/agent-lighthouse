@@ -57,7 +57,7 @@ _No dedicated evidence signal was researched for this audit in the 2026-08-20 pa
 
 **Mechanism claim:** The JSON Schema under an operation's `requestBody`/`responses` `content` is what a tool-calling runtime turns into the tool's input schema and what the model uses to interpret the reply, so an operation with no schema forces the model to guess the payload shape.
 
-**Grade: B** — every documented tool-calling runtime defines its parameters as JSON Schema and a named agent (Microsoft 365 Copilot) is documented to read the spec's parameters and responses for exactly this purpose; the response-side half is documented as an aid to interpretation rather than a requirement for the call to succeed.
+**Grade: B** — every documented tool-calling runtime defines its parameters as JSON Schema, and one named agent, Microsoft 365 Copilot, is documented to read the spec's parameters and responses for exactly this purpose. The response-side half is documented as an aid to interpretation, rather than a requirement for the call to succeed.
 
 **Evidence:**
 - Anthropic tool definitions take `input_schema`, "A JSON Schema object defining the expected parameters for the tool" — the request-body schema is what becomes that object when a spec is converted — https://platform.claude.com/docs/en/agents-and-tools/tool-use/define-tools (verified 2026-08-21)

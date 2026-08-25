@@ -149,11 +149,11 @@ ARD path.
 
 **Mechanism claim:** An AI agent given only a site's origin fetches `/openapi.json` or `/openapi.yaml`, and converts the operations it finds into callable tools, without a developer having registered the document with the agent first.
 
-**Grade: C** — OpenAPI is unambiguously the format documented consumers ingest, but every documented consumer receives the document from a developer at build time; no vendor documents a named agent that discovers a spec by probing a site root, so the discovery leg this audit actually measures is convention, not proven behavior.
+**Grade: C** — OpenAPI is unambiguously the format documented consumers ingest. But every documented consumer receives the document from a developer at build time, and no vendor documents a named agent that discovers a spec by probing a site root. The discovery leg this audit actually measures is convention, not proven behavior.
 
 **Evidence:**
 - OpenAPI 3.1 defines no discovery path or well-known URI; it only states "It is RECOMMENDED that the root OpenAPI document be named: `openapi.json` or `openapi.yaml`", which is the sole basis for probing those two paths — https://spec.openapis.org/oas/v3.1.0.html (verified 2026-08-21)
-- OpenAI GPT Actions are built by pasting the OpenAPI schema into the Action editor, not by ChatGPT retrieving it from the site: "ChatGPT uses those names and descriptions to understand (a) which API action should be called and (b) which parameter should be used" — https://developers.openai.com/api/docs/actions/getting-started (verified 2026-08-21)
+- OpenAI GPT Actions are built by pasting the OpenAPI schema into the Action editor, not by ChatGPT retrieving it from the site. The doc describes what happens next: "ChatGPT uses those names and descriptions to understand (a) which API action should be called and (b) which parameter should be used" — https://developers.openai.com/api/docs/actions/getting-started (verified 2026-08-21)
 - Microsoft 365 Copilot plugins "interact with … REST APIs that have an OpenAPI description", supplied inside a plugin manifest that the developer packages and publishes — https://learn.microsoft.com/en-us/microsoft-365-copilot/extensibility/overview-api-plugins (verified 2026-08-21)
 - The standards-track machine-discovery path for APIs is `/.well-known/api-catalog` (RFC 9727, June 2025), a linkset that may point at OpenAPI documents — not `/openapi.json`; no AI-agent consumer of it is documented — https://www.rfc-editor.org/rfc/rfc9727.html (verified 2026-08-21)
 

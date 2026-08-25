@@ -20,7 +20,7 @@ sources:
 
 ## What it checks
 
-Measures every h2/h3 section against the published default chunk window (512 tokens / ~2000 characters) to find sections that will be mechanically cut into two or more chunks, producing tail chunks that carry no heading — and the inverse, sections too thin to embed meaningfully. Also flags atomic structures (tables, long ordered lists) longer than the window, which get split mid-structure.
+Measures every h2 and h3 section against the published default chunk window of 512 tokens, or about 2000 characters. It finds sections that will be mechanically cut into two or more chunks, producing tail chunks that carry no heading. It also finds the inverse: sections too thin to embed meaningfully. Also flags atomic structures (tables, long ordered lists) longer than the window, which get split mid-structure.
 
 ## Claimed mechanism (falsifiable)
 

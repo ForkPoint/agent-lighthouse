@@ -81,7 +81,7 @@ Source: the [redemption dossier's verdict](../../deletions/agent-tools/ai-catalo
 
 ### Signal: ARD entry metadata read by a discovery client — grade B (agent-tools)
 
-**Mechanism:** A discovery client picks which catalog entry answers a query by matching text drawn from named entry fields, so an entry that omits those fields is present in the manifest and invisible to the query — the manifest lists it, and no search surfaces it.
+**Mechanism:** A discovery client picks which catalog entry answers a query by matching text drawn from named entry fields. An entry that omits those fields is therefore present in the manifest and invisible to the query. The manifest lists it, and no search surfaces it.
 
 **Grade: B** — the consuming code is first-party, public and readable, and the fields it matches on are exactly the ones this audit scores. It is not grade A because ARD is a draft (v0.9) rather than a ratified standard, and because the behaviour is documented in a client's source rather than in a vendor statement about a hosted crawler.
 
@@ -91,7 +91,7 @@ Source: the [redemption dossier's verdict](../../deletions/agent-tools/ai-catalo
 - ARD §4.1 makes `specVersion`, `host` and `entries` the required top-level fields, and defines `version`, `updatedAt`, `tags`, `metadata` and `trustManifest` as optional enrichment; identity is expressed through `host.identifier` (a DID) and the optional `trustManifest` — https://github.com/ards-project/ard-spec (verified 2026-08-24)
 - ARD is a Linux Foundation working-group specification with Google, Microsoft and Hugging Face among its contributors, published 2026-06-17 under Apache 2.0 — https://developers.googleblog.com/announcing-the-agentic-resource-discovery-specification/ (verified 2026-08-24)
 
-**Counter-evidence:** No crawler is documented to downrank a site for thin catalog metadata. The consequence is mechanical — the client matches less text — not a published ranking signal, and the hosted Hugging Face server does not fetch arbitrary well-known files at all: "Navigation is intentionally not exposed by the hosted server", so the consuming path is a user-driven CLI rather than a background crawler. The specification is also a draft and says so. Historically this audit scored an invented field list (`owner`, `contact`, `lastUpdated`, `services`) that appears in no revision of the spec and in none of the four live manifests checked — the ARD conformance example, neon.com, weaviate.io and the Shopware core template — so a spec-perfect manifest scored zero until the 2026-08-22 rewrite.
+**Counter-evidence:** No crawler is documented to downrank a site for thin catalog metadata. The consequence is mechanical — the client matches less text — rather than a published ranking signal. The hosted Hugging Face server does not fetch arbitrary well-known files at all: "Navigation is intentionally not exposed by the hosted server". The consuming path is therefore a user-driven CLI, not a background crawler. The specification is also a draft and says so. Historically this audit scored an invented field list: `owner`, `contact`, `lastUpdated` and `services`. None of those appears in any revision of the spec, or in any of the four live manifests checked — the ARD conformance example, neon.com, weaviate.io and the Shopware core template. A spec-perfect manifest therefore scored zero until the 2026-08-22 rewrite.
 
 ## Adversarial redemption research (2026-08-21)
 

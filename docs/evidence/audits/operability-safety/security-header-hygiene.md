@@ -47,7 +47,7 @@ Narrowed on 2026-08-24 to the security.txt signal alone. The three security-head
 
 **Falsifiable claim:** *none is made about AI agents.* `/.well-known/security.txt` is a vulnerability-disclosure file whose stated consumers are human security researchers and vulnerability-notification tooling. The evidence review found no AI crawler, retrieval pipeline or answer engine documented to read it, so the audit makes no claim that publishing one changes AI-agent behaviour. It reports the file's RFC 9116 conformance at weight 0, and never fails the site.
 
-What the audit does claim, and what is testable, is narrower: RFC 9116 defines what a security.txt must contain, so a *published* file with no `Contact`, no `Expires`, an unparseable `Expires` or an `Expires` in the past does not conform, and advertises a disclosure route that no longer works. That claim is about the file, not about agents, which is why the tier is informative.
+What the audit does claim, and what is testable, is narrower. RFC 9116 defines what a security.txt must contain. A *published* file with no `Contact`, no `Expires`, an unparseable `Expires`, or an `Expires` in the past does not conform — and it advertises a disclosure route that no longer works. That claim is about the file, not about agents, which is why the tier is informative.
 
 ## What it checks
 
@@ -83,7 +83,7 @@ Consolidating also let each source audit's code-review fixes land in one place r
 
 **B — the strongest proven consumer path among the four sources, not the average.**
 
-The security-headers signal shared by 8.2/8.3/8.4 grades **D**: no AI vendor documents any agent reading those headers, so nothing supports shipping the check at all. security.txt (8.7) grades **C** — real RFC, real but small adoption (~1.25% of the top 1M in 2025), zero AI consumers. The HTTPS/transport-security signal behind HSTS grades **B**: MCP, RFC 9116 and Chromium-based agent surfaces all mandate TLS, which is a documented, testable requirement even though no crawler vendor documents HSTS itself.
+The security-headers signal shared by 8.2, 8.3 and 8.4 grades **D**. No AI vendor documents any agent reading those headers, so nothing supports shipping the check at all. security.txt (8.7) grades **C**: a real RFC, with real but small adoption of about 1.25% of the top 1M in 2025, and zero AI consumers. The HTTPS/transport-security signal behind HSTS grades **B**: MCP, RFC 9116 and Chromium-based agent surfaces all mandate TLS, which is a documented, testable requirement even though no crawler vendor documents HSTS itself.
 
 Grade B therefore prices the evidence, and `tier: informative` prices the *claim*: `weightForGrade('B', 'informative') === 0`. The grade records what the evidence supports; the tier records that nothing here may move a score. A future task that finds a documented AI consumer for any of these headers can promote the tier without re-grading the evidence.
 

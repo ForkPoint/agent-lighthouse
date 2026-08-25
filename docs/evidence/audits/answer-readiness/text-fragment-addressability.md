@@ -22,7 +22,7 @@ sources:
 
 ## What it checks
 
-Determines whether a citing surface can construct a working `#:~:text=` deep link to the page's actual answer sentences. Hard-fails on the documented `Document-Policy: force-load-at-top` opt-out header, then simulates the spec's matching algorithm over the parsed DOM to prove each candidate answer span is (a) contained in a single block-level element, (b) unambiguous or disambiguable with a same-block prefix/suffix, and (c) free of characters that break normalization. Outputs the working fragment URLs as a fix artifact.
+Determines whether a citing surface can construct a working `#:~:text=` deep link to the page's actual answer sentences. Hard-fails on the documented `Document-Policy: force-load-at-top` opt-out header. It then simulates the spec's matching algorithm over the parsed DOM, to prove three things about each candidate answer span. The span is contained in a single block-level element. It is unambiguous, or disambiguable with a same-block prefix or suffix. And it is free of characters that break normalization. Outputs the working fragment URLs as a fix artifact.
 
 ## Claimed mechanism (falsifiable)
 
@@ -49,7 +49,7 @@ Static fetch (headless only for the JS-injection variant). 1) Read response head
 
 ## Example failure
 
-A CDN-managed site sends `Document-Policy: force-load-at-top` from a hardening template. Every AI and Search deep link into its documentation lands at the top of a 6,000-word page instead of the cited sentence. Second class: a spec page renders 'Maximum payload size is' in a <p> and '10 MB' in an adjacent <span class="value"> inside its own <div> — no single-block start string covers the sentence, so no fragment can address the one fact the page exists to state.
+A CDN-managed site sends `Document-Policy: force-load-at-top` from a hardening template. Every AI and Search deep link into its documentation lands at the top of a 6,000-word page instead of the cited sentence. Second class. A spec page renders 'Maximum payload size is' in a <p>, and '10 MB' in an adjacent <span class="value"> inside its own <div>. No single-block start string covers the sentence. No fragment can address the one fact the page exists to state.
 
 ## Scoring
 

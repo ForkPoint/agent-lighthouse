@@ -20,7 +20,7 @@ sources:
 
 ## What it checks
 
-Validates that a site publishing content-licensing terms does so in a form an AI licensing agent can actually find and parse: an RSL 1.0 document reachable through at least one of the four spec-defined discovery channels, with a well-formed body whose content scope actually covers the audited pages.
+Validates that a site publishing content-licensing terms does so in a form an AI licensing agent can actually find and parse. That means an RSL 1.0 document reachable through at least one of the four spec-defined discovery channels, with a well-formed body whose content scope actually covers the audited pages.
 
 ## Claimed mechanism (falsifiable)
 

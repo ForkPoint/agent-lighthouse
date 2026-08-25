@@ -49,7 +49,7 @@ Static tier: fetch with no cookies and no consent signals. Detect a CMP by scrip
 
 ## Example failure
 
-A news site loads a Sourcepoint dialog in a cross-origin iframe and sets aria-hidden="true" on <main>. An agent reading page text via DOM extraction gets the article (the text is in the DOM) but its accessibility snapshot is empty except for an unnamed iframe, so it cannot find any clickable element; asked to click 'Reject all' it reports that no such control exists on the page.
+A news site loads a Sourcepoint dialog in a cross-origin iframe and sets aria-hidden="true" on <main>. An agent reading page text via DOM extraction gets the article, because the text is in the DOM. But its accessibility snapshot is empty except for an unnamed iframe, so it cannot find any clickable element. Asked to click 'Reject all', it reports that no such control exists on the page.
 
 ## Scoring
 

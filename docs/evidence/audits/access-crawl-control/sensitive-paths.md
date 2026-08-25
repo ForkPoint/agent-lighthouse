@@ -104,13 +104,13 @@ Neither the redeem note nor the REWORK-TODO row asks for a tier change — the r
 
 ### Signal: path-level robots.txt Disallow honoured by named AI crawlers — grade A (crawler-permissions)
 
-**Mechanism:** AI crawlers apply RFC 9309 path matching, not only site-level allow or block, so a `Disallow` naming a directory keeps the URLs under it out of the crawls those agents perform — which is what makes a per-path rule a usable crawl-hygiene instrument rather than a decorative one.
+**Mechanism:** AI crawlers apply RFC 9309 path matching, not only a site-level allow or block. A `Disallow` naming a directory therefore keeps the URLs under it out of the crawls those agents perform. That is what makes a per-path rule a usable crawl-hygiene instrument rather than a decorative one.
 
 **Grade: A** — two AI vendors document path-level `Disallow` for their own AI crawlers with literal directory examples, on top of a ratified standard whose matching rule they implement. That is documented consumer behaviour for exactly the signal this audit inspects.
 
 **Evidence:**
 - RFC 9309 is the ratified standard, and its matching rule is normative: "The most specific match found MUST be used" — https://www.rfc-editor.org/rfc/rfc9309.html (verified 2026-08-21)
-- Apple documents the rule for both of its tokens with a literal directory: "Applebot doesn't try to crawl documents that are under /private/ or /not-allowed/", and for the generative-AI training token, "You can add a rule in robots.txt to disallow Applebot-Extended, as follows: User-agent: Applebot-Extended / Disallow: /private/" — https://support.apple.com/en-us/119829 (verified 2026-08-21)
+- Apple documents the rule for both of its tokens with a literal directory. For the ordinary crawler: "Applebot doesn't try to crawl documents that are under /private/ or /not-allowed/". For the generative-AI training token: "You can add a rule in robots.txt to disallow Applebot-Extended, as follows: User-agent: Applebot-Extended / Disallow: /private/" — https://support.apple.com/en-us/119829 (verified 2026-08-21)
 - Meta documents the same shape for a crawler that "crawls the web for use cases such as training foundation AI models": "User-agent: meta-externalagent / Allow: / # Allow everything / Disallow: /private/ # Disallow a specific directory" — https://developers.facebook.com/docs/sharing/webmasters/web-crawlers/ (verified 2026-08-21)
 - Anthropic states that "Anthropic's Bots respect 'do not crawl' signals by honoring industry standard directives in robots.txt" for ClaudeBot, Claude-User and Claude-SearchBot, though its own examples are root-level only — https://support.claude.com/en/articles/8896518-does-anthropic-crawl-data-from-the-web-and-how-can-site-owners-block-the-crawler (verified 2026-08-21)
 - OpenAI directs publishers to robots.txt for GPTBot and OAI-SearchBot opt-outs — https://developers.openai.com/api/docs/bots (verified 2026-08-21)

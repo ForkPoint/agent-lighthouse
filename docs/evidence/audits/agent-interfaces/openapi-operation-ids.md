@@ -56,7 +56,7 @@ _No dedicated evidence signal was researched for this audit in the 2026-08-20 pa
 
 **Mechanism claim:** A tool-calling runtime uses `operationId` as the function name it exposes to the model, so duplicate ids collide into one name and ids that violate the runtime's function-name pattern (`^[a-zA-Z0-9_-]{1,64}$`) are rejected at tool-registration time.
 
-**Grade: B** — a named agent is documented to turn operationIds into the functions it calls, and the function-name constraint is published API contract, but the specification makes operationId optional and generators synthesize one from method + path, so absence degrades naming rather than breaking the call.
+**Grade: B** — a named agent is documented to turn operationIds into the functions it calls, and the function-name constraint is published API contract. But the specification makes operationId optional, and generators synthesize one from the method and path. Absence therefore degrades naming rather than breaking the call.
 
 **Evidence:**
 - Microsoft 365 Copilot states: "Operation IDs are unique identifiers for an operation in the API and are used by Copilot to create functions that are executed when responding to a user's prompt". It adds that "Operation IDs are shown during debugging as functions to indicate which operations Copilot is attempting to execute" — https://learn.microsoft.com/en-us/microsoft-365-copilot/extensibility/openapi-document-guidance (verified 2026-08-21)

@@ -87,7 +87,7 @@ Google announced on 2025-08-20 that "Over time, Gemini for Home will replace Goo
 
 ### Signal: `speakable` selects the sentences an assistant reads aloud — grade B (structured-data)
 
-**Mechanism:** Google Assistant answers a spoken news query by reading article text aloud with text-to-speech, and `speakable` names the sections it reads — so an article without it has its excerpt chosen for it, often from navigation or boilerplate rather than from the headline and summary.
+**Mechanism:** Google Assistant answers a spoken news query by reading article text aloud with text-to-speech, and `speakable` names the sections it reads. An article without it has its excerpt chosen for it — often from navigation or boilerplate, rather than from the headline and summary.
 
 **Grade: B** — Google names the consuming agent on a live page, which is documented consumer behaviour, but the same page calls the feature beta and limits it to one country, one language and one content type. A vendor feature its own vendor labels provisional is a grade-B mechanism, not a grade-A one.
 

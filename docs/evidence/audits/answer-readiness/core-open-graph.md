@@ -32,7 +32,7 @@ One social-meta diagnostic for the head of `ctx.pages[0]`, with a scored half an
 | one to three core tags missing | `warn`, priority `high` |
 | all four core tags missing | `fail`, priority `high` |
 
-A placeholder `og:site_name` — an unrendered template token (`{{ … }}`, `{% … %}`, `${…}`, `<% … %>`) or the audit's own sample string ("Your Site Name", "Site Name", "SiteName", "Your Website") — is treated as missing, which is the false positive 4.8's review names first.
+A placeholder `og:site_name` is treated as missing. A placeholder is an unrendered template token — `{{ … }}`, `{% … %}`, `${…}`, `<% … %>` — or one of the audit's own sample strings: "Your Site Name", "Site Name", "SiteName", "Your Website". This is the false positive 4.8's review names first.
 
 **Informational — Twitter Cards.** `twitter:card`, `twitter:title`, `twitter:description` and `twitter:image` are reported in the `found` block, each labelled with the `og:*` property it falls back to. These rows never change the status, the score or the priority: no consumer is documented to read a `twitter:*` tag that has an `og:*` equivalent.
 
@@ -67,7 +67,7 @@ _No dedicated evidence signal was researched for this audit in the 2026-08-20 pa
 
 ## Evidence (2026-08-21)
 
-**Mechanism claim:** Named link-preview crawlers — `facebookexternalhit` and Slack's unfurler — fetch a shared URL and read `og:title`, `og:description`, `og:image` and `og:url` to build the preview card; when those tags are absent the crawler falls back to heuristic guesses at the title, text and image.
+**Mechanism claim:** Named link-preview crawlers — `facebookexternalhit` and Slack's unfurler — fetch a shared URL and read `og:title`, `og:description`, `og:image` and `og:url` to build the preview card. When those tags are absent, the crawler falls back to heuristic guesses at the title, text and image.
 
 **Grade: A** — two vendors document, by crawler name, that they read exactly these properties, and the fallback behavior when they are missing is stated in the vendor doc itself.
 

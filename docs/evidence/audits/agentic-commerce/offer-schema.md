@@ -54,7 +54,7 @@ _No dedicated evidence signal was researched for this audit in the 2026-08-20 pa
 
 ## Evidence (2026-08-21)
 
-**Mechanism claim:** Google's product data extractors parse `price` and `priceCurrency` out of the schema.org `Offer` in a product page's markup and use those exact values for merchant listing eligibility and for Merchant Center automatic item updates, so a page without them cannot supply a machine-read price to that pipeline.
+**Mechanism claim:** Google's product data extractors parse `price` and `priceCurrency` out of the schema.org `Offer` in a product page's markup. They use those exact values for merchant listing eligibility, and for Merchant Center automatic item updates. A page without them cannot supply a machine-read price to that pipeline.
 
 **Grade: A** — `offers.price` and `offers.priceCurrency` are the only *required* Offer properties in Google's merchant listing structured-data spec, and Google separately documents crawling that markup off the page HTML to correct price data.
 

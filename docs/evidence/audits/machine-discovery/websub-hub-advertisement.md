@@ -21,11 +21,11 @@ sources:
 
 ## What it checks
 
-Checks whether feeds advertise a push hub per the WebSub Recommendation, and — more importantly — whether the mandatory rel=self link is present, absolute, and equal to the URL the feed was actually fetched from, since a wrong self-link breaks hub verification even when a hub is configured.
+Checks whether feeds advertise a push hub per the WebSub Recommendation. More importantly, it checks that the mandatory rel=self link is present, absolute, and equal to the URL the feed was actually fetched from. A wrong self-link breaks hub verification even when a hub is configured.
 
 ## Claimed mechanism (falsifiable)
 
-WebSub is a W3C Recommendation requiring publishers to advertise at least one rel=hub and exactly one rel=self via Link headers or embedded link elements, with Link headers taking discovery precedence. Falsifiable claim: a feed declaring a hub but carrying a missing, relative, or non-canonical rel=self cannot complete hub subscription verification, so the push path silently degrades to whatever polling cadence subscribers happen to use — the failure is invisible to the publisher because the hub appears configured. This check is scored as advisory only: the WebSub conformance assertion is exact and standards-backed, but no AI answer engine is documented as a WebSub subscriber, so the consumer-side benefit is a plausible convention rather than documented behaviour.
+WebSub is a W3C Recommendation requiring publishers to advertise at least one rel=hub and exactly one rel=self via Link headers or embedded link elements, with Link headers taking discovery precedence. Falsifiable claim: a feed that declares a hub, but carries a missing, relative or non-canonical rel=self, cannot complete hub subscription verification. The push path then silently degrades to whatever polling cadence subscribers happen to use. The failure is invisible to the publisher, because the hub appears configured. This check is scored as advisory only: the WebSub conformance assertion is exact and standards-backed, but no AI answer engine is documented as a WebSub subscriber, so the consumer-side benefit is a plausible convention rather than documented behaviour.
 
 ## Evidence
 

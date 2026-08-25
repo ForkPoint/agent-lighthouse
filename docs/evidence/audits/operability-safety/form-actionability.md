@@ -61,7 +61,7 @@ _No dedicated evidence signal was researched for this audit in the 2026-08-20 pa
 
 ## Evidence (2026-08-21)
 
-**Mechanism claim:** Agents that act on a page through its accessibility tree identify a field by its accessible name, computed from `<label>`, `aria-label` or `aria-labelledby`; a fillable control that is not a native form element, or that has no accessible name, cannot be reliably targeted or filled by such an agent.
+**Mechanism claim:** Agents that act on a page through its accessibility tree identify a field by its accessible name, computed from `<label>`, `aria-label` or `aria-labelledby`. A fillable control that is not a native form element, or that has no accessible name, cannot be reliably targeted or filled by such an agent.
 
 **Grade: A** — two named agent stacks document that they perceive and act on pages via the accessibility tree, and the accessible name they consume is computed from exactly the label mechanisms this audit checks.
 

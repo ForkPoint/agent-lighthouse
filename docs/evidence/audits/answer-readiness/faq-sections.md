@@ -63,7 +63,7 @@ _No dedicated evidence signal was researched for this audit in the 2026-08-20 pa
 
 **Mechanism claim:** A page carrying `FAQPage` JSON-LD or an on-page question/answer block has its Q&A pairs extracted as discrete units and cited by AI answer engines more often than the same content written as continuous prose.
 
-**Grade: C** — `FAQPage` is a ratified schema.org type with very wide adoption, but its one documented consumer withdrew the feature for almost every site, no AI answer-engine vendor documents reading it, and the "Q&A blocks are the top extraction target" claim is nowhere measured.
+**Grade: C** — `FAQPage` is a ratified schema.org type with very wide adoption. But its one documented consumer withdrew the feature for almost every site, and no AI answer-engine vendor documents reading it. The "Q&A blocks are the top extraction target" claim is nowhere measured.
 
 **Evidence:**
 - schema.org defines the type — "A FAQPage is a WebPage presenting one or more 'Frequently asked questions' (see also QAPage)" — and reports adoption of 1M–10M domains in the July 2026 aggregation of Google's web index — https://schema.org/FAQPage (verified 2026-08-21)

@@ -27,7 +27,7 @@ Counts choice, date, and file-input controls implemented as custom div widgets i
 
 ## Claimed mechanism (falsifiable)
 
-Falsifiable claim: native <select>, <input type="date">, and <input type="file"> are single-call primitives in every mainstream agent toolkit (selectOption, fill, setInputFiles) and are keyboard-operable, so they succeed in one action with no actionability risk. A custom equivalent requires open → wait for popup → scroll the option list into view → locate the option → click, where each step is independently subject to Playwright's visible/stable/receives-events gates, and Anthropic documents dropdowns specifically as 'tricky for Claude to manipulate using mouse movements'. Test: instrument the same form with native vs custom controls and count tool calls and retries to reach an identical value.
+Falsifiable claim: native <select>, <input type="date">, and <input type="file"> are single-call primitives in every mainstream agent toolkit (selectOption, fill, setInputFiles) and are keyboard-operable, so they succeed in one action with no actionability risk. A custom equivalent requires five steps: open the control, wait for the popup, scroll the option list into view, locate the option, then click. Each step is independently subject to Playwright's visible, stable and receives-events gates. Anthropic documents dropdowns specifically as 'tricky for Claude to manipulate using mouse movements'. Test: instrument the same form with native vs custom controls and count tool calls and retries to reach an identical value.
 
 ## Evidence
 

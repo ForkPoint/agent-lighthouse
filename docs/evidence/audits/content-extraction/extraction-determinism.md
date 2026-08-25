@@ -43,7 +43,7 @@ There is no single 'the content of this page'; there is whatever the fetching ag
 - **[Scrape endpoint API reference](https://docs.firecrawl.dev/api-reference/endpoint/scrape)** — Firecrawl (vendor-doc, URL verified 2026-08-20)
   - onlyMainContent default: true (excludes headers, navs, footers via HTML-level filtering, no LLM); removeBase64Images default: true ("Removes all base 64 images from the markdown output"); blockAds default: true; the cleaned html format "Removes <script>, <style>, <noscript>, <meta>, and <head> tags". A commercial extraction vendor defaults to deleting base64 images and chrome — direct evidence these are treated as pure token waste.
 - **[Web Almanac 2024 — Markup](https://almanac.httparchive.org/en/2024/markup)** — HTTP Archive (dataset, URL verified 2026-08-20)
-  - Median 594 elements per mobile page (p90 1,716); median HTML transfer size 33 kB desktop / 32 kB mobile; 10.5% of mobile pages serve HTML uncompressed; 86% of mobile pages contain at least one HTML comment and 26% still ship IE conditional comments; SVG present on 51.6% of pages. Population baseline for calibrating per-page token budgets and for the claim that dead markup ships at scale.
+  - The median mobile page carries 594 elements, and the 90th percentile 1,716. Median HTML transfer size is 33 kB on desktop and 32 kB on mobile, and 10.5% of mobile pages serve HTML uncompressed. 86% of mobile pages contain at least one HTML comment, and 26% still ship IE conditional comments. SVG is present on 51.6% of pages. Population baseline for calibrating per-page token budgets and for the claim that dead markup ships at scale.
 
 ## Competitor coverage
 

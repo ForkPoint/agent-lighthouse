@@ -25,7 +25,7 @@ Proves the origin can actually serve and correctly 404 root-level .txt resources
 
 ## Claimed mechanism (falsifiable)
 
-IndexNow proves ownership by fetching https://host/{key}.txt and byte-comparing the body to {key}; a non-matching body yields HTTP 403 ('key not found in file') and the submission is discarded by every participating engine (Bing, Yandex, Naver, Seznam, Yep, Amazon). Falsifiable claim: if GET https://host/<random-32-hex>.txt returns 200 rather than 404, the origin has a catch-all that returns non-key content for arbitrary root .txt paths — so key rotation, key removal, and key-file health are undetectable, and the same catch-all makes every probe-based discovery file (llms.txt, ai.txt, security.txt) indistinguishable from a soft-404. Predicts: sites failing this probe cannot be given a trustworthy 'llms.txt present' verdict either, because a 200 response there carries no information.
+IndexNow proves ownership by fetching https://host/{key}.txt and byte-comparing the body to {key}; a non-matching body yields HTTP 403 ('key not found in file') and the submission is discarded by every participating engine (Bing, Yandex, Naver, Seznam, Yep, Amazon). Falsifiable claim: if GET https://host/<random-32-hex>.txt returns 200 rather than 404, the origin has a catch-all that returns non-key content for arbitrary root .txt paths. Key rotation, key removal and key-file health are then undetectable. The same catch-all makes every probe-based discovery file — llms.txt, ai.txt, security.txt — indistinguishable from a soft-404. Predicts: sites failing this probe cannot be given a trustworthy 'llms.txt present' verdict either, because a 200 response there carries no information.
 
 ## Evidence
 

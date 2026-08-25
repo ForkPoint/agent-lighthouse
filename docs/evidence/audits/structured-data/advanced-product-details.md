@@ -52,13 +52,13 @@ _No dedicated evidence signal was researched for this audit in the 2026-08-20 pa
 
 ## Evidence (2026-08-21)
 
-**Mechanism claim:** Google's product data extractors read `brand`, `category` and the Offer's `availability` from a product page's schema.org markup; `availability` is pulled into Merchant Center and used to correct the item's stock state, so a page that omits it leaves the stock state to be inferred rather than read.
+**Mechanism claim:** Google's product data extractors read `brand`, `category` and the Offer's `availability` from a product page's schema.org markup. `availability` is pulled into Merchant Center and used to correct the item's stock state. A page that omits it leaves the stock state to be inferred rather than read.
 
 **Grade: A** — all three measured properties appear in Google's documented merchant-listing property tables, and `availability` specifically is named in the automatic-item-updates extraction path, which is documented consumer behavior rather than convention.
 
 **Evidence:**
 - Merchant listing structured data lists `brand.name`, `category` ("Specifies the product's categories", `Text` or `CategoryCode`) and `offers.availability` among the properties Google reads; required are only Product `name`, `image`, `offers` and the Offer's price/priceCurrency pair — https://developers.google.com/search/docs/appearance/structured-data/merchant-listing (verified 2026-08-21)
-- Automatic item updates: "We automatically read the structured data markup on your website using our advanced data extractors and directly pull product data from your HTML into Merchant Center", with the covered attributes being price, sale price, `availability` (schema.org `ItemAvailability`) and `itemCondition` — https://support.google.com/merchants/answer/3246284 (verified 2026-08-21)
+- Automatic item updates: "We automatically read the structured data markup on your website using our advanced data extractors and directly pull product data from your HTML into Merchant Center". The covered attributes are price, sale price, `availability` (schema.org `ItemAvailability`) and `itemCondition` — https://support.google.com/merchants/answer/3246284 (verified 2026-08-21)
 - "Structured data lets Google and other web platforms automatically read your site and directly pull product data from your HTML"; "Structured data must match the values that are shown to the customer" — https://support.google.com/merchants/answer/6069143 (verified 2026-08-21)
 - Agent-side shopping indexes model the same fields: OpenAI's product feed spec makes `availability` (`in_stock`/`out_of_stock`/`pre_order`/`backorder`/`unknown`) and `brand` required fields — https://developers.openai.com/commerce/specs/feed (verified 2026-08-21)
 - Product snippets list `brand` among recommended properties — https://developers.google.com/search/docs/appearance/structured-data/product-snippet (verified 2026-08-21)

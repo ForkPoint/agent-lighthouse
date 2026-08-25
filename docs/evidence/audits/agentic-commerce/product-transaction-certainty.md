@@ -23,7 +23,7 @@ sources:
 
 ## What it checks
 
-AI shopping assistants need more than a product name and price to make an authoritative recommendation: they must know whether the item is in stock, how long the quoted price is valid, and what the return policy is before they commit a user to a purchase. A Product schema that only carries name and price forces agents to guess at availability, quote potentially stale prices, and stay silent on returns — all of which erode transactional certainty in agentic commerce flows. Complete your Offer with availability, priceValidUntil, and a valid price + priceCurrency pair, and attach hasMerchantReturnPolicy to the Product or Offer.
+AI shopping assistants need more than a product name and price to make an authoritative recommendation. Before they commit a user to a purchase, they must know whether the item is in stock, how long the quoted price is valid, and what the return policy is. A Product schema that only carries name and price forces agents to guess at availability, quote potentially stale prices, and stay silent on returns — all of which erode transactional certainty in agentic commerce flows. Complete your Offer with availability, priceValidUntil, and a valid price + priceCurrency pair, and attach hasMerchantReturnPolicy to the Product or Offer.
 
 ## Code review findings (2026-08-20, 11-agent pass)
 
@@ -61,7 +61,7 @@ _No dedicated evidence signal was researched for this audit in the 2026-08-20 pa
 
 **Evidence:**
 - Merchant listing structured data requires Product `name`, `image` and `offers`, and on the Offer, `price` (or `priceSpecification.price`) and `priceCurrency`. It recommends and parses three more: `availability`, `priceValidUntil` ("The date and time after which the price will no longer be available") and `hasMerchantReturnPolicy` ("Nested information about the return policies associated with an `Offer`") — https://developers.google.com/search/docs/appearance/structured-data/merchant-listing (verified 2026-08-21)
-- Automatic item updates read the markup off the page — "We automatically read the structured data markup on your website using our advanced data extractors and directly pull product data from your HTML into Merchant Center" — covering price, sale price, `availability` and `itemCondition` — https://support.google.com/merchants/answer/3246284 (verified 2026-08-21)
+- Automatic item updates read the markup off the page: "We automatically read the structured data markup on your website using our advanced data extractors and directly pull product data from your HTML into Merchant Center." The fields covered are price, sale price, `availability` and `itemCondition` — https://support.google.com/merchants/answer/3246284 (verified 2026-08-21)
 - Google acts on `priceValidUntil`: "Your product snippet may not display if the `priceValidUntil` property indicates a past date" — https://developers.google.com/search/docs/appearance/structured-data/product-snippet (verified 2026-08-21)
 - The same transactional fields are what an agent checkout surface stores: OpenAI's product feed spec makes `price` (number + ISO 4217 currency) and `availability` required, and requires `return_policy` (return policy URL) when `is_eligible_checkout` is true — https://developers.openai.com/commerce/specs/feed (verified 2026-08-21)
 - Agentic Commerce Protocol, "developed by Stripe and OpenAI" as an open standard for agent-initiated checkout, is the emerging transaction path these fields feed — https://www.agenticcommerce.dev/ (verified 2026-08-21)

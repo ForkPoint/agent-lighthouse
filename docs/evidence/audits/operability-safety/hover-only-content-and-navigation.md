@@ -27,7 +27,7 @@ Detects navigation subtrees and information that exist in the DOM only while a p
 
 ## Claimed mechanism (falsifiable)
 
-Falsifiable claim: a submenu revealed only by an ancestor :hover rule is display:none or visibility:hidden in the resting DOM, and Playwright's actionability contract defines such an element as not visible — so every Playwright-derived agent refuses to click it, and the snapshot serializer omits it entirely. The agent therefore never learns those destinations exist. WebSuite measures the information-retrieval half of this at 0% success for tooltip-based content across both agents tested. Test: add a :focus-within (or JS-toggled aria-expanded) path to the same menu; the submenu becomes reachable in the snapshot and the destination becomes clickable without any hover synthesis.
+Falsifiable claim. A submenu revealed only by an ancestor :hover rule is display:none or visibility:hidden in the resting DOM. Playwright's actionability contract defines such an element as not visible. Every Playwright-derived agent therefore refuses to click it, and the snapshot serializer omits it entirely. The agent therefore never learns those destinations exist. WebSuite measures the information-retrieval half of this at 0% success for tooltip-based content across both agents tested. Test: add a :focus-within (or JS-toggled aria-expanded) path to the same menu; the submenu becomes reachable in the snapshot and the destination becomes clickable without any hover synthesis.
 
 ## Evidence
 
