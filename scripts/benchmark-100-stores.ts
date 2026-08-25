@@ -157,7 +157,7 @@ async function auditStore(targetUrl: string, index: number, total: number): Prom
 
     const durationMs = Date.now() - startTime;
     const isBlocked = report.wafProtection?.isBlocked;
-    const wafName = report.wafProtection?.wafName;
+    const wafName = report.wafProtection?.name;
 
     if (isBlocked) {
       console.log(`  🛑 [${index + 1}/${total}] ${domain}: BOT WALL DETECTED (${wafName}) in ${(durationMs / 1000).toFixed(1)}s`);
