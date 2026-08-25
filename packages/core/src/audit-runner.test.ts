@@ -6,6 +6,7 @@ import type { CheckContext } from './check-context';
 import type { ScanConfig, AuditRegistration } from './audit-config';
 import { runAudits } from './audit-runner';
 import { AuditResultSchema } from './schemas';
+import type { AuditTrace } from './audit-trace';
 import type { AuditProgressEvent } from './audit-runner';
 
 // ---------------------------------------------------------------------------
@@ -315,5 +316,92 @@ describe('scan-error explanations', () => {
       throw 'just a string';
     }) as () => never);
     expect(stub.explanation).toBe('Audit failed to run: just a string');
+  });
+});
+
+describe('audit tracing', () => {
+  /** A config with one passing audit, one page-type skip and one that throws. */
+  function tracingConfig(): ScanConfig {
+    return {
+      categories: [{ id: 'cat1', name: 'Cat 1', weight: 1 }],
+      audits: {
+        cat1: [
+          makeReg(meta({ id: 'ok', category: 'cat1' }), () => result('pass', 1)),
+          makeReg(meta({ id: 'skip', category: 'cat1', applicablePageTypes: ['product'] }), () =>
+            result('pass', 1),
+          ),
+          makeReg(meta({ id: 'boom', category: 'cat1' }), () => {
+            throw new Error('boom');
+          }),
+        ],
+      },
+    };
+  }
+
+  async function tracesOf() {
+    const errorSpy = vi.spyOn(logger, 'error').mockImplementation(() => {});
+    const traces: AuditTrace[] = [];
+    await runAudits(ctxWith(['homepage']), tracingConfig(), undefined, undefined, (t) =>
+      traces.push(t),
+    );
+    errorSpy.mockRestore();
+    return traces;
+  }
+
+  // Every registered audit, not only the ones that produced a verdict: an
+  // audit missing from the trace is exactly the one worth seeing.
+  it('emits one record per registered audit', async () => {
+    const traces = await tracesOf();
+    expect(traces.map((t) => t.id).sort()).toEqual(['boom', 'ok', 'skip']);
+  });
+
+  it('distinguishes ran, skipped and errored', async () => {
+    const byId = new Map((await tracesOf()).map((t) => [t.id, t]));
+    expect(byId.get('ok')?.outcome).toBe('ran');
+    expect(byId.get('skip')?.outcome).toBe('skipped');
+    expect(byId.get('boom')?.outcome).toBe('error');
+  });
+
+  it('explains why a skipped audit never ran', async () => {
+    const byId = new Map((await tracesOf()).map((t) => [t.id, t]));
+    expect(byId.get('skip')?.explanation).toContain('product');
+    expect(byId.get('skip')?.durationMs).toBe(0);
+  });
+
+  it('carries the failure message on an errored audit', async () => {
+    const byId = new Map((await tracesOf()).map((t) => [t.id, t]));
+    expect(byId.get('boom')?.explanation).toContain('boom');
+  });
+
+  it('times an audit that ran', async () => {
+    const byId = new Map((await tracesOf()).map((t) => [t.id, t]));
+    expect(byId.get('ok')?.durationMs).toBeGreaterThanOrEqual(0);
+  });
+
+  // Building a record per audit is not free, so nothing is built when nobody
+  // is listening and the logger is not at debug level.
+  it('builds nothing when no handler is given and the logger is quiet', async () => {
+    const debugSpy = vi.spyOn(logger, 'debug').mockImplementation(() => {});
+    const errorSpy = vi.spyOn(logger, 'error').mockImplementation(() => {});
+    const previous = logger.level;
+    logger.level = 'info';
+    await runAudits(ctxWith(['homepage']), tracingConfig());
+    logger.level = previous;
+    errorSpy.mockRestore();
+    expect(debugSpy).not.toHaveBeenCalled();
+    debugSpy.mockRestore();
+  });
+
+  it('logs one debug line per audit when the level asks for it', async () => {
+    const debugSpy = vi.spyOn(logger, 'debug').mockImplementation(() => {});
+    const errorSpy = vi.spyOn(logger, 'error').mockImplementation(() => {});
+    const previous = logger.level;
+    logger.level = 'debug';
+    await runAudits(ctxWith(['homepage']), tracingConfig());
+    logger.level = previous;
+    errorSpy.mockRestore();
+    const lines = debugSpy.mock.calls.map((c) => String(c[0]));
+    expect(lines.filter((l) => l.startsWith('[audit] '))).toHaveLength(3);
+    debugSpy.mockRestore();
   });
 });

@@ -76,6 +76,7 @@ The one exception is `--assert-category`, which is read by a separate pass that 
 | `--min-score <number>`      | 0–100              | `0` (no assertion)   | Fail the run if the overall score is below this.                     |
 | `--assert-category <id:min>` | `id:number`       | none                 | Fail the run if a category scores below its threshold. Repeatable.   |
 | `--debug-audit <id\|fails>` | audit id or `fails` | none                | Print a deep diagnostic breakdown for matching audits.               |
+| `--trace [path]`            | file path          | off                  | Write one NDJSON record per audit, including skipped and errored ones. |
 | `--silent`                  | —                  | off                  | Suppress banner, progress and terminal report.                       |
 | `--progress-json`           | —                  | off                  | Stream scan progress as NDJSON on stderr.                            |
 
@@ -181,6 +182,72 @@ agent-lighthouse https://yourstore.com --debug-audit fails
 ```
 
 The argument is matched against an audit's exact id, or case-insensitively against its title. The literal value `fails` selects every check whose status is `fail` or `warn`. Not-applicable checks are included in the search set, so this is also the way to find out why an audit reported nothing. If nothing matches, the CLI says so and continues.
+
+### `--trace [path]`
+
+Writes one NDJSON record per registered audit to a file — every audit, every
+scan, including the ones that were skipped before running and the ones that
+errored. Those are the records worth having: a report shows what an audit
+concluded, and a trace shows whether it ever got the chance to conclude
+anything.
+
+```bash
+# default path: ./agent-lighthouse-trace.ndjson
+agent-lighthouse https://yourstore.com --trace
+
+# or name the file
+agent-lighthouse https://yourstore.com --trace ./run-1.ndjson
+```
+
+Each record carries:
+
+| Field | What it tells you |
+| :--- | :--- |
+| `id`, `category` | which audit |
+| `outcome` | `ran`, `skipped` (no scanned page matched its page types) or `error` |
+| `status`, `score`, `weight` | the verdict and what it contributed |
+| `tier`, `evidenceGrade` | whether it counted toward the score at all |
+| `durationMs` | wall time inside the audit; `0` for one that never ran |
+| `displayValue`, `explanation`, `pageUrl` | the verdict in words, and where |
+| `details` | the structured evidence the verdict was drawn from |
+
+The file is truncated at the start of a scan and appended to as the scan runs,
+so a crash still leaves everything up to the point it stopped.
+
+Two runs of the same site produce two comparable files, which is the point:
+
+```bash
+agent-lighthouse https://yourstore.com --trace ./before.ndjson --silent
+agent-lighthouse https://yourstore.com --trace ./after.ndjson --silent
+diff <(jq -c '{id,outcome,status,score}' before.ndjson) \
+     <(jq -c '{id,outcome,status,score}' after.ndjson)
+```
+
+Useful queries, once you have a file:
+
+```bash
+# every audit that never ran, and why
+jq -r 'select(.outcome != "ran") | "\(.outcome)\t\(.id)\t\(.explanation)"' trace.ndjson
+
+# the ten slowest audits
+jq -s 'sort_by(-.durationMs) | .[:10] | .[] | "\(.durationMs)ms\t\(.id)"' -r trace.ndjson
+
+# what a single audit actually saw
+jq 'select(.id == "structured-data/faqpage-schema")' trace.ndjson
+```
+
+For a one-line-per-audit summary on stderr instead of a file, set
+`LOG_LEVEL=debug`. The runner logs one line per audit at debug level whether or
+not a trace file is open, alongside the rest of the debug output:
+
+```bash
+LOG_LEVEL=debug agent-lighthouse https://yourstore.com --silent 2>&1 | grep '\[audit\]'
+```
+
+```
+[DEBUG] [audit] machine-discovery/llms-txt-exists ran/na score=0 weight=0 17ms — HTTP 404; no discovery <link> in <head>
+[DEBUG] [audit] structured-data/product-schema skipped/na score=0 weight=0
+```
 
 ### `--silent`
 

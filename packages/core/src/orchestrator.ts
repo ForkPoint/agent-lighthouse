@@ -16,6 +16,7 @@ import {
 import type { CheckContext, PageContext } from './check-context';
 import { defaultConfig, filterConfig } from './audit-config';
 import { planAudits, runAudits } from './audit-runner';
+import type { AuditTraceHandler } from './audit-runner';
 import { ProgressTracker } from './progress';
 import type { ScanEvent } from './progress';
 import { runA11yForHtml } from './audits/operability-safety/runner';
@@ -42,6 +43,12 @@ export interface ScanOptions {
    * scored.
    */
   includeExperimental?: boolean;
+  /**
+   * Called once per registered audit with what it did — including the ones
+   * that were skipped or failed. Use it to trace a verdict back to the
+   * evidence it was drawn from; see {@link AuditTrace}.
+   */
+  onAuditTrace?: AuditTraceHandler;
 }
 
 // Cap how many pages get the jsdom-based a11y pass. Accessibility issues are
@@ -399,6 +406,7 @@ export async function runScan(url: string, options?: ScanOptions): Promise<ScanR
       else tracker.unitFail(event.label, event.error);
     },
     auditPlan,
+    options?.onAuditTrace,
   );
   tracker.phaseDone();
 

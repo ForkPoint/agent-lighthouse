@@ -4,6 +4,7 @@ import { TAG_SKIPPED_PAGE_TYPE, TAG_SCAN_ERROR } from './constants';
 import type { CheckContext } from './check-context';
 import type { ScanConfig, CategoryConfig, AuditRegistration } from './audit-config';
 import { calculateCategoryScore, calculateOverallScore } from './scorer';
+import { traceFromCheck, formatTrace, type AuditTrace } from './audit-trace';
 
 /** How much of a failure message a report is willing to carry. */
 const MAX_ERROR_CHARS = 400;
@@ -71,6 +72,15 @@ export type AuditProgressEvent =
   | { type: 'unit:done'; label: string }
   | { type: 'unit:fail'; label: string; error: string };
 
+/**
+ * Called once per registered audit, with what it did.
+ *
+ * Separate from {@link AuditProgressEvent}, which exists to drive a progress
+ * bar and carries only a label. This carries the verdict and its evidence, and
+ * fires for skipped and errored audits too — those are the ones worth seeing.
+ */
+export type AuditTraceHandler = (trace: AuditTrace) => void;
+
 export interface AuditPlan {
   runnable: Array<{ reg: AuditRegistration; categoryId: string }>;
   skipped: CheckResult[];
@@ -122,9 +132,25 @@ export async function runAudits(
   config: ScanConfig,
   onEvent?: (event: AuditProgressEvent) => void,
   plan?: AuditPlan,
+  onTrace?: AuditTraceHandler,
 ): Promise<AuditRunResult> {
   const { runnable, skipped } = plan ?? planAudits(ctx, config);
   const allChecks: CheckResult[] = [...skipped];
+
+  // Emit one record per audit, whatever became of it. Building the record
+  // costs something, so it is skipped entirely unless someone is listening —
+  // either a trace handler or a debug-level logger.
+  const tracing = Boolean(onTrace) || logger.level === 'debug';
+  const trace = (check: CheckResult, durationMs: number): void => {
+    if (!tracing) return;
+    const record = traceFromCheck(check, durationMs);
+    logger.debug(formatTrace(record));
+    onTrace?.(record);
+  };
+
+  // A skipped audit never entered `audit()`, so its duration is zero rather
+  // than unmeasured.
+  for (const stub of skipped) trace(stub, 0);
 
   // Run in batches of 20 (same concurrency as before)
   const batchSize = 20;
@@ -133,12 +159,15 @@ export async function runAudits(
     const batchResults = await Promise.all(
       batch.map(async ({ reg }) => {
         const label = `${reg.meta.id} ${reg.meta.title}`;
+        const startedAt = tracing ? performance.now() : 0;
+        const elapsed = () => (tracing ? Math.round(performance.now() - startedAt) : 0);
         try {
           const instance = reg.create();
           const result = await instance.audit(ctx);
           // `toCheckResult` stamps the evidence weight from the audit's meta.
           const check = instance.toCheckResult(result);
           onEvent?.({ type: 'unit:done', label });
+          trace(check, elapsed());
           return check;
         } catch (err) {
           // Don't silently drop a throwing audit — record it as an errored
@@ -146,7 +175,9 @@ export async function runAudits(
           logger.error({ err, auditId: reg.meta.id }, '[scanner] Audit error');
           const message = describeError(err);
           onEvent?.({ type: 'unit:fail', label, error: message });
-          return stubCheck(reg.meta, TAG_SCAN_ERROR, `Audit failed to run: ${message}`);
+          const stub = stubCheck(reg.meta, TAG_SCAN_ERROR, `Audit failed to run: ${message}`);
+          trace(stub, elapsed());
+          return stub;
         }
       }),
     );
