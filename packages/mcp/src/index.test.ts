@@ -1,5 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import type { ScanReport } from '@forkpoint/agent-lighthouse-core';
+import { CATEGORY_MASS } from '@forkpoint/agent-lighthouse-core';
+import { auditWebsite } from './index';
 
 /**
  * The programmatic helper, which agent toolkits import directly rather than
@@ -13,8 +15,6 @@ vi.mock('@forkpoint/agent-lighthouse-core', async (importOriginal) => ({
   runScan,
 }));
 
-const { auditWebsite } = await import('./index');
-const { CATEGORY_MASS } = await import('@forkpoint/agent-lighthouse-core');
 
 function report(over: Partial<ScanReport> = {}): ScanReport {
   return {
@@ -86,7 +86,7 @@ describe('auditWebsite', () => {
   it('flattens the view groups into a flat category list', async () => {
     runScan.mockResolvedValue(report());
     const result = await auditWebsite('https://shop.test/');
-    const entry = result.categories.find((c) => c.name === 'agent-interfaces');
+    const entry = result.categories.find((c: { name: string }) => c.name === 'agent-interfaces');
     expect(entry).toMatchObject({ pass: 1, warn: 0, fail: 0 });
   });
 
