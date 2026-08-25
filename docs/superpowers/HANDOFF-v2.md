@@ -1,12 +1,12 @@
-# v2 restructure — handoff state (2026-08-23)
+# v2 restructure — handoff state (2026-08-25)
 
 Continuation anchor for the next session. Read this first, then the ledgers.
 
 ## Where things stand
 
-- Branch: `feat/v2-engine` (PR #10), pushed through `4cb9957` (Wave C); Plan 5b Wave D is committed locally and **not pushed** — the controller pushes after approval.
+- v2 landed: PR #10 squash-merged to `main` as `b0adaf5` on 2026-08-23. The evidence rework and site rebuild that followed it are on `feat/site-and-evidence-sweep` (PR #16).
 - Registry: **215 audits, 8 categories**, ids `category/slug`, evidence-mass scoring.
-- Gates at HEAD: `pnpm test` 3376 passed / 0 failed / 239 skipped · `pnpm typecheck` clean · `rtk err pnpm lint` clean · `node scripts/check-dossiers.mjs` → "215 audits OK, no orphans" · `npx changeset status` all-major (core/report/cli/mcp → 2.0.0).
+- Gates at HEAD: `pnpm test` 3780 passed / 0 failed / 215 skipped · `pnpm typecheck` clean · `rtk err pnpm lint` clean · `node scripts/check-dossiers.mjs` → "215 audits OK, no orphans" · `npx changeset status` all-major (core/report/cli/mcp → 2.0.0).
 - migration-map.json: 207 entries — 26 removed, 181 renamed, **zero** merging/interim. `migration-map.test.ts` pins the census, extinction, dossier-link existence, registry cross-pin; `sunset.test.ts` pins the v1 roster; `new-in-v2.ts` carries the 67 ids added by Plans 5 and 5b.
 - Zero `TODO(redeem)` / `TODO(merge)` / `TODO(rewrite)` markers left in live audit code. `REWORK-TODO.md` is all `[x] DONE`.
 
@@ -86,11 +86,17 @@ Source: `packages/core/src/audits/proposed/` (**4 stubs left**, none registered)
 - **`details` values must be scalars or an array of strings.** A number array
   is dropped whole by the result schema, which is how
   `answer-readiness/section-split-risk-profile` lost `sectionTokens` until Wave
-  C fixed it.
+  C fixed it. An array of *objects* is worse — it throws rather than dropping,
+  so the runner reports `[scanner] Audit error` and the audit returns no result
+  at all. That shipped undetected in
+  `operability-safety/stateful-control-introspectability` (issue #15) because
+  unit tests call `audit.audit(ctx)` directly and never reach `toCheckResult`.
+  Parse a result through `AuditResultSchema` in the test when an audit puts
+  anything structured in `details`.
 - Watch the scan budget: `verify-scan-results.test.ts` runs the whole registry against live sites at a 150s per-describe timeout, and the registry keeps growing. Share probes per scan rather than adding per-audit fetches.
 
 ### Endgame
-- **Squash-merge PR #10** when v2 work completes (user decision — `.lavish/`/`.playwright-mcp/` blobs exist in branch history and must not reach main).
+- ~~Squash-merge PR #10~~ done 2026-08-23 as `b0adaf5`. The squash was the point: `.lavish/` and `.playwright-mcp/` blobs exist in `feat/v2-engine` history and never reached `main`. Apply the same treatment to any branch that carried them.
 
 ## Session constraints (carry over)
 
