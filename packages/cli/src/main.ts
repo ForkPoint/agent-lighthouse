@@ -7,7 +7,15 @@ import {
   type ScanEvent,
 } from "@forkpoint/agent-lighthouse-core";
 import { createProgressRenderer } from "./progress-renderer";
-import { parseCliOptions, resolveCommand, isValidUrl } from "./options";
+import {
+  parseCliOptions,
+  resolveCommand,
+  isValidUrl,
+  parseCategoryAssertions,
+  failedAssertion,
+  selectDebugChecks,
+  openCommand,
+} from "./options";
 import { tierMarker } from "./tier-marker";
 import {
   buildReportView,
@@ -77,13 +85,7 @@ Examples:
 }
 
 function openInBrowser(filePath: string) {
-  const cmd =
-    process.platform === "darwin"
-      ? `open "${filePath}"`
-      : process.platform === "win32"
-        ? `start "" "${filePath}"`
-        : `xdg-open "${filePath}"`;
-  exec(cmd, () => {});
+  exec(openCommand(process.platform, filePath), () => {});
 }
 
 async function audit(targetUrl?: string) {
@@ -206,14 +208,7 @@ async function audit(targetUrl?: string) {
     const allChecks = view.groups.flatMap((g) =>
       g.categories.flatMap((c) => [...c.checks, ...c.notApplicable]),
     );
-    const targetChecks =
-      debugAudit === "fails"
-        ? allChecks.filter((c) => c.status === "fail" || c.status === "warn")
-        : allChecks.filter(
-            (c) =>
-              c.id === debugAudit ||
-              c.title.toLowerCase().includes(debugAudit.toLowerCase()),
-          );
+    const targetChecks = selectDebugChecks(allChecks, debugAudit);
 
     if (targetChecks.length === 0) {
       console.log(
@@ -312,28 +307,15 @@ async function audit(targetUrl?: string) {
   }
 
   // Per-category Assertions
-  const categoryAssertions = fileConfig.assertCategories ?? {};
-  for (let i = 0; i < args.length; i++) {
-    if (args[i] === "--assert-category" && args[i + 1]) {
-      const [catId, min] = args[i + 1].split(":");
-      if (catId && min) categoryAssertions[catId] = Number(min);
-    }
-  }
-
-  for (const [catId, threshold] of Object.entries(categoryAssertions)) {
-    const matchedCategory = view.groups
-      .flatMap((g) => g.categories)
-      .find(
-        (c) =>
-          c.id === catId || c.name.toLowerCase().includes(catId.toLowerCase()),
-      );
-
-    if (matchedCategory && matchedCategory.score < threshold) {
-      console.error(
-        `\n\x1b[31m✖ Category Assertion Failed:\x1b[0m Category '${matchedCategory.name}' scored ${matchedCategory.score} (threshold: ${threshold})`,
-      );
-      process.exit(1);
-    }
+  const failed = failedAssertion(
+    view.groups.flatMap((g) => g.categories),
+    parseCategoryAssertions(args, fileConfig),
+  );
+  if (failed) {
+    console.error(
+      `\n\x1b[31m✖ Category Assertion Failed:\x1b[0m Category '${failed.name}' scored ${failed.score} (threshold: ${failed.threshold})`,
+    );
+    process.exit(1);
   }
 }
 

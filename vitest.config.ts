@@ -28,6 +28,14 @@ export default defineConfig({
         'packages/core/src/tests/**',
         'packages/core/src/audits/proposed/**',
         'packages/website/src/pages/**',
+        // Entry points: each connects a transport or reads process.argv at
+        // module scope and runs on import, so a test can never reach one.
+        // Their logic lives in options.ts and tool.ts, which are covered; what
+        // is left is console printing and process.exit.
+        'packages/cli/src/main.ts',
+        'packages/mcp/src/server.ts',
+        // Astro build-time config, never evaluated by vitest.
+        'packages/website/src/content.config.ts',
       ],
     },
     alias: {

@@ -7,6 +7,10 @@ import {
   isValidUrl,
   parseCliOptions,
   resolveCommand,
+  parseCategoryAssertions,
+  failedAssertion,
+  selectDebugChecks,
+  openCommand,
 } from "./options";
 
 describe("getArgValue", () => {
@@ -233,5 +237,150 @@ describe("resolveCommand", () => {
 
   it("audits with no URL when audit is given alone, so the config file supplies it", () => {
     expect(resolveCommand(["audit"])).toEqual({ action: "audit", url: undefined });
+  });
+});
+
+describe("parseCategoryAssertions", () => {
+  it("reads one --assert-category pair", () => {
+    expect(parseCategoryAssertions(["--assert-category", "structured-data:90"])).toEqual({
+      "structured-data": 90,
+    });
+  });
+
+  it("reads the = form", () => {
+    expect(parseCategoryAssertions(["--assert-category=structured-data:90"])).toEqual({
+      "structured-data": 90,
+    });
+  });
+
+  // getArgValue returns the first occurrence only, which is why this flag
+  // cannot go through it: CI pipelines assert on several categories at once.
+  it("reads the flag repeated", () => {
+    expect(
+      parseCategoryAssertions([
+        "--assert-category",
+        "structured-data:90",
+        "--assert-category",
+        "agent-interfaces:70",
+      ]),
+    ).toEqual({ "structured-data": 90, "agent-interfaces": 70 });
+  });
+
+  it("merges the config file thresholds", () => {
+    expect(
+      parseCategoryAssertions(["--assert-category", "structured-data:90"], {
+        assertCategories: { "agent-interfaces": 70 },
+      }),
+    ).toEqual({ "structured-data": 90, "agent-interfaces": 70 });
+  });
+
+  it("lets the flag beat the config file for the same category", () => {
+    expect(
+      parseCategoryAssertions(["--assert-category", "structured-data:95"], {
+        assertCategories: { "structured-data": 50 },
+      }),
+    ).toEqual({ "structured-data": 95 });
+  });
+
+  // The loaded config is read again after this, so mutating it would leak.
+  it("does not mutate the config file object", () => {
+    const fileConfig = { assertCategories: { "structured-data": 50 } };
+    parseCategoryAssertions(["--assert-category", "agent-interfaces:70"], fileConfig);
+    expect(fileConfig.assertCategories).toEqual({ "structured-data": 50 });
+  });
+
+  it("ignores a pair with no threshold", () => {
+    expect(parseCategoryAssertions(["--assert-category", "structured-data"])).toEqual({});
+  });
+
+  it("ignores a trailing flag with no value", () => {
+    expect(parseCategoryAssertions(["--assert-category"])).toEqual({});
+  });
+
+  it("returns an empty object when the flag is absent", () => {
+    expect(parseCategoryAssertions(["--silent"])).toEqual({});
+  });
+});
+
+describe("failedAssertion", () => {
+  const categories = [
+    { id: "structured-data", name: "Structured Data", score: 40 },
+    { id: "agent-interfaces", name: "Agent Interfaces", score: 90 },
+  ];
+
+  it("returns nothing when every threshold is met", () => {
+    expect(failedAssertion(categories, { "agent-interfaces": 80 })).toBeUndefined();
+  });
+
+  it("names the category that fell short", () => {
+    expect(failedAssertion(categories, { "structured-data": 90 })).toEqual({
+      name: "Structured Data",
+      score: 40,
+      threshold: 90,
+    });
+  });
+
+  it("treats a score equal to the threshold as a pass", () => {
+    expect(failedAssertion(categories, { "structured-data": 40 })).toBeUndefined();
+  });
+
+  it("matches on a name substring, so an operator can type a word", () => {
+    expect(failedAssertion(categories, { structured: 90 })?.name).toBe("Structured Data");
+  });
+
+  // --preset and --categories both narrow the scan; failing CI over a category
+  // the operator excluded on purpose would make the flags unusable together.
+  it("ignores a threshold for a category that did not run", () => {
+    expect(failedAssertion(categories, { "agentic-commerce": 90 })).toBeUndefined();
+  });
+
+  it("returns nothing when there are no assertions", () => {
+    expect(failedAssertion(categories, {})).toBeUndefined();
+  });
+});
+
+describe("selectDebugChecks", () => {
+  const checks = [
+    { id: "structured-data/json-ld-present", title: "JSON-LD present", status: "pass" },
+    { id: "structured-data/faqpage-schema", title: "FAQPage schema", status: "fail" },
+    { id: "agent-interfaces/webmcp", title: "WebMCP endpoint", status: "warn" },
+    { id: "agent-interfaces/openapi", title: "OpenAPI document", status: "na" },
+  ];
+
+  it("selects every fail and warn for the reserved value 'fails'", () => {
+    expect(selectDebugChecks(checks, "fails").map((c) => c.id)).toEqual([
+      "structured-data/faqpage-schema",
+      "agent-interfaces/webmcp",
+    ]);
+  });
+
+  it("selects an audit by its exact id", () => {
+    expect(selectDebugChecks(checks, "agent-interfaces/webmcp")).toHaveLength(1);
+  });
+
+  it("selects by a title substring, case-insensitively", () => {
+    expect(selectDebugChecks(checks, "faqpage").map((c) => c.id)).toEqual([
+      "structured-data/faqpage-schema",
+    ]);
+  });
+
+  it("returns nothing when the id matches no audit", () => {
+    expect(selectDebugChecks(checks, "no-such-audit")).toEqual([]);
+  });
+});
+
+describe("openCommand", () => {
+  it("uses open on macOS", () => {
+    expect(openCommand("darwin", "/tmp/report.html")).toBe('open "/tmp/report.html"');
+  });
+
+  // The empty first argument is the window title, which `start` requires when
+  // the path is quoted.
+  it("uses start with an empty title on Windows", () => {
+    expect(openCommand("win32", "C:\\report.html")).toBe('start "" "C:\\report.html"');
+  });
+
+  it("uses xdg-open elsewhere", () => {
+    expect(openCommand("linux", "/tmp/report.html")).toBe('xdg-open "/tmp/report.html"');
   });
 });

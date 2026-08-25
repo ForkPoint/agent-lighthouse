@@ -140,3 +140,95 @@ export function resolveCommand(args: string[]): { action: "help" | "audit"; url?
   if (!command.startsWith("-")) return { action: "audit", url: command };
   return { action: "audit" };
 }
+
+/**
+ * Per-category thresholds, from `--assert-category id:min` and the config file.
+ *
+ * The flag repeats, so this cannot go through `getArgValue`, which returns the
+ * first occurrence only. A fresh object is returned rather than the config
+ * file's own: merging into `fileConfig.assertCategories` mutated the loaded
+ * config, which the caller may still read.
+ */
+export function parseCategoryAssertions(
+  args: string[],
+  fileConfig: FileConfig & { assertCategories?: Record<string, number> } = {},
+): Record<string, number> {
+  const out: Record<string, number> = { ...(fileConfig.assertCategories ?? {}) };
+
+  const record = (pair: string | undefined) => {
+    if (!pair) return;
+    const [catId, min] = pair.split(":");
+    if (catId && min) out[catId] = Number(min);
+  };
+
+  for (let i = 0; i < args.length; i++) {
+    const arg = args[i]!;
+    if (arg.startsWith("--assert-category=")) record(arg.slice("--assert-category=".length));
+    else if (arg === "--assert-category") record(args[i + 1]);
+  }
+  return out;
+}
+
+/** A category as the assertions see it. */
+export interface AssertableCategory {
+  id: string;
+  name: string;
+  score: number;
+}
+
+export interface FailedAssertion {
+  name: string;
+  score: number;
+  threshold: number;
+}
+
+/**
+ * The first assertion the scan does not meet, or undefined if it meets all.
+ *
+ * A threshold naming a category that did not run is not a failure: `--preset`
+ * and `--categories` both narrow the scan, and failing CI over a category the
+ * operator deliberately excluded would make the two flags unusable together.
+ */
+export function failedAssertion(
+  categories: AssertableCategory[],
+  assertions: Record<string, number>,
+): FailedAssertion | undefined {
+  for (const [catId, threshold] of Object.entries(assertions)) {
+    const matched = categories.find(
+      (c) => c.id === catId || c.name.toLowerCase().includes(catId.toLowerCase()),
+    );
+    if (matched && matched.score < threshold) {
+      return { name: matched.name, score: matched.score, threshold };
+    }
+  }
+  return undefined;
+}
+
+/** A check as the debugger selects it. */
+export interface DebuggableCheck {
+  id: string;
+  title: string;
+  status: string;
+}
+
+/**
+ * The checks `--debug-audit` should print.
+ *
+ * `fails` is a reserved value meaning "everything that is not clean"; anything
+ * else matches an audit id exactly or a title substring, so an operator can
+ * type `faqpage` instead of the full id.
+ */
+export function selectDebugChecks<T extends DebuggableCheck>(checks: T[], debugAudit: string): T[] {
+  if (debugAudit === "fails") {
+    return checks.filter((c) => c.status === "fail" || c.status === "warn");
+  }
+  const needle = debugAudit.toLowerCase();
+  return checks.filter((c) => c.id === debugAudit || c.title.toLowerCase().includes(needle));
+}
+
+/** The shell command that opens a file in the platform's default application. */
+export function openCommand(platform: NodeJS.Platform, filePath: string): string {
+  if (platform === "darwin") return `open "${filePath}"`;
+  if (platform === "win32") return `start "" "${filePath}"`;
+  return `xdg-open "${filePath}"`;
+}
