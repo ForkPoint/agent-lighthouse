@@ -5,6 +5,33 @@ import type { CheckContext } from './check-context';
 import type { ScanConfig, CategoryConfig, AuditRegistration } from './audit-config';
 import { calculateCategoryScore, calculateOverallScore } from './scorer';
 
+/** How much of a failure message a report is willing to carry. */
+const MAX_ERROR_CHARS = 400;
+
+/**
+ * A failure message a reader can act on.
+ *
+ * A Zod rejection stringifies to the whole issue tree — several hundred lines
+ * of JSON for one bad field, repeated into every report the scan writes. The
+ * part that identifies the defect is the path and the reason, so that is what
+ * is kept: `details.ghosts: Expected string, received object` rather than the
+ * tree it came from. Anything else is truncated instead of pasted whole.
+ */
+function describeError(err: unknown): string {
+  const issues = (err as { issues?: Array<{ path?: unknown[]; message?: string }> })?.issues;
+  if (Array.isArray(issues) && issues.length > 0) {
+    const seen = new Set<string>();
+    for (const issue of issues) {
+      const where = (issue.path ?? []).join('.');
+      seen.add(where ? `${where}: ${issue.message}` : String(issue.message));
+      if (seen.size >= 3) break;
+    }
+    return [...seen].join('; ').slice(0, MAX_ERROR_CHARS);
+  }
+  const message = err instanceof Error ? err.message : String(err);
+  return message.length > MAX_ERROR_CHARS ? `${message.slice(0, MAX_ERROR_CHARS - 1)}\u2026` : message;
+}
+
 /**
  * Build a not-applicable stub for an audit that never produced a real verdict,
  * so it stays visible in the report (tagged with why) instead of vanishing.
@@ -117,7 +144,7 @@ export async function runAudits(
           // Don't silently drop a throwing audit — record it as an errored
           // `na` stub so it stays visible in the report and in coverage.
           logger.error({ err, auditId: reg.meta.id }, '[scanner] Audit error');
-          const message = err instanceof Error ? err.message : String(err);
+          const message = describeError(err);
           onEvent?.({ type: 'unit:fail', label, error: message });
           return stubCheck(reg.meta, TAG_SCAN_ERROR, `Audit failed to run: ${message}`);
         }
