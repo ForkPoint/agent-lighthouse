@@ -22,7 +22,7 @@ sources:
 
 ## What it checks
 
-Verifies that sitemaps and feeds — the two resources AI crawlers poll far more often than they fetch pages — emit stable revalidation validators and honour If-None-Match / If-Modified-Since with a 304, instead of shipping a full body on every poll.
+Sitemaps and feeds are the two resources AI crawlers poll far more often than they fetch pages. Verifies that they emit stable revalidation validators, and honour If-None-Match and If-Modified-Since with a 304, instead of shipping a full body on every poll.
 
 ## Claimed mechanism (falsifiable)
 

@@ -32,7 +32,7 @@ Per-form score for whether every field an agent must populate carries the machin
 
 ## Claimed mechanism (falsifiable)
 
-Falsifiable claim: an agent filling a checkout must map each field to a value from user profile data. When the field declares autocomplete="postal-code", that mapping is a table lookup against a ratified vocabulary; when it declares name="field_7" with a visual-only label, the mapping is an inference that fails on ambiguous cases (address-line2 vs address-level2, cc-exp vs bday, tel-national vs tel). WebSuite measures the consequence directly: complex form filling succeeds 12.5% and 0% for the two agents tested, against 85%/76% for simple operational clicks. Test: add correct autocomplete tokens to a failing form and re-run the same fill task.
+Falsifiable claim: an agent filling a checkout must map each field to a value from user profile data. When the field declares autocomplete="postal-code", that mapping is a table lookup against a ratified vocabulary. When it declares name="field_7" with a visual-only label, the mapping is an inference. That inference fails on ambiguous cases: address-line2 against address-level2, cc-exp against bday, tel-national against tel. WebSuite measures the consequence directly: complex form filling succeeds 12.5% and 0% for the two agents tested, against 85%/76% for simple operational clicks. Test: add correct autocomplete tokens to a failing form and re-run the same fill task.
 
 ## Evidence
 

@@ -48,7 +48,7 @@ Token is real (Brave Search's crawler) but the value is thin: Brave Search build
 
 ### Signal: BraveBot / Bravebot allow/block state in robots.txt — grade C (robots-ai-crawlers)
 
-**Mechanism:** A 'Bravebot' disallow is intended to block Brave Search's crawler, but Brave's own documentation states its crawler deliberately does not advertise a differentiated user agent — so the token has no vendor-confirmed consumer and the rule is likely a no-op.
+**Mechanism:** A 'Bravebot' disallow is intended to block Brave Search's crawler. But Brave's own documentation states its crawler deliberately does not advertise a differentiated user agent. The token therefore has no vendor-confirmed consumer and the rule is likely a no-op.
 
 **Evidence:** Known Agents lists a Bravebot entry with UA 'Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko; compatible; Bravebot/1.0; +https://search.brave.com/help/brave-search-crawler) Chrome/W.X.Y.Z Safari/537.36' and only 2% top-website blocking as of 2026-08-19 — the lowest of any token in this set, indicating near-zero operator recognition.
 

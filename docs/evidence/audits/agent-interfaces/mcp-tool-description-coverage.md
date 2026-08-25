@@ -20,11 +20,11 @@ sources:
 
 ## What it checks
 
-Deterministic coverage metrics over the tool surface: what fraction of tools carry a description, what fraction of every input parameter (walked recursively through properties) carries a description, what fraction declare an outputSchema and a title, and whether the server ships top-level `instructions`. No LLM judging — pure presence and length counting against declared thresholds.
+Deterministic coverage metrics over the tool surface. What fraction of tools carry a description. What fraction of every input parameter, walked recursively through properties, carries a description. What fraction declare an outputSchema and a title, and whether the server ships top-level `instructions`. No LLM judging — pure presence and length counting against declared thresholds.
 
 ## Claimed mechanism (falsifiable)
 
-A tool description and its parameter descriptions are the entire basis on which a model decides whether and how to call it — they are the only prose the model ever sees about the tool. The spec states the documented purpose of outputSchema directly ('Guiding clients and LLMs to properly parse and utilize the returned data', 'Enabling strict schema validation of responses') and defines `instructions` as 'natural-language guidance for LLMs on how to use this server effectively'. The falsifiable claim is narrow and structural rather than aesthetic: a parameter with no `description` and no `enum`/`format`/`pattern` gives the model no way to derive a legal value, so it must guess, and guessed values surface as tool-execution errors and retry loops. Coverage is measured, not judged; only the pass thresholds are this project's convention, which is why this is graded B rather than A.
+A tool description and its parameter descriptions are the entire basis on which a model decides whether and how to call it — they are the only prose the model ever sees about the tool. The spec states the documented purpose of outputSchema directly: 'Guiding clients and LLMs to properly parse and utilize the returned data', and 'Enabling strict schema validation of responses'. It defines `instructions` as 'natural-language guidance for LLMs on how to use this server effectively'. The falsifiable claim is narrow and structural, not aesthetic. A parameter with no `description`, and no `enum`, `format` or `pattern`, gives the model no way to derive a legal value. It must guess, and guessed values surface as tool-execution errors and retry loops. Coverage is measured, not judged; only the pass thresholds are this project's convention, which is why this is graded B rather than A.
 
 ## Evidence
 

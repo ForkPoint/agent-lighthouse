@@ -58,7 +58,7 @@ Produces frequent, confident, high-priority FAILs on correctly configured sites.
 
 ### Signal: Crawl-delay directive in robots.txt — grade C (robots-ai-crawlers)
 
-**Mechanism:** A Crawl-delay line throttles fetch rate only for the specific crawlers that implement it; it is not part of RFC 9309, and the largest consumers explicitly do not support it, so its presence cannot be scored as a general readiness improvement.
+**Mechanism:** A Crawl-delay line throttles fetch rate only for the specific crawlers that implement it. It is not part of RFC 9309, and the largest consumers explicitly do not support it. Its presence cannot be scored as a general readiness improvement.
 
 **Evidence:** Support is genuinely split and each side is vendor-documented. Supporting: Anthropic explicitly names support for the 'Crawl-delay extension to robots.txt' for its bots; You.com states 'YouBot fully respects robots.txt directives, including user-agent specific rules and crawl-delay settings'. Not supporting: Google states 'Google supports the following fields (other fields such as crawl-delay aren't supported)' — only user-agent, allow, disallow and sitemap; Amazon states of Amazonbot 'They do not support the crawl-delay directive.'
 

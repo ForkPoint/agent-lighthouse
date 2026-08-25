@@ -47,7 +47,7 @@ CCBot is still active and Common Crawl still feeds many downstream training sets
 
 ### Signal: CCBot allow/block state in robots.txt — grade A (robots-ai-crawlers)
 
-**Mechanism:** Disallowing CCBot keeps the site out of the Common Crawl corpus, which is the upstream source for C4, RefinedWeb and Dolma and therefore for many LLM training sets — a block here has downstream training effects far beyond one operator.
+**Mechanism:** Disallowing CCBot keeps the site out of the Common Crawl corpus. That corpus is the upstream source for C4, RefinedWeb and Dolma, and therefore for many LLM training sets. A block here has downstream training effects far beyond one operator.
 
 **Grade: A** — Common Crawl publishes the exact user agent and the canonical opt-out snippet. The downstream leverage is measured rather than asserted. The Data Provenance Initiative's "Consent in Crisis" audited 14,000 domains. Within a single year, robots.txt restrictions had rendered "~5%+ of all tokens in C4, or 28%+ of the most actively maintained, critical sources in C4, fully restricted from use". A documented token with a measured corpus effect is grade A.
 

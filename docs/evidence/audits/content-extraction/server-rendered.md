@@ -63,7 +63,7 @@ The most valuable premise in the category — whether meaningful content exists 
 
 ### Signal: SSR vs CSR — do GPTBot/ClaudeBot/PerplexityBot execute JavaScript? — grade B (technical-infra)
 
-**Mechanism:** Content that exists in the DOM only after client-side JavaScript execution is invisible to the major non-rendering AI crawlers, which parse the raw HTML response only. FALSIFIABLE FORM: a page whose main content is injected client-side is fetched with HTTP 200 by GPTBot/ClaudeBot/PerplexityBot but the injected text never appears in those systems' answers or indexes, whereas an SSR/SSG equivalent does.
+**Mechanism:** Content that exists in the DOM only after client-side JavaScript execution is invisible to the major non-rendering AI crawlers, which parse the raw HTML response only. Falsifiable form: a page whose main content is injected client-side is fetched with HTTP 200 by GPTBot/ClaudeBot/PerplexityBot but the injected text never appears in those systems' answers or indexes, whereas an SSR/SSG equivalent does.
 
 **Grade: B** — The best-evidenced signal in this domain, and measured rather than claimed: joint Vercel and MERJ instrumentation on nextjs.org, with supplemental data from two other sites, found zero JavaScript execution across OAI-SearchBot, ChatGPT-User, GPTBot, ClaudeBot and PerplexityBot. Independent instrumentation of named tokens is strong evidence; what keeps it off A is that no vendor states the limitation itself, so the finding rests on observation of behaviour that could change silently. The exceptions are named in the audit rather than smoothed over: Gemini inherits Googlebot's evergreen-Chromium rendering, and Apple documents that "Applebot may render the content of your website within a browser".
 

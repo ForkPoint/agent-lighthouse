@@ -51,7 +51,7 @@ Issue tools/list three times: calls 1 and 2 on the same keep-alive connection ~2
 
 ## Example failure
 
-A Go-based server builds its tools slice by ranging over a map[string]Tool. Go randomizes map iteration order, so tools/list returns the same 24 tools in a different order on every call. Every agent turn that includes the tool block produces a different prefix, the provider's prompt cache misses 100% of the time, and the customer pays full input-token rates on ~18k tokens of tool schema per turn instead of the cached rate. The same server omits ttlMs entirely, so clients treat the list as immediately stale and refetch it before every turn as well.
+A Go-based server builds its tools slice by ranging over a map[string]Tool. Go randomizes map iteration order, so tools/list returns the same 24 tools in a different order on every call. Every agent turn that includes the tool block produces a different prefix. The provider's prompt cache misses 100% of the time. The customer pays full input-token rates on about 18k tokens of tool schema per turn, instead of the cached rate. The same server omits ttlMs entirely, so clients treat the list as immediately stale and refetch it before every turn as well.
 
 ## Scoring
 

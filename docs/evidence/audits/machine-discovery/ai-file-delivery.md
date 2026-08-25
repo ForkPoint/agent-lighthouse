@@ -81,7 +81,7 @@ The most defensible audit in the category — an llms.txt served as `application
 
 ### Signal: Correct Content-Type for llms.txt and .md files — grade C (technical-infra)
 
-**Mechanism:** The claim under test: serving /llms.txt and .md mirrors as text/plain or text/markdown (rather than text/html, application/octet-stream or a wrong charset) is required for AI consumers to parse them correctly. FALSIFIABLE FORM: a named AI consumer that parses the file when served as text/plain fails to parse the byte-identical file served as application/octet-stream or text/html.
+**Mechanism:** The claim under test: serving /llms.txt and .md mirrors as text/plain or text/markdown (rather than text/html, application/octet-stream or a wrong charset) is required for AI consumers to parse them correctly. Falsifiable form: a named AI consumer that parses the file when served as text/plain fails to parse the byte-identical file served as application/octet-stream or text/html.
 
 **Evidence:** Convention with sensible precedent, not a documented requirement. RFC 9116 does establish the pattern for well-known plain-text files — security.txt 'must be served as plain text (MIME type text/plain) with UTF-8 encoding'. The llms.txt spec uses type="text/markdown" when describing link relations, so text/markdown is the intent-consistent choice. Two real failure modes are mechanically certain rather than speculative: application/octet-stream triggers download-rather-than-parse behaviour in browser-based consumers, and a Content-Type of text/html on a Markdown file will lead HTML-oriented extraction pipelines to run an HTML parser over Markdown. X-Content-Type-Options: nosniff, where present, removes the browser's ability to recover from a wrong type.
 

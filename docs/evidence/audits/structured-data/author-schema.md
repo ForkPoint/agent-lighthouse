@@ -51,7 +51,7 @@ _No dedicated evidence signal was researched for this audit in the 2026-08-20 pa
 
 ## Evidence (2026-08-21)
 
-**Mechanism claim:** A `Person` author node carrying `jobTitle`, `sameAs` and `affiliation` is read by a named AI system, which cross-references the author across platforms and raises the retrieval/citation weight of the page relative to the same page marked up with `name` alone.
+**Mechanism claim:** A `Person` author node can carry `jobTitle`, `sameAs` and `affiliation`. The claim is that a named AI system reads it, cross-references the author across platforms, and raises the retrieval and citation weight of the page relative to the same page marked up with `name` alone.
 
 **Grade: C** — the only documented consumer is Google Search. It reads `author.name` plus `url` or `sameAs` to *disambiguate* an author, calls the whole property recommended rather than required, and never states an effect on ranking or trust scoring. No vendor documents `jobTitle` or `affiliation` being read at all, and the "RAG trust scoring" mechanism the audit asserts has no source.
 

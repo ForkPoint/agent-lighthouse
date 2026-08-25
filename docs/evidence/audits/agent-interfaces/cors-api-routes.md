@@ -93,7 +93,7 @@ The evidence calls the browser-sandboxed agent class "small today but growing". 
 
 ### Signal: CORS headers on public AI files and API routes — grade C (technical-infra)
 
-**Mechanism:** The claim under test: serving Access-Control-Allow-Origin (typically '*') on llms.txt, .md mirrors, feeds and public JSON endpoints is required for AI agents to fetch and use them. FALSIFIABLE FORM: an AI consumer that can read a resource when ACAO is present fails to read the same resource when it is absent.
+**Mechanism:** The claim under test: serving Access-Control-Allow-Origin (typically '*') on llms.txt, .md mirrors, feeds and public JSON endpoints is required for AI agents to fetch and use them. Falsifiable form: an AI consumer that can read a resource when ACAO is present fails to read the same resource when it is absent.
 
 **Evidence:** The mechanism is real but its scope is much narrower than the audit implies. CORS matters only for code running inside a browser origin: MDN states 'browsers restrict cross-origin HTTP requests initiated from scripts', and the server merely opts in via ACAO. The genuine AI consumer class is browser-sandboxed agent code. OpenAI's Apps SDK widgets run in an isolated iframe under a strict CSP, and must declare connect_domains — mapped to connect-src — for every origin they will fetch from. Such a widget fetching a publisher's JSON or llms.txt cross-origin will be blocked without ACAO. That class is small today but growing.
 

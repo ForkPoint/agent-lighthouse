@@ -22,7 +22,7 @@ sources:
 
 ## What it checks
 
-Checks three things about the site's MCP server: whether it is discoverable in the official MCP Registry, whether it is listed under a namespace cryptographically bound to the audited domain, and whether the ownership proof that namespace requires is actually being served. Together they distinguish a first-party listing from a third-party aggregator's republish of the same server.
+Checks three things about the site's MCP server. Whether it is discoverable in the official MCP Registry. Whether it is listed under a namespace cryptographically bound to the audited domain. And whether the ownership proof that namespace requires is actually being served. Together they distinguish a first-party listing from a third-party aggregator's republish of the same server.
 
 ## Claimed mechanism (falsifiable)
 

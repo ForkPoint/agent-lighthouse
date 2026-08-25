@@ -52,7 +52,7 @@ Static parse plus a lightweight CSS pass. Enumerate candidate state-bearing cont
 
 ## Example failure
 
-A privacy settings page renders 'Share my data' as <div class="toggle toggle--on" onclick="flip()">. The task is 'turn off data sharing'. The agent cannot read the initial state from the snapshot, clicks once, sees an identical snapshot (the class changed but nothing in the AX tree did), concludes the click failed, clicks again — and leaves sharing enabled while reporting the task complete.
+A privacy settings page renders 'Share my data' as <div class="toggle toggle--on" onclick="flip()">. The task is 'turn off data sharing'. The agent cannot read the initial state from the snapshot. It clicks once, and sees an identical snapshot: the class changed, but nothing in the AX tree did. It concludes the click failed and clicks again. It leaves sharing enabled, while reporting the task complete.
 
 ## Scoring
 

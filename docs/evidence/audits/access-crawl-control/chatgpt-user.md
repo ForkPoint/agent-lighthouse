@@ -52,7 +52,7 @@ One of the four checks in this category that genuinely matter — ChatGPT-User i
 
 ### Signal: ChatGPT-User allow/block state in robots.txt — grade A (robots-ai-crawlers)
 
-**Mechanism:** Disallowing ChatGPT-User is intended to stop user-initiated ChatGPT fetches of the site, but OpenAI reserves an exemption and field measurement shows the disallow is frequently not honored — so the directive's presence does not reliably predict agent behavior in either direction.
+**Mechanism:** Disallowing ChatGPT-User is intended to stop user-initiated ChatGPT fetches of the site. But OpenAI reserves an exemption, and field measurement shows the disallow is frequently not honored. The directive's presence therefore does not reliably predict agent behavior in either direction.
 
 **Evidence:** OpenAI documents the agent (UA 'ChatGPT-User/1.0; +https://openai.com/bot', IPs at openai.com/chatgpt-user.json) as handling 'user-initiated actions in ChatGPT and Custom GPTs'. It is the dominant user-action agent by volume: Cloudflare Radar attributes 'nearly three quarters of the request traffic' in the user-action category to ChatGPT-User (July 2025), and 14.9% of News & Publications AI traffic.
 

@@ -69,7 +69,7 @@ _No dedicated evidence signal was researched for this audit in the 2026-08-20 pa
 
 **Mechanism claim:** A page carrying `noindex` in a robots meta tag, or in the equivalent `X-Robots-Tag` header, is excluded from Google's Search index. Google documents that the same family of robots directives governs whether the page can be shown, or used as a direct input, in AI Overviews and AI Mode.
 
-**Grade: A** — the consumer is named in vendor documentation: Google Search Central states that `noindex` removes the page from search results and that `nosnippet`/`max-snippet` "will also prevent"/"limit" the content being "used as a direct input for AI Overviews and AI Mode".
+**Grade: A** — the consumer is named in vendor documentation. Google Search Central states that `noindex` removes the page from search results. It states that `nosnippet` and `max-snippet` "will also prevent" or "limit" the content being "used as a direct input for AI Overviews and AI Mode".
 
 **Evidence:**
 - Google Search Central, robots meta tag reference. `noindex`: "Do not show this page, media, or resource in search results." `nosnippet`: it "will also prevent the content from being used as a direct input for AI Overviews and AI Mode". `max-snippet:[number]`: it "will also limit how much of the content may be used as a direct input for AI Overviews and AI Mode". The doc scopes these rules to "all forms of search results (at Google: web search, Google Images, Discover, AI Overviews, AI Mode)" — https://developers.google.com/search/docs/crawling-indexing/robots-meta-tag (verified 2026-08-21)
