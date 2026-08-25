@@ -56,7 +56,7 @@ _No dedicated evidence signal was researched for this audit in the 2026-08-20 pa
 
 ## Evidence (2026-08-21)
 
-**Mechanism claim:** User agents read the `lang` attribute on `<html>` to programmatically determine the page's natural language; screen readers select pronunciation rules from it, visual browsers select scripts/characters, and media players select captions accordingly — so a page without it cannot have its language programmatically determined and fails WCAG 2.2 SC 3.1.1.
+**Mechanism claim:** User agents read the `lang` attribute on `<html>` to programmatically determine the page's natural language. Screen readers select pronunciation rules from it, visual browsers select scripts and characters, and media players select captions. A page without it cannot have its language programmatically determined, and fails WCAG 2.2 SC 3.1.1.
 
 **Grade: A** — ratified W3C Recommendation (WCAG 2.2, SC 3.1.1 Language of Page, Level A) plus WHATWG HTML, with named consumer classes whose behavior W3C documents explicitly.
 

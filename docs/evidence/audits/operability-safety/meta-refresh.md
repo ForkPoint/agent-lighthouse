@@ -53,7 +53,7 @@ _No dedicated evidence signal was researched for this audit in the 2026-08-20 pa
 
 ## Evidence (2026-08-21)
 
-**Mechanism claim:** A `<meta http-equiv="refresh" content="N;url=…">` with N greater than 0 causes the user agent to run the shared declarative refresh steps and navigate (or reload) the document N seconds after load, with no input from the visitor — so any agent driving that page loses its document, its element references and its in-progress form state mid-task.
+**Mechanism claim:** A `<meta http-equiv="refresh" content="N;url=…">` with N greater than 0 makes the user agent run the shared declarative refresh steps, then navigate or reload the document N seconds after load, with no input from the visitor. Any agent driving that page loses its document, its element references and its in-progress form state mid-task.
 
 **Grade: A** — declarative refresh is specified in the WHATWG HTML Standard and implemented by every browser an agent drives, making the "the page navigates itself after N seconds" claim a ratified, universally consumed behavior rather than an inference.
 

@@ -51,13 +51,13 @@ _No dedicated evidence signal was researched for this audit in the 2026-08-20 pa
 
 ## Evidence (2026-08-21)
 
-**Mechanism claim:** The `<title>` element is the document's name — it is what a browser tab list exposes, what assistive technology announces on page load, and what Google uses as a source for the title link in search results — so a page with a missing or empty title is unnamed in every consumer that identifies a page by name rather than by URL.
+**Mechanism claim:** The `<title>` element is the document's name. A browser tab list exposes it, assistive technology announces it on page load, and Google uses it as a source for the title link in search results. A page with a missing or empty title is therefore unnamed in every consumer that identifies a page by name rather than by URL.
 
 **Grade: A** — documented consumer behavior (Google states it generates title links from `<title>` content) plus a ratified Level A success criterion (WCAG 2.4.2 Page Titled) with universal browser/AT implementation.
 
 **Evidence:**
 - Google: title links are generated from several sources, first among them "Content in `<title>` elements" — https://developers.google.com/search/docs/appearance/title-link (verified 2026-08-21)
-- MDN: the title "defines the document's title that is shown in a browser's title bar or a page's tab"; "A common navigation technique for users of assistive technology is to read the page title and infer the content the page contains", with the guidance to "make titles unique to every page" — https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Elements/title (verified 2026-08-21)
+- MDN: the title "defines the document's title that is shown in a browser's title bar or a page's tab". It adds that "A common navigation technique for users of assistive technology is to read the page title and infer the content the page contains", and gives the guidance to "make titles unique to every page" — https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Elements/title (verified 2026-08-21)
 - WCAG 2.2 documents the page-title expectation as a Level A requirement (2.4.2 Page Titled) — referenced from the failure/technique set at https://www.w3.org/WAI/WCAG22/Techniques/failures/F41 (verified 2026-08-21)
 - Agent tool-chains address pages as tabs (Playwright MCP `browser_tabs`: "List, create, close, or select a browser tab"; chrome-devtools-mcp `list_pages`: "Get a list of pages open in the browser"), the surface on which a document's title is the only human/model-readable identifier — https://github.com/microsoft/playwright-mcp and https://github.com/ChromeDevTools/chrome-devtools-mcp/blob/main/docs/tool-reference.md (both verified 2026-08-21)
 

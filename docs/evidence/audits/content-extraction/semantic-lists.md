@@ -71,7 +71,7 @@ The description promises to catch 'content formatted as styled divs instead of s
 
 ### Signal: Semantic lists and tables versus div soup — grade B (semantic-dom-a11y)
 
-**Mechanism:** Content marked with ul/ol/li and table/tr/th/td survives HTML→markdown conversion and accessibility-tree serialization as discrete list items and rows/columns with preserved item and cell boundaries; the same content built from nested divs collapses into undelimited running prose, so an LLM must re-infer where one item or row ends and the next begins, and cell-to-header association is lost entirely.
+**Mechanism:** Content marked with ul/ol/li and table/tr/th/td survives HTML-to-markdown conversion and accessibility-tree serialization as discrete list items, rows and columns, with item and cell boundaries preserved. The same content built from nested divs collapses into undelimited running prose. An LLM must then re-infer where one item or row ends and the next begins, and cell-to-header association is lost entirely.
 
 **Grade: B** — The mechanism is documented at the standard level: HTML-AAM maps `table` to table and `th` to columnheader or rowheader, lists carry list and listitem roles, Playwright's snapshot contents enumerate lists and table structures, and browser-use treats `role='row'`/`'cell'`/`'gridcell'` as interactive. What is missing for an A is magnitude: no vendor document and no study isolates the effect of list and table markup on answer accuracy. ARIA is also an accepted substitute — a div grid carrying the right roles reaches the same accessibility tree — so "div soup" is not automatically a defect.
 

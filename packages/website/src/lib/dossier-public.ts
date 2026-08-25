@@ -292,13 +292,24 @@ function signalName(heading: string): string | undefined {
 const CLAUSE_END = /\s+[(\u2014]|\s+\/\s+/;
 const LABEL_CAP = 60;
 
+/**
+ * Words a truncated label must not end on.
+ *
+ * `Accessibility tree consumption by computer-use and\u2026` cuts on a word
+ * boundary and still reads as a sentence that broke, because the last word
+ * promises another one. Dropping the dangling word leaves a label that stops
+ * where a label is allowed to stop.
+ */
+const DANGLING = /\s+(?:and|or|of|for|to|in|on|by|with|the|a|an|as|at|from|that|which|per|via)$/i;
+
 function shortSignal(name: string): string {
   const head = name.split(CLAUSE_END)[0]!.trim() || name.trim();
   if (head.length <= LABEL_CAP) return head;
   // Cut on a word boundary rather than mid-word, and never leave a trailing
   // comma dangling in front of the ellipsis.
   const cut = head.slice(0, LABEL_CAP);
-  return `${cut.slice(0, cut.lastIndexOf(' ')).replace(/[,;:]$/, '')}\u2026`;
+  const words = cut.slice(0, cut.lastIndexOf(' ')).replace(/[,;:]$/, '');
+  return `${words.replace(DANGLING, '')}\u2026`;
 }
 
 /**
@@ -384,6 +395,22 @@ const BARE_TAG = /<\/?[a-z][a-z0-9]*(?:\s[^<>`]*?)?\/?>/;
 const BARE_ATTRIBUTE = /\b[a-z][a-z0-9-]*="[^"`\n]*"/;
 
 /**
+ * The same wound, written with single quotes.
+ *
+ * The research quotes source code as prose — `@itemprop='articleBody'`,
+ * `UNLIKELY_ROLES = ['menu','menubar']`, XPath axes such as `'self::article'`
+ * — and markdown curls those apostrophes into \u2018 and \u2019. A reader who
+ * copies the result gets a string no parser accepts.
+ *
+ * Only forms that cannot be ordinary prose are matched: an attribute
+ * assignment, a screaming-case identifier bound to an array literal, and a
+ * quoted run containing an XPath `::` axis. A bare `'menu'` is left alone,
+ * because that is also how English quotes a word.
+ */
+const SINGLE_QUOTED_CODE =
+  /@?\b[a-zA-Z_][\w.:-]*='[^'\n]{1,80}'|\b[A-Z][A-Z0-9_]{2,}\s*=\s*\[[^\]\n]{1,200}\]|'[^'\n]{0,60}::[^'\n]{0,60}'/;
+
+/**
  * One pass, not two.
  *
  * The tag alternative comes first so a whole `<link rel="alternate">` is
@@ -391,13 +418,79 @@ const BARE_ATTRIBUTE = /\b[a-z][a-z0-9-]*="[^"`\n]*"/;
  * the tag, then wrap the attributes *inside* the span it had just created, and
  * the nested backticks would break the span.
  */
-const BARE_CODE = new RegExp(`${BARE_TAG.source}|${BARE_ATTRIBUTE.source}`, 'g');
+const BARE_CODE = new RegExp(
+  `${BARE_TAG.source}|${BARE_ATTRIBUTE.source}|${SINGLE_QUOTED_CODE.source}`,
+  'g',
+);
+
+/**
+ * A URL written as prose rather than as a link.
+ *
+ * 306 evidence bullets end `— https://developers.google.com/search/docs/…
+ * (verified 2026-08-21)`, and 65 more carry one mid-sentence. The URL is the
+ * proof, so it cannot come off; but 90 characters of path is the widest thing
+ * on the page, it forces a horizontal scroll in the narrow column, and none of
+ * it is what the reader is reading.
+ *
+ * Trailing sentence punctuation is deliberately outside the match: `…/bots.`
+ * ends a sentence, and swallowing the period into the href would break the
+ * link and the sentence at once.
+ *
+ * The lookbehinds skip only what is already a link: `](https://…` is the href
+ * of a markdown link, and `[https://…` opens its label. An opening parenthesis
+ * on its own is *not* skipped — `(https://…, verified 2026-08-21)` is the
+ * corpus's other citation form, and it is the one the reader trips over most.
+ *
+ * `+https://…` is excluded because that plus sign is robots.txt's user-agent
+ * comment convention — the URL inside `GPTBot/1.4; +https://openai.com/gptbot`
+ * is a literal byte of the string an operator matches on, not a citation, and
+ * linking it would invite the reader to click a quoted value.
+ */
+const BARE_URL = /(?<!\]\()(?<![\[+])\bhttps?:\/\/[^\s)<>\]]*[^\s)<>\].,;:!?'"]/g;
+
+/**
+ * What to call a URL the reader is not going to read.
+ *
+ * The host says who is speaking, which is the part that carries authority, and
+ * the last path segment says which of their pages it is. The segments between
+ * are elided rather than dropped silently — a label that reads
+ * `docs.perplexity.ai/bots` for `/guides/bots` would be a path that does not
+ * exist, and the reader has no way to tell.
+ */
+const LINK_LABEL_CAP = 52;
+
+function urlLabel(url: string): string {
+  let host: string;
+  let path: string;
+  try {
+    const parsed = new URL(url);
+    host = parsed.host.replace(/^www\./, '');
+    path = parsed.pathname;
+  } catch {
+    return url;
+  }
+  const segments = path.split('/').filter(Boolean);
+  const last = segments.at(-1);
+  const label =
+    last === undefined
+      ? host
+      : segments.length === 1
+        ? `${host}/${last}`
+        : `${host}/\u2026/${last}`;
+  return label.length <= LINK_LABEL_CAP ? label : `${label.slice(0, LINK_LABEL_CAP - 1)}\u2026`;
+}
+
+function linkUrls(text: string): string {
+  return text.replace(BARE_URL, (url) => `[${urlLabel(url)}](${url})`);
+}
 
 function fenceTags(text: string): string {
   // Split on code spans and fences, and rewrite only the parts between them.
   return text
     .split(/(`{1,3}[^`]*`{1,3})/)
-    .map((part, index) => (index % 2 === 1 ? part : part.replace(BARE_CODE, (hit) => `\`${hit}\``)))
+    .map((part, index) =>
+      index % 2 === 1 ? part : linkUrls(part.replace(BARE_CODE, (hit) => `\`${hit}\``)),
+    )
     .join('');
 }
 

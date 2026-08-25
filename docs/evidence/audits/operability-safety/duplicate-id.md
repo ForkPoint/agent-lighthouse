@@ -53,13 +53,13 @@ _No dedicated evidence signal was researched for this audit in the 2026-08-20 pa
 
 ## Evidence (2026-08-21)
 
-**Mechanism claim:** `aria-labelledby`/`aria-describedby`/`for` resolve an IDREF by id lookup, which returns the first element in tree order; when two elements share an id, the accessible name computed per accname and exposed in the accessibility tree an agent reads is taken from the first occurrence — so a control referencing the second one is announced with the wrong label.
+**Mechanism claim:** `aria-labelledby`, `aria-describedby` and `for` resolve an IDREF by id lookup, which returns the first element in tree order. When two elements share an id, the accessible name computed per accname — the one exposed in the accessibility tree an agent reads — is taken from the first occurrence. A control referencing the second one is therefore announced with the wrong label.
 
 **Grade: A** — id resolution (first element in tree order) and the accname IDREF traversal are both ratified, universally implemented behavior, and role + accessible name is precisely what documented agent snapshot tools serialise for the model.
 
 **Evidence:**
 - `getElementById`: "IDs should be unique inside a document. If two or more elements in a document have the same ID, this method returns the first element found" — https://developer.mozilla.org/en-US/docs/Web/API/Document/getElementById (verified 2026-08-21)
-- Accessible Name and Description Computation 1.1 (W3C Recommendation, 18 December 2018) defines the LabelledBy step: "For each IDREF: Set the current node to the node referenced by the IDREF… Compute the text alternative of the current node" — https://www.w3.org/TR/accname-1.1/ (verified 2026-08-21); the same step text is carried in the 1.2 Working Draft — https://www.w3.org/TR/accname-1.2/ (verified 2026-08-21)
+- Accessible Name and Description Computation 1.1 (W3C Recommendation, 18 December 2018) defines the LabelledBy step: "For each IDREF: Set the current node to the node referenced by the IDREF… Compute the text alternative of the current node" — https://www.w3.org/TR/accname-1.1/ (verified 2026-08-21). The same step text is carried in the 1.2 Working Draft — https://www.w3.org/TR/accname-1.2/ (verified 2026-08-21)
 - Playwright ARIA snapshots serialise each node's role and accessible name for the model — https://playwright.dev/docs/aria-snapshots (verified 2026-08-21)
 - Playwright MCP and Chrome DevTools MCP both address elements by reference/uid taken from an accessibility-tree snapshot, so a wrong name is what the agent selects on — https://github.com/microsoft/playwright-mcp and https://github.com/ChromeDevTools/chrome-devtools-mcp/blob/main/docs/tool-reference.md (both verified 2026-08-21)
 - axe rule: the id "must be unique to prevent the second instance from being overlooked by assistive technology"; "only the first instance gets acted upon by client-side scripting" (impact: critical) — https://dequeuniversity.com/rules/axe/4.10/duplicate-id-aria (verified 2026-08-21)

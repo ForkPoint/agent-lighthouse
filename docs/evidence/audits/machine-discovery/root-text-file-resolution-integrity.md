@@ -46,7 +46,7 @@ No evidence any tool probes for root .txt soft-404 as a discovery precondition. 
 
 ## Example failure
 
-A Next.js site deployed on a host with a catch-all rewrite `/(.*) -> /index.html` returns 200 text/html for `/a3f2c9d1e4b70856.txt`. The owner's real IndexNow key file also 200s, so Bing Webmaster shows 'key verified' — but after a framework upgrade reorders the rewrite ahead of static file serving, every key fetch returns the app shell, IndexNow starts answering 403 to all submissions, and the site loses push indexing across six engines with no visible symptom. The same origin returns 200 for /llms.txt, so an 'llms.txt present' badge from any auditor is a false positive.
+A Next.js site deployed on a host with a catch-all rewrite `/(.*) -> /index.html` returns 200 text/html for `/a3f2c9d1e4b70856.txt`. The owner's real IndexNow key file also 200s, so Bing Webmaster shows 'key verified'. Then a framework upgrade reorders the rewrite ahead of static file serving. Every key fetch now returns the app shell, IndexNow starts answering 403 to all submissions, and the site loses push indexing across six engines with no visible symptom. The same origin returns 200 for /llms.txt, so an 'llms.txt present' badge from any auditor is a false positive.
 
 ## Scoring
 

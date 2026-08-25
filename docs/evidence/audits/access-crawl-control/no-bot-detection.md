@@ -53,7 +53,7 @@ _No dedicated evidence signal was researched for this audit in the 2026-08-20 pa
 
 ## Evidence (2026-08-21)
 
-**Mechanism claim:** An edge bot-management rule that blocks or challenges requests carrying a named AI agent's user-agent or IP causes that agent to receive a non-200 / challenge response instead of the page, so the content cannot be fetched, indexed or cited — and AI vendors publish per-agent IP ranges specifically so operators can allowlist them past those rules.
+**Mechanism claim:** An edge bot-management rule that blocks or challenges requests carrying a named AI agent's user-agent or IP hands that agent a non-200 or challenge response instead of the page. The content then cannot be fetched, indexed or cited. AI vendors publish per-agent IP ranges specifically so operators can allowlist them past those rules.
 
 **Grade: A** — the blocking behavior is a documented product feature of the largest CDN, and multiple AI vendors document per-agent IP endpoints plus explicit WAF allowlisting instructions, which only make sense because bot defense demonstrably intercepts their agents.
 

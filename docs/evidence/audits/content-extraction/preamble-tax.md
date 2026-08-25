@@ -28,7 +28,7 @@ Measure the token offset, within the raw response body, at which the main conten
 
 ## Claimed mechanism (falsifiable)
 
-Non-rendering agents ingest the document as a linear byte stream, so DOM order equals context order. Model accuracy is position-sensitive: relevant information at the beginning or end of a context is retrieved far more reliably than information buried in the middle. A page that inlines a 40k-token critical-CSS block and a serialized state blob ahead of <main> therefore does two things at once — it pushes the answer into the low-recall middle of whatever context window it lands in, and it guarantees the answer is what gets cut when the fetching harness truncates to a byte or token cap. Falsifiable: locate the first 200 normalized characters of the extracted main content inside the raw body, count tokens before that byte offset, and the number is deterministic.
+Non-rendering agents ingest the document as a linear byte stream, so DOM order equals context order. Model accuracy is position-sensitive: relevant information at the beginning or end of a context is retrieved far more reliably than information buried in the middle. A page that inlines a 40k-token critical-CSS block and a serialized state blob ahead of <main> therefore does two things at once. It pushes the answer into the low-recall middle of whatever context window it lands in. And it guarantees the answer is what gets cut when the fetching harness truncates to a byte or token cap. Falsifiable: locate the first 200 normalized characters of the extracted main content inside the raw body, count tokens before that byte offset, and the number is deterministic.
 
 ## Evidence
 

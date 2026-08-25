@@ -20,7 +20,7 @@ sources:
 
 ## What it checks
 
-Crawls the site, extracts main content per page, and computes two passage-level numbers no page-level tool produces: the fraction of each page's sentences that are unique to it (versus repeated across three or more sibling pages), and MinHash near-duplicate clusters at Jaccard >= 0.9 with the canonical status of every cluster member. Includes a divergence sub-check comparing each page against its llms-full.txt or .md alternate.
+Crawls the site, extracts main content per page, and computes two passage-level numbers no page-level tool produces. The first is the fraction of each page's sentences that are unique to it, against those repeated across three or more sibling pages. The second is MinHash near-duplicate clusters at Jaccard >= 0.9, with the canonical status of every cluster member. Includes a divergence sub-check comparing each page against its llms-full.txt or .md alternate.
 
 ## Claimed mechanism (falsifiable)
 

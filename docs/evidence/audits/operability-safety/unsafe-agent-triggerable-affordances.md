@@ -27,7 +27,7 @@ Enumerate state-changing operations that a page exposes behind a plain GET — <
 
 ## Claimed mechanism (falsifiable)
 
-RFC 9110 defines GET as read-only ('they do not commit to any action on the origin server') and notes that spiders are configured to follow links while crawling the web as a hypertext graph. Agents that explore a page rely on that contract. If consequence sits behind a bare GET, an exploring agent — or an agent that has been prompt-injected elsewhere and instructed to click through — mutates account or cart state with no confirmation step and no CSRF token, and Anthropic's own guidance to require human confirmation for consequential actions becomes unenforceable because nothing in the markup signals consequence. Falsifier: if every state-changing operation is a POST behind a confirmation interstitial, no exploring agent can trip it.
+RFC 9110 defines GET as read-only ('they do not commit to any action on the origin server') and notes that spiders are configured to follow links while crawling the web as a hypertext graph. Agents that explore a page rely on that contract. If consequence sits behind a bare GET, an exploring agent mutates account or cart state with no confirmation step and no CSRF token. So does an agent that has been prompt-injected elsewhere and instructed to click through. Anthropic's own guidance to require human confirmation for consequential actions then becomes unenforceable, because nothing in the markup signals consequence. Falsifier: if every state-changing operation is a POST behind a confirmation interstitial, no exploring agent can trip it.
 
 ## Evidence
 

@@ -26,7 +26,7 @@ Evaluates robots.txt per named AI user-agent against the exact URLs the site adv
 
 ## Claimed mechanism (falsifiable)
 
-The robots.txt Sitemap: directive is host-global and user-agent independent, but the sitemap file itself, the feed files, and every URL they list are subject to per-UA Disallow rules, and under the group-matching rule a crawler that matches a named group ignores the '*' group entirely. OpenAI documents the consequence at the extreme: 'Sites that are opted out of OAI-SearchBot will not be shown in ChatGPT search answers.' Falsifiable claim: for any UA whose named group disallows the advertised sitemap/feed path or a majority of the URLs it lists, the site's entire pull-indexing surface is unreachable by that agent regardless of sitemap quality. The high-frequency real-world trigger is a broad pattern (Disallow: /*.xml$, Disallow: /feed/, Disallow: /) added to an AI-bot group by a bot-blocking plugin while the site simultaneously advertises those exact paths.
+The robots.txt Sitemap: directive is host-global and user-agent independent, but the sitemap file itself, the feed files, and every URL they list are subject to per-UA Disallow rules, and under the group-matching rule a crawler that matches a named group ignores the '*' group entirely. OpenAI documents the consequence at the extreme: 'Sites that are opted out of OAI-SearchBot will not be shown in ChatGPT search answers.' Falsifiable claim: take any UA whose named group disallows the advertised sitemap or feed path, or a majority of the URLs it lists. The site's entire pull-indexing surface is then unreachable by that agent, however good the sitemap is. The high-frequency real-world trigger is a broad pattern (Disallow: /*.xml$, Disallow: /feed/, Disallow: /) added to an AI-bot group by a bot-blocking plugin while the site simultaneously advertises those exact paths.
 
 ## Evidence
 
@@ -35,7 +35,7 @@ The robots.txt Sitemap: directive is host-global and user-agent independent, but
 - **[Sitemaps XML format — protocol](https://www.sitemaps.org/protocol.html)** — sitemaps.org (spec, URL verified 2026-08-20)
   - lastmod must be W3C Datetime (YYYY-MM-DD or full timestamp). Path-scope rule: a sitemap at /catalog/sitemap.xml may only list URLs under /catalog/; all URLs must share protocol and host with the sitemap. 50,000 URLs / 50MB (52,428,800 bytes) per file; index files limited to 50,000 sitemaps and may only reference sitemaps on the same site.
 - **[RFC 9309 — Robots Exclusion Protocol](https://www.rfc-editor.org/rfc/rfc9309.html)** — IETF (spec, URL verified 2026-08-20)
-  - §2.2.1: 'Crawlers MUST use case-insensitive matching to find the group that matches the product token and then obey the rules of the group.' Groups matching the SAME token are combined. Critically: 'If no matching group exists, crawlers MUST obey the group with a user-agent line with the "*" value, if present.' The wildcard group is a fallback only — it is never merged with a named group. A named AI-bot group therefore fully shadows every wildcard rule.
+  - §2.2.1: 'Crawlers MUST use case-insensitive matching to find the group that matches the product token and then obey the rules of the group.' Groups matching the same token are combined. Critically: 'If no matching group exists, crawlers MUST obey the group with a user-agent line with the "*" value, if present.' The wildcard group is a fallback only — it is never merged with a named group. A named AI-bot group therefore fully shadows every wildcard rule.
 
 ## Competitor coverage
 

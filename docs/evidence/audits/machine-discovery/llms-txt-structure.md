@@ -84,7 +84,7 @@ The grade is additionally capped by that of `llms-txt-exists` (1.1): a formattin
 ### H2 sections (from 1.3, grade C)
 
 **Evidence:**
-- The spec defines "Zero or more markdown sections delimited by H2 headers, containing 'file lists'", and attaches behaviour to one heading: the "'Optional' section is used, by convention, for secondary information: links an agent can skip when a shorter context is needed" — the only agent-visible semantics the format assigns to a heading — https://llmstxt.org/ (verified 2026-08-21)
+- The spec defines "Zero or more markdown sections delimited by H2 headers, containing 'file lists'". It attaches behaviour to exactly one heading: the "'Optional' section is used, by convention, for secondary information: links an agent can skip when a shorter context is needed". That is the only agent-visible semantics the format assigns to a heading — https://llmstxt.org/ (verified 2026-08-21)
 - The reference implementation returns `sections` as a dict mapping section names to their parsed link lists, so an H2 heading is a real addressable key — https://raw.githubusercontent.com/AnswerDotAI/llms-txt/main/llms_txt/core.py (verified 2026-08-21)
 - Chrome ships an agentic-browsing Lighthouse audit for llms.txt, giving the format vendor-tool recognition — https://developer.chrome.com/docs/lighthouse/agentic-browsing/llms-txt (verified 2026-08-21)
 

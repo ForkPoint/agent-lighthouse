@@ -24,7 +24,7 @@ Repeatedly fetches tools/list and asserts three things the spec ties directly to
 
 ## Claimed mechanism (falsifiable)
 
-The spec states its own causal rationale verbatim: deterministic ordering 'enables clients to reliably cache the tool list and improves LLM prompt cache hit rates when tools are included in model context.' Tool definitions sit near the front of the model's prompt; if their serialized bytes change between turns, the provider-side prefix cache misses and the full tool block is re-billed at uncached rates on every single turn. Separately, servers MUST include caching hints on complete results, and when ttlMs is absent clients SHOULD assume 0 — immediately stale — so an omitted hint converts one cheap cached read into a network round-trip on every access. Both defects are invisible in functional testing and both are measurable with three identical requests.
+The spec states its own causal rationale verbatim: deterministic ordering 'enables clients to reliably cache the tool list and improves LLM prompt cache hit rates when tools are included in model context.' Tool definitions sit near the front of the model's prompt. If their serialized bytes change between turns, the provider-side prefix cache misses, and the full tool block is re-billed at uncached rates on every single turn. Separately, servers MUST include caching hints on complete results, and when ttlMs is absent clients SHOULD assume 0 — immediately stale — so an omitted hint converts one cheap cached read into a network round-trip on every access. Both defects are invisible in functional testing and both are measurable with three identical requests.
 
 ## Evidence
 

@@ -22,7 +22,7 @@ sources:
 
 ## What it checks
 
-Evaluates the cold-session interstitial an agent meets before any task work: whether primary content exists in the DOM behind the consent layer, whether the accept and reject controls have accessible names and live in the main document rather than a cross-origin iframe, and whether the layer traps the agent via inert/aria-hidden on main content.
+Evaluates the cold-session interstitial an agent meets before any task work. Does primary content exist in the DOM behind the consent layer? Do the accept and reject controls have accessible names, and do they live in the main document rather than a cross-origin iframe? And does the layer trap the agent, through inert or aria-hidden on main content?
 
 ## Claimed mechanism (falsifiable)
 

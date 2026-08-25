@@ -62,7 +62,7 @@ The core check (do existing <figure>s have a <figcaption>) is sound. The problem
 
 ### Signal: figure / figcaption binding captions to images — grade C (semantic-dom-a11y)
 
-**Mechanism:** Wrapping an image in <figure> with a <figcaption> creates a programmatic association between the caption text and the image, so the caption is exposed as the figure's accessible name/description and stays adjacent to the image reference through extraction and markdown conversion, instead of floating as an unattached paragraph whose relationship to the image must be inferred from proximity.
+**Mechanism:** Wrapping an image in <figure> with a <figcaption> creates a programmatic association between the caption text and the image. The caption is then exposed as the figure's accessible name or description, and it stays adjacent to the image reference through extraction and markdown conversion. Without it, the caption floats as an unattached paragraph whose relationship to the image must be inferred from proximity.
 
 **Evidence:** The mapping is specified: HTML-AAM maps figure→figure role and figcaption→caption role [w3c-html-aam], and accname's recursive name-from-content rules let figcaption text contribute to the figure's accessible name [w3c-accname]. Google states it draws image context from 'captions and image titles' alongside alt text and surrounding copy [google-image-seo-docs]. Playwright and Chrome DevTools snapshots surface figure nodes like any other role [playwright-mcp-snapshots, chrome-devtools-mcp-tool-reference].
 

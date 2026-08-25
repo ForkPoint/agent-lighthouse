@@ -54,7 +54,7 @@ _No dedicated evidence signal was researched for this audit in the 2026-08-20 pa
 
 ## Evidence (2026-08-21)
 
-**Mechanism claim:** ARIA states and properties are exposed to the accessibility tree only when the attribute name and its value are valid for the element's role (WAI-ARIA 1.2 defines the allowed value type per state/property); an invalid attribute or token — `aria-expanded="yes"`, a misspelled `aria-*` name, an `aria-controls` idref that resolves to nothing — is not exposed, so the `expanded`/`checked`/`disabled`/`selected` fields that agent snapshots print are simply absent and the agent reads no state where state exists.
+**Mechanism claim:** ARIA states and properties reach the accessibility tree only when the attribute name and its value are valid for the element's role; WAI-ARIA 1.2 defines the allowed value type for each state and property. An invalid attribute or token is not exposed at all — `aria-expanded="yes"`, a misspelled `aria-*` name, or an `aria-controls` idref that resolves to nothing. The `expanded`, `checked`, `disabled` and `selected` fields that agent snapshots print are then simply absent, and the agent reads no state where state exists.
 
 **Grade: A** — WAI-ARIA 1.2 is a ratified W3C Recommendation, and Playwright documents that its accessibility-tree snapshot carries exactly these ARIA-derived properties, so a corrupted value provably changes what the agent sees.
 

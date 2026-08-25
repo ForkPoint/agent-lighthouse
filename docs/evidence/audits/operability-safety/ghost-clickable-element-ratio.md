@@ -29,7 +29,7 @@ Measures the share of on-page click targets that a DOM/accessibility-tree agent 
 
 ## Claimed mechanism (falsifiable)
 
-Falsifiable claim: an element whose click behaviour comes only from a JS listener on a non-interactive tag (or from cursor:pointer styling) and which carries no role and no accessible name is omitted from the serialized accessibility snapshot that agent toolkits send to the model; because every action tool in those toolkits addresses elements by snapshot reference, the agent cannot emit a valid click for it and must either fail or fall back to coordinate clicking. Test: take a working <button aria-label="Add to cart">, replace it with an equivalently-styled <div onclick>, re-run browser_snapshot — the ref disappears and browser_click has no valid target. Reverse the change and the ref returns.
+Falsifiable claim: an element is omitted from the serialized accessibility snapshot that agent toolkits send to the model when its click behaviour comes only from a JS listener on a non-interactive tag, or from cursor:pointer styling, and it carries no role and no accessible name. Every action tool in those toolkits addresses elements by snapshot reference, so the agent cannot emit a valid click for such an element. It must either fail or fall back to coordinate clicking. Test: take a working <button aria-label="Add to cart">, replace it with an equivalently-styled <div onclick>, re-run browser_snapshot — the ref disappears and browser_click has no valid target. Reverse the change and the ref returns.
 
 ## Evidence
 

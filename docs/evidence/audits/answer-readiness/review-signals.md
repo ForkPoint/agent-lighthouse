@@ -67,12 +67,12 @@ _No dedicated evidence signal was researched for this audit in the 2026-08-20 pa
 
 ## Evidence (2026-08-21)
 
-**Mechanism claim:** Machine-readable review data is read by named consumers — Google Search parses schema.org `Review`/`AggregateRating` to render review rich results, and OpenAI ingests `review_count`/`star_rating` to build ChatGPT product results — so a product page that exposes ratings only as pixels is invisible to both, while one that exposes them structurally is not.
+**Mechanism claim:** Machine-readable review data is read by named consumers. Google Search parses schema.org `Review` and `AggregateRating` to render review rich results, and OpenAI ingests `review_count` and `star_rating` to build ChatGPT product results. A product page that exposes ratings only as pixels is therefore invisible to both, while one that exposes them structurally is not.
 
 **Grade: B** — consumption of the review vocabulary is documented on both a search surface and an AI surface, but the ChatGPT path runs through a submitted product feed rather than the on-page markup this audit inspects, and no study measures a citation delta for review markup.
 
 **Evidence:**
-- Google documents parsing the markup and the feature it drives: "When Google finds valid reviews or ratings markup, we may show a rich snippet that includes stars and other summary info from reviews or ratings", supported on Book, Course, Event, Local business, Movie, Product, Recipe, Software App and further schema.org types — https://developers.google.com/search/docs/appearance/structured-data/review-snippet (verified 2026-08-21)
+- Google documents parsing the markup and the feature it drives: "When Google finds valid reviews or ratings markup, we may show a rich snippet that includes stars and other summary info from reviews or ratings". The feature is supported on Book, Course, Event, Local business, Movie, Product, Recipe, Software App and further schema.org types — https://developers.google.com/search/docs/appearance/structured-data/review-snippet (verified 2026-08-21)
 - OpenAI's commerce specification carries first-class review fields for ChatGPT product results — `review_count` ("Number of product reviews"), `star_rating` ("Average review score"), `store_review_count`, `store_star_rating`, `reviews` — introduced as: "Supply aggregated review statistics and frequently asked questions. User-generated insights strengthen credibility and help shoppers make informed decisions." — https://developers.openai.com/commerce/specs/feed/ (verified 2026-08-21)
 - `AggregateRating` is core, ratified schema.org vocabulary ("The average rating based on multiple ratings or reviews") with `ratingValue`, `reviewCount` and `ratingCount`, deployed on 1M–10M domains per the Google July 2026 web index sample shown on the type page — https://schema.org/AggregateRating (verified 2026-08-21)
 

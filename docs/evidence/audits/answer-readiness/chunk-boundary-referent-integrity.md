@@ -20,7 +20,7 @@ sources:
 
 ## What it checks
 
-Splits the page the way a real RAG pipeline does (at h2/h3) and measures, per resulting chunk, whether the chunk still makes sense alone: does it open with a dangling anaphor, does it ever name the entity it is about, and does it contain positional cross-references that become nonsense once the surrounding page is gone. Emits a per-section pass/fail list with the exact offending sentence, not a page-level vibe score.
+Splits the page the way a real RAG pipeline does, at h2 and h3, then measures each resulting chunk for whether it still makes sense alone. Does it open with a dangling anaphor? Does it ever name the entity it is about? And does it contain positional cross-references that become nonsense once the surrounding page is gone? Emits a per-section pass/fail list with the exact offending sentence, not a page-level vibe score.
 
 ## Claimed mechanism (falsifiable)
 

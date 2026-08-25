@@ -52,7 +52,7 @@ Static parse of every <form>. For each control, infer the intended concept from 
 
 ## Example failure
 
-A signup form uses <input name="f_2" placeholder="ZIP"> and <input name="f_3" placeholder="State"> with no autocomplete and no labels. The agent fills the ZIP into the State field (both are short free-text inputs adjacent in the DOM), submits, gets a red border with a JS-injected sibling <span>Invalid</span> that is not linked by aria-describedby and carries no aria-invalid — so the agent's post-action snapshot shows no machine-readable error and it reports success on a form that never submitted.
+A signup form uses <input name="f_2" placeholder="ZIP"> and <input name="f_3" placeholder="State"> with no autocomplete and no labels. The agent fills the ZIP into the State field, since both are short free-text inputs adjacent in the DOM, and submits. It gets a red border and a JS-injected sibling <span>Invalid</span> that is not linked by aria-describedby and carries no aria-invalid. The agent's post-action snapshot therefore shows no machine-readable error, and it reports success on a form that never submitted.
 
 ## Scoring
 

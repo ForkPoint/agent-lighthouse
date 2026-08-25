@@ -56,7 +56,7 @@ _No dedicated evidence signal was researched for this audit in the 2026-08-20 pa
 
 **Mechanism claim:** An AI client that does not execute JavaScript cannot submit a form whose only submission path is a JS event handler; giving the form a server-side HTML submission path makes it actionable over plain HTTP.
 
-**Grade: C** — the "AI crawlers do not run JavaScript" half is well measured, but no documented agent submits HTML forms over raw HTTP, and the specific attribute this audit scores (`action`) does not distinguish a JS-only form from a standards-compliant self-posting one, so the causal link from signal to consumer is unproven.
+**Grade: C** — the "AI crawlers do not run JavaScript" half is well measured. But no documented agent submits HTML forms over raw HTTP, and the specific attribute this audit scores, `action`, does not distinguish a JS-only form from a standards-compliant self-posting one. The causal link from signal to consumer is therefore unproven.
 
 **Evidence:**
 - Vercel's crawler study finds "none of the major AI crawlers currently render JavaScript", naming OAI-SearchBot, ChatGPT-User, GPTBot, ClaudeBot, Meta-ExternalAgent, Bytespider and PerplexityBot; ChatGPT (11.50%) and Claude (23.84%) fetch JS files but do not execute them — https://vercel.com/blog/the-rise-of-the-ai-crawler (verified 2026-08-21)

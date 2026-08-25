@@ -61,7 +61,7 @@ _No dedicated evidence signal was researched for this audit in the 2026-08-20 pa
 **Grade: A** — a vendor doc names the consumer and states the behavior verbatim; the type is a live Google search feature with web-scale adoption.
 
 **Evidence:**
-- Google: "Adding `Article` structured data to your news, blog, and sports article pages can help Google understand more about the web page and show better title text, images, and date information for the article in search results on Google Search and other properties (for example, Google News and the Google Assistant)." — https://developers.google.com/search/docs/appearance/structured-data/article (verified 2026-08-21)
+- Google states the effect directly: "Adding `Article` structured data to your news, blog, and sports article pages can help Google understand more about the web page and show better title text, images, and date information for the article in search results on Google Search and other properties (for example, Google News and the Google Assistant)." — https://developers.google.com/search/docs/appearance/structured-data/article (verified 2026-08-21)
 - Article remains a live feature in Google's structured data gallery: "A news, sports, or blog article displayed in various rich result features." — https://developers.google.com/search/docs/appearance/structured-data/search-gallery (verified 2026-08-21)
 - Adoption: Article found on 2.4M domains in the October 2024 Common Crawl; BlogPosting on 1.40% and Article on 0.18% of mobile pages — https://webdatacommons.org/structureddata/2024-12/stats/stats.html and https://almanac.httparchive.org/en/2024/structured-data (both verified 2026-08-21)
 

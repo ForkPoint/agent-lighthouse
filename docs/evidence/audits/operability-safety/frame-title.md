@@ -57,7 +57,7 @@ _No dedicated evidence signal was researched for this audit in the 2026-08-20 pa
 
 **Mechanism claim:** The `title` attribute supplies an `<iframe>`'s accessible name, so an agent reading the accessibility tree sees `iframe "Checkout payment form"` instead of an anonymous `iframe` node and can choose which embedded context to enter.
 
-**Grade: C** — the name computation and the screen-reader consumer are ratified and documented, but the agent-side dependence is unproven: the documented agent snapshot tools address elements by per-element reference/uid and neither documents frame titles as part of what the model reads, and an agent can read a frame's contents directly rather than choosing frames by name.
+**Grade: C** — the name computation and the screen-reader consumer are ratified and documented, but the agent-side dependence is unproven. The documented agent snapshot tools address elements by per-element reference or uid, and neither documents frame titles as part of what the model reads. An agent can also read a frame's contents directly rather than choosing frames by name.
 
 **Evidence:**
 - MDN: "People navigating with assistive technology such as a screen reader can use the `title` attribute on an `<iframe>` to label its content… Without this title, they have to navigate into the `<iframe>` to determine what its embedded content is" — https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Elements/iframe (verified 2026-08-21)

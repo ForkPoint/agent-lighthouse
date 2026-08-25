@@ -62,7 +62,7 @@ _No dedicated evidence signal was researched for this audit in the 2026-08-20 pa
 
 **Mechanism claim:** An agent reading `/llms.txt` uses the `: description` note after each link to decide which of the linked pages to fetch, so links without a note cause the agent to fetch pages it would otherwise skip.
 
-**Grade: C** — the note is a spec-defined optional element that the format's reference parser exposes as a per-link `desc` field, and vendor tooling (Chrome Lighthouse) treats the link list itself as the point of the file — but no vendor documents a named agent pruning fetches on the basis of those notes.
+**Grade: C** — the note is a spec-defined optional element, and the format's reference parser exposes it as a per-link `desc` field. Vendor tooling, Chrome Lighthouse included, treats the link list itself as the point of the file. But no vendor documents a named agent pruning fetches on the basis of those notes.
 
 **Evidence:**
 - The llms.txt spec defines the link entry as "a required markdown hyperlink `[name](url)`, then optionally a `:` and notes about the file" — the description is part of the format, and explicitly optional — https://llmstxt.org/ (verified 2026-08-21)
