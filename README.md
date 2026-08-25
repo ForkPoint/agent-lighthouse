@@ -152,13 +152,11 @@ Generated reports are standalone files, so teams can attach them to pull request
 
 If you run Agent Lighthouse on a public site, share the result through the [site score template](https://github.com/ForkPoint/agent-lighthouse/issues/new?template=site-score.yml). Good examples help other developers learn what agent-ready sites look like.
 
-More launch material lives in:
+More material lives in:
 
-- [Promotion kit](docs/promotion.md)
+- [Media kit](docs/media-kit.md)
 - [Benchmark report](docs/benchmark.md)
 - [Badge generator notes](docs/badge.md)
-- [Launch post drafts](docs/launch-posts/)
-- [Outreach templates](docs/outreach/)
 - [Terminal demo transcript](docs/assets/terminal-demo.txt)
 - [Docs homepage screenshot](docs/assets/docs-home-screenshot.png)
 - [Generated report screenshot](docs/assets/report-screenshot.png)
