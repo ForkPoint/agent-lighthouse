@@ -36,7 +36,9 @@ sources:
 
 AI crawlers like GPTBot and ClaudeBot do not execute JavaScript. Content only visible after JS execution is completely invisible to them, meaning your site effectively has no content in AI knowledge bases. Use SSR (server-side rendering) or SSG (static site generation) to serve content in the initial HTML response.
 
-The audit measures the homepage's served HTML body — everything inside `<body>` except `script`, `style`, `noscript` and `template`. It passes when that text runs to more than 50 whitespace-delimited words or more than 200 characters. The character branch carries pages written in scripts that do not delimit words with spaces, where a word count of six can still mean several hundred characters of real copy.
+The audit measures each fetched page's served HTML body — everything inside `<body>` except `script`, `style`, `noscript` and `template`. A page counts as served when that text runs to more than 50 whitespace-delimited words or more than 200 characters. The character branch carries pages written in scripts that do not delimit words with spaces, where a word count of six can still mean several hundred characters of real copy.
+
+The verdict is the ratio. Every fetched page served: pass. Some but not all: warn, with the empty URLs listed. None: fail, at critical priority. A scan that fetched no page reports not applicable, because nothing about the site was seen.
 
 The measurement covers the whole body, page chrome included. A shell that serves only a navigation bar and a footer is the case the audit exists to catch, so that chrome has to be counted, not subtracted.
 
@@ -80,15 +82,19 @@ The most valuable premise in the category — whether meaningful content exists 
 - 2026-08-26 — the text metric was moved off `getMainContentText`. That helper reads a page's main content region, and it returned the first `<main>` element whenever any existed. Measured on real storefronts (design section 2.4): `velasca.com` ships one empty `<main>` with 194 words elsewhere in the body, and `hiutdenim.co.uk` ships four `<main>` elements of which the first holds 49 characters. Both were reported as serving no content. The audit now reads a new helper, `getRenderedText`, which returns the served `<body>` minus `script`, `style`, `noscript` and `template`. The word count comes from that same text.
 - 2026-08-26 — `getMainContentText` itself was corrected in the same change. Among several `<main>` elements it now returns the one holding the most text, and falls back to `<body>` only when none holds any. This affects the content audits that read it, not this one.
 - The threshold is unchanged: more than 50 words or more than 200 characters.
+- 2026-08-26 — the audit now judges every fetched page instead of `ctx.pages[0]`, and reports how many of them served readable text. The code review below records the reason: a site that server-renders its marketing homepage and client-renders every product page passed on the one page that was rendered, while the pages that matter went unreported. The empty URLs are carried in `details.emptyPages`.
+- 2026-08-26 — the per-page decision is read from the scan's evidence record rather than recomputed here, so the rule has one implementation. A page the record does not cover is judged by that same shared function.
+- 2026-08-26 — a scan with no fetched page returns `notApplicable`, where it previously returned `warn`. A warning is a claim about the site; the accurate statement is that nothing was seen.
 
 ## Deferred
 
 - Turning the `or` into an `and`, as the code review below asks. The character branch is the only path a page written in a non-space-delimited script can take, so removing it would fail CJK homepages that carry ample content.
 - Scoring the content region rather than the served body, as the code review below asks. The audit's subject is what a non-rendering crawler receives, and a shell that ships only a navigation bar and a footer is what it exists to catch, so the chrome is part of the measurement. The consequence is stated plainly: a template whose chrome alone clears 200 characters passes this check. Raising the bar is a separate change, and the evidence gate design (section 6.3) keeps this rule as the single implementation.
-- Judging every page and reporting a ratio instead of the homepage alone. That lands with step 3 of the scan evidence gate.
+- Raising the threshold itself. A page clears the bar at 51 words, which is a low bar for a real page; what the right number is has not been measured, so the shipped rule keeps the one the evidence gate design fixed as the single implementation.
 
 ## Review history
 
 - 2026-08-20 — code review (11-agent workflow) + evidence research (12-domain workflow, 400 sources).
 - 2026-08-21 — dossier generated; disposition pending final taxonomy design.
 - 2026-08-26 — text metric split; see Implementation deviations.
+- 2026-08-26 — judgement widened from the homepage to every fetched page; see Implementation deviations.

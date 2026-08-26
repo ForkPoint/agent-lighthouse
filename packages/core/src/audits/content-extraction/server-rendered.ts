@@ -1,8 +1,21 @@
 import type { AuditMeta, AuditResult } from "../../types";
 import { Audit } from "../../audit";
 import type { CheckContext } from '../../check-context';
-import { getRenderedText } from '../../parser';
 import { weightForGrade } from '../../scorer';
+import { pageRendersText } from '../../scan-evidence';
+
+/**
+ * Attach measurement details to a result the base helpers built.
+ *
+ * `pass`/`warn`/`fail` take no details argument, and `warn`/`fail` already use
+ * that field for the fix snippet, so the two are merged rather than replaced.
+ */
+function withDetails(
+  result: AuditResult,
+  details: Record<string, string | number | boolean | string[]>,
+): AuditResult {
+  return { ...result, details: { ...(result.details ?? {}), ...details } };
+}
 
 export class ServerRenderedAudit extends Audit {
   static override meta: AuditMeta = {
@@ -30,44 +43,71 @@ export class ServerRenderedAudit extends Audit {
   };
 
   audit(ctx: CheckContext): AuditResult {
-    const page = ctx.pages?.[0];
+    const pages = ctx.pages ?? [];
 
-    if (!page) {
-      return this.warn(
-        'No homepage data available to check server-rendered content.',
-        'Homepage HTML body has > 50 words or > 200 characters of text content',
-        'No homepage fetched',
-        undefined,
-        undefined,
+    if (pages.length === 0) {
+      return this.notApplicable(
+        'The scan fetched no page, so there is no served HTML to judge.',
+        'Every fetched page serves > 50 words or > 200 characters of readable text',
+        'No page fetched',
       );
     }
 
-    const $ = page.$;
-    // Shell detection reads the whole served body, chrome included. An empty or
-    // fragmented <main> is a theme artefact, not an absence of content.
-    const text = getRenderedText($);
-    const wordCount = text.split(/\s+/).filter(Boolean).length;
+    // The scan already decided this, per page, before any audit ran. Reading
+    // its record keeps one rule in one place, and keeps the verdict tied to
+    // what the fetch actually returned. A page the scan has no record for is
+    // judged by the same shared rule.
+    const rendered = ctx.evidence.renderedByPage;
+    const emptyPages = pages
+      .filter((page) => !(rendered[page.url] ?? pageRendersText(page)))
+      .map((page) => page.url);
 
-    if (wordCount > 50 || text.length > 200) {
-      return this.pass(
-        `Homepage has meaningful server-rendered content (${wordCount} words, ${text.length} characters).`,
-        'Homepage HTML body has > 50 words or > 200 characters of text content',
-        `${wordCount} words, ${text.length} characters`,
-        page.url,
+    const total = pages.length;
+    const renderedCount = total - emptyPages.length;
+    const expected = 'Every fetched page serves > 50 words or > 200 characters of readable text';
+    const found = `${renderedCount} of ${total} page(s) served readable text`;
+
+    if (emptyPages.length === 0) {
+      return withDetails(
+        this.pass(
+          `All ${total} fetched page(s) serve their content in the HTML response.`,
+          expected,
+          found,
+          pages[0].url,
+        ),
+        { pagesChecked: total, renderedPages: renderedCount },
       );
     }
 
-    return this.fail(
-      `Homepage has minimal server-rendered content (${wordCount} words, ${text.length} characters). AI agents cannot read client-side-only rendered content.`,
-      'Homepage HTML body has > 50 words or > 200 characters of text content',
-      `${wordCount} words, ${text.length} characters`,
-      {
-        priority: 'critical',
-        description:
-          'AI crawlers like GPTBot and ClaudeBot do not execute JavaScript. Content only visible after JS execution is completely invisible to them, meaning your site effectively has no content in AI knowledge bases. Use SSR (server-side rendering) or SSG (static site generation) to serve content in the initial HTML response.',
-        code: '// Next.js SSR example:\nexport async function getServerSideProps() {\n  const data = await fetchData();\n  return { props: { data } };\n}',
-      },
-      page.url,
+    const failGuidance = {
+      priority: 'critical' as const,
+      description:
+        'AI crawlers like GPTBot and ClaudeBot do not execute JavaScript. Content only visible after JS execution is completely invisible to them, meaning your site effectively has no content in AI knowledge bases. Use SSR (server-side rendering) or SSG (static site generation) to serve content in the initial HTML response.',
+      code: '// Next.js SSR example:\nexport async function getServerSideProps() {\n  const data = await fetchData();\n  return { props: { data } };\n}',
+    };
+
+    if (renderedCount === 0) {
+      return withDetails(
+        this.fail(
+          `None of the ${total} fetched page(s) serve readable content in the HTML response. AI agents cannot read client-side-only rendered content.`,
+          expected,
+          found,
+          failGuidance,
+          pages[0].url,
+        ),
+        { pagesChecked: total, renderedPages: 0, emptyPages },
+      );
+    }
+
+    return withDetails(
+      this.warn(
+        `${emptyPages.length} of ${total} fetched page(s) serve no readable content in the HTML response. AI agents read nothing on those pages.`,
+        expected,
+        found,
+        failGuidance,
+        emptyPages[0],
+      ),
+      { pagesChecked: total, renderedPages: renderedCount, emptyPages },
     );
   }
 }
