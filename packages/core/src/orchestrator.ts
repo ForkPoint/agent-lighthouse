@@ -25,6 +25,7 @@ import { extractProductFieldVerification } from './product-fields';
 import { generateScanSummary } from './summary';
 import { isInformative } from './scorer';
 import { detectWafProtection } from './waf-detector';
+import { buildScanEvidence } from './scan-evidence';
 
 import type { FetchResult } from './fetcher';
 
@@ -377,6 +378,14 @@ export async function runScan(url: string, options?: ScanOptions): Promise<ScanR
 
   const wafProtection = detectWafProtection(url, homepageResult, rootFiles, pages.length);
 
+  const evidence = buildScanEvidence({
+    requestedUrl: url,
+    homepageResult,
+    pages,
+    rootFiles,
+    wafProtection: wafProtection ?? null,
+  });
+
   const ctx: CheckContext = {
     rootFiles,
     pages,
@@ -384,6 +393,7 @@ export async function runScan(url: string, options?: ScanOptions): Promise<ScanR
     baseUrl,
     fetch: (options) => fetcher.fetch({ ...options, signal }),
     wafProtection: wafProtection ?? undefined,
+    evidence,
   };
 
   const config = filterConfig(defaultConfig, {

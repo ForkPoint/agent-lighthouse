@@ -34,6 +34,8 @@ export type { CssRule, PageCss } from './gatherers/css-rules';
 export { pagesOfType, judgePages } from './gatherers/pages';
 export type { PageJudgement } from './gatherers/pages';
 export type { CheckContext, CheckFn, PageContext } from './check-context';
+export type { ScanEvidence, EvidenceKey } from './scan-evidence';
+export { buildScanEvidence, allEvidenceMet } from './scan-evidence';
 export { Audit, evidenceUrl } from './audit';
 export { runAudits, planAudits } from './audit-runner';
 export { defaultConfig, CATEGORY_MASS, CATEGORY_IDS, filterConfig } from './audit-config';

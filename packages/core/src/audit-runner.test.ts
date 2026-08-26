@@ -8,6 +8,7 @@ import { runAudits } from './audit-runner';
 import { AuditResultSchema } from './schemas';
 import type { AuditTrace } from './audit-trace';
 import type { AuditProgressEvent } from './audit-runner';
+import { allEvidenceMet } from './scan-evidence';
 
 // ---------------------------------------------------------------------------
 // Helpers: build tiny fake Audit subclasses + registrations
@@ -55,6 +56,7 @@ function ctxWith(pageTypes: PageType[]): CheckContext {
     domain: 'example.com',
     baseUrl: 'https://example.com',
     fetch: async () => ({}) as never,
+    evidence: allEvidenceMet(),
   } as unknown as CheckContext;
 }
 

@@ -7,6 +7,7 @@ import {
 } from '../parser';
 import type { CheckContext, PageContext } from '../check-context';
 import type { FetchResult } from '../fetcher';
+import { allEvidenceMet } from '../scan-evidence';
 
 export function mockPageContext(url: string, html: string, index: number = 0): PageContext {
   const $ = parseHtml(html);
@@ -37,6 +38,9 @@ export function mockCheckContext(
     domain: 'example.com',
     baseUrl: 'https://example.com',
     fetch: async () => mockFetchResult('', 404),
+    // Unit tests judge the audit, not the gate: hand every requirement to them
+    // so a two-page fixture never gates itself out.
+    evidence: allEvidenceMet(),
   };
 }
 

@@ -1,6 +1,7 @@
 import type { CheckContext } from '../check-context';
 import type { FetchOptions, FetchResult } from '../fetcher';
 import type { AuditResult } from '../types';
+import { allEvidenceMet } from '../scan-evidence';
 
 const notFound = (url: string): FetchResult => ({
   url,
@@ -21,6 +22,7 @@ export function emptyContext(overrides: Partial<CheckContext> = {}): CheckContex
     domain: 'example.test',
     baseUrl: 'https://example.test',
     fetch: async (options: FetchOptions) => notFound(options.url),
+    evidence: allEvidenceMet(),
     ...overrides,
   };
 }
