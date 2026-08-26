@@ -98,6 +98,7 @@ export class ServiceSchemaAudit extends Audit {
     evidenceGrade: 'A',
     tier: 'scored',
     dossier: 'docs/evidence/audits/structured-data/service-schema.md',
+    requires: ['origin-reachable', 'unblocked-fetches', 'rendered-body', 'sample-adequate'],
     // Where a service business publishes its offerings. NOT ['product'] —
     // that was inherited from the pre-split audit and inverted this check:
     // it skipped every service site (no product page in the scan) and ran only

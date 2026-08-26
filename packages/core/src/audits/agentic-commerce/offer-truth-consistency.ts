@@ -115,6 +115,7 @@ export class OfferTruthConsistencyAudit extends Audit {
     weight: weightForGrade('B', 'scored'),
     defaultPriority: 'high',
     dossier: 'docs/evidence/audits/agentic-commerce/offer-truth-consistency.md',
+    requires: ['origin-reachable', 'unblocked-fetches', 'rendered-body', 'sample-adequate'],
     applicablePageTypes: ['product'],
     guidance: {
       impact:

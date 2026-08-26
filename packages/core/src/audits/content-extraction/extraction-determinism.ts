@@ -59,6 +59,7 @@ export class ExtractionDeterminismAudit extends Audit {
     weight: weightForGrade('B', 'scored'),
     defaultPriority: 'high',
     dossier: 'docs/evidence/audits/content-extraction/extraction-determinism.md',
+    requires: ['origin-reachable', 'unblocked-fetches', 'rendered-body', 'sample-adequate'],
     guidance: {
       impact:
         'Every agent pipeline strips a page down before a model reads it, and they do not all strip the same way. When the extractors disagree, the same URL yields different answers depending on which tool fetched it — and the page cannot be tested, because there is no single thing it says. When readability declines a page outright, the most widely deployed extractor of the three hands an agent nothing at all.',

@@ -63,6 +63,7 @@ export class OpenApiEndpointsAudit extends Audit {
     evidenceGrade: 'B',
     tier: 'scored',
     dossier: 'docs/evidence/audits/agent-interfaces/openapi-endpoints.md',
+    requires: ['origin-reachable'],
     defaultPriority: 'high',
     guidance: {
       impact:

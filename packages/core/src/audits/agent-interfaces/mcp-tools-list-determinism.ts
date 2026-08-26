@@ -157,6 +157,7 @@ export class McpToolsListDeterminismAudit extends Audit {
     evidenceGrade: 'A',
     tier: 'scored',
     dossier: 'docs/evidence/audits/agent-interfaces/mcp-tools-list-determinism.md',
+    requires: ['origin-reachable'],
     defaultPriority: 'medium',
     guidance: {
       impact:

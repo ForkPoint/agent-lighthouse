@@ -141,6 +141,7 @@ export class BuyableVariantResolutionAudit extends Audit {
     weight: weightForGrade('B', 'scored'),
     defaultPriority: 'high',
     dossier: 'docs/evidence/audits/agentic-commerce/buyable-variant-resolution.md',
+    requires: ['origin-reachable', 'unblocked-fetches', 'rendered-body', 'sample-adequate'],
     applicablePageTypes: ['product'],
     guidance: {
       impact:

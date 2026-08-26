@@ -132,6 +132,7 @@ export class McpToolDescriptionCoverageAudit extends Audit {
     weight: weightForGrade('B', 'scored'),
     defaultPriority: 'medium',
     dossier: 'docs/evidence/audits/agent-interfaces/mcp-tool-description-coverage.md',
+    requires: ['origin-reachable'],
     guidance: {
       impact:
         'A tool description and its parameter descriptions are the only prose a model ever sees about a tool — they are the whole basis on which it decides whether to call it and what to pass. A required parameter with no description, no enum and no pattern gives the model nothing to derive a legal value from, so it guesses. Guessed values come back as validation errors, and the agent spends retry turns per call until it gives up on the tool.',

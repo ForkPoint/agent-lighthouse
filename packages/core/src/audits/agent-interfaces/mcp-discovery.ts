@@ -28,6 +28,7 @@ export class McpDiscoveryAudit extends Audit {
     evidenceGrade: 'C',
     tier: 'informative',
     dossier: 'docs/evidence/audits/agent-interfaces/mcp-discovery.md',
+    requires: ['origin-reachable'],
     defaultPriority: 'medium',
     guidance: {
       impact:

@@ -90,6 +90,7 @@ export class OpenApiDescriptionQualityAudit extends Audit {
     evidenceGrade: 'A',
     tier: 'scored',
     dossier: 'docs/evidence/audits/agent-interfaces/openapi-description-quality.md',
+    requires: ['origin-reachable'],
     defaultPriority: 'high',
     guidance: {
       impact:

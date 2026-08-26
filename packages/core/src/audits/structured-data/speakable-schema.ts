@@ -127,6 +127,7 @@ export class SpeakableSchemaAudit extends Audit {
     evidenceGrade: 'B',
     tier: 'scored',
     dossier: 'docs/evidence/audits/structured-data/speakable-schema.md',
+    requires: ['origin-reachable', 'unblocked-fetches', 'rendered-body', 'sample-adequate'],
     // News and article publishing is the whole documented scope of the
     // feature, so a scan with no content page never runs this audit at all.
     // The runtime guard below repeats the precondition for the pages that

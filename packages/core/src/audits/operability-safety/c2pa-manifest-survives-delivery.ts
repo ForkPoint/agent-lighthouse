@@ -28,6 +28,7 @@ export class C2paManifestSurvivesDeliveryAudit extends Audit {
     weight: weightForGrade('B', 'scored'),
     defaultPriority: 'medium',
     dossier: 'docs/evidence/audits/operability-safety/c2pa-manifest-survives-delivery.md',
+    requires: ['origin-reachable', 'unblocked-fetches', 'rendered-body', 'sample-adequate'],
     guidance: {
       impact:
         'Signing an image at creation proves nothing if the bytes a crawler downloads are unsigned. Image transformation layers discard Content Credentials by default — Cloudflare states outright that with preservation disabled, existing Content Credentials are always discarded — so the publisher sees signed assets in their library while every consumer sees stripped ones. The provenance work is done and none of it reaches the reader.',

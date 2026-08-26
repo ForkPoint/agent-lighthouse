@@ -87,6 +87,7 @@ export class WikidataRoundTripVerificationAudit extends Audit {
     weight: weightForGrade('B', 'scored'),
     defaultPriority: 'medium',
     dossier: 'docs/evidence/audits/operability-safety/wikidata-round-trip-verification.md',
+    requires: ['origin-reachable', 'unblocked-fetches', 'rendered-body', 'sample-adequate'],
     guidance: {
       impact:
         'A knowledge-graph consumer that grounds a brand to an entity needs corroboration from the authority side, because `sameAs` carries no reciprocity requirement — Google documents it as a link to a page with more information, nothing more. Wikidata publishes that corroboration for free as P856. A claim whose entity points at an unrelated domain is either the wrong entity or an unbacked identity claim, and an answer engine that resolves it grounds the brand to somebody else.',

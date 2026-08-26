@@ -30,6 +30,8 @@ export class ServerRenderedAudit extends Audit {
     evidenceGrade: 'B',
     tier: 'scored',
     dossier: 'docs/evidence/audits/content-extraction/server-rendered.md',
+    // Gate exemption: A shell is what this audit reports. Gating it would delete the finding.
+    requires: ['origin-reachable', 'unblocked-fetches'],
     defaultPriority: 'critical',
     guidance: {
       impact:

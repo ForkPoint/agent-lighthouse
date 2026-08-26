@@ -265,6 +265,7 @@ export class CheckoutOfferFieldMappingAudit extends Audit {
     evidenceGrade: 'A',
     tier: 'scored',
     dossier: 'docs/evidence/audits/agentic-commerce/checkout-offer-field-mapping.md',
+    requires: ['origin-reachable', 'unblocked-fetches', 'rendered-body', 'sample-adequate'],
     applicablePageTypes: ['product'],
     defaultPriority: 'high',
     guidance: {

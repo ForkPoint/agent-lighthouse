@@ -75,6 +75,7 @@ export class TrustTxtReciprocityCoherenceAudit extends Audit {
     weight: 0,
     defaultPriority: 'low',
     dossier: 'docs/evidence/audits/operability-safety/trust-txt-reciprocity-coherence.md',
+    requires: ['origin-reachable'],
     guidance: {
       impact:
         'trust.txt association attributes are defined as reciprocal: `belongto=<association>` means something only if that association’s own trust.txt carries `member=<this domain>`. That makes the claim checkable rather than self-asserted, which is the whole point of publishing it. Separately, `datatrainingallowed=no` beside a robots.txt that leaves GPTBot and ClaudeBot free to crawl states two opposite policies, and the channel that actually gates crawlers is the one that says yes. Adoption caveat: no AI engine, answer engine or crawler is documented as reading trust.txt.',

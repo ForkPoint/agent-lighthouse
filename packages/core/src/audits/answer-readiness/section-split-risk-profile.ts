@@ -65,6 +65,7 @@ export class SectionSplitRiskProfileAudit extends Audit {
     weight: weightForGrade('B', 'scored'),
     defaultPriority: 'medium',
     dossier: 'docs/evidence/audits/answer-readiness/section-split-risk-profile.md',
+    requires: ['origin-reachable', 'unblocked-fetches', 'rendered-body', 'sample-adequate'],
     guidance: {
       impact:
         'Retrieval pipelines cut pages into fixed windows. A section longer than the window becomes one chunk carrying the heading and one or more tail chunks carrying none — and a tail chunk is text with no subject, which retrieves badly and cites worse. A page with no headings at all is cut at arbitrary offsets throughout.',

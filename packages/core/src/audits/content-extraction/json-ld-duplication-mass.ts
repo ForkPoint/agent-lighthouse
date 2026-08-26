@@ -71,6 +71,7 @@ export class JsonLdDuplicationMassAudit extends Audit {
     weight: weightForGrade('C', 'informative'),
     defaultPriority: 'low',
     dossier: 'docs/evidence/audits/content-extraction/json-ld-duplication-mass.md',
+    requires: ['origin-reachable', 'unblocked-fetches', 'rendered-body', 'sample-adequate'],
     guidance: {
       impact:
         'A non-rendering agent tokenizes the whole document, JSON-LD included. Where a block repeats the article body the DOM already carries, the page ships that text twice and the agent pays for both copies out of one context window. The same holds for a node declared identically in two blocks: the second copy adds tokens and no facts.',

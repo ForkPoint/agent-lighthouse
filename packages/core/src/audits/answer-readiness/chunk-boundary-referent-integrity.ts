@@ -119,6 +119,7 @@ export class ChunkBoundaryReferentIntegrityAudit extends Audit {
     weight: weightForGrade('B', 'scored'),
     defaultPriority: 'high',
     dossier: 'docs/evidence/audits/answer-readiness/chunk-boundary-referent-integrity.md',
+    requires: ['origin-reachable', 'unblocked-fetches', 'rendered-body', 'sample-adequate'],
     guidance: {
       impact:
         'An answer engine retrieves a passage, not a page. A section that opens "This means you should..." and never names its subject is unusable on arrival: the model either drops it or attributes it to whatever else is in the window. The fix is per-sentence and cheap, and it is invisible to a reader of the whole page — which is why it survives editing.',

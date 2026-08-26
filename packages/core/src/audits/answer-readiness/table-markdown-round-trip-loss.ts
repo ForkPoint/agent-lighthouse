@@ -191,6 +191,7 @@ export class TableMarkdownRoundTripLossAudit extends Audit {
     weight: weightForGrade('B', 'scored'),
     defaultPriority: 'medium',
     dossier: 'docs/evidence/audits/answer-readiness/table-markdown-round-trip-loss.md',
+    requires: ['origin-reachable', 'unblocked-fetches', 'rendered-body', 'sample-adequate'],
     guidance: {
       impact:
         'A model does not read your table markup. Something converts it to markdown first, and GFM markdown has no merged cells, no second header row and no lists inside a cell. A header spanning two columns arrives heading one of them; the other column of numbers arrives with no header at all. The model still answers the question — with a number read from the wrong column, stated as confidently as a right one.',

@@ -116,6 +116,7 @@ export class TrustSignalsAudit extends Audit {
     evidenceGrade: 'B',
     tier: 'scored',
     dossier: 'docs/evidence/audits/answer-readiness/trust-signals.md',
+    requires: ['origin-reachable', 'unblocked-fetches', 'rendered-body', 'sample-adequate'],
     applicablePageTypes: ['homepage'],
     defaultPriority: 'low',
     guidance: {

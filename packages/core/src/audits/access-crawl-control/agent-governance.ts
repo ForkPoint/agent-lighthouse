@@ -65,6 +65,8 @@ export class AgentGovernanceAudit extends Audit {
     evidenceGrade: 'A',
     tier: 'scored',
     dossier: 'docs/evidence/audits/access-crawl-control/agent-governance.md',
+    // Gate exemption: being refused is what this category reports.
+    requires: ['origin-reachable'],
     defaultPriority: 'medium',
     guidance: {
       impact:

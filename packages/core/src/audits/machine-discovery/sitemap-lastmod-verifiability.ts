@@ -118,6 +118,7 @@ export class SitemapLastmodVerifiabilityAudit extends Audit {
     evidenceGrade: 'A',
     tier: 'scored',
     dossier: 'docs/evidence/audits/machine-discovery/sitemap-lastmod-verifiability.md',
+    requires: ['origin-reachable', 'unblocked-fetches', 'rendered-body', 'sample-adequate'],
     defaultPriority: 'medium',
     guidance: {
       impact:

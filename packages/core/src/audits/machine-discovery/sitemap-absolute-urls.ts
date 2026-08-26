@@ -31,6 +31,7 @@ export class SitemapAbsoluteUrlsAudit extends Audit {
     evidenceGrade: 'B',
     tier: 'scored',
     dossier: 'docs/evidence/audits/machine-discovery/sitemap-absolute-urls.md',
+    requires: ['origin-reachable'],
     defaultPriority: 'high',
     guidance: {
       impact:

@@ -82,6 +82,7 @@ export class OpenApiOperationIdsAudit extends Audit {
     evidenceGrade: 'B',
     tier: 'scored',
     dossier: 'docs/evidence/audits/agent-interfaces/openapi-operation-ids.md',
+    requires: ['origin-reachable'],
     defaultPriority: 'medium',
     guidance: {
       impact:

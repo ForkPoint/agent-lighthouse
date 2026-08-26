@@ -115,6 +115,7 @@ export class WebmcpDeclarativeFormsAudit extends Audit {
     evidenceGrade: 'B',
     tier: 'scored',
     dossier: 'docs/evidence/audits/agent-interfaces/webmcp-declarative-forms.md',
+    requires: ['origin-reachable', 'unblocked-fetches', 'rendered-body', 'sample-adequate'],
     // Softened from 'high': the feature is Baseline "limited" (Chrome 149 /
     // Edge 150 origin trials, Brave Leo experimental) and Apple's WebKit
     // standards position is "oppose", so this is worth doing, not urgent.

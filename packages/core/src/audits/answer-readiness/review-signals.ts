@@ -205,6 +205,7 @@ export class ReviewSignalsAudit extends Audit {
     evidenceGrade: 'B',
     tier: 'scored',
     dossier: 'docs/evidence/audits/answer-readiness/review-signals.md',
+    requires: ['origin-reachable', 'unblocked-fetches', 'rendered-body', 'sample-adequate'],
     applicablePageTypes: ['homepage', 'product'],
     defaultPriority: 'medium',
     guidance: {

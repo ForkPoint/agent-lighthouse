@@ -25,6 +25,8 @@ export class NoBlockingCaptchaAudit extends Audit {
     evidenceGrade: 'A',
     tier: 'scored',
     dossier: 'docs/evidence/audits/operability-safety/no-blocking-captcha.md',
+    // Gate exemption: A captcha wall is what this audit reports.
+    requires: ['origin-reachable'],
     defaultPriority: 'high',
     guidance: {
       impact:

@@ -156,6 +156,8 @@ export class TdmRepAudit extends Audit {
     evidenceGrade: 'C',
     tier: 'experimental',
     dossier: 'docs/evidence/audits/access-crawl-control/tdm-rep.md',
+    // Gate exemption: being refused is what this category reports.
+    requires: ['origin-reachable', 'rendered-body', 'sample-adequate'],
     // Nothing consumes the signal, so nothing here should outrank an item that
     // changes what an agent can do.
     defaultPriority: 'low',

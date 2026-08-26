@@ -213,6 +213,8 @@ export class AiUsageSignalCoherenceAcrossChannelsAudit extends Audit {
     defaultPriority: 'high',
     dossier:
       'docs/evidence/audits/access-crawl-control/ai-usage-signal-coherence-across-channels.md',
+    // Gate exemption: being refused is what this category reports.
+    requires: ['origin-reachable', 'rendered-body', 'sample-adequate'],
     guidance: {
       impact:
         'No standard defines precedence between these channels; each specifies only its own parsing. A crawler that reads TDM-Rep and a crawler that reads AIPREF therefore read disjoint inputs, and when those inputs disagree the two reach opposite conclusions about the same page. Whichever one you did not mean to publish is the one some operator will act on. The documented worst case is not even yours to make: Cloudflare’s managed robots.txt prepends its own Content-Signal block above your file, so your stated policy can be contradicted at the edge without you knowing.',

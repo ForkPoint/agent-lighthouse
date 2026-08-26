@@ -207,6 +207,7 @@ export class SearchEndpointAudit extends Audit {
     evidenceGrade: 'C',
     tier: 'informative',
     dossier: 'docs/evidence/audits/agent-interfaces/search-endpoint.md',
+    requires: ['origin-reachable', 'unblocked-fetches', 'rendered-body', 'sample-adequate'],
     defaultPriority: 'low',
     guidance: {
       impact:

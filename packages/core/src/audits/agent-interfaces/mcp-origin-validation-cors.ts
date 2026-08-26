@@ -35,6 +35,7 @@ export class McpOriginValidationCorsAudit extends Audit {
     weight: weightForGrade('B', 'scored'),
     defaultPriority: 'high',
     dossier: 'docs/evidence/audits/agent-interfaces/mcp-origin-validation-cors.md',
+    requires: ['origin-reachable'],
     guidance: {
       impact:
         'The transport spec is unambiguous: servers MUST validate the Origin header on all incoming connections, and answer 403 when it is present and invalid, because a server that does not is reachable from any web page the user has open. The provable defect is the CORS pairing: an endpoint that reflects the requesting Origin into `Access-Control-Allow-Origin` and returns `Access-Control-Allow-Credentials: true` has authorized any page to enumerate its tool surface and invoke tools with the user’s session.',

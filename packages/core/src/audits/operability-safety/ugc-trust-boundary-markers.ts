@@ -213,6 +213,7 @@ export class UgcTrustBoundaryMarkersAudit extends Audit {
     weight: weightForGrade('B', 'scored'),
     defaultPriority: 'high',
     dossier: 'docs/evidence/audits/operability-safety/ugc-trust-boundary-markers.md',
+    requires: ['origin-reachable', 'unblocked-fetches', 'rendered-body', 'sample-adequate'],
     guidance: {
       impact:
         'Attacker-controllable text sits in the same DOM as first-party copy with no boundary, so anything a visitor types reads, to a fetching agent, as a statement the domain made. Google excludes text inside a `data-nosnippet` span, div or section from snippets across web search, Discover and AI Overviews, and includes everything outside it. The sanitizer arm matters most: if a comment body can carry an inline style or an iframe, hiding an instruction inside visitor text becomes self-serve on this site.',

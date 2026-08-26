@@ -116,6 +116,7 @@ export class OrganizationIdentifierRegistryResolutionAudit extends Audit {
     weight: weightForGrade('B', 'scored'),
     defaultPriority: 'medium',
     dossier: 'docs/evidence/audits/operability-safety/organization-identifier-registry-resolution.md',
+    requires: ['origin-reachable', 'unblocked-fetches', 'rendered-body', 'sample-adequate'],
     guidance: {
       impact:
         'A shopping or payment agent transacting with an unfamiliar merchant needs one thing no amount of markup can self-assert: a legal identity it can check against an authority. The LEI is the only schema.org organization identifier backed by a free, queryable, authoritative registry, which makes it the only one whose truth an outside party can establish. An identifier that resolves to nothing, or to a lapsed registration, or to a different legal name, is worse than none: it looks like verification and is not.',

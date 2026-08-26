@@ -78,6 +78,7 @@ export class SecurityHeaderHygieneAudit extends Audit {
     evidenceGrade: 'C',
     tier: 'informative',
     dossier: 'docs/evidence/audits/operability-safety/security-header-hygiene.md',
+    requires: ['origin-reachable'],
     defaultPriority: 'low',
     guidance: {
       impact:

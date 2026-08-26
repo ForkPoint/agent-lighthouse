@@ -176,6 +176,7 @@ export class DirectDefinitionsAudit extends Audit {
     evidenceGrade: 'C',
     tier: 'informative',
     dossier: 'docs/evidence/audits/answer-readiness/direct-definitions.md',
+    requires: ['origin-reachable', 'unblocked-fetches', 'rendered-body', 'sample-adequate'],
     applicablePageTypes: ['content'],
     // Never a defect, so never above the actionable items.
     defaultPriority: 'low',

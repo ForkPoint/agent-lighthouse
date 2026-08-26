@@ -145,6 +145,7 @@ export class McpOauthDiscoveryChainAudit extends Audit {
     evidenceGrade: 'A',
     tier: 'scored',
     dossier: 'docs/evidence/audits/agent-interfaces/mcp-oauth-discovery-chain.md',
+    requires: ['origin-reachable'],
     defaultPriority: 'high',
     guidance: {
       impact:

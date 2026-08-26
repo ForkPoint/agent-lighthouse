@@ -106,6 +106,7 @@ export class ReflectedParameterInjectionCanaryAudit extends Audit {
     weight: weightForGrade('B', 'scored'),
     defaultPriority: 'critical',
     dossier: 'docs/evidence/audits/operability-safety/reflected-parameter-injection-canary.md',
+    requires: ['origin-reachable', 'unblocked-fetches', 'rendered-body', 'sample-adequate'],
     guidance: {
       impact:
         "Agents and answer engines weight a source by domain authority, and a reflected-input URL passes human inspection because the hostname is genuine. If attacker-controlled query or path input lands in the page's own title, meta description, canonical link, or JSON-LD strings, the domain becomes a self-serve injection host: the attacker does not need to compromise anything, only to share a link. Reflection into rendered text is the same defect one step down, and it is only contained while the page stays out of an index.",

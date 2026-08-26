@@ -12,6 +12,7 @@
     "typecheck": "pnpm -r run typecheck",
     "lint": "oxlint .",
     "check:dossiers": "node scripts/check-dossiers.mjs",
+    "check:requires": "node scripts/check-requires.mjs",
     "format": "prettier --write \"**/*.{ts,tsx,js,json,md}\"",
     "format:check": "prettier --check \"**/*.{ts,tsx,js,json,md}\"",
     "changeset": "changeset",

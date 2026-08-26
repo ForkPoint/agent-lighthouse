@@ -101,7 +101,30 @@ export interface AuditMeta {
   tier?: AuditTier;
   /** Repo-relative path to the audit's evidence dossier. */
   dossier?: string;
+  /**
+   * Which classes of scan evidence this audit needs to say anything true.
+   *
+   * Declared per audit rather than inferred at runtime, and checked against
+   * what the source actually reads by `scripts/check-requires.mjs`. An audit
+   * that reads the sampled pages — directly or through a page-fed gatherer —
+   * needs all four keys; one that reads only root files needs the origin to
+   * have answered. The deliberate disagreements are the audits whose subject
+   * *is* the missing evidence, and they are listed in that script.
+   */
+  requires?: EvidenceKey[];
 }
+
+/**
+ * A class of evidence a scan either obtained or did not.
+ *
+ * Declared here rather than in `scan-evidence.ts` so `AuditMeta` can name it
+ * without the audit layer importing the scan layer.
+ */
+export type EvidenceKey =
+  | 'origin-reachable'
+  | 'unblocked-fetches'
+  | 'rendered-body'
+  | 'sample-adequate';
 
 export interface AuditResult {
   status: CheckStatus;

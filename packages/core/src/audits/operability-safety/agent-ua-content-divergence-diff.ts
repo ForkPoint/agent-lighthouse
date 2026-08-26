@@ -101,6 +101,7 @@ export class AgentUaContentDivergenceDiffAudit extends Audit {
     weight: weightForGrade('B', 'scored'),
     defaultPriority: 'high',
     dossier: 'docs/evidence/audits/operability-safety/agent-ua-content-divergence-diff.md',
+    requires: ['origin-reachable', 'unblocked-fetches', 'rendered-body', 'sample-adequate'],
     guidance: {
       impact:
         'An agent that reads a different page from the one a human sees cannot be checked by the human it answers to. Where the crawler copy is thinner, the answer engine quotes a page the visitor will never find; where it carries text the browser copy does not, the site is speaking to the model privately — which is the delivery mechanism for every instruction-injection attack that does not need a compromise. A JSON-LD block that differs between variants is the same problem in the field a machine trusts most.',

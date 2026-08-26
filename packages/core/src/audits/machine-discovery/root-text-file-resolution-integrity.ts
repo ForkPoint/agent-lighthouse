@@ -30,6 +30,7 @@ export class RootTextFileResolutionIntegrityAudit extends Audit {
     weight: weightForGrade('B', 'scored'),
     defaultPriority: 'medium',
     dossier: 'docs/evidence/audits/machine-discovery/root-text-file-resolution-integrity.md',
+    requires: ['origin-reachable', 'unblocked-fetches', 'rendered-body', 'sample-adequate'],
     guidance: {
       impact:
         'IndexNow proves ownership by fetching `https://host/{key}.txt` and byte-comparing the body to the key, and six engines discard the submission when that comparison fails. The same property decides whether any other root `.txt` file means anything: if an origin answers 200 for a path that does not exist, then a 200 for `/llms.txt` is not evidence the file is there. A catch-all rewrite ahead of static file serving turns every one of those signals into noise, with no visible symptom on the site itself.',

@@ -16,6 +16,7 @@ export class JsonLdPresentAudit extends Audit {
     evidenceGrade: 'A',
     tier: 'scored',
     dossier: 'docs/evidence/audits/structured-data/json-ld-present.md',
+    requires: ['origin-reachable', 'unblocked-fetches', 'rendered-body', 'sample-adequate'],
     defaultPriority: 'critical',
     guidance: {
       impact:

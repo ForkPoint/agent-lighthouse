@@ -1,5 +1,5 @@
 import type { CheckResult, CheckStatus } from './types';
-import { TAG_SCAN_ERROR, TAG_SKIPPED_PAGE_TYPE } from './constants';
+import { TAG_SCAN_ERROR, TAG_SKIPPED_NO_EVIDENCE, TAG_SKIPPED_PAGE_TYPE } from './constants';
 
 /**
  * What one audit did, in a form that can be diffed.
@@ -19,9 +19,10 @@ export interface AuditTrace {
   /**
    * `ran` — the audit executed and returned.
    * `skipped` — no scanned page matched its `applicablePageTypes`.
+   * `gated` — the scan never obtained evidence the audit needs.
    * `error` — it threw, or its result was rejected by the schema.
    */
-  outcome: 'ran' | 'skipped' | 'error';
+  outcome: 'ran' | 'skipped' | 'gated' | 'error';
   status: CheckStatus;
   score: number;
   weight: number;
@@ -36,11 +37,12 @@ export interface AuditTrace {
   details?: CheckResult['details'];
 }
 
-/** Which of the three outcomes a finished check represents. */
+/** Which outcome a finished check represents. */
 export function outcomeOf(check: CheckResult): AuditTrace['outcome'] {
   const tags = check.tags ?? [];
   if (tags.includes(TAG_SCAN_ERROR)) return 'error';
   if (tags.includes(TAG_SKIPPED_PAGE_TYPE)) return 'skipped';
+  if (tags.includes(TAG_SKIPPED_NO_EVIDENCE)) return 'gated';
   return 'ran';
 }
 

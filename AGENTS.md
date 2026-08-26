@@ -33,6 +33,7 @@ pnpm test               # vitest, from the repo root only
 pnpm typecheck          # tsc --noEmit per package
 pnpm lint               # oxlint
 pnpm check:dossiers     # registry <-> dossier agreement, both directions
+pnpm check:requires     # each audit's `requires` matches what its source reads
 pnpm changeset          # one per user-visible change
 ```
 
@@ -146,14 +147,14 @@ Write for a reader, not for a researcher:
 
 ## Before you commit
 
-All five, in order:
+All six, in order:
 
 ```bash
-pnpm build && pnpm test && pnpm typecheck && pnpm lint && pnpm check:dossiers
+pnpm build && pnpm test && pnpm typecheck && pnpm lint && pnpm check:dossiers && pnpm check:requires
 ```
 
-`check:dossiers` reads the _built_ core bundle, so `pnpm build` has to run
-first. Watch for stale build artifacts: an untracked `.js` or `.d.ts` under
+`check:dossiers` and `check:requires` read the _built_ core bundle, so
+`pnpm build` has to run first. Watch for stale build artifacts: an untracked `.js` or `.d.ts` under
 `packages/*/src/` shadows its source in vitest and turns a red suite green.
 
 Add a changeset for anything a user would notice. Removing an audit, changing

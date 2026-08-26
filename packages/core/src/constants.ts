@@ -18,6 +18,8 @@ export const SCANNER_USER_AGENT =
 
 export const TAG_SKIPPED_PAGE_TYPE = 'skipped:page-type';
 export const TAG_SCAN_ERROR = 'scan-error';
+/** An audit the scan could not feed: it needs evidence this scan never got. */
+export const TAG_SKIPPED_NO_EVIDENCE = 'skipped:no-evidence';
 
 // ── Scoring ────────────────────────────────────────────────────
 

@@ -11,16 +11,12 @@
  */
 import type { FetchResult } from './fetcher';
 import type { PageContext } from './check-context';
-import type { PageType } from './types';
+import type { EvidenceKey, PageType } from './types';
 import type { WafProtection } from './waf-detector';
 import { getRenderedText } from './parser';
 import { registrableOf } from './gatherers/domains';
 
-export type EvidenceKey =
-  | 'origin-reachable'
-  | 'unblocked-fetches'
-  | 'rendered-body'
-  | 'sample-adequate';
+export type { EvidenceKey };
 
 export const EVIDENCE_KEYS: readonly EvidenceKey[] = [
   'origin-reachable',

@@ -50,6 +50,14 @@ export interface ScanOptions {
    * evidence it was drawn from; see {@link AuditTrace}.
    */
   onAuditTrace?: AuditTraceHandler;
+  /**
+   * Skip audits the scan could not feed, instead of running them blind.
+   *
+   * Off by default while the gate is calibrated (design step 4). With it on,
+   * an audit whose required evidence the scan never obtained reports `na`
+   * tagged `skipped:no-evidence`, with the reason attached.
+   */
+  enforceEvidenceGate?: boolean;
 }
 
 // Cap how many pages get the jsdom-based a11y pass. Accessibility issues are
@@ -401,7 +409,9 @@ export async function runScan(url: string, options?: ScanOptions): Promise<ScanR
     includeExperimental: options?.includeExperimental ?? false,
   });
 
-  const auditPlan = planAudits(ctx, config);
+  const auditPlan = planAudits(ctx, config, {
+    enforceEvidence: options?.enforceEvidenceGate ?? false,
+  });
   tracker.phaseStart('audits', auditPlan.runnable.length);
 
   const {
