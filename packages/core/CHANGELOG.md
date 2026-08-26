@@ -1,5 +1,102 @@
 # @forkpoint/agent-lighthouse-core
 
+## 3.0.0
+
+### Major Changes
+
+- 13082c6: Every audit now receives the scan's evidence record.
+
+  `CheckContext` gains a required `evidence` field, built once per scan before
+  any audit runs. It records whether the origin answered, whether anything
+  blocked the scan, which fetched pages served readable text, and which page
+  types are usable. Nothing is gated on it yet — audits that want it can read it.
+
+  The field is required rather than optional on purpose: an optional field fails
+  open, and a caller that forgets it is exactly the silent-nothing verdict the
+  record exists to remove. Code that builds a `CheckContext` by hand must pass
+  one; `allEvidenceMet()` is exported for callers that do not exercise the gate.
+
+- 13082c6: A scan that saw too little now says so, instead of scoring the site anyway.
+
+  **The gate is on.** An audit whose required evidence the scan never obtained is
+  skipped, reports `na` tagged `skipped:no-evidence` with the reason attached, and
+  is never constructed. Pass `enforceEvidenceGate: false` to `runScan` to run
+  every audit regardless.
+
+  **The score can be absent.** `ScanReport.overallScore` and `scoreTier` are now
+  `number | null` and `ScoreTier | null`. They are null when the scan never
+  reached the site, was refused, or lost so much of the registry's evidence mass
+  to the gate that what remains is not a reading of the site. The report carries a
+  new `scanValidity` block saying which evidence classes were obtained, why the
+  missing ones are missing, and — when suppressed — why there is no score. Every
+  surface renders that as "Not scored" with the reason, never as `0`.
+
+  **Two audits stop lying about being blocked.** `no-blocking-captcha` reported a
+  pass on a site that walled the scanner: it looked for CAPTCHA markup in pages it
+  never received. It now fails and names the wall, and returns `notApplicable`
+  when no page was fetched. A rate limit is excluded — that is the scan asking too
+  fast, not the site refusing agents.
+
+  **A homepage 429 is retried once**, after `Retry-After` when the site sends one,
+  before the scan concludes it was blocked.
+
+  **`na` no longer leaks into `recommendations`.** Core now filters to `fail` and
+  `warn`, which is what `packages/report` always did.
+
+- 13082c6: `content-extraction/server-rendered` now judges every fetched page, not just
+  the first.
+
+  The audit reads the per-page record the scan already built and reports a ratio:
+  pass when every page served readable text, warn when some did not (the empty
+  URLs are listed in `details.emptyPages`), fail at critical priority when none
+  did. Its `message` and `found` strings changed shape accordingly.
+
+  A scan that fetched no page reports `notApplicable` instead of `warn`. Warning
+  was a claim about the site; the truth is that nothing was seen.
+
+- 13082c6: The text metric behind `content-extraction/server-rendered` now reads the served HTML body instead of the first `<main>` element.
+
+  The audit used to measure `getMainContentText`, which returns a page's main content region. That helper took the first `<main>` whenever any existed, so a site that ships an empty `<main>` wrapper, or several `<main>` elements of which the first is a stub, was measured as serving no content at all. Two real storefronts in the benchmark were failed at critical priority on that basis: one with a single empty `<main>` and 194 words elsewhere in its body, one with four `<main>` elements the first of which held 49 characters. Both now pass.
+
+  The audit reads a new exported helper, `getRenderedText`, which returns the whole `<body>` minus `script`, `style`, `noscript` and `template`. Its word count comes from that same text. The pass threshold is unchanged: more than 50 words or more than 200 characters.
+
+  `getMainContentText` keeps its job of describing the main content region, with its selection corrected. Among several `<main>` elements it now returns the one holding the most text rather than the first, and it falls back to `<body>` only when no `<main>` holds any text. A `<main>` inside a `<template>` is never counted: the page does not render it. Pages with a single non-empty `<main>` are measured exactly as before, so navigation, headers and footers stay out of the content audits that read it — dates, numbers, unique data, publication dates, content depth, hydration payload share and the user-agent parity gatherer.
+
+  The `<body>` fallback is the one place that changes for those audits. A page whose every `<main>` is empty used to measure as zero words; it now measures its body text, page chrome included. That is the correction `velasca.com` needed, and it is also why a chrome-only shell can now clear a word-count threshold it used to fail. `answer-readiness/content-without-clickthrough` carried a private copy of the old first-`<main>` rule and now reads the shared helper, so it stops warning about low content on pages whose real content sits in a later `<main>`.
+
+  Scan output changes for any site whose `<main>` is empty or fragmented: it stops being reported as serving no content.
+
+### Minor Changes
+
+- 13082c6: Audits declare which scan evidence they need, and a scan can act on it.
+
+  `AuditMeta` gains `requires`: the classes of evidence an audit needs to say
+  anything true. An audit that reads the sampled pages — directly or through a
+  page-fed gatherer — needs all four; one that reads only root files needs the
+  origin to have answered. Of 215 registered audits, 161 are page-fed.
+
+  `scripts/check-requires.mjs` (`pnpm check:requires`, wired into CI) proves each
+  declaration against what the source actually reads, and fails the build when a
+  new gatherer is not classified. Audits whose subject _is_ the missing evidence —
+  `server-rendered`, `no-blocking-captcha`, `no-bot-detection` and the
+  `access-crawl-control` category — are exempt through an allowlist, not through
+  a missing rule.
+
+  The gate itself is off by default. `runScan({ enforceEvidenceGate: true })`
+  turns it on: an audit the scan cannot feed reports `na` tagged
+  `skipped:no-evidence`, with the reason attached, and is never constructed.
+  `AuditTrace.outcome` gains `'gated'` for those.
+
+- 13082c6: `FetchResult` now records the redirect chain it walked.
+
+  Each hop carries its status, the URL it left and the URL it went to. `finalUrl`
+  alone cannot say whether a host change was permanent: a scan has to tell a
+  domain migration (301/308) from a temporary hop to somebody else's domain, and
+  only the per-hop status answers that.
+
+  The field is optional and absent when the response was not a redirect, so
+  nothing that reads a `FetchResult` today changes.
+
 ## 2.0.0
 
 ### Major Changes
