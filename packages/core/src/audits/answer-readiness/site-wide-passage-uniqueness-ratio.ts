@@ -118,6 +118,7 @@ export class SiteWidePassageUniquenessRatioAudit extends Audit {
     weight: weightForGrade('B', 'scored'),
     defaultPriority: 'medium',
     dossier: 'docs/evidence/audits/answer-readiness/site-wide-passage-uniqueness-ratio.md',
+    requires: ['origin-reachable', 'unblocked-fetches', 'rendered-body', 'sample-adequate'],
     guidance: {
       impact:
         'A search engine clusters duplicate and near-duplicate URLs and elects one canonical; the losers have their signals folded into the winner. A cluster of near-duplicate pages that each name themselves canonical therefore competes against itself, and at most one member stays citable however good the others are. Separately, a page whose sentences are mostly site-wide template produces chunks whose embeddings encode the template rather than the page, so every page built from that template lands in the same place in vector space and none is a distinctive match for any question.',

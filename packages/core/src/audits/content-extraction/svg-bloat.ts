@@ -87,6 +87,7 @@ export class SvgBloatAudit extends Audit {
     evidenceGrade: 'B',
     tier: 'scored',
     dossier: 'docs/evidence/audits/content-extraction/svg-bloat.md',
+    requires: ['origin-reachable', 'unblocked-fetches', 'rendered-body', 'sample-adequate'],
     defaultPriority: 'medium',
     guidance: {
       impact:

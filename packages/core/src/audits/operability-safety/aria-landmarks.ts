@@ -35,6 +35,7 @@ export class AriaLandmarksAudit extends Audit {
     evidenceGrade: 'A',
     tier: 'scored',
     dossier: 'docs/evidence/audits/operability-safety/aria-landmarks.md',
+    requires: ['origin-reachable', 'unblocked-fetches', 'rendered-body', 'sample-adequate'],
     defaultPriority: 'high',
     guidance: {
       impact:

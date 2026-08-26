@@ -11,7 +11,7 @@ import { SCORE_TIER_LABELS } from '@forkpoint/agent-lighthouse-core';
 export function generateScanSummary(report: Partial<ScanReport>): string {
   const {
     domain,
-    overallScore = 0,
+    overallScore,
     scoreTier,
     categories = [],
     recommendations = [],
@@ -38,7 +38,9 @@ export function generateScanSummary(report: Partial<ScanReport>): string {
 
   const v = readinessVitals;
   const summary = [
-    `Scan Report for ${domain}: Overall Readiness ${overallScore}% (${tierLabel}).`,
+    overallScore === null || overallScore === undefined
+      ? `Scan Report for ${domain}: not scored — this scan obtained too little evidence to judge the site.`
+      : `Scan Report for ${domain}: Overall Readiness ${overallScore}% (${tierLabel}).`,
     `Readiness Vitals: Commerce ${v.commerce}%, Content ${v.content}%, AI Bot Accessibility ${v.botAccessibility}%, Technical Readiness ${v.technical}%.`,
     `Audit Statistics: ${passCount} of ${totalChecks} checks passed.`,
     `Key Issues: ${criticalCount} critical, ${highCount} high priority findings.`,

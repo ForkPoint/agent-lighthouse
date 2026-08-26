@@ -3,6 +3,7 @@ import { pagesOfType, judgePages } from './pages';
 import { parseHtml } from '../parser';
 import type { CheckContext, PageContext } from '../check-context';
 import type { PageType } from '../types';
+import { allEvidenceMet } from '../scan-evidence';
 
 const page = (url: string, pageType: PageType, title: string): PageContext => ({
   url,
@@ -30,6 +31,7 @@ const ctx = {
     page('https://x.test/p', 'product', ''),
     page('https://x.test/c', 'category', 'Cat'),
   ],
+  evidence: allEvidenceMet(),
 } as unknown as CheckContext;
 
 describe('pagesOfType', () => {

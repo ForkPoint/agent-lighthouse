@@ -33,8 +33,8 @@ export interface CategorySummary {
 export interface ReportSummary {
   /** The scanned site, as the report names it. */
   url: string;
-  /** 0–100. */
-  score: number;
+  /** 0–100, or null when the scan obtained too little evidence to judge. */
+  score: number | null;
   /** The report's own tier label, or `''` when it carries none. */
   tier: string;
   /** How many pages the scan covered. */
@@ -107,8 +107,10 @@ function count(value: unknown): number {
  * are accepted too — the page this one replaces guessed those names, and a
  * report saved by a reader from that era should still open.
  *
- * `overallScore` is the one field required: a document without it is not a scan
- * report, and pretending it scored 0 would be a lie dressed as a result.
+ * `overallScore` is the one field required — but an explicit `null` is a
+ * value, not an absence: it is what a scan writes when it saw too little to
+ * judge the site. A document *missing* the field is still not a scan report,
+ * and pretending it scored 0 would be a lie dressed as a result.
  */
 export function summarize(report: unknown): ReportSummary {
   const record = asRecord(report);
@@ -116,8 +118,9 @@ export function summarize(report: unknown): ReportSummary {
     throw new ReportShapeError('That file is not a JSON object, so it cannot be a scan report.');
   }
 
+  const unscored = record['overallScore'] === null;
   const score = asNumber(record['overallScore']);
-  if (score === undefined) {
+  if (score === undefined && !unscored) {
     throw new ReportShapeError(
       'That JSON file has no numeric overallScore, so it is not an Agent Lighthouse report.',
     );
@@ -150,7 +153,7 @@ export function summarize(report: unknown): ReportSummary {
       asText(record['targetUrl']) ??
       asText(record['domain']) ??
       'Unnamed target',
-    score: asScore(score),
+    score: unscored || score === undefined ? null : asScore(score),
     tier: asText(record['scoreTier']) ?? '',
     pages,
     durationMs: Math.max(0, Math.round(duration)),
@@ -241,8 +244,21 @@ function header(summary: ReportSummary): HTMLElement {
   left.append(eyebrow, target, div('mt-1 text-xs text-slate-400', scanLine(summary)));
 
   const right = div('text-left sm:text-right');
-  const score = div(`text-4xl font-black ${scoreClass(summary.score)}`, `${summary.score}/100`);
+  // A scan that saw too little carries no number. Showing 0 here would read as
+  // a verdict about the site rather than about the scan.
+  const score =
+    summary.score === null
+      ? div('text-2xl font-black text-amber-300', 'Not scored')
+      : div(`text-4xl font-black ${scoreClass(summary.score)}`, `${summary.score}/100`);
   right.append(score);
+  if (summary.score === null) {
+    right.append(
+      div(
+        'mt-1 max-w-xs text-xs text-slate-400',
+        'This scan obtained too little evidence to judge the site.',
+      ),
+    );
+  }
   if (summary.tier) {
     right.append(
       div('mt-1 text-xs font-semibold uppercase tracking-wider text-slate-400', summary.tier),

@@ -77,6 +77,7 @@ export class ContactFormAudit extends Audit {
     evidenceGrade: 'C',
     tier: 'informative',
     dossier: 'docs/evidence/audits/operability-safety/contact-form.md',
+    requires: ['origin-reachable', 'unblocked-fetches', 'rendered-body', 'sample-adequate'],
     defaultPriority: 'high',
     guidance: {
       impact:

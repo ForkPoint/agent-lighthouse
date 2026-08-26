@@ -4,6 +4,19 @@ import { buildReportView } from './view-model';
 /**
  * Generates a GitHub PR comment markdown summary.
  */
+/**
+ * The sentence that explains a large not-assessed count.
+ *
+ * "154 audits not assessed" reads as a broken scanner unless the reason sits
+ * next to it.
+ */
+function notAssessedLine(view: ReturnType<typeof buildReportView>): string {
+  const { skippedNoEvidence, noEvidenceReasons } = view.coverage;
+  if (skippedNoEvidence === 0) return '';
+  const why = noEvidenceReasons.length > 0 ? ` ${noEvidenceReasons.join(' ')}` : '';
+  return `\n> **${skippedNoEvidence} audit${skippedNoEvidence === 1 ? '' : 's'} not assessed:** this scan did not obtain the evidence they need.${why}\n`;
+}
+
 export function generateMarkdownSummary(report: ScanReport): string {
   const view = buildReportView(report);
 
@@ -33,8 +46,13 @@ export function generateMarkdownSummary(report: ScanReport): string {
   return `### 🗼 Agent Lighthouse Audit Report
 
 **Target:** \`${report.url}\`  
-**Overall Score:** **\`${view.overallScore}/100\`** *(${view.scoreTier})*  
+**Overall Score:** ${
+    view.overallScore === null
+      ? `_Not scored_ — ${view.unscoredReason ?? 'this scan obtained too little evidence to judge the site.'}`
+      : `**\`${view.overallScore}/100\`** *(${view.scoreTier})*`
+  }  
 **Pages Audited:** \`${view.pagesScanned.length}\` | **Duration:** \`${(view.durationMs / 1000).toFixed(1)}s\`
+${notAssessedLine(view)}
 
 | Category | Score | Breakdown |
 | :--- | :---: | :--- |

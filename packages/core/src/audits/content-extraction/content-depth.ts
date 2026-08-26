@@ -17,6 +17,7 @@ export class ContentDepthAudit extends Audit {
     evidenceGrade: 'B',
     tier: 'scored',
     dossier: 'docs/evidence/audits/content-extraction/content-depth.md',
+    requires: ['origin-reachable', 'unblocked-fetches', 'rendered-body', 'sample-adequate'],
     defaultPriority: 'medium',
     guidance: {
       impact:

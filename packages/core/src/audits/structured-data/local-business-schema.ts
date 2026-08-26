@@ -72,6 +72,7 @@ export class LocalBusinessSchemaAudit extends Audit {
     evidenceGrade: 'A',
     tier: 'scored',
     dossier: 'docs/evidence/audits/structured-data/local-business-schema.md',
+    requires: ['origin-reachable', 'unblocked-fetches', 'rendered-body', 'sample-adequate'],
     applicablePageTypes: ['homepage'],
     defaultPriority: 'medium',
     guidance: {

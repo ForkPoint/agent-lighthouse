@@ -141,6 +141,66 @@ describe('buildReportView', () => {
     expect(v.coverage.erroredChecks.map((c) => c.id)).toEqual(['e1']);
   });
 
+  it('counts gated checks apart, and carries the reason that explains the number', () => {
+    const v = buildReportView(
+      report(
+        [
+          cat({
+            id: 'agent-interfaces',
+            checks: [
+              check({ id: 'g1', status: 'na', score: 0, tags: ['skipped:no-evidence'] }),
+              check({ id: 'g2', status: 'na', score: 0, tags: ['skipped:no-evidence'] }),
+              check({ id: 'p1' }),
+            ],
+          }),
+        ],
+        {
+          scanValidity: {
+            judgeable: true,
+            evidence: {
+              'origin-reachable': true,
+              'unblocked-fetches': true,
+              'rendered-body': false,
+              'sample-adequate': false,
+            },
+            reasons: { 'rendered-body': 'None of the 3 fetched page(s) served readable text.' },
+          },
+        },
+      ),
+    );
+
+    expect(v.coverage.skippedNoEvidence).toBe(2);
+    // The gated checks must not also be counted as plain not-applicable.
+    expect(v.coverage.notApplicable).toBe(0);
+    expect(v.coverage.noEvidenceReasons).toEqual([
+      'None of the 3 fetched page(s) served readable text.',
+    ]);
+  });
+
+  it('carries a null score through as null, never as zero', () => {
+    const v = buildReportView(
+      report([cat({ id: 'agent-interfaces', checks: [check({ id: 'p1' })] })], {
+        overallScore: null,
+        scoreTier: null,
+        scanValidity: {
+          judgeable: false,
+          evidence: {
+            'origin-reachable': false,
+            'unblocked-fetches': true,
+            'rendered-body': false,
+            'sample-adequate': false,
+          },
+          reasons: { 'origin-reachable': 'The homepage answered HTTP 403.' },
+          unscoredReason: 'The homepage answered HTTP 403.',
+        },
+      }),
+    );
+
+    expect(v.overallScore).toBeNull();
+    expect(v.scoreTier).toBeNull();
+    expect(v.unscoredReason).toBe('The homepage answered HTTP 403.');
+  });
+
   it('orders topFixes by priority (fail+warn) and topPasses by category weight', () => {
     const v = buildReportView(mixedReport());
     expect(v.topFixes.map((c) => c.id)).toEqual(['f1', 'w1']); // critical before high

@@ -227,6 +227,7 @@ export class UrlAddressableStateAndPaginationFallbackAudit extends Audit {
     tier: 'scored',
     dossier:
       'docs/evidence/audits/operability-safety/url-addressable-state-and-pagination-fallback.md',
+    requires: ['origin-reachable', 'unblocked-fetches', 'rendered-body', 'sample-adequate'],
     defaultPriority: 'high',
     applicablePageTypes: ['category'],
     guidance: {

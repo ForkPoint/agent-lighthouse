@@ -160,6 +160,7 @@ export class ReviewSchemaAudit extends Audit {
     evidenceGrade: 'A',
     tier: 'scored',
     dossier: 'docs/evidence/audits/structured-data/review-schema.md',
+    requires: ['origin-reachable', 'unblocked-fetches', 'rendered-body', 'sample-adequate'],
     applicablePageTypes: ['homepage', 'product'],
     defaultPriority: 'medium',
     guidance: {

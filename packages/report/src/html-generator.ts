@@ -208,6 +208,14 @@ export function generateHtmlReport(report: ScanReport): string {
               <span>Duration: ${(view.durationMs / 1000).toFixed(1)}s</span>
               <span>•</span>
               <span>Pages: ${view.pagesScanned.length} scanned</span>
+              ${
+                view.coverage.skippedNoEvidence > 0
+                  ? `<span>•</span>
+              <span class="text-amber-300" title="${escapeHtml(
+                view.coverage.noEvidenceReasons.join(' '),
+              )}">${view.coverage.skippedNoEvidence} not assessed</span>`
+                  : ''
+              }
               <span>•</span>
               <span>${new Date(report.scannedAt).toLocaleString()}</span>
             </div>
@@ -215,8 +223,17 @@ export function generateHtmlReport(report: ScanReport): string {
         </div>
         
         <div class="flex flex-col items-center">
-          ${renderGaugeSvg(view.overallScore, 120, 9)}
-          <span class="text-xs font-bold uppercase tracking-wider text-slate-400 mt-2">${view.scoreTier}</span>
+          ${
+            view.overallScore === null
+              ? `<div class="px-4 py-3 rounded-xl border border-amber-500/40 bg-amber-500/10 text-center max-w-xs">
+              <div class="text-sm font-bold uppercase tracking-wider text-amber-300">Not scored</div>
+              <p class="text-xs text-amber-100/80 mt-1">${escapeHtml(
+                view.unscoredReason ?? 'This scan obtained too little evidence to judge the site.',
+              )}</p>
+            </div>`
+              : `${renderGaugeSvg(view.overallScore, 120, 9)}
+          <span class="text-xs font-bold uppercase tracking-wider text-slate-400 mt-2">${view.scoreTier}</span>`
+          }
         </div>
       </div>
 

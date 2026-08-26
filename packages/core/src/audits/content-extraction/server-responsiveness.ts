@@ -36,6 +36,7 @@ export class ServerResponsivenessAudit extends Audit {
     evidenceGrade: 'B',
     tier: 'scored',
     dossier: 'docs/evidence/audits/content-extraction/server-responsiveness.md',
+    requires: ['origin-reachable', 'unblocked-fetches', 'rendered-body', 'sample-adequate'],
     defaultPriority: 'medium',
     guidance: {
       impact:

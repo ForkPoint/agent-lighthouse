@@ -47,6 +47,7 @@ export class LlmsTxtExistsAudit extends Audit {
     evidenceGrade: 'C',
     tier: 'informative',
     dossier: 'docs/evidence/audits/machine-discovery/llms-txt-exists.md',
+    requires: ['origin-reachable', 'unblocked-fetches', 'rendered-body', 'sample-adequate'],
     defaultPriority: 'low',
     guidance: {
       impact:

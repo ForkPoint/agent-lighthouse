@@ -6,6 +6,7 @@ import { Audit } from './audit';
 import { planAudits } from './audit-runner';
 import type { CheckContext } from './check-context';
 import { defaultConfig, type ScanConfig } from './audit-config';
+import { allEvidenceMet } from './scan-evidence';
 
 // ---------------------------------------------------------------------------
 // Fixtures
@@ -174,6 +175,7 @@ describe('meta → CheckResult pass-through', () => {
     };
     const ctx = {
       pages: (['homepage'] as PageType[]).map((pageType) => ({ pageType })),
+      evidence: allEvidenceMet(),
     } as unknown as CheckContext;
 
     const { skipped } = planAudits(ctx, config);

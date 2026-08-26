@@ -21,6 +21,7 @@ export class NoBrokenLinksAudit extends Audit {
     evidenceGrade: 'A',
     tier: 'scored',
     dossier: 'docs/evidence/audits/machine-discovery/no-broken-links.md',
+    requires: ['origin-reachable', 'unblocked-fetches', 'rendered-body', 'sample-adequate'],
     defaultPriority: 'high',
     guidance: {
       impact:

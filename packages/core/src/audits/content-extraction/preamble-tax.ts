@@ -128,6 +128,7 @@ export class PreambleTaxTokensBeforeTheFirstContentTokenAudit extends Audit {
     defaultPriority: 'medium',
     dossier:
       'docs/evidence/audits/content-extraction/preamble-tax.md',
+    requires: ['origin-reachable', 'unblocked-fetches', 'rendered-body', 'sample-adequate'],
     guidance: {
       impact:
         'A non-rendering agent ingests the document as a linear stream, so DOM order is context order. A page that inlines a critical-CSS block and a serialized state blob ahead of its content does two things at once: it pushes the answer into the middle of the context window, where retrieval is measurably weakest, and it guarantees the answer is what gets cut when the fetching harness truncates to a byte or token cap.',

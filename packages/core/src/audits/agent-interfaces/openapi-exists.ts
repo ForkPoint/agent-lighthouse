@@ -132,6 +132,7 @@ export class OpenApiExistsAudit extends Audit {
     evidenceGrade: 'B',
     tier: 'informative',
     dossier: 'docs/evidence/audits/agent-interfaces/openapi-exists.md',
+    requires: ['origin-reachable', 'unblocked-fetches', 'rendered-body', 'sample-adequate'],
     defaultPriority: 'medium',
     guidance: {
       impact:

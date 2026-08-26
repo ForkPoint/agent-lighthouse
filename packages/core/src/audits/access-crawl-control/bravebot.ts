@@ -16,6 +16,8 @@ export class BravebotAudit extends CrawlerBotAudit {
     evidenceGrade: 'C',
     tier: 'informative',
     dossier: 'docs/evidence/audits/access-crawl-control/bravebot.md',
+    // Gate exemption: being refused is what this category reports.
+    requires: ['origin-reachable'],
     defaultPriority: 'medium',
     guidance: {
       impact:

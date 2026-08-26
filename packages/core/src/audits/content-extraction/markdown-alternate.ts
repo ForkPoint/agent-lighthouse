@@ -143,6 +143,7 @@ export class MarkdownAlternateAudit extends Audit {
     weight: weightForGrade('A', 'scored'),
     defaultPriority: 'medium',
     dossier: 'docs/evidence/audits/content-extraction/markdown-alternate.md',
+    requires: ['origin-reachable', 'unblocked-fetches', 'rendered-body', 'sample-adequate'],
     guidance: {
       impact:
         'A markdown alternate is a promise that an agent can read the page cheaply and get the same answer. A stale or partial alternate breaks that promise silently: the agent gets a document that looks authoritative, costs less, and says less than the page it claims to mirror. Serving it as `text/plain` or `text/html` is the same failure one level down — the client that negotiated for markdown cannot tell it got any. The consumers this is graded on are interactive coding agents — Claude Code, Cursor, Copilot Chat and CLI, Codex CLI — and GPTBot, measured taking markdown on 34.8% of fetches where a `.md` URL exists.',

@@ -12,6 +12,7 @@ import {
   SECTION_GROUPS,
   SECTION_GROUP_LABELS,
   TAG_SCAN_ERROR,
+  TAG_SKIPPED_NO_EVIDENCE,
   TAG_SKIPPED_PAGE_TYPE,
 } from './sections';
 
@@ -56,6 +57,15 @@ export interface CoverageView {
   ran: number;
   /** Audits skipped because no scanned page matched their page types. */
   skippedByPageType: number;
+  /** Audits the scan could not feed: it never obtained the evidence they need. */
+  skippedNoEvidence: number;
+  /**
+   * Why, one sentence per missing evidence class.
+   *
+   * "154 audits not assessed" needs the sentence that says why, or the number
+   * reads as a defect in the scanner rather than as a fact about the scan.
+   */
+  noEvidenceReasons: string[];
   /** Audits that threw and were recorded instead of silently dropped. */
   errored: number;
   /** Audits that self-declared not-applicable (precondition unmet). */
@@ -67,8 +77,12 @@ export interface CoverageView {
 export interface ReportView {
   url: string;
   domain: string;
-  overallScore: number;
-  scoreTier: ScoreTier;
+  /** Null when the scan saw too little to judge the site. Never rendered as 0. */
+  overallScore: number | null;
+  /** Null exactly when `overallScore` is. */
+  scoreTier: ScoreTier | null;
+  /** Present when the score was suppressed: what is missing, in one sentence. */
+  unscoredReason?: string;
   summary: string;
   vitals: ReadinessVitals;
   readinessScore: number;
@@ -176,11 +190,17 @@ export function buildReportView(report: ScanReport, opts: BuildReportViewOptions
   const naChecks = allChecks.filter((c) => c.status === 'na');
   const erroredChecks = naChecks.filter((c) => hasTag(c, TAG_SCAN_ERROR));
   const skippedChecks = naChecks.filter((c) => hasTag(c, TAG_SKIPPED_PAGE_TYPE));
+  const gatedChecks = naChecks.filter((c) => hasTag(c, TAG_SKIPPED_NO_EVIDENCE));
   const coverage: CoverageView = {
     ran: allChecks.filter((c) => c.status !== 'na').length,
     skippedByPageType: skippedChecks.length,
+    skippedNoEvidence: gatedChecks.length,
+    noEvidenceReasons: Object.values(report.scanValidity?.reasons ?? {}).filter(
+      (reason): reason is string => Boolean(reason),
+    ),
     errored: erroredChecks.length,
-    notApplicable: naChecks.length - erroredChecks.length - skippedChecks.length,
+    notApplicable:
+      naChecks.length - erroredChecks.length - skippedChecks.length - gatedChecks.length,
     erroredChecks,
   };
 
@@ -218,8 +238,11 @@ export function buildReportView(report: ScanReport, opts: BuildReportViewOptions
     overallScore: report.overallScore,
     scoreTier: report.scoreTier,
     summary: report.summary ?? '',
+    ...(report.scanValidity?.unscoredReason
+      ? { unscoredReason: report.scanValidity.unscoredReason }
+      : {}),
     vitals,
-    readinessScore: report.readinessScore ?? report.overallScore,
+    readinessScore: report.readinessScore ?? report.overallScore ?? 0,
     groups,
     categories: categoryViews,
     topFixes,

@@ -1,6 +1,6 @@
-import type { CheckResult, CategoryResult, PageType, AuditMeta } from './types';
+import type { CheckResult, CategoryResult, EvidenceKey, PageType, AuditMeta } from './types';
 import { logger } from './logger';
-import { TAG_SKIPPED_PAGE_TYPE, TAG_SCAN_ERROR } from './constants';
+import { TAG_SKIPPED_PAGE_TYPE, TAG_SCAN_ERROR, TAG_SKIPPED_NO_EVIDENCE } from './constants';
 import type { CheckContext } from './check-context';
 import type { ScanConfig, CategoryConfig, AuditRegistration } from './audit-config';
 import { calculateCategoryScore, calculateOverallScore } from './scorer';
@@ -86,12 +86,72 @@ export interface AuditPlan {
   skipped: CheckResult[];
 }
 
+/** How `planAudits` should treat audits the scan cannot feed. */
+export interface PlanOptions {
+  /**
+   * Skip audits whose `requires` the scan did not obtain.
+   *
+   * Off by default while the gate is calibrated: turning it on changes what
+   * every blocked or client-rendered scan reports, and that lands as one
+   * deliberate change rather than as a side effect of this one.
+   */
+  enforceEvidence?: boolean;
+}
+
+/**
+ * Which of an audit's required evidence keys the scan did not obtain.
+ *
+ * `sample-adequate` is the one key that resolves per audit rather than per
+ * scan: an audit is fed by pages of the types it declares, so it is unmet when
+ * none of those types produced readable text. An audit that declares no page
+ * types is fed by the homepage.
+ */
+function unmetRequirements(ctx: CheckContext, meta: AuditMeta): EvidenceKey[] {
+  const required = meta.requires ?? [];
+  if (required.length === 0) return [];
+
+  const evidence = ctx.evidence;
+  const unmet: EvidenceKey[] = [];
+  for (const key of required) {
+    if (key === 'sample-adequate') {
+      const wanted = meta.applicablePageTypes?.length
+        ? meta.applicablePageTypes
+        : (['homepage'] as PageType[]);
+      if (!wanted.some((type) => evidence.usablePageTypes.has(type))) unmet.push(key);
+      continue;
+    }
+    if (!evidence.met[key]) unmet.push(key);
+  }
+  return unmet;
+}
+
+/** The sentence a gated stub carries: the key, and why the scan lacks it. */
+function gateExplanation(ctx: CheckContext, meta: AuditMeta, unmet: EvidenceKey[]): string {
+  const reasons = unmet.map((key) => ctx.evidence.reasons[key]).filter(Boolean);
+
+  // `sample-adequate` can be met for the scan and unmet for this audit: the
+  // scan read pages, just not of the type this audit needs. The scan-level
+  // reason is empty in that case, and "no sample-adequate evidence" alone
+  // tells a reader nothing.
+  if (unmet.includes('sample-adequate') && reasons.length === 0) {
+    const wanted = meta.applicablePageTypes?.length ? meta.applicablePageTypes.join('/') : 'homepage';
+    return `Not assessed: no scanned ${wanted} page served readable text.`;
+  }
+
+  const why = reasons.length > 0 ? ` ${reasons.join(' ')}` : '';
+  return `Not assessed: this scan has no ${unmet.join(', ')} evidence.${why}`;
+}
+
 /**
  * Split a scan config into the audits that will actually execute and the
- * page-type-skipped `na` stubs. Exported so the orchestrator can size the
+ * `na` stubs for those it will not. Exported so the orchestrator can size the
  * audits progress phase before running it.
  */
-export function planAudits(ctx: CheckContext, config: ScanConfig): AuditPlan {
+export function planAudits(
+  ctx: CheckContext,
+  config: ScanConfig,
+  options: PlanOptions = {},
+): AuditPlan {
   // Collect the set of page types present in the scan context
   const scannedPageTypes = new Set(ctx.pages.map((p) => p.pageType));
 
@@ -112,6 +172,17 @@ export function planAudits(ctx: CheckContext, config: ScanConfig): AuditPlan {
               TAG_SKIPPED_PAGE_TYPE,
               `Not applicable: no scanned page is of type ${applicable.join('/')}.`,
             ),
+          );
+          continue;
+        }
+      }
+      if (options.enforceEvidence) {
+        // Page-type mismatch is checked first, above, so no existing wording
+        // changes. Only an audit the scan could have fed reaches this.
+        const unmet = unmetRequirements(ctx, reg.meta);
+        if (unmet.length > 0) {
+          skipped.push(
+            stubCheck(reg.meta, TAG_SKIPPED_NO_EVIDENCE, gateExplanation(ctx, reg.meta, unmet)),
           );
           continue;
         }

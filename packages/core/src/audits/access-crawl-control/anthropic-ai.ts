@@ -30,6 +30,8 @@ export class AnthropicAudit extends CrawlerBotAudit {
     evidenceGrade: 'A',
     tier: 'scored',
     dossier: 'docs/evidence/audits/access-crawl-control/anthropic-ai.md',
+    // Gate exemption: being refused is what this category reports.
+    requires: ['origin-reachable'],
     defaultPriority: 'medium',
     guidance: {
       impact:

@@ -6,6 +6,7 @@ import { runAudits } from '../audit-runner';
 import { defaultConfig } from '../audit-config';
 import type { CheckContext, PageContext } from '../check-context';
 import type { FetchResult } from '../fetcher';
+import { allEvidenceMet } from '../scan-evidence';
 
 function loadFixture(filename: string): string {
   return readFileSync(resolve(__dirname, '../../test-data/corpus', filename), 'utf8');
@@ -76,6 +77,9 @@ function buildTestContext(baseUrl: string, pages: PageContext[], rootFiles: Reco
     pages,
     rootFiles,
     fetch: async () => createMockFetch(200, ''),
+    // The gate is not what these harnesses test, and their fixtures are small
+    // enough to gate themselves out. Hand them every requirement.
+    evidence: allEvidenceMet(),
   };
 }
 

@@ -44,6 +44,7 @@ export class ArticleSchemaAudit extends Audit {
     evidenceGrade: 'A',
     tier: 'scored',
     dossier: 'docs/evidence/audits/structured-data/article-schema.md',
+    requires: ['origin-reachable', 'unblocked-fetches', 'rendered-body', 'sample-adequate'],
     applicablePageTypes: ['content'],
     defaultPriority: 'high',
     guidance: {

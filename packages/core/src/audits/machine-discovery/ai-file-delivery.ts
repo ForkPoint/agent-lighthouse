@@ -80,6 +80,7 @@ export class AiFileDeliveryAudit extends Audit {
     evidenceGrade: 'B',
     tier: 'informative',
     dossier: 'docs/evidence/audits/machine-discovery/ai-file-delivery.md',
+    requires: ['origin-reachable', 'unblocked-fetches', 'rendered-body', 'sample-adequate'],
     defaultPriority: 'medium',
     guidance: {
       impact:

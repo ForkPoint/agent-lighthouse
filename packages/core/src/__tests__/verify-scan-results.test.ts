@@ -12,6 +12,7 @@ import { runAudits } from '../audit-runner';
 import { defaultConfig } from '../audit-config';
 import type { CheckContext, PageContext } from '../check-context';
 import type { FetchResult } from '../fetcher';
+import { allEvidenceMet } from '../scan-evidence';
 
 // Helper to build a real CheckContext from a URL
 async function buildRealContext(url: string): Promise<CheckContext> {
@@ -75,6 +76,9 @@ async function buildRealContext(url: string): Promise<CheckContext> {
     domain,
     baseUrl,
     fetch: (opts) => fetcher.fetch(opts),
+    // The gate is not what these harnesses test, and their fixtures are small
+    // enough to gate themselves out. Hand them every requirement.
+    evidence: allEvidenceMet(),
   };
 }
 

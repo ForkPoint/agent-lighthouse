@@ -39,6 +39,14 @@ export interface CheckContext {
   baseUrl: string;
   fetch: (options: FetchOptions) => Promise<FetchResult>;
   wafProtection?: import('./waf-detector').WafProtection;
+  /**
+   * What the scan actually obtained, decided once before any audit ran.
+   *
+   * Required, not optional. An optional field fails open, and a caller that
+   * forgets is exactly the silent-nothing verdict this exists to remove. Test
+   * harnesses that do not exercise the gate pass `allEvidenceMet()`.
+   */
+  evidence: import('./scan-evidence').ScanEvidence;
 }
 
 export type CheckFn = (ctx: CheckContext) => CheckResult | Promise<CheckResult>;

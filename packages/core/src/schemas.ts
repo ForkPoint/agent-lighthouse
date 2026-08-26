@@ -66,6 +66,13 @@ export const AuditTierSchema = z.enum(['scored', 'informative', 'experimental'])
 /** v2 audit identity: `category/slug`, stable across releases (spec §6). */
 export const AUDIT_ID_PATTERN = /^[a-z-]+\/[a-z0-9-]+$/;
 
+export const EvidenceKeySchema = z.enum([
+  'origin-reachable',
+  'unblocked-fetches',
+  'rendered-body',
+  'sample-adequate',
+]);
+
 export const AuditMetaSchema = z.object({
   id: z.string().regex(AUDIT_ID_PATTERN, 'audit id must be a `category/slug` path'),
   category: z.string(),
@@ -85,6 +92,9 @@ export const AuditMetaSchema = z.object({
   evidenceGrade: EvidenceGradeSchema,
   tier: AuditTierSchema,
   dossier: z.string().min(1).max(500),
+  // What the audit needs the scan to have obtained. Checked against the
+  // source by `scripts/check-requires.mjs`, not enforced here beyond shape.
+  requires: z.array(EvidenceKeySchema).optional(),
 });
 
 export const CheckResultSchema = z.object({

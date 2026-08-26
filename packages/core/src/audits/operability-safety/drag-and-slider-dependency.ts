@@ -221,6 +221,7 @@ export class DragAndSliderDependencyAudit extends Audit {
     evidenceGrade: 'B',
     tier: 'scored',
     dossier: 'docs/evidence/audits/operability-safety/drag-and-slider-dependency.md',
+    requires: ['origin-reachable', 'unblocked-fetches', 'rendered-body', 'sample-adequate'],
     defaultPriority: 'high',
     guidance: {
       impact:

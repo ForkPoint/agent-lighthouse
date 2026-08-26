@@ -4,10 +4,12 @@ import { logger } from './logger';
 import { Audit } from './audit';
 import type { CheckContext } from './check-context';
 import type { ScanConfig, AuditRegistration } from './audit-config';
-import { runAudits } from './audit-runner';
+import { planAudits, runAudits } from './audit-runner';
 import { AuditResultSchema } from './schemas';
 import type { AuditTrace } from './audit-trace';
 import type { AuditProgressEvent } from './audit-runner';
+import { allEvidenceMet, buildScanEvidence } from './scan-evidence';
+import { mockPageContext } from './__tests__/test-utils';
 
 // ---------------------------------------------------------------------------
 // Helpers: build tiny fake Audit subclasses + registrations
@@ -55,6 +57,7 @@ function ctxWith(pageTypes: PageType[]): CheckContext {
     domain: 'example.com',
     baseUrl: 'https://example.com',
     fetch: async () => ({}) as never,
+    evidence: allEvidenceMet(),
   } as unknown as CheckContext;
 }
 
@@ -403,5 +406,204 @@ describe('audit tracing', () => {
     const lines = debugSpy.mock.calls.map((c) => String(c[0]));
     expect(lines.filter((l) => l.startsWith('[audit] '))).toHaveLength(3);
     debugSpy.mockRestore();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// The evidence gate
+// ---------------------------------------------------------------------------
+
+describe('planAudits — evidence gate', () => {
+  /** A scan that reached the origin but read nothing from any page. */
+  function shellContext(): CheckContext {
+    const evidence = buildScanEvidence({
+      requestedUrl: 'https://example.com',
+      homepageResult: {
+        url: 'https://example.com/',
+        finalUrl: 'https://example.com/',
+        status: 200,
+        headers: { 'content-type': 'text/html' },
+        body: '<html><body><div id="root"></div></body></html>',
+        ttfbMs: 1,
+        totalMs: 1,
+        contentType: 'text/html',
+        contentLength: 46,
+      },
+      pages: [mockPageContext('https://example.com/', '<html><body><div id="root"></div></body></html>')],
+      rootFiles: {},
+      wafProtection: null,
+    });
+    return {
+      pages: [{ pageType: 'homepage' }],
+      rootFiles: {},
+      domain: 'example.com',
+      baseUrl: 'https://example.com',
+      fetch: async () => ({}) as never,
+      evidence,
+    } as unknown as CheckContext;
+  }
+
+  const gatedConfig = (): ScanConfig => ({
+    categories: [{ id: 'cat1', name: 'Cat 1', weight: 1 }],
+    audits: {
+      cat1: [
+        makeReg(
+          meta({
+            id: 'needs-pages',
+            category: 'cat1',
+            requires: ['origin-reachable', 'unblocked-fetches', 'rendered-body', 'sample-adequate'],
+          }),
+          () => result('pass', 1),
+        ),
+        makeReg(
+          meta({ id: 'needs-origin', category: 'cat1', requires: ['origin-reachable'] }),
+          () => result('pass', 1),
+        ),
+      ],
+    },
+  });
+
+  it('runs everything when the gate is off, however little the scan saw', () => {
+    const plan = planAudits(shellContext(), gatedConfig());
+    expect(plan.runnable.map((r) => r.reg.meta.id)).toEqual(['needs-pages', 'needs-origin']);
+    expect(plan.skipped).toHaveLength(0);
+  });
+
+  it('skips only the audit whose evidence is missing', () => {
+    const plan = planAudits(shellContext(), gatedConfig(), { enforceEvidence: true });
+    expect(plan.runnable.map((r) => r.reg.meta.id)).toEqual(['needs-origin']);
+    expect(plan.skipped).toHaveLength(1);
+  });
+
+  it('never constructs a gated audit', async () => {
+    const create = vi.fn(() => {
+      throw new Error('a gated audit must not be constructed');
+    });
+    const config: ScanConfig = {
+      categories: [{ id: 'cat1', name: 'Cat 1', weight: 1 }],
+      audits: {
+        cat1: [
+          {
+            create,
+            meta: meta({
+              id: 'needs-pages',
+              category: 'cat1',
+              requires: ['origin-reachable', 'rendered-body', 'sample-adequate'],
+            }),
+          },
+        ],
+      },
+    };
+    const ctx = shellContext();
+    const plan = planAudits(ctx, config, { enforceEvidence: true });
+    await runAudits(ctx, config, undefined, plan);
+    expect(create).not.toHaveBeenCalled();
+  });
+
+  it('stubs a gated audit as na, tagged, with the reason in the explanation', () => {
+    const plan = planAudits(shellContext(), gatedConfig(), { enforceEvidence: true });
+    const stub = plan.skipped[0];
+
+    expect(stub.id).toBe('needs-pages');
+    expect(stub.status).toBe('na');
+    expect(stub.tags).toContain('skipped:no-evidence');
+    expect(stub.explanation).toContain('rendered-body');
+    expect(stub.explanation).toContain('served readable text');
+  });
+
+  it('traces a gated audit as gated, not as skipped', async () => {
+    const ctx = shellContext();
+    const config = gatedConfig();
+    const traces: AuditTrace[] = [];
+    await runAudits(ctx, config, undefined, planAudits(ctx, config, { enforceEvidence: true }), (t) =>
+      traces.push(t),
+    );
+
+    expect(traces.find((t) => t.id === 'needs-pages')?.outcome).toBe('gated');
+    expect(traces.find((t) => t.id === 'needs-origin')?.outcome).toBe('ran');
+  });
+
+  it('reports a page-type mismatch as a page-type skip, not as a gate skip', () => {
+    const config: ScanConfig = {
+      categories: [{ id: 'cat1', name: 'Cat 1', weight: 1 }],
+      audits: {
+        cat1: [
+          makeReg(
+            meta({
+              id: 'product-only',
+              category: 'cat1',
+              applicablePageTypes: ['product'],
+              requires: ['origin-reachable', 'rendered-body', 'sample-adequate'],
+            }),
+            () => result('pass', 1),
+          ),
+        ],
+      },
+    };
+    const stub = planAudits(shellContext(), config, { enforceEvidence: true }).skipped[0];
+    expect(stub.tags).toContain('skipped:page-type');
+  });
+
+  it('resolves sample-adequate against the page types the audit declares', () => {
+    const pages = [
+      mockPageContext('https://example.com/', `<html><body><main>${'word '.repeat(80)}</main></body></html>`),
+    ];
+    const evidence = buildScanEvidence({
+      requestedUrl: 'https://example.com',
+      homepageResult: {
+        url: 'https://example.com/',
+        finalUrl: 'https://example.com/',
+        status: 200,
+        headers: {},
+        body: '',
+        ttfbMs: 1,
+        totalMs: 1,
+        contentType: 'text/html',
+        contentLength: 1,
+      },
+      pages,
+      rootFiles: {},
+      wafProtection: null,
+    });
+    const ctx = {
+      pages: [{ pageType: 'homepage' }, { pageType: 'product' }],
+      rootFiles: {},
+      domain: 'example.com',
+      baseUrl: 'https://example.com',
+      fetch: async () => ({}) as never,
+      evidence,
+    } as unknown as CheckContext;
+
+    const config: ScanConfig = {
+      categories: [{ id: 'cat1', name: 'Cat 1', weight: 1 }],
+      audits: {
+        cat1: [
+          makeReg(
+            meta({
+              id: 'product-audit',
+              category: 'cat1',
+              applicablePageTypes: ['product'],
+              requires: ['origin-reachable', 'sample-adequate'],
+            }),
+            () => result('pass', 1),
+          ),
+          makeReg(
+            meta({
+              id: 'homepage-audit',
+              category: 'cat1',
+              applicablePageTypes: ['homepage'],
+              requires: ['origin-reachable', 'sample-adequate'],
+            }),
+            () => result('pass', 1),
+          ),
+        ],
+      },
+    };
+
+    const plan = planAudits(ctx, config, { enforceEvidence: true });
+    // Only the homepage served readable text, so the product audit is gated
+    // even though a product page was fetched.
+    expect(plan.runnable.map((r) => r.reg.meta.id)).toEqual(['homepage-audit']);
+    expect(plan.skipped[0].id).toBe('product-audit');
   });
 });

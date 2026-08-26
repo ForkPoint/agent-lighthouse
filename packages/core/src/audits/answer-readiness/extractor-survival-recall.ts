@@ -145,6 +145,7 @@ export class ExtractorSurvivalRecallAudit extends Audit {
     weight: weightForGrade('B', 'scored'),
     defaultPriority: 'high',
     dossier: 'docs/evidence/audits/answer-readiness/extractor-survival-recall.md',
+    requires: ['origin-reachable', 'unblocked-fetches', 'rendered-body', 'sample-adequate'],
     guidance: {
       impact:
         'An answer engine never sees the page; it sees whatever its extractor kept. A specification table inside `<aside class="related-specs">` is invisible to every pipeline that strips asides, and the answer about that product gets written without it. The loss is silent: the page looks complete to its author and to every human reviewer.',

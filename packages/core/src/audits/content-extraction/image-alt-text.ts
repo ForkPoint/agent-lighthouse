@@ -55,6 +55,7 @@ export class ImageAltTextAudit extends Audit {
     evidenceGrade: 'A',
     tier: 'scored',
     dossier: 'docs/evidence/audits/content-extraction/image-alt-text.md',
+    requires: ['origin-reachable', 'unblocked-fetches', 'rendered-body', 'sample-adequate'],
     defaultPriority: 'high',
     guidance: {
       impact:

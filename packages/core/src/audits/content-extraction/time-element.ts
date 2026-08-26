@@ -16,6 +16,7 @@ export class TimeElementAudit extends Audit {
     evidenceGrade: 'C',
     tier: 'informative',
     dossier: 'docs/evidence/audits/content-extraction/time-element.md',
+    requires: ['origin-reachable', 'unblocked-fetches', 'rendered-body', 'sample-adequate'],
     applicablePageTypes: ['content'],
     defaultPriority: 'medium',
     guidance: {

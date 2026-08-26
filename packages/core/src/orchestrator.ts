@@ -23,10 +23,11 @@ import { runA11yForHtml } from './audits/operability-safety/runner';
 import { A11Y_RULES } from './audits/operability-safety';
 import { extractProductFieldVerification } from './product-fields';
 import { generateScanSummary } from './summary';
-import { isInformative } from './scorer';
+import { isInformative, gatedMassShare, GATED_MASS_UNSCORED_THRESHOLD } from './scorer';
 import { detectWafProtection } from './waf-detector';
+import { buildScanEvidence } from './scan-evidence';
 
-import type { FetchResult } from './fetcher';
+import type { FetchOptions, FetchResult } from './fetcher';
 
 export interface ScanOptions {
   onEvent?: (event: ScanEvent) => void;
@@ -49,6 +50,15 @@ export interface ScanOptions {
    * evidence it was drawn from; see {@link AuditTrace}.
    */
   onAuditTrace?: AuditTraceHandler;
+  /**
+   * Skip audits the scan could not feed, instead of running them blind.
+   *
+   * On by default. An audit whose required evidence the scan never obtained
+   * reports `na` tagged `skipped:no-evidence`, with the reason attached, and
+   * is never constructed. Set it to `false` to run every audit regardless —
+   * useful when measuring what the gate removes.
+   */
+  enforceEvidenceGate?: boolean;
 }
 
 // Cap how many pages get the jsdom-based a11y pass. Accessibility issues are
@@ -56,6 +66,41 @@ export interface ScanOptions {
 // per-scan cost so one heavy site can't dominate the worker. 0 disables the
 // a11y pass entirely (audits degrade to "not applicable").
 const A11Y_MAX_PAGES = Math.max(0, Number(process.env.SCANNER_A11Y_MAX_PAGES ?? 3));
+
+/** How long to wait before the single 429 retry when no `Retry-After` says. */
+const RATE_LIMIT_BACKOFF_MS = 5_000;
+/** A `Retry-After` longer than this is the site telling us to come back later. */
+const MAX_RETRY_AFTER_MS = 30_000;
+
+/**
+ * Fetch the homepage, retrying once on HTTP 429.
+ *
+ * A 429 is as likely the scan's own throttle as the site's refusal — the
+ * benchmark once had 36 of 48 stores answer 429 while a single `curl` with the
+ * same user-agent got 200. Declaring a scan unjudgeable on a self-inflicted
+ * signal trades a wrong number for a wrong null, so the scan waits once and
+ * asks again. One retry, no loop: if it 429s again, that stands.
+ */
+async function fetchHomepage(
+  fetcher: { fetch: (options: FetchOptions) => Promise<FetchResult> },
+  url: string,
+  signal?: AbortSignal,
+): Promise<FetchResult> {
+  const first = await fetcher.fetch({ url, signal });
+  if (first.status !== 429) return first;
+
+  const header = Number(first.headers['retry-after']);
+  const waitMs =
+    Number.isFinite(header) && header > 0
+      ? Math.min(header * 1000, MAX_RETRY_AFTER_MS)
+      : RATE_LIMIT_BACKOFF_MS;
+
+  logger.debug({ url, waitMs }, `[orchestrator] Homepage answered 429; retrying once in ${waitMs}ms`);
+  await new Promise((resolve) => setTimeout(resolve, waitMs));
+  signal?.throwIfAborted();
+
+  return fetcher.fetch({ url, signal });
+}
 
 // ── Page Discovery ─────────────────────────────────────────────
 
@@ -286,7 +331,7 @@ export async function runScan(url: string, options?: ScanOptions): Promise<ScanR
   // Fetch homepage first. The phase starts with just the homepage as a unit;
   // discovery below corrects the total once the full page list is known.
   tracker.phaseStart('fetch-pages', 1);
-  const homepageResult = await fetcher.fetch({ url, signal });
+  const homepageResult = await fetchHomepage(fetcher, url, signal);
   tracker.unitDone(displayUrl);
   const homepage$ =
     homepageResult.status === 200 && homepageResult.body ? parseHtml(homepageResult.body) : null;
@@ -377,6 +422,14 @@ export async function runScan(url: string, options?: ScanOptions): Promise<ScanR
 
   const wafProtection = detectWafProtection(url, homepageResult, rootFiles, pages.length);
 
+  const evidence = buildScanEvidence({
+    requestedUrl: url,
+    homepageResult,
+    pages,
+    rootFiles,
+    wafProtection: wafProtection ?? null,
+  });
+
   const ctx: CheckContext = {
     rootFiles,
     pages,
@@ -384,6 +437,7 @@ export async function runScan(url: string, options?: ScanOptions): Promise<ScanR
     baseUrl,
     fetch: (options) => fetcher.fetch({ ...options, signal }),
     wafProtection: wafProtection ?? undefined,
+    evidence,
   };
 
   const config = filterConfig(defaultConfig, {
@@ -391,7 +445,9 @@ export async function runScan(url: string, options?: ScanOptions): Promise<ScanR
     includeExperimental: options?.includeExperimental ?? false,
   });
 
-  const auditPlan = planAudits(ctx, config);
+  const auditPlan = planAudits(ctx, config, {
+    enforceEvidence: options?.enforceEvidenceGate ?? true,
+  });
   tracker.phaseStart('audits', auditPlan.runnable.length);
 
   const {
@@ -420,8 +476,11 @@ export async function runScan(url: string, options?: ScanOptions): Promise<ScanR
 
   // Informative checks carry no score and no fix worth surfacing, so they are
   // advisory-only: they never become recommendations, top fails or top passes.
+  // `na` is not a finding: an audit that had nothing to assess has nothing to
+  // recommend. `packages/report` has always filtered this way; core did not,
+  // and the evidence gate multiplies the difference.
   const recommendations = allChecks
-    .filter((c) => c.status !== 'pass' && !isInformative(c))
+    .filter((c) => (c.status === 'fail' || c.status === 'warn') && !isInformative(c))
     .slice()
     .sort((a: { priority: string }, b: { priority: string }) => {
       const order: Record<string, number> = { critical: 0, high: 1, medium: 2, low: 3 };
@@ -450,12 +509,33 @@ export async function runScan(url: string, options?: ScanOptions): Promise<ScanR
       readinessVitals.technical * READINESS_WEIGHTS.technical,
   );
 
+  // A number is a claim about the site. Two things make one meaningless: a scan
+  // that never reached the site (§7.1), and a scan the gate stripped so far
+  // that the remaining mass is not the registry any more (§7.2). Both report
+  // no score rather than a low one.
+  const gatedShare = gatedMassShare(allChecks);
+  const escalated = gatedShare > GATED_MASS_UNSCORED_THRESHOLD;
+  const unscoredReason = !evidence.judgeable
+    ? Object.values(evidence.reasons).filter(Boolean).join(' ') ||
+      'The scan obtained too little evidence to judge this site.'
+    : escalated
+      ? `The scan could not feed ${Math.round(gatedShare * 100)}% of the registry's evidence mass, ` +
+        'so what remains is not a reading of this site.'
+      : undefined;
+  const scored = unscoredReason === undefined;
+
   const report: ScanReport = {
     scanId: '', // Set by the caller
     url: displayUrl,
     domain,
-    overallScore,
-    scoreTier: getScoreTier(overallScore),
+    overallScore: scored ? overallScore : null,
+    scoreTier: scored ? getScoreTier(overallScore) : null,
+    scanValidity: {
+      judgeable: evidence.judgeable,
+      evidence: evidence.met,
+      reasons: evidence.reasons,
+      ...(unscoredReason ? { unscoredReason } : {}),
+    },
     summary: '', // Set below
     categories,
     topPasses,
@@ -478,7 +558,7 @@ export async function runScan(url: string, options?: ScanOptions): Promise<ScanR
   report.summary = generateScanSummary(report);
   tracker.unitDone();
   tracker.phaseDone();
-  tracker.scanDone(overallScore);
+  tracker.scanDone(report.overallScore);
   logger.debug({ durationMs, score: overallScore }, '[orchestrator] runScan complete');
 
   return report;

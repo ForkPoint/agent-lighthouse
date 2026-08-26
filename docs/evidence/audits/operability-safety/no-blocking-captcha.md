@@ -47,6 +47,20 @@ The concern is legitimate — interactive CAPTCHAs do stop agents — but detect
 
 _No dedicated evidence signal was researched for this audit in the 2026-08-20 pass. Its tier assignment falls to the taxonomy design; unproven mechanisms default to informative per the [evidence policy](../../policy.md)._
 
+## Implementation deviations
+
+- 2026-08-26 — the audit now reports the wall the scanner itself met. It looked
+  for CAPTCHA markup in the scanned pages, so a site that refused the scan
+  outright produced no pages, no matches, and a pass — the audit congratulated
+  the site that had just blocked it. When the scan carries a WAF block that is
+  not a rate limit, the audit fails and names the provider. A rate limit is
+  excluded: that is the scan asking too fast, not the site walling agents off.
+- 2026-08-26 — a scan with no fetched page returns `notApplicable` instead of
+  passing. No page means no form was inspected.
+- 2026-08-26 — the audit is exempt from the scan evidence gate. Being walled is
+  its subject, so gating it on the evidence a wall destroys would delete the
+  finding.
+
 ## Review history
 
 - 2026-08-20 — code review (11-agent workflow) + evidence research (12-domain workflow, 400 sources).

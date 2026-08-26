@@ -16,6 +16,8 @@ export class MistralaiUserAudit extends CrawlerBotAudit {
     evidenceGrade: 'A',
     tier: 'scored',
     dossier: 'docs/evidence/audits/access-crawl-control/mistralai-user.md',
+    // Gate exemption: being refused is what this category reports.
+    requires: ['origin-reachable'],
     defaultPriority: 'medium',
     guidance: {
       impact:

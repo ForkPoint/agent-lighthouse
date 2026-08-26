@@ -59,6 +59,7 @@ export class LastModifiedSchemaAudit extends Audit {
     evidenceGrade: 'B',
     tier: 'scored',
     dossier: 'docs/evidence/audits/answer-readiness/last-modified-schema.md',
+    requires: ['origin-reachable', 'unblocked-fetches', 'rendered-body', 'sample-adequate'],
     applicablePageTypes: ['content'],
     defaultPriority: 'medium',
     guidance: {

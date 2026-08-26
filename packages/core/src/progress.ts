@@ -14,7 +14,14 @@ export type ScanEvent =
     }
   | { type: 'unit:fail'; phase: PhaseId; label: string; error: string; fraction: number; elapsedMs: number }
   | { type: 'phase:done'; phase: PhaseId; durationMs: number; fraction: number; elapsedMs: number }
-  | { type: 'scan:done'; durationMs: number; score: number; fraction: number; elapsedMs: number };
+  | {
+      type: 'scan:done';
+      durationMs: number;
+      /** Null when the scan obtained too little evidence to judge the site. */
+      score: number | null;
+      fraction: number;
+      elapsedMs: number;
+    };
 
 /**
  * How much of the overall scan fraction each phase owns. Sums to 1 so the
@@ -138,7 +145,7 @@ export class ProgressTracker {
     });
   }
 
-  scanDone(score: number): void {
+  scanDone(score: number | null): void {
     this.onEvent({ type: 'scan:done', durationMs: this.elapsedMs(), score, ...this.stamp() });
   }
 }

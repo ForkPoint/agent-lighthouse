@@ -33,6 +33,7 @@ export class BreadcrumbSchemaAudit extends Audit {
     evidenceGrade: 'A',
     tier: 'scored',
     dossier: 'docs/evidence/audits/structured-data/breadcrumb-schema.md',
+    requires: ['origin-reachable', 'unblocked-fetches', 'rendered-body', 'sample-adequate'],
     applicablePageTypes: ['category', 'product', 'content'],
     defaultPriority: 'medium',
     guidance: {

@@ -101,6 +101,8 @@ export class MachineActionable402PaidAccessAudit extends Audit {
     weight: weightForGrade('B', 'scored'),
     defaultPriority: 'medium',
     dossier: 'docs/evidence/audits/access-crawl-control/machine-actionable-402-paid-access.md',
+    // Gate exemption: being refused is what this category reports.
+    requires: ['origin-reachable', 'rendered-body', 'sample-adequate'],
     guidance: {
       impact:
         'Charging for crawler access is a legitimate choice, and 402 is the status code for it. But a crawler is a program: it can pay only what it can parse. A 402 whose body is an HTML page explaining your licensing terms reads, to the client, as an unexplained refusal — the same outcome as a 403, after you built a paywall meant to earn revenue. A 402 that a shared cache is allowed to store is worse: the next crawler gets a stored refusal even after paying.',

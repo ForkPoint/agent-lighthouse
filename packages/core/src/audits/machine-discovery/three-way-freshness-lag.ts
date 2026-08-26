@@ -81,6 +81,7 @@ export class ThreeWayFreshnessLagAudit extends Audit {
     weight: weightForGrade('B', 'scored'),
     defaultPriority: 'medium',
     dossier: 'docs/evidence/audits/machine-discovery/three-way-freshness-lag.md',
+    requires: ['origin-reachable', 'unblocked-fetches', 'rendered-body', 'sample-adequate'],
     guidance: {
       impact:
         'A pull-based crawler fetches the sitemap and the feed on a schedule and reads nothing else. When those two surfaces trail the site, everything published in between is discoverable only by link-following, which is the slow path the site published a sitemap to avoid. A feed whose `lastBuildDate` is older than its own newest item is worse than stale: consumers that poll conditionally on that timestamp skip the feed entirely, so the new items are never read at all.',

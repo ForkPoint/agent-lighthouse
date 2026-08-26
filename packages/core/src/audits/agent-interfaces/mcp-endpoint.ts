@@ -50,6 +50,7 @@ export class McpEndpointAudit extends Audit {
     evidenceGrade: 'C',
     tier: 'informative',
     dossier: 'docs/evidence/audits/agent-interfaces/mcp-endpoint.md',
+    requires: ['origin-reachable'],
     defaultPriority: 'high',
     guidance: {
       impact:

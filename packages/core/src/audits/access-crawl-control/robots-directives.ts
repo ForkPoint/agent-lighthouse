@@ -156,6 +156,8 @@ export class MetaRobotsNotBlockingAudit extends Audit {
     evidenceGrade: 'A',
     tier: 'scored',
     dossier: 'docs/evidence/audits/access-crawl-control/robots-directives.md',
+    // Gate exemption: being refused is what this category reports.
+    requires: ['origin-reachable', 'rendered-body', 'sample-adequate'],
     defaultPriority: 'high',
     guidance: {
       impact:

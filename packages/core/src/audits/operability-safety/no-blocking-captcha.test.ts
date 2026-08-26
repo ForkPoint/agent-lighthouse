@@ -45,3 +45,44 @@ describe('NoBlockingCaptchaAudit', () => {
     expect(result.message).toContain('turnstile');
   });
 });
+
+describe('NoBlockingCaptchaAudit — the wall the scanner met', () => {
+  const audit = new NoBlockingCaptchaAudit();
+
+  it('reports the bot wall instead of passing the site that refused the scan', () => {
+    const ctx = {
+      ...mockCheckContext([]),
+      wafProtection: {
+        isBlocked: true,
+        provider: 'cloudflare' as const,
+        name: 'Cloudflare',
+        reason: 'HTTP 403 with cf-ray',
+        statusCode: 403,
+      },
+    };
+    const result = audit.audit(ctx);
+
+    expect(result.status).toBe('fail');
+    expect(result.message).toContain('bot wall');
+    expect(result.message).toContain('Cloudflare');
+  });
+
+  it('stays quiet about a rate limit, which is the scan asking too fast', () => {
+    const ctx = {
+      ...mockCheckContext([]),
+      wafProtection: {
+        isBlocked: true,
+        provider: 'rate-limited' as const,
+        name: 'Rate limit (HTTP 429)',
+        reason: 'HTTP 429',
+        statusCode: 429,
+        isRateLimit: true,
+      },
+    };
+    expect(audit.audit(ctx).status).toBe('na');
+  });
+
+  it('is notApplicable when no page was fetched', () => {
+    expect(audit.audit(mockCheckContext([])).status).toBe('na');
+  });
+});

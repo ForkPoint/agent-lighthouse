@@ -89,8 +89,10 @@ export function hydrateReport(row: PersistedScanRow): ScanReport {
     scanId: row.id,
     url: row.url,
     domain: row.domain,
-    overallScore: row.overallScore ?? 0,
-    scoreTier: (row.scoreTier as ScoreTier) ?? 'not-ready',
+    // A stored row with no score is a scan that was not judgeable, not a scan
+    // that scored zero. Keep the null; the renderers have a shape for it.
+    overallScore: row.overallScore ?? null,
+    scoreTier: (row.scoreTier as ScoreTier | null) ?? null,
     summary: '',
     categories,
     topPasses,

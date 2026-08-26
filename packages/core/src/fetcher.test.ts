@@ -661,6 +661,29 @@ describe('createFetcher redirect handling', () => {
     expect(result.finalUrl).toBe('https://example.com/end');
   });
 
+  it('records every hop with its status, so a caller can tell a move from a detour', async () => {
+    mockRequest
+      .mockResolvedValueOnce(mockResponse(301, '', { location: 'https://new.example/' }) as never)
+      .mockResolvedValueOnce(mockResponse(302, '', { location: 'https://us.new.example/' }) as never)
+      .mockResolvedValueOnce(mockResponse(200, 'arrived') as never);
+    mockLookup.mockResolvedValue({ address: '93.184.216.34', family: 4 } as never);
+
+    const result = await createFetcher().fetch({ url: 'https://old.example/' });
+
+    expect(result.redirectChain).toEqual([
+      { status: 301, from: 'https://old.example/', to: 'https://new.example/' },
+      { status: 302, from: 'https://new.example/', to: 'https://us.new.example/' },
+    ]);
+  });
+
+  it('carries no redirect chain when the response was not a redirect', async () => {
+    mockRequest.mockResolvedValueOnce(mockResponse(200, 'direct') as never);
+
+    const result = await createFetcher().fetch({ url: 'https://example.com/' });
+
+    expect(result.redirectChain).toBeUndefined();
+  });
+
   it('does not follow redirects when followRedirects is false', async () => {
     mockRequest.mockResolvedValueOnce(mockResponse(302, '', { location: '/end' }) as never);
 

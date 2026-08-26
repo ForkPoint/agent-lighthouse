@@ -101,7 +101,30 @@ export interface AuditMeta {
   tier?: AuditTier;
   /** Repo-relative path to the audit's evidence dossier. */
   dossier?: string;
+  /**
+   * Which classes of scan evidence this audit needs to say anything true.
+   *
+   * Declared per audit rather than inferred at runtime, and checked against
+   * what the source actually reads by `scripts/check-requires.mjs`. An audit
+   * that reads the sampled pages — directly or through a page-fed gatherer —
+   * needs all four keys; one that reads only root files needs the origin to
+   * have answered. The deliberate disagreements are the audits whose subject
+   * *is* the missing evidence, and they are listed in that script.
+   */
+  requires?: EvidenceKey[];
 }
+
+/**
+ * A class of evidence a scan either obtained or did not.
+ *
+ * Declared here rather than in `scan-evidence.ts` so `AuditMeta` can name it
+ * without the audit layer importing the scan layer.
+ */
+export type EvidenceKey =
+  | 'origin-reachable'
+  | 'unblocked-fetches'
+  | 'rendered-body'
+  | 'sample-adequate';
 
 export interface AuditResult {
   status: CheckStatus;
@@ -192,12 +215,32 @@ export interface CategoryResult {
 
 export type ScoreTier = 'agent-ready' | 'partially-ready' | 'needs-work' | 'not-ready';
 
+/**
+ * Whether a verdict about this site can mean anything, and what is missing.
+ *
+ * A scan that fetched nothing still produced a number before this existed:
+ * `ridge.com` scored 43 and `westontable.com` 37 on scans that read no page,
+ * against a real store's 51. The numbers overlap, so a reader could not
+ * separate "mediocre site" from "we never saw this site". When `judgeable` is
+ * false the report carries no score at all — not a zero, not a low number.
+ */
+export interface ScanValidity {
+  judgeable: boolean;
+  evidence: Record<EvidenceKey, boolean>;
+  reasons: Partial<Record<EvidenceKey, string>>;
+  /** Why the score was suppressed, when it was. */
+  unscoredReason?: string;
+}
+
 export interface ScanReport {
   scanId: string;
   url: string;
   domain: string;
-  overallScore: number;
-  scoreTier: ScoreTier;
+  /** Null when the scan obtained too little evidence to judge the site. */
+  overallScore: number | null;
+  /** Null exactly when `overallScore` is. */
+  scoreTier: ScoreTier | null;
+  scanValidity?: ScanValidity;
   summary?: string;
   categories: CategoryResult[];
   topPasses: CheckResult[];

@@ -36,6 +36,9 @@ jobs:
       - name: Check audit-dossier linkage
         run: pnpm check:dossiers
 
+      - name: Check audit-evidence requirements
+        run: pnpm check:requires
+
       - name: Typecheck
         run: pnpm typecheck
 

@@ -143,6 +143,7 @@ export class WebmcpRegisteredToolsAudit extends Audit {
     // detector that cannot distinguish "no tools" from "cannot see the tools".
     tier: 'experimental',
     dossier: 'docs/evidence/audits/agent-interfaces/webmcp-registered-tools.md',
+    requires: ['origin-reachable', 'unblocked-fetches', 'rendered-body', 'sample-adequate'],
     // Was `high` on an admittedly non-standard convention, so it outranked
     // genuinely actionable items in the recommendation list.
     defaultPriority: 'low',

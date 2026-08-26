@@ -87,3 +87,28 @@ describe('generateMarkdownSummary', () => {
     expect(md).toContain('2 advisory checks ran');
   });
 });
+
+describe('generateMarkdownSummary — an unscored scan', () => {
+  it('says not scored, with the reason, instead of printing a number', () => {
+    const md = generateMarkdownSummary({
+      ...report([]),
+      overallScore: null,
+      scoreTier: null,
+      scanValidity: {
+        judgeable: false,
+        evidence: {
+          'origin-reachable': false,
+          'unblocked-fetches': true,
+          'rendered-body': false,
+          'sample-adequate': false,
+        },
+        reasons: { 'origin-reachable': 'The homepage answered HTTP 403.' },
+        unscoredReason: 'The homepage answered HTTP 403.',
+      },
+    });
+
+    expect(md).toContain('_Not scored_');
+    expect(md).toContain('HTTP 403');
+    expect(md).not.toContain('/100');
+  });
+});

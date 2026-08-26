@@ -31,6 +31,7 @@ export class ProductDetailsAudit extends Audit {
     evidenceGrade: 'A',
     tier: 'scored',
     dossier: 'docs/evidence/audits/structured-data/advanced-product-details.md',
+    requires: ['origin-reachable', 'unblocked-fetches', 'rendered-body', 'sample-adequate'],
     applicablePageTypes: ['product'],
     defaultPriority: 'medium',
     guidance: {

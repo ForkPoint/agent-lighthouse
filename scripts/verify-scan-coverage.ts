@@ -1,6 +1,12 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
-import { defaultConfig, filterConfig, TAG_SCAN_ERROR, TAG_SKIPPED_PAGE_TYPE } from '../packages/core/src';
+import {
+  defaultConfig,
+  filterConfig,
+  TAG_SCAN_ERROR,
+  TAG_SKIPPED_NO_EVIDENCE,
+  TAG_SKIPPED_PAGE_TYPE,
+} from '../packages/core/src';
 import type { ScanReport, CheckResult } from '../packages/core/src';
 
 /**
@@ -50,6 +56,8 @@ interface StoreVerdict {
   missing: string[];
   scanErrors: Array<{ id: string; explanation: string }>;
   skipped: number;
+  /** Audits the evidence gate removed, counted apart from page-type skips. */
+  gated: number;
   counts: Record<string, number>;
 }
 
@@ -59,6 +67,7 @@ function verify(store: StoreResult, expected: Set<string>): StoreVerdict {
   const counts: Record<string, number> = {};
   const scanErrors: StoreVerdict['scanErrors'] = [];
   let skipped = 0;
+  let gated = 0;
 
   for (const check of checks) {
     const tags = check.tags ?? [];
@@ -70,6 +79,12 @@ function verify(store: StoreResult, expected: Set<string>): StoreVerdict {
       skipped += 1;
       continue;
     }
+    // Counted separately from a page-type skip: the gate is a young rule, and
+    // a broken audit hiding behind it would otherwise look like coverage.
+    if (tags.includes(TAG_SKIPPED_NO_EVIDENCE)) {
+      gated += 1;
+      continue;
+    }
     counts[check.status] = (counts[check.status] ?? 0) + 1;
   }
 
@@ -79,6 +94,7 @@ function verify(store: StoreResult, expected: Set<string>): StoreVerdict {
     missing: [...expected].filter((id) => !seen.has(id)),
     scanErrors,
     skipped,
+    gated,
     counts,
   };
 }
@@ -125,17 +141,33 @@ function main(): void {
   const totals: Record<string, number> = {};
   let totalChecks = 0;
   let totalSkipped = 0;
+  let totalGated = 0;
   for (const v of verdicts) {
     totalChecks += v.ran;
     totalSkipped += v.skipped;
+    totalGated += v.gated;
     for (const [status, n] of Object.entries(v.counts)) totals[status] = (totals[status] ?? 0) + n;
   }
 
   console.log(`${totalChecks} check results across ${verdicts.length} scan(s)`);
   console.log(
     `  statuses: ${Object.entries(totals).map(([s, n]) => `${s} ${n}`).join(', ')}` +
-      `${totalSkipped > 0 ? `, skipped:page-type ${totalSkipped}` : ''}\n`,
+      `${totalSkipped > 0 ? `, skipped:page-type ${totalSkipped}` : ''}` +
+      `${totalGated > 0 ? `, skipped:no-evidence ${totalGated}` : ''}\n`,
   );
+
+  if (totalGated > 0) {
+    const perStore = [...verdicts]
+      .filter((v) => v.gated > 0)
+      .sort((a, b) => b.gated - a.gated)
+      .slice(0, 10);
+    console.log('Audits the gate removed, worst stores first:');
+    for (const v of perStore) {
+      const share = Math.round((v.gated / (v.gated + v.ran)) * 100);
+      console.log(`  ${v.gated.toString().padStart(4)}  (${share}%)  ${v.url}`);
+    }
+    console.log('');
+  }
 
   if (errorsByAudit.size > 0) {
     console.log(`SCAN ERRORS — ${errorsByAudit.size} audit(s) failed to run:`);

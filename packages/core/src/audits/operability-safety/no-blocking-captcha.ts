@@ -25,6 +25,8 @@ export class NoBlockingCaptchaAudit extends Audit {
     evidenceGrade: 'A',
     tier: 'scored',
     dossier: 'docs/evidence/audits/operability-safety/no-blocking-captcha.md',
+    // Gate exemption: A captcha wall is what this audit reports.
+    requires: ['origin-reachable'],
     defaultPriority: 'high',
     guidance: {
       impact:
@@ -49,6 +51,29 @@ export class NoBlockingCaptchaAudit extends Audit {
   };
 
   audit(ctx: CheckContext): AuditResult {
+    // A wall the scanner hit is this audit's subject, not its blind spot. The
+    // shipped audit looked for CAPTCHA markup in pages it never got, found
+    // none, and passed the site that had just refused it. A rate limit is a
+    // different thing — the scan asked too fast — so it is not reported here.
+    const waf = ctx.wafProtection;
+    if (waf?.isBlocked && !waf.isRateLimit) {
+      return this.fail(
+        `The site answered the scanner with a bot wall (${waf.name}). An AI agent acting for a user meets the same wall.`,
+        'No bot wall or blocking CAPTCHA between an agent and the page',
+        `${waf.name}: ${waf.reason}`,
+        { priority: 'high', description: NoBlockingCaptchaAudit.meta.description },
+        ctx.baseUrl,
+      );
+    }
+
+    if (ctx.pages.length === 0) {
+      return this.notApplicable(
+        'No page was fetched, so no form could be inspected for a blocking CAPTCHA.',
+        'No recaptcha, hcaptcha, or turnstile script includes detected',
+        'No page fetched',
+      );
+    }
+
     const detectedCaptchas: Array<{ page: string; type: string }> = [];
 
     for (const page of ctx.pages) {

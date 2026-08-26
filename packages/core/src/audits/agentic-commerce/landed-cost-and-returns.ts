@@ -248,6 +248,7 @@ export class LandedCostAndReturnsAudit extends Audit {
     evidenceGrade: 'A',
     tier: 'scored',
     dossier: 'docs/evidence/audits/agentic-commerce/landed-cost-and-returns.md',
+    requires: ['origin-reachable', 'unblocked-fetches', 'rendered-body', 'sample-adequate'],
     applicablePageTypes: ['product'],
     defaultPriority: 'high',
     guidance: {

@@ -16,6 +16,7 @@ export class ExternalCitationsAudit extends Audit {
     evidenceGrade: 'B',
     tier: 'scored',
     dossier: 'docs/evidence/audits/answer-readiness/external-citations.md',
+    requires: ['origin-reachable', 'unblocked-fetches', 'rendered-body', 'sample-adequate'],
     applicablePageTypes: ['content'],
     defaultPriority: 'medium',
     guidance: {

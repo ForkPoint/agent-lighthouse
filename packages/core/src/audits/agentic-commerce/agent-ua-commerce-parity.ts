@@ -96,6 +96,7 @@ export class AgentUaCommerceParityAudit extends Audit {
     evidenceGrade: 'A',
     tier: 'scored',
     dossier: 'docs/evidence/audits/agentic-commerce/agent-ua-commerce-parity.md',
+    requires: ['origin-reachable', 'unblocked-fetches', 'rendered-body', 'sample-adequate'],
     defaultPriority: 'critical',
     guidance: {
       impact:

@@ -47,6 +47,7 @@ export class ProductTransactionCertaintyAudit extends Audit {
     evidenceGrade: 'A',
     tier: 'scored',
     dossier: 'docs/evidence/audits/agentic-commerce/product-transaction-certainty.md',
+    requires: ['origin-reachable', 'unblocked-fetches', 'rendered-body', 'sample-adequate'],
     applicablePageTypes: ['product'],
     defaultPriority: 'high',
     guidance: {

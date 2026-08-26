@@ -21,6 +21,7 @@ import {
 import type { CheckContext, PageContext } from '../check-context';
 import type { CheckResult } from '../types';
 import type { FetchResult } from '../fetcher';
+import { allEvidenceMet } from '../scan-evidence';
 
 const IS_LABS_ENABLED = Boolean(process.env.NEXT_PUBLIC_LABS_URL || process.env.LABS_PORT);
 const LABS_URL = process.env.NEXT_PUBLIC_LABS_URL || (process.env.LABS_PORT ? `http://localhost:${process.env.LABS_PORT}` : 'http://localhost:7200');
@@ -164,6 +165,9 @@ async function buildLabsContext(): Promise<CheckContext> {
     domain,
     baseUrl,
     fetch: (opts) => fetcher.fetch(opts),
+    // The gate is not what these harnesses test, and their fixtures are small
+    // enough to gate themselves out. Hand them every requirement.
+    evidence: allEvidenceMet(),
   };
 }
 

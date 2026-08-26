@@ -131,6 +131,7 @@ export class UnsafeAgentTriggerableAffordancesAudit extends Audit {
     tier: 'scored',
     dossier:
       'docs/evidence/audits/operability-safety/unsafe-agent-triggerable-affordances.md',
+    requires: ['origin-reachable', 'unblocked-fetches', 'rendered-body', 'sample-adequate'],
     defaultPriority: 'critical',
     guidance: {
       impact:

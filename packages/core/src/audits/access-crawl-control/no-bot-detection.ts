@@ -26,6 +26,8 @@ export class NoBotDetectionAudit extends Audit {
     evidenceGrade: 'A',
     tier: 'scored',
     dossier: 'docs/evidence/audits/access-crawl-control/no-bot-detection.md',
+    // Gate exemption: being refused is what this category reports.
+    requires: ['origin-reachable', 'rendered-body', 'sample-adequate'],
     defaultPriority: 'high',
     guidance: {
       impact:

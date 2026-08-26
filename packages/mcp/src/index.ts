@@ -12,6 +12,7 @@ export async function auditWebsite(url: string) {
     url: report.url,
     overallScore: view.overallScore,
     scoreTier: view.scoreTier,
+    ...(view.unscoredReason ? { unscoredReason: view.unscoredReason } : {}),
     durationMs: view.durationMs,
     categories: view.groups.flatMap(g => g.categories.map(c => ({
       name: c.name,

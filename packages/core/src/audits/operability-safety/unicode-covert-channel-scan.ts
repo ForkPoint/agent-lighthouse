@@ -245,6 +245,7 @@ export class UnicodeCovertChannelScanAudit extends Audit {
     evidenceGrade: 'B',
     tier: 'scored',
     dossier: 'docs/evidence/audits/operability-safety/unicode-covert-channel-scan.md',
+    requires: ['origin-reachable', 'unblocked-fetches', 'rendered-body', 'sample-adequate'],
     defaultPriority: 'critical',
     guidance: {
       impact:

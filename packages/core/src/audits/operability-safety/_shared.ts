@@ -22,6 +22,7 @@ import type {
   AuditResult,
   AuditTier,
   EvidenceGrade,
+  EvidenceKey,
   ScoreDisplayMode,
 } from '../../types';
 import { Audit } from '../../audit';
@@ -121,6 +122,18 @@ export function defineA11yAudit(spec: A11yAuditSpec): typeof Audit {
 
 export const base = {
   category: 'operability-safety' as const,
+  /**
+   * Every audit built on this base reads the sampled pages through
+   * `A11yBackedAudit`, so they all carry the same requirement set. Declared
+   * once here; `scripts/check-requires.mjs` resolves it for each audit that
+   * spreads `base`.
+   */
+  requires: [
+    'origin-reachable',
+    'unblocked-fetches',
+    'rendered-body',
+    'sample-adequate',
+  ] as EvidenceKey[],
 };
 
 /**

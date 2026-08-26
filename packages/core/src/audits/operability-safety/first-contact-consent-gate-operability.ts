@@ -152,6 +152,7 @@ export class FirstContactConsentGateOperabilityAudit extends Audit {
     tier: 'informative',
     dossier:
       'docs/evidence/audits/operability-safety/first-contact-consent-gate-operability.md',
+    requires: ['origin-reachable', 'unblocked-fetches', 'rendered-body', 'sample-adequate'],
     defaultPriority: 'low',
     guidance: {
       impact:

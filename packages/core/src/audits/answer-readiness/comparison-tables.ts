@@ -16,6 +16,7 @@ export class ComparisonTablesAudit extends Audit {
     evidenceGrade: 'C',
     tier: 'informative',
     dossier: 'docs/evidence/audits/answer-readiness/comparison-tables.md',
+    requires: ['origin-reachable', 'unblocked-fetches', 'rendered-body', 'sample-adequate'],
     applicablePageTypes: ['category', 'product', 'content'],
     defaultPriority: 'low',
     guidance: {

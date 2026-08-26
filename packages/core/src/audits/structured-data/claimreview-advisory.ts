@@ -96,6 +96,7 @@ export class ClaimreviewAdvisoryAudit extends Audit {
     evidenceGrade: 'A',
     tier: 'informative',
     dossier: 'docs/evidence/audits/structured-data/claimreview-advisory.md',
+    requires: ['origin-reachable', 'unblocked-fetches', 'rendered-body', 'sample-adequate'],
     defaultPriority: 'low',
     guidance: {
       impact:

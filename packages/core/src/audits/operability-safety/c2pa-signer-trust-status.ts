@@ -75,6 +75,7 @@ export class C2paSignerTrustStatusAudit extends Audit {
     weight: weightForGrade('B', 'scored'),
     defaultPriority: 'medium',
     dossier: 'docs/evidence/audits/operability-safety/c2pa-signer-trust-status.md',
+    requires: ['origin-reachable', 'unblocked-fetches', 'rendered-body', 'sample-adequate'],
     guidance: {
       impact:
         'A manifest that exists is not a manifest that verifies. A conforming C2PA validator resolves the signing certificate against the published Trust List and shows the credential as untrusted when it cannot — which is what a self-signed certificate always produces, and what an expired one produces the day it lapses. The publisher sees Content Credentials on every asset; the consumer sees a warning, or nothing at all.',

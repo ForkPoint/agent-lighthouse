@@ -22,6 +22,7 @@ export class LlmsTxtLinksValidAudit extends Audit {
     evidenceGrade: 'C',
     tier: 'informative',
     dossier: 'docs/evidence/audits/machine-discovery/llms-txt-links-valid.md',
+    requires: ['origin-reachable'],
     defaultPriority: 'low',
     guidance: {
       impact:

@@ -1,0 +1,346 @@
+[
+  {
+    "url": "https://hiutdenim.co.uk",
+    "status": 200,
+    "words": 7,
+    "chars": 49,
+    "simple": true,
+    "strict": true
+  },
+  {
+    "url": "https://gymshark.com",
+    "status": 200,
+    "words": 1,
+    "chars": 14,
+    "simple": true,
+    "strict": true
+  },
+  {
+    "url": "https://allbirds.com",
+    "status": 200,
+    "words": 111,
+    "chars": 651,
+    "simple": false,
+    "strict": false
+  },
+  {
+    "url": "https://fashionnova.com",
+    "status": 200,
+    "words": 18,
+    "chars": 199,
+    "simple": true,
+    "strict": true
+  },
+  {
+    "url": "https://taylorstitch.com",
+    "status": 200,
+    "words": 1335,
+    "chars": 8067,
+    "simple": false,
+    "strict": false
+  },
+  {
+    "url": "https://chubbiesshorts.com",
+    "status": 200,
+    "words": 771,
+    "chars": 6680,
+    "simple": false,
+    "strict": false
+  },
+  {
+    "url": "https://velasca.com",
+    "status": 200,
+    "words": 0,
+    "chars": 0,
+    "simple": true,
+    "strict": true
+  },
+  {
+    "url": "https://kith.com",
+    "status": 200,
+    "words": 747,
+    "chars": 4614,
+    "simple": false,
+    "strict": false
+  },
+  {
+    "url": "https://aloyoga.com",
+    "status": 200,
+    "words": 49,
+    "chars": 317,
+    "simple": false,
+    "strict": false
+  },
+  {
+    "url": "https://deathwishcoffee.com",
+    "status": 200,
+    "words": 1187,
+    "chars": 6363,
+    "simple": false,
+    "strict": false
+  },
+  {
+    "url": "https://magicspoon.com",
+    "status": 200,
+    "words": 705,
+    "chars": 4151,
+    "simple": false,
+    "strict": false
+  },
+  {
+    "url": "https://pipsnacks.com",
+    "status": 200,
+    "words": 594,
+    "chars": 3761,
+    "simple": false,
+    "strict": false
+  },
+  {
+    "url": "https://liquiddeath.com",
+    "status": 200,
+    "words": 389,
+    "chars": 2739,
+    "simple": false,
+    "strict": false
+  },
+  {
+    "url": "https://partakefoods.com",
+    "status": 200,
+    "words": 371,
+    "chars": 2123,
+    "simple": false,
+    "strict": false
+  },
+  {
+    "url": "https://drinkghia.com",
+    "status": 200,
+    "words": 1512,
+    "chars": 8257,
+    "simple": false,
+    "strict": false
+  },
+  {
+    "url": "https://kyliecosmetics.com",
+    "status": 200,
+    "words": 417,
+    "chars": 2527,
+    "simple": false,
+    "strict": false
+  },
+  {
+    "url": "https://graza.co",
+    "status": 200,
+    "words": 94,
+    "chars": 500,
+    "simple": false,
+    "strict": false
+  },
+  {
+    "url": "https://glossier.com",
+    "status": 200,
+    "words": 215,
+    "chars": 1207,
+    "simple": false,
+    "strict": false
+  },
+  {
+    "url": "https://colourpop.com",
+    "status": 200,
+    "words": 1061,
+    "chars": 5870,
+    "simple": false,
+    "strict": false
+  },
+  {
+    "url": "https://beardbrand.com",
+    "status": 200,
+    "words": 1328,
+    "chars": 8817,
+    "simple": false,
+    "strict": false
+  },
+  {
+    "url": "https://jeffreestarcosmetics.com",
+    "status": 200,
+    "words": 2182,
+    "chars": 12783,
+    "simple": false,
+    "strict": false
+  },
+  {
+    "url": "https://artisaire.com",
+    "status": 200,
+    "words": 1091,
+    "chars": 6861,
+    "simple": false,
+    "strict": false
+  },
+  {
+    "url": "https://popchart.co",
+    "status": 200,
+    "words": 425,
+    "chars": 2723,
+    "simple": false,
+    "strict": false
+  },
+  {
+    "url": "https://bioliteenergy.com",
+    "status": 200,
+    "words": 227,
+    "chars": 1439,
+    "simple": false,
+    "strict": false
+  },
+  {
+    "url": "https://tattly.com",
+    "status": 200,
+    "words": 9,
+    "chars": 63,
+    "simple": true,
+    "strict": true
+  },
+  {
+    "url": "https://ruggable.com",
+    "status": 200,
+    "words": 26,
+    "chars": 211,
+    "simple": false,
+    "strict": false
+  },
+  {
+    "url": "https://popsockets.com",
+    "status": 200,
+    "words": 3673,
+    "chars": 25586,
+    "simple": false,
+    "strict": false
+  },
+  {
+    "url": "https://skims.com",
+    "status": 200,
+    "words": 49,
+    "chars": 401,
+    "simple": false,
+    "strict": false
+  },
+  {
+    "url": "https://fentybeauty.com",
+    "status": 200,
+    "words": 660,
+    "chars": 4010,
+    "simple": false,
+    "strict": false
+  },
+  {
+    "url": "https://stevemadden.com",
+    "status": 200,
+    "words": 107,
+    "chars": 595,
+    "simple": false,
+    "strict": false
+  },
+  {
+    "url": "https://rebeccaminkoff.com",
+    "status": 200,
+    "words": 220,
+    "chars": 1272,
+    "simple": false,
+    "strict": false
+  },
+  {
+    "url": "https://houseplant.com",
+    "status": 200,
+    "words": 159,
+    "chars": 891,
+    "simple": false,
+    "strict": false
+  },
+  {
+    "url": "https://packagefreeshop.com",
+    "status": 200,
+    "words": 333,
+    "chars": 2193,
+    "simple": false,
+    "strict": false
+  },
+  {
+    "url": "https://oishii.com",
+    "status": 200,
+    "words": 311,
+    "chars": 2054,
+    "simple": false,
+    "strict": false
+  },
+  {
+    "url": "https://bestself.co",
+    "status": 200,
+    "words": 2320,
+    "chars": 13950,
+    "simple": false,
+    "strict": false
+  },
+  {
+    "url": "https://magdabutrym.com",
+    "status": 200,
+    "words": 38,
+    "chars": 510,
+    "simple": false,
+    "strict": false
+  },
+  {
+    "url": "https://greatjonesgoods.com",
+    "status": 200,
+    "words": 415,
+    "chars": 2843,
+    "simple": false,
+    "strict": false
+  },
+  {
+    "url": "https://heydaycanning.com",
+    "status": 200,
+    "words": 451,
+    "chars": 2765,
+    "simple": false,
+    "strict": false
+  },
+  {
+    "url": "https://quitenice.co",
+    "status": 200,
+    "words": 0,
+    "chars": 0,
+    "simple": true,
+    "strict": true
+  },
+  {
+    "url": "https://freshcap.com",
+    "status": 200,
+    "words": 1790,
+    "chars": 11849,
+    "simple": false,
+    "strict": false
+  },
+  {
+    "url": "https://justinreed.com",
+    "status": 200,
+    "words": 3255,
+    "chars": 18413,
+    "simple": false,
+    "strict": false
+  },
+  {
+    "url": "https://207ouest.com",
+    "status": 200,
+    "words": 394,
+    "chars": 2529,
+    "simple": false,
+    "strict": false
+  },
+  {
+    "url": "https://theouai.com",
+    "status": 200,
+    "words": 350,
+    "chars": 2086,
+    "simple": false,
+    "strict": false
+  }
+]

@@ -155,6 +155,7 @@ export class DatesOnContentAudit extends Audit {
     evidenceGrade: 'A',
     tier: 'scored',
     dossier: 'docs/evidence/audits/answer-readiness/dates-on-content.md',
+    requires: ['origin-reachable', 'unblocked-fetches', 'rendered-body', 'sample-adequate'],
     applicablePageTypes: ['content'],
     defaultPriority: 'medium',
     guidance: {

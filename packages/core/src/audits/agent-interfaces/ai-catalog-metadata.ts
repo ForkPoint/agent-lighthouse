@@ -93,6 +93,7 @@ export class AiCatalogMetadataAudit extends Audit {
     evidenceGrade: 'B',
     tier: 'scored',
     dossier: 'docs/evidence/audits/agent-interfaces/ai-catalog-metadata.md',
+    requires: ['origin-reachable'],
     defaultPriority: 'medium',
     guidance: {
       impact:

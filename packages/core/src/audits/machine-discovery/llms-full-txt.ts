@@ -21,6 +21,7 @@ export class LlmsFullTxtAudit extends Audit {
     evidenceGrade: 'C',
     tier: 'informative',
     dossier: 'docs/evidence/audits/machine-discovery/llms-full-txt.md',
+    requires: ['origin-reachable'],
     defaultPriority: 'high',
     guidance: {
       impact:

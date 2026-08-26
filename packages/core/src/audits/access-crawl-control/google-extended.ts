@@ -16,6 +16,8 @@ export class GoogleExtendedAudit extends CrawlerBotAudit {
     evidenceGrade: 'A',
     tier: 'scored',
     dossier: 'docs/evidence/audits/access-crawl-control/google-extended.md',
+    // Gate exemption: being refused is what this category reports.
+    requires: ['origin-reachable'],
     defaultPriority: 'medium',
     guidance: {
       impact:
