@@ -39,6 +39,23 @@ describe('ContentWithoutClickthroughAudit', () => {
     expect(result.message).toContain('Insufficient content');
   });
 
+  // hiutdenim.co.uk shape: a short first <main> shadowing the real content
+  // region. The low-content warning must read the largest <main>, not the first.
+  it('counts the largest <main>, so a stub first <main> does not trigger the warning', () => {
+    const stub = 'a'.repeat(49);
+    const real = Array.from({ length: 120 }, (_, i) => `real${i}`).join(' ');
+    const page = mockPageContext(
+      'https://example.com/blog/post',
+      `<html><body>
+        <main>${stub}</main>
+        <main></main>
+        <main><p>${real}</p></main>
+      </body></html>`,
+    );
+    const result = audit.audit(mockCheckContext([page]));
+    expect(result.status).toBe('pass');
+  });
+
   it('fails when no pages were scanned', () => {
     const result = audit.audit(mockCheckContext([]));
     expect(result.status).toBe('fail');

@@ -41,9 +41,9 @@ It answers four questions per scan:
 
 | Requirement | The question | Unmet when |
 | :-- | :-- | :-- |
-| `origin-reachable` | Did we reach the site at all? | non-2xx, a non-HTML root (PDF, JSON, feed), DNS failure, or a temporary redirect to another host |
+| `origin-reachable` | Did we reach the site at all? | non-2xx, a non-HTML root (PDF, JSON, feed), DNS failure, or a temporary redirect to a different registrable domain (a geo hop to `us.site.com` stays met) |
 | `unblocked-fetches` | Did a firewall or a rate limit stop us? | `wafProtection.isBlocked`, or the homepage returned 429 |
-| `rendered-body` | Does the served HTML carry readable text? | `words <= 50 && characters <= 200` |
+| `rendered-body` | Does the served HTML carry readable text? | `words <= 50 && characters <= 200`, measured over the whole `<body>` via `getRenderedText` |
 | `sample-adequate` | Did we obtain a usable page of the type this audit needs? | no fetched, rendered page of that type |
 
 The skip machinery already exists and is reused rather than rebuilt.
@@ -86,6 +86,16 @@ when the declaration disagrees with what the code actually reads. The mapping
 stays explicit in the file, per this repo's habit, and cannot drift silently when
 an audit starts reading something new.
 
+The check reads gatherer imports too, not only `ctx.pages`. The gatherer layer
+exists so audits do not touch pages directly — a pages-only grep would classify
+exactly the best-behaved audits as safe and leave them judging gatherer output
+built from nothing. The script maps each gatherer module to the evidence its
+input needs (`text-metrics`, `extraction`, `media` and their kin are page-fed;
+`robots`, `sitemap`, `feeds` are not), and an audit's expected `requires` is
+the union of its direct reads and its imported gatherers'. A gatherer missing
+from the map fails the build. This pushes the gated population above the 143
+direct readers; calibration reports the real count.
+
 Some audits are deliberately exempt, and the exemptions carry the weight:
 
 - `content-extraction/server-rendered` is **not** gated by `rendered-body`. A
@@ -124,13 +134,23 @@ of the registry's total, the whole scan is marked not judgeable and the score is
 suppressed. A shell then reports no score plus a critical `server-rendered`
 failure, which is the accurate pair of statements.
 
+Only mass the gate itself removed counts toward that threshold — checks tagged
+`skipped:no-evidence`. Page-type skips never count: a site with no blog and no
+product pages loses those audits legitimately, and counting them would leave
+small honest sites unscored.
+
+One consequence is accepted consciously rather than inherited. A shell owner
+gets the useful report — one critical finding, no number diluting it. A
+competitor comparison loses its score, and that is fine: the score it was using
+carried 5 to 12 points of pure artifact.
+
 The threshold is deliberately not written down yet. It comes out of the
 calibration run, and a number invented before that run would be a guess wearing a
 specification's clothes.
 
 ## Order of work
 
-### Step 0 — fix `getMainContentText`
+### Step 0 — split the text metric
 
 Independent of everything above, and shipping today.
 
@@ -151,10 +171,21 @@ characters, which is a coin flip rather than a verdict.
 Across the 100-store benchmark, `content-extraction/server-rendered` fails five
 stores and two of those five fails are false.
 
-Fix: measure text over `<body>` minus `script`, `style`, `noscript` and
-`template`; prefer `<main>` only when it actually holds text. Rerun the benchmark
-and record how many verdicts move. Own changeset, `major` — a scan's output
-changes.
+Fix: split the function, because it serves two jobs that want opposite scopes.
+Shell detection wants the whole `<body>`; the content audits — dates, numbers,
+keywords, depth — want navigation, footers and cookie banners kept out. One
+function cannot do both, and it has nine call sites across seven audit files
+plus one gatherer, so widening it would move verdicts across the whole suite.
+
+- `getRenderedText`, new: `<body>` minus `script`, `style`, `noscript`,
+  `template`. Feeds `server-rendered` now, the gate's `rendered-body` later.
+- `getMainContentText`, kept for content audits, selection fixed: take the
+  `<main>` with the most text — not the first — and fall back to `<body>` when
+  every `<main>` is empty.
+
+Rerun the benchmark and record every verdict that moves, across the consumers
+of both functions — not only `server-rendered`. Own changeset, `major` — a
+scan's output changes.
 
 ### Steps 1–6 — the gate
 
@@ -163,9 +194,9 @@ changes.
 2. **Put `evidence` on `CheckContext`, required rather than optional.** An
    optional field fails open, and a caller that forgets is exactly the
    silent-nothing bug this exists to remove. The cost was measured before the
-   decision: 224 of the 231 audit test files build their context through a shared
-   `mockCheckContext`, so the field is added once. Eight files build one by hand
-   and take `allEvidenceMet()` explicitly.
+   decision: 223 of the 231 audit test files build their context through a shared
+   `mockCheckContext` (recount at step 2 — it drifts), so the field is added
+   once. Eight files build one by hand and take `allEvidenceMet()` explicitly.
 3. **`server-rendered` consumes the gate's verdict** instead of recomputing it.
    First behaviour change, one audit, easy to reason about.
 4. **`requires` on meta, `check-requires.mjs`, and the gate in `planAudits`** —
@@ -173,13 +204,17 @@ changes.
 5. **Calibration.** 138 stores, gate off and gate on, twice, at
    `--concurrency=2 --delay=3` so the run does not throttle itself and measure
    its own throttling (the mistake behind #18). Stores that disagree between the
-   two runs are treated as rate-limit noise, not as data. The run reports gated
-   count per store, score delta per store, and every shell decision confirmed by
-   hand. Its numbers are written back into the design document, including the
-   §7.2 threshold.
-6. **Turn it on by default,** together with the score suppression, the
-   `recommendations` fix, and the null-score path through report, CLI, MCP and
-   the website. One `major` changeset.
+   two runs are dropped as rate-limit noise — unless they sit near the
+   `rendered-body` boundary, in which case they are hand-checked: a boundary
+   flapper is data, not noise. The corpus must include at least one storefront
+   that geo-302s to a country subdomain. The run reports gated count per store,
+   score delta per store, and every shell decision confirmed by hand. Its
+   numbers are written back into the design document, including the §7.2
+   threshold.
+6. **Turn it on by default,** together with the score suppression, the single
+   429 retry with backoff (so a self-inflicted throttle does not become "not
+   scored"), the `recommendations` fix, and the null-score path through report,
+   CLI, MCP and the website. One `major` changeset.
 
 Steps 0 through 3 are safe to merge on their own. Step 6 must land whole: a
 half-applied score rule is worse than no rule.
@@ -195,13 +230,20 @@ half-applied score rule is worse than no rule.
   conformance assertion turns into a vacuous `na`, which is a green suite proving
   nothing.
 - Calibration numbers are in the design document before step 6 merges, not after.
+- `getRenderedText` and `getMainContentText` stayed two functions; no content
+  audit's text source widened to the whole body.
+- `check-requires.mjs` maps every gatherer module to evidence keys; an unmapped
+  gatherer import fails the build.
+- The §7.2 escalation counts only `skipped:no-evidence` mass, never
+  `skipped:page-type`.
 
 ## What is still unknown
 
 - The shell rule's error rate is measured on 45 sites. That is a sample, not a
   bound.
-- `check-requires.mjs` greps for `ctx.pages` and will miss an audit that reaches
-  pages through a gatherer helper. It is a ratchet, not a proof.
+- `check-requires.mjs` greps for `ctx.pages` and gatherer imports; a helper
+  that reaches pages outside both still slips past. It is a ratchet, not a
+  proof.
 - The escalation threshold is unset until step 5 runs, so the design is not fully
   specified until then.
 - The spike corpus is five shells, two walls, two controls and 43 storefronts,

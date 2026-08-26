@@ -49,6 +49,11 @@ Fails a page when ≥2 of eight English teaser regexes match anywhere in its mai
 
 **Overlaps with:** _none_
 
+## Implementation deviations
+
+- 2026-08-26 — the shared text helper this audit reads, `getMainContentText`, changed its selection. Among several `<main>` elements it now returns the one holding the most text rather than the first, it ignores a `<main>` inside a `<template>`, and it falls back to the whole `<body>` only when no `<main>` holds any text. Measured cause (scan evidence gate design, section 2.4): storefronts ship empty or fragmented `<main>` wrappers, and the first one is often a stub. Two consequences for this audit. A page whose real content sits in a later `<main>` is now measured on that content. A page whose every `<main>` is empty is now measured on its body text, page chrome included, where it previously measured as empty.
+- 2026-08-26 — the audit carried a private copy of the old first-`<main>` word count, written when the shared helper had no empty-`<main>` fallback. That copy is removed; the audit reads the shared `getWordCount`, so its low-content warning and its teaser scan now measure the same text.
+
 ## Evidence
 
 _No dedicated evidence signal was researched for this audit in the 2026-08-20 pass. Its tier assignment falls to the taxonomy design; unproven mechanisms default to informative per the [evidence policy](../../policy.md)._

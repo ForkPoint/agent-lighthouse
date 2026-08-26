@@ -81,6 +81,8 @@ Tier per evidence policy: **scored** — grade A meets the A/B bar required for 
   type metadata are excluded, so the reported fraction is about prose shipped
   twice rather than about JSON shape.
 
+- 2026-08-26 — the shared text helper this audit reads, `getMainContentText`, changed its selection. Among several `<main>` elements it now returns the one holding the most text rather than the first, it ignores a `<main>` inside a `<template>`, and it falls back to the whole `<body>` only when no `<main>` holds any text. Measured cause (scan evidence gate design, section 2.4): storefronts ship empty or fragmented `<main>` wrappers, and the first one is often a stub. Two consequences for this audit. A page whose real content sits in a later `<main>` is now measured on that content. A page whose every `<main>` is empty is now measured on its body text, page chrome included, where it previously measured as empty.
+
 ## Deferred
 
 - Per-payload duplication attribution (which payload repeats the body) is

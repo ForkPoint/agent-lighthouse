@@ -2,26 +2,7 @@ import type { AuditMeta, AuditResult } from "../../types";
 import { Audit } from "../../audit";
 import { weightForGrade } from '../../scorer';
 import type { CheckContext } from '../../check-context';
-import { getMainContentText } from '../../parser';
-import type { CheerioAPI } from 'cheerio';
-
-/**
- * Word count of the main content, falling back to <body> when <main> is empty.
- * The plain getWordCount() picks <main> whenever the element merely exists —
- * but on JS/image-driven homepages <main> is often present yet empty, which
- * produced spurious "insufficient content" warnings.
- */
-function contentWordCount($: CheerioAPI): number {
-  const main = $('main').first();
-  const extract = (sel: ReturnType<CheerioAPI>): string => {
-    const clone = sel.clone();
-    clone.find('script, style, noscript, template').remove();
-    return clone.text().replace(/\s+/g, ' ').trim();
-  };
-  let text = main.length ? extract(main) : '';
-  if (!text) text = extract($('body'));
-  return text.split(/\s+/).filter(Boolean).length;
-}
+import { getMainContentText, getWordCount } from '../../parser';
 
 const TEASER_PATTERNS = [
   /click\s+(here\s+)?to\s+read\s+more/i,
@@ -107,7 +88,7 @@ export class ContentWithoutClickthroughAudit extends Audit {
         return !head.startsWith('<?xml');
       });
       if (checkPage) {
-        const wordCount = contentWordCount(checkPage.$);
+        const wordCount = getWordCount(checkPage.$);
         if (wordCount < 50) {
           return this.warn(
             'Insufficient content to evaluate.',

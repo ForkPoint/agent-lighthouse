@@ -354,10 +354,17 @@ function readableText(root: ReturnType<CheerioAPI>): string {
  */
 export function getMainContentText($: CheerioAPI): string {
   let best = '';
-  $('main').each((_, el) => {
-    const text = readableText($(el));
-    if (text.length > best.length) best = text;
-  });
+  // Scope the search to <body>. A <main> inside a <template> parses into a
+  // detached content fragment, which `$('main')` still matches — and the
+  // largest-wins rule would let inert markup the page never renders outweigh
+  // the real content region. `readableText` drops <template> everywhere else,
+  // so counting one here would contradict it.
+  $('body')
+    .find('main')
+    .each((_, el) => {
+      const text = readableText($(el));
+      if (text.length > best.length) best = text;
+    });
   if (best) return best;
   return readableText($('body'));
 }

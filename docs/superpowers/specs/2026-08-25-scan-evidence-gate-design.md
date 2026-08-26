@@ -1,7 +1,9 @@
 # Scan evidence gate — design
 
 Status: draft, revised after a measurement spike (§2) that changed four of its
-decisions and found one shipped bug
+decisions and found one shipped bug; revised again after plan review —
+text-metric split (§9 step 0), gatherer-aware `requires` check (§8), escalation
+mass defined (§7.2), same-domain geo redirects (§6.1), single 429 retry (§6.2)
 Date: 2026-08-25
 Area: `packages/core`, with forced changes in `report`, `cli`, `mcp`, `website`
 
@@ -125,6 +127,54 @@ flip, not a verdict.
 This is a live user-visible defect, it is independent of the gate, and it is
 cheap. It ships first (§9, step 0).
 
+### 2.4.1 What step 0 actually moved (measured 2026-08-26)
+
+Two measurements, because a live re-scan is noisy and the rule change is not.
+
+**Deterministic.** One homepage fetch per store across 20 benchmark
+storefronts, 19 of which answered (`bombas.com` returned 429). For each page,
+the old metric (`$('main').first()`, `<body>` only when no `<main>` exists),
+the new `getMainContentText` (the `<main>` holding the most text, `<body>` only
+when none holds any) and the new `getRenderedText` (the whole `<body>`) were
+scored against the unchanged `wordCount > 50 || length > 200` threshold.
+
+```
+                    <main> count   old metric    new getMainContentText   getRenderedText
+hiutdenim.co.uk           4        7w / 49c      135w / 1027c             296w / 2470c
+velasca.com               1        0w / 0c       194w / 1142c             194w / 1142c
+fashionnova.com           1       28w / 273c      28w /  273c             127w / 1396c
+```
+
+**Two of 19 pages change verdict, and both change from a false fail to a
+pass**: `hiutdenim.co.uk` and `velasca.com`, for both the main-scope and the
+body-scope metric. The other 17 hold their verdict. The three shells stay
+shells on every metric — `gymshark.com` at 1 word in the body,
+`quitenice.co` at 0, `tattly.com` at 20 words / 127 characters.
+`fashionnova.com`, the 2-character coin flip named above, now clears the
+threshold by 1,196 characters instead.
+
+**Live re-scan.** The full benchmark was re-run before and after on the same 20
+stores; 8 answered cleanly on both runs and were comparable. 26 check verdicts
+moved across those 8. Four are attributable to this change:
+
+```
+hiutdenim.co.uk   content-extraction/server-rendered    fail -> pass   7 words -> 296 words
+velasca.com       content-extraction/server-rendered    fail -> pass   0 words -> 194 words
+hiutdenim.co.uk   answer-readiness/specific-numbers     fail -> pass   found £325, £275, £245
+velasca.com       answer-readiness/unique-data          fail -> warn   found 10%
+```
+
+The remaining 22 are network noise, not code: TTFB moves that flip
+`server-responsiveness` (allbirds 693ms -> 5141ms), probe counts that differ
+run to run (`ai-crawler-edge-parity`, `agent-ua-commerce-parity`), and pages
+that were sampled in one run and not the other. `taylorstitch.com` moving
+`content-without-clickthrough` to warn on "39 words" looked like this change
+and is not: that page measures 39 words on the old metric and 39 on the new,
+and it was simply not in the earlier sample.
+
+Two verdicts move outside `server-rendered`, both from a false fail toward the
+truth. That is inside the blast radius this step was allowed.
+
 ## 3. Goal
 
 Decide, once per scan and before any audit runs, which classes of evidence the
@@ -184,9 +234,10 @@ export function allEvidenceMet(): ScanEvidence;
 4. **New:** `buildScanEvidence(...)` runs immediately after.
 5. `CheckContext` gains `evidence: ScanEvidence` — **required, not optional**.
    Optional fails open, and a caller that forgets is exactly the silent-nothing
-   bug this exists to remove. The cost was measured: 224 of the 231 audit test
-   files build their context through `mockCheckContext`, so the field is added
-   once in `__tests__/test-utils.ts`. Eight files build one by hand and take
+   bug this exists to remove. The cost was measured: 223 of the 231 audit test
+   files build their context through `mockCheckContext` (recounted 2026-08-25;
+   recount at step 2 — it drifts), so the field is added once in
+   `__tests__/test-utils.ts`. Eight files build one by hand and take
    `allEvidenceMet()` explicitly.
 6. `planAudits` gains a second skip reason beside `TAG_SKIPPED_PAGE_TYPE`.
 7. The report carries the evidence verdict (§7.3).
@@ -224,7 +275,12 @@ today parses into a nonsense DOM that every content audit then judges.
 
 A cross-host `301`/`308` counts as met, with the final host stamped in the
 report: that is a domain migration, and the site the user reached is real. A
-cross-host `302`/`307` counts as unmet.
+`302`/`307` whose target stays inside the same registrable domain (eTLD+1) also
+counts as met — `site.com` answering with a hop to `us.site.com` is a geo
+router, not a different site, and international storefronts do it on every
+request. Only a temporary redirect to a different registrable domain counts as
+unmet. The spike corpus is English-heavy and never exercised the geo case, so
+the calibration run (§8.3) checks it explicitly.
 
 `quitenice.co` in the spike corpus returned a 114-byte body — a parked or dead
 origin. It belongs here, not in `rendered-body`.
@@ -242,6 +298,14 @@ Asymmetry with `sample-adequate` is deliberate: a scan whose homepage answered
 but whose internal pages were refused stays met here and loses those pages
 through `sample-adequate`. Blocking is judged at the origin; coverage per page.
 
+A homepage 429 is retried once — after `Retry-After` when present, a fixed
+backoff otherwise — before the requirement goes unmet. A 429 is as likely the
+scan's own throttle as the site's refusal (#18), and declaring a scan not
+judgeable on a self-inflicted signal trades a wrong number for a wrong null.
+One retry, no loop; if it also fails, unmet stands and the reason carries
+`isRateLimit`. Ships with step 6, because it only matters once suppression is
+on.
+
 ### 6.3 `rendered-body`
 
 Per page. Met when the served HTML carries text a non-JS consumer can read.
@@ -252,8 +316,9 @@ met(page) = wordCount > 50 || textLength > 200
 
 That is the existing `server-rendered.ts:47` condition, moved into
 `scan-evidence.ts` as the single implementation, **with the text metric fixed**
-(§2.4): text is measured over `<body>` minus `script`/`style`/`noscript`/
-`template`, not over the first `<main>`.
+(§2.4): text comes from `getRenderedText` — the whole `<body>` minus
+`script`/`style`/`noscript`/`template` — never from the first `<main>`. Step 0
+(§9) creates that function and defines the split.
 
 The first draft added a corroborating-signal requirement on top. §2.3 measured
 it as strictly worse — it missed two of five real shells and improved nothing.
@@ -327,6 +392,12 @@ It fixed nothing. Two things actually work:
 **(a) is the design.** A JS-shell site therefore reports no score and a critical
 `server-rendered` failure, which is the accurate pair of statements.
 
+The mass that counts toward the threshold is only what the gate itself removed:
+checks tagged `skipped:no-evidence`. Page-type skips (`skipped:page-type`)
+never count. A site with no blog and no product pages loses those audits
+legitimately, and counting that mass would mark small honest sites unscored —
+the calibration run would then measure the wrong rule.
+
 The threshold fraction is not set in this document. It comes out of the
 calibration run (§8.3); writing a number here first would be a guess wearing a
 specification's clothes.
@@ -373,6 +444,15 @@ Pre-existing; this change multiplies it. `orchestrator.ts:424` builds
 `fail | warn`). Core must match. In scope, because this change is what makes it
 visible.
 
+### 7.6 What a shell report looks like, decided once
+
+A gated shell scan reports no score, one critical `server-rendered` failure and
+roughly 140 not-assessed stubs. For the site's owner that is the right report:
+the one finding that matters, undiluted by a number. What disappears is the
+score a competitor comparison would have used. Accepted, on purpose — the score
+such a comparison was using carried +5 to +12 of pure artifact (§2.2), so the
+comparison was already misinformation with better ergonomics.
+
 ## 8. Requirement assignment
 
 The first draft assigned requirements by category, and the measurement killed it:
@@ -409,6 +489,20 @@ Design:
   source and fails when its declared `requires` disagrees with what it reads.
   That makes the mapping explicit in the file, per this repo's habit, and stops
   it drifting when an audit starts reading something new.
+- The check covers the gatherer layer, not only `ctx.pages`. The gatherer layer
+  exists precisely so audits do not touch pages directly, so a pages-only grep
+  classifies the best-behaved audits as safe and leaves them running blind on a
+  shell scan — the vacuous-verdict bug, one layer down. Audits reach gatherers
+  through module imports (`from '../../gatherers/<name>'`), so the script keys
+  on those imports and carries a static map from each gatherer module to the
+  evidence keys its input needs: `text-metrics`, `extraction`, `css-rules`,
+  `media`, `commerce`, `structured-fields`, `tokens`, `ua-parity` and
+  `sampled-pages` are page-fed; `robots`, `sitemap`, `feeds`, `domains` and
+  `conditional` are not. An audit's expected `requires` is the union of its
+  direct reads and its imported gatherers'. A gatherer missing from the map
+  fails the build — that is what keeps the map honest when one is added. The
+  union will push the gated population above the 143 direct readers; the
+  calibration run reports the real count.
 - §7.4's exemptions are the deliberate disagreements, and each carries a comment
   saying so. The check reads them from an allowlist, not from the absence of a
   rule.
@@ -419,12 +513,35 @@ not go looking.
 
 ## 9. Rollout
 
-**Step 0 — fix `getMainContentText` (§2.4).** Independent of everything else,
-and it is shipping a false critical failure at `velasca.com` and
-`hiutdenim.co.uk` today. Measure over `<body>` minus non-content nodes; keep
-`<main>` as a preference only when it holds text. Re-run the 100-store benchmark
-and record how many `server-rendered` verdicts move. Own changeset, `major`
-(a scan's output changes).
+**Step 0 — split the text metric (§2.4).** Independent of everything else, and
+it is shipping a false critical failure at `velasca.com` and `hiutdenim.co.uk`
+today.
+
+`getMainContentText` serves two jobs that want opposite scopes. Shell detection
+asks whether the server rendered any text at all, and wants the whole `<body>`.
+The content audits — dates, numbers, keyword density, content depth — ask what
+the main content says, and want navigation, footers and cookie banners kept
+out. Widening the one function to fix the first job pours header text into
+every content regex, which is the same bug pointed the other way. The function
+has nine call sites across seven audit files plus `gatherers/ua-parity.ts`,
+whose output five more audits read, so the blast radius is the audit suite, not
+one verdict. (The first draft said 25 call sites across 11 files; recounted
+2026-08-26.)
+
+So: two functions.
+
+- `getRenderedText($)`, new: `<body>` minus
+  `script`/`style`/`noscript`/`template`. Consumed by `server-rendered` now and
+  by the gate's `rendered-body` later.
+- `getMainContentText($)`, kept for the content audits, selection bug fixed:
+  among all `<main>` elements take the one holding the most text — not
+  `.first()` — and fall back to `<body>` only when none holds any.
+  `velasca.com`'s empty `<main>` falls through to its 194-word body;
+  `hiutdenim.co.uk`'s 49-character first-of-four stops shadowing the real one.
+
+Re-run the 100-store benchmark and record every verdict that moves, across the
+consumers of both functions — not only `server-rendered`. Own changeset,
+`major` (a scan's output changes).
 
 1. `scan-evidence.ts` + tests, unwired.
 2. Wire into `CheckContext`; `test-utils.ts` and the eight hand-built contexts.
@@ -441,8 +558,11 @@ is worse than none.
 ### 8.3 Calibration
 
 `scripts/benchmark-stores.ts` scans 138 stores. Run it with the gate off and on
-at `--concurrency=2 --delay=3` (so the run does not re-create #18), twice, and
-treat stores that disagree between runs as rate-limit noise rather than data.
+at `--concurrency=2 --delay=3` (so the run does not re-create #18), twice.
+Stores that disagree between runs are excluded as rate-limit noise — except
+stores sitting near the `rendered-body` boundary (within ±10 words or ±40
+characters of the threshold), which are hand-checked instead of discarded: a
+boundary flapper is the most informative store in the run, not the least.
 
 Report three things:
 
@@ -452,6 +572,8 @@ Report three things:
 - Every `rendered-body` shell decision, each confirmed by `curl`. The
   false-positive rate goes in this document as a number, as §6.3 already does
   for the 45-site spike sample.
+- At least one storefront that answers with a geo `302` to a country subdomain,
+  confirming §6.1's same-registrable-domain carve-out holds.
 
 The §7.2 escalation threshold is set from this run, not before it.
 
@@ -503,8 +625,9 @@ fixture.
 1. **A fifth `CheckStatus`, `'unknown'`, instead of a tag?** It would turn every
    `status === 'na'` site in four packages into a compile error until reviewed —
    both the benefit and the cost. §7.2 works either way.
-2. **Should a 429 be retried once with backoff** before the scan is declared not
-   judgeable? It is our throttle, not the site's refusal. Separate change.
+2. ~~Should a 429 be retried once with backoff?~~ Resolved into §6.2: one
+   retry with backoff before `unblocked-fetches` goes unmet, shipping with
+   step 6.
 3. **`root-files-definitive`** (§6.5) — first follow-up.
 4. **Soft 404s and consent walls.** Both return 200 with real-looking HTML. The
    first is judged as the site; the second may trip `rendered-body` and be
@@ -519,8 +642,8 @@ fixture.
 
 - The `rendered-body` error rate is measured on 45 sites, not bounded.
 - `requires` encodes what an audit reads. `check-requires.mjs` greps for
-  `ctx.pages` and will miss an audit that reaches pages through a gatherer
-  helper. The check is a ratchet, not a proof.
+  `ctx.pages` and the gatherer imports; a helper that reaches pages outside
+  both still slips past. The check is a ratchet, not a proof.
 - §7.2's threshold is unset until calibration, so the design is not fully
   specified until step 5 runs.
 - The spike corpus is 5 shells, 2 walls, 2 controls, 43 storefronts. It is

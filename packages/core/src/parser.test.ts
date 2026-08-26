@@ -779,6 +779,18 @@ describe('getMainContentText / getRenderedText — real-world <main> shapes', ()
     expect(getWordCount($)).toBe(120);
   });
 
+  it('ignores a <main> inside a <template>: inert markup never wins', () => {
+    const inert = `${'X'.repeat(500)} template main content`;
+    const html = `<html><body>
+      <main>short real content</main>
+      <template><main>${inert}</main></template>
+    </body></html>`;
+    const $ = parseHtml(html);
+
+    expect(getMainContentText($)).toBe('short real content');
+    expect(getRenderedText($)).toBe('short real content');
+  });
+
   it('keeps single-<main> behaviour: chrome outside <main> stays excluded', () => {
     const html = `<html><body>
       <header>Header chrome</header>
