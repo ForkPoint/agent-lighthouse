@@ -1,7 +1,7 @@
 ---
 '@forkpoint/agent-lighthouse-core': major
 '@forkpoint/agent-lighthouse-report': major
-'@forkpoint/agent-lighthouse-cli': major
+'@forkpoint/agent-lighthouse': major
 '@forkpoint/agent-lighthouse-mcp': major
 ---
 
