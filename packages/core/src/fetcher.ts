@@ -60,6 +60,15 @@ export interface FetchResult {
   contentLength: number;
   /** Raw response bytes. Present only when the request asked for `binary`. */
   bytes?: Uint8Array;
+  /**
+   * Every redirect hop the fetcher walked, in order. Absent when the caller
+   * disabled redirects or the response was not a redirect.
+   *
+   * `finalUrl` alone cannot say whether a host change was permanent. A scan
+   * has to tell a domain migration (301/308) from a temporary hop to somebody
+   * else's domain, so the status of each hop is kept.
+   */
+  redirectChain?: Array<{ status: number; from: string; to: string }>;
   error?: string;
 }
 
@@ -196,6 +205,7 @@ export function createFetcher() {
       // nothing from having its redirects refused.
       let gateArmed: boolean | undefined;
       let hops = 0;
+      const redirectChain: Array<{ status: number; from: string; to: string }> = [];
 
       while (
         followRedirects &&
@@ -248,6 +258,7 @@ export function createFetcher() {
           currentBody = undefined;
         }
 
+        redirectChain.push({ status: response.statusCode, from: currentUrl, to: next });
         currentUrl = next;
         hops += 1;
 
@@ -312,6 +323,7 @@ export function createFetcher() {
         contentType: headers['content-type'] ?? '',
         contentLength: bytes ? bytes.byteLength : truncatedBody.length,
         ...(bytes ? { bytes } : {}),
+        ...(redirectChain.length > 0 ? { redirectChain } : {}),
       };
     } catch (err) {
       const totalMs = performance.now() - start;
