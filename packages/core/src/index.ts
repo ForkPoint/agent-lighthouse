@@ -58,6 +58,7 @@ export {
   extractScripts,
   extractStylesheetUrls,
   getMainContentText,
+  getRenderedText,
   getWordCount,
   detectPageType,
 } from './parser';

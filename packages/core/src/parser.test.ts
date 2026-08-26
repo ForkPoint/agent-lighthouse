@@ -17,6 +17,7 @@ import {
   extractScripts,
   extractStylesheetUrls,
   getMainContentText,
+  getRenderedText,
   getWordCount,
   detectPageType,
 } from './parser';
@@ -732,6 +733,89 @@ describe('getMainContentText — node removal', () => {
     </main></body></html>`;
     const $ = parseHtml(html);
     expect(getMainContentText($)).toBe('Visible text');
+  });
+});
+
+// ---------------------------------------------------------------------------
+// getMainContentText / getRenderedText — real-world <main> shapes
+// ---------------------------------------------------------------------------
+
+describe('getMainContentText / getRenderedText — real-world <main> shapes', () => {
+  // velasca.com: a single empty <main>, with all 194 words of copy sitting
+  // elsewhere in the <body>.
+  it('falls back to the body when the only <main> holds no text', () => {
+    const words = Array.from({ length: 194 }, (_, i) => `word${i}`).join(' ');
+    const html = `<html><body>
+      <main></main>
+      <div class="section"><p>${words}</p></div>
+    </body></html>`;
+    const $ = parseHtml(html);
+
+    const mainText = getMainContentText($);
+    expect(mainText).toContain('word0');
+    expect(mainText).toContain('word193');
+    expect(getWordCount($)).toBe(194);
+
+    const rendered = getRenderedText($);
+    expect(rendered).toContain('word0');
+    expect(rendered.split(/\s+/).filter(Boolean).length).toBe(194);
+  });
+
+  // hiutdenim.co.uk: four <main> elements, the first holding 49 characters.
+  it('picks the <main> holding the most text, not the first', () => {
+    const tiny = 'a'.repeat(49);
+    const real = Array.from({ length: 120 }, (_, i) => `real${i}`).join(' ');
+    const html = `<html><body>
+      <main>${tiny}</main>
+      <main></main>
+      <main>${real}</main>
+      <main>short tail</main>
+    </body></html>`;
+    const $ = parseHtml(html);
+
+    const mainText = getMainContentText($);
+    expect(mainText).toBe(real);
+    expect(mainText).not.toContain('aaa');
+    expect(getWordCount($)).toBe(120);
+  });
+
+  it('keeps single-<main> behaviour: chrome outside <main> stays excluded', () => {
+    const html = `<html><body>
+      <header>Header chrome</header>
+      <nav>Nav chrome</nav>
+      <main><p>The real article body</p></main>
+      <footer>Footer chrome</footer>
+    </body></html>`;
+    const $ = parseHtml(html);
+    expect(getMainContentText($)).toBe('The real article body');
+  });
+
+  it('getRenderedText drops script/style/noscript/template but keeps header, nav and footer', () => {
+    const html = `<html><body>
+      <header>Header chrome</header>
+      <nav>Nav chrome</nav>
+      <main><p>The real article body</p></main>
+      <footer>Footer chrome</footer>
+      <script>var x = 1;</script>
+      <style>.a{color:red}</style>
+      <noscript>No JS fallback</noscript>
+      <template>Template content</template>
+    </body></html>`;
+    const $ = parseHtml(html);
+    const rendered = getRenderedText($);
+
+    expect(rendered).toBe('Header chrome Nav chrome The real article body Footer chrome');
+    expect(rendered).not.toContain('var x');
+    expect(rendered).not.toContain('color:red');
+    expect(rendered).not.toContain('No JS fallback');
+    expect(rendered).not.toContain('Template content');
+  });
+
+  it('returns the body text from both functions when no <main> exists', () => {
+    const html = `<html><body><p>Plain body copy</p></body></html>`;
+    const $ = parseHtml(html);
+    expect(getMainContentText($)).toBe('Plain body copy');
+    expect(getRenderedText($)).toBe('Plain body copy');
   });
 });
 

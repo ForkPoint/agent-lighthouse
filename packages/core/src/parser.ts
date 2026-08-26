@@ -325,16 +325,53 @@ export function extractHeadings($: CheerioAPI): Array<{ level: number; text: str
   return headings;
 }
 
-export function getMainContentText($: CheerioAPI): string {
-  const root = $('main').first().length ? $('main').first() : $('body');
-  // cheerio's .text() concatenates the bodies of <script>/<style>/<noscript>
-  // tags too. On modern themes those hold megabytes of inline JSON/JS/CSS that
-  // pollute every downstream content regex (dates, numbers, keywords) with
-  // garbage matches. Clone the subtree (so we never mutate the shared DOM other
-  // audits read) and drop non-content nodes before extracting text.
+/**
+ * Collapse a subtree to its readable text.
+ *
+ * cheerio's .text() concatenates the bodies of <script>/<style>/<noscript>
+ * tags too. On modern themes those hold megabytes of inline JSON/JS/CSS that
+ * pollute every downstream content regex (dates, numbers, keywords) with
+ * garbage matches. Clone the subtree (so we never mutate the shared DOM other
+ * audits read) and drop non-content nodes before extracting text.
+ */
+function readableText(root: ReturnType<CheerioAPI>): string {
   const clone = root.clone();
   clone.find('script, style, noscript, template').remove();
   return clone.text().replace(/\s+/g, ' ').trim();
+}
+
+/**
+ * The text of the page's main content region.
+ *
+ * Answers what the main content says, so page chrome — navigation, headers,
+ * footers, cookie banners — stays out of it. Among several <main> elements the
+ * one holding the most text wins: themes ship empty or fragmented <main>
+ * wrappers, and the first one is often a short stub. Falls back to the whole
+ * <body> only when no <main> holds any text.
+ *
+ * For shell detection — did the server render any readable text at all — use
+ * `getRenderedText` instead.
+ */
+export function getMainContentText($: CheerioAPI): string {
+  let best = '';
+  $('main').each((_, el) => {
+    const text = readableText($(el));
+    if (text.length > best.length) best = text;
+  });
+  if (best) return best;
+  return readableText($('body'));
+}
+
+/**
+ * The text of the served HTML body, minus script/style/noscript/template.
+ *
+ * Answers whether the server rendered any readable text at all, so page chrome
+ * counts: a shell that ships only a nav and a footer is exactly what this has
+ * to see. Use `getMainContentText` when the question is what the main content
+ * says rather than whether anything was served.
+ */
+export function getRenderedText($: CheerioAPI): string {
+  return readableText($('body'));
 }
 
 export function getWordCount($: CheerioAPI): number {

@@ -1,7 +1,7 @@
 import type { AuditMeta, AuditResult } from "../../types";
 import { Audit } from "../../audit";
 import type { CheckContext } from '../../check-context';
-import { getWordCount, getMainContentText } from '../../parser';
+import { getRenderedText } from '../../parser';
 import { weightForGrade } from '../../scorer';
 
 export class ServerRenderedAudit extends Audit {
@@ -35,7 +35,7 @@ export class ServerRenderedAudit extends Audit {
     if (!page) {
       return this.warn(
         'No homepage data available to check server-rendered content.',
-        'Homepage <main> has > 50 words or > 200 characters of text content',
+        'Homepage HTML body has > 50 words or > 200 characters of text content',
         'No homepage fetched',
         undefined,
         undefined,
@@ -43,22 +43,24 @@ export class ServerRenderedAudit extends Audit {
     }
 
     const $ = page.$;
-    const wordCount = getWordCount($);
-    const mainText = getMainContentText($);
+    // Shell detection reads the whole served body, chrome included. An empty or
+    // fragmented <main> is a theme artefact, not an absence of content.
+    const text = getRenderedText($);
+    const wordCount = text.split(/\s+/).filter(Boolean).length;
 
-    if (wordCount > 50 || mainText.length > 200) {
+    if (wordCount > 50 || text.length > 200) {
       return this.pass(
-        `Homepage has meaningful server-rendered content (${wordCount} words, ${mainText.length} characters).`,
-        'Homepage <main> has > 50 words or > 200 characters of text content',
-        `${wordCount} words, ${mainText.length} characters`,
+        `Homepage has meaningful server-rendered content (${wordCount} words, ${text.length} characters).`,
+        'Homepage HTML body has > 50 words or > 200 characters of text content',
+        `${wordCount} words, ${text.length} characters`,
         page.url,
       );
     }
 
     return this.fail(
-      `Homepage has minimal server-rendered content (${wordCount} words, ${mainText.length} characters). AI agents cannot read client-side-only rendered content.`,
-      'Homepage <main> has > 50 words or > 200 characters of text content',
-      `${wordCount} words, ${mainText.length} characters`,
+      `Homepage has minimal server-rendered content (${wordCount} words, ${text.length} characters). AI agents cannot read client-side-only rendered content.`,
+      'Homepage HTML body has > 50 words or > 200 characters of text content',
+      `${wordCount} words, ${text.length} characters`,
       {
         priority: 'critical',
         description:
