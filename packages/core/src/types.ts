@@ -215,12 +215,32 @@ export interface CategoryResult {
 
 export type ScoreTier = 'agent-ready' | 'partially-ready' | 'needs-work' | 'not-ready';
 
+/**
+ * Whether a verdict about this site can mean anything, and what is missing.
+ *
+ * A scan that fetched nothing still produced a number before this existed:
+ * `ridge.com` scored 43 and `westontable.com` 37 on scans that read no page,
+ * against a real store's 51. The numbers overlap, so a reader could not
+ * separate "mediocre site" from "we never saw this site". When `judgeable` is
+ * false the report carries no score at all — not a zero, not a low number.
+ */
+export interface ScanValidity {
+  judgeable: boolean;
+  evidence: Record<EvidenceKey, boolean>;
+  reasons: Partial<Record<EvidenceKey, string>>;
+  /** Why the score was suppressed, when it was. */
+  unscoredReason?: string;
+}
+
 export interface ScanReport {
   scanId: string;
   url: string;
   domain: string;
-  overallScore: number;
-  scoreTier: ScoreTier;
+  /** Null when the scan obtained too little evidence to judge the site. */
+  overallScore: number | null;
+  /** Null exactly when `overallScore` is. */
+  scoreTier: ScoreTier | null;
+  scanValidity?: ScanValidity;
   summary?: string;
   categories: CategoryResult[];
   topPasses: CheckResult[];

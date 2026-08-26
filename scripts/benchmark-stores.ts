@@ -188,6 +188,14 @@ function numericFlag(name: string, fallback: number): number {
 const CONCURRENCY = numericFlag('concurrency', 2);
 const DELAY_MS = numericFlag('delay', 3000);
 
+/**
+ * Run with the scan evidence gate on (`--gate`).
+ *
+ * Calibration compares a gated run against an ungated one over the same
+ * stores, so the flag has to reach `runScan` rather than being set in code.
+ */
+const ENFORCE_GATE = process.argv.slice(2).includes('--gate');
+
 const pause = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 const UNIQUE_URLS = Array.from(
   new Set((ARG_URLS.length > 0 ? ARG_URLS : RAW_STORES).map(normalizeUrl)),
@@ -196,8 +204,8 @@ const UNIQUE_URLS = Array.from(
 interface StoreResult {
   url: string;
   status: 'success' | 'error' | 'bot_blocked';
-  score?: number;
-  tier?: string;
+  score?: number | null;
+  tier?: string | null;
   report?: ScanReport;
   error?: string;
   waf?: string;
@@ -212,7 +220,9 @@ if (!fs.existsSync(outDir)) {
 // file is the published benchmark, and a five-store re-check is not that.
 const outPath = path.join(
   outDir,
-  ARG_URLS.length > 0 ? 'benchmark-subset-data.json' : 'benchmark-stores-data.json',
+  `${ARG_URLS.length > 0 ? 'benchmark-subset-data' : 'benchmark-stores-data'}${
+    ENFORCE_GATE ? '-gated' : ''
+  }.json`,
 );
 
 async function auditStore(targetUrl: string, index: number, total: number): Promise<StoreResult> {
@@ -221,7 +231,7 @@ async function auditStore(targetUrl: string, index: number, total: number): Prom
   console.log(`[${index + 1}/${total}] Auditing: ${domain} (${targetUrl})`);
 
   try {
-    const report = await runScan(targetUrl);
+    const report = await runScan(targetUrl, { enforceEvidenceGate: ENFORCE_GATE });
 
     const durationMs = Date.now() - startTime;
     const isBlocked = report.wafProtection?.isBlocked;
@@ -240,7 +250,11 @@ async function auditStore(targetUrl: string, index: number, total: number): Prom
       };
     }
 
-    console.log(`  ✓ [${index + 1}/${total}] ${domain}: Score ${report.overallScore}/100 (${report.scoreTier}) in ${(durationMs / 1000).toFixed(1)}s`);
+    const verdict =
+      report.overallScore === null
+        ? `NOT SCORED — ${report.scanValidity?.unscoredReason ?? 'too little evidence'}`
+        : `Score ${report.overallScore}/100 (${report.scoreTier})`;
+    console.log(`  ✓ [${index + 1}/${total}] ${domain}: ${verdict} in ${(durationMs / 1000).toFixed(1)}s`);
     return {
       url: targetUrl,
       status: 'success',

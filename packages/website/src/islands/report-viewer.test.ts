@@ -49,6 +49,17 @@ describe('summarize', () => {
     expect(() => summarize({})).toThrow(/overallScore/);
   });
 
+  it('accepts an explicit null score: that is a value, not an absence', () => {
+    const summary = summarize({ overallScore: null, url: 'https://example.com/' });
+
+    expect(summary.score).toBeNull();
+    expect(summary.url).toBe('https://example.com/');
+  });
+
+  it('still refuses a report with no overallScore field at all', () => {
+    expect(() => summarize({ url: 'https://example.com/' })).toThrow(/overallScore/);
+  });
+
   it('survives a report missing everything but its score', () => {
     const summary = summarize({ overallScore: 0 });
 

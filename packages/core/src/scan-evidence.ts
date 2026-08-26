@@ -62,6 +62,17 @@ function bareHost(url: string): string {
 }
 
 /**
+ * The registrable name without its public suffix: `zalando` for both
+ * `zalando.com` and `zalando.bg`.
+ */
+function registrableName(url: string): string {
+  const domain = registrableOf(url);
+  if (!domain) return '';
+  const parts = domain.split('.');
+  return parts.length > 1 ? parts.slice(0, -1).join('.') : domain;
+}
+
+/**
  * Whether the response came from the site the user asked for.
  *
  * Same host (bar `www.` and the scheme upgrade) is the common case. A
@@ -82,6 +93,17 @@ function reachedTheRequestedSite(
   const requestedDomain = registrableOf(requestedUrl);
   const finalDomain = registrableOf(result.finalUrl || result.url);
   if (requestedDomain && requestedDomain === finalDomain) return { ok: true };
+
+  // A country storefront under a sibling ccTLD is the same site. Measured on
+  // the calibration corpus: `zalando.com` answers 302 to `www.zalando.bg` and
+  // `aboutyou.com` to `www.aboutyou.bg` — every request, from Bulgaria. The
+  // eTLD+1 rule alone would mark both unreachable and leave a real storefront
+  // unscored. Matching the registrable name across suffixes is a weaker signal
+  // than matching the domain, and it is the one these sites actually give.
+  const requestedName = registrableName(requestedUrl);
+  if (requestedName && requestedName === registrableName(result.finalUrl || result.url)) {
+    return { ok: true };
+  }
 
   const chain = result.redirectChain ?? [];
   const leaving = chain.filter((hop) => registrableOf(hop.from) !== registrableOf(hop.to));

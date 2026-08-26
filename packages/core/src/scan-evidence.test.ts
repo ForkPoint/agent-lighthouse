@@ -132,6 +132,19 @@ describe('scan-evidence: origin-reachable', () => {
     expect(evidence.met['origin-reachable']).toBe(true);
   });
 
+  it('is met for a geo 302 to the same name under a country suffix', () => {
+    // zalando.com answers 302 to www.zalando.bg on every request from Bulgaria.
+    const evidence = build({
+      requestedUrl: 'https://zalando.com',
+      homepageResult: homepage({
+        url: 'https://zalando.com/',
+        finalUrl: 'https://www.zalando.bg/',
+        redirectChain: [{ status: 302, from: 'https://zalando.com/', to: 'https://www.zalando.bg/' }],
+      }),
+    });
+    expect(evidence.met['origin-reachable']).toBe(true);
+  });
+
   it('is unmet for a 302 to a different registrable domain', () => {
     const evidence = build({
       requestedUrl: 'https://site.com',

@@ -142,8 +142,10 @@ describe('hydrateReport', () => {
       readinessScore: null,
       readinessVitals: null,
     });
-    expect(r.overallScore).toBe(0);
-    expect(r.scoreTier).toBe('not-ready');
+    // A stored row with no score is a scan that could not be judged, not one
+    // that scored zero.
+    expect(r.overallScore).toBeNull();
+    expect(r.scoreTier).toBeNull();
     expect(r.categories).toEqual([]);
     expect(r.checkResults).toEqual([]);
     expect(r.pagesScanned).toEqual([]);

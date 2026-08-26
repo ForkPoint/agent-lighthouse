@@ -42,4 +42,8 @@ export const SECTION_GROUP_LABELS: Record<string, string> = {
 export const CATEGORY_ORDER: string[] = SECTION_GROUPS.flatMap((g) => g.categoryIds);
 
 // Coverage tags live in @forkpoint/agent-lighthouse-core (produced by the scanner, consumed here).
-export { TAG_SKIPPED_PAGE_TYPE, TAG_SCAN_ERROR } from '@forkpoint/agent-lighthouse-core';
+export {
+  TAG_SKIPPED_PAGE_TYPE,
+  TAG_SKIPPED_NO_EVIDENCE,
+  TAG_SCAN_ERROR,
+} from '@forkpoint/agent-lighthouse-core';

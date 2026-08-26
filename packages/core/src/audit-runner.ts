@@ -126,8 +126,18 @@ function unmetRequirements(ctx: CheckContext, meta: AuditMeta): EvidenceKey[] {
 }
 
 /** The sentence a gated stub carries: the key, and why the scan lacks it. */
-function gateExplanation(ctx: CheckContext, unmet: EvidenceKey[]): string {
+function gateExplanation(ctx: CheckContext, meta: AuditMeta, unmet: EvidenceKey[]): string {
   const reasons = unmet.map((key) => ctx.evidence.reasons[key]).filter(Boolean);
+
+  // `sample-adequate` can be met for the scan and unmet for this audit: the
+  // scan read pages, just not of the type this audit needs. The scan-level
+  // reason is empty in that case, and "no sample-adequate evidence" alone
+  // tells a reader nothing.
+  if (unmet.includes('sample-adequate') && reasons.length === 0) {
+    const wanted = meta.applicablePageTypes?.length ? meta.applicablePageTypes.join('/') : 'homepage';
+    return `Not assessed: no scanned ${wanted} page served readable text.`;
+  }
+
   const why = reasons.length > 0 ? ` ${reasons.join(' ')}` : '';
   return `Not assessed: this scan has no ${unmet.join(', ')} evidence.${why}`;
 }
@@ -172,7 +182,7 @@ export function planAudits(
         const unmet = unmetRequirements(ctx, reg.meta);
         if (unmet.length > 0) {
           skipped.push(
-            stubCheck(reg.meta, TAG_SKIPPED_NO_EVIDENCE, gateExplanation(ctx, unmet)),
+            stubCheck(reg.meta, TAG_SKIPPED_NO_EVIDENCE, gateExplanation(ctx, reg.meta, unmet)),
           );
           continue;
         }

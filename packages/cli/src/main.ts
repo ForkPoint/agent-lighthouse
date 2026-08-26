@@ -167,11 +167,23 @@ async function audit(targetUrl?: string) {
       `\x1b[1m────────────────────────────────────────────────────────────────────────\x1b[0m`,
     );
     console.log(
-      `\x1b[1mOVERALL AGENT READINESS:\x1b[0m \x1b[1m${view.overallScore}/100\x1b[0m (${view.scoreTier.toUpperCase()})`,
+      view.overallScore === null
+        ? `\x1b[1mOVERALL AGENT READINESS:\x1b[0m \x1b[33mNOT SCORED\x1b[0m — ${
+            view.unscoredReason ?? 'this scan obtained too little evidence to judge the site.'
+          }`
+        : `\x1b[1mOVERALL AGENT READINESS:\x1b[0m \x1b[1m${view.overallScore}/100\x1b[0m (${view.scoreTier?.toUpperCase()})`,
     );
     console.log(
       `Target: ${report.url} | Preset: ${preset.name} | Pages: ${view.pagesScanned.length} | Duration: ${(view.durationMs / 1000).toFixed(1)}s`,
     );
+    if (view.coverage.skippedNoEvidence > 0) {
+      // The count alone reads as a broken scanner; the reason makes it a fact
+      // about the scan.
+      console.log(
+        `\x1b[33m${view.coverage.skippedNoEvidence} audit(s) not assessed:\x1b[0m ` +
+          `this scan did not obtain the evidence they need. ${view.coverage.noEvidenceReasons.join(' ')}`,
+      );
+    }
     console.log(
       `\x1b[1m────────────────────────────────────────────────────────────────────────\x1b[0m\n`,
     );
@@ -317,8 +329,16 @@ async function audit(targetUrl?: string) {
     openInBrowser(htmlPath);
   }
 
-  // Overall Score Assertion
-  if (minScore > 0 && view.overallScore < minScore) {
+  // Overall Score Assertion. An unscored scan fails it: the assertion asks for
+  // proof the site clears a bar, and a scan that saw too little proves nothing.
+  if (minScore > 0 && view.overallScore === null) {
+    console.error(
+      `\n\x1b[31m✖ CI Assertion Failed:\x1b[0m The scan produced no score, so it cannot clear ${minScore}. ` +
+        (view.unscoredReason ?? 'It obtained too little evidence to judge the site.'),
+    );
+    process.exit(1);
+  }
+  if (minScore > 0 && view.overallScore !== null && view.overallScore < minScore) {
     console.error(
       `\n\x1b[31m✖ CI Assertion Failed:\x1b[0m Overall score ${view.overallScore} is below minimum threshold ${minScore}`,
     );

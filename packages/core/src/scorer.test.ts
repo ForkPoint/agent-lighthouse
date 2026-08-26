@@ -1,7 +1,13 @@
 import type { CheckResult, CategoryResult } from './types';
 import { CATEGORY_NAMES } from './constants';
 import { CATEGORY_MASS, defaultConfig } from './audit-config';
-import { calculateCategoryScore, buildCategoryResult, calculateOverallScore } from './scorer';
+import {
+  calculateCategoryScore,
+  buildCategoryResult,
+  calculateOverallScore,
+  gatedMassShare,
+  GATED_MASS_UNSCORED_THRESHOLD,
+} from './scorer';
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -408,5 +414,63 @@ describe('weighted category score', () => {
   it('all-na or zero-total-weight scores 0', () => {
     expect(calculateCategoryScore([makeCheck({ status: 'na', weight: 1 })])).toBe(0);
     expect(calculateCategoryScore([makeCheck({ status: 'fail', score: 0, weight: 0 })])).toBe(0);
+  });
+});
+
+describe('gatedMassShare — what the gate removed', () => {
+  const check = (over: Partial<CheckResult>): CheckResult =>
+    ({
+      id: 'x/y',
+      category: 'content-extraction',
+      title: 't',
+      description: 'd',
+      status: 'pass',
+      score: 1,
+      weight: 1,
+      scoreDisplayMode: 'binary',
+      priority: 'medium',
+      impact: '',
+      fix: '',
+      ...over,
+    }) as CheckResult;
+
+  it('is zero when nothing was gated', () => {
+    expect(gatedMassShare([check({}), check({ status: 'fail', score: 0 })])).toBe(0);
+  });
+
+  it('counts only the mass the gate itself removed', () => {
+    const share = gatedMassShare([
+      check({ id: 'a/1', status: 'na', tags: ['skipped:no-evidence'] }),
+      check({ id: 'a/2', status: 'na', tags: ['skipped:page-type'] }),
+      check({ id: 'a/3' }),
+    ]);
+    // 1 of 3 units of mass. A page-type skip is a legitimate absence and is
+    // not counted: counting it would mark small honest sites unscored.
+    expect(share).toBeCloseTo(1 / 3);
+  });
+
+  it('ignores informative checks, which carry no mass', () => {
+    const share = gatedMassShare([
+      check({ id: 'a/1', weight: 0, scoreDisplayMode: 'informative', tags: ['skipped:no-evidence'] }),
+      check({ id: 'a/2' }),
+    ]);
+    expect(share).toBe(0);
+  });
+
+  it('reports the whole registry gone when every scored check was gated', () => {
+    expect(
+      gatedMassShare([
+        check({ id: 'a/1', status: 'na', tags: ['skipped:no-evidence'] }),
+        check({ id: 'a/2', status: 'na', tags: ['skipped:no-evidence'] }),
+      ]),
+    ).toBe(1);
+  });
+
+  it('crosses the unscored threshold before half the registry is gone', () => {
+    // The measured failure was a shell scoring 74 against a real store's 51,
+    // with four of eight categories dropped. Whatever the calibrated number
+    // is, it has to trip well below "most of the registry".
+    expect(GATED_MASS_UNSCORED_THRESHOLD).toBeLessThan(0.5);
+    expect(GATED_MASS_UNSCORED_THRESHOLD).toBeGreaterThan(0);
   });
 });

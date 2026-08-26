@@ -1,5 +1,5 @@
 import type { CheckResult, CategoryResult, EvidenceGrade, AuditTier } from './types';
-import { CATEGORY_NAMES, getScoreTier } from './constants';
+import { CATEGORY_NAMES, getScoreTier, TAG_SKIPPED_NO_EVIDENCE } from './constants';
 
 /**
  * Spec §4 weight law: an audit's scoring weight is a pure function of its
@@ -94,6 +94,42 @@ export function calculateOverallScore(categories: CategoryResult[]): number {
   }
   if (totalMass === 0) return 0;
   return Math.round(weighted / totalMass);
+}
+
+/**
+ * The share of the registry's evidence mass the gate may remove before a scan
+ * stops being scorable at all.
+ *
+ * Set from the calibration run (design §8.3.1), not guessed. Gating a category
+ * drops its mass out of the denominator, which *raises* the score of a site
+ * nobody could read — measured at +5 to +12, with a shell reaching 74 against
+ * a real store's 51. Past this share the honest output is no number.
+ *
+ * Measured over 24 stores: every storefront that served readable pages gated
+ * 0.000 of the mass, and the four shells and walls gated 0.616 to 0.691. No
+ * store fell in between, so this number sits in the middle of a 62-point gap
+ * and any value in (0.00, 0.61) would produce the same verdicts on that corpus.
+ */
+export const GATED_MASS_UNSCORED_THRESHOLD = 0.35;
+
+/**
+ * How much of the registry's evidence mass the gate removed.
+ *
+ * Only checks the gate itself removed count. A page-type skip is a legitimate
+ * absence — a site with no blog and no products loses those audits honestly —
+ * and counting that mass would mark small, well-built sites unscored.
+ */
+export function gatedMassShare(checks: CheckResult[]): number {
+  let gated = 0;
+  let total = 0;
+  for (const check of checks) {
+    if (isInformative(check)) continue;
+    const mass = check.weight ?? 0;
+    if (mass <= 0) continue;
+    total += mass;
+    if (check.tags?.includes(TAG_SKIPPED_NO_EVIDENCE)) gated += mass;
+  }
+  return total === 0 ? 0 : gated / total;
 }
 
 export { getScoreTier };

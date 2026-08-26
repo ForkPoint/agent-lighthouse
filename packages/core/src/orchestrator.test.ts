@@ -127,7 +127,10 @@ describe('runScan — discovery', () => {
     // blog/post-1 is selected but returns 404 → dropped from the page set.
 
     const onEvent = vi.fn();
-    const report = await runScan(url, { onEvent });
+    // The fixtures here are a few tags each, which is a shell by the evidence
+    // gate's rule. This test is about discovery, so it runs ungated; the gate
+    // has its own tests below.
+    const report = await runScan(url, { onEvent, enforceEvidenceGate: false });
 
     expect(report.url).toBe(url);
     expect(report.domain).toBe('example.com');
@@ -233,8 +236,87 @@ describe('runScan — homepage unreachable', () => {
 
     expect(report.pagesScanned).toEqual([]);
     expect(report.productFields).toBeUndefined();
-    expect(typeof report.overallScore).toBe('number');
+    // A scan that reached nothing makes no claim about the site. Reverting the
+    // suppression puts a number back here, which is what this pins.
+    expect(report.overallScore).toBeNull();
+    expect(report.scoreTier).toBeNull();
+    expect(report.scanValidity?.judgeable).toBe(false);
+    expect(report.scanValidity?.unscoredReason).toBeTruthy();
     expect(typeof report.summary).toBe('string');
+  });
+});
+
+// ---------------------------------------------------------------------------
+// The evidence gate, end to end
+// ---------------------------------------------------------------------------
+
+describe('runScan — the evidence gate', () => {
+  const url = 'https://example.com/';
+  /** A page an agent can read: comfortably over the word threshold. */
+  const FULL_HTML = `<html><body><main><h1>Kettles</h1><p>${'copper kettle '.repeat(60)}</p></main></body></html>`;
+
+  it('skips the audits it could not feed, and says why', async () => {
+    set(url, '<html><body><div id="root"></div></body></html>');
+
+    const report = await runScan(url);
+    const checks = report.categories.flatMap((c) => c.checks);
+    const gated = checks.filter((c) => c.tags?.includes('skipped:no-evidence'));
+
+    expect(gated.length).toBeGreaterThan(0);
+    expect(gated.every((c) => c.status === 'na')).toBe(true);
+    expect(gated[0].explanation).toContain('Not assessed');
+  });
+
+  it('still reports the shell itself: server-rendered is never gated', async () => {
+    set(url, '<html><body><div id="root"></div></body></html>');
+
+    const report = await runScan(url);
+    const serverRendered = report.categories
+      .flatMap((c) => c.checks)
+      .find((c) => c.id === 'content-extraction/server-rendered');
+
+    expect(serverRendered?.status).toBe('fail');
+    expect(serverRendered?.tags ?? []).not.toContain('skipped:no-evidence');
+  });
+
+  it('reports no score for a shell, rather than a flattering one', async () => {
+    set(url, '<html><body><div id="root"></div></body></html>');
+
+    const report = await runScan(url);
+
+    expect(report.overallScore).toBeNull();
+    expect(report.scoreTier).toBeNull();
+    expect(report.scanValidity?.unscoredReason).toBeTruthy();
+  });
+
+  it('scores a page an agent can actually read', async () => {
+    set(url, FULL_HTML);
+
+    const report = await runScan(url);
+
+    expect(typeof report.overallScore).toBe('number');
+    expect(report.scanValidity?.judgeable).toBe(true);
+    expect(report.scanValidity?.evidence['rendered-body']).toBe(true);
+  });
+
+  it('keeps na out of the recommendations', async () => {
+    set(url, '<html><body><div id="root"></div></body></html>');
+
+    const report = await runScan(url);
+
+    // `recommendations` is typed as advice, but the orchestrator fills it from
+    // checks, so compare by id: nothing that ended `na` may appear.
+    const naIds = new Set(
+      report.categories
+        .flatMap((c) => c.checks)
+        .filter((c) => c.status === 'na')
+        .map((c) => c.id),
+    );
+    const recommendedIds = (report.recommendations as unknown as Array<{ id?: string }>).map(
+      (r) => r.id,
+    );
+    expect(recommendedIds.filter((id) => id && naIds.has(id))).toEqual([]);
+    expect(naIds.size).toBeGreaterThan(0);
   });
 });
 
@@ -815,7 +897,10 @@ describe('runScan — progress events', () => {
 
   it('emits an ordered, monotonic event stream through a full scan', async () => {
     const events: ScanEvent[] = [];
-    const report = await runScan(url, { onEvent: (e) => events.push(e) });
+    const report = await runScan(url, {
+      onEvent: (e) => events.push(e),
+      enforceEvidenceGate: false,
+    });
 
     expect(events[0]).toMatchObject({ type: 'scan:start', url, fraction: 0 });
     expect(events.at(-1)).toMatchObject({

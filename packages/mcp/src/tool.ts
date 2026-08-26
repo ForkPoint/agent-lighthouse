@@ -30,8 +30,12 @@ type ReportView = ReturnType<typeof buildReportView>;
 
 export interface AuditSummary {
   url: string;
-  overallScore: number;
-  scoreTier: string;
+  /** Null when the scan obtained too little evidence to judge the site. */
+  overallScore: number | null;
+  /** Null exactly when `overallScore` is. */
+  scoreTier: string | null;
+  /** Present when the score was suppressed: what the scan is missing. */
+  unscoredReason?: string;
   durationSeconds: string;
   vitals: ReportView['vitals'];
   categories: Array<{
@@ -65,6 +69,7 @@ export function buildAuditSummary(report: ScanReport, view: ReportView): AuditSu
     url: report.url,
     overallScore: view.overallScore,
     scoreTier: view.scoreTier,
+    ...(view.unscoredReason ? { unscoredReason: view.unscoredReason } : {}),
     durationSeconds: (view.durationMs / 1000).toFixed(1),
     vitals: view.vitals,
     categories: view.groups.flatMap((g) =>

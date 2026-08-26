@@ -285,6 +285,17 @@ the calibration run (§8.3) checks it explicitly.
 `quitenice.co` in the spike corpus returned a 114-byte body — a parked or dead
 origin. It belongs here, not in `rendered-body`.
 
+**Amended 2026-08-26, from the calibration probe.** The eTLD+1 rule is not
+enough. `zalando.com` answers `302 https://www.zalando.bg/` and
+`aboutyou.com` answers `302 https://www.aboutyou.bg/...` — every request, from
+a European address. Both leave the registrable domain, so the rule as written
+marked two real storefronts unreachable and would have left them unscored. A
+temporary redirect is therefore also met when the **registrable name** matches
+across public suffixes (`zalando` == `zalando`), which is the signal a country
+storefront actually gives. It is weaker than matching the domain: two unrelated
+companies can share a second-level name under different TLDs. That is accepted,
+against the alternative of reporting every ccTLD geo router as unreachable.
+
 ### 6.2 `unblocked-fetches`
 
 Source: `wafProtection` and page statuses. Unmet when `wafProtection.isBlocked`,
@@ -576,6 +587,64 @@ Report three things:
   confirming §6.1's same-registrable-domain carve-out holds.
 
 The §7.2 escalation threshold is set from this run, not before it.
+
+### 8.3.1 Calibration result (run 2026-08-26)
+
+**Deviation from the plan above, stated plainly.** The run covers **24 stores,
+not 138**, and each configuration ran **once, not twice**. A full double pass is
+about four hours of wall clock at `--concurrency=2 --delay=3000`. The 24 were
+chosen to include every edge case the spike named: the three confirmed shells
+(`gymshark.com`, `tattly.com`, `quitenice.co`), two sites that answer with a bot
+wall (`sokoglam.com`, `aloyoga.com`), and the two stores step 0 rescued
+(`velasca.com`, `hiutdenim.co.uk`). Noise is therefore identified by inspection
+rather than by run-to-run agreement.
+
+**Gated evidence mass per store — the number the threshold comes from:**
+
+```
+0.000   20 stores   every storefront that served readable pages
+0.616   sokoglam.com          (Kasada bot wall)
+0.631   gymshark.com          (homepage 1 word; only a product page rendered)
+0.639   quitenice.co          (114-byte body — parked or dead origin)
+0.691   tattly.com            (20 words in <body>)
+```
+
+There is no store between 0.000 and 0.616. The distribution is not a gradient
+with a judgement call in the middle; it is two clusters with a 62-point gap. The
+threshold is set at **0.35**, in the middle of that gap. Any value in
+(0.00, 0.61) produces the same verdicts on this corpus, so the choice is not
+load-bearing — which is the useful thing to know about it.
+
+**Scores.** Twenty stores stayed scored. Eighteen moved by 0 or ±1, which is
+run-to-run noise, not the gate — the gate removes only audits that could not be
+fed, so a scored store's remaining verdicts are unchanged by construction.
+`aloyoga.com` moved 52 → 58 because it answered a bot wall on the first run and
+served normally on the second; it is a status change, not a scoring change.
+
+**Four stores became unscored**, each confirmed by hand:
+
+```
+gymshark.com    <body> holds 1 word; server-rendered fails; only a product page rendered
+tattly.com      <body> holds 20 words / 127 characters
+quitenice.co    114-byte body, no <main>, no text
+sokoglam.com    Kasada challenge — judgeable false, not an escalation
+```
+
+Three are shells and one is a wall. **No false trip on the 20 real
+storefronts**, and no store needed the boundary hand-check the plan reserved for
+flappers, because none sat near the `rendered-body` threshold.
+
+**Gated audit counts** are 127–149 of 212 on the four, and 0 on the other
+twenty. The gate is inert on a scan that read the site, which is the property
+worth stating: it costs nothing when the evidence is there.
+
+**Side effect worth recording.** A gated scan is much faster, because a skipped
+audit is never constructed: `gymshark.com` took 14.8s gated against roughly 60s
+ungated.
+
+**The geo case (§6.1) was checked separately** and produced a rule change; see
+the amendment in §6.1. `zalando.com` and `aboutyou.com` both answer a `302` to a
+sibling ccTLD, which the eTLD+1 rule alone would have called unreachable.
 
 ## 10. Testing
 
