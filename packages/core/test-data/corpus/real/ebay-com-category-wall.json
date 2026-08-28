@@ -1,0 +1,24 @@
+{
+  "url": "https://www.ebay.com/b/Laptops-Netbooks/175672/bn_1648276",
+  "capturedAt": "2026-08-28T12:19:38.003Z",
+  "sha256": "39252d953d8ed238702536da49df92b459d0e6296f9eefade7b1a277dbc287b2",
+  "status": 403,
+  "kind": "wall",
+  "headers": {
+    "server": "AkamaiGHost",
+    "mime-version": "1.0",
+    "content-length": "1831",
+    "cache-control": "no-cache, no-store, must-revalidate",
+    "pragma": "no-cache",
+    "expires": "0",
+    "content-type": "text/html",
+    "date": "Fri, 28 Aug 2026 12:19:38 GMT",
+    "connection": "keep-alive",
+    "x-cdn": "Akamai",
+    "set-cookie": "bm_s=YAAQhdcsFw26GzygAQAAybNPSAab5kQPbcuLQ973ELds2pbGNW4TYeqDxfWoqMLz1ra4fe2lmry/7E4B/2hjN5uj76hoODItI83YpBKp88KLc3WmNQimxTeZQGsFmi4KiWfXbeHibcgAUKg1XWSULzw9tYExDyJL0HnI9qpsCY6Wy/KS4s+bPs41fpztEWqP8oWbkc65+Hcgu125aGn2RGy2P7S52Hx/0L2MqnwKMxINN2h7NTyGVay7B5XC50yuOgwUnfevY7s+Nox9Vs5zCwuDfQidF5Xp4AIMx6iUHioBKzU86WbTaihz2S1S/QV+ozkvPD3sVQg5Uxja8LEjsMbJ5a2Ulbup592GCZtik1ITeYwqOF2LPvuBQwh+6+uxu3O8lpNv955+8YgDe5oCjz7hTw0hUGwyg7og+7+c2uKbacfYH4x6EXFObLjS4Mn5U//jGS2aaAtIPvsMXd+cZ45gSxU6Q+1183K3C28CdbyCSRS7d/kJMcOlKVxVhO57QSFkLcrWlYA/jIVx6/W7D9ZvOjmFO+/dWaIXjZFxwcM7yNRWomT6Y3HJw9wzKno1d8+fTRp0JDRBbiwNu3jL4hqU; Domain=.ebay.com; Path=/; Expires=Mon, 28 Sep 2026 12:19:38 GMT; Max-Age=2678400; Secure; HttpOnly\nbm_so=21B8E97BF235003C3D5920C5C9A5E406E9696FF306F3B3FBAFBE8245CC4D848E~YAAQhdcsFw66GzygAQAAybNPSAidnesQTFJo91H9Gx5aGeuLqMnKx5pPUPNRxsrKeSvfZV9NetuEkfRAxo0Sg0DAS9eeNtqgIkceIKhqXQZi87SJ9LFDUWFx9ULy1dvG859adEtzwdbcTWvr3Elb2Rf0N0qZ4oiqKltgbU0BHP53z98aBHyv74Fg63kCLwPX3QNsPqbayS6fgC/yYptKM6lRG5oNFLGvfOprqaL+6JVCPXUgB5U6VR6dTbNrhd6bfuzpycnG46dHHxnF4h0xxK7sJJ9ytwG+BQveq7/NpkLdYYnvWlaaXsdILDgmBtwNSrRj2K5d+Z7DowrIPWWsg+SMkCJDOqwecOQECCAnxZL/e7JPXE9u50SmgoAMUKvtF4Ln8JPXj2O91H6rfKc1qo1JwezrFkCK1z5ZTftOK1im+uv8BuEkFKiC5imCE64RSCa0+uQvLNmtfRekxgQztYg=; Domain=.ebay.com; Path=/; Expires=Sat, 29 Aug 2026 12:19:38 GMT; Max-Age=86400; Secure"
+  },
+  "contentType": "text/html",
+  "ttfbMs": 293,
+  "totalMs": 293,
+  "contentLength": 1830
+}

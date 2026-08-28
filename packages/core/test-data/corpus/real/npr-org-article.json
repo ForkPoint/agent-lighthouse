@@ -1,0 +1,31 @@
+{
+  "url": "https://www.npr.org/2026/08/28/nx-s1-5943596/shorts-work-office-silicon-valley-bloomberg",
+  "capturedAt": "2026-08-28T12:16:51.145Z",
+  "sha256": "a9e620b261890a1588e509e14a43da0748318b459f8d20a4578a384e57630bea",
+  "status": 200,
+  "kind": "page",
+  "headers": {
+    "access-control-allow-credentials": "true",
+    "access-control-allow-origin": "*",
+    "content-type": "text/html; charset=UTF-8",
+    "referrer-policy": "no-referrer-when-downgrade",
+    "server": "nginx",
+    "x-cache-npr": "HIT",
+    "x-content-type-options": "nosniff",
+    "x-npr-trace-id": "renwBNC45ol",
+    "x-served-by": "pod-www-render-nginx-7bc8b8cddc-vfhc6",
+    "x-xss-protection": "1; mode=block",
+    "x-akamai-transformed": "9 147139 0 pmb=mRUM,1",
+    "cache-control": "no-cache",
+    "expires": "Fri, 28 Aug 2026 12:16:50 GMT",
+    "date": "Fri, 28 Aug 2026 12:16:50 GMT",
+    "transfer-encoding": "chunked",
+    "connection": "keep-alive, Transfer-Encoding",
+    "server-timing": "cdn-cache; desc=HIT, edge; dur=18, origin; dur=0, ak_p; desc=\"1787919410786_388814717_325909543_1765_15638_42_89_-\";dur=1",
+    "set-cookie": "bm_s=YAAQfdcsF9z0px2gAQAA4CZNSAZgMK3UumlQm6tUJocVdM8G6dpbFr2uB8TNskBJREQ7kqFG/Lc8NYv+neJql+loh8IpFkxN/qIJ+9dbZNoW5gjL7pE+9BgtTx0I5eBVn+JkZE1s0oFlldMdofpRnmglKxD6/GDeSSZ8SNfGlqPtb1gXoMSUEof/lWLD42GM9woJ98poNLd7eg3+KOmk1191Crro3iE0wDtz0A3gGzSPcWZswdl4HaTYCfOxXigvC6/BfaLWht9EUXdxD7ydeD5Wu9aESYC9J2noOVDOjxfyFacJWoXdnA4SlB4fpJvbcW3ITaRV+Kued0MSJkNbV873hQPZ+0s7uXiBOM6cue7sER3ubQ43Kbn0LK9SSsrlHxEA8BM0M/xZIiv1YS4eUpdWiaCjGNZWGRbd7bvMU3PmB4at7qq8QqB0VhVqxXmjxZI+9jiVF8qSlj+wLiWPY2Vj3/VniR/4JM3oWAF0Hr2AKuK+51QPfxwSllGZNYp1ww66lXPE8j016CINHATzyUgtL2mjkvDC6IqQwXarpyRpyoy6ufR63CGdz2M1TTfYRvj00OdYUlHlMOVbY8ZDqdI=; Domain=.npr.org; Path=/; Expires=Mon, 28 Sep 2026 12:16:50 GMT; Max-Age=2678400; Secure; HttpOnly\nbm_so=AA7AB1C05F1A18CC3953D8CBDADB85EF6F2598EDD4C6B00A5770BF433AAA8412~YAAQfdcsF930px2gAQAA4CZNSAhWa4cCYm0NJT0XCLC0l6O0wfTo7vrp4ky+RgSR48/NRJQJwqJ/7GoBbEbp4bQD3uldOiGt8wzJqfWje7Qr1AJca1dCPeZVLd2pSfvm10CWz46TaekVA2M2phJLWPX9B4q8bKEXugE3RMRPEudmH69ztajkNp8GJpzVr/7VUw/iDGabGhQbVLHnnHDUzb0B8v92RZA9rtcpd5x8Ulv4uJE4+oo5xQwWTibzh227g2AqWOFP2BHGAvcMFHHKG6Laiwcgf5OViP9hiD/DPe7lo0+RZY9nhUd3pXVmCYuZSWg7DgE7toXzpWeeMMbY2+NSj4Xkb0ON3OI5smqIgOvFkP9dA09c2jK0IN040S45mcynCwZR35zzF0DTxiJhIFC4M6DgN1VKD+HKN0VMIut7I2gYRzTkFn+1MOYP5nQ7WZe/zBNl2yFNRi74DroNjw==; Domain=.npr.org; Path=/; Expires=Sat, 29 Aug 2026 12:16:50 GMT; Max-Age=86400; Secure"
+  },
+  "contentType": "text/html; charset=UTF-8",
+  "ttfbMs": 394,
+  "totalMs": 568,
+  "contentLength": 151552
+}

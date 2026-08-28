@@ -1,0 +1,25 @@
+{
+  "url": "https://www.rakuten.co.jp/",
+  "capturedAt": "2026-08-28T12:21:38.955Z",
+  "sha256": "ccd6cd791f5b2a26fbfa8cc6a60e5fde4e0265463dba49c135dfb3ab392b3d66",
+  "status": 200,
+  "kind": "page",
+  "headers": {
+    "server": "Apache",
+    "pragma": "no-cache",
+    "cache-control": "private",
+    "x-content-type-options": "nosniff",
+    "x-xss-protection": "1; mode=block",
+    "x-frame-options": "DENY",
+    "content-type": "text/html; charset=UTF-8",
+    "date": "Fri, 28 Aug 2026 12:21:38 GMT",
+    "transfer-encoding": "chunked",
+    "connection": "keep-alive, Transfer-Encoding",
+    "set-cookie": "Apache=22237137.65a1a7e7d8313; path=/; expires=Sat, 28-Aug-27 12:21:38 GMT",
+    "vary": "User-Agent"
+  },
+  "contentType": "text/html; charset=UTF-8",
+  "ttfbMs": 7381,
+  "totalMs": 7753,
+  "contentLength": 367199
+}

@@ -1,0 +1,33 @@
+{
+  "url": "https://hiutdenim.co.uk",
+  "capturedAt": "2026-08-28T12:09:28.067Z",
+  "sha256": "31d8518ba9d082833158363120ae155a8de9f850ce0873b2a090d4a8d8d18d72",
+  "status": 200,
+  "kind": "page",
+  "headers": {
+    "date": "Fri, 28 Aug 2026 12:09:28 GMT",
+    "content-type": "text/html",
+    "transfer-encoding": "chunked",
+    "connection": "keep-alive",
+    "set-cookie": "_shopify_y=9f82369a-72e3-439a-b1db-ca27d4caa51a; path=/; domain=hiut.myshopify.com; expires=Sat, 28 Aug 2027 18:09:27 GMT\n_shopify_s=206a0071-83d1-422b-9d42-3521dd29a0e4; path=/; domain=hiut.myshopify.com; expires=Fri, 28 Aug 2026 12:39:27 GMT\n_shopify_essential=:AaBIRmSAAAEAby4qZnWiKae8YxrbzIiMi4SQlKDHeykwgU95JDDhpxsNYffvJOji49Hnbi5I86NpztST87s-BfBIsnY5eDFUY-dL_zY6qltWgO8i57YhiE62FCeSH77ORM3pGqwtWn4YeTb-_-1CcTn-i83bl1hV17gFK_RYGOnJhRxLxZMsvQqyA2geT_OhnywM8AnUtUoOLw-c3EZ_OHzQHF9Z8ipQgqI3c4XqzFY7Sut5JxdKFgdmKe9eVefmGDRivHGytYO0HehEI53p-31rpQo6gP3i2ywWxWnq_5KiUaCjXglUJ_MRkxm10ZHuCv50aFJaaFVFycfDSMNKzOpB6KnyH4deCONuMo2ke-yy84xr8LNsP5vkCNhExSw80q7W--WiIeNxfCTC5lGRKiPTKa026YDHCFKFCytKBtljSRqLVyaVagQT3bSZW9XKwi2-YQCwF51h85rQ6gYwOxmjtk8zgHDF4CEcqj56hVvMi1ToJ73R5Xo:; Max-Age=31536000; Path=/; HttpOnly; Secure; Priority=High; SameSite=Lax\n_shopify_analytics=:AaBIRmSCAAEAmMPyXfjUXp1EIdRLBtE5ES07q7yjYB3FxVP5LfVwPqDULLbyeTiWLknzWBHst5Gs_fDm2EiXnyeJ0KNlKiVt7yjLsKKm3MoAZ713gr8s9GijrwFuxIqo:; Max-Age=31536000; Path=/; HttpOnly; Secure; Priority=High; SameSite=Lax\n_shopify_marketing=:AaBIRmSCAAEAZoURe0SI_4m4HQEs79k7R0bx-HajnQTjHnR7D5lT2POg8POr1FLbt3YorjShPjLs6D0pUXH5aXTdzkgr0Rk9EAQpY_iP-cO2kwd_5qxp9UO38xfItTm2:; Max-Age=31536000; Path=/; HttpOnly; Secure; Priority=High; SameSite=Lax",
+    "strict-transport-security": "max-age=31536000",
+    "content-security-policy": "base-uri 'self'; default-src self https://*.google.com https://*.google.com.br https://www.google.co.uk https://*.google-analytics.com/ https://www.googletagmanager.com https://ssl.gstatic.com https://www.gstatic.com https://fonts.gstatic.com data: https://*.g.doubleclick.net https://www.merchant-center-analytics.goog https://*.vimeo.com https://*.envolvetech.com https://www.dwin1.com https://www.dwin2.com https://*.awin1.com https://*.zenaps.com https://the.sciencebehindecommerce.com https://*.wepowerconnections.com https://smct.co https://*.smct.co https://*.smct.io https://lantern.roeyecdn.com https://lantern.roeye.com https://*.appspot.com https://*.cloudfront.net https://*.amazonaws.com https://connect.facebook.net https://www.facebook.com https://cdn.jsdelivr.net https://static.klaviyo.com https://static-forms.klaviyo.com https://static-tracking.klaviyo.com 'self' 'nonce-80efa6e12035d79442dd21953fe54b65' https://cdn.shopify.com https://shopify.com; frame-ancestors 'none'; style-src self unsafe-inline https://cdn.shopify.com https://cdn.jsdelivr.net https://www.googletagmanager.com https://tagmanager.google.com https://fonts.googleapis.com https://static.klaviyo.com https://static-tracking.klaviyo.com https://static-forms.klaviyo.com 'self' 'unsafe-inline' https://cdn.shopify.com; connect-src self https://cdn.shopify.com https://monorail-edge.shopifysvc.com https://*.myshopify.com https://*.google.com.br https://*.google.com https://www.google.co.uk https://*.google-analytics.com/ https://www.googletagmanager.com https://*.g.doubleclick.net https://ad.doubleclick.net https://www.merchant-center-analytics.goog https://*.vimeo.com https://*.envolvetech.com https://www.dwin1.com https://www.dwin2.com https://*.awin1.com https://*.zenaps.com https://the.sciencebehindecommerce.com https://*.wepowerconnections.com https://smct.co https://*.smct.co https://*.smct.io https://lantern.roeyecdn.com https://*.appspot.com https://*.cloudfront.net https://*.amazonaws.com https://connect.facebook.net https://www.facebook.com https://static.klaviyo.com https://static-tracking.klaviyo.com https://static-forms.klaviyo.com https://fast.a.klaviyo.com https://a.klaviyo.com https://*.run.app https://*.on.aws 'self' https://cdn.shopify.com/ https://monorail-edge.shopifysvc.com https://hiut.myshopify.com https://hiut.myshopify.com; script-src 'strict-dynamic' https: 'unsafe-inline' 'unsafe-eval' 'sha256-+W9PtZ5lunTOK8tttfcHPEFfWpzka2wYnEbEdijoy9Q=' 'nonce-80efa6e12035d79442dd21953fe54b65'; media-src https://*.google.com.br https://cdn.shopify.com https://hiutdenim.co.uk https://hiut.myshopify.com https://*.vimeo.com https://*.envolvetech.com https://smct.co https://*.smct.co https://*.smct.io https://lantern.roeyecdn.com https://*.appspot.com https://*.cloudfront.net https://*.amazonaws.com; frame-src https://*.google.com.br https://www.youtube.com https://*.vimeo.com https://www.googletagmanager.com https://tagassistant.google.com https://*.envolvetech.com https://www.dwin1.com https://www.dwin2.com https://*.awin1.com https://*.zenaps.com https://the.sciencebehindecommerce.com https://*.wepowerconnections.com https://smct.co https://*.smct.co https://*.smct.io https://lantern.roeyecdn.com https://*.appspot.com https://*.cloudfront.net https://*.amazonaws.com",
+    "server-timing": "_y;desc=9f82369a-72e3-439a-b1db-ca27d4caa51a, _s;desc=206a0071-83d1-422b-9d42-3521dd29a0e4",
+    "x-permitted-cross-domain-policies": "none",
+    "oxygen-full-page-cache": "uncacheable",
+    "powered-by": "Shopify, Oxygen, Hydrogen",
+    "x-request-id": "92001120-e4c4-4d49-9334-e768b5d9aaed-1787918967",
+    "x-download-options": "noopen",
+    "report-to": "{\"group\":\"cf-nel\",\"max_age\":604800,\"endpoints\":[{\"url\":\"https://a.nel.cloudflare.com/report/v4?s=ZSfbuk5XnZNHPvugtW43VBXuOxn2R%2Bw3EVgkjh2lXt00MFwyTTY%2Br77Sv%2FJegSKQoInnkJCNK00Ac7USLpQewaBucm%2BrUDqboV0I1Cser1qycmop9JFlKhn7og0ap5SUJA%3D%3D\"}]}",
+    "nel": "{\"report_to\":\"cf-nel\",\"success_fraction\":0.01,\"max_age\":604800}",
+    "x-xss-protection": "1; mode=block",
+    "x-content-type-options": "nosniff",
+    "server": "cloudflare",
+    "cf-ray": "a323350c6b7b263a-SOF",
+    "alt-svc": "h3=\":443\"; ma=86400"
+  },
+  "contentType": "text/html",
+  "ttfbMs": 572,
+  "totalMs": 646,
+  "contentLength": 204904
+}

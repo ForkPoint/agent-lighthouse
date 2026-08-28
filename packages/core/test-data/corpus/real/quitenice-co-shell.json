@@ -1,0 +1,16 @@
+{
+  "url": "https://quitenice.co",
+  "capturedAt": "2026-08-28T12:10:04.464Z",
+  "sha256": "6dc9c7fc93bb488bb0520a6c780a8d3c0fb5486a4711aca49b4c53fac7393023",
+  "status": 200,
+  "kind": "shell",
+  "headers": {
+    "content-type": "text/html",
+    "date": "Fri, 28 Aug 2026 12:10:04 GMT",
+    "content-length": "114"
+  },
+  "contentType": "text/html",
+  "ttfbMs": 681,
+  "totalMs": 681,
+  "contentLength": 114
+}

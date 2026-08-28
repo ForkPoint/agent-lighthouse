@@ -1,0 +1,28 @@
+{
+  "url": "https://react.dev/reference/react/useState",
+  "capturedAt": "2026-08-28T12:16:22.208Z",
+  "sha256": "b10e48b9c2f31b6c9d5345202afb7db50e129ed911fc942acaf52e9103673934",
+  "status": 200,
+  "kind": "page",
+  "headers": {
+    "accept-ranges": "bytes",
+    "access-control-allow-origin": "*",
+    "age": "326422",
+    "cache-control": "public, max-age=0, must-revalidate",
+    "content-disposition": "inline",
+    "content-length": "447717",
+    "content-type": "text/html; charset=utf-8",
+    "date": "Fri, 28 Aug 2026 12:16:21 GMT",
+    "etag": "\"c55b65ac4b4638f965b621c902442c68\"",
+    "server": "Vercel",
+    "strict-transport-security": "max-age=63072000",
+    "vary": "RSC, Next-Router-State-Tree, Next-Router-Prefetch, Next-Router-Segment-Prefetch",
+    "x-matched-path": "/reference/react/useState",
+    "x-vercel-cache": "HIT",
+    "x-vercel-id": "fra1::cr44t-1787919381914-c5fe85d61c31"
+  },
+  "contentType": "text/html; charset=utf-8",
+  "ttfbMs": 351,
+  "totalMs": 556,
+  "contentLength": 447390
+}

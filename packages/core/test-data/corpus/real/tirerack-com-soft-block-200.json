@@ -1,0 +1,24 @@
+{
+  "url": "https://www.tirerack.com/",
+  "capturedAt": "2026-08-28T12:15:43.001Z",
+  "sha256": "220f253819b7619c0c72d10b0082256465ff532ac3bdbc97143bb6a789debf07",
+  "status": 200,
+  "kind": "page",
+  "headers": {
+    "server": "AkamaiNetStorage",
+    "content-length": "905",
+    "content-type": "text/html",
+    "etag": "\"1bd0678acb0ce81de765f3e43b782270:1494967693\"",
+    "strict-transport-security": "max-age=15768000",
+    "cache-control": "max-age=3600",
+    "expires": "Fri, 28 Aug 2026 13:15:43 GMT",
+    "date": "Fri, 28 Aug 2026 12:15:43 GMT",
+    "connection": "keep-alive",
+    "akamai-grn": "0.95d72c17.1787919342.4387e81",
+    "server-timing": "ak_p; desc=\"1787919342653_388814741_70811265_38341_2596_40_0_-\";dur=1"
+  },
+  "contentType": "text/html",
+  "ttfbMs": 677,
+  "totalMs": 678,
+  "contentLength": 905
+}

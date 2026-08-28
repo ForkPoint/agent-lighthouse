@@ -1,0 +1,41 @@
+{
+  "url": "https://meta.discourse.org/t/new-to-discourse-start-here/1",
+  "capturedAt": "2026-08-28T12:18:30.397Z",
+  "sha256": "75972f0df43711b7a2dbccb0c7b96679f11cd67165ed7e58fbaee4b209f31b58",
+  "status": 200,
+  "kind": "page",
+  "headers": {
+    "server": "nginx",
+    "date": "Fri, 28 Aug 2026 12:18:30 GMT",
+    "content-type": "text/html; charset=utf-8",
+    "content-length": "45754",
+    "vary": "Accept-Encoding, Accept",
+    "x-frame-options": "SAMEORIGIN",
+    "x-xss-protection": "0",
+    "x-content-type-options": "nosniff",
+    "x-permitted-cross-domain-policies": "none",
+    "referrer-policy": "strict-origin-when-cross-origin",
+    "x-discourse-route": "topics/show",
+    "x-discourse-crawler-view": "true",
+    "last-modified": "Tue, 18 Nov 2025 17:42:26 GMT",
+    "cross-origin-opener-policy": "same-origin",
+    "cache-control": "no-cache, private",
+    "content-security-policy": "upgrade-insecure-requests; base-uri 'self'; object-src 'none'; script-src 'nonce-untGXIssafZWUSXDBSl7YhLk0' 'strict-dynamic' 'wasm-unsafe-eval'; worker-src 'self' blob: https://global.discourse-cdn.com/meta/assets/; frame-ancestors 'self' https://blog.discourse.org https://civilized-discourse-construction-kit-inc.ghost.io; manifest-src 'self'",
+    "x-discourse-cached": "skip",
+    "x-request-id": "e36f6e3a-1623-4f5d-9c5f-bd93c6431ef7",
+    "x-discourse-trackview": "1",
+    "cdck-proxy-id": "app-router-tieadvanced01.sea3, app-balancer-tieinterceptor1a.sea3",
+    "strict-transport-security": "max-age=31536000"
+  },
+  "contentType": "text/html; charset=utf-8",
+  "ttfbMs": 1298,
+  "totalMs": 1533,
+  "contentLength": 45706,
+  "redirectChain": [
+    {
+      "status": 301,
+      "from": "https://meta.discourse.org/t/welcome-to-meta-discourse-org/1",
+      "to": "https://meta.discourse.org/t/new-to-discourse-start-here/1"
+    }
+  ]
+}

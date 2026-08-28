@@ -1,0 +1,30 @@
+{
+  "url": "https://www.canada.ca/en/services/taxes/income-tax.html",
+  "capturedAt": "2026-08-28T12:17:27.389Z",
+  "sha256": "0746b0fb052b9f37b83f326313cc5765c4b8d27ad0dd3ec0140dedf68c3de7fd",
+  "status": 200,
+  "kind": "page",
+  "headers": {
+    "content-type": "text/html;charset=utf-8",
+    "server": "Apache",
+    "x-dispatcher": "dispatcher1cacentral1-29794460",
+    "x-vhost": "publish",
+    "x-content-type-options": "nosniff",
+    "last-modified": "Fri, 28 Aug 2026 11:16:01 GMT",
+    "x-akamai-transformed": "9 6882 0 pmb=mRUM,1",
+    "date": "Fri, 28 Aug 2026 12:17:27 GMT",
+    "content-length": "26859",
+    "connection": "keep-alive",
+    "set-cookie": "aka-ca-site-token=0a4e12029c950000577c916a75010000f8e40100; path=/; secure",
+    "server-timing": "cdn-cache; desc=HIT, edge; dur=3101, origin; dur=0, ak_p; desc=\"1787919444116_34754058_609766047_309546_12754_56_142_-\";dur=1",
+    "alt-svc": "h3=\":443\"; ma=93600",
+    "access-control-allow-origin": "*",
+    "x-frame-options": "DENY",
+    "strict-transport-security": "max-age=31536000",
+    "akamai-grn": "0.0a4e1202.1787919444.24584a9f"
+  },
+  "contentType": "text/html;charset=utf-8",
+  "ttfbMs": 3495,
+  "totalMs": 3548,
+  "contentLength": 26855
+}

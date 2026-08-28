@@ -1,0 +1,25 @@
+{
+  "url": "https://www.aljazeera.com/news/2026/8/28/armed-raid-on-cattle-camp-kills-at-least-49-in-south-sudan",
+  "capturedAt": "2026-08-28T12:17:01.243Z",
+  "sha256": "2205ae4ced5dda56a0af772bd4ee85a3dd47b895b65212bc832f2a559e607f20",
+  "status": 200,
+  "kind": "page",
+  "headers": {
+    "server": "nginx",
+    "content-type": "text/html; charset=utf-8",
+    "x-content-type-options": "nosniff",
+    "x-frame-options": "SAMEORIGIN",
+    "x-xss-protection": "1; mode=block",
+    "etag": "W/\"2cd39-FmcfvK4TEe8BdvIpkvpYd+QbzkQ\"",
+    "cache-control": "max-age=120, must-revalidate",
+    "x-rq": "hhn2 182 253 80",
+    "date": "Fri, 28 Aug 2026 12:17:01 GMT",
+    "transfer-encoding": "chunked",
+    "connection": "keep-alive, Transfer-Encoding",
+    "strict-transport-security": "max-age=15768000"
+  },
+  "contentType": "text/html; charset=utf-8",
+  "ttfbMs": 318,
+  "totalMs": 499,
+  "contentLength": 183565
+}

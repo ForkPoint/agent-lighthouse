@@ -1,0 +1,23 @@
+{
+  "url": "https://lobste.rs/",
+  "capturedAt": "2026-08-28T12:18:25.130Z",
+  "sha256": "96088330af0035161d0cfa4dc3e20bb09c69668607a98209a0508c1b24856c48",
+  "status": 200,
+  "kind": "page",
+  "headers": {
+    "accept-ranges": "bytes",
+    "alt-svc": "h3=\":443\"; ma=2592000",
+    "content-length": "58792",
+    "content-security-policy": "default-src 'none'; img-src 'self' data:; script-src 'self' 'inline-speculation-rules'; style-src 'self' 'unsafe-inline'",
+    "content-type": "text/html; charset=utf-8",
+    "etag": "\"dl0kk68992il19d4\"",
+    "last-modified": "Fri, 28 Aug 2026 12:18:00 GMT",
+    "strict-transport-security": "max-age=31536000",
+    "vary": "Accept-Encoding",
+    "date": "Fri, 28 Aug 2026 12:18:24 GMT"
+  },
+  "contentType": "text/html; charset=utf-8",
+  "ttfbMs": 557,
+  "totalMs": 906,
+  "contentLength": 58790
+}
