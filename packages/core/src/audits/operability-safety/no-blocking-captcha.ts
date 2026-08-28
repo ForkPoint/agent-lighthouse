@@ -2,6 +2,7 @@ import type { AuditMeta, AuditResult } from "../../types";
 import { Audit } from "../../audit";
 import { weightForGrade } from '../../scorer';
 import type { CheckContext } from '../../check-context';
+import { scanReadTheSite, unreadSiteReason } from '../../scan-evidence';
 
 const CAPTCHA_PATTERNS = [
   'recaptcha',
@@ -63,6 +64,15 @@ export class NoBlockingCaptchaAudit extends Audit {
         `${waf.name}: ${waf.reason}`,
         { priority: 'high', description: NoBlockingCaptchaAudit.meta.description },
         ctx.baseUrl,
+      );
+    }
+
+    // Nothing here can be attributed to this site; see `scanReadTheSite`.
+    if (!scanReadTheSite(ctx.evidence)) {
+      return this.notApplicable(
+        'No page here can be attributed to this site, so no form was inspected for a CAPTCHA.',
+        'No recaptcha, hcaptcha, or turnstile script includes detected',
+        unreadSiteReason(ctx.evidence),
       );
     }
 

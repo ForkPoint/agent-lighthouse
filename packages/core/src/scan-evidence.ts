@@ -222,6 +222,33 @@ export function buildScanEvidence(input: ScanEvidenceInput): ScanEvidence {
   };
 }
 
+/**
+ * Whether the scan holds a response it can attribute to the site the user
+ * asked for.
+ *
+ * `ctx.pages` is not "this site's pages". The orchestrator admits any 200 that
+ * carried a body, with no content-type gate and no attribution check, so a
+ * broker's parking page reached through a temporary redirect and a PDF served
+ * at the homepage both arrive as a `PageContext` an audit will read as though
+ * the site had written it. `ctx.rootFiles` is the same: a parking host answers
+ * every path, so `/llms.txt` comes back 200 and belongs to the broker.
+ *
+ * Attribution is decided once, before any audit runs. An audit that names
+ * `origin-reachable` in its `requires` has said its verdict depends on that
+ * decision, so it must read the decision rather than assume it went its way.
+ */
+export function scanReadTheSite(evidence: ScanEvidence): boolean {
+  return evidence.met['origin-reachable'];
+}
+
+/** Why the scan holds nothing it can attribute to the site. */
+export function unreadSiteReason(evidence: ScanEvidence): string {
+  return (
+    evidence.reasons['origin-reachable'] ??
+    'The scan obtained no response it could attribute to this site.'
+  );
+}
+
 /** All requirements met. For test harnesses not exercising the gate. */
 export function allEvidenceMet(): ScanEvidence {
   return {

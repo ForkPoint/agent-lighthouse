@@ -85,6 +85,14 @@ The most valuable premise in the category — whether meaningful content exists 
 - 2026-08-26 — the audit now judges every fetched page instead of `ctx.pages[0]`, and reports how many of them served readable text. The code review below records the reason: a site that server-renders its marketing homepage and client-renders every product page passed on the one page that was rendered, while the pages that matter went unreported. The empty URLs are carried in `details.emptyPages`.
 - 2026-08-26 — the per-page decision is read from the scan's evidence record rather than recomputed here, so the rule has one implementation. A page the record does not cover is judged by that same shared function.
 - 2026-08-26 — a scan with no fetched page returns `notApplicable`, where it previously returned `warn`. A warning is a claim about the site; the accurate statement is that nothing was seen.
+- 2026-08-28 — the audit declines when the scan holds no response it can
+  attribute to this site. `ctx.pages` and `ctx.rootFiles` carry whatever
+  answered 200, which on a parked domain is a broker's page served from another
+  host and on a walled, throttled or non-HTML origin is nothing about the site
+  at all. The audit read them as the site's own and returned a verdict about
+  somebody else. It now consults `scanReadTheSite`, the `origin-reachable`
+  decision it already names in `requires`, and returns `notApplicable` with the
+  gate's reason attached. Found by the hostile-state contract suite.
 
 ## Deferred
 

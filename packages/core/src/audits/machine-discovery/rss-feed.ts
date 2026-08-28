@@ -3,6 +3,7 @@ import { Audit } from "../../audit";
 import type { CheckContext } from '../../check-context';
 import { weightForGrade } from '../../scorer';
 import type { FetchResult } from '../../fetcher';
+import { scanReadTheSite, unreadSiteReason } from '../../scan-evidence';
 
 function isOk(result: FetchResult): boolean {
   return result.status === 200;
@@ -105,6 +106,15 @@ export class RssFeedAudit extends Audit {
   };
 
   async audit(ctx: CheckContext): Promise<AuditResult> {
+    // Nothing here can be attributed to this site; see `scanReadTheSite`.
+    if (!scanReadTheSite(ctx.evidence)) {
+      return this.notApplicable(
+        'No response here can be attributed to this site, so no feed was judged.',
+        'Feed returns HTTP 200',
+        unreadSiteReason(ctx.evidence),
+      );
+    }
+
     const links = autodiscoveryLinks(ctx);
     const feed = await findFeedResult(ctx, links);
     // Autodiscovery is a convention with browser and aggregator consumers but no

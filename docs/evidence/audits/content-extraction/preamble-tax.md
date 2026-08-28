@@ -98,6 +98,14 @@ document, because 3,000 tokens ahead of a 4,000-token page and 3,000 ahead of a
 The largest opaque block ahead of the content — `<script>`, `<style>`,
 `<template>`, `<svg>`, `<noscript>` or a comment — is named with its token cost
 and its line number, so the finding points at one edit.
+- 2026-08-28 — the audit declines when the scan holds no response it can
+  attribute to this site. `ctx.pages` and `ctx.rootFiles` carry whatever
+  answered 200, which on a parked domain is a broker's page served from another
+  host and on a walled, throttled or non-HTML origin is nothing about the site
+  at all. The audit read them as the site's own and returned a verdict about
+  somebody else. It now consults `scanReadTheSite`, the `origin-reachable`
+  decision it already names in `requires`, and returns `notApplicable` with the
+  gate's reason attached. Found by the hostile-state contract suite.
 
 ## Deferred
 

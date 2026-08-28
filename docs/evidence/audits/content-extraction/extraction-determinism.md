@@ -102,6 +102,14 @@ the question with the tool under test.
 Only the entry page is compared. Three extractions cost one jsdom parse and two
 cheerio passes; running that per page would multiply the scan's cost to report
 the same template property.
+- 2026-08-28 — the audit declines when the scan holds no response it can
+  attribute to this site. `ctx.pages` and `ctx.rootFiles` carry whatever
+  answered 200, which on a parked domain is a broker's page served from another
+  host and on a walled, throttled or non-HTML origin is nothing about the site
+  at all. The audit read them as the site's own and returned a verdict about
+  somebody else. It now consults `scanReadTheSite`, the `origin-reachable`
+  decision it already names in `requires`, and returns `notApplicable` with the
+  gate's reason attached. Found by the hostile-state contract suite.
 
 ## Deferred
 

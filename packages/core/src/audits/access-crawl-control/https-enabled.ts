@@ -2,6 +2,7 @@ import type { AuditMeta, AuditResult } from "../../types";
 import { Audit } from "../../audit";
 import type { CheckContext } from '../../check-context';
 import { weightForGrade } from '../../scorer';
+import { scanReadTheSite, unreadSiteReason } from '../../scan-evidence';
 
 export class HttpsEnabledAudit extends Audit {
   static override meta: AuditMeta = {
@@ -31,6 +32,15 @@ export class HttpsEnabledAudit extends Audit {
   };
 
   audit(ctx: CheckContext): AuditResult {
+    // Nothing here can be attributed to this site; see `scanReadTheSite`.
+    if (!scanReadTheSite(ctx.evidence)) {
+      return this.notApplicable(
+        'No homepage here can be attributed to this site, so its transport was not judged.',
+        'Base URL uses https:// and homepage returns 200',
+        unreadSiteReason(ctx.evidence),
+      );
+    }
+
     const isHttps = ctx.baseUrl.startsWith('https://');
     const page = ctx.pages?.[0];
     const status200 = page?.fetchResult.status === 200;

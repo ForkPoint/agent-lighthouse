@@ -14,6 +14,7 @@ import type { AuditMeta, AuditResult } from '../../types';
 import { Audit } from '../../audit';
 import { weightForGrade } from '../../scorer';
 import type { CheckContext, PageContext } from '../../check-context';
+import { scanReadTheSite, unreadSiteReason } from '../../scan-evidence';
 
 /** URL shapes that change state on the server when they are merely fetched. */
 const STATE_VERBS: ReadonlyArray<{ pattern: RegExp; label: string }> = [
@@ -154,6 +155,15 @@ export class UnsafeAgentTriggerableAffordancesAudit extends Audit {
   }
 
   audit(ctx: CheckContext): AuditResult {
+    // Nothing here can be attributed to this site; see `scanReadTheSite`.
+    if (!scanReadTheSite(ctx.evidence)) {
+      return this.notApplicable(
+        'No page here can be attributed to this site, so its links were not inspected.',
+        EXPECTED,
+        unreadSiteReason(ctx.evidence),
+      );
+    }
+
     if (ctx.pages.length === 0) {
       return this.notApplicable(
         'No page was fetched, so there is no link to inspect.',

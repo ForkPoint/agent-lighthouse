@@ -81,6 +81,17 @@ Best idea in the category, wrecked by the detection regex. FAKE_HEADING_CLASS = 
 
 **Counter-evidence:** The falsifiable claim that survives is 'headings must exist and be real elements'. The stricter claim audited by sequential-headings is that levels must never skip, as in h2 to h4. That claim has no documented consumer. Every splitter and snapshot cited tolerates skipped levels, and simply records whatever level it finds. No vendor doc or study shows a measured penalty for skipped levels in LLM parsing. Google states outright that 'there are no additional requirements to appear in AI Overviews or AI Mode, nor other special optimizations necessary' [google-ai-features-docs], so no AI-search vendor endorses heading structure as an extraction or ranking requirement. LangChain is a library used by site owners' own pipelines, not a public crawler of third-party sites — treat it as mechanism evidence, not proof that ChatGPT chunks your page this way.
 
+## Implementation deviations
+
+- 2026-08-28 — the audit declines when the scan holds no response it can
+  attribute to this site. `ctx.pages` and `ctx.rootFiles` carry whatever
+  answered 200, which on a parked domain is a broker's page served from another
+  host and on a walled, throttled or non-HTML origin is nothing about the site
+  at all. The audit read them as the site's own and returned a verdict about
+  somebody else. It now consults `scanReadTheSite`, the `origin-reachable`
+  decision it already names in `requires`, and returns `notApplicable` with the
+  gate's reason attached. Found by the hostile-state contract suite.
+
 ## Review history
 
 - 2026-08-20 — code review (11-agent workflow) + evidence research (12-domain workflow, 400 sources).

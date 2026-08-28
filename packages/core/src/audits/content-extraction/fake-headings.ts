@@ -4,6 +4,7 @@ import type { AuditMeta, AuditResult, CheckPriority } from "../../types";
 import { Audit } from "../../audit";
 import type { CheckContext } from '../../check-context';
 import { weightForGrade } from '../../scorer';
+import { scanReadTheSite, unreadSiteReason } from '../../scan-evidence';
 
 /**
  * Classes that commonly impersonate a heading in utility-CSS markup
@@ -108,6 +109,15 @@ export class FakeHeadingsAudit extends Audit {
   };
 
   audit(ctx: CheckContext): AuditResult {
+    // Nothing here can be attributed to this site; see `scanReadTheSite`.
+    if (!scanReadTheSite(ctx.evidence)) {
+      return this.notApplicable(
+        'No page here can be attributed to this site, so its headings were not judged.',
+        'All heading-like text uses semantic <h1>-<h6> elements',
+        unreadSiteReason(ctx.evidence),
+      );
+    }
+
     const found: Array<{ url: string; heading: FakeHeading }> = [];
 
     for (const page of ctx.pages) {

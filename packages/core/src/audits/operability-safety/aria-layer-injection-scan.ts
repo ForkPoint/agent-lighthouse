@@ -13,6 +13,7 @@ import { weightForGrade } from '../../scorer';
 import type { CheckContext } from '../../check-context';
 import { INSTRUCTION_LEXICON } from './invisible-instruction-scan';
 import { idSelector } from './_agent-affordances';
+import { scanReadTheSite, unreadSiteReason } from '../../scan-evidence';
 
 /** Long values are the canonical smuggling slot, since long alt is already an anti-pattern. */
 const LONG_VALUE_CHARS = 250;
@@ -335,6 +336,15 @@ export class AriaLayerInjectionScanAudit extends Audit {
   }
 
   audit(ctx: CheckContext): AuditResult {
+    // Nothing here can be attributed to this site; see `scanReadTheSite`.
+    if (!scanReadTheSite(ctx.evidence)) {
+      return this.notApplicable(
+        'No page here can be attributed to this site, so its non-visual values were not judged.',
+        EXPECTED,
+        unreadSiteReason(ctx.evidence),
+      );
+    }
+
     const s = survey(ctx);
 
     if (s.valuesSeen === 0) {

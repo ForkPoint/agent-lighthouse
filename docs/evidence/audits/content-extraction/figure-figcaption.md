@@ -68,6 +68,17 @@ The core check (do existing <figure>s have a <figcaption>) is sound. The problem
 
 **Counter-evidence:** Weak and largely inferential. No AI vendor names figcaption anywhere. Mozilla Readability does not preserve or prioritise figcaption — figures are touched only by the pass that recovers lazy-loaded image sources [mozilla-readability-source] — and trafilatura's documented preservation list covers tables, lists, headings and formatting without singling out figcaption [trafilatura-corefunctions]. Google's caption statement does not distinguish <figcaption> from a nearby <p>, so the specific claim that the ELEMENT (rather than mere text proximity) is what helps is unproven. Adoption is not measured in the Web Almanac accessibility chapter. This is a plausible mechanism with no demonstrated consumer of the binding itself — informative, never scored.
 
+## Implementation deviations
+
+- 2026-08-28 — the audit declines when the scan holds no response it can
+  attribute to this site. `ctx.pages` and `ctx.rootFiles` carry whatever
+  answered 200, which on a parked domain is a broker's page served from another
+  host and on a walled, throttled or non-HTML origin is nothing about the site
+  at all. The audit read them as the site's own and returned a verdict about
+  somebody else. It now consults `scanReadTheSite`, the `origin-reachable`
+  decision it already names in `requires`, and returns `notApplicable` with the
+  gate's reason attached. Found by the hostile-state contract suite.
+
 ## Review history
 
 - 2026-08-20 — code review (11-agent workflow) + evidence research (12-domain workflow, 400 sources).

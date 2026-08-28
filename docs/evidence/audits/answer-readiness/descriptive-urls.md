@@ -66,6 +66,17 @@ Real signal — readable URLs appear in AI citations and do carry pre-fetch topi
 
 **Counter-evidence:** Google's own doc frames descriptive URLs purely as crawlability and human/machine comprehension, and makes no ranking claim whatsoever — it says only that they help 'Google Search (and your users) better understand your site'. The Semrush slug data is a distribution over already-cited URLs, with no uncited control group. It therefore cannot separate a URL effect from the confound that well-edited sites both write good slugs and produce citable content. Semrush labels the whole study correlational. No AI vendor documents URL wording as an input to source selection — OpenAI's and Anthropic's publisher-facing docs are silent, and Anthropic's crawler doc contains no content-selection guidance at all. The GEO paper did not test URLs among its nine methods, and the 2026 critical survey does not list URL structure among replicated levers. Google's AI-features doc reiterates there are no special optimizations for AI surfaces. Plausible, conventional, cheap — and entirely unproven as a citation driver.
 
+## Implementation deviations
+
+- 2026-08-28 — the audit declines when the scan holds no response it can
+  attribute to this site. `ctx.pages` and `ctx.rootFiles` carry whatever
+  answered 200, which on a parked domain is a broker's page served from another
+  host and on a walled, throttled or non-HTML origin is nothing about the site
+  at all. The audit read them as the site's own and returned a verdict about
+  somebody else. It now consults `scanReadTheSite`, the `origin-reachable`
+  decision it already names in `requires`, and returns `notApplicable` with the
+  gate's reason attached. Found by the hostile-state contract suite.
+
 ## Review history
 
 - 2026-08-20 — code review (11-agent workflow) + evidence research (12-domain workflow, 400 sources).

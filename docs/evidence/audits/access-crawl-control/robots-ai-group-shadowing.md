@@ -94,6 +94,14 @@ Tier per evidence policy: **scored** — grade A meets the A/B bar required for 
   empty named group both fail: protection the operator wrote is not enforced.
   A named group that blocks a bot the wildcard allowed warns instead — it is
   frequently deliberate, and the finding says which reading applies.
+- 2026-08-28 — the audit declines when the scan holds no response it can
+  attribute to this site. `ctx.pages` and `ctx.rootFiles` carry whatever
+  answered 200, which on a parked domain is a broker's page served from another
+  host and on a walled, throttled or non-HTML origin is nothing about the site
+  at all. The audit read them as the site's own and returned a verdict about
+  somebody else. It now consults `scanReadTheSite`, the `origin-reachable`
+  decision it already names in `requires`, and returns `notApplicable` with the
+  gate's reason attached. Found by the hostile-state contract suite.
 
 ## Deferred
 

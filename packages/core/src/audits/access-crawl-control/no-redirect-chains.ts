@@ -2,6 +2,7 @@ import type { AuditMeta, AuditResult } from "../../types";
 import { Audit } from "../../audit";
 import type { CheckContext } from '../../check-context';
 import { weightForGrade } from '../../scorer';
+import { scanReadTheSite, unreadSiteReason } from '../../scan-evidence';
 
 export class NoRedirectChainsAudit extends Audit {
   static override meta: AuditMeta = {
@@ -30,6 +31,15 @@ export class NoRedirectChainsAudit extends Audit {
   };
 
   audit(ctx: CheckContext): AuditResult {
+    // Nothing here can be attributed to this site; see `scanReadTheSite`.
+    if (!scanReadTheSite(ctx.evidence)) {
+      return this.notApplicable(
+        'No page here can be attributed to this site, so its redirect behaviour was not judged.',
+        'No redirect chains',
+        unreadSiteReason(ctx.evidence),
+      );
+    }
+
     if (ctx.pages.length === 0) {
       return this.fail(
         'No pages scanned.',

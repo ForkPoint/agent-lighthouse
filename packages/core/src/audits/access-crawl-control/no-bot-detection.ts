@@ -2,6 +2,7 @@ import type { AuditMeta, AuditResult } from "../../types";
 import { Audit } from "../../audit";
 import type { CheckContext } from '../../check-context';
 import { weightForGrade } from '../../scorer';
+import { scanReadTheSite, unreadSiteReason } from '../../scan-evidence';
 
 const BOT_DETECTION_PATTERNS: Array<{
   name: string;
@@ -49,6 +50,15 @@ export class NoBotDetectionAudit extends Audit {
         'The scan was rate-limited (HTTP 429), so it never saw enough of the site to judge bot defenses. Re-run the scan after a pause.',
         'No JavaScript-based bot challenges that would block legitimate AI agents',
         'Scan rate-limited',
+      );
+    }
+
+    // Nothing here can be attributed to this site; see `scanReadTheSite`.
+    if (!scanReadTheSite(ctx.evidence)) {
+      return this.notApplicable(
+        'No page here can be attributed to this site, so its scripts were not judged.',
+        'No JavaScript-based bot challenges that would block legitimate AI agents',
+        unreadSiteReason(ctx.evidence),
       );
     }
 

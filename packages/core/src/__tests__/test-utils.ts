@@ -44,6 +44,80 @@ export function mockCheckContext(
   };
 }
 
+/**
+ * A page and a set of root files complete enough that every audit reading them
+ * reaches some verdict. Paired with {@link unreachedSiteContext} it proves an
+ * attribution guard fires: the same input yields a verdict when the scan
+ * reached the site and `na` when it did not.
+ */
+export function attributableFixture(): {
+  pages: PageContext[];
+  rootFiles: Record<string, FetchResult>;
+} {
+  const body = Array.from(
+    { length: 60 },
+    () => 'Widgets are machined from bar stock and finished by hand in our workshop.',
+  ).join(' ');
+  const html =
+    '<html lang="en"><head><title>Widgets</title>' +
+    '<meta name="description" content="Hand-finished widgets, machined from bar stock." />' +
+    '<link rel="alternate" type="application/rss+xml" href="/rss.xml" /></head>' +
+    '<body><header>Navigation</header><main><article><h1>Widgets</h1>' +
+    `<p>${body}</p>` +
+    '<figure><img src="/widget.png" alt="A widget" /><figcaption>A widget.</figcaption></figure>' +
+    '<table><thead><tr><th>Name</th></tr></thead><tbody><tr><td>Widget</td></tr></tbody></table>' +
+    '<a href="/widgets/hand-finished-widget">Hand-finished widget</a>' +
+    '</article></main><footer>Contact us</footer></body></html>';
+
+  const file = (path: string, bodyText: string, contentType: string): FetchResult => {
+    const result = mockFetchResult(bodyText, 200, contentType);
+    result.url = `https://example.com${path}`;
+    result.finalUrl = result.url;
+    return result;
+  };
+
+  return {
+    pages: [mockPageContext('https://example.com/widgets/hand-finished-widget', html)],
+    rootFiles: {
+      '/robots.txt': file('/robots.txt', 'User-agent: *\nAllow: /\n', 'text/plain'),
+      '/llms.txt': file('/llms.txt', '# Widgets\n\n- [Widgets](/widgets)\n', 'text/plain'),
+      '/llms-full.txt': file('/llms-full.txt', `# Widgets\n\n${body}\n`, 'text/plain'),
+      '/rss.xml': file(
+        '/rss.xml',
+        '<?xml version="1.0"?><rss version="2.0"><channel><title>Widgets</title>' +
+          '<item><title>A widget</title><link>https://example.com/widgets/a</link></item>' +
+          '</channel></rss>',
+        'application/rss+xml',
+      ),
+    },
+  };
+}
+
+/**
+ * A scan holding readable responses it cannot attribute to the site the user
+ * asked for — the `redirected-away` hostile state at unit-test scale. Every
+ * audit that names `origin-reachable` in its `requires` must decline here.
+ */
+export function unreachedSiteContext(
+  pages: PageContext[] = [],
+  rootFiles: Record<string, FetchResult> = {},
+): CheckContext {
+  const ctx = mockCheckContext(pages, rootFiles);
+  return {
+    ...ctx,
+    evidence: {
+      ...ctx.evidence,
+      met: { ...ctx.evidence.met, 'origin-reachable': false },
+      reasons: {
+        'origin-reachable':
+          'The requested host redirected to parking.brandsale.test, a different site, ' +
+          'without a permanent redirect.',
+      },
+      judgeable: false,
+    },
+  };
+}
+
 export function mockFetchResult(
   body: string,
   status: number = 200,

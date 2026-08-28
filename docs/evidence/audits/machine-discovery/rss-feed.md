@@ -94,6 +94,17 @@ Consequently the link never decides the result on its own: a site with a reachab
 
 Not addressed by this fold (they belong to 1.11's own "fix required" backlog, not to the merge): validating that the feed body parses as XML before passing, the extra candidate paths (`/feed/`, `/index.xml`, `/rss`), the shared `_feed.ts` with rss-feed-content, and returning `na` for sites with no periodic content.
 
+## Implementation deviations
+
+- 2026-08-28 — the audit declines when the scan holds no response it can
+  attribute to this site. `ctx.pages` and `ctx.rootFiles` carry whatever
+  answered 200, which on a parked domain is a broker's page served from another
+  host and on a walled, throttled or non-HTML origin is nothing about the site
+  at all. The audit read them as the site's own and returned a verdict about
+  somebody else. It now consults `scanReadTheSite`, the `origin-reachable`
+  decision it already names in `requires`, and returns `notApplicable` with the
+  gate's reason attached. Found by the hostile-state contract suite.
+
 ## Review history
 
 - 2026-08-20 — code review (11-agent workflow) + evidence research (12-domain workflow, 400 sources) on both source audits.

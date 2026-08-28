@@ -64,6 +64,17 @@ Produces frequent, confident, high-priority FAILs on correctly configured sites.
 
 **Counter-evidence:** RFC 9309 defines no crawl-delay directive at all — the only accommodation is §2.2.4, which merely permits crawlers to 'interpret other records that are not part of the robots.txt protocol'. There is no interoperable value semantics (seconds vs. requests-per-second is unspecified), no vendor consensus, and the two highest-volume AI crawlers in Cloudflare's data (GPTBot, ClaudeBot's operator aside) publish no crawl-delay commitment. OpenAI, Perplexity, Meta, Mistral and DuckDuckGo document no crawl-delay support in either direction. A crawl-delay line is at best a per-vendor hint; never score its presence or absence.
 
+## Implementation deviations
+
+- 2026-08-28 — the audit declines when the scan holds no response it can
+  attribute to this site. `ctx.pages` and `ctx.rootFiles` carry whatever
+  answered 200, which on a parked domain is a broker's page served from another
+  host and on a walled, throttled or non-HTML origin is nothing about the site
+  at all. The audit read them as the site's own and returned a verdict about
+  somebody else. It now consults `scanReadTheSite`, the `origin-reachable`
+  decision it already names in `requires`, and returns `notApplicable` with the
+  gate's reason attached. Found by the hostile-state contract suite.
+
 ## Review history
 
 - 2026-08-20 — code review (11-agent workflow) + evidence research (12-domain workflow, 400 sources).

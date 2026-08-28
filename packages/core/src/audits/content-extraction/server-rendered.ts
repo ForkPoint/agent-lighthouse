@@ -2,7 +2,7 @@ import type { AuditMeta, AuditResult } from "../../types";
 import { Audit } from "../../audit";
 import type { CheckContext } from '../../check-context';
 import { weightForGrade } from '../../scorer';
-import { pageRendersText } from '../../scan-evidence';
+import { pageRendersText, scanReadTheSite, unreadSiteReason } from '../../scan-evidence';
 
 /**
  * Attach measurement details to a result the base helpers built.
@@ -45,6 +45,15 @@ export class ServerRenderedAudit extends Audit {
   };
 
   audit(ctx: CheckContext): AuditResult {
+    // Nothing here can be attributed to this site; see `scanReadTheSite`.
+    if (!scanReadTheSite(ctx.evidence)) {
+      return this.notApplicable(
+        'No page here can be attributed to this site, so its served HTML was not judged.',
+        'Every fetched page serves > 50 words or > 200 characters of readable text',
+        unreadSiteReason(ctx.evidence),
+      );
+    }
+
     const pages = ctx.pages ?? [];
 
     if (pages.length === 0) {

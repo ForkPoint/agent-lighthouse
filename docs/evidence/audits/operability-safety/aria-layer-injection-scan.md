@@ -75,6 +75,14 @@ below the floor.
 finite verb)" is implemented as a closed verb list rather than a parser. A
 security heuristic should miss a sentence sooner than flag a nonce, and no
 part-of-speech tagger is available without a new dependency.
+- 2026-08-28 — the audit declines when the scan holds no response it can
+  attribute to this site. `ctx.pages` and `ctx.rootFiles` carry whatever
+  answered 200, which on a parked domain is a broker's page served from another
+  host and on a walled, throttled or non-HTML origin is nothing about the site
+  at all. The audit read them as the site's own and returned a verdict about
+  somebody else. It now consults `scanReadTheSite`, the `origin-reachable`
+  decision it already names in `requires`, and returns `notApplicable` with the
+  gate's reason attached. Found by the hostile-state contract suite.
 
 ## Deferred
 

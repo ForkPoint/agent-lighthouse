@@ -2,6 +2,7 @@ import type { AuditMeta, AuditResult } from "../../types";
 import { Audit } from "../../audit";
 import type { CheckContext } from '../../check-context';
 import { weightForGrade } from '../../scorer';
+import { scanReadTheSite, unreadSiteReason } from '../../scan-evidence';
 
 export class DataTablesAudit extends Audit {
   static override meta: AuditMeta = {
@@ -30,6 +31,15 @@ export class DataTablesAudit extends Audit {
   };
 
   audit(ctx: CheckContext): AuditResult {
+    // Nothing here can be attributed to this site; see `scanReadTheSite`.
+    if (!scanReadTheSite(ctx.evidence)) {
+      return this.notApplicable(
+        'No page here can be attributed to this site, so its tables were not judged.',
+        'Tables have <thead> and <th> elements',
+        unreadSiteReason(ctx.evidence),
+      );
+    }
+
     let totalTables = 0;
     let properTables = 0;
 

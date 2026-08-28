@@ -3,6 +3,7 @@ import { Audit } from "../../audit";
 import type { CheckContext } from '../../check-context';
 import { extractImages } from '../../parser';
 import { weightForGrade } from '../../scorer';
+import { scanReadTheSite, unreadSiteReason } from '../../scan-evidence';
 
 export class FigureFigcaptionAudit extends Audit {
   static override meta: AuditMeta = {
@@ -31,6 +32,15 @@ export class FigureFigcaptionAudit extends Audit {
   };
 
   audit(ctx: CheckContext): AuditResult {
+    // Nothing here can be attributed to this site; see `scanReadTheSite`.
+    if (!scanReadTheSite(ctx.evidence)) {
+      return this.notApplicable(
+        'No page here can be attributed to this site, so its figures were not judged.',
+        'Images with context wrapped in <figure> with <figcaption>',
+        unreadSiteReason(ctx.evidence),
+      );
+    }
+
     let totalFigures = 0;
     let figuresWithCaption = 0;
 
