@@ -91,9 +91,9 @@ The most valuable premise in the category — whether meaningful content exists 
   a broker's page from another host, on a walled or throttled origin nothing
   at all. It now consults `scanReadTheSite()` and returns `notApplicable`
   carrying the gate's own reason.
-  Verdicts that moved on the four nothing-obtained contract states: redirected
-  away pass → na, non-HTML homepage fail → na. Found by
-  `packages/core/src/tests/hostile-state-contract.test.ts`.
+  Verdicts that moved on the five nothing-obtained contract states: redirected
+  away pass → na, non-HTML homepage fail → na, HTTP 200 bot challenge fail →
+  na. Found by `packages/core/src/tests/hostile-state-contract.test.ts`.
 
 ## Deferred
 

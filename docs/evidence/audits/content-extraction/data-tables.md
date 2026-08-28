@@ -95,9 +95,9 @@ Correct core logic (parse5 auto-inserts <tbody>, so the '<table><tr><th>' patter
   a broker's page from another host, on a walled or throttled origin nothing
   at all. It now consults `scanReadTheSite()` and returns `notApplicable`
   carrying the gate's own reason.
-  Verdicts that moved on the four nothing-obtained contract states: walled
+  Verdicts that moved on the five nothing-obtained contract states: walled
   pass → na, throttled pass → na, redirected away pass → na, non-HTML homepage
-  pass → na. Found by
+  pass → na, HTTP 200 bot challenge pass → na. Found by
   `packages/core/src/tests/hostile-state-contract.test.ts`.
 - 2026-08-28 — a page that served no readable text no longer counts as a page
   with no tables. `<table>` markup arrives inside the body a JS shell withholds,

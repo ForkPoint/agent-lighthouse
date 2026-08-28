@@ -81,9 +81,9 @@ Declares applicablePageTypes ['content'] but then loops every page in the crawl 
   domain a broker's page from another host, on a walled or throttled origin
   nothing at all. It now consults `scanReadTheSite()` and returns
   `notApplicable` carrying the gate's own reason.
-  Verdicts that moved on the four nothing-obtained contract states: walled
+  Verdicts that moved on the five nothing-obtained contract states: walled
   pass → na, throttled pass → na, redirected away fail → na, non-HTML homepage
-  fail → na. Found by
+  fail → na, HTTP 200 bot challenge unchanged. Found by
   `packages/core/src/tests/hostile-state-contract.test.ts`.
 
 ## Review history

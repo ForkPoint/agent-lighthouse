@@ -85,9 +85,9 @@ purpose, because a site-wide block says nothing about the individual path.
   parked domain a broker's page from another host, on a walled or throttled
   origin nothing at all. It now consults `scanReadTheSite()` and returns
   `notApplicable` carrying the gate's own reason.
-  Verdicts that moved on the four nothing-obtained contract states: redirected
-  away pass → na, non-HTML homepage pass → na. Found by
-  `packages/core/src/tests/hostile-state-contract.test.ts`.
+  Verdicts that moved on the five nothing-obtained contract states: redirected
+  away pass → na, non-HTML homepage pass → na, HTTP 200 bot challenge pass →
+  na. Found by `packages/core/src/tests/hostile-state-contract.test.ts`.
 - 2026-08-28 — links and GET forms live in the body, and a JS shell exposes
   neither, so "no link or GET form changes state when it is fetched" was silence
   rather than safety. The empty-findings branch now returns `notApplicable` when

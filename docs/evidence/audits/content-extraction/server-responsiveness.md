@@ -91,8 +91,9 @@ Fails when any page's TTFB exceeds 1800ms, warns above an 800ms average. The und
   The guard sits **below** the `wafProtection.isBlocked` branch, so a walled
   scan still reports that the time could not be measured and names the wall,
   rather than the generic attribution message.
-  Verdicts that moved on the four nothing-obtained contract states: redirected
-  away pass → na, non-HTML homepage pass → na. Found by
+  Verdicts that moved on the five nothing-obtained contract states: redirected
+  away pass → na, non-HTML homepage pass → na, HTTP 200 bot challenge
+  unchanged. Found by
   `packages/core/src/tests/hostile-state-contract.test.ts`.
 - 2026-08-28 — `requires` drops `rendered-body` and `sample-adequate` and is now
   `['origin-reachable', 'unblocked-fetches']`. TTFB is measured from the

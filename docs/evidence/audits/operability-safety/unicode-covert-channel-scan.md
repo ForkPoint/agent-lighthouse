@@ -85,9 +85,9 @@ reads.
   parked domain a broker's page from another host, on a walled or throttled
   origin nothing at all. It now consults `scanReadTheSite()` and returns
   `notApplicable` carrying the gate's own reason.
-  Verdicts that moved on the four nothing-obtained contract states: walled
+  Verdicts that moved on the five nothing-obtained contract states: walled
   pass → na, throttled pass → na, redirected away pass → na, non-HTML homepage
-  pass → na. Found by
+  pass → na, HTTP 200 bot challenge pass → na. Found by
   `packages/core/src/tests/hostile-state-contract.test.ts`.
 - 2026-08-28 — the root files are readable on a JS-shell scan, but the pages are
   where a covert channel is planted, and a page with no text carries none. The

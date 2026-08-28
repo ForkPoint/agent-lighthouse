@@ -57,28 +57,47 @@ Each state is a `CheckContext` builder in a shared helper module.
 | :---- | :------------------ |
 | `blocked` | A bot wall. No pages. Root files answered 403. `wafProtection.isBlocked` set, `isRateLimit` false. |
 | `throttled` | HTTP 429 on everything. No pages. `isRateLimit` true. |
+| `challenged-at-200` | The same wall at HTTP 200, `text/html`, from the requested host. One page fetched, and every word of it Cloudflare's. `wafProtection.isBlocked` set, `isRateLimit` false. |
 | `redirected-away` | The homepage landed on a different registrable domain. |
 | `non-html` | The homepage served `application/pdf`. |
 | `shell` | One page fetched, `<body><div id="root"></div></body>`. Root files answered normally. |
 
-The first four are the states the evidence gate now marks unscored. They are
+The first five are the states the evidence gate now marks unscored. They are
 exactly the states in which an audit has the least to go on and the most
 freedom to invent.
+
+`challenged-at-200` was added 2026-08-28, after the first five shipped and a
+review found what they could not reach. A managed challenge does not have to
+answer with an error status: served at 200 with an HTML content type from the
+host that was asked for, it satisfies every test `origin-reachable` applies.
+The other four states all deny `origin-reachable`, so an audit whose only
+protection was that key looked protected in all of them and was not protected
+at all. It denies `unblocked-fetches` alone, which is why the attribution
+guard now reads `judgeable` rather than `origin-reachable`.
 
 ### 2.3 The invariants
 
 Two tiers, because the claim is not the same in both.
 
-**Nothing-obtained** — `blocked`, `throttled`, `redirected-away`, `non-html`.
-No audit may return `pass`. The scan holds no evidence about the site, so no
+**Nothing-obtained** — `blocked`, `challenged-at-200`, `throttled`,
+`redirected-away`, `non-html`. No audit may return `pass`. The scan holds no evidence about the site, so no
 audit may congratulate it. `notApplicable` is right, and `fail` is right when
 the missing response is itself the finding, which is what
 `no-blocking-captcha` now reports. Only `pass` is forbidden.
 
-**Degraded** — `shell`. Only audits that declare `rendered-body` in `requires`
-are held to the no-pass rule. A robots-based audit passing here is correct:
-`robots.txt` was fetched and read. Narrowing by `requires` rather than by
-category keeps the rule tied to what the audit itself says it needs.
+**Degraded** — `shell`. Only audits whose verdict comes from a scanned page's
+served HTML are held to the no-pass rule. A robots-based audit passing here is
+correct: `robots.txt` was fetched and read. Narrowing that way rather than by
+category keeps the rule tied to where the audit's verdict comes from.
+
+The population was `requires.includes('rendered-body')` until 2026-08-28. That
+excused every audit exempted from the key — including the two exempted because
+their subject is the wall, which then decided by substring search over
+`page.fetchResult.body` and reported "found nothing" about a mount point and a
+bundle. The suite now asks the source instead, through `readsServedPageBody` in
+`scripts/lib/requires-analysis.mjs`: an audit that reads the response envelope
+(a `lang` attribute, a robots meta tag, a header, TTFB, the URL) is not held,
+because a shell serves all of that whole; an audit that searches the body is.
 
 **Universal** — in every state, an audit must not throw, and its result must
 satisfy `AuditResultSchema`. The runner turns a throw or a rejection into a

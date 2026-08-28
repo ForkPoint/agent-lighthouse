@@ -76,9 +76,9 @@ The core check (do existing <figure>s have a <figcaption>) is sound. The problem
   a broker's page from another host, on a walled or throttled origin nothing
   at all. It now consults `scanReadTheSite()` and returns `notApplicable`
   carrying the gate's own reason.
-  Verdicts that moved on the four nothing-obtained contract states: walled
+  Verdicts that moved on the five nothing-obtained contract states: walled
   pass → na, throttled pass → na, redirected away pass → na, non-HTML homepage
-  pass → na. Found by
+  pass → na, HTTP 200 bot challenge pass → na. Found by
   `packages/core/src/tests/hostile-state-contract.test.ts`.
 - 2026-08-28 — the "no images or figures" branch no longer passes a page that
   served no readable text. A JS shell serves neither, so the pass credited a page

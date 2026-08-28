@@ -45,6 +45,23 @@ npx tsx scripts/capture-fixture.ts <url> [--name=<name>] [--allow-non-page] [--a
 One request per page. A site that refuses twice is a wall fixture or is
 skipped; it is not retried into submission.
 
+### No dated JSON-LD
+
+`agentic-commerce/offer-truth-consistency` compares a `priceValidUntil` against
+`Date.now()`, so a fixture carrying one would flip a snapshot cell on a
+calendar date with no code change behind it. No fixture carries one: a search
+across all 41 finds `priceValidUntil` and `validThrough` nowhere, and the eight
+files that contain the string `expires` carry it in analytics payloads, cookie
+code and query strings — never inside a `<script type="application/ld+json">`.
+
+Four other audits read the clock. All four snapshot `na` on all 41 fixtures and
+cannot do otherwise here: `sitemap-lastmod-verifiability` and
+`security-header-hygiene` read root files, which a fixture context serves as
+404s; `c2pa-signer-trust-status` reads signed media the harness has none of;
+and `web-bot-auth-request-tolerance` signs its own probe request, which the
+harness answers 404. Check this list again if a fixture context ever gains
+populated root files.
+
 ## The fixtures
 
 All captured 2026-08-28. Sizes are gzipped bytes on disk.
@@ -257,3 +274,66 @@ mostly closed to an honest user agent, and that is the finding.
   exist: the arm is only reachable independently by a page with 51–80 words in
   under 200 characters, and 60 words of any natural language run past 200
   characters.
+
+## The nightly corpus job
+
+`.github/workflows/corpus-nightly.yml` runs `scripts/scan-site-list.ts` at
+03:17 UTC. It is not the fixture corpus: it scans live sites from
+`packages/core/test-data/sites/sites.json` and asserts invariants, never
+verdicts. There is no ground truth for 1913 third-party sites, so the rules it
+checks live in `packages/core/src/tests/scan-invariants.ts` and say what a scan
+may *claim* — chiefly that a scan the gate could not feed reports no score.
+
+**The window.** 400 sites a night, starting at a date-seeded offset, wrapping
+past the end of the list. Full coverage takes five nights. 400 is sized against
+the 240-minute deadline, not against the list: a site costs about 63 s of one
+worker, and two workers finish 400 in about 210 minutes.
+
+**The summary.** `reports/corpus-nightly.json`, uploaded as the
+`corpus-nightly` artifact on every run, failed or not. It is rewritten every 10
+sites and again on the way out, including from the SIGTERM handler, so a
+cancelled run still leaves one.
+
+| Field | What it means |
+| :-- | :-- |
+| `complete` | False when a deadline, a signal or a crash ended the run early. |
+| `windowOffset` | Index in `sites.json` where this night's window started. |
+| `planned` | Sites in the window. |
+| `scanned` | Sites that produced a scan. |
+| `skipped` | Sites left alone because `robots.txt` said so. |
+| `unreached` | Sites the run never got to. Non-zero means it ran out of time. |
+| `violations` | Sites with at least one invariant violation. |
+| `outcomes[]` | One record per site: `domain`, `category`, `skipped`, `evidence`, `unscoredReason`, `statusCounts`, `violations`, `durationMs`. Deliberately no score — a dated score for a domain that never asked to be scanned is not this job's to publish. |
+
+**Reading the exit code.** Only one of them is a finding about the scanner.
+
+| Code | Meaning |
+| --: | :-- |
+| 0 | Clean. |
+| 1 | A scan broke an invariant. This is the finding the job exists for; the offending domains are in `outcomes[].violations`. |
+| 2 | A flag was malformed or unknown. Nothing was scanned. |
+| 3 | Cancelled by a signal. The summary is partial, and may be absent. |
+| 4 | The deadline arrived with sites still queued (`unreached > 0`). |
+| 5 | A non-empty window produced no outcome at all. |
+| 6 | `main()` rejected — the runner broke, not a scanned site. |
+
+**Reproducing one site.**
+
+```bash
+node --import tsx scripts/scan-site-list.ts --limit=1 --offset=<index of the domain in sites.json>
+```
+
+`--offset` makes a run reproducible; without it the window follows the date.
+`--limit=0` is the wiring smoke test — it reads the list, builds the window and
+writes an empty summary, and makes no network request. CI runs that path on
+every pull request, which is the only thing that keeps this script loading.
+
+**Politeness, and why it skips so much.** These are not our sites. The scanner
+itself ignores `robots.txt`, which a site owner scanning their own site is
+entitled to; this job is an uninvited visitor, so it reads the file first. It
+skips a site whose `robots.txt` blanket-disallows, or sets a `Crawl-delay` for,
+**any** user agent the run will send — its own token plus the six AI crawler
+tokens the UA-parity gatherer probes with. That is coarser than suppressing one
+probe, and it is the granularity the script has: the probes are issued inside
+`runScan`, which offers no per-token switch. The `robots.txt` it read is handed
+to `runScan`, so each site is asked for that file once, not twice.

@@ -63,8 +63,9 @@ _No dedicated evidence signal was researched for this audit in the 2026-08-20 pa
   whose pages it never saw. The gate exemption drops `origin-reachable` for
   the same reason; the page-fed keys stay, because with no page there is no
   hop.
-  Verdicts that moved on the four nothing-obtained contract states: walled
-  fail → na, throttled fail → na, non-HTML homepage pass → na. Found by
+  Verdicts that moved on the five nothing-obtained contract states: walled
+  fail → na, throttled fail → na, non-HTML homepage pass → na, HTTP 200 bot
+  challenge pass → na. Found by
   `packages/core/src/tests/hostile-state-contract.test.ts`.
 - 2026-08-28 — `requires` is now empty. The gate exemption already dropped
   `origin-reachable`, because a hop that left the site is this audit's subject;

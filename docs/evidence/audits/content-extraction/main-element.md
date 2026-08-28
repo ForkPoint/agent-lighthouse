@@ -82,9 +82,9 @@ Checks only the literal tag — 'page.$('main').length > 0' — so <div role="ma
   domain a broker's page from another host, on a walled or throttled origin
   nothing at all. It now consults `scanReadTheSite()` and returns
   `notApplicable` carrying the gate's own reason.
-  Verdicts that moved on the four nothing-obtained contract states: walled
+  Verdicts that moved on the five nothing-obtained contract states: walled
   pass → na, throttled pass → na, redirected away pass → na, non-HTML homepage
-  fail → na. Found by
+  fail → na, HTTP 200 bot challenge fail → na. Found by
   `packages/core/src/tests/hostile-state-contract.test.ts`.
 
 ## Review history

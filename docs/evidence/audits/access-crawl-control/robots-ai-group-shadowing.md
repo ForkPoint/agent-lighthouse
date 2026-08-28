@@ -100,8 +100,8 @@ Tier per evidence policy: **scored** — grade A meets the A/B bar required for 
   domain a broker's page from another host, on a walled or throttled origin
   nothing at all. It now consults `scanReadTheSite()` and returns
   `notApplicable` carrying the gate's own reason.
-  Verdicts that moved on the four nothing-obtained contract states: redirected
-  away pass → na. Found by
+  Verdicts that moved on the five nothing-obtained contract states: redirected
+  away pass → na, HTTP 200 bot challenge pass → na. Found by
   `packages/core/src/tests/hostile-state-contract.test.ts`.
 - 2026-08-28 — `requires` drops `rendered-body` and `sample-adequate` and is now
   `['origin-reachable']`. The verdict comes from robots.txt; the scanned pages

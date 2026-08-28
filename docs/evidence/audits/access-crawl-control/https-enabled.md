@@ -103,9 +103,9 @@ The signal is real and important (AI crawlers do require valid TLS), but the imp
   attributable homepage — the orchestrator only admits a page that answered
   200, so that branch could never name a status, and on a bot wall it named a
   fault that does not exist.
-  Verdicts that moved on the four nothing-obtained contract states: walled
+  Verdicts that moved on the five nothing-obtained contract states: walled
   warn → na, throttled warn → na, redirected away pass → na, non-HTML homepage
-  pass → na. Found by
+  pass → na, HTTP 200 bot challenge pass → na. Found by
   `packages/core/src/tests/hostile-state-contract.test.ts`.
 
 ## Review history
