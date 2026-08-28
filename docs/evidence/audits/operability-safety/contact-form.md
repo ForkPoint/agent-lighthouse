@@ -70,3 +70,19 @@ Real user-facing signal — 'contact this company for a quote' is a genuine agen
 
 - 2026-08-20 — code review (11-agent workflow) + evidence research (12-domain workflow, 400 sources).
 - 2026-08-21 — dossier generated; disposition pending final taxonomy design.
+
+## Deferred
+
+- **Unescaped `id` in `extractForms`.** The shared form parser builds a
+  selector from a page-supplied `id` to find a control's label, the
+  `label[for="..."]` lookup in `parser.ts`. An `id` carrying a quote or a
+  backslash makes css-what throw inside `$()`; the throw escapes
+  `extractForms`, so both audits that consume it — `forms-no-js` and
+  `contact-form` — become `scan-error` stubs and the site is told nothing
+  about either. No corpus fixture carries such an `id`, so nothing throws
+  today; the class is live and latent. Two audits in this category already
+  escape their interpolated values (`form-actionability` has
+  `escapeAttrValue`, `form-autofill-token-coverage` has `cssEscape`), so the
+  fix is to reuse one at the parser call site. Found by the real-page corpus
+  snapshot, which caught the same shape throwing for real in
+  `answer-readiness/extractor-survival-recall`.

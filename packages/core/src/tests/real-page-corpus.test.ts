@@ -6,6 +6,8 @@ import type { FetchResult } from '../fetcher';
 import {
   parseHtml,
   extractJsonLd,
+  extractMicrodata,
+  extractRdfa,
   extractMetaTags,
   extractHeadLinks,
   detectPageType,
@@ -67,15 +69,22 @@ function fixtureFetchResult(html: string, provenance: FixtureProvenance): FetchR
 function fixturePageContext(html: string, provenance: FixtureProvenance): PageContext {
   const $ = parseHtml(html);
   const jsonLd = extractJsonLd($);
+  // The union of every structured-data format, exactly as the orchestrator
+  // builds it. 23 audits read `structuredData ?? jsonLd`, so omitting it would
+  // silently downgrade every microdata and RDFa page in the corpus to its
+  // JSON-LD subset — and `detectPageType` would misclassify the pages whose
+  // product or category markers live only in microdata.
+  const structuredData = [...jsonLd, ...extractMicrodata($), ...extractRdfa($)];
   const meta = extractMetaTags($);
   return {
     url: provenance.url,
     // `true` marks it the first page of the scan, which is how a homepage is
     // told from an interior page. Each fixture is a one-page scan.
-    pageType: detectPageType(provenance.url, $, jsonLd, meta, true),
+    pageType: detectPageType(provenance.url, $, structuredData, meta, true),
     fetchResult: fixtureFetchResult(html, provenance),
     $,
     jsonLd,
+    structuredData,
     meta,
     headLinks: extractHeadLinks($),
   };
@@ -99,6 +108,32 @@ function fixturePageContext(html: string, provenance: FixtureProvenance): PageCo
  * claim about the bytes, with nothing upstream excusing it. Production skips
  * an audit whose `requires` a degenerate response denies, so a verdict here
  * on a wall or a shell is what the audit would say if it were asked.
+ *
+ * Three things the harness cannot supply, and a reader needs them to tell
+ * "no real site does this" from "the corpus could not ask":
+ *
+ * - **No `a11yResults`.** Only the orchestrator runs the jsdom rule engine, so
+ *   the 17 accessibility-tree audits are structurally unreachable here and
+ *   snapshot `na` on every fixture. That is the harness, not the pages. Wiring
+ *   the runner in would give them real coverage on real DOMs and would also
+ *   blow the runtime budget, so it belongs to its own task.
+ * - **`rootFiles: {}` and a `ctx.fetch` that answers 404.** A fixture is one
+ *   frozen response, not a crawl, so every `robots.txt`, sitemap, feed, MCP,
+ *   OpenAPI and catalog audit declines or warns on a file it was never given.
+ *   Populating the 26 root files as explicit 404s was measured and moves
+ *   exactly one cell across the whole corpus —
+ *   `machine-discovery/cors-ai-files`, `fail` to `warn`, informative and
+ *   weight 0 — so it is not worth the fidelity. Recorded so nobody re-derives
+ *   it. For the same reason no audit needing a second request can be exercised
+ *   at all: `reflected-parameter-injection-canary` passes on every page
+ *   because its probe fetch 404s.
+ *
+ * One rule for whoever captures the next fixture: **no dated JSON-LD.**
+ * `agentic-commerce/offer-truth-consistency` compares `priceValidUntil`
+ * against `Date.now()`. No fixture carries one today, so the snapshot is
+ * deterministic. A capture that did would make a cell flip on a calendar date
+ * with no code change behind it, which is the one failure mode this baseline
+ * must never have.
  */
 function fixtureContext(html: string, provenance: FixtureProvenance): CheckContext {
   const page = fixturePageContext(html, provenance);
@@ -122,7 +157,14 @@ describe('real-page corpus', () => {
   });
 
   for (const name of fixtures) {
-    it(`${name}: verdicts hold`, async () => {
+    // One `it` runs 215 audits over one page, and the heaviest fixtures are
+    // heavy by design: `nodejs-docs-fs` is 35,290 words, `otto-de-category`
+    // 1.78 MB. The slowest measures ~19 s on a laptop, which leaves too little
+    // room under the global 30 s default for a two-core CI runner — and a
+    // timeout here reads as "a verdict moved", inviting a regenerated snapshot
+    // to paper over a machine that was merely slow. Raised locally rather than
+    // globally so the rest of the suite keeps the tighter default.
+    it(`${name}: verdicts hold`, { timeout: 60_000 }, async () => {
       const { html, provenance } = readFixture(name);
       const ctx = fixtureContext(html, provenance);
 
