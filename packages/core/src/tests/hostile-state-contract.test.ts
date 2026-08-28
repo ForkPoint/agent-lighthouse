@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { defaultConfig } from '../audit-config';
 import { AuditResultSchema } from '../schemas';
 import { NOTHING_OBTAINED, SHELL_STATE } from './hostile-states';
-import { auditSources, readsServedPageBody } from './audit-sources';
+import { auditSources, readsPagesDirectly, SHELL_STANCE } from './audit-sources';
 import type { AuditResult } from '../types';
 
 /**
@@ -85,23 +85,46 @@ describe('hostile-state contract — a shell page', () => {
   // second half is not redundant — `audit-sources.ts` says which two audits
   // fell through the first half and why.
   const sources = auditSources();
+  // Every audit that reads the sampled pages and was let off `rendered-body`
+  // by a `GATE_EXEMPTIONS` entry. Derived the way the build-time check derives
+  // the requirement, so the set cannot drift from the exemptions themselves.
+  const exempted = registrations.filter(
+    (r) =>
+      !(r.meta.requires ?? []).includes('rendered-body') &&
+      readsPagesDirectly(sources.get(r.meta.id) ?? ''),
+  );
   const readsRenderedBody = registrations.filter(
     (r) =>
       (r.meta.requires ?? []).includes('rendered-body') ||
-      readsServedPageBody(sources.get(r.meta.id) ?? ''),
+      SHELL_STANCE.get(r.meta.id) === 'body',
   );
 
   it('has page-reading audits to check', () => {
     expect(readsRenderedBody.length).toBeGreaterThan(20);
   });
 
+  it('makes every audit that dropped rendered-body say what a shell proves about it', () => {
+    // A new exemption is unclassified until someone writes it down, and an
+    // unclassified audit is one nothing asks about a shell. That is how
+    // `third-party-dom-write-blast-radius` went unwatched: it dropped the key
+    // on this branch and the old text filter never noticed.
+    const unclassified = exempted.map((r) => r.meta.id).filter((id) => !SHELL_STANCE.has(id));
+    expect(unclassified).toEqual([]);
+    const stale = [...SHELL_STANCE.keys()].filter(
+      (id) => !exempted.some((r) => r.meta.id === id),
+    );
+    expect(stale, 'an entry for an audit that no longer drops rendered-body').toEqual([]);
+  });
+
   it('holds the audits that dropped rendered-body by exemption to the rule too', () => {
-    // The regression this filter exists for. Both declare `requires: []`, so
-    // filtering on the declaration alone excused exactly the two audits that
-    // shipped a weight-1.0 vacuous pass on every client-rendered site.
+    // The regression this filter exists for. All three declare an exemption
+    // that lets a shell reach them, and all three decide by reading the served
+    // document: two shipped a weight-1.0 vacuous pass on every client-rendered
+    // site, and the third grew its guard on this branch with nothing watching.
     const held = new Set(readsRenderedBody.map((r) => r.meta.id));
     expect(held.has('access-crawl-control/no-bot-detection')).toBe(true);
     expect(held.has('operability-safety/no-blocking-captcha')).toBe(true);
+    expect(held.has('operability-safety/third-party-dom-write-blast-radius')).toBe(true);
   });
 
   for (const registration of readsRenderedBody) {

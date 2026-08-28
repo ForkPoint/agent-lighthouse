@@ -36,23 +36,66 @@ export function auditSources(): Map<string, string> {
 }
 
 /**
- * Whether the audit decides by searching a scanned page's served HTML.
+ * Whether an audit's source reads the sampled pages itself.
  *
- * The narrow question the shell contract needs, and it is not the one
- * `requires` answers. Several audits are exempted from `rendered-body` because
- * they read the response *envelope* — the `lang` attribute, a robots meta tag,
- * the `X-Robots-Tag` header, TTFB, the URL — all of which a JS shell serves
- * whole, so passing a shell is the right verdict for them. An audit that
- * instead runs a substring search over `page.fetchResult.body` is not in that
- * group: a shell's body is a mount point and a bundle, so "pattern not found"
- * says nothing about the site.
- *
- * That distinction is what `no-bot-detection` and `no-blocking-captcha` fell
- * through. Both declare `requires: []` so a 403 still reaches their wall
- * branch, and a filter reading the declaration therefore never asked either of
- * them anything about a shell — while both went on to report "found nothing"
- * at weight 1.0 about a body holding one empty `<div>`.
+ * The same test `scripts/lib/requires-analysis.mjs` makes at build time to
+ * decide that an audit needs `rendered-body`. Reading it here lets the shell
+ * contract find the audits that were let off that key by a `GATE_EXEMPTIONS`
+ * entry, without importing an untyped `.mjs` into a `tsc`-checked test.
  */
-export function readsServedPageBody(source: string): boolean {
-  return /fetchResult\.body/.test(source);
+export function readsPagesDirectly(source: string): boolean {
+  return /\bctx\.pages\b/.test(source);
 }
+
+/**
+ * What a shell page proves about an audit that was exempted from
+ * `rendered-body`.
+ *
+ * - `envelope` — the audit reads what a shell serves whole: the `lang`
+ *   attribute, a robots meta tag, the `X-Robots-Tag` header, TTFB, the URL,
+ *   the redirect chain. Its verdict on a shell is a real verdict, `pass`
+ *   included, so the shell tier must not hold it to "may not pass".
+ * - `body` — the audit's verdict depends on the rendered document. "Found
+ *   nothing" in a body that is one empty `<div>` says nothing about the site,
+ *   so a `pass` there is vacuous and the shell tier holds it.
+ *
+ * Declared, not inferred. The review that produced this table proposed holding
+ * every `rendered-body`-exempt audit to the rule; run against the shell state
+ * that convicts seven audits which are right to pass it — `language-attribute`
+ * reading `<html lang="en">`, `server-responsiveness` reading TTFB — because
+ * no syntactic test separates a DOM read of the envelope from a DOM read of
+ * the document. The previous filter inferred it from the literal string
+ * `fetchResult.body`, which missed `third-party-dom-write-blast-radius`
+ * entirely: it censuses origins through `page.$`.
+ *
+ * The contract suite asserts this table covers every exempted audit, so a new
+ * exemption fails there until someone says which kind it is.
+ */
+export type ShellStance = 'envelope' | 'body';
+
+export const SHELL_STANCE: ReadonlyMap<string, ShellStance> = new Map<string, ShellStance>([
+  // Reads `<meta name="robots">` and the X-Robots-Tag header.
+  ['access-crawl-control/no-nofollow', 'envelope'],
+  // Reads the redirect chain the response carries.
+  ['access-crawl-control/no-redirect-chains', 'envelope'],
+  // Reads robots directives from meta tags and the X-Robots-Tag header.
+  ['access-crawl-control/robots-directives', 'envelope'],
+  // Reads the request scheme and the response status.
+  ['access-crawl-control/https-enabled', 'envelope'],
+  // The verdict comes from robots.txt; pages only contribute probe paths.
+  ['access-crawl-control/robots-ai-group-shadowing', 'envelope'],
+  // Measures TTFB, which a shell answers with as anything else.
+  ['content-extraction/server-responsiveness', 'envelope'],
+  // Reads the `lang` attribute on `<html>`, served before any body renders.
+  ['content-extraction/language-attribute', 'envelope'],
+  // Judges the URL strings of the pages the scan fetched.
+  ['answer-readiness/descriptive-urls', 'envelope'],
+  // A shell is this audit's finding: it must report it, never pass it.
+  ['content-extraction/server-rendered', 'body'],
+  // Substring search over the served HTML for a bot-defense loader.
+  ['access-crawl-control/no-bot-detection', 'body'],
+  // Substring search over the served HTML for CAPTCHA markup.
+  ['operability-safety/no-blocking-captcha', 'body'],
+  // Censuses the origins the served document names, through `page.$`.
+  ['operability-safety/third-party-dom-write-blast-radius', 'body'],
+]);
