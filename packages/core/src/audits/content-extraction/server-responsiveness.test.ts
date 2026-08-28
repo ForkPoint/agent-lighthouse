@@ -1,6 +1,13 @@
 import { describe, it, expect } from 'vitest';
 import { ServerResponsivenessAudit } from './server-responsiveness';
-import { mockCheckContext, mockPageContext } from '../../__tests__/test-utils';
+import {
+  attributableFixture,
+  mockCheckContext,
+  mockPageContext,
+  shellSiteContext,
+  unreachedSiteContext,
+  walledSiteContext,
+} from '../../__tests__/test-utils';
 import type { PageContext } from '../../check-context';
 
 /** A page whose fetch recorded `ttfb` milliseconds to first byte. */
@@ -96,5 +103,34 @@ describe('ServerResponsivenessAudit', () => {
   it('discloses that the figure includes connection setup from the scanner location', () => {
     const result = run(timedPage(200));
     expect(result.found).toContain('connection setup');
+  });
+
+  // The scan may hold a readable page that is not this site's — a broker's
+  // parking page, a foreign interstitial. Attribution is the gate's decision,
+  // and this audit has to honour it rather than read the page anyway.
+  it('declines when no response can be attributed to this site', async () => {
+    const { pages, rootFiles } = attributableFixture();
+    const instance = new ServerResponsivenessAudit();
+    const reached = await instance.audit(mockCheckContext(pages, rootFiles));
+    expect(reached.status, 'the same input reached is judged').not.toBe('na');
+
+    const unreached = await instance.audit(unreachedSiteContext(pages, rootFiles));
+    expect(unreached.status).toBe('na');
+  });
+  // Ordering: a walled scan gets the reason it could not be measured, which
+  // names the wall. A guard above that branch would replace it with the
+  // generic attribution message and lose the wall.
+  it('names the wall as the reason it could not measure a walled scan', () => {
+    const result = new ServerResponsivenessAudit().audit(walledSiteContext());
+    expect(result.status).toBe('na');
+    expect(result.message).toContain('could not be measured');
+    expect(result.message).toContain('Cloudflare');
+  });
+
+  // `requires` deliberately omits `rendered-body`: TTFB is measured from the
+  // response, and a shell answers as fast or as slow as anything else.
+  it('still judges a page that served no readable text', async () => {
+    const result = await new ServerResponsivenessAudit().audit(shellSiteContext());
+    expect(result.status).not.toBe('na');
   });
 });

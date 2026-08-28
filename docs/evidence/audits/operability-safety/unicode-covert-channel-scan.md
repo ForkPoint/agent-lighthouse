@@ -79,6 +79,24 @@ Bidi controls are a finding when the pushes and pops do not balance, and also
 when a balanced pair wraps text containing no right-to-left script at all — a
 direction scope around Latin text does nothing except reorder what an extractor
 reads.
+- 2026-08-28 — the audit declines when the scan holds no response it can
+  attribute to this site. It read the codepoints of the scanned pages and root
+  files, and `ctx.pages`/`ctx.rootFiles` carry whatever answered 200 — on a
+  parked domain a broker's page from another host, on a walled or throttled
+  origin nothing at all. It now consults `scanReadTheSite()` and returns
+  `notApplicable` carrying the gate's own reason.
+  Verdicts that moved on the five nothing-obtained contract states: walled
+  pass → na, throttled pass → na, redirected away pass → na, non-HTML homepage
+  pass → na, HTTP 200 bot challenge pass → na. Found by
+  `packages/core/src/tests/hostile-state-contract.test.ts`.
+- 2026-08-28 — the root files are readable on a JS-shell scan, but the pages are
+  where a covert channel is planted, and a page with no text carries none. The
+  no-hits branch now returns `notApplicable` when `scanReadPageText()` is false,
+  keeping its `details` counts. It sits after the hit branches: a Tags-block
+  run in a robots.txt served beside a shell is still a fail, pinned by the test
+  "still reports a tag-block run in a root file served beside a shell". Verdict
+  moved on the shell contract state: pass → na. Found by
+  `packages/core/src/tests/hostile-state-contract.test.ts`.
 
 ## Deferred
 

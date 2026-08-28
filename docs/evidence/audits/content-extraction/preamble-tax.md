@@ -98,6 +98,15 @@ document, because 3,000 tokens ahead of a 4,000-token page and 3,000 ahead of a
 The largest opaque block ahead of the content — `<script>`, `<style>`,
 `<template>`, `<svg>`, `<noscript>` or a comment — is named with its token cost
 and its line number, so the finding points at one edit.
+- 2026-08-28 — the audit declines when the scan holds no response it can
+  attribute to this site. It read the first scanned page's leading tokens, and
+  `ctx.pages`/`ctx.rootFiles` carry whatever answered 200 — on a parked domain
+  a broker's page from another host, on a walled or throttled origin nothing
+  at all. It now consults `scanReadTheSite()` and returns `notApplicable`
+  carrying the gate's own reason.
+  Verdicts that moved on the five nothing-obtained contract states: redirected
+  away pass → na, HTTP 200 bot challenge unchanged. Found by
+  `packages/core/src/tests/hostile-state-contract.test.ts`.
 
 ## Deferred
 

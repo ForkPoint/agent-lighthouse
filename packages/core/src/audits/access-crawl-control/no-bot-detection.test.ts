@@ -1,6 +1,13 @@
 import { describe, it, expect } from 'vitest';
 import { NoBotDetectionAudit } from './no-bot-detection';
-import { mockCheckContext, mockPageContext } from '../../__tests__/test-utils';
+import {
+  attributableFixture,
+  mockCheckContext,
+  shellSiteContext,
+  mockPageContext,
+  unreachedSiteContext,
+  walledSiteContext,
+} from '../../__tests__/test-utils';
 
 describe('NoBotDetectionAudit', () => {
   const audit = new NoBotDetectionAudit();
@@ -102,4 +109,51 @@ describe('NoBotDetectionAudit', () => {
       expect(result.message).toMatch(/rate-limited/i);
     });
   });
+
+  // The scan may hold a readable page that is not this site's — a broker's
+  // parking page, a foreign interstitial. Attribution is the gate's decision,
+  // and this audit has to honour it rather than read the page anyway.
+  it('declines when no response can be attributed to this site', async () => {
+    const { pages, rootFiles } = attributableFixture();
+    const instance = new NoBotDetectionAudit();
+    const reached = await instance.audit(mockCheckContext(pages, rootFiles));
+    expect(reached.status, 'the same input reached is judged').not.toBe('na');
+
+    const unreached = await instance.audit(unreachedSiteContext(pages, rootFiles));
+    expect(unreached.status).toBe('na');
+  });
+  // Ordering, not just behaviour: the wall is this audit's subject, so the
+  // attribution guard must sit BELOW the `isBlocked` branch. A guard above it
+  // returns `na` here and the critical, weight-1.0 finding disappears from a
+  // walled scan — the most common hostile scan there is.
+  it('reports the firewall on a walled scan, not a shrug', () => {
+    const result = new NoBotDetectionAudit().audit(walledSiteContext());
+    expect(result.status).toBe('fail');
+    expect(result.message).toContain('Bot-defense firewall detected');
+    expect(result.message).toContain('Cloudflare');
+  });
+
+  // The weight-1.0 vacuous pass this audit shipped. The detection is a
+  // substring search over the served HTML, and a shell serves a mount point
+  // and a bundle: the Turnstile loader is inside the bundle, where the search
+  // cannot reach it. `requires` is empty so the gate does not decline this —
+  // the audit has to.
+  it('declines a page that served no readable text', () => {
+    const result = new NoBotDetectionAudit().audit(shellSiteContext());
+    expect(result.status).toBe('na');
+    expect(result.message).toContain('no readable text');
+  });
+
+  // Ordering again: the guard sits below the detection branches, so a shell
+  // that ships a challenge loader in its static HTML is still reported.
+  it('still reports a loader a shell serves statically', () => {
+    const html =
+      '<html lang="en"><head><title>Shop</title>' +
+      '<script src="https://challenges.cloudflare.com/turnstile/v0/api.js"></script></head>' +
+      '<body><div id="root"></div></body></html>';
+    const result = new NoBotDetectionAudit().audit(shellSiteContext(html));
+    expect(result.status).toBe('warn');
+    expect(result.message).toContain('Cloudflare Turnstile');
+  });
+
 });

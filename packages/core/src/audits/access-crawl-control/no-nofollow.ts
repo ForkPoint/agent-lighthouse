@@ -2,6 +2,7 @@ import type { AuditMeta, AuditResult } from "../../types";
 import { Audit } from "../../audit";
 import type { CheckContext } from '../../check-context';
 import { weightForGrade } from '../../scorer';
+import { scanReadTheSite, unreadSiteReason } from '../../scan-evidence';
 
 export class NoNofollowAudit extends Audit {
   static override meta: AuditMeta = {
@@ -16,8 +17,9 @@ export class NoNofollowAudit extends Audit {
     evidenceGrade: 'A',
     tier: 'scored',
     dossier: 'docs/evidence/audits/access-crawl-control/no-nofollow.md',
-    // Gate exemption: being refused is what this category reports.
-    requires: ['origin-reachable', 'rendered-body', 'sample-adequate'],
+    // Gate exemption: being refused is what this category reports, and the meta tag and
+    // header this audit reads are served by a page whose body renders nothing.
+    requires: ['origin-reachable'],
     defaultPriority: 'high',
     guidance: {
       impact:
@@ -31,6 +33,15 @@ export class NoNofollowAudit extends Audit {
   };
 
   audit(ctx: CheckContext): AuditResult {
+    // Nothing here can be attributed to this site; see `scanReadTheSite`.
+    if (!scanReadTheSite(ctx.evidence)) {
+      return this.notApplicable(
+        'No page here can be attributed to this site, so its nofollow directives were not judged.',
+        'No site-wide nofollow directives',
+        unreadSiteReason(ctx.evidence),
+      );
+    }
+
     if (ctx.pages.length === 0) {
       return this.fail(
         'No pages scanned.',

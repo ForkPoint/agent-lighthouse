@@ -2,6 +2,7 @@ import type { AuditMeta, AuditResult } from "../../types";
 import { Audit } from "../../audit";
 import type { CheckContext } from '../../check-context';
 import { weightForGrade } from '../../scorer';
+import { scanReadTheSite, unreadSiteReason } from '../../scan-evidence';
 
 export class NoRedirectChainsAudit extends Audit {
   static override meta: AuditMeta = {
@@ -16,8 +17,10 @@ export class NoRedirectChainsAudit extends Audit {
     evidenceGrade: 'A',
     tier: 'scored',
     dossier: 'docs/evidence/audits/access-crawl-control/no-redirect-chains.md',
-    // Gate exemption: being refused is what this category reports.
-    requires: ['origin-reachable', 'rendered-body', 'sample-adequate'],
+    // Gate exemption: a hop that left the site is this audit's subject, and leaving the
+    // site is exactly what denies `origin-reachable`. It reads request URL against final
+    // URL, which every response carries, and reports "no pages scanned" itself.
+    requires: [],
     defaultPriority: 'medium',
     guidance: {
       impact:
@@ -30,18 +33,11 @@ export class NoRedirectChainsAudit extends Audit {
   };
 
   audit(ctx: CheckContext): AuditResult {
-    if (ctx.pages.length === 0) {
-      return this.fail(
-        'No pages scanned.',
-        'No redirect chains (URL equals finalUrl or single redirect)',
-        'No pages scanned',
-        {
-          priority: 'medium',
-          description: NoRedirectChainsAudit.meta.description,
-        },
-      );
-    }
-
+    // A hop is measurable whatever it landed on, and a hop that left the site
+    // is this audit's subject rather than its blind spot: the parked-domain
+    // scan is exactly the redirect a reader needs named. So the redirect is
+    // counted before the site is attributed, and the guard below only stops
+    // the audit *clearing* a site whose pages it never saw.
     const redirected: Array<{ from: string; to: string }> = [];
 
     for (const page of ctx.pages) {
@@ -53,6 +49,28 @@ export class NoRedirectChainsAudit extends Audit {
     }
 
     if (redirected.length === 0) {
+      // Nothing redirected — but "nothing redirected" is only a clean bill of
+      // health for pages that are this site's. See `scanReadTheSite`.
+      if (!scanReadTheSite(ctx.evidence)) {
+        return this.notApplicable(
+          'No page here can be attributed to this site, so its redirect behaviour was not judged.',
+          'No redirect chains',
+          unreadSiteReason(ctx.evidence),
+        );
+      }
+
+      if (ctx.pages.length === 0) {
+        return this.fail(
+          'No pages scanned.',
+          'No redirect chains (URL equals finalUrl or single redirect)',
+          'No pages scanned',
+          {
+            priority: 'medium',
+            description: NoRedirectChainsAudit.meta.description,
+          },
+        );
+      }
+
       return this.pass(
         `All ${ctx.pages.length} page(s) resolve without redirects.`,
         'No redirect chains',

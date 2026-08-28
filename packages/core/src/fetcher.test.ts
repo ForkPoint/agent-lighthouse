@@ -741,3 +741,87 @@ describe('createFetcher redirect handling', () => {
     expect(result.body).toBe('dev server');
   });
 });
+
+// ---------------------------------------------------------------------------
+// maxConcurrent — the wait must sit outside the clocks
+// ---------------------------------------------------------------------------
+
+describe('createFetcher — maxConcurrent', () => {
+  /** A response that does not resolve until the test releases it. */
+  function heldResponse(): { response: ReturnType<typeof mockResponse>; release: () => void } {
+    let release!: () => void;
+    const held = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    const response = mockResponse(200, 'ok');
+    response.body.text = vi.fn().mockImplementation(async () => {
+      await held;
+      return 'ok';
+    });
+    return { response, release };
+  }
+
+  it('issues at most `maxConcurrent` requests at a time, in arrival order', async () => {
+    const issued: string[] = [];
+    const gates = [heldResponse(), heldResponse(), heldResponse()];
+    let n = 0;
+    mockRequest.mockImplementation(async (url: unknown) => {
+      issued.push(String(url));
+      return gates[n++]!.response as never;
+    });
+
+    const fetcher = createFetcher({ maxConcurrent: 1 });
+    const all = Promise.all([
+      fetcher.fetch({ url: 'https://example.com/a' }),
+      fetcher.fetch({ url: 'https://example.com/b' }),
+      fetcher.fetch({ url: 'https://example.com/c' }),
+    ]);
+
+    await Promise.resolve();
+    expect(issued).toEqual(['https://example.com/a']);
+
+    gates[0]!.release();
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    expect(issued).toEqual(['https://example.com/a', 'https://example.com/b']);
+
+    gates[1]!.release();
+    gates[2]!.release();
+    await all;
+    expect(issued).toEqual([
+      'https://example.com/a',
+      'https://example.com/b',
+      'https://example.com/c',
+    ]);
+  });
+
+  it('keeps the queued time out of ttfbMs', async () => {
+    const first = heldResponse();
+    let n = 0;
+    mockRequest.mockImplementation(async () => (n++ === 0 ? first.response : mockResponse(200, 'ok')) as never);
+
+    const fetcher = createFetcher({ maxConcurrent: 1 });
+    const queued = fetcher.fetch({ url: 'https://example.com/second' });
+    const held = fetcher.fetch({ url: 'https://example.com/first' });
+
+    // The second request waits ~30ms for the first, which is longer than the
+    // request it then makes. Measured from `fetch()` it would carry that wait.
+    await new Promise((resolve) => setTimeout(resolve, 30));
+    first.release();
+
+    const [a, b] = await Promise.all([queued, held]);
+    expect(a.ttfbMs).toBeLessThan(20);
+    expect(b.ttfbMs).toBeGreaterThanOrEqual(0);
+  });
+
+  it('releases its slot when a request throws', async () => {
+    mockRequest.mockRejectedValueOnce(new Error('boom'));
+    mockRequest.mockResolvedValueOnce(mockResponse(200, 'ok') as never);
+
+    const fetcher = createFetcher({ maxConcurrent: 1 });
+    const failed = await fetcher.fetch({ url: 'https://example.com/a' });
+    expect(failed.status).toBe(0);
+
+    const after = await fetcher.fetch({ url: 'https://example.com/b' });
+    expect(after.status).toBe(200);
+  });
+});

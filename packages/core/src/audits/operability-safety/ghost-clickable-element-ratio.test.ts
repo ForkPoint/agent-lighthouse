@@ -1,6 +1,10 @@
 import { describe, it, expect } from 'vitest';
 import { GhostClickableElementRatioAudit } from './ghost-clickable-element-ratio';
-import { mockCheckContext, mockPageContext } from '../../__tests__/test-utils';
+import {
+  mockCheckContext,
+  mockPageContext,
+  walledSiteContext,
+} from '../../__tests__/test-utils';
 import { expectNotApplicableOnEmpty } from '../../tests/na-contract';
 import type { CheckContext } from '../../check-context';
 
@@ -92,4 +96,16 @@ describe('GhostClickableElementRatioAudit', () => {
     expect(meta.tier).toBe('scored');
     expect(meta.weight).toBeCloseTo(0.6);
   });
+
+  // A bot wall does not have to answer with an error status. A Cloudflare
+  // managed challenge is served at 200 `text/html` from the requested host,
+  // and its one `role="main"` wrapper is a semantic click target — enough for
+  // the survey to report a ratio of 1.00 and pass Cloudflare's markup as the
+  // site's.
+  it('declines when no response can be attributed to this site', async () => {
+    const result = await new GhostClickableElementRatioAudit().audit(walledSiteContext());
+    expect(result.status).toBe('na');
+    expect(result.message).toContain('attributed to this site');
+  });
+
 });

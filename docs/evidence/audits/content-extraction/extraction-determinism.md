@@ -102,6 +102,15 @@ the question with the tool under test.
 Only the entry page is compared. Three extractions cost one jsdom parse and two
 cheerio passes; running that per page would multiply the scan's cost to report
 the same template property.
+- 2026-08-28 — the audit declines when the scan holds no response it can
+  attribute to this site. It read the first scanned page through three
+  extractors, and `ctx.pages`/`ctx.rootFiles` carry whatever answered 200 — on
+  a parked domain a broker's page from another host, on a walled or throttled
+  origin nothing at all. It now consults `scanReadTheSite()` and returns
+  `notApplicable` carrying the gate's own reason.
+  Verdicts that moved on the five nothing-obtained contract states: redirected
+  away pass → na, HTTP 200 bot challenge unchanged. Found by
+  `packages/core/src/tests/hostile-state-contract.test.ts`.
 
 ## Deferred
 

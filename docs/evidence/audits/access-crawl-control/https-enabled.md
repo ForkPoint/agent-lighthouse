@@ -88,6 +88,36 @@ The signal is real and important (AI crawlers do require valid TLS), but the imp
 
 **Counter-evidence:** Two caveats that shape how this must be audited. (1) User-Agent-based probing is unreliable in both directions: Cloudflare documented Perplexity using a Chrome-impersonating stealth crawler on unlisted IPs across rotating ASNs at 3–6M requests/day to evade no-crawl directives, and conversely malicious scrapers routinely spoof GPTBot. An audit that merely sets a UA header measures the WAF's UA rules, not real agent access — genuine verification requires the vendors' published IP ranges (openai.com/gptbot.json, claude.com/crawling/bots.json, perplexity.com/perplexitybot.json) or Web Bot Auth signatures. (2) Blocking is often a deliberate, rational business decision, not a defect. Cloudflare's crawl-to-refer data puts Anthropic at about 71,000 crawls per HTML referral in the June 2025 window, with the caveat that Claude's native app sends no Referer. That makes uncompensated crawl a real cost. The audit should REPORT the gate neutrally as 'AI agents are blocked here' rather than scoring it as a failure, since the site owner may have chosen it.
 
+## Implementation deviations
+
+- 2026-08-28 — the audit declines when the scan holds no response it can
+  attribute to this site. It read the homepage's status code, and
+  `ctx.pages`/`ctx.rootFiles` carry whatever answered 200 — on a parked domain
+  a broker's page from another host, on a walled or throttled origin nothing
+  at all. It now consults `scanReadTheSite()` and returns `notApplicable`
+  carrying the gate's own reason.
+  The plain-HTTP fail runs **before** the guard: the scheme is a property of
+  the request and is provable with no response at all, so a walled HTTP site
+  still fails. The gate exemption drops the response-fed keys for that reason.
+  The old "Possible TLS or server error" warn is gone for a scan with no
+  attributable homepage — the orchestrator only admits a page that answered
+  200, so that branch could never name a status, and on a bot wall it named a
+  fault that does not exist.
+  Verdicts that moved on the five nothing-obtained contract states: walled
+  warn → na, throttled warn → na, redirected away pass → na, non-HTML homepage
+  pass → na, HTTP 200 bot challenge pass → na. Found by
+  `packages/core/src/tests/hostile-state-contract.test.ts`.
+
+- 2026-08-28 — the empty-document warn no longer names a status the audit did
+  not read. It printed "200 with an empty body", but `origin-reachable` accepts
+  any 2xx while the orchestrator admits a page only at `status === 200 && body`,
+  so a homepage answering 204, 203 or 206 reaches the same branch and was told
+  it had returned 200. The audit holds no homepage `FetchResult` — `ctx.pages`
+  is empty by definition on that branch — so the wording now states only what
+  is known: the response carried no document. Plumbing the homepage status onto
+  `CheckContext` was considered and not done; it would make every caller that
+  builds a context carry a field one branch of one audit reads.
+
 ## Review history
 
 - 2026-08-20 — code review (11-agent workflow) + evidence research (12-domain workflow, 400 sources).

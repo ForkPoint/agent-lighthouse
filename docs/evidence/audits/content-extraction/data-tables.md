@@ -87,6 +87,27 @@ Correct core logic (parse5 auto-inserts <tbody>, so the '<table><tr><th>' patter
 
 **Counter-evidence:** Two real caveats. First, th is sufficient but not necessary in Readability. The same function also classifies by size: roughly 10 or more cells, or 10 or more rows and 4 or more columns. A large th-less table survives anyway, so the deletion risk is concentrated in small tables. Second, the `scope` attribute is a weaker signal than `th`, and should be graded C on its own. None of the extractors examined — Readability, trafilatura, htmldate — reads @scope, and no agent harness doc mentions it. scope matters for the HTML header-association algorithm, and for screen readers. It reaches agents only indirectly, through the a11y tree on complex multi-level tables. Caption adoption is tiny (1.6% of desktop sites [web-almanac-2025-accessibility]) so caption should be advisory, not required. Recommend scoring th/thead presence, and treating scope and caption as informative sub-checks.
 
+## Implementation deviations
+
+- 2026-08-28 — the audit declines when the scan holds no response it can
+  attribute to this site. It read the tables on the scanned pages, and
+  `ctx.pages`/`ctx.rootFiles` carry whatever answered 200 — on a parked domain
+  a broker's page from another host, on a walled or throttled origin nothing
+  at all. It now consults `scanReadTheSite()` and returns `notApplicable`
+  carrying the gate's own reason.
+  Verdicts that moved on the five nothing-obtained contract states: walled
+  pass → na, throttled pass → na, redirected away pass → na, non-HTML homepage
+  pass → na, HTTP 200 bot challenge pass → na. Found by
+  `packages/core/src/tests/hostile-state-contract.test.ts`.
+- 2026-08-28 — a page that served no readable text no longer counts as a page
+  with no tables. `<table>` markup arrives inside the body a JS shell withholds,
+  so `totalTables === 0` was the scan reporting its own silence rather than the
+  site publishing nothing to fix. The zero-table branch now consults
+  `scanReadPageText()` and returns `notApplicable` carrying the gate's reason;
+  every branch that found a table is untouched. Verdict moved on the shell
+  contract state: pass → na. Found by
+  `packages/core/src/tests/hostile-state-contract.test.ts`.
+
 ## Review history
 
 - 2026-08-20 — code review (11-agent workflow) + evidence research (12-domain workflow, 400 sources).

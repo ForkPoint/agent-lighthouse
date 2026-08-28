@@ -85,6 +85,15 @@ The most valuable premise in the category — whether meaningful content exists 
 - 2026-08-26 — the audit now judges every fetched page instead of `ctx.pages[0]`, and reports how many of them served readable text. The code review below records the reason: a site that server-renders its marketing homepage and client-renders every product page passed on the one page that was rendered, while the pages that matter went unreported. The empty URLs are carried in `details.emptyPages`.
 - 2026-08-26 — the per-page decision is read from the scan's evidence record rather than recomputed here, so the rule has one implementation. A page the record does not cover is judged by that same shared function.
 - 2026-08-26 — a scan with no fetched page returns `notApplicable`, where it previously returned `warn`. A warning is a claim about the site; the accurate statement is that nothing was seen.
+- 2026-08-28 — the audit declines when the scan holds no response it can
+  attribute to this site. It read the served body of each scanned page, and
+  `ctx.pages`/`ctx.rootFiles` carry whatever answered 200 — on a parked domain
+  a broker's page from another host, on a walled or throttled origin nothing
+  at all. It now consults `scanReadTheSite()` and returns `notApplicable`
+  carrying the gate's own reason.
+  Verdicts that moved on the five nothing-obtained contract states: redirected
+  away pass → na, non-HTML homepage fail → na, HTTP 200 bot challenge fail →
+  na. Found by `packages/core/src/tests/hostile-state-contract.test.ts`.
 
 ## Deferred
 

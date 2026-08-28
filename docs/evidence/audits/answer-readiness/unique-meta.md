@@ -53,6 +53,28 @@ The only site-wide audit in the category, and its core dedup logic is dead code.
 
 _No dedicated evidence signal was researched for this audit in the 2026-08-20 pass. Its tier assignment falls to the taxonomy design; unproven mechanisms default to informative per the [evidence policy](../../policy.md)._
 
+## Implementation deviations
+
+- 2026-08-28 — the audit declines when the scan holds no response it can
+  attribute to this site. It read the title and description of each scanned
+  page, and `ctx.pages`/`ctx.rootFiles` carry whatever answered 200 — on a
+  parked domain a broker's page from another host, on a walled or throttled
+  origin nothing at all. It now consults `scanReadTheSite()` and returns
+  `notApplicable` carrying the gate's own reason.
+  Verdicts that moved on the five nothing-obtained contract states: walled
+  pass → na, throttled pass → na, redirected away pass → na, non-HTML homepage
+  pass → na, HTTP 200 bot challenge pass → na. Found by
+  `packages/core/src/tests/hostile-state-contract.test.ts`.
+- 2026-08-28 — the fewer-than-two-pages branch returned `pass` while its own
+  message read "uniqueness check not applicable". The status now matches the
+  words: `notApplicable`. Uniqueness needs two pages to compare, and a scan of a
+  JS shell — whose links never render, so nothing is discovered to sample —
+  routinely holds one. This moves the verdict on every scan holding fewer
+  than two distinct canonical pages, not only on a shell: pass → na. This is
+  the fix the 2026-08-20 code review recorded as item 5 above and nobody had
+  applied. Found by
+  `packages/core/src/tests/hostile-state-contract.test.ts`.
+
 ## Review history
 
 - 2026-08-20 — code review (11-agent workflow) + evidence research (12-domain workflow, 400 sources).

@@ -222,6 +222,71 @@ export function buildScanEvidence(input: ScanEvidenceInput): ScanEvidence {
   };
 }
 
+/**
+ * Whether the scan holds a response it can attribute to the site the user
+ * asked for.
+ *
+ * `ctx.pages` is not "this site's pages". The orchestrator admits any 200 that
+ * carried a body, with no content-type gate and no attribution check, so a
+ * broker's parking page reached through a temporary redirect and a PDF served
+ * at the homepage both arrive as a `PageContext` an audit will read as though
+ * the site had written it. `ctx.rootFiles` is the same: a parking host answers
+ * every path, so `/llms.txt` comes back 200 and belongs to the broker.
+ *
+ * Attribution is decided once, before any audit runs. An audit that names
+ * `origin-reachable` in its `requires` has said its verdict depends on that
+ * decision, so it must read the decision rather than assume it went its way.
+ *
+ * This is `judgeable`, not `origin-reachable` alone, because a bot wall does
+ * not have to answer with an error status. A Cloudflare managed challenge is
+ * served at HTTP 200, `text/html`, from the requested host, so every test
+ * `origin-reachable` applies passes and the interstitial arrives as a
+ * `PageContext`. Its `<meta name="robots" content="noindex,nofollow">` is
+ * Cloudflare's, not the owner's, and an audit reading it under
+ * `origin-reachable` alone told site owners at critical priority that their
+ * homepage was noindexed. `unblocked-fetches` is the key that knows the
+ * difference, and the two together are what `judgeable` already means.
+ */
+export function scanReadTheSite(evidence: ScanEvidence): boolean {
+  return evidence.judgeable;
+}
+
+/** Why the scan holds nothing it can attribute to the site. */
+export function unreadSiteReason(evidence: ScanEvidence): string {
+  return (
+    evidence.reasons['origin-reachable'] ??
+    evidence.reasons['unblocked-fetches'] ??
+    'The scan obtained no response it could attribute to this site.'
+  );
+}
+
+/**
+ * Whether any fetched page served text a non-JS consumer can read.
+ *
+ * A JS shell is not an empty scan: the page arrived, the head is complete, the
+ * headers and the root files are all there. What it withholds is the rendered
+ * document — the tables, figures, headings, links and accessible names an
+ * audit walks. An audit whose population lives in the body therefore finds
+ * none of it and, unguarded, reports the absence as cleanliness: "no data
+ * tables found" about a page whose body is one empty `<div>`.
+ *
+ * Read this only where the audit would otherwise say "found nothing, so
+ * nothing is wrong". A finding the served HTML does support — an injected
+ * `og:description`, a third-party script tag, a slow response — is still true
+ * on a shell and must be reported before this guard is reached.
+ */
+export function scanReadPageText(evidence: ScanEvidence): boolean {
+  return evidence.met['rendered-body'];
+}
+
+/** Why no fetched page served text to read. */
+export function unreadPageTextReason(evidence: ScanEvidence): string {
+  return (
+    evidence.reasons['rendered-body'] ??
+    'No fetched page served text a non-JS consumer can read.'
+  );
+}
+
 /** All requirements met. For test harnesses not exercising the gate. */
 export function allEvidenceMet(): ScanEvidence {
   return {

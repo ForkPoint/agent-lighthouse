@@ -80,6 +80,32 @@ Fails when any page's TTFB exceeds 1800ms, warns above an 800ms average. The und
 
 **Counter-evidence:** No AI vendor publishes a timeout threshold — not OpenAI, not Anthropic, not Perplexity — so any specific number (the widely repeated '1–5 second' budget) is unsourced folklore and must not be cited as vendor guidance. The 499 research is reported second-hand with no published sample size or methodology, and the Profound figure is a correlation between failure rate and citation count that is plausibly confounded by site quality and authority. Note also the direction is not purely 'faster is better for the publisher': Vercel's data shows GPTBot and ClaudeBot generating 569M and 370M requests/month respectively on one network, so a faster origin also invites more uncompensated crawl.
 
+## Implementation deviations
+
+- 2026-08-28 — the audit declines when the scan holds no response it can
+  attribute to this site. It read the TTFB of the scanned pages, and
+  `ctx.pages`/`ctx.rootFiles` carry whatever answered 200 — on a parked domain
+  a broker's page from another host, on a walled or throttled origin nothing
+  at all. It now consults `scanReadTheSite()` and returns `notApplicable`
+  carrying the gate's own reason.
+  The guard sits **below** the `wafProtection.isBlocked` branch, so a walled
+  scan still reports that the time could not be measured and names the wall,
+  rather than the generic attribution message.
+  Verdicts that moved on the five nothing-obtained contract states: redirected
+  away pass → na, non-HTML homepage pass → na, HTTP 200 bot challenge
+  unchanged. Found by
+  `packages/core/src/tests/hostile-state-contract.test.ts`.
+- 2026-08-28 — `requires` drops `rendered-body` and `sample-adequate` and is now
+  `['origin-reachable', 'unblocked-fetches']`. TTFB is measured from the
+  response, and a JS shell answers as fast or as slow as anything else the origin
+  serves, so gating the measurement on rendered text withheld a figure the scan
+  was holding. Recorded as a gate exemption in
+  `scripts/lib/requires-analysis.mjs`. The walled-scan branch above still names
+  the wall, and the verdict itself does not move — but the gate is on for every
+  scan, so a client-rendered scan now carries its TTFB judgement at weight 0.6
+  instead of a skip. Found by
+  `packages/core/src/tests/hostile-state-contract.test.ts`.
+
 ## Review history
 
 - 2026-08-20 — code review (11-agent workflow) + evidence research (12-domain workflow, 400 sources).

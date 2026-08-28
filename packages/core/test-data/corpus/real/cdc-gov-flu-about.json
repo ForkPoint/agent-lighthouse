@@ -1,0 +1,24 @@
+{
+  "url": "https://www.cdc.gov/flu/about/index.html",
+  "capturedAt": "2026-08-28T12:17:31.950Z",
+  "sha256": "1a50419aa570c697cf109d615e8d4f658748530115ab9eb92587a344617d7dd3",
+  "status": 200,
+  "kind": "page",
+  "headers": {
+    "content-type": "text/html",
+    "access-control-allow-headers": "Access-Control-Allow-Headers, Origin, Accept, X-Requested-With, Content-Type, Access-Control-Request-Method, Access-Control-Request-Headers",
+    "access-control-allow-origin": "*",
+    "access-control-expose-headers": "Request-Context",
+    "request-context": "appId=cid-v1:2622e9c6-4e75-4e1f-9006-c7d931da325f",
+    "x-azure-ref": "20260828T121010Z-1684bd5d987cp9fnhC1MSPt4840000001rq0000000003z5g",
+    "date": "Fri, 28 Aug 2026 12:17:31 GMT",
+    "transfer-encoding": "chunked",
+    "connection": "keep-alive, Transfer-Encoding",
+    "set-cookie": "akamai_visit_id=164e1202194512276114; expires=Sun, 27-Aug-2028 12:17:31 GMT; path=/; domain=.cdc.gov; secure; SameSite=None\nAkamai-Request-ID=164e1202194512276114; path=/; domain=.cdc.gov; secure; SameSite=none",
+    "strict-transport-security": "max-age=31536000 ; includeSubDomains ; preload"
+  },
+  "contentType": "text/html",
+  "ttfbMs": 687,
+  "totalMs": 801,
+  "contentLength": 73295
+}

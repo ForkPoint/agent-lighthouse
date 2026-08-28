@@ -10,6 +10,12 @@ import type { AuditMeta, AuditResult } from '../../types';
 import { Audit } from '../../audit';
 import { weightForGrade } from '../../scorer';
 import type { CheckContext, PageContext } from '../../check-context';
+import {
+  scanReadTheSite,
+  unreadSiteReason,
+  scanReadPageText,
+  unreadPageTextReason,
+} from '../../scan-evidence';
 
 /** Two-label public suffixes common enough to matter, in place of a bundled PSL. */
 const MULTI_SUFFIX = new Set([
@@ -181,7 +187,10 @@ export class ThirdPartyDomWriteBlastRadiusAudit extends Audit {
     evidenceGrade: 'B',
     tier: 'scored',
     dossier: 'docs/evidence/audits/operability-safety/third-party-dom-write-blast-radius.md',
-    requires: ['origin-reachable', 'unblocked-fetches', 'rendered-body', 'sample-adequate'],
+    // Gate exemption: every origin the served HTML names is counted whether or not the
+    // body renders, so a page that ships a vendor script statically is still reported.
+    // The empty census is the case a shell cannot support, and `audit()` declines it.
+    requires: ['origin-reachable', 'unblocked-fetches'],
     defaultPriority: 'high',
     guidance: {
       impact:
@@ -204,6 +213,15 @@ export class ThirdPartyDomWriteBlastRadiusAudit extends Audit {
   }
 
   audit(ctx: CheckContext): AuditResult {
+    // Nothing here can be attributed to this site; see `scanReadTheSite`.
+    if (!scanReadTheSite(ctx.evidence)) {
+      return this.notApplicable(
+        'No page here can be attributed to this site, so its third-party surface was not measured.',
+        EXPECTED,
+        unreadSiteReason(ctx.evidence),
+      );
+    }
+
     if (ctx.pages.length === 0) {
       return this.notApplicable(
         'No page was fetched, so there is no third-party surface to measure.',
@@ -254,6 +272,25 @@ export class ThirdPartyDomWriteBlastRadiusAudit extends Audit {
           details,
         };
       }
+      // An empty census on a page that served no readable text is the served
+      // HTML being empty, not the page being clean: same-origin resources are
+      // discarded above, and a JS shell's own bundle is the only thing in it.
+      // The vendors an agent then meets — a tag manager, a session recorder —
+      // are injected by that bundle at runtime, which the `found` string
+      // already says this census does not count. Every origin the served HTML
+      // does name is reported by the branches above, on a shell as anywhere.
+      if (!scanReadPageText(ctx.evidence)) {
+        return {
+          ...this.notApplicable(
+            'The scanned page served no readable text, so the origins writing into it were not counted.',
+            EXPECTED,
+            unreadPageTextReason(ctx.evidence),
+          ),
+          displayValue: found,
+          details,
+        };
+      }
+
       return {
         ...this.pass(
           'No third-party origin ships executable code into the page, so nothing but the site itself writes what an agent reads.',

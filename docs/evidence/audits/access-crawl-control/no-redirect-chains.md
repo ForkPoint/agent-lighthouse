@@ -48,6 +48,36 @@ BROKEN — always passes. It compares `page.fetchResult.url` with `page.fetchRes
 
 _No dedicated evidence signal was researched for this audit in the 2026-08-20 pass. Its tier assignment falls to the taxonomy design; unproven mechanisms default to informative per the [evidence policy](../../policy.md)._
 
+## Implementation deviations
+
+- 2026-08-28 — the audit declines when the scan holds no response it can
+  attribute to this site. It read the request/final URL of each scanned page,
+  and `ctx.pages`/`ctx.rootFiles` carry whatever answered 200 — on a parked
+  domain a broker's page from another host, on a walled or throttled origin
+  nothing at all. It now consults `scanReadTheSite()` and returns
+  `notApplicable` carrying the gate's own reason.
+  The redirect is counted **before** the guard runs: a hop that left the site
+  is this audit's subject, and leaving the site is exactly what denies
+  `origin-reachable`. A scan redirected to a parking host now fails naming the
+  hop instead of declining. The guard only stops the audit *clearing* a site
+  whose pages it never saw. The gate exemption drops `origin-reachable` for
+  the same reason; the page-fed keys stay, because with no page there is no
+  hop.
+  Verdicts that moved on the five nothing-obtained contract states: walled
+  fail → na, throttled fail → na, non-HTML homepage pass → na, HTTP 200 bot
+  challenge pass → na. Found by
+  `packages/core/src/tests/hostile-state-contract.test.ts`.
+- 2026-08-28 — `requires` is now empty. The gate exemption already dropped
+  `origin-reachable`, because a hop that left the site is this audit's subject;
+  `rendered-body` and `sample-adequate` now go with it. A hop is recorded by the
+  response — request URL against final URL — and a page that renders no text
+  resolves in as many hops as any other. The audit reports "no pages scanned"
+  itself, so nothing relies on those keys standing in for a page existing. The
+  verdict itself does not move, but the gate is on for every scan, so a
+  client-rendered scan is now scored on its redirect behaviour at weight 1.0
+  instead of being skipped. Found by
+  `packages/core/src/tests/hostile-state-contract.test.ts`.
+
 ## Review history
 
 - 2026-08-20 — code review (11-agent workflow) + evidence research (12-domain workflow, 400 sources).

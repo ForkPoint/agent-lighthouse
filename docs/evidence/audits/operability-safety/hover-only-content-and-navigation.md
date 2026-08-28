@@ -88,6 +88,17 @@ or an unreferenced hover card warns, because the agent still reaches every page.
 
 ## Deferred
 
+- **Unescaped `id` in the trigger selectors.** Both hover checks build a
+  selector from a page-supplied `id` — `[aria-controls~="${id}"]` and
+  `[aria-labelledby~="${id}"]`. An `id` carrying a quote or a backslash makes
+  css-what throw inside `$()`, the throw escapes the audit, and the runner
+  replaces the result with a `scan-error` stub. No corpus fixture carries such
+  an `id`, so nothing throws today; the class is live and latent. Two
+  neighbours already solve it (`form-actionability` has `escapeAttrValue`,
+  `form-autofill-token-coverage` has `cssEscape`), so the fix is to reuse one,
+  not to write one. Found by the real-page corpus snapshot, which caught the
+  same shape throwing for real in `answer-readiness/extractor-survival-recall`.
+
 - **Headless snapshot diff.** The sketch's higher-precision tier dispatches a
   synthetic hover on each nav trigger and diffs the exposed link set against the
   resting snapshot. That needs a live browser, which the scanner does not drive.

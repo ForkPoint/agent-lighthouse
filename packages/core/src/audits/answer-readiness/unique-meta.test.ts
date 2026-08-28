@@ -1,6 +1,11 @@
 import { describe, it, expect } from 'vitest';
 import { UniqueMetaAudit } from './unique-meta';
-import { mockCheckContext, mockPageContext } from '../../__tests__/test-utils';
+import {
+  attributableFixture,
+  mockCheckContext,
+  mockPageContext,
+  unreachedSiteContext,
+} from '../../__tests__/test-utils';
 
 const doc = (title: string, desc: string) =>
   `<html lang="en"><head><title>${title}</title><meta name="description" content="${desc}"></head><body></body></html>`;
@@ -28,16 +33,19 @@ describe('UniqueMetaAudit', () => {
     expect(result.message).toContain('Duplicate');
   });
 
-  it('passes (not applicable) when fewer than 2 pages are scanned', () => {
+  // Uniqueness needs two pages to compare. With one there is no verdict, which
+  // is what this branch always said in words while scoring a pass — and a scan
+  // of a JS shell, whose links never render, routinely lands here.
+  it('is not applicable when fewer than 2 pages are scanned', () => {
     const ctx = mockCheckContext([mockPageContext('https://example.com/a', doc('A', 'a'))]);
     const result = audit.audit(ctx);
-    expect(result.status).toBe('pass');
+    expect(result.status).toBe('na');
     expect(result.message).toContain('not applicable');
   });
 
-  it('passes (not applicable) when there are no pages', () => {
+  it('is not applicable when there are no pages', () => {
     const result = audit.audit(mockCheckContext([]));
-    expect(result.status).toBe('pass');
+    expect(result.status).toBe('na');
   });
 
   it('uses meta[name="title"] as the title source when no <title> element exists', () => {
@@ -72,5 +80,21 @@ describe('UniqueMetaAudit', () => {
     const result = audit.audit(ctx);
     expect(result.status).toBe('fail');
     expect(result.message).toContain('Duplicate');
+  });
+
+  // The scan may hold a readable page that is not this site's — a broker's
+  // parking page, a foreign interstitial. Attribution is the gate's decision,
+  // and this audit has to honour it rather than read the page anyway.
+  it('declines when no response can be attributed to this site', async () => {
+    const { pages, rootFiles } = attributableFixture();
+    // Two distinct pages, or the single-page branch answers `na` for its own
+    // reason and the control below proves nothing.
+    const second = mockPageContext('https://example.com/widgets/other', doc('Other', 'Other.'), 1);
+    const instance = new UniqueMetaAudit();
+    const reached = await instance.audit(mockCheckContext([...pages, second], rootFiles));
+    expect(reached.status, 'the same input reached is judged').not.toBe('na');
+
+    const unreached = await instance.audit(unreachedSiteContext([...pages, second], rootFiles));
+    expect(unreached.status).toBe('na');
   });
 });

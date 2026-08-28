@@ -1,3 +1,4 @@
+import type { Dispatcher } from 'undici';
 import type { CheckStatus, PageOverride, PageType, ScanReport } from './types';
 import { getScoreTier, MAX_PAGES_PER_SCAN, READINESS_WEIGHTS } from './constants';
 import { logger } from './logger';
@@ -59,6 +60,39 @@ export interface ScanOptions {
    * useful when measuring what the gate removes.
    */
   enforceEvidenceGate?: boolean;
+  /**
+   * undici dispatcher for every request this scan makes.
+   *
+   * Omitted, the scan uses the fetcher's shared agent, which opens as many
+   * connections per origin as the scan asks for. A caller scanning origins that
+   * did not invite it — the nightly corpus job — passes a bounded agent so the
+   * ~28 root-file requests the scan issues at once do not arrive at a stranger's
+   * WAF as a burst.
+   */
+  dispatcher?: Dispatcher;
+  /**
+   * How many requests this scan may have in flight at once.
+   *
+   * Omitted, the scan issues every request as it reaches the fetcher. A caller
+   * scanning origins that did not invite it sets this alongside `dispatcher`:
+   * the dispatcher bounds the sockets, and this bounds what is issued, so the
+   * requests the scan holds back wait outside the per-request deadline and
+   * outside `ttfbMs` instead of inside undici's queue. Without it a bounded
+   * scan reports its own queueing as the origin being slow or unreachable.
+   */
+  maxConcurrent?: number;
+  /**
+   * A `robots.txt` response the caller already has, used instead of fetching
+   * it again.
+   *
+   * For a caller that must read `robots.txt` before it decides to scan at all.
+   * The nightly corpus job is one: it asks permission first, and without this
+   * every site it visits gets two requests for the one file its owner watches.
+   * It must be the response to `<baseUrl>/robots.txt` fetched with this
+   * scanner's own user agent — anything else and the scan judges a file it was
+   * not served.
+   */
+  robotsTxt?: FetchResult;
 }
 
 // Cap how many pages get the jsdom-based a11y pass. Accessibility issues are
@@ -234,7 +268,10 @@ export async function runScan(url: string, options?: ScanOptions): Promise<ScanR
 
   const tracker = new ProgressTracker((event) => onEvent?.(event));
   const start = performance.now();
-  const fetcher = createFetcher();
+  const fetcher = createFetcher({
+    dispatcher: options?.dispatcher,
+    maxConcurrent: options?.maxConcurrent,
+  });
 
   const baseUrl = new URL(url).origin;
   const domain = new URL(url).hostname;
@@ -307,13 +344,18 @@ export async function runScan(url: string, options?: ScanOptions): Promise<ScanR
   logger.debug({ count: rootFilePaths.length }, '[orchestrator] Phase 1: Fetching root files');
   tracker.phaseStart('fetch-root', rootFilePaths.length);
 
+  const prefetchedRobots = options?.robotsTxt;
   const rootResults = await Promise.all(
-    rootFilePaths.map((path) =>
-      fetcher.fetch({ url: `${baseUrl}${path}`, signal }).then((result) => {
+    rootFilePaths.map((path) => {
+      if (path === '/robots.txt' && prefetchedRobots) {
+        tracker.unitDone(path);
+        return Promise.resolve(prefetchedRobots);
+      }
+      return fetcher.fetch({ url: `${baseUrl}${path}`, signal }).then((result) => {
         tracker.unitDone(path);
         return result;
-      }),
-    ),
+      });
+    }),
   );
 
   const rootFiles: Record<string, FetchResult> = {};

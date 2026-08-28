@@ -108,6 +108,24 @@ Its counter-evidence is the sharper half and is now load-bearing in this audit's
 1.17 grades **A** on Google's documented use of the signal plus RFC 6596; 4.3 grades **B**, capped explicitly because "it would be A only if an AI-specific vendor statement existed". The absorbed evidence is the weaker of the two and adds a second index-derived consumer (Bing → Copilot) rather than a new mechanism, so nothing is raised: **A**, `tier: scored`, `weight 1.0` (`weightForGrade('A', 'scored')`).
 
 `defaultPriority` stays `medium` rather than inheriting 4.3's `high`. The high-priority cases — homepage collapse, an unusable canonical — now set their priority per result, and the residual case the default covers is a missing canonical, which the evidence says is not a defect.
+
+## Implementation deviations
+
+- 2026-08-28 — the audit declines when the scan holds no page it can attribute
+  to this site. A bot wall served at HTTP 200 through the site's own edge keeps
+  the site's head fragment, so it carried a self-referential
+  `<link rel="canonical">` on a body the site did not write, and the audit read
+  that as a clean bill of health: "All 1 page(s) declare a canonical URL that
+  resolves to themselves." `origin-reachable` is met on such a wall and
+  `unblocked-fetches` is dropped for this whole category, so nothing stopped
+  it. It now consults `scanReadTheSite()` and returns `notApplicable` carrying
+  the gate's own reason, before any page is read. Measured merge-base to here
+  on a text-rich HTTP 200 wall, the state where the gate lets this audit run:
+  pass → na, at weight 1.0. On a wall whose body renders no text the gate
+  already skipped it, so nothing moves there. Found by the `challenged-at-200`
+  contract state once it carried the markup a real 200 wall carries
+  (`packages/core/src/tests/hostile-state-contract.test.ts`).
+
 ## Review history
 
 - 2026-08-20 — code review (11-agent workflow) + evidence research (12-domain workflow, 400 sources).

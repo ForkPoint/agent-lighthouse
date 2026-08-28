@@ -1,0 +1,50 @@
+{
+  "url": "https://www.velasca.com/",
+  "capturedAt": "2026-08-28T12:01:34.072Z",
+  "sha256": "7e8be787e359b1cecbebd29f7d9354c3ee644b237ede30f454051393c62d5e29",
+  "status": 200,
+  "kind": "page",
+  "headers": {
+    "date": "Fri, 28 Aug 2026 12:01:33 GMT",
+    "content-type": "text/html; charset=utf-8",
+    "transfer-encoding": "chunked",
+    "connection": "keep-alive",
+    "x-download-options": "noopen",
+    "x-content-type-options": "nosniff",
+    "x-request-id": "31f86b86-8745-4bd8-9182-cea8a1311ddb-1787918493",
+    "link": "<https://cdn.shopify.com>; rel=\"preconnect\", <https://cdn.shopify.com>; rel=\"preconnect\"; crossorigin, <https://fonts.googleapis.com>; rel=\"preconnect\", <https://fonts.googleapis.com/css2?family=Jomolhari&display=swap>; as=\"style\"; rel=\"preload\", <https://fonts.googleapis.com/css2?family=Jost:ital,wght@0,100..900;1,100..900&display=swap>; as=\"style\"; rel=\"preload\", <//www.velasca.com/cdn/shop/t/13/assets/main.css?v=182790687750649199321784711762>; as=\"style\"; rel=\"preload\", <//www.velasca.com/cdn/shop/t/13/assets/stamped-text.css?v=38410641173842691021752497475>; as=\"style\"; rel=\"preload\", <https://www.velasca.com/cdn/shopifycloud/portable-wallets/latest/accelerated-checkout-backwards-compat.css>; as=\"style\"; rel=\"preload\"; crossorigin",
+    "cf-cache-status": "DYNAMIC",
+    "set-cookie": "localization=US; path=/; expires=Sat, 28 Aug 2027 12:01:33 GMT\ncart_currency=USD; path=/; expires=Fri, 11 Sep 2026 12:01:33 GMT\n_shopify_y=b36a2161-4c7e-495e-a448-f85852d218b8; domain=velasca.com; path=/; expires=Sat, 28 Aug 2027 18:01:33 GMT; SameSite=Lax\n_shopify_s=b6dccc0c-00a3-4374-9eae-0a72b30ea6bf; domain=velasca.com; path=/; expires=Fri, 28 Aug 2026 12:31:33 GMT; SameSite=Lax\n_shopify_essential=:AaBIPyjbAAEA-TIMRZko3r4YiD19r4PaNi7VYRRnKrDltjbNGUc8VCTbqbGNBrLehb77boOYjay6fDZpz-XvhqZo8D4cr6qlGvLVrEL_3HuS8CCVs6cDFEDYlC-Xy-fdlVXHqXKEPF_PVBxIV95IUIHGsEEilf_ExDulLJMqaey9T-taSOIgbapIUGbSAnZpicF4tDaPVv315sW98FXmd9tFBQBR7eKRg_TuSDPJurr8jpz0WKtQEjs-z4KGEZbIdEoYWNNKH8L-q1K68lyvZ6T2kXX7ht9h3w814VgHBh_nIW3LWrxCkheQ9SJkDEzyiuzhMFHkQy5FjhdMLECEBJzi_z6rzLgs7X9vuWT_UC6LFyFCt5dtB_pilYRrqokgW9S8i7S9deKkJNxreGvA7oir0pGNcO4rI6am3GOHns-Lc70KELk7ElcjIjKasxv7zwKa4t-U7OO-ZtMSUnfQisaXxXCCXyut95nXfphPDs8qZQ-MIJCBAgEhaD2xdtv62oJZMUMzSane9LET1Mp-uC6kDSwoKvV8Zbgf3-288A:; Max-Age=31536000; Path=/; HttpOnly; Secure; Priority=High; SameSite=Lax\n_shopify_analytics=:AaBIPyj5AAEAbweuidEXsALnBOneYyhTCeLyf3_dX639pxF--KOP3UEycM-KQ75Q0Ox_XCSM0CT8Eza77dx4p0iCkCgDXmwrM_CvltugH35HL77_NwlUqMQDJc1zyHPthEFomOQ8tWGRjQ:; Max-Age=31536000; Path=/; HttpOnly; Secure; Priority=High; SameSite=Lax\n_shopify_marketing=:AaBIPyj5AAEAlLu-Rf-Z37rW8GYVQpZtlTnMmgirwl9Co8pfBNNmsXsc7LaFC69HG1_asiX-nSELOmRw1oEVx3f-Z_aYEnLhzCPb6MliNfn6zcBd-3IOGY48ZasMB0k1Og:; Max-Age=31536000; Path=/; HttpOnly; Secure; Priority=High; SameSite=Lax",
+    "nel": "{\"report_to\":\"cf-nel\",\"success_fraction\":0.01,\"max_age\":604800}",
+    "shopify-complexity-score": "0",
+    "shopify-complexity-score-v2": "37",
+    "x-frame-options": "DENY",
+    "content-security-policy": "block-all-mixed-content; frame-ancestors 'none'; upgrade-insecure-requests;",
+    "strict-transport-security": "max-age=7889238",
+    "x-permitted-cross-domain-policies": "none",
+    "vary": "Accept, accept-encoding",
+    "cdn-cache-control": "no-cache, no-store",
+    "content-language": "en-US",
+    "accept-ch": "Sec-CH-Viewport-Width",
+    "powered-by": "Shopify",
+    "server-timing": "processing;dur=44;desc=\"gc:1\", db;dur=10, db_async;dur=2.233, asn;desc=\"29244\", edge;desc=\"SOF\", country;desc=\"BG\", theme;desc=\"183570039171\", pageType;desc=\"index\", servedBy;desc=\"cgbm\", requestID;desc=\"31f86b86-8745-4bd8-9182-cea8a1311ddb-1787918493\", _y;desc=\"b36a2161-4c7e-495e-a448-f85852d218b8\", _s;desc=\"b6dccc0c-00a3-4374-9eae-0a72b30ea6bf\", _cmp;desc=\"3.AMPS_BG22_f_f_6UmuskYwRnKTJiIwBlYqmA\", compressionLevel;desc=\"5\"",
+    "x-dc": "gcp-europe-west1,gcp-europe-west1,gcp-europe-west1",
+    "x-xss-protection": "1; mode=block",
+    "alt-svc": "h3=\":443\"; ma=86400",
+    "server": "cloudflare",
+    "report-to": "{\"group\":\"cf-nel\",\"max_age\":604800,\"endpoints\":[{\"url\":\"https://a.nel.cloudflare.com/report/v4?s=Z%2Bbp1uBtnO1gDem5%2F77B5%2F9Mgu%2FZ0MBqcO1WcokShA3iMQtLayHB4nCHVc2RxTlJ7SbOmSnIcU9%2B6i0vVcqI92DE1SHybtaF57kOggRHLZ292h2CVnpXxYTxlR0VKpLxxA%3D%3D\"}]}",
+    "etag": "W/\"page_cache:16270215:IndexController:440af54f64393981ec73aab3a69a6d77:c007d374554e40f332f05d36fe15d56a\"",
+    "cf-ray": "a323297aad85d103-SOF"
+  },
+  "contentType": "text/html; charset=utf-8",
+  "ttfbMs": 660,
+  "totalMs": 753,
+  "contentLength": 341965,
+  "redirectChain": [
+    {
+      "status": 301,
+      "from": "https://velasca.com",
+      "to": "https://www.velasca.com/"
+    }
+  ]
+}

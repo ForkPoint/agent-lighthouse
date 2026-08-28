@@ -1,0 +1,50 @@
+{
+  "url": "https://www.allbirds.com/collections/mens",
+  "capturedAt": "2026-08-28T12:20:56.253Z",
+  "sha256": "fd82ed4a93f51242a7640415fe966f58a825a9ca4750a5f4b75edc9a147f0776",
+  "status": 200,
+  "kind": "page",
+  "headers": {
+    "date": "Fri, 28 Aug 2026 12:20:55 GMT",
+    "content-type": "text/html; charset=utf-8",
+    "transfer-encoding": "chunked",
+    "connection": "keep-alive",
+    "x-download-options": "noopen",
+    "cf-cache-status": "DYNAMIC",
+    "set-cookie": "localization=US; path=/; expires=Sat, 28 Aug 2027 12:20:55 GMT; SameSite=Lax\ncart_currency=USD; path=/; expires=Fri, 11 Sep 2026 12:20:55 GMT; SameSite=Lax\n_shopify_essential=:AaBIUOHoAAEAt7SdubpwlaCvTp_Eo1kxj3t9Zs_DQq6kJ5M9VEogOQj4k77NCXx85VV4x3ZXlh9Q7KtcEr4onsWQvbmG4m5e6o0nvLTpMxGgE5Nd_p62EitanfAdHZ-WwPIXVNpxXlTOCAR3ekTEv2iKYZQLlDYV_1Fm6h_hiS0tJpBIAhEMUoTplSe7Gyr1v-Aivp-8Re9GB0p9oEAH4pcEhEDO2uKuCwbirEOM7G2XiJZKW5jyNF0pQoGVoRlPM-3rMvay2AjqJPC_SyXH7l7BG_vakxITEyNugonmCDxaVzTzOdvkhDQgnbkTyUz5zyexiGRdGW87A2yg5O05bfyoG0AT7lGshrgveVBZeOcMOtVKPwdpVjU63H9TMgKMKO896Unq-mqE-Him2Sq3vC2kyHHTP52H_AeB-PPxnWViZTrli6l_Nsdx492gtmCksKGNlWbk1LJeo2bbAdDCNboJ84CtT7xH56NY4VzdHT3AZ4vLCP7jpEQ-FckuN-ugHB3UmplHeAh01v_yBmbsRCxbNU2XEyUyMEpmsaNybHzLpIhJveKI:; Max-Age=31536000; Path=/; HttpOnly; Secure; Priority=High; SameSite=Lax",
+    "link": "<https://cdn.shopify.com>; rel=\"preconnect\", <https://cdn.shopify.com>; rel=\"preconnect\"; crossorigin, <//www.allbirds.com/cdn/shop/t/4159/assets/theme.css>; as=\"style\"; rel=\"preload\", <https://www.allbirds.com/cdn/shopifycloud/portable-wallets/latest/accelerated-checkout-backwards-compat.css>; as=\"style\"; rel=\"preload\"; crossorigin",
+    "x-content-type-options": "nosniff",
+    "x-request-id": "9501fd49-1a56-4885-8355-88eca369a9b2-1787919655",
+    "nel": "{\"report_to\":\"cf-nel\",\"success_fraction\":0.01,\"max_age\":604800}",
+    "shopify-complexity-score": "569",
+    "shopify-complexity-score-v2": "569",
+    "x-frame-options": "DENY",
+    "content-security-policy": "block-all-mixed-content; frame-ancestors 'none'; upgrade-insecure-requests;",
+    "strict-transport-security": "max-age=7889238",
+    "x-permitted-cross-domain-policies": "none",
+    "vary": "Accept, accept-encoding",
+    "cdn-cache-control": "no-cache, no-store",
+    "content-language": "en-US",
+    "accept-ch": "Sec-CH-Viewport-Width",
+    "powered-by": "Shopify",
+    "server-timing": "processing;dur=577;desc=\"gc:54\", db;dur=89, db_async;dur=31.686, fetch;dur=20, render;dur=228, asn;desc=\"29244\", edge;desc=\"SOF\", country;desc=\"BG\", theme;desc=\"130450260048\", pageType;desc=\"collection\", servedBy;desc=\"86dj\", requestID;desc=\"9501fd49-1a56-4885-8355-88eca369a9b2-1787919655\", _y;desc=\"00000000-0000-0000-5000-000000000000\", _s;desc=\"00000000-0000-0000-5000-000000000000\", _cmp;desc=\"3.ampS_BG22_t_f_YWUStpZER6i4hSZu-50z1A\", compressionLevel;desc=\"5\", compressionTime;dur=35.136",
+    "x-dc": "gcp-europe-west1,gcp-europe-west1,gcp-europe-west1",
+    "x-xss-protection": "1; mode=block",
+    "alt-svc": "h3=\":443\"; ma=86400",
+    "server": "cloudflare",
+    "report-to": "{\"group\":\"cf-nel\",\"max_age\":604800,\"endpoints\":[{\"url\":\"https://a.nel.cloudflare.com/report/v4?s=rK%2FIl7mQZN7FOwPMwGaTHo%2BJ4ulm8LQnh0ysILX9FuI2QrrlWlwEnE6GHvQ9bMZP2fBlKoUedqNUNoiCql6SUlhUfSbTU112FvzY%2FNYicHBUXv%2FnW5XPJf88MikXCtXT7JY%3D\"}]}",
+    "etag": "W/\"page_cache:11044168:CollectionDetailsController:a42d0af466939524ecb1b075632c04ba:03d523da4455284b4d98e90e680f5e27\"",
+    "cf-ray": "a32345d5e87772df-SOF"
+  },
+  "contentType": "text/html; charset=utf-8",
+  "ttfbMs": 951,
+  "totalMs": 1115,
+  "contentLength": 1430709,
+  "redirectChain": [
+    {
+      "status": 301,
+      "from": "https://www.allbirds.com/products/mens-wool-runners",
+      "to": "https://www.allbirds.com/collections/mens"
+    }
+  ]
+}

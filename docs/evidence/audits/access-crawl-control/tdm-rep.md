@@ -124,6 +124,19 @@ _No dedicated evidence signal was researched for this audit in the 2026-08-20 pa
 
 **Counter-evidence:** No major AI vendor documents honoring the protocol. OpenAI's crawler documentation describes robots.txt and published IP ranges only, with no mention of TDM signals (https://developers.openai.com/api/docs/bots); Anthropic's crawler article describes robots.txt directives and `Crawl-delay` only (https://support.claude.com/en/articles/8896518-does-anthropic-crawl-data-from-the-web-and-how-can-site-owners-block-the-crawler); Perplexity's documents robots.txt and WAF allowlisting only (https://docs.perplexity.ai/guides/bots) — all verified 2026-08-21. Standardization momentum has also moved elsewhere. The IETF **AIPREF** working group is chartered to standardize AI-preference expression via "Well-Known URIs ([RFC 8615](https://www.rfc-editor.org/rfc/rfc8615.html)) such as the Robots Exclusion Protocol ([RFC 9309](https://www.rfc-editor.org/rfc/rfc9309.html)), and HTTP response header fields", with IESG submission targeted for 31 August 2026. Its charter does not reference TDM-Rep — https://datatracker.ietf.org/wg/aipref/about/ (verified 2026-08-21). Finally, the signal is directionally orthogonal to agent readiness: a reservation value of `1` denies mining, and the audit passes it identically to `0`.
 
+## Implementation deviations
+
+- 2026-08-28 — the audit declines when the scan holds no response it can
+  attribute to this site. All three channels it reads — the response header,
+  the well-known file, the page meta tag — come from whatever answered the
+  request, and a bot wall served at HTTP 200 answers every path while carrying
+  the site-wide headers its edge attaches. The audit reported the wall's
+  `tdm-reservation` header as this site's declaration. It now consults
+  `scanReadTheSite()` and returns `notApplicable` carrying the gate's own
+  reason. Measured merge-base to here on a text-rich HTTP 200 wall: pass → na
+  (informative, weight 0). Found by
+  `packages/core/src/tests/hostile-state-contract.test.ts`.
+
 ## Review history
 
 - 2026-08-20 — code review (11-agent workflow) + evidence research (12-domain workflow, 400 sources).

@@ -69,6 +69,19 @@ The most defensible audit in the category — a wildcard `Disallow: /` genuinely
 
 **Counter-evidence:** Blocking is a legitimate rights choice, not a defect, and the audit must not frame it as an error. Publishers with licensing deals or a copyright strategy block deliberately. Cloudflare's crawl-to-refer data — Anthropic at about 50,000:1, OpenAI at 887:1 — shows the economic case for blocking training crawlers is real. Blocking is also partly self-executing at best: TollBit H1 2026 found ~15% of AI page-fetchers reached disallowed URLs anyway, so a block neither reliably protects nor is it fully costly. The correct audit posture is to flag UNDIFFERENTIATED blanket blocks (search-side and training-side treated identically) as a likely-unintended configuration, and to report deliberate, differentiated blocking neutrally.
 
+## Implementation deviations
+
+- 2026-08-28 — the audit declines when the scan holds no response it can
+  attribute to this site. It read the robots.txt served at the root, and
+  `ctx.pages`/`ctx.rootFiles` carry whatever answered 200 — on a parked domain
+  a broker's page from another host, on a walled or throttled origin nothing
+  at all. It now consults `scanReadTheSite()` and returns `notApplicable`
+  carrying the gate's own reason.
+  Verdicts that moved on the five nothing-obtained contract states: walled
+  warn → na, throttled warn → na, redirected away pass → na, non-HTML homepage
+  warn → na, HTTP 200 bot challenge pass → na. Found by
+  `packages/core/src/tests/hostile-state-contract.test.ts`.
+
 ## Review history
 
 - 2026-08-20 — code review (11-agent workflow) + evidence research (12-domain workflow, 400 sources).

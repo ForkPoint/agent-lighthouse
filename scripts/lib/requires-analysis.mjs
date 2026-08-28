@@ -63,12 +63,79 @@ export const GATE_EXEMPTIONS = {
     reason: 'A shell is what this audit reports. Gating it would delete the finding.',
   },
   'operability-safety/no-blocking-captcha': {
-    drop: ['unblocked-fetches', 'rendered-body', 'sample-adequate'],
-    reason: 'A captcha wall is what this audit reports.',
+    drop: ['origin-reachable', 'unblocked-fetches', 'rendered-body', 'sample-adequate'],
+    reason:
+      'A captcha wall is what this audit reports, and a wall denies origin-reachable: ' +
+      'gating on it made the wall finding unreachable for the 403 that produced it.',
   },
-  'operability-safety/no-bot-detection': {
-    drop: ['unblocked-fetches', 'rendered-body', 'sample-adequate'],
-    reason: 'Bot detection is what this audit reports.',
+  // The id here was `operability-safety/no-bot-detection` until 2026-08-28 — a
+  // category that does not hold this audit, so the entry matched nothing and
+  // the drop came only from BLOCK_EXEMPT_CATEGORY.
+  'access-crawl-control/no-bot-detection': {
+    drop: ['origin-reachable', 'unblocked-fetches', 'rendered-body', 'sample-adequate'],
+    reason:
+      'A bot-defense firewall is what this audit reports, and it names the firewall from ' +
+      'wafProtection alone — evidence a wall destroys is not evidence this finding needs.',
+  },
+  'access-crawl-control/no-redirect-chains': {
+    drop: ['origin-reachable', 'rendered-body', 'sample-adequate'],
+    reason:
+      'A hop that left the site is this audit\'s subject, and leaving the site is exactly ' +
+      'what denies origin-reachable. It reads request URL against final URL, which every ' +
+      'response carries, and it reports "no pages scanned" itself when there is none.',
+  },
+  // The seven below share one shape. `check-requires` derives `rendered-body`
+  // from the source touching `ctx.pages`, but each of these reads the response
+  // envelope — head markup, headers, robots.txt, transport timing, the URL —
+  // and a JS shell serves all of that in full. Gating them on rendered text
+  // would withhold a verdict the scan is holding.
+  'access-crawl-control/no-nofollow': {
+    drop: ['rendered-body', 'sample-adequate'],
+    reason:
+      'Reads `<meta name="robots">` and the X-Robots-Tag header. A body that renders no ' +
+      'text still carries both.',
+  },
+  'access-crawl-control/robots-directives': {
+    drop: ['rendered-body', 'sample-adequate'],
+    reason:
+      'Reads robots directives from meta tags and the X-Robots-Tag header, both served ' +
+      'whole by a page whose body is empty.',
+  },
+  'access-crawl-control/robots-ai-group-shadowing': {
+    drop: ['rendered-body', 'sample-adequate'],
+    reason:
+      'The verdict comes from robots.txt. The scanned pages only contribute extra probe ' +
+      'paths, so a shell narrows the probe set without changing what is judged.',
+  },
+  'content-extraction/language-attribute': {
+    drop: ['rendered-body', 'sample-adequate'],
+    reason:
+      'Reads the `lang` attribute on `<html>`, which is served before any body renders.',
+  },
+  'content-extraction/server-responsiveness': {
+    drop: ['rendered-body', 'sample-adequate'],
+    reason:
+      'Measures TTFB from the response. A shell answers as fast or as slow as anything ' +
+      'else the origin serves.',
+  },
+  'answer-readiness/descriptive-urls': {
+    drop: ['rendered-body', 'sample-adequate'],
+    reason:
+      'Judges the URL strings of the pages the scan fetched. A URL is readable whether or ' +
+      'not the page behind it rendered text.',
+  },
+  'operability-safety/third-party-dom-write-blast-radius': {
+    drop: ['rendered-body', 'sample-adequate'],
+    reason:
+      'Every origin the served HTML names is counted whether or not the body renders, and ' +
+      'a page that ships a vendor script statically is the case worth reporting. The audit ' +
+      'declines its own empty census on a shell rather than certifying one.',
+  },
+  'access-crawl-control/https-enabled': {
+    drop: ['origin-reachable', 'unblocked-fetches', 'rendered-body', 'sample-adequate'],
+    reason:
+      'A base URL on plain HTTP is proven by the request, with no response at all, and that ' +
+      'fail is worth reporting on a site whose homepage never answered.',
   },
 };
 

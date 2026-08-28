@@ -1,6 +1,12 @@
 import { describe, it, expect } from 'vitest';
 import { NoRedirectChainsAudit } from './no-redirect-chains';
-import { mockCheckContext, mockPageContext } from '../../__tests__/test-utils';
+import {
+  attributableFixture,
+  mockCheckContext,
+  mockPageContext,
+  shellSiteContext,
+  unreachedSiteContext,
+} from '../../__tests__/test-utils';
 
 describe('NoRedirectChainsAudit', () => {
   const audit = new NoRedirectChainsAudit();
@@ -67,5 +73,38 @@ describe('NoRedirectChainsAudit', () => {
     const result = audit.audit(ctx);
     expect(result.status).toBe('warn');
     expect(result.found).toContain('+1 more');
+  });
+
+  // The scan may hold a readable page that is not this site's — a broker's
+  // parking page, a foreign interstitial. Attribution is the gate's decision,
+  // and this audit has to honour it rather than read the page anyway.
+  it('declines when no response can be attributed to this site', async () => {
+    const { pages, rootFiles } = attributableFixture();
+    const instance = new NoRedirectChainsAudit();
+    const reached = await instance.audit(mockCheckContext(pages, rootFiles));
+    expect(reached.status, 'the same input reached is judged').not.toBe('na');
+
+    const unreached = await instance.audit(unreachedSiteContext(pages, rootFiles));
+    expect(unreached.status).toBe('na');
+  });
+  // Ordering: the hop that left the site is this audit's subject, and leaving
+  // the site is exactly what denies `origin-reachable`. A guard above the
+  // redirect count silences the one audit that should be speaking.
+  it('reports the hop when the redirect is what left the site', () => {
+    const parked = '<html><body><p>Parked.</p></body></html>';
+    const page = mockPageContext('https://example.com/', parked);
+    page.fetchResult.finalUrl = 'https://parking.brandsale.test/example.com';
+
+    const result = new NoRedirectChainsAudit().audit(unreachedSiteContext([page]));
+    expect(result.status).toBe('fail');
+    expect(result.message).toContain('1/1');
+    expect(result.found).toContain('parking.brandsale.test');
+  });
+
+  // `requires` deliberately omits `rendered-body`: a hop is recorded by the
+  // response, and a shell resolves in as many hops as anything else.
+  it('still judges a page that served no readable text', async () => {
+    const result = await new NoRedirectChainsAudit().audit(shellSiteContext());
+    expect(result.status).not.toBe('na');
   });
 });

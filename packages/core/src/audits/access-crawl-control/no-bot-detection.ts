@@ -2,6 +2,12 @@ import type { AuditMeta, AuditResult } from "../../types";
 import { Audit } from "../../audit";
 import type { CheckContext } from '../../check-context';
 import { weightForGrade } from '../../scorer';
+import {
+  scanReadTheSite,
+  unreadSiteReason,
+  scanReadPageText,
+  unreadPageTextReason,
+} from '../../scan-evidence';
 
 const BOT_DETECTION_PATTERNS: Array<{
   name: string;
@@ -26,8 +32,10 @@ export class NoBotDetectionAudit extends Audit {
     evidenceGrade: 'A',
     tier: 'scored',
     dossier: 'docs/evidence/audits/access-crawl-control/no-bot-detection.md',
-    // Gate exemption: being refused is what this category reports.
-    requires: ['origin-reachable', 'rendered-body', 'sample-adequate'],
+    // Gate exemption: being refused is what this category reports, and this audit names
+    // the firewall from `wafProtection` alone. Evidence a wall destroys is not evidence
+    // the wall finding needs.
+    requires: [],
     defaultPriority: 'high',
     guidance: {
       impact:
@@ -67,6 +75,15 @@ export class NoBotDetectionAudit extends Audit {
       );
     }
 
+    // Nothing here can be attributed to this site; see `scanReadTheSite`.
+    if (!scanReadTheSite(ctx.evidence)) {
+      return this.notApplicable(
+        'No page here can be attributed to this site, so its scripts were not judged.',
+        'No JavaScript-based bot challenges that would block legitimate AI agents',
+        unreadSiteReason(ctx.evidence),
+      );
+    }
+
     if (!ctx.pages || ctx.pages.length === 0) {
       return this.warn(
         'No pages were scanned to check for bot-detection scripts.',
@@ -97,6 +114,21 @@ export class NoBotDetectionAudit extends Audit {
     }
 
     if (detectedServices.size === 0) {
+      // Finding no challenge loader in a body that rendered nothing is not
+      // proof there is none. The detection is a substring search over the
+      // served HTML, and a JS shell serves a mount point and a bundle — the
+      // Turnstile or DataDome loader lives inside that bundle, where this
+      // search cannot see it. `requires` is empty so the wall branch above
+      // stays reachable behind a 403, which means the gate does not decline
+      // this for us and the audit has to decline it here.
+      if (!scanReadPageText(ctx.evidence)) {
+        return this.notApplicable(
+          'The scanned page served no readable text, so its scripts were not judged.',
+          'No JavaScript-based bot challenges that would block legitimate AI agents',
+          unreadPageTextReason(ctx.evidence),
+        );
+      }
+
       return this.pass(
         'No aggressive bot-detection scripts found on scanned pages.',
         'No JavaScript-based bot challenges that would block legitimate AI agents',

@@ -3,6 +3,12 @@ import { Audit } from "../../audit";
 import { weightForGrade } from '../../scorer';
 import type { CheckContext } from '../../check-context';
 import { getMainContentText, getWordCount } from '../../parser';
+import {
+  scanReadTheSite,
+  unreadSiteReason,
+  scanReadPageText,
+  unreadPageTextReason,
+} from '../../scan-evidence';
 
 const TEASER_PATTERNS = [
   /click\s+(here\s+)?to\s+read\s+more/i,
@@ -41,6 +47,15 @@ export class ContentWithoutClickthroughAudit extends Audit {
   };
 
   audit(ctx: CheckContext): AuditResult {
+    // Nothing here can be attributed to this site; see `scanReadTheSite`.
+    if (!scanReadTheSite(ctx.evidence)) {
+      return this.notApplicable(
+        'No page here can be attributed to this site, so its teasers were not judged.',
+        'No "click to read more" or "contact us to learn" teasers dominating the page',
+        unreadSiteReason(ctx.evidence),
+      );
+    }
+
     const page = ctx.pages[0];
     if (!page) {
       return this.fail(
@@ -104,6 +119,17 @@ export class ContentWithoutClickthroughAudit extends Audit {
             checkPage.url,
           );
         }
+      }
+
+      // Teasers are body copy. A page that served none has no self-contained
+      // content to certify — the low-content branch above skips the homepage,
+      // which on a shell scan is often the only page there is.
+      if (!scanReadPageText(ctx.evidence)) {
+        return this.notApplicable(
+          'The scanned page served no readable text, so there was no content to judge for teasers.',
+          'No "click to read more" or "contact us to learn" teasers dominating the page',
+          unreadPageTextReason(ctx.evidence),
+        );
       }
 
       return this.pass(

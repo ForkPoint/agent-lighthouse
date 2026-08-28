@@ -1,6 +1,13 @@
 import { describe, it, expect, vi } from 'vitest';
 import { UnsafeAgentTriggerableAffordancesAudit } from './unsafe-agent-triggerable-affordances';
-import { mockCheckContext, mockPageContext, mockFetchResult } from '../../__tests__/test-utils';
+import {
+  attributableFixture,
+  mockCheckContext,
+  shellSiteContext,
+  mockFetchResult,
+  mockPageContext,
+  unreachedSiteContext,
+} from '../../__tests__/test-utils';
 import { expectNotApplicableOnEmpty } from '../../tests/na-contract';
 import type { CheckContext } from '../../check-context';
 
@@ -91,5 +98,30 @@ describe('UnsafeAgentTriggerableAffordancesAudit', () => {
     expect(meta.tier).toBe('scored');
     expect(meta.defaultPriority).toBe('critical');
     expect(meta.scoreDisplayMode).toBe('ternary');
+  });
+
+  // The scan may hold a readable page that is not this site's — a broker's
+  // parking page, a foreign interstitial. Attribution is the gate's decision,
+  // and this audit has to honour it rather than read the page anyway.
+  it('declines when no response can be attributed to this site', async () => {
+    const { pages, rootFiles } = attributableFixture();
+    const instance = new UnsafeAgentTriggerableAffordancesAudit();
+    const reached = await instance.audit(mockCheckContext(pages, rootFiles));
+    expect(reached.status, 'the same input reached is judged').not.toBe('na');
+
+    const unreached = await instance.audit(unreachedSiteContext(pages, rootFiles));
+    expect(unreached.status).toBe('na');
+  });
+
+  // Links and GET forms live in the body. A shell exposes none, so "nothing here
+  // changes state on a GET" is silence rather than safety.
+  it('declines a page that served no readable text', async () => {
+    const { pages, rootFiles } = attributableFixture();
+    const instance = new UnsafeAgentTriggerableAffordancesAudit();
+    const rendered = await instance.audit(mockCheckContext(pages, rootFiles));
+    expect(rendered.status, 'the same input rendered is judged').not.toBe('na');
+
+    const shell = await instance.audit(shellSiteContext());
+    expect(shell.status).toBe('na');
   });
 });

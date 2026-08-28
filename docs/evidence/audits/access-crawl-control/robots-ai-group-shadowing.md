@@ -94,6 +94,23 @@ Tier per evidence policy: **scored** — grade A meets the A/B bar required for 
   empty named group both fail: protection the operator wrote is not enforced.
   A named group that blocks a bot the wildcard allowed warns instead — it is
   frequently deliberate, and the finding says which reading applies.
+- 2026-08-28 — the audit declines when the scan holds no response it can
+  attribute to this site. It read the robots.txt groups served at the root,
+  and `ctx.pages`/`ctx.rootFiles` carry whatever answered 200 — on a parked
+  domain a broker's page from another host, on a walled or throttled origin
+  nothing at all. It now consults `scanReadTheSite()` and returns
+  `notApplicable` carrying the gate's own reason.
+  Verdicts that moved on the five nothing-obtained contract states: redirected
+  away pass → na, HTTP 200 bot challenge pass → na. Found by
+  `packages/core/src/tests/hostile-state-contract.test.ts`.
+- 2026-08-28 — `requires` drops `rendered-body` and `sample-adequate` and is now
+  `['origin-reachable']`. The verdict comes from robots.txt; the scanned pages
+  only contribute extra probe paths, so a JS shell narrows the probe set without
+  changing what is judged. Recorded as a gate exemption in
+  `scripts/lib/requires-analysis.mjs`. The verdict itself does not move, but
+  the gate is on for every scan, so a shell scan — whose robots.txt was fetched
+  and read normally — now gets this judgement at weight 1.0 instead of a skip.
+  Found by `packages/core/src/tests/hostile-state-contract.test.ts`.
 
 ## Deferred
 

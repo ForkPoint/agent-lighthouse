@@ -53,6 +53,23 @@ Fails a page when ≥2 of eight English teaser regexes match anywhere in its mai
 
 - 2026-08-26 — the shared text helper this audit reads, `getMainContentText`, changed its selection. Among several `<main>` elements it now returns the one holding the most text rather than the first, it ignores a `<main>` inside a `<template>`, and it falls back to the whole `<body>` only when no `<main>` holds any text. Measured cause (scan evidence gate design, section 2.4): storefronts ship empty or fragmented `<main>` wrappers, and the first one is often a stub. Two consequences for this audit. A page whose real content sits in a later `<main>` is now measured on that content. A page whose every `<main>` is empty is now measured on its body text, page chrome included, where it previously measured as empty.
 - 2026-08-26 — the audit carried a private copy of the old first-`<main>` word count, written when the shared helper had no empty-`<main>` fallback. That copy is removed; the audit reads the shared `getWordCount`, so its low-content warning and its teaser scan now measure the same text.
+- 2026-08-28 — the audit declines when the scan holds no response it can
+  attribute to this site. It read the teaser text of the first scanned page,
+  and `ctx.pages`/`ctx.rootFiles` carry whatever answered 200 — on a parked
+  domain a broker's page from another host, on a walled or throttled origin
+  nothing at all. It now consults `scanReadTheSite()` and returns
+  `notApplicable` carrying the gate's own reason.
+  Verdicts that moved on the five nothing-obtained contract states: walled
+  fail → na, throttled fail → na, redirected away pass → na, non-HTML homepage
+  pass → na, HTTP 200 bot challenge pass → na. Found by
+  `packages/core/src/tests/hostile-state-contract.test.ts`.
+- 2026-08-28 — teasers are body copy, and the low-content warning deliberately
+  skips the homepage, which on a JS-shell scan is often the only page sampled. A
+  page with no text therefore reached the clean pass. That pass now returns
+  `notApplicable` when `scanReadPageText()` is false; the teaser fail and the
+  low-content warn are unchanged. Verdict moved on the shell contract state:
+  pass → na. Found by
+  `packages/core/src/tests/hostile-state-contract.test.ts`.
 
 ## Evidence
 

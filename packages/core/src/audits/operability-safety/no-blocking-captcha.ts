@@ -2,6 +2,12 @@ import type { AuditMeta, AuditResult } from "../../types";
 import { Audit } from "../../audit";
 import { weightForGrade } from '../../scorer';
 import type { CheckContext } from '../../check-context';
+import {
+  scanReadTheSite,
+  unreadSiteReason,
+  scanReadPageText,
+  unreadPageTextReason,
+} from '../../scan-evidence';
 
 const CAPTCHA_PATTERNS = [
   'recaptcha',
@@ -25,8 +31,10 @@ export class NoBlockingCaptchaAudit extends Audit {
     evidenceGrade: 'A',
     tier: 'scored',
     dossier: 'docs/evidence/audits/operability-safety/no-blocking-captcha.md',
-    // Gate exemption: A captcha wall is what this audit reports.
-    requires: ['origin-reachable'],
+    // Gate exemption: a captcha wall is what this audit reports, and a wall denies
+    // `origin-reachable` — gating on it made the finding unreachable for the 403 that
+    // produced it. The wall branch reads `wafProtection`, not any response body.
+    requires: [],
     defaultPriority: 'high',
     guidance: {
       impact:
@@ -66,6 +74,15 @@ export class NoBlockingCaptchaAudit extends Audit {
       );
     }
 
+    // Nothing here can be attributed to this site; see `scanReadTheSite`.
+    if (!scanReadTheSite(ctx.evidence)) {
+      return this.notApplicable(
+        'No page here can be attributed to this site, so no form was inspected for a CAPTCHA.',
+        'No recaptcha, hcaptcha, or turnstile script includes detected',
+        unreadSiteReason(ctx.evidence),
+      );
+    }
+
     if (ctx.pages.length === 0) {
       return this.notApplicable(
         'No page was fetched, so no form could be inspected for a blocking CAPTCHA.',
@@ -86,6 +103,21 @@ export class NoBlockingCaptchaAudit extends Audit {
     }
 
     if (detectedCaptchas.length === 0) {
+      // Finding nothing in a body that rendered nothing is not a clean form.
+      // The detection is a substring search over the served HTML, and a JS
+      // shell serves a mount point and a bundle: the Turnstile loader a user's
+      // agent meets is inside that bundle, and the form it guards does not
+      // exist in the markup either. `requires` is empty so the wall branch
+      // above stays reachable, which means the gate does not decline this for
+      // us — the audit has to decline it here.
+      if (!scanReadPageText(ctx.evidence)) {
+        return this.notApplicable(
+          'The scanned page served no readable text, so no form was inspected for a CAPTCHA.',
+          'No recaptcha, hcaptcha, or turnstile script includes detected',
+          unreadPageTextReason(ctx.evidence),
+        );
+      }
+
       return this.pass(
         'No blocking CAPTCHA scripts detected on scanned pages.',
         'No recaptcha, hcaptcha, or turnstile script includes detected',

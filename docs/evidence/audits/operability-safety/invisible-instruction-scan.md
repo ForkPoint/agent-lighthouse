@@ -84,6 +84,15 @@ CIE XYZ (D65) to L\*a\*b\*, then Euclidean distance, with the floor at 5 exactly
 as the sketch specifies. Only literal `color:` and `background-color:`
 declarations participate — an inherited or image background is not resolvable
 without a rendering engine.
+- 2026-08-28 — the audit declines when the scan holds no response it can
+  attribute to this site. It read the hidden text on the scanned pages, and
+  `ctx.pages`/`ctx.rootFiles` carry whatever answered 200 — on a parked domain
+  a broker's page from another host, on a walled or throttled origin nothing
+  at all. It now consults `scanReadTheSite()` and returns `notApplicable`
+  carrying the gate's own reason.
+  Verdicts that moved on the five nothing-obtained contract states: redirected
+  away pass → na, HTTP 200 bot challenge pass → na. Found by
+  `packages/core/src/tests/hostile-state-contract.test.ts`.
 
 ## Deferred
 

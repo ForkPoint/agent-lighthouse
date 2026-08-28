@@ -68,6 +68,26 @@ The core check (do existing <figure>s have a <figcaption>) is sound. The problem
 
 **Counter-evidence:** Weak and largely inferential. No AI vendor names figcaption anywhere. Mozilla Readability does not preserve or prioritise figcaption — figures are touched only by the pass that recovers lazy-loaded image sources [mozilla-readability-source] — and trafilatura's documented preservation list covers tables, lists, headings and formatting without singling out figcaption [trafilatura-corefunctions]. Google's caption statement does not distinguish <figcaption> from a nearby <p>, so the specific claim that the ELEMENT (rather than mere text proximity) is what helps is unproven. Adoption is not measured in the Web Almanac accessibility chapter. This is a plausible mechanism with no demonstrated consumer of the binding itself — informative, never scored.
 
+## Implementation deviations
+
+- 2026-08-28 — the audit declines when the scan holds no response it can
+  attribute to this site. It read the figures on the scanned pages, and
+  `ctx.pages`/`ctx.rootFiles` carry whatever answered 200 — on a parked domain
+  a broker's page from another host, on a walled or throttled origin nothing
+  at all. It now consults `scanReadTheSite()` and returns `notApplicable`
+  carrying the gate's own reason.
+  Verdicts that moved on the five nothing-obtained contract states: walled
+  pass → na, throttled pass → na, redirected away pass → na, non-HTML homepage
+  pass → na, HTTP 200 bot challenge pass → na. Found by
+  `packages/core/src/tests/hostile-state-contract.test.ts`.
+- 2026-08-28 — the "no images or figures" branch no longer passes a page that
+  served no readable text. A JS shell serves neither, so the pass credited a page
+  that never showed a figure. That branch now returns `notApplicable` when
+  `scanReadPageText()` is false; the warning for images that exist without a
+  `<figure>` still fires whenever images arrived. Verdict moved on the shell
+  contract state: pass → na. Found by
+  `packages/core/src/tests/hostile-state-contract.test.ts`.
+
 ## Review history
 
 - 2026-08-20 — code review (11-agent workflow) + evidence research (12-domain workflow, 400 sources).

@@ -96,6 +96,17 @@ crawlable, consistent declaration passes. No declaration at all is
 `notApplicable` — AIPREF is a draft, and not publishing a preference is not a
 defect.
 
+- 2026-08-28 — the audit declines when the scan holds no response it can
+  attribute to this site. Both channels it reads — the robots.txt
+  `Content-Usage` directive and the `Content-Usage` response header — come from
+  whatever answered the request, and a bot wall served at HTTP 200 through the
+  site's own edge carries the site-wide headers on a body the site did not
+  write. The audit validated the wall's header as this site's declaration. It
+  now consults `scanReadTheSite()` and returns `notApplicable` carrying the
+  gate's own reason. Measured merge-base to here on a text-rich HTTP 200 wall:
+  pass → na, at weight 0.6. Found by
+  `packages/core/src/tests/hostile-state-contract.test.ts`.
+
 ## Deferred
 
 - **Longest-prefix resolution between two declarations.** attach-05 says the

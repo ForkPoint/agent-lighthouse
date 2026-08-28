@@ -1,0 +1,33 @@
+{
+  "url": "https://www.irs.gov/forms-pubs/about-form-1040",
+  "capturedAt": "2026-08-28T12:17:15.604Z",
+  "sha256": "f53674b885a498166b4c8d61b104b8191195ddd507c8b20bb8e0dbbeb33ab4a9",
+  "status": 200,
+  "kind": "page",
+  "headers": {
+    "content-type": "text/html; charset=UTF-8",
+    "x-drupal-dynamic-cache": "MISS",
+    "content-language": "en",
+    "x-content-type-options": "nosniff",
+    "x-frame-options": "SAMEORIGIN",
+    "x-generator": "Drupal 10 (https://www.drupal.org)",
+    "last-modified": "Fri, 28 Aug 2026 10:21:50 GMT",
+    "etag": "\"1787912510-gzip\"",
+    "x-request-id": "v-487ef2fe-a2ca-11f1-9b3a-03ecd37ef4ae",
+    "x-ah-environment": "prod",
+    "x-cache-hits": "1",
+    "x-age": "0",
+    "cache-control": "public, max-age=47",
+    "expires": "Fri, 28 Aug 2026 12:18:01 GMT",
+    "date": "Fri, 28 Aug 2026 12:17:14 GMT",
+    "transfer-encoding": "chunked",
+    "connection": "keep-alive, Transfer-Encoding",
+    "set-cookie": "akaalb_DMAF_ALB_PROD=1787920334~op=~rv=11~m=~os=~id=6371bc9b20aae84d12b4f2b013b577bb; path=/; HttpOnly; Secure; SameSite=None; Domain=.irs.gov\n_abck=2E72ACB917CCE8F327873C94B58EE68B~-1~YAAQVYIsF+quKDygAQAA7oRNSBC/y84Ph9JQMuk97hLQdZie79BA1FGZVL2gAhfF9ZZfnDH8SZCiPCJcP0SmSzK3Du+x9DOwUeMm2ClRtY0lIkSpHNrT1S/QfuSeF2dSyCjuNNt3zhHMUVjgo+lcNVJ5Ocw8jqduXKLzbpHBACjA+zDZ0coQt3tsW4b8dvs/X/ayQatTttRg0MUxOcfuhUqqeUq0hzAhL0GhbRWkyRneuTbN8pW6iCi2h6lI8U03KtUEFVWXMiawoPP4dPnVHxx6HBViQ5Jm2gIRnBTHdM8xTwu13JEn3Do4KPVj5abffmUlXfae9EAT30kbVQiznG7PcDbFRhpDaccjR0wpEsQHSDGEBWo1rKMymnQvE8E3r/yV6rE9HK+NlfeoSejAO+Fti1tzhGvA/4K+oVWNaiUpezlAOJIAn/7SYut/g7JIv6s=~-1~-1~-1~-1~-1; Domain=.irs.gov; Path=/; Expires=Sat, 28 Aug 2027 12:17:14 GMT; Max-Age=31536000; Secure\nbm_sz=1CDF9339E2E8F2AA020C87EB5706F0DA~YAAQVYIsF+uuKDygAQAA7oRNSABfbUxY9Q2f1xIiCgaBSEqAy4xu7FfjYt+8XIKWHDAV2F3n42EXvhF95GhOfrUr2zGvtViNzkEwDb5aR8XULztqc45TBYzixDn5638559d3CpbLlc3voHQQqSSI4lD3EZo/HumV3yyi4GOneKnQvKHGcP+tPKZ+KG2EY6B1cb6W2gR9yK4C3C/yOQyqrwaJ6CjMmzExdCea3tqi+wYEhGP1CPN9QrEwOnPTOxia9dga+BQ2QUyWTbmyd93TuhQnd8V1rKOdy4S+NpcMy7DdiNBvfz2Cj1128vNm1QKELCDSlmUjfDEMYEH0xi8HO9QM5X5jWEzT5dB13A==~4539191~4470583; Domain=.irs.gov; Path=/; Expires=Fri, 28 Aug 2026 16:17:14 GMT; Max-Age=14400",
+    "strict-transport-security": "max-age=31536000",
+    "akamai-grn": "0.55822c17.1787919434.11567a01"
+  },
+  "contentType": "text/html; charset=UTF-8",
+  "ttfbMs": 797,
+  "totalMs": 1311,
+  "contentLength": 113008
+}

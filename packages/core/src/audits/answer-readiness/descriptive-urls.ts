@@ -2,6 +2,7 @@ import type { AuditMeta, AuditResult } from "../../types";
 import { Audit } from "../../audit";
 import { weightForGrade } from '../../scorer';
 import type { CheckContext } from '../../check-context';
+import { scanReadTheSite, unreadSiteReason } from '../../scan-evidence';
 
 const BAD_SLUG_PATTERNS = [
   /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i, // UUID
@@ -27,7 +28,8 @@ export class DescriptiveUrlsAudit extends Audit {
     evidenceGrade: 'C',
     tier: 'informative',
     dossier: 'docs/evidence/audits/answer-readiness/descriptive-urls.md',
-    requires: ['origin-reachable', 'unblocked-fetches', 'rendered-body', 'sample-adequate'],
+    // Gate exemption: a URL is readable whether or not the page behind it rendered text.
+    requires: ['origin-reachable', 'unblocked-fetches'],
     defaultPriority: 'high',
     guidance: {
       impact:
@@ -40,6 +42,15 @@ export class DescriptiveUrlsAudit extends Audit {
   };
 
   audit(ctx: CheckContext): AuditResult {
+    // Nothing here can be attributed to this site; see `scanReadTheSite`.
+    if (!scanReadTheSite(ctx.evidence)) {
+      return this.notApplicable(
+        'No page here can be attributed to this site, so its URLs were not judged.',
+        'Page URLs use readable slugs (no UUIDs, no /post-123/, no encoded params)',
+        unreadSiteReason(ctx.evidence),
+      );
+    }
+
     const page = ctx.pages[0];
     if (!page) {
       return this.fail(

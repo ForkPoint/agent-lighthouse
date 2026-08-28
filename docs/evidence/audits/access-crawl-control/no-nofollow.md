@@ -66,6 +66,29 @@ Title and guidance promise 'No nofollow on important links' and advise reserving
 
 **Counter-evidence:** Two significant qualifications. First, Apple's documented nofollow is the PAGE-LEVEL meta robots directive, not per-link rel="nofollow" — most audits conflate these, and Apple's docs say nothing about the rel attribute on individual anchors. An audit that flags a single rel="nofollow" internal link cannot cite the Applebot page as support. Second, Google demoted nofollow from directive to hint in September 2019. It states plainly that 'the linked pages may be found through other means, such as sitemaps or links from other sites, and thus they may still be crawled'. So nofollow does not reliably prevent discovery even for Google. OpenAI, Anthropic and Perplexity documentation is entirely silent on nofollow, with no evidence GPTBot, ClaudeBot or PerplexityBot honors it in either form. Scope the audit to meta robots nofollow/none on indexable pages, and treat per-link rel=nofollow on internal navigation as a weaker informational finding.
 
+## Implementation deviations
+
+- 2026-08-28 — the audit declines when the scan holds no response it can
+  attribute to this site. It read the nofollow directives on the scanned
+  pages, and `ctx.pages`/`ctx.rootFiles` carry whatever answered 200 — on a
+  parked domain a broker's page from another host, on a walled or throttled
+  origin nothing at all. It now consults `scanReadTheSite()` and returns
+  `notApplicable` carrying the gate's own reason.
+  Verdicts that moved on the five nothing-obtained contract states: walled
+  fail → na, throttled fail → na, redirected away pass → na, non-HTML homepage
+  pass → na, HTTP 200 bot challenge fail → na. Found by
+  `packages/core/src/tests/hostile-state-contract.test.ts`.
+- 2026-08-28 — `requires` drops `rendered-body` and `sample-adequate` and is now
+  `['origin-reachable']`. `check-requires` derived those two keys from the source
+  touching `ctx.pages`, but what it reads there is `<meta name="robots">` and the
+  `X-Robots-Tag` header, both served whole by a page whose body renders nothing.
+  The disagreement is recorded as a gate exemption in
+  `scripts/lib/requires-analysis.mjs`. The verdict itself does not move, but
+  the gate is on for every scan, so this audit now runs on a client-rendered
+  one instead of being skipped. It is scored at weight 1.0, so a shell scan
+  that reported nothing about its nofollow directives now reports and scores
+  them. Found by `packages/core/src/tests/hostile-state-contract.test.ts`.
+
 ## Review history
 
 - 2026-08-20 — code review (11-agent workflow) + evidence research (12-domain workflow, 400 sources).

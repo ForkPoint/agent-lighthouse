@@ -122,6 +122,20 @@ export class NoBrokenAiEndpointsAudit extends Audit {
       if (await isSafeUrl(url)) urls.push(url);
     }
 
+    // Every listed URL was refused by the SSRF gate: each named localhost, a
+    // private address, or a host that resolves nowhere. Nothing was checked, so
+    // there is nothing to certify — "All 0 URL(s) are reachable" was a pass
+    // awarded for a census that never ran.
+    if (urls.length === 0) {
+      return this.warn(
+        `${allUrls.length} AI endpoint URL(s) are listed, and none of them could be requested: each names localhost, a private address, or a host that does not resolve.`,
+        'All URLs from AI-related files return 200',
+        `${allUrls.length} URL(s) listed, 0 reachable to check`,
+        undefined,
+        page?.url,
+      );
+    }
+
     const results = await Promise.all(
       urls.map(async (url) => {
         try {

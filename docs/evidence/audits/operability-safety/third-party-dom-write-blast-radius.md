@@ -89,6 +89,31 @@ an agent reads.
 
 The `found` line always ends with "runtime-injected tags not counted", so the
 number is not read as the whole list.
+- 2026-08-28 — the audit declines when the scan holds no response it can
+  attribute to this site. It read the script origins on the scanned pages, and
+  `ctx.pages`/`ctx.rootFiles` carry whatever answered 200 — on a parked domain
+  a broker's page from another host, on a walled or throttled origin nothing
+  at all. It now consults `scanReadTheSite()` and returns `notApplicable`
+  carrying the gate's own reason.
+  Verdicts that moved on the five nothing-obtained contract states: redirected
+  away pass → na, non-HTML homepage pass → na, HTTP 200 bot challenge pass →
+  na. Found by `packages/core/src/tests/hostile-state-contract.test.ts`.
+- 2026-08-28 — `requires` drops `rendered-body` and `sample-adequate` and is now
+  `['origin-reachable', 'unblocked-fetches']`, and the zero-origin branch gains
+  a guard. Every origin the served HTML names is counted whether or not the
+  body renders, so a page that ships a vendor script statically is still
+  reported and gating that on rendered text withheld a real finding. The empty
+  census is the half a shell cannot support: same-origin resources are
+  discarded from the survey, a JS shell's script tags are its own bundle, and
+  the vendors an agent then meets are injected by that bundle at runtime —
+  which the `found` string already says this census does not count. Passing
+  such a page would assert "nothing but the site itself writes what an agent
+  reads" on exactly the page class where a static census is emptiest, so that
+  branch now consults `scanReadPageText()` and returns `notApplicable`. Verdict
+  on the shell contract state: pass → na, and under the evidence gate the audit
+  runs there instead of being skipped. The exemption is recorded in
+  `scripts/lib/requires-analysis.mjs`. Found by
+  `packages/core/src/tests/hostile-state-contract.test.ts`.
 
 ## Deferred
 

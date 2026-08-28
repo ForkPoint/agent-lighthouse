@@ -77,6 +77,41 @@ failed at critical priority on a 429, which told storefronts that serve GPTBot
 perfectly well that their firewall blocks AI crawlers. Re-running the scan after
 a pause is the only way to get a verdict from a rate-limited origin.
 
+## Implementation deviations
+
+- 2026-08-28 — the audit declines when the scan holds no response it can
+  attribute to this site. It read the scripts on the scanned pages, and
+  `ctx.pages`/`ctx.rootFiles` carry whatever answered 200 — on a parked domain
+  a broker's page from another host, on a walled or throttled origin nothing
+  at all. It now consults `scanReadTheSite()` and returns `notApplicable`
+  carrying the gate's own reason.
+  The guard sits **below** the `wafProtection.isBlocked` branch, not above it:
+  a bot-defense firewall is this audit's subject, so a walled scan still fails
+  and names the firewall. `requires` is now empty and the gate exemption drops
+  `origin-reachable` too — a 403 denies that key, so the gate had been
+  skipping this audit before it could report the very wall that produced the
+  403.
+  Verdicts that moved on the five nothing-obtained contract states: redirected
+  away pass → na, non-HTML homepage pass → na, HTTP 200 bot challenge
+  unchanged. Found by
+  `packages/core/src/tests/hostile-state-contract.test.ts`.
+- 2026-08-28 — the "found nothing" branch declines a page that served no
+  readable text. The detection is a substring search over the served HTML, and
+  a JS shell serves a mount point and a bundle: the Turnstile or DataDome
+  loader a user's agent meets is inside that bundle, where the search cannot
+  reach it. Before this the audit returned `pass "No aggressive bot-detection
+  scripts found on scanned pages."` at weight 1.0 about every client-rendered
+  site. `requires` is empty so the wall branch stays reachable behind a 403,
+  which means the evidence gate does not decline this case — the audit has to.
+  The wall and detection branches above still run first, so a shell that does
+  ship a challenge loader statically is still reported. Measured on the shell
+  contract state: pass → na.
+- 2026-08-28 — `scanReadTheSite()` now reads `evidence.judgeable`
+  (`origin-reachable && unblocked-fetches`) rather than `origin-reachable`
+  alone, because a Cloudflare managed challenge is served at HTTP 200,
+  `text/html`, from the requested host. This audit's verdict on that state is
+  unchanged: the wall branch above the guard reports the firewall either way.
+
 ## Review history
 
 - 2026-08-20 — code review (11-agent workflow) + evidence research (12-domain workflow, 400 sources).

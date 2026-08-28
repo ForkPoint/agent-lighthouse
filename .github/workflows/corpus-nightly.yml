@@ -1,0 +1,73 @@
+name: Corpus nightly
+
+on:
+  schedule:
+    # 03:17 UTC — off the hour, which is when scheduled runs queue worst.
+    # A scheduled workflow in a public repository is disabled automatically
+    # after 60 days without repository activity, so a job that goes quiet is
+    # worth checking here before it is debugged.
+    - cron: '17 3 * * *'
+  workflow_dispatch:
+
+# One at a time. Two concurrent runs would double the request rate every
+# scanned origin sees from GitHub's address range.
+concurrency: corpus-nightly
+
+permissions:
+  contents: read
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    # The job cap is 6 hours. Measured: 4 sites took 122 s wall at concurrency
+    # 2, about 60 s per site per worker, and one site alone took 120 s. With the
+    # 3 s inter-site delay a window costs `limit / 2 * 63 s`: 400 sites is 210
+    # minutes, inside the script's own 240-minute deadline with half an hour of
+    # slack. 500 was the first budget and it cost 262 minutes — past the
+    # deadline, so the job would have exited "ran out of time" on any night
+    # whose window held few robots-skipped sites. This cap is the backstop
+    # behind the deadline, not the plan.
+    timeout-minutes: 300
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v3
+        with:
+          version: 9
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      # No build step: the script runs through `tsx` against `packages/core/src`
+      # and never reads `dist/`. Building would spend minutes against the cap and
+      # give the nightly a second way to go red for reasons unrelated to scanning.
+      # `node --import tsx` rather than `npx tsx`: the script writes its partial
+      # summary from a SIGTERM handler, and each wrapper process between the
+      # runner and node is one more place that signal can stop.
+      # Exit codes are distinct on purpose: 1 is a scan that broke an
+      # invariant — the finding this job exists for — while 3 (cancelled),
+      # 4 (deadline), 5 (scanned nothing) and 6 (the runner threw) are the job
+      # failing rather than a site. `scan-site-list.ts` documents the set.
+      - name: Scan the site list
+        run: node --import tsx scripts/scan-site-list.ts --limit=400
+
+      # `if: always()` on purpose: the summary is most wanted on the run that
+      # failed, and the scan step exits non-zero exactly when it found something.
+      - name: Upload the summary
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: corpus-nightly
+          path: reports/corpus-nightly.json
+          retention-days: 14
+          # Default is `warn`, which turns a run that produced no summary into a
+          # green upload step under a red job — the one case where the operator
+          # most needs to be told there is nothing to read.
+          if-no-files-found: error

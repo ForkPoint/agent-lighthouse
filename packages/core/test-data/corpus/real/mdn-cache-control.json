@@ -1,0 +1,51 @@
+{
+  "url": "https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Cache-Control",
+  "capturedAt": "2026-08-28T12:16:04.882Z",
+  "sha256": "cd0c8088eebf7918348e9a0138541d56f50158f9cba3f33f24ef9034031defc5",
+  "status": 200,
+  "kind": "page",
+  "headers": {
+    "connection": "keep-alive",
+    "content-length": "248397",
+    "etag": "\"f27e4f4f351ad9e0f1bb100b2bedd891\"",
+    "x-goog-metageneration": "1",
+    "server": "Google Frontend",
+    "x-cloud-trace-context": "90d05b7a791862269aa9d8181d70de82",
+    "content-security-policy": "default-src 'self'; script-src 'report-sample' 'self' 'wasm-unsafe-eval' assets.codepen.io production-assets.codepen.io https://js.stripe.com transcend-cdn.com 'sha256-XNBp89FG76amD8BqrJzyflxOF9PaWPqPqvJfKZPCv7M=' 'sha256-YCNoU9DNiinACbd8n6UPyB/8vj0kXvhkOni9/06SuYw=' 'sha256-PZjP7OR6mBEtnvXIZfCZ5PuOlxoDF1LDZL8aj8c42rw='; script-src-elem 'report-sample' 'self' 'wasm-unsafe-eval' assets.codepen.io production-assets.codepen.io https://js.stripe.com transcend-cdn.com 'sha256-XNBp89FG76amD8BqrJzyflxOF9PaWPqPqvJfKZPCv7M=' 'sha256-YCNoU9DNiinACbd8n6UPyB/8vj0kXvhkOni9/06SuYw=' 'sha256-PZjP7OR6mBEtnvXIZfCZ5PuOlxoDF1LDZL8aj8c42rw='; style-src 'report-sample' 'self' 'unsafe-inline' transcend-cdn.com; object-src 'none'; base-uri 'self'; connect-src 'self' developer.allizom.org bcd.developer.allizom.org bcd.developer.mozilla.org updates.developer.allizom.org updates.developer.mozilla.org https://incoming.telemetry.mozilla.org https://observatory-api.mdn.allizom.net https://observatory-api.mdn.mozilla.net telemetry.transcend.io telemetry.us.transcend.io transcend-cdn.com https://api.github.com/search/issues https://api.stripe.com; font-src 'self'; frame-src 'self' mdn.github.io *.mdnplay.dev *.mdnyalp.dev *.play.test.mdn.allizom.net https://v2.scrimba.com https://scrimba.com jsfiddle.net www.youtube-nocookie.com codepen.io survey.alchemer.com https://js.stripe.com; img-src 'self' data: *.githubusercontent.com *.gravatar.com mozillausercontent.com firefoxusercontent.com profile.stage.mozaws.net profile.accounts.firefox.com developer.mozilla.org mdn.dev wikipedia.org upload.wikimedia.org https://mdn.github.io/shared-assets/ https://mdn.dev/; manifest-src 'self'; media-src 'self' archive.org videos.cdn.mozilla.net https://mdn.github.io/shared-assets/; child-src 'self'; worker-src 'self';",
+    "x-goog-stored-content-encoding": "identity",
+    "last-modified": "Fri, 28 Aug 2026 03:43:24 GMT",
+    "x-guploader-uploadid": "AJjja9ZMtEK0LeL_SZ6L7QzciOnuqgy5VB1aJQO6Q3PWtLAYB3B5KHGXi3khICdF7GWitBUTzqIzm0c",
+    "strict-transport-security": "max-age=63072000",
+    "x-goog-storage-class": "STANDARD",
+    "x-goog-generation": "1787888604804839",
+    "via": "1.1 google, 1.1 varnish, 1.1 varnish, 1.1 varnish",
+    "x-content-type-options": "nosniff",
+    "x-goog-stored-content-length": "248397",
+    "cache-control": "public, max-age=3600",
+    "x-goog-hash": "crc32c=poloAg==, md5=8n5PTzUa2eDxuxALK+3YkQ==",
+    "expires": "Fri, 28 Aug 2026 09:49:34 GMT",
+    "x-goog-meta-goog-reserved-file-mtime": "1787887680",
+    "content-type": "text/html",
+    "x-frame-options": "DENY",
+    "referrer-policy": "strict-origin-when-cross-origin",
+    "accept-ranges": "bytes",
+    "age": "0",
+    "date": "Fri, 28 Aug 2026 12:16:04 GMT",
+    "x-served-by": "cache-par-lfpg1960049-PAR, cache-par-lfpg1960049-PAR, cache-par-lfpg1960049-PAR, cache-sof1510042-SOF",
+    "x-cache": "MISS, HIT, MISS",
+    "x-cache-hits": "0, 11, 0",
+    "x-timer": "S1787919364.474883,VS0,VE230",
+    "vary": "Accept-Encoding"
+  },
+  "contentType": "text/html",
+  "ttfbMs": 568,
+  "totalMs": 768,
+  "contentLength": 248239,
+  "redirectChain": [
+    {
+      "status": 301,
+      "from": "https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Cache-Control",
+      "to": "https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Cache-Control"
+    }
+  ]
+}

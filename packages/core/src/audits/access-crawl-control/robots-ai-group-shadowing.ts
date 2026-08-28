@@ -9,6 +9,7 @@ import type { AuditMeta, AuditResult } from '../../types';
 import { Audit } from '../../audit';
 import { weightForGrade } from '../../scorer';
 import type { CheckContext } from '../../check-context';
+import { scanReadTheSite, unreadSiteReason } from '../../scan-evidence';
 import {
   parseRobots,
   groupsForBot,
@@ -125,7 +126,9 @@ export class RobotsAiGroupShadowingAudit extends Audit {
     tier: 'scored',
     dossier: 'docs/evidence/audits/access-crawl-control/robots-ai-group-shadowing.md',
     // Gate exemption: being refused is what this category reports.
-    requires: ['origin-reachable', 'rendered-body', 'sample-adequate'],
+    // Gate exemption: the verdict comes from robots.txt. The scanned pages only widen
+    // the probe path set, so a shell narrows the probe and changes nothing judged.
+    requires: ['origin-reachable'],
     defaultPriority: 'high',
     guidance: {
       impact:
@@ -148,6 +151,15 @@ export class RobotsAiGroupShadowingAudit extends Audit {
   }
 
   audit(ctx: CheckContext): AuditResult {
+    // Nothing here can be attributed to this site; see `scanReadTheSite`.
+    if (!scanReadTheSite(ctx.evidence)) {
+      return this.notApplicable(
+        'No response here can be attributed to this site, so its robots groups were not judged.',
+        EXPECTED,
+        unreadSiteReason(ctx.evidence),
+      );
+    }
+
     const robots = ctx.rootFiles['/robots.txt'];
     if (!robots || robots.status !== 200 || !robots.body.trim()) {
       return this.notApplicable(

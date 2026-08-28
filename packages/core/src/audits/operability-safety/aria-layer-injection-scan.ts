@@ -13,6 +13,12 @@ import { weightForGrade } from '../../scorer';
 import type { CheckContext } from '../../check-context';
 import { INSTRUCTION_LEXICON } from './invisible-instruction-scan';
 import { idSelector } from './_agent-affordances';
+import {
+  scanReadTheSite,
+  unreadSiteReason,
+  scanReadPageText,
+  unreadPageTextReason,
+} from '../../scan-evidence';
 
 /** Long values are the canonical smuggling slot, since long alt is already an anti-pattern. */
 const LONG_VALUE_CHARS = 250;
@@ -335,6 +341,15 @@ export class AriaLayerInjectionScanAudit extends Audit {
   }
 
   audit(ctx: CheckContext): AuditResult {
+    // Nothing here can be attributed to this site; see `scanReadTheSite`.
+    if (!scanReadTheSite(ctx.evidence)) {
+      return this.notApplicable(
+        'No page here can be attributed to this site, so its non-visual values were not judged.',
+        EXPECTED,
+        unreadSiteReason(ctx.evidence),
+      );
+    }
+
     const s = survey(ctx);
 
     if (s.valuesSeen === 0) {
@@ -384,6 +399,25 @@ export class AriaLayerInjectionScanAudit extends Audit {
         `${warnings.length} anomalous value(s) across ${s.valuesSeen} scanned`,
         this.recommendation(),
         warnings[0]!.pageUrl,
+      );
+    }
+
+    // Reached only when nothing was found. A shell serves the head and almost
+    // nothing else, so the accessibility layer this audit reads — alt,
+    // aria-label, option labels, hidden inputs, links — never arrived.
+    //
+    // This audit declares `rendered-body`, so under the evidence gate — on for
+    // every scan — it is skipped before `audit()` runs on a shell and no
+    // production report reaches either branch. The ordering is what makes the
+    // audit correct when it is called directly, which is how the contract
+    // suite calls it and how a caller passing `enforceEvidenceGate: false`
+    // gets it: an instruction planted in the document title or an og:* value
+    // is served by a shell, so the payload branches above must run first.
+    if (!scanReadPageText(ctx.evidence)) {
+      return this.notApplicable(
+        'The scanned page served no readable text, so its accessibility layer was not judged.',
+        EXPECTED,
+        unreadPageTextReason(ctx.evidence),
       );
     }
 

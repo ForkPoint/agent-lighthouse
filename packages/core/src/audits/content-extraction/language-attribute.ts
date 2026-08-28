@@ -2,6 +2,7 @@ import type { AuditMeta, AuditResult } from "../../types";
 import { Audit } from "../../audit";
 import type { CheckContext } from '../../check-context';
 import { weightForGrade } from '../../scorer';
+import { scanReadTheSite, unreadSiteReason } from '../../scan-evidence';
 
 export class LanguageAttributeAudit extends Audit {
   static override meta: AuditMeta = {
@@ -16,7 +17,8 @@ export class LanguageAttributeAudit extends Audit {
     evidenceGrade: 'A',
     tier: 'scored',
     dossier: 'docs/evidence/audits/content-extraction/language-attribute.md',
-    requires: ['origin-reachable', 'unblocked-fetches', 'rendered-body', 'sample-adequate'],
+    // Gate exemption: `<html lang>` is served before any body renders.
+    requires: ['origin-reachable', 'unblocked-fetches'],
     defaultPriority: 'high',
     guidance: {
       impact:
@@ -30,6 +32,15 @@ export class LanguageAttributeAudit extends Audit {
   };
 
   audit(ctx: CheckContext): AuditResult {
+    // Nothing here can be attributed to this site; see `scanReadTheSite`.
+    if (!scanReadTheSite(ctx.evidence)) {
+      return this.notApplicable(
+        'No page here can be attributed to this site, so its language attribute was not judged.',
+        '<html lang="..."> with a non-empty language code',
+        unreadSiteReason(ctx.evidence),
+      );
+    }
+
     const page = ctx.pages[0];
     const $ = page?.$;
     const lang = $?.('html').attr('lang') ?? '';

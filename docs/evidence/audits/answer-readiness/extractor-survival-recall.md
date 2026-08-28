@@ -87,6 +87,25 @@ of the extractor as much as of the page.
 
 Thresholds: below 90% recall fails, per the proposal. The 90–97% warn band is
 this implementation's.
+- 2026-08-28 — the audit declines when the scan holds no response it can
+  attribute to this site. It read the first scanned page's key spans, and
+  `ctx.pages`/`ctx.rootFiles` carry whatever answered 200 — on a parked domain
+  a broker's page from another host, on a walled or throttled origin nothing
+  at all. It now consults `scanReadTheSite()` and returns `notApplicable`
+  carrying the gate's own reason.
+  Verdicts that moved on the five nothing-obtained contract states: redirected
+  away pass → na, HTTP 200 bot challenge pass → na. Found by
+  `packages/core/src/tests/hostile-state-contract.test.ts`.
+- 2026-08-28 — the JSON-LD span's host element is found by walking the DOM in
+  reverse instead of by building a `:contains()` selector out of the string.
+  Page content is not a selector: gov.uk publishes the service name "Register
+  your vehicle as off the road (SORN)", the 40-character prefix used for the
+  lookup cuts the closing bracket off, and css-what threw "Parenthesis not
+  matched". A throw is not a verdict — the runner replaced the whole result
+  with `scan-error`, so the audit reported nothing about a page it had already
+  measured. Any published string can carry a bracket, a quote or a backslash.
+  Verdicts that moved: `gov-uk-vehicle-tax` scan-error → fail. Found by
+  `packages/core/src/tests/real-page-corpus.test.ts`.
 
 ## Deferred
 

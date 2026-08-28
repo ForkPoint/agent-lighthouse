@@ -1,0 +1,42 @@
+{
+  "url": "https://www.reuters.com/",
+  "capturedAt": "2026-08-28T12:01:48.287Z",
+  "sha256": "867d8dadbc6040955cb96a5209d8e977d4edb1e2fa42a64f817fb5f3596fd3f7",
+  "status": 401,
+  "kind": "wall",
+  "headers": {
+    "server": "CloudFront",
+    "date": "Fri, 28 Aug 2026 12:01:48 GMT",
+    "content-type": "text/html;charset=utf-8",
+    "content-length": "774",
+    "connection": "keep-alive",
+    "x-datadome": "protected",
+    "accept-ch": "Sec-CH-UA,Sec-CH-UA-Mobile,Sec-CH-UA-Platform,Sec-CH-UA-Arch,Sec-CH-UA-Full-Version-List,Sec-CH-UA-Model,Sec-CH-Device-Memory",
+    "charset": "utf-8",
+    "cache-control": "max-age=0, private, no-cache, no-store, must-revalidate",
+    "pragma": "no-cache",
+    "access-control-allow-credentials": "true",
+    "access-control-expose-headers": "x-dd-b, x-set-cookie",
+    "access-control-allow-origin": "*",
+    "x-datadome-cid": "AHrlqAAAAAMAE0dRjb-pYbwAlT7Rmg==",
+    "x-dd-b": "3",
+    "set-cookie": "datadome=cVBM5tF3BXKdTQbkKMpLDZDn0xjom50LeKKBO_tEXVeQx9xWCcFlSMQqlmNa~G1HFVk9_~zjRLCTKuk9VHUjo9OaTg_PUR9JLDVoOJLPcKM7mG6~t4TQN8mH3KTcVXxZ; Max-Age=31536000; Domain=.reuters.com; Path=/; Secure; SameSite=Lax",
+    "x-cache": "LambdaGeneratedResponse from cloudfront",
+    "via": "1.1 edaac0c3cd1ddfd8f1b1392316b5a8fe.cloudfront.net (CloudFront)",
+    "x-amz-cf-pop": "SOF50-P1",
+    "x-amz-cf-id": "MTDno3_wL5e0cJrL8aQCgzM1uXRy1n1wU5E68zQF9bqPEWqHZrE1eA==",
+    "content-security-policy": "frame-ancestors 'self'; report-uri https://reuters.report-uri.com/r/t/csp/enforce; report-to report-uri",
+    "report-to": "{\"endpoints\":[{\"url\":\"https://reuters.report-uri.com/a/t/g\"}],\"group\":\"report-uri\",\"include_subdomains\":true,\"max_age\":31536000}"
+  },
+  "contentType": "text/html;charset=utf-8",
+  "ttfbMs": 1033,
+  "totalMs": 1034,
+  "contentLength": 774,
+  "redirectChain": [
+    {
+      "status": 301,
+      "from": "https://reuters.com",
+      "to": "https://www.reuters.com/"
+    }
+  ]
+}

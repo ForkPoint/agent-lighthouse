@@ -1,0 +1,24 @@
+{
+  "url": "https://kubernetes.io/docs/concepts/workloads/pods/",
+  "capturedAt": "2026-08-28T12:16:17.757Z",
+  "sha256": "4930c825e819c89a6a9cc72e7938f65c00ba16b1ef488ec83de9fc20d5564d04",
+  "status": 200,
+  "kind": "page",
+  "headers": {
+    "accept-ranges": "bytes",
+    "age": "12801",
+    "cache-control": "public,max-age=0,must-revalidate",
+    "cache-status": "\"Netlify Edge\"; hit; ttl=31523199",
+    "content-length": "539224",
+    "content-type": "text/html; charset=UTF-8",
+    "date": "Fri, 28 Aug 2026 12:16:17 GMT",
+    "etag": "\"c3c510f6f77a82ae1fd6955ec8f8dc6a-ssl\"",
+    "server": "Netlify",
+    "strict-transport-security": "max-age=31536000",
+    "x-nf-request-id": "01M144S94Z1RD1RRCPPQFC1JYW"
+  },
+  "contentType": "text/html; charset=UTF-8",
+  "ttfbMs": 283,
+  "totalMs": 445,
+  "contentLength": 539044
+}

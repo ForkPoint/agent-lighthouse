@@ -92,6 +92,19 @@ A ghost whose ancestor was already flagged on the click-signal arm is not
 counted again, so a clickable wrapper holding a clickable inner div is one
 finding rather than two.
 
+- 2026-08-28 — the audit declines when the scan holds no response it can
+  attribute to this site. `ctx.pages` carries whatever answered 200, and a
+  Cloudflare managed challenge answers 200 `text/html` from the requested host:
+  its one `role="main"` wrapper is a semantic click target, so the survey found
+  a ratio of 1.00 and passed the interstitial as though the owner had written
+  it. It now consults `scanReadTheSite()` and returns `notApplicable` carrying
+  the gate's own reason, before the survey runs. In production the gate already
+  skips this audit in every such state — it declares all four evidence keys —
+  so no released verdict moves; the guard is what makes the audit correct when
+  it is called directly, which is how the contract suite calls it. Measured on
+  the HTTP 200 bot-challenge contract state: pass → na. Found by
+  `packages/core/src/tests/hostile-state-contract.test.ts`.
+
 ## Deferred
 
 - **Headless CDP tier.** The sketch's higher-precision tier intersects

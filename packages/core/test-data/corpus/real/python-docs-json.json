@@ -1,0 +1,30 @@
+{
+  "url": "https://docs.python.org/3/library/json.html",
+  "capturedAt": "2026-08-28T12:16:09.098Z",
+  "sha256": "ea26ee078e0c79275f5f3d434052f24e562cc2b61f05e1f902be0c506c347624",
+  "status": 200,
+  "kind": "page",
+  "headers": {
+    "connection": "keep-alive",
+    "content-length": "111909",
+    "server": "nginx",
+    "content-type": "text/html",
+    "last-modified": "Fri, 28 Aug 2026 10:59:28 GMT",
+    "etag": "\"6a916a10-1b525\"",
+    "x-clacks-overhead": "GNU Terry Pratchett",
+    "strict-transport-security": "max-age=315360000; includeSubDomains; preload",
+    "via": "1.1 varnish, 1.1 varnish",
+    "accept-ranges": "bytes",
+    "age": "0",
+    "date": "Fri, 28 Aug 2026 12:16:09 GMT",
+    "x-served-by": "cache-lga21958-LGA, cache-sof1510041-SOF",
+    "x-cache": "HIT, MISS",
+    "x-cache-hits": "6, 0",
+    "x-timer": "S1787919369.845866,VS0,VE230",
+    "vary": "Accept-Encoding"
+  },
+  "contentType": "text/html",
+  "ttfbMs": 386,
+  "totalMs": 432,
+  "contentLength": 111760
+}

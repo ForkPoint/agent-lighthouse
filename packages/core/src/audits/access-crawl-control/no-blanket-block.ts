@@ -3,6 +3,7 @@ import { Audit } from "../../audit";
 import type { CheckContext } from '../../check-context';
 import { parseRobotsTxt, isPathAllowed } from './_robots-txt-helpers';
 import { weightForGrade } from '../../scorer';
+import { scanReadTheSite, unreadSiteReason } from '../../scan-evidence';
 
 export class NoBlanketBlockAudit extends Audit {
   static override meta: AuditMeta = {
@@ -32,6 +33,15 @@ export class NoBlanketBlockAudit extends Audit {
   };
 
   audit(ctx: CheckContext): AuditResult {
+    // Nothing here can be attributed to this site; see `scanReadTheSite`.
+    if (!scanReadTheSite(ctx.evidence)) {
+      return this.notApplicable(
+        'No response here can be attributed to this site, so its robots.txt was not judged.',
+        'User-agent: * does not Disallow: / entirely',
+        unreadSiteReason(ctx.evidence),
+      );
+    }
+
     const robotsFile = ctx.rootFiles['/robots.txt'];
 
     if (!robotsFile || robotsFile.status !== 200 || !robotsFile.body) {

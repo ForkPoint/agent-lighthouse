@@ -1,0 +1,44 @@
+{
+  "url": "https://www.otto.de/technik/marken/",
+  "capturedAt": "2026-08-28T12:19:29.618Z",
+  "sha256": "134d0446a9c04db707f046175093f6abf06c880149bcbc4c0c620557ccbcb79d",
+  "status": 200,
+  "kind": "page",
+  "headers": {
+    "date": "Fri, 28 Aug 2026 12:19:29 GMT",
+    "content-type": "text/html;charset=UTF-8",
+    "transfer-encoding": "chunked",
+    "connection": "keep-alive",
+    "cache-control": "no-cache, no-store, max-age=0, must-revalidate",
+    "pragma": "no-cache",
+    "expires": "0",
+    "x-frame-options": "DENY",
+    "referrer-policy": "strict-origin-when-cross-origin",
+    "vary": "X-App, Accept-Encoding",
+    "x-varnish": "858961398",
+    "age": "0",
+    "accept-ranges": "bytes",
+    "traceresponse": "00-fc12037d4b00eb146d97cd3329110136-c63f45ced7a2af4f-00",
+    "x-recruiting": "Seems you like http headers. To write ours, apply at www.otto.de/jobs/ and mention this header.",
+    "accept-ch": "Sec-CH-UA, Sec-CH-UA-Mobile, Sec-CH-UA-Full-Version-List, Sec-CH-UA-Platform, Sec-CH-UA-Platform-Version, Sec-CH-UA-Arch, Sec-CH-UA-Model, Sec-CH-UA-Bitness",
+    "set-cookie": "visitorId=4fea069a-ab39-4609-aa34-868c24b7b2c6.v1; Path=/; Domain=.otto.de; max-age=63072000; Expires=Sun, 27 Aug 2028 12:19:29 GMT; Secure\nBrowserId=84377ab9-3bfc-4528-9d8c-44ae3c9f8d6f.v1; Path=/; Domain=.otto.de; max-age=63072000; Expires=Sun, 27 Aug 2028 12:19:29 GMT; Secure",
+    "timing-allow-origin": "*",
+    "strict-transport-security": "max-age=31536000",
+    "content-security-policy": "frame-ancestors 'self' https://*.otto.de https://*.ottogroup.com https://og2gether.sharepoint.com https://otto.mpp360.cloud https://internal.otto.market;",
+    "x-xss-protection": "1; mode=block",
+    "x-content-type-options": "nosniff",
+    "server": "Edge Proxy",
+    "via": "1.1 www-nondach-live-edge-proxy-69678c6b-c569f.www.otto.de (Edge Proxy)"
+  },
+  "contentType": "text/html;charset=UTF-8",
+  "ttfbMs": 490,
+  "totalMs": 927,
+  "contentLength": 1826046,
+  "redirectChain": [
+    {
+      "status": 301,
+      "from": "https://www.otto.de/technik/",
+      "to": "https://www.otto.de/technik/marken/"
+    }
+  ]
+}

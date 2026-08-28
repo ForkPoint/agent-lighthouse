@@ -1,0 +1,30 @@
+{
+  "url": "https://vercel.com/pricing",
+  "capturedAt": "2026-08-28T12:20:26.235Z",
+  "sha256": "a01f71575a7e4daadea17e6c0a84e7551ed9d2e74e077c26495e9da4ee137da5",
+  "status": 200,
+  "kind": "wall",
+  "headers": {
+    "accept-ch": "Sec-CH-Prefers-Color-Scheme",
+    "age": "1083",
+    "cache-control": "public, max-age=3600",
+    "content-length": "24706",
+    "content-type": "text/markdown; charset=utf-8",
+    "critical-ch": "Sec-CH-Prefers-Color-Scheme",
+    "date": "Fri, 28 Aug 2026 09:01:59 GMT",
+    "link": "<https://vercel.com/pricing>; rel=\"canonical\"",
+    "server": "Vercel",
+    "set-cookie": "_v-consent=%7B%22essential%22%3Atrue%2C%22analytics%22%3Afalse%2C%22marketing%22%3Afalse%2C%22functional%22%3Afalse%2C%22version%22%3A1%7D; Path=/; Max-Age=31536000; SameSite=Lax; Secure; Domain=.vercel.com\n_v-anonymous-id=JhkCl7Bd2VOYwl3zXwl7P; Path=/; Max-Age=7776000; SameSite=Lax; Secure; Domain=.vercel.com\n_v-anonymous-id-renewed=1; Path=/; Max-Age=86400; SameSite=Lax; Secure; Domain=.vercel.com",
+    "strict-transport-security": "max-age=63072000; includeSubDomains; preload",
+    "vary": "Accept",
+    "x-matched-path": "/precomputed/[experimentCode]/pricing/md",
+    "x-pathname": "/pricing",
+    "x-powered-by": "Next.js, Payload",
+    "x-vercel-cache": "HIT",
+    "x-vercel-id": "fra1::iad1::k69p2-1787919626231-55e2f5208746"
+  },
+  "contentType": "text/markdown; charset=utf-8",
+  "ttfbMs": 257,
+  "totalMs": 258,
+  "contentLength": 24702
+}

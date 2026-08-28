@@ -10,6 +10,12 @@ import type { AuditMeta, AuditResult } from '../../types';
 import { Audit } from '../../audit';
 import { weightForGrade } from '../../scorer';
 import type { CheckContext, PageContext } from '../../check-context';
+import {
+  scanReadTheSite,
+  unreadSiteReason,
+  scanReadPageText,
+  unreadPageTextReason,
+} from '../../scan-evidence';
 
 /** Attributes whose value reaches a model as ordinary text. */
 const SCANNED_ATTRIBUTES = [
@@ -268,6 +274,15 @@ export class UnicodeCovertChannelScanAudit extends Audit {
   }
 
   audit(ctx: CheckContext): AuditResult {
+    // Nothing here can be attributed to this site; see `scanReadTheSite`.
+    if (!scanReadTheSite(ctx.evidence)) {
+      return this.notApplicable(
+        'No response here can be attributed to this site, so its codepoints were not judged.',
+        EXPECTED,
+        unreadSiteReason(ctx.evidence),
+      );
+    }
+
     const hits: Hit[] = [];
     for (const page of ctx.pages) hits.push(...scanPage(page));
     for (const path of ROOT_FILES) {
@@ -297,6 +312,27 @@ export class UnicodeCovertChannelScanAudit extends Audit {
     };
 
     if (hits.length === 0) {
+      // Reached only when nothing was found anywhere. A hit in a root file —
+      // which a shell serves in full — skips this branch entirely and is
+      // reported below, so the guard cannot silence one. What is left is a
+      // page that carried no text to scan, and the pages are where a covert
+      // channel is planted.
+      //
+      // Under the evidence gate — on for every scan — this audit declares
+      // `rendered-body` and is skipped before `audit()` runs on a shell, so
+      // no production report reaches here. The guard is what makes the audit
+      // correct when it is called directly, and when a caller turns the gate
+      // off to measure what it removes.
+      if (!scanReadPageText(ctx.evidence)) {
+        return {
+          ...this.notApplicable(
+            'The scanned page served no readable text, so its codepoints were not judged.',
+            EXPECTED,
+            unreadPageTextReason(ctx.evidence),
+          ),
+          details,
+        };
+      }
       return {
         ...this.pass(
           'No invisible codepoint carries text on the scanned pages or in the root files.',

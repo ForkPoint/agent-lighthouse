@@ -73,6 +73,15 @@ Tier per evidence policy: **scored** — grade A meets the A/B bar required for 
   finding, because it is one configuration mistake.
 - The primary answer span is the first sentence after the `h1`, else after the
   first `h2`, else the first paragraph of the main content.
+- 2026-08-28 — the audit declines when the scan holds no response it can
+  attribute to this site. It read the first scanned page's snippet directives,
+  and `ctx.pages`/`ctx.rootFiles` carry whatever answered 200 — on a parked
+  domain a broker's page from another host, on a walled or throttled origin
+  nothing at all. It now consults `scanReadTheSite()` and returns
+  `notApplicable` carrying the gate's own reason.
+  Verdicts that moved on the five nothing-obtained contract states: redirected
+  away pass → na, non-HTML homepage pass → na, HTTP 200 bot challenge fail →
+  na. Found by `packages/core/src/tests/hostile-state-contract.test.ts`.
 
 ## Deferred
 

@@ -289,6 +289,36 @@ describe('runScan — the evidence gate', () => {
     expect(report.scanValidity?.unscoredReason).toBeTruthy();
   });
 
+  // A wall reaches `overallScore: null` by a different route than a shell: the
+  // shell is judgeable and gets suppressed by the gated-mass escalation, while
+  // a 403 denies `origin-reachable` outright. Pinning `judgeable: false` is what
+  // keeps this test on the wall's path instead of re-pinning the shell's.
+  it('reports no score for a site that refused the scanner', async () => {
+    // The homepage answers with the wall, which is what a 403 storefront does.
+    h.map.set(url, {
+      url,
+      finalUrl: url,
+      status: 403,
+      headers: { 'cf-ray': '8a0f0000000-LHR', 'content-type': 'text/html' },
+      body: '<html><body>Attention Required! | Cloudflare</body></html>',
+      ttfbMs: 1,
+      totalMs: 2,
+      contentType: 'text/html',
+      contentLength: 58,
+    });
+
+    const report = await runScan(url);
+
+    expect(report.overallScore).toBeNull();
+    expect(report.scoreTier).toBeNull();
+    expect(report.scanValidity?.judgeable).toBe(false);
+    // The branch does not decide *whether* the score is suppressed — denying
+    // `origin-reachable` also gates enough mass to trip the escalation — it
+    // decides the wording. A walled site must be told it was walled, not handed
+    // a percentage of registry mass, so pin the sentence and not just truthiness.
+    expect(report.scanValidity?.unscoredReason).toContain('HTTP 403');
+  });
+
   it('scores a page an agent can actually read', async () => {
     set(url, FULL_HTML);
 
@@ -941,3 +971,25 @@ describe('runScan — progress events', () => {
   });
 });
 
+
+// ---------------------------------------------------------------------------
+// A robots.txt the caller already fetched
+// ---------------------------------------------------------------------------
+
+describe('runScan — prefetched robots.txt', () => {
+  it('uses the response the caller passed instead of asking the origin again', async () => {
+    const url = 'https://robots.example.com/';
+    set(url, '<html lang="en"><body><main><h1>Home</h1><p>Text.</p></main></body></html>');
+    // The origin would answer with an empty file. The caller's copy carries a
+    // crawl-delay, so a scan that re-fetched would report the empty one.
+    const robotsUrl = 'https://robots.example.com/robots.txt';
+    h.map.set(robotsUrl, ok(robotsUrl, 'User-agent: *\nAllow: /\n', 'text/plain'));
+    const prefetched = ok(robotsUrl, 'User-agent: *\nCrawl-delay: 10\n', 'text/plain');
+
+    const report = await runScan(url, { robotsTxt: prefetched });
+    const crawlDelay = report.categories
+      .flatMap((c) => c.checks)
+      .find((c) => c.id === 'access-crawl-control/crawl-delay')!;
+    expect(crawlDelay.explanation).toContain('Crawl-delay');
+  });
+});

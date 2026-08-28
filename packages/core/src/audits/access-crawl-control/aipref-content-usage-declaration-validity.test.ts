@@ -1,6 +1,11 @@
 import { describe, it, expect } from 'vitest';
 import { AiprefContentUsageDeclarationValidityAudit } from './aipref-content-usage-declaration-validity';
-import { mockCheckContext, mockPageContext, mockFetchResult } from '../../__tests__/test-utils';
+import {
+  challengedSiteContext,
+  mockCheckContext,
+  mockPageContext,
+  mockFetchResult,
+} from '../../__tests__/test-utils';
 import type { FetchResult } from '../../fetcher';
 import { expectNotApplicableOnEmpty } from '../../tests/na-contract';
 import type { CheckContext } from '../../check-context';
@@ -93,6 +98,18 @@ describe('AiprefContentUsageDeclarationValidityAudit', () => {
     }));
     expect(result.status).toBe('pass');
     expect(result.details?.['effectiveDeclarations']).toBe(2);
+  });
+
+  // Finding 1 of the pre-merge review: a bot wall served at HTTP 200 through the
+  // site's own edge carries the site's head fragment and its site-wide response
+  // headers on a body the site did not write. `origin-reachable` is met there,
+  // so the declaration this audit reads is the wall's.
+  it('declines a Content-Usage header a bot wall answering 200 attached', async () => {
+    const reached = site(undefined, { 'content-usage': 'train-ai=n' });
+    expect((await audit.audit(reached)).status, 'the same header reached is judged').toBe('pass');
+
+    const challenged = challengedSiteContext(reached.pages, reached.rootFiles);
+    expect((await audit.audit(challenged)).status).toBe('na');
   });
 
   it('is a scored grade B audit with an id inside the cap', () => {

@@ -1,6 +1,11 @@
 import { describe, it, expect } from 'vitest';
 import { AiUsageSignalCoherenceAcrossChannelsAudit } from './ai-usage-signal-coherence-across-channels';
-import { mockCheckContext, mockPageContext, mockFetchResult } from '../../__tests__/test-utils';
+import {
+  challengedSiteContext,
+  mockCheckContext,
+  mockPageContext,
+  mockFetchResult,
+} from '../../__tests__/test-utils';
 import { expectNotApplicableOnEmpty } from '../../tests/na-contract';
 import type { CheckContext } from '../../check-context';
 
@@ -136,6 +141,18 @@ describe('AiUsageSignalCoherenceAcrossChannelsAudit', () => {
     );
     expect(result.status).toBe('pass');
     expect((result.details?.['notes'] as string[])[0]).toContain('array of rules');
+  });
+
+  // Finding 1 of the pre-merge review: a bot wall served at HTTP 200 through the
+  // site's own edge carries the site's head fragment and its site-wide response
+  // headers on a body the site did not write. `origin-reachable` is met there,
+  // so the declaration this audit reads is the wall's.
+  it('declines to compare channels a bot wall answering 200 filled in', async () => {
+    const reached = site({ headers: { 'content-usage': 'train-ai=n' } });
+    expect((await audit.audit(reached)).status, 'the same header reached is judged').toBe('pass');
+
+    const challenged = challengedSiteContext(reached.pages, reached.rootFiles);
+    expect((await audit.audit(challenged)).status).toBe('na');
   });
 
   it('is a scored grade B audit', () => {

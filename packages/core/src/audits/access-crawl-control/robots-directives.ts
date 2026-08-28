@@ -2,6 +2,7 @@ import type { AuditMeta, AuditResult } from '../../types';
 import { Audit } from '../../audit';
 import type { CheckContext, PageContext } from '../../check-context';
 import { weightForGrade } from '../../scorer';
+import { scanReadTheSite, unreadSiteReason } from '../../scan-evidence';
 
 /**
  * Meta names that carry robots directives. `robots` is the generic form; the
@@ -156,8 +157,9 @@ export class MetaRobotsNotBlockingAudit extends Audit {
     evidenceGrade: 'A',
     tier: 'scored',
     dossier: 'docs/evidence/audits/access-crawl-control/robots-directives.md',
-    // Gate exemption: being refused is what this category reports.
-    requires: ['origin-reachable', 'rendered-body', 'sample-adequate'],
+    // Gate exemption: being refused is what this category reports, and robots directives
+    // live in the head and the headers, which arrive whether or not the body renders.
+    requires: ['origin-reachable'],
     defaultPriority: 'high',
     guidance: {
       impact:
@@ -171,6 +173,15 @@ export class MetaRobotsNotBlockingAudit extends Audit {
   };
 
   audit(ctx: CheckContext): AuditResult {
+    // Nothing here can be attributed to this site; see `scanReadTheSite`.
+    if (!scanReadTheSite(ctx.evidence)) {
+      return this.notApplicable(
+        'No page here can be attributed to this site, so its robots directives were not judged.',
+        'No blocking robots directive on content pages',
+        unreadSiteReason(ctx.evidence),
+      );
+    }
+
     if (!ctx.pages || ctx.pages.length === 0) {
       // A green "not blocking by default" on a scan where every fetch failed
       // was v1 4.20's worst failure mode; nothing was assessed, so nothing is

@@ -1,6 +1,10 @@
 import { describe, it, expect } from 'vitest';
 import { CanonicalLinksAudit } from './canonical';
-import { mockCheckContext, mockPageContext } from '../../__tests__/test-utils';
+import {
+  challengedSiteContext,
+  mockCheckContext,
+  mockPageContext,
+} from '../../__tests__/test-utils';
 
 const page = (url: string, head: string, index = 0) =>
   mockPageContext(url, `<html lang="en"><head>${head}</head><body>Hi</body></html>`, index);
@@ -170,5 +174,17 @@ describe('CanonicalLinksAudit', () => {
 
   it('is not-applicable when no pages were scanned', () => {
     expect(audit.audit(mockCheckContext([])).status).toBe('na');
+  });
+
+  // Finding 1 of the pre-merge review: a bot wall served at HTTP 200 through the
+  // site's own edge carries the site's head fragment and its site-wide response
+  // headers on a body the site did not write. `origin-reachable` is met there,
+  // so the declaration this audit reads is the wall's.
+  it('declines a canonical read off a bot wall answering 200', () => {
+    const pages = [self('https://example.com/')];
+    expect(audit.audit(mockCheckContext(pages)).status, 'the same page reached is judged').toBe(
+      'pass',
+    );
+    expect(audit.audit(challengedSiteContext(pages)).status).toBe('na');
   });
 });

@@ -14,6 +14,12 @@ import type { AuditMeta, AuditResult } from '../../types';
 import { Audit } from '../../audit';
 import { weightForGrade } from '../../scorer';
 import type { CheckContext, PageContext } from '../../check-context';
+import {
+  scanReadTheSite,
+  unreadSiteReason,
+  scanReadPageText,
+  unreadPageTextReason,
+} from '../../scan-evidence';
 
 /** URL shapes that change state on the server when they are merely fetched. */
 const STATE_VERBS: ReadonlyArray<{ pattern: RegExp; label: string }> = [
@@ -154,6 +160,15 @@ export class UnsafeAgentTriggerableAffordancesAudit extends Audit {
   }
 
   audit(ctx: CheckContext): AuditResult {
+    // Nothing here can be attributed to this site; see `scanReadTheSite`.
+    if (!scanReadTheSite(ctx.evidence)) {
+      return this.notApplicable(
+        'No page here can be attributed to this site, so its links were not inspected.',
+        EXPECTED,
+        unreadSiteReason(ctx.evidence),
+      );
+    }
+
     if (ctx.pages.length === 0) {
       return this.notApplicable(
         'No page was fetched, so there is no link to inspect.',
@@ -174,6 +189,18 @@ export class UnsafeAgentTriggerableAffordancesAudit extends Audit {
     };
 
     if (findings.length === 0) {
+      // Links and GET forms live in the body. A page that served no text
+      // offered no affordance to inspect, so "none is unsafe" is silence.
+      if (!scanReadPageText(ctx.evidence)) {
+        return {
+          ...this.notApplicable(
+            'The scanned page served no readable text, so it exposed no links or forms to inspect.',
+            EXPECTED,
+            unreadPageTextReason(ctx.evidence),
+          ),
+          details,
+        };
+      }
       return {
         ...this.pass(
           'No link or GET form on the scanned pages changes state when it is fetched.',

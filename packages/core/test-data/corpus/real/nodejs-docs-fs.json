@@ -1,0 +1,26 @@
+{
+  "url": "https://nodejs.org/api/fs.html",
+  "capturedAt": "2026-08-28T12:16:13.495Z",
+  "sha256": "ae75ac67a867e94c5f5a31545ed98e22eb1f42b2b50d211a6646dfa2847bfd0b",
+  "status": 200,
+  "kind": "page",
+  "headers": {
+    "date": "Fri, 28 Aug 2026 12:16:13 GMT",
+    "content-type": "text/html; charset=utf-8",
+    "content-length": "1102999",
+    "connection": "keep-alive",
+    "cf-cache-status": "HIT",
+    "accept-ranges": "bytes",
+    "cache-control": "public, max-age=3600, s-maxage=14400",
+    "etag": "\"1c07c923369c2f896d13002ea1c961df\"",
+    "last-modified": "Wed, 26 Aug 2026 18:39:28 GMT",
+    "strict-transport-security": "max-age=31536000; includeSubDomains; preload",
+    "x-content-type-options": "nosniff",
+    "server": "cloudflare",
+    "cf-ray": "a3233ef17f0bef75-SOF"
+  },
+  "contentType": "text/html; charset=utf-8",
+  "ttfbMs": 223,
+  "totalMs": 514,
+  "contentLength": 1101697
+}

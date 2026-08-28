@@ -64,3 +64,19 @@ _No dedicated evidence signal was researched for this audit in the 2026-08-20 pa
 - Playwright MCP likewise drives a real browser and exposes structured accessibility snapshots to the model — https://github.com/microsoft/playwright-mcp (verified 2026-08-21)
 
 **Counter-evidence:** The HTML Standard makes the graded attribute optional by design — in the form submission algorithm, if the action attribute "is null or attribute's value is the empty string, then return this's node document's URL" (https://html.spec.whatwg.org/multipage/form-control-infrastructure.html, verified 2026-08-21). A `<form method="post">` with no action is fully functional without JavaScript, so a missing `action` is not evidence of JS dependence. No vendor documents an agent that POSTs a form from parsed HTML without a browser, and every documented form-filling agent executes JavaScript — which removes the harm this audit's failure state describes.
+
+## Deferred
+
+- **Unescaped `id` in `extractForms`.** The shared form parser builds a
+  selector from a page-supplied `id` to find a control's label, the
+  `label[for="..."]` lookup in `parser.ts`. An `id` carrying a quote or a
+  backslash makes css-what throw inside `$()`; the throw escapes
+  `extractForms`, so both audits that consume it — `forms-no-js` and
+  `contact-form` — become `scan-error` stubs and the site is told nothing
+  about either. No corpus fixture carries such an `id`, so nothing throws
+  today; the class is live and latent. Two audits in this category already
+  escape their interpolated values (`form-actionability` has
+  `escapeAttrValue`, `form-autofill-token-coverage` has `cssEscape`), so the
+  fix is to reuse one at the parser call site. Found by the real-page corpus
+  snapshot, which caught the same shape throwing for real in
+  `answer-readiness/extractor-survival-recall`.

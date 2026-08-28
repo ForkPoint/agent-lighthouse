@@ -1,0 +1,34 @@
+{
+  "url": "https://www.myfritz.net/devices/",
+  "capturedAt": "2026-08-28T12:01:39.334Z",
+  "sha256": "d8fc537afaf7de189a01832d5e8180a54ce4e9f39ab4d675147e68acfd2edddb",
+  "status": 200,
+  "kind": "shell",
+  "headers": {
+    "content-type": "text/html;charset=UTF-8",
+    "transfer-encoding": "chunked",
+    "strict-transport-security": "max-age=31536000",
+    "x-content-type-options": "nosniff",
+    "x-frame-options": "sameorigin",
+    "x-xss-protection": "1; mode=block",
+    "referrer-policy": "no-referrer, never",
+    "content-security-policy": "default-src 'none'; script-src 'self' 'unsafe-inline' https://www.myfritz.net https://sso.myfritz.net https://static.myfritz.net https://piwik.avm.de https://www.google.com/recaptcha/ https://www.gstatic.com/recaptcha/; style-src 'self' 'unsafe-inline' https://www.myfritz.net https://sso.myfritz.net https://static.myfritz.net; img-src 'self' https://www.myfritz.net https://sso.myfritz.net https://static.myfritz.net https://piwik.avm.de data: ; font-src 'self' https://www.myfritz.net https://sso.myfritz.net https://static.myfritz.net; connect-src 'self' https://sso.myfritz.net https://gateway.myfritz.net wss://gateway.myfritz.net https://piwik.avm.de; frame-src 'self' https://sso.myfritz.net https://www.google.com/recaptcha/; media-src 'none'; object-src 'none'; worker-src 'none'; manifest-src https://www.myfritz.net/static/manifest.json https://sso.myfritz.net/static/manifest.json; frame-ancestors https://sso.myfritz.net https://www.myfritz.net; form-action 'self' https://www.myfritz.net",
+    "access-control-allow-origin": "https://www.myfritz.net",
+    "access-control-allow-headers": "Authorization,content-type",
+    "cache-control": "no-store",
+    "pragma": "no-cache",
+    "expires": "0",
+    "server": "cloud-gateway/cloud-gateway-4.6.66 (AVM)"
+  },
+  "contentType": "text/html;charset=UTF-8",
+  "ttfbMs": 462,
+  "totalMs": 463,
+  "contentLength": 6883,
+  "redirectChain": [
+    {
+      "status": 302,
+      "from": "https://myfritz.net",
+      "to": "https://www.myfritz.net/devices/"
+    }
+  ]
+}

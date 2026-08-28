@@ -108,6 +108,28 @@ All three rows graded **A** independently, on the same proven consumer path (Goo
 
 `defaultPriority` stays `high` rather than inheriting the absorbed rows' `critical`: `critical` is now emitted per result, and only when the homepage is among the blocked pages — which is exactly the case 1.13 existed to catch.
 
+## Implementation deviations
+
+- 2026-08-28 — the audit declines when the scan holds no response it can
+  attribute to this site. It read the robots meta and X-Robots-Tag on the
+  scanned pages, and `ctx.pages`/`ctx.rootFiles` carry whatever answered 200 —
+  on a parked domain a broker's page from another host, on a walled or
+  throttled origin nothing at all. It now consults `scanReadTheSite()` and
+  returns `notApplicable` carrying the gate's own reason.
+  Verdicts that moved on the five nothing-obtained contract states: redirected
+  away pass → na, non-HTML homepage pass → na, HTTP 200 bot challenge fail →
+  na. Found by `packages/core/src/tests/hostile-state-contract.test.ts`.
+- 2026-08-28 — `requires` drops `rendered-body` and `sample-adequate` and is now
+  `['origin-reachable']`. The directives this audit reads live in meta tags and
+  the `X-Robots-Tag` header, which arrive whether or not the body renders, so the
+  keys `check-requires` derived from the `ctx.pages` read overstated what the
+  verdict depends on. Recorded as a gate exemption in
+  `scripts/lib/requires-analysis.mjs`. The verdict itself does not move, but
+  the gate is on for every scan, so this audit now runs on a client-rendered
+  one instead of being skipped. It is scored at weight 1.0, so a shell scan
+  now carries a judgement on whether its pages forbid indexing or quoting.
+  Found by `packages/core/src/tests/hostile-state-contract.test.ts`.
+
 ## Review history
 
 - 2026-08-20 — code review (11-agent workflow) + evidence research (12-domain workflow, 400 sources).

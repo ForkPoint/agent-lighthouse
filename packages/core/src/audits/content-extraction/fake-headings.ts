@@ -4,6 +4,12 @@ import type { AuditMeta, AuditResult, CheckPriority } from "../../types";
 import { Audit } from "../../audit";
 import type { CheckContext } from '../../check-context';
 import { weightForGrade } from '../../scorer';
+import {
+  scanReadTheSite,
+  unreadSiteReason,
+  scanReadPageText,
+  unreadPageTextReason,
+} from '../../scan-evidence';
 
 /**
  * Classes that commonly impersonate a heading in utility-CSS markup
@@ -108,6 +114,15 @@ export class FakeHeadingsAudit extends Audit {
   };
 
   audit(ctx: CheckContext): AuditResult {
+    // Nothing here can be attributed to this site; see `scanReadTheSite`.
+    if (!scanReadTheSite(ctx.evidence)) {
+      return this.notApplicable(
+        'No page here can be attributed to this site, so its headings were not judged.',
+        'All heading-like text uses semantic <h1>-<h6> elements',
+        unreadSiteReason(ctx.evidence),
+      );
+    }
+
     const found: Array<{ url: string; heading: FakeHeading }> = [];
 
     for (const page of ctx.pages) {
@@ -147,6 +162,15 @@ export class FakeHeadingsAudit extends Audit {
     const expected = 'All heading-like text uses semantic <h1>-<h6> elements';
 
     if (found.length === 0) {
+      // Heading-like text is body text. A page that served none carries no
+      // headings, fake or real, so there is nothing to have got right.
+      if (!scanReadPageText(ctx.evidence)) {
+        return this.notApplicable(
+          'The scanned page served no readable text, so it held no headings to judge.',
+          expected,
+          unreadPageTextReason(ctx.evidence),
+        );
+      }
       return this.pass(
         'No fake headings detected — heading-like text uses semantic heading elements.',
         expected,

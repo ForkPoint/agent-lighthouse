@@ -1,6 +1,12 @@
 import { describe, it, expect } from 'vitest';
 import { ContentWithoutClickthroughAudit } from './content-without-clickthrough';
-import { mockCheckContext, mockPageContext } from '../../__tests__/test-utils';
+import {
+  attributableFixture,
+  mockCheckContext,
+  shellSiteContext,
+  mockPageContext,
+  unreachedSiteContext,
+} from '../../__tests__/test-utils';
 
 describe('ContentWithoutClickthroughAudit', () => {
   const audit = new ContentWithoutClickthroughAudit();
@@ -137,5 +143,31 @@ describe('ContentWithoutClickthroughAudit', () => {
     const result = audit.audit(mockCheckContext([page1, page2]));
     expect(result.status).toBe('fail');
     expect(result.found).toContain('...');
+  });
+
+  // The scan may hold a readable page that is not this site's — a broker's
+  // parking page, a foreign interstitial. Attribution is the gate's decision,
+  // and this audit has to honour it rather than read the page anyway.
+  it('declines when no response can be attributed to this site', async () => {
+    const { pages, rootFiles } = attributableFixture();
+    const instance = new ContentWithoutClickthroughAudit();
+    const reached = await instance.audit(mockCheckContext(pages, rootFiles));
+    expect(reached.status, 'the same input reached is judged').not.toBe('na');
+
+    const unreached = await instance.audit(unreachedSiteContext(pages, rootFiles));
+    expect(unreached.status).toBe('na');
+  });
+
+  // Teasers are body copy. The low-content branch skips the homepage, which on a
+  // shell scan is often the only page there is, so the pass was unreachable
+  // evidence dressed as a clean bill of health.
+  it('declines a page that served no readable text', async () => {
+    const { pages, rootFiles } = attributableFixture();
+    const instance = new ContentWithoutClickthroughAudit();
+    const rendered = await instance.audit(mockCheckContext(pages, rootFiles));
+    expect(rendered.status, 'the same input rendered is judged').not.toBe('na');
+
+    const shell = await instance.audit(shellSiteContext());
+    expect(shell.status).toBe('na');
   });
 });

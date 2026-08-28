@@ -1,6 +1,12 @@
 import { describe, it, expect } from 'vitest';
 import { ThirdPartyDomWriteBlastRadiusAudit } from './third-party-dom-write-blast-radius';
-import { mockCheckContext, mockPageContext } from '../../__tests__/test-utils';
+import {
+  attributableFixture,
+  mockCheckContext,
+  mockPageContext,
+  shellSiteContext,
+  unreachedSiteContext,
+} from '../../__tests__/test-utils';
 import { expectNotApplicableOnEmpty } from '../../tests/na-contract';
 import type { CheckContext } from '../../check-context';
 
@@ -110,5 +116,38 @@ describe('ThirdPartyDomWriteBlastRadiusAudit', () => {
     expect(meta.evidenceGrade).toBe('B');
     expect(meta.tier).toBe('scored');
     expect(meta.scoreDisplayMode).toBe('ternary');
+  });
+
+  // The scan may hold a readable page that is not this site's — a broker's
+  // parking page, a foreign interstitial. Attribution is the gate's decision,
+  // and this audit has to honour it rather than read the page anyway.
+  it('declines when no response can be attributed to this site', async () => {
+    const { pages, rootFiles } = attributableFixture();
+    const instance = new ThirdPartyDomWriteBlastRadiusAudit();
+    const reached = await instance.audit(mockCheckContext(pages, rootFiles));
+    expect(reached.status, 'the same input reached is judged').not.toBe('na');
+
+    const unreached = await instance.audit(unreachedSiteContext(pages, rootFiles));
+    expect(unreached.status).toBe('na');
+  });
+
+  // `requires` deliberately omits `rendered-body`: an origin named in the
+  // served HTML is counted whether or not the body renders. An empty census is
+  // the half a shell cannot support — same-origin bundles are discarded, and
+  // the vendors an agent meets are injected by that bundle at runtime — so
+  // that branch declines instead of certifying the page.
+  it('counts the origins a shell names, and declines when it names none', async () => {
+    const vendor =
+      '<html lang="en"><head><title>Shop</title>' +
+      '<script src="https://cdn.vendor.test/tag.js"></script></head>' +
+      '<body><div id="root"></div><script src="/app.js"></script></body></html>';
+    const audit = new ThirdPartyDomWriteBlastRadiusAudit();
+
+    const named = await audit.audit(shellSiteContext(vendor));
+    expect(named.status, 'an origin in the served HTML is still judged').not.toBe('na');
+    expect(named.found).toContain('vendor.test');
+
+    const empty = await audit.audit(shellSiteContext());
+    expect(empty.status).toBe('na');
   });
 });

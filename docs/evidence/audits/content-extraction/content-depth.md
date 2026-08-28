@@ -65,6 +65,16 @@ Three independent sources of wrong verdicts. (1) getWordCount is 'text.split(/\s
 ## Implementation deviations
 
 - 2026-08-26 — the shared text helper this audit reads, `getMainContentText`, changed its selection. Among several `<main>` elements it now returns the one holding the most text rather than the first, it ignores a `<main>` inside a `<template>`, and it falls back to the whole `<body>` only when no `<main>` holds any text. Measured cause (scan evidence gate design, section 2.4): storefronts ship empty or fragmented `<main>` wrappers, and the first one is often a stub. Two consequences for this audit. A page whose real content sits in a later `<main>` is now measured on that content. A page whose every `<main>` is empty is now measured on its body text, page chrome included, where it previously measured as empty.
+- 2026-08-28 — the audit declines when the scan holds no response it can
+  attribute to this site. It read the word count of the scanned pages, and
+  `ctx.pages`/`ctx.rootFiles` carry whatever answered 200 — on a parked domain
+  a broker's page from another host, on a walled or throttled origin nothing
+  at all. It now consults `scanReadTheSite()` and returns `notApplicable`
+  carrying the gate's own reason.
+  Verdicts that moved on the five nothing-obtained contract states: walled
+  pass → na, throttled pass → na, redirected away fail → na, non-HTML homepage
+  fail → na, HTTP 200 bot challenge fail → na. Found by
+  `packages/core/src/tests/hostile-state-contract.test.ts`.
 
 ## Evidence
 

@@ -1,6 +1,11 @@
 import { describe, it, expect } from 'vitest';
 import { AiContentDeclarationAudit } from './ai-content-declaration';
-import { mockCheckContext, mockPageContext, mockFetchResult } from '../../__tests__/test-utils';
+import {
+  challengedSiteContext,
+  mockCheckContext,
+  mockPageContext,
+  mockFetchResult,
+} from '../../__tests__/test-utils';
 import { expectNotApplicableOnEmpty } from '../../tests/na-contract';
 import type { PageContext } from '../../check-context';
 
@@ -175,5 +180,17 @@ describe('AiContentDeclarationAudit', () => {
     it('drops the priority to low', () => {
       expect(meta.defaultPriority).toBe('low');
     });
+  });
+
+  // Finding 1 of the pre-merge review: a bot wall served at HTTP 200 through the
+  // site's own edge carries the site's head fragment and its site-wide response
+  // headers on a body the site did not write. `origin-reachable` is met there,
+  // so the declaration this audit reads is the wall's.
+  it('declines a Content-Usage header read off a bot wall answering 200', () => {
+    const pages = [withHeader(page('<title>Plain</title>'), 'content-usage', 'train-ai=n')];
+    expect(audit.audit(mockCheckContext(pages)).status, 'the same header reached is judged').toBe(
+      'pass',
+    );
+    expect(audit.audit(challengedSiteContext(pages)).status).toBe('na');
   });
 });

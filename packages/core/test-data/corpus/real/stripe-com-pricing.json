@@ -1,0 +1,38 @@
+{
+  "url": "https://stripe.com/en-bg/pricing",
+  "capturedAt": "2026-08-28T12:20:00.784Z",
+  "sha256": "d623c62e4628388a8f9ea3b3b99e09ab09f30643f299151eb64d34eccd631f8c",
+  "status": 200,
+  "kind": "page",
+  "headers": {
+    "server": "nginx",
+    "date": "Fri, 28 Aug 2026 12:20:00 GMT",
+    "content-type": "text/html; charset=utf-8",
+    "content-length": "911064",
+    "connection": "keep-alive",
+    "content-security-policy": "base-uri 'none'; connect-src https://c.increment.com https://c.stripe.dev https://c.stripe.global https://c.stripe.partners blob: https://b.stripecdn.com https://climate.stripe.com https://errors.stripe.com https://ext.stripe.com https://r.stripe.com https://stripe-images.s3.us-west-1.amazonaws.com https://stripe.com https://y4pfttj91h-1.algolianet.com/1/indexes/mkt_partners/query https://y4pfttj91h-2.algolianet.com/1/indexes/mkt_partners/query https://y4pfttj91h-3.algolianet.com/1/indexes/mkt_partners/query https://y4pfttj91h-dsn.algolia.net/1/indexes/mkt_partners/query https://tax-connectors.stripe.com 'self'; default-src 'none'; font-src https://b.stripecdn.com 'self'; form-action https://climate.stripe.com https://stripe.com 'self'; frame-ancestors https://app.contentful.com 'self'; frame-src https://checkout.stripe.dev https://support-conversations.stripe.com https://b.stripecdn.com https://checkout.stripe.com https://crypto-js.stripe.com https://js.stripe.com 'self'; img-src data: https://assets.ctfassets.net https://assets.stripeassets.com https://b.stripecdn.com https://images.ctfassets.net https://images.stripeassets.com https://q.stripe.com https://stripe-camo.global.ssl.fastly.net 'self'; media-src https://assets.ctfassets.net https://assets.stripeassets.com https://b.stripecdn.com https://videos.ctfassets.net https://videos.stripeassets.com 'self'; script-src https://b.stripecdn.com https://crypto-js.stripe.com https://js.stripe.com 'self' 'sha256-3aWvb9tRBjmz1OjR3n7mwiTm94+s4iki4mMZF82asmc=' 'sha256-5LtzXhT7UFn+GqP5pKEMGL08UNZsrzANHFEBW/mQHGw=' 'sha256-beLzNcen8LrazzSCRjAapoIMTgJI0osPWGNSX7aK6lc=' 'sha256-cCM0Z4lzGkzQnmbdVw+ouz0JRawyaKcZ4yiqzqYS7ek=' 'sha256-vTifGUJH6hJYTvstw4xJ4xfr/vE0ELkOV4GpCumyqfg=' 'sha256-KxhSaxKB5RFTQsqfRwp+zG7iLjvMrTAySqnSvWlqct0=' 'sha256-tMuJ8c00j54yuxogrdIJeGhNVB350dc56i969XRz/Mc=' 'sha256-aEFSvCaVnb2wNwuO3IzA8J44RdTKt6vms9beA7BcCYg=' 'sha256-0SWEc2BfR2o77i2vUiNNIrFKQkjc2Ujsr2hlfZ6oUek=' 'report-sample'; style-src https://b.stripecdn.com 'self' 'unsafe-inline'; worker-src 'none'; upgrade-insecure-requests; report-uri https://q.stripe.com/csp-violation?q=a6XVHHmaAIiwOdxEVGDiLAdtdTcpP3fDZ5cnfnOxOeQ_SALn1awKtz1Xr1JyMgA%3D; report-to csp",
+    "cross-origin-opener-policy": "same-origin-allow-popups; report-to=\"wsp_coop\"",
+    "cross-origin-opener-policy-report-only": "same-origin-allow-popups; report-to=\"wsp_coop\"",
+    "referrer-policy": "no-referrer-when-downgrade",
+    "report-to": "{\"group\":\"coop\",\"max_age\":8640,\"endpoints\":[{\"url\":\"https://q.stripe.com/coop-report\"}],\"include_subdomains\":true}, {\"group\":\"wsp_coop\",\"max_age\":8640,\"endpoints\":[{\"url\":\"https://q.stripe.com/coop-report?s=a6XVHHmaAIiwOdxEVGDiLAdtdTcpP3fDZ5cnfnOxOeQ_SALn1awKtz1Xr1JyMgA=\"}],\"include_subdomains\":true}, {\"group\":\"wsp_coep\",\"max_age\":8640,\"endpoints\":[{\"url\":\"https://q.stripe.com/coep-report?s=a6XVHHmaAIiwOdxEVGDiLAdtdTcpP3fDZ5cnfnOxOeQ_SALn1awKtz1Xr1JyMgA=\"}],\"include_subdomains\":true}, {\"group\":\"csp\",\"max_age\":8640,\"endpoints\":[{\"url\":\"https://q.stripe.com/csp-report-v2?q=a6XVHHmaAIiwOdxEVGDiLAdtdTcpP3fDZ5cnfnOxOeQ_SALn1awKtz1Xr1JyMgA%3D&t=1\"}],\"include_subdomains\":true}",
+    "reporting-endpoints": "coop=\"https://q.stripe.com/coop-report\", wsp_coop=\"https://q.stripe.com/coop-report?s=a6XVHHmaAIiwOdxEVGDiLAdtdTcpP3fDZ5cnfnOxOeQ_SALn1awKtz1Xr1JyMgA=\", wsp_coep=\"https://q.stripe.com/coep-report?s=a6XVHHmaAIiwOdxEVGDiLAdtdTcpP3fDZ5cnfnOxOeQ_SALn1awKtz1Xr1JyMgA=\", csp=\"https://q.stripe.com/csp-report-v2?q=a6XVHHmaAIiwOdxEVGDiLAdtdTcpP3fDZ5cnfnOxOeQ_SALn1awKtz1Xr1JyMgA%3D&t=1\"",
+    "x-content-type-options": "nosniff",
+    "x-frame-options": "SAMEORIGIN",
+    "x-mkt-cache": "HIT",
+    "x-stripe-proxy-response": "upstream",
+    "x-stripe-server-rpc-duration-micros": "60088",
+    "x-wc": "3ff",
+    "strict-transport-security": "max-age=63072000; includeSubDomains; preload"
+  },
+  "contentType": "text/html; charset=utf-8",
+  "ttfbMs": 675,
+  "totalMs": 1346,
+  "contentLength": 910671,
+  "redirectChain": [
+    {
+      "status": 307,
+      "from": "https://stripe.com/pricing",
+      "to": "https://stripe.com/en-bg/pricing"
+    }
+  ]
+}

@@ -1,0 +1,32 @@
+{
+  "url": "https://lobste.rs/login",
+  "capturedAt": "2026-08-28T12:15:38.579Z",
+  "sha256": "47292f1cb8ce8e89946766f4891f8fa3980579aa9d535843101028f217ed47e2",
+  "status": 200,
+  "kind": "page",
+  "headers": {
+    "alt-svc": "h3=\":443\"; ma=2592000",
+    "cache-control": "max-age=0, private, must-revalidate",
+    "content-length": "4107",
+    "content-security-policy": "default-src 'none'; connect-src 'self'; img-src 'self' data:; script-src 'self' 'nonce-H0Mm74+5sqBSzuT1+JTDvg=='; style-src 'self' 'unsafe-inline'",
+    "content-type": "text/html; charset=utf-8",
+    "etag": "W/\"47292f1cb8ce8e89946766f4891f8fa3\"",
+    "feature-policy": "accelerometer 'none'; autoplay 'none'; ambient-light-sensor 'none'; camera 'none'; encrypted-media 'none'; fullscreen 'none'; geolocation 'none'; gyroscope 'none'; idle-detection 'none'; magnetometer 'none'; microphone 'none'; midi 'none'; payment 'none'; picture-in-picture 'none'; screen-wake-lock 'none'; serial 'none'; sync-xhr 'none'; usb 'none'; web-share 'none'",
+    "link": "</assets/application-7d3a2a90.css>; rel=preload; as=style; nopush,</assets/system-system-fd030c9d.css>; rel=preload; as=style; nopush,</application.js>; rel=modulepreload; as=script; nopush",
+    "referrer-policy": "strict-origin-when-cross-origin",
+    "set-cookie": "lobster_trap=yLJVgDs307dmx6migD40oAf2MQklLkkQ4BJH6XHFabQiKC%2FJRp8iBgmpgb%2B7gAkbKo1bpaQZeq5MylthQK1fTIGfSFDlnuTMQ5hZIphDUM8npiCAlI9ItvkSK2IGLjwLw68591j4mu045Z6qUtSJXg7NuoXknIztFGqbd21IzFB%2BG5wp1WducGXTSKF1%2Bsbbd7DTq1axRCfvfadnvTKvrSSoxp9K2TFb%2BCjYtNVeoLBZ8LKundQVHU22MyCxDihyQa1Qu1W%2FY684mvn5wwF683gnMviA8ggB%2FtEKX6ts6V9IE4sTMTI7d%2FcT--NN26VwiP%2BkIYq9G%2B--gQEQogqXD0uLYsV3nA6uog%3D%3D; path=/; expires=Mon, 28 Sep 2026 12:15:38 GMT; secure; httponly; samesite=lax",
+    "strict-transport-security": "max-age=31536000, max-age=63072000; includeSubDomains; preload",
+    "vary": "Accept",
+    "via": "1.1 Caddy",
+    "x-content-type-options": "nosniff",
+    "x-frame-options": "SAMEORIGIN",
+    "x-permitted-cross-domain-policies": "none",
+    "x-request-id": "d050be45-4e7f-4fe0-a9a8-6bff085d4b98",
+    "x-xss-protection": "0",
+    "date": "Fri, 28 Aug 2026 12:15:38 GMT"
+  },
+  "contentType": "text/html; charset=utf-8",
+  "ttfbMs": 535,
+  "totalMs": 536,
+  "contentLength": 4107
+}
