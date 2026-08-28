@@ -65,9 +65,12 @@ _No dedicated evidence signal was researched for this audit in the 2026-08-20 pa
   `['origin-reachable', 'unblocked-fetches']`. The `lang` attribute is an
   attribute of `<html>`, served before any body renders, so whether a page
   rendered text has no bearing on whether it declared its language. Recorded as a
-  gate exemption in `scripts/lib/requires-analysis.mjs`. No verdict changes;
-  under the evidence gate the audit is no longer skipped on a JS-shell scan.
-  Found by `packages/core/src/tests/hostile-state-contract.test.ts`.
+  gate exemption in `scripts/lib/requires-analysis.mjs`. The verdict itself
+  does not move, but the gate is on for every scan, so a client-rendered scan
+  is now scored on its `lang` attribute at weight 1.0 instead of being skipped.
+  With `server-responsiveness`, this is what takes the `content-extraction`
+  category from unscored to 73 on the shell contract state. Found by
+  `packages/core/src/tests/hostile-state-contract.test.ts`.
 
 ## Review history
 

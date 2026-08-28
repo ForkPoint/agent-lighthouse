@@ -99,13 +99,20 @@ number is not read as the whole list.
   away pass → na, non-HTML homepage pass → na. Found by
   `packages/core/src/tests/hostile-state-contract.test.ts`.
 - 2026-08-28 — `requires` drops `rendered-body` and `sample-adequate` and is now
-  `['origin-reachable', 'unblocked-fetches']`. The census is of script,
-  stylesheet and frame origins in the served HTML, judged against the
-  Content-Security-Policy header; a JS shell is mostly script tags, which is
-  precisely what this counts. Recorded as a gate exemption in
-  `scripts/lib/requires-analysis.mjs`. No verdict changes; under the evidence
-  gate the audit is no longer skipped on a shell scan, which is the case its
-  finding matters most in. Found by
+  `['origin-reachable', 'unblocked-fetches']`, and the zero-origin branch gains
+  a guard. Every origin the served HTML names is counted whether or not the
+  body renders, so a page that ships a vendor script statically is still
+  reported and gating that on rendered text withheld a real finding. The empty
+  census is the half a shell cannot support: same-origin resources are
+  discarded from the survey, a JS shell's script tags are its own bundle, and
+  the vendors an agent then meets are injected by that bundle at runtime —
+  which the `found` string already says this census does not count. Passing
+  such a page would assert "nothing but the site itself writes what an agent
+  reads" on exactly the page class where a static census is emptiest, so that
+  branch now consults `scanReadPageText()` and returns `notApplicable`. Verdict
+  on the shell contract state: pass → na, and under the evidence gate the audit
+  runs there instead of being skipped. The exemption is recorded in
+  `scripts/lib/requires-analysis.mjs`. Found by
   `packages/core/src/tests/hostile-state-contract.test.ts`.
 
 ## Deferred

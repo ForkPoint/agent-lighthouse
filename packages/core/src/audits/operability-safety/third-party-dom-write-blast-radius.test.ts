@@ -131,11 +131,23 @@ describe('ThirdPartyDomWriteBlastRadiusAudit', () => {
     expect(unreached.status).toBe('na');
   });
 
-  // `requires` deliberately omits `rendered-body`: the census is of script,
-  // stylesheet and frame origins in the served HTML, and a shell is mostly
-  // script tags.
-  it('still judges a page that served no readable text', async () => {
-    const result = await new ThirdPartyDomWriteBlastRadiusAudit().audit(shellSiteContext());
-    expect(result.status).not.toBe('na');
+  // `requires` deliberately omits `rendered-body`: an origin named in the
+  // served HTML is counted whether or not the body renders. An empty census is
+  // the half a shell cannot support — same-origin bundles are discarded, and
+  // the vendors an agent meets are injected by that bundle at runtime — so
+  // that branch declines instead of certifying the page.
+  it('counts the origins a shell names, and declines when it names none', async () => {
+    const vendor =
+      '<html lang="en"><head><title>Shop</title>' +
+      '<script src="https://cdn.vendor.test/tag.js"></script></head>' +
+      '<body><div id="root"></div><script src="/app.js"></script></body></html>';
+    const audit = new ThirdPartyDomWriteBlastRadiusAudit();
+
+    const named = await audit.audit(shellSiteContext(vendor));
+    expect(named.status, 'an origin in the served HTML is still judged').not.toBe('na');
+    expect(named.found).toContain('vendor.test');
+
+    const empty = await audit.audit(shellSiteContext());
+    expect(empty.status).toBe('na');
   });
 });

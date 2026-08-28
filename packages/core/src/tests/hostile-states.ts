@@ -309,6 +309,16 @@ const nonHtml = state({
 });
 
 /**
+ * The body a JS shell serves: a mount point and a bundle, no text. Exported so
+ * the per-audit tests build their shell from this exact page — two copies that
+ * drift would let the contract suite and the unit tests stop agreeing on what
+ * a shell is.
+ */
+export const SHELL_HTML =
+  '<html lang="en"><head><title>Shop</title></head>' +
+  '<body><div id="root"></div><script src="/app.js"></script></body></html>';
+
+/**
  * A JS shell: a page arrived from the right host, carrying no text a non-JS
  * consumer can read. The only state the gate still calls judgeable — what this
  * site serves is a finding about the site, not about the scan.
@@ -321,7 +331,7 @@ const shell = state({
     url: HOME_URL,
     status: 200,
     contentType: 'text/html',
-    body: '<html lang="en"><head><title>Shop</title></head><body><div id="root"></div><script src="/app.js"></script></body></html>',
+    body: SHELL_HTML,
   }),
   rootFiles: rootFiles((path) =>
     path === '/robots.txt'

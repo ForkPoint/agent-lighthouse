@@ -107,10 +107,10 @@ Tier per evidence policy: **scored** — grade A meets the A/B bar required for 
   `['origin-reachable']`. The verdict comes from robots.txt; the scanned pages
   only contribute extra probe paths, so a JS shell narrows the probe set without
   changing what is judged. Recorded as a gate exemption in
-  `scripts/lib/requires-analysis.mjs`. No verdict changes; under the evidence
-  gate the audit is no longer skipped on a shell scan, where robots.txt was
-  fetched and read normally. Found by
-  `packages/core/src/tests/hostile-state-contract.test.ts`.
+  `scripts/lib/requires-analysis.mjs`. The verdict itself does not move, but
+  the gate is on for every scan, so a shell scan — whose robots.txt was fetched
+  and read normally — now gets this judgement at weight 1.0 instead of a skip.
+  Found by `packages/core/src/tests/hostile-state-contract.test.ts`.
 
 ## Deferred
 

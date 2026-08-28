@@ -8,6 +8,7 @@ import {
 import type { CheckContext, PageContext } from '../check-context';
 import type { FetchResult } from '../fetcher';
 import { allEvidenceMet, buildScanEvidence } from '../scan-evidence';
+import { SHELL_HTML } from '../tests/hostile-states';
 
 export function mockPageContext(url: string, html: string, index: number = 0): PageContext {
   const $ = parseHtml(html);
@@ -150,13 +151,6 @@ export function walledSiteContext(overrides: Partial<CheckContext> = {}): CheckC
     ...overrides,
   };
 }
-
-/**
- * The body a JS shell serves: a mount point and a script, no text.
- */
-export const SHELL_HTML =
-  '<html lang="en"><head><title>Shop</title></head>' +
-  '<body><div id="root"></div><script src="/app.js"></script></body></html>';
 
 /**
  * A page that arrived from the right host and rendered no text.

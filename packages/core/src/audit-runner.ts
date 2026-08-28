@@ -91,9 +91,12 @@ export interface PlanOptions {
   /**
    * Skip audits whose `requires` the scan did not obtain.
    *
-   * Off by default while the gate is calibrated: turning it on changes what
-   * every blocked or client-rendered scan reports, and that lands as one
-   * deliberate change rather than as a side effect of this one.
+   * The orchestrator turns this on for every scan
+   * (`enforceEvidenceGate ?? true`), so an audit's `requires` decides what a
+   * blocked or client-rendered scan reports. It defaults to off in this option
+   * bag only so a caller planning audits directly gets the unfiltered set;
+   * passing `false` is the measurement escape hatch for comparing a gated run
+   * against an ungated one.
    */
   enforceEvidence?: boolean;
 }

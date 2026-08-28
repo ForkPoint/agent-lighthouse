@@ -124,9 +124,11 @@ All three rows graded **A** independently, on the same proven consumer path (Goo
   the `X-Robots-Tag` header, which arrive whether or not the body renders, so the
   keys `check-requires` derived from the `ctx.pages` read overstated what the
   verdict depends on. Recorded as a gate exemption in
-  `scripts/lib/requires-analysis.mjs`. No verdict changes; under the evidence
-  gate the audit is no longer skipped on a JS-shell scan. Found by
-  `packages/core/src/tests/hostile-state-contract.test.ts`.
+  `scripts/lib/requires-analysis.mjs`. The verdict itself does not move, but
+  the gate is on for every scan, so this audit now runs on a client-rendered
+  one instead of being skipped. It is scored at weight 1.0, so a shell scan
+  now carries a judgement on whether its pages forbid indexing or quoting.
+  Found by `packages/core/src/tests/hostile-state-contract.test.ts`.
 
 ## Review history
 

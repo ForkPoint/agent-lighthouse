@@ -82,9 +82,10 @@ Real signal — readable URLs appear in AI citations and do carry pre-fetch topi
   `['origin-reachable', 'unblocked-fetches']`. The audit judges the URL strings
   of the pages the scan fetched, and a URL is readable whether or not the page
   behind it rendered text. Recorded as a gate exemption in
-  `scripts/lib/requires-analysis.mjs`. No verdict changes; under the evidence
-  gate the audit is no longer skipped on a JS-shell scan, though a shell yields a
-  thinner set of URLs to judge because link discovery finds less. Found by
+  `scripts/lib/requires-analysis.mjs`. The verdict itself does not move, and
+  the audit carries weight 0 in the `informative` tier, so a shell scan gains a
+  reported line and no score. The reservation worth recording is the sample: a
+  shell yields fewer URLs to judge, because link discovery finds less. Found by
   `packages/core/src/tests/hostile-state-contract.test.ts`.
 
 ## Review history

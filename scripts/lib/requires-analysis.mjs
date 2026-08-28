@@ -127,8 +127,9 @@ export const GATE_EXEMPTIONS = {
   'operability-safety/third-party-dom-write-blast-radius': {
     drop: ['rendered-body', 'sample-adequate'],
     reason:
-      'Counts the script, stylesheet and frame origins in the served HTML against the CSP ' +
-      'header. A shell is mostly script tags, which is precisely this census.',
+      'Every origin the served HTML names is counted whether or not the body renders, and ' +
+      'a page that ships a vendor script statically is the case worth reporting. The audit ' +
+      'declines its own empty census on a shell rather than certifying one.',
   },
   'access-crawl-control/https-enabled': {
     drop: ['origin-reachable', 'unblocked-fetches', 'rendered-body', 'sample-adequate'],

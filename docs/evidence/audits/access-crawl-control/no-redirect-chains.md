@@ -71,9 +71,10 @@ _No dedicated evidence signal was researched for this audit in the 2026-08-20 pa
   `rendered-body` and `sample-adequate` now go with it. A hop is recorded by the
   response — request URL against final URL — and a page that renders no text
   resolves in as many hops as any other. The audit reports "no pages scanned"
-  itself, so nothing relies on those keys standing in for a page existing. No
-  verdict changes; under the evidence gate the audit is no longer skipped on a
-  JS-shell scan. Found by
+  itself, so nothing relies on those keys standing in for a page existing. The
+  verdict itself does not move, but the gate is on for every scan, so a
+  client-rendered scan is now scored on its redirect behaviour at weight 1.0
+  instead of being skipped. Found by
   `packages/core/src/tests/hostile-state-contract.test.ts`.
 
 ## Review history

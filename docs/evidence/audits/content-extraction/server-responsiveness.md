@@ -99,8 +99,10 @@ Fails when any page's TTFB exceeds 1800ms, warns above an 800ms average. The und
   response, and a JS shell answers as fast or as slow as anything else the origin
   serves, so gating the measurement on rendered text withheld a figure the scan
   was holding. Recorded as a gate exemption in
-  `scripts/lib/requires-analysis.mjs`. No verdict changes; the walled-scan branch
-  above still names the wall. Found by
+  `scripts/lib/requires-analysis.mjs`. The walled-scan branch above still names
+  the wall, and the verdict itself does not move — but the gate is on for every
+  scan, so a client-rendered scan now carries its TTFB judgement at weight 0.6
+  instead of a skip. Found by
   `packages/core/src/tests/hostile-state-contract.test.ts`.
 
 ## Review history

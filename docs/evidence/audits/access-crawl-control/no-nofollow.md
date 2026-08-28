@@ -83,9 +83,11 @@ Title and guidance promise 'No nofollow on important links' and advise reserving
   touching `ctx.pages`, but what it reads there is `<meta name="robots">` and the
   `X-Robots-Tag` header, both served whole by a page whose body renders nothing.
   The disagreement is recorded as a gate exemption in
-  `scripts/lib/requires-analysis.mjs`. No verdict changes; under the evidence
-  gate the audit is no longer skipped on a JS-shell scan, where its answer is
-  sound. Found by `packages/core/src/tests/hostile-state-contract.test.ts`.
+  `scripts/lib/requires-analysis.mjs`. The verdict itself does not move, but
+  the gate is on for every scan, so this audit now runs on a client-rendered
+  one instead of being skipped. It is scored at weight 1.0, so a shell scan
+  that reported nothing about its nofollow directives now reports and scores
+  them. Found by `packages/core/src/tests/hostile-state-contract.test.ts`.
 
 ## Review history
 
