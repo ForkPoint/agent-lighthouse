@@ -236,10 +236,28 @@ const blocked = state({
  * from the requested host denies nothing but `unblocked-fetches`, so it is the
  * one wall the four states above do not reach — and the state that convicts an
  * audit whose only protection is `origin-reachable`.
+ *
+ * The wall is modelled at its hardest, not at its emptiest. A challenge is
+ * served *through* the site's own edge, so the response-header rules and the
+ * head fragment the site attaches to every response are still attached to this
+ * one: a self-referential canonical, the site's AI-usage headers, its TDM
+ * reservation. eBay's 200 wall in the corpus is that shape already — it is
+ * eBay's own error template, carrying eBay's `<meta name="robots">`, eBay's
+ * footer and eBay's links.
+ *
+ * Every one of those signals is a declaration about a document the scan never
+ * received. Reporting them as the site's is the same defect as reporting the
+ * interstitial's `noindex`: the audit is describing the wall. So the state
+ * carries them, and any audit that congratulates the site for them is
+ * convicted here.
  */
 const CHALLENGE_200_HTML =
   '<!DOCTYPE html><html lang="en-US"><head><title>Just a moment...</title>' +
   '<meta name="robots" content="noindex,nofollow">' +
+  // The site's own head fragment, which the edge kept: it names the requested
+  // URL as its own canonical, so a self-referential-canonical check reads a
+  // clean bill of health off a page the site did not write.
+  `<link rel="canonical" href="${HOME_URL}">` +
   '<meta name="viewport" content="width=device-width,initial-scale=1"></head>' +
   '<body class="no-js"><div class="main-wrapper" role="main"><div class="main-content">' +
   '<h1>example.test</h1><p id="challenge-error-text">Enable JavaScript and cookies to continue</p>' +
@@ -250,6 +268,11 @@ const CHALLENGE_200_HEADERS = {
   'cf-mitigated': 'challenge',
   'cf-ray': 'a32341f569537bd7-SOF',
   server: 'cloudflare',
+  // Site-wide response headers, added by the same edge that served the wall.
+  // A header rule matches every response, the interstitial included, so these
+  // arrive on a body that holds none of the site's content.
+  'content-usage': 'train-ai=n',
+  'tdm-reservation': '1',
 };
 
 const challengedAt200 = state({
