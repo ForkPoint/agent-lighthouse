@@ -1,5 +1,17 @@
 # @forkpoint/agent-lighthouse-mcp
 
+## 3.1.0
+
+### Patch Changes
+
+- Updated dependencies [90d815b]
+- Updated dependencies [90d815b]
+- Updated dependencies [90d815b]
+- Updated dependencies [90d815b]
+- Updated dependencies [90d815b]
+  - @forkpoint/agent-lighthouse-core@3.1.0
+  - @forkpoint/agent-lighthouse-report@3.1.0
+
 ## 3.0.0
 
 ### Major Changes
