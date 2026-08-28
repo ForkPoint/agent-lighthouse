@@ -443,11 +443,20 @@ async function main(): Promise<void> {
     console.error('\nno site produced an outcome — the run scanned nothing');
     process.exit(EXIT.scannedNothing);
   }
+  // Violations decide the exit code, deadline or not. A night that found a
+  // real violation at site 300 and then ran out of time was reported as exit 4
+  // — the job failing — and the finding this job exists for went unsaid. The
+  // deadline is still printed, so an operator reading a red run sees both.
   if (unreached > 0) {
-    console.error(`\nran out of time with ${unreached} of ${planned.length} sites unscanned`);
-    process.exit(EXIT.deadline);
+    console.error(
+      `\nran out of time with ${unreached} of ${planned.length} sites unscanned` +
+        (broken.length > 0
+          ? ` — exiting ${EXIT.violation} for ${broken.length} site(s) with violations, not ${EXIT.deadline}`
+          : ''),
+    );
   }
   if (broken.length > 0) process.exit(EXIT.violation);
+  if (unreached > 0) process.exit(EXIT.deadline);
 }
 
 main().catch((err) => {
