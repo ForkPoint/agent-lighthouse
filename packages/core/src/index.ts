@@ -2,8 +2,8 @@ export { runScan } from './orchestrator';
 export type { ScanOptions } from './orchestrator';
 export { ProgressTracker, PHASE_WEIGHTS } from './progress';
 export type { PhaseId, ScanEvent } from './progress';
-export { createFetcher, isSafeUrl } from './fetcher';
-export type { FetchResult, FetchOptions } from './fetcher';
+export { createFetcher, isSafeUrl, boundedDispatcher } from './fetcher';
+export type { FetchResult, FetchOptions, FetcherOptions } from './fetcher';
 export {
   classifyFetch,
   isRealFile,
