@@ -3,6 +3,7 @@ import { NoBlockingCaptchaAudit } from './no-blocking-captcha';
 import {
   attributableFixture,
   mockCheckContext,
+  shellSiteContext,
   mockPageContext,
   unreachedSiteContext,
   walledSiteContext,
@@ -112,4 +113,27 @@ describe('NoBlockingCaptchaAudit — the wall the scanner met', () => {
     expect(result.message).toContain('bot wall');
     expect(result.message).toContain('Cloudflare');
   });
+
+  // The weight-1.0 vacuous pass this audit shipped. The detection is a
+  // substring search over the served HTML; a shell renders its forms — and
+  // whatever guards them — from a bundle this search cannot read. `requires`
+  // is empty so the gate does not decline this, and the audit has to.
+  it('declines a page that served no readable text', () => {
+    const result = new NoBlockingCaptchaAudit().audit(shellSiteContext());
+    expect(result.status).toBe('na');
+    expect(result.message).toContain('no readable text');
+  });
+
+  // Ordering: the guard sits below the detection branch, so a CAPTCHA a shell
+  // does serve statically is still reported.
+  it('still reports a CAPTCHA a shell serves statically', () => {
+    const html =
+      '<html lang="en"><head><title>Shop</title>' +
+      '<script src="https://www.google.com/recaptcha/api.js"></script></head>' +
+      '<body><div id="root"></div></body></html>';
+    const result = new NoBlockingCaptchaAudit().audit(shellSiteContext(html));
+    expect(result.status).toBe('warn');
+    expect(result.message).toContain('recaptcha');
+  });
+
 });

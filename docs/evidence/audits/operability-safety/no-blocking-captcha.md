@@ -70,9 +70,28 @@ _No dedicated evidence signal was researched for this audit in the 2026-08-20 pa
   and names the wall. `requires` is now empty and the gate exemption drops
   `origin-reachable`: a 403 denies that key, so the wall finding added on
   2026-08-26 had been unreachable in production for the 403 that produces it.
-  Verdicts that moved on the four nothing-obtained contract states: redirected
-  away pass → na, non-HTML homepage pass → na. Found by
+  Verdicts that moved on the five nothing-obtained contract states: redirected
+  away pass → na, non-HTML homepage pass → na, HTTP 200 bot challenge
+  unchanged. Found by
   `packages/core/src/tests/hostile-state-contract.test.ts`.
+- 2026-08-28 — the "found nothing" branch declines a page that served no
+  readable text. The detection is a substring search over the served HTML, and
+  a JS shell serves a mount point and a bundle: the CAPTCHA an agent meets is
+  rendered by that bundle, and so is the form it guards. Before this the audit
+  returned `pass "No blocking CAPTCHA scripts detected on scanned pages."` at
+  weight 1.0 about every client-rendered site. `requires` is empty so the wall
+  branch stays reachable behind a 403, which means the evidence gate does not
+  decline this case — the audit has to. Measured on the shell contract state:
+  pass → na. A consequence worth naming: this was the only
+  `operability-safety` check that scored on a shell, so that category's score
+  on such a scan moves 100 → 0, which is what `calculateCategoryScore` returns
+  when nothing in a category was assessed. A shell scan carries no overall
+  score in either version.
+- 2026-08-28 — `scanReadTheSite()` now reads `evidence.judgeable`
+  (`origin-reachable && unblocked-fetches`) rather than `origin-reachable`
+  alone, because a Cloudflare managed challenge is served at HTTP 200,
+  `text/html`, from the requested host. This audit's verdict on that state is
+  unchanged: the wall branch above the guard reports the wall either way.
 
 ## Review history
 

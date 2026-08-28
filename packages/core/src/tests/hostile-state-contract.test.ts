@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { defaultConfig } from '../audit-config';
 import { AuditResultSchema } from '../schemas';
 import { NOTHING_OBTAINED, SHELL_STATE } from './hostile-states';
+import { auditSources, readsServedPageBody } from './audit-sources';
 import type { AuditResult } from '../types';
 
 /**
@@ -74,18 +75,33 @@ describe('hostile-state contract — nothing obtained', () => {
 /**
  * A shell is not an empty scan: a page arrived, it just carried no text. Root
  * files were fetched and read, so a robots-based audit passing here is
- * correct. Only audits that declare `rendered-body` are held to the rule —
- * narrowing by the audit's own `requires` keeps the claim tied to what the
- * audit says it needs, rather than to its category.
+ * correct. Held to the rule: every audit that declares `rendered-body`, plus
+ * every audit that searches a page's served HTML whatever it declares.
  */
 describe('hostile-state contract — a shell page', () => {
   const ctx = SHELL_STATE.build();
-  const readsRenderedBody = registrations.filter((r) =>
-    (r.meta.requires ?? []).includes('rendered-body'),
+  // Held to the rule: an audit that declares `rendered-body`, plus an audit
+  // whose source searches a page's served HTML whatever it declares. The
+  // second half is not redundant — `audit-sources.ts` says which two audits
+  // fell through the first half and why.
+  const sources = auditSources();
+  const readsRenderedBody = registrations.filter(
+    (r) =>
+      (r.meta.requires ?? []).includes('rendered-body') ||
+      readsServedPageBody(sources.get(r.meta.id) ?? ''),
   );
 
   it('has page-reading audits to check', () => {
     expect(readsRenderedBody.length).toBeGreaterThan(20);
+  });
+
+  it('holds the audits that dropped rendered-body by exemption to the rule too', () => {
+    // The regression this filter exists for. Both declare `requires: []`, so
+    // filtering on the declaration alone excused exactly the two audits that
+    // shipped a weight-1.0 vacuous pass on every client-rendered site.
+    const held = new Set(readsRenderedBody.map((r) => r.meta.id));
+    expect(held.has('access-crawl-control/no-bot-detection')).toBe(true);
+    expect(held.has('operability-safety/no-blocking-captcha')).toBe(true);
   });
 
   for (const registration of readsRenderedBody) {

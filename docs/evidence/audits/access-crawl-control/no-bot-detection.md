@@ -91,9 +91,26 @@ a pause is the only way to get a verdict from a rate-limited origin.
   `origin-reachable` too — a 403 denies that key, so the gate had been
   skipping this audit before it could report the very wall that produced the
   403.
-  Verdicts that moved on the four nothing-obtained contract states: redirected
-  away pass → na, non-HTML homepage pass → na. Found by
+  Verdicts that moved on the five nothing-obtained contract states: redirected
+  away pass → na, non-HTML homepage pass → na, HTTP 200 bot challenge
+  unchanged. Found by
   `packages/core/src/tests/hostile-state-contract.test.ts`.
+- 2026-08-28 — the "found nothing" branch declines a page that served no
+  readable text. The detection is a substring search over the served HTML, and
+  a JS shell serves a mount point and a bundle: the Turnstile or DataDome
+  loader a user's agent meets is inside that bundle, where the search cannot
+  reach it. Before this the audit returned `pass "No aggressive bot-detection
+  scripts found on scanned pages."` at weight 1.0 about every client-rendered
+  site. `requires` is empty so the wall branch stays reachable behind a 403,
+  which means the evidence gate does not decline this case — the audit has to.
+  The wall and detection branches above still run first, so a shell that does
+  ship a challenge loader statically is still reported. Measured on the shell
+  contract state: pass → na.
+- 2026-08-28 — `scanReadTheSite()` now reads `evidence.judgeable`
+  (`origin-reachable && unblocked-fetches`) rather than `origin-reachable`
+  alone, because a Cloudflare managed challenge is served at HTTP 200,
+  `text/html`, from the requested host. This audit's verdict on that state is
+  unchanged: the wall branch above the guard reports the firewall either way.
 
 ## Review history
 

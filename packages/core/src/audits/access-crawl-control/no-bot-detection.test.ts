@@ -3,6 +3,7 @@ import { NoBotDetectionAudit } from './no-bot-detection';
 import {
   attributableFixture,
   mockCheckContext,
+  shellSiteContext,
   mockPageContext,
   unreachedSiteContext,
   walledSiteContext,
@@ -131,4 +132,28 @@ describe('NoBotDetectionAudit', () => {
     expect(result.message).toContain('Bot-defense firewall detected');
     expect(result.message).toContain('Cloudflare');
   });
+
+  // The weight-1.0 vacuous pass this audit shipped. The detection is a
+  // substring search over the served HTML, and a shell serves a mount point
+  // and a bundle: the Turnstile loader is inside the bundle, where the search
+  // cannot reach it. `requires` is empty so the gate does not decline this —
+  // the audit has to.
+  it('declines a page that served no readable text', () => {
+    const result = new NoBotDetectionAudit().audit(shellSiteContext());
+    expect(result.status).toBe('na');
+    expect(result.message).toContain('no readable text');
+  });
+
+  // Ordering again: the guard sits below the detection branches, so a shell
+  // that ships a challenge loader in its static HTML is still reported.
+  it('still reports a loader a shell serves statically', () => {
+    const html =
+      '<html lang="en"><head><title>Shop</title>' +
+      '<script src="https://challenges.cloudflare.com/turnstile/v0/api.js"></script></head>' +
+      '<body><div id="root"></div></body></html>';
+    const result = new NoBotDetectionAudit().audit(shellSiteContext(html));
+    expect(result.status).toBe('warn');
+    expect(result.message).toContain('Cloudflare Turnstile');
+  });
+
 });
