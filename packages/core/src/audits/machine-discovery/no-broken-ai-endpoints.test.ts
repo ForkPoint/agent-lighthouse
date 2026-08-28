@@ -156,16 +156,19 @@ describe('NoBrokenAiEndpointsAudit', () => {
     expect(result.message).toContain('reachable');
   });
 
-  it('skips URLs that fail the safe-URL check (covers isSafeUrl false branch)', async () => {
+  it('declines to certify a list whose every URL the safe-URL check refused', async () => {
     // localhost is explicitly blocked by isSafeUrl without DNS lookup → false branch covered
     const ctx = mockCheckContext([], {
       '/llms.txt': mockFetchResult('http://localhost/api\n', 200, 'text/plain'),
     });
     // No ctx.fetch needed — isSafeUrl filters out localhost before any fetch
     const result = await audit.audit(ctx);
-    // 0 safe URLs → 0 broken → pass (with "All 0 AI endpoint URL(s) are reachable")
-    expect(result.status).toBe('pass');
-    expect(result.message).toContain('All 0');
+    // The audit used to answer "All 0 AI endpoint URL(s) are reachable" here: a
+    // pass for a census of nothing. One URL was listed and none was requested,
+    // so the honest verdict names that.
+    expect(result.status).toBe('warn');
+    expect(result.message).toContain('none of them could be requested');
+    expect(result.found).toContain('0 reachable to check');
   });
 
   it('counts fetch errors as broken (status 0)', async () => {

@@ -92,6 +92,19 @@ Genuinely valuable signal — a llms.txt full of 404s does degrade agent trust �
 
 **Counter-evidence:** Two caveats that shape how this must be audited. (1) User-Agent-based probing is unreliable in both directions: Cloudflare documented Perplexity using a Chrome-impersonating stealth crawler on unlisted IPs across rotating ASNs at 3–6M requests/day to evade no-crawl directives, and conversely malicious scrapers routinely spoof GPTBot. An audit that merely sets a UA header measures the WAF's UA rules, not real agent access — genuine verification requires the vendors' published IP ranges (openai.com/gptbot.json, claude.com/crawling/bots.json, perplexity.com/perplexitybot.json) or Web Bot Auth signatures. (2) Blocking is often a deliberate, rational business decision, not a defect. Cloudflare's crawl-to-refer data puts Anthropic at about 71,000 crawls per HTML referral in the June 2025 window, with the caveat that Claude's native app sends no Referer. That makes uncompensated crawl a real cost. The audit should REPORT the gate neutrally as 'AI agents are blocked here' rather than scoring it as a failure, since the site owner may have chosen it.
 
+## Implementation deviations
+
+- 2026-08-28 — a list whose every URL the SSRF gate refused is no longer a
+  pass. `isSafeUrl()` drops any URL naming localhost, a private address or a
+  host that does not resolve; when that emptied the list, the audit reported
+  "All 0 AI endpoint URL(s) are reachable" — a pass for a census that never
+  ran. It now warns, naming how many URLs were listed and that none of them
+  could be requested. The older branch for a manifest that lists no URLs at all
+  is unchanged. Found by
+  `packages/core/src/tests/hostile-state-contract.test.ts`: on a bot wall
+  answering 200 at `/llms.txt`, the wall's own markup supplied the only
+  candidate URL and the audit passed the site behind it.
+
 ## Review history
 
 - 2026-08-20 — code review (11-agent workflow) + evidence research (12-domain workflow, 400 sources).
