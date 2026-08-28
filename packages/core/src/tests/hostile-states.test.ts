@@ -5,9 +5,9 @@ import { HOSTILE_STATES, NOTHING_OBTAINED, ROOT_PATHS, SHELL_STATE } from './hos
 import { EVIDENCE_KEYS } from '../scan-evidence';
 
 describe('hostile scan states', () => {
-  it('offers five states, four of which hold no evidence about the site', () => {
-    expect(HOSTILE_STATES).toHaveLength(5);
-    expect(NOTHING_OBTAINED).toHaveLength(4);
+  it('offers six states, five of which hold no evidence about the site', () => {
+    expect(HOSTILE_STATES).toHaveLength(6);
+    expect(NOTHING_OBTAINED).toHaveLength(5);
     expect(SHELL_STATE.nothingObtained).toBe(false);
   });
 
@@ -66,6 +66,25 @@ describe('hostile scan states', () => {
     const ctx = SHELL_STATE.build();
     expect(ctx.pages).toHaveLength(1);
     expect(Object.values(ctx.evidence.renderedByPage)).toEqual([false]);
+  });
+
+  it('reaches the requested host on the 200 challenge and is still refused', () => {
+    // The state the other four cannot express: everything about the response
+    // says "the site answered" — 200, text/html, the requested host, so
+    // `origin-reachable` is met — and the scan was still turned away. An audit
+    // whose only guard is `origin-reachable` reports the interstitial as the
+    // site's own markup, which is how a challenge page's `noindex,nofollow`
+    // became a critical finding against the owner's homepage.
+    const ctx = HOSTILE_STATES.find((s) => s.name === 'challenged-at-200')!.build();
+    expect(ctx.pages).toHaveLength(1);
+    expect(ctx.pages[0]!.fetchResult.status).toBe(200);
+    expect(ctx.evidence.met['origin-reachable']).toBe(true);
+    expect(ctx.evidence.met['unblocked-fetches']).toBe(false);
+    expect(ctx.evidence.judgeable).toBe(false);
+    // The live detector, not the fixture, is what calls this a wall.
+    expect(ctx.wafProtection?.isBlocked).toBe(true);
+    expect(ctx.wafProtection?.provider).toBe('cloudflare');
+    expect(ctx.wafProtection?.statusCode).toBe(200);
   });
 
   it('names a bot wall on the blocked state and a throttle on the throttled one', () => {

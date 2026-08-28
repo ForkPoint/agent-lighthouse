@@ -7,6 +7,7 @@ import {
   extractRdfa,
 } from '../parser';
 import { buildScanEvidence } from '../scan-evidence';
+import { detectWafProtection } from '../waf-detector';
 import type { CheckContext, PageContext } from '../check-context';
 import type { FetchResult } from '../fetcher';
 import type { EvidenceKey } from '../scan-evidence';
@@ -15,8 +16,8 @@ import type { PageType } from '../types';
 
 /**
  * Scan states in which an audit has the least to go on and the most freedom to
- * invent. Four of them hold no evidence about the site the user asked for; the
- * fifth is a page that arrived and said nothing.
+ * invent. Five of them hold no evidence about the site the user asked for; the
+ * sixth is a page that arrived and said nothing.
  *
  * These are contexts, not fixtures: the contract suites run every registered
  * audit against each one, so an audit that congratulates a site the scan never
@@ -149,6 +150,11 @@ interface StateSpec {
   homepage: FetchResult;
   rootFiles: Record<string, FetchResult>;
   wafProtection?: WafProtection;
+  /**
+   * Derive the WAF verdict from the responses instead of stating it, for a
+   * state whose whole point is that the live detector reaches it.
+   */
+  waf?: (homepage: FetchResult, rootFiles: Record<string, FetchResult>) => WafProtection | null;
   /** Type the classifier would give the page, when one survives the filter. */
   pageType?: PageType;
 }
@@ -160,19 +166,20 @@ function state(spec: StateSpec): HostileState {
     nothingObtained: spec.nothingObtained,
     build: () => {
       const pages = pagesFrom(spec.homepage, spec.pageType ?? 'homepage');
+      const waf = spec.waf?.(spec.homepage, spec.rootFiles) ?? spec.wafProtection ?? null;
       return {
         rootFiles: spec.rootFiles,
         pages,
         domain: 'example.test',
         baseUrl: BASE_URL,
         fetch: async ({ url }) => fetchResult({ url, status: 404 }),
-        wafProtection: spec.wafProtection,
+        wafProtection: waf ?? undefined,
         evidence: buildScanEvidence({
           requestedUrl: HOME_URL,
           homepageResult: spec.homepage,
           pages,
           rootFiles: spec.rootFiles,
-          wafProtection: spec.wafProtection ?? null,
+          wafProtection: waf,
         }),
       };
     },
@@ -212,6 +219,60 @@ const blocked = state({
     reason: 'HTTP 403 with a cf-ray header',
     statusCode: 403,
   },
+});
+
+/**
+ * The same wall, served at HTTP 200.
+ *
+ * Copied from the two 200-status interstitials in the real corpus:
+ * `stackoverflow-thread-wall.html.gz` and `ebay-com-category-wall.html.gz`
+ * both carry `<title>Just a moment...</title>`, `<meta name="robots"
+ * content="noindex,nofollow">` and a `cf-mitigated: challenge` header, and
+ * their whole rendered body is one line asking the reader to enable
+ * JavaScript.
+ *
+ * `blocked` answers 403, which denies `origin-reachable` and takes every
+ * attribution guard with it. A managed challenge served at 200 `text/html`
+ * from the requested host denies nothing but `unblocked-fetches`, so it is the
+ * one wall the four states above do not reach — and the state that convicts an
+ * audit whose only protection is `origin-reachable`.
+ */
+const CHALLENGE_200_HTML =
+  '<!DOCTYPE html><html lang="en-US"><head><title>Just a moment...</title>' +
+  '<meta name="robots" content="noindex,nofollow">' +
+  '<meta name="viewport" content="width=device-width,initial-scale=1"></head>' +
+  '<body class="no-js"><div class="main-wrapper" role="main"><div class="main-content">' +
+  '<h1>example.test</h1><p id="challenge-error-text">Enable JavaScript and cookies to continue</p>' +
+  '</div></div><script src="/cdn-cgi/challenge-platform/h/b/orchestrate/chl_page/v1"></script>' +
+  '</body></html>';
+
+const CHALLENGE_200_HEADERS = {
+  'cf-mitigated': 'challenge',
+  'cf-ray': 'a32341f569537bd7-SOF',
+  server: 'cloudflare',
+};
+
+const challengedAt200 = state({
+  name: 'challenged-at-200',
+  missing: ['unblocked-fetches', 'rendered-body', 'sample-adequate'],
+  nothingObtained: true,
+  homepage: fetchResult({
+    url: HOME_URL,
+    status: 200,
+    contentType: 'text/html',
+    headers: CHALLENGE_200_HEADERS,
+    body: CHALLENGE_200_HTML,
+  }),
+  rootFiles: rootFiles(() => ({
+    status: 200,
+    contentType: 'text/html',
+    headers: CHALLENGE_200_HEADERS,
+    body: CHALLENGE_200_HTML,
+  })),
+  // Derived, not written by hand. The hand-written maps on the states above
+  // predate this one; here the point is that a live scan of this response
+  // really does produce a blocked verdict, so the detector decides it.
+  waf: (homepage, files) => detectWafProtection(HOME_URL, homepage, files, 1),
 });
 
 /** A throttle: the scan asked too fast. Says nothing about who the site admits. */
@@ -344,6 +405,12 @@ const shell = state({
   ),
 });
 
-export const NOTHING_OBTAINED: HostileState[] = [blocked, throttled, redirectedAway, nonHtml];
+export const NOTHING_OBTAINED: HostileState[] = [
+  blocked,
+  challengedAt200,
+  throttled,
+  redirectedAway,
+  nonHtml,
+];
 export const SHELL_STATE: HostileState = shell;
 export const HOSTILE_STATES: HostileState[] = [...NOTHING_OBTAINED, shell];
