@@ -27,8 +27,10 @@ export class NoBotDetectionAudit extends Audit {
     evidenceGrade: 'A',
     tier: 'scored',
     dossier: 'docs/evidence/audits/access-crawl-control/no-bot-detection.md',
-    // Gate exemption: being refused is what this category reports.
-    requires: ['origin-reachable', 'rendered-body', 'sample-adequate'],
+    // Gate exemption: being refused is what this category reports, and this audit names
+    // the firewall from `wafProtection` alone. Evidence a wall destroys is not evidence
+    // the wall finding needs.
+    requires: [],
     defaultPriority: 'high',
     guidance: {
       impact:
@@ -53,15 +55,6 @@ export class NoBotDetectionAudit extends Audit {
       );
     }
 
-    // Nothing here can be attributed to this site; see `scanReadTheSite`.
-    if (!scanReadTheSite(ctx.evidence)) {
-      return this.notApplicable(
-        'No page here can be attributed to this site, so its scripts were not judged.',
-        'No JavaScript-based bot challenges that would block legitimate AI agents',
-        unreadSiteReason(ctx.evidence),
-      );
-    }
-
     // If active WAF protection or aggressive connection dropping was detected
     if (ctx.wafProtection?.isBlocked) {
       return this.fail(
@@ -74,6 +67,15 @@ export class NoBotDetectionAudit extends Audit {
             'A Web Application Firewall (WAF) or bot defense system is actively dropping, resetting, or challenging crawler HTTP connections. Legitimate AI search crawlers (GPTBot, Claude, Perplexity) cannot access or index your store content unless allowlisted.',
           code: '// Example: Allowlist AI crawler user-agents in your WAF settings\n// Akamai / Cloudflare / DataDome WAF Custom Rules:\n// Allow User-Agent matching "GPTBot" OR "ChatGPT-User" OR "Claude-User" OR "PerplexityBot"',
         },
+      );
+    }
+
+    // Nothing here can be attributed to this site; see `scanReadTheSite`.
+    if (!scanReadTheSite(ctx.evidence)) {
+      return this.notApplicable(
+        'No page here can be attributed to this site, so its scripts were not judged.',
+        'No JavaScript-based bot challenges that would block legitimate AI agents',
+        unreadSiteReason(ctx.evidence),
       );
     }
 

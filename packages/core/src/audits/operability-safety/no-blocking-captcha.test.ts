@@ -5,6 +5,7 @@ import {
   mockCheckContext,
   mockPageContext,
   unreachedSiteContext,
+  walledSiteContext,
 } from '../../__tests__/test-utils';
 
 describe('NoBlockingCaptchaAudit', () => {
@@ -102,5 +103,13 @@ describe('NoBlockingCaptchaAudit — the wall the scanner met', () => {
 
     const unreached = await instance.audit(unreachedSiteContext(pages, rootFiles));
     expect(unreached.status).toBe('na');
+  });
+  // Ordering: the wall is this audit's subject. A guard above the wall branch
+  // returns `na` and re-ships the defect this audit was written to fix.
+  it('reports the wall on a walled scan, not a shrug', () => {
+    const result = new NoBlockingCaptchaAudit().audit(walledSiteContext());
+    expect(result.status).toBe('fail');
+    expect(result.message).toContain('bot wall');
+    expect(result.message).toContain('Cloudflare');
   });
 });

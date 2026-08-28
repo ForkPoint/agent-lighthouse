@@ -5,6 +5,7 @@ import {
   mockCheckContext,
   mockPageContext,
   unreachedSiteContext,
+  walledSiteContext,
 } from '../../__tests__/test-utils';
 
 describe('NoBotDetectionAudit', () => {
@@ -119,5 +120,15 @@ describe('NoBotDetectionAudit', () => {
 
     const unreached = await instance.audit(unreachedSiteContext(pages, rootFiles));
     expect(unreached.status).toBe('na');
+  });
+  // Ordering, not just behaviour: the wall is this audit's subject, so the
+  // attribution guard must sit BELOW the `isBlocked` branch. A guard above it
+  // returns `na` here and the critical, weight-1.0 finding disappears from a
+  // walled scan — the most common hostile scan there is.
+  it('reports the firewall on a walled scan, not a shrug', () => {
+    const result = new NoBotDetectionAudit().audit(walledSiteContext());
+    expect(result.status).toBe('fail');
+    expect(result.message).toContain('Bot-defense firewall detected');
+    expect(result.message).toContain('Cloudflare');
   });
 });

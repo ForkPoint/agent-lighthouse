@@ -86,13 +86,14 @@ The most valuable premise in the category — whether meaningful content exists 
 - 2026-08-26 — the per-page decision is read from the scan's evidence record rather than recomputed here, so the rule has one implementation. A page the record does not cover is judged by that same shared function.
 - 2026-08-26 — a scan with no fetched page returns `notApplicable`, where it previously returned `warn`. A warning is a claim about the site; the accurate statement is that nothing was seen.
 - 2026-08-28 — the audit declines when the scan holds no response it can
-  attribute to this site. `ctx.pages` and `ctx.rootFiles` carry whatever
-  answered 200, which on a parked domain is a broker's page served from another
-  host and on a walled, throttled or non-HTML origin is nothing about the site
-  at all. The audit read them as the site's own and returned a verdict about
-  somebody else. It now consults `scanReadTheSite`, the `origin-reachable`
-  decision it already names in `requires`, and returns `notApplicable` with the
-  gate's reason attached. Found by the hostile-state contract suite.
+  attribute to this site. It read the served body of each scanned page, and
+  `ctx.pages`/`ctx.rootFiles` carry whatever answered 200 — on a parked domain
+  a broker's page from another host, on a walled or throttled origin nothing
+  at all. It now consults `scanReadTheSite()` and returns `notApplicable`
+  carrying the gate's own reason.
+  Verdicts that moved on the four nothing-obtained contract states: redirected
+  away pass → na, non-HTML homepage fail → na. Found by
+  `packages/core/src/tests/hostile-state-contract.test.ts`.
 
 ## Deferred
 

@@ -91,13 +91,22 @@ The signal is real and important (AI crawlers do require valid TLS), but the imp
 ## Implementation deviations
 
 - 2026-08-28 — the audit declines when the scan holds no response it can
-  attribute to this site. `ctx.pages` and `ctx.rootFiles` carry whatever
-  answered 200, which on a parked domain is a broker's page served from another
-  host and on a walled, throttled or non-HTML origin is nothing about the site
-  at all. The audit read them as the site's own and returned a verdict about
-  somebody else. It now consults `scanReadTheSite`, the `origin-reachable`
-  decision it already names in `requires`, and returns `notApplicable` with the
-  gate's reason attached. Found by the hostile-state contract suite.
+  attribute to this site. It read the homepage's status code, and
+  `ctx.pages`/`ctx.rootFiles` carry whatever answered 200 — on a parked domain
+  a broker's page from another host, on a walled or throttled origin nothing
+  at all. It now consults `scanReadTheSite()` and returns `notApplicable`
+  carrying the gate's own reason.
+  The plain-HTTP fail runs **before** the guard: the scheme is a property of
+  the request and is provable with no response at all, so a walled HTTP site
+  still fails. The gate exemption drops the response-fed keys for that reason.
+  The old "Possible TLS or server error" warn is gone for a scan with no
+  attributable homepage — the orchestrator only admits a page that answered
+  200, so that branch could never name a status, and on a bot wall it named a
+  fault that does not exist.
+  Verdicts that moved on the four nothing-obtained contract states: walled
+  warn → na, throttled warn → na, redirected away pass → na, non-HTML homepage
+  pass → na. Found by
+  `packages/core/src/tests/hostile-state-contract.test.ts`.
 
 ## Review history
 

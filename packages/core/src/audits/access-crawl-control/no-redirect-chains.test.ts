@@ -86,4 +86,17 @@ describe('NoRedirectChainsAudit', () => {
     const unreached = await instance.audit(unreachedSiteContext(pages, rootFiles));
     expect(unreached.status).toBe('na');
   });
+  // Ordering: the hop that left the site is this audit's subject, and leaving
+  // the site is exactly what denies `origin-reachable`. A guard above the
+  // redirect count silences the one audit that should be speaking.
+  it('reports the hop when the redirect is what left the site', () => {
+    const parked = '<html><body><p>Parked.</p></body></html>';
+    const page = mockPageContext('https://example.com/', parked);
+    page.fetchResult.finalUrl = 'https://parking.brandsale.test/example.com';
+
+    const result = new NoRedirectChainsAudit().audit(unreachedSiteContext([page]));
+    expect(result.status).toBe('fail');
+    expect(result.message).toContain('1/1');
+    expect(result.found).toContain('parking.brandsale.test');
+  });
 });

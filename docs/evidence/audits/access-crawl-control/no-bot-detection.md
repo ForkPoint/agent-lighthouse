@@ -80,13 +80,20 @@ a pause is the only way to get a verdict from a rate-limited origin.
 ## Implementation deviations
 
 - 2026-08-28 — the audit declines when the scan holds no response it can
-  attribute to this site. `ctx.pages` and `ctx.rootFiles` carry whatever
-  answered 200, which on a parked domain is a broker's page served from another
-  host and on a walled, throttled or non-HTML origin is nothing about the site
-  at all. The audit read them as the site's own and returned a verdict about
-  somebody else. It now consults `scanReadTheSite`, the `origin-reachable`
-  decision it already names in `requires`, and returns `notApplicable` with the
-  gate's reason attached. Found by the hostile-state contract suite.
+  attribute to this site. It read the scripts on the scanned pages, and
+  `ctx.pages`/`ctx.rootFiles` carry whatever answered 200 — on a parked domain
+  a broker's page from another host, on a walled or throttled origin nothing
+  at all. It now consults `scanReadTheSite()` and returns `notApplicable`
+  carrying the gate's own reason.
+  The guard sits **below** the `wafProtection.isBlocked` branch, not above it:
+  a bot-defense firewall is this audit's subject, so a walled scan still fails
+  and names the firewall. `requires` is now empty and the gate exemption drops
+  `origin-reachable` too — a 403 denies that key, so the gate had been
+  skipping this audit before it could report the very wall that produced the
+  403.
+  Verdicts that moved on the four nothing-obtained contract states: redirected
+  away pass → na, non-HTML homepage pass → na. Found by
+  `packages/core/src/tests/hostile-state-contract.test.ts`.
 
 ## Review history
 

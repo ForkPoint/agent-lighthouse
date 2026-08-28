@@ -5,6 +5,7 @@ import {
   mockCheckContext,
   mockPageContext,
   unreachedSiteContext,
+  walledSiteContext,
 } from '../../__tests__/test-utils';
 
 describe('HttpsEnabledAudit', () => {
@@ -55,5 +56,21 @@ describe('HttpsEnabledAudit', () => {
 
     const unreached = await instance.audit(unreachedSiteContext(pages, rootFiles));
     expect(unreached.status).toBe('na');
+  });
+  // Ordering: the scheme is a property of the request, provable with no
+  // response at all, so a walled scan of an HTTP site still gets the fail.
+  it('still fails a plain-HTTP site whose homepage never answered', () => {
+    const ctx = walledSiteContext({ baseUrl: 'http://example.com' });
+    const result = new HttpsEnabledAudit().audit(ctx);
+    expect(result.status).toBe('fail');
+    expect(result.message).toContain('not served over HTTPS');
+  });
+
+  // The old branch warned "Possible TLS or server error" whenever no 200
+  // arrived. On a bot wall that named a fault that does not exist.
+  it('does not invent a TLS fault on a walled HTTPS site', () => {
+    const result = new HttpsEnabledAudit().audit(walledSiteContext());
+    expect(result.status).toBe('na');
+    expect(result.message).not.toContain('TLS or server error');
   });
 });

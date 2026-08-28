@@ -51,13 +51,21 @@ _No dedicated evidence signal was researched for this audit in the 2026-08-20 pa
 ## Implementation deviations
 
 - 2026-08-28 — the audit declines when the scan holds no response it can
-  attribute to this site. `ctx.pages` and `ctx.rootFiles` carry whatever
-  answered 200, which on a parked domain is a broker's page served from another
-  host and on a walled, throttled or non-HTML origin is nothing about the site
-  at all. The audit read them as the site's own and returned a verdict about
-  somebody else. It now consults `scanReadTheSite`, the `origin-reachable`
-  decision it already names in `requires`, and returns `notApplicable` with the
-  gate's reason attached. Found by the hostile-state contract suite.
+  attribute to this site. It read the request/final URL of each scanned page,
+  and `ctx.pages`/`ctx.rootFiles` carry whatever answered 200 — on a parked
+  domain a broker's page from another host, on a walled or throttled origin
+  nothing at all. It now consults `scanReadTheSite()` and returns
+  `notApplicable` carrying the gate's own reason.
+  The redirect is counted **before** the guard runs: a hop that left the site
+  is this audit's subject, and leaving the site is exactly what denies
+  `origin-reachable`. A scan redirected to a parking host now fails naming the
+  hop instead of declining. The guard only stops the audit *clearing* a site
+  whose pages it never saw. The gate exemption drops `origin-reachable` for
+  the same reason; the page-fed keys stay, because with no page there is no
+  hop.
+  Verdicts that moved on the four nothing-obtained contract states: walled
+  fail → na, throttled fail → na, non-HTML homepage pass → na. Found by
+  `packages/core/src/tests/hostile-state-contract.test.ts`.
 
 ## Review history
 

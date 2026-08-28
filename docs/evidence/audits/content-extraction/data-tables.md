@@ -90,13 +90,15 @@ Correct core logic (parse5 auto-inserts <tbody>, so the '<table><tr><th>' patter
 ## Implementation deviations
 
 - 2026-08-28 — the audit declines when the scan holds no response it can
-  attribute to this site. `ctx.pages` and `ctx.rootFiles` carry whatever
-  answered 200, which on a parked domain is a broker's page served from another
-  host and on a walled, throttled or non-HTML origin is nothing about the site
-  at all. The audit read them as the site's own and returned a verdict about
-  somebody else. It now consults `scanReadTheSite`, the `origin-reachable`
-  decision it already names in `requires`, and returns `notApplicable` with the
-  gate's reason attached. Found by the hostile-state contract suite.
+  attribute to this site. It read the tables on the scanned pages, and
+  `ctx.pages`/`ctx.rootFiles` carry whatever answered 200 — on a parked domain
+  a broker's page from another host, on a walled or throttled origin nothing
+  at all. It now consults `scanReadTheSite()` and returns `notApplicable`
+  carrying the gate's own reason.
+  Verdicts that moved on the four nothing-obtained contract states: walled
+  pass → na, throttled pass → na, redirected away pass → na, non-HTML homepage
+  pass → na. Found by
+  `packages/core/src/tests/hostile-state-contract.test.ts`.
 
 ## Review history
 

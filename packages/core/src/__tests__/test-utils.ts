@@ -118,6 +118,39 @@ export function unreachedSiteContext(
   };
 }
 
+/**
+ * A scan the site walled: a bot wall on the context *and* `origin-reachable`
+ * denied, which is exactly what an HTTP 403 challenge produces.
+ *
+ * This pairing is the point. {@link unreachedSiteContext} flips the evidence
+ * key alone, so an attribution guard mistakenly placed *above* an audit's wall
+ * branch still passes there. Here it does not: the audits whose subject is the
+ * refusal must return the refusal, and ordering is what this context pins.
+ */
+export function walledSiteContext(overrides: Partial<CheckContext> = {}): CheckContext {
+  const ctx = unreachedSiteContext();
+  return {
+    ...ctx,
+    wafProtection: {
+      isBlocked: true,
+      provider: 'cloudflare',
+      name: 'Cloudflare',
+      reason: 'HTTP 403 with a cf-ray header',
+      statusCode: 403,
+    },
+    evidence: {
+      ...ctx.evidence,
+      met: { ...ctx.evidence.met, 'unblocked-fetches': false },
+      reasons: {
+        ...ctx.evidence.reasons,
+        'origin-reachable': 'The homepage answered HTTP 403.',
+        'unblocked-fetches': 'Cloudflare refused the scan: HTTP 403 with a cf-ray header.',
+      },
+    },
+    ...overrides,
+  };
+}
+
 export function mockFetchResult(
   body: string,
   status: number = 200,

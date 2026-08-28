@@ -63,12 +63,31 @@ export const GATE_EXEMPTIONS = {
     reason: 'A shell is what this audit reports. Gating it would delete the finding.',
   },
   'operability-safety/no-blocking-captcha': {
-    drop: ['unblocked-fetches', 'rendered-body', 'sample-adequate'],
-    reason: 'A captcha wall is what this audit reports.',
+    drop: ['origin-reachable', 'unblocked-fetches', 'rendered-body', 'sample-adequate'],
+    reason:
+      'A captcha wall is what this audit reports, and a wall denies origin-reachable: ' +
+      'gating on it made the wall finding unreachable for the 403 that produced it.',
   },
-  'operability-safety/no-bot-detection': {
-    drop: ['unblocked-fetches', 'rendered-body', 'sample-adequate'],
-    reason: 'Bot detection is what this audit reports.',
+  // The id here was `operability-safety/no-bot-detection` until 2026-08-28 — a
+  // category that does not hold this audit, so the entry matched nothing and
+  // the drop came only from BLOCK_EXEMPT_CATEGORY.
+  'access-crawl-control/no-bot-detection': {
+    drop: ['origin-reachable', 'unblocked-fetches', 'rendered-body', 'sample-adequate'],
+    reason:
+      'A bot-defense firewall is what this audit reports, and it names the firewall from ' +
+      'wafProtection alone — evidence a wall destroys is not evidence this finding needs.',
+  },
+  'access-crawl-control/no-redirect-chains': {
+    drop: ['origin-reachable'],
+    reason:
+      'A hop that left the site is this audit\'s subject, and leaving the site is exactly ' +
+      'what denies origin-reachable. The page-fed keys stay: with no page there is no hop.',
+  },
+  'access-crawl-control/https-enabled': {
+    drop: ['origin-reachable', 'unblocked-fetches', 'rendered-body', 'sample-adequate'],
+    reason:
+      'A base URL on plain HTTP is proven by the request, with no response at all, and that ' +
+      'fail is worth reporting on a site whose homepage never answered.',
   },
 };
 

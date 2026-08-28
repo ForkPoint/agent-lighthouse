@@ -26,8 +26,10 @@ export class NoBlockingCaptchaAudit extends Audit {
     evidenceGrade: 'A',
     tier: 'scored',
     dossier: 'docs/evidence/audits/operability-safety/no-blocking-captcha.md',
-    // Gate exemption: A captcha wall is what this audit reports.
-    requires: ['origin-reachable'],
+    // Gate exemption: a captcha wall is what this audit reports, and a wall denies
+    // `origin-reachable` — gating on it made the finding unreachable for the 403 that
+    // produced it. The wall branch reads `wafProtection`, not any response body.
+    requires: [],
     defaultPriority: 'high',
     guidance: {
       impact:

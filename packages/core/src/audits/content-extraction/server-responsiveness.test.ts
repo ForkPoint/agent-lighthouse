@@ -5,6 +5,7 @@ import {
   mockCheckContext,
   mockPageContext,
   unreachedSiteContext,
+  walledSiteContext,
 } from '../../__tests__/test-utils';
 import type { PageContext } from '../../check-context';
 
@@ -114,5 +115,14 @@ describe('ServerResponsivenessAudit', () => {
 
     const unreached = await instance.audit(unreachedSiteContext(pages, rootFiles));
     expect(unreached.status).toBe('na');
+  });
+  // Ordering: a walled scan gets the reason it could not be measured, which
+  // names the wall. A guard above that branch would replace it with the
+  // generic attribution message and lose the wall.
+  it('names the wall as the reason it could not measure a walled scan', () => {
+    const result = new ServerResponsivenessAudit().audit(walledSiteContext());
+    expect(result.status).toBe('na');
+    expect(result.message).toContain('could not be measured');
+    expect(result.message).toContain('Cloudflare');
   });
 });

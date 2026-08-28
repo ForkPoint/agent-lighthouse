@@ -17,8 +17,9 @@ export class HttpsEnabledAudit extends Audit {
     evidenceGrade: 'A',
     tier: 'scored',
     dossier: 'docs/evidence/audits/access-crawl-control/https-enabled.md',
-    // Gate exemption: being refused is what this category reports.
-    requires: ['origin-reachable', 'rendered-body', 'sample-adequate'],
+    // Gate exemption: a base URL on plain HTTP is proven by the request, with no response
+    // at all, and that fail is worth reporting on a site whose homepage never answered.
+    requires: [],
     defaultPriority: 'critical',
     guidance: {
       impact:
@@ -32,7 +33,32 @@ export class HttpsEnabledAudit extends Audit {
   };
 
   audit(ctx: CheckContext): AuditResult {
-    // Nothing here can be attributed to this site; see `scanReadTheSite`.
+    const isHttps = ctx.baseUrl.startsWith('https://');
+    const page = ctx.pages?.[0];
+    const status200 = page?.fetchResult.status === 200;
+
+    // The scheme is a property of the request, so this branch is true with no
+    // response at all — and a site on plain HTTP is worth saying even when the
+    // scan was walled. It therefore runs before the attribution guard.
+    if (!isHttps) {
+      return this.fail(
+        'Site is not served over HTTPS. AI agents require secure connections.',
+        'Base URL uses https:// and homepage returns 200',
+        `Base URL: ${ctx.baseUrl}`,
+        {
+          priority: 'critical',
+          description:
+            'Enterprise AI frameworks refuse to interact with non-HTTPS sites due to security policies. GPTBot, ClaudeBot, and enterprise RAG systems all skip HTTP-only sites entirely, making your content invisible to AI-generated answers. Enable HTTPS with a valid TLS certificate.',
+          code: '# For nginx:\nserver {\n  listen 443 ssl;\n  ssl_certificate /path/to/cert.pem;\n  ssl_certificate_key /path/to/key.pem;\n}',
+        },
+        page?.url,
+      );
+    }
+
+    // Past here every verdict rests on the homepage response, and a response
+    // this scan cannot attribute to the site proves nothing about its TLS.
+    // The old branch below warned "Possible TLS or server error" whenever no
+    // 200 arrived, which on a bot wall named a fault that does not exist.
     if (!scanReadTheSite(ctx.evidence)) {
       return this.notApplicable(
         'No homepage here can be attributed to this site, so its transport was not judged.',
@@ -41,11 +67,7 @@ export class HttpsEnabledAudit extends Audit {
       );
     }
 
-    const isHttps = ctx.baseUrl.startsWith('https://');
-    const page = ctx.pages?.[0];
-    const status200 = page?.fetchResult.status === 200;
-
-    if (isHttps && status200) {
+    if (status200) {
       return this.pass(
         'Site is served over HTTPS with a valid TLS connection.',
         'Base URL uses https:// and homepage returns 200',
@@ -54,30 +76,17 @@ export class HttpsEnabledAudit extends Audit {
       );
     }
 
-    if (isHttps && !status200) {
-      return this.warn(
-        `Site uses HTTPS but homepage returned status ${page?.fetchResult.status ?? 'unknown'}. Possible TLS or server error.`,
-        'Base URL uses https:// and homepage returns 200',
-        `${ctx.baseUrl} — status ${page?.fetchResult.status ?? 'N/A'}`,
-        {
-          priority: 'high',
-          description:
-            'Enterprise AI frameworks refuse to interact with sites that have TLS errors. A non-200 HTTPS response prevents AI agents from ingesting your content, effectively making your site invisible to all AI systems. Fix server or TLS configuration to return a clean 200.',
-          code: '# Verify TLS with: curl -vI https://yoursite.com\n# Check for certificate expiry, chain issues, or redirect loops',
-        },
-        page?.url,
-      );
-    }
-
-    return this.fail(
-      'Site is not served over HTTPS. AI agents require secure connections.',
+    // Reached only when the scan holds this site's homepage and it did not
+    // answer 200 — a real server or TLS fault, not a scan that came back empty.
+    return this.warn(
+      `Site uses HTTPS but homepage returned status ${page?.fetchResult.status ?? 'unknown'}. Possible TLS or server error.`,
       'Base URL uses https:// and homepage returns 200',
-      `Base URL: ${ctx.baseUrl}`,
+      `${ctx.baseUrl} — status ${page?.fetchResult.status ?? 'N/A'}`,
       {
-        priority: 'critical',
+        priority: 'high',
         description:
-          'Enterprise AI frameworks refuse to interact with non-HTTPS sites due to security policies. GPTBot, ClaudeBot, and enterprise RAG systems all skip HTTP-only sites entirely, making your content invisible to AI-generated answers. Enable HTTPS with a valid TLS certificate.',
-        code: '# For nginx:\nserver {\n  listen 443 ssl;\n  ssl_certificate /path/to/cert.pem;\n  ssl_certificate_key /path/to/key.pem;\n}',
+          'Enterprise AI frameworks refuse to interact with sites that have TLS errors. A non-200 HTTPS response prevents AI agents from ingesting your content, effectively making your site invisible to all AI systems. Fix server or TLS configuration to return a clean 200.',
+        code: '# Verify TLS with: curl -vI https://yoursite.com\n# Check for certificate expiry, chain issues, or redirect loops',
       },
       page?.url,
     );
