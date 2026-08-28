@@ -71,6 +71,17 @@ export interface ScanOptions {
    */
   dispatcher?: Dispatcher;
   /**
+   * How many requests this scan may have in flight at once.
+   *
+   * Omitted, the scan issues every request as it reaches the fetcher. A caller
+   * scanning origins that did not invite it sets this alongside `dispatcher`:
+   * the dispatcher bounds the sockets, and this bounds what is issued, so the
+   * requests the scan holds back wait outside the per-request deadline and
+   * outside `ttfbMs` instead of inside undici's queue. Without it a bounded
+   * scan reports its own queueing as the origin being slow or unreachable.
+   */
+  maxConcurrent?: number;
+  /**
    * A `robots.txt` response the caller already has, used instead of fetching
    * it again.
    *
@@ -257,7 +268,10 @@ export async function runScan(url: string, options?: ScanOptions): Promise<ScanR
 
   const tracker = new ProgressTracker((event) => onEvent?.(event));
   const start = performance.now();
-  const fetcher = createFetcher({ dispatcher: options?.dispatcher });
+  const fetcher = createFetcher({
+    dispatcher: options?.dispatcher,
+    maxConcurrent: options?.maxConcurrent,
+  });
 
   const baseUrl = new URL(url).origin;
   const domain = new URL(url).hostname;

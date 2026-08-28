@@ -211,6 +211,15 @@ const pause = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
  * `--concurrency` and `--delay` pace the job between sites and do nothing about
  * this. The library keeps its unbounded default for a site owner scanning their
  * own site; this job opts out.
+ *
+ * The dispatcher is half of it. It bounds the sockets, but undici accepts all
+ * 26 root-file requests and queues the rest, while each request's 10-second
+ * deadline and its `ttfbMs` clock start when the scan calls `fetch()`. On an
+ * origin averaging more than ~770 ms per file the tail would abort on our own
+ * queue and be recorded as unreachable, and `server-responsiveness` — which
+ * bands at 800 ms and 2500 ms — would read the queue as the origin. Passing
+ * `maxConcurrent` alongside makes the scan hold those requests before the
+ * clocks start.
  */
 const dispatcher = boundedDispatcher(CONNECTIONS);
 
@@ -265,7 +274,7 @@ type RobotsVerdict =
  * and absence is not consent withheld.
  */
 async function robotsVerdict(domain: string): Promise<RobotsVerdict> {
-  const result = await createFetcher({ dispatcher }).fetch({
+  const result = await createFetcher({ dispatcher, maxConcurrent: CONNECTIONS }).fetch({
     url: `https://${domain}/robots.txt`,
   });
   if (result.status === 401 || result.status === 403 || result.status === 429) {
@@ -308,6 +317,7 @@ async function scanOne(site: SiteEntry): Promise<SiteOutcome> {
 
     const report = await runScan(`https://${site.domain}`, {
       dispatcher,
+      maxConcurrent: CONNECTIONS,
       robotsTxt: verdict.robotsTxt,
     });
     const checks = report.categories.flatMap((c) => c.checks);

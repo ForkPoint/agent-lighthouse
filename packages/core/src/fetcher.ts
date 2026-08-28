@@ -146,6 +146,50 @@ export interface FetcherOptions {
    * one scan cannot open 28 sockets at once against a stranger's WAF.
    */
   dispatcher?: Dispatcher;
+  /**
+   * How many requests this fetcher may have in flight at once.
+   *
+   * Omitted, there is no ceiling and every request is issued as it arrives.
+   *
+   * A bounded dispatcher alone is not enough for a caller that wants one, and
+   * the difference is what the clocks measure. `Agent({ connections: 2 })`
+   * accepts all 26 root-file requests the scan fires in one `Promise.all` and
+   * queues 24 of them inside undici — but the per-request deadline and the
+   * `ttfbMs` clock both start when `fetch()` is called, so an origin averaging
+   * 800 ms per file would have its tail requests time out on the scanner's own
+   * queue and be reported as unreachable. Waiting here instead holds a request
+   * outside both clocks until it can actually be issued, so what they measure
+   * is the origin.
+   */
+  maxConcurrent?: number;
+}
+
+/**
+ * A FIFO admission gate: at most `limit` holders at a time, in arrival order.
+ *
+ * Order matters. A `Promise.all` of 26 requests must not become a lottery in
+ * which the last-queued file may be the first issued; the fetcher's callers
+ * read the first response that arrives as the first request they made.
+ */
+function createGate(limit: number): { acquire: () => Promise<() => void> } {
+  let inFlight = 0;
+  const waiting: Array<() => void> = [];
+
+  const release = (): void => {
+    inFlight -= 1;
+    const next = waiting.shift();
+    if (next) next();
+  };
+
+  return {
+    acquire: async () => {
+      if (inFlight >= limit) {
+        await new Promise<void>((resolve) => waiting.push(resolve));
+      }
+      inFlight += 1;
+      return release;
+    },
+  };
 }
 
 /**
@@ -162,8 +206,27 @@ export function boundedDispatcher(connections: number): Dispatcher {
 
 export function createFetcher(fetcherOptions: FetcherOptions = {}) {
   const dispatcher = fetcherOptions.dispatcher ?? noRedirectAgent;
+  const gate =
+    fetcherOptions.maxConcurrent && fetcherOptions.maxConcurrent > 0
+      ? createGate(Math.floor(fetcherOptions.maxConcurrent))
+      : undefined;
 
+  /**
+   * Wait for a slot, then issue. Nothing inside `issue` starts until the
+   * request is the scanner's turn to make, which is what keeps the wait out of
+   * the deadline and out of `ttfbMs`.
+   */
   async function fetch(options: FetchOptions): Promise<FetchResult> {
+    if (!gate) return issue(options);
+    const release = await gate.acquire();
+    try {
+      return await issue(options);
+    } finally {
+      release();
+    }
+  }
+
+  async function issue(options: FetchOptions): Promise<FetchResult> {
     const {
       url,
       timeout = REQUEST_TIMEOUT_MS,
