@@ -96,6 +96,16 @@ this implementation's.
   Verdicts that moved on the four nothing-obtained contract states: redirected
   away pass → na. Found by
   `packages/core/src/tests/hostile-state-contract.test.ts`.
+- 2026-08-28 — the JSON-LD span's host element is found by walking the DOM in
+  reverse instead of by building a `:contains()` selector out of the string.
+  Page content is not a selector: gov.uk publishes the service name "Register
+  your vehicle as off the road (SORN)", the 40-character prefix used for the
+  lookup cuts the closing bracket off, and css-what threw "Parenthesis not
+  matched". A throw is not a verdict — the runner replaced the whole result
+  with `scan-error`, so the audit reported nothing about a page it had already
+  measured. Any published string can carry a bracket, a quote or a backslash.
+  Verdicts that moved: `gov-uk-vehicle-tax` scan-error → fail. Found by
+  `packages/core/src/tests/real-page-corpus.test.ts`.
 
 ## Deferred
 

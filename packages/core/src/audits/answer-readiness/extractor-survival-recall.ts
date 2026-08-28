@@ -51,6 +51,28 @@ function chainOf($: CheerioAPI, el: Element): string {
   return [...parents, describe(el)].join(' > ');
 }
 
+/**
+ * The last element, in document order, whose text carries `text`.
+ *
+ * Page content is not a selector. This was `$(':contains("…")')` with a JSON-LD
+ * string interpolated into it, and gov.uk publishes the service name "Register
+ * your vehicle as off the road (SORN)" — truncated to 40 characters the
+ * closing bracket is gone, css-what threw "Parenthesis not matched", and the
+ * whole audit reported `scan-error` for a page it had already measured. Any
+ * string a site publishes can carry a bracket, a quote or a backslash, so the
+ * lookup does not build a selector at all.
+ *
+ * Reverse order matches what `.last()` returned and lets the common case stop
+ * at the first hit instead of testing every element on the page.
+ */
+function lastElementContaining($: CheerioAPI, text: string): Element | undefined {
+  const all = $('*').toArray() as Element[];
+  for (let i = all.length - 1; i >= 0; i--) {
+    if ($(all[i]).text().includes(text)) return all[i];
+  }
+  return undefined;
+}
+
 /** The comparison form of a span: its first few words, normalized. */
 function needleOf(text: string): string {
   return normalizeText(text).split(' ').slice(0, SPAN_WORDS).join(' ');
@@ -106,8 +128,8 @@ function keySpans(page: PageContext): KeySpan[] {
         // Only strings the prose also carries: the rest is machine-only data,
         // which no extractor is expected to keep.
         if (needle.split(' ').length >= 3 && bodyText.includes(needle)) {
-          const host = $(`:contains("${value.slice(0, 40).replace(/"/g, '')}")`).last();
-          push('json-ld', (host[0] as Element) ?? ($('body')[0] as Element), value);
+          const host = lastElementContaining($, value.slice(0, 40));
+          push('json-ld', host ?? ($('body')[0] as Element), value);
         }
         return;
       }
