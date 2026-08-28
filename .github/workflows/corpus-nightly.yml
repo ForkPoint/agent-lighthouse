@@ -1,0 +1,55 @@
+name: Corpus nightly
+
+on:
+  schedule:
+    # 03:17 UTC — off the hour, which is when scheduled runs queue worst.
+    # A scheduled workflow in a public repository is disabled automatically
+    # after 60 days without repository activity, so a job that goes quiet is
+    # worth checking here before it is debugged.
+    - cron: '17 3 * * *'
+  workflow_dispatch:
+
+# One at a time. Two concurrent runs would double the request rate every
+# scanned origin sees from GitHub's address range.
+concurrency: corpus-nightly
+
+permissions:
+  contents: read
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    # The job cap is 6 hours. 500 sites at the measured rate is about 2.
+    timeout-minutes: 300
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v3
+        with:
+          version: 9
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build packages
+        run: pnpm build
+
+      - name: Scan the site list
+        run: npx tsx scripts/scan-site-list.ts --limit=500
+
+      # `if: always()` on purpose: the summary is most wanted on the run that
+      # failed, and the scan step exits non-zero exactly when it found something.
+      - name: Upload the summary
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: corpus-nightly
+          path: reports/corpus-nightly.json
+          retention-days: 14
