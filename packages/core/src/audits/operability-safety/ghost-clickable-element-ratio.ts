@@ -13,6 +13,7 @@ import type { CheckContext } from '../../check-context';
 import { collectPageCss } from '../../gatherers/css-rules';
 import { detailLines } from '../../detail-lines';
 import { NATIVE_INTERACTIVE, accessibleName, hasClickSignal, isElement } from './_agent-affordances';
+import { scanReadTheSite, unreadSiteReason } from '../../scan-evidence';
 
 /** Below this share of addressable click targets the page fails. */
 const RATIO_FLOOR = 0.9;
@@ -198,6 +199,18 @@ export class GhostClickableElementRatioAudit extends Audit {
   }
 
   async audit(ctx: CheckContext): Promise<AuditResult> {
+    // Nothing here can be attributed to this site; see `scanReadTheSite`. A
+    // bot wall served at HTTP 200 is a page like any other to the survey
+    // below, and its one `role="main"` wrapper is enough to make a ratio out
+    // of Cloudflare's markup and call it the site's.
+    if (!scanReadTheSite(ctx.evidence)) {
+      return this.notApplicable(
+        'No page here can be attributed to this site, so its click targets were not counted.',
+        EXPECTED,
+        unreadSiteReason(ctx.evidence),
+      );
+    }
+
     const s = await survey(ctx);
     const total = s.semantic + s.ghosts.length;
     const partial =

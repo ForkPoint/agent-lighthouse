@@ -236,15 +236,26 @@ export function buildScanEvidence(input: ScanEvidenceInput): ScanEvidence {
  * Attribution is decided once, before any audit runs. An audit that names
  * `origin-reachable` in its `requires` has said its verdict depends on that
  * decision, so it must read the decision rather than assume it went its way.
+ *
+ * This is `judgeable`, not `origin-reachable` alone, because a bot wall does
+ * not have to answer with an error status. A Cloudflare managed challenge is
+ * served at HTTP 200, `text/html`, from the requested host, so every test
+ * `origin-reachable` applies passes and the interstitial arrives as a
+ * `PageContext`. Its `<meta name="robots" content="noindex,nofollow">` is
+ * Cloudflare's, not the owner's, and an audit reading it under
+ * `origin-reachable` alone told site owners at critical priority that their
+ * homepage was noindexed. `unblocked-fetches` is the key that knows the
+ * difference, and the two together are what `judgeable` already means.
  */
 export function scanReadTheSite(evidence: ScanEvidence): boolean {
-  return evidence.met['origin-reachable'];
+  return evidence.judgeable;
 }
 
 /** Why the scan holds nothing it can attribute to the site. */
 export function unreadSiteReason(evidence: ScanEvidence): string {
   return (
     evidence.reasons['origin-reachable'] ??
+    evidence.reasons['unblocked-fetches'] ??
     'The scan obtained no response it could attribute to this site.'
   );
 }

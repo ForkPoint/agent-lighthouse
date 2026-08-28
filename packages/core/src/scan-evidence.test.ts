@@ -1,5 +1,10 @@
 import { describe, it, expect } from 'vitest';
-import { buildScanEvidence, allEvidenceMet } from './scan-evidence';
+import {
+  buildScanEvidence,
+  allEvidenceMet,
+  scanReadTheSite,
+  unreadSiteReason,
+} from './scan-evidence';
 import { mockPageContext, mockFetchResult } from './__tests__/test-utils';
 import type { FetchResult } from './fetcher';
 import type { PageContext } from './check-context';
@@ -321,5 +326,52 @@ describe('allEvidenceMet', () => {
     for (const type of ['homepage', 'category', 'product', 'content'] as const) {
       expect(evidence.usablePageTypes.has(type)).toBe(true);
     }
+  });
+});
+
+describe('scanReadTheSite', () => {
+  // The guard 36 audits consult. It used to read `origin-reachable` alone,
+  // which a bot wall satisfies whenever the wall answers 200.
+  it('is false when the origin answered but the scan was refused', () => {
+    const evidence = build({
+      homepageResult: homepage({
+        status: 200,
+        contentType: 'text/html',
+        headers: { 'cf-mitigated': 'challenge', server: 'cloudflare' },
+      }),
+      wafProtection: {
+        isBlocked: true,
+        provider: 'cloudflare',
+        name: 'Cloudflare Turnstile / Managed Challenge',
+        reason: 'Cloudflare bot challenge detected',
+        statusCode: 200,
+      },
+    });
+
+    expect(evidence.met['origin-reachable'], 'a 200 from the right host').toBe(true);
+    expect(evidence.met['unblocked-fetches']).toBe(false);
+    expect(scanReadTheSite(evidence)).toBe(false);
+    // The reason has to name the wall, not fall through to the generic line:
+    // `origin-reachable` is met, so it carries no reason of its own.
+    expect(unreadSiteReason(evidence)).toContain('Cloudflare');
+  });
+
+  it('is true when the origin answered and nothing refused the scan', () => {
+    const evidence = build({});
+    expect(scanReadTheSite(evidence)).toBe(true);
+  });
+
+  it('is false when the response cannot be attributed to the requested site', () => {
+    const evidence = build({
+      requestedUrl: 'https://example.com',
+      homepageResult: homepage({
+        finalUrl: 'https://parking.brandsale.test/example.com',
+        redirectChain: [
+          { status: 302, from: 'https://example.com/', to: 'https://parking.brandsale.test/example.com' },
+        ],
+      }),
+    });
+    expect(scanReadTheSite(evidence)).toBe(false);
+    expect(unreadSiteReason(evidence)).toContain('different site');
   });
 });
