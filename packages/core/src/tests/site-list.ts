@@ -95,6 +95,13 @@ export function buildSiteList(
   // `'seed'`, not `'tranco'`: claiming a source that never listed them would
   // let a consumer scan a hand-picked storefront believing it is top-ranked.
   for (const [domain, category] of categoryOf) {
+    // `normalize` answers '' for anything that is not a bare hostname, and the
+    // seed map is keyed by its output, so one malformed entry in the
+    // hand-maintained `categories.json` would be carried into the committed
+    // list as `{ domain: '' }` — and the nightly would request
+    // `https:///robots.txt` for it. The generator refuses such an entry
+    // outright; this is the second door.
+    if (domain === '') continue;
     if (!byDomain.has(domain)) {
       byDomain.set(domain, {
         domain,

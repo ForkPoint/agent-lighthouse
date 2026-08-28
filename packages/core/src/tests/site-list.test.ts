@@ -186,6 +186,23 @@ describe('buildSiteList', () => {
     expect(built.map((s) => s.domain)).toEqual(['apple.com', 'mango.com', 'zebra.com']);
   });
 
+  // `normalize` answers '' for a seed entry that is not a bare hostname, and
+  // the seed map is keyed by its output. Carried through, that entry became
+  // `{ domain: '' }` in the committed list and `https:///robots.txt` in the
+  // nightly. No entry in `categories.json` trips it today; the guard is what
+  // keeps that true.
+  it('drops a seed entry whose domain did not survive normalization', () => {
+    const built = buildSiteList(
+      [{ domains: ['a.com'], source: 'tranco' }],
+      new Map([
+        ['', 'retail'],
+        ['seeded.com', 'retail'],
+      ]),
+      10,
+    );
+    expect(built.map((s) => s.domain)).toEqual(['a.com', 'seeded.com']);
+  });
+
   it('honours the limit', () => {
     const built = buildSiteList(
       [{ domains: ['a.com', 'b.com', 'c.com'], source: 'tranco' }],

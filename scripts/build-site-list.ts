@@ -71,8 +71,28 @@ const CATEGORIES = flag('categories', 'packages/core/test-data/sites/categories.
 
 const seed: Record<string, string[]> = JSON.parse(fs.readFileSync(CATEGORIES, 'utf8'));
 const categoryOf = new Map<string, string>();
+// `normalize` answers '' for anything that is not a bare hostname. Keying the
+// map on that would seed the committed list with `{ domain: '' }`, and the
+// nightly would then request `https:///robots.txt` for it. A malformed entry
+// here is a typo in a hand-maintained file, so it is worth stopping for rather
+// than dropping: a seeded site that silently vanishes is never scanned.
+const malformed: string[] = [];
 for (const [category, domains] of Object.entries(seed)) {
-  for (const domain of domains) categoryOf.set(normalize(domain), category);
+  for (const domain of domains) {
+    const host = normalize(domain);
+    if (host === '') {
+      malformed.push(`${category}: ${JSON.stringify(domain)}`);
+      continue;
+    }
+    categoryOf.set(host, category);
+  }
+}
+if (malformed.length > 0) {
+  console.error(
+    `${CATEGORIES} holds ${malformed.length} entr(y/ies) that are not bare hostnames:\n  ` +
+      `${malformed.join('\n  ')}`,
+  );
+  process.exit(1);
 }
 
 const sites = buildSiteList(
