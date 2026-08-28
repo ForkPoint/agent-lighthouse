@@ -17,6 +17,13 @@ import type { FixtureProvenance } from '../packages/core/src/tests/fixture-io';
  * This file does flags and IO only. What the response turned out to be is
  * decided by `classifyCapture`, which the suite re-runs against the stored
  * response; a rule that lived here could not be checked after the fact.
+ *
+ * Response headers are preserved verbatim, server-issued anonymous cookies
+ * included. They are values a server minted for one throwaway request — no
+ * account, no credential, nobody behind them — and the same tokens appear
+ * inside the frozen bodies anyway, so redacting the headers would not remove
+ * them. Redacting the bodies would mean the fixture is no longer what the
+ * site served, which is the one property the corpus exists to have.
  */
 
 const OUT_DIR = path.resolve(__dirname, '../packages/core/test-data/corpus/real');
@@ -56,6 +63,13 @@ function defaultName(target: string): string {
 
 const name = nameFlag?.slice('--name='.length) ?? defaultName(url);
 
+// The name becomes a path. Anything outside this alphabet could write over a
+// source file or escape the corpus directory entirely.
+if (!/^[a-z0-9-]+$/.test(name)) {
+  console.error(`"${name}" is not a usable fixture name — use lowercase letters, digits and -`);
+  process.exit(1);
+}
+
 function refuse(message: string): never {
   console.error(message);
   process.exit(1);
@@ -63,7 +77,10 @@ function refuse(message: string): never {
 
 async function main(): Promise<void> {
   const htmlPath = path.join(OUT_DIR, `${name}.html.gz`);
-  if (fs.existsSync(htmlPath) && !force) {
+  const jsonPath = path.join(OUT_DIR, `${name}.json`);
+  // Both halves are checked. A fixture whose body was deleted still owns its
+  // name, and replacing the orphaned record silently is the same loss.
+  if ((fs.existsSync(htmlPath) || fs.existsSync(jsonPath)) && !force) {
     refuse(`${name} already exists — pass --force to replace it, or --name= to capture it apart`);
   }
 
@@ -106,12 +123,15 @@ async function main(): Promise<void> {
     kind,
     headers: result.headers,
     contentType: result.contentType,
+    ttfbMs: result.ttfbMs,
+    totalMs: result.totalMs,
+    contentLength: result.contentLength,
     ...(result.redirectChain ? { redirectChain: result.redirectChain } : {}),
   };
 
   fs.mkdirSync(OUT_DIR, { recursive: true });
   fs.writeFileSync(htmlPath, gz);
-  fs.writeFileSync(path.join(OUT_DIR, `${name}.json`), `${JSON.stringify(provenance, null, 2)}\n`);
+  fs.writeFileSync(jsonPath, `${JSON.stringify(provenance, null, 2)}\n`);
 
   const kb = (n: number) => `${(n / 1024).toFixed(1)} KB`;
   console.log(

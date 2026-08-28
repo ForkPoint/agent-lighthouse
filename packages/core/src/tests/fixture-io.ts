@@ -43,6 +43,16 @@ export interface FixtureProvenance {
    */
   headers: Record<string, string>;
   contentType: string;
+  /**
+   * What the fetch cost, as the capture measured it.
+   *
+   * `content-extraction/server-responsiveness` takes its median from
+   * `fetchResult.ttfbMs`. A replay that synthesised a zero there would report
+   * "median TTFB 0ms" and pass the site on a number nobody observed.
+   */
+  ttfbMs: number;
+  totalMs: number;
+  contentLength: number;
   /** Present only when the capture was redirected. */
   redirectChain?: Array<{ status: number; from: string; to: string }>;
 }

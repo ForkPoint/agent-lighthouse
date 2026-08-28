@@ -1,14 +1,14 @@
 {
   "url": "https://www.chase.com/",
-  "capturedAt": "2026-08-28T11:51:46.690Z",
-  "sha256": "8a9e7d1ae53047afc035fb98a73c5365499b69e897a971304d01e697866e5392",
+  "capturedAt": "2026-08-28T12:01:36.387Z",
+  "sha256": "08d6ea1e811f9725a78455e85b3a755b11435b49b6bef5b8b6bef6be838282e8",
   "status": 200,
   "kind": "page",
   "headers": {
     "content-type": "text/html; charset=utf-8",
-    "x-nextjs-cache": "STALE",
+    "x-nextjs-cache": "HIT",
     "etag": "\"vduhvxqrja6mot\"",
-    "x-envoy-upstream-service-time": "39",
+    "x-envoy-upstream-service-time": "20",
     "accept-ch": "Sec-CH-UA-Full-Version-List, Sec-CH-UA-Platform-Version, Sec-CH-UA-Arch, Sec-CH-UA-Model, Sec-CH-UA-Bitness, Sec-CH-UA-Wow64",
     "permissions-policy": "ch-ua-full-version-list=(\"https://*.chase.com\"),ch-ua-platform-version=(\"https://*.chase.com\"),ch-ua-arch=(\"https://*.chase.com\"),ch-ua-model=(\"https://*.chase.com\"),ch-ua-bitness=(\"https://*.chase.com\"),ch-ua-wow64=(\"https://*.chase.com\")",
     "x-frame-options": "SAMEORIGIN",
@@ -16,15 +16,18 @@
     "x-content-security-policy": "frame-ancestors 'none'",
     "x-xss-protection": "1; mode=block",
     "x-akamai-transformed": "9 - 0 pmb=mRUM,2",
-    "cache-control": "public, max-age=766",
-    "date": "Fri, 28 Aug 2026 11:51:46 GMT",
+    "cache-control": "public, max-age=1613",
+    "date": "Fri, 28 Aug 2026 12:01:36 GMT",
     "transfer-encoding": "chunked",
     "connection": "keep-alive, Transfer-Encoding",
-    "server-timing": "cdn-cache; desc=HIT, edge; dur=1, ak_p; desc=\"1787917905568_388814604_143926049_46_12261_111_479_-\";dur=1",
+    "server-timing": "cdn-cache; desc=HIT, edge; dur=1, ak_p; desc=\"1787918495777_388814735_130562519_52_180757_42_87_-\";dur=1",
     "strict-transport-security": "max-age=31536000",
-    "x-amzn-trace-id": "0.0cd72c17.1787917906.8942321"
+    "x-amzn-trace-id": "0.8fd72c17.1787918495.7c839d7"
   },
   "contentType": "text/html; charset=utf-8",
+  "ttfbMs": 1421,
+  "totalMs": 1612,
+  "contentLength": 314143,
   "redirectChain": [
     {
       "status": 301,

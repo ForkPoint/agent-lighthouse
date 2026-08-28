@@ -53,6 +53,11 @@ describe('the real-page fixtures', () => {
         0,
       );
       expect(typeof provenance.contentType, name).toBe('string');
+      // A real fetch never costs zero. A zero here is a synthesised default,
+      // which `server-responsiveness` would go on to score as an observation.
+      expect(provenance.ttfbMs, `${name} recorded no TTFB`).toBeGreaterThan(0);
+      expect(provenance.totalMs, name).toBeGreaterThan(0);
+      expect(typeof provenance.contentLength, name).toBe('number');
     }
   });
 
