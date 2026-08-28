@@ -96,3 +96,52 @@ Related: the site-level robots gating added late in the branch will raise the
 - The corpus fixture harness hands every audit `allEvidenceMet()`, so the corpus
   can never exercise the evidence gate. The hostile-state suite is the only place
   those guards are proven.
+
+## 8. A text-rich 200 bot wall still draws 28 wrong verdicts
+
+An audit that reads only root files derives `requires: ['origin-reachable']`, so
+it runs against a wall's files. None returns `pass` — the hostile-state suite
+proves that — but on a bot wall served at HTTP 200 with the site's own template
+around it, 28 audits emit a wrong non-`notApplicable` verdict. `sitemap-exists`
+fails at weight 1.0, `sitemap-lastmod` warns at 1.0, the four `openapi-*` audits
+fail at 0.6 each, and 13 crawler-token audits warn "allowed by default" off a
+robots.txt that answered HTML.
+
+All 28 are pre-existing. Measured across the hostile-state branch: the
+merge-base has 43 wrong non-`na` verdicts in that state, the branch has 30, and
+the branch's set is a strict subset. It removed 13 and added none.
+
+Two of the 28 sit inside `access-crawl-control` and were left unguarded on the
+branch, on a justification that turned out to be false. Both reach a wrong
+scored `fail` on a site-templated wall:
+
+- `sensitive-paths`, weight 1.0 — harvests `<a href>` from the wall's own DOM
+  (`sensitive-paths.ts:164-170`), and because robots.txt answered HTML the
+  `hasRobots` guard at `:226` is false, so everything reads as crawlable. The
+  wall supplies both the observed URLs and the reason robots.txt looks absent.
+- `rsl-licensing-terms-conformance`, weight 0.6 — reports "1 problem(s) in this
+  site's RSL licensing" off a `<link rel="license" type="application/rsl+xml">`
+  in the same head fragment the branch guarded `canonical` for.
+
+`machine-actionable-402-paid-access` is genuinely safe: a 200 wall never yields a
+402 probe.
+
+Fixing the class needs a second invariant that knows which audits must report the
+wall rather than decline it. The nothing-obtained tier forbids only `pass`,
+deliberately, because `fail` is correct when the wall is the finding.
+
+## 9. `pnpm test` is not offline-safe, and `AL_SKIP_NETWORK=1` no longer means what CLAUDE.md says
+
+`isSafeUrl()` calls `dns.lookup`, and the corpus suite reaches it through
+`root-text-file-resolution-integrity` and `reflected-parameter-injection-canary`.
+`pnpm test` now makes about 2065 `dns.lookup` calls against real public
+hostnames — `www.barclays.co.uk`, `lobste.rs`, `www.chase.com`, `www.irs.gov` —
+where before the corpus landed it made about 390 against reserved names.
+
+With name resolution failing, 54 tests in 3 files go red, including all 41 corpus
+snapshots, because those two audits flip to `notApplicable` when `isSafeUrl`
+fails closed. CI with DNS is green.
+
+Nothing reaches the published package and no HTTP request is made. But
+`CLAUDE.md` advertises `AL_SKIP_NETWORK=1` as the offline path, and that is now
+inaccurate. The golden snapshot is also hostage to live global DNS.
