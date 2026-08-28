@@ -98,6 +98,18 @@ AIPREF is chartered with an IESG submission target of 31 August 2026. If `Conten
 
 **Counter-evidence:** Decisive. The IETF AIPREF attachment draft of 19 Aug 2026 is Standards Track, authored by Google and Mozilla, and updates RFC 9309. It defines exactly two attachment mechanisms: the Content-Usage HTTP response header, and a Content-Usage rule in robots.txt. It defines no HTML meta element and no link relation — 'Embedded Preferences' is acknowledged and left out of scope. So the standards trajectory is running away from the head, not toward it. Google's supported-meta-tags list omits noai and tdm-reservation; Originality.AI's own study concludes "Major AI companies point elsewhere ... rather than honoring the noai meta tag specifically." OpenAI's and Anthropic's crawler docs document robots.txt only. Keep as experimental with a plainly worded caveat that these tags currently express intent with no known enforcing consumer, and track AIPREF for the header/robots.txt path — do not present them to users as protection.
 
+## Implementation deviations
+
+- 2026-08-28 — the audit declines when the scan holds no response it can
+  attribute to this site. The `Content-Usage` header and the head-level opt-out
+  tags are read off whatever answered the request, and a bot wall served at
+  HTTP 200 through the site's own edge carries the site-wide response headers
+  on a body the site did not write. The audit reported the wall's header as an
+  AIPREF declaration by this site. It now consults `scanReadTheSite()` and
+  returns `notApplicable` carrying the gate's own reason. Measured merge-base
+  to here on a text-rich HTTP 200 wall: pass → na (informative, weight 0).
+  Found by `packages/core/src/tests/hostile-state-contract.test.ts`.
+
 ## Review history
 
 - 2026-08-20 — code review (11-agent workflow) + evidence research (12-domain workflow, 400 sources).

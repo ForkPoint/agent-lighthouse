@@ -153,6 +153,46 @@ export function walledSiteContext(overrides: Partial<CheckContext> = {}): CheckC
 }
 
 /**
+ * A scan a bot wall answered at HTTP 200.
+ *
+ * The wall the branch's `challenged-at-200` hostile state models, at unit-test
+ * scale. It is not {@link walledSiteContext}: a managed challenge served at 200
+ * `text/html` from the requested host meets every test `origin-reachable`
+ * applies, so only `unblocked-fetches` is denied and an audit guarding on
+ * `origin-reachable` alone still runs — against markup and headers the wall
+ * attached, not the site.
+ *
+ * Pass the same `pages` and `rootFiles` an audit judges when the scan reached
+ * the site, so the pair proves the guard fires on the wall and only there.
+ */
+export function challengedSiteContext(
+  pages: PageContext[] = [],
+  rootFiles: Record<string, FetchResult> = {},
+): CheckContext {
+  const ctx = mockCheckContext(pages, rootFiles);
+  return {
+    ...ctx,
+    wafProtection: {
+      isBlocked: true,
+      provider: 'cloudflare',
+      name: 'Cloudflare',
+      reason: 'HTTP 200 with cf-mitigated: challenge',
+      statusCode: 200,
+    },
+    evidence: {
+      ...ctx.evidence,
+      met: { ...ctx.evidence.met, 'unblocked-fetches': false },
+      reasons: {
+        ...ctx.evidence.reasons,
+        'unblocked-fetches':
+          'Cloudflare refused the scan: HTTP 200 with cf-mitigated: challenge.',
+      },
+      judgeable: false,
+    },
+  };
+}
+
+/**
  * A page that arrived from the right host and rendered no text.
  *
  * `origin-reachable` and `unblocked-fetches` stay met — a shell is a finding

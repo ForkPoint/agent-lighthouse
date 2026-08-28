@@ -119,6 +119,16 @@ misconfigured — it has left every crawler to its own default, which is a real
 cost but not a contradiction. A scan that read neither a page nor a robots.txt
 is `notApplicable`: nothing could have carried a signal.
 
+- 2026-08-28 — the audit declines when the scan holds no response it can
+  attribute to this site. Every channel it compares — robots.txt, the TDM-Rep
+  file, the response headers, the page markup — is read off whatever answered
+  the request, and a bot wall served at HTTP 200 answers all of them
+  identically. "Two signals across two channels, with no contradiction between
+  them" was a statement about the wall. It now consults `scanReadTheSite()` and
+  returns `notApplicable` carrying the gate's own reason. Measured merge-base
+  to here on a text-rich HTTP 200 wall: pass → na, at weight 0.6. Found by
+  `packages/core/src/tests/hostile-state-contract.test.ts`.
+
 ## Deferred
 
 - **EPUB TDM-Rep.** The report defines a fourth transport, `tdm:reservation` in

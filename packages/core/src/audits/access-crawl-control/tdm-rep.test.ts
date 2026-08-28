@@ -1,6 +1,11 @@
 import { describe, it, expect } from 'vitest';
 import { TdmRepAudit } from './tdm-rep';
-import { mockPageContext, mockCheckContext, mockFetchResult } from '../../__tests__/test-utils';
+import {
+  challengedSiteContext,
+  mockPageContext,
+  mockCheckContext,
+  mockFetchResult,
+} from '../../__tests__/test-utils';
 import { expectNotApplicableOnEmpty } from '../../tests/na-contract';
 import type { PageContext } from '../../check-context';
 
@@ -215,5 +220,17 @@ describe('TdmRepAudit', () => {
       expect(copy).toContain('no major ai crawler');
       expect(copy).not.toContain('puts you in control of how ai systems may use your content');
     });
+  });
+
+  // Finding 1 of the pre-merge review: a bot wall served at HTTP 200 through the
+  // site's own edge carries the site's head fragment and its site-wide response
+  // headers on a body the site did not write. `origin-reachable` is met there,
+  // so the declaration this audit reads is the wall's.
+  it('declines a reservation read off a bot wall answering 200', () => {
+    const pages = [withHeader(page(), 'tdm-reservation', '1')];
+    expect(audit.audit(mockCheckContext(pages)).status, 'the same header reached is judged').toBe(
+      'pass',
+    );
+    expect(audit.audit(challengedSiteContext(pages)).status).toBe('na');
   });
 });

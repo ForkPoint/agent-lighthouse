@@ -2,6 +2,7 @@ import type { AuditMeta, AuditResult } from '../../types';
 import { Audit } from '../../audit';
 import type { CheckContext } from '../../check-context';
 import { weightForGrade } from '../../scorer';
+import { scanReadTheSite, unreadSiteReason } from '../../scan-evidence';
 import { parseRobots, directiveLines, decidingRule, isPathAllowed } from '../../gatherers/robots';
 import { parseDictionary } from '../../gatherers/structured-fields';
 
@@ -71,6 +72,18 @@ export class AiprefContentUsageDeclarationValidityAudit extends Audit {
   };
 
   audit(ctx: CheckContext): AuditResult {
+    // Both channels — the robots.txt directive and the Content-Usage response
+    // header — are read off whatever answered the request. A bot wall
+    // answering 200 through the site's own edge carries the header on a body
+    // the site did not write; see `scanReadTheSite`.
+    if (!scanReadTheSite(ctx.evidence)) {
+      return this.notApplicable(
+        'No response here can be attributed to this site, so no Content-Usage declaration was read.',
+        'Every Content-Usage declaration parses as an RFC 8941 dictionary of AIPREF categories, attaches to a crawlable path, and agrees with the other channel',
+        unreadSiteReason(ctx.evidence),
+      );
+    }
+
     const robots = ctx.rootFiles['/robots.txt'];
     const robotsBody = robots?.status === 200 ? robots.body : '';
     const groups = robotsBody === '' ? [] : parseRobots(robotsBody);

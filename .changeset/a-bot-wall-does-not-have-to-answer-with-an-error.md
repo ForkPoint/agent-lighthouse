@@ -3,8 +3,8 @@
 ---
 
 A bot wall served at HTTP 200 is treated as a wall, not as the site's own
-markup. Four checks stop reporting a verdict about a Cloudflare challenge page,
-and one starts reporting the wall.
+markup. Nine checks stop reporting a verdict about a challenge page, and one
+starts reporting the wall.
 
 **What was wrong.** The attribution guard 36 audits consult,
 `scanReadTheSite()`, read `evidence.met['origin-reachable']` — "the response
@@ -31,10 +31,12 @@ requested host), with the evidence gate on as every scan runs it:
 - **1 na → fail.** `no-bot-detection` names the firewall. It could not before:
   its own gate exemption is what makes the wall branch reachable, and that
   branch now runs on a 200 wall as it does on a 403.
-- **5 stay `na` and change their wording**, from the gate's "Not assessed: this
+- **9 stay `na` and change their wording**, from the gate's "Not assessed: this
   scan has no … evidence" stub to the audit's own sentence naming the wall:
   `https-enabled`, `no-nofollow`, `no-redirect-chains`,
-  `robots-ai-group-shadowing`, `robots-directives`.
+  `robots-ai-group-shadowing`, `robots-directives`, `descriptive-urls`,
+  `language-attribute`, `server-responsiveness` and
+  `third-party-dom-write-blast-radius`.
 
 The scan reports no overall score on that state before and after — `judgeable`
 was already false there, and the gated evidence-mass share is 0.643 before and
@@ -57,10 +59,59 @@ click target and passed the interstitial at a ratio of 1.00. No released
 verdict moves — it declares every evidence key, so the gate already skipped it
 there — and the guard is what makes it correct when it is called directly.
 
+**The same wall, with a body.** A wall that answers 200 does not have to
+answer with an empty page. A site-templated one — the corpus holds eBay's,
+which is eBay's own error template — renders enough prose that `rendered-body`
+and `sample-adequate` are met, and then the gate lets through every audit whose
+`requires` is satisfied by an origin that answered. `unblocked-fetches` is
+dropped from every `access-crawl-control` audit by design, so on that wall the
+category ran against markup and headers the wall attached: the site's head
+fragment, kept by the edge, and the site-wide response headers its edge rules
+add to every response.
+
+Five more checks now decline there, each measured merge-base to this release on
+a text-rich HTTP 200 wall carrying a self-referential canonical, a
+`Content-Usage: train-ai=n` header and a `tdm-reservation: 1` header:
+
+- **`canonical` (1.0), pass → na.** "All 1 page(s) declare a canonical URL that
+  resolves to themselves" — about a canonical the site's template left on the
+  interstitial.
+- **`aipref-content-usage-declaration-validity` (0.6), pass → na**, and
+  **`ai-usage-signal-coherence-across-channels` (0.6), pass → na.** Both
+  validated the edge's own `Content-Usage` header as this site's declaration;
+  the second added that its channels agreed, which is what a wall answering
+  every path identically will always look like.
+- **`tdm-rep` (informative), pass → na**, and **`ai-content-declaration`
+  (informative), pass → na.** Same header, same wall.
+
+Counting the checks that already declined on the empty-bodied wall, 13 verdicts
+move on that state between the merge base and this release, and its
+`access-crawl-control` score goes from 57 to 46.
+
+`machine-discovery/no-broken-ai-endpoints` (1.0) is fixed in the same pass and
+for the same reason, without a guard: it answered "All 0 AI endpoint URL(s) are
+reachable" whenever every URL it collected was refused by the SSRF gate — a
+pass for a census that never ran. On the wall, the wall's own markup was where
+the URL came from. It now warns and says how many URLs it could not request.
+
 **How this is kept true.** `packages/core/src/tests/hostile-states.ts` gains a
 sixth state: a Cloudflare managed challenge at HTTP 200 from the requested
 host, with the WAF verdict derived from the real `detectWafProtection` rather
 than stated. It joins the nothing-obtained tier, where no audit may return
 `pass`. Written before the fix, it convicted 14 audits; 13 were fixed by the
-predicate and the fourteenth by the guard above. The contract suite's exemption
-allowlist is still empty.
+predicate and the fourteenth by the guard above.
+
+That state now carries what a real 200 wall carries — the head fragment and the
+site-wide response headers the edge keeps attaching — which is what convicted
+the five checks above and `no-broken-ai-endpoints`. The contract suite's
+exemption allowlist is still empty.
+
+The shell tier of the same suite stopped guessing which audits it must hold.
+It filtered on the literal string `fetchResult.body`, which missed
+`third-party-dom-write-blast-radius`: it censuses origins through the parsed
+DOM, dropped `rendered-body` in this release, and grew a guard nothing checked.
+Every audit exempted from `rendered-body` now declares what a shell proves
+about it — `envelope` for the ones reading the `lang` attribute, a robots meta
+tag or TTFB, which a shell serves whole, and `body` for the ones whose "found
+nothing" depends on a rendered document. An exemption added without that
+declaration fails the suite.
