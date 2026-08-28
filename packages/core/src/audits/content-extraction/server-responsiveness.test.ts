@@ -4,6 +4,7 @@ import {
   attributableFixture,
   mockCheckContext,
   mockPageContext,
+  shellSiteContext,
   unreachedSiteContext,
   walledSiteContext,
 } from '../../__tests__/test-utils';
@@ -124,5 +125,12 @@ describe('ServerResponsivenessAudit', () => {
     expect(result.status).toBe('na');
     expect(result.message).toContain('could not be measured');
     expect(result.message).toContain('Cloudflare');
+  });
+
+  // `requires` deliberately omits `rendered-body`: TTFB is measured from the
+  // response, and a shell answers as fast or as slow as anything else.
+  it('still judges a page that served no readable text', async () => {
+    const result = await new ServerResponsivenessAudit().audit(shellSiteContext());
+    expect(result.status).not.toBe('na');
   });
 });

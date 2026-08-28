@@ -94,6 +94,14 @@ Fails when any page's TTFB exceeds 1800ms, warns above an 800ms average. The und
   Verdicts that moved on the four nothing-obtained contract states: redirected
   away pass → na, non-HTML homepage pass → na. Found by
   `packages/core/src/tests/hostile-state-contract.test.ts`.
+- 2026-08-28 — `requires` drops `rendered-body` and `sample-adequate` and is now
+  `['origin-reachable', 'unblocked-fetches']`. TTFB is measured from the
+  response, and a JS shell answers as fast or as slow as anything else the origin
+  serves, so gating the measurement on rendered text withheld a figure the scan
+  was holding. Recorded as a gate exemption in
+  `scripts/lib/requires-analysis.mjs`. No verdict changes; the walled-scan branch
+  above still names the wall. Found by
+  `packages/core/src/tests/hostile-state-contract.test.ts`.
 
 ## Review history
 

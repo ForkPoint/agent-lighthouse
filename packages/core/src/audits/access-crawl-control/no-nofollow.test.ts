@@ -4,6 +4,7 @@ import {
   attributableFixture,
   mockCheckContext,
   mockPageContext,
+  shellSiteContext,
   unreachedSiteContext,
 } from '../../__tests__/test-utils';
 
@@ -78,5 +79,12 @@ describe('NoNofollowAudit', () => {
 
     const unreached = await instance.audit(unreachedSiteContext(pages, rootFiles));
     expect(unreached.status).toBe('na');
+  });
+
+  // `requires` deliberately omits `rendered-body`: the meta tag and the header
+  // this audit reads are served whole by a page whose body renders nothing.
+  it('still judges a page that served no readable text', async () => {
+    const result = await new NoNofollowAudit().audit(shellSiteContext());
+    expect(result.status).not.toBe('na');
   });
 });

@@ -4,6 +4,7 @@ import {
   attributableFixture,
   mockCheckContext,
   mockPageContext,
+  shellSiteContext,
   unreachedSiteContext,
 } from '../../__tests__/test-utils';
 
@@ -44,5 +45,12 @@ describe('LanguageAttributeAudit', () => {
 
     const unreached = await instance.audit(unreachedSiteContext(pages, rootFiles));
     expect(unreached.status).toBe('na');
+  });
+
+  // `requires` deliberately omits `rendered-body`: `<html lang>` is served
+  // before any body renders.
+  it('still judges a page that served no readable text', async () => {
+    const result = await new LanguageAttributeAudit().audit(shellSiteContext());
+    expect(result.status).not.toBe('na');
   });
 });

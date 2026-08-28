@@ -10,7 +10,12 @@ import type { AuditMeta, AuditResult } from '../../types';
 import { Audit } from '../../audit';
 import { weightForGrade } from '../../scorer';
 import type { CheckContext, PageContext } from '../../check-context';
-import { scanReadTheSite, unreadSiteReason } from '../../scan-evidence';
+import {
+  scanReadTheSite,
+  unreadSiteReason,
+  scanReadPageText,
+  unreadPageTextReason,
+} from '../../scan-evidence';
 
 /** Attributes whose value reaches a model as ordinary text. */
 const SCANNED_ATTRIBUTES = [
@@ -307,6 +312,20 @@ export class UnicodeCovertChannelScanAudit extends Audit {
     };
 
     if (hits.length === 0) {
+      // Reached only when nothing was found anywhere, so a payload in a root
+      // file — which a shell serves in full — has already been reported by the
+      // branches below. What is left is a page that carried no text to scan,
+      // and the pages are where a covert channel is planted.
+      if (!scanReadPageText(ctx.evidence)) {
+        return {
+          ...this.notApplicable(
+            'The scanned page served no readable text, so its codepoints were not judged.',
+            EXPECTED,
+            unreadPageTextReason(ctx.evidence),
+          ),
+          details,
+        };
+      }
       return {
         ...this.pass(
           'No invisible codepoint carries text on the scanned pages or in the root files.',

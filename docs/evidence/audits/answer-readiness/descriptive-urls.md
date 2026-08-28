@@ -78,6 +78,14 @@ Real signal — readable URLs appear in AI citations and do carry pre-fetch topi
   fail → na, throttled fail → na, redirected away pass → na, non-HTML homepage
   pass → na. Found by
   `packages/core/src/tests/hostile-state-contract.test.ts`.
+- 2026-08-28 — `requires` drops `rendered-body` and `sample-adequate` and is now
+  `['origin-reachable', 'unblocked-fetches']`. The audit judges the URL strings
+  of the pages the scan fetched, and a URL is readable whether or not the page
+  behind it rendered text. Recorded as a gate exemption in
+  `scripts/lib/requires-analysis.mjs`. No verdict changes; under the evidence
+  gate the audit is no longer skipped on a JS-shell scan, though a shell yields a
+  thinner set of URLs to judge because link discovery finds less. Found by
+  `packages/core/src/tests/hostile-state-contract.test.ts`.
 
 ## Review history
 

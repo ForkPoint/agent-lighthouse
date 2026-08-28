@@ -18,9 +18,9 @@ export class NoRedirectChainsAudit extends Audit {
     tier: 'scored',
     dossier: 'docs/evidence/audits/access-crawl-control/no-redirect-chains.md',
     // Gate exemption: a hop that left the site is this audit's subject, and leaving the
-    // site is exactly what denies `origin-reachable`. The page-fed keys stay — with no
-    // page there is no hop to report.
-    requires: ['rendered-body', 'sample-adequate'],
+    // site is exactly what denies `origin-reachable`. It reads request URL against final
+    // URL, which every response carries, and reports "no pages scanned" itself.
+    requires: [],
     defaultPriority: 'medium',
     guidance: {
       impact:

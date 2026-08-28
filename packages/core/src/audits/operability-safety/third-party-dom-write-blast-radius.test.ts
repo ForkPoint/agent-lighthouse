@@ -4,6 +4,7 @@ import {
   attributableFixture,
   mockCheckContext,
   mockPageContext,
+  shellSiteContext,
   unreachedSiteContext,
 } from '../../__tests__/test-utils';
 import { expectNotApplicableOnEmpty } from '../../tests/na-contract';
@@ -128,5 +129,13 @@ describe('ThirdPartyDomWriteBlastRadiusAudit', () => {
 
     const unreached = await instance.audit(unreachedSiteContext(pages, rootFiles));
     expect(unreached.status).toBe('na');
+  });
+
+  // `requires` deliberately omits `rendered-body`: the census is of script,
+  // stylesheet and frame origins in the served HTML, and a shell is mostly
+  // script tags.
+  it('still judges a page that served no readable text', async () => {
+    const result = await new ThirdPartyDomWriteBlastRadiusAudit().audit(shellSiteContext());
+    expect(result.status).not.toBe('na');
   });
 });

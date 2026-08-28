@@ -3,6 +3,7 @@ import { FakeHeadingsAudit } from './fake-headings';
 import {
   attributableFixture,
   mockCheckContext,
+  shellSiteContext,
   mockPageContext,
   unreachedSiteContext,
 } from '../../__tests__/test-utils';
@@ -114,5 +115,17 @@ describe('FakeHeadingsAudit', () => {
 
     const unreached = await instance.audit(unreachedSiteContext(pages, rootFiles));
     expect(unreached.status).toBe('na');
+  });
+
+  // Heading-like text is body text. A shell serves none, so it has neither fake
+  // headings nor real ones to have got right.
+  it('declines a page that served no readable text', async () => {
+    const { pages, rootFiles } = attributableFixture();
+    const instance = new FakeHeadingsAudit();
+    const rendered = await instance.audit(mockCheckContext(pages, rootFiles));
+    expect(rendered.status, 'the same input rendered is judged').not.toBe('na');
+
+    const shell = await instance.audit(shellSiteContext());
+    expect(shell.status).toBe('na');
   });
 });

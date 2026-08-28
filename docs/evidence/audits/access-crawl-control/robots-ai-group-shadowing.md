@@ -103,6 +103,14 @@ Tier per evidence policy: **scored** — grade A meets the A/B bar required for 
   Verdicts that moved on the four nothing-obtained contract states: redirected
   away pass → na. Found by
   `packages/core/src/tests/hostile-state-contract.test.ts`.
+- 2026-08-28 — `requires` drops `rendered-body` and `sample-adequate` and is now
+  `['origin-reachable']`. The verdict comes from robots.txt; the scanned pages
+  only contribute extra probe paths, so a JS shell narrows the probe set without
+  changing what is judged. Recorded as a gate exemption in
+  `scripts/lib/requires-analysis.mjs`. No verdict changes; under the evidence
+  gate the audit is no longer skipped on a shell scan, where robots.txt was
+  fetched and read normally. Found by
+  `packages/core/src/tests/hostile-state-contract.test.ts`.
 
 ## Deferred
 

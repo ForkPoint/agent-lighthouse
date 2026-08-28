@@ -37,7 +37,9 @@ export class ServerResponsivenessAudit extends Audit {
     evidenceGrade: 'B',
     tier: 'scored',
     dossier: 'docs/evidence/audits/content-extraction/server-responsiveness.md',
-    requires: ['origin-reachable', 'unblocked-fetches', 'rendered-body', 'sample-adequate'],
+    // Gate exemption: TTFB is measured from the response, and a shell answers as fast
+    // or as slow as anything else the origin serves.
+    requires: ['origin-reachable', 'unblocked-fetches'],
     defaultPriority: 'medium',
     guidance: {
       impact:

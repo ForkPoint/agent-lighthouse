@@ -65,6 +65,15 @@ _No dedicated evidence signal was researched for this audit in the 2026-08-20 pa
   pass → na, throttled pass → na, redirected away pass → na, non-HTML homepage
   pass → na. Found by
   `packages/core/src/tests/hostile-state-contract.test.ts`.
+- 2026-08-28 — the fewer-than-two-pages branch returned `pass` while its own
+  message read "uniqueness check not applicable". The status now matches the
+  words: `notApplicable`. Uniqueness needs two pages to compare, and a scan of a
+  JS shell — whose links never render, so nothing is discovered to sample —
+  routinely holds one. This moves the verdict on every scan holding fewer
+  than two distinct canonical pages, not only on a shell: pass → na. This is
+  the fix the 2026-08-20 code review recorded as item 5 above and nobody had
+  applied. Found by
+  `packages/core/src/tests/hostile-state-contract.test.ts`.
 
 ## Review history
 

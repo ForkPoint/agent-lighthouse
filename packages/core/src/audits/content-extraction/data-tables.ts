@@ -2,7 +2,12 @@ import type { AuditMeta, AuditResult } from "../../types";
 import { Audit } from "../../audit";
 import type { CheckContext } from '../../check-context';
 import { weightForGrade } from '../../scorer';
-import { scanReadTheSite, unreadSiteReason } from '../../scan-evidence';
+import {
+  scanReadTheSite,
+  unreadSiteReason,
+  scanReadPageText,
+  unreadPageTextReason,
+} from '../../scan-evidence';
 
 export class DataTablesAudit extends Audit {
   static override meta: AuditMeta = {
@@ -55,6 +60,15 @@ export class DataTablesAudit extends Audit {
     }
 
     if (totalTables === 0) {
+      // A shell serves an empty body, so "no tables" is the scan finding
+      // nothing to look at rather than the page having nothing to fix.
+      if (!scanReadPageText(ctx.evidence)) {
+        return this.notApplicable(
+          'The scanned page served no readable text, so it held no tables to judge.',
+          'Tables have <thead> and <th> elements',
+          unreadPageTextReason(ctx.evidence),
+        );
+      }
       return this.pass(
         'No data tables found — check not applicable.',
         'Tables have <thead> and <th> elements',

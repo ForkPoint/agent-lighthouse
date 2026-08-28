@@ -17,8 +17,9 @@ export class NoNofollowAudit extends Audit {
     evidenceGrade: 'A',
     tier: 'scored',
     dossier: 'docs/evidence/audits/access-crawl-control/no-nofollow.md',
-    // Gate exemption: being refused is what this category reports.
-    requires: ['origin-reachable', 'rendered-body', 'sample-adequate'],
+    // Gate exemption: being refused is what this category reports, and the meta tag and
+    // header this audit reads are served by a page whose body renders nothing.
+    requires: ['origin-reachable'],
     defaultPriority: 'high',
     guidance: {
       impact:

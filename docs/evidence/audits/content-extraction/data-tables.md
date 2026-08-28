@@ -99,6 +99,14 @@ Correct core logic (parse5 auto-inserts <tbody>, so the '<table><tr><th>' patter
   pass → na, throttled pass → na, redirected away pass → na, non-HTML homepage
   pass → na. Found by
   `packages/core/src/tests/hostile-state-contract.test.ts`.
+- 2026-08-28 — a page that served no readable text no longer counts as a page
+  with no tables. `<table>` markup arrives inside the body a JS shell withholds,
+  so `totalTables === 0` was the scan reporting its own silence rather than the
+  site publishing nothing to fix. The zero-table branch now consults
+  `scanReadPageText()` and returns `notApplicable` carrying the gate's reason;
+  every branch that found a table is untouched. Verdict moved on the shell
+  contract state: pass → na. Found by
+  `packages/core/src/tests/hostile-state-contract.test.ts`.
 
 ## Review history
 

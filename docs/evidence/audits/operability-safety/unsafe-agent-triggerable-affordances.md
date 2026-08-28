@@ -88,6 +88,13 @@ purpose, because a site-wide block says nothing about the individual path.
   Verdicts that moved on the four nothing-obtained contract states: redirected
   away pass → na, non-HTML homepage pass → na. Found by
   `packages/core/src/tests/hostile-state-contract.test.ts`.
+- 2026-08-28 — links and GET forms live in the body, and a JS shell exposes
+  neither, so "no link or GET form changes state when it is fetched" was silence
+  rather than safety. The empty-findings branch now returns `notApplicable` when
+  `scanReadPageText()` is false, keeping its `details` counts; every finding
+  still fails or warns as before. Verdict moved on the shell contract state:
+  pass → na. Found by
+  `packages/core/src/tests/hostile-state-contract.test.ts`.
 
 ## Deferred
 

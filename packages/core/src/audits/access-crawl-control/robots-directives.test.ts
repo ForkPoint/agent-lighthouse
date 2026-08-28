@@ -4,6 +4,7 @@ import {
   attributableFixture,
   mockCheckContext,
   mockPageContext,
+  shellSiteContext,
   unreachedSiteContext,
 } from '../../__tests__/test-utils';
 
@@ -174,5 +175,12 @@ describe('MetaRobotsNotBlockingAudit', () => {
 
     const unreached = await instance.audit(unreachedSiteContext(pages, rootFiles));
     expect(unreached.status).toBe('na');
+  });
+
+  // `requires` deliberately omits `rendered-body`: robots directives live in the
+  // head and the headers, which arrive whether or not the body renders.
+  it('still judges a page that served no readable text', async () => {
+    const result = await new MetaRobotsNotBlockingAudit().audit(shellSiteContext());
+    expect(result.status).not.toBe('na');
   });
 });

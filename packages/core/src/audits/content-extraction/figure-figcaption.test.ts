@@ -3,6 +3,7 @@ import { FigureFigcaptionAudit } from './figure-figcaption';
 import {
   attributableFixture,
   mockCheckContext,
+  shellSiteContext,
   mockPageContext,
   unreachedSiteContext,
 } from '../../__tests__/test-utils';
@@ -69,5 +70,17 @@ describe('FigureFigcaptionAudit', () => {
 
     const unreached = await instance.audit(unreachedSiteContext(pages, rootFiles));
     expect(unreached.status).toBe('na');
+  });
+
+  // A shell serves no images and no figures because it serves no body. Passing
+  // it would credit a page that never showed one.
+  it('declines a page that served no readable text', async () => {
+    const { pages, rootFiles } = attributableFixture();
+    const instance = new FigureFigcaptionAudit();
+    const rendered = await instance.audit(mockCheckContext(pages, rootFiles));
+    expect(rendered.status, 'the same input rendered is judged').not.toBe('na');
+
+    const shell = await instance.audit(shellSiteContext());
+    expect(shell.status).toBe('na');
   });
 });

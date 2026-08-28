@@ -182,7 +182,9 @@ export class ThirdPartyDomWriteBlastRadiusAudit extends Audit {
     evidenceGrade: 'B',
     tier: 'scored',
     dossier: 'docs/evidence/audits/operability-safety/third-party-dom-write-blast-radius.md',
-    requires: ['origin-reachable', 'unblocked-fetches', 'rendered-body', 'sample-adequate'],
+    // Gate exemption: the census is of script, stylesheet and frame origins in the
+    // served HTML, judged against the CSP header. A shell is mostly script tags.
+    requires: ['origin-reachable', 'unblocked-fetches'],
     defaultPriority: 'high',
     guidance: {
       impact:

@@ -17,7 +17,8 @@ export class LanguageAttributeAudit extends Audit {
     evidenceGrade: 'A',
     tier: 'scored',
     dossier: 'docs/evidence/audits/content-extraction/language-attribute.md',
-    requires: ['origin-reachable', 'unblocked-fetches', 'rendered-body', 'sample-adequate'],
+    // Gate exemption: `<html lang>` is served before any body renders.
+    requires: ['origin-reachable', 'unblocked-fetches'],
     defaultPriority: 'high',
     guidance: {
       impact:

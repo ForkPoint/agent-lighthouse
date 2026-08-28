@@ -4,6 +4,7 @@ import {
   attributableFixture,
   mockCheckContext,
   mockPageContext,
+  shellSiteContext,
   unreachedSiteContext,
 } from '../../__tests__/test-utils';
 
@@ -62,5 +63,12 @@ describe('DescriptiveUrlsAudit', () => {
 
     const unreached = await instance.audit(unreachedSiteContext(pages, rootFiles));
     expect(unreached.status).toBe('na');
+  });
+
+  // `requires` deliberately omits `rendered-body`: a URL is readable whether or
+  // not the page behind it rendered text.
+  it('still judges a page that served no readable text', async () => {
+    const result = await new DescriptiveUrlsAudit().audit(shellSiteContext());
+    expect(result.status).not.toBe('na');
   });
 });

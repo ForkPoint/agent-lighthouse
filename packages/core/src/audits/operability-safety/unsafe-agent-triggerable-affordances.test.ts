@@ -3,6 +3,7 @@ import { UnsafeAgentTriggerableAffordancesAudit } from './unsafe-agent-triggerab
 import {
   attributableFixture,
   mockCheckContext,
+  shellSiteContext,
   mockFetchResult,
   mockPageContext,
   unreachedSiteContext,
@@ -110,5 +111,17 @@ describe('UnsafeAgentTriggerableAffordancesAudit', () => {
 
     const unreached = await instance.audit(unreachedSiteContext(pages, rootFiles));
     expect(unreached.status).toBe('na');
+  });
+
+  // Links and GET forms live in the body. A shell exposes none, so "nothing here
+  // changes state on a GET" is silence rather than safety.
+  it('declines a page that served no readable text', async () => {
+    const { pages, rootFiles } = attributableFixture();
+    const instance = new UnsafeAgentTriggerableAffordancesAudit();
+    const rendered = await instance.audit(mockCheckContext(pages, rootFiles));
+    expect(rendered.status, 'the same input rendered is judged').not.toBe('na');
+
+    const shell = await instance.audit(shellSiteContext());
+    expect(shell.status).toBe('na');
   });
 });

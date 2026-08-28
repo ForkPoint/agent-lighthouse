@@ -89,6 +89,14 @@ reads.
   pass → na, throttled pass → na, redirected away pass → na, non-HTML homepage
   pass → na. Found by
   `packages/core/src/tests/hostile-state-contract.test.ts`.
+- 2026-08-28 — the root files are readable on a JS-shell scan, but the pages are
+  where a covert channel is planted, and a page with no text carries none. The
+  no-hits branch now returns `notApplicable` when `scanReadPageText()` is false,
+  keeping its `details` counts. It sits after the hit branches: a Tags-block
+  run in a robots.txt served beside a shell is still a fail, pinned by the test
+  "still reports a tag-block run in a root file served beside a shell". Verdict
+  moved on the shell contract state: pass → na. Found by
+  `packages/core/src/tests/hostile-state-contract.test.ts`.
 
 ## Deferred
 

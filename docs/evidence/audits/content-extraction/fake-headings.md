@@ -93,6 +93,12 @@ Best idea in the category, wrecked by the detection regex. FAKE_HEADING_CLASS = 
   pass → na, throttled pass → na, redirected away pass → na, non-HTML homepage
   pass → na. Found by
   `packages/core/src/tests/hostile-state-contract.test.ts`.
+- 2026-08-28 — heading-like text is body text, and a JS shell serves none, so
+  such a page holds neither fake headings nor real ones to have got right. The
+  empty-findings branch now returns `notApplicable` when `scanReadPageText()` is
+  false; every reported fake heading still fails as before. Verdict moved on the
+  shell contract state: pass → na. Found by
+  `packages/core/src/tests/hostile-state-contract.test.ts`.
 
 ## Review history
 

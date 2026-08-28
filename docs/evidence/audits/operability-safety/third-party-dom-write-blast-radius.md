@@ -98,6 +98,15 @@ number is not read as the whole list.
   Verdicts that moved on the four nothing-obtained contract states: redirected
   away pass → na, non-HTML homepage pass → na. Found by
   `packages/core/src/tests/hostile-state-contract.test.ts`.
+- 2026-08-28 — `requires` drops `rendered-body` and `sample-adequate` and is now
+  `['origin-reachable', 'unblocked-fetches']`. The census is of script,
+  stylesheet and frame origins in the served HTML, judged against the
+  Content-Security-Policy header; a JS shell is mostly script tags, which is
+  precisely what this counts. Recorded as a gate exemption in
+  `scripts/lib/requires-analysis.mjs`. No verdict changes; under the evidence
+  gate the audit is no longer skipped on a shell scan, which is the case its
+  finding matters most in. Found by
+  `packages/core/src/tests/hostile-state-contract.test.ts`.
 
 ## Deferred
 

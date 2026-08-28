@@ -3,6 +3,7 @@ import { ContentWithoutClickthroughAudit } from './content-without-clickthrough'
 import {
   attributableFixture,
   mockCheckContext,
+  shellSiteContext,
   mockPageContext,
   unreachedSiteContext,
 } from '../../__tests__/test-utils';
@@ -155,5 +156,18 @@ describe('ContentWithoutClickthroughAudit', () => {
 
     const unreached = await instance.audit(unreachedSiteContext(pages, rootFiles));
     expect(unreached.status).toBe('na');
+  });
+
+  // Teasers are body copy. The low-content branch skips the homepage, which on a
+  // shell scan is often the only page there is, so the pass was unreachable
+  // evidence dressed as a clean bill of health.
+  it('declines a page that served no readable text', async () => {
+    const { pages, rootFiles } = attributableFixture();
+    const instance = new ContentWithoutClickthroughAudit();
+    const rendered = await instance.audit(mockCheckContext(pages, rootFiles));
+    expect(rendered.status, 'the same input rendered is judged').not.toBe('na');
+
+    const shell = await instance.audit(shellSiteContext());
+    expect(shell.status).toBe('na');
   });
 });

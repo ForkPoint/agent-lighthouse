@@ -58,7 +58,9 @@ export class UniqueMetaAudit extends Audit {
 
     const uniquePages = Array.from(canonicalGroups.values());
     if (uniquePages.length < 2) {
-      return this.pass(
+      // Uniqueness needs two pages to compare. With one there is no verdict,
+      // which is what this branch always said in words while scoring a pass.
+      return this.notApplicable(
         'Only one distinct canonical page scanned; uniqueness check not applicable.',
         'Each page has a unique title + description combination',
         '1 distinct page scanned',

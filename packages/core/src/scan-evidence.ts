@@ -249,6 +249,33 @@ export function unreadSiteReason(evidence: ScanEvidence): string {
   );
 }
 
+/**
+ * Whether any fetched page served text a non-JS consumer can read.
+ *
+ * A JS shell is not an empty scan: the page arrived, the head is complete, the
+ * headers and the root files are all there. What it withholds is the rendered
+ * document — the tables, figures, headings, links and accessible names an
+ * audit walks. An audit whose population lives in the body therefore finds
+ * none of it and, unguarded, reports the absence as cleanliness: "no data
+ * tables found" about a page whose body is one empty `<div>`.
+ *
+ * Read this only where the audit would otherwise say "found nothing, so
+ * nothing is wrong". A finding the served HTML does support — an injected
+ * `og:description`, a third-party script tag, a slow response — is still true
+ * on a shell and must be reported before this guard is reached.
+ */
+export function scanReadPageText(evidence: ScanEvidence): boolean {
+  return evidence.met['rendered-body'];
+}
+
+/** Why no fetched page served text to read. */
+export function unreadPageTextReason(evidence: ScanEvidence): string {
+  return (
+    evidence.reasons['rendered-body'] ??
+    'No fetched page served text a non-JS consumer can read.'
+  );
+}
+
 /** All requirements met. For test harnesses not exercising the gate. */
 export function allEvidenceMet(): ScanEvidence {
   return {

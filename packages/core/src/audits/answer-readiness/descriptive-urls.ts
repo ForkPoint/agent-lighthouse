@@ -28,7 +28,8 @@ export class DescriptiveUrlsAudit extends Audit {
     evidenceGrade: 'C',
     tier: 'informative',
     dossier: 'docs/evidence/audits/answer-readiness/descriptive-urls.md',
-    requires: ['origin-reachable', 'unblocked-fetches', 'rendered-body', 'sample-adequate'],
+    // Gate exemption: a URL is readable whether or not the page behind it rendered text.
+    requires: ['origin-reachable', 'unblocked-fetches'],
     defaultPriority: 'high',
     guidance: {
       impact:

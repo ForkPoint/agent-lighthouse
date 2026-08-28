@@ -126,7 +126,9 @@ export class RobotsAiGroupShadowingAudit extends Audit {
     tier: 'scored',
     dossier: 'docs/evidence/audits/access-crawl-control/robots-ai-group-shadowing.md',
     // Gate exemption: being refused is what this category reports.
-    requires: ['origin-reachable', 'rendered-body', 'sample-adequate'],
+    // Gate exemption: the verdict comes from robots.txt. The scanned pages only widen
+    // the probe path set, so a shell narrows the probe and changes nothing judged.
+    requires: ['origin-reachable'],
     defaultPriority: 'high',
     guidance: {
       impact:

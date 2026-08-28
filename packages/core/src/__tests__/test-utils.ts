@@ -7,7 +7,7 @@ import {
 } from '../parser';
 import type { CheckContext, PageContext } from '../check-context';
 import type { FetchResult } from '../fetcher';
-import { allEvidenceMet } from '../scan-evidence';
+import { allEvidenceMet, buildScanEvidence } from '../scan-evidence';
 
 export function mockPageContext(url: string, html: string, index: number = 0): PageContext {
   const $ = parseHtml(html);
@@ -148,6 +148,41 @@ export function walledSiteContext(overrides: Partial<CheckContext> = {}): CheckC
       },
     },
     ...overrides,
+  };
+}
+
+/**
+ * The body a JS shell serves: a mount point and a script, no text.
+ */
+export const SHELL_HTML =
+  '<html lang="en"><head><title>Shop</title></head>' +
+  '<body><div id="root"></div><script src="/app.js"></script></body></html>';
+
+/**
+ * A page that arrived from the right host and rendered no text.
+ *
+ * `origin-reachable` and `unblocked-fetches` stay met — a shell is a finding
+ * about the site, not about the scan — so the evidence comes from the real
+ * `buildScanEvidence` rather than a hand-written `met` map. An audit reading
+ * the response envelope must still reach a verdict here; one reading the
+ * rendered document must not congratulate the emptiness.
+ */
+export function shellSiteContext(
+  html: string = SHELL_HTML,
+  rootFiles: Record<string, FetchResult> = {},
+): CheckContext {
+  const url = 'https://example.com/';
+  const page = mockPageContext(url, html);
+  const ctx = mockCheckContext([page], rootFiles);
+  return {
+    ...ctx,
+    evidence: buildScanEvidence({
+      requestedUrl: url,
+      homepageResult: page.fetchResult,
+      pages: [page],
+      rootFiles,
+      wafProtection: null,
+    }),
   };
 }
 

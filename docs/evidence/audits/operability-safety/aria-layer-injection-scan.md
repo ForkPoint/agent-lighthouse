@@ -84,6 +84,16 @@ part-of-speech tagger is available without a new dependency.
   Verdicts that moved on the four nothing-obtained contract states: redirected
   away pass → na. Found by
   `packages/core/src/tests/hostile-state-contract.test.ts`.
+- 2026-08-28 — a JS shell serves the head and little else, so alt, aria-label,
+  option labels, hidden input values and links never arrive. The document title
+  alone kept `valuesSeen` above the existing zero-value guard and produced a
+  clean pass over one value. The clean pass now returns `notApplicable` when
+  `scanReadPageText()` is false. It sits after the injection, opposing-verb
+  and anomaly branches on purpose: an instruction planted in a shell's `<title>`
+  or an `og:*` value is served and is still a finding, pinned by the test "still
+  reports an instruction planted in the title of a shell". Verdict moved on the
+  shell contract state: pass → na. Found by
+  `packages/core/src/tests/hostile-state-contract.test.ts`.
 
 ## Deferred
 

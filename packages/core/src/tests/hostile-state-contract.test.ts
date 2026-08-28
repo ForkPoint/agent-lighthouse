@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { defaultConfig } from '../audit-config';
 import { AuditResultSchema } from '../schemas';
-import { NOTHING_OBTAINED } from './hostile-states';
+import { NOTHING_OBTAINED, SHELL_STATE } from './hostile-states';
 import type { AuditResult } from '../types';
 
 /**
@@ -67,6 +67,44 @@ describe('hostile-state contract — nothing obtained', () => {
           );
         }
       }
+    });
+  }
+});
+
+/**
+ * A shell is not an empty scan: a page arrived, it just carried no text. Root
+ * files were fetched and read, so a robots-based audit passing here is
+ * correct. Only audits that declare `rendered-body` are held to the rule —
+ * narrowing by the audit's own `requires` keeps the claim tied to what the
+ * audit says it needs, rather than to its category.
+ */
+describe('hostile-state contract — a shell page', () => {
+  const ctx = SHELL_STATE.build();
+  const readsRenderedBody = registrations.filter((r) =>
+    (r.meta.requires ?? []).includes('rendered-body'),
+  );
+
+  it('has page-reading audits to check', () => {
+    expect(readsRenderedBody.length).toBeGreaterThan(20);
+  });
+
+  for (const registration of readsRenderedBody) {
+    const { id } = registration.meta;
+
+    it(`${id}: claims nothing about a page that rendered no text`, async () => {
+      let result: AuditResult;
+      try {
+        result = await registration.create().audit(ctx);
+      } catch (err) {
+        expect.fail(`threw instead of returning a result — ${String(err)}`);
+      }
+
+      expect(AuditResultSchema.safeParse(result).success).toBe(true);
+      if (VACUOUS_PASS_ALLOWLIST.has(id)) return;
+      expect(
+        result.status,
+        `passed a page that rendered no text — "${result.message}"`,
+      ).not.toBe('pass');
     });
   }
 });

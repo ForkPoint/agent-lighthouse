@@ -61,6 +61,13 @@ _No dedicated evidence signal was researched for this audit in the 2026-08-20 pa
   fail → na, throttled fail → na, redirected away pass → na, non-HTML homepage
   fail → na. Found by
   `packages/core/src/tests/hostile-state-contract.test.ts`.
+- 2026-08-28 — `requires` drops `rendered-body` and `sample-adequate` and is now
+  `['origin-reachable', 'unblocked-fetches']`. The `lang` attribute is an
+  attribute of `<html>`, served before any body renders, so whether a page
+  rendered text has no bearing on whether it declared its language. Recorded as a
+  gate exemption in `scripts/lib/requires-analysis.mjs`. No verdict changes;
+  under the evidence gate the audit is no longer skipped on a JS-shell scan.
+  Found by `packages/core/src/tests/hostile-state-contract.test.ts`.
 
 ## Review history
 

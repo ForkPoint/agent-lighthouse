@@ -78,10 +78,57 @@ export const GATE_EXEMPTIONS = {
       'wafProtection alone — evidence a wall destroys is not evidence this finding needs.',
   },
   'access-crawl-control/no-redirect-chains': {
-    drop: ['origin-reachable'],
+    drop: ['origin-reachable', 'rendered-body', 'sample-adequate'],
     reason:
       'A hop that left the site is this audit\'s subject, and leaving the site is exactly ' +
-      'what denies origin-reachable. The page-fed keys stay: with no page there is no hop.',
+      'what denies origin-reachable. It reads request URL against final URL, which every ' +
+      'response carries, and it reports "no pages scanned" itself when there is none.',
+  },
+  // The seven below share one shape. `check-requires` derives `rendered-body`
+  // from the source touching `ctx.pages`, but each of these reads the response
+  // envelope — head markup, headers, robots.txt, transport timing, the URL —
+  // and a JS shell serves all of that in full. Gating them on rendered text
+  // would withhold a verdict the scan is holding.
+  'access-crawl-control/no-nofollow': {
+    drop: ['rendered-body', 'sample-adequate'],
+    reason:
+      'Reads `<meta name="robots">` and the X-Robots-Tag header. A body that renders no ' +
+      'text still carries both.',
+  },
+  'access-crawl-control/robots-directives': {
+    drop: ['rendered-body', 'sample-adequate'],
+    reason:
+      'Reads robots directives from meta tags and the X-Robots-Tag header, both served ' +
+      'whole by a page whose body is empty.',
+  },
+  'access-crawl-control/robots-ai-group-shadowing': {
+    drop: ['rendered-body', 'sample-adequate'],
+    reason:
+      'The verdict comes from robots.txt. The scanned pages only contribute extra probe ' +
+      'paths, so a shell narrows the probe set without changing what is judged.',
+  },
+  'content-extraction/language-attribute': {
+    drop: ['rendered-body', 'sample-adequate'],
+    reason:
+      'Reads the `lang` attribute on `<html>`, which is served before any body renders.',
+  },
+  'content-extraction/server-responsiveness': {
+    drop: ['rendered-body', 'sample-adequate'],
+    reason:
+      'Measures TTFB from the response. A shell answers as fast or as slow as anything ' +
+      'else the origin serves.',
+  },
+  'answer-readiness/descriptive-urls': {
+    drop: ['rendered-body', 'sample-adequate'],
+    reason:
+      'Judges the URL strings of the pages the scan fetched. A URL is readable whether or ' +
+      'not the page behind it rendered text.',
+  },
+  'operability-safety/third-party-dom-write-blast-radius': {
+    drop: ['rendered-body', 'sample-adequate'],
+    reason:
+      'Counts the script, stylesheet and frame origins in the served HTML against the CSP ' +
+      'header. A shell is mostly script tags, which is precisely this census.',
   },
   'access-crawl-control/https-enabled': {
     drop: ['origin-reachable', 'unblocked-fetches', 'rendered-body', 'sample-adequate'],

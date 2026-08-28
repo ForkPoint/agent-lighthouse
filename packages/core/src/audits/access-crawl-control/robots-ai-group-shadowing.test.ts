@@ -5,6 +5,7 @@ import {
   mockCheckContext,
   mockFetchResult,
   mockPageContext,
+  shellSiteContext,
   unreachedSiteContext,
 } from '../../__tests__/test-utils';
 import type { FetchResult } from '../../fetcher';
@@ -98,5 +99,15 @@ describe('RobotsAiGroupShadowingAudit', () => {
 
     const unreached = await instance.audit(unreachedSiteContext(pages, rootFiles));
     expect(unreached.status).toBe('na');
+  });
+
+  // `requires` deliberately omits `rendered-body`: the verdict comes from
+  // robots.txt, and the pages only widen the set of probe paths.
+  it('still judges a page that served no readable text', async () => {
+    const robots = mockFetchResult('User-agent: *\nAllow: /\n', 200, 'text/plain');
+    const result = await new RobotsAiGroupShadowingAudit().audit(
+      shellSiteContext(undefined, { '/robots.txt': robots }),
+    );
+    expect(result.status).toBe('pass');
   });
 });

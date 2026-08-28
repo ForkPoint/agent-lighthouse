@@ -80,6 +80,13 @@ The core check (do existing <figure>s have a <figcaption>) is sound. The problem
   pass → na, throttled pass → na, redirected away pass → na, non-HTML homepage
   pass → na. Found by
   `packages/core/src/tests/hostile-state-contract.test.ts`.
+- 2026-08-28 — the "no images or figures" branch no longer passes a page that
+  served no readable text. A JS shell serves neither, so the pass credited a page
+  that never showed a figure. That branch now returns `notApplicable` when
+  `scanReadPageText()` is false; the warning for images that exist without a
+  `<figure>` still fires whenever images arrived. Verdict moved on the shell
+  contract state: pass → na. Found by
+  `packages/core/src/tests/hostile-state-contract.test.ts`.
 
 ## Review history
 

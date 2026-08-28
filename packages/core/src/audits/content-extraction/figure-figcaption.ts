@@ -3,7 +3,12 @@ import { Audit } from "../../audit";
 import type { CheckContext } from '../../check-context';
 import { extractImages } from '../../parser';
 import { weightForGrade } from '../../scorer';
-import { scanReadTheSite, unreadSiteReason } from '../../scan-evidence';
+import {
+  scanReadTheSite,
+  unreadSiteReason,
+  scanReadPageText,
+  unreadPageTextReason,
+} from '../../scan-evidence';
 
 export class FigureFigcaptionAudit extends Audit {
   static override meta: AuditMeta = {
@@ -72,6 +77,16 @@ export class FigureFigcaptionAudit extends Audit {
               'AI agents use <figcaption> to understand the context and purpose of images beyond what alt text provides. Wrapping images in <figure> with <figcaption> gives agents a richer description that can be cited in AI-generated explanations.',
             code: '<figure>\n  <img src="chart.png" alt="Sales growth chart">\n  <figcaption>Figure 1: Sales grew 40% year-over-year in Q4 2024.</figcaption>\n</figure>',
           },
+        );
+      }
+
+      // No images and no figures on a page that served no text means the
+      // markup never arrived, not that the site publishes uncaptioned nothing.
+      if (!scanReadPageText(ctx.evidence)) {
+        return this.notApplicable(
+          'The scanned page served no readable text, so it held no images or figures to judge.',
+          'Images with context wrapped in <figure> with <figcaption>',
+          unreadPageTextReason(ctx.evidence),
         );
       }
 

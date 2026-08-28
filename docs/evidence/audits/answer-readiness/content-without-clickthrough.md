@@ -63,6 +63,13 @@ Fails a page when ≥2 of eight English teaser regexes match anywhere in its mai
   fail → na, throttled fail → na, redirected away pass → na, non-HTML homepage
   pass → na. Found by
   `packages/core/src/tests/hostile-state-contract.test.ts`.
+- 2026-08-28 — teasers are body copy, and the low-content warning deliberately
+  skips the homepage, which on a JS-shell scan is often the only page sampled. A
+  page with no text therefore reached the clean pass. That pass now returns
+  `notApplicable` when `scanReadPageText()` is false; the teaser fail and the
+  low-content warn are unchanged. Verdict moved on the shell contract state:
+  pass → na. Found by
+  `packages/core/src/tests/hostile-state-contract.test.ts`.
 
 ## Evidence
 

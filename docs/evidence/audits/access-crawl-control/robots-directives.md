@@ -119,6 +119,14 @@ All three rows graded **A** independently, on the same proven consumer path (Goo
   Verdicts that moved on the four nothing-obtained contract states: redirected
   away pass → na, non-HTML homepage pass → na. Found by
   `packages/core/src/tests/hostile-state-contract.test.ts`.
+- 2026-08-28 — `requires` drops `rendered-body` and `sample-adequate` and is now
+  `['origin-reachable']`. The directives this audit reads live in meta tags and
+  the `X-Robots-Tag` header, which arrive whether or not the body renders, so the
+  keys `check-requires` derived from the `ctx.pages` read overstated what the
+  verdict depends on. Recorded as a gate exemption in
+  `scripts/lib/requires-analysis.mjs`. No verdict changes; under the evidence
+  gate the audit is no longer skipped on a JS-shell scan. Found by
+  `packages/core/src/tests/hostile-state-contract.test.ts`.
 
 ## Review history
 

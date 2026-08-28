@@ -4,6 +4,7 @@ import {
   attributableFixture,
   mockCheckContext,
   mockPageContext,
+  shellSiteContext,
   unreachedSiteContext,
 } from '../../__tests__/test-utils';
 
@@ -98,5 +99,12 @@ describe('NoRedirectChainsAudit', () => {
     expect(result.status).toBe('fail');
     expect(result.message).toContain('1/1');
     expect(result.found).toContain('parking.brandsale.test');
+  });
+
+  // `requires` deliberately omits `rendered-body`: a hop is recorded by the
+  // response, and a shell resolves in as many hops as anything else.
+  it('still judges a page that served no readable text', async () => {
+    const result = await new NoRedirectChainsAudit().audit(shellSiteContext());
+    expect(result.status).not.toBe('na');
   });
 });
