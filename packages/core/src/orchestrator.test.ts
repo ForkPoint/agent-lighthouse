@@ -294,7 +294,7 @@ describe('runScan — the evidence gate', () => {
   // a 403 denies `origin-reachable` outright. Pinning `judgeable: false` is what
   // keeps this test on the wall's path instead of re-pinning the shell's.
   it('reports no score for a site that refused the scanner', async () => {
-    // Every request answered by the wall, which is what a 403 storefront does.
+    // The homepage answers with the wall, which is what a 403 storefront does.
     h.map.set(url, {
       url,
       finalUrl: url,
@@ -304,7 +304,7 @@ describe('runScan — the evidence gate', () => {
       ttfbMs: 1,
       totalMs: 2,
       contentType: 'text/html',
-      contentLength: 60,
+      contentLength: 58,
     });
 
     const report = await runScan(url);
@@ -312,7 +312,11 @@ describe('runScan — the evidence gate', () => {
     expect(report.overallScore).toBeNull();
     expect(report.scoreTier).toBeNull();
     expect(report.scanValidity?.judgeable).toBe(false);
-    expect(report.scanValidity?.unscoredReason).toBeTruthy();
+    // The branch does not decide *whether* the score is suppressed — denying
+    // `origin-reachable` also gates enough mass to trip the escalation — it
+    // decides the wording. A walled site must be told it was walled, not handed
+    // a percentage of registry mass, so pin the sentence and not just truthiness.
+    expect(report.scanValidity?.unscoredReason).toContain('HTTP 403');
   });
 
   it('scores a page an agent can actually read', async () => {
