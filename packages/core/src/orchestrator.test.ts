@@ -289,6 +289,32 @@ describe('runScan — the evidence gate', () => {
     expect(report.scanValidity?.unscoredReason).toBeTruthy();
   });
 
+  // A wall reaches `overallScore: null` by a different route than a shell: the
+  // shell is judgeable and gets suppressed by the gated-mass escalation, while
+  // a 403 denies `origin-reachable` outright. Pinning `judgeable: false` is what
+  // keeps this test on the wall's path instead of re-pinning the shell's.
+  it('reports no score for a site that refused the scanner', async () => {
+    // Every request answered by the wall, which is what a 403 storefront does.
+    h.map.set(url, {
+      url,
+      finalUrl: url,
+      status: 403,
+      headers: { 'cf-ray': '8a0f0000000-LHR', 'content-type': 'text/html' },
+      body: '<html><body>Attention Required! | Cloudflare</body></html>',
+      ttfbMs: 1,
+      totalMs: 2,
+      contentType: 'text/html',
+      contentLength: 60,
+    });
+
+    const report = await runScan(url);
+
+    expect(report.overallScore).toBeNull();
+    expect(report.scoreTier).toBeNull();
+    expect(report.scanValidity?.judgeable).toBe(false);
+    expect(report.scanValidity?.unscoredReason).toBeTruthy();
+  });
+
   it('scores a page an agent can actually read', async () => {
     set(url, FULL_HTML);
 
