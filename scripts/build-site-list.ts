@@ -1,5 +1,10 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
+import {
+  buildSiteList,
+  normalize,
+  type SiteEntry,
+} from '../packages/core/src/tests/site-list';
 
 /**
  * Build the site list from two public ranked sources.
@@ -18,14 +23,11 @@ import * as path from 'node:path';
  *
  * A generator that fetches cannot be re-run to the same output, and this one is
  * meant to be.
+ *
+ * This file is only flags and file I/O. The merge logic it calls lives in
+ * `packages/core/src/tests/site-list.ts`, where a test can reach it without
+ * running a generator that overwrites the committed list.
  */
-
-interface SiteEntry {
-  domain: string;
-  category: string;
-  source: 'tranco' | 'crux';
-  rankBucket: number;
-}
 
 /** Read a `--name=value` flag, falling back to a default. */
 function flag(name: string, fallback: string): string {
@@ -33,28 +35,13 @@ function flag(name: string, fallback: string): string {
   return arg ? arg.slice(name.length + 3) : fallback;
 }
 
-const LIMIT = Number(flag('limit', '1000'));
-const TRANCO = flag('tranco', '/tmp/site-lists/tranco.csv');
-const CRUX = flag('crux', '/tmp/site-lists/crux.csv');
-const OUT = flag('out', 'packages/core/test-data/sites/sites.json');
-const CATEGORIES = flag('categories', 'packages/core/test-data/sites/categories.json');
-
-/** A bare lowercase hostname, or '' when the field is not one. */
-function normalize(raw: string): string {
-  const trimmed = raw
-    .trim()
-    .replace(/^https?:\/\//, '')
-    .replace(/\/.*$/, '');
-  const host = trimmed.toLowerCase().replace(/^www\./, '');
-  return /^[a-z0-9.-]+\.[a-z]{2,}$/.test(host) ? host : '';
-}
-
 /**
  * Read one ranked source, best-ranked first.
  *
  * Tranco rows are `rank,domain` with no header. CrUX rows are `origin,rank`
  * behind an `origin,rank` header line, which `normalize` drops for us because
- * the literal word `origin` is not a hostname.
+ * the literal word `origin` is not a hostname. CrUX origins also carry a
+ * scheme (`https://example.com`), which `normalize` strips.
  */
 function readRanked(file: string, domainColumn: number): string[] {
   if (!fs.existsSync(file)) {
@@ -68,46 +55,41 @@ function readRanked(file: string, domainColumn: number): string[] {
     .filter(Boolean);
 }
 
+const rawLimit = flag('limit', '1000');
+const limit = Number(rawLimit);
+// Without this, `--limit=abc` yields NaN, `slice(0, NaN)` yields [], and the
+// committed list is silently overwritten with nothing but seed fallbacks.
+if (!Number.isInteger(limit) || limit <= 0) {
+  console.error(`--limit must be a positive integer, got: ${rawLimit}`);
+  process.exit(1);
+}
+
+const TRANCO = flag('tranco', '/tmp/site-lists/tranco.csv');
+const CRUX = flag('crux', '/tmp/site-lists/crux.csv');
+const OUT = flag('out', 'packages/core/test-data/sites/sites.json');
+const CATEGORIES = flag('categories', 'packages/core/test-data/sites/categories.json');
+
 const seed: Record<string, string[]> = JSON.parse(fs.readFileSync(CATEGORIES, 'utf8'));
 const categoryOf = new Map<string, string>();
 for (const [category, domains] of Object.entries(seed)) {
   for (const domain of domains) categoryOf.set(normalize(domain), category);
 }
 
-const byDomain = new Map<string, SiteEntry>();
+const sites = buildSiteList(
+  [
+    { domains: readRanked(TRANCO, 1), source: 'tranco' },
+    { domains: readRanked(CRUX, 0), source: 'crux' },
+  ],
+  categoryOf,
+  limit,
+);
 
-function add(domains: string[], source: SiteEntry['source']): void {
-  domains.slice(0, LIMIT).forEach((domain, index) => {
-    // First writer wins: the sources are added best-ranked first, so a domain
-    // already present is already recorded at its better rank.
-    if (byDomain.has(domain)) return;
-    byDomain.set(domain, {
-      domain,
-      category: categoryOf.get(domain) ?? 'unknown',
-      source,
-      rankBucket: Math.floor(index / 1000) * 1000,
-    });
-  });
-}
-
-add(readRanked(TRANCO, 1), 'tranco');
-add(readRanked(CRUX, 0), 'crux');
-
-// Seeded domains are the reason the list reaches past storefronts, so they are
-// kept even when they fall outside the rank cut.
-for (const [domain, category] of categoryOf) {
-  if (!byDomain.has(domain)) {
-    byDomain.set(domain, { domain, category, source: 'tranco', rankBucket: 0 });
-  }
-}
-
-const sites = [...byDomain.values()].sort((a, b) => a.rankBucket - b.rankBucket);
 fs.mkdirSync(path.dirname(OUT), { recursive: true });
 fs.writeFileSync(OUT, `${JSON.stringify(sites, null, 2)}\n`);
 
+const count = (source: SiteEntry['source']) => sites.filter((s) => s.source === source).length;
 const unknown = sites.filter((s) => s.category === 'unknown').length;
-const tranco = sites.filter((s) => s.source === 'tranco').length;
 console.log(
-  `${sites.length} sites -> ${OUT} (tranco ${tranco}, ` +
-    `crux ${sites.length - tranco}, unknown category ${unknown})`,
+  `${sites.length} sites -> ${OUT} (tranco ${count('tranco')}, crux ${count('crux')}, ` +
+    `seed ${count('seed')}, unknown category ${unknown})`,
 );

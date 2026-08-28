@@ -27,6 +27,7 @@
     "docs.djangoproject.com",
     "docs.docker.com",
     "docs.github.com",
+    "docs.gitlab.com",
     "docs.python.org",
     "go.dev",
     "kubernetes.io",
@@ -34,7 +35,6 @@
     "nodejs.org",
     "postgresql.org",
     "react.dev",
-    "readthedocs.org",
     "rust-lang.org",
     "typescriptlang.org",
     "w3.org"
@@ -99,10 +99,10 @@
   ],
   "forum": [
     "askubuntu.com",
-    "discourse.org",
     "discuss.pytorch.org",
     "forums.macrumors.com",
     "lobste.rs",
+    "meta.discourse.org",
     "news.ycombinator.com",
     "quora.com",
     "reddit.com",
