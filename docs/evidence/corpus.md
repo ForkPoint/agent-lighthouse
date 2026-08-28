@@ -54,7 +54,7 @@ All captured 2026-08-28. Sizes are gzipped bytes on disk.
 | Fixture | Served | Kind | Size | The shape it covers |
 | :-- | :-- | :-- | --: | :-- |
 | `hiutdenim-co-uk` | hiutdenim.co.uk | page | 30.5 KB | Four `<main>` elements holding 49, 6, 33 and 1,027 readable characters of the 2,470 the page renders. The defect that started this corpus. **Do not prune.** |
-| `velasca-com` | velasca.com | page | 99.3 KB | One `<main>` whose readable text is empty — it holds only scripts — with all 194 rendered words outside it. |
+| `velasca-com` | velasca.com | page | 99.3 KB | One `<main>` whose readable text is empty — 71,880 characters of scripts and empty skeleton markup, 76 `<div>`s among them holding nothing — with all 194 rendered words outside it. |
 | `gymshark-com-shell` | gymshark.com → us.checkout.gymshark.com | shell | 14.5 KB | Redirects to a checkout host whose 47 KB body renders one word. |
 | `tattly-com-shell` | tattly.com | shell | 24.1 KB | 20 words, 127 characters — under both arms of the shell rule, in a 105 KB body. |
 | `quitenice-co-shell` | quitenice.co | shell | 0.1 KB | 114-byte parked origin. The smallest thing a 200 can be. |
@@ -84,8 +84,11 @@ Both blind spots were found by mutation testing in Task 6.
 
 #### Which fixture actually pins the shell threshold
 
-`pageRendersText` is `wordCount > 50 || textLength > 200`. Because it is an
-OR, a fixture pins the rule only when *both* arms move past it.
+`pageRendersText` is `wordCount > 50 || textLength > 200`, and because it is
+an OR the two kinds pin it from opposite directions. A `page` fixture is
+flipped only by a mutant that tightens *both* arms past it — either arm left
+loose still returns `page`. A `shell` fixture is flipped by a mutant that
+loosens *either* arm below it.
 
 - **Lower edge: `tattly-com-shell`** — 20 words / 127 characters, a `shell`.
   Loosen either threshold below those numbers and it becomes a `page`.
@@ -96,10 +99,17 @@ OR, a fixture pins the rule only when *both* arms move past it.
 `lobsters-login-threshold` (54 words / 321 characters) pins nothing. Every
 mutant that flips it — word arm at 54 or more *and* character arm at 321 or
 more — also flips `tirerack-com-soft-block-200`, which is smaller on both
-axes. Swept over all `wordCount > W || textLength > C` mutants, tattly is the
-sole killer of 54,306 and tirerack of 29,355; lobsters is the sole killer of
-none. It is kept only as a natural example of a real page sitting just over
-the line, and it is the first fixture to drop if the corpus needs space.
+axes. Swept over the `wordCount > W || textLength > C` grid
+`W ∈ [0,300] × C ∈ [0,1200]` less the original `(50,200)`, tattly is the sole
+killer of 54,306 mutants and tirerack of 29,355; lobsters is the sole killer
+of none. Those counts are grid-dependent — widen it to `W ≤ 500, C ≤ 2000`
+and the same corpus gives 92,106 and 53,955 — so quote the grid with them.
+
+The rule a new fixture has to satisfy: **a `page` fixture sharpens the upper
+edge only if no existing text-decided `page` fixture is `≤` it on both words
+and characters.** It has to sit on the corpus's (words, characters) Pareto
+frontier. Lobsters does not, which is why it is kept only as a natural
+example of a real page sitting just over the line.
 
 ### Where the classifier and a reader disagree
 
@@ -119,10 +129,16 @@ the correct thing for a snapshot to record — it is what the scanner does
 today with a markdown response — but it is not a finding about Vercel.
 
 `tirerack-com-soft-block-200` is doubly load-bearing, and the two pulls
-oppose each other. It cannot be dropped: it is the only fixture pinning the
-upper edge of the shell threshold. It cannot be corrected to `wall` without
-re-recording, which is the same operation as fixing the Akamai-2xx defect
-below. Any baseline taken over it — including a full 215-audit snapshot —
+oppose each other. Dropping it loosens the upper edge rather than removing
+it: lobsters inherits the frontier, the killed total falls from 306,422 to
+277,067 — exactly the 29,355-mutant band between the two — and the edge moves
+from 36 / 270 out to 54 / 321. The order matters, and it is directional.
+Dropping lobsters first costs nothing, but only while tirerack is there;
+dropping both leaves the upper edge at `velasca-com`, 194 words over 1,142
+characters, and the threshold effectively unpinned. Never prune lobsters and
+tirerack in the same pass. Tirerack also cannot be corrected to `wall`
+without re-recording, which is the same operation as fixing the Akamai-2xx
+defect below. Any baseline taken over it — including a full 215-audit snapshot —
 describes an Akamai error page, not a tire retailer's homepage. Read every
 verdict in that baseline with that in mind.
 
@@ -229,8 +245,9 @@ mostly closed to an honest user agent, and that is the finding.
   probed. Every real challenge answered 403 or 429 — Cloudflare, PerimeterX
   "press & hold", Kasada, DataDome — so it lands in the corpus as a wall by
   status, which the corpus already had. The 2xx WAF branch is covered by
-  `walmart-com-wall-200`, but by a false positive on a served page rather than
-  by a challenge page. Replace it if one is ever found.
+  `walmart-com-wall-200` and `vercel-com-wall-200`, but both by false
+  positives on served pages rather than by a challenge page. Replace them if
+  one is ever found.
 - **A marketplace product page.** Every marketplace that publishes one refused
   the capture.
 - **A fixture that pins the `wordCount` arm on its own.** It probably cannot
