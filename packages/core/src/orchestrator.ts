@@ -1,3 +1,4 @@
+import type { Dispatcher } from 'undici';
 import type { CheckStatus, PageOverride, PageType, ScanReport } from './types';
 import { getScoreTier, MAX_PAGES_PER_SCAN, READINESS_WEIGHTS } from './constants';
 import { logger } from './logger';
@@ -59,6 +60,16 @@ export interface ScanOptions {
    * useful when measuring what the gate removes.
    */
   enforceEvidenceGate?: boolean;
+  /**
+   * undici dispatcher for every request this scan makes.
+   *
+   * Omitted, the scan uses the fetcher's shared agent, which opens as many
+   * connections per origin as the scan asks for. A caller scanning origins that
+   * did not invite it — the nightly corpus job — passes a bounded agent so the
+   * ~28 root-file requests the scan issues at once do not arrive at a stranger's
+   * WAF as a burst.
+   */
+  dispatcher?: Dispatcher;
 }
 
 // Cap how many pages get the jsdom-based a11y pass. Accessibility issues are
@@ -234,7 +245,7 @@ export async function runScan(url: string, options?: ScanOptions): Promise<ScanR
 
   const tracker = new ProgressTracker((event) => onEvent?.(event));
   const start = performance.now();
-  const fetcher = createFetcher();
+  const fetcher = createFetcher({ dispatcher: options?.dispatcher });
 
   const baseUrl = new URL(url).origin;
   const domain = new URL(url).hostname;

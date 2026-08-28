@@ -1,4 +1,4 @@
-import { request, Agent } from 'undici';
+import { request, Agent, type Dispatcher } from 'undici';
 import dns from 'node:dns/promises';
 import {
   SCANNER_USER_AGENT,
@@ -9,7 +9,7 @@ import { isPrivateIp } from './url-utils';
 import { logger } from './logger';
 
 /**
- * The only dispatcher. Redirects are walked by hand below rather than by
+ * The default dispatcher. Redirects are walked by hand below rather than by
  * undici's interceptor, so every hop passes the isSafeUrl gate.
  */
 const noRedirectAgent = new Agent();
@@ -135,7 +135,34 @@ export async function isSafeUrl(url: string): Promise<boolean> {
   }
 }
 
-export function createFetcher() {
+export interface FetcherOptions {
+  /**
+   * undici dispatcher for every request this fetcher makes.
+   *
+   * Omitted, requests go through a shared `new Agent()` whose per-origin
+   * connection count is unlimited — right for a site owner scanning their own
+   * site, who wants the scan over quickly. A caller scanning origins that did
+   * not invite it passes a bounded agent (`new Agent({ connections: 2 })`) so
+   * one scan cannot open 28 sockets at once against a stranger's WAF.
+   */
+  dispatcher?: Dispatcher;
+}
+
+/**
+ * A dispatcher that opens at most `connections` sockets per origin.
+ *
+ * The scanner's own default has no such ceiling, and for a site owner scanning
+ * their own site that is the right trade. A caller scanning origins that did
+ * not invite it wants the ceiling, and this saves it from taking a direct
+ * dependency on undici to express one line of politeness.
+ */
+export function boundedDispatcher(connections: number): Dispatcher {
+  return new Agent({ connections });
+}
+
+export function createFetcher(fetcherOptions: FetcherOptions = {}) {
+  const dispatcher = fetcherOptions.dispatcher ?? noRedirectAgent;
+
   async function fetch(options: FetchOptions): Promise<FetchResult> {
     const {
       url,
@@ -191,7 +218,7 @@ export function createFetcher() {
         headers: reqHeaders,
         body: currentBody,
         signal,
-        dispatcher: noRedirectAgent,
+        dispatcher,
       });
 
       // Follow redirects here rather than handing the chain to undici's
@@ -267,7 +294,7 @@ export function createFetcher() {
           headers: reqHeaders,
           body: currentBody,
           signal,
-          dispatcher: noRedirectAgent,
+          dispatcher,
         });
       }
 
