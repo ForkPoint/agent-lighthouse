@@ -80,18 +80,23 @@ export class HttpsEnabledAudit extends Audit {
     // orchestrator admits a page only on `status === 200 && body`, so
     // `ctx.pages[0]` is always a 200 — `status200` is false only when the scan
     // holds no page at all. Attribution is proven above, so the homepage did
-    // answer 200 as HTML from this host; what it served was an empty body.
-    // That is worth reporting, and it is not a TLS error: the connection
-    // succeeded. There is also no status to name, which is why the old message
-    // printed "status unknown" and then diagnosed a certificate.
+    // answer over HTTPS from this host and the connection succeeded; what it
+    // did not return is a document. That is worth reporting, and it is not a
+    // TLS error, which is what the old message diagnosed.
+    //
+    // The status is deliberately not named. `origin-reachable` accepts any
+    // 2xx, so a homepage answering 204, 203 or 206 lands here as readily as an
+    // empty 200, and the audit holds no homepage `FetchResult` to read the
+    // real one from — `ctx.pages` is empty by definition on this branch. The
+    // previous wording printed "200 with an empty body" for all of them.
     return this.warn(
-      'Site uses HTTPS and the homepage answered, but it served an empty body, so an agent has nothing to read over that connection.',
+      'Site uses HTTPS and the homepage answered, but the response carried no document, so an agent has nothing to read over that connection.',
       'Base URL uses https:// and homepage returns 200',
-      `${ctx.baseUrl} — 200 with an empty body`,
+      `${ctx.baseUrl} — a 2xx response that carried no document`,
       {
         priority: 'high',
         description:
-          'The homepage answered over HTTPS with a 200 and no content. An AI agent that follows a link to this origin receives an empty document, so nothing about the site can be indexed or quoted. Check the origin, the CDN cache entry and any edge rule that can strip a response body.',
+          'The homepage answered over HTTPS and returned no document — an empty 200 body, or a 2xx status that carries none. An AI agent that follows a link to this origin receives nothing, so nothing about the site can be indexed or quoted. Check the origin, the CDN cache entry and any edge rule that can strip a response body.',
         code: '# Reproduce with:\ncurl -sSi https://yoursite.com | head -20',
       },
       page?.url,

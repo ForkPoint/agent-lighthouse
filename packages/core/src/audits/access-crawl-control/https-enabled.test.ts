@@ -38,16 +38,25 @@ describe('HttpsEnabledAudit', () => {
   });
 
   // The only state that reaches the warn. Attribution holds — the homepage
-  // answered 200 as HTML from this host — and no page survived the
-  // orchestrator's `status === 200 && body` filter, which means the body was
-  // empty. The connection is fine; there is nothing behind it.
-  it('warns about an empty body, not a TLS fault, when no page survived', () => {
+  // answered a 2xx as HTML from this host — and no page survived the
+  // orchestrator's `status === 200 && body` filter. The connection is fine;
+  // there is nothing behind it.
+  it('warns about a missing document, not a TLS fault, when no page survived', () => {
     const ctx = mockCheckContext([]);
     const result = audit.audit(ctx);
     expect(result.status).toBe('warn');
-    expect(result.message).toContain('empty body');
+    expect(result.message).toContain('carried no document');
     expect(result.message).not.toContain('TLS');
     expect(result.message).not.toContain('unknown');
+  });
+
+  // `origin-reachable` accepts any 2xx while the orchestrator admits a page
+  // only at 200, so a homepage answering 204 reaches the same branch. The
+  // audit never read that status, and it used to assert it was 200.
+  it('names no status it did not read', () => {
+    const result = audit.audit(mockCheckContext([]));
+    expect(result.found).not.toContain('200');
+    expect(result.message).not.toContain('200');
   });
 
   // The scan may hold a readable page that is not this site's — a broker's

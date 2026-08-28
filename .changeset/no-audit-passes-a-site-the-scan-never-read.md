@@ -68,8 +68,11 @@ unreachable for the 403 that produces it. Their `requires` and their entries in
   orchestrator only admits pages that answered 200, so that branch could never
   name a status, and on a bot wall it named a fault that does not exist. That
   branch is now reached in one state, and it says what that state is: the
-  homepage answered 200 as HTML and served an empty body, so nothing could be
-  read over a connection that was itself fine.
+  homepage answered over HTTPS and the response carried no document, so nothing
+  could be read over a connection that was itself fine. It names no status:
+  `origin-reachable` accepts any 2xx while the orchestrator admits a page only
+  at 200, so a homepage answering 204, 203 or 206 lands there too, and the
+  audit holds no homepage response to read the real status from.
 
 `GATE_EXEMPTIONS` also had a dead key: the entry for `no-bot-detection` was
 filed under `operability-safety/`, a category that does not hold it, so it had

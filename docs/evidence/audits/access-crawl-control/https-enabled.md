@@ -108,6 +108,16 @@ The signal is real and important (AI crawlers do require valid TLS), but the imp
   pass → na, HTTP 200 bot challenge pass → na. Found by
   `packages/core/src/tests/hostile-state-contract.test.ts`.
 
+- 2026-08-28 — the empty-document warn no longer names a status the audit did
+  not read. It printed "200 with an empty body", but `origin-reachable` accepts
+  any 2xx while the orchestrator admits a page only at `status === 200 && body`,
+  so a homepage answering 204, 203 or 206 reaches the same branch and was told
+  it had returned 200. The audit holds no homepage `FetchResult` — `ctx.pages`
+  is empty by definition on that branch — so the wording now states only what
+  is known: the response carried no document. Plumbing the homepage status onto
+  `CheckContext` was considered and not done; it would make every caller that
+  builds a context carry a field one branch of one audit reads.
+
 ## Review history
 
 - 2026-08-20 — code review (11-agent workflow) + evidence research (12-domain workflow, 400 sources).
