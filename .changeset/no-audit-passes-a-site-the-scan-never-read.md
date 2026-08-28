@@ -1,5 +1,5 @@
 ---
-'@forkpoint/agent-lighthouse-core': major
+'@forkpoint/agent-lighthouse-core': minor
 ---
 
 Audits no longer report a verdict about a response the scan cannot attribute to

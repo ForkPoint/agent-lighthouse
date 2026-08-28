@@ -1,5 +1,5 @@
 ---
-'@forkpoint/agent-lighthouse-core': major
+'@forkpoint/agent-lighthouse-core': minor
 ---
 
 A page-reading audit no longer congratulates a site whose page rendered no

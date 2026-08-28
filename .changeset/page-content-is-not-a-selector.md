@@ -1,5 +1,5 @@
 ---
-'@forkpoint/agent-lighthouse-core': major
+'@forkpoint/agent-lighthouse-core': minor
 ---
 
 `answer-readiness/extractor-survival-recall` reports a verdict on pages whose

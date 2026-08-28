@@ -1,5 +1,5 @@
 ---
-'@forkpoint/agent-lighthouse-core': major
+'@forkpoint/agent-lighthouse-core': minor
 ---
 
 A bot wall served at HTTP 200 is treated as a wall, not as the site's own
