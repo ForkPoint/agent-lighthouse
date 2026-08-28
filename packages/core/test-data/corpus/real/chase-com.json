@@ -1,0 +1,35 @@
+{
+  "url": "https://www.chase.com/",
+  "capturedAt": "2026-08-28T11:51:46.690Z",
+  "sha256": "8a9e7d1ae53047afc035fb98a73c5365499b69e897a971304d01e697866e5392",
+  "status": 200,
+  "kind": "page",
+  "headers": {
+    "content-type": "text/html; charset=utf-8",
+    "x-nextjs-cache": "STALE",
+    "etag": "\"vduhvxqrja6mot\"",
+    "x-envoy-upstream-service-time": "39",
+    "accept-ch": "Sec-CH-UA-Full-Version-List, Sec-CH-UA-Platform-Version, Sec-CH-UA-Arch, Sec-CH-UA-Model, Sec-CH-UA-Bitness, Sec-CH-UA-Wow64",
+    "permissions-policy": "ch-ua-full-version-list=(\"https://*.chase.com\"),ch-ua-platform-version=(\"https://*.chase.com\"),ch-ua-arch=(\"https://*.chase.com\"),ch-ua-model=(\"https://*.chase.com\"),ch-ua-bitness=(\"https://*.chase.com\"),ch-ua-wow64=(\"https://*.chase.com\")",
+    "x-frame-options": "SAMEORIGIN",
+    "content-security-policy": "frame-ancestors 'none'",
+    "x-content-security-policy": "frame-ancestors 'none'",
+    "x-xss-protection": "1; mode=block",
+    "x-akamai-transformed": "9 - 0 pmb=mRUM,2",
+    "cache-control": "public, max-age=766",
+    "date": "Fri, 28 Aug 2026 11:51:46 GMT",
+    "transfer-encoding": "chunked",
+    "connection": "keep-alive, Transfer-Encoding",
+    "server-timing": "cdn-cache; desc=HIT, edge; dur=1, ak_p; desc=\"1787917905568_388814604_143926049_46_12261_111_479_-\";dur=1",
+    "strict-transport-security": "max-age=31536000",
+    "x-amzn-trace-id": "0.0cd72c17.1787917906.8942321"
+  },
+  "contentType": "text/html; charset=utf-8",
+  "redirectChain": [
+    {
+      "status": 301,
+      "from": "https://chase.com",
+      "to": "https://www.chase.com/"
+    }
+  ]
+}

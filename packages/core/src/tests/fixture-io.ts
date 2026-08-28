@@ -31,6 +31,20 @@ export interface FixtureProvenance {
   /** The HTTP status the capture observed. Half of why `kind` is what it is. */
   status: number;
   kind: FixtureKind;
+  /**
+   * The response headers, verbatim.
+   *
+   * Dozens of audits read `headers[...]` and `contentType` directly, so a
+   * fixture that stored only the body would hand them the harness's defaults
+   * and turn every `x-robots-tag`, CORS, caching and security-header verdict
+   * into fiction. Headers also decide `kind` for a 2xx bot wall, so without
+   * them the suite cannot replay that decision and a regression that
+   * reclassified a challenge page as readable would pass unnoticed.
+   */
+  headers: Record<string, string>;
+  contentType: string;
+  /** Present only when the capture was redirected. */
+  redirectChain?: Array<{ status: number; from: string; to: string }>;
 }
 
 const DIR = resolve(__dirname, '../../test-data/corpus/real');
@@ -61,7 +75,17 @@ function asPage(result: FetchResult): PageContext {
  */
 export function classifyCapture(result: FetchResult): FixtureKind {
   if (result.status < 200 || result.status >= 300) return 'wall';
-  if (detectWafProtection(result.finalUrl || result.url, result, {}, 0)?.isBlocked) return 'wall';
+  // The fourth argument is how many pages the scan obtained. Zero is the
+  // sentinel for "it obtained nothing", and several provider branches widen
+  // to match any marker header when they see it — a capture has a 2xx body in
+  // hand, so the truthful count is one, and passing zero would call every
+  // Akamai-fronted page a wall.
+  //
+  // Residual: with one, a 200 AkamaiGHost denial body no longer trips the
+  // Akamai branch and lands as `shell` instead of `wall`. Both are non-page,
+  // so nothing is filed as readable content, and the alternative — a second
+  // WAF rule written here — is the copy that this module exists to avoid.
+  if (detectWafProtection(result.finalUrl || result.url, result, {}, 1)?.isBlocked) return 'wall';
   return pageRendersText(asPage(result)) ? 'page' : 'shell';
 }
 

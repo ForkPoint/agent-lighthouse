@@ -1,0 +1,2 @@
+# Fixture bodies are frozen bytes: a newline rewrite would change every SHA.
+*.gz binary

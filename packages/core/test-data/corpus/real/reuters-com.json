@@ -1,7 +1,39 @@
 {
   "url": "https://www.reuters.com/",
-  "capturedAt": "2026-08-28T11:40:45.923Z",
-  "sha256": "ef8048eaffa4f19b091aaa54484ebc018d54adcf1e13ed72efd2b57312a3e4cd",
+  "capturedAt": "2026-08-28T11:51:50.776Z",
+  "sha256": "8bfe30889400208f92055894ea49eebce46c754d01058c5ac2ee3d4e90420bd6",
   "status": 401,
-  "kind": "wall"
+  "kind": "wall",
+  "headers": {
+    "server": "CloudFront",
+    "date": "Fri, 28 Aug 2026 11:51:50 GMT",
+    "content-type": "text/html;charset=utf-8",
+    "content-length": "774",
+    "connection": "keep-alive",
+    "x-datadome": "protected",
+    "accept-ch": "Sec-CH-UA,Sec-CH-UA-Mobile,Sec-CH-UA-Platform,Sec-CH-UA-Arch,Sec-CH-UA-Full-Version-List,Sec-CH-UA-Model,Sec-CH-Device-Memory",
+    "charset": "utf-8",
+    "cache-control": "max-age=0, private, no-cache, no-store, must-revalidate",
+    "pragma": "no-cache",
+    "access-control-allow-credentials": "true",
+    "access-control-expose-headers": "x-dd-b, x-set-cookie",
+    "access-control-allow-origin": "*",
+    "x-datadome-cid": "AHrlqAAAAAMANxCL-14yGDoAlT7Rmg==",
+    "x-dd-b": "3",
+    "set-cookie": "datadome=7X3RPv03YyIeAIeZI8PSoiCi5JHRM~Vk0sCmAUNvkemaNDD4U6odwEb3li6hW8r6XRvzNuhQJOrlw~svZ4E8_u7f9pItw7dKf0gfP4jZcvuRrqKtH4TMO1nGd9YmLSQb; Max-Age=31536000; Domain=.reuters.com; Path=/; Secure; SameSite=Lax",
+    "x-cache": "LambdaGeneratedResponse from cloudfront",
+    "via": "1.1 d16a88479a2b657232507f3f3656d4f2.cloudfront.net (CloudFront)",
+    "x-amz-cf-pop": "SOF50-P1",
+    "x-amz-cf-id": "Be-MEFhQMQETskoAxx2B-jeude7ATb5Gt3M7XiqLOxPJCxNmf97vww==",
+    "content-security-policy": "frame-ancestors 'self'; report-uri https://reuters.report-uri.com/r/t/csp/enforce; report-to report-uri",
+    "report-to": "{\"endpoints\":[{\"url\":\"https://reuters.report-uri.com/a/t/g\"}],\"group\":\"report-uri\",\"include_subdomains\":true,\"max_age\":31536000}"
+  },
+  "contentType": "text/html;charset=utf-8",
+  "redirectChain": [
+    {
+      "status": 301,
+      "from": "https://reuters.com",
+      "to": "https://www.reuters.com/"
+    }
+  ]
 }
