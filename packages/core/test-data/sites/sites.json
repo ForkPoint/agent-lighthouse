@@ -3684,6 +3684,12 @@
     "rankBucket": 200
   },
   {
+    "domain": "forum.arduino.cc",
+    "source": "seed",
+    "category": "forum",
+    "rankBucket": 1000
+  },
+  {
     "domain": "forums.macrumors.com",
     "source": "seed",
     "category": "forum",
@@ -9100,12 +9106,6 @@
     "source": "tranco",
     "category": "unknown",
     "rankBucket": 600
-  },
-  {
-    "domain": "stackexchange.com",
-    "source": "seed",
-    "category": "forum",
-    "rankBucket": 1000
   },
   {
     "domain": "stackoverflow.com",

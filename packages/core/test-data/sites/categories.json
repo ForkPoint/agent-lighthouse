@@ -100,6 +100,7 @@
   "forum": [
     "askubuntu.com",
     "discuss.pytorch.org",
+    "forum.arduino.cc",
     "forums.macrumors.com",
     "lobste.rs",
     "meta.discourse.org",
@@ -107,7 +108,6 @@
     "quora.com",
     "reddit.com",
     "serverfault.com",
-    "stackexchange.com",
     "stackoverflow.com",
     "superuser.com"
   ],

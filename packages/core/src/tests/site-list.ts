@@ -36,19 +36,26 @@ export interface SiteEntry {
 export const BUCKET_WIDTH = 100;
 
 /**
- * A bare lowercase hostname, or '' when the field is not one.
+ * What counts as a bare hostname.
  *
  * The TLD alternation accepts punycode as well as letters: both sources carry
  * IDN domains such as `xn--80asehdb.xn--p1ai`, and a letters-only TLD test
  * drops all 1400-odd of them.
+ *
+ * Exported so the committed list is checked against the same pattern that
+ * produced it. Kept as two copies, a loosening here would be caught only by
+ * the next regeneration.
  */
+export const HOSTNAME = /^[a-z0-9.-]+\.([a-z]{2,}|xn--[a-z0-9]+)$/;
+
+/** A bare lowercase hostname, or '' when the field is not one. */
 export function normalize(raw: string): string {
   const trimmed = raw
     .trim()
     .replace(/^https?:\/\//, '')
     .replace(/\/.*$/, '');
   const host = trimmed.toLowerCase().replace(/^www\./, '');
-  return /^[a-z0-9.-]+\.([a-z]{2,}|xn--[a-z0-9]+)$/.test(host) ? host : '';
+  return HOSTNAME.test(host) ? host : '';
 }
 
 /** The bucket a zero-based rank index falls in. */
@@ -89,7 +96,16 @@ export function buildSiteList(
   // let a consumer scan a hand-picked storefront believing it is top-ranked.
   for (const [domain, category] of categoryOf) {
     if (!byDomain.has(domain)) {
-      byDomain.set(domain, { domain, source: 'seed', category, rankBucket: bucketOf(limit) });
+      byDomain.set(domain, {
+        domain,
+        source: 'seed',
+        category,
+        // One bucket past the worst RANKED index, which is `limit - 1` — not
+        // `bucketOf(limit)`, which collides with the last ranked bucket at any
+        // limit that is not a multiple of the width. At limit 10 that put a
+        // hand-seeded domain in bucket 0 beside rank #1.
+        rankBucket: bucketOf(limit - 1) + BUCKET_WIDTH,
+      });
     }
   }
 

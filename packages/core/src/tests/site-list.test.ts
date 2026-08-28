@@ -3,6 +3,7 @@ import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import {
   BUCKET_WIDTH,
+  HOSTNAME,
   bucketOf,
   buildSiteList,
   normalize,
@@ -12,8 +13,6 @@ import {
 const sites: SiteEntry[] = JSON.parse(
   readFileSync(resolve(__dirname, '../../test-data/sites/sites.json'), 'utf8'),
 );
-
-const HOSTNAME = /^[a-z0-9.-]+\.([a-z]{2,}|xn--[a-z0-9]+)$/;
 
 describe('the site list', () => {
   it('holds enough sites to be worth scanning', () => {
@@ -57,7 +56,10 @@ describe('the site list', () => {
 
   it('spreads entries over rank buckets so a top slice selects a slice', () => {
     // The bucket once had width equal to the limit, which put all 1913 entries
-    // in bucket 0 and turned `rankBucket < 5000` into "everything".
+    // in bucket 0 and turned `rankBucket < 5000` into "everything". This checks
+    // the committed artefact only — the generator-level guard is in the
+    // buildSiteList block, because a width change leaves this file's buckets
+    // looking plausible until someone regenerates.
     const buckets = new Set(sites.map((s) => s.rankBucket));
     expect(buckets.size).toBeGreaterThan(1);
     const head = sites.filter((s) => s.rankBucket < BUCKET_WIDTH);
@@ -139,8 +141,35 @@ describe('buildSiteList', () => {
     const built = buildSiteList([{ domains: ['a.com'], source: 'tranco' }], categoryOf, 10);
     const carried = built.find((s) => s.domain === 'offlist.com');
     expect(carried?.source).toBe('seed');
-    expect(carried?.rankBucket).toBe(bucketOf(10));
     expect(built.find((s) => s.domain === 'a.com')?.source).toBe('tranco');
+  });
+
+  it.each([10, 99, 100, 150, 1000])(
+    'keeps the seed bucket clear of every ranked bucket at limit %i',
+    (limit) => {
+      // The invariant, not the arithmetic. `bucketOf(limit)` satisfied this at
+      // multiples of the width and collided everywhere else: at limit 150 the
+      // seed bucket was 100 and so was the worst ranked bucket, and at limit 10
+      // a hand-seeded domain sat in bucket 0 beside rank #1.
+      const ranked = Array.from({ length: limit }, (_, i) => `r${String(i).padStart(5, '0')}.com`);
+      const built = buildSiteList([{ domains: ranked, source: 'tranco' }], categoryOf, limit);
+      const seeded = built.filter((s) => s.source === 'seed');
+      const worstRanked = Math.max(...built.filter((s) => s.source !== 'seed').map((s) => s.rankBucket));
+
+      expect(seeded.length).toBeGreaterThan(0);
+      for (const site of seeded) {
+        expect(site.rankBucket, `limit ${limit}, ${site.domain}`).toBeGreaterThan(worstRanked);
+      }
+    },
+  );
+
+  it('spreads ranked entries across more than one bucket', () => {
+    // The generator-level counterpart to the committed-file check above: this
+    // is what goes red if BUCKET_WIDTH is widened back to the limit.
+    const ranked = Array.from({ length: 250 }, (_, i) => `r${String(i).padStart(5, '0')}.com`);
+    const built = buildSiteList([{ domains: ranked, source: 'tranco' }], new Map(), 250);
+    const buckets = [...new Set(built.map((s) => s.rankBucket))].sort((a, b) => a - b);
+    expect(buckets).toEqual([0, 100, 200]);
   });
 
   it('returns entries ordered by domain, whatever order the sources arrive in', () => {
