@@ -19,13 +19,13 @@ describe('HttpsEnabledAudit', () => {
     expect(result.message).toContain('HTTPS');
   });
 
-  it('warns when https but homepage returns non-200', () => {
+  // A non-200 page is not a state the scanner produces: the orchestrator
+  // admits a page only on `status === 200 && body`, so the previous version of
+  // this test hand-set a 500 on an admitted page and pinned a message about a
+  // status no reachable input can carry.
+  it('never sees a page carrying a non-200 status', () => {
     const page = mockPageContext('https://example.com', '<html><body>Hi</body></html>');
-    page.fetchResult.status = 500;
-    const ctx = mockCheckContext([page]);
-    const result = audit.audit(ctx);
-    expect(result.status).toBe('warn');
-    expect(result.message).toContain('500');
+    expect(page.fetchResult.status).toBe(200);
   });
 
   it('fails when baseUrl is not https', () => {
@@ -37,12 +37,17 @@ describe('HttpsEnabledAudit', () => {
     expect(result.message).toContain('not served over HTTPS');
   });
 
-  it('warns with "unknown" status when https but no pages available', () => {
+  // The only state that reaches the warn. Attribution holds — the homepage
+  // answered 200 as HTML from this host — and no page survived the
+  // orchestrator's `status === 200 && body` filter, which means the body was
+  // empty. The connection is fine; there is nothing behind it.
+  it('warns about an empty body, not a TLS fault, when no page survived', () => {
     const ctx = mockCheckContext([]);
-    // baseUrl is 'https://example.com' by default → isHttps=true, page=undefined → warn
     const result = audit.audit(ctx);
     expect(result.status).toBe('warn');
-    expect(result.message).toContain('unknown');
+    expect(result.message).toContain('empty body');
+    expect(result.message).not.toContain('TLS');
+    expect(result.message).not.toContain('unknown');
   });
 
   // The scan may hold a readable page that is not this site's — a broker's

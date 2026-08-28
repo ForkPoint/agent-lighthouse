@@ -57,8 +57,8 @@ export class HttpsEnabledAudit extends Audit {
 
     // Past here every verdict rests on the homepage response, and a response
     // this scan cannot attribute to the site proves nothing about its TLS.
-    // The old branch below warned "Possible TLS or server error" whenever no
-    // 200 arrived, which on a bot wall named a fault that does not exist.
+    // The branch below warned "Possible TLS or server error" whenever no 200
+    // arrived, which on a bot wall named a fault that does not exist.
     if (!scanReadTheSite(ctx.evidence)) {
       return this.notApplicable(
         'No homepage here can be attributed to this site, so its transport was not judged.',
@@ -76,17 +76,23 @@ export class HttpsEnabledAudit extends Audit {
       );
     }
 
-    // Reached only when the scan holds this site's homepage and it did not
-    // answer 200 — a real server or TLS fault, not a scan that came back empty.
+    // One state reaches this, and it is not the one the old wording named. The
+    // orchestrator admits a page only on `status === 200 && body`, so
+    // `ctx.pages[0]` is always a 200 — `status200` is false only when the scan
+    // holds no page at all. Attribution is proven above, so the homepage did
+    // answer 200 as HTML from this host; what it served was an empty body.
+    // That is worth reporting, and it is not a TLS error: the connection
+    // succeeded. There is also no status to name, which is why the old message
+    // printed "status unknown" and then diagnosed a certificate.
     return this.warn(
-      `Site uses HTTPS but homepage returned status ${page?.fetchResult.status ?? 'unknown'}. Possible TLS or server error.`,
+      'Site uses HTTPS and the homepage answered, but it served an empty body, so an agent has nothing to read over that connection.',
       'Base URL uses https:// and homepage returns 200',
-      `${ctx.baseUrl} — status ${page?.fetchResult.status ?? 'N/A'}`,
+      `${ctx.baseUrl} — 200 with an empty body`,
       {
         priority: 'high',
         description:
-          'Enterprise AI frameworks refuse to interact with sites that have TLS errors. A non-200 HTTPS response prevents AI agents from ingesting your content, effectively making your site invisible to all AI systems. Fix server or TLS configuration to return a clean 200.',
-        code: '# Verify TLS with: curl -vI https://yoursite.com\n# Check for certificate expiry, chain issues, or redirect loops',
+          'The homepage answered over HTTPS with a 200 and no content. An AI agent that follows a link to this origin receives an empty document, so nothing about the site can be indexed or quoted. Check the origin, the CDN cache entry and any edge rule that can strip a response body.',
+        code: '# Reproduce with:\ncurl -sSi https://yoursite.com | head -20',
       },
       page?.url,
     );

@@ -404,10 +404,15 @@ export class AriaLayerInjectionScanAudit extends Audit {
 
     // Reached only when nothing was found. A shell serves the head and almost
     // nothing else, so the accessibility layer this audit reads — alt,
-    // aria-label, option labels, hidden inputs, links — never arrived. The
-    // payload branches above run first on purpose: an instruction planted in
-    // the document title or an og:* value is served by a shell and is still a
-    // finding.
+    // aria-label, option labels, hidden inputs, links — never arrived.
+    //
+    // This audit declares `rendered-body`, so under the evidence gate — on for
+    // every scan — it is skipped before `audit()` runs on a shell and no
+    // production report reaches either branch. The ordering is what makes the
+    // audit correct when it is called directly, which is how the contract
+    // suite calls it and how a caller passing `enforceEvidenceGate: false`
+    // gets it: an instruction planted in the document title or an og:* value
+    // is served by a shell, so the payload branches above must run first.
     if (!scanReadPageText(ctx.evidence)) {
       return this.notApplicable(
         'The scanned page served no readable text, so its accessibility layer was not judged.',

@@ -317,6 +317,12 @@ export class UnicodeCovertChannelScanAudit extends Audit {
       // reported below, so the guard cannot silence one. What is left is a
       // page that carried no text to scan, and the pages are where a covert
       // channel is planted.
+      //
+      // Under the evidence gate — on for every scan — this audit declares
+      // `rendered-body` and is skipped before `audit()` runs on a shell, so
+      // no production report reaches here. The guard is what makes the audit
+      // correct when it is called directly, and when a caller turns the gate
+      // off to measure what it removes.
       if (!scanReadPageText(ctx.evidence)) {
         return {
           ...this.notApplicable(
