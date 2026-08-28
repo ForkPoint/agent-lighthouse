@@ -1,5 +1,428 @@
 # @forkpoint/agent-lighthouse-core
 
+## 3.1.0
+
+### Minor Changes
+
+- 90d815b: A bot wall served at HTTP 200 is treated as a wall, not as the site's own
+  markup. Nine checks stop reporting a verdict about a challenge page, and one
+  starts reporting the wall.
+
+  **What was wrong.** The attribution guard 36 audits consult,
+  `scanReadTheSite()`, read `evidence.met['origin-reachable']` — "the response
+  came from the host the user asked for, with a 2xx and an HTML content type". A
+  Cloudflare managed challenge satisfies every part of that: it is served at HTTP
+  200, `text/html`, from the requested host. `origin-reachable` is true, the
+  interstitial arrives as a `PageContext`, and the audits read it as the owner's
+  page. `unblocked-fetches` is the key that knows better, and nothing consulted
+  it: `unblocked-fetches` is dropped from every `access-crawl-control` audit by
+  design, since being refused is what that category reports.
+
+  `scanReadTheSite()` now returns `evidence.judgeable` —
+  `origin-reachable && unblocked-fetches` — which is the predicate the scan
+  already used to decide whether to publish a score at all.
+
+  **Measured**, released 3.0.0 to this release, on a scan of a site behind a
+  Cloudflare managed challenge (HTTP 200, `text/html`, `cf-mitigated: challenge`,
+  requested host), with the evidence gate on as every scan runs it:
+
+  - **3 pass → na.** `no-blanket-block` (0.6), `crawl-delay` (informative) and
+    `llms-full-txt` (informative) were reading the challenge page served at
+    `/robots.txt` and `/llms-full.txt` and reporting what they found there as the
+    site's.
+  - **1 na → fail.** `no-bot-detection` names the firewall. It could not before:
+    its own gate exemption is what makes the wall branch reachable, and that
+    branch now runs on a 200 wall as it does on a 403.
+  - **9 stay `na` and change their wording**, from the gate's "Not assessed: this
+    scan has no … evidence" stub to the audit's own sentence naming the wall:
+    `https-enabled`, `no-nofollow`, `no-redirect-chains`,
+    `robots-ai-group-shadowing`, `robots-directives`, `descriptive-urls`,
+    `language-attribute`, `server-responsiveness` and
+    `third-party-dom-write-blast-radius`.
+
+  The scan reports no overall score on that state before and after — `judgeable`
+  was already false there, and the gated evidence-mass share is 0.643 before and
+  0.599 after, both far past the 0.35 threshold. What changes is the checks
+  inside the categories: `access-crawl-control` moves 52 → 46 on that state.
+
+  Two verdicts this change specifically prevents, both measured on the same
+  state and neither ever released: `robots-directives` reporting **"1 content
+  page(s) carry a blocking robots directive, including the homepage"** at
+  critical priority, and `no-nofollow` reporting **"All 1 scanned page(s) have
+  nofollow directives"**. The `<meta name="robots" content="noindex,nofollow">`
+  they were reading is Cloudflare's, on the interstitial — the corpus fixtures
+  `stackoverflow-thread-wall` and `ebay-com-category-wall` both carry it. Those
+  two audits dropped `rendered-body` in this release, and `origin-reachable` was
+  all the protection they had left.
+
+  `operability-safety/ghost-clickable-element-ratio` gains the same guard. Its
+  survey counted the challenge page's one `role="main"` wrapper as a semantic
+  click target and passed the interstitial at a ratio of 1.00. No released
+  verdict moves — it declares every evidence key, so the gate already skipped it
+  there — and the guard is what makes it correct when it is called directly.
+
+  **The same wall, with a body.** A wall that answers 200 does not have to
+  answer with an empty page. A site-templated one — the corpus holds eBay's,
+  which is eBay's own error template — renders enough prose that `rendered-body`
+  and `sample-adequate` are met, and then the gate lets through every audit whose
+  `requires` is satisfied by an origin that answered. `unblocked-fetches` is
+  dropped from every `access-crawl-control` audit by design, so on that wall the
+  category ran against markup and headers the wall attached: the site's head
+  fragment, kept by the edge, and the site-wide response headers its edge rules
+  add to every response.
+
+  Five more checks now decline there, each measured merge-base to this release on
+  a text-rich HTTP 200 wall carrying a self-referential canonical, a
+  `Content-Usage: train-ai=n` header and a `tdm-reservation: 1` header:
+
+  - **`canonical` (1.0), pass → na.** "All 1 page(s) declare a canonical URL that
+    resolves to themselves" — about a canonical the site's template left on the
+    interstitial.
+  - **`aipref-content-usage-declaration-validity` (0.6), pass → na**, and
+    **`ai-usage-signal-coherence-across-channels` (0.6), pass → na.** Both
+    validated the edge's own `Content-Usage` header as this site's declaration;
+    the second added that its channels agreed, which is what a wall answering
+    every path identically will always look like.
+  - **`tdm-rep` (informative), pass → na**, and **`ai-content-declaration`
+    (informative), pass → na.** Same header, same wall.
+
+  Counting the checks that already declined on the empty-bodied wall, 13 verdicts
+  move on that state between the merge base and this release, and its
+  `access-crawl-control` score goes from 57 to 46.
+
+  `machine-discovery/no-broken-ai-endpoints` (1.0) is fixed in the same pass and
+  for the same reason, without a guard: it answered "All 0 AI endpoint URL(s) are
+  reachable" whenever every URL it collected was refused by the SSRF gate — a
+  pass for a census that never ran. On the wall, the wall's own markup was where
+  the URL came from. It now warns and says how many URLs it could not request.
+
+  **How this is kept true.** `packages/core/src/tests/hostile-states.ts` gains a
+  sixth state: a Cloudflare managed challenge at HTTP 200 from the requested
+  host, with the WAF verdict derived from the real `detectWafProtection` rather
+  than stated. It joins the nothing-obtained tier, where no audit may return
+  `pass`. Written before the fix, it convicted 14 audits; 13 were fixed by the
+  predicate and the fourteenth by the guard above.
+
+  That state now carries what a real 200 wall carries — the head fragment and the
+  site-wide response headers the edge keeps attaching — which is what convicted
+  the five checks above and `no-broken-ai-endpoints`. The contract suite's
+  exemption allowlist is still empty.
+
+  The shell tier of the same suite stopped guessing which audits it must hold.
+  It filtered on the literal string `fetchResult.body`, which missed
+  `third-party-dom-write-blast-radius`: it censuses origins through the parsed
+  DOM, dropped `rendered-body` in this release, and grew a guard nothing checked.
+  Every audit exempted from `rendered-body` now declares what a shell proves
+  about it — `envelope` for the ones reading the `lang` attribute, a robots meta
+  tag or TTFB, which a shell serves whole, and `body` for the ones whose "found
+  nothing" depends on a rendered document. An exemption added without that
+  declaration fails the suite.
+
+- 90d815b: A scan can bring its own undici dispatcher, so a caller can bound how many
+  connections it opens per origin.
+
+  `ScanOptions` gains `dispatcher`, `createFetcher` takes an optional
+  `{ dispatcher }`, and `boundedDispatcher(connections)` is exported for callers
+  that would rather not depend on undici to express one line of politeness.
+
+  Nothing changes for a caller that passes none. The scanner keeps its shared
+  `new Agent()`, whose per-origin connection count is unlimited: a scan issues its
+  ~28 root-file requests in one `Promise.all` and then up to five pages in
+  parallel, and for a site owner scanning their own site finishing quickly is the
+  right trade.
+
+  It is the wrong trade for a caller scanning origins that did not invite it. That
+  28-socket burst is what a per-IP WAF counts, and the nightly corpus job
+  (`scripts/scan-site-list.ts`) now passes `boundedDispatcher(2)` so the 400
+  strangers in a night's window each see at most two connections at a time.
+
+  **A bounded dispatcher alone measures the wrong thing**, which is why
+  `ScanOptions` and `createFetcher` also gain `maxConcurrent`. `Agent({
+connections: 2 })` accepts all 26 root-file requests the scan fires in one
+  `Promise.all` and queues 24 of them inside undici — while the 10-second
+  per-request deadline and the `ttfbMs` clock both start when `fetch()` is
+  called. On an origin averaging more than ~770 ms per file the tail aborts on
+  the scanner's own queue and the report records those root files as unreachable,
+  and the same queueing inflates `ttfbMs` for the later sampled pages and the
+  UA-parity refetches — enough to move `content-extraction/server-responsiveness`,
+  which bands at 800 ms and 2500 ms, on a healthy origin.
+
+  `maxConcurrent` holds a request in a FIFO queue in front of the fetcher, before
+  either clock starts, so what the deadline and `ttfbMs` measure is the origin.
+  The library's own default is unchanged: omit it and every request is issued as
+  it arrives, with the timeout it always had. The nightly job passes it alongside
+  the dispatcher, at the same number, so a bounded run never queues inside undici.
+
+  `ScanOptions` also gains `robotsTxt`, a `robots.txt` response the caller
+  already holds, used in place of fetching it again. It is for a caller that must
+  read the file before it decides to scan at all — the nightly job asks
+  permission first, and without this every site it visits is asked twice for the
+  one file its owner watches. It must be the response to `<baseUrl>/robots.txt`
+  fetched with this scanner's own user agent; a caller that passes something else
+  makes the scan judge a file it was not served. Omitted, the scan fetches it as
+  before.
+
+- 90d815b: Audits no longer report a verdict about a response the scan cannot attribute to
+  the site, and four audits whose subject is the failed response can now reach the
+  finding they exist for.
+
+  **Why any of this changed.** `ctx.pages` was never "this site's pages". The
+  orchestrator admits any response that answered 200 with a body — no
+  content-type gate, no attribution check — so a domain broker's parking page
+  reached through a temporary redirect, and a PDF served at the homepage, both
+  arrive as a `PageContext` an audit reads as though the site had written it.
+  `ctx.rootFiles` is the same: a parking host answers every path, so
+  `/robots.txt` and `/llms-full.txt` come back 200 and belong to the broker. On a
+  walled or throttled origin there is nothing at all, and an audit looping an
+  empty list found no fault and said so.
+
+  **36 audits now decline instead.** Each already named `origin-reachable` in its
+  `requires` and then assumed the answer. They now read it, via new
+  `scanReadTheSite()` and `unreadSiteReason()` in `scan-evidence`, and return
+  `notApplicable` carrying the gate's own reason.
+
+  Measured with the gate held open — the contract suite calls every audit
+  directly, which is what a caller passing `enforceEvidenceGate: false` gets —
+  across the five nothing-obtained scan states: **90 pass → na**, **33 fail →
+  na**, **9 warn → na**. Those are the vacuous congratulations and the invented
+  faults this work set out to remove: "no `lang` attribute" on a page that never
+  arrived, "no llms-full.txt" on a scan that was refused.
+
+  **Almost none of that is visible in a released report, and this is the honest
+  version of a claim an earlier draft of this changeset got wrong.** The evidence
+  gate has been on for every scan since 3.0.0, and in each of these states it
+  already skipped those audits before they ran: the same `na`, tagged
+  `skipped:no-evidence`, with a different sentence attached. What actually moves
+  in a report, measured 3.0.0 to this release with the gate on, is seven cells
+  across the five states:
+
+  - **4 na → fail.** `no-bot-detection` on a 403 wall and on a 200 challenge,
+    `no-blocking-captcha` on a 403 wall, `no-redirect-chains` on a scan
+    redirected to another domain. These are the findings recovered below.
+  - **3 pass → na**, all on a 200 bot challenge, and all from the predicate
+    change described in the sibling changeset about a wall served at 200.
+  - **18 cells keep the status `na` and change their wording**, from the gate's
+    "Not assessed: this scan has no … evidence" stub to the audit's own sentence.
+
+  An `na` leaves the score denominator either way, so what a walled or parked
+  scan reports is unchanged in shape: fewer scored checks, and no overall score.
+
+  **Four audits gain a finding they could not previously reach.** `origin-reachable`
+  is denied by exactly the conditions these audits report, so
+  `planAudits({ enforceEvidence: true })` — on by default since 3.0.0 — was
+  skipping them before they ran. The wall-reporting `fail` released in 3.0.0 was
+  unreachable for the 403 that produces it. Their `requires` and their entries in
+  `GATE_EXEMPTIONS` now drop `origin-reachable`:
+
+  - `operability-safety/no-blocking-captcha` and
+    `access-crawl-control/no-bot-detection` now **fail** a 403-walled scan and
+    name the firewall, where both previously reported `na`.
+  - `access-crawl-control/no-redirect-chains` now **fails** a scan redirected to
+    another domain and names the hop. Leaving the site is what denies
+    `origin-reachable`, so the one audit whose subject is the redirect was the one
+    silenced by it.
+  - `access-crawl-control/https-enabled` still **fails** a plain-HTTP site whose
+    homepage never answered: the scheme is proven by the request. Its
+    "Site uses HTTPS but homepage returned status unknown. Possible TLS or server
+    error" warn is gone for a scan with no attributable homepage — the
+    orchestrator only admits pages that answered 200, so that branch could never
+    name a status, and on a bot wall it named a fault that does not exist. That
+    branch is now reached in one state, and it says what that state is: the
+    homepage answered over HTTPS and the response carried no document, so nothing
+    could be read over a connection that was itself fine. It names no status:
+    `origin-reachable` accepts any 2xx while the orchestrator admits a page only
+    at 200, so a homepage answering 204, 203 or 206 lands there too, and the
+    audit holds no homepage response to read the real status from.
+
+  `GATE_EXEMPTIONS` also had a dead key: the entry for `no-bot-detection` was
+  filed under `operability-safety/`, a category that does not hold it, so it had
+  been matching nothing.
+
+  `content-extraction/server-rendered` is unchanged: its exemption was already
+  correct, and the client-rendered shell it reports still meets `origin-reachable`.
+
+  **How this is now kept true.** A registry-driven suite,
+  `hostile-state-contract.test.ts`, runs every registered audit against the five
+  nothing-obtained states and forbids `pass`. Its exemption allowlist is empty.
+  Per-audit tests pin the ordering for the five audits whose subject is the
+  failed response, so a guard placed above their wall branch fails the build.
+
+- 90d815b: A page-reading audit no longer congratulates a site whose page rendered no
+  text, and eight audits that never needed rendered text stop claiming they do.
+
+  **What a JS shell is, and why it is not an empty scan.** The page arrives from
+  the right host, with a 200, a complete `<head>`, real headers and root files
+  that fetch and parse. What it withholds is the rendered document: the tables,
+  figures, headings, links, forms and accessible names an audit walks. An audit
+  whose population lives in the body therefore finds none of it and, unguarded,
+  reports the absence as cleanliness — "no data tables found", "no fake headings
+  detected", "no link changes state when it is fetched" — about a body holding
+  one empty `<div>`. The measured case is `gymshark.com`, whose `<body>` carries
+  one word.
+
+  **Eleven audits now decline instead.** `scan-evidence` gains
+  `scanReadPageText()` and `unreadPageTextReason()`, and each audit consults them
+  in the branch where it would otherwise have said "found nothing, so nothing is
+  wrong":
+
+  - `content-extraction/data-tables`, `content-extraction/figure-figcaption`,
+    `content-extraction/fake-headings`,
+    `answer-readiness/content-without-clickthrough`,
+    `operability-safety/aria-layer-injection-scan`,
+    `operability-safety/unicode-covert-channel-scan` and
+    `operability-safety/unsafe-agent-triggerable-affordances` return
+    `notApplicable` on a page that served no readable text. **7 pass → na**
+    when the audit is called on the shell scan state; no other verdict moves.
+  - `access-crawl-control/no-bot-detection` and
+    `operability-safety/no-blocking-captcha` do the same, and theirs is the one
+    pair a user sees change on an ordinary client-rendered scan — see below.
+  - `answer-readiness/unique-meta` returned `pass` while its message read
+    "uniqueness check not applicable". It now returns `notApplicable` whenever
+    the scan holds fewer than two distinct canonical pages — **pass → na on every
+    such scan**, not only on a shell. Its dossier's 2026-08-20 code review had
+    already recorded this fix as needed.
+  - `operability-safety/third-party-dom-write-blast-radius` declines a
+    zero-origin census on a page that served no readable text. It is one of the
+    two whose guard runs under the evidence gate — see below.
+
+  **Two weight-1.0 vacuous passes on every client-rendered site.**
+  `no-bot-detection` and `no-blocking-captcha` both decide by substring search
+  over `page.fetchResult.body`. A shell's body is a mount point and a bundle, so
+  both found nothing and said so: `pass "No aggressive bot-detection scripts
+found on scanned pages."` and `pass "No blocking CAPTCHA scripts detected on
+scanned pages."` — about sites whose Turnstile loader is inside the bundle and
+  whose forms do not exist in the markup at all. Neither is gated out of that
+  state: both declare `requires: []` so their wall branch stays reachable behind
+  a 403, which means the gate cannot decline the case for them.
+
+  Both now return `notApplicable` when the scanned page served no readable text.
+  The wall and detection branches still run first, so a 403 is still reported and
+  a shell that ships a challenge loader statically is still reported.
+  `no-blocking-captcha` was the only `operability-safety` check that scored on a
+  shell, so that category's score on such a scan moves **100 → 0** — which is
+  what `calculateCategoryScore` returns when a category has nothing assessed, not
+  a judgement about the site. A shell scan carries no overall score either way.
+
+  **Eight audits drop `rendered-body` and `sample-adequate` from `requires`, and
+  that is a scoring change on client-rendered scans.** `check-requires` derives
+  those keys from the source touching `ctx.pages`, but these read the response
+  envelope — head markup, response headers, robots.txt, transport timing, the
+  URL, the script and frame origins — all of which a shell serves in full. Each
+  is recorded as a gate exemption with its reason:
+  `access-crawl-control/no-nofollow`, `access-crawl-control/robots-directives`
+  and `access-crawl-control/robots-ai-group-shadowing` become
+  `['origin-reachable']`; `access-crawl-control/no-redirect-chains` becomes `[]`;
+  `content-extraction/language-attribute`,
+  `content-extraction/server-responsiveness`,
+  `answer-readiness/descriptive-urls` and
+  `operability-safety/third-party-dom-write-blast-radius` become
+  `['origin-reachable', 'unblocked-fetches']`.
+
+  **Measured**, released 3.0.0 to this release, over all 215 audits on the shell
+  scan state with the evidence gate on — which is how every scan runs:
+
+  - runnable **54 → 64**, skipped **161 → 151**
+  - report-wide statuses **5 pass → 12 pass**, **184 na → 177 na**; fail (11) and
+    warn (15) unchanged
+  - category math on that state: `content-extraction` **0 → 73**,
+    `access-crawl-control` **59 → 69**, `operability-safety` **100 → 0**, and the
+    weighted roll-up **48 → 46**
+
+  **Ten audits widen onto a shell scan, and one narrows.** The ten stop being
+  skipped before they run. Eight of them then report — `https-enabled`,
+  `no-nofollow`, `no-redirect-chains`, `robots-ai-group-shadowing`,
+  `robots-directives`, `language-attribute` (all weight 1.0),
+  `server-responsiveness` (0.6) and `descriptive-urls` (informative), every one
+  of them `pass` on the measured shell. The other two enter the run and decline
+  their own empty result, so they add no credit:
+  `third-party-dom-write-blast-radius` (0.6) and `no-bot-detection` (1.0).
+  `https-enabled` and `no-bot-detection` widen for a different reason from the
+  other eight — their `requires` dropped `origin-reachable` so their wall
+  findings could be reached — and they are the pair the sibling changeset
+  describes only in the walled direction. The one that narrows is
+  `no-blocking-captcha`, `pass → na`.
+
+  **A shell scan still reports no overall score, before and after.** The 48 → 46
+  above is the category roll-up, not what a user sees: a shell gates 0.578 of the
+  registry's evidence mass, over `GATED_MASS_UNSCORED_THRESHOLD`, so the report
+  carries `overallScore: null` and `scoreTier: null` either way. What a user sees
+  change is inside the categories — nine checks that read "not assessed" now
+  report, seven of them scoring, and one that scored now reads "not assessed" —
+  and one number in the scan validity block. `ScanValidity` carries no ratio
+  field, so that share reaches a user only as the percentage inside
+  `unscoredReason`: **"could not feed 64% of the registry's evidence mass"**
+  becomes **"…58%"**, because the ten take 8.2 of the registry's 134.0
+  non-informative mass out of the gated set. It stays far above the 0.35
+  threshold, so the null score is not at risk. What they report is true of what
+  the site served; what changed is that the scan stops withholding it.
+
+  `third-party-dom-write-blast-radius` keeps a guard for the half a shell cannot
+  support: same-origin resources are discarded from the census, a shell's script
+  tags are its own bundle, and the vendors an agent meets are injected by that
+  bundle at runtime — which its own `found` string already says the census does
+  not count. A zero-origin census on a page that served no readable text returns
+  `notApplicable` rather than certifying that nothing but the site writes what an
+  agent reads. Every origin the served HTML does name is still reported.
+
+  The seven guards in the first group are not visible in a gated scan of a
+  shell — those audits still declare `rendered-body`, so the gate skips them
+  before `audit()` runs, and no production report reaches either their guard or
+  the reporting branches above it. What the guard buys is a correct verdict when
+  the audit is called directly, which is how the contract suite calls it, and
+  when a caller sets `enforceEvidenceGate: false`. The ordering within each — an
+  instruction planted in a shell's `<title>` or `og:*` value still fails
+  `aria-layer-injection-scan`, a Unicode Tags run in a robots.txt served beside a
+  shell still fails `unicode-covert-channel-scan` — is pinned by tests and is
+  what those audits do under a direct call, not what a gated scan reports.
+  `unique-meta`'s change is the one in that group with no such condition: it
+  moves on every scan holding fewer than two distinct canonical pages.
+
+  Found by `packages/core/src/tests/hostile-state-contract.test.ts`, which runs
+  every audit that reads a scanned page against a shell built from the real
+  `buildScanEvidence` and forbids `pass`. It selects that population from the
+  source rather than from `requires`: an audit exempted from `rendered-body`
+  because its subject is the wall was, by declaration alone, excused from the one
+  test that would have caught its vacuous pass — which is exactly how
+  `no-bot-detection` and `no-blocking-captcha` shipped theirs.
+
+- 90d815b: `answer-readiness/extractor-survival-recall` reports a verdict on pages whose
+  structured data contains a bracket, instead of reporting nothing at all.
+
+  **What it did.** The audit measures which of a page's key spans survive the
+  extractors an answer engine uses. One of those spans is a JSON-LD string the
+  prose repeats, and to name the element it lives in the audit built a CSS
+  selector out of the string itself: `:contains("<the first 40 characters>")`.
+  Page content is not a selector. gov.uk publishes the service name "Register
+  your vehicle as off the road (SORN)", and 40 characters in the closing bracket
+  is gone, so css-what threw `Parenthesis not matched` before the audit ever
+  reached a verdict. A throw is not a verdict: the scan runner replaces the
+  result with a `scan-error` stub, so a page the audit had already measured got
+  no report at all — no pass, no fail, nothing for the site owner to act on.
+  Brackets, quotes and backslashes are ordinary things for a site to publish, so
+  the lookup no longer builds a selector: it walks the DOM in reverse and takes
+  the last element whose text carries the string, which is what the selector was
+  asked for.
+
+  **Measured.** Over the 41 real-page fixtures in
+  `packages/core/test-data/corpus/real/`, running all 215 registered audits
+  against each: one throw before, none after. The single fixture affected _by
+  this fix_ is `gov-uk-vehicle-tax`, whose verdict moves `scan-error` → `fail` —
+  the audit now says what it found. No other audit changed by this fix moves on
+  any fixture.
+
+  One other cell moves across the same corpus, from a different change in this
+  release and disclosed in its own changeset: `answer-readiness/unique-meta`
+  moves **pass → na on 41 of 41 fixtures**, because a one-page scan holds fewer
+  than two distinct canonical pages and the audit no longer reports `pass` with a
+  message that reads "uniqueness check not applicable". Whoever regenerates this
+  snapshot should expect exactly those 42 cells to move against 3.0.0 and nothing
+  else.
+
+  Scores move only for a page in that shape. `scan-error` scored nothing, so a
+  site publishing bracketed structured data now carries this audit's weight
+  (grade B, 0.6) in its answer-readiness score for the first time, in whichever
+  direction the audit's real verdict falls.
+
 ## 3.0.0
 
 ### Major Changes
