@@ -53,24 +53,53 @@ All captured 2026-08-28. Sizes are gzipped bytes on disk.
 
 | Fixture | Served | Kind | Size | The shape it covers |
 | :-- | :-- | :-- | --: | :-- |
-| `hiutdenim-co-uk` | hiutdenim.co.uk | page | 30.5 KB | Four `<main>` elements; the first holds 49 characters of the 2,470 the page renders. The defect that started this corpus. |
-| `velasca-com` | velasca.com | page | 99.3 KB | One empty `<main>`, 194 words rendered outside it. |
+| `hiutdenim-co-uk` | hiutdenim.co.uk | page | 30.5 KB | Four `<main>` elements holding 49, 6, 33 and 1,027 readable characters of the 2,470 the page renders. The defect that started this corpus. **Do not prune.** |
+| `velasca-com` | velasca.com | page | 99.3 KB | One `<main>` whose readable text is empty — it holds only scripts — with all 194 rendered words outside it. |
 | `gymshark-com-shell` | gymshark.com → us.checkout.gymshark.com | shell | 14.5 KB | Redirects to a checkout host whose 47 KB body renders one word. |
 | `tattly-com-shell` | tattly.com | shell | 24.1 KB | 20 words, 127 characters — under both arms of the shell rule, in a 105 KB body. |
 | `quitenice-co-shell` | quitenice.co | shell | 0.1 KB | 114-byte parked origin. The smallest thing a 200 can be. |
-| `chase-com` | chase.com | page | 48.1 KB | Akamai-fronted bank homepage that answers the scanner normally. |
+| `chase-com` | chase.com | page | 48.1 KB | Akamai-fronted bank homepage that answers the scanner normally. Its single `<main>` holds 199 readable characters against 5,783 in the body. **Do not prune.** |
 | `myfritz-net` | myfritz.net | shell | 1.9 KB | Zero words, zero characters. The floor of the shell rule. |
 | `reuters-com` | reuters.com | wall | 0.6 KB | HTTP 401. A wall decided by status alone. |
 
+Two of those hold the divergence the corpus was built for, and it is not
+`velasca-com`. `getMainContentText` picks the `<main>` with the most text and
+falls back to `<body>` when no `<main>` holds any. Velasca's only `<main>` is
+empty, so the fallback fires and main-scoped text comes back equal to
+body-scoped text — 1,142 characters either way, no divergence to observe. The
+fixtures where main-scoped and body-scoped text genuinely disagree are
+`hiutdenim-co-uk` (1,027 against 2,470, four `<main>` elements, the first a
+49-character stub) and `chase-com` (199 against 5,783, one stub `<main>` that
+holds just enough text to beat the fallback). Prune either and the corpus
+stops covering the class of defect that created it.
+
 ### The two blind-spot fixtures
 
-Both were found by mutation testing in Task 6. Neither existed in the corpus
-before, and each kills a mutant that the whole suite otherwise survived.
+Both blind spots were found by mutation testing in Task 6.
 
 | Fixture | Served | Kind | Size | The shape it covers |
 | :-- | :-- | :-- | --: | :-- |
-| `walmart-com-wall-200` | walmart.com/help | wall | 62.9 KB | **Blind spot 1 — the 2xx WAF branch.** A 200 that `detectWafProtection` calls blocked, on a `_pxAppId` marker in the body. Before it, every wall in the corpus was a wall by status, so deleting the WAF call entirely left the suite green. |
-| `lobsters-login-threshold` | lobste.rs/login | page | 1.6 KB | **Blind spot 2 — the shell threshold.** 54 words, 321 characters: just over `wordCount > 50 \|\| textLength > 200` on both arms. Before it, the lowest `page` in the corpus rendered 194 words, so the threshold could be raised or lowered and nothing failed. |
+| `walmart-com-wall-200` | walmart.com/help | wall | 62.9 KB | **Blind spot 1 — the 2xx WAF branch.** A 200 that `detectWafProtection` calls blocked, on a `_pxAppId` marker in the body. Before it, every wall in the corpus was a wall by status, so deleting the WAF call entirely left the suite green. `vercel-com-wall-200` is a second. |
+| `tirerack-com-soft-block-200` | tirerack.com | page | 0.6 KB | **Blind spot 2 — the upper edge of the shell threshold.** 36 words over 270 characters. **Do not prune.** |
+
+#### Which fixture actually pins the shell threshold
+
+`pageRendersText` is `wordCount > 50 || textLength > 200`. Because it is an
+OR, a fixture pins the rule only when *both* arms move past it.
+
+- **Lower edge: `tattly-com-shell`** — 20 words / 127 characters, a `shell`.
+  Loosen either threshold below those numbers and it becomes a `page`.
+- **Upper edge: `tirerack-com-soft-block-200`** — 36 words / 270 characters, a
+  `page`. Raise the character arm past 270 and it becomes a `shell`, because
+  36 words never satisfied the word arm.
+
+`lobsters-login-threshold` (54 words / 321 characters) pins nothing. Every
+mutant that flips it — word arm at 54 or more *and* character arm at 321 or
+more — also flips `tirerack-com-soft-block-200`, which is smaller on both
+axes. Swept over all `wordCount > W || textLength > C` mutants, tattly is the
+sole killer of 54,306 and tirerack of 29,355; lobsters is the sole killer of
+none. It is kept only as a natural example of a real page sitting just over
+the line, and it is the first fixture to drop if the corpus needs space.
 
 ### Where the classifier and a reader disagree
 
@@ -82,6 +111,39 @@ scanner concludes and what the response is.
 | `vercel-com-wall-200` | vercel.com/pricing | wall | 6.7 KB | Served `text/markdown` to the scanner UA — content negotiated for agents, which is the thing this project asks sites to do. Classified a Kasada wall because the prose links `.../attack-challenge-mode`, and `k-challenge` is a substring of it. |
 | `walmart-com-wall-200` | walmart.com/help | wall | 62.9 KB | The real help page, 823 words of it, called a wall on a PerimeterX bootstrap variable that every Walmart page carries. |
 | `tirerack-com-soft-block-200` | tirerack.com | page | 0.6 KB | A genuine 200 soft block — Akamai's "this page is currently unavailable" with a reference number — read as a readable page. The Akamai branch only fires at 403, and 36 words over 270 characters clears the text rule. |
+
+`vercel-com-wall-200` is `text/markdown`, not HTML. Anything that hands its
+body to `parseHtml` gets cheerio wrapped around markdown source, so a
+DOM-reading audit run over it reports on markup that was never there. That is
+the correct thing for a snapshot to record — it is what the scanner does
+today with a markdown response — but it is not a finding about Vercel.
+
+`tirerack-com-soft-block-200` is doubly load-bearing, and the two pulls
+oppose each other. It cannot be dropped: it is the only fixture pinning the
+upper edge of the shell threshold. It cannot be corrected to `wall` without
+re-recording, which is the same operation as fixing the Akamai-2xx defect
+below. Any baseline taken over it — including a full 215-audit snapshot —
+describes an Akamai error page, not a tire retailer's homepage. Read every
+verdict in that baseline with that in mind.
+
+### Fixtures that pin behaviour known to be wrong
+
+`fixture-io.test.ts` asserts `classifyCapture(response) === provenance.kind`.
+Three fixtures record a `kind` that a correct classifier would not produce, so
+**fixing any of these defects turns the replay test red, and that is the fix
+landing, not a regression.** Re-record the affected `kind` in the same commit
+as the fix.
+
+| Defect | Fixture that pins it | `kind` after the fix |
+| :-- | :-- | :-- |
+| `k-challenge` matches any prose containing that substring | `vercel-com-wall-200` | `page` |
+| `_pxappid` matches every page a PerimeterX customer serves | `walmart-com-wall-200` | `page` |
+| The Akamai branch ignores 2xx soft blocks | `tirerack-com-soft-block-200` | `wall` |
+
+Fixing `_pxappid` costs coverage as well as a fixture: `walmart-com-wall-200`
+is one of only two fixtures reaching the 2xx WAF branch, and `vercel-com-wall-200`
+is the other, so fixing both leaves that branch with no fixture at all. Capture
+a genuine 200 challenge page before, or in, the commit that fixes them.
 
 ### News
 
@@ -117,7 +179,7 @@ scanner concludes and what the response is.
 | :-- | :-- | :-- | --: | :-- |
 | `irs-gov-form-1040` | irs.gov/forms-pubs/about-form-1040 | page | 20.0 KB | Tax form landing page — a document index, not prose. |
 | `gov-uk-vehicle-tax` | gov.uk/vehicle-tax | page | 13.6 KB | Government service start page, deliberately minimal markup. |
-| `canada-ca-income-tax` | canada.ca/en/services/taxes/… | page | 8.5 KB | Bilingual government hub page; the smallest `page` body in the corpus. |
+| `canada-ca-income-tax` | canada.ca/en/services/taxes/… | page | 8.5 KB | Bilingual government hub page — the smallest of the full-content `page` bodies at 26,859 bytes. |
 | `cdc-gov-flu-about` | cdc.gov/flu/about/index.html | page | 14.3 KB | Public-health explainer, 1,895 words in 72 KB. |
 
 ### Marketplace
@@ -171,7 +233,7 @@ mostly closed to an honest user agent, and that is the finding.
   by a challenge page. Replace it if one is ever found.
 - **A marketplace product page.** Every marketplace that publishes one refused
   the capture.
-- **A page whose word count is 51–80 but whose text is under 200 characters.**
-  It probably does not exist: 60 words of any natural language run past 200
-  characters, so the `wordCount` arm of the shell rule cannot be pinned on its
-  own.
+- **A fixture that pins the `wordCount` arm on its own.** It probably cannot
+  exist: the arm is only reachable independently by a page with 51–80 words in
+  under 200 characters, and 60 words of any natural language run past 200
+  characters.

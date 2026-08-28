@@ -10,6 +10,7 @@ Agent Lighthouse scores websites on AI-agent readiness. Every audit here must ea
 | [deletions/](./deletions/README.md) | Adversarial redemption research on the 32 delete candidates — final dispositions |
 | [sunset/](./sunset/README.md) | The 26 audits removed in v2 with the proof each signal is not a factor: rationale + full dossiers |
 | [proposals/](./proposals/README.md) | 83 proposed new checks with evidence dossiers |
+| [corpus.md](./corpus.md) | What each of the 41 real-page fixtures in `packages/core/test-data/corpus/real/` is, and the shape it exists to cover |
 | [sources.json](./sources.json) | The single source registry (647 entries) every dossier cites — URLs verified at research time |
 
 ## How this was produced
