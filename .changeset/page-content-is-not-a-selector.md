@@ -22,10 +22,18 @@ asked for.
 
 **Measured.** Over the 41 real-page fixtures in
 `packages/core/test-data/corpus/real/`, running all 215 registered audits
-against each: one throw before, none after. The single affected fixture is
-`gov-uk-vehicle-tax`, whose verdict moves `scan-error` → `fail` — the audit now
-says what it found. The other 40 fixtures are unchanged, and no other audit's
-verdict moves on any fixture.
+against each: one throw before, none after. The single fixture affected *by
+this fix* is `gov-uk-vehicle-tax`, whose verdict moves `scan-error` → `fail` —
+the audit now says what it found. No other audit changed by this fix moves on
+any fixture.
+
+One other cell moves across the same corpus, from a different change in this
+release and disclosed in its own changeset: `answer-readiness/unique-meta`
+moves **pass → na on 41 of 41 fixtures**, because a one-page scan holds fewer
+than two distinct canonical pages and the audit no longer reports `pass` with a
+message that reads "uniqueness check not applicable". Whoever regenerates this
+snapshot should expect exactly those 42 cells to move against 3.0.0 and nothing
+else.
 
 Scores move only for a page in that shape. `scan-error` scored nothing, so a
 site publishing bracketed structured data now carries this audit's weight

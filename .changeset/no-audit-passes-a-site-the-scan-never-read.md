@@ -21,22 +21,31 @@ empty list found no fault and said so.
 `scanReadTheSite()` and `unreadSiteReason()` in `scan-evidence`, and return
 `notApplicable` carrying the gate's own reason.
 
-Three classes of verdict change are visible in a report, measured across the
-four nothing-obtained scan states:
+Measured with the gate held open — the contract suite calls every audit
+directly, which is what a caller passing `enforceEvidenceGate: false` gets —
+across the five nothing-obtained scan states: **90 pass → na**, **33 fail →
+na**, **9 warn → na**. Those are the vacuous congratulations and the invented
+faults this work set out to remove: "no `lang` attribute" on a page that never
+arrived, "no llms-full.txt" on a scan that was refused.
 
-- **69 pass → na.** The vacuous congratulations this work set out to remove.
-- **28 fail → na**, across 13 audits — `no-nofollow`, `no-redirect-chains`,
-  `language-attribute`, `single-h1`, `main-element`, `article-element`,
-  `header-footer`, `content-depth`, `server-rendered`, `llms-full-txt`,
-  `rss-feed`, `content-without-clickthrough`, `descriptive-urls`. These were
-  failures asserted about pages the scan never had: "no `lang` attribute" on a
-  page that never arrived, "no llms-full.txt" on a scan that was refused.
-- **8 warn → na**, across 3 audits — `no-blanket-block` and `crawl-delay`
-  ("No robots.txt found" when the fetch was refused, not absent), and
-  `https-enabled` (see below).
+**Almost none of that is visible in a released report, and this is the honest
+version of a claim an earlier draft of this changeset got wrong.** The evidence
+gate has been on for every scan since 3.0.0, and in each of these states it
+already skipped those audits before they ran: the same `na`, tagged
+`skipped:no-evidence`, with a different sentence attached. What actually moves
+in a report, measured 3.0.0 to this release with the gate on, is seven cells
+across the five states:
 
-An `na` leaves the score denominator, so a walled or parked scan now reports
-fewer scored checks rather than a score built from invented ones.
+- **4 na → fail.** `no-bot-detection` on a 403 wall and on a 200 challenge,
+  `no-blocking-captcha` on a 403 wall, `no-redirect-chains` on a scan
+  redirected to another domain. These are the findings recovered below.
+- **3 pass → na**, all on a 200 bot challenge, and all from the predicate
+  change described in the sibling changeset about a wall served at 200.
+- **18 cells keep the status `na` and change their wording**, from the gate's
+  "Not assessed: this scan has no … evidence" stub to the audit's own sentence.
+
+An `na` leaves the score denominator either way, so what a walled or parked
+scan reports is unchanged in shape: fewer scored checks, and no overall score.
 
 **Four audits gain a finding they could not previously reach.** `origin-reachable`
 is denied by exactly the conditions these audits report, so
@@ -57,7 +66,10 @@ unreachable for the 403 that produces it. Their `requires` and their entries in
   "Site uses HTTPS but homepage returned status unknown. Possible TLS or server
   error" warn is gone for a scan with no attributable homepage — the
   orchestrator only admits pages that answered 200, so that branch could never
-  name a status, and on a bot wall it named a fault that does not exist.
+  name a status, and on a bot wall it named a fault that does not exist. That
+  branch is now reached in one state, and it says what that state is: the
+  homepage answered 200 as HTML and served an empty body, so nothing could be
+  read over a connection that was itself fine.
 
 `GATE_EXEMPTIONS` also had a dead key: the entry for `no-bot-detection` was
 filed under `operability-safety/`, a category that does not hold it, so it had
@@ -67,7 +79,7 @@ been matching nothing.
 correct, and the client-rendered shell it reports still meets `origin-reachable`.
 
 **How this is now kept true.** A registry-driven suite,
-`hostile-state-contract.test.ts`, runs every registered audit against the four
-states and forbids `pass`. Its exemption allowlist is empty. Per-audit tests
-pin the ordering for the five audits whose subject is the failed response, so a
-guard placed above their wall branch fails the build.
+`hostile-state-contract.test.ts`, runs every registered audit against the five
+nothing-obtained states and forbids `pass`. Its exemption allowlist is empty.
+Per-audit tests pin the ordering for the five audits whose subject is the
+failed response, so a guard placed above their wall branch fails the build.
