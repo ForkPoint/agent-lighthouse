@@ -64,19 +64,27 @@ The evidence gate is on for every scan — the orchestrator passes
 reports. Measured over all 215 audits on the shell scan state, gate on:
 
 - runnable **56 → 64**, skipped **159 → 151**
-- overall score **49 → 63**
-- `content-extraction` **0 → 73**, `access-crawl-control` **63 → 70**
 - report-wide statuses **7 pass → 14 pass**, **182 na → 175 na**; fail (11) and
   warn (15) unchanged
+- category math on that state: `content-extraction` **0 → 73**,
+  `access-crawl-control` **63 → 70**, and the weighted roll-up **49 → 63**
 
 Five of the eight carry weight 1.0 (`no-nofollow`, `robots-directives`,
 `robots-ai-group-shadowing`, `no-redirect-chains`, `language-attribute`), one
 carries 0.6 (`server-responsiveness`), one carries 0
 (`descriptive-urls`, informative), and
 `third-party-dom-write-blast-radius` (0.6) enters the run but declines its own
-empty census, so it adds no credit. A site that scans as a shell — a React
-storefront, an SPA — therefore sees its score rise across this release, because
-six checks it was previously not judged on now report and pass. What they
+empty census, so it adds no credit.
+
+**A shell scan still reports no overall score, before and after.** The 49 → 63
+above is the category roll-up, not what a user sees: a shell gates 0.578 of the
+registry's evidence mass, over `GATED_MASS_UNSCORED_THRESHOLD`, so the report
+carries `overallScore: null` and `scoreTier: null` either way. What a user sees
+change is inside the categories — eight checks that read "not assessed" now
+report, six of them scoring — and one number in the scan validity block: the
+gated mass share falls from **0.624 to 0.578**, because these eight take 6.2 of
+the registry's 134.0 non-informative mass out of the gated set. It stays far
+above the 0.35 threshold, so the null score is not at risk. What they
 report is true of what the site served; what changed is that the scan stops
 withholding it.
 
