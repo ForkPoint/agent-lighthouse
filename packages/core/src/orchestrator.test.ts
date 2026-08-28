@@ -971,3 +971,25 @@ describe('runScan — progress events', () => {
   });
 });
 
+
+// ---------------------------------------------------------------------------
+// A robots.txt the caller already fetched
+// ---------------------------------------------------------------------------
+
+describe('runScan — prefetched robots.txt', () => {
+  it('uses the response the caller passed instead of asking the origin again', async () => {
+    const url = 'https://robots.example.com/';
+    set(url, '<html lang="en"><body><main><h1>Home</h1><p>Text.</p></main></body></html>');
+    // The origin would answer with an empty file. The caller's copy carries a
+    // crawl-delay, so a scan that re-fetched would report the empty one.
+    const robotsUrl = 'https://robots.example.com/robots.txt';
+    h.map.set(robotsUrl, ok(robotsUrl, 'User-agent: *\nAllow: /\n', 'text/plain'));
+    const prefetched = ok(robotsUrl, 'User-agent: *\nCrawl-delay: 10\n', 'text/plain');
+
+    const report = await runScan(url, { robotsTxt: prefetched });
+    const crawlDelay = report.categories
+      .flatMap((c) => c.checks)
+      .find((c) => c.id === 'access-crawl-control/crawl-delay')!;
+    expect(crawlDelay.explanation).toContain('Crawl-delay');
+  });
+});

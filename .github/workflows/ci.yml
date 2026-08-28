@@ -45,3 +45,12 @@ jobs:
       - name: Test
         run: pnpm test
 
+      # The nightly corpus job runs on a schedule, so nothing else in CI ever
+      # loads its script — and `scripts/` is outside every package tsconfig, so
+      # `pnpm typecheck` does not read it either. `--limit=0` is the wiring
+      # path: it parses flags, reads the site list, builds the window and writes
+      # an empty summary, and it makes no network request. It costs a few
+      # seconds and it means the first execution of that file is not the merge.
+      - name: Smoke-test the corpus nightly script
+        run: node --import tsx scripts/scan-site-list.ts --limit=0
+

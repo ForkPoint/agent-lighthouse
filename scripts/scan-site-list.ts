@@ -4,8 +4,10 @@ import { runScan } from '../packages/core/src';
 import { boundedDispatcher, createFetcher } from '../packages/core/src/fetcher';
 import { parseRobots, groupsForBot, isBlanketBlocked } from '../packages/core/src/gatherers/robots';
 import { SCANNER_USER_AGENT } from '../packages/core/src/constants';
+import { AI_CRAWLER_UAS } from '../packages/core/src/gatherers/ua-parity';
 import { invariantViolations } from '../packages/core/src/tests/scan-invariants';
 import type { SiteEntry } from '../packages/core/src/tests/site-list';
+import type { FetchResult } from '../packages/core/src/fetcher';
 import type { EvidenceKey } from '../packages/core/src/types';
 
 /**
@@ -30,8 +32,48 @@ import type { EvidenceKey } from '../packages/core/src/types';
  * tells it to.
  */
 
+/**
+ * Exit codes.
+ *
+ * Five different things end this run and an operator reading a red job needs
+ * to tell them apart before opening the artifact — not least because the one
+ * case where the artifact may be missing is the one a single exit 1 hides.
+ */
+const EXIT = {
+  ok: 0,
+  /** A scan broke an invariant. The finding this job exists for. */
+  violation: 1,
+  /** A flag was malformed or unknown. Nothing was scanned. */
+  badFlags: 2,
+  /** The run was cancelled by a signal. The summary is partial, or absent. */
+  cancelled: 3,
+  /** The deadline arrived with sites still queued. */
+  deadline: 4,
+  /** A non-empty window produced no outcome at all. */
+  scannedNothing: 5,
+  /** `main()` rejected: the runner itself broke, not a scanned site. */
+  crashed: 6,
+} as const;
+
 /** The `robots.txt` product token for {@link SCANNER_USER_AGENT}. */
 const BOT_TOKEN = SCANNER_USER_AGENT.split('/')[0]!.toLowerCase();
+
+/**
+ * Every product token this job's requests will carry.
+ *
+ * The scan does not only fetch as itself. The UA-parity gatherer re-fetches
+ * sampled pages as GPTBot, OAI-SearchBot, ChatGPT-User, ClaudeBot, Claude-User
+ * and PerplexityBot, so a publisher who wrote `User-agent: GPTBot` /
+ * `Disallow: /` and nothing else would see GPTBot traffic from this job while
+ * its own robots group was never read: `groupsForBot(..., 'agentlighthouse')`
+ * returns nothing, and nothing is not a refusal.
+ *
+ * This job is an uninvited visitor sending seven user agents. If the file says
+ * no to any one of them, it leaves the site alone. That is coarser than
+ * suppressing one probe, and it is the granularity this script has: the probes
+ * are issued deep inside `runScan`, which offers no per-token switch.
+ */
+const PROBED_TOKENS: readonly string[] = [BOT_TOKEN, ...AI_CRAWLER_UAS.map((u) => u.token)];
 
 /**
  * Why a site produced no scan. Kept apart from a violation: a site we chose not
@@ -76,14 +118,32 @@ interface Summary {
 /**
  * Every flag, with its default. Unknown or malformed arguments abort: an
  * operator who typed `--limits=10` or `--limit 10` meant to scan ten sites, and
- * silently falling back to the default would send them at 500 live origins for
- * four hours.
+ * silently falling back to the default would send them at 400 live origins for
+ * three and a half hours.
  */
 const DEFAULTS = {
-  limit: 500,
+  /**
+   * Sites per run.
+   *
+   * Sized against `deadline-minutes`, not against the list. Measured at
+   * concurrency 2: about 60 s of scan per site per worker, plus the 3 s
+   * inter-site delay, so a window costs `limit / concurrency * 63 s`. At 400
+   * that is 210 minutes and the run finishes inside the 240-minute deadline
+   * with half an hour to spare; at 500 it is 262 minutes, which is past the
+   * deadline, and the job would have gone red on timing whenever a night's
+   * window held few robots-skipped sites. 1913 entries at 400 a night is full
+   * coverage in five nights.
+   */
+  limit: 400,
   concurrency: 2,
   delay: 3000,
   connections: 2,
+  /**
+   * When workers stop pulling new sites. Must stay above `limit / concurrency
+   * * 63 s` — see {@link DEFAULTS.limit} — and below the workflow's
+   * `timeout-minutes`, so the run writes its summary instead of being
+   * cancelled without one.
+   */
   'deadline-minutes': 240,
   /** Where the window starts. Defaults to the date-seeded offset below. */
   offset: Number.NaN,
@@ -93,7 +153,7 @@ type FlagName = keyof typeof DEFAULTS;
 
 function die(message: string): never {
   console.error(`[scan-site-list] ${message}`);
-  process.exit(2);
+  process.exit(EXIT.badFlags);
 }
 
 function parseFlags(argv: string[]): Record<FlagName, number> {
@@ -107,6 +167,12 @@ function parseFlags(argv: string[]): Record<FlagName, number> {
     const raw = match[2]!;
     if (!Object.hasOwn(DEFAULTS, name)) {
       die(`unknown flag --${name}. Known flags: ${Object.keys(DEFAULTS).join(', ')}.`);
+    }
+    // `Number('')` is 0, which passes every test below and sends `--limit=`
+    // down the `LIMIT === 0` smoke-test path with a clean exit. An operator
+    // whose shell dropped a variable meant to scan something.
+    if (raw.trim() === '') {
+      die(`--${name} was given no value. Every flag is --name=value.`);
     }
     const value = Number(raw);
     if (!Number.isFinite(value) || value < 0) {
@@ -160,9 +226,9 @@ function dayOfYear(now: Date): number {
 /**
  * `size` entries starting at `offset`, wrapping past the end of the list.
  *
- * The list is sorted by domain, so a fixed `slice(0, 500)` scans the same
- * numeric-prefixed head every night and never visits the other 1413 entries.
- * A date-seeded offset covers the whole list in about four nights at identical
+ * The list is sorted by domain, so a fixed `slice(0, 400)` scans the same
+ * numeric-prefixed head every night and never visits the other 1513 entries.
+ * A date-seeded offset covers the whole list in five nights at identical
  * politeness, and `--offset=` makes a dispatch run reproducible.
  */
 function windowOf<T>(all: T[], size: number, offset: number): T[] {
@@ -175,7 +241,9 @@ function windowOf<T>(all: T[], size: number, offset: number): T[] {
 
 // ── robots.txt ─────────────────────────────────────────────────
 
-type RobotsVerdict = { scan: true } | { scan: false; reason: SkipReason };
+type RobotsVerdict =
+  | { scan: true; robotsTxt: FetchResult }
+  | { scan: false; reason: SkipReason };
 
 /**
  * Whether `robots.txt` lets this job scan the site at all.
@@ -203,12 +271,19 @@ async function robotsVerdict(domain: string): Promise<RobotsVerdict> {
   if (result.status === 401 || result.status === 403 || result.status === 429) {
     return { scan: false, reason: 'robots-refused' };
   }
-  if (result.error || result.status !== 200 || !result.body) return { scan: true };
+  // Handed to `runScan` either way, so the one file an operator watches is
+  // requested once per site instead of twice.
+  if (result.error || result.status !== 200 || !result.body) {
+    return { scan: true, robotsTxt: result };
+  }
 
-  const groups = groupsForBot(parseRobots(result.body), BOT_TOKEN);
-  if (isBlanketBlocked(groups, BOT_TOKEN)) return { scan: false, reason: 'robots-disallow' };
-  if (groups.some((g) => (g.crawlDelay ?? 0) > 0)) return { scan: false, reason: 'crawl-delay' };
-  return { scan: true };
+  const parsed = parseRobots(result.body);
+  for (const token of PROBED_TOKENS) {
+    const groups = groupsForBot(parsed, token);
+    if (isBlanketBlocked(groups, token)) return { scan: false, reason: 'robots-disallow' };
+    if (groups.some((g) => (g.crawlDelay ?? 0) > 0)) return { scan: false, reason: 'crawl-delay' };
+  }
+  return { scan: true, robotsTxt: result };
 }
 
 // ── Scanning one site ──────────────────────────────────────────
@@ -231,7 +306,10 @@ async function scanOne(site: SiteEntry): Promise<SiteOutcome> {
       return base;
     }
 
-    const report = await runScan(`https://${site.domain}`, { dispatcher });
+    const report = await runScan(`https://${site.domain}`, {
+      dispatcher,
+      robotsTxt: verdict.robotsTxt,
+    });
     const checks = report.categories.flatMap((c) => c.checks);
 
     for (const check of checks) {
@@ -299,7 +377,7 @@ async function main(): Promise<void> {
     process.on(signal, () => {
       console.error(`\n[scan-site-list] ${signal} after ${outcomes.length} sites; flushing summary`);
       writeSummary();
-      process.exit(1);
+      process.exit(EXIT.cancelled);
     });
   }
 
@@ -353,16 +431,16 @@ async function main(): Promise<void> {
   // exited: an empty summary is indistinguishable from a clean one.
   if (planned.length > 0 && outcomes.length === 0) {
     console.error('\nno site produced an outcome — the run scanned nothing');
-    process.exit(1);
+    process.exit(EXIT.scannedNothing);
   }
   if (unreached > 0) {
     console.error(`\nran out of time with ${unreached} of ${planned.length} sites unscanned`);
-    process.exit(1);
+    process.exit(EXIT.deadline);
   }
-  if (broken.length > 0) process.exit(1);
+  if (broken.length > 0) process.exit(EXIT.violation);
 }
 
 main().catch((err) => {
   console.error(err);
-  process.exit(1);
+  process.exit(EXIT.crashed);
 });

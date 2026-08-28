@@ -20,10 +20,13 @@ jobs:
   scan:
     runs-on: ubuntu-latest
     # The job cap is 6 hours. Measured: 4 sites took 122 s wall at concurrency
-    # 2, about 60 s per site per worker, and one site alone took 120 s — so 500
-    # sites is roughly 260 minutes, not the 2 hours first budgeted. The script
-    # carries its own 240-minute deadline and writes what it has; this cap is
-    # the backstop behind it, not the plan.
+    # 2, about 60 s per site per worker, and one site alone took 120 s. With the
+    # 3 s inter-site delay a window costs `limit / 2 * 63 s`: 400 sites is 210
+    # minutes, inside the script's own 240-minute deadline with half an hour of
+    # slack. 500 was the first budget and it cost 262 minutes — past the
+    # deadline, so the job would have exited "ran out of time" on any night
+    # whose window held few robots-skipped sites. This cap is the backstop
+    # behind the deadline, not the plan.
     timeout-minutes: 300
     steps:
       - uses: actions/checkout@v4
@@ -48,8 +51,12 @@ jobs:
       # `node --import tsx` rather than `npx tsx`: the script writes its partial
       # summary from a SIGTERM handler, and each wrapper process between the
       # runner and node is one more place that signal can stop.
+      # Exit codes are distinct on purpose: 1 is a scan that broke an
+      # invariant — the finding this job exists for — while 3 (cancelled),
+      # 4 (deadline), 5 (scanned nothing) and 6 (the runner threw) are the job
+      # failing rather than a site. `scan-site-list.ts` documents the set.
       - name: Scan the site list
-        run: node --import tsx scripts/scan-site-list.ts --limit=500
+        run: node --import tsx scripts/scan-site-list.ts --limit=400
 
       # `if: always()` on purpose: the summary is most wanted on the run that
       # failed, and the scan step exits non-zero exactly when it found something.
