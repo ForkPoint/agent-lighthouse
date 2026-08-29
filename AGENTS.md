@@ -92,7 +92,10 @@ community convention nothing documents consuming; **D** is speculative.
   artifact is absent. Only a present-and-defective artifact may `fail`. Four
   `openapi-*` audits failed every site with no OpenAPI document at all — 2.4
   combined weight telling a bakery to add a `servers` array to a spec it had
-  never written.
+  never written. Absent means absent: an artifact that is present and
+  malformed is a finding, and the check that declines the absence still fails
+  the breakage. `gatherers/openapi.ts` splits the two in one place so no
+  caller has to guess.
 - **Put that precondition beside the read.** The gatherer that reads the
   artifact owns it, next to the read, with the reasoning written down.
   `packages/core/src/gatherers/openapi.ts` is the worked example, and

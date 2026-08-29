@@ -25,13 +25,24 @@ the four also decline a document that declares no operations, which is the same
 absence one level down — `openapi-endpoints` is the audit that reports an empty
 document, and it now reports it once.
 
+**Absent means absent.** A `paths` member that is present and is not a Paths
+Object — an array, a string, `null`, or an entry that is not a path item object
+— is a defective document, not an absent one. `openapi-endpoints`,
+`openapi-schemas` and `openapi-operation-ids` fail it and name the defect in
+`found`, where two of them previously reported "0 operations". An empty `paths`
+object, or no `paths` key, still declines.
+
 **What did not change.** Every verdict on a document that exists and is
 defective. A missing `servers` array, entries with no `url`, an unreachable
 server URL, a document with no operations, low schema coverage, an
 unregistrable or duplicated `operationId` — all still fail or warn exactly as
 before. That is the finding the grade B was earned for.
 
-**Also.** The seven byte-identical copies of `getOpenApiSpec` collapse into
-`packages/core/src/gatherers/openapi.ts`, which now owns the read, the `paths`
-traversal, and the precondition. `agent-interfaces/search-endpoint` and
-`operability-safety/contact-form` changed their import and nothing else.
+**Also.** The seven byte-identical copies of `getOpenApiSpec`, and the four of
+the `paths` traversal, collapse into `packages/core/src/gatherers/openapi.ts`,
+which now owns the read, the traversal and the precondition.
+`agent-interfaces/search-endpoint` and `operability-safety/contact-form` keep
+judging a site that publishes no document — they have other evidence — and no
+verdict of theirs moved. `agent-interfaces/openapi-description-quality` already
+declined the absence and still does; only the wording of its decline changed,
+so that it says what the rest of the family says.
