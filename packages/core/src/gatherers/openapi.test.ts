@@ -198,7 +198,14 @@ describe('NO_OPENAPI_SPEC', () => {
   // The four content audits must say the same thing about the same absence.
   // A per-audit sentence is how three of them drifted apart in the first place.
   it('carries one message and one `found` for the whole family', () => {
-    expect(NO_OPENAPI_SPEC.found).toBe('No OpenAPI document');
+    expect(NO_OPENAPI_SPEC.found).toBe('No readable OpenAPI document');
     expect(NO_OPENAPI_SPEC.message).toContain('/openapi.json');
+  });
+
+  // The read also comes back empty for a 200 whose body will not parse, so the
+  // wording may not claim the site publishes nothing.
+  it('does not claim the site publishes no document', () => {
+    expect(NO_OPENAPI_SPEC.message).not.toContain('is published');
+    expect(NO_OPENAPI_SPEC.message).toContain('readable');
   });
 });

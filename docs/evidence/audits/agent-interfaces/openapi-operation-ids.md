@@ -191,6 +191,11 @@ any value — and inside a path item only the eight method keys are judged,
 because `summary`, `parameters`, `servers` and `$ref` are legal members that
 are not Operation Objects.
 
+**The decline says what was observed.** The shared `notApplicable` line reads
+"No readable OpenAPI document at /openapi.json". The read also comes back empty
+for a 200 whose body will not parse, and a site that publishes a broken
+document has not published none.
+
 ## Deferred
 
 The two other standing items from the fold are untouched: the shared read is

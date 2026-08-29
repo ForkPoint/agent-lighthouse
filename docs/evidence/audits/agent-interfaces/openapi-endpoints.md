@@ -124,6 +124,11 @@ precondition and not an `EvidenceKey`.
 document this audit never read. `agent-interfaces/openapi-exists` reports a
 spec advertised but unreadable, once.
 
+**The decline says what was observed.** The shared `notApplicable` line reads
+"No readable OpenAPI document at /openapi.json". The read also comes back empty
+for a 200 whose body will not parse, and a site that publishes a broken
+document has not published none.
+
 ## Deferred
 
 The rest of the required fix stands: the shared read is still JSON-only, so the

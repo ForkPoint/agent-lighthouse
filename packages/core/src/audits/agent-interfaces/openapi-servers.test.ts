@@ -60,7 +60,7 @@ describe('OpenApiServersAudit', () => {
     const ctx = mockCheckContext([], {});
     const result = await audit.audit(ctx);
     expect(result.status).toBe('na');
-    expect(result.found).toBe('No OpenAPI document');
+    expect(result.found).toBe('No readable OpenAPI document');
   });
 
   it('declines on a scan that read nothing', async () => {

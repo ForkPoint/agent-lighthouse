@@ -56,6 +56,11 @@ verdict of theirs moved. `agent-interfaces/openapi-description-quality` already
 declined the absence and still does; only the wording of its decline changed,
 so that it says what the rest of the family says.
 
+The shared decline now reads "No readable OpenAPI document at /openapi.json"
+rather than "No OpenAPI document is published at /openapi.json". The read also
+comes back empty for a 200 whose body will not parse, and a site that publishes
+a broken document has not published none.
+
 `operability-safety/contact-form` and `agent-interfaces/search-endpoint` read
 the same document without judging it, and they keep the traversal they had: a
 site with a `POST /contact` and one malformed sibling entry still has a contact

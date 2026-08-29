@@ -53,8 +53,12 @@ const HTTP_METHODS = [
  *   and move a perfectly judgeable site toward `overallScore: null`.
  */
 export const NO_OPENAPI_SPEC = {
-  message: 'No OpenAPI document is published at /openapi.json, so there is nothing to check.',
-  found: 'No OpenAPI document',
+  // States what the read observed, not what the site did. `readOpenApiSpec`
+  // also returns nothing for a 200 whose body will not parse, and for JSON
+  // that is not an object — a site that does publish a document, badly. Saying
+  // "no document is published" there would claim something never observed.
+  message: 'No readable OpenAPI document at /openapi.json, so there is nothing to check.',
+  found: 'No readable OpenAPI document',
 } as const;
 
 function isObject(val: unknown): val is Record<string, unknown> {
