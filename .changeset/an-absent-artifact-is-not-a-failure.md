@@ -43,9 +43,10 @@ named in the message and counted in `found`, and they do not change the verdict.
 
 **What did not change.** Every verdict on a document that exists and is
 defective. A missing `servers` array, entries with no `url`, an unreachable
-server URL, a document with no operations, low schema coverage, an
-unregistrable or duplicated `operationId` — all still fail or warn exactly as
-before. That is the finding the grade B was earned for.
+server URL, low schema coverage, an unregistrable or duplicated `operationId` —
+all still fail or warn exactly as before. That is the finding the grade B was
+earned for. A document that declares no operations is still failed, by
+`openapi-endpoints`, which is the audit whose subject it is.
 
 **Also.** The seven byte-identical copies of `getOpenApiSpec`, and the four of
 the `paths` traversal, collapse into `packages/core/src/gatherers/openapi.ts`,

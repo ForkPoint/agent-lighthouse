@@ -101,7 +101,7 @@ The verdict shape:
 
 | Spec | Verdict |
 | :--- | :--- |
-| no spec / no operations | `fail` (unchanged) |
+| no spec / no operations | `fail` (unchanged) — superseded 2026-08-29: both now `notApplicable`, see Implementation deviations |
 | any operationId outside the legal charset or over 64 chars | `fail`, listing every offending id — **new** |
 | ids missing or duplicated only | `warn` (unchanged) |
 | all present, unique and legal | `pass` (unchanged) |
