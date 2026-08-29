@@ -2,16 +2,16 @@ import type { AuditMeta, AuditResult } from "../../types";
 import { Audit } from "../../audit";
 import { weightForGrade } from '../../scorer';
 import type { CheckContext } from '../../check-context';
-import { readOpenApiSpec } from '../../gatherers/openapi';
+import {
+  NO_OPENAPI_SPEC,
+  openApiOperations,
+  readOpenApiSpec,
+  type OpenApiSpec,
+} from '../../gatherers/openapi';
 
 function isObject(val: unknown): val is Record<string, unknown> {
   return typeof val === 'object' && val !== null && !Array.isArray(val);
 }
-
-type OpenApiPaths = Record<string, Record<string, unknown>>;
-type OpenApiOperation = Record<string, unknown>;
-
-const HTTP_METHODS = ['get', 'post', 'put', 'patch', 'delete', 'options', 'head', 'trace'];
 
 const MIN_DESCRIPTION_LENGTH = 15;
 
@@ -25,34 +25,25 @@ interface CheckableItem {
   described: boolean;
 }
 
-function getCheckableItems(spec: Record<string, unknown>): CheckableItem[] {
-  const paths = spec['paths'] as OpenApiPaths | undefined;
-  if (!isObject(paths)) return [];
-
+function getCheckableItems(spec: OpenApiSpec): CheckableItem[] {
   const items: CheckableItem[] = [];
-  for (const [path, pathItem] of Object.entries(paths)) {
-    if (!isObject(pathItem)) continue;
-    for (const method of HTTP_METHODS) {
-      const op = pathItem[method];
-      if (!isObject(op)) continue;
-      const operation = op as OpenApiOperation;
-      const opLabel = `${method.toUpperCase()} ${path}`;
+  for (const { path, method, op } of openApiOperations(spec)) {
+    const opLabel = `${method.toUpperCase()} ${path}`;
 
-      items.push({
-        label: `${opLabel} (operation)`,
-        described: hasGoodDescription(operation['description']),
-      });
+    items.push({
+      label: `${opLabel} (operation)`,
+      described: hasGoodDescription(op['description']),
+    });
 
-      const parameters = operation['parameters'];
-      if (Array.isArray(parameters)) {
-        for (const param of parameters) {
-          if (!isObject(param)) continue;
-          const name = typeof param['name'] === 'string' ? param['name'] : '(unnamed)';
-          items.push({
-            label: `${opLabel} param '${name}'`,
-            described: hasGoodDescription(param['description']),
-          });
-        }
+    const parameters = op['parameters'];
+    if (Array.isArray(parameters)) {
+      for (const param of parameters) {
+        if (!isObject(param)) continue;
+        const name = typeof param['name'] === 'string' ? param['name'] : '(unnamed)';
+        items.push({
+          label: `${opLabel} param '${name}'`,
+          described: hasGoodDescription(param['description']),
+        });
       }
     }
   }
@@ -99,11 +90,16 @@ export class OpenApiDescriptionQualityAudit extends Audit {
 
   audit(ctx: CheckContext): AuditResult {
     const spec = readOpenApiSpec(ctx);
+    // Absent artifact, absent verdict — the shared precondition, deliberately
+    // not a private sentence. Reading `NO_OPENAPI_SPEC` is what enrols this
+    // audit in `tests/absent-artifact-contract.test.ts`, so the audit every
+    // dossier cites as proof that a scored audit may decline is itself held to
+    // it.
     if (!spec) {
       return this.notApplicable(
-        'No parseable OpenAPI JSON spec found at /openapi.json.',
+        NO_OPENAPI_SPEC.message,
         'OpenAPI spec with verbose descriptions on all operations and parameters',
-        'No spec',
+        NO_OPENAPI_SPEC.found,
       );
     }
 

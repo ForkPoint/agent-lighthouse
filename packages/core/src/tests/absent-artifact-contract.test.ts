@@ -14,14 +14,20 @@ import type { CheckContext } from '../check-context';
  * suite holds the one family that broke it.
  *
  * `agent-interfaces/openapi-servers`, `openapi-endpoints`, `openapi-schemas`
- * and `openapi-operation-ids` each returned `fail` at `priority: 'high'` on
- * every site with no OpenAPI document — 2.4 combined weight telling a bakery
- * to add a `servers` array to a spec it had never written.
+ * and `openapi-operation-ids` each returned `fail` — the first two at
+ * `priority: 'high'`, the other two at `'medium'` — on every site with no
+ * OpenAPI document. 2.4 combined weight telling a bakery to add a `servers`
+ * array to a spec it had never written.
+ *
+ * `openapi-description-quality` is held here too, though it never broke the
+ * rule. It is the audit every dossier cites as proof that a *scored* audit may
+ * decline, so leaving it out would let someone flip its branch to `fail` with
+ * this suite still green.
  *
  * Registry-driven, and the marker is the import rather than a list: an audit
  * that reads `NO_OPENAPI_SPEC` from `gatherers/openapi.ts` has declared that
  * its verdict is about the document's contents, so it is held here. Adding a
- * fifth such audit enrols it automatically.
+ * sixth such audit enrols it automatically.
  *
  * Why only this family. The general rule needs to know which artifact each
  * audit is *about*, and no syntactic test answers that:
@@ -57,6 +63,7 @@ function siteWithoutASpec(overrides: Record<string, ReturnType<typeof mockFetchR
 describe('absent artifact, absent verdict — the OpenAPI document', () => {
   it('finds the audits that read the shared precondition', () => {
     expect(openApiContentAudits.map((r) => r.meta.id).sort()).toEqual([
+      'agent-interfaces/openapi-description-quality',
       'agent-interfaces/openapi-endpoints',
       'agent-interfaces/openapi-operation-ids',
       'agent-interfaces/openapi-schemas',

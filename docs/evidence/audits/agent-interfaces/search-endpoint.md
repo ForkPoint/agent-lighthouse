@@ -107,3 +107,18 @@ _No dedicated evidence signal was researched for this audit in the 2026-08-20 pa
 - The OpenAPI half of the signal depends on an agent obtaining the spec at all, which is documented only for developer-registered documents (GPT Actions, Copilot API plugins) — https://developers.openai.com/api/docs/actions/getting-started (verified 2026-08-21)
 
 **Counter-evidence:** No crawler or agent documentation from OpenAI, Anthropic, Google, Microsoft or Perplexity states that a named agent reads `SearchAction` to query a site, rather than crawling it or using a general web-search tool. The documented server-side tools those vendors ship — Anthropic's `web_search` and `web_fetch`, for example — query the open web, not a site's declared search template. High markup adoption therefore reflects legacy SEO practice, not proven agent consumption — a community convention with a plausible but unverified mechanism.
+
+## Implementation deviations
+
+**2026-08-29 — the OpenAPI read and the `paths` walk moved to
+`packages/core/src/gatherers/openapi.ts`.** This file carried a private copy of
+both, which is the drift the shared module exists to end. No verdict moved: the
+shared walk visits path items in the same order and applies the same "is the
+`get` value an object" test, so the first `\bsearch\b` path with a GET is still
+the one reported.
+
+This audit is deliberately **not** enrolled in the absent-artifact contract. It
+judges whether a site offers a search interface at all, and a `SearchAction` in
+JSON-LD or an on-page search form is evidence enough to reach a verdict without
+any OpenAPI document. The absence of the document is not the absence of the
+thing it audits.
