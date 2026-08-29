@@ -3,6 +3,8 @@ import { Audit } from "../../audit";
 import { weightForGrade } from '../../scorer';
 import type { CheckContext } from '../../check-context';
 import {
+  defectCount,
+  defectNote,
   NO_OPENAPI_SPEC,
   readOpenApiPaths,
   readOpenApiSpec,
@@ -61,9 +63,10 @@ export class OpenApiEndpointsAudit extends Audit {
 
     const paths = readOpenApiPaths(spec);
 
-    // Present and broken, not absent: `paths` exists and is not a Paths
-    // Object, so no agent can read an operation out of it. A defective
-    // document is the finding this audit carries its grade for.
+    // Present and broken, not absent: nothing under `paths` is readable and
+    // the author wrote what blocks it. The `expected` line above is genuinely
+    // unmet here — there is no path with an operation — which is why this
+    // branch may state it beside a `fail`.
     if (paths.kind === 'malformed') {
       return this.fail(
         `OpenAPI spec has a malformed paths object: ${paths.found}.`,
@@ -77,12 +80,17 @@ export class OpenApiEndpointsAudit extends Audit {
       );
     }
 
+    // At least one operation is readable, so the requirement in `expected` is
+    // met and this audit passes — even if a sibling entry is broken. Twenty
+    // working operations are twenty working operations; the defect is named,
+    // not charged, because no source says a broken sibling costs a site the
+    // endpoints it does publish.
     if (paths.kind === 'operations') {
       const count = paths.operations.length;
       return this.pass(
-        `OpenAPI spec defines ${count} operation(s) across its paths.`,
+        `OpenAPI spec defines ${count} operation(s) across its paths.${defectNote(paths.defects)}`,
         EXPECTED,
-        `${count} operation(s)`,
+        `${count} operation(s)${defectCount(paths.defects)}`,
       );
     }
 

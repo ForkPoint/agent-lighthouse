@@ -91,4 +91,42 @@ describe('OpenApiEndpointsAudit', () => {
     expect(result.status).toBe('fail');
     expect(result.found).toBe('paths entry "/products" is an array, not a path item object');
   });
+  // Against released `main` a document with twenty good operations and one
+  // broken entry passed with "20 operation(s)". It still does: the readable
+  // operations meet the stated expectation, and the defect is named, not
+  // charged.
+  it('passes on readable operations beside a broken entry and names the defect', () => {
+    const spec = JSON.stringify({
+      paths: {
+        '/a': { get: { operationId: 'a' } },
+        '/b': { post: { operationId: 'b' } },
+        '/legacy': null,
+      },
+    });
+    const ctx = mockCheckContext([], { '/openapi.json': mockFetchResult(spec, 200) });
+    const result = audit.audit(ctx);
+    expect(result.status).toBe('pass');
+    expect(result.message).toContain('2 operation(s)');
+    expect(result.message).toContain('Skipped 1 unreadable entry');
+    expect(result.found).toBe('2 operation(s); 1 unreadable');
+  });
+
+  // A defect one level down is the same defect: nothing is readable, so this
+  // is a present-and-broken document, not an empty one.
+  it('fails when the only method value is not an operation object', () => {
+    const spec = JSON.stringify({ paths: { '/x': { get: 'yes' } } });
+    const ctx = mockCheckContext([], { '/openapi.json': mockFetchResult(spec, 200) });
+    const result = audit.audit(ctx);
+    expect(result.status).toBe('fail');
+    expect(result.found).toBe('paths entry "/x" declares get as a string, not an operation object');
+  });
+
+  // Legal OpenAPI that declares nothing: broken is not the finding here.
+  it('reports an empty path item as an empty document, not a malformed one', () => {
+    const spec = JSON.stringify({ paths: { '/x': {} } });
+    const ctx = mockCheckContext([], { '/openapi.json': mockFetchResult(spec, 200) });
+    const result = audit.audit(ctx);
+    expect(result.status).toBe('fail');
+    expect(result.found).toBe('0 operations');
+  });
 });

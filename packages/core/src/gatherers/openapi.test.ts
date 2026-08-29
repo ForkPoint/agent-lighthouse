@@ -103,8 +103,14 @@ describe('readOpenApiPaths', () => {
     ['no paths key', { openapi: '3.1.0', info: {} }],
     ['an empty paths object', { paths: {} }],
     ['path items that declare no method', { paths: { '/x': { summary: 'nothing' } } }],
-    ['a path item whose method value is not an object', { paths: { '/x': { get: 'yes' } } }],
+    ['a legal path item that declares nothing', { paths: { '/x': {} } }],
     ['only specification extensions', { paths: { 'x-internal': 'anything' } }],
+    // Legal Path Item members that are not Operation Objects. Judging these
+    // would fail every document that declares shared parameters.
+    [
+      'a path item carrying only non-operation members',
+      { paths: { '/x': { summary: 'a', parameters: [], servers: [], $ref: '#/x' } } },
+    ],
   ])('reports %s as empty', (_label, spec) => {
     expect(readOpenApiPaths(spec as Record<string, unknown>).kind).toBe('empty');
   });
@@ -128,10 +134,56 @@ describe('readOpenApiPaths', () => {
       { paths: { '/x': ['get'] } },
       'paths entry "/x" is an array, not a path item object',
     ],
+    // A defect is a defect at either level: a non-object where an Operation
+    // Object belongs is the same error as one where a Path Item Object
+    // belongs, so the document is present and broken, not empty.
+    [
+      'a method value that is not an operation object',
+      { paths: { '/x': { get: 'yes' } } },
+      'paths entry "/x" declares get as a string, not an operation object',
+    ],
+    [
+      'a method value that is null',
+      { paths: { '/x': { post: null } } },
+      'paths entry "/x" declares post as null, not an operation object',
+    ],
+    // Every entry defective means nothing survives the read, so it is
+    // malformed even though there is more than one broken thing.
+    [
+      'every entry defective',
+      { paths: { '/a': null, '/b': 'GET' } },
+      'paths entry "/a" is null, not a path item object (+1 more)',
+    ],
   ])('reports %s as malformed and names it', (_label, spec, found) => {
     const reading = readOpenApiPaths(spec as Record<string, unknown>);
     expect(reading.kind).toBe('malformed');
     expect(reading.kind === 'malformed' && reading.found).toBe(found);
+  });
+
+  // The regression this classifier used to carry: it judged the document as a
+  // whole, so one broken entry erased every operation beside it. What is
+  // readable is returned, and what is not is named alongside it.
+  it('keeps the readable operations beside a broken entry and lists the defect', () => {
+    const reading = readOpenApiPaths({
+      paths: {
+        '/a': { get: { operationId: 'a' } },
+        '/b': { post: { operationId: 'b' } },
+        '/legacy': null,
+        '/c': { get: 'yes' },
+      },
+    });
+    expect(reading.kind).toBe('operations');
+    if (reading.kind !== 'operations') return;
+    expect(reading.operations.map((o) => `${o.method} ${o.path}`)).toEqual(['get /a', 'post /b']);
+    expect(reading.defects).toEqual([
+      'paths entry "/legacy" is null, not a path item object',
+      'paths entry "/c" declares get as a string, not an operation object',
+    ]);
+  });
+
+  it('reports no defects for a document with nothing broken', () => {
+    const reading = readOpenApiPaths({ paths: { '/a': { get: {} } } });
+    expect(reading.kind === 'operations' && reading.defects).toEqual([]);
   });
 
   it('does not judge a specification extension beside a real path item', () => {

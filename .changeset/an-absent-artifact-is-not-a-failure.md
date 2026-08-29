@@ -25,12 +25,21 @@ the four also decline a document that declares no operations, which is the same
 absence one level down — `openapi-endpoints` is the audit that reports an empty
 document, and it now reports it once.
 
-**Absent means absent.** A `paths` member that is present and is not a Paths
-Object — an array, a string, `null`, or an entry that is not a path item object
-— is a defective document, not an absent one. `openapi-endpoints`,
-`openapi-schemas` and `openapi-operation-ids` fail it and name the defect in
-`found`, where all three previously reported "0 operations". An empty `paths`
-object, or no `paths` key, still declines.
+**Absent means absent; broken means broken.** A `paths` member that is present
+and yields nothing readable — `paths` is not an object at all, or every entry
+under it is defective — is a defective document, not an absent one.
+`openapi-endpoints`, `openapi-schemas` and `openapi-operation-ids` fail it and
+name the defect in `found`, where all three previously reported "0 operations".
+A defect counts at either level: a non-object where a Path Item Object belongs
+and a non-object where an Operation Object belongs are the same error. An empty
+`paths` object, no `paths` key, and a path item that declares no method are
+legal and declare nothing, so they still decline.
+
+**A broken entry does not erase the operations beside it.** A document with
+twenty readable operations and one `null` path item is graded on its twenty:
+`openapi-endpoints` counts them, `openapi-schemas` measures coverage over them,
+`openapi-operation-ids` checks their ids. The entries that could not be read are
+named in the message and counted in `found`, and they do not change the verdict.
 
 **What did not change.** Every verdict on a document that exists and is
 defective. A missing `servers` array, entries with no `url`, an unreachable

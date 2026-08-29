@@ -202,4 +202,50 @@ describe('OpenApiOperationIdsAudit', () => {
     expect(result.status).toBe('fail');
     expect(result.found).toBe('paths entry "/products" is an array, not a path item object');
   });
+  // The ids that can be seen are checked. On released `main` this document
+  // passed on its two good ids; it still does, with the defect named.
+  it('checks the ids it can see beside a broken entry', () => {
+    const spec = JSON.stringify({
+      paths: {
+        '/a': { get: { operationId: 'listA' } },
+        '/b': { post: { operationId: 'createB' } },
+        '/legacy': null,
+      },
+    });
+    const ctx = mockCheckContext([], { '/openapi.json': mockFetchResult(spec, 200) });
+    const result = audit.audit(ctx);
+    expect(result.status).toBe('pass');
+    expect(result.message).toContain('All 2 operation(s)');
+    expect(result.message).toContain('Skipped 1 unreadable entry');
+    expect(result.found).toBe('2 unique operationId(s); 1 unreadable');
+  });
+
+  // A real defect in the readable part is still a real finding, and the
+  // skipped entry does not soften it.
+  it('still warns on a missing operationId beside a broken entry', () => {
+    const spec = JSON.stringify({
+      paths: { '/a': { get: {} }, '/legacy': 'GET' },
+    });
+    const ctx = mockCheckContext([], { '/openapi.json': mockFetchResult(spec, 200) });
+    const result = audit.audit(ctx);
+    expect(result.status).toBe('warn');
+    expect(result.found).toContain('1 missing');
+    expect(result.found).toContain('1 unreadable');
+  });
+
+  it('fails when the only method value is not an operation object', () => {
+    const spec = JSON.stringify({ paths: { '/x': { get: 'yes' } } });
+    const ctx = mockCheckContext([], { '/openapi.json': mockFetchResult(spec, 200) });
+    const result = audit.audit(ctx);
+    expect(result.status).toBe('fail');
+    expect(result.found).toBe('paths entry "/x" declares get as a string, not an operation object');
+  });
+
+  it('declines an empty path item', () => {
+    const spec = JSON.stringify({ paths: { '/x': {} } });
+    const ctx = mockCheckContext([], { '/openapi.json': mockFetchResult(spec, 200) });
+    const result = audit.audit(ctx);
+    expect(result.status).toBe('na');
+    expect(result.found).toBe('0 operations');
+  });
 });

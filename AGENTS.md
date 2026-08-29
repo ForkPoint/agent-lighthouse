@@ -94,8 +94,11 @@ community convention nothing documents consuming; **D** is speculative.
   combined weight telling a bakery to add a `servers` array to a spec it had
   never written. Absent means absent: an artifact that is present and
   malformed is a finding, and the check that declines the absence still fails
-  the breakage. `gatherers/openapi.ts` splits the two in one place so no
-  caller has to guess.
+  the breakage. Broken is judged over what survives the read, not over the
+  whole artifact: if part of it is readable, grade that part and name the rest.
+  One malformed entry beside twenty good ones does not erase the twenty.
+  `gatherers/openapi.ts` splits the three in one place so no caller has to
+  guess.
 - **Put that precondition beside the read.** The gatherer that reads the
   artifact owns it, next to the read, with the reasoning written down.
   `packages/core/src/gatherers/openapi.ts` is the worked example, and

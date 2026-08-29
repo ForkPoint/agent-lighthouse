@@ -3,6 +3,8 @@ import { Audit } from "../../audit";
 import { weightForGrade } from '../../scorer';
 import type { CheckContext } from '../../check-context';
 import {
+  defectCount,
+  defectNote,
   NO_OPENAPI_SPEC,
   readOpenApiPaths,
   readOpenApiSpec,
@@ -77,10 +79,10 @@ export class OpenApiOperationIdsAudit extends Audit {
 
     const paths = readOpenApiPaths(spec);
 
-    // Present and broken is not absent. A `paths` that exists and is not a
-    // Paths Object is a defective document: no tool-calling runtime can walk
-    // it to register a function name, and the author wrote the thing that
-    // blocks it.
+    // Present and broken is not absent. Nothing under `paths` is readable, so
+    // the message below is literally true: no operationId can be read. No
+    // tool-calling runtime can walk this document to register a function name,
+    // and the author wrote the thing that blocks it.
     if (paths.kind === 'malformed') {
       return this.fail(
         `The OpenAPI document's paths object is malformed, so no operationId can be read: ${paths.found}.`,
@@ -105,7 +107,12 @@ export class OpenApiOperationIdsAudit extends Audit {
       );
     }
 
+    // The ids that can be seen are checked; a defective sibling entry declares
+    // no operationId to check and is named rather than counted against the
+    // ones that do.
     const ops = paths.operations;
+    const note = defectNote(paths.defects);
+    const suffix = defectCount(paths.defects);
 
     const ids = new Set<string>();
     let missing = 0;
@@ -128,9 +135,9 @@ export class OpenApiOperationIdsAudit extends Audit {
 
     if (missing === 0 && duplicates === 0 && illegal.length === 0) {
       return this.pass(
-        `All ${ops.length} operation(s) have unique, registrable operationIds.`,
+        `All ${ops.length} operation(s) have unique, registrable operationIds.${note}`,
         EXPECTED,
-        `${ops.length} unique operationId(s)`,
+        `${ops.length} unique operationId(s)${suffix}`,
       );
     }
 
@@ -143,9 +150,9 @@ export class OpenApiOperationIdsAudit extends Audit {
     // call outright; a missing or duplicated id only degrades naming.
     if (illegal.length > 0) {
       return this.fail(
-        `operationId issues: ${issues.join(', ')} out of ${ops.length} operation(s).`,
+        `operationId issues: ${issues.join(', ')} out of ${ops.length} operation(s).${note}`,
         EXPECTED,
-        `Illegal operationId(s): ${[...new Set(illegal)].join(', ')}${missing > 0 ? `; ${missing} missing` : ''}${duplicates > 0 ? `; ${duplicates} duplicate(s)` : ''}`,
+        `Illegal operationId(s): ${[...new Set(illegal)].join(', ')}${missing > 0 ? `; ${missing} missing` : ''}${duplicates > 0 ? `; ${duplicates} duplicate(s)` : ''}${suffix}`,
         {
           priority: 'medium',
           description:
@@ -156,9 +163,9 @@ export class OpenApiOperationIdsAudit extends Audit {
     }
 
     return this.warn(
-      `operationId issues: ${issues.join(', ')} out of ${ops.length} operation(s).`,
+      `operationId issues: ${issues.join(', ')} out of ${ops.length} operation(s).${note}`,
       EXPECTED,
-      issues.join(', '),
+      `${issues.join(', ')}${suffix}`,
       {
         priority: 'medium',
         description: OpenApiOperationIdsAudit.meta.description,

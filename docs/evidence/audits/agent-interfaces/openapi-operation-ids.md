@@ -32,10 +32,15 @@ A site that publishes no OpenAPI document — or one that declares no operations
 — is **not** a failure here. There are no operationIds to judge, so the audit
 returns "not applicable" and takes no weight off the score.
 
-A document whose `paths` is present but is not a Paths Object —
-`"paths": ["get","post"]`, a string where a path item belongs — is a different
-case. That document exists and is broken, so it still fails, and the report
-names the defect. Absent means absent; present-and-broken is a finding.
+A document whose `paths` is present and yields nothing readable is a different
+case. That document exists and is broken — `"paths": ["get","post"]` puts a
+string where a path item belongs, `{"/x": {"get": "yes"}}` puts one where an
+operation belongs — so it still fails, and the report names the defect. Absent
+means absent; present-and-broken is a finding.
+
+One broken entry does not erase the operations beside it. The ids that can be
+read are checked, and any entry that could not be read is named in the report
+rather than counted as a missing id.
 
 ## Code review findings (2026-08-20, 11-agent pass)
 
@@ -163,13 +168,28 @@ records why it is not a runner precondition and not an `EvidenceKey`.
 document this audit never read.
 
 **Present and broken is not absent.** `paths` is classified in one place,
-`readOpenApiPaths` in `gatherers/openapi.ts`, and it separates three states. No
-`paths` key, an empty Paths Object, or path items that declare no method are
-`empty` — the document announces nothing and this audit declines. A `paths`
-that is present and is not a Paths Object is `malformed` — an array, a string,
-`null`, or an entry whose value is not a path item object — and that still
-`fail`s, with the defect named in `found`. Specification-extension keys (`x-`)
-are skipped rather than judged: OpenAPI 3.1 §4.8.8 lets them hold any value.
+`readOpenApiPaths` in `gatherers/openapi.ts`. It separates what it could read
+from what was defective, and the verdict follows what survives:
+
+- Nothing readable and something broken — `paths` is not a Paths Object, or
+  every entry under it is defective — is `malformed`, and it `fail`s with the
+  defect named in `found`. The message ("no operationId can be read") is literally
+  true in that state and only in that state.
+- At least one readable operation is graded on the operations it read. An entry no runtime can walk declares no operationId, so it is not counted as a missing one.
+  The defects are named in the message and counted in `found`; they do not
+  change the verdict, because no source says a broken sibling entry costs a
+  site the operations it does publish. Released `main` graded such a document
+  on its readable operations and so does this audit.
+- Nothing broken and nothing declared is `empty`, and this audit declines.
+  `{"/x": {}}` is legal OpenAPI that lands there.
+
+A defect counts at either level: a non-object where a Path Item Object belongs
+and a non-object where an Operation Object belongs are the same error one level
+apart, so `{"/x": {"get": "yes"}}` is a broken document. Specification-extension
+keys (`x-`) are skipped rather than judged — OpenAPI 3.1 §4.8.8 lets them hold
+any value — and inside a path item only the eight method keys are judged,
+because `summary`, `parameters`, `servers` and `$ref` are legal members that
+are not Operation Objects.
 
 ## Deferred
 

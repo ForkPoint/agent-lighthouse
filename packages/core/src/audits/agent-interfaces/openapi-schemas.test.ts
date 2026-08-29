@@ -274,4 +274,43 @@ describe('OpenApiSchemasAudit', () => {
     expect(result.status).toBe('fail');
     expect(result.found).toBe('paths entry "/products" is an array, not a path item object');
   });
+  // Coverage is graded over what can be read. On released `main` this document
+  // was graded on its two readable operations; it still is, and the defect is
+  // named beside the grade instead of erasing it.
+  it('grades coverage over the readable operations beside a broken entry', () => {
+    const spec = JSON.stringify({
+      paths: {
+        '/a': {
+          get: { responses: { '200': { content: { 'application/json': { schema: {} } } } } },
+        },
+        '/b': {
+          get: { responses: { '200': { content: { 'application/json': { schema: {} } } } } },
+        },
+        '/legacy': null,
+      },
+    });
+    const ctx = mockCheckContext([], { '/openapi.json': mockFetchResult(spec, 200) });
+    const result = audit.audit(ctx);
+    expect(result.status).toBe('pass');
+    expect(result.message).toContain('Skipped 1 unreadable entry');
+    expect(result.found).toContain('2/2 response schemas');
+    expect(result.found).toContain('1 unreadable');
+  });
+
+  it('fails when the only method value is not an operation object', () => {
+    const spec = JSON.stringify({ paths: { '/x': { get: 'yes' } } });
+    const ctx = mockCheckContext([], { '/openapi.json': mockFetchResult(spec, 200) });
+    const result = audit.audit(ctx);
+    expect(result.status).toBe('fail');
+    expect(result.found).toBe('paths entry "/x" declares get as a string, not an operation object');
+  });
+
+  // Legal and declares nothing: an absence one level down, so it declines.
+  it('declines an empty path item', () => {
+    const spec = JSON.stringify({ paths: { '/x': {} } });
+    const ctx = mockCheckContext([], { '/openapi.json': mockFetchResult(spec, 200) });
+    const result = audit.audit(ctx);
+    expect(result.status).toBe('na');
+    expect(result.found).toBe('0 operations');
+  });
 });

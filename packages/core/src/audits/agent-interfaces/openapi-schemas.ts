@@ -3,6 +3,8 @@ import { Audit } from "../../audit";
 import { weightForGrade } from '../../scorer';
 import type { CheckContext } from '../../check-context';
 import {
+  defectCount,
+  defectNote,
   NO_OPENAPI_SPEC,
   readOpenApiPaths,
   readOpenApiSpec,
@@ -92,9 +94,9 @@ export class OpenApiSchemasAudit extends Audit {
 
     const paths = readOpenApiPaths(spec);
 
-    // Present and broken is not absent. A `paths` that exists and is not a
-    // Paths Object is a defective document: an agent cannot reach an operation
-    // to read its schemas, and the author wrote the thing that blocks it.
+    // Present and broken is not absent. Nothing under `paths` is readable, so
+    // the message below is literally true: no operation's schemas can be read.
+    // The author wrote the thing that blocks the agent.
     if (paths.kind === 'malformed') {
       return this.fail(
         `The OpenAPI document's paths object is malformed, so no operation's schemas can be read: ${paths.found}.`,
@@ -115,7 +117,13 @@ export class OpenApiSchemasAudit extends Audit {
       );
     }
 
+    // Coverage is measured over the operations that are readable, and any
+    // defective sibling is named rather than counted. A denominator that
+    // included entries no agent can walk would grade the site on operations it
+    // does not have.
     const ops = paths.operations;
+    const note = defectNote(paths.defects);
+    const suffix = defectCount(paths.defects);
 
     let withRequestSchema = 0;
     let withResponseSchema = 0;
@@ -167,25 +175,25 @@ export class OpenApiSchemasAudit extends Audit {
       (writeMethods === 0 || withRequestSchema === writeMethods)
     ) {
       return this.pass(
-        `All operations have response schemas${writeMethods > 0 ? ` and all ${writeMethods} write operation(s) have request schemas` : ''}.`,
+        `All operations have response schemas${writeMethods > 0 ? ` and all ${writeMethods} write operation(s) have request schemas` : ''}.${note}`,
         EXPECTED,
-        `${withResponseSchema}/${totalCheckable} response schemas, ${withRequestSchema}/${writeMethods} request schemas`,
+        `${withResponseSchema}/${totalCheckable} response schemas, ${withRequestSchema}/${writeMethods} request schemas${suffix}`,
       );
     }
 
     if (hasGoodCoverage) {
       return this.warn(
-        `Partial schema coverage: ${withResponseSchema}/${totalCheckable} response schemas, ${withRequestSchema}/${writeMethods} request schemas.`,
+        `Partial schema coverage: ${withResponseSchema}/${totalCheckable} response schemas, ${withRequestSchema}/${writeMethods} request schemas.${note}`,
         EXPECTED,
-        `${withResponseSchema}/${totalCheckable} response, ${withRequestSchema}/${writeMethods} request`,
+        `${withResponseSchema}/${totalCheckable} response, ${withRequestSchema}/${writeMethods} request${suffix}`,
         recommendation,
       );
     }
 
     return this.fail(
-      `Low schema coverage: ${withResponseSchema}/${totalCheckable} response schemas, ${withRequestSchema}/${writeMethods} request schemas.`,
+      `Low schema coverage: ${withResponseSchema}/${totalCheckable} response schemas, ${withRequestSchema}/${writeMethods} request schemas.${note}`,
       EXPECTED,
-      `${withResponseSchema}/${totalCheckable} response, ${withRequestSchema}/${writeMethods} request`,
+      `${withResponseSchema}/${totalCheckable} response, ${withRequestSchema}/${writeMethods} request${suffix}`,
       recommendation,
     );
   }
