@@ -2,28 +2,10 @@ import type { AuditMeta, AuditResult } from "../../types";
 import { Audit } from "../../audit";
 import { weightForGrade } from '../../scorer';
 import type { CheckContext } from '../../check-context';
-
-function tryParseJson(body: string): unknown {
-  try {
-    return JSON.parse(body);
-  } catch {
-    return undefined;
-  }
-}
+import { NO_OPENAPI_SPEC, readOpenApiSpec } from '../../gatherers/openapi';
 
 function isObject(val: unknown): val is Record<string, unknown> {
   return typeof val === 'object' && val !== null && !Array.isArray(val);
-}
-
-function getOpenApiSpec(ctx: {
-  rootFiles: Record<string, { status: number; body: string }>;
-}): Record<string, unknown> | undefined {
-  const jsonResult = ctx.rootFiles['/openapi.json'];
-  if (jsonResult && jsonResult.status === 200 && jsonResult.body) {
-    const parsed = tryParseJson(jsonResult.body);
-    if (isObject(parsed)) return parsed;
-  }
-  return undefined;
 }
 
 export class OpenApiServersAudit extends Audit {
@@ -58,17 +40,16 @@ export class OpenApiServersAudit extends Audit {
   };
 
   async audit(ctx: CheckContext): Promise<AuditResult> {
-    const spec = getOpenApiSpec(ctx);
+    const spec = readOpenApiSpec(ctx);
+    // Absent artifact, absent verdict. This audit judges a document's
+    // `servers` array; a site that publishes no document has not written a
+    // bad one. See `gatherers/openapi.ts` for why the precondition lives
+    // there and not in the runner or in `requires`.
     if (!spec) {
-      return this.fail(
-        'No parseable OpenAPI JSON spec found.',
+      return this.notApplicable(
+        NO_OPENAPI_SPEC.message,
         'servers array has at least one entry with a reachable url',
-        'No spec',
-        {
-          priority: 'high',
-          description: OpenApiServersAudit.meta.description,
-          code: `"servers": [\n  {\n    "url": "https://yoursite.com/api",\n    "description": "Production server"\n  }\n]`,
-        },
+        NO_OPENAPI_SPEC.found,
       );
     }
 

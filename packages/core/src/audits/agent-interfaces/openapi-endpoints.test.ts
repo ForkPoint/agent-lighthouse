@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { OpenApiEndpointsAudit } from './openapi-endpoints';
 import { mockCheckContext, mockFetchResult } from '../../__tests__/test-utils';
+import { expectNotApplicableOnEmpty } from '../../tests/na-contract';
 
 describe('OpenApiEndpointsAudit', () => {
   const audit = new OpenApiEndpointsAudit();
@@ -19,9 +20,9 @@ describe('OpenApiEndpointsAudit', () => {
     expect(result.message).toContain('2 operation(s)');
   });
 
-  it('fails when there is no parseable spec', () => {
+  it('declines when there is no parseable spec', () => {
     const ctx = mockCheckContext([], {});
-    expect(audit.audit(ctx).status).toBe('fail');
+    expect(audit.audit(ctx).status).toBe('na');
   });
 
   it('fails when the spec has no operations', () => {
@@ -32,13 +33,25 @@ describe('OpenApiEndpointsAudit', () => {
     expect(result.message).toContain('no operations');
   });
 
-  it('fails when openapi.json contains invalid JSON', () => {
+  // A body that will not parse is a document this audit never read, so it is
+  // the same absence `openapi-exists` already reports.
+  it('declines when openapi.json contains invalid JSON', () => {
     const ctx = mockCheckContext([], {
       '/openapi.json': mockFetchResult('invalid json {{{', 200),
     });
-    const result = audit.audit(ctx);
-    expect(result.status).toBe('fail');
-    expect(result.message).toContain('No parseable');
+    expect(audit.audit(ctx).status).toBe('na');
+  });
+
+  // Absent artifact, absent verdict. A document that declares no operations
+  // is still this audit's finding — see the `fail` cases above.
+  it('declines when there is no spec', () => {
+    const result = audit.audit(mockCheckContext([], {}));
+    expect(result.status).toBe('na');
+    expect(result.found).toBe('No OpenAPI document');
+  });
+
+  it('declines on a scan that read nothing', async () => {
+    await expectNotApplicableOnEmpty(audit);
   });
 
   it('fails when spec has no paths key', () => {

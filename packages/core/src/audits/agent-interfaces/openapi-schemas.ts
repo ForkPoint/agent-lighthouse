@@ -2,52 +2,14 @@ import type { AuditMeta, AuditResult } from "../../types";
 import { Audit } from "../../audit";
 import { weightForGrade } from '../../scorer';
 import type { CheckContext } from '../../check-context';
-
-function tryParseJson(body: string): unknown {
-  try {
-    return JSON.parse(body);
-  } catch {
-    return undefined;
-  }
-}
+import {
+  NO_OPENAPI_SPEC,
+  openApiOperations,
+  readOpenApiSpec,
+} from '../../gatherers/openapi';
 
 function isObject(val: unknown): val is Record<string, unknown> {
   return typeof val === 'object' && val !== null && !Array.isArray(val);
-}
-
-type OpenApiPaths = Record<string, Record<string, unknown>>;
-type OpenApiOperation = Record<string, unknown>;
-
-const HTTP_METHODS = ['get', 'post', 'put', 'patch', 'delete', 'options', 'head', 'trace'];
-
-function getOpenApiSpec(ctx: {
-  rootFiles: Record<string, { status: number; body: string }>;
-}): Record<string, unknown> | undefined {
-  const jsonResult = ctx.rootFiles['/openapi.json'];
-  if (jsonResult && jsonResult.status === 200 && jsonResult.body) {
-    const parsed = tryParseJson(jsonResult.body);
-    if (isObject(parsed)) return parsed;
-  }
-  return undefined;
-}
-
-function getOperations(
-  spec: Record<string, unknown>,
-): Array<{ path: string; method: string; op: OpenApiOperation }> {
-  const paths = spec['paths'] as OpenApiPaths | undefined;
-  if (!isObject(paths)) return [];
-
-  const ops: Array<{ path: string; method: string; op: OpenApiOperation }> = [];
-  for (const [path, pathItem] of Object.entries(paths)) {
-    if (!isObject(pathItem)) continue;
-    for (const method of HTTP_METHODS) {
-      const op = pathItem[method];
-      if (isObject(op)) {
-        ops.push({ path, method, op: op as OpenApiOperation });
-      }
-    }
-  }
-  return ops;
 }
 
 export class OpenApiSchemasAudit extends Audit {
@@ -111,31 +73,25 @@ export class OpenApiSchemasAudit extends Audit {
   };
 
   audit(ctx: CheckContext): AuditResult {
-    const spec = getOpenApiSpec(ctx);
+    const spec = readOpenApiSpec(ctx);
+    // Absent artifact, absent verdict. This audit judges the schemas attached
+    // to a document's operations; no document, and no operations, means no
+    // schema coverage was ever observed. `openapi-endpoints` is the audit that
+    // reports an empty document.
     if (!spec) {
-      return this.fail(
-        'No parseable OpenAPI JSON spec found.',
+      return this.notApplicable(
+        NO_OPENAPI_SPEC.message,
         'Operations have requestBody and responses with schema definitions',
-        'No spec',
-        {
-          priority: 'medium',
-          description: OpenApiSchemasAudit.meta.description,
-          code: `"post": {\n  "operationId": "submitContact",\n  "requestBody": {\n    "required": true,\n    "content": {\n      "application/json": {\n        "schema": {\n          "type": "object",\n          "required": ["email", "message"],\n          "properties": {\n            "name": { "type": "string" },\n            "email": { "type": "string", "format": "email" },\n            "message": { "type": "string" }\n          }\n        }\n      }\n    }\n  },\n  "responses": {\n    "200": {\n      "description": "Success",\n      "content": {\n        "application/json": {\n          "schema": {\n            "type": "object",\n            "properties": {\n              "success": { "type": "boolean" },\n              "id": { "type": "string" }\n            }\n          }\n        }\n      }\n    }\n  }\n}`,
-        },
+        NO_OPENAPI_SPEC.found,
       );
     }
 
-    const ops = getOperations(spec);
+    const ops = openApiOperations(spec);
     if (ops.length === 0) {
-      return this.fail(
-        'No operations to check.',
+      return this.notApplicable(
+        'The OpenAPI document declares no operations, so it carries no request or response schemas to check.',
         'Operations have requestBody and responses with schema definitions',
         '0 operations',
-        {
-          priority: 'medium',
-          description: OpenApiSchemasAudit.meta.description,
-          code: `"post": {\n  "operationId": "submitContact",\n  "requestBody": {\n    "required": true,\n    "content": {\n      "application/json": {\n        "schema": {\n          "type": "object",\n          "required": ["email", "message"],\n          "properties": {\n            "name": { "type": "string" },\n            "email": { "type": "string", "format": "email" },\n            "message": { "type": "string" }\n          }\n        }\n      }\n    }\n  },\n  "responses": {\n    "200": {\n      "description": "Success",\n      "content": {\n        "application/json": {\n          "schema": {\n            "type": "object",\n            "properties": {\n              "success": { "type": "boolean" },\n              "id": { "type": "string" }\n            }\n          }\n        }\n      }\n    }\n  }\n}`,
-        },
       );
     }
 

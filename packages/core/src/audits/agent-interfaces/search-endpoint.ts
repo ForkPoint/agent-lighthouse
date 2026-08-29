@@ -3,6 +3,7 @@ import { Audit } from '../../audit';
 import { weightForGrade } from '../../scorer';
 import type { CheckContext, PageContext } from '../../check-context';
 import { flattenJsonLd } from '../../parser';
+import { readOpenApiSpec } from '../../gatherers/openapi';
 
 function tryParseJson(body: string): unknown {
   try {
@@ -42,15 +43,6 @@ const SEARCH_PATH_RE = /\bsearch\b/i;
 
 /** Statuses that mean "the endpoint exists but we were not allowed to see it". */
 const GATED_STATUSES = new Set([401, 403, 407, 451]);
-
-function getOpenApiSpec(ctx: CheckContext): Record<string, unknown> | undefined {
-  const jsonResult = ctx.rootFiles['/openapi.json'];
-  if (jsonResult && jsonResult.status === 200 && jsonResult.body) {
-    const parsed = tryParseJson(jsonResult.body);
-    if (isObject(parsed)) return parsed;
-  }
-  return undefined;
-}
 
 function findSearchOperation(spec: Record<string, unknown>): string | undefined {
   const paths = spec['paths'] as OpenApiPaths | undefined;
@@ -223,7 +215,7 @@ export class SearchEndpointAudit extends Audit {
   async audit(ctx: CheckContext): Promise<AuditResult> {
     const state = readSearchActions(ctx.pages);
     const openApiPath = (() => {
-      const spec = getOpenApiSpec(ctx);
+      const spec = readOpenApiSpec(ctx);
       return spec ? findSearchOperation(spec) : undefined;
     })();
 

@@ -2,23 +2,11 @@ import type { AuditMeta, AuditResult } from "../../types";
 import { Audit } from "../../audit";
 import { weightForGrade } from '../../scorer';
 import type { CheckContext } from '../../check-context';
-
-function tryParseJson(body: string): unknown {
-  try {
-    return JSON.parse(body);
-  } catch {
-    return undefined;
-  }
-}
-
-function isObject(val: unknown): val is Record<string, unknown> {
-  return typeof val === 'object' && val !== null && !Array.isArray(val);
-}
-
-type OpenApiPaths = Record<string, Record<string, unknown>>;
-type OpenApiOperation = Record<string, unknown>;
-
-const HTTP_METHODS = ['get', 'post', 'put', 'patch', 'delete', 'options', 'head', 'trace'];
+import {
+  NO_OPENAPI_SPEC,
+  openApiOperations,
+  readOpenApiSpec,
+} from '../../gatherers/openapi';
 
 /**
  * The naming rule folded in from v1 5.23 (webmcp-tool-naming) on 2026-08-22.
@@ -38,36 +26,6 @@ const LEGAL_OPERATION_ID = /^[a-zA-Z0-9_-]{1,64}$/;
 
 /** Shared `expected` line: uniqueness and registrability are one requirement. */
 const EXPECTED = 'Every operation has a unique operationId that is a legal tool-call function name';
-
-function getOpenApiSpec(ctx: {
-  rootFiles: Record<string, { status: number; body: string }>;
-}): Record<string, unknown> | undefined {
-  const jsonResult = ctx.rootFiles['/openapi.json'];
-  if (jsonResult && jsonResult.status === 200 && jsonResult.body) {
-    const parsed = tryParseJson(jsonResult.body);
-    if (isObject(parsed)) return parsed;
-  }
-  return undefined;
-}
-
-function getOperations(
-  spec: Record<string, unknown>,
-): Array<{ path: string; method: string; op: OpenApiOperation }> {
-  const paths = spec['paths'] as OpenApiPaths | undefined;
-  if (!isObject(paths)) return [];
-
-  const ops: Array<{ path: string; method: string; op: OpenApiOperation }> = [];
-  for (const [path, pathItem] of Object.entries(paths)) {
-    if (!isObject(pathItem)) continue;
-    for (const method of HTTP_METHODS) {
-      const op = pathItem[method];
-      if (isObject(op)) {
-        ops.push({ path, method, op: op as OpenApiOperation });
-      }
-    }
-  }
-  return ops;
-}
 
 export class OpenApiOperationIdsAudit extends Audit {
   static override meta: AuditMeta = {
@@ -109,31 +67,22 @@ export class OpenApiOperationIdsAudit extends Audit {
   };
 
   audit(ctx: CheckContext): AuditResult {
-    const spec = getOpenApiSpec(ctx);
+    const spec = readOpenApiSpec(ctx);
+    // Absent artifact, absent verdict. An operationId is a property of an
+    // operation, so a site with no document — and a document with no
+    // operations — carries nothing this audit can have read.
+    // `openapi-endpoints` is the audit that reports an empty document, and it
+    // reports it once.
     if (!spec) {
-      return this.fail(
-        'No parseable OpenAPI JSON spec found.',
-        EXPECTED,
-        'No spec',
-        {
-          priority: 'medium',
-          description: OpenApiOperationIdsAudit.meta.description,
-          code: `"paths": {\n  "/contact": {\n    "post": {\n      "operationId": "submitContactForm",\n      "summary": "Submit a contact inquiry"\n    }\n  },\n  "/search": {\n    "get": {\n      "operationId": "searchContent",\n      "summary": "Search site content"\n    }\n  }\n}`,
-        },
-      );
+      return this.notApplicable(NO_OPENAPI_SPEC.message, EXPECTED, NO_OPENAPI_SPEC.found);
     }
 
-    const ops = getOperations(spec);
+    const ops = openApiOperations(spec);
     if (ops.length === 0) {
-      return this.fail(
-        'No operations to check.',
+      return this.notApplicable(
+        'The OpenAPI document declares no operations, so it carries no operationIds to check.',
         EXPECTED,
         '0 operations',
-        {
-          priority: 'medium',
-          description: OpenApiOperationIdsAudit.meta.description,
-          code: `"paths": {\n  "/contact": {\n    "post": {\n      "operationId": "submitContactForm",\n      "summary": "Submit a contact inquiry"\n    }\n  },\n  "/search": {\n    "get": {\n      "operationId": "searchContent",\n      "summary": "Search site content"\n    }\n  }\n}`,
-        },
       );
     }
 

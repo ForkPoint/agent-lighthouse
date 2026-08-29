@@ -21,6 +21,16 @@ sources:
 
 Without request/response schemas, AI agents must guess the data format for your endpoints. This leads to malformed requests and failed API calls. Define JSON schemas for all request bodies and responses.
 
+## Example failure
+
+A site publishes `/openapi.json` whose `POST /contact` operation declares no
+`requestBody` schema and whose responses declare no `content` schema. An agent
+must guess the field names and types to send, and cannot tell what came back.
+
+A site that publishes no OpenAPI document — or one that declares no operations
+— is **not** a failure here. Schema coverage was never measured, so the audit
+returns "not applicable" and takes no weight off the score.
+
 ## Code review findings (2026-08-20, 11-agent pass)
 
 Valuable signal — agents need request/response shapes to build valid calls — but the traversal never resolves $ref, so the largest and best-maintained real-world specs (which put everything in components) score near zero, and it demands schemas from operations that correctly have none.
@@ -66,3 +76,31 @@ _No dedicated evidence signal was researched for this audit in the 2026-08-20 pa
 - Gemini function declarations accept only "a subset of the OpenAPI schema", so schema shape directly determines whether an operation can be exposed at all — https://ai.google.dev/gemini-api/docs/function-calling (verified 2026-08-21)
 
 **Counter-evidence:** Microsoft's own recommended response example is written as `schema: $ref: '#/components/schemas/Repair'` — the reference form this audit's traversal cannot resolve, so the best-documented way to satisfy the mechanism is scored as failing it. No source states that a response schema is required for a call to succeed: the request-side schema carries the documented weight, while response schemas improve interpretation. Operations that legitimately return no body (`204`, `HEAD`, `OPTIONS`) and bodyless `POST`s are normal API design, so the coverage ratio this audit computes overstates the mechanism's reach.
+
+## Implementation deviations
+
+**2026-08-29 — absence is `notApplicable`, not `fail`.** The audit returned
+`fail` at `priority: 'medium'` on a site with no OpenAPI document, and again on
+a document declaring no operations. Neither is a schema-coverage finding: no
+coverage was ever measured. Both now return `notApplicable`. Nothing in this
+dossier's evidence documents a consumer that is worse off for the absence of a
+document, and `agent-interfaces/openapi-endpoints` is the audit that reports an
+empty one.
+
+Every coverage verdict on a document with operations is unchanged. Low
+coverage still `fail`s, partial coverage still `warn`s, and full coverage still
+passes. That is what carries the grade B.
+
+**The read moved to `packages/core/src/gatherers/openapi.ts`**, shared with the
+six other audits that had a byte-identical copy of it, along with the `paths`
+traversal. The precondition lives beside the read; `gatherers/openapi.ts`
+records why it is not a runner precondition and not an `EvidenceKey`.
+
+**A 200 with an unparseable body is treated as an absence**, because it is a
+document this audit never read.
+
+## Deferred
+
+The standing required fix is untouched: `$ref` responses are still counted as
+schema-less, 204/HEAD/OPTIONS operations are still in the denominator, bodyless
+`POST`s still count against `writeMethods`, and the read is still JSON-only.

@@ -2,14 +2,7 @@ import type { AuditMeta, AuditResult } from "../../types";
 import { Audit } from "../../audit";
 import { weightForGrade } from '../../scorer';
 import type { CheckContext } from '../../check-context';
-
-function tryParseJson(body: string): unknown {
-  try {
-    return JSON.parse(body);
-  } catch {
-    return undefined;
-  }
-}
+import { readOpenApiSpec } from '../../gatherers/openapi';
 
 function isObject(val: unknown): val is Record<string, unknown> {
   return typeof val === 'object' && val !== null && !Array.isArray(val);
@@ -21,17 +14,6 @@ type OpenApiOperation = Record<string, unknown>;
 const HTTP_METHODS = ['get', 'post', 'put', 'patch', 'delete', 'options', 'head', 'trace'];
 
 const MIN_DESCRIPTION_LENGTH = 15;
-
-function getOpenApiSpec(ctx: {
-  rootFiles: Record<string, { status: number; body: string }>;
-}): Record<string, unknown> | undefined {
-  const jsonResult = ctx.rootFiles['/openapi.json'];
-  if (jsonResult && jsonResult.status === 200 && jsonResult.body) {
-    const parsed = tryParseJson(jsonResult.body);
-    if (isObject(parsed)) return parsed;
-  }
-  return undefined;
-}
 
 function hasGoodDescription(val: unknown): boolean {
   return typeof val === 'string' && val.trim().length > MIN_DESCRIPTION_LENGTH;
@@ -116,7 +98,7 @@ export class OpenApiDescriptionQualityAudit extends Audit {
   };
 
   audit(ctx: CheckContext): AuditResult {
-    const spec = getOpenApiSpec(ctx);
+    const spec = readOpenApiSpec(ctx);
     if (!spec) {
       return this.notApplicable(
         'No parseable OpenAPI JSON spec found at /openapi.json.',

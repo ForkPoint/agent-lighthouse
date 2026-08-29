@@ -21,6 +21,17 @@ sources:
 
 AI agents use operationIds as stable function names when calling your API. Without unique operationIds, agents must guess endpoint names from paths, leading to ambiguity and errors. An operationId that is not a legal function name — spaces, punctuation, or more than 64 characters — cannot be registered as a tool at all.
 
+## Example failure
+
+A site publishes `/openapi.json` whose operations carry
+`operationId: "Get user's profile (v2)"`. The spaces, apostrophe and
+parentheses put it outside `^[a-zA-Z0-9_-]{1,64}$`, so a tool-calling runtime
+cannot register the name and the operation is unreachable.
+
+A site that publishes no OpenAPI document — or one that declares no operations
+— is **not** a failure here. There are no operationIds to judge, so the audit
+returns "not applicable" and takes no weight off the score.
+
 ## Code review findings (2026-08-20, 11-agent pass)
 
 Genuinely useful signal — LLM tool-calling maps operationId to the function name, and OpenAI/Anthropic function names must match ^[a-zA-Z0-9_-]{1,64}$ — but the audit checks only presence and uniqueness, missing the constraint that actually breaks tool generation, and inherits the JSON-only loader bug.
@@ -112,3 +123,42 @@ The tier stays `scored`. It was never `experimental`, and nothing in this fold a
 - **The YAML blind spot.** `getOpenApiSpec()` still reads only `/openapi.json`, so a YAML spec still reports "No spec" while 5.1 passes. Adopting the shared loader is this audit's standing fix and touches the whole `openapi-*` family, not this fold.
 - **Duplicate accounting is still a counter.** A triplicated id still counts as 2 duplicates and the colliding ids are still not named. The fold names the *illegal* ids because that is what it introduced; converting the duplicate counter to a `Map<id, count>` is the separate half of the required fix.
 - **"No spec" is still a `fail`, not `notApplicable`.** Unchanged by this fold.
+
+## Implementation deviations
+
+**2026-08-29 — absence is `notApplicable`, not `fail`.** This resolves the
+standing item recorded under the 2026-08-22 fold — *"'No spec' is still a
+`fail`, not `notApplicable`"* — and the line in the 2026-08-20 required fix
+that asked for it: *"Return `notApplicable()` rather than `fail` when there is
+no spec."*
+
+Two branches moved, and both are the same absence:
+
+| Document | Before | After |
+| :--- | :--- | :--- |
+| none published | `fail` (`priority: 'medium'`) | `notApplicable` |
+| present, declares no operations | `fail` | `notApplicable` |
+
+An operationId is a property of an operation. A site with no document, and a
+document with no operations, carries none for this audit to have read.
+`agent-interfaces/openapi-endpoints` is the audit that reports an empty
+document, and it reports it once.
+
+Every verdict on a document that declares operations is unchanged: an illegal
+id still `fail`s and is still named in `found`, missing and duplicate ids still
+`warn`, and a clean document still passes. That is the whole of the graded
+mechanism.
+
+**The read moved to `packages/core/src/gatherers/openapi.ts`**, shared with the
+six other audits that had a byte-identical copy of it, along with the `paths`
+traversal. The precondition lives beside the read; `gatherers/openapi.ts`
+records why it is not a runner precondition and not an `EvidenceKey`.
+
+**A 200 with an unparseable body is treated as an absence**, because it is a
+document this audit never read.
+
+## Deferred
+
+The two other standing items from the fold are untouched: the shared read is
+still JSON-only, so the YAML blind spot remains, and duplicate accounting is
+still a counter rather than a `Map<id, count>` naming the colliding ids.

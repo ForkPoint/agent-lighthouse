@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { OpenApiSchemasAudit } from './openapi-schemas';
 import { mockCheckContext, mockFetchResult } from '../../__tests__/test-utils';
+import { expectNotApplicableOnEmpty } from '../../tests/na-contract';
 
 const responseWithSchema = {
   '200': { description: 'ok', content: { 'application/json': { schema: { type: 'object' } } } },
@@ -54,27 +55,33 @@ describe('OpenApiSchemasAudit', () => {
     expect(result.message).toContain('Low schema coverage');
   });
 
-  it('fails when there is no spec', () => {
-    const ctx = mockCheckContext([], {});
-    expect(audit.audit(ctx).status).toBe('fail');
+  // Absent artifact, absent verdict: no document, and no operations inside
+  // one, means no schema coverage was ever observed. The coverage failures
+  // above are unchanged — they are what carries the grade B.
+  it('declines when there is no spec', () => {
+    const result = audit.audit(mockCheckContext([], {}));
+    expect(result.status).toBe('na');
+    expect(result.found).toBe('No OpenAPI document');
   });
 
-  it('fails when there are no operations', () => {
+  it('declines on a scan that read nothing', async () => {
+    await expectNotApplicableOnEmpty(audit);
+  });
+
+  it('declines when there are no operations', () => {
     const ctx = mockCheckContext([], {
       '/openapi.json': mockFetchResult(JSON.stringify({ paths: {} }), 200),
     });
     const result = audit.audit(ctx);
-    expect(result.status).toBe('fail');
-    expect(result.message).toContain('No operations');
+    expect(result.status).toBe('na');
+    expect(result.message).toContain('no operations');
   });
 
-  it('fails when openapi.json contains invalid JSON', () => {
+  it('declines when openapi.json contains invalid JSON', () => {
     const ctx = mockCheckContext([], {
       '/openapi.json': mockFetchResult('invalid json {{{', 200),
     });
-    const result = audit.audit(ctx);
-    expect(result.status).toBe('fail');
-    expect(result.message).toContain('No parseable');
+    expect(audit.audit(ctx).status).toBe('na');
   });
 
   it('fails when a POST endpoint has no requestBody schema but has a response schema', () => {
@@ -153,12 +160,12 @@ describe('OpenApiSchemasAudit', () => {
     expect(result.message).not.toContain('write operation');
   });
 
-  it('fails when spec has a paths entry that is not an object', () => {
+  it('declines on a null path item — no operation was ever read', () => {
     const spec = JSON.stringify({ paths: { '/null-path': null } });
     const ctx = mockCheckContext([], { '/openapi.json': mockFetchResult(spec, 200) });
     const result = audit.audit(ctx);
-    expect(result.status).toBe('fail');
-    expect(result.message).toContain('No operations');
+    expect(result.status).toBe('na');
+    expect(result.message).toContain('no operations');
   });
 
   it('handles POST with requestBody that has no content property', () => {
@@ -198,12 +205,12 @@ describe('OpenApiSchemasAudit', () => {
     expect(result.message).toContain('Low schema coverage');
   });
 
-  it('fails when spec has no paths key', () => {
+  it('declines on a document with no paths key — no operation was ever read', () => {
     const spec = JSON.stringify({ openapi: '3.0.3', info: {} });
     const ctx = mockCheckContext([], { '/openapi.json': mockFetchResult(spec, 200) });
     const result = audit.audit(ctx);
-    expect(result.status).toBe('fail');
-    expect(result.message).toContain('No operations');
+    expect(result.status).toBe('na');
+    expect(result.message).toContain('no operations');
   });
 
   it('does not count request schema when POST requestBody has content but no schema in media type', () => {
@@ -241,27 +248,27 @@ describe('OpenApiSchemasAudit', () => {
     expect(result.message).toContain('Low schema coverage');
   });
 
-  it('fails when paths is an array (covers Array.isArray branch of isObject)', () => {
+  it('declines on an array in place of paths — no operation was ever read', () => {
     const spec = JSON.stringify({ paths: ['get', 'post'] });
     const ctx = mockCheckContext([], { '/openapi.json': mockFetchResult(spec, 200) });
     const result = audit.audit(ctx);
-    expect(result.status).toBe('fail');
-    expect(result.message).toContain('No operations');
+    expect(result.status).toBe('na');
+    expect(result.message).toContain('no operations');
   });
 
-  it('fails when path item is a string (covers typeof branch of isObject)', () => {
+  it('declines on a string path item — no operation was ever read', () => {
     const spec = JSON.stringify({ paths: { '/products': 'GET' } });
     const ctx = mockCheckContext([], { '/openapi.json': mockFetchResult(spec, 200) });
     const result = audit.audit(ctx);
-    expect(result.status).toBe('fail');
-    expect(result.message).toContain('No operations');
+    expect(result.status).toBe('na');
+    expect(result.message).toContain('no operations');
   });
 
-  it('fails when path item is an array (covers Array.isArray pathItem branch)', () => {
+  it('declines on an array path item — no operation was ever read', () => {
     const spec = JSON.stringify({ paths: { '/products': ['get', 'post'] } });
     const ctx = mockCheckContext([], { '/openapi.json': mockFetchResult(spec, 200) });
     const result = audit.audit(ctx);
-    expect(result.status).toBe('fail');
-    expect(result.message).toContain('No operations');
+    expect(result.status).toBe('na');
+    expect(result.message).toContain('no operations');
   });
 });

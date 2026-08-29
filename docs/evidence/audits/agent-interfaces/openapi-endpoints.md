@@ -20,6 +20,16 @@ sources:
 
 An OpenAPI spec without endpoints is like a menu with no items. AI agents need at least one path with an operation to know what actions they can perform on your site. Add your most important endpoints first.
 
+## Example failure
+
+A site publishes `/openapi.json` carrying `info`, `components` and an empty
+`paths` object. An agent reads a valid document and finds zero actions it can
+take.
+
+A site that publishes no OpenAPI document at all is **not** a failure here.
+This audit judges a document's contents; with no document, it returns
+"not applicable" and takes no weight off the score.
+
 ## Code review findings (2026-08-20, 11-agent pass)
 
 Measures whether the spec found by 5.1 has at least one operation — a thin derivative of 5.1 that mostly re-reports the same fact, and does so through a private copy of getOpenApiSpec() that (unlike 5.1) cannot read YAML, guaranteeing contradictory results on YAML-only sites.
@@ -62,3 +72,29 @@ _No dedicated evidence signal was researched for this audit in the 2026-08-20 pa
 - The Path Item / Operation Object is the unit of the described API surface in OpenAPI 3.1 — https://spec.openapis.org/oas/v3.1.0.html (verified 2026-08-21)
 
 **Counter-evidence:** The measured state is close to unobservable in the wild. A published spec with a `paths` object but no operation objects is rare. No adoption or effect data distinguishes passing from failing here, beyond what `5.1` already establishes. OpenAPI 3.1 also lets a document declare its surface through `webhooks` or `$ref`-ed path items, so "zero operations" as this audit counts them does not always mean zero agent-callable actions.
+
+## Implementation deviations
+
+**2026-08-29 — absence is `notApplicable`, not `fail`.** This dossier's own
+required fix asked for it in 2026-08-20: *"return `notApplicable()` (not
+`fail`) when no spec exists so the absence is charged exactly once, by 5.1"*.
+It is now done. A site that publishes no OpenAPI document gets no verdict from
+this audit and the audit carries no weight there.
+
+A menu with no items is still a finding: a document that exists and declares
+no operations still `fail`s, and that is the check the grade B is for.
+
+**The read moved to `packages/core/src/gatherers/openapi.ts`**, shared with the
+six other audits that had a byte-identical copy of it. The precondition lives
+beside the read; `gatherers/openapi.ts` records why it is not a runner
+precondition and not an `EvidenceKey`.
+
+**A 200 with an unparseable body is treated as an absence**, because it is a
+document this audit never read. `agent-interfaces/openapi-exists` reports a
+spec advertised but unreadable, once.
+
+## Deferred
+
+The rest of the required fix stands: the shared read is still JSON-only, so the
+YAML divergence from `openapi-exists` is unchanged, and `$ref` path items and
+OpenAPI 3.1 `webhooks` are still uncounted.
