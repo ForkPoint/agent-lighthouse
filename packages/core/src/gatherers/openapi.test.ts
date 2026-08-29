@@ -1,6 +1,11 @@
 import { describe, it, expect } from 'vitest';
 import { mockCheckContext, mockFetchResult } from '../__tests__/test-utils';
-import { NO_OPENAPI_SPEC, openApiOperations, readOpenApiSpec } from './openapi';
+import {
+  NO_OPENAPI_SPEC,
+  openApiOperations,
+  readOpenApiPaths,
+  readOpenApiSpec,
+} from './openapi';
 
 const ctxWith = (body: string, status = 200) =>
   mockCheckContext([], { '/openapi.json': mockFetchResult(body, status) });
@@ -66,6 +71,53 @@ describe('openApiOperations', () => {
     ['a non-object operation', { paths: { '/x': { get: 'yes' } } }],
   ])('returns no operations for %s', (_label, spec) => {
     expect(openApiOperations(spec as Record<string, unknown>)).toEqual([]);
+  });
+});
+
+describe('readOpenApiPaths', () => {
+  // Absent and broken are different findings, and this is the one place the
+  // difference is decided. An audit about the document's contents declines the
+  // first and fails the second.
+  it.each([
+    ['no paths key', { openapi: '3.1.0', info: {} }],
+    ['an empty paths object', { paths: {} }],
+    ['path items that declare no method', { paths: { '/x': { summary: 'nothing' } } }],
+    ['a path item whose method value is not an object', { paths: { '/x': { get: 'yes' } } }],
+    ['only specification extensions', { paths: { 'x-internal': 'anything' } }],
+  ])('reports %s as empty', (_label, spec) => {
+    expect(readOpenApiPaths(spec as Record<string, unknown>).kind).toBe('empty');
+  });
+
+  it.each([
+    ['paths as an array', { paths: ['get', 'post'] }, 'paths is an array, not an object'],
+    ['paths as null', { paths: null }, 'paths is null, not an object'],
+    ['paths as a string', { paths: '/search' }, 'paths is a string, not an object'],
+    [
+      'a null path item',
+      { paths: { '/x': null } },
+      'paths entry "/x" is null, not a path item object',
+    ],
+    [
+      'a string path item',
+      { paths: { '/x': 'GET' } },
+      'paths entry "/x" is a string, not a path item object',
+    ],
+    [
+      'an array path item',
+      { paths: { '/x': ['get'] } },
+      'paths entry "/x" is an array, not a path item object',
+    ],
+  ])('reports %s as malformed and names it', (_label, spec, found) => {
+    const reading = readOpenApiPaths(spec as Record<string, unknown>);
+    expect(reading.kind).toBe('malformed');
+    expect(reading.kind === 'malformed' && reading.found).toBe(found);
+  });
+
+  it('does not judge a specification extension beside a real path item', () => {
+    const reading = readOpenApiPaths({
+      paths: { 'x-internal': ['anything'], '/search': { get: { operationId: 'search' } } },
+    });
+    expect(reading.kind).toBe('operations');
   });
 });
 

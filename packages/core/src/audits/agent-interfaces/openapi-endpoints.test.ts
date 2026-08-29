@@ -20,11 +20,6 @@ describe('OpenApiEndpointsAudit', () => {
     expect(result.message).toContain('2 operation(s)');
   });
 
-  it('declines when there is no parseable spec', () => {
-    const ctx = mockCheckContext([], {});
-    expect(audit.audit(ctx).status).toBe('na');
-  });
-
   it('fails when the spec has no operations', () => {
     const spec = JSON.stringify({ openapi: '3.0.3', paths: {} });
     const ctx = mockCheckContext([], { '/openapi.json': mockFetchResult(spec, 200) });
@@ -62,35 +57,38 @@ describe('OpenApiEndpointsAudit', () => {
     expect(result.message).toContain('no operations');
   });
 
-  it('fails when spec has a paths entry that is not an object', () => {
+  // Present and broken, not absent. Each of these is a `paths` the author
+  // wrote and an agent cannot walk, so it stays a failure and says so.
+  it('fails and names the defect when a path item is null', () => {
     const spec = JSON.stringify({ paths: { '/null-path': null } });
     const ctx = mockCheckContext([], { '/openapi.json': mockFetchResult(spec, 200) });
     const result = audit.audit(ctx);
     expect(result.status).toBe('fail');
-    expect(result.message).toContain('no operations');
+    expect(result.message).toContain('malformed paths object');
+    expect(result.found).toBe('paths entry "/null-path" is null, not a path item object');
   });
 
-  it('fails when paths is an array (covers Array.isArray branch of isObject)', () => {
+  it('fails and names the defect when paths is an array', () => {
     const spec = JSON.stringify({ paths: ['get', 'post'] });
     const ctx = mockCheckContext([], { '/openapi.json': mockFetchResult(spec, 200) });
     const result = audit.audit(ctx);
     expect(result.status).toBe('fail');
-    expect(result.message).toContain('no operations');
+    expect(result.found).toBe('paths is an array, not an object');
   });
 
-  it('fails when path item is a string (covers typeof branch of isObject)', () => {
+  it('fails and names the defect when a path item is a string', () => {
     const spec = JSON.stringify({ paths: { '/products': 'GET' } });
     const ctx = mockCheckContext([], { '/openapi.json': mockFetchResult(spec, 200) });
     const result = audit.audit(ctx);
     expect(result.status).toBe('fail');
-    expect(result.message).toContain('no operations');
+    expect(result.found).toBe('paths entry "/products" is a string, not a path item object');
   });
 
-  it('fails when path item is an array (covers Array.isArray pathItem branch)', () => {
+  it('fails and names the defect when a path item is an array', () => {
     const spec = JSON.stringify({ paths: { '/products': ['get', 'post'] } });
     const ctx = mockCheckContext([], { '/openapi.json': mockFetchResult(spec, 200) });
     const result = audit.audit(ctx);
     expect(result.status).toBe('fail');
-    expect(result.message).toContain('no operations');
+    expect(result.found).toBe('paths entry "/products" is an array, not a path item object');
   });
 });

@@ -4,9 +4,14 @@ import { weightForGrade } from '../../scorer';
 import type { CheckContext } from '../../check-context';
 import {
   NO_OPENAPI_SPEC,
-  openApiOperations,
+  readOpenApiPaths,
   readOpenApiSpec,
 } from '../../gatherers/openapi';
+
+/** Shared `expected` line: one path, one operation, is the whole requirement. */
+const EXPECTED = 'At least one path with one operation in the OpenAPI spec';
+
+const FIX_CODE = `"paths": {\n  "/search": {\n    "get": {\n      "operationId": "searchContent",\n      "summary": "Search site content",\n      "parameters": [{\n        "name": "q", "in": "query", "schema": { "type": "string" }\n      }],\n      "responses": { "200": { "description": "Search results" } }\n    }\n  }\n}`;
 
 export class OpenApiEndpointsAudit extends Audit {
   static override meta: AuditMeta = {
@@ -51,31 +56,42 @@ export class OpenApiEndpointsAudit extends Audit {
     // restaurant that prints no menu is not. The `fail` below still stands
     // for a document that exists and declares nothing.
     if (!spec) {
-      return this.notApplicable(
-        NO_OPENAPI_SPEC.message,
-        'At least one path with one operation in the OpenAPI spec',
-        NO_OPENAPI_SPEC.found,
+      return this.notApplicable(NO_OPENAPI_SPEC.message, EXPECTED, NO_OPENAPI_SPEC.found);
+    }
+
+    const paths = readOpenApiPaths(spec);
+
+    // Present and broken, not absent: `paths` exists and is not a Paths
+    // Object, so no agent can read an operation out of it. A defective
+    // document is the finding this audit carries its grade for.
+    if (paths.kind === 'malformed') {
+      return this.fail(
+        `OpenAPI spec has a malformed paths object: ${paths.found}.`,
+        EXPECTED,
+        paths.found,
+        {
+          priority: 'high',
+          description: OpenApiEndpointsAudit.meta.description,
+          code: FIX_CODE,
+        },
       );
     }
 
-    const ops = openApiOperations(spec);
-    if (ops.length > 0) {
+    if (paths.kind === 'operations') {
+      const count = paths.operations.length;
       return this.pass(
-        `OpenAPI spec defines ${ops.length} operation(s) across its paths.`,
-        'At least one path with one operation in the OpenAPI spec',
-        `${ops.length} operation(s)`,
+        `OpenAPI spec defines ${count} operation(s) across its paths.`,
+        EXPECTED,
+        `${count} operation(s)`,
       );
     }
 
-    return this.fail(
-      'OpenAPI spec has no operations defined in paths.',
-      'At least one path with one operation in the OpenAPI spec',
-      '0 operations',
-      {
-        priority: 'high',
-        description: OpenApiEndpointsAudit.meta.description,
-        code: `"paths": {\n  "/search": {\n    "get": {\n      "operationId": "searchContent",\n      "summary": "Search site content",\n      "parameters": [{\n        "name": "q", "in": "query", "schema": { "type": "string" }\n      }],\n      "responses": { "200": { "description": "Search results" } }\n    }\n  }\n}`,
-      },
-    );
+    // A menu with no items. This audit is the one place the empty document is
+    // reported, which is why the other three decline it rather than repeat it.
+    return this.fail('OpenAPI spec has no operations defined in paths.', EXPECTED, '0 operations', {
+      priority: 'high',
+      description: OpenApiEndpointsAudit.meta.description,
+      code: FIX_CODE,
+    });
   }
 }

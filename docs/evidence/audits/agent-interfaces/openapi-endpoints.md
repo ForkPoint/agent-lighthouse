@@ -30,6 +30,11 @@ A site that publishes no OpenAPI document at all is **not** a failure here.
 This audit judges a document's contents; with no document, it returns
 "not applicable" and takes no weight off the score.
 
+A document whose `paths` is present but is not a Paths Object —
+`"paths": ["get","post"]`, a string where a path item belongs — fails too, and
+the report names the defect. Absent means absent; present-and-broken is a
+finding.
+
 ## Code review findings (2026-08-20, 11-agent pass)
 
 Measures whether the spec found by 5.1 has at least one operation — a thin derivative of 5.1 that mostly re-reports the same fact, and does so through a private copy of getOpenApiSpec() that (unlike 5.1) cannot read YAML, guaranteeing contradictory results on YAML-only sites.
@@ -83,6 +88,14 @@ this audit and the audit carries no weight there.
 
 A menu with no items is still a finding: a document that exists and declares
 no operations still `fail`s, and that is the check the grade B is for.
+
+**Present and broken is not absent.** `paths` is classified in one place,
+`readOpenApiPaths` in `gatherers/openapi.ts`. A `paths` that is present and is
+not a Paths Object — an array, a string, `null`, or an entry whose value is not
+a path item object — is `malformed` rather than empty. It still `fail`s, and
+the report now names the defect in `found` instead of calling it "0
+operations". Specification-extension keys (`x-`) are skipped rather than
+judged: OpenAPI 3.1 §4.8.8 lets them hold any value.
 
 **The read moved to `packages/core/src/gatherers/openapi.ts`**, shared with the
 six other audits that had a byte-identical copy of it. The precondition lives

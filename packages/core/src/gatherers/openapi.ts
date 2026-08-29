@@ -19,7 +19,7 @@ export type OpenApiSpec = Record<string, unknown>;
 export type OpenApiOperation = Record<string, unknown>;
 
 /** The method keys a Path Item Object may carry, per OpenAPI 3.1 §4.8.9. */
-export const HTTP_METHODS = [
+const HTTP_METHODS = [
   'get',
   'post',
   'put',
@@ -36,10 +36,10 @@ export const HTTP_METHODS = [
  * **Absent artifact, absent verdict.** An audit about a document's contents has
  * observed nothing about a site that publishes no document, so it returns
  * `notApplicable`. Only a present-and-defective document may `fail`. Four of
- * these audits used to `fail` at `priority: 'high'` on the absence, which told
- * every bakery, blog and law firm to add a `servers` array to a spec it had
- * never written — 2.4 combined weight against a site no source says is worse
- * off. `openapi-exists` already declines the identical absence.
+ * these audits used to `fail` at high or medium priority on the absence, which
+ * told every bakery, blog and law firm to add a `servers` array to a spec it
+ * had never written — 2.4 combined weight against a site no source says is
+ * worse off. `openapi-exists` already declines the identical absence.
  *
  * The precondition lives beside the read, and the two places it must not live:
  *
@@ -94,20 +94,93 @@ export function readOpenApiSpec(ctx: OpenApiContext): OpenApiSpec | undefined {
   return undefined;
 }
 
-/** Every operation the document declares, flattened to path + method + object. */
-export function openApiOperations(
-  spec: OpenApiSpec,
-): Array<{ path: string; method: string; op: OpenApiOperation }> {
-  const paths = spec['paths'];
-  if (!isObject(paths)) return [];
+/** One operation, located: the path it hangs under and the method key it used. */
+export interface LocatedOperation {
+  path: string;
+  method: string;
+  op: OpenApiOperation;
+}
 
-  const ops: Array<{ path: string; method: string; op: OpenApiOperation }> = [];
-  for (const [path, pathItem] of Object.entries(paths)) {
-    if (!isObject(pathItem)) continue;
+/**
+ * What the document's `paths` member turned out to be.
+ *
+ * The three cases exist because absent and broken are not the same finding:
+ *
+ * - `empty` — no `paths` key, an empty Paths Object, or path items that declare
+ *   no method. The document announces no operations. An audit about an
+ *   operation's contents has read nothing and declines.
+ * - `malformed` — `paths` is present and is not a Paths Object. `"paths":
+ *   ["get","post"]` puts a string where a Path Item Object belongs. That is a
+ *   defective document, not an absent one, and a defective document is exactly
+ *   what these audits are for. It fails.
+ * - `operations` — a well-formed Paths Object declaring at least one operation.
+ */
+export type OpenApiPathsReading =
+  | { kind: 'empty' }
+  | { kind: 'malformed'; found: string }
+  | { kind: 'operations'; operations: LocatedOperation[] };
+
+/** Names a JSON value's shape for a `found` line, e.g. "an array", "a string". */
+function describeShape(val: unknown): string {
+  if (val === null) return 'null';
+  if (Array.isArray(val)) return 'an array';
+  if (typeof val === 'string') return 'a string';
+  if (typeof val === 'number') return 'a number';
+  if (typeof val === 'boolean') return 'a boolean';
+  return 'not an object';
+}
+
+/**
+ * The document's `paths` member, classified so callers can tell absent from
+ * broken.
+ *
+ * `x-` keys are skipped rather than judged: OpenAPI 3.1 §4.8.8 lets a Paths
+ * Object carry specification extensions alongside its path items, and an
+ * extension may legally hold any JSON value.
+ */
+export function readOpenApiPaths(spec: OpenApiSpec): OpenApiPathsReading {
+  const paths = spec['paths'];
+  // Only an absent key is an absent `paths`. `"paths": null` is a value the
+  // author wrote, and it is not a Paths Object.
+  if (paths === undefined) return { kind: 'empty' };
+  if (!isObject(paths)) {
+    return { kind: 'malformed', found: `paths is ${describeShape(paths)}, not an object` };
+  }
+
+  const entries = Object.entries(paths).filter(([key]) => !key.startsWith('x-'));
+  if (entries.length === 0) return { kind: 'empty' };
+
+  const broken = entries.find(([, pathItem]) => !isObject(pathItem));
+  if (broken) {
+    return {
+      kind: 'malformed',
+      found: `paths entry "${broken[0]}" is ${describeShape(broken[1])}, not a path item object`,
+    };
+  }
+
+  const operations: LocatedOperation[] = [];
+  for (const [path, pathItem] of entries) {
     for (const method of HTTP_METHODS) {
-      const op = pathItem[method];
-      if (isObject(op)) ops.push({ path, method, op });
+      const op = (pathItem as Record<string, unknown>)[method];
+      if (isObject(op)) operations.push({ path, method, op });
     }
   }
-  return ops;
+  // Well-formed path items that declare no method are legal and announce
+  // nothing, so they land with the other empties.
+  if (operations.length === 0) return { kind: 'empty' };
+  return { kind: 'operations', operations };
+}
+
+/**
+ * Every operation the document declares, flattened to path + method + object.
+ *
+ * For callers that judge a site whether or not it publishes a document —
+ * `agent-interfaces/search-endpoint`, `operability-safety/contact-form` — where
+ * a malformed `paths` and an absent one are equally "no operation found".
+ * A caller whose verdict is *about* the document's contents wants
+ * `readOpenApiPaths` instead, so it can fail the malformed case.
+ */
+export function openApiOperations(spec: OpenApiSpec): LocatedOperation[] {
+  const paths = readOpenApiPaths(spec);
+  return paths.kind === 'operations' ? paths.operations : [];
 }

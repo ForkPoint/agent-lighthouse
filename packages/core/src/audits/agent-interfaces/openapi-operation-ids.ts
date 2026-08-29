@@ -4,7 +4,7 @@ import { weightForGrade } from '../../scorer';
 import type { CheckContext } from '../../check-context';
 import {
   NO_OPENAPI_SPEC,
-  openApiOperations,
+  readOpenApiPaths,
   readOpenApiSpec,
 } from '../../gatherers/openapi';
 
@@ -69,22 +69,43 @@ export class OpenApiOperationIdsAudit extends Audit {
   audit(ctx: CheckContext): AuditResult {
     const spec = readOpenApiSpec(ctx);
     // Absent artifact, absent verdict. An operationId is a property of an
-    // operation, so a site with no document — and a document with no
-    // operations — carries nothing this audit can have read.
-    // `openapi-endpoints` is the audit that reports an empty document, and it
-    // reports it once.
+    // operation, so a site with no document carries nothing this audit can
+    // have read.
     if (!spec) {
       return this.notApplicable(NO_OPENAPI_SPEC.message, EXPECTED, NO_OPENAPI_SPEC.found);
     }
 
-    const ops = openApiOperations(spec);
-    if (ops.length === 0) {
+    const paths = readOpenApiPaths(spec);
+
+    // Present and broken is not absent. A `paths` that exists and is not a
+    // Paths Object is a defective document: no tool-calling runtime can walk
+    // it to register a function name, and the author wrote the thing that
+    // blocks it.
+    if (paths.kind === 'malformed') {
+      return this.fail(
+        `The OpenAPI document's paths object is malformed, so no operationId can be read: ${paths.found}.`,
+        EXPECTED,
+        paths.found,
+        {
+          priority: 'medium',
+          description: OpenApiOperationIdsAudit.meta.description,
+          code: `"paths": {\n  "/contact": {\n    "post": {\n      "operationId": "submitContactForm"\n    }\n  }\n}`,
+        },
+      );
+    }
+
+    // Declaring no operations is the absence one level down: there is no
+    // operation for an operationId to be a property of. `openapi-endpoints` is
+    // the audit that reports an empty document, and it reports it once.
+    if (paths.kind === 'empty') {
       return this.notApplicable(
         'The OpenAPI document declares no operations, so it carries no operationIds to check.',
         EXPECTED,
         '0 operations',
       );
     }
+
+    const ops = paths.operations;
 
     const ids = new Set<string>();
     let missing = 0;

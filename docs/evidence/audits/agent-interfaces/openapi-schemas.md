@@ -31,6 +31,11 @@ A site that publishes no OpenAPI document — or one that declares no operations
 — is **not** a failure here. Schema coverage was never measured, so the audit
 returns "not applicable" and takes no weight off the score.
 
+A document whose `paths` is present but is not a Paths Object —
+`"paths": ["get","post"]`, a string where a path item belongs — is a different
+case. That document exists and is broken, so it still fails, and the report
+names the defect. Absent means absent; present-and-broken is a finding.
+
 ## Code review findings (2026-08-20, 11-agent pass)
 
 Valuable signal — agents need request/response shapes to build valid calls — but the traversal never resolves $ref, so the largest and best-maintained real-world specs (which put everything in components) score near zero, and it demands schemas from operations that correctly have none.
@@ -98,6 +103,15 @@ records why it is not a runner precondition and not an `EvidenceKey`.
 
 **A 200 with an unparseable body is treated as an absence**, because it is a
 document this audit never read.
+
+**Present and broken is not absent.** `paths` is classified in one place,
+`readOpenApiPaths` in `gatherers/openapi.ts`, and it separates three states. No
+`paths` key, an empty Paths Object, or path items that declare no method are
+`empty` — the document announces nothing and this audit declines. A `paths`
+that is present and is not a Paths Object is `malformed` — an array, a string,
+`null`, or an entry whose value is not a path item object — and that still
+`fail`s, with the defect named in `found`. Specification-extension keys (`x-`)
+are skipped rather than judged: OpenAPI 3.1 §4.8.8 lets them hold any value.
 
 ## Deferred
 
