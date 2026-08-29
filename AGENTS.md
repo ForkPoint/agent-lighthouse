@@ -87,6 +87,25 @@ community convention nothing documents consuming; **D** is speculative.
   an optional convention has done nothing wrong. Fail only what a source says
   costs the site something. `packages/core/src/tests/na-contract.ts` has the
   helper that pins this on an empty scan.
+- **Absent artifact, absent verdict.** The sharper form of the rule above. An
+  audit about an artifact's _contents_ returns `notApplicable` when the
+  artifact is absent. Only a present-and-defective artifact may `fail`. Four
+  `openapi-*` audits failed every site with no OpenAPI document at all — 2.4
+  combined weight telling a bakery to add a `servers` array to a spec it had
+  never written.
+- **Put that precondition beside the read.** The gatherer that reads the
+  artifact owns it, next to the read, with the reasoning written down.
+  `packages/core/src/gatherers/openapi.ts` is the worked example, and
+  `packages/core/src/tests/absent-artifact-contract.test.ts` holds every audit
+  that imports its precondition. Two places it must not go:
+  - **Not the runner.** `planAudits` knows page types and `EvidenceKey`s, both
+    scan-level and domain-neutral. Teach it one artifact type and api-catalog,
+    MCP manifest, RSL and feeds follow, until the runner is a registry of
+    artifact predicates.
+  - **Never an `EvidenceKey`.** `gatedMassShare` counts skipped-for-no-evidence
+    mass toward the 0.35 unscored threshold. An `openapi-spec-present` key
+    would push that weight into the numerator on every site without an API and
+    move a perfectly judgeable one toward `overallScore: null`.
 - **Score the population the evidence covers.** A grade earned for coding
   agents does not license failing a retail store. Gate with
   `applicablePageTypes` or return `notApplicable`.
