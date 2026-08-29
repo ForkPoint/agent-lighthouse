@@ -29,7 +29,7 @@ document, and it now reports it once.
 Object — an array, a string, `null`, or an entry that is not a path item object
 — is a defective document, not an absent one. `openapi-endpoints`,
 `openapi-schemas` and `openapi-operation-ids` fail it and name the defect in
-`found`, where two of them previously reported "0 operations". An empty `paths`
+`found`, where all three previously reported "0 operations". An empty `paths`
 object, or no `paths` key, still declines.
 
 **What did not change.** Every verdict on a document that exists and is
