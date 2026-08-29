@@ -72,6 +72,27 @@ describe('openApiOperations', () => {
   ])('returns no operations for %s', (_label, spec) => {
     expect(openApiOperations(spec as Record<string, unknown>)).toEqual([]);
   });
+
+  // A caller here is looking for one endpoint, not grading the document. A site
+  // with a POST /contact and one broken sibling entry does have a contact
+  // endpoint, and `readOpenApiPaths` would discard both because it judges the
+  // document as a whole. That difference is why this walk is separate.
+  it('keeps the well-formed entries beside a broken one', () => {
+    const ops = openApiOperations({
+      paths: { '/contact': { post: { operationId: 'contact' } }, '/bad': 'oops' },
+    });
+    expect(ops.map((o) => `${o.method} ${o.path}`)).toEqual(['post /contact']);
+  });
+
+  // OpenAPI 3.1 §4.8.8: a Paths Object may carry specification extensions
+  // beside its path items. A real path key always starts with `/`, so an `x-`
+  // key is never an operation, whatever it holds.
+  it('skips a specification extension that looks like a path item', () => {
+    const ops = openApiOperations({
+      paths: { 'x-webhooks': { post: {} }, '/ok': { get: {} } },
+    });
+    expect(ops.map((o) => `${o.method} ${o.path}`)).toEqual(['get /ok']);
+  });
 });
 
 describe('readOpenApiPaths', () => {

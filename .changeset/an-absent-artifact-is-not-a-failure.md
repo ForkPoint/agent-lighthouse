@@ -46,3 +46,10 @@ judging a site that publishes no document — they have other evidence — and n
 verdict of theirs moved. `agent-interfaces/openapi-description-quality` already
 declined the absence and still does; only the wording of its decline changed,
 so that it says what the rest of the family says.
+
+`operability-safety/contact-form` and `agent-interfaces/search-endpoint` read
+the same document without judging it, and they keep the traversal they had: a
+site with a `POST /contact` and one malformed sibling entry still has a contact
+endpoint. They do stop counting a `x-` specification extension as a path item,
+which OpenAPI 3.1 §4.8.8 says it never was. Both are informative, so no score
+moves either way.

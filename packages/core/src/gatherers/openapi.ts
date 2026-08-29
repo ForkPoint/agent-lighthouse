@@ -175,12 +175,26 @@ export function readOpenApiPaths(spec: OpenApiSpec): OpenApiPathsReading {
  * Every operation the document declares, flattened to path + method + object.
  *
  * For callers that judge a site whether or not it publishes a document —
- * `agent-interfaces/search-endpoint`, `operability-safety/contact-form` — where
- * a malformed `paths` and an absent one are equally "no operation found".
+ * `agent-interfaces/search-endpoint`, `operability-safety/contact-form`. They
+ * are looking for one endpoint, not grading the document, so a broken sibling
+ * entry is skipped rather than discarding the entries beside it. A site with a
+ * `POST /contact` and one malformed path item does have a contact endpoint, and
+ * saying otherwise is the wrong claim this module exists to prevent.
+ *
  * A caller whose verdict is *about* the document's contents wants
  * `readOpenApiPaths` instead, so it can fail the malformed case.
  */
 export function openApiOperations(spec: OpenApiSpec): LocatedOperation[] {
-  const paths = readOpenApiPaths(spec);
-  return paths.kind === 'operations' ? paths.operations : [];
+  const paths = spec['paths'];
+  if (!isObject(paths)) return [];
+
+  const operations: LocatedOperation[] = [];
+  for (const [path, pathItem] of Object.entries(paths)) {
+    if (path.startsWith('x-') || !isObject(pathItem)) continue;
+    for (const method of HTTP_METHODS) {
+      const op = pathItem[method];
+      if (isObject(op)) operations.push({ path, method, op });
+    }
+  }
+  return operations;
 }
