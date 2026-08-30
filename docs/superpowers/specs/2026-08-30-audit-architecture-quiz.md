@@ -243,3 +243,70 @@ whether each is cacheable and shareable.
 | 9–10 | not yet asked | — |
 
 **One law ratified of eight asked.** The quiz found more than the design did.
+
+---
+
+## Law 5 — resolved
+
+Re-explained from first principles rather than from the design's vocabulary.
+Both questions answered.
+
+**Question 1 — is the four-case split right, and does an empty artifact
+decline?** Ruled: **yes.**
+
+| case | example | verdict |
+|:--|:--|:--|
+| absent | `/openapi.json` 404s, returns HTML, or was never fetched | `notApplicable` |
+| empty | `{ "openapi": "3.1.0", "paths": {} }` — legal, declares nothing | `notApplicable` |
+| malformed | `{ "paths": "coming soon" }` — the author wrote the breakage | `fail`, naming it |
+| readable | one good operation beside one broken entry | grade the good, name the broken |
+
+**Question 2 — where does the precondition live?** Ruled: **version 3, the
+guard.**
+
+Three versions were put side by side:
+
+- **Version 1**, on `main` today: each audit carries a private copy of the read
+  and writes `return this.fail(...)` on absence. The bug.
+- **Version 2**, what PR 23 ships: a shared read, and each audit writes
+  `if (!spec) return this.notApplicable(NO_OPENAPI_SPEC.message, ...)` by hand.
+  Correct, but the block is copied into five files and a sixth audit can still
+  copy version 1. The rule lives in a comment, and a comment stops nobody.
+- **Version 3**, chosen: the precondition is a piece that runs. The audit
+  declares what it reads and implements only the judgement.
+
+```ts
+export class OpenApiServersAudit extends Audit {
+  static reads = openApiContents;   // runs first: sorts the four cases
+
+  judge(spec: OpenApiSpec, ctx: CheckContext): AuditResult {
+    const servers = spec['servers'];   // guaranteed readable
+    // ...only the judgement
+  }
+}
+```
+
+The audit author never writes the absent case and therefore cannot write it
+wrong. Cost: the entry point of roughly 24 artifact audits is rewritten. That
+cost is what the review priced as expensive and what law 1's note argues is
+worth paying — "the actual code of the audit is focusing on the audit itself
+not some boilerplate code for preconditions".
+
+**Status:** ratified. Law 5 is re-drafted around a running guard, not an
+imported constant. Supersedes the design document's §5.
+
+---
+
+## Running tally
+
+| law | ruling | effect on the design |
+|--:|:--|:--|
+| 1 | note, not a verdict | re-draft; the precondition-reuse law is law 5's guard |
+| 2 | note, not a verdict | keep mechanism, add a freshness law, record the unused `reviewed:` stamp as debt |
+| 3 | note, not a verdict | park as an open question; do not assert |
+| 4 | correct | ratified |
+| 5 | **ratified, version 3** | four-case split confirmed; declaration becomes a running guard |
+| 6 | discuss | re-frame around what a scan is |
+| 7 | objection sustained | re-draft around operator intent, not address class |
+| 8 | deeper objection | inventory the 33 fetching audits; ask why the gatherer layer does not cover them |
+| 9–10 | not yet asked | — |
