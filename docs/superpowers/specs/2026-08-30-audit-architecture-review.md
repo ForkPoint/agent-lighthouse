@@ -8,6 +8,53 @@ This document records three things in order: an architecture proposal, an advers
 
 ---
 
+---
+
+## 0. Corrections issued after publication
+
+Two claims in this document are wrong. Both were produced by a defective test
+fixture, discovered on 2026-08-30 while explaining law 6 in
+[`2026-08-30-audit-architecture-quiz.md`](./2026-08-30-audit-architecture-quiz.md).
+
+`emptyContext()` builds its evidence from `allEvidenceMet()`, setting
+`judgeable: true` and `usablePageTypes: ALL_PAGE_TYPES`, while supplying zero
+pages. It asserts that nothing was read and everything was read at once.
+`buildScanEvidence` never produces that state. Audits therefore walk past their
+own correct `scanReadTheSite` guard and read pages that are not there.
+
+**Retraction 1 — the seven vacuous passes do not exist.** Re-measured against a
+truthful unreachable fixture (`judgeable: false`): 153 `na`, 38 `fail`, 24
+`warn`, **0 `pass`**. `content-extraction/main-element`, `article-element`,
+`header-footer`, `data-tables`, `content-depth`, `figure-figcaption` and
+`fake-headings` all decline correctly. Affects §5.1, §9 step 4, §11 question 3.
+
+**Retraction 2 — the counterexample in §6.2 is invalid.** On a truthful
+fixture all three audits return `na`:
+
+```
+content-extraction/single-h1      -> na
+content-extraction/main-element   -> na
+content-extraction/aside-element  -> na
+```
+
+They diverged only because the fixture claimed the site had been read. §6.2's
+verdict of "fails, **decisively**" rested on that divergence and is no longer
+earned.
+
+**What this does not do.** It does not revive the five-kind taxonomy. Four
+independent arguments in §6.2 stand untouched: audits that fit no kind
+(cross-artifact coherence, third-party artifacts, differential audits, per-URL
+artifacts); audits that fit two (`search-endpoint`, `contact-form`); the
+`page-content` row forcing 23 a11y audits to fail a page for lacking a
+`<dialog>`, which is about element absence and not scan absence; and §6.3's
+pricing, where the absence law costs ~16 weight to repair 1.6. The taxonomy is
+still rejected. It is rejected on those grounds, not on the counterexample.
+
+**Also corrected:** the non-`na` figure of 81 was inflated by 19 for the same
+reason. The true figure is 62.
+
+---
+
 ## 1. Why this exists
 
 PR 23 fixed a real bug. Four `openapi-*` audits returned `fail` on every site that publishes no OpenAPI document — 2.4 combined weight telling a bakery to add a `servers` array to a spec it had never written.
@@ -322,9 +369,11 @@ flowchart TD
     style CN fill:#14532d,color:#fff
 ```
 
-Same category. Same carrier. Same kind. Three verdicts. If `kind` determined the verdict, this is impossible — so `kind` is orthogonal to the thing it was invented to decide.
+Same category. Same carrier. Same kind. Three verdicts.
 
-`main-element` returning `pass` on zero pages is also a live vacuous-pass bug: 0/0 reads as 100%.
+> **This counterexample is invalid — see §0.** On a truthful unreachable fixture all three return `na`. The divergence was manufactured by `emptyContext()` claiming the site had been read. The taxonomy is still rejected, on the four independent grounds below.
+
+~~`main-element` returning `pass` on zero pages is also a live vacuous-pass bug.~~ **Retracted — see §0.**
 
 **The `page-content` row is worse than useless.** It says *present, empty → fail / warn*. The 23 a11y audits in `operability-safety/` correctly return `na` when the element class is absent — `_shared.ts:88-92`: *"else every rule was INAPPLICABLE / unseen → na (nothing to assess)"*. A page with no `<dialog>` is not a `dialog-name` failure. The row would either force 23 audits to regress, or be non-binding and therefore not a gate.
 
@@ -592,7 +641,7 @@ Seed with the 77 measured ids — generate the list, hand-write the reasons. Def
 
 Then retire the 77 per-file `expectNotApplicableOnEmpty` calls, keeping `emptyContext` — the new suite uses it.
 
-Side effect worth having: the 7 vacuous passes become entries somebody has to justify in writing, which is where at least three of them get fixed instead.
+~~Side effect: the 7 vacuous passes become entries somebody has to justify.~~ **Retracted — see §0.** The real side effect is smaller and better: on a truthful fixture the exemption map is not needed at all, because every audit must decline.
 
 This is also where the robots.txt question gets forced into the open, as a **content** decision in 20 dossiers rather than an architectural one: *does RFC 9309 §2.2.1 license `warn` on an absent robots.txt, or should absence be `pass`?*
 

@@ -60,7 +60,7 @@ Every law names the gate that proves it. A law marked **DEBT** is not enforced. 
 | 3 | Score only the population the evidence covers | `planAudits` at runtime | holds; omitting `applicablePageTypes` means all types |
 | 4 | Declare what the scan must have obtained | `scripts/check-requires.mjs` + `GATE_EXEMPTIONS` | holds 215/215 |
 | 5 | **Absent artifact, absent verdict.** The gatherer that reads an artifact owns the absent / empty / malformed / readable split and exports the precondition. An audit about that artifact's contents declares itself by **importing** it | `packages/core/src/tests/absent-artifact-contract.test.ts` | **DEBT** — one family (OpenAPI). Sitemap and feeds uncovered; 1.6 weight fails wrongly today |
-| 6 | A scan that read nothing yields no verdict | `packages/core/src/tests/na-contract.ts`, opt-in | **DEBT** — holds 73 of 215. 81 cannot satisfy it; 61 could and never call it |
+| 6 | A scan that read nothing yields no verdict | `packages/core/src/tests/na-contract.ts`, opt-in, **on a defective fixture** | **DEBT** — see §9. Split into two laws; the truthful figure is 62, not 81 |
 | 7 | Gate every URL taken from scanned content with `isSafeUrl()` | — | **DEBT** — nothing enforces it. 9 of 33 fetching audits skip it |
 | 8 | Bound what you fetch | — | **DEBT** — 33 audits, 33 private caps, nothing sums them |
 | 9 | `details` values are scalars or arrays of strings | `AuditResultSchema` at runtime | holds — unit tests bypass `toCheckResult`, so parse the result in the test |
@@ -131,10 +131,10 @@ Two rules follow, both already written into `gatherers/openapi.ts`:
 3. The four-way read, with `gatherers/openapi.ts` as the worked example
 4. Why the declaration is an import — §5 above, at length
 5. The kinds that do **not** exist, and why — the rejected taxonomy, so nobody proposes it twice
-6. Anti-patterns with named instances: the private-reader duplication, the vacuous pass over an empty set, the unguarded first fetch hop
+6. Anti-patterns with named instances: the private-reader duplication, the self-contradictory test fixture, the unguarded first fetch hop
 7. Standing debts, with their measurements and where each is tracked
 
-Section 5 earns its place: the five-kind taxonomy is an attractive idea that fails for a non-obvious reason (`main-element` passes, `single-h1` fails, `aside-element` declines — same directory, same kind, same empty scan). Without a record, the next person proposes it again.
+Section 5 earns its place: the five-kind taxonomy is an attractive idea that fails for four separate reasons — audits that fit no kind, audits that fit two, a `page-content` rule that would break 23 a11y audits, and an absence law costing ~16 weight to repair 1.6. Without a record, the next person proposes it again.
 
 ---
 
@@ -142,7 +142,7 @@ Section 5 earns its place: the five-kind taxonomy is an attractive idea that fai
 
 **In:** the two documents.
 
-**Out, each needing its own spec:** the sitemap gatherer and its five rebinds; the family table in the absent-artifact contract; the `isSafeUrl` enumeration and nine fixes; the empty-scan contract and its exemption map; the fetch-budget number; the seven vacuous passes.
+**Out, each needing its own spec:** the sitemap gatherer and its five rebinds; the family table in the absent-artifact contract; the `isSafeUrl` enumeration and nine fixes; the two empty-scan fixtures; the fetch-budget number.
 
 This document changes no code. It states the rules the code will be held to, and marks honestly which of them nothing currently holds.
 
@@ -150,21 +150,35 @@ This document changes no code. It states the rules the code will be held to, and
 
 ## 9. Measurements this rests on
 
-Taken on this branch, 2026-08-30, running all 215 registered audits against `emptyContext()`.
+Taken on this branch, 2026-08-30, running all 215 registered audits against a
+**truthful unreachable fixture**: no pages, no root files, `judgeable: false`,
+which is what `buildScanEvidence` produces when the origin never answered.
 
-| measurement | value |
-|:--|--:|
-| registered audits | 215 |
-| return `na` | 134 |
-| return `fail` | 46 |
-| return `warn` | 28 |
-| return `pass` | 7 |
-| test files calling `expectNotApplicableOnEmpty` | 73 |
-| audits that both call it and return non-`na` | **0** |
-| audits returning `na`, with a test file, that never call it | **61** |
+| measurement | old fixture | truthful fixture |
+|:--|--:|--:|
+| `na` | 134 | **153** |
+| `fail` | 46 | 38 |
+| `warn` | 28 | 24 |
+| `pass` | 7 | **0** |
+| non-`na` | 81 | **62** |
 
-The three sets partition the registry: 73 callers + 61 compliant non-callers + 81 non-`na` = 215.
+**The first column is not trustworthy.** `emptyContext()` sets
+`judgeable: true` and `usablePageTypes: ALL_PAGE_TYPES` while supplying zero
+pages, so it claims the site was both read and not read. Audits walk past their
+own `scanReadTheSite` guard and read pages that are not there. Nineteen of the
+81 were artifacts of that, including all seven reported passes.
 
-**What this proves.** The opt-in gate is *sound but incomplete*. It produces no false greens — not one audit calls the contract and would fail it. It holds 34% of the registry when it could hold 63% for free. The review called this rot; it is not rot, it is coverage. Law 6's debt is stated on the true grounds.
+**Retracted:** the seven vacuous passes. `content-extraction/main-element`,
+`article-element`, `header-footer`, `data-tables`, `content-depth`,
+`figure-figcaption` and `fake-headings` all decline correctly on a truthful
+fixture. See the quiz record.
 
-The seven vacuous passes, all in one category: `content-extraction/main-element`, `article-element`, `header-footer`, `data-tables`, `content-depth`, `figure-figcaption`, `fake-headings`. Each returns `pass` on a scan that read nothing, because a ratio over an empty set reads as 100%.
+**What stands.** 62 audits give a verdict about a site the scan never reached,
+15 of them robots.txt bot audits warning "robots.txt not found" about a host
+that never answered.
+
+**What replaces the exemption map.** Law 6 splits in two. Fixture A — the
+unreachable scan — admits no exemptions at all: every audit must return `na`,
+and 62 currently do not. Fixture B — a bare but real site — is a snapshot where
+verdicts are legal, and is not yet measured; the first attempt hand-rolled a
+`PageContext` and 29 audits threw, so it must be built from `mockPageContext`.
