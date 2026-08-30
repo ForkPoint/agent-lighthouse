@@ -134,3 +134,112 @@ a blocked fetch is exactly what it reports on.
 | 3 | note, not a verdict | park as an open question; do not assert |
 | 4 | correct | ratified |
 | 5–10 | pending | — |
+
+---
+
+## Law 5 — Absent artifact, absent verdict
+
+**Claude's explanation.** The gatherer that reads an artifact owns a four-way
+split — absent (nothing readable arrived), empty (readable, declares nothing),
+malformed (nothing readable and the author wrote the breakage), readable
+(something survives, defects may sit beside it). Absent and empty decline;
+malformed fails; readable grades what survived and names the rest. Following
+law 1's note: the design wrote the declaration as importing a *constant*, but a
+constant is passive — an audit can import `NO_OPENAPI_SPEC` and still branch
+wrongly around it. A guard that *runs* cannot be satisfied without being obeyed.
+
+**Ruling.** No option selected.
+
+> i don't get this one, let's discuss it again
+
+**Status:** open. Explanation was unclear and must be re-made from first
+principles, not from the vocabulary the design already assumes.
+
+---
+
+## Law 6 — A scan that read nothing yields no verdict
+
+**Claude's explanation.** `emptyContext()` builds its evidence from
+`allEvidenceMet()`, which sets `judgeable: true` and `usablePageTypes:
+ALL_PAGE_TYPES`, while supplying zero pages. The fixture therefore asserts "the
+scan read the site fine" and "there are no pages" simultaneously, a state no
+real scan produces. `single-h1` passes its `scanReadTheSite` guard on that
+fixture and falls through to `!homepage -> fail`. So some of the 81 audits that
+"cannot satisfy the contract" may be fixture artifacts rather than real
+violations.
+
+**Ruling.** No option selected.
+
+> have to discussi this in details, can't understand what you are asking
+
+**Status:** open. The question was posed in terms of a fixture the reader has
+no reason to hold in mind. Needs re-framing around what a scan actually is.
+
+---
+
+## Law 7 — Gate every URL taken from scanned content with `isSafeUrl()`
+
+**Claude's explanation.** SSRF defence. `isSafeUrl` resolves DNS and refuses
+localhost and private addresses. The fetcher re-applies it on redirect hops, but
+`gateArmed ??= await isSafeUrl(targetUrl)` arms the gate only when the starting
+URL is already public — so an unguarded first hop bypasses the check *and*
+disarms the redirect gate behind it. Nine of 33 fetching audits never import it.
+
+**Ruling.** No option selected. A design objection was raised instead.
+
+> don't see why i wouldn't be scanning a local dev website before uploading to
+> production
+
+**Consequence.** This is a hit, and it is not about the mechanism. Scanning
+`http://localhost:3000` before a deploy is a legitimate, arguably primary use of
+the tool. A blanket private-address refusal breaks it. So the rule cannot be
+"never touch a private address" — the real distinction is between an address the
+*operator* named and an address the *scanned site* supplied. The first is
+consent; the second is the attack.
+
+**Status:** law 7 to be re-drafted around operator intent, not address class.
+The nine unguarded audits remain a finding; the rule that governs them changes.
+
+---
+
+## Law 8 — Bound what you fetch
+
+**Claude's explanation.** 33 audits call `ctx.fetch`, each with a private cap —
+`MAX_PROBES = 3`, `DEAD_URL_SAMPLE = 5`, `MAX_ENTITIES = 2`, `.slice(0, 20)`.
+Each is locally reasonable; the sum is nobody's. The reason it matters is not
+politeness: exceeding what a host tolerates gets the scanner rate-limited
+mid-scan, which corrupts the `unblocked-fetches` evidence key that other audits
+declare in `requires`, so the scan reports a site as hostile when the scanner
+was the cause.
+
+**Ruling.** No option selected. A deeper objection was raised.
+
+> the use of so many fetches is somehow a sign of a ery bad architecture, let's
+> discuss what audits do it and can't we fetch and cache and reuse across audits
+
+**Consequence.** The question is not how to bound per-audit fetching but why
+per-audit fetching exists at all. The gatherer layer was built to share reads;
+33 audits reaching for `ctx.fetch` directly suggests the layer does not cover
+what they need. The right move may be to move those reads into gatherers with a
+shared cache, after which a budget law has far less to govern.
+
+**Status:** open. Requires an inventory of what the 33 actually fetch, and
+whether each is cacheable and shareable.
+
+---
+
+## Running tally
+
+| law | ruling | effect on the design |
+|--:|:--|:--|
+| 1 | note, not a verdict | re-draft; add a law on precondition reuse |
+| 2 | note, not a verdict | keep mechanism, add a freshness law, record the unused `reviewed:` stamp as debt |
+| 3 | note, not a verdict | park as an open question; do not assert |
+| 4 | correct | ratified |
+| 5 | discuss | re-explain from first principles |
+| 6 | discuss | re-frame around what a scan is |
+| 7 | objection sustained | re-draft around operator intent, not address class |
+| 8 | deeper objection | inventory the 33 fetching audits; ask why the gatherer layer does not cover them |
+| 9–10 | not yet asked | — |
+
+**One law ratified of eight asked.** The quiz found more than the design did.
