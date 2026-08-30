@@ -842,3 +842,124 @@ identifiers.'` and has no `notApplicable` branch; the page-type gate is the only
 thing keeping that off a bakery.
 
 **Status:** final. Supersedes both earlier law 3 entries.
+
+---
+
+## Law 7 — resolved: consent attaches to the origin
+
+The objection was sustained: scanning a local development site before deploying
+is a legitimate, arguably primary use of the tool, so a blanket private-address
+refusal is wrong.
+
+### The objection was already the code's own rule
+
+`packages/core/src/fetcher.ts:292`:
+
+```
+// The gate is armed only when the starting URL is itself public: an
+// operator who deliberately points the scanner at a dev host gains
+// nothing from having its redirects refused.
+```
+
+`isSafeUrl` is called in exactly one place inside the fetcher — line 317, the
+redirect gate. The orchestrator never gates the scan's entry URL. **Scanning
+`http://localhost:3000` works today, deliberately.** The law was worded as
+though it did not.
+
+### The law
+
+> **The operator's URL is trusted. A URL taken from scanned content is not.**
+
+The same distinction settled in law 3, one layer down: declared versus
+inferred. Consent, again.
+
+### The hole
+
+Nine of 33 fetching audits pass content-harvested URLs to `ctx.fetch` with no
+gate, and the fetcher cannot cover for them:
+
+```ts
+gateArmed ??= await isSafeUrl(targetUrl);      // targetUrl is 127.0.0.1 -> false
+if (gateArmed && !(await isSafeUrl(next))) {   // never runs
+```
+
+An unguarded first hop is fetched **and** disarms the redirect gate for the rest
+of that chain. `machine-discovery/no-broken-links` — grade A, weight 1.0 —
+supplies 20 URLs scraped from the page, filtered only by
+`hostname.endsWith('.' + domain)`, which any wildcard DNS record satisfies.
+
+### Resolution: the gate moves into `ctx.fetch`
+
+Twenty-four audits call `isSafeUrl` correctly and nine forget. A test that
+checks for the import is the weak form — an import can be present and unused,
+which is the critique that killed `meta.subject`. Law 5's lesson, third
+application: put the guard where it runs.
+
+> **`ctx.fetch` gates by origin. The scan target's origin passes. Any other
+> origin must clear `isSafeUrl`. Audits never call it.**
+
+```ts
+fetch: async (options) => {
+  const sameOrigin = new URL(options.url).origin === new URL(ctx.baseUrl).origin;
+  if (!sameOrigin && !(await isSafeUrl(options.url))) return refused(options.url);
+  return fetcher.fetch(options);
+}
+```
+
+| scan target | audit fetches | result | why |
+|:--|:--|:--|:--|
+| `http://localhost:3000` | `http://localhost:3000/robots.txt` | **allowed** | same origin — the operator named it |
+| `http://localhost:3000` | `http://127.0.0.1:9200/` | **refused** | different origin, private — SSRF into another local service |
+| `https://shop.example` | `https://shop.example/api` | allowed | same origin |
+| `https://shop.example` | `http://169.254.169.254/` | **refused** | cloud metadata endpoint, harvested from a page |
+
+Origin, not address class. A blanket private-address rule breaks local
+development scanning; an origin rule does not, because consent attaches to the
+origin the operator typed.
+
+### What it costs
+
+- nine audits fixed by a change none of them contain
+- twenty-four audits delete their `isSafeUrl` calls — the guard stops being
+  theirs to remember
+- the rule becomes unforgettable rather than enforced by a test that greps
+  imports
+
+### Verified before ratifying
+
+- 51 test files already `vi.mock` the fetcher and 52 stub `isSafeUrl`, so no
+  suite performs real DNS and moving the gate adds no DNS to the suites.
+- At least eight audits fetch cross-origin by design —
+  `operability-safety/wikidata-round-trip-verification`,
+  `answer-readiness/author-page`, `machine-discovery/rss-feed`,
+  `three-way-freshness-lag`, `llms-txt-links-valid`, `websub-hub-advertisement`,
+  `agent-commerce-feed-parity`, `no-broken-ai-endpoints`. These now clear
+  `isSafeUrl` on a path that previously had none, which is the intent.
+
+### One gap the move creates
+
+Audit unit tests construct their own `ctx.fetch` stub and therefore bypass the
+gate entirely. That is correct for unit tests, but it means the gate needs its
+own test where the context is built, not where audits are exercised.
+
+**Status:** ratified.
+
+---
+
+## Running tally
+
+| law | ruling | effect on the design |
+|--:|:--|:--|
+| 1 | note, not a verdict | re-draft; the precondition-reuse law is law 5's guard |
+| 2 | ratified, with a collision | consent makes contribution scan-dependent; resolved at the result, not the meta |
+| 3 | **ratified, final** | two modes: declared is scored, undetected is informative. Everything reported |
+| 4 | correct | ratified |
+| 5 | **ratified, version 3** | four-case split; the declaration is a running guard |
+| 6 | **ratified, two fixtures** | fixture A is absolute; 7 vacuous passes retracted; 81 corrected to 62 |
+| 7 | **ratified** | consent attaches to the origin; the gate moves into `ctx.fetch` |
+| 8 | partly answered by scope | origin artifacts cache per origin; the 33 `ctx.fetch` callers remain |
+| 9–10 | not yet asked | — |
+
+**Six laws ratified of eight asked.** Three of them — 3, 5 and 7 — resolved to
+the same shape: put the guard where it runs, and let consent decide what the
+tool may claim.
