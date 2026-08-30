@@ -674,3 +674,76 @@ is scored; it never decides whether the finding is true.
 | 9–10 | not yet asked | — |
 
 **Four laws ratified of eight asked.**
+
+---
+
+## Option C, concrete: the scorer already has the hook
+
+Ratified. Checked against `packages/core/src/scorer.ts`, C needs almost no new
+machinery, because the predicate it wants already exists and is already the
+single source of truth.
+
+```ts
+// scorer.ts:22
+/**
+ * Single source of truth for "this check is advisory only".
+ * Informative checks are still shown to the user, but they must never
+ * influence scores, recommendations, top fails/passes or readiness vitals.
+ * Every surface that ranks or scores checks filters through this predicate
+ * so the rule cannot drift per package.
+ */
+export function isInformative(check: Pick<CheckResult, 'scoreDisplayMode'>): boolean {
+  return check.scoreDisplayMode === 'informative';
+}
+```
+
+"Still shown to the user, never influences a score" is exactly what an
+unconsented finding needs. `scoreDisplayMode` already lives on `CheckResult`,
+not only on meta.
+
+### The change
+
+```ts
+// audit meta — the page types under which this audit is scored
+pageTypes: ['product'],          // renamed from applicablePageTypes
+
+// runner, building the CheckResult
+scoreDisplayMode:
+  meta.pageTypes?.length && !meta.pageTypes.includes(ctx.pageType)
+    ? 'informative'              // reported in full, never scored
+    : meta.scoreDisplayMode,
+```
+
+`scorer.ts` does not change at all.
+
+### Why law 2 survives
+
+`sunset.test.ts` validates **meta**, and meta is untouched: one grade, one
+tier, one weight, permanently. All three invariants hold as identities. The
+scan-dependent part lives on the result, which is already how `status: 'na'`
+and `scoreDisplayMode` behave today.
+
+### Three behaviours inherited for free
+
+| existing rule | effect on an unconsented finding |
+|:--|:--|
+| `calculateCategoryScore:29` excludes `na` and informative | leaves the category denominator |
+| `gatedMassShare:126` skips informative before counting | does **not** count toward the 0.35 unscored threshold — correct, because consent is not missing evidence |
+| `hasAssessableCheck:80` drops a category whose checks are all `na` or informative | scanning an undeclared page removes `agentic-commerce` from the overall score rather than scoring it 0 |
+
+The third inherits a protection the scorer already documents:
+
+> without it a site with no commerce surface paid the whole agentic-commerce
+> evidence mass at score 0, which reads as a penalty for not being a shop
+
+### Naming
+
+One word everywhere. `consentTypes` was proposed and rejected as jargon.
+
+| surface | name |
+|:--|:--|
+| scan input | `--page-type product` |
+| audit meta | `pageTypes: PageType[]` — the types under which this audit is scored |
+| page context | `pageType`, plus `typeSource: 'declared' \| 'detected'` |
+
+**Status:** ratified.
