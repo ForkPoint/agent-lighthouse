@@ -558,3 +558,119 @@ Both change what a "score" means, so neither is decided here.
 | 9–10 | not yet asked | — |
 
 **Three laws ratified of eight asked.**
+
+---
+
+## Law 3 — amended: detection kept, informative only; declaration is consent
+
+The earlier ruling deleted detection outright. Amended: detection stays, but it
+can never reach a verdict. The operator may supply the page type; detection is
+the fallback.
+
+### The rule
+
+> **A page's type is a label. A detected label may never affect a verdict. A
+> declared label is operator consent and may.**
+
+| | detected | declared by the operator |
+|:--|:--|:--|
+| appears in the report | yes, marked as a guess | yes, marked as declared |
+| may affect a verdict | **never** | yes — it is consent |
+
+### Condition 1 — informative is enforced, not intended *(accepted)*
+
+Fourteen audits gate on `content` today because nothing stopped them. If
+`pageType` remains on `PageContext`, a future audit reads it again and the rule
+rots the way the NA contract did.
+
+> **Gate:** no audit source may reference `pageType`. One registry-enumerating
+> test over the audit sources, same shape as `scripts/check-requires.mjs`.
+
+Without that gate the rule is a comment, and this session has established what
+comments are worth.
+
+### Condition 2 — the label carries its provenance *(accepted)*
+
+```jsonc
+"pagesScanned": [
+  { "url": "...", "pageType": "product",  "typeSource": "declared" },
+  { "url": "...", "pageType": "category", "typeSource": "detected" }
+]
+```
+
+A detected label published without that marker is the top law broken in the
+report layer instead of the audit layer. `typeSource` is where "the detection
+method is flawed" gets said.
+
+### Condition 3 — declaration is consent *(accepted, and chosen over label-only)*
+
+A detected type is our guess and may never move a score. A declared type is the
+operator vouching for what the page is, which makes the finding relevant by
+their own statement.
+
+So `agentic-commerce/offer-schema` scanned against a URL declared `product` is
+scored. The same audit against an undeclared URL still runs and still reports
+"this page carries no Product schema" — it simply does not move the score.
+
+This is the same distinction drawn in law 7: operator intent versus a value the
+tool inferred. Consent is what separates them in both places.
+
+### The collision with law 2, recorded before it is discovered
+
+Law 2 is ratified: `weight = weightForGrade(grade, tier)`, and
+`packages/core/src/audits/sunset.test.ts` enforces three invariants — a
+non-scored tier implies weight 0 and `scoreDisplayMode: 'informative'`, grade C
+in the scored tier is unregistrable, and `tier !== 'scored'` is equivalent to
+`weight === 0`.
+
+Consent makes an audit's contribution **scan-dependent**. A statically scored
+audit must contribute nothing on a scan where consent was not given. Taken
+naively that breaks all three invariants, because tier and weight would vary per
+scan.
+
+Three ways to express it. **C is recommended.**
+
+| | approach | cost |
+|:--|:--|:--|
+| A | `tier` becomes scan-dependent | breaks law 2's invariants directly; `sunset.test.ts` would have to be re-expressed as a static ceiling rather than an identity |
+| B | treat consent like an evidence key — no consent, audit skipped, reported `na` with "declare the page type to have this scored" | reuses existing machinery, but the audit declines instead of reporting its finding, which loses the thing consent was meant to preserve |
+| **C** | meta stays static; the **scorer** excludes unconsented audits from the denominator, the way `gatedMassShare` already inspects tags | law 2 untouched, the finding is still reported, and runtime-dependent scoring already exists in `scan-evidence` |
+
+Under C an audit is always registered with one static grade, tier and weight.
+Whether that weight enters a given scan's denominator is a scoring decision made
+from the scan's consent state, not a mutation of the audit.
+
+### What this changes about the earlier deletions
+
+Still deleted: `evidence.usablePageTypes`, the `sample-adequate` per-audit
+override, the page-type skip and `TAG_SKIPPED_PAGE_TYPE`, and every `pageType`
+read in the 18 audit bodies.
+
+**No longer deleted:** `detectPageType` and its helpers, which survive as the
+fallback label. `meta.applicablePageTypes` survives in changed form — no longer
+a runner gate, now the declaration of which consent applies to this audit.
+
+Unchanged: the absence rule still replaces the gate. `product-identifiers`
+still needs its own `notApplicable` branch, because on an undeclared page with
+no `Product` schema it must report, not fail. Consent decides whether a finding
+is scored; it never decides whether the finding is true.
+
+**Status:** ratified as amended. Supersedes the previous law 3 entry.
+
+---
+
+## Running tally
+
+| law | ruling | effect on the design |
+|--:|:--|:--|
+| 1 | note, not a verdict | re-draft; the precondition-reuse law is law 5's guard |
+| 2 | ratified, **with a collision** | consent makes contribution scan-dependent; resolved by option C at the scorer |
+| 3 | **ratified as amended** | detected labels never move a verdict; declared labels are consent and may |
+| 4 | correct | ratified |
+| 5 | **ratified, version 3** | four-case split confirmed; declaration becomes a running guard |
+| 6 | **ratified, two fixtures** | fixture A is absolute with no exemptions; 7 vacuous passes retracted; 81 corrected to 62 |
+| 7 | objection sustained | re-draft around operator intent, not address class — the same consent distinction as law 3 |
+| 8 | **partly answered by scope** | origin artifacts cache per origin; the 33 `ctx.fetch` callers remain |
+| 9–10 | not yet asked | — |
+
+**Four laws ratified of eight asked.**
