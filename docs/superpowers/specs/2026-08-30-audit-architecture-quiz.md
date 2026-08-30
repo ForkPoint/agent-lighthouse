@@ -407,3 +407,154 @@ is needed for fixture A.
 | 9–10 | not yet asked | — |
 
 **Two laws ratified of eight asked, and one published claim retracted.**
+
+---
+
+## Law 3 — resolved: page type is declared, never detected
+
+Parked after the first pass, reopened, and settled.
+
+### Why detection was rejected
+
+`detectPageType` (`packages/core/src/parser.ts:574`) is four rules in fixed
+order, and the fourth has no test:
+
+```ts
+if (isFirstPage && pathname === '/')            return 'homepage';
+if (isProductPage(pathname, $, jsonLd, meta))   return 'product';
+if (isCategoryPage(pathname, $, jsonLd))        return 'category';
+return 'content';                                // no test — the else branch
+```
+
+Three named failures, all in the shipped code:
+
+- `/shop/sourdough` matches the **category** regex — `^/(...|shop|...)` — before
+  the product branch is reached. A product page with full `Product` JSON-LD
+  classifies as `category`.
+- Product detection by markup is `[class*="add-to-cart"]` plus `.price`. Both
+  are CSS class names any theme may spell differently.
+- `content` means "we could not classify this". A blog post, a contact page and
+  a privacy policy are one type, and fourteen audits gated on it.
+
+**Ruling:** remove the detection. If a page's type matters, the operator
+supplies it with the URL. If detection is ever reintroduced, its unreliability
+is stated to the user rather than hidden behind a verdict.
+
+### Deletions
+
+| what | where |
+|:--|:--|
+| `detectPageType`, `isProductPage`, `isCategoryPage` | `parser.ts:574-680` |
+| `meta.applicablePageTypes` | 35 audits |
+| `evidence.usablePageTypes` | `scan-evidence.ts` |
+| the `sample-adequate` per-audit override | `audit-runner.ts:120-123` |
+| the page-type skip and `TAG_SKIPPED_PAGE_TYPE` | `audit-runner.ts:169-178`, `constants.ts:19` |
+| `pageType` reads in audit bodies | 18 audits |
+
+Kept: `overrideTypeByKey` (`orchestrator.ts:299`) — the operator's declaration.
+Declaration survives, detection does not.
+
+### What replaces the gate
+
+The four-case rule from law 5, applied to a page's own content rather than to an
+origin artifact. No classification is involved.
+
+| the audit asks | page carries no `Product` schema | example |
+|:--|:--|:--|
+| does this page carry it | that is the finding — report it | `structured-data/offer-schema` |
+| is what it carries correct | nothing to judge → `notApplicable` | `agentic-commerce/product-identifiers` |
+
+`product-identifiers` has no `notApplicable` branch today. It returns
+`fail: 'No Product schema found to check for identifiers.'`, and the page-type
+gate was the only thing keeping that away from a bakery. **The gate was doing
+the absence rule's job.** That is the same defect PR 23 fixed in the OpenAPI
+family, hidden one level up in the runner instead of sitting in the audit.
+
+This is why the order matters: `applicablePageTypes` cannot be removed until
+each of the 35 audits owns its precondition. Remove the gate first and eight
+commerce audits start failing bakeries.
+
+### The circularity that had to be avoided
+
+The obvious replacement — "decline when the page carries no Product schema" —
+breaks the other direction. A real shop with add-to-cart controls, prices and no
+JSON-LD would be excused by exactly the audits that exist to catch it. **An
+audit that checks whether product data exists cannot use product data as its own
+precondition.**
+
+The split above avoids it without any classifier: the existence audit reports
+the absence, the contents audits decline. Neither needs to know what kind of
+page it is looking at.
+
+**Status:** ratified.
+
+---
+
+## New direction — one page per scan, idempotent per URL
+
+Recorded during the law 3 discussion. This supersedes the multi-page sampler.
+
+Sizing, measured on this branch:
+
+| group | count |
+|:--|--:|
+| audits touching `ctx.pages` | 144 |
+| audits looping every page | 106 |
+| audits reading only `ctx.pages[0]` | 53 |
+| audits computing a ratio across pages | **1** |
+| audits reading `ctx.rootFiles` | 54 |
+| audits calling `ctx.fetch` | 33 |
+
+Only one audit computes a percentage over the page set, so multi-page semantics
+were barely used. The 106 loops mostly ask "does any page have X" and become
+"does this page have X", which is the more honest sentence.
+
+### Two scopes replace page types
+
+| scope | subject | idempotent per |
+|:--|:--|:--|
+| **page** | the document at the URL the operator gave | URL |
+| **origin** | `robots.txt`, `sitemap.xml`, `llms.txt`, `openapi.json`, `/.well-known/*`, MCP endpoint | origin |
+
+An audit declares its scope, not the kind of page it wants. This also answers
+law 8's objection: origin artifacts are fetched once per origin and reused
+across every page scan of that host, because the scope makes the cache key
+obvious.
+
+### What idempotence forbids
+
+- no sampling, no discovery, no "first five links"
+- no verdict depending on which pages happened to be found
+- no verdict against "now" — `three-way-freshness-lag` must state dates, not
+  judge staleness against the clock
+- the 33 fetching audits must pick targets deterministically from the page's own
+  content, in document order
+
+### Open, not yet decided
+
+1. **The 54 origin-scope audits under per-URL scans.** They produce the same
+   verdict on every page of a host. Are they a separate scan with a separate
+   score, a cached section inside every page scan, or informative on a page scan
+   and scored only on an origin scan?
+2. **Does a multi-page site scan survive**, and if so as what — a batch of
+   independent per-URL scans supplied by the operator, or nothing at all?
+
+Both change what a "score" means, so neither is decided here.
+
+---
+
+## Running tally
+
+| law | ruling | effect on the design |
+|--:|:--|:--|
+| 1 | note, not a verdict | re-draft; the precondition-reuse law is law 5's guard |
+| 2 | note, not a verdict | keep mechanism, add a freshness law, record the unused `reviewed:` stamp as debt |
+| 3 | **ratified** | page type is declared, never detected. Six deletions; the absence rule replaces the gate |
+| 4 | correct | ratified |
+| 5 | **ratified, version 3** | four-case split confirmed; declaration becomes a running guard |
+| 6 | **ratified, two fixtures** | fixture A is absolute with no exemptions; 7 vacuous passes retracted; 81 corrected to 62 |
+| 7 | objection sustained | re-draft around operator intent, not address class |
+| 8 | **partly answered by scope** | origin artifacts cache per origin; the remaining question is the 33 `ctx.fetch` callers |
+| 9–10 | not yet asked | — |
+
+**Three laws ratified of eight asked.**

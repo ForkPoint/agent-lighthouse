@@ -57,7 +57,7 @@ Every law names the gate that proves it. A law marked **DEBT** is not enforced. 
 |--:|:--|:--|:--|
 | 1 | One audit, one file, one dossier | `scripts/check-dossiers.mjs`, both directions | holds 215/215 |
 | 2 | The grade sets the weight. Never hand-set one — `weight = weightForGrade(grade, tier)` | `packages/core/src/audits/sunset.test.ts` | holds 215/215 |
-| 3 | Score only the population the evidence covers | `planAudits` at runtime | holds; omitting `applicablePageTypes` means all types |
+| 3 | **Page type is declared by the operator, never detected.** It is a report label, never an input to a verdict | detection deleted; nothing left to gate | **ruled 2026-08-30** — see the quiz record. `detectPageType` and `applicablePageTypes` are removed |
 | 4 | Declare what the scan must have obtained | `scripts/check-requires.mjs` + `GATE_EXEMPTIONS` | holds 215/215 |
 | 5 | **Absent artifact, absent verdict.** The gatherer that reads an artifact owns the absent / empty / malformed / readable split and exports the precondition. An audit about that artifact's contents declares itself by **importing** it | `packages/core/src/tests/absent-artifact-contract.test.ts` | **DEBT** — one family (OpenAPI). Sitemap and feeds uncovered; 1.6 weight fails wrongly today |
 | 6 | A scan that read nothing yields no verdict | `packages/core/src/tests/na-contract.ts`, opt-in, **on a defective fixture** | **DEBT** — see §9. Split into two laws; the truthful figure is 62, not 81 |
