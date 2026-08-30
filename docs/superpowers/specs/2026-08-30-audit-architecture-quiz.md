@@ -747,3 +747,98 @@ One word everywhere. `consentTypes` was proposed and rejected as jargon.
 | page context | `pageType`, plus `typeSource: 'declared' \| 'detected'` |
 
 **Status:** ratified.
+
+---
+
+## Law 3 — final form
+
+Three modes were proposed and reduced to two. Hiding findings was a report
+nicety, not an architectural need, so it is gone.
+
+### The rule
+
+> **A page type moves a score only when the operator declared it. Detection
+> produces a label, never a verdict.**
+
+Two states in the audit model: consented, not consented. That is all the scorer
+knows about.
+
+| page type | comes from | audits declaring `pageTypes` | score | shown |
+|:--|:--|:--|:--|:--|
+| **declared** — `--page-type product` | the operator | scored | counts | yes |
+| **not declared** | detection, label only | informative | none | yes |
+
+Everything is always reported. The only question the model asks is whether the
+operator vouched for what the page is.
+
+### The whole code change
+
+```ts
+// 1. meta — renamed; meaning changes from "gate" to "scored under"
+pageTypes: ['product'],                    // was applicablePageTypes
+
+// 2. runner — the only new logic anywhere
+scoreDisplayMode:
+  meta.pageTypes?.length && !meta.pageTypes.includes(ctx.declaredPageType)
+    ? 'informative'
+    : meta.scoreDisplayMode,
+
+// 3. page context — the label carries its provenance
+{ url, pageType: 'product', typeSource: 'declared' | 'detected' }
+```
+
+`packages/core/src/scorer.ts` does not change. Every scoring surface already
+filters through `isInformative`.
+
+### Deleted
+
+`evidence.usablePageTypes`; the `sample-adequate` per-audit override
+(`audit-runner.ts:120-123`); the page-type skip and `TAG_SKIPPED_PAGE_TYPE`
+(`audit-runner.ts:169-178`, `constants.ts:19`); the `pageType` reads in 18 audit
+bodies.
+
+### Kept
+
+`detectPageType` and its helpers, as the fallback label. `overrideTypeByKey`,
+as the operator's declaration.
+
+### New gate
+
+> No audit source may reference `pageType`.
+
+One registry-enumerating test over the audit sources, same shape as
+`scripts/check-requires.mjs`. Without it "informative" is a comment, and
+fourteen audits gate on `content` today for exactly that reason.
+
+### Why dropping audits was rejected
+
+An earlier third mode would have skipped the type-specific audits entirely.
+That penalises the site it was meant to help:
+
+```ts
+// scorer.ts:80
+function hasAssessableCheck(cat: CategoryResult): boolean {
+  if (cat.checks.length === 0) return true;      // empty list stays in the score
+  return cat.checks.some((c) => c.status !== 'na' && !isInformative(c));
+}
+// scorer.ts:31
+if (totalWeight === 0) return 0;                 // and scores 0
+```
+
+Drop every `agentic-commerce` audit and the category arrives with zero checks,
+passes the early return, and contributes its full `CATEGORY_MASS` at score 0.
+The informative path does the opposite: the checks are present but advisory, so
+`hasAssessableCheck` returns false and the category leaves the score entirely —
+the protection the scorer already documents against penalising a site for not
+being a shop.
+
+**Dropping punishes. Informative protects.**
+
+### Prerequisite, unchanged
+
+The 35 audits must own their preconditions before the gate is removed.
+`product-identifiers` returns `fail: 'No Product schema found to check for
+identifiers.'` and has no `notApplicable` branch; the page-type gate is the only
+thing keeping that off a bakery.
+
+**Status:** final. Supersedes both earlier law 3 entries.
