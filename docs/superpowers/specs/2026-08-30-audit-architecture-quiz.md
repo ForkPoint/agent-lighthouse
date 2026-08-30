@@ -310,3 +310,100 @@ imported constant. Supersedes the design document's §5.
 | 7 | objection sustained | re-draft around operator intent, not address class |
 | 8 | deeper objection | inventory the 33 fetching audits; ask why the gatherer layer does not cover them |
 | 9–10 | not yet asked | — |
+
+---
+
+## Law 6 — resolved, and a published claim retracted
+
+Re-explained around the fixture rather than around the rule. Both questions
+answered.
+
+**Question 1 — should the fixture describe a real scan?** Ruled: **yes, fix it.**
+
+**Question 2 — is the empty-scan rule testing two different things?** Ruled:
+**maybe we need two separate.** Taken as: build two fixtures.
+
+### What was wrong
+
+`emptyContext()` builds its evidence from `allEvidenceMet()`, which sets
+`judgeable: true` and `usablePageTypes: ALL_PAGE_TYPES`, while supplying zero
+pages. The fixture asserts *nothing was read* and *everything was read* at the
+same time. `buildScanEvidence` never produces that state: `judgeable` is
+`met['origin-reachable'] && met['unblocked-fetches']`, both false when the
+origin never answered.
+
+Audits open with `if (!scanReadTheSite(ctx.evidence))`, which reads
+`evidence.judgeable`. On the old fixture that guard returns `true`, so audits
+walk past their own correct decline branch and start reading pages that are not
+there.
+
+### The measurement, re-run against a truthful fixture
+
+| | old fixture | truthful fixture |
+|:--|--:|--:|
+| `na` | 134 | **153** |
+| `fail` | 46 | 38 |
+| `warn` | 28 | 24 |
+| `pass` | 7 | **0** |
+| non-`na` | 81 | **62** |
+
+### Retraction
+
+**The seven vacuous passes do not exist.** `content-extraction/main-element`,
+`article-element`, `header-footer`, `data-tables`, `content-depth`,
+`figure-figcaption` and `fake-headings` all return `notApplicable` correctly
+once the fixture stops claiming the site was read. Their `scanReadTheSite`
+guard was always right.
+
+They were reported as bugs in three places, all of which are now wrong:
+
+- `2026-08-30-audit-architecture-review.md` §5.1 and §9
+- `2026-08-30-audit-architecture-design.md` §9
+- commit `a709a36`'s message
+
+The 81 was inflated by the same cause. The real figure is **62 audits that
+give a verdict about a site the scan never reached**, and 15 of those are the
+robots.txt bot family warning "robots.txt not found" about a host that never
+answered.
+
+### The two fixtures
+
+| fixture | asserts | exemptions |
+|:--|:--|:--|
+| **A — unreachable** | the scan failed: `judgeable: false`, no pages, no root files, reasons populated. **Every** audit returns `na` | **none, ever.** A verdict here claims something about a site nobody reached |
+| **B — bare but real** | the scan worked: one minimal page, evidence met. Verdicts are legal and expected | not a law. A snapshot of what a minimal real site scores |
+
+One fixture was being asked to be a law and a snapshot at once, so it was
+neither, and its contradictory evidence manufactured 19 phantom violations
+including all 7 phantom passes.
+
+Fixture A is a stronger law than the design proposed: no exemption map, no
+written reasons, no `EMPTY_SCAN_VERDICTS`. It is enforceable today against 62
+real failures.
+
+**Fixture B is not yet measured.** The first attempt hand-rolled a
+`PageContext` and 29 audits threw on missing fields. It must be built from
+`mockPageContext` in `packages/core/src/__tests__/test-utils` before any number
+from it is trusted.
+
+**Status:** ratified. Law 6 splits into two laws — one absolute, one
+observational. The design document's change A is superseded: no exemption map
+is needed for fixture A.
+
+---
+
+## Running tally
+
+| law | ruling | effect on the design |
+|--:|:--|:--|
+| 1 | note, not a verdict | re-draft; the precondition-reuse law is law 5's guard |
+| 2 | note, not a verdict | keep mechanism, add a freshness law, record the unused `reviewed:` stamp as debt |
+| 3 | note, not a verdict | parked; see the `usablePageTypes` review below |
+| 4 | correct | ratified |
+| 5 | **ratified, version 3** | four-case split confirmed; declaration becomes a running guard |
+| 6 | **ratified, two fixtures** | fixture A is absolute with no exemptions; 7 vacuous passes retracted; 81 corrected to 62 |
+| 7 | objection sustained | re-draft around operator intent, not address class |
+| 8 | deeper objection | inventory the 33 fetching audits; ask why the gatherer layer does not cover them |
+| 9–10 | not yet asked | — |
+
+**Two laws ratified of eight asked, and one published claim retracted.**
