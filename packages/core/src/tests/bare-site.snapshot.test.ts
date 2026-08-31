@@ -17,14 +17,19 @@ import { bareSiteContext } from "./fixtures";
 describe("a bare but real site", () => {
   it("is told this, and only this", async () => {
     const rows: string[] = [];
+    const registeredIds: string[] = [];
     for (const cat of defaultConfig.categories) {
       for (const reg of defaultConfig.audits[cat.id] ?? []) {
         const result = await reg.create().audit(bareSiteContext());
+        registeredIds.push(reg.meta.id);
         rows.push(
           `${result.status.padEnd(4)} ${String(reg.meta.weight).padEnd(3)} ${reg.meta.id}`,
         );
       }
     }
+    expect(rows.map((row) => row.trim().split(/\s+/).at(-1)).sort()).toEqual(
+      registeredIds.sort(),
+    );
     expect(rows.sort().join("\n")).toMatchSnapshot();
   });
 });
