@@ -390,10 +390,11 @@ origin gate and the only layer that can be counted.
    audit ──┐                             audit ──┐
    audit ──┼──► ctx.fetch ──► net        audit ──┼──► gatherer ──► net
    audit ──┘                             audit ──┘         ▲
-     …33 call sites                        …one layer      │
-      9 ungated                                        gated once
-     33 private caps                                  counted once
-     nothing sums them                                cached once
+     …32 audits fetch                       …one layer     │
+      6 fetch a content URL                             gated once
+        with no isSafeUrl                              counted once
+     32 private caps                                    cached once
+     nothing sums them
 ```
 
 A gatherer with exactly one consumer is still correct. The fetch becomes
@@ -458,16 +459,16 @@ Recorded so they are not proposed again.
 
 Measured 2026-08-30 across 215 registered audits. **None is fixed.**
 
-| debt                                               | measurement                                                                                                                                                                           |
-| :------------------------------------------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Audits verdict on a scan that reached nothing      | **62** do. 15 are robots.txt bot audits warning _"robots.txt not found"_ about a host that never answered                                                                             |
-| The empty-scan fixture contradicts itself          | `emptyContext()` sets `judgeable: true` and `usablePageTypes: ALL_PAGE_TYPES` while supplying zero pages. It manufactured 19 phantom violations, including 7 phantom "vacuous passes" |
-| An artifact-contents audit fails on absence        | `sitemap-lastmod` (A, 1.0) `fail`s at `priority: 'critical'`; `sitemap-absolute-urls` (B, 0.6) `fail`s. 1.6 weight                                                                    |
-| The page-type gate is doing the absence rule's job | `product-identifiers` has **no** `notApplicable` branch — the gate is the only thing keeping `fail: 'No Product schema found'` off a bakery                                           |
-| Private readers duplicate a gatherer               | 5 audits carry `getSitemapResult` while `gatherers/sitemap.ts` exists without the four-way split                                                                                      |
-| Content-harvested URLs reach the network ungated   | 9 of 33 fetching audits never import `isSafeUrl`. An unguarded first hop is fetched **and** disarms the redirect gate behind it                                                       |
-| Fetching is unbounded in aggregate                 | 33 audits, 33 private caps, nothing sums them                                                                                                                                         |
-| The warrant has no expiry                          | 215 of 216 `reviewed:` stamps, all one sprint, read by nothing                                                                                                                        |
+| debt                                               | measurement                                                                                                                                                                                                                                                                                    |
+| :------------------------------------------------- | :--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Audits verdict on a scan that reached nothing      | **62** do. 15 are robots.txt bot audits warning _"robots.txt not found"_ about a host that never answered                                                                                                                                                                                      |
+| The empty-scan fixture contradicts itself          | `emptyContext()` sets `judgeable: true` and `usablePageTypes: ALL_PAGE_TYPES` while supplying zero pages. It manufactured 19 phantom violations, including 7 phantom "vacuous passes"                                                                                                          |
+| An artifact-contents audit fails on absence        | `sitemap-lastmod` (A, 1.0) `fail`s at `priority: 'critical'`; `sitemap-absolute-urls` (B, 0.6) `fail`s. 1.6 weight                                                                                                                                                                             |
+| The page-type gate is doing the absence rule's job | `product-identifiers` has **no** `notApplicable` branch — the gate is the only thing keeping `fail: 'No Product schema found'` off a bakery                                                                                                                                                    |
+| Private readers duplicate a gatherer               | 5 audits carry `getSitemapResult` while `gatherers/sitemap.ts` exists without the four-way split                                                                                                                                                                                               |
+| Content-harvested URLs reach the network ungated   | 8 of 32 fetching audits never import `isSafeUrl`, and 6 of those fetch a URL taken from scanned content: `author-page`, `rss-feed`, `rss-feed-content`, `no-broken-links`, `openapi-servers`, `search-endpoint`. An unguarded first hop is fetched **and** disarms the redirect gate behind it |
+| Fetching is unbounded in aggregate                 | 32 audits, 32 private caps, nothing sums them                                                                                                                                                                                                                                                  |
+| The warrant has no expiry                          | 215 of 216 `reviewed:` stamps, all one sprint, read by nothing                                                                                                                                                                                                                                 |
 
 ---
 
