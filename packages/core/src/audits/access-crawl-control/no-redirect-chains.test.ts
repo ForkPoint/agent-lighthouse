@@ -94,10 +94,9 @@ describe('NoRedirectChainsAudit', () => {
       'na',
     );
   });
-  // Ordering: the hop that left the site is this audit's subject, and leaving
-  // the site is exactly what denies `origin-reachable`. A guard above the
-  // redirect count silences the one audit that should be speaking.
-  it('reports the hop when the redirect is what left the site', () => {
+  // This direct call pins the audit's local redirect branch. The runner does
+  // not publish this finding from an unread scan; it emits an `na` stub instead.
+  it('reports the cross-origin hop when its local branch is called directly', () => {
     const parked = '<html><body><p>Parked.</p></body></html>';
     const page = mockPageContext('https://example.com/', parked);
     page.fetchResult.finalUrl = 'https://parking.brandsale.test/example.com';

@@ -112,9 +112,9 @@ describe('NoBlockingCaptchaAudit — the wall the scanner met', () => {
       'na',
     );
   });
-  // Ordering: the wall is this audit's subject. A guard above the wall branch
-  // returns `na` and re-ships the defect this audit was written to fix.
-  it('reports the wall on a walled scan, not a shrug', () => {
+  // This direct call pins the audit's local WAF branch. The runner does not
+  // publish this finding from an unread scan; it emits an `na` stub instead.
+  it('reports the wall when its local WAF branch is called directly', () => {
     const result = new NoBlockingCaptchaAudit().audit(walledSiteContext());
     expect(result.status).toBe('fail');
     expect(result.message).toContain('bot wall');

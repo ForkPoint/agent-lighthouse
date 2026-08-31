@@ -94,9 +94,9 @@ export interface PlanOptions {
    *
    * An audit's `requires` decides what a blocked or client-rendered scan
    * reports, so a caller that omits this option gets the gated set — the same
-   * set a scan gets. Passing `false` is an explicit diagnostic opt-out for
-   * comparing a gated run against an ungated one; it is never the default and
-   * never what production takes.
+   * set a scan gets. A production diagnostic may pass `false` to bypass only
+   * these per-audit `requires` checks. It is never the default, and it never
+   * bypasses the unconditional unread-scan guard.
    */
   enforceEvidence?: boolean;
 }

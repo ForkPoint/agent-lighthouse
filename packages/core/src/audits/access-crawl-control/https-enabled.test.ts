@@ -74,9 +74,9 @@ describe('HttpsEnabledAudit', () => {
     expect(plan.runnable.map((entry) => entry.reg.meta.id)).not.toContain(HttpsEnabledAudit.meta.id);
     expect(plan.skipped.find((stub) => stub.id === HttpsEnabledAudit.meta.id)?.status).toBe('na');
   });
-  // Ordering: the scheme is a property of the request, provable with no
-  // response at all, so a walled scan of an HTTP site still gets the fail.
-  it('still fails a plain-HTTP site whose homepage never answered', () => {
+  // This direct call pins the audit's local scheme branch. The runner does not
+  // publish this finding from an unread scan; it emits an `na` stub instead.
+  it('fails unread plain HTTP when its local scheme branch is called directly', () => {
     const ctx = walledSiteContext({ baseUrl: 'http://example.com' });
     const result = new HttpsEnabledAudit().audit(ctx);
     expect(result.status).toBe('fail');

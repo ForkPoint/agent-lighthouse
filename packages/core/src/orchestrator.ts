@@ -56,8 +56,9 @@ export interface ScanOptions {
    *
    * On by default. An audit whose required evidence the scan never obtained
    * reports `na` tagged `skipped:no-evidence`, with the reason attached, and
-   * is never constructed. Set it to `false` to run every audit regardless —
-   * useful when measuring what the gate removes.
+   * is never constructed. Set it to `false` to bypass only the per-audit
+   * `requires` checks. The unread-scan guard remains unconditional, so a scan
+   * that read no attributable site response still runs no audit.
    */
   enforceEvidenceGate?: boolean;
   /**
