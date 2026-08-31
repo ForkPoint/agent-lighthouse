@@ -3,13 +3,16 @@ import type { AuditMeta, AuditResult, PageType } from './types';
 import { logger } from './logger';
 import { Audit } from './audit';
 import type { CheckContext } from './check-context';
-import type { ScanConfig, AuditRegistration } from './audit-config';
+import { defaultConfig, type ScanConfig, type AuditRegistration } from './audit-config';
+import { TAG_SKIPPED_NO_EVIDENCE } from './constants';
 import { planAudits, runAudits } from './audit-runner';
 import { AuditResultSchema } from './schemas';
 import type { AuditTrace } from './audit-trace';
 import type { AuditProgressEvent } from './audit-runner';
 import { allEvidenceMet, buildScanEvidence } from './scan-evidence';
 import { mockPageContext } from './__tests__/test-utils';
+import { unreachableContext, bareSiteContext } from './tests/fixtures';
+import { planAllAuditsForTest } from './tests/plan-all-audits';
 
 // ---------------------------------------------------------------------------
 // Helpers: build tiny fake Audit subclasses + registrations
@@ -322,6 +325,41 @@ describe('scan-error explanations', () => {
   });
 });
 
+describe('planAudits on a scan that read nothing', () => {
+  // Four audits declare no `requires` and are therefore invisible to the
+  // evidence gate. They are correct today only because each hand-rolls
+  // `scanReadTheSite` inside `audit()`. That is the arrangement this removes:
+  // an audit's protection must not depend on the audit remembering.
+  it('runs nothing at all', () => {
+    const plan = planAudits(unreachableContext(), defaultConfig);
+    expect(plan.runnable).toHaveLength(0);
+    expect(plan.skipped).toHaveLength(215);
+  });
+
+  it('tags every skip with the reason the scan gave', () => {
+    const plan = planAudits(unreachableContext(), defaultConfig);
+    for (const stub of plan.skipped) {
+      expect(stub.status).toBe('na');
+      expect(stub.tags).toContain(TAG_SKIPPED_NO_EVIDENCE);
+      expect(stub.explanation).toContain('ENOTFOUND');
+    }
+  });
+
+  // The precondition must not fire on a site that was read. A bare site is
+  // still a site, and every verdict about it is a verdict about the site.
+  it('does not fire on a bare but reachable site', () => {
+    const plan = planAudits(bareSiteContext(), defaultConfig);
+    expect(plan.runnable.length).toBeGreaterThan(100);
+  });
+});
+
+it('lets tests address every registered audit without weakening production', () => {
+  const plan = planAllAuditsForTest(defaultConfig);
+
+  expect(plan.runnable).toHaveLength(215);
+  expect(plan.skipped).toEqual([]);
+});
+
 describe('audit tracing', () => {
   /** A config with one passing audit, one page-type skip and one that throws. */
   function tracingConfig(): ScanConfig {
@@ -463,14 +501,14 @@ describe('planAudits — evidence gate', () => {
     },
   });
 
-  it('runs everything when the gate is off, however little the scan saw', () => {
-    const plan = planAudits(shellContext(), gatedConfig());
+  it('runs everything only when the gate is explicitly off, however little the scan saw', () => {
+    const plan = planAudits(shellContext(), gatedConfig(), { enforceEvidence: false });
     expect(plan.runnable.map((r) => r.reg.meta.id)).toEqual(['needs-pages', 'needs-origin']);
     expect(plan.skipped).toHaveLength(0);
   });
 
-  it('skips only the audit whose evidence is missing', () => {
-    const plan = planAudits(shellContext(), gatedConfig(), { enforceEvidence: true });
+  it('skips only the audit whose evidence is missing by default', () => {
+    const plan = planAudits(shellContext(), gatedConfig());
     expect(plan.runnable.map((r) => r.reg.meta.id)).toEqual(['needs-origin']);
     expect(plan.skipped).toHaveLength(1);
   });
