@@ -58,15 +58,15 @@ user sees. It changes what guarantees the correctness.
 
 ## File Structure
 
-| file                                                   | responsibility                                                                                                                   |
-| :----------------------------------------------------- | :------------------------------------------------------------------------------------------------------------------------------- |
-| `packages/core/src/tests/fixtures.ts`                  | **Create.** The two fixtures, built through the real `buildScanEvidence`. Nothing else.                                          |
-| `packages/core/src/tests/plan-all-audits.ts`           | **Create.** Test-only full-registry planning. It bypasses production evidence and page-type gates and is never package-exported. |
-| `packages/core/src/audit-runner.ts`                    | **Modify.** One universal precondition in `planAudits`, before the `requires` loop.                                              |
-| `packages/core/src/tests/unreachable-contract.test.ts` | **Create.** The absolute gate.                                                                                                   |
-| `packages/core/src/tests/bare-site.snapshot.test.ts`   | **Create.** The snapshot gate.                                                                                                   |
-| `packages/core/src/tests/na-contract.ts`               | **Modify, then delete `emptyContext`.** Re-export the fixtures; keep `expectNotApplicableOnEmpty` for the 73 tests that call it. |
-| `.changeset/*.md`                                      | **Create.** One `major`.                                                                                                         |
+| file                                                   | responsibility                                                                                                                                                                        |
+| :----------------------------------------------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `packages/core/src/tests/fixtures.ts`                  | **Create.** The two fixtures, built through the real `buildScanEvidence`. Nothing else.                                                                                               |
+| `packages/core/src/tests/plan-all-audits.ts`           | **Create.** Test-only full-registry planning. It bypasses production evidence and page-type gates and is never package-exported.                                                      |
+| `packages/core/src/audit-runner.ts`                    | **Modify.** One universal precondition in `planAudits`, before the `requires` loop, and `PlanOptions.enforceEvidence` defaults to `true`. `PlanOptions` and the third parameter stay. |
+| `packages/core/src/tests/unreachable-contract.test.ts` | **Create.** The absolute gate.                                                                                                                                                        |
+| `packages/core/src/tests/bare-site.snapshot.test.ts`   | **Create.** The snapshot gate.                                                                                                                                                        |
+| `packages/core/src/tests/na-contract.ts`               | **Modify, then delete `emptyContext`.** Re-export the fixtures; keep `expectNotApplicableOnEmpty` for the 73 tests that call it.                                                      |
+| `.changeset/*.md`                                      | **Create.** One `major`.                                                                                                                                                              |
 
 `fixtures.ts` is separate from `na-contract.ts` because the two gates and the 73
 existing contract calls are three consumers of the same two objects, and the
@@ -371,9 +371,53 @@ if (unread) {
 }
 ```
 
-Remove `PlanOptions`, remove the third `options` parameter from `planAudits`,
-and remove the `if (options.enforceEvidence)` wrapper around
-`unmetRequirements`. The `requires` gate always runs in production.
+Then flip the `requires` gate to safe-by-default. Keep `PlanOptions`, keep the
+third `options` parameter, and keep the orchestrator wiring at
+`packages/core/src/orchestrator.ts:490` exactly as it is. Change only the
+default: in `planAudits`, replace
+
+```ts
+if (options.enforceEvidence) {
+```
+
+with
+
+```ts
+if (options.enforceEvidence ?? true) {
+```
+
+and rewrite the `PlanOptions.enforceEvidence` JSDoc so it documents the new
+default:
+
+```ts
+/** How `planAudits` should treat audits the scan cannot feed. */
+export interface PlanOptions {
+  /**
+   * Skip audits whose `requires` the scan did not obtain. **Defaults to true.**
+   *
+   * An audit's `requires` decides what a blocked or client-rendered scan
+   * reports, so a caller that omits this option gets the gated set — the same
+   * set a scan gets. Passing `false` is an explicit diagnostic opt-out for
+   * comparing a gated run against an ungated one; it is never the default and
+   * never what production takes.
+   */
+  enforceEvidence?: boolean;
+}
+```
+
+**Why `enforceEvidenceGate` stays.** `ScanOptions.enforceEvidenceGate`
+(`orchestrator.ts:54-62`) is a documented public `runScan` option and two
+`orchestrator.test.ts` cases pass `enforceEvidenceGate: false` (`:133`, `:932`).
+It keeps its documented behaviour as the explicit diagnostic opt-out. Deleting
+`PlanOptions` would break that option, break the orchestrator call and break
+those two tests; defaulting it to `true` closes the unsafe default without
+removing anything a caller relies on.
+
+**What this does not weaken.** The unread-scan precondition added above has no
+option at all — it is unconditional in `planAudits`, and
+`enforceEvidence: false` does not reach it. The only full bypass of every gate
+is `planAllAuditsForTest` (Task 2, Step 7), which lives under
+`packages/core/src/tests/` and is never package-exported.
 
 - [ ] **Step 4: Run test to verify it passes**
 
@@ -777,9 +821,32 @@ or keep the guard in this one audit and record it in the changeset.
 
 - [ ] **Step 4: Repeat for the remaining 41**
 
-One audit at a time, running the two gates after each. Do not batch: the
-snapshot is the only detector, and a batch that moves two verdicts reports one
-diff.
+One audit at a time, and after each one run exactly what Step 3 ran — the two
+gates **and that audit's own test file**:
+
+```bash
+npx vitest run \
+  packages/core/src/tests/unreachable-contract.test.ts \
+  packages/core/src/tests/bare-site.snapshot.test.ts \
+  packages/core/src/audits/<category>/<slug>.test.ts
+```
+
+Do not batch: the snapshot is the only detector of a moved verdict, and a batch
+that moves two verdicts reports one diff.
+
+**Why the audit's own suite is not optional here.** Neither gate can see this
+failure class. `unreachable-contract.test.ts` plans through `planAudits`, which
+skips every audit on fixture A, so the deleted guard is never reached.
+`bare-site.snapshot.test.ts` uses a reachable fixture, where the guard never
+fired in the first place. The detector is the audit's own test: 16 of these 42
+call `expectNotApplicableOnEmpty`, which after Task 5 calls `audit()` directly
+on `unreachableContext()` and requires `na` — `access-crawl-control/tdm-rep`,
+`answer-readiness/extractor-survival-recall` and
+`operability-safety/aria-layer-injection-scan` among them. An audit whose
+post-guard path does not fall through to `notApplicable` breaks that test. Left
+to Step 6, the break surfaces after all 42 edits, which is the batch this task
+exists to avoid. The Step 3 remedy applies unchanged: assert through
+`planAudits`, or keep the guard in that one audit and name it in the changeset.
 
 - [ ] **Step 5: Prove no guard is left**
 
@@ -830,10 +897,25 @@ missing declaration.
 `unreachable-contract.test.ts` holds the whole registry to it with no exemption
 list. The 42 copies are gone.
 
-What changes for a caller: on an unreachable origin, the four audits that
-previously produced their own `na` explanation now carry the runner's, which
-names the reason the scan gave — `Not assessed: The homepage could not be
-fetched: ENOTFOUND.` Every other verdict is unchanged, on every site.
+What changes for a `runScan` caller: on an unreachable origin, the four audits
+that previously produced their own `na` explanation now carry the runner's,
+which names the reason the scan gave — `Not assessed: The homepage could not be
+fetched: ENOTFOUND.` Every other verdict a scan reports is unchanged, on every
+site.
+
+What changes for an SDK caller of `planAudits` / `runAudits`: the `requires`
+gate is now on by default. `PlanOptions.enforceEvidence` previously defaulted to
+`false`, so `planAudits(ctx, config)` and `runAudits(ctx, config)` with no option
+bag ran every audit blind. They now skip an audit whose required evidence the
+scan never obtained, reporting `na` tagged `skipped:no-evidence` where a live
+verdict used to appear. Pass `{ enforceEvidence: false }` to keep the old
+behaviour.
+
+`runScan`'s `enforceEvidenceGate` option is unchanged: it stays documented and
+functional as the explicit diagnostic opt-out, and it already defaulted to
+`true`. Nothing bypasses the new unread-scan precondition — it takes no option,
+and the only full bypass of every gate is a test-only helper that is not
+exported from the package.
 ```
 
 - [ ] **Step 2: Commit**
@@ -868,9 +950,11 @@ are named individually rather than described.
 **Type consistency.** `unreachableContext` and `bareSiteContext` take
 `Partial<CheckContext>` and return `CheckContext` in Task 1 and are called with
 no argument in Tasks 2–5. `expectNotApplicableOnEmpty` keeps the exact signature
-it has today, which is why the 73 callers are untouched. Production uses only
-`planAudits(ctx, config)`. `planAllAuditsForTest(config)` returns the same
-`AuditPlan` shape and stays under `packages/core/src/tests/`.
+it has today, which is why the 73 callers are untouched. `planAudits` keeps its
+three-parameter signature, so `orchestrator.ts:490` and its
+`enforceEvidenceGate` wiring typecheck unchanged; only the omitted-option
+default moves from `false` to `true`. `planAllAuditsForTest(config)` returns the
+same `AuditPlan` shape and stays under `packages/core/src/tests/`.
 
 **Known gap, stated rather than solved.** Task 6 Step 3 allows a single audit to
 keep its guard if its own unit test depends on it. That is an escape hatch in the

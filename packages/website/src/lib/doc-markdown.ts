@@ -40,8 +40,8 @@ export function resolveDocLink(href: string, fromDir: string, published: Set<str
  * Rewrite the relative links of one documentation source as it is rendered.
  *
  * The directory to resolve against travels in the frontmatter rather than in the
- * closure, so a single processor can render all eleven pages: six come from the
- * repository root and five from `docs/`.
+ * closure, so a single processor can render all twelve pages: six come from the
+ * repository root and six from under `docs/`.
  */
 function docLinksPlugin(published: Set<string>): MdastPlugin {
   return {
@@ -71,7 +71,7 @@ export interface RenderedDoc {
  * on the page. Everything else matches, including Shiki, which
  * `createSatteriMarkdownProcessor` enables by default exactly as Astro does.
  *
- * One processor renders all eleven pages: the per-document state that matters —
+ * One processor renders all twelve pages: the per-document state that matters —
  * the heading slugger and the collected headings — is created per `render` call.
  */
 export async function createDocRenderer(published: Set<string>) {

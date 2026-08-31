@@ -12,9 +12,11 @@ This document records three things in order: an architecture proposal, an advers
 
 ## 0. Corrections issued after publication
 
-Two claims in this document are wrong. Both were produced by a defective test
-fixture, discovered on 2026-08-30 while explaining law 6 in
+Three claims in this document are wrong. Retractions 1 and 2 were produced by a
+defective test fixture, discovered on 2026-08-30 while explaining law 6 in
 [`2026-08-30-audit-architecture-quiz.md`](./2026-08-30-audit-architecture-quiz.md).
+Retraction 3 has a different cause — a source-text scan that counted a comment —
+and is recorded last.
 
 `emptyContext()` builds its evidence from `allEvidenceMet()`, setting
 `judgeable: true` and `usablePageTypes: ALL_PAGE_TYPES`, while supplying zero
@@ -52,6 +54,30 @@ still rejected. It is rejected on those grounds, not on the counterexample.
 
 **Also corrected:** the non-`na` figure of 81 was inflated by 19 for the same
 reason. The true figure is 62.
+
+**Retraction 3 — §7's fetch counts are one too many.** §7.1's heading, "9 of 33
+fetching audits never import `isSafeUrl`", and §7.2's "33 audits, 33 private
+caps" both count `operability-safety/unsafe-agent-triggerable-affordances` as a
+fetching audit. It does not fetch. The count came from a raw source-text scan,
+and that file's only match is a comment at line 6 — "Its test pins that
+`ctx.fetch` is never called." The audit is markup analysis only, and its test
+pins that `ctx.fetch` is never called.
+
+The corrected figures are **8 of 32**, and only **6** of the eight fetch a URL
+taken from scanned content: `answer-readiness/author-page`,
+`machine-discovery/rss-feed`, `machine-discovery/rss-feed-content`,
+`machine-discovery/no-broken-links`, `agent-interfaces/openapi-servers`,
+`agent-interfaces/search-endpoint`. The other two —
+`answer-readiness/about-credentials` and `machine-discovery/cors-ai-files` —
+fetch only paths the scanner itself composes. §7.2's budget count is 32, not 33.
+Read §7.1's nine-name list and §7.2's "33" against these numbers.
+`docs/architecture/audits.md` §11 and
+[`2026-08-31-audit-architecture-migration.md`](../plans/2026-08-31-audit-architecture-migration.md)
+carry the corrected counts.
+
+**The method, not just the number, was wrong.** A substring scan cannot tell a
+call from a comment. The migration plan's Phase 3 and Phase 4b gates parse the
+TypeScript instead, for exactly this reason.
 
 ---
 
@@ -455,7 +481,7 @@ The half that dies: replacing `na-contract` with a subject-derived suite would b
 
 Both verified, both live.
 
-### 7.1 Safety — 9 of 33 fetching audits never import `isSafeUrl` **[verified]**
+### 7.1 Safety — 9 of 33 fetching audits never import `isSafeUrl` **[verified]** **[corrected: 8 of 32 — see §0, retraction 3]**
 
 `CLAUDE.md` mandates it:
 
@@ -482,7 +508,7 @@ if (resolved.hostname === domain || resolved.hostname.endsWith(`.${domain}`))
 
 which admits any wildcard-DNS subdomain resolving into private address space.
 
-### 7.2 Fetch budget — 33 audits, 33 private caps, no sum **[measured]**
+### 7.2 Fetch budget — 33 audits, 33 private caps, no sum **[measured]** **[corrected: 32 — see §0, retraction 3]**
 
 | audit | cap | where |
 |:--|:--|:--|

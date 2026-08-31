@@ -284,8 +284,13 @@ mass at score 0. Dropping punishes the site; informative protects it.
 
 **Gates:**
 
-1. A source test asserts that no file under `packages/core/src/audits/`
-   references `pageType`. Page type belongs to the runner.
+1. A source check asserts that no production file under
+   `packages/core/src/audits/` **reads** `pageType`. Page type belongs to the
+   runner. It parses the TypeScript and inspects the syntax tree — see
+   [The two source gates parse, they do not grep](#the-two-source-gates-parse-they-do-not-grep)
+   — so a comment, a JSDoc line or a dossier quotation that names `pageType` is
+   not a violation, and a property read that is renamed but still executed still
+   is.
 2. Scorer tests prove that an audit with weight 1.0 contributes 1.0 when scored
    and zero when informative or `na`; a partly informative category uses its
    assessed mass, not its registry mass.
@@ -333,10 +338,13 @@ only layer that can be counted against a budget, and the only layer that can
 cache. A gatherer with exactly one consumer is still correct: the fetch becomes
 visible to the scan instead of hidden in a private constant.
 
-**Gate:** `pnpm check:audit-boundaries` scans production files under
-`packages/core/src/audits/`. It rejects `ctx.fetch`, destructured or global
-`fetch`, imports from the fetcher, and imports from direct HTTP clients. Tests
-may mock gatherers. No second fetch-free audit context type is added; the source
+**Gate:** `pnpm check:audit-boundaries` parses every production TypeScript file
+under `packages/core/src/audits/` — audit sources and the private helpers beside
+them, `*.test.ts` excluded — and rejects an **executable** fetch reference:
+`ctx.fetch` and any aliased binding of it, a destructured `fetch`, the global
+`fetch`, an import from `../../fetcher`, and an import from a direct HTTP client
+(`undici`, `node:http`, `node:https`, `axios`, `got`, `node-fetch`). Tests may
+mock gatherers. No second fetch-free audit context type is added; the source
 gate remains necessary either way.
 
 Keep the pre-request DNS check and repeat it on every redirect. Do not pin the
@@ -349,7 +357,48 @@ with an outbound network rule.
 `http://localhost:3000` completes, hosted egress tests prove private destinations
 are blocked, 32 private caps are replaced by one budget, one `major` changeset.
 
----
+### The two source gates parse, they do not grep
+
+Phase 3's `pageType` gate and Phase 4b's `check:audit-boundaries` are the only
+two checks in this roadmap that read source rather than run it. Both parse the
+TypeScript with the compiler's own parser — `ts.createSourceFile`, no type
+checker, no program, no import traversal — and walk the syntax tree. Neither
+matches text.
+
+**Why, concretely.** A substring scan already produced a wrong number on this
+work. `operability-safety/unsafe-agent-triggerable-affordances` was counted as a
+fetching audit because line 6 of it reads "Its test pins that `ctx.fetch` is
+never called." The audit never fetches; the comment does. See
+[`2026-08-30-audit-architecture-review.md`](../specs/2026-08-30-audit-architecture-review.md)
+§0, retraction 3. A grep fails that file forever, and it also passes any
+behaviour-preserving rename — `const f = ctx.fetch` reads no differently to a
+regular expression than a sentence about fetching does.
+
+**What each gate walks.**
+
+| gate     | rejected node                                                                                                                                                                                                                                                                               | accepted                                                                           |
+| :------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | :--------------------------------------------------------------------------------- |
+| Phase 3  | `PropertyAccessExpression` / `ElementAccessExpression` whose name is `pageType`; a `BindingElement` destructuring `pageType`; `pageType` in a type position that resolves to a value read                                                                                                   | the identifier inside a comment, a JSDoc tag, a string literal, or a template span |
+| Phase 4b | `PropertyAccessExpression` `.fetch` on `ctx` or any local alias of it; a `BindingElement` destructuring `fetch`; a bare `fetch` identifier in call position that no local binding shadows; an `ImportDeclaration` whose module specifier resolves to the fetcher or to a direct HTTP client | the same four literal contexts, and any of these inside a `*.test.ts` file         |
+
+Comments and JSDoc are never visited, because the parser attaches them as
+trivia rather than as nodes. String and template literals are visited and
+skipped by kind. That is the whole difference from grep, and it is the whole
+point.
+
+**Scope.** Both gates read every production `.ts` file under
+`packages/core/src/audits/`, not only the files that export an audit. The
+private helper beside an audit is inside the boundary the gate defends, so it is
+inside the set the gate reads.
+
+**What is deliberately not built yet.** No import graph. Neither gate follows a
+local import to ask whether the imported module fetches. That is sound only
+while the audit tree contains no module that reaches the network without naming
+the fetcher or an HTTP client directly, which is true today: Phase 4b moves the
+last 32 fetching audits into gatherers, and gatherers live outside
+`packages/core/src/audits/`. Add single-hop traversal of relative imports the
+first time an audit-tree module can reach a network helper the direct-import
+rule does not name. Until then, a graph is cost with no defect to catch.
 
 ## Phase 5 — One URL, one score, the origin cached
 
