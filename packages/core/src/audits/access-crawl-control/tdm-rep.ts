@@ -26,7 +26,6 @@ import type { AuditMeta, AuditResult } from '../../types';
 import { Audit } from '../../audit';
 import type { CheckContext } from '../../check-context';
 import { weightForGrade } from '../../scorer';
-import { scanReadTheSite, unreadSiteReason } from '../../scan-evidence';
 
 const TDMREP_PATH = '/.well-known/tdmrep.json';
 const RESERVATION_HEADER = 'tdm-reservation';
@@ -174,19 +173,6 @@ export class TdmRepAudit extends Audit {
   };
 
   audit(ctx: CheckContext): AuditResult {
-    // Every channel this audit reads — the response header, the well-known
-    // file, the page meta — is attached by whatever answered the request. A bot
-    // wall answering 200 through the site's own edge carries the site's
-    // site-wide headers on a body the site did not write, and reporting the
-    // reservation off it credits the wall; see `scanReadTheSite`.
-    if (!scanReadTheSite(ctx.evidence)) {
-      return this.notApplicable(
-        'No response here can be attributed to this site, so no TDM-Rep declaration was read.',
-        EXPECTED,
-        unreadSiteReason(ctx.evidence),
-      );
-    }
-
     const pageUrl = ctx.pages[0]?.url;
 
     // 1. The response header — the CG report's preferred technique.

@@ -2,7 +2,6 @@ import type { AuditMeta, AuditResult } from "../../types";
 import { Audit } from "../../audit";
 import type { CheckContext } from '../../check-context';
 import { weightForGrade } from '../../scorer';
-import { scanReadTheSite, unreadSiteReason } from '../../scan-evidence';
 
 export class NoNofollowAudit extends Audit {
   static override meta: AuditMeta = {
@@ -33,15 +32,6 @@ export class NoNofollowAudit extends Audit {
   };
 
   audit(ctx: CheckContext): AuditResult {
-    // Nothing here can be attributed to this site; see `scanReadTheSite`.
-    if (!scanReadTheSite(ctx.evidence)) {
-      return this.notApplicable(
-        'No page here can be attributed to this site, so its nofollow directives were not judged.',
-        'No site-wide nofollow directives',
-        unreadSiteReason(ctx.evidence),
-      );
-    }
-
     if (ctx.pages.length === 0) {
       return this.fail(
         'No pages scanned.',

@@ -14,8 +14,6 @@ import type { CheckContext } from '../../check-context';
 import { INSTRUCTION_LEXICON } from './invisible-instruction-scan';
 import { idSelector } from './_agent-affordances';
 import {
-  scanReadTheSite,
-  unreadSiteReason,
   scanReadPageText,
   unreadPageTextReason,
 } from '../../scan-evidence';
@@ -341,15 +339,6 @@ export class AriaLayerInjectionScanAudit extends Audit {
   }
 
   audit(ctx: CheckContext): AuditResult {
-    // Nothing here can be attributed to this site; see `scanReadTheSite`.
-    if (!scanReadTheSite(ctx.evidence)) {
-      return this.notApplicable(
-        'No page here can be attributed to this site, so its non-visual values were not judged.',
-        EXPECTED,
-        unreadSiteReason(ctx.evidence),
-      );
-    }
-
     const s = survey(ctx);
 
     if (s.valuesSeen === 0) {

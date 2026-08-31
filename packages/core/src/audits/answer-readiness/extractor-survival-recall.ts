@@ -7,7 +7,6 @@ import { weightForGrade } from '../../scorer';
 import { readabilityArticle, AGGRESSIVE_DROP_RE } from '../../gatherers/extraction';
 import { normalizeText, sentences } from '../../gatherers/text-metrics';
 import { parseHtml, allJsonLdNodes } from '../../parser';
-import { scanReadTheSite, unreadSiteReason } from '../../scan-evidence';
 
 /** Below this share of key spans surviving, an agent reads a different page. */
 const RECALL_FLOOR = 0.9;
@@ -181,15 +180,6 @@ export class ExtractorSurvivalRecallAudit extends Audit {
   };
 
   audit(ctx: CheckContext): AuditResult {
-    // Nothing here can be attributed to this site; see `scanReadTheSite`.
-    if (!scanReadTheSite(ctx.evidence)) {
-      return this.notApplicable(
-        'No page here can be attributed to this site, so no key span was measured.',
-        'A page from this site whose key spans can be measured',
-        unreadSiteReason(ctx.evidence),
-      );
-    }
-
     const page = ctx.pages[0];
     if (!page) {
       return this.notApplicable(

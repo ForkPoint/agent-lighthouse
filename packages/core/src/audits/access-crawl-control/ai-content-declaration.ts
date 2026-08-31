@@ -23,7 +23,6 @@ import type { AuditMeta, AuditResult } from '../../types';
 import { Audit } from '../../audit';
 import type { CheckContext, PageContext } from '../../check-context';
 import { weightForGrade } from '../../scorer';
-import { scanReadTheSite, unreadSiteReason } from '../../scan-evidence';
 
 /**
  * The AIPREF attachment header. draft-ietf-aipref-attach defines exactly two
@@ -145,19 +144,6 @@ export class AiContentDeclarationAudit extends Audit {
   };
 
   audit(ctx: CheckContext): AuditResult {
-    // The Content-Usage header and the head-level opt-outs are both read off
-    // whatever answered the request. A bot wall answering 200 through the
-    // site's own edge carries the site's response headers on a body the site
-    // did not write, so a declaration read here is the wall's; see
-    // `scanReadTheSite`.
-    if (!scanReadTheSite(ctx.evidence)) {
-      return this.notApplicable(
-        'No response here can be attributed to this site, so no AI-usage declaration was read.',
-        EXPECTED,
-        unreadSiteReason(ctx.evidence),
-      );
-    }
-
     const found = survey(ctx);
 
     if (found.aipref) {

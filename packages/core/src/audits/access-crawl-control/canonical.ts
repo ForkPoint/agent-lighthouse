@@ -2,7 +2,6 @@ import type { AuditMeta, AuditResult } from '../../types';
 import { Audit } from '../../audit';
 import type { CheckContext, PageContext } from '../../check-context';
 import { weightForGrade } from '../../scorer';
-import { scanReadTheSite, unreadSiteReason } from '../../scan-evidence';
 
 /**
  * One comparison key per URL: host without `www.`, lower-cased path with no
@@ -132,18 +131,6 @@ export class CanonicalLinksAudit extends Audit {
 
   audit(ctx: CheckContext): AuditResult {
     const expected = 'Each page declares a canonical URL that points at itself';
-
-    // A bot wall answering 200 is served through the site's own edge, so it can
-    // carry the site's canonical link and nothing else the site wrote. Reading
-    // that link as a clean bill of health describes the wall; see
-    // `scanReadTheSite`.
-    if (!scanReadTheSite(ctx.evidence)) {
-      return this.notApplicable(
-        'No page here can be attributed to this site, so its canonical links were not judged.',
-        expected,
-        unreadSiteReason(ctx.evidence),
-      );
-    }
 
     if (ctx.pages.length === 0) {
       return this.notApplicable(

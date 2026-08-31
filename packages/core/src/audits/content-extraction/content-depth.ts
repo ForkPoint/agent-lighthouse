@@ -3,7 +3,6 @@ import { Audit } from "../../audit";
 import type { CheckContext } from '../../check-context';
 import { getWordCount } from '../../parser';
 import { weightForGrade } from '../../scorer';
-import { scanReadTheSite, unreadSiteReason } from '../../scan-evidence';
 
 export class ContentDepthAudit extends Audit {
   static override meta: AuditMeta = {
@@ -30,15 +29,6 @@ export class ContentDepthAudit extends Audit {
   };
 
   audit(ctx: CheckContext): AuditResult {
-    // Nothing here can be attributed to this site; see `scanReadTheSite`.
-    if (!scanReadTheSite(ctx.evidence)) {
-      return this.notApplicable(
-        'No page here can be attributed to this site, so its content depth was not judged.',
-        'More than 300 words of content per page',
-        unreadSiteReason(ctx.evidence),
-      );
-    }
-
     let pagesAboveThreshold = 0;
     const wordCounts: Array<{ url: string; count: number }> = [];
 

@@ -1,4 +1,6 @@
 import { describe, it, expect } from 'vitest';
+import { defaultConfig } from '../../audit-config';
+import { planAudits } from '../../audit-runner';
 import { AiContentDeclarationAudit } from './ai-content-declaration';
 import {
   challengedSiteContext,
@@ -185,12 +187,18 @@ describe('AiContentDeclarationAudit', () => {
   // Finding 1 of the pre-merge review: a bot wall served at HTTP 200 through the
   // site's own edge carries the site's head fragment and its site-wide response
   // headers on a body the site did not write. `origin-reachable` is met there,
-  // so the declaration this audit reads is the wall's.
+  // so the runner must not run this audit against the wall's declaration.
   it('declines a Content-Usage header read off a bot wall answering 200', () => {
     const pages = [withHeader(page('<title>Plain</title>'), 'content-usage', 'train-ai=n')];
     expect(audit.audit(mockCheckContext(pages)).status, 'the same header reached is judged').toBe(
       'pass',
     );
-    expect(audit.audit(challengedSiteContext(pages)).status).toBe('na');
+    const plan = planAudits(challengedSiteContext(pages), defaultConfig);
+    expect(plan.runnable.map((entry) => entry.reg.meta.id)).not.toContain(
+      AiContentDeclarationAudit.meta.id,
+    );
+    expect(
+      plan.skipped.find((stub) => stub.id === AiContentDeclarationAudit.meta.id)?.status,
+    ).toBe('na');
   });
 });

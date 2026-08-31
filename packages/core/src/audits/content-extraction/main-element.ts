@@ -2,7 +2,6 @@ import type { AuditMeta, AuditResult } from "../../types";
 import { Audit } from "../../audit";
 import type { CheckContext } from '../../check-context';
 import { weightForGrade } from '../../scorer';
-import { scanReadTheSite, unreadSiteReason } from '../../scan-evidence';
 
 export class MainElementAudit extends Audit {
   static override meta: AuditMeta = {
@@ -31,15 +30,6 @@ export class MainElementAudit extends Audit {
   };
 
   audit(ctx: CheckContext): AuditResult {
-    // Nothing here can be attributed to this site; see `scanReadTheSite`.
-    if (!scanReadTheSite(ctx.evidence)) {
-      return this.notApplicable(
-        'No page here can be attributed to this site, so its landmarks were not judged.',
-        '<main> element present on all pages',
-        unreadSiteReason(ctx.evidence),
-      );
-    }
-
     let pagesWithMain = 0;
 
     for (const page of ctx.pages) {

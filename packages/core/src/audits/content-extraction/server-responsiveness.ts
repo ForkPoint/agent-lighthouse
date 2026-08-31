@@ -2,7 +2,6 @@ import type { AuditMeta, AuditResult } from "../../types";
 import { Audit } from "../../audit";
 import type { CheckContext } from '../../check-context';
 import { weightForGrade } from '../../scorer';
-import { scanReadTheSite, unreadSiteReason } from '../../scan-evidence';
 
 /**
  * Bands, not a cliff. 800ms is the widely used "good TTFB" target; 2500ms is
@@ -60,15 +59,6 @@ export class ServerResponsivenessAudit extends Audit {
         `Response time could not be measured — the scan was blocked by ${ctx.wafProtection.name}.`,
         EXPECTED,
         `Blocked by ${ctx.wafProtection.name}`,
-      );
-    }
-
-    // Nothing here can be attributed to this site; see `scanReadTheSite`.
-    if (!scanReadTheSite(ctx.evidence)) {
-      return this.notApplicable(
-        'No page here can be attributed to this site, so its response time was not judged.',
-        EXPECTED,
-        unreadSiteReason(ctx.evidence),
       );
     }
 

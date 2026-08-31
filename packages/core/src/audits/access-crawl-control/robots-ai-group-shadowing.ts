@@ -9,7 +9,6 @@ import type { AuditMeta, AuditResult } from '../../types';
 import { Audit } from '../../audit';
 import { weightForGrade } from '../../scorer';
 import type { CheckContext } from '../../check-context';
-import { scanReadTheSite, unreadSiteReason } from '../../scan-evidence';
 import {
   parseRobots,
   groupsForBot,
@@ -151,15 +150,6 @@ export class RobotsAiGroupShadowingAudit extends Audit {
   }
 
   audit(ctx: CheckContext): AuditResult {
-    // Nothing here can be attributed to this site; see `scanReadTheSite`.
-    if (!scanReadTheSite(ctx.evidence)) {
-      return this.notApplicable(
-        'No response here can be attributed to this site, so its robots groups were not judged.',
-        EXPECTED,
-        unreadSiteReason(ctx.evidence),
-      );
-    }
-
     const robots = ctx.rootFiles['/robots.txt'];
     if (!robots || robots.status !== 200 || !robots.body.trim()) {
       return this.notApplicable(
