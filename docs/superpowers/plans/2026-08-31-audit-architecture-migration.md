@@ -48,8 +48,8 @@ in every phase inherits these.
 ```
    ┌─────────────────────────────────────────────────────────────┐
    │  PHASE 1   Truthful fixtures, and the absolute rule         │
-   │            a scan that reached nothing verdicts nothing     │
-   │            62 audits · 32.4 weight                          │
+   │            the runner refuses an unread scan, so no audit   │
+   │            has to remember to · 1 expression, 2 gates       │
    └───────────────────────────┬─────────────────────────────────┘
                                │  the measuring instrument:
                                │  every later claim is counted
@@ -116,6 +116,21 @@ directly. Zero audits threw on either fixture.
 Zero passes. The seven "vacuous passes" reported earlier in this work were an
 artifact of the self-contradictory `emptyContext()` and do not exist.
 
+**None of those 62 verdicts reaches a user.** Measured through `planAudits`
+rather than by calling `audit()` directly, fixture A gives
+`runnable = 4, skipped = 211`: the evidence gate removes 211 audits through
+their `requires` lines, and the remaining four — `https-enabled`,
+`no-bot-detection`, `no-redirect-chains`, `no-blocking-captcha` — declare no
+`requires` and each hand-roll `scanReadTheSite`. All four return `na`. The
+scanner is correct today.
+
+What is wrong is _how_ it is correct. The protection is one metadata line per
+audit, plus 42 audits that hand-roll `scanReadTheSite` inside `audit()`, plus
+four special cases. Nothing in an audit's own code enforces it. And the safety
+net has a hole exactly where it is needed: 142 of 215 audits have no
+`expectNotApplicableOnEmpty` call at all, and **all 62 sit in that gap** — the
+73 audits the contract does cover return `na` on fixture A anyway.
+
 **Fixture B — a bare but real site.** One reachable homepage, `lang="en"`, one
 `<h1>`, about 100 words of prose, no optional convention adopted at all.
 
@@ -159,23 +174,40 @@ absolute because _no_ verdict about an unread site can be correct.
 
 ## Phase 1 — Truthful fixtures, and the absolute rule
 
-**Law:** an audit that runs on a scan which obtained nothing reports on the
-scanner, not on the site.
+**Law:** protection from verdicting on an unread scan belongs to the runner,
+not to each audit's metadata.
 
-**Gate:** `packages/core/src/tests/unreachable-contract.test.ts` runs every
-registered audit against fixture A and asserts `na`. **No exemption list.** A
-law with an escape hatch is the thing this whole migration exists to stop.
+**Work:**
 
-**Second gate:** `packages/core/src/tests/bare-site.snapshot.test.ts` records
-fixture B's verdict table. It fails on any change, so a later phase must state
-what it moved and why. Not absolute — a reviewer may accept the new snapshot.
+1. `planAudits` gains one universal precondition, consulted _before_ `requires`:
+   when `scanReadTheSite(ctx.evidence)` is false, every audit is skipped with
+   `TAG_SKIPPED_NO_EVIDENCE` and `unreadSiteReason`. This is scan-level and
+   domain-neutral — the one kind of precondition that belongs in the runner, and
+   the kind `requires` already encodes. It is not an artifact precondition, which
+   `docs/architecture/audits.md` §12 keeps out of `planAudits` for good reason.
+2. `emptyContext()` is replaced by two honest fixtures in
+   `packages/core/src/tests/fixtures.ts`, both built through the real
+   `buildScanEvidence`.
+3. The 42 audits that hand-roll `scanReadTheSite` become dead code. Remove them
+   in their own commit, after the gates are green.
 
-**Cost:** 62 audits, 32.4 weight. 15 of them share
-`audits/access-crawl-control/_crawler-bot-audit.ts` and are one edit. 4 are
-`openapi-*` and land with Phase 2's merge.
+**Gate (absolute):** `packages/core/src/tests/unreachable-contract.test.ts`
+asserts `planAudits(fixtureA, defaultConfig, { enforceEvidence: true })
+.runnable.length === 0` over the whole registry. **No exemption list.** It
+covers all 215 audits by construction rather than by 73 opt-in calls, which is
+the property `expectNotApplicableOnEmpty` never had.
 
-**Exit:** both gates green, `emptyContext()` no longer self-contradictory, one
-`major` changeset.
+**Gate (snapshot):** `packages/core/src/tests/bare-site.snapshot.test.ts`
+records fixture B's verdict table. It fails on any change, so a later phase must
+state what it moved and why. A reviewer may accept a new snapshot; fixture A's
+gate has no such door.
+
+**Cost:** one runner expression, two fixtures, two test files, 42 deletions.
+Not 62 audit rewrites — the measurement above is why.
+
+**Exit:** both gates green, `emptyContext()` gone, the 42 hand-rolled guards
+gone, one `major` changeset (the `na` explanation text on an unreachable scan
+changes for the four ungated audits).
 
 **Plan:** `docs/superpowers/plans/2026-08-31-phase-1-truthful-fixtures.md`.
 
