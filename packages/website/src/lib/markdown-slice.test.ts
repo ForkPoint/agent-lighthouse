@@ -118,6 +118,6 @@ describe('readDocSource', () => {
 
   it('gives every section a distinct slug and its own route', () => {
     expect(new Set(DOC_SECTIONS.map((s) => s.slug)).size).toBe(DOC_SECTIONS.length);
-    expect(DOC_SECTIONS).toHaveLength(11);
+    expect(DOC_SECTIONS).toHaveLength(12);
   });
 });

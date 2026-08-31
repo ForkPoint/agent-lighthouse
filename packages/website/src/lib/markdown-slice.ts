@@ -77,7 +77,7 @@ export interface DocSection {
  * Where each docs page gets its prose.
  *
  * Reuse first: nothing here is copied into this package. Six pages are sections
- * of the README, rendered in place; five are whole files under `docs/`. A
+ * of the README, rendered in place; six are whole files under `docs/`. A
  * renamed heading empties a page silently, so `markdown-slice.test.ts` pins
  * every one of them against the file on disk.
  */
@@ -91,6 +91,7 @@ export const DOC_SECTIONS: readonly DocSection[] = [
   { slug: 'badge', title: 'Badge', file: 'docs/badge.md' },
   { slug: 'benchmark', title: 'Benchmark', file: 'docs/benchmark.md' },
   { slug: 'scoring', title: 'Scoring', file: 'docs/scoring.md' },
+  { slug: 'audit-architecture', title: 'Audit architecture', file: 'docs/architecture/audits.md' },
   { slug: 'cli', title: 'CLI reference', file: 'docs/cli.md' },
   { slug: 'config', title: 'Configuration', file: 'docs/config.md' },
 ];
