@@ -15,8 +15,8 @@ This document records three things in order: an architecture proposal, an advers
 Three claims in this document are wrong. Retractions 1 and 2 were produced by a
 defective test fixture, discovered on 2026-08-30 while explaining law 6 in
 [`2026-08-30-audit-architecture-quiz.md`](./2026-08-30-audit-architecture-quiz.md).
-Retraction 3 has a different cause — a source-text scan that counted a comment —
-and is recorded last.
+Retraction 3 has a different cause — a source-text scan with no definition of
+what it was counting — and is recorded last.
 
 `emptyContext()` builds its evidence from `allEvidenceMet()`, setting
 `judgeable: true` and `usablePageTypes: ALL_PAGE_TYPES`, while supplying zero
@@ -55,29 +55,56 @@ still rejected. It is rejected on those grounds, not on the counterexample.
 **Also corrected:** the non-`na` figure of 81 was inflated by 19 for the same
 reason. The true figure is 62.
 
-**Retraction 3 — §7's fetch counts are one too many.** §7.1's heading, "9 of 33
-fetching audits never import `isSafeUrl`", and §7.2's "33 audits, 33 private
-caps" both count `operability-safety/unsafe-agent-triggerable-affordances` as a
-fetching audit. It does not fetch. The count came from a raw source-text scan,
-and that file's only match is a comment at line 6 — "Its test pins that
-`ctx.fetch` is never called." The audit is markup analysis only, and its test
-pins that `ctx.fetch` is never called.
+**Retraction 3 — §7's denominator counts the wrong things, in both directions.**
+§7.1's heading, "9 of 33 fetching audits never import `isSafeUrl`", and §7.2's
+"33 audits, 33 private caps" both come from a raw source-text scan for
+`ctx.fetch` over the audit tree. That scan is wrong three times over.
 
-The corrected figures are **8 of 32**, and only **6** of the eight fetch a URL
+**The definition first.** A *network-reaching audit* is a **registered** audit
+that can issue a request, directly or through a helper. That is the denominator
+this document now uses everywhere. It is not the same as "files under
+`packages/core/src/audits/` that contain the string `ctx.fetch`", which is what
+was measured.
+
+Three errors, measured against the tree:
+
+1. **A comment counted as a call.** `operability-safety/unsafe-agent-triggerable-affordances`
+   does not fetch. Its only match is the comment at line 6 — "Its test pins that
+   `ctx.fetch` is never called." The audit is markup analysis only. 33 → 32.
+2. **A helper counted as an audit.** `agent-interfaces/_mcp-client.ts` calls
+   `ctx.fetch`, but it is exported from no `index.ts` and is registered as no
+   audit. It is a shared helper. 32 files → **31 registered audits that call
+   `ctx.fetch` in their own file**.
+3. **Five audits missed entirely.** `mcp-version-downgrade`,
+   `mcp-tool-description-coverage`, `mcp-tool-contract-validity`,
+   `mcp-tools-list-determinism` and `mcp-modern-era-reachability` each reach the
+   network through `postRpc` / `getRpc` in that helper and name no fetch
+   themselves. A scan for `ctx.fetch` cannot see them.
+
+**The corrected figure is 8 of 36 network-reaching audits** — 31 that fetch in
+their own file plus the 5 the helper fetches for. Errors 2 and 3 nearly cancel
+in the count and do not cancel in meaning: the 5 helper-only audits are gated,
+because `_mcp-client.ts` imports `isSafeUrl` and calls it before every request.
+
+The numerator is unchanged at **8**, and only **6** of the eight fetch a URL
 taken from scanned content: `answer-readiness/author-page`,
 `machine-discovery/rss-feed`, `machine-discovery/rss-feed-content`,
 `machine-discovery/no-broken-links`, `agent-interfaces/openapi-servers`,
 `agent-interfaces/search-endpoint`. The other two —
 `answer-readiness/about-credentials` and `machine-discovery/cors-ai-files` —
-fetch only paths the scanner itself composes. §7.2's budget count is 32, not 33.
-Read §7.1's nine-name list and §7.2's "33" against these numbers.
-`docs/architecture/audits.md` §11 and
+fetch only paths the scanner itself composes.
+
+§7.2's budget count is **36**, not 33. Read §7.1's nine-name list, §7.2's "33"
+and §8's "9/33" row against these numbers. `docs/architecture/audits.md` §8 and
+§11 and
 [`2026-08-31-audit-architecture-migration.md`](../plans/2026-08-31-audit-architecture-migration.md)
-carry the corrected counts.
+carry the same 36 and the same definition.
 
 **The method, not just the number, was wrong.** A substring scan cannot tell a
-call from a comment. The migration plan's Phase 3 and Phase 4b gates parse the
-TypeScript instead, for exactly this reason.
+call from a comment, cannot tell an audit from a helper, and cannot see an audit
+that fetches through something else. The migration plan's Phase 3 and Phase 4b
+gates parse the TypeScript instead, and they read the whole audit tree —
+helpers included — which is what makes them complete without an import graph.
 
 ---
 
@@ -481,7 +508,7 @@ The half that dies: replacing `na-contract` with a subject-derived suite would b
 
 Both verified, both live.
 
-### 7.1 Safety — 9 of 33 fetching audits never import `isSafeUrl` **[verified]** **[corrected: 8 of 32 — see §0, retraction 3]**
+### 7.1 Safety — 9 of 33 fetching audits never import `isSafeUrl` **[verified]** **[corrected: 8 of 36 network-reaching audits — see §0, retraction 3]**
 
 `CLAUDE.md` mandates it:
 
@@ -508,7 +535,7 @@ if (resolved.hostname === domain || resolved.hostname.endsWith(`.${domain}`))
 
 which admits any wildcard-DNS subdomain resolving into private address space.
 
-### 7.2 Fetch budget — 33 audits, 33 private caps, no sum **[measured]** **[corrected: 32 — see §0, retraction 3]**
+### 7.2 Fetch budget — 33 audits, 33 private caps, no sum **[measured]** **[corrected: 36 network-reaching audits — see §0, retraction 3]**
 
 | audit | cap | where |
 |:--|:--|:--|
@@ -553,7 +580,7 @@ flowchart TB
 | 3 | Population | `meta.applicablePageTypes` | `planAudits` | holds; no CI gate needed |
 | 4 | Evidence | `meta.requires` | `check:requires` + `GATE_EXEMPTIONS` | holds, 215/215 |
 | 5 | **Reading & absence** | the gatherer's exported precondition constant | changes A, B, C | 1 family broken |
-| 6 | **Budget & safety** | fetch caps, `isSafeUrl()` | change D | 9/33 unguarded |
+| 6 | **Budget & safety** | fetch caps, `isSafeUrl()` | change D | 9/33 unguarded **[corrected: 8 of 36 — see §0, retraction 3]** |
 
 ### What the surviving architecture rule actually is
 

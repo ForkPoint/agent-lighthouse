@@ -283,10 +283,16 @@ git commit -m "test(core): two scan fixtures that describe themselves truthfully
 - Consumes: `unreachableContext` and `bareSiteContext` from Task 1;
   `scanReadTheSite` and `unreadSiteReason`, both already exported from
   `../scan-evidence`; `TAG_SKIPPED_NO_EVIDENCE` from `./constants`.
-- Produces: safe production `planAudits(ctx, config)` with no disabling option;
-  test-only `planAllAuditsForTest(config): AuditPlan`, imported by tests through
-  its file path and never exported from `packages/core`; Task 3 relies on the
-  production planner returning `runnable.length === 0` on fixture A.
+- Produces: `planAudits(ctx, config)` gated by default — the unread-scan
+  precondition takes no option at all, and the `requires` gate is on unless a
+  caller passes the documented diagnostic opt-out `{ enforceEvidence: false }`.
+  `PlanOptions` and the third parameter stay, so `orchestrator.ts:490` and
+  `ScanOptions.enforceEvidenceGate` keep working unchanged. Also test-only
+  `planAllAuditsForTest(config): AuditPlan`, imported by tests through its file
+  path and never exported from `packages/core` — it is the only full bypass of
+  every gate. Task 3 relies on the production planner returning
+  `runnable.length === 0` on fixture A, which holds for any value of
+  `enforceEvidence` because the precondition sits above it.
 
 - [ ] **Step 1: Write the failing test**
 

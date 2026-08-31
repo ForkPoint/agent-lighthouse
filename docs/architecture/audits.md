@@ -433,10 +433,10 @@ origin gate and the only layer that can be counted.
    audit ──┐                             audit ──┐
    audit ──┼──► ctx.fetch ──► net        audit ──┼──► gatherer ──► net
    audit ──┘                             audit ──┘         ▲
-     …32 audits fetch                       …one layer     │
+    …36 audits reach net                    …one layer     │
       6 fetch a content URL                             gated once
         with no isSafeUrl                              counted once
-     32 private caps                                    cached once
+     36 private caps                                    cached once
      nothing sums them
 ```
 
@@ -449,11 +449,26 @@ seven byte-identical copies of `getOpenApiSpec`.
 It also removes the possibility of the duplication it was cloned from: with no
 audit able to reach the network, a private reader has nowhere to live.
 
-The enforcing source gate scans production audit files and rejects `ctx.fetch`,
-destructured or global `fetch`, imports from the fetcher, and imports from direct
-HTTP clients. The project does not add a second fetch-free audit context type;
-the source gate remains necessary even with such a type and is the smaller
-complete boundary. The gate runs in CI as `pnpm check:audit-boundaries`.
+**How the 36 is counted.** A *network-reaching audit* is a registered audit that
+can issue a request, directly or through a helper. 31 call `ctx.fetch` in their
+own file. The other 5 — `mcp-version-downgrade`, `mcp-tool-description-coverage`,
+`mcp-tool-contract-validity`, `mcp-tools-list-determinism`,
+`mcp-modern-era-reachability` — name no fetch at all and reach the network
+through `agent-interfaces/_mcp-client.ts`, a shared helper that lives inside the
+audit tree and is registered as no audit. Counting files that call `ctx.fetch`
+gives 32 and counts that helper as an audit; counting registered audits that can
+reach the network gives 36. The second is the number this document uses.
+
+The enforcing source gate parses every production TypeScript file under the audit
+tree — audit sources **and** the private helpers beside them, `_mcp-client.ts`
+included — and rejects `ctx.fetch`, destructured or global `fetch`, imports from
+the fetcher, and imports from direct HTTP clients. Scanning the whole tree is
+what makes the gate complete without an import graph, so the rule that keeps it
+complete is: an audit's network helper stays inside the audit tree until Phase 4b
+moves it into a gatherer, and never lands in some third directory the gate does
+not read. The project does not add a second fetch-free audit context type; the
+source gate remains necessary even with such a type and is the smaller complete
+boundary. The gate runs in CI as `pnpm check:audit-boundaries`.
 
 ---
 
@@ -515,8 +530,8 @@ Measured 2026-08-30 across 215 registered audits. **None is fixed.**
 | An artifact-contents audit fails on absence                                    | `sitemap-lastmod` (A, 1.0) `fail`s at `priority: 'critical'`; `sitemap-absolute-urls` (B, 0.6) `fail`s. 1.6 weight                                                                                                                                                                                                                                                                                                                                 |
 | The page-type gate is doing the absence rule's job                             | `product-identifiers` has **no** `notApplicable` branch — the gate is the only thing keeping `fail: 'No Product schema found'` off a bakery                                                                                                                                                                                                                                                                                                        |
 | Private readers duplicate a gatherer                                           | 5 audits carry `getSitemapResult` while `gatherers/sitemap.ts` exists without the four-way split                                                                                                                                                                                                                                                                                                                                                   |
-| Content-harvested URLs reach the network ungated                               | 8 of 32 fetching audits never import `isSafeUrl`, and 6 of those fetch a URL taken from scanned content: `author-page`, `rss-feed`, `rss-feed-content`, `no-broken-links`, `openapi-servers`, `search-endpoint`. An unguarded first hop is fetched **and** disarms the redirect gate behind it                                                                                                                                                     |
-| Fetching is unbounded in aggregate                                             | 32 audits, 32 private caps, nothing sums them                                                                                                                                                                                                                                                                                                                                                                                                      |
+| Content-harvested URLs reach the network ungated                               | 8 of 36 network-reaching audits never import `isSafeUrl`, and 6 of those fetch a URL taken from scanned content: `author-page`, `rss-feed`, `rss-feed-content`, `no-broken-links`, `openapi-servers`, `search-endpoint`. An unguarded first hop is fetched **and** disarms the redirect gate behind it                                                                                                                                                     |
+| Fetching is unbounded in aggregate                                             | 36 audits reach the network, each bounding itself privately, nothing sums them. 31 call `ctx.fetch` in their own file; the other 5 fetch through `agent-interfaces/_mcp-client.ts`, a shared helper inside the audit tree                                                                                                                                                                                                                                                                                                                                                                                                      |
 | The warrant has no expiry                                                      | 215 of 216 `reviewed:` stamps, all one sprint, read by nothing                                                                                                                                                                                                                                                                                                                                                                                     |
 
 ---

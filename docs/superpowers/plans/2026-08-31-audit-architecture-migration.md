@@ -78,7 +78,7 @@ in every phase inherits these.
    │  PHASE 4   The origin gate, and audits stop fetching        │
    │            4a  isSafeUrl moves into ctx.fetch, keyed on     │
    │                origin — fixes 6, unblocks localhost         │
-   │            4b  32 fetching audits move into gatherers       │
+   │            4b  36 network-reaching audits move to gatherers │
    └───────────────────────────┬─────────────────────────────────┘
                                │  3 and 4 both required: the origin
                                │  cache needs one fetching layer and
@@ -331,12 +331,23 @@ The other two of the eight without the import —
 fetch only `${ctx.baseUrl}${path}`. They are same-origin and correct as they
 stand.
 
-### 4b — the 32 fetching audits move into gatherers
+### 4b — the 36 network-reaching audits move into gatherers
 
 One layer issues requests. It is then the only layer that needs the gate, the
 only layer that can be counted against a budget, and the only layer that can
 cache. A gatherer with exactly one consumer is still correct: the fetch becomes
 visible to the scan instead of hidden in a private constant.
+
+**What 36 counts.** A _network-reaching audit_ is a registered audit that can
+issue a request, directly or through a helper — the denominator defined in
+[`2026-08-30-audit-architecture-review.md`](../specs/2026-08-30-audit-architecture-review.md)
+§0, retraction 3. 31 call `ctx.fetch` in their own file. The other 5 —
+`mcp-version-downgrade`, `mcp-tool-description-coverage`,
+`mcp-tool-contract-validity`, `mcp-tools-list-determinism`,
+`mcp-modern-era-reachability` — name no fetch and go through
+`agent-interfaces/_mcp-client.ts`, a shared helper inside the audit tree that is
+registered as no audit. This phase moves that helper into a gatherer alongside
+the 31, which is what empties the tree.
 
 **Gate:** `pnpm check:audit-boundaries` parses every production TypeScript file
 under `packages/core/src/audits/` — audit sources and the private helpers beside
@@ -355,7 +366,7 @@ with an outbound network rule.
 
 **Exit:** the source gate green, a local CLI scan of
 `http://localhost:3000` completes, hosted egress tests prove private destinations
-are blocked, 32 private caps are replaced by one budget, one `major` changeset.
+are blocked, 36 private caps are replaced by one budget, one `major` changeset.
 
 ### The two source gates parse, they do not grep
 
@@ -366,39 +377,60 @@ checker, no program, no import traversal — and walk the syntax tree. Neither
 matches text.
 
 **Why, concretely.** A substring scan already produced a wrong number on this
-work. `operability-safety/unsafe-agent-triggerable-affordances` was counted as a
-fetching audit because line 6 of it reads "Its test pins that `ctx.fetch` is
-never called." The audit never fetches; the comment does. See
+work, three ways at once. `operability-safety/unsafe-agent-triggerable-affordances`
+was counted as a fetching audit because line 6 of it reads "Its test pins that
+`ctx.fetch` is never called" — the audit never fetches; the comment does.
+`agent-interfaces/_mcp-client.ts` was counted as an audit, and it is a helper
+registered nowhere. And five audits that fetch only through that helper were
+missed, because none of them contains the string. See
 [`2026-08-30-audit-architecture-review.md`](../specs/2026-08-30-audit-architecture-review.md)
-§0, retraction 3. A grep fails that file forever, and it also passes any
+§0, retraction 3. A grep fails the first file forever, and it also passes any
 behaviour-preserving rename — `const f = ctx.fetch` reads no differently to a
 regular expression than a sentence about fetching does.
 
 **What each gate walks.**
 
-| gate     | rejected node                                                                                                                                                                                                                                                                               | accepted                                                                           |
-| :------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | :--------------------------------------------------------------------------------- |
-| Phase 3  | `PropertyAccessExpression` / `ElementAccessExpression` whose name is `pageType`; a `BindingElement` destructuring `pageType`; `pageType` in a type position that resolves to a value read                                                                                                   | the identifier inside a comment, a JSDoc tag, a string literal, or a template span |
-| Phase 4b | `PropertyAccessExpression` `.fetch` on `ctx` or any local alias of it; a `BindingElement` destructuring `fetch`; a bare `fetch` identifier in call position that no local binding shadows; an `ImportDeclaration` whose module specifier resolves to the fetcher or to a direct HTTP client | the same four literal contexts, and any of these inside a `*.test.ts` file         |
+| gate     | rejected node                                                                                                                                                                                                                                                                               | accepted                                                                                     |
+| :------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | :------------------------------------------------------------------------------------------- |
+| Phase 3  | a `PropertyAccessExpression` whose name is `pageType`; an `ElementAccessExpression` whose argument is the string literal `'pageType'`; a `BindingElement` destructuring `pageType`                                                                                                          | the identifier inside a comment, a JSDoc tag, an ordinary string literal, or a template span |
+| Phase 4b | `PropertyAccessExpression` `.fetch` on `ctx` or any local alias of it; a `BindingElement` destructuring `fetch`; a bare `fetch` identifier in call position that no local binding shadows; an `ImportDeclaration` whose module specifier resolves to the fetcher or to a direct HTTP client | the same four literal contexts, and any of these inside a `*.test.ts` file                   |
 
 Comments and JSDoc are never visited, because the parser attaches them as
 trivia rather than as nodes. String and template literals are visited and
 skipped by kind. That is the whole difference from grep, and it is the whole
 point.
 
+**One carve-out, and it is not an exception to that rule.** In
+`page['pageType']` the string literal is not prose — it is the property name of
+an `ElementAccessExpression`, and skipping it would skip exactly the read the
+gate exists to catch. So the argument of an `ElementAccessExpression` is
+inspected as a name, while every other string literal is skipped. There is no
+type-position rule and no resolution step: both are impossible without a type
+checker, and the gate has none by design. A `pageType` that appears only in a
+type annotation is not a value read and is not rejected.
+
 **Scope.** Both gates read every production `.ts` file under
 `packages/core/src/audits/`, not only the files that export an audit. The
 private helper beside an audit is inside the boundary the gate defends, so it is
-inside the set the gate reads.
+inside the set the gate reads. `agent-interfaces/_mcp-client.ts` is the live
+example: it is registered as no audit, it imports the fetcher, and five audits
+reach the network through it and name no fetch themselves. The gate sees the
+helper, so it sees the leak.
 
-**What is deliberately not built yet.** No import graph. Neither gate follows a
-local import to ask whether the imported module fetches. That is sound only
-while the audit tree contains no module that reaches the network without naming
-the fetcher or an HTTP client directly, which is true today: Phase 4b moves the
-last 32 fetching audits into gatherers, and gatherers live outside
-`packages/core/src/audits/`. Add single-hop traversal of relative imports the
-first time an audit-tree module can reach a network helper the direct-import
-rule does not name. Until then, a graph is cost with no defect to catch.
+**No import graph, and the reason is the scope above.** Neither gate follows a
+local import to ask whether the imported module fetches, and neither needs to.
+The soundness argument is not that every audit names its own fetch — five of
+them already do not. It is that **every production module inside the audit tree
+is itself scanned**, so a module that reaches the network is caught in its own
+file whether or not its callers name it. `_mcp-client.ts` is caught on its
+`../../fetcher` import, not on anything its five callers contain.
+
+That argument holds exactly as long as the tree stays the boundary, so the
+boundary is a rule and not an observation: **an audit's network helper stays
+inside `packages/core/src/audits/` until Phase 4b moves it into a gatherer.** It
+may not move into some third directory the gate does not read while its callers
+stay behind. Under that rule an import graph buys nothing, so it is not built.
+Revisit only if that rule is broken.
 
 ## Phase 5 — One URL, one score, the origin cached
 
@@ -474,7 +506,7 @@ green on a manual `workflow_dispatch`, one `major` changeset.
 | Phase 1's absolute gate is loosened with an exemption list the first time an audit is awkward | The gate ships with no exemption mechanism to loosen. Adding one is a visible change to the test file, reviewable as such              |
 | Phase 3 renames `applicablePageTypes` across 215 metas in one commit                          | The rename is mechanical and typechecked. It is its own commit, separate from the behaviour change, so a bisect can tell them apart    |
 | A partly informative category keeps its full registry mass                                    | Phase 3 stores registry and assessed mass separately; scorer tests pin the 1.0 audit weight through the overall formula                |
-| Phase 4b touches 32 audits and could regress verdicts silently                                | Phase 1's fixture B snapshot is the detector. Any verdict that moves fails it and must be explained                                    |
+| Phase 4b touches 36 audits and could regress verdicts silently                                | Phase 1's fixture B snapshot is the detector. Any verdict that moves fails it and must be explained                                    |
 | A shared origin cache crosses authentication boundaries                                       | Only canonical anonymous reads use it; authenticated and explicitly prefetched reads bypass it, and isolation tests pin the rule       |
 | Phase 5 changes what a scan _is_, and every published score changes                           | `major` changeset, and the benchmark corpus is re-run and its numbers republished as part of the phase                                 |
 | Later phases are planned against numbers earlier phases invalidate                            | Each phase's plan file is written immediately before that phase runs, never earlier. This roadmap deliberately stops at scope and gate |
