@@ -5,6 +5,7 @@ import type { CheckContext } from './check-context';
 import type { ScanConfig, CategoryConfig, AuditRegistration } from './audit-config';
 import { calculateCategoryScore, calculateOverallScore } from './scorer';
 import { traceFromCheck, formatTrace, type AuditTrace } from './audit-trace';
+import { scanReadTheSite, unreadSiteReason } from './scan-evidence';
 
 /** How much of a failure message a report is willing to carry. */
 const MAX_ERROR_CHARS = 400;
@@ -89,14 +90,13 @@ export interface AuditPlan {
 /** How `planAudits` should treat audits the scan cannot feed. */
 export interface PlanOptions {
   /**
-   * Skip audits whose `requires` the scan did not obtain.
+   * Skip audits whose `requires` the scan did not obtain. **Defaults to true.**
    *
-   * The orchestrator turns this on for every scan
-   * (`enforceEvidenceGate ?? true`), so an audit's `requires` decides what a
-   * blocked or client-rendered scan reports. It defaults to off in this option
-   * bag only so a caller planning audits directly gets the unfiltered set;
-   * passing `false` is the measurement escape hatch for comparing a gated run
-   * against an ungated one.
+   * An audit's `requires` decides what a blocked or client-rendered scan
+   * reports, so a caller that omits this option gets the gated set — the same
+   * set a scan gets. Passing `false` is an explicit diagnostic opt-out for
+   * comparing a gated run against an ungated one; it is never the default and
+   * never what production takes.
    */
   enforceEvidence?: boolean;
 }
@@ -163,9 +163,29 @@ export function planAudits(
   // recorded as `na` stubs so they remain visible in the report.
   const runnable: AuditPlan['runnable'] = [];
   const skipped: CheckResult[] = [];
+
+  // One precondition above every other: the scan holds no response it can
+  // attribute to this site, so no audit may say anything about it.
+  //
+  // This is scan-level and domain-neutral, which is the only kind of
+  // precondition that belongs here — `requires` is already exactly that. An
+  // artifact precondition stays in the gatherer that performs the read; see
+  // docs/architecture/audits.md §12.
+  //
+  // It sits above `requires` rather than inside it because `requires` is the
+  // audit's own claim about itself. Four audits declare none and were correct
+  // only by hand-rolling this check inside `audit()`, and 142 of 215 audits
+  // have no contract test that would catch the omission. An audit's protection
+  // must not depend on the audit remembering.
+  const unread = !scanReadTheSite(ctx.evidence);
+  const unreadWhy = unread ? `Not assessed: ${unreadSiteReason(ctx.evidence)}` : '';
   for (const cat of config.categories) {
     const regs = config.audits[cat.id] ?? [];
     for (const reg of regs) {
+      if (unread) {
+        skipped.push(stubCheck(reg.meta, TAG_SKIPPED_NO_EVIDENCE, unreadWhy));
+        continue;
+      }
       const applicable = reg.meta.applicablePageTypes;
       if (applicable && applicable.length > 0) {
         if (!applicable.some((pt: PageType) => scannedPageTypes.has(pt))) {
@@ -179,7 +199,7 @@ export function planAudits(
           continue;
         }
       }
-      if (options.enforceEvidence) {
+      if (options.enforceEvidence ?? true) {
         // Page-type mismatch is checked first, above, so no existing wording
         // changes. Only an audit the scan could have fed reaches this.
         const unmet = unmetRequirements(ctx, reg.meta);
