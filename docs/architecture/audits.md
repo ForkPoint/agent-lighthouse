@@ -227,30 +227,60 @@ This resolves two unrelated-looking problems the same way.
                                                     "we could not tell"
 ```
 
-`/shop/sourdough` matches the **category** regex before the product branch is
-reached. Product detection by markup is a CSS class-name match. And `content`
-means _"we could not classify this"_ — a label fourteen audits once gated on,
-so a contact page and a privacy policy were judged for missing bylines.
+On `/shop/sourdough` the product branch runs first and no product rule matches —
+the URL pattern wants `shop/<a>/<b>/<c>` and this path has one segment — so the
+category regex claims it. Product detection by markup is a CSS class-name match.
+And `content` means _"we could not classify this"_ — a label fourteen audits once
+gated on, so a contact page and a privacy policy were judged for missing bylines.
 
 Under consent, result mode is one pure function:
+
+Provenance travels with each page, not with the scan: every `PageContext` keeps
+its `pageType` and gains a `pageTypeSource` of `declared` or `detected`. The
+scan target is `declared` from `--page-type`, each URL named in
+`ScanOptions.pages` is `declared` from its override, and everything the crawl
+found is `detected`.
+
+One pure function then decides an audit's whole participation — the pages it may
+read **and** the mode its result is reported in — because deciding those apart is
+what would let a guess reach a score:
 
 ```ts
 // meta — the page types under which this audit is scored
 const meta = { pageTypes: ["product"] satisfies PageType[] };
 
-function scoreModeFor(meta: AuditMeta, ctx: CheckContext): ScoreDisplayMode {
-  if (meta.scoreDisplayMode === "informative") return "informative";
-  if (!meta.pageTypes?.length) return meta.scoreDisplayMode;
+interface AuditScope {
+  pages: readonly PageContext[]; // immutable, per audit
+  mode: ScoreDisplayMode;
+}
 
-  const consented =
-    ctx.typeSource === "declared" && meta.pageTypes.includes(ctx.pageType);
-  return consented ? meta.scoreDisplayMode : "informative";
+function scoreModeFor(meta: AuditMeta, ctx: CheckContext): AuditScope {
+  if (!meta.pageTypes?.length) {
+    return { pages: ctx.pages, mode: meta.scoreDisplayMode };
+  }
+
+  const declared = ctx.pages.filter(
+    (p) => p.pageTypeSource === "declared" && meta.pageTypes.includes(p.pageType),
+  );
+  if (declared.length > 0) {
+    return { pages: declared, mode: meta.scoreDisplayMode };
+  }
+
+  const detected = ctx.pages.filter((p) => meta.pageTypes.includes(p.pageType));
+  return { pages: detected, mode: "informative" };
 }
 ```
 
-The runner applies that value when it creates `CheckResult`. `AuditPlan` stays
+A detected page never enters a scored page set. An audit that declares no
+`pageTypes` is universal and gets every page.
+
+The runner applies both halves when it creates `CheckResult`. `AuditPlan` stays
 `{ reg, categoryId }`, and static audit meta is never changed. Two concurrent
 scans therefore cannot leak consent state into each other.
+
+Audits do not read `pageType` themselves. A typed audit that needs a narrower
+cut of the pages it was handed goes through `gatherers/pages.ts`, which already
+owns that boundary.
 
 ```
    al scan URL --page-type product     al scan URL
@@ -436,8 +466,8 @@ origin gate and the only layer that can be counted.
     …36 audits reach net                    …one layer     │
       6 fetch a content URL                             gated once
         with no isSafeUrl                              counted once
-     36 private caps                                    cached once
-     nothing sums them
+      4 named private caps                              cached once
+       the rest unbounded
 ```
 
 A gatherer with exactly one consumer is still correct. The fetch becomes
@@ -529,9 +559,9 @@ Measured 2026-08-30 across 215 registered audits. **None is fixed.**
 | The empty-scan fixture contradicts itself                                      | `emptyContext()` sets `judgeable: true` and `usablePageTypes: ALL_PAGE_TYPES` while supplying zero pages. It is the fixture every audit's unit test uses, so no unit test can catch a missing or wrong `requires` line — which is the only thing standing between 62 audits and a verdict about a site nobody read                                                                                                                                 |
 | An artifact-contents audit fails on absence                                    | `sitemap-lastmod` (A, 1.0) `fail`s at `priority: 'critical'`; `sitemap-absolute-urls` (B, 0.6) `fail`s. 1.6 weight                                                                                                                                                                                                                                                                                                                                 |
 | The page-type gate is doing the absence rule's job                             | `product-identifiers` has **no** `notApplicable` branch — the gate is the only thing keeping `fail: 'No Product schema found'` off a bakery                                                                                                                                                                                                                                                                                                        |
-| Private readers duplicate a gatherer                                           | 5 audits carry `getSitemapResult` while `gatherers/sitemap.ts` exists without the four-way split                                                                                                                                                                                                                                                                                                                                                   |
+| Private readers duplicate a gatherer                                           | 4 audits carry a byte-identical `getSitemapResult` (`sitemap-exists`, `sitemap-absolute-urls`, `sitemap-lastmod`, `discovery-index-coverage`) and a fifth, `access-crawl-control/sensitive-paths`, reads `ctx.rootFiles['/sitemap.xml']` inline — all while `gatherers/sitemap.ts` exists without the four-way split                                                                                                                                                                                                                                                                                                                                                   |
 | Content-harvested URLs reach the network ungated                               | 8 of 36 network-reaching audits never import `isSafeUrl`, and 6 of those fetch a URL taken from scanned content: `author-page`, `rss-feed`, `rss-feed-content`, `no-broken-links`, `openapi-servers`, `search-endpoint`. An unguarded first hop is fetched **and** disarms the redirect gate behind it                                                                                                                                                     |
-| Fetching is unbounded in aggregate                                             | 36 audits reach the network, each bounding itself privately, nothing sums them. 31 call `ctx.fetch` in their own file; the other 5 fetch through `agent-interfaces/_mcp-client.ts`, a shared helper inside the audit tree                                                                                                                                                                                                                                                                                                                                                                                                      |
+| Fetching is unbounded in aggregate                                             | 36 audits reach the network and **4** name a private cap; the rest are bounded by nothing at all, and nothing sums any of them. `machine-discovery/rss-feed` fetches every discovered feed link in an unbounded loop. 31 of the 36 call `ctx.fetch` in their own file; the other 5 fetch through `agent-interfaces/_mcp-client.ts`, a shared helper inside the audit tree                                                                                                                                                                                                                                                                                                                                                                                                      |
 | The warrant has no expiry                                                      | 215 of 216 `reviewed:` stamps, all one sprint, read by nothing                                                                                                                                                                                                                                                                                                                                                                                     |
 
 ---

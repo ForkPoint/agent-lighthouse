@@ -488,7 +488,7 @@ Two unnamed costs: `subject` would have to be added to `AuditMetaSchema`, a seco
 
 `gatherers/` already **is** the artifact registry: 17 modules including `openapi.ts`, `sitemap.ts`, `feeds.ts`, `robots.ts`. Adding `artifacts.ts` gives two registries.
 
-The real defect is narrower: `gatherers/sitemap.ts` exists — 220 lines, with `siteSitemapTree`, `isW3CDateTime`, `sampleEntries` — but **does not export the absent / malformed / readable classification that `openapi.ts` has**. So five audits carry byte-identical private `getSitemapResult` helpers: `machine-discovery/sitemap-lastmod.ts:13-20`, `sitemap-exists.ts`, `sitemap-absolute-urls.ts`, `discovery-index-coverage.ts:13-20`, `access-crawl-control/sensitive-paths.ts`. **[verified]** That is one missing export, not a new module.
+The real defect is narrower: `gatherers/sitemap.ts` exists — 220 lines, with `siteSitemapTree`, `isW3CDateTime`, `sampleEntries` — but **does not export the absent / malformed / readable classification that `openapi.ts` has**. So **four** audits carry byte-identical private `getSitemapResult` helpers, each defined at `:13`: `machine-discovery/sitemap-lastmod.ts`, `sitemap-exists.ts`, `sitemap-absolute-urls.ts`, `discovery-index-coverage.ts`. A fifth audit reads the same artifact without the helper: `access-crawl-control/sensitive-paths.ts:172` takes `ctx.rootFiles['/sitemap.xml'] ?? ctx.rootFiles['/sitemap-index.xml']` inline and parses it on the spot. **[verified — corrected 2026-08-31; this claim previously read "five audits carry" the helper, and `sensitive-paths` carries none]** Five readers, four copies, one missing export — not a new module.
 
 The registry also cannot be keyed as assumed. The 16 `rootFiles` paths are only part of the artifact surface: feeds are *discovered* (head links plus probe paths, `gatherers/feeds.ts`), MCP endpoints are live-probed, markdown alternates are per-URL, Wikidata is third-party. `ArtifactId → root path` covers roughly half the population.
 
@@ -535,7 +535,7 @@ if (resolved.hostname === domain || resolved.hostname.endsWith(`.${domain}`))
 
 which admits any wildcard-DNS subdomain resolving into private address space.
 
-### 7.2 Fetch budget — 33 audits, 33 private caps, no sum **[measured]** **[corrected: 36 network-reaching audits — see §0, retraction 3]**
+### 7.2 Fetch budget — 33 audits, 33 private caps, no sum **[measured]** **[corrected: 36 network-reaching audits, and only 4 private caps — see §0, retraction 3 and the note below]**
 
 | audit | cap | where |
 |:--|:--|:--|
@@ -545,6 +545,20 @@ which admits any wildcard-DNS subdomain resolving into private address space.
 | `machine-discovery/no-broken-links` | `.slice(0, 20)` | `:85` |
 
 Nothing declares it, nothing sums it, nothing bounds a scan.
+
+**The heading's 1:1 phrasing is wrong, and wrong in the safe direction.** "33
+audits, 33 private caps" reads as one cap per fetching audit. The table above it
+names **4**, and 4 is the true figure — the remaining 32 network-reaching audits
+carry no cap at all. `machine-discovery/rss-feed:62-63` is the clearest case: it
+loops over every feed link discovered on the page and fetches each one, with no
+bound of any kind. `answer-readiness/author-page`, `about-credentials`,
+`agent-interfaces/openapi-servers`, `openapi-exists`, `search-endpoint`,
+`mcp-endpoint`, `machine-discovery/cors-ai-files`,
+`operability-safety/reflected-parameter-injection-canary` and
+`access-crawl-control/web-bot-auth-request-tolerance` name no cap constant
+either. So the debt is **36 network-reaching audits, 4 named private caps, the
+rest unbounded** — worse than the heading claims, not better. Phase 4b replaces
+all of it with one budget.
 
 ---
 
@@ -641,7 +655,7 @@ export type SitemapReading =
 export function readSitemap(ctx: { rootFiles: Record<string, FetchResult> }): SitemapReading;
 ```
 
-**Delete the five private `getSitemapResult` copies** and rebind:
+**Delete the four private `getSitemapResult` copies, and the fifth audit's inline read**, and rebind:
 
 | audit | change | why |
 |:--|:--|:--|
@@ -649,7 +663,7 @@ export function readSitemap(ctx: { rootFiles: Record<string, FetchResult> }): Si
 | `machine-discovery/sitemap-absolute-urls` | same, both branches (`:51`, `:72`) | Same violation at 0.6 |
 | `machine-discovery/sitemap-exists` | keeps `fail` | Absence **is** its subject |
 | `machine-discovery/discovery-index-coverage` | swap the helper only | Verdicts unchanged |
-| `access-crawl-control/sensitive-paths` | swap the helper only | Verdicts unchanged |
+| `access-crawl-control/sensitive-paths` | replace the inline `ctx.rootFiles['/sitemap.xml']` read at `:172` with `readSitemap(ctx)` — there is no helper here to swap | Verdicts unchanged |
 
 Blast radius: **1.6 scored weight.** One PR, one `major` changeset. Optionally repeat for `gatherers/feeds.ts` (`NO_FEED`, fixes `rss-feed-content`, weight 0) — it can wait.
 

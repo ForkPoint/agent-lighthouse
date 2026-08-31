@@ -62,7 +62,7 @@ in every phase inherits these.
    │  PHASE 2   The four-way read, past OpenAPI                  │
    │            merge PR 23, then split the sitemap the same way │
    │            2 audits fail on absence · 1.6 weight            │
-   │            5 private copies of getSitemapResult             │
+   │            4 copies of getSitemapResult + 1 inline read     │
    └───────────────────────────┬─────────────────────────────────┘
                                │  product-identifiers has no `na`
                                │  branch — the page-type gate is
@@ -232,13 +232,19 @@ already contains `gatherers/openapi.ts` and
 `tests/absent-artifact-contract.test.ts`, which are the worked example and the
 membership gate. Nothing in this phase should be re-derived.
 
-**Work:** give `gatherers/sitemap.ts` the same four-way split, and move the five
-private `getSitemapResult` copies onto it.
+**Work:** give `gatherers/sitemap.ts` the same four-way split, then move its
+five private readers onto it. Four are byte-identical `getSitemapResult` copies,
+each defined at `:13` — `machine-discovery/sitemap-exists`,
+`sitemap-absolute-urls`, `sitemap-lastmod`, `discovery-index-coverage`. The
+fifth, `access-crawl-control/sensitive-paths`, has no helper to swap: it reads
+`ctx.rootFiles['/sitemap.xml'] ?? ctx.rootFiles['/sitemap-index.xml']` inline at
+`:172` and parses it on the spot, so that read is rewritten rather than
+redirected. Five readers, four copies.
 
 **Cost:** `machine-discovery/sitemap-lastmod` (grade A, weight 1.0, currently
 `fail` at `priority: 'critical'` when there is no sitemap) and
 `machine-discovery/sitemap-absolute-urls` (grade B, weight 0.6). 1.6 weight, 5
-duplicate readers.
+duplicate readers — 4 copies of the helper plus 1 inline read.
 
 **Gate:** extend `absent-artifact-contract.test.ts` to the sitemap family. It
 keys membership on the _import_ of the shared precondition, so an audit that
@@ -260,15 +266,34 @@ green, one `major` changeset.
    `packages/cli/src/options.ts` next to `--preset`.
 2. Rename `AuditMeta.applicablePageTypes` to `AuditMeta.pageTypes` — the meta
    stays static; the runner decides inclusion.
-3. One pure `scoreModeFor(meta, ctx)` function runs when the runner creates a
-   `CheckResult`. An audit whose `pageTypes` do not include the **declared** type
-   is reported with `scoreDisplayMode: 'informative'`. `AuditPlan.runnable`
-   remains `{ reg, categoryId }`; shared audit meta is never mutated.
-4. Detection stays and is reported as a guess. It never gates anything.
-5. Split category mass into `registryMass` and `assessedMass`.
+3. Add `PageContext.pageTypeSource: 'declared' | 'detected'`. `pageType` stays
+   on every page — it is not removed and not made optional. Only its provenance
+   becomes explicit. The scan target gets `declared` from `--page-type`; each
+   URL named in `ScanOptions.pages` gets `declared` from its `PageOverride`;
+   every other page keeps its detected type and is marked `detected`.
+4. One pure runner **scope function** replaces the separate `scoreModeFor`
+   decision. Given an audit's meta and the scan context it returns both halves
+   of the same decision at once: the immutable page set that audit may read,
+   and its `scoreDisplayMode`. Three cases, and no fourth:
+
+   | audit                                                             | pages it gets               | mode        |
+   | :---------------------------------------------------------------- | :-------------------------- | :---------- |
+   | universal (no `pageTypes`)                                        | every page                  | scored      |
+   | typed, and at least one **declared** page matches its `pageTypes` | all matching declared pages | scored      |
+   | typed, no declared match                                          | matching **detected** pages | informative |
+
+   A detected page never enters a scored page set. That is the whole law, and
+   putting the page set and the mode in one function is what makes it
+   impossible to score one while reading the other. `AuditPlan.runnable` remains
+   `{ reg, categoryId }`; shared audit meta is never mutated.
+
+5. Detection stays and is reported as a guess. It never gates anything.
+6. Split category mass into `registryMass` and `assessedMass`.
    `registryMass` is the sum of registered audit weights and measures coverage.
    `assessedMass` is the sum of weights whose results are neither `na` nor
    informative and weights the category in `calculateOverallScore`.
+7. **Remove the 17 direct `page.pageType` reads in audit sources** — see the
+   next section, which names every one and its replacement.
 
 **Why `scorer.ts` changes:** `isInformative` already removes an unconsented
 result from its category mean, but `calculateOverallScore` still applies the
@@ -281,6 +306,71 @@ evidence.
 **Why not drop the audits instead:** `hasAssessableCheck` returns `true` on an
 empty check list, so a category emptied of its checks pays its full evidence
 mass at score 0. Dropping punishes the site; informative protects it.
+
+### The 17 audits that read `pageType`, and what replaces each
+
+Gate 1 rejects a `PropertyAccessExpression` named `pageType` in any production
+file under the audit tree. **17 files read `page.pageType` today**, so the gate
+cannot go green until all 17 are rewritten. They are named here the way Phase 1
+names its 42 guards and Phase 4a names its six unguarded fetchers — this is
+scoped work, not a mechanical sweep, because the reads are per-page _selection_
+and the runner scope function is what takes selection over.
+
+**Group 1 — selection an audit no longer performs (14 files).** Each filters
+`ctx.pages` down to the types its meta already declares, which is exactly what
+the scope function now hands it. The read is deleted and the audit iterates the
+page set it was given.
+
+| file                                               | read at | its filter              |
+| :------------------------------------------------- | ------: | :---------------------- |
+| `answer-readiness/trust-signals.ts`                |  `:134` | `homepage`              |
+| `answer-readiness/publication-date.ts`             |   `:13` | `content`               |
+| `answer-readiness/dates-on-content.ts`             |   `:28` | `content`               |
+| `answer-readiness/review-signals.ts`               |  `:238` | `homepage` or `product` |
+| `content-extraction/aside-element.ts`              |  `:106` | `content`               |
+| `agentic-commerce/offer-schema.ts`                 |   `:56` | `product`               |
+| `agentic-commerce/landed-cost-and-returns.ts`      |  `:190` | `product`               |
+| `agentic-commerce/offer-truth-consistency.ts`      |  `:149` | `product`               |
+| `agentic-commerce/buyable-variant-resolution.ts`   |  `:179` | `product`               |
+| `agentic-commerce/checkout-offer-field-mapping.ts` |  `:220` | `product`               |
+| `agentic-commerce/agent-ua-commerce-parity.ts`     |  `:115` | `product`               |
+| `structured-data/speakable-schema.ts`              |   `:92` | `content`               |
+| `structured-data/review-schema.ts`                 |  `:211` | `product`               |
+| `structured-data/article-schema.ts`                |   `:25` | `content`               |
+
+`agent-ua-commerce-parity` is the one file in this group whose meta does not yet
+declare the type it filters on: it has no `applicablePageTypes` at all. **Add
+`pageTypes: ['product']` to its meta** as part of this phase, or the scope
+function hands it every page and the filter's removal changes its verdict.
+
+Where a typed audit genuinely needs a _subgroup_ of the pages it was handed —
+not a different type, a narrower cut of the same one — it calls
+`gatherers/pages.ts`, which already owns that boundary and already returns a
+copy rather than the live array. No audit reaches `p.pageType` to do it.
+
+**Group 2 — selection that is not about page type at all (3 files).** These
+three use `pageType` as a stand-in for "is this the URL the operator gave us",
+which is a question about identity, not classification.
+
+| file                                               | read at | today                                         | replacement                                 |
+| :------------------------------------------------- | ------: | :-------------------------------------------- | :------------------------------------------ |
+| `access-crawl-control/robots-directives.ts`        |  `:200` | `isHomepage: page.pageType === 'homepage'`    | compare the page URL to the scan target URL |
+| `content-extraction/markdown-alternate.ts`         |  `:236` | `find((c) => c.pageType !== 'homepage')`      | first page that is not the scan target      |
+| `answer-readiness/content-without-clickthrough.ts` |   `:94` | `if (p.pageType === 'homepage') return false` | skip the scan target                        |
+
+Target-URL identity is the honest predicate, and it survives Phase 5, where
+`MAX_PAGES_PER_SCAN` goes to 1 and "the homepage" and "the target" stop being
+distinguishable at all.
+
+**One implementation constraint, recorded because it is easy to miss.** Handing
+each audit an immutable per-audit view of `CheckContext` collides with the
+gatherer caches: `gatherers/conditional.ts:41`, `feeds.ts:322`,
+`sampled-pages.ts:9`, `media.ts:305`, `sitemap.ts:205` and `ua-parity.ts:238`
+each key a `WeakMap` on the `CheckContext` **object identity**. Six per-audit
+views means six cache misses per audit and six times the fetches. The views must
+therefore carry a stable shared `cacheOwner` — one object per scan, threaded
+through every view — and those six gatherers key on that instead of on the
+context they were passed.
 
 **Gates:**
 
@@ -302,9 +392,10 @@ mass at score 0. Dropping punishes the site; informative protects it.
 `fail: 'No Product schema found'` off a bakery. Remove the gate first and it
 fails every site.
 
-**Exit:** all three gates green, `--page-type product` scores what
-`--page-type` omitted only reports, coverage exposes registry and assessed mass,
-one `major` changeset.
+**Exit:** all three gates green — which requires all 17 `pageType` reads gone and
+`agent-ua-commerce-parity` carrying `pageTypes: ['product']` — `--page-type
+product` scores what `--page-type` omitted only reports, coverage exposes
+registry and assessed mass, one `major` changeset.
 
 ---
 
@@ -366,7 +457,7 @@ with an outbound network rule.
 
 **Exit:** the source gate green, a local CLI scan of
 `http://localhost:3000` completes, hosted egress tests prove private destinations
-are blocked, 36 private caps are replaced by one budget, one `major` changeset.
+are blocked, the 4 named private caps and the 32 unbounded fetch sites are replaced by one budget, one `major` changeset.
 
 ### The two source gates parse, they do not grep
 
