@@ -1064,3 +1064,152 @@ origin-scoped; the last is page-scoped.
 
 **Status:** ratified. Design only — no code written, per the standing
 "report only" instruction.
+
+---
+
+## Law 9 — ratified, and the guide is stale
+
+**Explanation.** `AuditResultSchema.details` takes three known string keys plus
+a catchall accepting only `string | number | boolean | string[]` (100 items max,
+1000 characters each). `validate()` calls `AuditResultSchema.parse`, which
+**throws**. The runner catches it at `audit-runner.ts:246`, logs
+`[scanner] Audit error`, and emits an errored `na` stub — so one bad `details`
+value costs the audit its entire result. Unit tests call `audit.audit(ctx)`
+directly and never reach `toCheckResult`, so they never see it.
+
+**Ruling: correct, and fix the guide.**
+
+`CLAUDE.md` says a number array is *"dropped by the result schema"*. That was
+true before the catchall existed, and the schema's own comment records the
+history: *"A closed object dropped all of it silently."* Now a number array
+matches no union member and throws exactly like an array of objects.
+
+**Follow-up:** correct that sentence in `AGENTS.md` when the laws are written.
+
+---
+
+## Law 10 — ratified
+
+**Explanation.** A per-audit fetch or parse that duplicates a gatherer costs
+every scan and drifts. The OpenAPI family proved it: seven audits carried a
+byte-identical private `getOpenApiSpec`, three also carried `getOperations`, and
+one copy drifted every time the family was touched. The sitemap family is the
+same story today — `gatherers/sitemap.ts` exists at 220 lines but never exported
+the absent / malformed / readable split, so five audits carry private
+`getSitemapResult` helpers: `machine-discovery/sitemap-lastmod.ts:13`,
+`sitemap-exists.ts`, `sitemap-absolute-urls.ts`,
+`discovery-index-coverage.ts:13`, `access-crawl-control/sensitive-paths.ts`.
+
+**Ruling: correct.** Still a DEBT — nothing enforces it. Law 8's resolution
+below supplies the gate.
+
+---
+
+## Law 2's sibling — the warrant expires
+
+**Ruling:** none of the proposed options. A GitHub workflow instead.
+
+> we need to have a workflow process in github that will sweep the metadata and
+> flag it in an issue, so this issue can be processed and the audit can be
+> updated in due time, let's say every 6 months the audit has to be reviewed
+
+**Measured:** 215 of 216 dossiers carry a `reviewed:` date and every one falls
+between 2026-08-20 and 2026-08-24 — one research sprint. The stamp exists, is
+fully populated, and nothing reads it.
+
+**The law.** A grade is a claim with a date. An audit must be re-reviewed every
+**6 months**.
+
+**The mechanism, and why it is not a CI gate.** A stale grade is not a broken
+build and must not fail one — nobody should be blocked from shipping a fix
+because a dossier needs re-reading. It is also not a demotion: a score must not
+move because nobody did paperwork.
+
+So: a scheduled GitHub workflow sweeps `reviewed:` across
+`docs/evidence/audits/`, and opens or updates a single rolling issue listing
+every audit past 6 months, oldest first, with its grade and category. One issue,
+updated in place, not one per audit and not a new one per run.
+
+This is deliberately the weakest enforcement of any law here, and that is
+correct: the work it triggers is research, which a human does, on a schedule a
+human controls. The gate's job is only to make the debt impossible to forget.
+
+**Status:** ratified as a scheduled sweep, not a gate.
+
+---
+
+## Law 8 — resolved: audits do not fetch
+
+**Ruling:** a question rather than an option.
+
+> isn't makeing them a gatherer better in the long run?
+
+**Yes, and it collapses law 8 into law 7.**
+
+Law 7 moved the origin gate inside `ctx.fetch` so an audit cannot forget it.
+Law 8 asks how to bound fetching. If audits cannot fetch at all, both answers
+are the same answer:
+
+```
+today   audit -> ctx.fetch -> fetcher      33 call sites, 9 ungated, 33 private caps
+after   audit -> gatherer  -> fetcher      one layer, gated once, counted once
+```
+
+**The objection, and why it does not hold.** Some fetches have exactly one
+consumer — `operability-safety/wikidata-round-trip-verification` resolving P856,
+`machine-discovery/no-broken-links` checking 20 links — so a single-consumer
+gatherer looks like indirection for its own sake. Three things make it worth it,
+and all three only exist under this architecture:
+
+- **visible** — the fetch belongs to the scan, not to a private constant in an
+  audit body
+- **countable** — a budget can be enforced rather than declared, because there
+  is one place that issues requests
+- **cacheable** — the moment a second consumer appears, which is exactly how the
+  OpenAPI family reached seven copies
+
+**And it supplies law 10's missing gate.** If no audit imports the fetcher and
+no audit calls `ctx.fetch`, the private-reader duplication cannot recur — there
+is nowhere to put a private reader that reaches the network.
+
+**The gate:** no audit source may call `ctx.fetch` or import from `../../fetcher`.
+Registry-enumerating, same shape as `check-requires.mjs`.
+
+**Cost:** 33 audits migrate. Rough grouping, to be confirmed by inventory:
+cross-origin verification (wikidata, feeds, hubs), link liveness
+(`no-broken-links`, `llms-txt-links-valid`), artifact probes
+(`markdown-alternate`, `mcp-endpoint`), and UA parity second fetches.
+
+**Status:** ratified. Law 8 and law 10 share one gate; law 7's gate moves into
+the gatherer layer with it.
+
+---
+
+## Running tally — quiz complete
+
+| law | ruling |
+|--:|:--|
+| 1 | absorbed into law 5's guard |
+| 2 | ratified, **plus** a 6-month re-review sweep that opens a rolling GitHub issue |
+| 3 | ratified, final — declared is scored, detected is informative, everything reported |
+| 4 | ratified as written |
+| 5 | ratified — four-case read, declaration is a running guard |
+| 6 | ratified — two fixtures; fixture A absolute; two claims retracted |
+| 7 | ratified — consent attaches to the origin |
+| 8 | ratified — audits do not fetch; gatherers do |
+| 9 | ratified, and `AGENTS.md` needs a correction |
+| 10 | ratified — gated by law 8's rule |
+
+**Ten of ten ruled.** Six were corrected, sharpened or replaced by the ruling
+rather than confirmed as explained, and two published claims were retracted
+along the way.
+
+Three sentences hold the whole architecture:
+
+1. **Put the guard where it runs.** Laws 5, 7, 8, 10 — a precondition, an
+   origin gate, a fetch, a shared read. None of them may be an audit author's
+   responsibility to remember.
+2. **A claim states the conditions under which it holds.** Laws 2, 3, 6 and the
+   score's `conditions` block — including what absence means, what was consented
+   to, and how old the evidence is.
+3. **A law names its gate, or it is a wish.** The reason this document exists.
