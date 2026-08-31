@@ -3,11 +3,10 @@
 The architecture behind every check Agent Lighthouse runs: what an audit is,
 what it may claim, and which rule stops it claiming more.
 
-> **Status.** Every section carries one. **Enforced** holds in `main` today.
-> **PR 23** is written but unmerged. **Decided** was settled on 2026-08-30 and is
-> _not built_ — do not assume the code obeys it. The working record, with every
-> measurement and every rejected alternative, is in
-> `docs/superpowers/specs/2026-08-30-audit-architecture-quiz.md`.
+> **Status.** This file is the canonical design record. Every section carries
+> one. **Enforced** holds in `main` today. **PR 23** is written but unmerged.
+> **Decided** is settled and is _not built_ — do not assume the code obeys it.
+> Git history keeps the full review dialogue and every superseded draft.
 
 ---
 
@@ -415,6 +414,13 @@ prefetched evidence bypasses the shared cache. Raw credentials never enter a
 cache key. The anonymous key includes `ORIGIN_EVIDENCE_VERSION`; every record
 stores `readAt` and expires by the phase's stated TTL.
 
+The unread-scan guard is unconditional. It runs before every audit and has no
+production opt-out. The narrower `requires` gate defaults on.
+`ScanOptions.enforceEvidenceGate: false` remains a documented diagnostic
+opt-out for comparing gated and ungated evidence. It never bypasses the
+unread-scan guard. A full-registry bypass exists only in a test helper that the
+package does not export.
+
 ---
 
 ## 7. The score states its conditions _(decided)_
@@ -557,6 +563,8 @@ Recorded so they are not proposed again.
 ## 11. Standing debts
 
 Measured 2026-08-30 across 215 registered audits. **None is fixed.**
+`docs/architecture/debt.md` tracks related defects that are outside the six
+architecture phases.
 
 | debt                                                                           | measurement                                                                                                                                                                                                                                                                                                                                                                                                                                        |
 | :----------------------------------------------------------------------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |

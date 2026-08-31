@@ -1,9 +1,12 @@
-# Scan evidence gate — design
+# Scan evidence gate — historical design
 
-Status: draft, revised after a measurement spike (§2) that changed four of its
-decisions and found one shipped bug; revised again after plan review —
-text-metric split (§9 step 0), gatherer-aware `requires` check (§8), escalation
-mass defined (§7.2), same-domain geo redirects (§6.1), single 429 retry (§6.2)
+Status: shipped in `13082c6` (PR 19). This file is historical measurement
+context, not the current architecture. `docs/architecture/audits.md` governs
+current work. The design was revised after a measurement spike (§2) that
+changed four of its decisions and found one shipped bug. A plan review revised
+it again: text-metric split (§9 step 0), gatherer-aware `requires` check (§8),
+escalation mass (§7.2), same-domain geo redirects (§6.1), and one 429 retry
+(§6.2).
 Date: 2026-08-25
 Area: `packages/core`, with forced changes in `report`, `cli`, `mcp`, `website`
 

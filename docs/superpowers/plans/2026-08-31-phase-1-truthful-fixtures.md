@@ -17,6 +17,14 @@ has to explain any verdict it moves.
 **Tech Stack:** TypeScript, vitest (root config only), Zod, oxlint, pnpm
 workspaces.
 
+**Spec:** `docs/architecture/audits.md`
+
+**Roadmap:** `docs/superpowers/plans/2026-08-31-audit-architecture-migration.md`
+
+**Plan authority:** the spec owns behavior. The roadmap owns phase boundaries.
+This file owns Phase 1 execution only. Correct this file before execution if it
+conflicts with either parent.
+
 ## Global Constraints
 
 Inherited from `docs/superpowers/plans/2026-08-31-audit-architecture-migration.md`.

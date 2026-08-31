@@ -6,6 +6,18 @@
 > measured against numbers that earlier phases change. Phase 1's plan is
 > `2026-08-31-phase-1-truthful-fixtures.md`.
 
+**Plan authority:** `docs/architecture/audits.md` owns the decisions. This
+roadmap owns phase order, cross-phase interfaces and exit conditions. The one
+current phase plan owns executable steps. If a step conflicts with the
+architecture guide, the guide governs and the step must be corrected before
+execution.
+
+| plan level | current file | purpose |
+| :--------- | :----------- | :------ |
+| canonical design | `docs/architecture/audits.md` | settled rules and rejected designs |
+| roadmap | this file | six phases and their dependency order |
+| executable plan | `2026-08-31-phase-1-truthful-fixtures.md` | Phase 1 code, tests and commits |
+
 **Goal:** bring `main` into agreement with the model published at
 `docs/architecture/audits.md`, in six phases, each of which ships a working
 scanner and a gate that keeps its law from drifting back.
@@ -440,9 +452,9 @@ cache. A gatherer with exactly one consumer is still correct: the fetch becomes
 visible to the scan instead of hidden in a private constant.
 
 **What 36 counts.** A _network-reaching audit_ is a registered audit that can
-issue a request, directly or through a helper — the denominator defined in
-[`2026-08-30-audit-architecture-review.md`](../specs/2026-08-30-audit-architecture-review.md)
-§0, retraction 3. 31 call `ctx.fetch` in their own file. The other 5 —
+issue a request, directly or through a helper — the denominator recorded in
+[`docs/architecture/audits.md`](../../architecture/audits.md). 31 call
+`ctx.fetch` in their own file. The other 5 —
 `mcp-version-downgrade`, `mcp-tool-description-coverage`,
 `mcp-tool-contract-validity`, `mcp-tools-list-determinism`,
 `mcp-modern-era-reachability` — name no fetch and go through
@@ -484,11 +496,12 @@ was counted as a fetching audit because line 6 of it reads "Its test pins that
 `ctx.fetch` is never called" — the audit never fetches; the comment does.
 `agent-interfaces/_mcp-client.ts` was counted as an audit, and it is a helper
 registered nowhere. And five audits that fetch only through that helper were
-missed, because none of them contains the string. See
-[`2026-08-30-audit-architecture-review.md`](../specs/2026-08-30-audit-architecture-review.md)
-§0, retraction 3. A grep fails the first file forever, and it also passes any
-behaviour-preserving rename — `const f = ctx.fetch` reads no differently to a
-regular expression than a sentence about fetching does.
+missed, because none of them contains the string. The corrected count and
+rejected text scan are recorded in
+[`docs/architecture/audits.md`](../../architecture/audits.md). A grep fails the
+first file forever, and it also passes any behaviour-preserving rename —
+`const f = ctx.fetch` reads no differently to a regular expression than a
+sentence about fetching does.
 
 **What each gate walks.**
 

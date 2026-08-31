@@ -1,6 +1,6 @@
 # Evidence-gate spike
 
-Measurement run behind `docs/superpowers/specs/2026-08-25-scan-evidence-gate-design.md`.
+Measurement run behind `docs/architecture/history/scan-evidence-gate-design.md`.
 Kept so every number in that document can be reproduced or refuted.
 
 ```bash
