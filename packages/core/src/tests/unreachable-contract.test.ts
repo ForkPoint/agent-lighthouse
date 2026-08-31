@@ -20,9 +20,13 @@ describe("an unread scan verdicts nothing", () => {
       (sum, cat) => sum + (defaultConfig.audits[cat.id]?.length ?? 0),
       0,
     );
+    const registeredIds = defaultConfig.categories.flatMap(
+      (cat) => defaultConfig.audits[cat.id]?.map((entry) => entry.meta.id) ?? [],
+    );
 
     expect(plan.runnable.map((entry) => entry.reg.meta.id)).toEqual([]);
     expect(plan.skipped).toHaveLength(registered);
+    expect(plan.skipped.map((stub) => stub.id).sort()).toEqual(registeredIds.sort());
   });
 
   it("gives every skipped audit a reason a reader can act on", () => {
