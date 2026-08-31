@@ -535,30 +535,26 @@ if (resolved.hostname === domain || resolved.hostname.endsWith(`.${domain}`))
 
 which admits any wildcard-DNS subdomain resolving into private address space.
 
-### 7.2 Fetch budget — 33 audits, 33 private caps, no sum **[measured]** **[corrected: 36 network-reaching audits, and only 4 private caps — see §0, retraction 3 and the note below]**
+### 7.2 Fetch budget — 33 audits, 33 private caps, no sum **[measured]** **[corrected: 36 network-reaching audits, 14 verified named limits, and no shared budget — see §0, retraction 3 and the note below]**
 
-| audit | cap | where |
+| audit | example limit | where |
 |:--|:--|:--|
 | `content-extraction/markdown-alternate` | `MAX_PROBES = 3` | `:11` |
 | `machine-discovery/three-way-freshness-lag` | `DEAD_URL_SAMPLE = 5` | `:15` |
 | `operability-safety/wikidata-round-trip-verification` | `MAX_ENTITIES = 2` | `:11` |
 | `machine-discovery/no-broken-links` | `.slice(0, 20)` | `:85` |
 
-Nothing declares it, nothing sums it, nothing bounds a scan.
+This table is an illustrative sample. It is not the full count.
 
-**The heading's 1:1 phrasing is wrong, and wrong in the safe direction.** "33
-audits, 33 private caps" reads as one cap per fetching audit. The table above it
-names **4**, and 4 is the true figure — the remaining 32 network-reaching audits
-carry no cap at all. `machine-discovery/rss-feed:62-63` is the clearest case: it
-loops over every feed link discovered on the page and fetches each one, with no
-bound of any kind. `answer-readiness/author-page`, `about-credentials`,
-`agent-interfaces/openapi-servers`, `openapi-exists`, `search-endpoint`,
-`mcp-endpoint`, `machine-discovery/cors-ai-files`,
-`operability-safety/reflected-parameter-injection-canary` and
-`access-crawl-control/web-bot-auth-request-tolerance` name no cap constant
-either. So the debt is **36 network-reaching audits, 4 named private caps, the
-rest unbounded** — worse than the heading claims, not better. Phase 4b replaces
-all of it with one budget.
+**The heading's 1:1 phrasing is wrong.** "33 audits, 33 private caps" reads as
+one cap per fetching audit. A verified count found **14** files with named
+top-level request limits. Other audits use a mix of inline bounds, fixed request
+counts, early exits and unbounded worst cases, so the remainder cannot honestly
+be called unbounded. `machine-discovery/rss-feed:62-63`, for example, can fetch
+every discovered feed link in the worst case but stops at the first successful
+response. The architectural debt does not depend on one fragile cap total:
+nothing declares, sums or enforces one shared scan budget. Phase 4b adds that
+budget.
 
 ---
 

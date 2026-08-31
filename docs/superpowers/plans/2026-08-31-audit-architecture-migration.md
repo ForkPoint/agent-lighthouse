@@ -278,16 +278,17 @@ green, one `major` changeset.
 
    | audit                                                             | pages it gets               | mode        |
    | :---------------------------------------------------------------- | :-------------------------- | :---------- |
-   | universal (no `pageTypes`)                                        | every page                  | scored      |
-   | typed, and at least one **declared** page matches its `pageTypes` | all matching declared pages | scored      |
+   | universal (no `pageTypes`)                                        | every page                  | meta mode   |
+   | typed, and at least one **declared** page matches its `pageTypes` | all matching declared pages | meta mode   |
    | typed, no declared match                                          | matching **detected** pages | informative |
 
-   A detected page never enters a scored page set. That is the whole law, and
-   putting the page set and the mode in one function is what makes it
-   impossible to score one while reading the other. `AuditPlan.runnable` remains
+   A page selected because of a detected page type never enters a scored page
+   set. Putting the page set and the mode in one function makes it impossible
+   to score one while reading the other. `AuditPlan.runnable` remains
    `{ reg, categoryId }`; shared audit meta is never mutated.
 
-5. Detection stays and is reported as a guess. It never gates anything.
+5. Detection stays and is reported as a guess. It may select evidence for an
+   informative result. It never authorizes scoring.
 6. Split category mass into `registryMass` and `assessedMass`.
    `registryMass` is the sum of registered audit weights and measures coverage.
    `assessedMass` is the sum of weights whose results are neither `na` nor
@@ -316,7 +317,7 @@ names its 42 guards and Phase 4a names its six unguarded fetchers — this is
 scoped work, not a mechanical sweep, because the reads are per-page _selection_
 and the runner scope function is what takes selection over.
 
-**Group 1 — selection an audit no longer performs (14 files).** Each filters
+**Group 1 — selection an audit no longer performs (11 files).** Each filters
 `ctx.pages` down to the types its meta already declares, which is exactly what
 the scope function now hands it. The read is deleted and the audit iterates the
 page set it was given.
@@ -334,33 +335,41 @@ page set it was given.
 | `agentic-commerce/buyable-variant-resolution.ts`   |  `:179` | `product`               |
 | `agentic-commerce/checkout-offer-field-mapping.ts` |  `:220` | `product`               |
 | `agentic-commerce/agent-ua-commerce-parity.ts`     |  `:115` | `product`               |
-| `structured-data/speakable-schema.ts`              |   `:92` | `content`               |
-| `structured-data/review-schema.ts`                 |  `:211` | `product`               |
-| `structured-data/article-schema.ts`                |   `:25` | `content`               |
 
 `agent-ua-commerce-parity` is the one file in this group whose meta does not yet
 declare the type it filters on: it has no `applicablePageTypes` at all. **Add
 `pageTypes: ['product']` to its meta** as part of this phase, or the scope
 function hands it every page and the filter's removal changes its verdict.
 
-Where a typed audit genuinely needs a _subgroup_ of the pages it was handed —
-not a different type, a narrower cut of the same one — it calls
-`gatherers/pages.ts`, which already owns that boundary and already returns a
-copy rather than the live array. No audit reaches `p.pageType` to do it.
+`structured-data/review-schema.ts:211` is a separate subgroup case. Its meta
+allows `homepage` and `product`, but one warning concerns product pages only.
+Replace its direct read with `pagesOfType(ctx, 'product')`. A gatherer may select
+one declared type from a multi-type runner-approved set. No audit reaches
+`p.pageType` to do it.
 
-**Group 2 — selection that is not about page type at all (3 files).** These
-three use `pageType` as a stand-in for "is this the URL the operator gave us",
-which is a question about identity, not classification.
+**Group 2 — objective artifact unions (2 files).**
+`structured-data/article-schema.ts:24-27` and
+`structured-data/speakable-schema.ts:91-96` accept either a content page or a
+page carrying Article, BlogPosting or NewsArticle markup. Deleting the union
+would restore the Shopify-route false negative documented in both files.
+
+Move that union into `gatherers/pages.ts`. Each per-audit context view keeps
+`allPages` as a read-only, gatherer-only view of the full sample. The gatherer
+returns the runner-approved content pages plus any page whose markup explicitly
+declares an Article type, deduplicated by URL. The markup is observed evidence,
+not a detected page-type guess. Extend the AST boundary check so production
+audit files cannot read `allPages` directly.
+
+**Group 3 — an objective homepage predicate (3 files).** These three use
+`pageType` as a stand-in for the first sampled page at the origin root. Preserve
+that predicate in `gatherers/pages.ts`: the page must be first in the scan and
+its URL pathname must be `/`. A deep target such as `/docs` is not a homepage.
 
 | file                                               | read at | today                                         | replacement                                 |
 | :------------------------------------------------- | ------: | :-------------------------------------------- | :------------------------------------------ |
-| `access-crawl-control/robots-directives.ts`        |  `:200` | `isHomepage: page.pageType === 'homepage'`    | compare the page URL to the scan target URL |
-| `content-extraction/markdown-alternate.ts`         |  `:236` | `find((c) => c.pageType !== 'homepage')`      | first page that is not the scan target      |
-| `answer-readiness/content-without-clickthrough.ts` |   `:94` | `if (p.pageType === 'homepage') return false` | skip the scan target                        |
-
-Target-URL identity is the honest predicate, and it survives Phase 5, where
-`MAX_PAGES_PER_SCAN` goes to 1 and "the homepage" and "the target" stop being
-distinguishable at all.
+| `access-crawl-control/robots-directives.ts`        |  `:200` | `isHomepage: page.pageType === 'homepage'`    | call the shared homepage predicate          |
+| `content-extraction/markdown-alternate.ts`         |  `:236` | `find((c) => c.pageType !== 'homepage')`      | use the first non-homepage page             |
+| `answer-readiness/content-without-clickthrough.ts` |   `:94` | `if (p.pageType === 'homepage') return false` | skip only the objective homepage            |
 
 **One implementation constraint, recorded because it is easy to miss.** Handing
 each audit an immutable per-audit view of `CheckContext` collides with the
@@ -375,8 +384,9 @@ context they were passed.
 **Gates:**
 
 1. A source check asserts that no production file under
-   `packages/core/src/audits/` **reads** `pageType`. Page type belongs to the
-   runner. It parses the TypeScript and inspects the syntax tree — see
+   `packages/core/src/audits/` **reads** `pageType` or the gatherer-only
+   `allPages`. Page scope belongs to the runner and gatherers. The check parses
+   the TypeScript and inspects the syntax tree — see
    [The two source gates parse, they do not grep](#the-two-source-gates-parse-they-do-not-grep)
    — so a comment, a JSDoc line or a dossier quotation that names `pageType` is
    not a violation, and a property read that is renamed but still executed still
@@ -457,7 +467,8 @@ with an outbound network rule.
 
 **Exit:** the source gate green, a local CLI scan of
 `http://localhost:3000` completes, hosted egress tests prove private destinations
-are blocked, the 4 named private caps and the 32 unbounded fetch sites are replaced by one budget, one `major` changeset.
+are blocked, the mixed private limits are replaced by one shared budget, one
+`major` changeset.
 
 ### The two source gates parse, they do not grep
 

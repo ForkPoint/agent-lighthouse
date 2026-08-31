@@ -228,7 +228,7 @@ This resolves two unrelated-looking problems the same way.
 ```
 
 On `/shop/sourdough` the product branch runs first and no product rule matches —
-the URL pattern wants `shop/<a>/<b>/<c>` and this path has one segment — so the
+the URL pattern wants `shop/{a}/{b}/{c}` and this path has one segment — so the
 category regex claims it. Product detection by markup is a CSS class-name match.
 And `content` means _"we could not classify this"_ — a label fourteen audits once
 gated on, so a contact page and a privacy policy were judged for missing bylines.
@@ -254,7 +254,7 @@ interface AuditScope {
   mode: ScoreDisplayMode;
 }
 
-function scoreModeFor(meta: AuditMeta, ctx: CheckContext): AuditScope {
+function scopeForAudit(meta: AuditMeta, ctx: CheckContext): AuditScope {
   if (!meta.pageTypes?.length) {
     return { pages: ctx.pages, mode: meta.scoreDisplayMode };
   }
@@ -271,8 +271,8 @@ function scoreModeFor(meta: AuditMeta, ctx: CheckContext): AuditScope {
 }
 ```
 
-A detected page never enters a scored page set. An audit that declares no
-`pageTypes` is universal and gets every page.
+A page selected because of a detected page type never enters a scored page set.
+An audit that declares no `pageTypes` is universal and gets every page.
 
 The runner applies both halves when it creates `CheckResult`. `AuditPlan` stays
 `{ reg, categoryId }`, and static audit meta is never changed. Two concurrent
@@ -280,7 +280,11 @@ scans therefore cannot leak consent state into each other.
 
 Audits do not read `pageType` themselves. A typed audit that needs a narrower
 cut of the pages it was handed goes through `gatherers/pages.ts`, which already
-owns that boundary.
+owns that boundary. The per-audit view also keeps `allPages` as a read-only,
+gatherer-only view of the full sample. A source gate rejects direct audit reads
+of `allPages`. This lets a gatherer add a page because it carries objective
+artifact evidence, such as Article markup, without letting the page's detected
+type authorize that addition.
 
 ```
    al scan URL --page-type product     al scan URL
@@ -466,8 +470,9 @@ origin gate and the only layer that can be counted.
     …36 audits reach net                    …one layer     │
       6 fetch a content URL                             gated once
         with no isSafeUrl                              counted once
-      4 named private caps                              cached once
-       the rest unbounded
+     14 verified named limits                           cached once
+      other limits vary
+      no shared budget
 ```
 
 A gatherer with exactly one consumer is still correct. The fetch becomes
@@ -538,7 +543,7 @@ Recorded so they are not proposed again.
 
 | proposal                                                        | why it failed                                                                                                                                                                                                                                                      |
 | :-------------------------------------------------------------- | :----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Five audit kinds**, the kind fixing the absence verdict       | Audits fit no kind (cross-artifact coherence, third-party artifacts, differential audits, per-URL artifacts) or fit two (`search-endpoint`, `contact-form`); and a `page-content` rule would force 23 accessibility audits to fail a page for lacking a `<dialog>` |
+| **Five audit kinds**, the kind fixing the absence verdict       | Audits fit no kind (cross-artifact coherence, third-party artifacts, differential audits, per-URL artifacts) or fit two (`search-endpoint`, `contact-form`); and a `page-content` rule would force 23 accessibility audits to fail a page for lacking a dialog element |
 | **`meta.subject`** as a required discriminated union            | A field can be green while `audit()` returns the wrong value — see §4                                                                                                                                                                                              |
 | **A central `artifacts.ts` registry**                           | `gatherers/` already is one. The real defect was one missing export from `gatherers/sitemap.ts`                                                                                                                                                                    |
 | **An absence law with a source-id override**                    | Would silence 16 scored weight-1.0 bot audits to repair a measured defect of 1.6 weight, and its gate was a spelling check over 715 ids that already hold three spellings of RFC 9309                                                                              |
@@ -561,7 +566,7 @@ Measured 2026-08-30 across 215 registered audits. **None is fixed.**
 | The page-type gate is doing the absence rule's job                             | `product-identifiers` has **no** `notApplicable` branch — the gate is the only thing keeping `fail: 'No Product schema found'` off a bakery                                                                                                                                                                                                                                                                                                        |
 | Private readers duplicate a gatherer                                           | 4 audits carry a byte-identical `getSitemapResult` (`sitemap-exists`, `sitemap-absolute-urls`, `sitemap-lastmod`, `discovery-index-coverage`) and a fifth, `access-crawl-control/sensitive-paths`, reads `ctx.rootFiles['/sitemap.xml']` inline — all while `gatherers/sitemap.ts` exists without the four-way split                                                                                                                                                                                                                                                                                                                                                   |
 | Content-harvested URLs reach the network ungated                               | 8 of 36 network-reaching audits never import `isSafeUrl`, and 6 of those fetch a URL taken from scanned content: `author-page`, `rss-feed`, `rss-feed-content`, `no-broken-links`, `openapi-servers`, `search-endpoint`. An unguarded first hop is fetched **and** disarms the redirect gate behind it                                                                                                                                                     |
-| Fetching is unbounded in aggregate                                             | 36 audits reach the network and **4** name a private cap; the rest are bounded by nothing at all, and nothing sums any of them. `machine-discovery/rss-feed` fetches every discovered feed link in an unbounded loop. 31 of the 36 call `ctx.fetch` in their own file; the other 5 fetch through `agent-interfaces/_mcp-client.ts`, a shared helper inside the audit tree                                                                                                                                                                                                                                                                                                                                                                                                      |
+| Fetching is unbounded in aggregate                                             | 36 audits reach the network. A verified count found **14** files with named top-level request limits. Other audits use a mix of inline bounds, fixed request counts, early exits and unbounded worst cases. Nothing declares or enforces one shared scan budget. `machine-discovery/rss-feed` can fetch every discovered feed link in the worst case, but stops at the first successful response. 31 of the 36 call `ctx.fetch` in their own file; the other 5 fetch through `agent-interfaces/_mcp-client.ts`, a shared helper inside the audit tree                                                                                                                                                                                                                                                                                                                              |
 | The warrant has no expiry                                                      | 215 of 216 `reviewed:` stamps, all one sprint, read by nothing                                                                                                                                                                                                                                                                                                                                                                                     |
 
 ---
