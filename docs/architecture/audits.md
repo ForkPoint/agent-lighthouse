@@ -3,10 +3,10 @@
 The architecture behind every check Agent Lighthouse runs: what an audit is,
 what it may claim, and which rule stops it claiming more.
 
-> **Status.** Laws marked **enforced** hold in the code today. Laws marked
-> **decided** were settled on 2026-08-30 and are _not built yet_ — do not assume
-> the code obeys them. The working record, with every measurement and every
-> rejected alternative, is in
+> **Status.** Every section carries one. **Enforced** holds in `main` today.
+> **PR 23** is written but unmerged. **Decided** was settled on 2026-08-30 and is
+> _not built_ — do not assume the code obeys it. The working record, with every
+> measurement and every rejected alternative, is in
 > `docs/superpowers/specs/2026-08-30-audit-architecture-quiz.md`.
 
 ---
@@ -91,7 +91,7 @@ already required.
 
 ---
 
-## 3. The four-way read _(enforced for OpenAPI, decided elsewhere)_
+## 3. The four-way read _(written for OpenAPI in PR 23, unmerged; decided elsewhere)_
 
 The shared vocabulary for reading any artifact — a file, or a page's structured
 data. The gatherer that reads it owns the classification; the audit only judges.
@@ -127,7 +127,9 @@ data. The gatherer that reads it owns the classification; the audit only judges.
 //                         "/b": { "get": "yes" } } }     one good, one broken
 ```
 
-Two rules follow, both already written into `packages/core/src/gatherers/openapi.ts`:
+Two rules follow. Both are written into `packages/core/src/gatherers/openapi.ts`,
+which lives on `fix/absent-artifact-is-not-a-failure` (PR 23) and is **not** in
+`main`:
 
 - **Broken is judged over what survives the read, not over the whole artifact.**
   One malformed entry beside twenty good ones does not erase the twenty.
@@ -180,9 +182,9 @@ A declaration that _describes_ can be true while the code contradicts it.
    └─────────────────────────────────────────────────────────────┘
 ```
 
-`packages/core/src/tests/absent-artifact-contract.test.ts` reached the same
-conclusion independently, and keys audit membership on the _import_ rather than
-on a list:
+`packages/core/src/tests/absent-artifact-contract.test.ts` — also PR 23, also
+unmerged — reached the same conclusion independently, and keys audit membership
+on the _import_ rather than on a list:
 
 > The shared precondition constant is the closest thing to a declaration, so a
 > family pins its own instance by exporting one and importing it.
@@ -471,12 +473,13 @@ Measured 2026-08-30 across 215 registered audits. **None is fixed.**
 
 ## 12. Writing an audit today
 
-Until the decided laws are built, these hold and are enforced.
+These hold in `main` today, except where marked.
 
 - **Absence is `notApplicable`, not `fail`.** Only a present-and-defective
-  artifact may fail. `gatherers/openapi.ts` is the worked example;
-  `tests/absent-artifact-contract.test.ts` holds every audit importing its
-  precondition.
+  artifact may fail. The worked example, `gatherers/openapi.ts`, and the contract
+  test that pins it, `tests/absent-artifact-contract.test.ts`, are in PR 23 and
+  not yet merged. Until they land, `tests/na-contract.ts` is the only helper
+  enforcing this, and §11 lists where it does not.
 - **Put the precondition beside the read**, in the gatherer, with the reasoning
   written down. Two places it must not go. **Not the runner** — `planAudits`
   knows page types and `EvidenceKey`s, both scan-level and domain-neutral, and
