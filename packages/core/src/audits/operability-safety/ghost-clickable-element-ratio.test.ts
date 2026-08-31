@@ -1,4 +1,6 @@
 import { describe, it, expect } from 'vitest';
+import { defaultConfig } from '../../audit-config';
+import { planAudits } from '../../audit-runner';
 import { GhostClickableElementRatioAudit } from './ghost-clickable-element-ratio';
 import {
   mockCheckContext,
@@ -103,9 +105,13 @@ describe('GhostClickableElementRatioAudit', () => {
   // the survey to report a ratio of 1.00 and pass Cloudflare's markup as the
   // site's.
   it('declines when no response can be attributed to this site', async () => {
-    const result = await new GhostClickableElementRatioAudit().audit(walledSiteContext());
-    expect(result.status).toBe('na');
-    expect(result.message).toContain('attributed to this site');
+    const plan = planAudits(walledSiteContext(), defaultConfig);
+    const result = plan.skipped.find((stub) => stub.id === GhostClickableElementRatioAudit.meta.id);
+    expect(plan.runnable.map((entry) => entry.reg.meta.id)).not.toContain(
+      GhostClickableElementRatioAudit.meta.id,
+    );
+    expect(result?.status).toBe('na');
+    expect(result?.explanation).toMatch(/^Not assessed: /);
   });
 
 });

@@ -1,4 +1,6 @@
 import { describe, it, expect } from 'vitest';
+import { defaultConfig } from '../../audit-config';
+import { planAudits } from '../../audit-runner';
 import { AiprefContentUsageDeclarationValidityAudit } from './aipref-content-usage-declaration-validity';
 import {
   challengedSiteContext,
@@ -103,13 +105,21 @@ describe('AiprefContentUsageDeclarationValidityAudit', () => {
   // Finding 1 of the pre-merge review: a bot wall served at HTTP 200 through the
   // site's own edge carries the site's head fragment and its site-wide response
   // headers on a body the site did not write. `origin-reachable` is met there,
-  // so the declaration this audit reads is the wall's.
+  // so the runner must not run this audit against the wall's declaration.
   it('declines a Content-Usage header a bot wall answering 200 attached', async () => {
     const reached = site(undefined, { 'content-usage': 'train-ai=n' });
     expect((await audit.audit(reached)).status, 'the same header reached is judged').toBe('pass');
 
     const challenged = challengedSiteContext(reached.pages, reached.rootFiles);
-    expect((await audit.audit(challenged)).status).toBe('na');
+    const plan = planAudits(challenged, defaultConfig);
+    expect(plan.runnable.map((entry) => entry.reg.meta.id)).not.toContain(
+      AiprefContentUsageDeclarationValidityAudit.meta.id,
+    );
+    expect(
+      plan.skipped.find(
+        (stub) => stub.id === AiprefContentUsageDeclarationValidityAudit.meta.id,
+      )?.status,
+    ).toBe('na');
   });
 
   it('is a scored grade B audit with an id inside the cap', () => {

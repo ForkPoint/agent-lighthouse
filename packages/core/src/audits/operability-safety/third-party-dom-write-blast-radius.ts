@@ -11,8 +11,6 @@ import { Audit } from '../../audit';
 import { weightForGrade } from '../../scorer';
 import type { CheckContext, PageContext } from '../../check-context';
 import {
-  scanReadTheSite,
-  unreadSiteReason,
   scanReadPageText,
   unreadPageTextReason,
 } from '../../scan-evidence';
@@ -213,15 +211,6 @@ export class ThirdPartyDomWriteBlastRadiusAudit extends Audit {
   }
 
   audit(ctx: CheckContext): AuditResult {
-    // Nothing here can be attributed to this site; see `scanReadTheSite`.
-    if (!scanReadTheSite(ctx.evidence)) {
-      return this.notApplicable(
-        'No page here can be attributed to this site, so its third-party surface was not measured.',
-        EXPECTED,
-        unreadSiteReason(ctx.evidence),
-      );
-    }
-
     if (ctx.pages.length === 0) {
       return this.notApplicable(
         'No page was fetched, so there is no third-party surface to measure.',

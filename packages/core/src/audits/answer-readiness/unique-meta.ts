@@ -2,7 +2,6 @@ import type { AuditMeta, AuditResult } from "../../types";
 import { Audit } from "../../audit";
 import { weightForGrade } from '../../scorer';
 import type { CheckContext } from '../../check-context';
-import { scanReadTheSite, unreadSiteReason } from '../../scan-evidence';
 
 export class UniqueMetaAudit extends Audit {
   static override meta: AuditMeta = {
@@ -30,15 +29,6 @@ export class UniqueMetaAudit extends Audit {
   };
 
   audit(ctx: CheckContext): AuditResult {
-    // Nothing here can be attributed to this site; see `scanReadTheSite`.
-    if (!scanReadTheSite(ctx.evidence)) {
-      return this.notApplicable(
-        'No page here can be attributed to this site, so its metadata was not judged.',
-        'Each page has a unique title + description combination',
-        unreadSiteReason(ctx.evidence),
-      );
-    }
-
     // Group pages by canonical URL so variant query parameters (e.g. ?variant=123) are not counted as duplicate distinct pages
     const canonicalGroups = new Map<string, (typeof ctx.pages)[0]>();
     for (const page of ctx.pages) {

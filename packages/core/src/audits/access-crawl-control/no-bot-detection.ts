@@ -3,8 +3,6 @@ import { Audit } from "../../audit";
 import type { CheckContext } from '../../check-context';
 import { weightForGrade } from '../../scorer';
 import {
-  scanReadTheSite,
-  unreadSiteReason,
   scanReadPageText,
   unreadPageTextReason,
 } from '../../scan-evidence';
@@ -72,15 +70,6 @@ export class NoBotDetectionAudit extends Audit {
             'A Web Application Firewall (WAF) or bot defense system is actively dropping, resetting, or challenging crawler HTTP connections. Legitimate AI search crawlers (GPTBot, Claude, Perplexity) cannot access or index your store content unless allowlisted.',
           code: '// Example: Allowlist AI crawler user-agents in your WAF settings\n// Akamai / Cloudflare / DataDome WAF Custom Rules:\n// Allow User-Agent matching "GPTBot" OR "ChatGPT-User" OR "Claude-User" OR "PerplexityBot"',
         },
-      );
-    }
-
-    // Nothing here can be attributed to this site; see `scanReadTheSite`.
-    if (!scanReadTheSite(ctx.evidence)) {
-      return this.notApplicable(
-        'No page here can be attributed to this site, so its scripts were not judged.',
-        'No JavaScript-based bot challenges that would block legitimate AI agents',
-        unreadSiteReason(ctx.evidence),
       );
     }
 

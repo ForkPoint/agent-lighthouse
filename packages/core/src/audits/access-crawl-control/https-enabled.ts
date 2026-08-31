@@ -2,7 +2,6 @@ import type { AuditMeta, AuditResult } from "../../types";
 import { Audit } from "../../audit";
 import type { CheckContext } from '../../check-context';
 import { weightForGrade } from '../../scorer';
-import { scanReadTheSite, unreadSiteReason } from '../../scan-evidence';
 
 export class HttpsEnabledAudit extends Audit {
   static override meta: AuditMeta = {
@@ -52,18 +51,6 @@ export class HttpsEnabledAudit extends Audit {
           code: '# For nginx:\nserver {\n  listen 443 ssl;\n  ssl_certificate /path/to/cert.pem;\n  ssl_certificate_key /path/to/key.pem;\n}',
         },
         page?.url,
-      );
-    }
-
-    // Past here every verdict rests on the homepage response, and a response
-    // this scan cannot attribute to the site proves nothing about its TLS.
-    // The branch below warned "Possible TLS or server error" whenever no 200
-    // arrived, which on a bot wall named a fault that does not exist.
-    if (!scanReadTheSite(ctx.evidence)) {
-      return this.notApplicable(
-        'No homepage here can be attributed to this site, so its transport was not judged.',
-        'Base URL uses https:// and homepage returns 200',
-        unreadSiteReason(ctx.evidence),
       );
     }
 

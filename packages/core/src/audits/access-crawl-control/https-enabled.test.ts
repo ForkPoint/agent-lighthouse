@@ -1,4 +1,6 @@
 import { describe, it, expect } from 'vitest';
+import { defaultConfig } from '../../audit-config';
+import { planAudits } from '../../audit-runner';
 import { HttpsEnabledAudit } from './https-enabled';
 import {
   attributableFixture,
@@ -61,15 +63,16 @@ describe('HttpsEnabledAudit', () => {
 
   // The scan may hold a readable page that is not this site's — a broker's
   // parking page, a foreign interstitial. Attribution is the gate's decision,
-  // and this audit has to honour it rather than read the page anyway.
+  // and the runner has to honour it rather than run this audit anyway.
   it('declines when no response can be attributed to this site', async () => {
     const { pages, rootFiles } = attributableFixture();
     const instance = new HttpsEnabledAudit();
     const reached = await instance.audit(mockCheckContext(pages, rootFiles));
     expect(reached.status, 'the same input reached is judged').not.toBe('na');
 
-    const unreached = await instance.audit(unreachedSiteContext(pages, rootFiles));
-    expect(unreached.status).toBe('na');
+    const plan = planAudits(unreachedSiteContext(pages, rootFiles), defaultConfig);
+    expect(plan.runnable.map((entry) => entry.reg.meta.id)).not.toContain(HttpsEnabledAudit.meta.id);
+    expect(plan.skipped.find((stub) => stub.id === HttpsEnabledAudit.meta.id)?.status).toBe('na');
   });
   // Ordering: the scheme is a property of the request, provable with no
   // response at all, so a walled scan of an HTTP site still gets the fail.
@@ -83,8 +86,10 @@ describe('HttpsEnabledAudit', () => {
   // The old branch warned "Possible TLS or server error" whenever no 200
   // arrived. On a bot wall that named a fault that does not exist.
   it('does not invent a TLS fault on a walled HTTPS site', () => {
-    const result = new HttpsEnabledAudit().audit(walledSiteContext());
-    expect(result.status).toBe('na');
-    expect(result.message).not.toContain('TLS or server error');
+    const plan = planAudits(walledSiteContext(), defaultConfig);
+    const result = plan.skipped.find((stub) => stub.id === HttpsEnabledAudit.meta.id);
+    expect(plan.runnable.map((entry) => entry.reg.meta.id)).not.toContain(HttpsEnabledAudit.meta.id);
+    expect(result?.status).toBe('na');
+    expect(result?.explanation).not.toContain('TLS or server error');
   });
 });

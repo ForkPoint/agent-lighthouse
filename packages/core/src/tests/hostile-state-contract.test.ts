@@ -1,24 +1,17 @@
 import { describe, it, expect } from 'vitest';
 import { defaultConfig } from '../audit-config';
+import { planAudits } from '../audit-runner';
 import { AuditResultSchema } from '../schemas';
 import { NOTHING_OBTAINED, SHELL_STATE } from './hostile-states';
 import { auditSources, readsPagesDirectly, SHELL_STANCE } from './audit-sources';
 import type { AuditResult } from '../types';
 
 /**
- * A scan that obtained nothing holds no evidence about the site, so no audit
- * may congratulate it. `notApplicable` is right, and `fail` is right when the
- * missing response is itself the finding — `no-blocking-captcha` reports the
- * wall it met. Only `pass` is forbidden.
+ * A scan that obtained nothing holds no evidence about the site, so the runner
+ * must not execute any audit. Every registration gets a `notApplicable` stub.
  *
- * This is registry-driven on purpose. `expectNotApplicableOnEmpty` says almost
- * the same thing and 73 of 222 audit test files call it, because calling it is
- * the author's job and the author forgets. Reading the registry covers every
- * audit whether or not anyone remembered.
- *
- * `operability-safety/no-blocking-captcha` shipped a vacuous pass here: it
- * looked for CAPTCHA markup in pages it never received, found none, and passed
- * the site that had just refused it.
+ * This is registry-driven on purpose. Reading the registry covers every audit
+ * whether or not anyone remembered to write an audit-level empty-input test.
  */
 
 /**
@@ -42,31 +35,13 @@ describe('hostile-state contract — nothing obtained', () => {
   for (const registration of registrations) {
     const { id } = registration.meta;
 
-    it(`${id}: claims nothing when the scan read nothing`, async () => {
+    it(`${id}: claims nothing when the scan read nothing`, () => {
       for (const { state, ctx } of states) {
-        let result: AuditResult;
-        try {
-          result = await registration.create().audit(ctx);
-        } catch (err) {
-          expect.fail(`${state.name}: threw instead of returning a result — ${String(err)}`);
-        }
-
-        const parsed = AuditResultSchema.safeParse(result);
-        if (!parsed.success) {
-          const issues = parsed.error.issues
-            .map((issue) => `${issue.path.join('.')}: ${issue.message}`)
-            .slice(0, 3)
-            .join('; ');
-          expect.fail(`${state.name}: result rejected by AuditResultSchema — ${issues}`);
-        }
-
-        if (VACUOUS_PASS_ALLOWLIST.has(id)) continue;
-        if (result.status === 'pass') {
-          expect.fail(
-            `${state.name}: passed a site the scan never read — "${result.message}". ` +
-              `Return notApplicable, or fail if the missing response is the finding.`,
-          );
-        }
+        const plan = planAudits(ctx, defaultConfig);
+        const result = plan.skipped.find((stub) => stub.id === id);
+        expect(plan.runnable.map((entry) => entry.reg.meta.id), state.name).not.toContain(id);
+        expect(result?.status, state.name).toBe('na');
+        expect(result?.explanation, state.name).toMatch(/^Not assessed: /);
       }
     });
   }

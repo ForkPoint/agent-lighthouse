@@ -3,7 +3,6 @@ import { Audit } from "../../audit";
 import type { CheckContext } from '../../check-context';
 import { weightForGrade } from '../../scorer';
 import type { FetchResult } from '../../fetcher';
-import { scanReadTheSite, unreadSiteReason } from '../../scan-evidence';
 
 function isOk(result: FetchResult): boolean {
   return result.status === 200;
@@ -36,15 +35,6 @@ export class LlmsFullTxtAudit extends Audit {
   };
 
   audit(ctx: CheckContext): AuditResult {
-    // Nothing here can be attributed to this site; see `scanReadTheSite`.
-    if (!scanReadTheSite(ctx.evidence)) {
-      return this.notApplicable(
-        'No response here can be attributed to this site, so no llms-full.txt was judged.',
-        'GET /llms-full.txt returns 200',
-        unreadSiteReason(ctx.evidence),
-      );
-    }
-
     const result = ctx.rootFiles['/llms-full.txt'];
 
     if (!result || !isOk(result)) {

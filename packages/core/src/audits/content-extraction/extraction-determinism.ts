@@ -11,7 +11,6 @@ import {
 } from '../../gatherers/extraction';
 import { shingles, jaccard } from '../../gatherers/text-metrics';
 import type { CheerioAPI } from 'cheerio';
-import { scanReadTheSite, unreadSiteReason } from '../../scan-evidence';
 
 /** Below this much visible text there is no article for anyone to extract. */
 const MIN_VISIBLE_CHARS = 200;
@@ -73,15 +72,6 @@ export class ExtractionDeterminismAudit extends Audit {
   };
 
   audit(ctx: CheckContext): AuditResult {
-    // Nothing here can be attributed to this site; see `scanReadTheSite`.
-    if (!scanReadTheSite(ctx.evidence)) {
-      return this.notApplicable(
-        'No page here can be attributed to this site, so no extraction could be compared.',
-        'A page from this site whose extraction can be compared',
-        unreadSiteReason(ctx.evidence),
-      );
-    }
-
     const page = ctx.pages[0];
     if (!page) {
       return this.notApplicable(
