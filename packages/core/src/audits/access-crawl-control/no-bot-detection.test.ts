@@ -127,11 +127,9 @@ describe('NoBotDetectionAudit', () => {
     );
     expect(plan.skipped.find((stub) => stub.id === NoBotDetectionAudit.meta.id)?.status).toBe('na');
   });
-  // Ordering, not just behaviour: the wall is this audit's subject, so the
-  // attribution guard must sit BELOW the `isBlocked` branch. A guard above it
-  // returns `na` here and the critical, weight-1.0 finding disappears from a
-  // walled scan — the most common hostile scan there is.
-  it('reports the firewall on a walled scan, not a shrug', () => {
+  // This direct call pins the audit's local WAF branch. The runner does not
+  // publish this finding from an unread scan; it emits an `na` stub instead.
+  it('reports the firewall when its local WAF branch is called directly', () => {
     const result = new NoBotDetectionAudit().audit(walledSiteContext());
     expect(result.status).toBe('fail');
     expect(result.message).toContain('Bot-defense firewall detected');

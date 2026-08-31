@@ -501,6 +501,122 @@ describe('planAudits — evidence gate', () => {
     },
   });
 
+  it('turns a WAF-blocked scan into actionable runner stubs, even with requires disabled', () => {
+    const page = mockPageContext(
+      'https://example.com/',
+      `<html><body><p>${'Readable site text. '.repeat(60)}</p></body></html>`,
+    );
+    const evidence = buildScanEvidence({
+      requestedUrl: 'https://example.com/',
+      homepageResult: { ...page.fetchResult, contentType: 'text/html' },
+      pages: [page],
+      rootFiles: {},
+      wafProtection: {
+        isBlocked: true,
+        provider: 'cloudflare',
+        name: 'Cloudflare Managed Challenge',
+        reason: 'bot challenge detected',
+      },
+    });
+    const ctx = {
+      ...shellContext(),
+      pages: [page],
+      evidence,
+    };
+
+    const plan = planAudits(ctx, defaultConfig, { enforceEvidence: false });
+    const stub = plan.skipped.find((check) => check.id === 'access-crawl-control/no-bot-detection');
+
+    expect(plan.runnable).toEqual([]);
+    expect(stub).toMatchObject({
+      status: 'na',
+      score: 0,
+      tags: [TAG_SKIPPED_NO_EVIDENCE],
+      explanation:
+        'Not assessed: Cloudflare Managed Challenge refused the scan: bot challenge detected.',
+    });
+  });
+
+  it('turns a temporary cross-origin redirect into actionable runner stubs', () => {
+    const page = mockPageContext(
+      'https://example.com/',
+      `<html><body><p>${'Readable parking text. '.repeat(60)}</p></body></html>`,
+    );
+    page.fetchResult.finalUrl = 'https://parking.test/example.com';
+    page.fetchResult.redirectChain = [
+      {
+        from: 'https://example.com/',
+        to: 'https://parking.test/example.com',
+        status: 302,
+      },
+    ];
+    const evidence = buildScanEvidence({
+      requestedUrl: 'https://example.com/',
+      homepageResult: { ...page.fetchResult, contentType: 'text/html' },
+      pages: [page],
+      rootFiles: {},
+      wafProtection: null,
+    });
+    const ctx = {
+      ...shellContext(),
+      pages: [page],
+      evidence,
+    };
+
+    const plan = planAudits(ctx, defaultConfig, { enforceEvidence: false });
+    const stub = plan.skipped.find(
+      (check) => check.id === 'access-crawl-control/no-redirect-chains',
+    );
+
+    expect(plan.runnable).toEqual([]);
+    expect(stub).toMatchObject({
+      status: 'na',
+      score: 0,
+      tags: [TAG_SKIPPED_NO_EVIDENCE],
+      explanation:
+        'Not assessed: The requested host redirected to parking.test, a different site, without a permanent redirect.',
+    });
+  });
+
+  it('turns an unread plain-HTTP scan into actionable runner stubs', () => {
+    const homepageResult = {
+      url: 'http://example.com/',
+      finalUrl: 'http://example.com/',
+      status: 0,
+      headers: {},
+      body: '',
+      ttfbMs: 0,
+      totalMs: 0,
+      contentType: '',
+      contentLength: 0,
+      error: 'ECONNREFUSED',
+    };
+    const evidence = buildScanEvidence({
+      requestedUrl: 'http://example.com/',
+      homepageResult,
+      pages: [],
+      rootFiles: {},
+      wafProtection: null,
+    });
+    const ctx = {
+      ...shellContext(),
+      pages: [],
+      baseUrl: 'http://example.com',
+      evidence,
+    };
+
+    const plan = planAudits(ctx, defaultConfig, { enforceEvidence: false });
+    const stub = plan.skipped.find((check) => check.id === 'access-crawl-control/https-enabled');
+
+    expect(plan.runnable).toEqual([]);
+    expect(stub).toMatchObject({
+      status: 'na',
+      score: 0,
+      tags: [TAG_SKIPPED_NO_EVIDENCE],
+      explanation: 'Not assessed: The homepage could not be fetched: ECONNREFUSED.',
+    });
+  });
+
   it('runs everything only when the gate is explicitly off, however little the scan saw', () => {
     const plan = planAudits(shellContext(), gatedConfig(), { enforceEvidence: false });
     expect(plan.runnable.map((r) => r.reg.meta.id)).toEqual(['needs-pages', 'needs-origin']);
