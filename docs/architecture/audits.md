@@ -232,22 +232,25 @@ reached. Product detection by markup is a CSS class-name match. And `content`
 means _"we could not classify this"_ — a label fourteen audits once gated on,
 so a contact page and a privacy policy were judged for missing bylines.
 
-Under consent, the whole mechanism is one expression:
+Under consent, result mode is one pure function:
 
 ```ts
 // meta — the page types under which this audit is scored
-pageTypes: ['product'],
+const meta = { pageTypes: ["product"] satisfies PageType[] };
 
-// runner — the only new logic anywhere
-scoreDisplayMode:
-  meta.pageTypes?.length && !meta.pageTypes.includes(ctx.declaredPageType)
-    ? 'informative'          // reported in full, never scored
-    : meta.scoreDisplayMode,
+function scoreModeFor(meta: AuditMeta, ctx: CheckContext): ScoreDisplayMode {
+  if (meta.scoreDisplayMode === "informative") return "informative";
+  if (!meta.pageTypes?.length) return meta.scoreDisplayMode;
+
+  const consented =
+    ctx.typeSource === "declared" && meta.pageTypes.includes(ctx.pageType);
+  return consented ? meta.scoreDisplayMode : "informative";
+}
 ```
 
-`scorer.ts` does not change. `isInformative` is already the documented single
-source of truth for _"shown to the user, never influences a score"_, and every
-ranking surface filters through it.
+The runner applies that value when it creates `CheckResult`. `AuditPlan` stays
+`{ reg, categoryId }`, and static audit meta is never changed. Two concurrent
+scans therefore cannot leak consent state into each other.
 
 ```
    al scan URL --page-type product     al scan URL
@@ -264,22 +267,46 @@ ranking surface filters through it.
    Both report every finding. Only the score differs.
 ```
 
-Three behaviours are inherited rather than designed:
+### Stable audit mass, conditional participation
 
-| existing rule                                                                     | effect on an unconsented finding                                                        |
-| :-------------------------------------------------------------------------------- | :-------------------------------------------------------------------------------------- |
-| `calculateCategoryScore:29` excludes `na` and informative                         | leaves the category denominator                                                         |
-| `gatedMassShare:126` skips informative before counting                            | does **not** count toward the 0.35 unscored threshold — consent is not missing evidence |
-| `hasAssessableCheck:80` drops a category whose checks are all `na` or informative | the category leaves the overall score rather than scoring 0                             |
+An audit keeps one intrinsic weight from its grade and tier. That weight never
+changes when the audit scores. An `informative` or `na` result does not
+participate in the score, so its effective mass for that scan is zero.
 
-The last one matters, and the scorer already explains why:
+The scorer therefore keeps two values instead of using one value for two jobs:
 
-> without it a site with no commerce surface paid the whole agentic-commerce
-> evidence mass at score 0, which reads as a penalty for not being a shop
+```ts
+registryMass = sum(registeredAudits.map((audit) => audit.meta.weight));
 
-**Dropping the audits instead would punish the site.** An empty check list passes
-`hasAssessableCheck`'s early return and scores 0 at full mass. Informative
-protects; dropping punishes.
+assessedChecks = category.checks.filter(
+  (check) => check.status !== "na" && !isInformative(check),
+);
+assessedMass = sum(assessedChecks.map((check) => check.weight));
+```
+
+- `registryMass` measures coverage. It never weights the overall score.
+- `assessedMass` weights the category in the overall score.
+- `gatedMass` stays separate and still decides when missing evidence makes the
+  honest result `overallScore: null`.
+
+The overall formula is:
+
+```ts
+overallScore =
+  sum(categories.map((category) => category.score * category.assessedMass)) /
+  sum(categories.map((category) => category.assessedMass));
+```
+
+If the total assessed mass is zero, the report returns no overall score.
+
+This correction is required for consent. Structured Data has 9.6 registered
+mass, of which 7.6 is page-typed. On a scan with only 2.0 assessed mass, applying
+the static 9.6 category mass makes those remaining audits act 4.8 times heavier.
+Using `assessedMass` preserves each audit's declared weight.
+
+`isInformative` remains the single predicate for _"shown to the user, never
+influences a score"_. Consent does not count as missing evidence and therefore
+does not increase `gatedMass`.
 
 ### 5.2 Network address
 
@@ -306,6 +333,12 @@ The fetcher already states the principle at `fetcher.ts:292`:
 > deliberately points the scanner at a dev host gains nothing from having its
 > redirects refused.
 
+The application keeps its pre-request DNS check and repeats the check on every
+redirect. It does not pin the checked IP inside the HTTP client. A hosted or
+multi-tenant deployment must also deny outbound connections to localhost,
+private networks and metadata endpoints at the network boundary. The local CLI
+may allow the operator-selected local origin so development scans keep working.
+
 ---
 
 ## 6. Scope _(decided)_
@@ -319,7 +352,7 @@ An audit's subject is either one document or one origin.
    │ the document at the URL     │     │ robots.txt   sitemap.xml    │
    │ the operator gave           │     │ llms.txt     openapi.json   │
    │                             │     │ /.well-known/*   MCP        │
-   │ cache key:  URL             │     │ cache key:  origin          │
+   │ cache key:  URL             │     │ cache key: origin + version │
    │ 134 audits · 88.4 mass      │     │  76 audits · 42.8 mass      │
    │ 66.0%                       │     │ 32.0%                       │
    └─────────────────────────────┘     └─────────────────────────────┘
@@ -342,6 +375,12 @@ Under per-URL scans that breaks origin idempotence:
 > **An origin fact must be idempotent per origin.** Those 26 belong to the origin
 > scan and read the origin's homepage, never the scanned page.
 
+Shared origin caching applies only to the canonical anonymous request profile.
+An origin scan with URL credentials, an authorization header or explicit
+prefetched evidence bypasses the shared cache. Raw credentials never enter a
+cache key. The anonymous key includes `ORIGIN_EVIDENCE_VERSION`; every record
+stores `readAt` and expires by the phase's stated TTL.
+
 ---
 
 ## 7. The score states its conditions _(decided)_
@@ -356,6 +395,10 @@ The repository already scores conditionally: past
 
 > **A score states the conditions under which it holds. Where the conditions
 > cannot be stated, there is no score.**
+
+The score uses `assessedMass`. Coverage compares `assessedMass` with
+`registryMass`, while `gatedMass` states what the scan could not read. Category
+names group findings; they never inflate an audit's intrinsic weight.
 
 ```
    ┌──────────────────────────────────────────────────────────┐
@@ -405,6 +448,12 @@ seven byte-identical copies of `getOpenApiSpec`.
 
 It also removes the possibility of the duplication it was cloned from: with no
 audit able to reach the network, a private reader has nowhere to live.
+
+The enforcing source gate scans production audit files and rejects `ctx.fetch`,
+destructured or global `fetch`, imports from the fetcher, and imports from direct
+HTTP clients. The project does not add a second fetch-free audit context type;
+the source gate remains necessary even with such a type and is the smaller
+complete boundary. The gate runs in CI as `pnpm check:audit-boundaries`.
 
 ---
 

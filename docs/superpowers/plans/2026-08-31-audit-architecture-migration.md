@@ -27,8 +27,11 @@ in every phase inherits these.
 - An audit may only claim what a source documents.
 - Absence is `notApplicable`, not `fail`. Only a present-and-defective artifact
   may fail.
-- A precondition lives in the gatherer that performs the read. Never in
-  `planAudits`. Never as an `EvidenceKey`.
+- An artifact precondition lives in the gatherer that performs the read. Never
+  in `planAudits`. Never as an `EvidenceKey`. The one exception is the
+  domain-neutral unread-scan guard, which `planAudits` always enforces.
+- A public production API must not default a safety gate to off. Unsafe
+  full-registry planning belongs under test helpers only.
 - `details` values are `string | number | boolean | string[]`. Anything else
   throws in `AuditResultSchema.parse` and costs the whole result.
 - Every audit is three files that must agree: the check, its test, its dossier.
@@ -185,15 +188,21 @@ not to each audit's metadata.
    domain-neutral — the one kind of precondition that belongs in the runner, and
    the kind `requires` already encodes. It is not an artifact precondition, which
    `docs/architecture/audits.md` §12 keeps out of `planAudits` for good reason.
+   The guard is unconditional in the production planner. Remove
+   `PlanOptions.enforceEvidence`; an omitted Boolean must not disable the law.
 2. `emptyContext()` is replaced by two honest fixtures in
    `packages/core/src/tests/fixtures.ts`, both built through the real
    `buildScanEvidence`.
 3. The 42 audits that hand-roll `scanReadTheSite` become dead code. Remove them
    in their own commit, after the gates are green.
+4. A test-only `planAllAuditsForTest(defaultConfig)` helper bypasses both the
+   evidence and page-type filters and returns all 215 registrations. It is not
+   exported from `packages/core`. The full-registry test uses this helper rather
+   than a production escape hatch.
 
 **Gate (absolute):** `packages/core/src/tests/unreachable-contract.test.ts`
-asserts `planAudits(fixtureA, defaultConfig, { enforceEvidence: true })
-.runnable.length === 0` over the whole registry. **No exemption list.** It
+asserts `planAudits(fixtureA, defaultConfig).runnable.length === 0` over the
+whole registry. **No exemption list.** It
 covers all 215 audits by construction rather than by 73 opt-in calls, which is
 the property `expectNotApplicableOnEmpty` never had.
 
@@ -251,31 +260,46 @@ green, one `major` changeset.
    `packages/cli/src/options.ts` next to `--preset`.
 2. Rename `AuditMeta.applicablePageTypes` to `AuditMeta.pageTypes` — the meta
    stays static; the runner decides inclusion.
-3. One expression in `planAudits`: an audit whose `pageTypes` do not include the
-   **declared** type runs and is reported, with `scoreDisplayMode` forced to
-   `'informative'`. `scorer.ts` is not touched.
+3. One pure `scoreModeFor(meta, ctx)` function runs when the runner creates a
+   `CheckResult`. An audit whose `pageTypes` do not include the **declared** type
+   is reported with `scoreDisplayMode: 'informative'`. `AuditPlan.runnable`
+   remains `{ reg, categoryId }`; shared audit meta is never mutated.
 4. Detection stays and is reported as a guess. It never gates anything.
+5. Split category mass into `registryMass` and `assessedMass`.
+   `registryMass` is the sum of registered audit weights and measures coverage.
+   `assessedMass` is the sum of weights whose results are neither `na` nor
+   informative and weights the category in `calculateOverallScore`.
 
-**Why `scorer.ts` is untouched:** `isInformative` is already the documented
-single source of truth for "shown, never scored", and `gatedMassShare` already
-skips informative checks before counting — so an unconsented audit does not push
-a site toward `overallScore: null`. Consent is not missing evidence.
+**Why `scorer.ts` changes:** `isInformative` already removes an unconsented
+result from its category mean, but `calculateOverallScore` still applies the
+category's full static registry mass whenever one assessable check remains.
+That inflates the remaining audits. Structured Data can apply 9.6 category mass
+to 2.0 assessed mass, a 4.8-times increase. The overall score must use
+`assessedMass`. `gatedMassShare` stays separate because consent is not missing
+evidence.
 
 **Why not drop the audits instead:** `hasAssessableCheck` returns `true` on an
 empty check list, so a category emptied of its checks pays its full evidence
 mass at score 0. Dropping punishes the site; informative protects it.
 
-**Gate:** a source test asserting that no file under
-`packages/core/src/audits/` references `pageType`. Page type becomes something
-the runner knows and an audit cannot see.
+**Gates:**
+
+1. A source test asserts that no file under `packages/core/src/audits/`
+   references `pageType`. Page type belongs to the runner.
+2. Scorer tests prove that an audit with weight 1.0 contributes 1.0 when scored
+   and zero when informative or `na`; a partly informative category uses its
+   assessed mass, not its registry mass.
+3. Runner tests prove declared → scored, detected → informative, and static
+   informative → informative.
 
 **Prerequisite:** Phase 2. `agentic-commerce/product-identifiers` has no
 `notApplicable` branch — the page-type gate is the only thing keeping
 `fail: 'No Product schema found'` off a bakery. Remove the gate first and it
 fails every site.
 
-**Exit:** the source gate green, `--page-type product` scores what
-`--page-type` omitted only reports, one `major` changeset.
+**Exit:** all three gates green, `--page-type product` scores what
+`--page-type` omitted only reports, coverage exposes registry and assessed mass,
+one `major` changeset.
 
 ---
 
@@ -309,13 +333,21 @@ only layer that can be counted against a budget, and the only layer that can
 cache. A gatherer with exactly one consumer is still correct: the fetch becomes
 visible to the scan instead of hidden in a private constant.
 
-**Gate:** a source test asserting that no file under
-`packages/core/src/audits/` references `ctx.fetch`. With no audit able to reach
-the network, a private duplicate reader has nowhere to live — which is how the
-OpenAPI family reached seven byte-identical copies of `getOpenApiSpec`.
+**Gate:** `pnpm check:audit-boundaries` scans production files under
+`packages/core/src/audits/`. It rejects `ctx.fetch`, destructured or global
+`fetch`, imports from the fetcher, and imports from direct HTTP clients. Tests
+may mock gatherers. No second fetch-free audit context type is added; the source
+gate remains necessary either way.
 
-**Exit:** both source gates green, a scan of `http://localhost:3000` completes,
-32 private caps replaced by one budget, one `major` changeset.
+Keep the pre-request DNS check and repeat it on every redirect. Do not pin the
+checked IP inside the application HTTP client. Document two deployment modes:
+the local CLI may reach the operator-selected local origin; hosted and
+multi-tenant deployments block localhost, private ranges and metadata endpoints
+with an outbound network rule.
+
+**Exit:** the source gate green, a local CLI scan of
+`http://localhost:3000` completes, hosted egress tests prove private destinations
+are blocked, 32 private caps are replaced by one budget, one `major` changeset.
 
 ---
 
@@ -328,7 +360,11 @@ OpenAPI family reached seven byte-identical copies of `getOpenApiSpec`.
 1. `MAX_PAGES_PER_SCAN` 6 → 1. `discoverPages` and its URL-regex buckets are
    removed; the operator's URL is the scan.
 2. Two scan units: **page**, keyed by URL; **origin**, keyed by origin and
-   cached. Measured split: page-only 134 audits / 88.4 mass / 66.0%; origin-only
+   cached for canonical anonymous reads. The shared key is
+   `origin + ORIGIN_EVIDENCE_VERSION`; records store `readAt` and expire by a
+   documented TTL. URL credentials, authorization headers and explicit
+   prefetched evidence bypass the shared cache. Raw credentials never enter a
+   key. Measured split: page-only 134 audits / 88.4 mass / 66.0%; origin-only
    50 / 31.8 / 23.7%; both 26 / 11.0 / 8.2%; neither 5 / 2.8 / 2.1%.
 3. The 26 straddlers move to origin scope and read the **origin's homepage**,
    never the scanned page. They are not dual-subject — they are origin audits
@@ -342,8 +378,15 @@ OpenAPI family reached seven byte-identical copies of `getOpenApiSpec`.
 **Open item, to be resolved in this phase's plan:** the 5 audits that read
 neither pages nor root files (2.8 mass, 2.1%) have no scope yet.
 
-**Gate:** an idempotence test — two scans of two different URLs on one origin
-produce identical results for every origin-scope check.
+**Gates:**
+
+1. An idempotence test — two anonymous scans of two different URLs on one
+   origin produce identical results for every origin-scope check.
+2. A cache-isolation test — an authenticated origin read is never reused by an
+   anonymous scan, and neither URL credentials nor authorization values appear
+   in a cache key or stored report.
+3. A version test — changing `ORIGIN_EVIDENCE_VERSION` forces a fresh origin
+   read.
 
 **Exit:** the idempotence gate green, one `major` changeset.
 
@@ -354,8 +397,8 @@ produce identical results for every origin-scope check.
 **Work:**
 
 1. `ScanReport.conditions`: `url`, `pageType` with its source (`declared` or
-   `detected`), `origin.readAt` and `origin.cached`, `coverage` (page mass,
-   origin mass, gated mass — all three already computed and never shown), and
+   `detected`), `origin.readAt` and `origin.cached`, `coverage` (registry mass,
+   assessed mass, page mass, origin mass and gated mass), and
    `unscored` (how many audits were informative, and why).
 2. Every renderer in `packages/report` shows it beside the number.
 3. `.github/workflows/audit-review-sweep.yml`: a scheduled job that sweeps
@@ -381,7 +424,9 @@ green on a manual `workflow_dispatch`, one `major` changeset.
 | :-------------------------------------------------------------------------------------------- | :------------------------------------------------------------------------------------------------------------------------------------- |
 | Phase 1's absolute gate is loosened with an exemption list the first time an audit is awkward | The gate ships with no exemption mechanism to loosen. Adding one is a visible change to the test file, reviewable as such              |
 | Phase 3 renames `applicablePageTypes` across 215 metas in one commit                          | The rename is mechanical and typechecked. It is its own commit, separate from the behaviour change, so a bisect can tell them apart    |
+| A partly informative category keeps its full registry mass                                    | Phase 3 stores registry and assessed mass separately; scorer tests pin the 1.0 audit weight through the overall formula                |
 | Phase 4b touches 32 audits and could regress verdicts silently                                | Phase 1's fixture B snapshot is the detector. Any verdict that moves fails it and must be explained                                    |
+| A shared origin cache crosses authentication boundaries                                       | Only canonical anonymous reads use it; authenticated and explicitly prefetched reads bypass it, and isolation tests pin the rule       |
 | Phase 5 changes what a scan _is_, and every published score changes                           | `major` changeset, and the benchmark corpus is re-run and its numbers republished as part of the phase                                 |
 | Later phases are planned against numbers earlier phases invalidate                            | Each phase's plan file is written immediately before that phase runs, never earlier. This roadmap deliberately stops at scope and gate |
 

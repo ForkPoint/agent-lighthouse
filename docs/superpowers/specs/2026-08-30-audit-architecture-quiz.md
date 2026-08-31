@@ -37,9 +37,9 @@ not be read as "every audit reimplements its own preconditions." Preconditions
 are cross-cutting concerns and belong in reusable pieces — annotations,
 decorators or guards — so an audit body holds the judgement and nothing else.
 
-This is stronger than the design's law 5. Importing a *constant* is passive: an
+This is stronger than the design's law 5. Importing a _constant_ is passive: an
 audit can import `NO_OPENAPI_SPEC` and still branch wrongly around it. Importing
-a *guard that runs* is active, and cannot be satisfied without being obeyed. It
+a _guard that runs_ is active, and cannot be satisfied without being obeyed. It
 also partly revives the "framework prevents it" option, which the review
 rejected on migration cost rather than on soundness.
 
@@ -115,7 +115,7 @@ needs to say anything true — `origin-reachable`, `unblocked-fetches`,
 that declaration against what the source actually reads. Four audits declare
 `requires: []` deliberately and are listed as `GATE_EXEMPTIONS`:
 `access-crawl-control/no-redirect-chains`, `no-bot-detection`, `https-enabled`,
-and `operability-safety/no-blocking-captcha`. The reason: their subject *is* the
+and `operability-safety/no-blocking-captcha`. The reason: their subject _is_ the
 missing evidence. `no-bot-detection` cannot require `unblocked-fetches`, because
 a blocked fetch is exactly what it reports on.
 
@@ -127,13 +127,13 @@ a blocked fetch is exactly what it reports on.
 
 ## Running tally
 
-| law | ruling | effect on the design |
-|--:|:--|:--|
-| 1 | note, not a verdict | re-draft; add a law on precondition reuse |
-| 2 | note, not a verdict | keep mechanism, add a freshness law, record the unused `reviewed:` stamp as debt |
-| 3 | note, not a verdict | park as an open question; do not assert |
-| 4 | correct | ratified |
-| 5–10 | pending | — |
+|  law | ruling              | effect on the design                                                             |
+| ---: | :------------------ | :------------------------------------------------------------------------------- |
+|    1 | note, not a verdict | re-draft; add a law on precondition reuse                                        |
+|    2 | note, not a verdict | keep mechanism, add a freshness law, record the unused `reviewed:` stamp as debt |
+|    3 | note, not a verdict | park as an open question; do not assert                                          |
+|    4 | correct             | ratified                                                                         |
+| 5–10 | pending             | —                                                                                |
 
 ---
 
@@ -144,9 +144,9 @@ split — absent (nothing readable arrived), empty (readable, declares nothing),
 malformed (nothing readable and the author wrote the breakage), readable
 (something survives, defects may sit beside it). Absent and empty decline;
 malformed fails; readable grades what survived and names the rest. Following
-law 1's note: the design wrote the declaration as importing a *constant*, but a
+law 1's note: the design wrote the declaration as importing a _constant_, but a
 constant is passive — an audit can import `NO_OPENAPI_SPEC` and still branch
-wrongly around it. A guard that *runs* cannot be satisfied without being obeyed.
+wrongly around it. A guard that _runs_ cannot be satisfied without being obeyed.
 
 **Ruling.** No option selected.
 
@@ -182,7 +182,7 @@ no reason to hold in mind. Needs re-framing around what a scan actually is.
 **Claude's explanation.** SSRF defence. `isSafeUrl` resolves DNS and refuses
 localhost and private addresses. The fetcher re-applies it on redirect hops, but
 `gateArmed ??= await isSafeUrl(targetUrl)` arms the gate only when the starting
-URL is already public — so an unguarded first hop bypasses the check *and*
+URL is already public — so an unguarded first hop bypasses the check _and_
 disarms the redirect gate behind it. Nine of 33 fetching audits never import it.
 
 **Ruling.** No option selected. A design objection was raised instead.
@@ -194,7 +194,7 @@ disarms the redirect gate behind it. Nine of 33 fetching audits never import it.
 `http://localhost:3000` before a deploy is a legitimate, arguably primary use of
 the tool. A blanket private-address refusal breaks it. So the rule cannot be
 "never touch a private address" — the real distinction is between an address the
-*operator* named and an address the *scanned site* supplied. The first is
+_operator_ named and an address the _scanned site_ supplied. The first is
 consent; the second is the attack.
 
 **Status:** law 7 to be re-drafted around operator intent, not address class.
@@ -230,17 +230,17 @@ whether each is cacheable and shareable.
 
 ## Running tally
 
-| law | ruling | effect on the design |
-|--:|:--|:--|
-| 1 | note, not a verdict | re-draft; add a law on precondition reuse |
-| 2 | note, not a verdict | keep mechanism, add a freshness law, record the unused `reviewed:` stamp as debt |
-| 3 | note, not a verdict | park as an open question; do not assert |
-| 4 | correct | ratified |
-| 5 | discuss | re-explain from first principles |
-| 6 | discuss | re-frame around what a scan is |
-| 7 | objection sustained | re-draft around operator intent, not address class |
-| 8 | deeper objection | inventory the 33 fetching audits; ask why the gatherer layer does not cover them |
-| 9–10 | not yet asked | — |
+|  law | ruling              | effect on the design                                                             |
+| ---: | :------------------ | :------------------------------------------------------------------------------- |
+|    1 | note, not a verdict | re-draft; add a law on precondition reuse                                        |
+|    2 | note, not a verdict | keep mechanism, add a freshness law, record the unused `reviewed:` stamp as debt |
+|    3 | note, not a verdict | park as an open question; do not assert                                          |
+|    4 | correct             | ratified                                                                         |
+|    5 | discuss             | re-explain from first principles                                                 |
+|    6 | discuss             | re-frame around what a scan is                                                   |
+|    7 | objection sustained | re-draft around operator intent, not address class                               |
+|    8 | deeper objection    | inventory the 33 fetching audits; ask why the gatherer layer does not cover them |
+| 9–10 | not yet asked       | —                                                                                |
 
 **One law ratified of eight asked.** The quiz found more than the design did.
 
@@ -254,12 +254,12 @@ Both questions answered.
 **Question 1 — is the four-case split right, and does an empty artifact
 decline?** Ruled: **yes.**
 
-| case | example | verdict |
-|:--|:--|:--|
-| absent | `/openapi.json` 404s, returns HTML, or was never fetched | `notApplicable` |
-| empty | `{ "openapi": "3.1.0", "paths": {} }` — legal, declares nothing | `notApplicable` |
-| malformed | `{ "paths": "coming soon" }` — the author wrote the breakage | `fail`, naming it |
-| readable | one good operation beside one broken entry | grade the good, name the broken |
+| case      | example                                                         | verdict                         |
+| :-------- | :-------------------------------------------------------------- | :------------------------------ |
+| absent    | `/openapi.json` 404s, returns HTML, or was never fetched        | `notApplicable`                 |
+| empty     | `{ "openapi": "3.1.0", "paths": {} }` — legal, declares nothing | `notApplicable`                 |
+| malformed | `{ "paths": "coming soon" }` — the author wrote the breakage    | `fail`, naming it               |
+| readable  | one good operation beside one broken entry                      | grade the good, name the broken |
 
 **Question 2 — where does the precondition live?** Ruled: **version 3, the
 guard.**
@@ -277,10 +277,10 @@ Three versions were put side by side:
 
 ```ts
 export class OpenApiServersAudit extends Audit {
-  static reads = openApiContents;   // runs first: sorts the four cases
+  static reads = openApiContents; // runs first: sorts the four cases
 
   judge(spec: OpenApiSpec, ctx: CheckContext): AuditResult {
-    const servers = spec['servers'];   // guaranteed readable
+    const servers = spec["servers"]; // guaranteed readable
     // ...only the judgement
   }
 }
@@ -299,17 +299,17 @@ imported constant. Supersedes the design document's §5.
 
 ## Running tally
 
-| law | ruling | effect on the design |
-|--:|:--|:--|
-| 1 | note, not a verdict | re-draft; the precondition-reuse law is law 5's guard |
-| 2 | note, not a verdict | keep mechanism, add a freshness law, record the unused `reviewed:` stamp as debt |
-| 3 | note, not a verdict | park as an open question; do not assert |
-| 4 | correct | ratified |
-| 5 | **ratified, version 3** | four-case split confirmed; declaration becomes a running guard |
-| 6 | discuss | re-frame around what a scan is |
-| 7 | objection sustained | re-draft around operator intent, not address class |
-| 8 | deeper objection | inventory the 33 fetching audits; ask why the gatherer layer does not cover them |
-| 9–10 | not yet asked | — |
+|  law | ruling                  | effect on the design                                                             |
+| ---: | :---------------------- | :------------------------------------------------------------------------------- |
+|    1 | note, not a verdict     | re-draft; the precondition-reuse law is law 5's guard                            |
+|    2 | note, not a verdict     | keep mechanism, add a freshness law, record the unused `reviewed:` stamp as debt |
+|    3 | note, not a verdict     | park as an open question; do not assert                                          |
+|    4 | correct                 | ratified                                                                         |
+|    5 | **ratified, version 3** | four-case split confirmed; declaration becomes a running guard                   |
+|    6 | discuss                 | re-frame around what a scan is                                                   |
+|    7 | objection sustained     | re-draft around operator intent, not address class                               |
+|    8 | deeper objection        | inventory the 33 fetching audits; ask why the gatherer layer does not cover them |
+| 9–10 | not yet asked           | —                                                                                |
 
 ---
 
@@ -327,7 +327,7 @@ answered.
 
 `emptyContext()` builds its evidence from `allEvidenceMet()`, which sets
 `judgeable: true` and `usablePageTypes: ALL_PAGE_TYPES`, while supplying zero
-pages. The fixture asserts *nothing was read* and *everything was read* at the
+pages. The fixture asserts _nothing was read_ and _everything was read_ at the
 same time. `buildScanEvidence` never produces that state: `judgeable` is
 `met['origin-reachable'] && met['unblocked-fetches']`, both false when the
 origin never answered.
@@ -339,13 +339,13 @@ there.
 
 ### The measurement, re-run against a truthful fixture
 
-| | old fixture | truthful fixture |
-|:--|--:|--:|
-| `na` | 134 | **153** |
-| `fail` | 46 | 38 |
-| `warn` | 28 | 24 |
-| `pass` | 7 | **0** |
-| non-`na` | 81 | **62** |
+|          | old fixture | truthful fixture |
+| :------- | ----------: | ---------------: |
+| `na`     |         134 |          **153** |
+| `fail`   |          46 |               38 |
+| `warn`   |          28 |               24 |
+| `pass`   |           7 |            **0** |
+| non-`na` |          81 |           **62** |
 
 ### Retraction
 
@@ -368,10 +368,10 @@ answered.
 
 ### The two fixtures
 
-| fixture | asserts | exemptions |
-|:--|:--|:--|
-| **A — unreachable** | the scan failed: `judgeable: false`, no pages, no root files, reasons populated. **Every** audit returns `na` | **none, ever.** A verdict here claims something about a site nobody reached |
-| **B — bare but real** | the scan worked: one minimal page, evidence met. Verdicts are legal and expected | not a law. A snapshot of what a minimal real site scores |
+| fixture               | asserts                                                                                                       | exemptions                                                                  |
+| :-------------------- | :------------------------------------------------------------------------------------------------------------ | :-------------------------------------------------------------------------- |
+| **A — unreachable**   | the scan failed: `judgeable: false`, no pages, no root files, reasons populated. **Every** audit returns `na` | **none, ever.** A verdict here claims something about a site nobody reached |
+| **B — bare but real** | the scan worked: one minimal page, evidence met. Verdicts are legal and expected                              | not a law. A snapshot of what a minimal real site scores                    |
 
 One fixture was being asked to be a law and a snapshot at once, so it was
 neither, and its contradictory evidence manufactured 19 phantom violations
@@ -394,17 +394,17 @@ is needed for fixture A.
 
 ## Running tally
 
-| law | ruling | effect on the design |
-|--:|:--|:--|
-| 1 | note, not a verdict | re-draft; the precondition-reuse law is law 5's guard |
-| 2 | note, not a verdict | keep mechanism, add a freshness law, record the unused `reviewed:` stamp as debt |
-| 3 | note, not a verdict | parked; see the `usablePageTypes` review below |
-| 4 | correct | ratified |
-| 5 | **ratified, version 3** | four-case split confirmed; declaration becomes a running guard |
-| 6 | **ratified, two fixtures** | fixture A is absolute with no exemptions; 7 vacuous passes retracted; 81 corrected to 62 |
-| 7 | objection sustained | re-draft around operator intent, not address class |
-| 8 | deeper objection | inventory the 33 fetching audits; ask why the gatherer layer does not cover them |
-| 9–10 | not yet asked | — |
+|  law | ruling                     | effect on the design                                                                     |
+| ---: | :------------------------- | :--------------------------------------------------------------------------------------- |
+|    1 | note, not a verdict        | re-draft; the precondition-reuse law is law 5's guard                                    |
+|    2 | note, not a verdict        | keep mechanism, add a freshness law, record the unused `reviewed:` stamp as debt         |
+|    3 | note, not a verdict        | parked; see the `usablePageTypes` review below                                           |
+|    4 | correct                    | ratified                                                                                 |
+|    5 | **ratified, version 3**    | four-case split confirmed; declaration becomes a running guard                           |
+|    6 | **ratified, two fixtures** | fixture A is absolute with no exemptions; 7 vacuous passes retracted; 81 corrected to 62 |
+|    7 | objection sustained        | re-draft around operator intent, not address class                                       |
+|    8 | deeper objection           | inventory the 33 fetching audits; ask why the gatherer layer does not cover them         |
+| 9–10 | not yet asked              | —                                                                                        |
 
 **Two laws ratified of eight asked, and one published claim retracted.**
 
@@ -420,10 +420,10 @@ Parked after the first pass, reopened, and settled.
 order, and the fourth has no test:
 
 ```ts
-if (isFirstPage && pathname === '/')            return 'homepage';
-if (isProductPage(pathname, $, jsonLd, meta))   return 'product';
-if (isCategoryPage(pathname, $, jsonLd))        return 'category';
-return 'content';                                // no test — the else branch
+if (isFirstPage && pathname === "/") return "homepage";
+if (isProductPage(pathname, $, jsonLd, meta)) return "product";
+if (isCategoryPage(pathname, $, jsonLd)) return "category";
+return "content"; // no test — the else branch
 ```
 
 Three named failures, all in the shipped code:
@@ -442,14 +442,14 @@ is stated to the user rather than hidden behind a verdict.
 
 ### Deletions
 
-| what | where |
-|:--|:--|
-| `detectPageType`, `isProductPage`, `isCategoryPage` | `parser.ts:574-680` |
-| `meta.applicablePageTypes` | 35 audits |
-| `evidence.usablePageTypes` | `scan-evidence.ts` |
-| the `sample-adequate` per-audit override | `audit-runner.ts:120-123` |
-| the page-type skip and `TAG_SKIPPED_PAGE_TYPE` | `audit-runner.ts:169-178`, `constants.ts:19` |
-| `pageType` reads in audit bodies | 18 audits |
+| what                                                | where                                        |
+| :-------------------------------------------------- | :------------------------------------------- |
+| `detectPageType`, `isProductPage`, `isCategoryPage` | `parser.ts:574-680`                          |
+| `meta.applicablePageTypes`                          | 35 audits                                    |
+| `evidence.usablePageTypes`                          | `scan-evidence.ts`                           |
+| the `sample-adequate` per-audit override            | `audit-runner.ts:120-123`                    |
+| the page-type skip and `TAG_SKIPPED_PAGE_TYPE`      | `audit-runner.ts:169-178`, `constants.ts:19` |
+| `pageType` reads in audit bodies                    | 18 audits                                    |
 
 Kept: `overrideTypeByKey` (`orchestrator.ts:299`) — the operator's declaration.
 Declaration survives, detection does not.
@@ -459,9 +459,9 @@ Declaration survives, detection does not.
 The four-case rule from law 5, applied to a page's own content rather than to an
 origin artifact. No classification is involved.
 
-| the audit asks | page carries no `Product` schema | example |
-|:--|:--|:--|
-| does this page carry it | that is the finding — report it | `structured-data/offer-schema` |
+| the audit asks             | page carries no `Product` schema   | example                                |
+| :------------------------- | :--------------------------------- | :------------------------------------- |
+| does this page carry it    | that is the finding — report it    | `structured-data/offer-schema`         |
 | is what it carries correct | nothing to judge → `notApplicable` | `agentic-commerce/product-identifiers` |
 
 `product-identifiers` has no `notApplicable` branch today. It returns
@@ -496,14 +496,14 @@ Recorded during the law 3 discussion. This supersedes the multi-page sampler.
 
 Sizing, measured on this branch:
 
-| group | count |
-|:--|--:|
-| audits touching `ctx.pages` | 144 |
-| audits looping every page | 106 |
-| audits reading only `ctx.pages[0]` | 53 |
+| group                                 | count |
+| :------------------------------------ | ----: |
+| audits touching `ctx.pages`           |   144 |
+| audits looping every page             |   106 |
+| audits reading only `ctx.pages[0]`    |    53 |
 | audits computing a ratio across pages | **1** |
-| audits reading `ctx.rootFiles` | 54 |
-| audits calling `ctx.fetch` | 33 |
+| audits reading `ctx.rootFiles`        |    54 |
+| audits calling `ctx.fetch`            |    33 |
 
 Only one audit computes a percentage over the page set, so multi-page semantics
 were barely used. The 106 loops mostly ask "does any page have X" and become
@@ -511,10 +511,10 @@ were barely used. The 106 loops mostly ask "does any page have X" and become
 
 ### Two scopes replace page types
 
-| scope | subject | idempotent per |
-|:--|:--|:--|
-| **page** | the document at the URL the operator gave | URL |
-| **origin** | `robots.txt`, `sitemap.xml`, `llms.txt`, `openapi.json`, `/.well-known/*`, MCP endpoint | origin |
+| scope      | subject                                                                                 | idempotent per |
+| :--------- | :-------------------------------------------------------------------------------------- | :------------- |
+| **page**   | the document at the URL the operator gave                                               | URL            |
+| **origin** | `robots.txt`, `sitemap.xml`, `llms.txt`, `openapi.json`, `/.well-known/*`, MCP endpoint | origin         |
 
 An audit declares its scope, not the kind of page it wants. This also answers
 law 8's objection: origin artifacts are fetched once per origin and reused
@@ -545,17 +545,17 @@ Both change what a "score" means, so neither is decided here.
 
 ## Running tally
 
-| law | ruling | effect on the design |
-|--:|:--|:--|
-| 1 | note, not a verdict | re-draft; the precondition-reuse law is law 5's guard |
-| 2 | note, not a verdict | keep mechanism, add a freshness law, record the unused `reviewed:` stamp as debt |
-| 3 | **ratified** | page type is declared, never detected. Six deletions; the absence rule replaces the gate |
-| 4 | correct | ratified |
-| 5 | **ratified, version 3** | four-case split confirmed; declaration becomes a running guard |
-| 6 | **ratified, two fixtures** | fixture A is absolute with no exemptions; 7 vacuous passes retracted; 81 corrected to 62 |
-| 7 | objection sustained | re-draft around operator intent, not address class |
-| 8 | **partly answered by scope** | origin artifacts cache per origin; the remaining question is the 33 `ctx.fetch` callers |
-| 9–10 | not yet asked | — |
+|  law | ruling                       | effect on the design                                                                     |
+| ---: | :--------------------------- | :--------------------------------------------------------------------------------------- |
+|    1 | note, not a verdict          | re-draft; the precondition-reuse law is law 5's guard                                    |
+|    2 | note, not a verdict          | keep mechanism, add a freshness law, record the unused `reviewed:` stamp as debt         |
+|    3 | **ratified**                 | page type is declared, never detected. Six deletions; the absence rule replaces the gate |
+|    4 | correct                      | ratified                                                                                 |
+|    5 | **ratified, version 3**      | four-case split confirmed; declaration becomes a running guard                           |
+|    6 | **ratified, two fixtures**   | fixture A is absolute with no exemptions; 7 vacuous passes retracted; 81 corrected to 62 |
+|    7 | objection sustained          | re-draft around operator intent, not address class                                       |
+|    8 | **partly answered by scope** | origin artifacts cache per origin; the remaining question is the 33 `ctx.fetch` callers  |
+| 9–10 | not yet asked                | —                                                                                        |
 
 **Three laws ratified of eight asked.**
 
@@ -572,12 +572,12 @@ the fallback.
 > **A page's type is a label. A detected label may never affect a verdict. A
 > declared label is operator consent and may.**
 
-| | detected | declared by the operator |
-|:--|:--|:--|
-| appears in the report | yes, marked as a guess | yes, marked as declared |
-| may affect a verdict | **never** | yes — it is consent |
+|                       | detected               | declared by the operator |
+| :-------------------- | :--------------------- | :----------------------- |
+| appears in the report | yes, marked as a guess | yes, marked as declared  |
+| may affect a verdict  | **never**              | yes — it is consent      |
 
-### Condition 1 — informative is enforced, not intended *(accepted)*
+### Condition 1 — informative is enforced, not intended _(accepted)_
 
 Fourteen audits gate on `content` today because nothing stopped them. If
 `pageType` remains on `PageContext`, a future audit reads it again and the rule
@@ -589,7 +589,7 @@ rots the way the NA contract did.
 Without that gate the rule is a comment, and this session has established what
 comments are worth.
 
-### Condition 2 — the label carries its provenance *(accepted)*
+### Condition 2 — the label carries its provenance _(accepted)_
 
 ```jsonc
 "pagesScanned": [
@@ -602,7 +602,7 @@ A detected label published without that marker is the top law broken in the
 report layer instead of the audit layer. `typeSource` is where "the detection
 method is flawed" gets said.
 
-### Condition 3 — declaration is consent *(accepted, and chosen over label-only)*
+### Condition 3 — declaration is consent _(accepted, and chosen over label-only)_
 
 A detected type is our guess and may never move a score. A declared type is the
 operator vouching for what the page is, which makes the finding relevant by
@@ -630,11 +630,11 @@ scan.
 
 Three ways to express it. **C is recommended.**
 
-| | approach | cost |
-|:--|:--|:--|
-| A | `tier` becomes scan-dependent | breaks law 2's invariants directly; `sunset.test.ts` would have to be re-expressed as a static ceiling rather than an identity |
-| B | treat consent like an evidence key — no consent, audit skipped, reported `na` with "declare the page type to have this scored" | reuses existing machinery, but the audit declines instead of reporting its finding, which loses the thing consent was meant to preserve |
-| **C** | meta stays static; the **scorer** excludes unconsented audits from the denominator, the way `gatedMassShare` already inspects tags | law 2 untouched, the finding is still reported, and runtime-dependent scoring already exists in `scan-evidence` |
+|       | approach                                                                                                                           | cost                                                                                                                                    |
+| :---- | :--------------------------------------------------------------------------------------------------------------------------------- | :-------------------------------------------------------------------------------------------------------------------------------------- |
+| A     | `tier` becomes scan-dependent                                                                                                      | breaks law 2's invariants directly; `sunset.test.ts` would have to be re-expressed as a static ceiling rather than an identity          |
+| B     | treat consent like an evidence key — no consent, audit skipped, reported `na` with "declare the page type to have this scored"     | reuses existing machinery, but the audit declines instead of reporting its finding, which loses the thing consent was meant to preserve |
+| **C** | meta stays static; the **scorer** excludes unconsented audits from the denominator, the way `gatedMassShare` already inspects tags | law 2 untouched, the finding is still reported, and runtime-dependent scoring already exists in `scan-evidence`                         |
 
 Under C an audit is always registered with one static grade, tier and weight.
 Whether that weight enters a given scan's denominator is a scoring decision made
@@ -661,17 +661,17 @@ is scored; it never decides whether the finding is true.
 
 ## Running tally
 
-| law | ruling | effect on the design |
-|--:|:--|:--|
-| 1 | note, not a verdict | re-draft; the precondition-reuse law is law 5's guard |
-| 2 | ratified, **with a collision** | consent makes contribution scan-dependent; resolved by option C at the scorer |
-| 3 | **ratified as amended** | detected labels never move a verdict; declared labels are consent and may |
-| 4 | correct | ratified |
-| 5 | **ratified, version 3** | four-case split confirmed; declaration becomes a running guard |
-| 6 | **ratified, two fixtures** | fixture A is absolute with no exemptions; 7 vacuous passes retracted; 81 corrected to 62 |
-| 7 | objection sustained | re-draft around operator intent, not address class — the same consent distinction as law 3 |
-| 8 | **partly answered by scope** | origin artifacts cache per origin; the 33 `ctx.fetch` callers remain |
-| 9–10 | not yet asked | — |
+|  law | ruling                         | effect on the design                                                                       |
+| ---: | :----------------------------- | :----------------------------------------------------------------------------------------- |
+|    1 | note, not a verdict            | re-draft; the precondition-reuse law is law 5's guard                                      |
+|    2 | ratified, **with a collision** | consent makes contribution scan-dependent; resolved by option C at the scorer              |
+|    3 | **ratified as amended**        | detected labels never move a verdict; declared labels are consent and may                  |
+|    4 | correct                        | ratified                                                                                   |
+|    5 | **ratified, version 3**        | four-case split confirmed; declaration becomes a running guard                             |
+|    6 | **ratified, two fixtures**     | fixture A is absolute with no exemptions; 7 vacuous passes retracted; 81 corrected to 62   |
+|    7 | objection sustained            | re-draft around operator intent, not address class — the same consent distinction as law 3 |
+|    8 | **partly answered by scope**   | origin artifacts cache per origin; the 33 `ctx.fetch` callers remain                       |
+| 9–10 | not yet asked                  | —                                                                                          |
 
 **Four laws ratified of eight asked.**
 
@@ -692,8 +692,10 @@ single source of truth.
  * Every surface that ranks or scores checks filters through this predicate
  * so the rule cannot drift per package.
  */
-export function isInformative(check: Pick<CheckResult, 'scoreDisplayMode'>): boolean {
-  return check.scoreDisplayMode === 'informative';
+export function isInformative(
+  check: Pick<CheckResult, "scoreDisplayMode">,
+): boolean {
+  return check.scoreDisplayMode === "informative";
 }
 ```
 
@@ -705,16 +707,21 @@ not only on meta.
 
 ```ts
 // audit meta — the page types under which this audit is scored
-pageTypes: ['product'],          // renamed from applicablePageTypes
+const meta = { pageTypes: ["product"] satisfies PageType[] };
 
 // runner, building the CheckResult
-scoreDisplayMode:
-  meta.pageTypes?.length && !meta.pageTypes.includes(ctx.pageType)
-    ? 'informative'              // reported in full, never scored
-    : meta.scoreDisplayMode,
+function scoreModeFor(meta: AuditMeta, ctx: CheckContext): ScoreDisplayMode {
+  if (meta.scoreDisplayMode === "informative") return "informative";
+  if (!meta.pageTypes?.length) return meta.scoreDisplayMode;
+
+  const consented =
+    ctx.typeSource === "declared" && meta.pageTypes.includes(ctx.pageType);
+  return consented ? meta.scoreDisplayMode : "informative";
+}
 ```
 
-`scorer.ts` does not change at all.
+The runner applies the returned value to `CheckResult`. `AuditPlan` and static
+meta stay unchanged.
 
 ### Why law 2 survives
 
@@ -723,15 +730,16 @@ tier, one weight, permanently. All three invariants hold as identities. The
 scan-dependent part lives on the result, which is already how `status: 'na'`
 and `scoreDisplayMode` behave today.
 
-### Three behaviours inherited for free
+### Two behaviours inherited; one scorer correction
 
-| existing rule | effect on an unconsented finding |
-|:--|:--|
-| `calculateCategoryScore:29` excludes `na` and informative | leaves the category denominator |
-| `gatedMassShare:126` skips informative before counting | does **not** count toward the 0.35 unscored threshold — correct, because consent is not missing evidence |
-| `hasAssessableCheck:80` drops a category whose checks are all `na` or informative | scanning an undeclared page removes `agentic-commerce` from the overall score rather than scoring it 0 |
+| existing rule                                                    | effect on an unconsented finding                                                                         |
+| :--------------------------------------------------------------- | :------------------------------------------------------------------------------------------------------- |
+| `calculateCategoryScore:29` excludes `na` and informative        | leaves the category denominator                                                                          |
+| `gatedMassShare:126` skips informative before counting           | does **not** count toward the 0.35 unscored threshold — correct, because consent is not missing evidence |
+| `calculateOverallScore` uses the category's static registry mass | **must change** to assessed mass so a partly informative category cannot amplify its remaining audits    |
 
-The third inherits a protection the scorer already documents:
+The scorer keeps `registryMass` for coverage and uses `assessedMass` for the
+overall formula. This preserves each audit's intrinsic weight.
 
 > without it a site with no commerce surface paid the whole agentic-commerce
 > evidence mass at score 0, which reads as a penalty for not being a shop
@@ -740,11 +748,11 @@ The third inherits a protection the scorer already documents:
 
 One word everywhere. `consentTypes` was proposed and rejected as jargon.
 
-| surface | name |
-|:--|:--|
-| scan input | `--page-type product` |
-| audit meta | `pageTypes: PageType[]` — the types under which this audit is scored |
-| page context | `pageType`, plus `typeSource: 'declared' \| 'detected'` |
+| surface      | name                                                                 |
+| :----------- | :------------------------------------------------------------------- |
+| scan input   | `--page-type product`                                                |
+| audit meta   | `pageTypes: PageType[]` — the types under which this audit is scored |
+| page context | `pageType`, plus `typeSource: 'declared' \| 'detected'`              |
 
 **Status:** ratified.
 
@@ -763,10 +771,10 @@ nicety, not an architectural need, so it is gone.
 Two states in the audit model: consented, not consented. That is all the scorer
 knows about.
 
-| page type | comes from | audits declaring `pageTypes` | score | shown |
-|:--|:--|:--|:--|:--|
-| **declared** — `--page-type product` | the operator | scored | counts | yes |
-| **not declared** | detection, label only | informative | none | yes |
+| page type                            | comes from            | audits declaring `pageTypes` | score  | shown |
+| :----------------------------------- | :-------------------- | :--------------------------- | :----- | :---- |
+| **declared** — `--page-type product` | the operator          | scored                       | counts | yes   |
+| **not declared**                     | detection, label only | informative                  | none   | yes   |
 
 Everything is always reported. The only question the model asks is whether the
 operator vouched for what the page is.
@@ -777,17 +785,22 @@ operator vouched for what the page is.
 // 1. meta — renamed; meaning changes from "gate" to "scored under"
 pageTypes: ['product'],                    // was applicablePageTypes
 
-// 2. runner — the only new logic anywhere
-scoreDisplayMode:
-  meta.pageTypes?.length && !meta.pageTypes.includes(ctx.declaredPageType)
-    ? 'informative'
-    : meta.scoreDisplayMode,
+// 2. runner — one pure result-mode function
+function scoreModeFor(meta: AuditMeta, ctx: CheckContext): ScoreDisplayMode {
+  if (meta.scoreDisplayMode === 'informative') return 'informative';
+  if (!meta.pageTypes?.length) return meta.scoreDisplayMode;
+
+  const consented =
+    ctx.typeSource === 'declared' && meta.pageTypes.includes(ctx.pageType);
+  return consented ? meta.scoreDisplayMode : 'informative';
+}
 
 // 3. page context — the label carries its provenance
 { url, pageType: 'product', typeSource: 'declared' | 'detected' }
 ```
 
-`packages/core/src/scorer.ts` does not change. Every scoring surface already
+`packages/core/src/scorer.ts` splits category mass into `registryMass` for
+coverage and `assessedMass` for overall weighting. Every scoring surface still
 filters through `isInformative`.
 
 ### Deleted
@@ -818,19 +831,17 @@ That penalises the site it was meant to help:
 ```ts
 // scorer.ts:80
 function hasAssessableCheck(cat: CategoryResult): boolean {
-  if (cat.checks.length === 0) return true;      // empty list stays in the score
-  return cat.checks.some((c) => c.status !== 'na' && !isInformative(c));
+  if (cat.checks.length === 0) return true; // empty list stays in the score
+  return cat.checks.some((c) => c.status !== "na" && !isInformative(c));
 }
 // scorer.ts:31
-if (totalWeight === 0) return 0;                 // and scores 0
+if (totalWeight === 0) return 0; // and scores 0
 ```
 
 Drop every `agentic-commerce` audit and the category arrives with zero checks,
 passes the early return, and contributes its full `CATEGORY_MASS` at score 0.
-The informative path does the opposite: the checks are present but advisory, so
-`hasAssessableCheck` returns false and the category leaves the score entirely —
-the protection the scorer already documents against penalising a site for not
-being a shop.
+The informative path keeps the checks visible. Their weight does not enter
+`assessedMass`, so they cannot move the overall score.
 
 **Dropping punishes. Informative protects.**
 
@@ -900,18 +911,20 @@ application: put the guard where it runs.
 
 ```ts
 fetch: async (options) => {
-  const sameOrigin = new URL(options.url).origin === new URL(ctx.baseUrl).origin;
-  if (!sameOrigin && !(await isSafeUrl(options.url))) return refused(options.url);
+  const sameOrigin =
+    new URL(options.url).origin === new URL(ctx.baseUrl).origin;
+  if (!sameOrigin && !(await isSafeUrl(options.url)))
+    return refused(options.url);
   return fetcher.fetch(options);
-}
+};
 ```
 
-| scan target | audit fetches | result | why |
-|:--|:--|:--|:--|
-| `http://localhost:3000` | `http://localhost:3000/robots.txt` | **allowed** | same origin — the operator named it |
-| `http://localhost:3000` | `http://127.0.0.1:9200/` | **refused** | different origin, private — SSRF into another local service |
-| `https://shop.example` | `https://shop.example/api` | allowed | same origin |
-| `https://shop.example` | `http://169.254.169.254/` | **refused** | cloud metadata endpoint, harvested from a page |
+| scan target             | audit fetches                      | result      | why                                                         |
+| :---------------------- | :--------------------------------- | :---------- | :---------------------------------------------------------- |
+| `http://localhost:3000` | `http://localhost:3000/robots.txt` | **allowed** | same origin — the operator named it                         |
+| `http://localhost:3000` | `http://127.0.0.1:9200/`           | **refused** | different origin, private — SSRF into another local service |
+| `https://shop.example`  | `https://shop.example/api`         | allowed     | same origin                                                 |
+| `https://shop.example`  | `http://169.254.169.254/`          | **refused** | cloud metadata endpoint, harvested from a page              |
 
 Origin, not address class. A blanket private-address rule breaks local
 development scanning; an origin rule does not, because consent attaches to the
@@ -948,17 +961,17 @@ own test where the context is built, not where audits are exercised.
 
 ## Running tally
 
-| law | ruling | effect on the design |
-|--:|:--|:--|
-| 1 | note, not a verdict | re-draft; the precondition-reuse law is law 5's guard |
-| 2 | ratified, with a collision | consent makes contribution scan-dependent; resolved at the result, not the meta |
-| 3 | **ratified, final** | two modes: declared is scored, undetected is informative. Everything reported |
-| 4 | correct | ratified |
-| 5 | **ratified, version 3** | four-case split; the declaration is a running guard |
-| 6 | **ratified, two fixtures** | fixture A is absolute; 7 vacuous passes retracted; 81 corrected to 62 |
-| 7 | **ratified** | consent attaches to the origin; the gate moves into `ctx.fetch` |
-| 8 | partly answered by scope | origin artifacts cache per origin; the 33 `ctx.fetch` callers remain |
-| 9–10 | not yet asked | — |
+|  law | ruling                     | effect on the design                                                            |
+| ---: | :------------------------- | :------------------------------------------------------------------------------ |
+|    1 | note, not a verdict        | re-draft; the precondition-reuse law is law 5's guard                           |
+|    2 | ratified, with a collision | consent makes contribution scan-dependent; resolved at the result, not the meta |
+|    3 | **ratified, final**        | two modes: declared is scored, undetected is informative. Everything reported   |
+|    4 | correct                    | ratified                                                                        |
+|    5 | **ratified, version 3**    | four-case split; the declaration is a running guard                             |
+|    6 | **ratified, two fixtures** | fixture A is absolute; 7 vacuous passes retracted; 81 corrected to 62           |
+|    7 | **ratified**               | consent attaches to the origin; the gate moves into `ctx.fetch`                 |
+|    8 | partly answered by scope   | origin artifacts cache per origin; the 33 `ctx.fetch` callers remain            |
+| 9–10 | not yet asked              | —                                                                               |
 
 **Six laws ratified of eight asked.** Three of them — 3, 5 and 7 — resolved to
 the same shape: put the guard where it runs, and let consent decide what the
@@ -976,13 +989,13 @@ here.
 Measured on this branch over all 215 registered audits, classifying by whether
 the source reads `ctx.pages`, `ctx.rootFiles`, both or neither.
 
-| scope | audits | mass | share |
-|:--|--:|--:|--:|
-| **page only** | 134 | 88.4 | **66.0%** |
-| **origin only** | 50 | 31.8 | **23.7%** |
-| both | 26 | 11.0 | 8.2% |
-| neither — fetches live | 5 | 2.8 | 2.1% |
-| **total** | **215** | **134.0** | |
+| scope                  |  audits |      mass |     share |
+| :--------------------- | ------: | --------: | --------: |
+| **page only**          |     134 |      88.4 | **66.0%** |
+| **origin only**        |      50 |      31.8 | **23.7%** |
+| both                   |      26 |      11.0 |      8.2% |
+| neither — fetches live |       5 |       2.8 |      2.1% |
+| **total**              | **215** | **134.0** |           |
 
 Only 26 audits straddle, so the split is structurally available.
 
@@ -1004,13 +1017,13 @@ same artifact, different verdict, decided by which URL the operator typed.
 
 ### Two scan units
 
-| | **origin scan** | **page scan** |
-|:--|:--|:--|
-| cache key | origin | URL |
-| runs | 50 origin-only + the 26 straddlers | 134 page-only |
-| mass | 42.8 | 88.4 |
-| reads | `robots.txt`, `sitemap.xml`, `llms.txt`, `openapi.json`, `/.well-known/*`, and the origin's homepage for discovery links | the one document at that URL |
-| computed | once per origin, cached | per scan |
+|           | **origin scan**                                                                                                          | **page scan**                |
+| :-------- | :----------------------------------------------------------------------------------------------------------------------- | :--------------------------- |
+| cache key | origin                                                                                                                   | URL                          |
+| runs      | 50 origin-only + the 26 straddlers                                                                                       | 134 page-only                |
+| mass      | 42.8                                                                                                                     | 88.4                         |
+| reads     | `robots.txt`, `sitemap.xml`, `llms.txt`, `openapi.json`, `/.well-known/*`, and the origin's homepage for discovery links | the one document at that URL |
+| computed  | once per origin, cached                                                                                                  | per scan                     |
 
 ### One score, not two
 
@@ -1019,7 +1032,7 @@ unit and the score unit do not have to follow each other.
 
 Origin files genuinely affect every page — a `robots.txt` blocking GPTBot
 degrades every URL on the host — so folding that mass into each page's score is
-accurate rather than a distortion. Two pages of one site *should* share that
+accurate rather than a distortion. Two pages of one site _should_ share that
 baseline.
 
 The repo already scores conditionally. `GATED_MASS_UNSCORED_THRESHOLD = 0.35`
@@ -1046,12 +1059,12 @@ Fields, not prose, so the renderers and the JSON output both carry them.
 }
 ```
 
-| # | field | why a reader needs it |
-|--:|:--|:--|
-| 1 | `url` | the score is about one document, not a site |
-| 2 | `pageType` with `source` | law 3 makes this decide what was scored — an undeclared scan silently drops the commerce mass, and the number must say so |
-| 3 | `origin.readAt` | a cached origin result is a fact from an earlier moment; undated it is a claim about now that nobody verified now |
-| 4 | `coverage.gated` | already computed by `gatedMassShare`, currently used only to decide `null` and never shown |
+|   # | field                    | why a reader needs it                                                                                                     |
+| --: | :----------------------- | :------------------------------------------------------------------------------------------------------------------------ |
+|   1 | `url`                    | the score is about one document, not a site                                                                               |
+|   2 | `pageType` with `source` | law 3 makes this decide what was scored — an undeclared scan silently drops the commerce mass, and the number must say so |
+|   3 | `origin.readAt`          | a cached origin result is a fact from an earlier moment; undated it is a claim about now that nobody verified now         |
+|   4 | `coverage.gated`         | already computed by `gatedMassShare`, currently used only to decide `null` and never shown                                |
 
 ### Open
 
@@ -1079,9 +1092,9 @@ directly and never reach `toCheckResult`, so they never see it.
 
 **Ruling: correct, and fix the guide.**
 
-`CLAUDE.md` says a number array is *"dropped by the result schema"*. That was
+`CLAUDE.md` says a number array is _"dropped by the result schema"_. That was
 true before the catchall existed, and the schema's own comment records the
-history: *"A closed object dropped all of it silently."* Now a number array
+history: _"A closed object dropped all of it silently."_ Now a number array
 matches no union member and throws exactly like an array of objects.
 
 **Follow-up:** correct that sentence in `AGENTS.md` when the laws are written.
@@ -1187,18 +1200,18 @@ the gatherer layer with it.
 
 ## Running tally — quiz complete
 
-| law | ruling |
-|--:|:--|
-| 1 | absorbed into law 5's guard |
-| 2 | ratified, **plus** a 6-month re-review sweep that opens a rolling GitHub issue |
-| 3 | ratified, final — declared is scored, detected is informative, everything reported |
-| 4 | ratified as written |
-| 5 | ratified — four-case read, declaration is a running guard |
-| 6 | ratified — two fixtures; fixture A absolute; two claims retracted |
-| 7 | ratified — consent attaches to the origin |
-| 8 | ratified — audits do not fetch; gatherers do |
-| 9 | ratified, and `AGENTS.md` needs a correction |
-| 10 | ratified — gated by law 8's rule |
+| law | ruling                                                                             |
+| --: | :--------------------------------------------------------------------------------- |
+|   1 | absorbed into law 5's guard                                                        |
+|   2 | ratified, **plus** a 6-month re-review sweep that opens a rolling GitHub issue     |
+|   3 | ratified, final — declared is scored, detected is informative, everything reported |
+|   4 | ratified as written                                                                |
+|   5 | ratified — four-case read, declaration is a running guard                          |
+|   6 | ratified — two fixtures; fixture A absolute; two claims retracted                  |
+|   7 | ratified — consent attaches to the origin                                          |
+|   8 | ratified — audits do not fetch; gatherers do                                       |
+|   9 | ratified, and `AGENTS.md` needs a correction                                       |
+|  10 | ratified — gated by law 8's rule                                                   |
 
 **Ten of ten ruled.** Six were corrected, sharpened or replaced by the ruling
 rather than confirmed as explained, and two published claims were retracted
@@ -1213,3 +1226,93 @@ Three sentences hold the whole architecture:
    score's `conditions` block — including what absence means, what was consented
    to, and how old the evidence is.
 3. **A law names its gate, or it is a wish.** The reason this document exists.
+
+---
+
+## Post-quiz architecture review — accepted 2026-08-31
+
+The branch review found two composition errors and three boundary choices. The
+following decisions are final and supersede any earlier sentence in this quiz
+that says `scorer.ts` stays unchanged or that the production evidence gate may
+default to off.
+
+### 1. Audit weight is stable; score participation is conditional
+
+An audit keeps the static weight derived from its grade and tier. When it is
+scored, that exact weight participates. When its result is `informative` or
+`na`, its effective mass for that scan is zero.
+
+The scorer keeps separate values:
+
+```ts
+registryMass = sum(all registered audit weights);
+assessedMass = sum(weights where status !== 'na' && !isInformative(result));
+```
+
+`registryMass` measures coverage. `assessedMass` weights a category in the
+overall score. `gatedMass` remains separate and decides whether missing evidence
+makes `overallScore` null.
+
+This fixes the consent collision missed in the original Option C review. A
+partly informative category must not retain its full static category mass.
+Structured Data would otherwise use 9.6 category mass for 2.0 assessed mass,
+making the remaining audits act 4.8 times heavier.
+
+### 2. The public evidence gate is safe by default
+
+`planAudits(ctx, config)` always enforces the universal unread-scan guard.
+`runAudits(ctx, config)` uses that safe planner when no plan is supplied.
+Production exports have no `enforceEvidence?: boolean` option whose omitted
+value disables the guard.
+
+The 215-audit bypass exists only under test helpers. It bypasses both evidence
+and page-type filters so the whole registry can be exercised. It is not exported
+from `packages/core`.
+
+### 3. Page-type consent uses one pure result function
+
+`AuditPlan.runnable` remains `{ reg, categoryId }`. The runner does not mutate
+shared audit meta and does not store an effective mode in the plan.
+
+```ts
+function scoreModeFor(meta: AuditMeta, ctx: CheckContext): ScoreDisplayMode {
+  if (meta.scoreDisplayMode === "informative") return "informative";
+  if (!meta.pageTypes?.length) return meta.scoreDisplayMode;
+
+  const consented =
+    ctx.typeSource === "declared" && meta.pageTypes.includes(ctx.pageType);
+  return consented ? meta.scoreDisplayMode : "informative";
+}
+```
+
+The runner applies this value when it creates `CheckResult`. A declared type
+scores. A detected type informs. A static informative audit is never promoted.
+
+### 4. One source gate enforces the network boundary
+
+Audits keep the existing context shape. No second fetch-free `AuditContext`
+type is added. `pnpm check:audit-boundaries` scans production audit sources and
+rejects `ctx.fetch`, destructured or global `fetch`, imports from the fetcher,
+and imports from direct HTTP clients. Tests may mock gatherers.
+
+### 5. DNS safety stays in two layers
+
+The application keeps the pre-request DNS check and the check on every redirect.
+It does not pin the checked IP inside the HTTP client. Hosted and multi-tenant
+deployments must also block localhost, private networks and metadata endpoints
+with an outbound network rule. The local CLI may reach the operator-selected
+local origin.
+
+### 6. Shared origin caching is anonymous only
+
+Anonymous origin reads cache by `origin + ORIGIN_EVIDENCE_VERSION`. Every record
+stores `readAt` and expires by a documented TTL. A scan with URL credentials,
+an authorization header or explicit prefetched evidence bypasses the shared
+cache. Raw credentials never enter the cache key.
+
+### 7. The phase plans must contain executable proof
+
+The Phase 1 plan keeps the 215-audit test. It uses a test-only full-registry
+helper instead of disabling a production guard. Every test written in a phase
+plan must be implemented and runnable; a proposed test that cannot run must be
+corrected or removed before that phase starts.

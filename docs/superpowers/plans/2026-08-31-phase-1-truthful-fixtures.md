@@ -61,6 +61,7 @@ user sees. It changes what guarantees the correctness.
 | file                                                   | responsibility                                                                                                                   |
 | :----------------------------------------------------- | :------------------------------------------------------------------------------------------------------------------------------- |
 | `packages/core/src/tests/fixtures.ts`                  | **Create.** The two fixtures, built through the real `buildScanEvidence`. Nothing else.                                          |
+| `packages/core/src/tests/plan-all-audits.ts`           | **Create.** Test-only full-registry planning. It bypasses production evidence and page-type gates and is never package-exported. |
 | `packages/core/src/audit-runner.ts`                    | **Modify.** One universal precondition in `planAudits`, before the `requires` loop.                                              |
 | `packages/core/src/tests/unreachable-contract.test.ts` | **Create.** The absolute gate.                                                                                                   |
 | `packages/core/src/tests/bare-site.snapshot.test.ts`   | **Create.** The snapshot gate.                                                                                                   |
@@ -274,6 +275,7 @@ git commit -m "test(core): two scan fixtures that describe themselves truthfully
 **Files:**
 
 - Modify: `packages/core/src/audit-runner.ts` — `planAudits`, around line 166
+- Create: `packages/core/src/tests/plan-all-audits.ts`
 - Test: `packages/core/src/audit-runner.test.ts`
 
 **Interfaces:**
@@ -281,8 +283,10 @@ git commit -m "test(core): two scan fixtures that describe themselves truthfully
 - Consumes: `unreachableContext` and `bareSiteContext` from Task 1;
   `scanReadTheSite` and `unreadSiteReason`, both already exported from
   `../scan-evidence`; `TAG_SKIPPED_NO_EVIDENCE` from `./constants`.
-- Produces: no new export. `planAudits`'s existing signature is unchanged;
-  Task 3 relies on it returning `runnable.length === 0` on fixture A.
+- Produces: safe production `planAudits(ctx, config)` with no disabling option;
+  test-only `planAllAuditsForTest(config): AuditPlan`, imported by tests through
+  its file path and never exported from `packages/core`; Task 3 relies on the
+  production planner returning `runnable.length === 0` on fixture A.
 
 - [ ] **Step 1: Write the failing test**
 
@@ -298,17 +302,13 @@ describe("planAudits on a scan that read nothing", () => {
   // `scanReadTheSite` inside `audit()`. That is the arrangement this removes:
   // an audit's protection must not depend on the audit remembering.
   it("runs nothing at all", () => {
-    const plan = planAudits(unreachableContext(), defaultConfig, {
-      enforceEvidence: true,
-    });
+    const plan = planAudits(unreachableContext(), defaultConfig);
     expect(plan.runnable).toHaveLength(0);
     expect(plan.skipped).toHaveLength(215);
   });
 
   it("tags every skip with the reason the scan gave", () => {
-    const plan = planAudits(unreachableContext(), defaultConfig, {
-      enforceEvidence: true,
-    });
+    const plan = planAudits(unreachableContext(), defaultConfig);
     for (const stub of plan.skipped) {
       expect(stub.status).toBe("na");
       expect(stub.tags).toContain(TAG_SKIPPED_NO_EVIDENCE);
@@ -319,19 +319,8 @@ describe("planAudits on a scan that read nothing", () => {
   // The precondition must not fire on a site that was read. A bare site is
   // still a site, and every verdict about it is a verdict about the site.
   it("does not fire on a bare but reachable site", () => {
-    const plan = planAudits(bareSiteContext(), defaultConfig, {
-      enforceEvidence: true,
-    });
+    const plan = planAudits(bareSiteContext(), defaultConfig);
     expect(plan.runnable.length).toBeGreaterThan(100);
-  });
-
-  // The escape hatch is for measuring what the gate removes, and it must keep
-  // working or the comparison it exists for is impossible.
-  it("is off when the evidence gate is off", () => {
-    const plan = planAudits(unreachableContext(), defaultConfig, {
-      enforceEvidence: false,
-    });
-    expect(plan.runnable).toHaveLength(215);
   });
 });
 ```
@@ -366,7 +355,7 @@ and **before** the `for (const cat of config.categories)` loop:
 // only by hand-rolling this check inside `audit()`, and 142 of 215 audits
 // have no contract test that would catch the omission. An audit's protection
 // must not depend on the audit remembering.
-const unread = options.enforceEvidence && !scanReadTheSite(ctx.evidence);
+const unread = !scanReadTheSite(ctx.evidence);
 const unreadWhy = unread
   ? `Not assessed: ${unreadSiteReason(ctx.evidence)}`
   : "";
@@ -382,22 +371,71 @@ if (unread) {
 }
 ```
 
+Remove `PlanOptions`, remove the third `options` parameter from `planAudits`,
+and remove the `if (options.enforceEvidence)` wrapper around
+`unmetRequirements`. The `requires` gate always runs in production.
+
 - [ ] **Step 4: Run test to verify it passes**
 
 Run: `npx vitest run packages/core/src/audit-runner.test.ts`
-Expected: PASS, including the four new tests.
+Expected: PASS, including the three new tests.
 
-- [ ] **Step 5: Check nothing else moved**
+- [ ] **Step 5: Write the failing full-registry helper test**
+
+```ts
+// append to packages/core/src/audit-runner.test.ts
+import { planAllAuditsForTest } from "./tests/plan-all-audits";
+
+it("lets tests address every registered audit without weakening production", () => {
+  const plan = planAllAuditsForTest(defaultConfig);
+
+  expect(plan.runnable).toHaveLength(215);
+  expect(plan.skipped).toEqual([]);
+});
+```
+
+- [ ] **Step 6: Run the helper test to verify it fails**
+
+Run: `npx vitest run packages/core/src/audit-runner.test.ts -t 'lets tests address every registered audit'`
+Expected: FAIL because `./tests/plan-all-audits` does not exist.
+
+- [ ] **Step 7: Implement the test-only helper**
+
+```ts
+// packages/core/src/tests/plan-all-audits.ts
+import type { ScanConfig } from "../audit-config";
+import type { AuditPlan } from "../audit-runner";
+
+/** Test-only registry view. Production planning must never bypass its gates. */
+export function planAllAuditsForTest(config: ScanConfig): AuditPlan {
+  return {
+    runnable: config.categories.flatMap((category) =>
+      (config.audits[category.id] ?? []).map((reg) => ({
+        reg,
+        categoryId: category.id,
+      })),
+    ),
+    skipped: [],
+  };
+}
+```
+
+- [ ] **Step 8: Run the helper test to verify it passes**
+
+Run: `npx vitest run packages/core/src/audit-runner.test.ts -t 'lets tests address every registered audit'`
+Expected: PASS, 215 runnable and zero skipped.
+
+- [ ] **Step 9: Check nothing else moved**
 
 Run: `AL_SKIP_NETWORK=1 npx vitest run packages/core`
 Expected: PASS. `scan-invariants.test.ts` rule 3 asserts that no check passes
 when `origin-reachable` is false; this change makes that unreachable rather than
 merely unobserved, so it must stay green.
 
-- [ ] **Step 6: Commit**
+- [ ] **Step 10: Commit**
 
 ```bash
-git add packages/core/src/audit-runner.ts packages/core/src/audit-runner.test.ts
+git add packages/core/src/audit-runner.ts packages/core/src/audit-runner.test.ts packages/core/src/tests/plan-all-audits.ts
 git commit -m "fix(core): the runner refuses an unread scan, so no audit has to"
 ```
 
@@ -440,9 +478,7 @@ import { unreachableContext } from "./fixtures";
  */
 describe("an unread scan verdicts nothing", () => {
   it("leaves no audit runnable", () => {
-    const plan = planAudits(unreachableContext(), defaultConfig, {
-      enforceEvidence: true,
-    });
+    const plan = planAudits(unreachableContext(), defaultConfig);
 
     const registered = defaultConfig.categories.reduce(
       (sum, cat) => sum + (defaultConfig.audits[cat.id]?.length ?? 0),
@@ -454,9 +490,7 @@ describe("an unread scan verdicts nothing", () => {
   });
 
   it("gives every skipped audit a reason a reader can act on", () => {
-    const plan = planAudits(unreachableContext(), defaultConfig, {
-      enforceEvidence: true,
-    });
+    const plan = planAudits(unreachableContext(), defaultConfig);
     for (const stub of plan.skipped) {
       expect(stub.status, stub.id).toBe("na");
       expect(stub.explanation, stub.id).toMatch(/^Not assessed: /);
@@ -474,7 +508,7 @@ behaviour; this task's deliverable is the gate that stops it regressing.
 
 - [ ] **Step 3: Prove the gate bites**
 
-Temporarily change `const unread = options.enforceEvidence && ...` in
+Temporarily change `const unread = !scanReadTheSite(ctx.evidence)` in
 `audit-runner.ts` to `const unread = false;`.
 
 Run: `npx vitest run packages/core/src/tests/unreachable-contract.test.ts`
@@ -834,8 +868,9 @@ are named individually rather than described.
 **Type consistency.** `unreachableContext` and `bareSiteContext` take
 `Partial<CheckContext>` and return `CheckContext` in Task 1 and are called with
 no argument in Tasks 2–5. `expectNotApplicableOnEmpty` keeps the exact signature
-it has today, which is why the 73 callers are untouched. `planAudits(ctx,
-config, options)` is unchanged.
+it has today, which is why the 73 callers are untouched. Production uses only
+`planAudits(ctx, config)`. `planAllAuditsForTest(config)` returns the same
+`AuditPlan` shape and stays under `packages/core/src/tests/`.
 
 **Known gap, stated rather than solved.** Task 6 Step 3 allows a single audit to
 keep its guard if its own unit test depends on it. That is an escape hatch in the
