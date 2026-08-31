@@ -963,3 +963,104 @@ own test where the context is built, not where audits are exercised.
 **Six laws ratified of eight asked.** Three of them — 3, 5 and 7 — resolved to
 the same shape: put the guard where it runs, and let consent decide what the
 tool may claim.
+
+---
+
+## The scan unit — two units, one score
+
+Opened by the "one page per scan, idempotent per URL" direction and settled
+here.
+
+### Scoring mass by scope
+
+Measured on this branch over all 215 registered audits, classifying by whether
+the source reads `ctx.pages`, `ctx.rootFiles`, both or neither.
+
+| scope | audits | mass | share |
+|:--|--:|--:|--:|
+| **page only** | 134 | 88.4 | **66.0%** |
+| **origin only** | 50 | 31.8 | **23.7%** |
+| both | 26 | 11.0 | 8.2% |
+| neither — fetches live | 5 | 2.8 | 2.1% |
+| **total** | **215** | **134.0** | |
+
+Only 26 audits straddle, so the split is structurally available.
+
+### The 26 straddlers break origin idempotence
+
+They are not dual-subject. They are origin audits that also scrape a page for a
+discovery link: `openapi-exists` reads `/openapi.json` **and**
+`<link rel="service-desc">`; `llms-txt-exists` reads `/llms.txt` **and** checks
+the page references it; `ai-usage-signal-coherence-across-channels` reads
+robots.txt, RSL and AIPREF **and** page headers.
+
+Under per-URL scans that is a defect. Scan the homepage and the
+`service-desc` link is there; scan a product page and it is not. Same origin,
+same artifact, different verdict, decided by which URL the operator typed.
+
+> **Fix: the 26 belong to the origin scan and read the origin's homepage, never
+> the scanned page.** Their subject is the origin, so their page source must be
+> a fixed property of the origin too.
+
+### Two scan units
+
+| | **origin scan** | **page scan** |
+|:--|:--|:--|
+| cache key | origin | URL |
+| runs | 50 origin-only + the 26 straddlers | 134 page-only |
+| mass | 42.8 | 88.4 |
+| reads | `robots.txt`, `sitemap.xml`, `llms.txt`, `openapi.json`, `/.well-known/*`, and the origin's homepage for discovery links | the one document at that URL |
+| computed | once per origin, cached | per scan |
+
+### One score, not two
+
+Two scan units were initially proposed to mean two scores. Rejected: the scan
+unit and the score unit do not have to follow each other.
+
+Origin files genuinely affect every page — a `robots.txt` blocking GPTBot
+degrades every URL on the host — so folding that mass into each page's score is
+accurate rather than a distortion. Two pages of one site *should* share that
+baseline.
+
+The repo already scores conditionally. `GATED_MASS_UNSCORED_THRESHOLD = 0.35`
+is a disclaimer with teeth: past that share of missing evidence the honest
+output is `overallScore: null`.
+
+> **A score states the conditions under which it holds. Where the conditions
+> cannot be stated, there is no score.**
+
+The top law applied to the number itself.
+
+### The four conditions a score must carry
+
+Fields, not prose, so the renderers and the JSON output both carry them.
+
+```jsonc
+"score": 68,
+"conditions": {
+  "url":      "https://shop.example/p/sourdough",
+  "pageType": { "value": "product", "source": "declared" },
+  "origin":   { "readAt": "2026-08-30T14:02:11Z", "cached": true },
+  "coverage": { "page": 88.4, "origin": 42.8, "gated": 0.0 },
+  "unscored": ["12 audits informative: page type not declared"]
+}
+```
+
+| # | field | why a reader needs it |
+|--:|:--|:--|
+| 1 | `url` | the score is about one document, not a site |
+| 2 | `pageType` with `source` | law 3 makes this decide what was scored — an undeclared scan silently drops the commerce mass, and the number must say so |
+| 3 | `origin.readAt` | a cached origin result is a fact from an earlier moment; undated it is a claim about now that nobody verified now |
+| 4 | `coverage.gated` | already computed by `gatedMassShare`, currently used only to decide `null` and never shown |
+
+### Open
+
+The 5 audits that read neither pages nor root files — 2.1% of mass — need
+individual placement: `access-crawl-control/web-bot-auth-request-tolerance`,
+`bot-content-delta-declared`, `machine-discovery/websub-hub-advertisement`,
+`feed-entry-identity-and-canonical-integrity`, and
+`operability-safety/url-addressable-state-and-pagination-fallback`. Four look
+origin-scoped; the last is page-scoped.
+
+**Status:** ratified. Design only — no code written, per the standing
+"report only" instruction.
