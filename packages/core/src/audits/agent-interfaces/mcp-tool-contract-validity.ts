@@ -13,7 +13,7 @@ import {
   discoverMcpEndpoint,
   listTools,
   isObject,
-} from './_mcp-client';
+} from '../../gatherers/mcp';
 
 /** How many `nextCursor` pages are followed. */
 const MAX_PAGES = 4;

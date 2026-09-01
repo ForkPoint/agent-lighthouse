@@ -2,7 +2,7 @@ import type { AuditMeta, AuditResult } from '../../types';
 import { Audit } from '../../audit';
 import type { CheckContext, PageContext } from '../../check-context';
 import { weightForGrade } from '../../scorer';
-import { type FetchResult } from '../../fetcher';
+import type { FetchResult } from '../../fetcher';
 import { siteSitemapTree } from '../../gatherers/sitemap';
 
 function isOk(result: FetchResult): boolean {

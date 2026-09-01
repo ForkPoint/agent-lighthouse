@@ -41,13 +41,18 @@ export const GATHERER_EVIDENCE = {
   'text-metrics': PAGE_FED_REQUIRES,
   tokens: PAGE_FED_REQUIRES,
   'ua-parity': PAGE_FED_REQUIRES,
+  author: ORIGIN_ONLY_REQUIRES,
   conditional: ORIGIN_ONLY_REQUIRES,
   currency: ORIGIN_ONLY_REQUIRES,
+  discovery: ORIGIN_ONLY_REQUIRES,
   domains: ORIGIN_ONLY_REQUIRES,
   feeds: ORIGIN_ONLY_REQUIRES,
   'fetch-classify': ORIGIN_ONLY_REQUIRES,
+  mcp: ORIGIN_ONLY_REQUIRES,
   openapi: ORIGIN_ONLY_REQUIRES,
   robots: ORIGIN_ONLY_REQUIRES,
+  rsl: ORIGIN_ONLY_REQUIRES,
+  security: ORIGIN_ONLY_REQUIRES,
   sitemap: ORIGIN_ONLY_REQUIRES,
 };
 

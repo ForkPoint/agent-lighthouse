@@ -3,47 +3,7 @@ import type { AuditMeta, AuditResult } from "../../types";
 import { Audit } from "../../audit";
 import type { CheckContext } from '../../check-context';
 import { weightForGrade } from '../../scorer';
-import type { FetchResult } from '../../fetcher';
-
-function isOk(result: FetchResult): boolean {
-  return result.status === 200;
-}
-
-/** Find RSS/Atom feed result -- check head links on pages first, then root file paths */
-async function findFeedResult(
-  ctx: CheckContext,
-): Promise<{ result: FetchResult; url: string } | null> {
-  // Check <link rel="alternate"> in page heads
-  for (const page of ctx.pages) {
-    for (const link of page.headLinks) {
-      if (
-        link.rel === 'alternate' &&
-        (link.type === 'application/rss+xml' || link.type === 'application/atom+xml') &&
-        link.href
-      ) {
-        let feedUrl = link.href;
-        if (feedUrl.startsWith('/')) feedUrl = `${ctx.baseUrl}${feedUrl}`;
-        const result = await ctx.fetch({ url: feedUrl });
-        if (isOk(result)) return { result, url: feedUrl };
-      }
-    }
-  }
-
-  // Fall back to well-known paths
-  const paths = ['/rss.xml', '/feed.xml', '/atom.xml'];
-  for (const path of paths) {
-    const rootResult = ctx.rootFiles[path];
-    if (rootResult && isOk(rootResult)) {
-      return { result: rootResult, url: `${ctx.baseUrl}${path}` };
-    }
-  }
-
-  // Try /atom.xml explicitly since it may not be in rootFiles
-  const atomResult = await ctx.fetch({ url: `${ctx.baseUrl}/atom.xml` });
-  if (isOk(atomResult)) return { result: atomResult, url: `${ctx.baseUrl}/atom.xml` };
-
-  return null;
-}
+import { sharedFeeds } from '../../gatherers/feeds';
 
 export class RssFeedContentAudit extends Audit {
   static override meta: AuditMeta = {
@@ -58,7 +18,7 @@ export class RssFeedContentAudit extends Audit {
     evidenceGrade: 'C',
     tier: 'informative',
     dossier: 'docs/evidence/audits/machine-discovery/rss-feed-content.md',
-    requires: ['origin-reachable', 'unblocked-fetches', 'rendered-body', 'sample-adequate'],
+    requires: ['origin-reachable'],
     defaultPriority: 'medium',
     guidance: {
       impact:
@@ -71,7 +31,8 @@ export class RssFeedContentAudit extends Audit {
   };
 
   async audit(ctx: CheckContext): Promise<AuditResult> {
-    const feed = await findFeedResult(ctx);
+    const feeds = await sharedFeeds(ctx);
+    const feed = feeds[0];
 
     if (!feed) {
       return this.fail(
@@ -87,7 +48,7 @@ export class RssFeedContentAudit extends Audit {
       );
     }
 
-    const $ = cheerio.load(feed.result.body, { xmlMode: true });
+    const $ = cheerio.load(feed.body ?? '', { xmlMode: true });
     const items = $('item, entry');
     const total = items.length;
 

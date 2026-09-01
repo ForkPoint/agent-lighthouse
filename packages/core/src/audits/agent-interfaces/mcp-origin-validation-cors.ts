@@ -3,15 +3,16 @@ import type { AuditMeta, AuditResult } from '../../types';
 import { Audit } from '../../audit';
 import { weightForGrade } from '../../scorer';
 import type { CheckContext } from '../../check-context';
-import { isSafeUrl } from '../../fetcher';
+import { isSafeUrl } from '../../url-utils';
 import {
   discoverMcpEndpoint,
   discoverProbe,
   postRpcRaw,
+  mcpFetch,
   sharedProbe,
   discoverParams,
   MCP_PROTOCOL_VERSION,
-} from './_mcp-client';
+} from '../../gatherers/mcp';
 
 /** A domain that cannot belong to anyone: `.example` is reserved by RFC 2606. */
 function throwawayOrigin(): string {
@@ -77,8 +78,7 @@ export class McpOriginValidationCorsAudit extends Audit {
     );
 
     const preflight = (await isSafeUrl(url))
-      ? await ctx.fetch({
-          url,
+      ? await mcpFetch(ctx, url, {
           method: 'OPTIONS',
           headers: {
             Origin: origin,

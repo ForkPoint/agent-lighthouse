@@ -22,7 +22,9 @@ import type { AuditMeta, AuditResult } from '../../types';
 import { Audit } from '../../audit';
 import { weightForGrade } from '../../scorer';
 import type { CheckContext } from '../../check-context';
-import { type FetchResult, isSafeUrl } from '../../fetcher';
+import type { FetchResult } from '../../fetcher';
+import { isSafeUrl } from '../../url-utils';
+import { probeOpenApiServer } from '../../gatherers/openapi';
 
 /** How many endpoints to probe. Two is enough to tell a policy from an accident. */
 const MAX_TARGETS = 2;
@@ -136,17 +138,21 @@ async function probe(ctx: CheckContext, url: string): Promise<Probe> {
   // the same way openapi-exists and mcp-endpoint gate the URLs they harvest.
   if (!(await isSafeUrl(url))) return { kind: 'refused', url };
 
+  let answered = false;
   try {
     // A preflight is what a browser sends first; some servers answer CORS
     // headers only on the actual request, so GET is the documented fallback.
     for (const method of ['OPTIONS', 'GET'] as const) {
-      const result = await ctx.fetch({ url, method });
-      const value = result.headers['access-control-allow-origin'];
-      if (typeof value === 'string' && value.trim()) {
-        return { kind: 'acao', url, value: value.trim() };
+      const result = await probeOpenApiServer(ctx, url, { method });
+      if (result) {
+        answered = true;
+        const value = result.headers['access-control-allow-origin'];
+        if (typeof value === 'string' && value.trim()) {
+          return { kind: 'acao', url, value: value.trim() };
+        }
       }
     }
-    return { kind: 'none', url };
+    return answered ? { kind: 'none', url } : { kind: 'error', url };
   } catch {
     return { kind: 'error', url };
   }

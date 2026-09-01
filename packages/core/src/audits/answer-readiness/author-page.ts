@@ -2,6 +2,7 @@ import type { AuditMeta, AuditResult } from "../../types";
 import { Audit } from "../../audit";
 import { weightForGrade } from '../../scorer';
 import type { CheckContext } from '../../check-context';
+import { probeAuthorUrl } from '../../gatherers/author';
 
 /**
  * Walk all JSON-LD blocks (including @graph arrays) and return every
@@ -141,11 +142,9 @@ export class AuthorPageAudit extends Audit {
       );
     }
 
-    // Verify the first author URL
-    const urlToCheck = authorUrls[0];
-    try {
-      const result = await ctx.fetch({ url: urlToCheck });
-      if (result.status === 200) {
+    const urlToCheck = authorUrls[0]!;
+    const result = await probeAuthorUrl(ctx, urlToCheck);
+    if (result && result.status === 200) {
         return this.pass(
           `Author page at "${urlToCheck}" returns 200.`,
           'Author links in content resolve to 200',
@@ -154,10 +153,24 @@ export class AuthorPageAudit extends Audit {
         );
       }
 
+      if (result) {
+        return this.fail(
+          `Author page at "${urlToCheck}" returned HTTP ${result.status}.`,
+          'Author links in content resolve to 200',
+          `${urlToCheck} (HTTP ${result.status})`,
+          {
+            priority: 'medium',
+            description:
+              'AI engines that follow your author page link and get a non-200 response will flag the author as unverifiable, negating the trust benefit of having named authors. Fix the URL to return a 200 status with real author bio content.',
+            code: '# Verify: curl -I https://yoursite.com/authors/jane-smith\n# Ensure the page returns 200 with author bio content',
+          },
+          page.url,
+        );
+      }
       return this.fail(
-        `Author page at "${urlToCheck}" returned HTTP ${result.status}.`,
+        `Failed to fetch author page at "${urlToCheck}".`,
         'Author links in content resolve to 200',
-        `${urlToCheck} (HTTP ${result.status})`,
+        `${urlToCheck} (fetch error)`,
         {
           priority: 'medium',
           description:
@@ -166,19 +179,5 @@ export class AuthorPageAudit extends Audit {
         },
         page.url,
       );
-    } catch {
-      return this.fail(
-        `Failed to fetch author page at "${urlToCheck}".`,
-        'Author links in content resolve to 200',
-        `${urlToCheck} (fetch error)`,
-        {
-          priority: 'medium',
-          description:
-            'AI engines verify author page URLs by fetching them. A failing author page URL signals broken credentials to AI trust-scoring systems. Ensure the author page URL is reachable and returns a 200 status with meaningful bio content.',
-          code: '# Fix the author URL in your JSON-LD or check for server errors\n# curl -I https://yoursite.com/authors/jane-smith',
-        },
-        page.url,
-      );
     }
   }
-}

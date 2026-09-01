@@ -3,6 +3,8 @@ import { Audit } from "../../audit";
 import type { CheckContext } from '../../check-context';
 import { weightForGrade } from '../../scorer';
 
+import { sharedProbeUrl } from '../../gatherers/discovery';
+
 export class CorsAiFilesAudit extends Audit {
   static override meta: AuditMeta = {
     id: 'machine-discovery/cors-ai-files',
@@ -50,17 +52,10 @@ export class CorsAiFilesAudit extends Audit {
     const corsResults: Array<{ path: string; hasCors: boolean }> = [];
 
     for (const path of existingAiPaths) {
-      try {
-        const result = await ctx.fetch({
-          url: `${ctx.baseUrl}${path}`,
-          method: 'OPTIONS',
-        });
-        const acaoValue = result.headers['access-control-allow-origin'];
-        const hasCors = acaoValue === '*' || (typeof acaoValue === 'string' && acaoValue.length > 0);
-        corsResults.push({ path, hasCors });
-      } catch {
-        corsResults.push({ path, hasCors: false });
-      }
+      const result = await sharedProbeUrl(ctx, `${ctx.baseUrl}${path}`, { method: 'OPTIONS' });
+      const acaoValue = result?.headers['access-control-allow-origin'];
+      const hasCors = acaoValue === '*' || (typeof acaoValue === 'string' && acaoValue.length > 0);
+      corsResults.push({ path, hasCors });
     }
 
     const withCors = corsResults.filter((r) => r.hasCors);

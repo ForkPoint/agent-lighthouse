@@ -8,17 +8,17 @@ import {
   discoverProbe,
   MCP_PROTOCOL_VERSION,
   MCP_ACCEPT,
-} from './_mcp-client';
-import { mockCheckContext, mockFetchResult } from '../../__tests__/test-utils';
-import type { CheckContext } from '../../check-context';
-import type { FetchOptions, FetchResult } from '../../fetcher';
+} from './mcp';
+import { mockCheckContext, mockFetchResult } from '../__tests__/test-utils';
+import type { CheckContext } from '../check-context';
+import type { FetchOptions, FetchResult } from '../fetcher';
 
 // isSafeUrl performs a real DNS lookup before the client POSTs to a URL it read
 // out of a site-controlled root file. Stub it with an offline stand-in that
 // still blocks loopback and private ranges, so the refusal test proves the gate
 // rather than the mock.
-vi.mock('../../fetcher', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('../../fetcher')>();
+vi.mock('../fetcher', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../fetcher')>();
   return {
     ...actual,
     isSafeUrl: async (url: string) => {

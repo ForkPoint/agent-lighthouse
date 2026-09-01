@@ -3,7 +3,8 @@ import type { AuditMeta, AuditResult } from '../../types';
 import { Audit } from '../../audit';
 import type { CheckContext } from '../../check-context';
 import { weightForGrade } from '../../scorer';
-import { isSafeUrl } from '../../fetcher';
+import { isSafeUrl } from '../../url-utils';
+import { probeSecurityUrl } from '../../gatherers/security';
 
 /** The derived components the Web Bot Auth profile signs. */
 const COVERED = ['@authority', '@method', '@path'] as const;
@@ -131,20 +132,20 @@ export class WebBotAuthRequestToleranceAudit extends Audit {
       );
     }
 
-    const baseline = await ctx.fetch({ url, followRedirects: true });
-    if (baseline.status < 200 || baseline.status >= 300) {
+    const baseline = await probeSecurityUrl(ctx, url, { followRedirects: true });
+    if (!baseline || baseline.status < 200 || baseline.status >= 300) {
       return this.notApplicable(
-        `The unsigned baseline answered HTTP ${baseline.status}, so a signed request has nothing to be compared against.`,
+        `The unsigned baseline answered HTTP ${baseline?.status ?? 0}, so a signed request has nothing to be compared against.`,
         'A 2xx baseline to compare the signed request against',
-        `HTTP ${baseline.status} unsigned`,
+        `HTTP ${baseline?.status ?? 0} unsigned`,
       );
     }
 
-    const signed = await ctx.fetch({
-      url,
+    const signed = await probeSecurityUrl(ctx, url, {
       followRedirects: true,
       headers: signedHeaders(url, Date.now(), WebBotAuthRequestToleranceAudit.AGENT_DIRECTORY),
     });
+    if (!signed) return this.fail('Signed probe failed', 'HTTP 200', 'No response');
 
     const acceptSignature = signed.headers['accept-signature'];
     const vary = (signed.headers['vary'] ?? '').toLowerCase();

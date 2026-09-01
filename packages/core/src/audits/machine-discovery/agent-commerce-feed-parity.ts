@@ -11,7 +11,8 @@ import type { AuditMeta, AuditResult } from '../../types';
 import { Audit } from '../../audit';
 import { weightForGrade } from '../../scorer';
 import type { CheckContext, PageContext } from '../../check-context';
-import { isSafeUrl } from '../../fetcher';
+
+import { fetchImageHead } from '../../gatherers/media';
 import { fetchSampledPage } from '../../gatherers/sampled-pages';
 import { parseHtml, extractJsonLd, extractMetaTags, flattenJsonLd } from '../../parser';
 import { siteSitemapTree, sampleEntries } from '../../gatherers/sitemap';
@@ -273,8 +274,8 @@ export class AgentCommerceFeedParityAudit extends Audit {
       const image = text(candidate.product['image']);
       if (image && /^https:\/\//i.test(image) && imageChecks < MAX_IMAGE_CHECKS) {
         imageChecks += 1;
-        if (await isSafeUrl(image)) {
-          const head = await ctx.fetch({ url: image, method: 'HEAD' });
+        const head = await fetchImageHead(ctx, image);
+        if (head) {
           const type = (head.headers['content-type'] ?? '').split(';')[0]!.trim().toLowerCase();
           if (head.status === 200 && type && !FEED_IMAGE_TYPES.has(type)) {
             assessment.risks.push(

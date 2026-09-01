@@ -2,7 +2,8 @@ import type { AuditMeta, AuditResult } from '../../types';
 import { Audit } from '../../audit';
 import type { CheckContext, PageContext } from '../../check-context';
 import { weightForGrade } from '../../scorer';
-import { isSafeUrl } from '../../fetcher';
+import { isSafeUrl } from '../../url-utils';
+import { probeSecurityUrl } from '../../gatherers/security';
 import { allJsonLdNodes } from '../../parser';
 
 /** The shape an LEI has before any registry is asked about it. */
@@ -187,9 +188,9 @@ export class OrganizationIdentifierRegistryResolutionAudit extends Audit {
         warnings.push(`The GLEIF registry could not be reached to resolve ${lei}`);
         continue;
       }
-      const response = await ctx.fetch({ url, acceptHeader: 'application/vnd.api+json' });
-      if (response.status !== 200) {
-        warnings.push(`The GLEIF registry answered HTTP ${response.status} for ${lei}, so it could not be resolved`);
+      const response = await probeSecurityUrl(ctx, url, { headers: { Accept: 'application/vnd.api+json' } });
+      if (!response || response.status !== 200) {
+        warnings.push(`The GLEIF registry answered HTTP ${response?.status ?? 0} for ${lei}, so it could not be resolved`);
         continue;
       }
 

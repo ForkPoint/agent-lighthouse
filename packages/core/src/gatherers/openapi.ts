@@ -1,16 +1,6 @@
-/**
- * The site's OpenAPI document, read once and shared.
- *
- * Seven audits used to carry a byte-identical private `getOpenApiSpec`, and
- * three of them also carried a byte-identical `getOperations`. One copy drifted
- * from the others every time the family was touched. This module is the single
- * read, plus the precondition that governs what an audit may say when the read
- * comes back empty.
- *
- * No fetch happens here: the orchestrator already asks for `/openapi.json` with
- * the rest of the root files, so this is a parse over bytes the scan holds.
- * `gatherers/sitemap.ts` reads `ctx.rootFiles` the same way.
- */
+import type { CheckContext } from '../check-context';
+import type { FetchResult } from '../fetcher';
+import { isSafeUrl } from '../fetcher';
 
 /** An OpenAPI document as served: an untyped object, walked key by key. */
 export type OpenApiSpec = Record<string, unknown>;
@@ -255,4 +245,36 @@ export function openApiOperations(spec: OpenApiSpec): LocatedOperation[] {
     }
   }
   return operations;
+}
+
+const openApiServerCache = new WeakMap<object, Map<string, Promise<FetchResult | undefined>>>();
+
+export function probeOpenApiServer(
+  ctx: { fetch: CheckContext['fetch'] },
+  url: string,
+  options: { method?: 'GET' | 'OPTIONS'; headers?: Record<string, string> } = {},
+): Promise<FetchResult | undefined> {
+  let cache = openApiServerCache.get(ctx);
+  if (!cache) {
+    cache = new Map();
+    openApiServerCache.set(ctx, cache);
+  }
+  const key = `${options.method ?? 'OPTIONS'}|${url}`;
+  let hit = cache.get(key);
+  if (!hit) {
+    hit = (async () => {
+      if (!(await isSafeUrl(url))) return undefined;
+      try {
+        return await ctx.fetch({
+          url,
+          method: options.method ?? 'OPTIONS',
+          ...(options.headers ? { headers: options.headers } : {}),
+        });
+      } catch {
+        return undefined;
+      }
+    })();
+    cache.set(key, hit);
+  }
+  return hit;
 }

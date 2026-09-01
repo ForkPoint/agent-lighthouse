@@ -2,7 +2,8 @@ import type { AuditMeta, AuditResult } from '../../types';
 import { Audit } from '../../audit';
 import type { CheckContext, PageContext } from '../../check-context';
 import type { FetchResult } from '../../fetcher';
-import { isSafeUrl } from '../../fetcher';
+import { isSafeUrl } from '../../url-utils';
+import { probeAuthorUrl } from '../../gatherers/author';
 import { weightForGrade } from '../../scorer';
 import { countTokens } from '../../gatherers/tokens';
 import { shingles, jaccard } from '../../gatherers/text-metrics';
@@ -264,16 +265,11 @@ export class MarkdownAlternateAudit extends Audit {
     let declaredStatus = 0;
     for (const probe of probes) {
       if (!(await isSafeUrl(probe.url))) continue;
-      let result: FetchResult;
-      try {
-        result = await ctx.fetch({
-          url: probe.url,
-          followRedirects: true,
-          ...(probe.acceptHeader ? { acceptHeader: probe.acceptHeader } : {}),
-        });
-      } catch {
-        continue;
-      }
+      const result = await probeAuthorUrl(ctx, probe.url, {
+        followRedirects: true,
+        ...(probe.acceptHeader ? { headers: { Accept: probe.acceptHeader } } : {}),
+      });
+      if (!result) continue;
       if (probe.route === 'declared link') declaredStatus = result.status;
       if (result.status !== 200 || result.body.trim() === '') continue;
       // The HTML document answering again is a catch-all route, not an

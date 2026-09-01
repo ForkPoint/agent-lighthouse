@@ -3,7 +3,8 @@ import type { AuditMeta, AuditResult } from '../../types';
 import { Audit } from '../../audit';
 import type { CheckContext } from '../../check-context';
 import { weightForGrade } from '../../scorer';
-import { isSafeUrl } from '../../fetcher';
+import { isSafeUrl } from '../../url-utils';
+import { probeRsl } from '../../gatherers/rsl';
 import { directiveLines } from '../../gatherers/robots';
 import { linksWithRel } from '../../gatherers/structured-fields';
 import { isIso4217 } from '../../gatherers/currency';
@@ -141,9 +142,8 @@ export class RslLicensingTermsConformanceAudit extends Audit {
     if (candidates.length === 0) {
       for (const path of CONVENTIONAL_PATHS) {
         const url = new URL(path, ctx.baseUrl).toString();
-        if (!(await isSafeUrl(url))) continue;
-        const result = await ctx.fetch({ url, followRedirects: true });
-        if (result.status !== 200 || result.body.trim() === '') continue;
+        const result = await probeRsl(ctx, url, { followRedirects: true });
+        if (!result || result.status !== 200 || result.body.trim() === '') continue;
         candidates.push({ url, channel: `probe of ${path}`, conventionalOnly: true });
       }
     }
@@ -169,9 +169,9 @@ export class RslLicensingTermsConformanceAudit extends Audit {
         errors.push(`${candidate.channel}: ${candidate.url} is not a URL this scanner will fetch`);
         continue;
       }
-      const result = await ctx.fetch({ url: candidate.url, followRedirects: true });
-      if (result.status !== 200) {
-        errors.push(`${candidate.channel}: ${candidate.url} answered HTTP ${result.status}`);
+      const result = await probeRsl(ctx, candidate.url, { followRedirects: true });
+      if (!result || result.status !== 200) {
+        errors.push(`${candidate.channel}: ${candidate.url} answered HTTP ${result?.status ?? 0}`);
         continue;
       }
       documents.push({

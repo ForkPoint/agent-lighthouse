@@ -2,7 +2,8 @@ import type { AuditMeta, AuditResult } from '../../types';
 import { Audit } from '../../audit';
 import type { CheckContext } from '../../check-context';
 import type { FetchResult } from '../../fetcher';
-import { isSafeUrl } from '../../fetcher';
+
+import { probeSecurityUrl } from '../../gatherers/security';
 import { parseHtml, extractJsonLd, allJsonLdNodes } from '../../parser';
 import { weightForGrade } from '../../scorer';
 
@@ -157,14 +158,8 @@ export class ReflectedParameterInjectionCanaryAudit extends Audit {
 
     for (const url of probes) {
       // Read-only GET, same origin, SSRF-gated like every other outbound fetch.
-      if (!(await isSafeUrl(url))) continue;
-      let result: FetchResult;
-      try {
-        result = await ctx.fetch({ url });
-      } catch {
-        continue;
-      }
-      if (result.status < 200) continue;
+      const result = await probeSecurityUrl(ctx, url, { method: 'GET' });
+      if (!result || result.status < 200) continue;
       reachable += 1;
 
       const html = result.body;

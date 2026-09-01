@@ -1,7 +1,8 @@
 import type { AuditMeta, AuditResult } from '../../types';
 import { Audit } from '../../audit';
 import type { CheckContext } from '../../check-context';
-import { isSafeUrl } from '../../fetcher';
+import { isSafeUrl } from '../../url-utils';
+import { probeRsl } from '../../gatherers/rsl';
 import { parseRobots, isPathAllowed } from '../../gatherers/robots';
 import { detailLines } from '../../detail-lines';
 
@@ -105,7 +106,7 @@ export class TrustTxtReciprocityCoherenceAudit extends Audit {
     for (const path of TRUST_TXT_PATHS) {
       const existing = ctx.rootFiles[path];
       const result = existing ?? ((await isSafeUrl(`${origin}${path}`))
-        ? await ctx.fetch({ url: `${origin}${path}`, followRedirects: true })
+        ? await probeRsl(ctx, `${origin}${path}`, { followRedirects: true })
         : undefined);
       if (result && result.status === 200 && result.body.trim() !== '') {
         body = result.body;
@@ -150,10 +151,10 @@ export class TrustTxtReciprocityCoherenceAudit extends Audit {
         continue;
       }
       checked += 1;
-      const result = await ctx.fetch({ url, followRedirects: true });
-      if (result.status !== 200) {
+      const result = await probeRsl(ctx, url, { followRedirects: true });
+      if (!result || result.status !== 200) {
         observations.push(
-          `${entry.name}=${entry.value}: that domain's trust.txt answered HTTP ${result.status}, so the association is unverifiable`,
+          `${entry.name}=${entry.value}: that domain's trust.txt answered HTTP ${result?.status ?? 0}, so the association is unverifiable`,
         );
         continue;
       }
