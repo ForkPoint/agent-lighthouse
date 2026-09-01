@@ -30,14 +30,16 @@ describe('hostile-state contract — nothing obtained', () => {
   });
 
   // Build each state once. No audit mutates its context.
-  const states = NOTHING_OBTAINED.map((state) => ({ state, ctx: state.build() }));
+  const states = NOTHING_OBTAINED.map((state) => {
+    const ctx = state.build();
+    return { state, plan: planAudits(ctx, defaultConfig) };
+  });
 
   for (const registration of registrations) {
     const { id } = registration.meta;
 
     it(`${id}: claims nothing when the scan read nothing`, () => {
-      for (const { state, ctx } of states) {
-        const plan = planAudits(ctx, defaultConfig);
+      for (const { state, plan } of states) {
         const result = plan.skipped.find((stub) => stub.id === id);
         expect(plan.runnable.map((entry) => entry.reg.meta.id), state.name).not.toContain(id);
         expect(result?.status, state.name).toBe('na');

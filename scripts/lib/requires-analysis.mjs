@@ -53,9 +53,11 @@ export const GATHERER_EVIDENCE = {
 /**
  * The deliberate disagreements (design §7.4).
  *
- * Being blocked, or serving a shell, is what these audits are about. Gating
- * them on the evidence they exist to report would delete the finding. Each
- * entry names the keys dropped from what the source would otherwise imply.
+ * The runner rejects an unread scan before this evidence gate applies. These
+ * exemptions state what an audit still needs after that check. A shell or a
+ * response envelope can hold the fact that an audit judges, so requiring
+ * rendered text would delete that finding. Each entry names the keys dropped
+ * from what the source would otherwise imply.
  */
 export const GATE_EXEMPTIONS = {
   'content-extraction/server-rendered': {
@@ -65,8 +67,8 @@ export const GATE_EXEMPTIONS = {
   'operability-safety/no-blocking-captcha': {
     drop: ['origin-reachable', 'unblocked-fetches', 'rendered-body', 'sample-adequate'],
     reason:
-      'A captcha wall is what this audit reports, and a wall denies origin-reachable: ' +
-      'gating on it made the wall finding unreachable for the 403 that produced it.',
+      'The runner rejects an unread scan first. On a readable response, wafProtection ' +
+      'can identify a captcha wall without rendered text or an adequate page sample.',
   },
   // The id here was `operability-safety/no-bot-detection` until 2026-08-28 — a
   // category that does not hold this audit, so the entry matched nothing and
@@ -74,15 +76,14 @@ export const GATE_EXEMPTIONS = {
   'access-crawl-control/no-bot-detection': {
     drop: ['origin-reachable', 'unblocked-fetches', 'rendered-body', 'sample-adequate'],
     reason:
-      'A bot-defense firewall is what this audit reports, and it names the firewall from ' +
-      'wafProtection alone — evidence a wall destroys is not evidence this finding needs.',
+      'The runner rejects an unread scan first. On a readable response, wafProtection ' +
+      'can identify a bot-defense product without rendered text or an adequate sample.',
   },
   'access-crawl-control/no-redirect-chains': {
     drop: ['origin-reachable', 'rendered-body', 'sample-adequate'],
     reason:
-      'A hop that left the site is this audit\'s subject, and leaving the site is exactly ' +
-      'what denies origin-reachable. It reads request URL against final URL, which every ' +
-      'response carries, and it reports "no pages scanned" itself when there is none.',
+      'The runner rejects an unread scan first. On a readable response, request and final ' +
+      'URLs prove the redirect chain without rendered text or an adequate page sample.',
   },
   // The seven below share one shape. `check-requires` derives `rendered-body`
   // from the source touching `ctx.pages`, but each of these reads the response
@@ -134,8 +135,8 @@ export const GATE_EXEMPTIONS = {
   'access-crawl-control/https-enabled': {
     drop: ['origin-reachable', 'unblocked-fetches', 'rendered-body', 'sample-adequate'],
     reason:
-      'A base URL on plain HTTP is proven by the request, with no response at all, and that ' +
-      'fail is worth reporting on a site whose homepage never answered.',
+      'The runner rejects an unread scan first. Once a response is readable, the base URL ' +
+      'proves the transport without rendered text or an adequate page sample.',
   },
 };
 

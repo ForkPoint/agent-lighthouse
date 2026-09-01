@@ -86,11 +86,9 @@ export function invariantViolations(report: ScanReport, checks: CheckResult[]): 
   // Rule 3, tripwire. Nothing obtained: the scan holds no response it can
   // attribute to this site, so no audit may congratulate it. Mirrors
   // `hostile-state-contract.test.ts`, which asserts the same thing per audit on
-  // a synthetic state. Under the default evidence gate 211 of 215 audits are
-  // skipped to `na` before they run; the four that are not
-  // (`no-redirect-chains`, `no-bot-detection`, `https-enabled`,
-  // `no-blocking-captcha`) each guard with `scanReadTheSite`. So on a live scan
-  // this fires only if the gate or one of those four guards regresses.
+  // a synthetic state. The runner's unread-scan guard skips all 215 audits to
+  // `na` before any audit runs. On a live scan this fires only if that guard
+  // regresses or another path constructs an inconsistent report.
   if (validity.evidence['origin-reachable'] === false && passes.length > 0) {
     violations.push(
       `origin unreachable but ${passes.length} check(s) passed, e.g. ${passes[0]!.id}`,
