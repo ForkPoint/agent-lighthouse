@@ -21,6 +21,27 @@ sources:
 
 AI agents use operationIds as stable function names when calling your API. Without unique operationIds, agents must guess endpoint names from paths, leading to ambiguity and errors. An operationId that is not a legal function name — spaces, punctuation, or more than 64 characters — cannot be registered as a tool at all.
 
+## Example failure
+
+A site publishes `/openapi.json` whose operations carry
+`operationId: "Get user's profile (v2)"`. The spaces, apostrophe and
+parentheses put it outside `^[a-zA-Z0-9_-]{1,64}$`, so a tool-calling runtime
+cannot register the name and the operation is unreachable.
+
+A site that publishes no OpenAPI document — or one that declares no operations
+— is **not** a failure here. There are no operationIds to judge, so the audit
+returns "not applicable" and takes no weight off the score.
+
+A document whose `paths` is present and yields nothing readable is a different
+case. That document exists and is broken — `"paths": ["get","post"]` puts a
+string where a path item belongs, `{"/x": {"get": "yes"}}` puts one where an
+operation belongs — so it still fails, and the report names the defect. Absent
+means absent; present-and-broken is a finding.
+
+One broken entry does not erase the operations beside it. The ids that can be
+read are checked, and any entry that could not be read is named in the report
+rather than counted as a missing id.
+
 ## Code review findings (2026-08-20, 11-agent pass)
 
 Genuinely useful signal — LLM tool-calling maps operationId to the function name, and OpenAI/Anthropic function names must match ^[a-zA-Z0-9_-]{1,64}$ — but the audit checks only presence and uniqueness, missing the constraint that actually breaks tool generation, and inherits the JSON-only loader bug.
@@ -80,7 +101,7 @@ The verdict shape:
 
 | Spec | Verdict |
 | :--- | :--- |
-| no spec / no operations | `fail` (unchanged) |
+| no spec / no operations | `fail` (unchanged) — superseded 2026-08-29: both now `notApplicable`, see Implementation deviations |
 | any operationId outside the legal charset or over 64 chars | `fail`, listing every offending id — **new** |
 | ids missing or duplicated only | `warn` (unchanged) |
 | all present, unique and legal | `pass` (unchanged) |
@@ -112,3 +133,71 @@ The tier stays `scored`. It was never `experimental`, and nothing in this fold a
 - **The YAML blind spot.** `getOpenApiSpec()` still reads only `/openapi.json`, so a YAML spec still reports "No spec" while 5.1 passes. Adopting the shared loader is this audit's standing fix and touches the whole `openapi-*` family, not this fold.
 - **Duplicate accounting is still a counter.** A triplicated id still counts as 2 duplicates and the colliding ids are still not named. The fold names the *illegal* ids because that is what it introduced; converting the duplicate counter to a `Map<id, count>` is the separate half of the required fix.
 - **"No spec" is still a `fail`, not `notApplicable`.** Unchanged by this fold.
+
+## Implementation deviations
+
+**2026-08-29 — absence is `notApplicable`, not `fail`.** This resolves the
+standing item recorded under the 2026-08-22 fold — *"'No spec' is still a
+`fail`, not `notApplicable`"* — and the line in the 2026-08-20 required fix
+that asked for it: *"Return `notApplicable()` rather than `fail` when there is
+no spec."*
+
+Two branches moved, and both are the same absence:
+
+| Document | Before | After |
+| :--- | :--- | :--- |
+| none published | `fail` (`priority: 'medium'`) | `notApplicable` |
+| present, declares no operations | `fail` | `notApplicable` |
+
+An operationId is a property of an operation. A site with no document, and a
+document with no operations, carries none for this audit to have read.
+`agent-interfaces/openapi-endpoints` is the audit that reports an empty
+document, and it reports it once.
+
+Every verdict on a document that declares operations is unchanged: an illegal
+id still `fail`s and is still named in `found`, missing and duplicate ids still
+`warn`, and a clean document still passes. That is the whole of the graded
+mechanism.
+
+**The read moved to `packages/core/src/gatherers/openapi.ts`**, shared with the
+six other audits that had a byte-identical copy of it, along with the `paths`
+traversal. The precondition lives beside the read; `gatherers/openapi.ts`
+records why it is not a runner precondition and not an `EvidenceKey`.
+
+**A 200 with an unparseable body is treated as an absence**, because it is a
+document this audit never read.
+
+**Present and broken is not absent.** `paths` is classified in one place,
+`readOpenApiPaths` in `gatherers/openapi.ts`. It separates what it could read
+from what was defective, and the verdict follows what survives:
+
+- Nothing readable and something broken — `paths` is not a Paths Object, or
+  every entry under it is defective — is `malformed`, and it `fail`s with the
+  defect named in `found`. The message ("no operationId can be read") is literally
+  true in that state and only in that state.
+- At least one readable operation is graded on the operations it read. An entry no runtime can walk declares no operationId, so it is not counted as a missing one.
+  The defects are named in the message and counted in `found`; they do not
+  change the verdict, because no source says a broken sibling entry costs a
+  site the operations it does publish. Released `main` graded such a document
+  on its readable operations and so does this audit.
+- Nothing broken and nothing declared is `empty`, and this audit declines.
+  `{"/x": {}}` is legal OpenAPI that lands there.
+
+A defect counts at either level: a non-object where a Path Item Object belongs
+and a non-object where an Operation Object belongs are the same error one level
+apart, so `{"/x": {"get": "yes"}}` is a broken document. Specification-extension
+keys (`x-`) are skipped rather than judged — OpenAPI 3.1 §4.8.8 lets them hold
+any value — and inside a path item only the eight method keys are judged,
+because `summary`, `parameters`, `servers` and `$ref` are legal members that
+are not Operation Objects.
+
+**The decline says what was observed.** The shared `notApplicable` line reads
+"No readable OpenAPI document at /openapi.json". The read also comes back empty
+for a 200 whose body will not parse, and a site that publishes a broken
+document has not published none.
+
+## Deferred
+
+The two other standing items from the fold are untouched: the shared read is
+still JSON-only, so the YAML blind spot remains, and duplicate accounting is
+still a counter rather than a `Map<id, count>` naming the colliding ids.

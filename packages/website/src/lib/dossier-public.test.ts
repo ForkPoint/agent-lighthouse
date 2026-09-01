@@ -503,7 +503,9 @@ describe('publicDossier', () => {
         // Every scored audit publishes its grade reasoning; the shortfall is
         // in the informative and experimental tiers, which the bar exempts.
         'How it scores': 190,
-        'Example failure': 66,
+        // 70 since 2026-08-29: the four `openapi-*` content audits gained one,
+        // to publish that an absent OpenAPI document is not a failure.
+        'Example failure': 70,
       });
     });
   });

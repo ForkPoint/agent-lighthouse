@@ -2,53 +2,18 @@ import type { AuditMeta, AuditResult } from "../../types";
 import { Audit } from "../../audit";
 import { weightForGrade } from '../../scorer';
 import type { CheckContext } from '../../check-context';
+import {
+  defectCount,
+  defectNote,
+  NO_OPENAPI_SPEC,
+  readOpenApiPaths,
+  readOpenApiSpec,
+} from '../../gatherers/openapi';
 
-function tryParseJson(body: string): unknown {
-  try {
-    return JSON.parse(body);
-  } catch {
-    return undefined;
-  }
-}
+/** Shared `expected` line: one path, one operation, is the whole requirement. */
+const EXPECTED = 'At least one path with one operation in the OpenAPI spec';
 
-function isObject(val: unknown): val is Record<string, unknown> {
-  return typeof val === 'object' && val !== null && !Array.isArray(val);
-}
-
-type OpenApiPaths = Record<string, Record<string, unknown>>;
-type OpenApiOperation = Record<string, unknown>;
-
-const HTTP_METHODS = ['get', 'post', 'put', 'patch', 'delete', 'options', 'head', 'trace'];
-
-function getOpenApiSpec(ctx: {
-  rootFiles: Record<string, { status: number; body: string }>;
-}): Record<string, unknown> | undefined {
-  const jsonResult = ctx.rootFiles['/openapi.json'];
-  if (jsonResult && jsonResult.status === 200 && jsonResult.body) {
-    const parsed = tryParseJson(jsonResult.body);
-    if (isObject(parsed)) return parsed;
-  }
-  return undefined;
-}
-
-function getOperations(
-  spec: Record<string, unknown>,
-): Array<{ path: string; method: string; op: OpenApiOperation }> {
-  const paths = spec['paths'] as OpenApiPaths | undefined;
-  if (!isObject(paths)) return [];
-
-  const ops: Array<{ path: string; method: string; op: OpenApiOperation }> = [];
-  for (const [path, pathItem] of Object.entries(paths)) {
-    if (!isObject(pathItem)) continue;
-    for (const method of HTTP_METHODS) {
-      const op = pathItem[method];
-      if (isObject(op)) {
-        ops.push({ path, method, op: op as OpenApiOperation });
-      }
-    }
-  }
-  return ops;
-}
+const FIX_CODE = `"paths": {\n  "/search": {\n    "get": {\n      "operationId": "searchContent",\n      "summary": "Search site content",\n      "parameters": [{\n        "name": "q", "in": "query", "schema": { "type": "string" }\n      }],\n      "responses": { "200": { "description": "Search results" } }\n    }\n  }\n}`;
 
 export class OpenApiEndpointsAudit extends Audit {
   static override meta: AuditMeta = {
@@ -88,38 +53,53 @@ export class OpenApiEndpointsAudit extends Audit {
   };
 
   audit(ctx: CheckContext): AuditResult {
-    const spec = getOpenApiSpec(ctx);
+    const spec = readOpenApiSpec(ctx);
+    // Absent artifact, absent verdict. A menu with no items is a finding; a
+    // restaurant that prints no menu is not. The `fail` below still stands
+    // for a document that exists and declares nothing.
     if (!spec) {
+      return this.notApplicable(NO_OPENAPI_SPEC.message, EXPECTED, NO_OPENAPI_SPEC.found);
+    }
+
+    const paths = readOpenApiPaths(spec);
+
+    // Present and broken, not absent: nothing under `paths` is readable and
+    // the author wrote what blocks it. The `expected` line above is genuinely
+    // unmet here — there is no path with an operation — which is why this
+    // branch may state it beside a `fail`.
+    if (paths.kind === 'malformed') {
       return this.fail(
-        'No parseable OpenAPI JSON spec found.',
-        'At least one path with one operation in the OpenAPI spec',
-        'No spec',
+        `OpenAPI spec has a malformed paths object: ${paths.found}.`,
+        EXPECTED,
+        paths.found,
         {
           priority: 'high',
           description: OpenApiEndpointsAudit.meta.description,
-          code: `"paths": {\n  "/search": {\n    "get": {\n      "operationId": "searchContent",\n      "summary": "Search site content",\n      "parameters": [{\n        "name": "q", "in": "query", "schema": { "type": "string" }\n      }],\n      "responses": { "200": { "description": "Search results" } }\n    }\n  }\n}`,
+          code: FIX_CODE,
         },
       );
     }
 
-    const ops = getOperations(spec);
-    if (ops.length > 0) {
+    // At least one operation is readable, so the requirement in `expected` is
+    // met and this audit passes — even if a sibling entry is broken. Twenty
+    // working operations are twenty working operations; the defect is named,
+    // not charged, because no source says a broken sibling costs a site the
+    // endpoints it does publish.
+    if (paths.kind === 'operations') {
+      const count = paths.operations.length;
       return this.pass(
-        `OpenAPI spec defines ${ops.length} operation(s) across its paths.`,
-        'At least one path with one operation in the OpenAPI spec',
-        `${ops.length} operation(s)`,
+        `OpenAPI spec defines ${count} operation(s) across its paths.${defectNote(paths.defects)}`,
+        EXPECTED,
+        `${count} operation(s)${defectCount(paths.defects)}`,
       );
     }
 
-    return this.fail(
-      'OpenAPI spec has no operations defined in paths.',
-      'At least one path with one operation in the OpenAPI spec',
-      '0 operations',
-      {
-        priority: 'high',
-        description: OpenApiEndpointsAudit.meta.description,
-        code: `"paths": {\n  "/search": {\n    "get": {\n      "operationId": "searchContent",\n      "summary": "Search site content",\n      "parameters": [{\n        "name": "q", "in": "query", "schema": { "type": "string" }\n      }],\n      "responses": { "200": { "description": "Search results" } }\n    }\n  }\n}`,
-      },
-    );
+    // A menu with no items. This audit is the one place the empty document is
+    // reported, which is why the other three decline it rather than repeat it.
+    return this.fail('OpenAPI spec has no operations defined in paths.', EXPECTED, '0 operations', {
+      priority: 'high',
+      description: OpenApiEndpointsAudit.meta.description,
+      code: FIX_CODE,
+    });
   }
 }

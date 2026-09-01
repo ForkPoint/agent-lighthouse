@@ -46,6 +46,7 @@ export const GATHERER_EVIDENCE = {
   domains: ORIGIN_ONLY_REQUIRES,
   feeds: ORIGIN_ONLY_REQUIRES,
   'fetch-classify': ORIGIN_ONLY_REQUIRES,
+  openapi: ORIGIN_ONLY_REQUIRES,
   robots: ORIGIN_ONLY_REQUIRES,
   sitemap: ORIGIN_ONLY_REQUIRES,
 };

@@ -2,23 +2,13 @@ import type { AuditMeta, AuditResult } from "../../types";
 import { Audit } from "../../audit";
 import { weightForGrade } from '../../scorer';
 import type { CheckContext } from '../../check-context';
-
-function tryParseJson(body: string): unknown {
-  try {
-    return JSON.parse(body);
-  } catch {
-    return undefined;
-  }
-}
-
-function isObject(val: unknown): val is Record<string, unknown> {
-  return typeof val === 'object' && val !== null && !Array.isArray(val);
-}
-
-type OpenApiPaths = Record<string, Record<string, unknown>>;
-type OpenApiOperation = Record<string, unknown>;
-
-const HTTP_METHODS = ['get', 'post', 'put', 'patch', 'delete', 'options', 'head', 'trace'];
+import {
+  defectCount,
+  defectNote,
+  NO_OPENAPI_SPEC,
+  readOpenApiPaths,
+  readOpenApiSpec,
+} from '../../gatherers/openapi';
 
 /**
  * The naming rule folded in from v1 5.23 (webmcp-tool-naming) on 2026-08-22.
@@ -38,36 +28,6 @@ const LEGAL_OPERATION_ID = /^[a-zA-Z0-9_-]{1,64}$/;
 
 /** Shared `expected` line: uniqueness and registrability are one requirement. */
 const EXPECTED = 'Every operation has a unique operationId that is a legal tool-call function name';
-
-function getOpenApiSpec(ctx: {
-  rootFiles: Record<string, { status: number; body: string }>;
-}): Record<string, unknown> | undefined {
-  const jsonResult = ctx.rootFiles['/openapi.json'];
-  if (jsonResult && jsonResult.status === 200 && jsonResult.body) {
-    const parsed = tryParseJson(jsonResult.body);
-    if (isObject(parsed)) return parsed;
-  }
-  return undefined;
-}
-
-function getOperations(
-  spec: Record<string, unknown>,
-): Array<{ path: string; method: string; op: OpenApiOperation }> {
-  const paths = spec['paths'] as OpenApiPaths | undefined;
-  if (!isObject(paths)) return [];
-
-  const ops: Array<{ path: string; method: string; op: OpenApiOperation }> = [];
-  for (const [path, pathItem] of Object.entries(paths)) {
-    if (!isObject(pathItem)) continue;
-    for (const method of HTTP_METHODS) {
-      const op = pathItem[method];
-      if (isObject(op)) {
-        ops.push({ path, method, op: op as OpenApiOperation });
-      }
-    }
-  }
-  return ops;
-}
 
 export class OpenApiOperationIdsAudit extends Audit {
   static override meta: AuditMeta = {
@@ -109,33 +69,50 @@ export class OpenApiOperationIdsAudit extends Audit {
   };
 
   audit(ctx: CheckContext): AuditResult {
-    const spec = getOpenApiSpec(ctx);
+    const spec = readOpenApiSpec(ctx);
+    // Absent artifact, absent verdict. An operationId is a property of an
+    // operation, so a site with no document carries nothing this audit can
+    // have read.
     if (!spec) {
+      return this.notApplicable(NO_OPENAPI_SPEC.message, EXPECTED, NO_OPENAPI_SPEC.found);
+    }
+
+    const paths = readOpenApiPaths(spec);
+
+    // Present and broken is not absent. Nothing under `paths` is readable, so
+    // the message below is literally true: no operationId can be read. No
+    // tool-calling runtime can walk this document to register a function name,
+    // and the author wrote the thing that blocks it.
+    if (paths.kind === 'malformed') {
       return this.fail(
-        'No parseable OpenAPI JSON spec found.',
+        `The OpenAPI document's paths object is malformed, so no operationId can be read: ${paths.found}.`,
         EXPECTED,
-        'No spec',
+        paths.found,
         {
           priority: 'medium',
           description: OpenApiOperationIdsAudit.meta.description,
-          code: `"paths": {\n  "/contact": {\n    "post": {\n      "operationId": "submitContactForm",\n      "summary": "Submit a contact inquiry"\n    }\n  },\n  "/search": {\n    "get": {\n      "operationId": "searchContent",\n      "summary": "Search site content"\n    }\n  }\n}`,
+          code: `"paths": {\n  "/contact": {\n    "post": {\n      "operationId": "submitContactForm"\n    }\n  }\n}`,
         },
       );
     }
 
-    const ops = getOperations(spec);
-    if (ops.length === 0) {
-      return this.fail(
-        'No operations to check.',
+    // Declaring no operations is the absence one level down: there is no
+    // operation for an operationId to be a property of. `openapi-endpoints` is
+    // the audit that reports an empty document, and it reports it once.
+    if (paths.kind === 'empty') {
+      return this.notApplicable(
+        'The OpenAPI document declares no operations, so it carries no operationIds to check.',
         EXPECTED,
         '0 operations',
-        {
-          priority: 'medium',
-          description: OpenApiOperationIdsAudit.meta.description,
-          code: `"paths": {\n  "/contact": {\n    "post": {\n      "operationId": "submitContactForm",\n      "summary": "Submit a contact inquiry"\n    }\n  },\n  "/search": {\n    "get": {\n      "operationId": "searchContent",\n      "summary": "Search site content"\n    }\n  }\n}`,
-        },
       );
     }
+
+    // The ids that can be seen are checked; a defective sibling entry declares
+    // no operationId to check and is named rather than counted against the
+    // ones that do.
+    const ops = paths.operations;
+    const note = defectNote(paths.defects);
+    const suffix = defectCount(paths.defects);
 
     const ids = new Set<string>();
     let missing = 0;
@@ -158,9 +135,9 @@ export class OpenApiOperationIdsAudit extends Audit {
 
     if (missing === 0 && duplicates === 0 && illegal.length === 0) {
       return this.pass(
-        `All ${ops.length} operation(s) have unique, registrable operationIds.`,
+        `All ${ops.length} operation(s) have unique, registrable operationIds.${note}`,
         EXPECTED,
-        `${ops.length} unique operationId(s)`,
+        `${ops.length} unique operationId(s)${suffix}`,
       );
     }
 
@@ -173,9 +150,9 @@ export class OpenApiOperationIdsAudit extends Audit {
     // call outright; a missing or duplicated id only degrades naming.
     if (illegal.length > 0) {
       return this.fail(
-        `operationId issues: ${issues.join(', ')} out of ${ops.length} operation(s).`,
+        `operationId issues: ${issues.join(', ')} out of ${ops.length} operation(s).${note}`,
         EXPECTED,
-        `Illegal operationId(s): ${[...new Set(illegal)].join(', ')}${missing > 0 ? `; ${missing} missing` : ''}${duplicates > 0 ? `; ${duplicates} duplicate(s)` : ''}`,
+        `Illegal operationId(s): ${[...new Set(illegal)].join(', ')}${missing > 0 ? `; ${missing} missing` : ''}${duplicates > 0 ? `; ${duplicates} duplicate(s)` : ''}${suffix}`,
         {
           priority: 'medium',
           description:
@@ -186,9 +163,9 @@ export class OpenApiOperationIdsAudit extends Audit {
     }
 
     return this.warn(
-      `operationId issues: ${issues.join(', ')} out of ${ops.length} operation(s).`,
+      `operationId issues: ${issues.join(', ')} out of ${ops.length} operation(s).${note}`,
       EXPECTED,
-      issues.join(', '),
+      `${issues.join(', ')}${suffix}`,
       {
         priority: 'medium',
         description: OpenApiOperationIdsAudit.meta.description,

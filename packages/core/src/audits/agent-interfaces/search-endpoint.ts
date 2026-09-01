@@ -3,6 +3,7 @@ import { Audit } from '../../audit';
 import { weightForGrade } from '../../scorer';
 import type { CheckContext, PageContext } from '../../check-context';
 import { flattenJsonLd } from '../../parser';
+import { openApiOperations, readOpenApiSpec, type OpenApiSpec } from '../../gatherers/openapi';
 
 function tryParseJson(body: string): unknown {
   try {
@@ -29,10 +30,6 @@ function asArray(value: unknown): unknown[] {
   return Array.isArray(value) ? value : [value];
 }
 
-type OpenApiPaths = Record<string, Record<string, unknown>>;
-
-const HTTP_METHODS = ['get', 'post', 'put', 'patch', 'delete', 'options', 'head', 'trace'];
-
 /**
  * A search operation is one whose path carries `search` as its own word —
  * `/search`, `/api/product-search`. A substring match also fired on
@@ -43,27 +40,10 @@ const SEARCH_PATH_RE = /\bsearch\b/i;
 /** Statuses that mean "the endpoint exists but we were not allowed to see it". */
 const GATED_STATUSES = new Set([401, 403, 407, 451]);
 
-function getOpenApiSpec(ctx: CheckContext): Record<string, unknown> | undefined {
-  const jsonResult = ctx.rootFiles['/openapi.json'];
-  if (jsonResult && jsonResult.status === 200 && jsonResult.body) {
-    const parsed = tryParseJson(jsonResult.body);
-    if (isObject(parsed)) return parsed;
-  }
-  return undefined;
-}
-
-function findSearchOperation(spec: Record<string, unknown>): string | undefined {
-  const paths = spec['paths'] as OpenApiPaths | undefined;
-  if (!isObject(paths)) return undefined;
-
-  for (const [path, pathItem] of Object.entries(paths)) {
-    if (!isObject(pathItem)) continue;
-    if (!SEARCH_PATH_RE.test(path)) continue;
-    for (const method of HTTP_METHODS) {
-      if (method === 'get' && isObject(pathItem[method])) return path;
-    }
-  }
-  return undefined;
+function findSearchOperation(spec: OpenApiSpec): string | undefined {
+  return openApiOperations(spec).find(
+    ({ path, method }) => method === 'get' && SEARCH_PATH_RE.test(path),
+  )?.path;
 }
 
 type SearchActionState =
@@ -223,7 +203,7 @@ export class SearchEndpointAudit extends Audit {
   async audit(ctx: CheckContext): Promise<AuditResult> {
     const state = readSearchActions(ctx.pages);
     const openApiPath = (() => {
-      const spec = getOpenApiSpec(ctx);
+      const spec = readOpenApiSpec(ctx);
       return spec ? findSearchOperation(spec) : undefined;
     })();
 

@@ -19,10 +19,6 @@ fail 0   machine-discovery/llms-txt-link-descriptions
 fail 0   machine-discovery/rss-feed-content
 fail 0   operability-safety/contact-form
 fail 0   structured-data/author-schema
-fail 0.6 agent-interfaces/openapi-endpoints
-fail 0.6 agent-interfaces/openapi-operation-ids
-fail 0.6 agent-interfaces/openapi-schemas
-fail 0.6 agent-interfaces/openapi-servers
 fail 0.6 answer-readiness/external-citations
 fail 0.6 answer-readiness/extractor-survival-recall
 fail 0.6 answer-readiness/last-modified-schema
@@ -80,6 +76,10 @@ na   0.6 agent-interfaces/ai-catalog-urls
 na   0.6 agent-interfaces/mcp-origin-validation-cors
 na   0.6 agent-interfaces/mcp-registry-listing-ownership
 na   0.6 agent-interfaces/mcp-tool-description-coverage
+na   0.6 agent-interfaces/openapi-endpoints
+na   0.6 agent-interfaces/openapi-operation-ids
+na   0.6 agent-interfaces/openapi-schemas
+na   0.6 agent-interfaces/openapi-servers
 na   0.6 agent-interfaces/webmcp-declarative-forms
 na   0.6 agentic-commerce/buyable-variant-resolution
 na   0.6 agentic-commerce/cart-handoff-reachability

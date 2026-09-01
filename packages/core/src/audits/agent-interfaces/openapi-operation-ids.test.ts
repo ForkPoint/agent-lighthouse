@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { OpenApiOperationIdsAudit } from './openapi-operation-ids';
 import { mockCheckContext, mockFetchResult } from '../../__tests__/test-utils';
+import { expectNotApplicableOnEmpty } from '../../tests/na-contract';
 
 describe('OpenApiOperationIdsAudit', () => {
   const audit = new OpenApiOperationIdsAudit();
@@ -130,66 +131,121 @@ describe('OpenApiOperationIdsAudit', () => {
     });
   });
 
-  it('fails when there is no spec', () => {
-    const ctx = mockCheckContext([], {});
-    expect(audit.audit(ctx).status).toBe('fail');
+  // Absent artifact, absent verdict: an operationId is a property of an
+  // operation, so no document and no operations leave nothing to have read.
+  // The missing/duplicate/illegal verdicts above are unchanged.
+  it('declines when there is no spec', () => {
+    const result = audit.audit(mockCheckContext([], {}));
+    expect(result.status).toBe('na');
+    expect(result.found).toBe('No readable OpenAPI document');
   });
 
-  it('fails when the spec has no operations', () => {
+  it('declines on a scan that read nothing', async () => {
+    await expectNotApplicableOnEmpty(audit);
+  });
+
+  it('declines when the spec has no operations', () => {
     const ctx = mockCheckContext([], {
       '/openapi.json': mockFetchResult(JSON.stringify({ paths: {} }), 200),
     });
     const result = audit.audit(ctx);
-    expect(result.status).toBe('fail');
-    expect(result.message).toContain('No operations');
+    expect(result.status).toBe('na');
+    expect(result.message).toContain('no operationIds');
   });
 
-  it('fails when openapi.json contains invalid JSON', () => {
+  it('declines when openapi.json contains invalid JSON', () => {
     const ctx = mockCheckContext([], {
       '/openapi.json': mockFetchResult('invalid json {{{', 200),
     });
-    const result = audit.audit(ctx);
-    expect(result.status).toBe('fail');
-    expect(result.message).toContain('No parseable');
+    expect(audit.audit(ctx).status).toBe('na');
   });
 
-  it('fails when spec has no paths key', () => {
+  it('declines on a document with no paths key — no operation was ever read', () => {
     const spec = JSON.stringify({ openapi: '3.0.3', info: {} });
     const ctx = mockCheckContext([], { '/openapi.json': mockFetchResult(spec, 200) });
     const result = audit.audit(ctx);
-    expect(result.status).toBe('fail');
-    expect(result.message).toContain('No operations');
+    expect(result.status).toBe('na');
+    expect(result.message).toContain('no operations');
   });
 
-  it('fails when spec has a paths entry that is not an object', () => {
+  // Present and broken, not absent. A `paths` the author wrote and a runtime
+  // cannot walk to register a function name is a defective document.
+  it('fails and names the defect when a path item is null', () => {
     const spec = JSON.stringify({ paths: { '/null-path': null } });
     const ctx = mockCheckContext([], { '/openapi.json': mockFetchResult(spec, 200) });
     const result = audit.audit(ctx);
     expect(result.status).toBe('fail');
-    expect(result.message).toContain('No operations');
+    expect(result.message).toContain('paths object is malformed');
+    expect(result.found).toBe('paths entry "/null-path" is null, not a path item object');
   });
 
-  it('fails when paths is an array (covers Array.isArray branch of isObject)', () => {
+  it('fails and names the defect when paths is an array', () => {
     const spec = JSON.stringify({ paths: ['get', 'post'] });
     const ctx = mockCheckContext([], { '/openapi.json': mockFetchResult(spec, 200) });
     const result = audit.audit(ctx);
     expect(result.status).toBe('fail');
-    expect(result.message).toContain('No operations');
+    expect(result.found).toBe('paths is an array, not an object');
   });
 
-  it('fails when path item is a string (covers typeof branch of isObject)', () => {
+  it('fails and names the defect when a path item is a string', () => {
     const spec = JSON.stringify({ paths: { '/products': 'GET' } });
     const ctx = mockCheckContext([], { '/openapi.json': mockFetchResult(spec, 200) });
     const result = audit.audit(ctx);
     expect(result.status).toBe('fail');
-    expect(result.message).toContain('No operations');
+    expect(result.found).toBe('paths entry "/products" is a string, not a path item object');
   });
 
-  it('fails when path item is an array (covers Array.isArray pathItem branch)', () => {
+  it('fails and names the defect when a path item is an array', () => {
     const spec = JSON.stringify({ paths: { '/products': ['get', 'post'] } });
     const ctx = mockCheckContext([], { '/openapi.json': mockFetchResult(spec, 200) });
     const result = audit.audit(ctx);
     expect(result.status).toBe('fail');
-    expect(result.message).toContain('No operations');
+    expect(result.found).toBe('paths entry "/products" is an array, not a path item object');
+  });
+  // The ids that can be seen are checked. On released `main` this document
+  // passed on its two good ids; it still does, with the defect named.
+  it('checks the ids it can see beside a broken entry', () => {
+    const spec = JSON.stringify({
+      paths: {
+        '/a': { get: { operationId: 'listA' } },
+        '/b': { post: { operationId: 'createB' } },
+        '/legacy': null,
+      },
+    });
+    const ctx = mockCheckContext([], { '/openapi.json': mockFetchResult(spec, 200) });
+    const result = audit.audit(ctx);
+    expect(result.status).toBe('pass');
+    expect(result.message).toContain('All 2 operation(s)');
+    expect(result.message).toContain('Skipped 1 unreadable entry');
+    expect(result.found).toBe('2 unique operationId(s); 1 unreadable');
+  });
+
+  // A real defect in the readable part is still a real finding, and the
+  // skipped entry does not soften it.
+  it('still warns on a missing operationId beside a broken entry', () => {
+    const spec = JSON.stringify({
+      paths: { '/a': { get: {} }, '/legacy': 'GET' },
+    });
+    const ctx = mockCheckContext([], { '/openapi.json': mockFetchResult(spec, 200) });
+    const result = audit.audit(ctx);
+    expect(result.status).toBe('warn');
+    expect(result.found).toContain('1 missing');
+    expect(result.found).toContain('1 unreadable');
+  });
+
+  it('fails when the only method value is not an operation object', () => {
+    const spec = JSON.stringify({ paths: { '/x': { get: 'yes' } } });
+    const ctx = mockCheckContext([], { '/openapi.json': mockFetchResult(spec, 200) });
+    const result = audit.audit(ctx);
+    expect(result.status).toBe('fail');
+    expect(result.found).toBe('paths entry "/x" declares get as a string, not an operation object');
+  });
+
+  it('declines an empty path item', () => {
+    const spec = JSON.stringify({ paths: { '/x': {} } });
+    const ctx = mockCheckContext([], { '/openapi.json': mockFetchResult(spec, 200) });
+    const result = audit.audit(ctx);
+    expect(result.status).toBe('na');
+    expect(result.found).toBe('0 operations');
   });
 });

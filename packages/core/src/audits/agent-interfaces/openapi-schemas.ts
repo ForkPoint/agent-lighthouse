@@ -2,53 +2,20 @@ import type { AuditMeta, AuditResult } from "../../types";
 import { Audit } from "../../audit";
 import { weightForGrade } from '../../scorer';
 import type { CheckContext } from '../../check-context';
-
-function tryParseJson(body: string): unknown {
-  try {
-    return JSON.parse(body);
-  } catch {
-    return undefined;
-  }
-}
+import {
+  defectCount,
+  defectNote,
+  NO_OPENAPI_SPEC,
+  readOpenApiPaths,
+  readOpenApiSpec,
+} from '../../gatherers/openapi';
 
 function isObject(val: unknown): val is Record<string, unknown> {
   return typeof val === 'object' && val !== null && !Array.isArray(val);
 }
 
-type OpenApiPaths = Record<string, Record<string, unknown>>;
-type OpenApiOperation = Record<string, unknown>;
-
-const HTTP_METHODS = ['get', 'post', 'put', 'patch', 'delete', 'options', 'head', 'trace'];
-
-function getOpenApiSpec(ctx: {
-  rootFiles: Record<string, { status: number; body: string }>;
-}): Record<string, unknown> | undefined {
-  const jsonResult = ctx.rootFiles['/openapi.json'];
-  if (jsonResult && jsonResult.status === 200 && jsonResult.body) {
-    const parsed = tryParseJson(jsonResult.body);
-    if (isObject(parsed)) return parsed;
-  }
-  return undefined;
-}
-
-function getOperations(
-  spec: Record<string, unknown>,
-): Array<{ path: string; method: string; op: OpenApiOperation }> {
-  const paths = spec['paths'] as OpenApiPaths | undefined;
-  if (!isObject(paths)) return [];
-
-  const ops: Array<{ path: string; method: string; op: OpenApiOperation }> = [];
-  for (const [path, pathItem] of Object.entries(paths)) {
-    if (!isObject(pathItem)) continue;
-    for (const method of HTTP_METHODS) {
-      const op = pathItem[method];
-      if (isObject(op)) {
-        ops.push({ path, method, op: op as OpenApiOperation });
-      }
-    }
-  }
-  return ops;
-}
+/** Shared `expected` line, used by every branch below. */
+const EXPECTED = 'Operations have requestBody and responses with schema definitions';
 
 export class OpenApiSchemasAudit extends Audit {
   static override meta: AuditMeta = {
@@ -111,33 +78,52 @@ export class OpenApiSchemasAudit extends Audit {
   };
 
   audit(ctx: CheckContext): AuditResult {
-    const spec = getOpenApiSpec(ctx);
+    const recommendation = {
+      priority: 'medium' as const,
+      description: OpenApiSchemasAudit.meta.description,
+      code: `"post": {\n  "operationId": "submitContact",\n  "requestBody": {\n    "required": true,\n    "content": {\n      "application/json": {\n        "schema": {\n          "type": "object",\n          "required": ["email", "message"],\n          "properties": {\n            "name": { "type": "string" },\n            "email": { "type": "string", "format": "email" },\n            "message": { "type": "string" }\n          }\n        }\n      }\n    }\n  },\n  "responses": {\n    "200": {\n      "description": "Success",\n      "content": {\n        "application/json": {\n          "schema": {\n            "type": "object",\n            "properties": {\n              "success": { "type": "boolean" },\n              "id": { "type": "string" }\n            }\n          }\n        }\n      }\n    }\n  }\n}`,
+    };
+
+    const spec = readOpenApiSpec(ctx);
+    // Absent artifact, absent verdict. This audit judges the schemas attached
+    // to a document's operations; no document means no schema coverage was
+    // ever observed.
     if (!spec) {
+      return this.notApplicable(NO_OPENAPI_SPEC.message, EXPECTED, NO_OPENAPI_SPEC.found);
+    }
+
+    const paths = readOpenApiPaths(spec);
+
+    // Present and broken is not absent. Nothing under `paths` is readable, so
+    // the message below is literally true: no operation's schemas can be read.
+    // The author wrote the thing that blocks the agent.
+    if (paths.kind === 'malformed') {
       return this.fail(
-        'No parseable OpenAPI JSON spec found.',
-        'Operations have requestBody and responses with schema definitions',
-        'No spec',
-        {
-          priority: 'medium',
-          description: OpenApiSchemasAudit.meta.description,
-          code: `"post": {\n  "operationId": "submitContact",\n  "requestBody": {\n    "required": true,\n    "content": {\n      "application/json": {\n        "schema": {\n          "type": "object",\n          "required": ["email", "message"],\n          "properties": {\n            "name": { "type": "string" },\n            "email": { "type": "string", "format": "email" },\n            "message": { "type": "string" }\n          }\n        }\n      }\n    }\n  },\n  "responses": {\n    "200": {\n      "description": "Success",\n      "content": {\n        "application/json": {\n          "schema": {\n            "type": "object",\n            "properties": {\n              "success": { "type": "boolean" },\n              "id": { "type": "string" }\n            }\n          }\n        }\n      }\n    }\n  }\n}`,
-        },
+        `The OpenAPI document's paths object is malformed, so no operation's schemas can be read: ${paths.found}.`,
+        EXPECTED,
+        paths.found,
+        recommendation,
       );
     }
 
-    const ops = getOperations(spec);
-    if (ops.length === 0) {
-      return this.fail(
-        'No operations to check.',
-        'Operations have requestBody and responses with schema definitions',
+    // Declaring no operations is the absence one level down. Coverage of zero
+    // operations is a 0/0 measurement, not a finding; `openapi-endpoints` is
+    // the audit that reports an empty document, and it reports it once.
+    if (paths.kind === 'empty') {
+      return this.notApplicable(
+        'The OpenAPI document declares no operations, so it carries no request or response schemas to check.',
+        EXPECTED,
         '0 operations',
-        {
-          priority: 'medium',
-          description: OpenApiSchemasAudit.meta.description,
-          code: `"post": {\n  "operationId": "submitContact",\n  "requestBody": {\n    "required": true,\n    "content": {\n      "application/json": {\n        "schema": {\n          "type": "object",\n          "required": ["email", "message"],\n          "properties": {\n            "name": { "type": "string" },\n            "email": { "type": "string", "format": "email" },\n            "message": { "type": "string" }\n          }\n        }\n      }\n    }\n  },\n  "responses": {\n    "200": {\n      "description": "Success",\n      "content": {\n        "application/json": {\n          "schema": {\n            "type": "object",\n            "properties": {\n              "success": { "type": "boolean" },\n              "id": { "type": "string" }\n            }\n          }\n        }\n      }\n    }\n  }\n}`,
-        },
       );
     }
+
+    // Coverage is measured over the operations that are readable, and any
+    // defective sibling is named rather than counted. A denominator that
+    // included entries no agent can walk would grade the site on operations it
+    // does not have.
+    const ops = paths.operations;
+    const note = defectNote(paths.defects);
+    const suffix = defectCount(paths.defects);
 
     let withRequestSchema = 0;
     let withResponseSchema = 0;
@@ -189,31 +175,25 @@ export class OpenApiSchemasAudit extends Audit {
       (writeMethods === 0 || withRequestSchema === writeMethods)
     ) {
       return this.pass(
-        `All operations have response schemas${writeMethods > 0 ? ` and all ${writeMethods} write operation(s) have request schemas` : ''}.`,
-        'Operations have requestBody and responses with schema definitions',
-        `${withResponseSchema}/${totalCheckable} response schemas, ${withRequestSchema}/${writeMethods} request schemas`,
+        `All operations have response schemas${writeMethods > 0 ? ` and all ${writeMethods} write operation(s) have request schemas` : ''}.${note}`,
+        EXPECTED,
+        `${withResponseSchema}/${totalCheckable} response schemas, ${withRequestSchema}/${writeMethods} request schemas${suffix}`,
       );
     }
 
-    const recommendation = {
-      priority: 'medium' as const,
-      description: OpenApiSchemasAudit.meta.description,
-      code: `"post": {\n  "operationId": "submitContact",\n  "requestBody": {\n    "required": true,\n    "content": {\n      "application/json": {\n        "schema": {\n          "type": "object",\n          "required": ["email", "message"],\n          "properties": {\n            "name": { "type": "string" },\n            "email": { "type": "string", "format": "email" },\n            "message": { "type": "string" }\n          }\n        }\n      }\n    }\n  },\n  "responses": {\n    "200": {\n      "description": "Success",\n      "content": {\n        "application/json": {\n          "schema": {\n            "type": "object",\n            "properties": {\n              "success": { "type": "boolean" },\n              "id": { "type": "string" }\n            }\n          }\n        }\n      }\n    }\n  }\n}`,
-    };
-
     if (hasGoodCoverage) {
       return this.warn(
-        `Partial schema coverage: ${withResponseSchema}/${totalCheckable} response schemas, ${withRequestSchema}/${writeMethods} request schemas.`,
-        'Operations have requestBody and responses with schema definitions',
-        `${withResponseSchema}/${totalCheckable} response, ${withRequestSchema}/${writeMethods} request`,
+        `Partial schema coverage: ${withResponseSchema}/${totalCheckable} response schemas, ${withRequestSchema}/${writeMethods} request schemas.${note}`,
+        EXPECTED,
+        `${withResponseSchema}/${totalCheckable} response, ${withRequestSchema}/${writeMethods} request${suffix}`,
         recommendation,
       );
     }
 
     return this.fail(
-      `Low schema coverage: ${withResponseSchema}/${totalCheckable} response schemas, ${withRequestSchema}/${writeMethods} request schemas.`,
-      'Operations have requestBody and responses with schema definitions',
-      `${withResponseSchema}/${totalCheckable} response, ${withRequestSchema}/${writeMethods} request`,
+      `Low schema coverage: ${withResponseSchema}/${totalCheckable} response schemas, ${withRequestSchema}/${writeMethods} request schemas.${note}`,
+      EXPECTED,
+      `${withResponseSchema}/${totalCheckable} response, ${withRequestSchema}/${writeMethods} request${suffix}`,
       recommendation,
     );
   }
