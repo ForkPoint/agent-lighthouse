@@ -288,13 +288,13 @@ export async function runAudits(
           const scopedCtx = scopedPages ? { ...ctx, pages: scopedPages } : ctx;
           const result = await instance.audit(scopedCtx);
           const check = instance.toCheckResult(result, scoreDisplayMode);
-          onEvent?.({ type: 'unit:done', label });
+          if (typeof onEvent === 'function') onEvent({ type: 'unit:done', label });
           trace(check, elapsed());
           return check;
         } catch (err) {
           logger.error({ err, auditId: reg.meta.id }, '[scanner] Audit error');
           const message = describeError(err);
-          onEvent?.({ type: 'unit:fail', label, error: message });
+          if (typeof onEvent === 'function') onEvent({ type: 'unit:fail', label, error: message });
           const stub = stubCheck(reg.meta, TAG_SCAN_ERROR, `Audit failed to run: ${message}`);
           trace(stub, elapsed());
           return stub;
