@@ -2,15 +2,15 @@ import type { AuditMeta, AuditResult } from '../../types';
 import { Audit } from '../../audit';
 import { weightForGrade } from '../../scorer';
 import type { CheckContext } from '../../check-context';
-import { isSafeUrl } from '../../fetcher';
+import { isSafeUrl } from '../../url-utils';
 import {
   discoverMcpEndpoint,
   parseRpcResponse,
   rpcRequest,
+  mcpFetch,
   isObject,
-  MCP_ACCEPT,
   MCP_PROTOCOL_VERSION as PROTOCOL_VERSION,
-} from './_mcp-client';
+} from '../../gatherers/mcp';
 
 const CAPABILITY_KEYS = ['tools', 'resources', 'prompts'];
 
@@ -113,17 +113,16 @@ export class McpEndpointAudit extends Audit {
 
     let response;
     try {
-      response = await ctx.fetch({
-        url,
+      response = await mcpFetch(ctx, url, {
         method: 'POST',
-        acceptHeader: MCP_ACCEPT,
-        contentType: 'application/json',
+        headers: { 'Content-Type': 'application/json' },
         body: rpcRequest(1, 'initialize', {
           protocolVersion: PROTOCOL_VERSION,
           capabilities: {},
           clientInfo: { name: 'agent-lighthouse', version: '1.0.0' },
         }),
       });
+      if (!response) throw new Error('Unreachable');
     } catch {
       return this.fail(
         `MCP endpoint at ${url} is not reachable.`,
@@ -196,14 +195,12 @@ export class McpEndpointAudit extends Audit {
     // presence alone let `{"readOnlyHint": null}` claim safety metadata.
     let tools: unknown[] | undefined;
     try {
-      const listed = await ctx.fetch({
-        url,
+      const listed = await mcpFetch(ctx, url, {
         method: 'POST',
-        acceptHeader: MCP_ACCEPT,
-        contentType: 'application/json',
+        headers: { 'Content-Type': 'application/json' },
         body: rpcRequest(2, 'tools/list'),
       });
-      if (listed.status === 200) {
+      if (listed && listed.status === 200) {
         const listOutcome = parseRpcResponse(listed);
         if (listOutcome.ok && Array.isArray(listOutcome.value['tools'])) {
           tools = listOutcome.value['tools'] as unknown[];

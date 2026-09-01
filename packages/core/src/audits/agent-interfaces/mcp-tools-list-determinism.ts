@@ -17,7 +17,7 @@ import {
   discoverParams,
   isObject,
   MCP_PROTOCOL_VERSION,
-} from './_mcp-client';
+} from '../../gatherers/mcp';
 
 /** How many identical tools/list calls the audit compares. */
 const CALLS = 3;

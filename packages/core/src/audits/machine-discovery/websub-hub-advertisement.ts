@@ -1,8 +1,8 @@
 import type { AuditMeta, AuditResult } from '../../types';
 import { Audit } from '../../audit';
 import type { CheckContext } from '../../check-context';
-import { isSafeUrl } from '../../fetcher';
-import { sharedFeeds } from '../../gatherers/feeds';
+import { isSafeUrl } from '../../url-utils';
+import { sharedFeeds, probeHubHead } from '../../gatherers/feeds';
 
 /** Feeds inspected. The same cap the other Wave C feed audits use. */
 const MAX_FEEDS = 2;
@@ -104,7 +104,11 @@ export class WebsubHubAdvertisementAudit extends Audit {
           observations.push(`${where}: hub ${raw} did not pass the address check, so it was not probed`);
           continue;
         }
-        const result = await ctx.fetch({ url: raw, method: 'HEAD', followRedirects: true });
+        const result = await probeHubHead(ctx, raw);
+        if (!result) {
+          observations.push(`${where}: hub ${raw} answered with no response`);
+          continue;
+        }
         const alive = (result.status >= 200 && result.status < 300) || HUB_ALIVE.has(result.status);
         hubProbes.push(`${raw} -> HTTP ${result.status}`);
         if (!alive) {

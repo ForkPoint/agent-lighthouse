@@ -8,7 +8,7 @@ import {
   listTools,
   parseRpcResponse,
   isObject,
-} from './_mcp-client';
+} from '../../gatherers/mcp';
 
 /** How many `nextCursor` pages are followed. Same budget as contract validity. */
 const MAX_PAGES = 4;

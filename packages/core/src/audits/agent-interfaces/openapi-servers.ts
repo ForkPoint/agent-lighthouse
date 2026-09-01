@@ -8,6 +8,8 @@ function isObject(val: unknown): val is Record<string, unknown> {
   return typeof val === 'object' && val !== null && !Array.isArray(val);
 }
 
+import { probeOpenApiServer } from '../../gatherers/openapi';
+
 export class OpenApiServersAudit extends Audit {
   static override meta: AuditMeta = {
     id: 'agent-interfaces/openapi-servers',
@@ -84,16 +86,15 @@ export class OpenApiServersAudit extends Audit {
     }
 
     const serverUrl = (firstWithUrl as Record<string, unknown>)['url'] as string;
-
-    try {
-      const result = await ctx.fetch({ url: serverUrl });
-      if (result.status >= 200 && result.status < 400) {
-        return this.pass(
-          `Server URL ${serverUrl} is reachable (HTTP ${result.status}).`,
-          'servers array has at least one entry with a reachable url',
-          `${serverUrl} -> HTTP ${result.status}`,
-        );
-      }
+    const result = await probeOpenApiServer(ctx, serverUrl, { method: 'GET' });
+    if (result && result.status >= 200 && result.status < 400) {
+      return this.pass(
+        `Server URL ${serverUrl} is reachable (HTTP ${result.status}).`,
+        'servers array has at least one entry with a reachable url',
+        `${serverUrl} -> HTTP ${result.status}`,
+      );
+    }
+    if (result) {
       return this.warn(
         `Server URL ${serverUrl} returned HTTP ${result.status}.`,
         'servers array has at least one entry with a reachable url',
@@ -104,17 +105,16 @@ export class OpenApiServersAudit extends Audit {
           code: `"servers": [\n  {\n    "url": "https://yoursite.com/api",\n    "description": "Production server"\n  }\n]`,
         },
       );
-    } catch {
-      return this.warn(
-        `Server URL ${serverUrl} could not be reached.`,
-        'servers array has at least one entry with a reachable url',
-        `${serverUrl} -> unreachable`,
-        {
-          priority: 'high',
-          description: OpenApiServersAudit.meta.description,
-          code: `"servers": [\n  {\n    "url": "https://yoursite.com/api",\n    "description": "Production server"\n  }\n]`,
-        },
-      );
     }
+    return this.warn(
+      `Server URL ${serverUrl} could not be reached.`,
+      'servers array has at least one entry with a reachable url',
+      `${serverUrl} -> unreachable`,
+      {
+        priority: 'high',
+        description: OpenApiServersAudit.meta.description,
+        code: `"servers": [\n  {\n    "url": "https://yoursite.com/api",\n    "description": "Production server"\n  }\n]`,
+      },
+    );
   }
 }

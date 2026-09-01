@@ -328,3 +328,26 @@ export function fetchImage(ctx: MediaContext, url: string): Promise<Uint8Array |
   cache.set(url, pending);
   return pending;
 }
+
+const imageHeadCache = new WeakMap<object, Map<string, Promise<FetchResult | undefined>>>();
+
+export function fetchImageHead(ctx: MediaContext, url: string): Promise<FetchResult | undefined> {
+  let cache = imageHeadCache.get(ctx);
+  if (!cache) {
+    cache = new Map();
+    imageHeadCache.set(ctx, cache);
+  }
+  let hit = cache.get(url);
+  if (!hit) {
+    hit = (async () => {
+      if (!(await isSafeUrl(url))) return undefined;
+      try {
+        return await ctx.fetch({ url, method: 'HEAD' });
+      } catch {
+        return undefined;
+      }
+    })();
+    cache.set(url, hit);
+  }
+  return hit;
+}

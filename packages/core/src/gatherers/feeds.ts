@@ -49,6 +49,7 @@ export interface FeedEntry {
 
 export interface FeedDocument {
   url: string;
+  body?: string;
   /** Response `Content-Type`, parameters included. */
   contentType: string;
   /** What the document actually is, decided by its root element. */
@@ -77,6 +78,52 @@ interface FeedContext {
   fetch: (options: FetchOptions) => Promise<FetchResult>;
   baseUrl: string;
   pages: Array<{ url: string; headLinks: Array<{ rel: string; type: string; href: string }> }>;
+  rootFiles?: Record<string, FetchResult>;
+}
+
+/**
+ * Fetch and parse one feed, at most once per scan.
+ *
+ * Keyed on the CheckContext object, so one scan shares its feeds and two scans
+ * share nothing. `isSafeUrl`-gated because feed URLs are read out of
+ * site-controlled markup.
+ */
+export function sharedFeed(
+  ctx: FeedContext,
+  url: string,
+  opts: { signal?: AbortSignal } = {},
+): Promise<FeedDocument | undefined> {
+  const cache = cacheFor(ctx);
+  let pending = cache.get(url);
+  if (!pending) {
+    pending = (async () => {
+      if (!(await isSafeUrl(url))) return undefined;
+      const pathname = (() => {
+        try {
+          return new URL(url).pathname;
+        } catch {
+          return '';
+        }
+      })();
+      const rootRes = ctx.rootFiles?.[pathname];
+      if (rootRes && rootRes.status >= 200 && rootRes.status < 300) {
+        return parseFeed(url, rootRes);
+      }
+      const result = await ctx.fetch({
+        url,
+        followRedirects: true,
+        acceptHeader: 'application/atom+xml, application/rss+xml, application/feed+json, */*',
+        signal: opts.signal,
+      });
+      if (result.status >= 200 && result.status < 300) {
+        return parseFeed(url, result);
+      }
+      if (rootRes) return parseFeed(url, rootRes);
+      return parseFeed(url, result);
+    })();
+    cache.set(url, pending);
+  }
+  return pending;
 }
 
 /**
@@ -117,7 +164,7 @@ function resolve(href: string, base: string): string {
  * someone else's feed, and auditing it would report their defects as this
  * site's.
  */
-export function discoverFeedUrls(ctx: FeedContext): string[] {
+export function discoverFeedHeadUrls(ctx: FeedContext): string[] {
   const urls: string[] = [];
   const host = (() => {
     try {
@@ -137,7 +184,6 @@ export function discoverFeedUrls(ctx: FeedContext): string[] {
       if (resolved) urls.push(resolved);
     }
   }
-  for (const path of CONVENTIONAL_PATHS) urls.push(resolve(path, ctx.baseUrl));
 
   const seen = new Set<string>();
   return urls.filter((url) => {
@@ -147,6 +193,17 @@ export function discoverFeedUrls(ctx: FeedContext): string[] {
     } catch {
       return false;
     }
+    seen.add(url);
+    return true;
+  });
+}
+
+export function discoverFeedUrls(ctx: FeedContext): string[] {
+  const head = discoverFeedHeadUrls(ctx);
+  const conv = CONVENTIONAL_PATHS.map((path) => resolve(path, ctx.baseUrl)).filter(Boolean) as string[];
+  const seen = new Set<string>();
+  return [...head, ...conv].filter((url) => {
+    if (seen.has(url)) return false;
     seen.add(url);
     return true;
   });
@@ -207,6 +264,7 @@ export function parseFeed(url: string, result: FetchResult): FeedDocument {
   const header = headerLinks(result);
   const base: FeedDocument = {
     url,
+    body,
     contentType: result.headers['content-type'] ?? result.contentType ?? '',
     declaredType: 'unknown',
     status: result.status,
@@ -330,46 +388,78 @@ function cacheFor(ctx: object): Map<string, Promise<FeedDocument | undefined>> {
   return cache;
 }
 
-/**
- * Fetch and parse one feed, at most once per scan.
- *
- * Keyed on the CheckContext object, so one scan shares its feeds and two scans
- * share nothing. `isSafeUrl`-gated because feed URLs are read out of
- * site-controlled markup.
- */
-export function sharedFeed(
-  ctx: FeedContext,
-  url: string,
-  opts: { signal?: AbortSignal } = {},
-): Promise<FeedDocument | undefined> {
-  const cache = cacheFor(ctx);
-  let pending = cache.get(url);
-  if (!pending) {
-    pending = (async () => {
-      if (!(await isSafeUrl(url))) return undefined;
-      const result = await ctx.fetch({
-        url,
-        followRedirects: true,
-        acceptHeader: 'application/atom+xml, application/rss+xml, application/feed+json, */*',
-        signal: opts.signal,
-      });
-      return parseFeed(url, result);
-    })();
-    cache.set(url, pending);
-  }
-  return pending;
-}
+
 
 /** Every discoverable feed that fetched and parsed, newest-entry data included. */
 export async function sharedFeeds(
   ctx: FeedContext,
   opts: { signal?: AbortSignal; max?: number } = {},
 ): Promise<FeedDocument[]> {
-  const urls = discoverFeedUrls(ctx).slice(0, opts.max ?? 4);
+  const headUrls = discoverFeedUrls(ctx);
   const docs: FeedDocument[] = [];
-  for (const url of urls) {
+  for (const url of headUrls.slice(0, opts.max ?? 4)) {
     const doc = await sharedFeed(ctx, url, opts);
     if (doc && doc.status >= 200 && doc.status < 300 && doc.parsed) docs.push(doc);
   }
+  if (docs.length === 0) {
+    for (const path of CONVENTIONAL_PATHS) {
+      const url = resolve(path, ctx.baseUrl);
+      if (!url) continue;
+      const doc = await sharedFeed(ctx, url, opts);
+      if (doc && doc.status >= 200 && doc.status < 300 && doc.parsed) {
+        docs.push(doc);
+        break;
+      }
+    }
+  }
   return docs;
+}
+
+const canonicalCheckCache = new WeakMap<object, Map<string, Promise<FetchResult | undefined>>>();
+
+export function sharedCanonicalCheck(
+  ctx: FeedContext,
+  url: string,
+): Promise<FetchResult | undefined> {
+  let cache = canonicalCheckCache.get(ctx);
+  if (!cache) {
+    cache = new Map();
+    canonicalCheckCache.set(ctx, cache);
+  }
+  let hit = cache.get(url);
+  if (!hit) {
+    hit = (async () => {
+      if (!(await isSafeUrl(url))) return undefined;
+      try {
+        return await ctx.fetch({ url, followRedirects: true });
+      } catch {
+        return undefined;
+      }
+    })();
+    cache.set(url, hit);
+  }
+  return hit;
+}
+
+const hubHeadCache = new WeakMap<object, Map<string, Promise<FetchResult | undefined>>>();
+
+export function probeHubHead(ctx: FeedContext, url: string): Promise<FetchResult | undefined> {
+  let cache = hubHeadCache.get(ctx);
+  if (!cache) {
+    cache = new Map();
+    hubHeadCache.set(ctx, cache);
+  }
+  let hit = cache.get(url);
+  if (!hit) {
+    hit = (async () => {
+      if (!(await isSafeUrl(url))) return undefined;
+      try {
+        return await ctx.fetch({ url, method: 'HEAD', followRedirects: true });
+      } catch {
+        return undefined;
+      }
+    })();
+    cache.set(url, hit);
+  }
+  return hit;
 }

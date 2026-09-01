@@ -2,6 +2,7 @@ import type { AuditMeta, AuditResult } from "../../types";
 import { Audit } from "../../audit";
 import { weightForGrade } from '../../scorer';
 import type { CheckContext } from '../../check-context';
+import { probeAuthorUrl } from '../../gatherers/author';
 
 const CREDENTIAL_KEYWORDS = [
   'team',
@@ -82,10 +83,8 @@ export class AboutCredentialsAudit extends Audit {
     if (!aboutResult) {
       for (const path of aboutPaths) {
         try {
-          const result = await ctx.fetch({
-            url: `${ctx.baseUrl}${path}`,
-          });
-          if (result.status === 200 && result.body) {
+          const result = await probeAuthorUrl(ctx, `${ctx.baseUrl}${path}`);
+          if (result && result.status === 200 && result.body) {
             aboutResult = result;
             break;
           }

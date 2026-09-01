@@ -2,82 +2,7 @@ import type { AuditMeta, AuditResult } from "../../types";
 import { Audit } from "../../audit";
 import type { CheckContext } from '../../check-context';
 import { weightForGrade } from '../../scorer';
-import type { FetchResult } from '../../fetcher';
-
-function isOk(result: FetchResult): boolean {
-  return result.status === 200;
-}
-
-/** Feed media types, MIME parameters stripped. Atom and JSON Feed included. */
-const FEED_TYPES = new Set([
-  'application/rss+xml',
-  'application/atom+xml',
-  'application/feed+json',
-  'application/rdf+xml',
-]);
-
-/**
- * Every `<link>` on the scanned pages that advertises a feed, resolved to an
- * absolute URL.
- *
- * Absorbed from v1 4.16 with its review's required fixes: `rel` is a normalized
- * token list rather than an exact string, the media type is compared with its
- * MIME parameters stripped, Atom and JSON Feed count, and every page is
- * inspected — a site declaring its feed on /blog rather than on the homepage
- * used to be reported as having no feed link at all.
- */
-function autodiscoveryLinks(ctx: CheckContext): Array<{ url: string; pageUrl: string }> {
-  const found: Array<{ url: string; pageUrl: string }> = [];
-  for (const page of ctx.pages) {
-    for (const link of page.headLinks) {
-      const rels = link.rel.toLowerCase().trim().split(/\s+/);
-      if (!rels.includes('alternate')) continue;
-      const type = link.type.split(';')[0]!.trim().toLowerCase();
-      if (!FEED_TYPES.has(type) || !link.href) continue;
-      try {
-        // v1 resolved '/'-prefixed hrefs only, so `feed.xml` or `./rss` was
-        // handed to the fetcher verbatim and always failed.
-        found.push({ url: new URL(link.href, page.url).href, pageUrl: page.url });
-      } catch {
-        // Skip unparseable hrefs.
-      }
-    }
-  }
-  // A feed link lives in a shared layout, so every scanned page declares the
-  // same URL. Fetching it once per page spent N requests to learn one fact.
-  const seen = new Set<string>();
-  return found.filter((entry) => {
-    if (seen.has(entry.url)) return false;
-    seen.add(entry.url);
-    return true;
-  });
-}
-
-/** Find RSS/Atom feed result -- check head links on pages first, then root file paths */
-async function findFeedResult(
-  ctx: CheckContext,
-  links: Array<{ url: string }>,
-): Promise<{ result: FetchResult; url: string } | null> {
-  for (const link of links) {
-    const result = await ctx.fetch({ url: link.url });
-    if (isOk(result)) return { result, url: link.url };
-  }
-
-  // Fall back to well-known paths
-  const paths = ['/rss.xml', '/feed.xml', '/atom.xml'];
-  for (const path of paths) {
-    const rootResult = ctx.rootFiles[path];
-    if (rootResult && isOk(rootResult)) {
-      return { result: rootResult, url: `${ctx.baseUrl}${path}` };
-    }
-  }
-
-  // Try /atom.xml explicitly since it may not be in rootFiles
-  const atomResult = await ctx.fetch({ url: `${ctx.baseUrl}/atom.xml` });
-  if (isOk(atomResult)) return { result: atomResult, url: `${ctx.baseUrl}/atom.xml` };
-
-  return null;
-}
+import { discoverFeedHeadUrls, sharedFeeds } from '../../gatherers/feeds';
 
 export class RssFeedAudit extends Audit {
   static override meta: AuditMeta = {
@@ -92,7 +17,7 @@ export class RssFeedAudit extends Audit {
     evidenceGrade: 'B',
     tier: 'scored',
     dossier: 'docs/evidence/audits/machine-discovery/rss-feed.md',
-    requires: ['origin-reachable', 'unblocked-fetches', 'rendered-body', 'sample-adequate'],
+    requires: ['origin-reachable'],
     defaultPriority: 'medium',
     guidance: {
       impact:
@@ -105,16 +30,14 @@ export class RssFeedAudit extends Audit {
   };
 
   async audit(ctx: CheckContext): Promise<AuditResult> {
-    const links = autodiscoveryLinks(ctx);
-    const feed = await findFeedResult(ctx, links);
-    // Autodiscovery is a convention with browser and aggregator consumers but no
-    // documented AI consumer, so its state is reported next to the feed rather
-    // than scored on its own (v1 4.16 failed sites for the link alone).
+    const feeds = await sharedFeeds(ctx);
+    const autodiscoveryUrls = discoverFeedHeadUrls(ctx);
     const linkNote =
-      links.length > 0
-        ? `autodiscovery <link> present (${links[0]!.url})`
+      autodiscoveryUrls.length > 0
+        ? `autodiscovery <link> present (${autodiscoveryUrls[0]})`
         : 'no autodiscovery <link> in <head>';
 
+    const feed = feeds[0];
     if (!feed) {
       return this.fail(
         'No RSS or Atom feed found via head links or common paths (/rss.xml, /feed.xml, /atom.xml).',

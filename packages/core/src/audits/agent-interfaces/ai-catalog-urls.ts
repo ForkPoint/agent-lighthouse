@@ -2,7 +2,8 @@ import type { AuditMeta, AuditResult } from '../../types';
 import { Audit } from '../../audit';
 import { weightForGrade } from '../../scorer';
 import type { CheckContext } from '../../check-context';
-import { isSafeUrl } from '../../fetcher';
+import { isSafeUrl } from '../../url-utils';
+import { sharedProbeUrl } from '../../gatherers/discovery';
 import { AI_CATALOG_PATH, entryLabel, readAiCatalog } from './_ard';
 import type { ArdEntry } from './_ard';
 
@@ -166,12 +167,8 @@ export class AiCatalogUrlsAudit extends Audit {
         return { label: entryLabel(entry), url, status: -1 };
       }
 
-      try {
-        const response = await ctx.fetch({ url });
-        return { label: entryLabel(entry), url, status: response.status };
-      } catch {
-        return { label: entryLabel(entry), url, status: 0 };
-      }
+      const response = await sharedProbeUrl(ctx, url);
+      return { label: entryLabel(entry), url, status: response?.status ?? 0 };
     });
 
     const broken = probes.filter((p) => !isReachable(p.status));

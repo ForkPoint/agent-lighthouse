@@ -8,7 +8,7 @@ import {
   discoverProbe,
   MCP_PROTOCOL_VERSION,
   MCP_ACCEPT,
-} from './_mcp-client';
+} from '../../gatherers/mcp';
 import { mockCheckContext, mockFetchResult } from '../../__tests__/test-utils';
 import type { CheckContext } from '../../check-context';
 import type { FetchOptions, FetchResult } from '../../fetcher';

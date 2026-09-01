@@ -3,7 +3,8 @@ import type { AuditMeta, AuditResult } from '../../types';
 import { Audit } from '../../audit';
 import type { CheckContext } from '../../check-context';
 import { weightForGrade } from '../../scorer';
-import { isSafeUrl } from '../../fetcher';
+import { isSafeUrl } from '../../url-utils';
+import { sharedProbeUrl } from '../../gatherers/discovery';
 
 /** Statuses that prove the origin resolves a missing root .txt as missing. */
 const ABSENT = new Set([404, 410]);
@@ -76,14 +77,14 @@ export class RootTextFileResolutionIntegrityAudit extends Audit {
 
     const probes = [];
     for (const url of probeUrls) {
-      const result = await ctx.fetch({
-        url,
+      const result = await sharedProbeUrl(ctx, url, {
         followRedirects: true,
         headers: { 'Cache-Control': 'no-cache', Pragma: 'no-cache' },
       });
-      probes.push({ url, result });
+      if (result) probes.push({ url, result });
     }
-    const robots = await ctx.fetch({ url: robotsUrl, followRedirects: true });
+    const robots = await sharedProbeUrl(ctx, robotsUrl, { followRedirects: true });
+    if (!robots) return this.fail('Robots file probe failed', '200 OK or 404', 'No response');
 
     const failures: string[] = [];
     const answering = probes.filter((probe) => probe.result.status >= 200 && probe.result.status < 300);

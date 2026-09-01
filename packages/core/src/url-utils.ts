@@ -1,3 +1,5 @@
+
+
 // ── URL Utilities ─────────────────────────────────────────────
 
 export function normalizeUrl(input: string): string {
@@ -57,3 +59,5 @@ export function isPrivateIp(ip: string): boolean {
 
   return PRIVATE_IPv4_PATTERNS.some((re) => re.test(candidate));
 }
+
+export { isSafeUrl } from './fetcher';

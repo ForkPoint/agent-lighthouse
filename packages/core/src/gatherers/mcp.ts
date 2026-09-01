@@ -1,6 +1,6 @@
-import type { CheckContext } from '../../check-context';
-import type { FetchResult } from '../../fetcher';
-import { isSafeUrl } from '../../fetcher';
+import type { CheckContext } from '../check-context';
+import type { FetchResult } from '../fetcher';
+import { isSafeUrl } from '../fetcher';
 
 /**
  * MCP's current specification revision. Pinning an older one makes servers that
@@ -76,8 +76,6 @@ export function discoverMcpEndpoint(ctx: CheckContext): McpEndpoint | undefined 
     }
   }
 
-  // An MCP server card declared in the AI catalog is an explicit declaration
-  // too, and it is the one the mcp-endpoint evidence recommends detecting.
   const catalog = ctx.rootFiles['/.well-known/ai-catalog.json'];
   if (catalog && catalog.status === 200 && catalog.body) {
     const parsed = tryParseJson(catalog.body);
@@ -110,11 +108,6 @@ export type RpcOutcome =
 
 /**
  * Pull the JSON-RPC payload out of a response body.
- *
- * The Streamable HTTP transport may answer with `text/event-stream` instead of
- * a JSON body. In a stream the response is the frame carrying `result` or
- * `error`; the frames around it are progress notifications, so the last such
- * frame wins rather than the first parseable one.
  */
 function rpcPayload(body: string): unknown {
   const direct = tryParseJson(body);
@@ -162,9 +155,6 @@ export function parseRpcResponse(result: FetchResult): RpcOutcome {
 
 /**
  * POST one JSON-RPC call to a declared MCP endpoint.
- *
- * The URL comes out of a site-controlled root file and we are about to POST to
- * it, which is SSRF-adjacent — hence the `isSafeUrl` gate before any request.
  */
 export async function postRpc(
   ctx: CheckContext,
@@ -198,19 +188,12 @@ export async function postRpc(
 
 /**
  * One request to a declared MCP endpoint, returning the whole response.
- *
- * `postRpc` above answers the question "did the call succeed", which is all the
- * initialize handshake needs. The protocol-conformance audits need the opposite:
- * the status line, the response headers and the error body *are* the evidence —
- * a 400 carrying `-32022`, a 401 carrying `WWW-Authenticate`, a GET that fails
- * to answer 405. Returns undefined when the URL is refused or the socket is not
- * answered, so a caller can tell "no answer" from "an answer we did not like".
  */
 export async function mcpFetch(
   ctx: CheckContext,
   url: string,
   init: {
-    method?: 'GET' | 'POST' | 'DELETE';
+    method?: 'GET' | 'POST' | 'OPTIONS' | 'DELETE';
     body?: string;
     headers?: Record<string, string>;
     signal?: AbortSignal;
@@ -250,15 +233,6 @@ export function postRpcRaw(
   });
 }
 
-/**
- * The five protocol audits probe the same endpoint in the same scan, and three
- * of them want the same `server/discover` response. Memoise per scan, keyed on
- * the CheckContext object so two concurrent scans never share a probe.
- *
- * Deliberately opt-in: `mcp-tools-list-determinism` must issue its three
- * `tools/list` calls for real, and a cache would answer them from one response
- * and make every determinism assertion vacuously true.
- */
 const probeCache = new WeakMap<object, Map<string, Promise<FetchResult | undefined>>>();
 
 export function sharedProbe(
@@ -278,11 +252,6 @@ export function sharedProbe(
   return pending;
 }
 
-/**
- * The modern-era `server/discover` probe, shared by the reachability, OAuth and
- * downgrade audits: one POST carrying the current revision in both the header
- * and `_meta`, exactly as a current client sends it.
- */
 export function discoverProbe(ctx: CheckContext, url: string): Promise<FetchResult | undefined> {
   return sharedProbe(ctx, `discover|${url}`, () =>
     postRpcRaw(ctx, url, 'al-1', 'server/discover', discoverParams(), {
@@ -291,7 +260,6 @@ export function discoverProbe(ctx: CheckContext, url: string): Promise<FetchResu
   );
 }
 
-/** The `_meta` block a modern client carries on every request. */
 export function discoverParams(version: string = MCP_PROTOCOL_VERSION): Record<string, unknown> {
   return {
     _meta: {
@@ -302,22 +270,12 @@ export function discoverParams(version: string = MCP_PROTOCOL_VERSION): Record<s
   };
 }
 
-/** A complete `tools/list` read, with whether the page budget cut it short. */
 export interface ToolListing {
   tools: Record<string, unknown>[];
-  /** True when a `nextCursor` was still pending when the budget ran out. */
   truncated: boolean;
-  /** How many pages were actually read. */
   pages: number;
 }
 
-/**
- * Every tool the endpoint lists, following `nextCursor` up to `maxPages`.
- *
- * Each page goes through `sharedProbe` under the same key, so the audits that
- * read the tool surface — contract validity, description coverage — pay for one
- * fetch between them however many of them run.
- */
 export async function listTools(
   ctx: CheckContext,
   url: string,

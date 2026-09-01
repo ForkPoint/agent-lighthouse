@@ -8,6 +8,20 @@ import {
 import { isPrivateIp } from './url-utils';
 import { logger } from './logger';
 
+export async function isSafeUrl(url: string): Promise<boolean> {
+  try {
+    const parsed = new URL(url);
+    if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') return false;
+    const hostname = parsed.hostname.replace(/^\[|\]$/g, '');
+    if (hostname === 'localhost' || hostname === '127.0.0.1' || hostname === '::1') return false;
+    if (isPrivateIp(hostname)) return false;
+    const { address } = await dns.lookup(hostname);
+    return !isPrivateIp(address);
+  } catch {
+    return false;
+  }
+}
+
 /**
  * The default dispatcher. Redirects are walked by hand below rather than by
  * undici's interceptor, so every hop passes the isSafeUrl gate.
@@ -114,26 +128,7 @@ function errorCode(err: unknown): string | undefined {
   return typeof code === 'string' ? code : undefined;
 }
 
-/**
- * Validates that a URL is safe to fetch (http/https scheme, non-private IP).
- * Use before fetching any URL extracted from scanned site content.
- */
-export async function isSafeUrl(url: string): Promise<boolean> {
-  try {
-    const parsed = new URL(url);
-    if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') return false;
-    // URL.hostname keeps the brackets around an IPv6 literal, so a bare
-    // comparison against '::1' never matched and http://[::1]/ was treated as
-    // safe until DNS happened to fail on it.
-    const hostname = parsed.hostname.replace(/^\[|\]$/g, '');
-    if (hostname === 'localhost' || hostname === '127.0.0.1' || hostname === '::1') return false;
-    if (isPrivateIp(hostname)) return false;
-    const { address } = await dns.lookup(hostname);
-    return !isPrivateIp(address);
-  } catch {
-    return false;
-  }
-}
+
 
 export interface FetcherOptions {
   /**

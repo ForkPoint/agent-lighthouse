@@ -2,9 +2,9 @@ import type { AuditMeta, AuditResult } from '../../types';
 import { Audit } from '../../audit';
 import { weightForGrade } from '../../scorer';
 import type { CheckContext } from '../../check-context';
-import { isSafeUrl } from '../../fetcher';
+import { isSafeUrl } from '../../url-utils';
 import { registrableDomain } from '../../gatherers/domains';
-import { discoverMcpEndpoint, isObject, tryParseJson } from './_mcp-client';
+import { discoverMcpEndpoint, mcpFetch, isObject, tryParseJson } from '../../gatherers/mcp';
 
 /** The public registry clients resolve "the MCP server for this domain" against. */
 const REGISTRY = 'https://registry.modelcontextprotocol.io/v0.1/servers';
@@ -134,8 +134,8 @@ export class McpRegistryListingOwnershipAudit extends Audit {
       const url = `${REGISTRY}?search=${encodeURIComponent(term)}`;
       if (!(await isSafeUrl(url))) continue;
       searched += 1;
-      const response = await ctx.fetch({ url, acceptHeader: 'application/json' });
-      if (response.status !== 200) continue;
+      const response = await mcpFetch(ctx, url, { method: 'GET', headers: { Accept: 'application/json' } });
+      if (!response || response.status !== 200) continue;
       for (const listing of parseListings(response.body)) {
         // The join key is the remote host, never the name: a name is whatever
         // the person who registered it chose.
@@ -187,7 +187,7 @@ export class McpRegistryListingOwnershipAudit extends Audit {
     // Fetched rather than read from `ctx.rootFiles`: the proof belongs to the
     // apex, and a scan of `www.example.com` collects root files for the www
     // host, not for the apex the registry namespace is bound to.
-    const proofResult = (await isSafeUrl(proofUrl)) ? await ctx.fetch({ url: proofUrl }) : undefined;
+    const proofResult = (await isSafeUrl(proofUrl)) ? await mcpFetch(ctx, proofUrl, { method: 'GET' }) : undefined;
     if (proofResult && proofResult.status === 200) {
       const line = proofResult.body.split(/\r?\n/).find((candidate) => candidate.trim() !== '') ?? '';
       proof = PROOF_GRAMMAR.test(line.trim()) ? 'valid' : 'malformed';

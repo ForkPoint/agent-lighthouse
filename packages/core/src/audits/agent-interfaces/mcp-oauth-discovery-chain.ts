@@ -10,9 +10,8 @@ import type { AuditMeta, AuditResult } from '../../types';
 import { Audit } from '../../audit';
 import { weightForGrade } from '../../scorer';
 import type { CheckContext } from '../../check-context';
-import type { FetchResult } from '../../fetcher';
-import { isSafeUrl } from '../../fetcher';
-import { discoverMcpEndpoint, discoverProbe, tryParseJson, isObject } from './_mcp-client';
+import { isSafeUrl } from '../../url-utils';
+import { discoverMcpEndpoint, discoverProbe, mcpFetch, tryParseJson, isObject } from '../../gatherers/mcp';
 
 /** How many authorization servers are probed. */
 const MAX_AS = 2;
@@ -85,12 +84,8 @@ interface JsonDoc {
 /** GET one public metadata document. Every URL here comes from site data. */
 async function getJson(ctx: CheckContext, url: string): Promise<JsonDoc | undefined> {
   if (!(await isSafeUrl(url))) return undefined;
-  let res: FetchResult;
-  try {
-    res = await ctx.fetch({ url, acceptHeader: 'application/json' });
-  } catch {
-    return undefined;
-  }
+  let res = await mcpFetch(ctx, url, { method: 'GET', headers: { Accept: 'application/json' } });
+  if (!res) return undefined;
   if (res.status !== 200) return undefined;
   const parsed = tryParseJson(res.body);
   return isObject(parsed) ? { url, value: parsed } : undefined;

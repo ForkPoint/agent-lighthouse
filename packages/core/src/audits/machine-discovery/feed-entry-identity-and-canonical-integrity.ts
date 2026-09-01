@@ -2,9 +2,9 @@ import type { AuditMeta, AuditResult } from '../../types';
 import { Audit } from '../../audit';
 import type { CheckContext } from '../../check-context';
 import { weightForGrade } from '../../scorer';
-import { isSafeUrl } from '../../fetcher';
+
 import { parseHtml } from '../../parser';
-import { sharedFeeds, type FeedDocument, type FeedEntry } from '../../gatherers/feeds';
+import { sharedFeeds, sharedCanonicalCheck, type FeedDocument, type FeedEntry } from '../../gatherers/feeds';
 
 /** Entries whose identity is checked. The newest twenty is what a consumer reads. */
 const MAX_ENTRIES = 20;
@@ -155,10 +155,9 @@ export class FeedEntryIdentityAndCanonicalIntegrityAudit extends Audit {
 
     for (const item of newest) {
       const link = item.entry.link;
-      if (!(await isSafeUrl(link))) continue;
-      const result = await ctx.fetch({ url: link, followRedirects: true });
-      if (result.status < 200 || result.status >= 300) {
-        failures.push(`${link}: the feed links to a URL that answered HTTP ${result.status}`);
+      const result = await sharedCanonicalCheck(ctx, link);
+      if (!result || result.status < 200 || result.status >= 300) {
+        failures.push(`${link}: the feed links to a URL that answered HTTP ${result?.status ?? 0}`);
         continue;
       }
       if (result.finalUrl !== '' && result.finalUrl !== link) {

@@ -3,7 +3,7 @@ import { Audit } from '../../audit';
 import { weightForGrade } from '../../scorer';
 import type { CheckContext, PageContext } from '../../check-context';
 import { flattenJsonLd } from '../../parser';
-import { openApiOperations, readOpenApiSpec, type OpenApiSpec } from '../../gatherers/openapi';
+import { openApiOperations, readOpenApiSpec, probeOpenApiServer, type OpenApiSpec } from '../../gatherers/openapi';
 
 function tryParseJson(body: string): unknown {
   try {
@@ -211,8 +211,8 @@ export class SearchEndpointAudit extends Audit {
       // Every placeholder is substituted; the first miss left a literal `{lang}`
       // in the URL and turned a working endpoint into a false warn.
       const testUrl = state.urlTemplate.replace(/\{[^}]*\}/g, 'test');
-      try {
-        const result = await ctx.fetch({ url: testUrl });
+      const result = await probeOpenApiServer(ctx, testUrl, { method: 'GET' });
+      if (result) {
         if (result.status === 200) {
           if (carriesResults(result.body, result.contentType ?? '')) {
             return this.pass(
@@ -246,15 +246,14 @@ export class SearchEndpointAudit extends Audit {
           { priority: 'low', description: SearchEndpointAudit.meta.description, code: SAMPLE },
           state.pageUrl,
         );
-      } catch {
-        return this.warn(
-          `SearchAction URL found but could not be reached: ${state.urlTemplate}.`,
-          EXPECTED,
-          `SearchAction template: ${state.urlTemplate} -> unreachable`,
-          { priority: 'low', description: SearchEndpointAudit.meta.description, code: SAMPLE },
-          state.pageUrl,
-        );
       }
+      return this.warn(
+        `SearchAction URL found but could not be reached: ${state.urlTemplate}.`,
+        EXPECTED,
+        `SearchAction template: ${state.urlTemplate} -> unreachable`,
+        { priority: 'low', description: SearchEndpointAudit.meta.description, code: SAMPLE },
+        state.pageUrl,
+      );
     }
 
     if (openApiPath) {

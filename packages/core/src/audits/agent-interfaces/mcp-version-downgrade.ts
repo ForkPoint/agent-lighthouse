@@ -17,7 +17,7 @@ import {
   postRpcRaw,
   isObject,
   MCP_PROTOCOL_VERSION,
-} from './_mcp-client';
+} from '../../gatherers/mcp';
 
 /** A revision no server can support, so the rejection path is unambiguous. */
 const IMPOSSIBLE = '1900-01-01';

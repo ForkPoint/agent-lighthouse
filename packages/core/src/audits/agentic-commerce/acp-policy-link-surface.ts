@@ -7,7 +7,8 @@ import type { AuditMeta, AuditResult } from '../../types';
 import { Audit } from '../../audit';
 import { weightForGrade } from '../../scorer';
 import type { CheckContext } from '../../check-context';
-import { isSafeUrl } from '../../fetcher';
+import { isSafeUrl } from '../../url-utils';
+import { probeSecurityUrl } from '../../gatherers/security';
 import { parseHtml } from '../../parser';
 
 /** The ACP CheckoutSession `links` enum, in spec order. */
@@ -140,7 +141,8 @@ async function validate(ctx: CheckContext, type: AcpLinkType, url: string): Prom
     if (!(await isSafeUrl(current.toString()))) {
       return { type, url, ok: false, reason: 'is blocked by the URL safety gate' };
     }
-    result = await ctx.fetch({ url: current.toString(), followRedirects: false });
+    result = await probeSecurityUrl(ctx, current.toString(), { followRedirects: false });
+    if (!result) return { type, url, ok: false, reason: 'is unreachable' };
     const location = result.headers['location'];
     if (result.status >= 300 && result.status < 400 && location) {
       hops += 1;

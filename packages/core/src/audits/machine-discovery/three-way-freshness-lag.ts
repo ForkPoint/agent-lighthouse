@@ -2,10 +2,10 @@ import type { AuditMeta, AuditResult } from '../../types';
 import { Audit } from '../../audit';
 import type { CheckContext, PageContext } from '../../check-context';
 import { weightForGrade } from '../../scorer';
-import { isSafeUrl } from '../../fetcher';
+
 import { allJsonLdNodes } from '../../parser';
 import { siteSitemapTree, isW3CDateTime, sampleEntries } from '../../gatherers/sitemap';
-import { sharedFeeds, parseFeedDate, type FeedDocument } from '../../gatherers/feeds';
+import { sharedFeeds, parseFeedDate, sharedCanonicalCheck, type FeedDocument } from '../../gatherers/feeds';
 
 /** How far a surface may trail the page before it is a lag rather than a delay. */
 const LAG_DAYS = 7;
@@ -155,12 +155,13 @@ export class ThreeWayFreshnessLagAudit extends Audit {
     const dead: string[] = [];
     const sample = sampleEntries(tree.entries, DEAD_URL_SAMPLE);
     for (const entry of sample) {
-      if (!(await isSafeUrl(entry.loc))) continue;
-      const result = await ctx.fetch({ url: entry.loc, followRedirects: true });
-      if (result.status === 404 || result.status === 410) {
-        dead.push(`${entry.loc} (HTTP ${result.status})`);
-      } else if (result.status === 200 && NOINDEX.test(result.body)) {
-        dead.push(`${entry.loc} (noindex)`);
+      const result = await sharedCanonicalCheck(ctx, entry.loc);
+      if (result) {
+        if (result.status === 404 || result.status === 410) {
+          dead.push(`${entry.loc} (HTTP ${result.status})`);
+        } else if (result.status === 200 && NOINDEX.test(result.body)) {
+          dead.push(`${entry.loc} (noindex)`);
+        }
       }
     }
     if (dead.length > 0) {

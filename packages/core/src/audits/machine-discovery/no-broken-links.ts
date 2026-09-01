@@ -2,11 +2,7 @@ import type { AuditMeta, AuditResult } from "../../types";
 import { Audit } from "../../audit";
 import type { CheckContext } from '../../check-context';
 import { weightForGrade } from '../../scorer';
-import type { FetchResult } from '../../fetcher';
-
-function isOk(result: FetchResult): boolean {
-  return result.status === 200;
-}
+import { sharedProbeUrl } from '../../gatherers/discovery';
 
 export class NoBrokenLinksAudit extends Audit {
   static override meta: AuditMeta = {
@@ -83,9 +79,8 @@ export class NoBrokenLinksAudit extends Audit {
 
     // Sample up to 20 internal links to avoid excessive fetching
     const urlsToCheck = Array.from(internalUrls).slice(0, 20);
-    const results = await Promise.all(urlsToCheck.map((url) => ctx.fetch({ url })));
-
-    const broken = results.filter((r) => !isOk(r));
+    const results = await Promise.all(urlsToCheck.map((url) => sharedProbeUrl(ctx, url)));
+    const broken = results.filter((r) => !r || r.status !== 200).map((r, i) => ({ url: urlsToCheck[i]!, status: r?.status ?? 0 }));
 
     if (broken.length > 0) {
       const brokenUrls = broken.map((r) => `${r.url} (${r.status})`).join(', ');

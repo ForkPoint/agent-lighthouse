@@ -18,7 +18,7 @@ import {
   sharedProbe,
   isObject,
   MCP_PROTOCOL_VERSION,
-} from './_mcp-client';
+} from '../../gatherers/mcp';
 
 /** The audit that owns the challenge this one can only report. */
 const OAUTH_AUDIT = 'agent-interfaces/mcp-oauth-discovery-chain';

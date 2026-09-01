@@ -2,8 +2,9 @@ import type { AuditMeta, AuditResult } from "../../types";
 import { Audit } from "../../audit";
 import type { CheckContext } from '../../check-context';
 import { weightForGrade } from '../../scorer';
-import { isSafeUrl } from '../../fetcher';
+import { isSafeUrl } from '../../url-utils';
 import { extractMarkdownLinks } from '../../parser';
+import { checkEndpointStatus } from '../../gatherers/discovery';
 
 export class NoBrokenAiEndpointsAudit extends Audit {
   static override meta: AuditMeta = {
@@ -137,37 +138,7 @@ export class NoBrokenAiEndpointsAudit extends Audit {
     }
 
     const results = await Promise.all(
-      urls.map(async (url) => {
-        try {
-          let result = await ctx.fetch({ url, method: 'HEAD' });
-          if (result.status >= 400) {
-            result = await ctx.fetch({ url, method: 'GET' });
-          }
-          if (result.status >= 400 && (url.includes('/mcp') || url.includes('/api/'))) {
-            const postResult = await ctx.fetch({
-              url,
-              method: 'POST',
-              body: JSON.stringify({
-                jsonrpc: '2.0',
-                id: 1,
-                method: 'initialize',
-                params: {
-                  protocolVersion: '2024-11-05',
-                  capabilities: {},
-                  clientInfo: { name: 'agent-lighthouse', version: '1.0.0' },
-                },
-              }),
-              contentType: 'application/json',
-            });
-            if (postResult.status >= 200 && postResult.status < 400) {
-              result = postResult;
-            }
-          }
-          return { url, status: result.status };
-        } catch {
-          return { url, status: 0 };
-        }
-      }),
+      urls.map((url) => checkEndpointStatus(ctx, url)),
     );
 
     for (const result of results) {

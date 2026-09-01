@@ -2,11 +2,11 @@ import type { AuditMeta, AuditResult } from "../../types";
 import { Audit } from "../../audit";
 import type { CheckContext } from '../../check-context';
 import { weightForGrade } from '../../scorer';
-import { type FetchResult, isSafeUrl } from '../../fetcher';
+import { isSafeUrl } from '../../url-utils';
 import { extractMarkdownLinks } from '../../parser';
-
-function isOk(result: FetchResult): boolean {
-  return result.status === 200;
+import { sharedProbeUrl } from '../../gatherers/discovery';
+function isOk(res: { status: number }): boolean {
+  return res.status >= 200 && res.status < 300;
 }
 
 export class LlmsTxtLinksValidAudit extends Audit {
@@ -75,9 +75,8 @@ export class LlmsTxtLinksValidAudit extends Audit {
       }
     }
 
-    const results = await Promise.all(resolved.map((url) => ctx.fetch({ url })));
-
-    const broken = results.filter((r) => !isOk(r));
+    const results = await Promise.all(resolved.map((url) => sharedProbeUrl(ctx, url)));
+    const broken = results.filter((r) => !r || r.status !== 200).map((r, i) => ({ url: resolved[i]!, status: r?.status ?? 0 }));
 
     if (broken.length > 0) {
       const topBroken = broken.slice(0, 10).map((r) => `${r.url} (${r.status})`).join(', ');

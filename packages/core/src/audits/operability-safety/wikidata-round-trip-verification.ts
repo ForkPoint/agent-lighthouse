@@ -2,7 +2,8 @@ import type { AuditMeta, AuditResult } from '../../types';
 import { Audit } from '../../audit';
 import type { CheckContext } from '../../check-context';
 import { weightForGrade } from '../../scorer';
-import { isSafeUrl } from '../../fetcher';
+import { isSafeUrl } from '../../url-utils';
+import { probeSecurityUrl } from '../../gatherers/security';
 import { allJsonLdNodes } from '../../parser';
 import { registrableOf, registrableDomain } from '../../gatherers/domains';
 
@@ -120,9 +121,9 @@ export class WikidataRoundTripVerificationAudit extends Audit {
         warnings.push(`${id}: Wikidata could not be reached, so the claim is unverified`);
         continue;
       }
-      const response = await ctx.fetch({ url, acceptHeader: 'application/json' });
-      if (response.status !== 200) {
-        warnings.push(`${id}: Wikidata answered HTTP ${response.status}, so the claim is unverified`);
+      const response = await probeSecurityUrl(ctx, url, { headers: { Accept: 'application/json' } });
+      if (!response || response.status !== 200) {
+        warnings.push(`${id}: Wikidata answered HTTP ${response?.status ?? 0}, so the claim is unverified`);
         continue;
       }
 

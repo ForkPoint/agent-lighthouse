@@ -2,7 +2,9 @@ import type { AuditMeta, AuditResult } from '../../types';
 import { Audit } from '../../audit';
 import { weightForGrade } from '../../scorer';
 import type { CheckContext, PageContext } from '../../check-context';
-import { type FetchResult, isSafeUrl } from '../../fetcher';
+import type { FetchResult } from '../../fetcher';
+import { probeOpenApiServer } from '../../gatherers/openapi';
+import { isSafeUrl } from '../../url-utils';
 
 function tryParseJson(body: string): unknown {
   try {
@@ -204,8 +206,8 @@ export class OpenApiExistsAudit extends Audit {
           link.pageUrl,
         );
       }
-      try {
-        const result = await ctx.fetch({ url });
+      const result = await probeOpenApiServer(ctx, url, { method: 'GET' });
+      if (result) {
         const valid =
           servedAsData(result) &&
           (isOpenApiDocument(tryParseJson(result.body)) || isOpenApiYaml(result.body));
@@ -217,8 +219,6 @@ export class OpenApiExistsAudit extends Audit {
             link.pageUrl,
           );
         }
-      } catch {
-        // Fall through to the warn below: advertised, not verifiable.
       }
       return this.warn(
         `An API description is advertised at ${link.href} but it could not be verified.`,
