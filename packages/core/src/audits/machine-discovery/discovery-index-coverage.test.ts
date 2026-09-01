@@ -144,21 +144,23 @@ describe('DiscoveryIndexCoverageAudit', () => {
   // configuration. Review finding (1.22): the Shopify-only filename heuristic
   // reported every page of a Yoast/Next.js site as an orphan.
   it('fetches sub-sitemaps from a sitemap index instead of passing vacuously', async () => {
+    const rootSpec = mockFetchResult(
+      sitemapIndex(['https://example.com/post-sitemap.xml']),
+      200,
+      'application/xml',
+    );
     const ctx: CheckContext = {
       ...mockCheckContext([page('https://example.com/about')], {
-        '/sitemap.xml': mockFetchResult(
-          sitemapIndex(['https://example.com/post-sitemap.xml']),
-          200,
-          'application/xml',
-        ),
+        '/sitemap.xml': rootSpec,
       }),
-      fetch: vi.fn(async () =>
-        mockFetchResult(sitemap(['https://example.com/about']), 200, 'application/xml'),
-      ),
+      fetch: vi.fn(async ({ url }) => {
+        if (url === 'https://example.com/sitemap.xml') return rootSpec;
+        return mockFetchResult(sitemap(['https://example.com/about']), 200, 'application/xml');
+      }),
     };
     const result = await audit.audit(ctx);
     expect(result.status).toBe('pass');
-    expect(ctx.fetch).toHaveBeenCalledTimes(1);
+    expect(ctx.fetch).toHaveBeenCalledTimes(2);
   });
 
   it('reports pages that no sub-sitemap of the index lists', async () => {
@@ -181,46 +183,56 @@ describe('DiscoveryIndexCoverageAudit', () => {
   // Final-review finding I1: <loc> values are site-controlled input for a fetch
   // this audit initiates, so they are origin-filtered and isSafeUrl-gated.
   it('fetches no sub-sitemap that is off-origin or unsafe to probe', async () => {
-    const fetch = vi.fn(async () =>
-      mockFetchResult(sitemap(['https://example.com/about']), 200, 'application/xml'),
+    const rootSpec = mockFetchResult(
+      sitemapIndex([
+        'https://attacker.example.net/sitemap.xml', // off-origin
+        'http://localhost/sitemap.xml', // off-origin and unsafe
+        'http://127.0.0.1/sitemap.xml', // off-origin and unsafe
+        'file:///etc/passwd', // not an HTTP(S) URL
+        'https://internal.example.com/sitemap.xml', // on-origin but unsafe
+        'https://cdn.example.com/post-sitemap.xml', // the only fetchable one
+      ]),
+      200,
+      'application/xml',
     );
+    const fetch = vi.fn(async ({ url }) => {
+      if (url === 'https://example.com/sitemap.xml') return rootSpec;
+      return mockFetchResult(sitemap(['https://example.com/about']), 200, 'application/xml');
+    });
     const ctx: CheckContext = {
       ...mockCheckContext([page('https://example.com/about')], {
-        '/sitemap.xml': mockFetchResult(
-          sitemapIndex([
-            'https://attacker.example.net/sitemap.xml', // off-origin
-            'http://localhost/sitemap.xml', // off-origin and unsafe
-            'http://127.0.0.1/sitemap.xml', // off-origin and unsafe
-            'file:///etc/passwd', // not an HTTP(S) URL
-            'https://internal.example.com/sitemap.xml', // on-origin but unsafe
-            'https://cdn.example.com/post-sitemap.xml', // the only fetchable one
-          ]),
-          200,
-          'application/xml',
-        ),
+        '/sitemap.xml': rootSpec,
       }),
       fetch,
     };
 
     const result = await audit.audit(ctx);
 
-    expect(fetch).toHaveBeenCalledTimes(1);
+    expect(fetch).toHaveBeenCalledTimes(2);
     expect(fetch).toHaveBeenCalledWith({ url: 'https://cdn.example.com/post-sitemap.xml' });
     expect(result.status).toBe('pass');
   });
 
+
+
   it('caps sub-sitemap fetches at ten', async () => {
     const subs = Array.from({ length: 25 }, (_, i) => `https://example.com/sitemap-${i}.xml`);
-    const fetch = vi.fn(async () => mockFetchResult(sitemap([]), 200, 'application/xml'));
+    const rootSpec = mockFetchResult(sitemapIndex(subs), 200, 'application/xml');
+    const fetch = vi.fn(async ({ url }) => {
+      if (url === 'https://example.com/sitemap.xml') return rootSpec;
+      return mockFetchResult(sitemap([]), 200, 'application/xml');
+    });
     const ctx: CheckContext = {
       ...mockCheckContext([page('https://example.com/about')], {
-        '/sitemap.xml': mockFetchResult(sitemapIndex(subs), 200, 'application/xml'),
+        '/sitemap.xml': rootSpec,
       }),
       fetch,
     };
     await audit.audit(ctx);
-    expect(fetch).toHaveBeenCalledTimes(10);
+    expect(fetch).toHaveBeenCalledTimes(11);
   });
+
+
 
   // Review finding (1.8 + 1.22): raw string equality over trailing-slash
   // variants only, so protocol/host/case/encoding differences produced phantom

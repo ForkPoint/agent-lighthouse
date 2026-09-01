@@ -38,12 +38,19 @@ export function mockCheckContext(
     rootFiles,
     domain: 'example.com',
     baseUrl: 'https://example.com',
-    fetch: async () => mockFetchResult('', 404),
+    fetch: async ({ url }) => {
+      try {
+        const pathname = new URL(url).pathname;
+        if (rootFiles[pathname]) return rootFiles[pathname];
+      } catch {}
+      return mockFetchResult('', 404);
+    },
     // Unit tests judge the audit, not the gate: hand every requirement to them
     // so a two-page fixture never gates itself out.
     evidence: allEvidenceMet(),
   };
 }
+
 
 /**
  * A page and a set of root files complete enough that every audit reading them

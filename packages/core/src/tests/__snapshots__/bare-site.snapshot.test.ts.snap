@@ -30,7 +30,6 @@ fail 0.6 answer-readiness/trust-signals
 fail 0.6 answer-readiness/unique-data
 fail 0.6 content-extraction/content-depth
 fail 0.6 machine-discovery/rss-feed
-fail 0.6 machine-discovery/sitemap-absolute-urls
 fail 1   agentic-commerce/product-identifiers
 fail 1   answer-readiness/core-open-graph
 fail 1   content-extraction/article-element
@@ -38,7 +37,6 @@ fail 1   content-extraction/header-footer
 fail 1   content-extraction/main-element
 fail 1   machine-discovery/in-content-links
 fail 1   machine-discovery/sitemap-exists
-fail 1   machine-discovery/sitemap-lastmod
 fail 1   operability-safety/aria-landmarks
 fail 1   structured-data/advanced-product-details
 fail 1   structured-data/json-ld-present
@@ -96,6 +94,7 @@ na   0.6 content-extraction/svg-bloat
 na   0.6 machine-discovery/conditional-request-support
 na   0.6 machine-discovery/feed-entry-identity-and-canonical-integrity
 na   0.6 machine-discovery/root-text-file-resolution-integrity
+na   0.6 machine-discovery/sitemap-absolute-urls
 na   0.6 machine-discovery/three-way-freshness-lag
 na   0.6 operability-safety/agent-ua-content-divergence-diff
 na   0.6 operability-safety/c2pa-manifest-survives-delivery
@@ -138,6 +137,7 @@ na   1   content-extraction/image-alt-text
 na   1   content-extraction/markdown-alternate
 na   1   machine-discovery/agent-commerce-feed-parity
 na   1   machine-discovery/ai-crawler-surface-reachability
+na   1   machine-discovery/sitemap-lastmod
 na   1   machine-discovery/sitemap-lastmod-verifiability
 na   1   operability-safety/accessible-names
 na   1   operability-safety/aria-attributes

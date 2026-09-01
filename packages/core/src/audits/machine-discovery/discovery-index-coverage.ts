@@ -1,25 +1,13 @@
-import * as cheerio from 'cheerio';
 import type { AuditMeta, AuditResult } from '../../types';
 import { Audit } from '../../audit';
 import type { CheckContext, PageContext } from '../../check-context';
 import { weightForGrade } from '../../scorer';
-import { type FetchResult, isSafeUrl } from '../../fetcher';
+import { type FetchResult } from '../../fetcher';
+import { siteSitemapTree } from '../../gatherers/sitemap';
 
 function isOk(result: FetchResult): boolean {
   return result.status === 200;
 }
-
-/** Try to find the sitemap FetchResult, checking /sitemap.xml first then /sitemap-index.xml. */
-function getSitemapResult(ctx: CheckContext): FetchResult | null {
-  const sitemap = ctx.rootFiles['/sitemap.xml'];
-  if (sitemap && isOk(sitemap)) return sitemap;
-  const index = ctx.rootFiles['/sitemap-index.xml'];
-  if (index && isOk(index)) return index;
-  return null;
-}
-
-/** Sub-sitemaps fetched from a <sitemapindex> before the comparison. */
-const MAX_SUB_SITEMAPS = 10;
 
 /**
  * One comparison key for both sides of the coverage check.
@@ -51,48 +39,10 @@ function coverageKey(rawUrl: string, base?: string): string | null {
   }
 }
 
-/** Collect every <loc> of a sitemap or sitemap-index body. */
-function locsOf(body: string, selector: string): string[] {
-  const $ = cheerio.load(body, { xmlMode: true });
-  const out: string[] = [];
-  $(selector).each((_, el) => {
-    const loc = $(el).text().trim();
-    if (loc) out.push(loc);
-  });
-  return out;
-}
 
-/**
- * Sub-sitemap <loc> URLs we are willing to fetch, resolved to absolute.
- *
- * The <loc> values come verbatim out of the scanned site's own sitemap body, so
- * they are site-controlled input for a fetch we initiate: keep them on the
- * scanned site (same registrable host or a subdomain of it, matching how the
- * orchestrator scopes the URLs it harvests from the same file) and drop
- * anything that is not a resolvable HTTP(S) URL. The `isSafeUrl` check that
- * blocks private addresses is applied per URL at the fetch site.
- */
-function sameSiteSubSitemaps(locs: string[], baseUrl: string): string[] {
-  let baseHost: string;
-  try {
-    baseHost = new URL(baseUrl).hostname.toLowerCase().replace(/^www\./, '');
-  } catch {
-    return [];
-  }
 
-  const out: string[] = [];
-  for (const loc of locs) {
-    try {
-      const url = new URL(loc, baseUrl);
-      if (url.protocol !== 'http:' && url.protocol !== 'https:') continue;
-      const host = url.hostname.toLowerCase().replace(/^www\./, '');
-      if (host === baseHost || host.endsWith(`.${baseHost}`)) out.push(url.toString());
-    } catch {
-      // Unresolvable <loc> — nothing to fetch.
-    }
-  }
-  return out;
-}
+
+
 
 /**
  * Markdown links from llms.txt, relative ones included.
@@ -145,30 +95,8 @@ export class DiscoveryIndexCoverageAudit extends Audit {
       if (key) keys.add(key);
     };
 
-    const sitemapResult = getSitemapResult(ctx);
-    if (sitemapResult) {
-      for (const loc of locsOf(sitemapResult.body, 'urlset > url > loc')) add(loc);
-
-      // A <sitemapindex> lists no page URLs of its own. v1 short-circuited to a
-      // pass here without reading one; the sub-sitemaps are fetched instead.
-      const subSitemaps = sameSiteSubSitemaps(
-        locsOf(sitemapResult.body, 'sitemapindex > sitemap > loc'),
-        ctx.baseUrl,
-      ).slice(0, MAX_SUB_SITEMAPS);
-      if (subSitemaps.length > 0) {
-        const fetched = await Promise.all(
-          subSitemaps.map(async (url) =>
-            // Same gate every other content-derived fetch on this branch uses:
-            // a site-controlled URL is never fetched without isSafeUrl().
-            (await isSafeUrl(url)) ? ctx.fetch({ url }).catch(() => null) : null,
-          ),
-        );
-        for (const sub of fetched) {
-          if (!sub || !isOk(sub)) continue;
-          for (const loc of locsOf(sub.body, 'urlset > url > loc')) add(loc);
-        }
-      }
-    }
+    const sitemapTree = await siteSitemapTree(ctx);
+    for (const entry of sitemapTree.entries) add(entry.loc);
 
     const llmsResult = ctx.rootFiles['/llms.txt'];
     if (llmsResult && isOk(llmsResult)) {
@@ -177,6 +105,7 @@ export class DiscoveryIndexCoverageAudit extends Audit {
 
     return keys;
   }
+
 
   /** A page's own keys: its URL plus its declared canonical, if any. */
   private pageKeys(page: PageContext): string[] {

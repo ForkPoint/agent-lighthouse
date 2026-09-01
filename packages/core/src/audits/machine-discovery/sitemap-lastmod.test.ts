@@ -14,7 +14,7 @@ const sitemap = (entries: Array<[string, boolean]>) =>
 describe('SitemapLastmodAudit', () => {
   const audit = new SitemapLastmodAudit();
 
-  it('passes when at least 80% of entries have <lastmod>', () => {
+  it('passes when at least 80% of entries have <lastmod>', async () => {
     const ctx = mockCheckContext([], {
       '/sitemap.xml': mockFetchResult(
         sitemap([
@@ -28,12 +28,12 @@ describe('SitemapLastmodAudit', () => {
         'application/xml',
       ),
     });
-    const result = audit.audit(ctx);
+    const result = await audit.audit(ctx);
     expect(result.status).toBe('pass');
     expect(result.message).toContain('have <lastmod>');
   });
 
-  it('fails when fewer than 80% of entries have <lastmod>', () => {
+  it('fails when fewer than 80% of entries have <lastmod>', async () => {
     const ctx = mockCheckContext([], {
       '/sitemap.xml': mockFetchResult(
         sitemap([
@@ -45,28 +45,26 @@ describe('SitemapLastmodAudit', () => {
         'application/xml',
       ),
     });
-    const result = audit.audit(ctx);
+    const result = await audit.audit(ctx);
     expect(result.status).toBe('fail');
     expect(result.message).toContain('of URL entries have <lastmod>');
   });
 
-  it('warns when the sitemap has no <url> entries', () => {
+  it('declines when the sitemap has no <url> entries', async () => {
     const ctx = mockCheckContext([], {
       '/sitemap.xml': mockFetchResult(sitemap([]), 200, 'application/xml'),
     });
-    const result = audit.audit(ctx);
-    expect(result.status).toBe('warn');
-    expect(result.message).toContain('no <url> entries');
+    const result = await audit.audit(ctx);
+    expect(result.status).toBe('na');
   });
 
-  it('fails when no sitemap is found', () => {
+  it('declines when no sitemap is found', async () => {
     const ctx = mockCheckContext([]);
-    const result = audit.audit(ctx);
-    expect(result.status).toBe('fail');
-    expect(result.message).toContain('No sitemap found');
+    const result = await audit.audit(ctx);
+    expect(result.status).toBe('na');
   });
 
-  it('uses sitemap-index.xml as fallback when sitemap.xml is absent (covers line 16 branch)', () => {
+  it('uses sitemap-index.xml as fallback when sitemap.xml is absent (covers line 16 branch)', async () => {
     const ctx = mockCheckContext([], {
       '/sitemap-index.xml': mockFetchResult(
         sitemap([
@@ -77,7 +75,8 @@ describe('SitemapLastmodAudit', () => {
         'application/xml',
       ),
     });
-    const result = audit.audit(ctx);
+    const result = await audit.audit(ctx);
     expect(result.status).toBe('pass');
   });
 });
+
