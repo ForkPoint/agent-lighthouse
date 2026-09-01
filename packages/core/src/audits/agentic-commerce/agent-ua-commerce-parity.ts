@@ -112,7 +112,6 @@ export class AgentUaCommerceParityAudit extends Audit {
 
   async audit(ctx: CheckContext): Promise<AuditResult> {
     const pdps = ctx.pages
-      .filter((page) => page.pageType === 'product')
       .slice(0, MAX_PDPS)
       .map((page) => page.url);
     const cartUrl = `${ctx.baseUrl}/cart`;

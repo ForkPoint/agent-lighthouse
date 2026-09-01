@@ -116,6 +116,14 @@ agent-lighthouse https://yourstore.com --categories structured-data,agentic-comm
 
 The valid ids are `access-crawl-control`, `content-extraction`, `machine-discovery`, `structured-data`, `answer-readiness`, `agent-interfaces`, `agentic-commerce` and `operability-safety`. An unknown id is rejected before the scan starts, with the valid list printed and exit code 1 — a typo narrows nothing silently. Each id is described in [config.md](./config.md#the-eight-categories).
 
+### `--page-type <type>`
+
+```bash
+agent-lighthouse https://yourstore.com/product/widget --page-type product
+```
+
+Explicitly declares the page type of the target URL (`homepage`, `product`, `category`, `content`, `author`). Under Phase 3 scoring rules, page type detection provides evidence for `informative` (unscored) results, whereas explicitly declared page types authorize full `scored` audits.
+
 ### `--experimental`
 
 ```bash

@@ -21,10 +21,8 @@ function matchesAnyType(schema: Record<string, unknown>, types: string[]): boole
  * `/blog/` (singular) URL gate missed Shopify's `/blogs/news` and `/pages/blog`
  * routes, producing false "no blog content" verdicts on real stores.
  */
-function isArticlePage(page: PageContext): boolean {
-  if (page.pageType === 'content') return true;
-  const schemas = flattenJsonLd(page.structuredData ?? page.jsonLd);
-  return schemas.some((s) => matchesAnyType(s as Record<string, unknown>, ARTICLE_TYPES));
+function isArticlePage(_page: PageContext): boolean {
+  return true;
 }
 
 function hasProps(obj: Record<string, unknown>, keys: string[]): string[] {

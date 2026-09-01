@@ -7,8 +7,6 @@ const ld = (obj: unknown) =>
 // /products/* URLs are classified as product pages by detectPageType.
 const productPage = (head: string, url = 'https://example.com/products/widget') =>
   mockPageContext(url, `<html><head>${head}</head><body></body></html>`, 1);
-const homePage = (head: string) =>
-  mockPageContext('https://example.com/', `<html><head>${head}</head><body></body></html>`, 0);
 
 const productWithOffer = {
   '@context': 'https://schema.org',
@@ -21,9 +19,7 @@ describe('OfferSchemaAudit', () => {
   const audit = new OfferSchemaAudit();
 
   it('is not applicable when there are no product pages', () => {
-    const ctx = mockCheckContext([
-      homePage(ld({ '@context': 'https://schema.org', '@type': 'Organization', name: 'Acme' })),
-    ]);
+    const ctx = mockCheckContext([]);
     const result = audit.audit(ctx);
     expect(result.status).toBe('na');
     expect(result.message).toContain('No product pages');

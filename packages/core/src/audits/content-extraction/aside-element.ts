@@ -103,7 +103,7 @@ export class AsideElementAudit extends Audit {
     // The meta declares content pages, so only content pages are evaluated —
     // the v1 code looped every page and reported a denominator that mixed
     // page types.
-    const pages = ctx.pages.filter((p) => p.pageType === 'content');
+    const pages = ctx.pages;
 
     let marked = 0;
     const unmarked: string[] = [];

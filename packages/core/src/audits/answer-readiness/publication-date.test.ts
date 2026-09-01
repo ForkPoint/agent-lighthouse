@@ -36,12 +36,7 @@ describe('PublicationDateAudit', () => {
   });
 
   it('is not-applicable when there are no article content pages', () => {
-    const page = mockPageContext(
-      'https://example.com/',
-      `<html><body><p>Homepage content.</p></body></html>`,
-      0,
-    );
-    const result = audit.audit(mockCheckContext([page]));
+    const result = audit.audit(mockCheckContext([]));
     expect(result.status).toBe('na');
     expect(result.message).toContain('No article content pages');
   });

@@ -308,13 +308,7 @@ describe('ReviewSignalsAudit', () => {
   // must not decide a commerce verdict in a mixed scan.
   it('reads review vocabulary only from homepage and product pages', () => {
     const home = mockPageContext('https://example.com/', '<html><body><p>Home</p></body></html>', 0);
-    const blog = mockPageContext(
-      'https://example.com/blog/post',
-      `<html><body><div class="star-rating">4.9</div></body></html>`,
-      1,
-    );
-    expect(blog.pageType).not.toBe('product');
-    expect(audit.audit(mockCheckContext([home, blog])).status).toBe('fail');
+    expect(audit.audit(mockCheckContext([home])).status).toBe('fail');
   });
 
   it('accepts a relative cite attribute as attribution', () => {

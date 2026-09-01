@@ -24,14 +24,18 @@ fail 0.6 answer-readiness/extractor-survival-recall
 fail 0.6 answer-readiness/last-modified-schema
 fail 0.6 answer-readiness/meta-description
 fail 0.6 answer-readiness/og-type
+fail 0.6 answer-readiness/publication-date
 fail 0.6 answer-readiness/review-signals
 fail 0.6 answer-readiness/specific-numbers
 fail 0.6 answer-readiness/trust-signals
 fail 0.6 answer-readiness/unique-data
 fail 0.6 content-extraction/content-depth
 fail 0.6 machine-discovery/rss-feed
+fail 0.6 structured-data/speakable-schema
+fail 1   agentic-commerce/offer-schema
 fail 1   agentic-commerce/product-identifiers
 fail 1   answer-readiness/core-open-graph
+fail 1   answer-readiness/dates-on-content
 fail 1   content-extraction/article-element
 fail 1   content-extraction/header-footer
 fail 1   content-extraction/main-element
@@ -39,6 +43,7 @@ fail 1   machine-discovery/in-content-links
 fail 1   machine-discovery/sitemap-exists
 fail 1   operability-safety/aria-landmarks
 fail 1   structured-data/advanced-product-details
+fail 1   structured-data/article-schema
 fail 1   structured-data/json-ld-present
 fail 1   structured-data/organization-schema
 fail 1   structured-data/schema-validation
@@ -50,7 +55,6 @@ na   0   agent-interfaces/mcp-discovery
 na   0   agent-interfaces/openapi-exists
 na   0   agent-interfaces/webmcp-registered-tools
 na   0   answer-readiness/direct-definitions
-na   0   answer-readiness/first-paragraph-answers
 na   0   answer-readiness/unique-meta
 na   0   content-extraction/json-ld-duplication-mass
 na   0   machine-discovery/ai-file-delivery
@@ -81,9 +85,7 @@ na   0.6 agent-interfaces/openapi-servers
 na   0.6 agent-interfaces/webmcp-declarative-forms
 na   0.6 agentic-commerce/buyable-variant-resolution
 na   0.6 agentic-commerce/cart-handoff-reachability
-na   0.6 agentic-commerce/offer-truth-consistency
 na   0.6 answer-readiness/chunk-boundary-referent-integrity
-na   0.6 answer-readiness/publication-date
 na   0.6 answer-readiness/section-split-risk-profile
 na   0.6 answer-readiness/site-wide-passage-uniqueness-ratio
 na   0.6 answer-readiness/table-markdown-round-trip-loss
@@ -110,7 +112,6 @@ na   0.6 operability-safety/table-headers
 na   0.6 operability-safety/ugc-trust-boundary-markers
 na   0.6 operability-safety/url-addressable-state-and-pagination-fallback
 na   0.6 operability-safety/wikidata-round-trip-verification
-na   0.6 structured-data/speakable-schema
 na   1   access-crawl-control/agent-governance
 na   1   access-crawl-control/ai-crawler-edge-parity
 na   1   access-crawl-control/anthropic-ai
@@ -128,9 +129,7 @@ na   1   agentic-commerce/acp-policy-link-surface
 na   1   agentic-commerce/agent-ua-commerce-parity
 na   1   agentic-commerce/checkout-offer-field-mapping
 na   1   agentic-commerce/landed-cost-and-returns
-na   1   agentic-commerce/offer-schema
 na   1   agentic-commerce/product-transaction-certainty
-na   1   answer-readiness/dates-on-content
 na   1   answer-readiness/text-fragment-addressability
 na   1   content-extraction/hydration-payload-share
 na   1   content-extraction/image-alt-text
@@ -157,11 +156,11 @@ na   1   operability-safety/meta-refresh
 na   1   operability-safety/native-control-substitution
 na   1   operability-safety/nested-interactive
 na   1   operability-safety/presentation-conflict
-na   1   structured-data/article-schema
 na   1   structured-data/local-business-schema
 na   1   structured-data/review-schema
 na   1   structured-data/service-schema
 pass 0   answer-readiness/descriptive-urls
+pass 0   answer-readiness/first-paragraph-answers
 pass 0   content-extraction/figure-figcaption
 pass 0.6 answer-readiness/content-without-clickthrough
 pass 0.6 content-extraction/data-tables
@@ -197,6 +196,7 @@ warn 0   structured-data/howto-schema
 warn 0.6 access-crawl-control/ai-bot-directives
 warn 0.6 access-crawl-control/ai-usage-signal-coherence-across-channels
 warn 0.6 access-crawl-control/no-blanket-block
+warn 0.6 agentic-commerce/offer-truth-consistency
 warn 0.6 content-extraction/section-headings
 warn 0.6 content-extraction/sequential-headings
 warn 0.6 machine-discovery/discovery-index-coverage

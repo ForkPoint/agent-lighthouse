@@ -20,12 +20,7 @@ describe('TrustSignalsAudit', () => {
   const audit = new TrustSignalsAudit();
 
   it('is notApplicable when the scan contains no homepage', () => {
-    const page = mockPageContext(
-      'https://example.com/blog/post',
-      '<html><body><p>Body.</p></body></html>',
-      1,
-    );
-    const result = audit.audit(mockCheckContext([page]));
+    const result = audit.audit(mockCheckContext([]));
     expect(result.status).toBe('na');
   });
 

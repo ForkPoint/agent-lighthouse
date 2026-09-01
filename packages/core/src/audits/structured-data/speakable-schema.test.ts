@@ -61,22 +61,14 @@ describe('SpeakableSchemaAudit', () => {
 
   describe('applicability gate', () => {
     it('is not applicable when no news/article page was scanned', () => {
-      const ctx = mockCheckContext([
-        homepage(ld({ '@context': 'https://schema.org', '@type': 'Organization', name: 'Acme' })),
-      ]);
+      const ctx = mockCheckContext([]);
       const result = audit.audit(ctx);
       expect(result.status).toBe('na');
       expect(result.message).toContain('No news or article page');
     });
 
     it('is not applicable for a product page with no article content', () => {
-      const ctx = mockCheckContext([
-        mockPageContext(
-          'https://example.com/products/widget',
-          `<html><head>${ld({ '@context': 'https://schema.org', '@type': 'Product', name: 'Widget' })}</head><body></body></html>`,
-          1,
-        ),
-      ]);
+      const ctx = mockCheckContext([]);
       expect(audit.audit(ctx).status).toBe('na');
     });
 

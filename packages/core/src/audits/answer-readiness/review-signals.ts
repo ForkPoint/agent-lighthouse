@@ -234,9 +234,7 @@ export class ReviewSignalsAudit extends Audit {
     // quotation branch is deliberately not scoped this way — its GEO
     // measurement is about generative-answer citation on content generally, so
     // confining it to commerce pages would narrow past its own evidence.
-    const commerce = ctx.pages.filter(
-      (p) => p.pageType === 'homepage' || p.pageType === 'product',
-    );
+    const commerce = ctx.pages;
 
     // Machine-readable social proof: what an agent consumer can actually read.
     const strong: string[] = [];

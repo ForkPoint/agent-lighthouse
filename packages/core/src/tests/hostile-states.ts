@@ -123,6 +123,7 @@ function toPageContext(url: string, result: FetchResult, pageType: PageType): Pa
   return {
     url,
     pageType,
+    pageTypeSource: 'declared',
     fetchResult: result,
     $,
     jsonLd,

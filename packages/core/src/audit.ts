@@ -148,9 +148,11 @@ export abstract class Audit {
   }
 
   /** Merge static meta with the runtime result to produce a CheckResult. */
-  toCheckResult(rawResult: AuditResult): CheckResult {
+  toCheckResult(rawResult: AuditResult, overrideDisplayMode?: import('./types').ScoreDisplayMode): CheckResult {
     const result = this.validate(rawResult);
     const meta = (this.constructor as typeof Audit).meta;
+    const scoreDisplayMode = overrideDisplayMode ?? meta.scoreDisplayMode;
+    const isInformative = scoreDisplayMode === 'informative';
 
     // Backward compatibility mapping
     const displayValue = result.displayValue ?? result.found ?? result.message;
@@ -168,11 +170,11 @@ export abstract class Audit {
       title: result.status === 'pass' || result.status === 'na' ? meta.title : meta.failureTitle,
       description: meta.description,
       status: result.status,
-      score: result.score,
+      score: isInformative ? 0 : result.score,
       // Single source of truth for a check's evidence weight: stamped here, at
       // the one place a CheckResult is built from its meta.
-      weight: meta.weight,
-      scoreDisplayMode: meta.scoreDisplayMode,
+      weight: isInformative ? 0 : meta.weight,
+      scoreDisplayMode,
       displayValue,
       explanation,
       pageUrl: result.pageUrl,

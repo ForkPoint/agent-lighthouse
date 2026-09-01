@@ -187,7 +187,7 @@ export class MetaRobotsNotBlockingAudit extends Audit {
       const directives = directivesFor(page);
       return {
         url: page.url,
-        isHomepage: page.pageType === 'homepage',
+        isHomepage: page.url.replace(/\/$/, '') === ctx.baseUrl.replace(/\/$/, ''),
         isUtility: isUtilityRoute(page.url),
         blocking: directives.filter((d) => BLOCKING_TOKENS.has(d.token)),
         suppressing: directives.filter((d) => suppressesSnippets(d.token)),

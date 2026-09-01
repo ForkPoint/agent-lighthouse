@@ -187,7 +187,6 @@ function assessReturns(policy: Record<string, unknown> | undefined): ReturnsLeg 
 /** The first Offer on a product page, plus the page it came from. */
 function findOffer(ctx: CheckContext): { offer: Record<string, unknown>; page: PageContext } | undefined {
   for (const page of ctx.pages) {
-    if (page.pageType !== 'product') continue;
     for (const node of flattenJsonLd(page.jsonLd)) {
       if (!isObject(node)) continue;
       if (typesOf(node).includes('Offer')) return { offer: node, page };

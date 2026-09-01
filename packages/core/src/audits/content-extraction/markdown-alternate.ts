@@ -233,7 +233,7 @@ export class MarkdownAlternateAudit extends Audit {
     // declares an alternate, then any non-homepage. Costs no fetch.
     const page =
       ctx.pages.find((candidate) => declaredAlternate(candidate) !== undefined) ??
-      ctx.pages.find((candidate) => candidate.pageType !== 'homepage') ??
+      ctx.pages.find((candidate) => candidate.url.replace(/\/$/, '') !== ctx.baseUrl.replace(/\/$/, '')) ??
       ctx.pages[0];
     if (!page) {
       return this.notApplicable(

@@ -217,7 +217,6 @@ function assess(product: Record<string, unknown>, page: PageContext): Assessment
 
 function findProduct(ctx: CheckContext): { product: Record<string, unknown>; page: PageContext } | undefined {
   for (const page of ctx.pages) {
-    if (page.pageType !== 'product') continue;
     for (const node of flattenJsonLd(page.structuredData ?? page.jsonLd)) {
       if (isObject(node) && typesOf(node).some((t) => PRODUCT_TYPES.includes(t))) {
         return { product: node, page };
