@@ -21,6 +21,7 @@ export function mockPageContext(url: string, html: string, index: number = 0): P
   return {
     url,
     pageType: detectPageType(url, $, jsonLd, meta, index === 0),
+    pageTypeSource: 'declared',
     fetchResult,
     $,
     jsonLd,

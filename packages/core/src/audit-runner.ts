@@ -1,7 +1,7 @@
-import type { CheckResult, CategoryResult, EvidenceKey, PageType, AuditMeta } from './types';
+import type { CheckResult, CategoryResult, EvidenceKey, PageType, AuditMeta, ScoreDisplayMode } from './types';
 import { logger } from './logger';
 import { TAG_SKIPPED_PAGE_TYPE, TAG_SCAN_ERROR, TAG_SKIPPED_NO_EVIDENCE } from './constants';
-import type { CheckContext } from './check-context';
+import type { CheckContext, PageContext } from './check-context';
 import type { ScanConfig, CategoryConfig, AuditRegistration } from './audit-config';
 import { calculateCategoryScore, calculateOverallScore } from './scorer';
 import { traceFromCheck, formatTrace, type AuditTrace } from './audit-trace';
@@ -83,7 +83,7 @@ export type AuditProgressEvent =
 export type AuditTraceHandler = (trace: AuditTrace) => void;
 
 export interface AuditPlan {
-  runnable: Array<{ reg: AuditRegistration; categoryId: string }>;
+  runnable: RunnableAudit[];
   skipped: CheckResult[];
 }
 
@@ -109,17 +109,61 @@ export interface PlanOptions {
  * none of those types produced readable text. An audit that declares no page
  * types is fed by the homepage.
  */
+/**
+ * Runner scope decision function.
+ *
+ * Given an audit's meta and the scan context, decides both the page set the
+ * audit receives and its scoreDisplayMode:
+ *
+ * 1. Universal audit (no pageTypes): receives all pages, meta display mode.
+ * 2. Typed audit + at least one DECLARED matching page: receives all matching
+ *    declared pages, meta display mode (scored).
+ * 3. Typed audit + no declared match, but DETECTED matching page(s): receives
+ *    matching detected pages, overridden display mode 'informative'.
+ * 4. Neither: returns null (audit skipped for no matching page types).
+ */
+export interface AuditScope {
+  pages: PageContext[];
+  scoreDisplayMode: ScoreDisplayMode;
+}
+
+export function scopeAudit(ctx: CheckContext, meta: AuditMeta): AuditScope | null {
+  const pageTypes = meta.pageTypes ?? meta.applicablePageTypes;
+  if (!pageTypes || pageTypes.length === 0) {
+    return { pages: ctx.pages, scoreDisplayMode: meta.scoreDisplayMode };
+  }
+
+  const declaredPages = ctx.pages.filter(
+    (p) => pageTypes.includes(p.pageType) && p.pageTypeSource === 'declared',
+  );
+  if (declaredPages.length > 0) {
+    return { pages: declaredPages, scoreDisplayMode: meta.scoreDisplayMode };
+  }
+
+  const detectedPages = ctx.pages.filter(
+    (p) => pageTypes.includes(p.pageType) && p.pageTypeSource === 'detected',
+  );
+  if (detectedPages.length > 0) {
+    return { pages: detectedPages, scoreDisplayMode: 'informative' };
+  }
+
+  return null;
+}
+
 function unmetRequirements(ctx: CheckContext, meta: AuditMeta): EvidenceKey[] {
   const required = meta.requires ?? [];
   if (required.length === 0) return [];
 
   const evidence = ctx.evidence;
   const unmet: EvidenceKey[] = [];
+  const wanted = meta.pageTypes?.length
+    ? meta.pageTypes
+    : meta.applicablePageTypes?.length
+    ? meta.applicablePageTypes
+    : (['homepage'] as PageType[]);
+
   for (const key of required) {
     if (key === 'sample-adequate') {
-      const wanted = meta.applicablePageTypes?.length
-        ? meta.applicablePageTypes
-        : (['homepage'] as PageType[]);
       if (!wanted.some((type) => evidence.usablePageTypes.has(type))) unmet.push(key);
       continue;
     }
@@ -132,17 +176,24 @@ function unmetRequirements(ctx: CheckContext, meta: AuditMeta): EvidenceKey[] {
 function gateExplanation(ctx: CheckContext, meta: AuditMeta, unmet: EvidenceKey[]): string {
   const reasons = unmet.map((key) => ctx.evidence.reasons[key]).filter(Boolean);
 
-  // `sample-adequate` can be met for the scan and unmet for this audit: the
-  // scan read pages, just not of the type this audit needs. The scan-level
-  // reason is empty in that case, and "no sample-adequate evidence" alone
-  // tells a reader nothing.
   if (unmet.includes('sample-adequate') && reasons.length === 0) {
-    const wanted = meta.applicablePageTypes?.length ? meta.applicablePageTypes.join('/') : 'homepage';
+    const wanted = meta.pageTypes?.length
+      ? meta.pageTypes.join('/')
+      : meta.applicablePageTypes?.length
+      ? meta.applicablePageTypes.join('/')
+      : 'homepage';
     return `Not assessed: no scanned ${wanted} page served readable text.`;
   }
 
   const why = reasons.length > 0 ? ` ${reasons.join(' ')}` : '';
   return `Not assessed: this scan has no ${unmet.join(', ')} evidence.${why}`;
+}
+
+export interface RunnableAudit {
+  reg: AuditRegistration;
+  categoryId: string;
+  scopedPages?: PageContext[];
+  scoreDisplayMode?: ScoreDisplayMode;
 }
 
 /**
@@ -154,29 +205,10 @@ export function planAudits(
   ctx: CheckContext,
   config: ScanConfig,
   options: PlanOptions = {},
-): AuditPlan {
-  // Collect the set of page types present in the scan context
-  const scannedPageTypes = new Set(ctx.pages.map((p) => p.pageType));
-
-  // Flatten all registrations for batched execution. Audits whose
-  // applicablePageTypes don't match any scanned page type are not executed, but
-  // recorded as `na` stubs so they remain visible in the report.
-  const runnable: AuditPlan['runnable'] = [];
+): { runnable: RunnableAudit[]; skipped: CheckResult[] } {
+  const runnable: RunnableAudit[] = [];
   const skipped: CheckResult[] = [];
 
-  // One precondition above every other: the scan holds no response it can
-  // attribute to this site, so no audit may say anything about it.
-  //
-  // This is scan-level and domain-neutral, which is the only kind of
-  // precondition that belongs here — `requires` is already exactly that. An
-  // artifact precondition stays in the gatherer that performs the read; see
-  // docs/architecture/audits.md §12.
-  //
-  // It sits above `requires` rather than inside it because `requires` is the
-  // audit's own claim about itself. Four audits declare none and were correct
-  // only by hand-rolling this check inside `audit()`, and 142 of 215 audits
-  // have no contract test that would catch the omission. An audit's protection
-  // must not depend on the audit remembering.
   const unread = !scanReadTheSite(ctx.evidence);
   const unreadWhy = unread ? `Not assessed: ${unreadSiteReason(ctx.evidence)}` : '';
   for (const cat of config.categories) {
@@ -186,22 +218,19 @@ export function planAudits(
         skipped.push(stubCheck(reg.meta, TAG_SKIPPED_NO_EVIDENCE, unreadWhy));
         continue;
       }
-      const applicable = reg.meta.applicablePageTypes;
-      if (applicable && applicable.length > 0) {
-        if (!applicable.some((pt: PageType) => scannedPageTypes.has(pt))) {
-          skipped.push(
-            stubCheck(
-              reg.meta,
-              TAG_SKIPPED_PAGE_TYPE,
-              `Not applicable: no scanned page is of type ${applicable.join('/')}.`,
-            ),
-          );
-          continue;
-        }
+      const scope = scopeAudit(ctx, reg.meta);
+      if (!scope) {
+        const wanted = (reg.meta.pageTypes ?? reg.meta.applicablePageTypes ?? []).join('/');
+        skipped.push(
+          stubCheck(
+            reg.meta,
+            TAG_SKIPPED_PAGE_TYPE,
+            `Not applicable: no scanned page is of type ${wanted}.`,
+          ),
+        );
+        continue;
       }
       if (options.enforceEvidence ?? true) {
-        // Page-type mismatch is checked first, above, so no existing wording
-        // changes. Only an audit the scan could have fed reaches this.
         const unmet = unmetRequirements(ctx, reg.meta);
         if (unmet.length > 0) {
           skipped.push(
@@ -210,7 +239,12 @@ export function planAudits(
           continue;
         }
       }
-      runnable.push({ reg, categoryId: cat.id });
+      runnable.push({
+        reg,
+        categoryId: cat.id,
+        scopedPages: scope.pages,
+        scoreDisplayMode: scope.scoreDisplayMode,
+      });
     }
   }
   return { runnable, skipped };
@@ -231,9 +265,6 @@ export async function runAudits(
   const { runnable, skipped } = plan ?? planAudits(ctx, config);
   const allChecks: CheckResult[] = [...skipped];
 
-  // Emit one record per audit, whatever became of it. Building the record
-  // costs something, so it is skipped entirely unless someone is listening —
-  // either a trace handler or a debug-level logger.
   const tracing = Boolean(onTrace) || logger.level === 'debug';
   const trace = (check: CheckResult, durationMs: number): void => {
     if (!tracing) return;
@@ -242,33 +273,28 @@ export async function runAudits(
     onTrace?.(record);
   };
 
-  // A skipped audit never entered `audit()`, so its duration is zero rather
-  // than unmeasured.
   for (const stub of skipped) trace(stub, 0);
 
-  // Run in batches of 20 (same concurrency as before)
   const batchSize = 20;
   for (let i = 0; i < runnable.length; i += batchSize) {
     const batch = runnable.slice(i, i + batchSize);
     const batchResults = await Promise.all(
-      batch.map(async ({ reg }) => {
+      batch.map(async ({ reg, scopedPages, scoreDisplayMode }) => {
         const label = `${reg.meta.id} ${reg.meta.title}`;
         const startedAt = tracing ? performance.now() : 0;
         const elapsed = () => (tracing ? Math.round(performance.now() - startedAt) : 0);
         try {
           const instance = reg.create();
-          const result = await instance.audit(ctx);
-          // `toCheckResult` stamps the evidence weight from the audit's meta.
-          const check = instance.toCheckResult(result);
-          onEvent?.({ type: 'unit:done', label });
+          const scopedCtx = scopedPages ? { ...ctx, pages: scopedPages } : ctx;
+          const result = await instance.audit(scopedCtx);
+          const check = instance.toCheckResult(result, scoreDisplayMode);
+          if (typeof onEvent === 'function') onEvent({ type: 'unit:done', label });
           trace(check, elapsed());
           return check;
         } catch (err) {
-          // Don't silently drop a throwing audit — record it as an errored
-          // `na` stub so it stays visible in the report and in coverage.
           logger.error({ err, auditId: reg.meta.id }, '[scanner] Audit error');
           const message = describeError(err);
-          onEvent?.({ type: 'unit:fail', label, error: message });
+          if (typeof onEvent === 'function') onEvent({ type: 'unit:fail', label, error: message });
           const stub = stubCheck(reg.meta, TAG_SCAN_ERROR, `Audit failed to run: ${message}`);
           trace(stub, elapsed());
           return stub;

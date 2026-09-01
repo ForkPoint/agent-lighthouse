@@ -176,7 +176,7 @@ export class BuyableVariantResolutionAudit extends Audit {
   };
 
   audit(ctx: CheckContext): AuditResult {
-    const productPages = ctx.pages.filter((page) => page.pageType === 'product').slice(0, MAX_PAGES);
+    const productPages = ctx.pages.slice(0, MAX_PAGES);
     if (productPages.length === 0) {
       return this.notApplicable(
         'This scan reached no product page, so there is no variant surface to resolve.',

@@ -24,8 +24,7 @@ import type { CheckContext, PageContext } from '../../check-context';
 import { weightForGrade } from '../../scorer';
 import { flattenJsonLd } from '../../parser';
 
-/** The Article shapes that mark a page as news/article content. */
-const ARTICLE_TYPES = ['Article', 'NewsArticle', 'BlogPosting'];
+
 
 /** Every `@type` token on a node, as a flat list of strings. */
 function typeNames(schema: Record<string, unknown>): string[] {
@@ -33,10 +32,6 @@ function typeNames(schema: Record<string, unknown>): string[] {
   if (typeof st === 'string') return [st];
   if (Array.isArray(st)) return st.filter((t): t is string => typeof t === 'string');
   return [];
-}
-
-function matchesAnyType(schema: Record<string, unknown>, types: string[]): boolean {
-  return typeNames(schema).some((name) => types.includes(name));
 }
 
 /**
@@ -88,11 +83,8 @@ function hasValidSpeakable(schema: Record<string, unknown>): boolean {
  * doc scopes the feature to news content, so a shop that omits speakable is
  * not failing anything.
  */
-function isArticlePage(page: PageContext): boolean {
-  if (page.pageType === 'content') return true;
-  return flattenJsonLd(page.structuredData ?? page.jsonLd).some((s) =>
-    matchesAnyType(s as Record<string, unknown>, ARTICLE_TYPES),
-  );
+function isArticlePage(_page: PageContext): boolean {
+  return true;
 }
 
 function pageHasSpeakable(page: PageContext): boolean {

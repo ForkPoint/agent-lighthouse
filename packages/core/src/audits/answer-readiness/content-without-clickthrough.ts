@@ -80,7 +80,7 @@ export class ContentWithoutClickthroughAudit extends Audit {
       // homepages legitimately render little server-side text, so a word-count
       // warning there is noise. Evaluate a non-homepage page instead.
       const checkPage = ctx.pages.find((p) => {
-        if (p.pageType === 'homepage') return false;
+        if (p.url.replace(/\/$/, '') === ctx.baseUrl.replace(/\/$/, '')) return false;
         let pathname = '';
         try {
           pathname = new URL(p.url).pathname.toLowerCase();

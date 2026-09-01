@@ -36,6 +36,7 @@ function buildPageContext(url: string, html: string, pageType: PageContext['page
   return {
     url,
     pageType,
+    pageTypeSource: 'declared',
     fetchResult: createMockFetch(200, html),
     $,
     jsonLd,

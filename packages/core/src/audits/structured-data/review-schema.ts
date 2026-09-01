@@ -208,7 +208,7 @@ export class ReviewSchemaAudit extends Audit {
     }
 
     const total = findings.reduce((n, f) => n + f.ratings.total, 0);
-    const productPages = findings.filter((f) => f.page.pageType === 'product');
+    const productPages = findings.filter((f) => f.ratings.onProduct > 0 || /\/(products?|items?|p|dp)\b/i.test(f.page.url));
     const productPagesWithRating = productPages.filter((f) => f.ratings.onProduct > 0);
 
     if (productPages.length > 0 && productPagesWithRating.length === 0 && total > 0) {

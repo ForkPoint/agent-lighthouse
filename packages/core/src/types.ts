@@ -90,6 +90,7 @@ export interface AuditMeta {
   description: string;
   scoreDisplayMode: ScoreDisplayMode;
   weight: number;
+  pageTypes?: PageType[];
   applicablePageTypes?: PageType[];
   defaultPriority: CheckPriority;
   guidance?: AuditGuidance;
@@ -209,6 +210,8 @@ export interface CategoryResult {
   passCount: number;
   warnCount: number;
   failCount: number;
+  registryMass?: number;
+  assessedMass?: number;
 }
 
 // ── Scan Report ────────────────────────────────────────────────

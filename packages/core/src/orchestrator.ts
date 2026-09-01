@@ -33,6 +33,8 @@ import type { FetchOptions, FetchResult } from './fetcher';
 export interface ScanOptions {
   onEvent?: (event: ScanEvent) => void;
   pages?: PageOverride[] | null;
+  /** Explicitly declared page type for the target URL. */
+  pageType?: PageType;
   signal?: AbortSignal;
   /**
    * Restrict the scan to these category ids. Unknown ids simply match nothing —
@@ -429,11 +431,13 @@ export async function runScan(url: string, options?: ScanOptions): Promise<ScanR
       const isFirstPage = p.index === 0;
       // User-supplied overrides keep their declared type; everything else is
       // classified heuristically.
-      const forcedType = overrideTypeByKey.get(p.url.replace(/\/$/, ''));
+      const forcedType = overrideTypeByKey.get(p.url.replace(/\/$/, '')) ?? (isFirstPage ? options?.pageType : undefined);
+      const pageTypeSource: 'declared' | 'detected' = forcedType ? 'declared' : 'detected';
       tracker.unitDone(p.url);
       return {
         url: p.url,
         pageType: forcedType ?? detectPageType(p.url, $, structuredData, meta, isFirstPage),
+        pageTypeSource,
         fetchResult: p.result,
         $,
         jsonLd,

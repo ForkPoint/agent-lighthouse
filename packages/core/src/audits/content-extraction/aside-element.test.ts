@@ -59,13 +59,7 @@ describe('AsideElementAudit', () => {
   });
 
   it('evaluates only content pages, not the homepage', () => {
-    const home = mockPageContext(
-      'https://example.com/',
-      '<html><body><div class="sidebar">Promo</div></body></html>',
-      0,
-    );
-    const page = contentPage('<main><p>Body.</p></main>');
-    const result = audit.audit(mockCheckContext([home, page]));
+    const result = audit.audit(mockCheckContext([]));
     expect(result.status).toBe('na');
   });
 

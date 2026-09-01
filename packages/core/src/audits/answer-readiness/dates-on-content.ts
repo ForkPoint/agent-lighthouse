@@ -25,7 +25,6 @@ const DATE_PATTERN =
  * non-HTML interstitials, which have no meaningful publication date.
  */
 export function isArticleContentPage(p: PageContext): boolean {
-  if (p.pageType !== 'content') return false;
   let pathname = '';
   try {
     pathname = new URL(p.url).pathname.toLowerCase();

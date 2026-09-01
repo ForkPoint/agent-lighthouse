@@ -55,7 +55,7 @@ const result = (status: AuditResult['status'], score: number): AuditResult => ({
 
 function ctxWith(pageTypes: PageType[]): CheckContext {
   return {
-    pages: pageTypes.map((pt) => ({ pageType: pt })),
+    pages: pageTypes.map((pt) => ({ pageType: pt, pageTypeSource: 'declared' as const })),
     rootFiles: {},
     domain: 'example.com',
     baseUrl: 'https://example.com',
@@ -720,7 +720,7 @@ describe('planAudits — evidence gate', () => {
       wafProtection: null,
     });
     const ctx = {
-      pages: [{ pageType: 'homepage' }, { pageType: 'product' }],
+      pages: [{ pageType: 'homepage', pageTypeSource: 'declared' }, { pageType: 'product', pageTypeSource: 'declared' }],
       rootFiles: {},
       domain: 'example.com',
       baseUrl: 'https://example.com',

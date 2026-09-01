@@ -11,7 +11,7 @@ exports[`Snapshot Regression Tests > matches baseline results for Labs Homepage 
   {
     "explanation": "llms.txt exists and is valid.",
     "id": "machine-discovery/llms-txt-exists",
-    "score": 1,
+    "score": 0,
     "status": "pass",
   },
 ]

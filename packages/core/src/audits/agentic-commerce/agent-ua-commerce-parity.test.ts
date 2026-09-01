@@ -49,8 +49,7 @@ interface RunOptions {
 
 function run(options: RunOptions = {}) {
   const audit = new AgentUaCommerceParityAudit();
-  const pages = [mockPageContext('https://example.com/', HOME)];
-  if (options.product !== false) pages.push(mockPageContext(PDP_URL, PDP, 1));
+  const pages = options.product === false ? [] : [mockPageContext('https://example.com/', HOME), mockPageContext(PDP_URL, PDP, 1)];
 
   const rootFiles: Record<string, FetchResult> = {};
   if (options.robots) rootFiles['/robots.txt'] = mockFetchResult(options.robots, 200, 'text/plain');

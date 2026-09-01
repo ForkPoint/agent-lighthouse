@@ -47,10 +47,16 @@ export function buildCategoryResult(
   checks: CheckResult[],
   mass = 0,
 ): CategoryResult {
+  const assessedMass = checks
+    .filter((c) => c.status !== 'na' && !isInformative(c))
+    .reduce((sum, c) => sum + (c.weight ?? 0), 0);
+
   return {
     id,
     name: CATEGORY_NAMES[id] ?? id,
     weight: mass,
+    registryMass: mass,
+    assessedMass,
     score: calculateCategoryScore(checks),
     checks,
     passCount: checks.filter((c) => c.status === 'pass').length,
@@ -86,7 +92,7 @@ export function calculateOverallScore(categories: CategoryResult[]): number {
   let weighted = 0;
   let totalMass = 0;
   for (const cat of categories) {
-    const mass = cat.weight ?? 0;
+    const mass = cat.assessedMass ?? cat.weight ?? 0;
     if (mass <= 0) continue;
     if (!hasAssessableCheck(cat)) continue;
     weighted += cat.score * mass;

@@ -21,9 +21,7 @@ describe('ArticleSchemaAudit', () => {
   const audit = new ArticleSchemaAudit();
 
   it('is not applicable when there are no content/article pages', () => {
-    const ctx = mockCheckContext([
-      mockPageContext('https://example.com/', '<html><head></head><body></body></html>', 0),
-    ]);
+    const ctx = mockCheckContext([]);
     const result = audit.audit(ctx);
     expect(result.status).toBe('na');
     expect(result.message).toContain('No blog/content pages');

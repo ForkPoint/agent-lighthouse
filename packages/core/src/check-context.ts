@@ -6,6 +6,7 @@ import type { A11yPageResult } from './audits/operability-safety/runner';
 export interface PageContext {
   url: string;
   pageType: PageType;
+  pageTypeSource?: 'declared' | 'detected';
   fetchResult: FetchResult;
   $: CheerioAPI;
   /** Parsed JSON-LD blocks only (used by JSON-LD-specific audits). */

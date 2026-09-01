@@ -53,7 +53,7 @@ export class OfferSchemaAudit extends Audit {
     // platforms serve products under /products/, not /pricing/ or /plans/, so a
     // URL gate produces false "not applicable" verdicts. Gate on the detected
     // product page type instead, which already covers SaaS pricing pages.
-    const productPages = ctx.pages.filter((p) => p.pageType === 'product');
+    const productPages = ctx.pages;
 
     if (productPages.length === 0) {
       return this.notApplicable(

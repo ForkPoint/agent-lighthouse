@@ -10,7 +10,6 @@ const DATE_PATTERN =
 
 /** Gate to genuine article pages — excludes XML sitemaps and interstitials. */
 function isArticleContentPage(p: PageContext): boolean {
-  if (p.pageType !== 'content') return false;
   let pathname = '';
   try {
     pathname = new URL(p.url).pathname.toLowerCase();

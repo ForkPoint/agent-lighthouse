@@ -131,7 +131,7 @@ export class TrustSignalsAudit extends Audit {
   };
 
   audit(ctx: CheckContext): AuditResult {
-    const page = ctx.pages.find((p) => p.pageType === 'homepage');
+    const page = ctx.pages[0];
 
     if (!page) {
       return this.notApplicable(

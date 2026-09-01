@@ -83,6 +83,7 @@ export const AuditMetaSchema = z.object({
   // 0 is legal: informative-tier and deprecated audits report evidence without
   // moving the score, so they carry weight 0 and stay out of the denominator.
   weight: z.number().nonnegative(),
+  pageTypes: z.array(z.string()).optional(),
   applicablePageTypes: z.array(z.string()).optional(),
   defaultPriority: CheckPrioritySchema,
   guidance: AuditGuidanceSchema.optional(),

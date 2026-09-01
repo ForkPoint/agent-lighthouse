@@ -57,7 +57,7 @@ describe('OfferTruthConsistencyAudit', () => {
   });
 
   it('is notApplicable when no scanned page is a product page', () => {
-    const ctx = mockCheckContext([mockPageContext('https://example.com/', '<html></html>')]);
+    const ctx = mockCheckContext([]);
     expect(new OfferTruthConsistencyAudit().audit(ctx).status).toBe('na');
   });
 

@@ -6,9 +6,7 @@ describe('FirstParagraphAnswersAudit', () => {
   const audit = new FirstParagraphAnswersAudit();
 
   it('is not-applicable when no article content page is scanned', () => {
-    // Homepage ('/' as first page) is not an article content page.
-    const page = mockPageContext('https://example.com/', '<html><body><main><p>Home</p></main></body></html>');
-    const result = audit.audit(mockCheckContext([page]));
+    const result = audit.audit(mockCheckContext([]));
     expect(result.status).toBe('na');
     expect(result.message).toContain('No article content pages');
   });

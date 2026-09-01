@@ -1,4 +1,4 @@
-import { CATEGORY_IDS, type PresetName } from "@forkpoint/agent-lighthouse-core";
+import { CATEGORY_IDS, type PresetName, type PageType } from "@forkpoint/agent-lighthouse-core";
 
 /**
  * Argument parsing, lifted out of `main.ts`.
@@ -40,6 +40,7 @@ export interface CliOptions {
   progressJson: boolean;
   shouldView: boolean;
   debugAudit: string | undefined;
+  pageType: PageType | undefined;
   /** Where to write the per-audit NDJSON trace, if `--trace` was given. */
   tracePath: string | undefined;
 }
@@ -129,6 +130,7 @@ export function parseCliOptions(
     progressJson: args.includes("--progress-json"),
     shouldView: args.includes("-v") || args.includes("--view"),
     debugAudit: getArgValue(args, "", "--debug-audit"),
+    pageType: getArgValue(args, "", "--page-type") as PageType | undefined,
     // A bare `--trace` with no path is still a request to trace, so it gets
     // the default file rather than being read as "no trace".
     tracePath: args.includes("--trace")
