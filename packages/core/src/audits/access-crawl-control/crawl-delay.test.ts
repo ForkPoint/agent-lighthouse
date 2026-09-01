@@ -1,4 +1,6 @@
 import { describe, it, expect } from 'vitest';
+import { defaultConfig } from '../../audit-config';
+import { planAudits } from '../../audit-runner';
 import { CrawlDelayAudit } from './crawl-delay';
 import {
   attributableFixture,
@@ -51,14 +53,15 @@ describe('CrawlDelayAudit', () => {
 
   // The scan may hold a readable page that is not this site's — a broker's
   // parking page, a foreign interstitial. Attribution is the gate's decision,
-  // and this audit has to honour it rather than read the page anyway.
+  // and the runner has to honour it rather than run this audit anyway.
   it('declines when no response can be attributed to this site', async () => {
     const { pages, rootFiles } = attributableFixture();
     const instance = new CrawlDelayAudit();
     const reached = await instance.audit(mockCheckContext(pages, rootFiles));
     expect(reached.status, 'the same input reached is judged').not.toBe('na');
 
-    const unreached = await instance.audit(unreachedSiteContext(pages, rootFiles));
-    expect(unreached.status).toBe('na');
+    const plan = planAudits(unreachedSiteContext(pages, rootFiles), defaultConfig);
+    expect(plan.runnable.map((entry) => entry.reg.meta.id)).not.toContain(CrawlDelayAudit.meta.id);
+    expect(plan.skipped.find((stub) => stub.id === CrawlDelayAudit.meta.id)?.status).toBe('na');
   });
 });

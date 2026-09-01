@@ -11,7 +11,6 @@ import { Audit } from '../../audit';
 import { weightForGrade } from '../../scorer';
 import type { CheckContext, PageContext } from '../../check-context';
 import { collectPageCss, type CssRule } from '../../gatherers/css-rules';
-import { scanReadTheSite, unreadSiteReason } from '../../scan-evidence';
 
 /**
  * Phrases that mark text as an instruction addressed to a model rather than
@@ -318,19 +317,6 @@ export class InvisibleInstructionScanAudit extends Audit {
   }
 
   async audit(ctx: CheckContext): Promise<AuditResult> {
-    // Nothing here can be attributed to this site; see `scanReadTheSite`.
-    // This audit declares every evidence key, so under the gate it is already
-    // skipped in each state that denies attribution and no production report
-    // reaches this branch. It is what makes the audit correct when it is
-    // called directly, or with the gate turned off.
-    if (!scanReadTheSite(ctx.evidence)) {
-      return this.notApplicable(
-        'No page here can be attributed to this site, so its hidden text was not judged.',
-        EXPECTED,
-        unreadSiteReason(ctx.evidence),
-      );
-    }
-
     const s = await survey(ctx);
 
     const partial = s.crossOrigin > 0 ? `; ${s.crossOrigin} cross-origin stylesheet not fetched` : '';

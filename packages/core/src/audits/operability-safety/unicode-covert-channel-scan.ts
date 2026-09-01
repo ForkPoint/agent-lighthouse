@@ -11,8 +11,6 @@ import { Audit } from '../../audit';
 import { weightForGrade } from '../../scorer';
 import type { CheckContext, PageContext } from '../../check-context';
 import {
-  scanReadTheSite,
-  unreadSiteReason,
   scanReadPageText,
   unreadPageTextReason,
 } from '../../scan-evidence';
@@ -274,15 +272,6 @@ export class UnicodeCovertChannelScanAudit extends Audit {
   }
 
   audit(ctx: CheckContext): AuditResult {
-    // Nothing here can be attributed to this site; see `scanReadTheSite`.
-    if (!scanReadTheSite(ctx.evidence)) {
-      return this.notApplicable(
-        'No response here can be attributed to this site, so its codepoints were not judged.',
-        EXPECTED,
-        unreadSiteReason(ctx.evidence),
-      );
-    }
-
     const hits: Hit[] = [];
     for (const page of ctx.pages) hits.push(...scanPage(page));
     for (const path of ROOT_FILES) {

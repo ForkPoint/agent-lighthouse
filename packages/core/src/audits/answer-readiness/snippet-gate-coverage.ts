@@ -10,7 +10,6 @@ import { Audit } from '../../audit';
 import { weightForGrade } from '../../scorer';
 import type { CheckContext, PageContext } from '../../check-context';
 import { allJsonLdNodes } from '../../parser';
-import { scanReadTheSite, unreadSiteReason } from '../../scan-evidence';
 
 /** Above this share of main-content characters, suppression is structural. */
 const COVERAGE_FLOOR = 0.2;
@@ -288,15 +287,6 @@ export class SnippetGateCoverageAudit extends Audit {
   }
 
   audit(ctx: CheckContext): AuditResult {
-    // Nothing here can be attributed to this site; see `scanReadTheSite`.
-    if (!scanReadTheSite(ctx.evidence)) {
-      return this.notApplicable(
-        'No page here can be attributed to this site, so snippet permissions were not resolved.',
-        EXPECTED,
-        unreadSiteReason(ctx.evidence),
-      );
-    }
-
     const page = ctx.pages[0];
     if (!page) {
       return this.notApplicable(

@@ -11,7 +11,6 @@ import { Audit } from '../../audit';
 import { weightForGrade } from '../../scorer';
 import type { CheckContext, PageContext } from '../../check-context';
 import { collectPageCss, type CssRule } from '../../gatherers/css-rules';
-import { scanReadTheSite, unreadSiteReason } from '../../scan-evidence';
 
 /** The repo-wide rough token estimator; no tokenizer dependency is carried. */
 const CHARS_PER_TOKEN = 4;
@@ -247,15 +246,6 @@ export class CssHiddenGhostContentAudit extends Audit {
   }
 
   async audit(ctx: CheckContext): Promise<AuditResult> {
-    // Nothing here can be attributed to this site; see `scanReadTheSite`.
-    if (!scanReadTheSite(ctx.evidence)) {
-      return this.notApplicable(
-        'No page here can be attributed to this site, so its hidden text was not measured.',
-        EXPECTED,
-        unreadSiteReason(ctx.evidence),
-      );
-    }
-
     const s = await survey(ctx);
     const partial =
       s.crossOrigin > 0 ? `; ${s.crossOrigin} cross-origin stylesheet not fetched` : '';

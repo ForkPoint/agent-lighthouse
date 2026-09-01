@@ -3,7 +3,6 @@ import type { AuditMeta, AuditResult } from '../../types';
 import { Audit } from '../../audit';
 import type { CheckContext, PageContext } from '../../check-context';
 import { weightForGrade } from '../../scorer';
-import { scanReadTheSite, unreadSiteReason } from '../../scan-evidence';
 import { parseRobots, directiveLines, isBlanketBlocked } from '../../gatherers/robots';
 import { parseDictionary } from '../../gatherers/structured-fields';
 import { TRAINING_CRAWLERS } from './_robots-txt-helpers';
@@ -228,18 +227,6 @@ export class AiUsageSignalCoherenceAcrossChannelsAudit extends Audit {
   };
 
   audit(ctx: CheckContext): AuditResult {
-    // Every channel compared here — robots.txt, the well-known file, the
-    // response headers, the page markup — is read off whatever answered the
-    // request. A bot wall answering 200 answers all of them, so "the channels
-    // agree" would be a statement about the wall; see `scanReadTheSite`.
-    if (!scanReadTheSite(ctx.evidence)) {
-      return this.notApplicable(
-        'No response here can be attributed to this site, so its AI-usage channels were not compared.',
-        'Every channel that carries an AI-usage signal says the same thing',
-        unreadSiteReason(ctx.evidence),
-      );
-    }
-
     if (ctx.pages.length === 0 && (ctx.rootFiles['/robots.txt']?.status ?? 0) !== 200) {
       return this.notApplicable(
         'The scan read no page and no robots.txt, so no channel could carry a signal.',

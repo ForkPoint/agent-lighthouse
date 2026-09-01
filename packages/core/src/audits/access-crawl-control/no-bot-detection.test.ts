@@ -1,4 +1,6 @@
 import { describe, it, expect } from 'vitest';
+import { defaultConfig } from '../../audit-config';
+import { planAudits } from '../../audit-runner';
 import { NoBotDetectionAudit } from './no-bot-detection';
 import {
   attributableFixture,
@@ -112,21 +114,22 @@ describe('NoBotDetectionAudit', () => {
 
   // The scan may hold a readable page that is not this site's — a broker's
   // parking page, a foreign interstitial. Attribution is the gate's decision,
-  // and this audit has to honour it rather than read the page anyway.
+  // and the runner has to honour it rather than run this audit anyway.
   it('declines when no response can be attributed to this site', async () => {
     const { pages, rootFiles } = attributableFixture();
     const instance = new NoBotDetectionAudit();
     const reached = await instance.audit(mockCheckContext(pages, rootFiles));
     expect(reached.status, 'the same input reached is judged').not.toBe('na');
 
-    const unreached = await instance.audit(unreachedSiteContext(pages, rootFiles));
-    expect(unreached.status).toBe('na');
+    const plan = planAudits(unreachedSiteContext(pages, rootFiles), defaultConfig);
+    expect(plan.runnable.map((entry) => entry.reg.meta.id)).not.toContain(
+      NoBotDetectionAudit.meta.id,
+    );
+    expect(plan.skipped.find((stub) => stub.id === NoBotDetectionAudit.meta.id)?.status).toBe('na');
   });
-  // Ordering, not just behaviour: the wall is this audit's subject, so the
-  // attribution guard must sit BELOW the `isBlocked` branch. A guard above it
-  // returns `na` here and the critical, weight-1.0 finding disappears from a
-  // walled scan — the most common hostile scan there is.
-  it('reports the firewall on a walled scan, not a shrug', () => {
+  // This direct call pins the audit's local WAF branch. The runner does not
+  // publish this finding from an unread scan; it emits an `na` stub instead.
+  it('reports the firewall when its local WAF branch is called directly', () => {
     const result = new NoBotDetectionAudit().audit(walledSiteContext());
     expect(result.status).toBe('fail');
     expect(result.message).toContain('Bot-defense firewall detected');

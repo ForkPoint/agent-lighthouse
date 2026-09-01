@@ -4,7 +4,6 @@ import type { CheckContext } from '../../check-context';
 import { weightForGrade } from '../../scorer';
 import { countTokens } from '../../gatherers/tokens';
 import { readabilityArticle, semanticText } from '../../gatherers/extraction';
-import { scanReadTheSite, unreadSiteReason } from '../../scan-evidence';
 
 /**
  * Where the delivered tokens went.
@@ -62,15 +61,6 @@ export class TokenRatioAudit extends Audit {
   };
 
   audit(ctx: CheckContext): AuditResult {
-    // Nothing here can be attributed to this site; see `scanReadTheSite`.
-    if (!scanReadTheSite(ctx.evidence)) {
-      return this.notApplicable(
-        'No page here can be attributed to this site, so its token mix was not measured.',
-        'A homepage from this site whose token mix can be measured',
-        unreadSiteReason(ctx.evidence),
-      );
-    }
-
     const page = ctx.pages[0];
     const rawHtml = page?.fetchResult.body ?? '';
 

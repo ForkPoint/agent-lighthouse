@@ -3,13 +3,16 @@ import type { AuditMeta, AuditResult, PageType } from './types';
 import { logger } from './logger';
 import { Audit } from './audit';
 import type { CheckContext } from './check-context';
-import type { ScanConfig, AuditRegistration } from './audit-config';
+import { defaultConfig, type ScanConfig, type AuditRegistration } from './audit-config';
+import { TAG_SKIPPED_NO_EVIDENCE } from './constants';
 import { planAudits, runAudits } from './audit-runner';
 import { AuditResultSchema } from './schemas';
 import type { AuditTrace } from './audit-trace';
 import type { AuditProgressEvent } from './audit-runner';
 import { allEvidenceMet, buildScanEvidence } from './scan-evidence';
 import { mockPageContext } from './__tests__/test-utils';
+import { unreachableContext, bareSiteContext } from './tests/fixtures';
+import { planAllAuditsForTest } from './tests/plan-all-audits';
 
 // ---------------------------------------------------------------------------
 // Helpers: build tiny fake Audit subclasses + registrations
@@ -322,6 +325,41 @@ describe('scan-error explanations', () => {
   });
 });
 
+describe('planAudits on a scan that read nothing', () => {
+  // Four audits declare no `requires` and are therefore invisible to the
+  // evidence gate. They are correct today only because each hand-rolls
+  // `scanReadTheSite` inside `audit()`. That is the arrangement this removes:
+  // an audit's protection must not depend on the audit remembering.
+  it('runs nothing at all', () => {
+    const plan = planAudits(unreachableContext(), defaultConfig);
+    expect(plan.runnable).toHaveLength(0);
+    expect(plan.skipped).toHaveLength(215);
+  });
+
+  it('tags every skip with the reason the scan gave', () => {
+    const plan = planAudits(unreachableContext(), defaultConfig);
+    for (const stub of plan.skipped) {
+      expect(stub.status).toBe('na');
+      expect(stub.tags).toContain(TAG_SKIPPED_NO_EVIDENCE);
+      expect(stub.explanation).toContain('ENOTFOUND');
+    }
+  });
+
+  // The precondition must not fire on a site that was read. A bare site is
+  // still a site, and every verdict about it is a verdict about the site.
+  it('does not fire on a bare but reachable site', () => {
+    const plan = planAudits(bareSiteContext(), defaultConfig);
+    expect(plan.runnable.length).toBeGreaterThan(100);
+  });
+});
+
+it('lets tests address every registered audit without weakening production', () => {
+  const plan = planAllAuditsForTest(defaultConfig);
+
+  expect(plan.runnable).toHaveLength(215);
+  expect(plan.skipped).toEqual([]);
+});
+
 describe('audit tracing', () => {
   /** A config with one passing audit, one page-type skip and one that throws. */
   function tracingConfig(): ScanConfig {
@@ -463,14 +501,130 @@ describe('planAudits — evidence gate', () => {
     },
   });
 
-  it('runs everything when the gate is off, however little the scan saw', () => {
-    const plan = planAudits(shellContext(), gatedConfig());
+  it('turns a WAF-blocked scan into actionable runner stubs, even with requires disabled', () => {
+    const page = mockPageContext(
+      'https://example.com/',
+      `<html><body><p>${'Readable site text. '.repeat(60)}</p></body></html>`,
+    );
+    const evidence = buildScanEvidence({
+      requestedUrl: 'https://example.com/',
+      homepageResult: { ...page.fetchResult, contentType: 'text/html' },
+      pages: [page],
+      rootFiles: {},
+      wafProtection: {
+        isBlocked: true,
+        provider: 'cloudflare',
+        name: 'Cloudflare Managed Challenge',
+        reason: 'bot challenge detected',
+      },
+    });
+    const ctx = {
+      ...shellContext(),
+      pages: [page],
+      evidence,
+    };
+
+    const plan = planAudits(ctx, defaultConfig, { enforceEvidence: false });
+    const stub = plan.skipped.find((check) => check.id === 'access-crawl-control/no-bot-detection');
+
+    expect(plan.runnable).toEqual([]);
+    expect(stub).toMatchObject({
+      status: 'na',
+      score: 0,
+      tags: [TAG_SKIPPED_NO_EVIDENCE],
+      explanation:
+        'Not assessed: Cloudflare Managed Challenge refused the scan: bot challenge detected.',
+    });
+  });
+
+  it('turns a temporary cross-origin redirect into actionable runner stubs', () => {
+    const page = mockPageContext(
+      'https://example.com/',
+      `<html><body><p>${'Readable parking text. '.repeat(60)}</p></body></html>`,
+    );
+    page.fetchResult.finalUrl = 'https://parking.test/example.com';
+    page.fetchResult.redirectChain = [
+      {
+        from: 'https://example.com/',
+        to: 'https://parking.test/example.com',
+        status: 302,
+      },
+    ];
+    const evidence = buildScanEvidence({
+      requestedUrl: 'https://example.com/',
+      homepageResult: { ...page.fetchResult, contentType: 'text/html' },
+      pages: [page],
+      rootFiles: {},
+      wafProtection: null,
+    });
+    const ctx = {
+      ...shellContext(),
+      pages: [page],
+      evidence,
+    };
+
+    const plan = planAudits(ctx, defaultConfig, { enforceEvidence: false });
+    const stub = plan.skipped.find(
+      (check) => check.id === 'access-crawl-control/no-redirect-chains',
+    );
+
+    expect(plan.runnable).toEqual([]);
+    expect(stub).toMatchObject({
+      status: 'na',
+      score: 0,
+      tags: [TAG_SKIPPED_NO_EVIDENCE],
+      explanation:
+        'Not assessed: The requested host redirected to parking.test, a different site, without a permanent redirect.',
+    });
+  });
+
+  it('turns an unread plain-HTTP scan into actionable runner stubs', () => {
+    const homepageResult = {
+      url: 'http://example.com/',
+      finalUrl: 'http://example.com/',
+      status: 0,
+      headers: {},
+      body: '',
+      ttfbMs: 0,
+      totalMs: 0,
+      contentType: '',
+      contentLength: 0,
+      error: 'ECONNREFUSED',
+    };
+    const evidence = buildScanEvidence({
+      requestedUrl: 'http://example.com/',
+      homepageResult,
+      pages: [],
+      rootFiles: {},
+      wafProtection: null,
+    });
+    const ctx = {
+      ...shellContext(),
+      pages: [],
+      baseUrl: 'http://example.com',
+      evidence,
+    };
+
+    const plan = planAudits(ctx, defaultConfig, { enforceEvidence: false });
+    const stub = plan.skipped.find((check) => check.id === 'access-crawl-control/https-enabled');
+
+    expect(plan.runnable).toEqual([]);
+    expect(stub).toMatchObject({
+      status: 'na',
+      score: 0,
+      tags: [TAG_SKIPPED_NO_EVIDENCE],
+      explanation: 'Not assessed: The homepage could not be fetched: ECONNREFUSED.',
+    });
+  });
+
+  it('runs everything only when the gate is explicitly off, however little the scan saw', () => {
+    const plan = planAudits(shellContext(), gatedConfig(), { enforceEvidence: false });
     expect(plan.runnable.map((r) => r.reg.meta.id)).toEqual(['needs-pages', 'needs-origin']);
     expect(plan.skipped).toHaveLength(0);
   });
 
-  it('skips only the audit whose evidence is missing', () => {
-    const plan = planAudits(shellContext(), gatedConfig(), { enforceEvidence: true });
+  it('skips only the audit whose evidence is missing by default', () => {
+    const plan = planAudits(shellContext(), gatedConfig());
     expect(plan.runnable.map((r) => r.reg.meta.id)).toEqual(['needs-origin']);
     expect(plan.skipped).toHaveLength(1);
   });

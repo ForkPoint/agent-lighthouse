@@ -1,4 +1,6 @@
 import { describe, it, expect } from 'vitest';
+import { defaultConfig } from '../../audit-config';
+import { planAudits } from '../../audit-runner';
 import { NoRedirectChainsAudit } from './no-redirect-chains';
 import {
   attributableFixture,
@@ -77,20 +79,24 @@ describe('NoRedirectChainsAudit', () => {
 
   // The scan may hold a readable page that is not this site's — a broker's
   // parking page, a foreign interstitial. Attribution is the gate's decision,
-  // and this audit has to honour it rather than read the page anyway.
+  // and the runner has to honour it rather than run this audit anyway.
   it('declines when no response can be attributed to this site', async () => {
     const { pages, rootFiles } = attributableFixture();
     const instance = new NoRedirectChainsAudit();
     const reached = await instance.audit(mockCheckContext(pages, rootFiles));
     expect(reached.status, 'the same input reached is judged').not.toBe('na');
 
-    const unreached = await instance.audit(unreachedSiteContext(pages, rootFiles));
-    expect(unreached.status).toBe('na');
+    const plan = planAudits(unreachedSiteContext(pages, rootFiles), defaultConfig);
+    expect(plan.runnable.map((entry) => entry.reg.meta.id)).not.toContain(
+      NoRedirectChainsAudit.meta.id,
+    );
+    expect(plan.skipped.find((stub) => stub.id === NoRedirectChainsAudit.meta.id)?.status).toBe(
+      'na',
+    );
   });
-  // Ordering: the hop that left the site is this audit's subject, and leaving
-  // the site is exactly what denies `origin-reachable`. A guard above the
-  // redirect count silences the one audit that should be speaking.
-  it('reports the hop when the redirect is what left the site', () => {
+  // This direct call pins the audit's local redirect branch. The runner does
+  // not publish this finding from an unread scan; it emits an `na` stub instead.
+  it('reports the cross-origin hop when its local branch is called directly', () => {
     const parked = '<html><body><p>Parked.</p></body></html>';
     const page = mockPageContext('https://example.com/', parked);
     page.fetchResult.finalUrl = 'https://parking.brandsale.test/example.com';
