@@ -1,6 +1,10 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import { defaultConfig } from "../audit-config";
 import { bareSiteContext } from "./fixtures";
+
+vi.mock("../fetcher", () => ({
+  isSafeUrl: vi.fn(async () => false),
+}));
 
 /**
  * What a site that has done nothing wrong is told.
@@ -17,19 +21,19 @@ import { bareSiteContext } from "./fixtures";
 describe("a bare but real site", () => {
   it("is told this, and only this", async () => {
     const rows: string[] = [];
-    const registeredIds: string[] = [];
+    const expectedIds = Object.values(defaultConfig.audits)
+      .flat()
+      .map((reg) => reg.meta.id)
+      .sort();
     for (const cat of defaultConfig.categories) {
       for (const reg of defaultConfig.audits[cat.id] ?? []) {
         const result = await reg.create().audit(bareSiteContext());
-        registeredIds.push(reg.meta.id);
         rows.push(
           `${result.status.padEnd(4)} ${String(reg.meta.weight).padEnd(3)} ${reg.meta.id}`,
         );
       }
     }
-    expect(rows.map((row) => row.trim().split(/\s+/).at(-1)).sort()).toEqual(
-      registeredIds.sort(),
-    );
+    expect(rows.map((row) => row.trim().split(/\s+/).at(-1)).sort()).toEqual(expectedIds);
     expect(rows.sort().join("\n")).toMatchSnapshot();
   });
 });
