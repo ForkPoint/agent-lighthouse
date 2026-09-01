@@ -1,7 +1,7 @@
-import type { AuditMeta, AuditResult } from '../../types';
-import { Audit } from '../../audit';
-import type { CheckContext, PageContext } from '../../check-context';
-import { weightForGrade } from '../../scorer';
+import type { AuditMeta, AuditResult } from "../../types";
+import { Audit } from "../../audit";
+import type { CheckContext, PageContext } from "../../check-context";
+import { weightForGrade } from "../../scorer";
 
 /**
  * One comparison key per URL: host without `www.`, lower-cased path with no
@@ -12,18 +12,18 @@ import { weightForGrade } from '../../scorer';
  * two different targets.
  */
 function key(url: URL): string {
-  const host = url.hostname.toLowerCase().replace(/^www\./, '');
-  const path = url.pathname.replace(/\/+$/, '').toLowerCase();
+  const host = url.hostname.toLowerCase().replace(/^www\./, "");
+  const path = url.pathname.replace(/\/+$/, "").toLowerCase();
   return `${host}${path}`;
 }
 
 function isRoot(url: URL): boolean {
-  return url.pathname.replace(/\/+$/, '') === '';
+  return url.pathname.replace(/\/+$/, "") === "";
 }
 
 function sameSite(url: URL, domain: string): boolean {
-  const host = url.hostname.toLowerCase().replace(/^www\./, '');
-  const site = domain.toLowerCase().replace(/^www\./, '');
+  const host = url.hostname.toLowerCase().replace(/^www\./, "");
+  const site = domain.toLowerCase().replace(/^www\./, "");
   return host === site || host.endsWith(`.${site}`);
 }
 
@@ -37,10 +37,10 @@ function sameSite(url: URL, domain: string): boolean {
 function headCanonicals(page: PageContext): string[] {
   const $ = page.$;
   const hrefs: string[] = [];
-  $('head link[rel]').each((_, el) => {
-    const rel = ($(el).attr('rel') ?? '').trim().toLowerCase().split(/\s+/);
-    if (!rel.includes('canonical')) return;
-    const href = ($(el).attr('href') ?? '').trim();
+  $("head link[rel]").each((_, el) => {
+    const rel = ($(el).attr("rel") ?? "").trim().toLowerCase().split(/\s+/);
+    if (!rel.includes("canonical")) return;
+    const href = ($(el).attr("href") ?? "").trim();
     if (href) hrefs.push(href);
   });
   return hrefs;
@@ -50,9 +50,9 @@ function headCanonicals(page: PageContext): string[] {
 function hasCanonicalOutsideHead(page: PageContext): boolean {
   const $ = page.$;
   let found = false;
-  $('body link[rel]').each((_, el) => {
-    const rel = ($(el).attr('rel') ?? '').trim().toLowerCase().split(/\s+/);
-    if (rel.includes('canonical')) found = true;
+  $("body link[rel]").each((_, el) => {
+    const rel = ($(el).attr("rel") ?? "").trim().toLowerCase().split(/\s+/);
+    if (rel.includes("canonical")) found = true;
   });
   return found;
 }
@@ -83,7 +83,7 @@ function readCanonical(page: PageContext): PageCanonical {
       invalid.push(href);
       continue;
     }
-    if (resolved.protocol !== 'https:' && resolved.protocol !== 'http:') {
+    if (resolved.protocol !== "https:" && resolved.protocol !== "http:") {
       invalid.push(href);
       continue;
     }
@@ -103,40 +103,40 @@ function readCanonical(page: PageContext): PageCanonical {
 
 export class CanonicalLinksAudit extends Audit {
   static override meta: AuditMeta = {
-    id: 'access-crawl-control/canonical',
-    category: 'access-crawl-control',
-    title: 'Canonical URLs point at the right page',
-    failureTitle: 'Canonical URLs point at the wrong page',
+    id: "access-crawl-control/canonical",
+    category: "access-crawl-control",
+    title: "Canonical URLs point at the right page",
+    failureTitle: "Canonical URLs point at the wrong page",
     description:
       'A `<link rel="canonical">` tells crawlers which URL is the authoritative version of a page, and the URL they pick is the one eligible to be shown — and cited — in AI answers. The value matters more than the presence: pages that all canonicalize onto the homepage remove themselves from the index.',
-    scoreDisplayMode: 'ternary',
-    weight: weightForGrade('A', 'scored'),
-    evidenceGrade: 'A',
-    tier: 'scored',
-    dossier: 'docs/evidence/audits/access-crawl-control/canonical.md',
+    scoreDisplayMode: "ternary",
+    weight: weightForGrade("A", "scored"),
+    evidenceGrade: "A",
+    tier: "scored",
+    dossier: "docs/evidence/audits/access-crawl-control/canonical.md",
     // Gate exemption: being refused is what this category reports.
-    requires: ['origin-reachable', 'rendered-body', 'sample-adequate'],
-    defaultPriority: 'medium',
+    requires: ["origin-reachable", "rendered-body", "sample-adequate"],
+    defaultPriority: "medium",
     guidance: {
       impact:
-        'A canonical pointing at the wrong URL is worse than no canonical at all: when every page canonicalizes onto the homepage — a common CMS and SPA template bug — the pages consolidate onto one URL and drop out of the index that AI Overviews and AI Mode draw on. A canonical pointing at another domain hands the attribution there.',
-      fix: 'Give each page a self-referential <link rel="canonical"> in <head> holding that page\'s own preferred URL. Check templates that emit a hard-coded canonical, and make sure client-side routing updates the tag rather than leaving the shell\'s value in place.',
+        "A canonical pointing at the wrong URL is worse than no canonical at all: when every page canonicalizes onto the homepage — a common CMS and SPA template bug — the pages consolidate onto one URL and drop out of the index that AI Overviews and AI Mode draw on. A canonical pointing at another domain hands the attribution there.",
+      fix: "Give each page a self-referential <link rel=\"canonical\"> in <head> holding that page's own preferred URL. Check templates that emit a hard-coded canonical, and make sure client-side routing updates the tag rather than leaving the shell's value in place.",
       code: '<link rel="canonical" href="https://yoursite.com/this-page" />',
-      effort: 'easy',
+      effort: "easy",
       docsUrl:
-        'https://developers.google.com/search/docs/crawling-indexing/consolidate-duplicate-urls',
-      tags: ['canonical', 'seo', 'discoverability'],
+        "https://developers.google.com/search/docs/crawling-indexing/consolidate-duplicate-urls",
+      tags: ["canonical", "seo", "discoverability"],
     },
   };
 
   audit(ctx: CheckContext): AuditResult {
-    const expected = 'Each page declares a canonical URL that points at itself';
+    const expected = "Each page declares a canonical URL that points at itself";
 
     if (ctx.pages.length === 0) {
       return this.notApplicable(
-        'No pages were scanned, so no canonical links could be read.',
+        "No pages were scanned, so no canonical links could be read.",
         expected,
-        'No pages scanned',
+        "No pages scanned",
       );
     }
 
@@ -145,7 +145,9 @@ export class CanonicalLinksAudit extends Audit {
 
     const invalid = read.filter((p) => p.invalid.length > 0);
     const conflicting = read.filter((p) => p.targets.length > 1);
-    const missing = read.filter((p) => p.targets.length === 0 && p.invalid.length === 0);
+    const missing = read.filter(
+      (p) => p.targets.length === 0 && p.invalid.length === 0,
+    );
     const offSite = read.filter(
       (p) => p.targets.length > 0 && !sameSite(p.targets[0]!, domain),
     );
@@ -166,11 +168,13 @@ export class CanonicalLinksAudit extends Audit {
       return this.fail(
         `${collapsedOnRoot.length} page(s) declare the homepage as their canonical URL.`,
         expected,
-        collapsedOnRoot.map((p) => `${p.url} → ${p.targets[0]!.href}`).join(' | '),
+        collapsedOnRoot
+          .map((p) => `${p.url} → ${p.targets[0]!.href}`)
+          .join(" | "),
         {
-          priority: 'high',
+          priority: "high",
           description:
-            'Every one of these pages tells crawlers that the homepage is the authoritative version of its content, so their own URLs are consolidated away and stop being eligible to appear — or be cited — in AI answers. This is usually a template emitting one hard-coded canonical for every route.',
+            "Every one of these pages tells crawlers that the homepage is the authoritative version of its content, so their own URLs are consolidated away and stop being eligible to appear — or be cited — in AI answers. This is usually a template emitting one hard-coded canonical for every route.",
           code: '<link rel="canonical" href="https://yoursite.com/this-page" />',
         },
         collapsedOnRoot[0]!.url,
@@ -181,11 +185,11 @@ export class CanonicalLinksAudit extends Audit {
       return this.fail(
         `${invalid.length} page(s) declare a canonical that is not a valid http(s) URL.`,
         expected,
-        invalid.map((p) => `${p.url} → ${p.invalid.join(', ')}`).join(' | '),
+        invalid.map((p) => `${p.url} → ${p.invalid.join(", ")}`).join(" | "),
         {
-          priority: 'high',
+          priority: "high",
           description:
-            'A canonical that does not resolve to an http(s) URL is ignored, so the page falls back to whatever URL the crawler happened to fetch — and any duplicate variants of it stay unconsolidated.',
+            "A canonical that does not resolve to an http(s) URL is ignored, so the page falls back to whatever URL the crawler happened to fetch — and any duplicate variants of it stay unconsolidated.",
           code: '<link rel="canonical" href="https://yoursite.com/this-page" />',
         },
         invalid[0]!.url,
@@ -217,11 +221,11 @@ export class CanonicalLinksAudit extends Audit {
       return this.warn(
         `${pages.length} of ${declaring.length} page(s) with a canonical collapse onto one URL (${target}).`,
         expected,
-        pages.map((p) => `${p.url} → ${p.targets[0]!.href}`).join(' | '),
+        pages.map((p) => `${p.url} → ${p.targets[0]!.href}`).join(" | "),
         {
-          priority: 'high',
+          priority: "high",
           description:
-            'When most scanned pages name the same other URL as canonical, their own URLs are consolidated away. Pagination and filtered variants legitimately do this for a page or two; a site-wide pattern is a template bug.',
+            "When most scanned pages name the same other URL as canonical, their own URLs are consolidated away. Pagination and filtered variants legitimately do this for a page or two; a site-wide pattern is a template bug.",
           code: '<link rel="canonical" href="https://yoursite.com/this-page" />',
         },
         pages[0]!.url,
@@ -233,12 +237,12 @@ export class CanonicalLinksAudit extends Audit {
         `${conflicting.length} page(s) carry conflicting canonical links.`,
         expected,
         conflicting
-          .map((p) => `${p.url} → ${p.targets.map((t) => t.href).join(' vs ')}`)
-          .join(' | '),
+          .map((p) => `${p.url} → ${p.targets.map((t) => t.href).join(" vs ")}`)
+          .join(" | "),
         {
-          priority: 'medium',
+          priority: "medium",
           description:
-            'A page with two canonical elements naming different URLs gives crawlers no usable preference — Google may ignore both and pick its own canonical. Emit exactly one.',
+            "A page with two canonical elements naming different URLs gives crawlers no usable preference — Google may ignore both and pick its own canonical. Emit exactly one.",
           code: '<link rel="canonical" href="https://yoursite.com/this-page" />',
         },
         conflicting[0]!.url,
@@ -249,11 +253,11 @@ export class CanonicalLinksAudit extends Audit {
       return this.warn(
         `${offSite.length} page(s) name another domain as their canonical URL.`,
         expected,
-        offSite.map((p) => `${p.url} → ${p.targets[0]!.href}`).join(' | '),
+        offSite.map((p) => `${p.url} → ${p.targets[0]!.href}`).join(" | "),
         {
-          priority: 'medium',
+          priority: "medium",
           description:
-            'A cross-domain canonical hands consolidation — and the citation — to the other domain. That is correct for content you syndicated from elsewhere and a serious defect otherwise.',
+            "A cross-domain canonical hands consolidation — and the citation — to the other domain. That is correct for content you syndicated from elsewhere and a serious defect otherwise.",
           code: '<link rel="canonical" href="https://yoursite.com/this-page" />',
         },
         offSite[0]!.url,
@@ -263,20 +267,23 @@ export class CanonicalLinksAudit extends Audit {
     if (missing.length > 0) {
       const bodyOnly = missing.filter((p) => p.hasBodyOnly);
       const detail =
-        missing.map((p) => p.url).slice(0, 5).join(', ') +
-        (missing.length > 5 ? ` (+${missing.length - 5} more)` : '') +
+        missing
+          .map((p) => p.url)
+          .slice(0, 5)
+          .join(", ") +
+        (missing.length > 5 ? ` (+${missing.length - 5} more)` : "") +
         (bodyOnly.length > 0
           ? ` — ${bodyOnly.length} page(s) declare a canonical outside <head>, where crawlers ignore it`
-          : '');
+          : "");
       const all = missing.length === ctx.pages.length;
       return this.warn(
         all
-          ? 'No scanned page declares a canonical URL.'
+          ? "No scanned page declares a canonical URL."
           : `${missing.length}/${ctx.pages.length} page(s) do not declare a canonical URL.`,
         expected,
         detail,
         {
-          priority: all ? 'medium' : 'low',
+          priority: all ? "medium" : "low",
           description:
             'Google states a site "will likely do just fine without specifying a canonical preference" and will choose a canonical itself, so this is a missed opportunity rather than a defect: a self-referential canonical is how you make that choice yourself and keep parameterized and trailing-slash variants consolidated onto one citable URL.',
           code: '<link rel="canonical" href="https://yoursite.com/this-page" />',

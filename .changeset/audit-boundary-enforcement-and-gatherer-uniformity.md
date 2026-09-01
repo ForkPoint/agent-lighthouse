@@ -1,9 +1,10 @@
 ---
-'@forkpoint/agent-lighthouse-core': major
-'@forkpoint/agent-lighthouse': major
+"@forkpoint/agent-lighthouse-core": major
+"@forkpoint/agent-lighthouse": major
 ---
 
 Audit boundary enforcement & gatherer uniformity (Phase 4 of audit architecture migration):
+
 - Enforced architectural boundary: zero direct `ctx.fetch`, bare `fetch()`, or HTTP client imports in `packages/core/src/audits/`.
 - Created AST contract script `scripts/check-audit-boundaries.mjs` and added `"check:audit-boundaries"` script to `package.json`.
 - Created dedicated gatherer modules `gatherers/mcp.ts`, `gatherers/discovery.ts`, `gatherers/rsl.ts`, `gatherers/security.ts`, and `gatherers/author.ts` with WeakMap per-scan fetch caching.

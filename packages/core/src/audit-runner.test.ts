@@ -1,31 +1,37 @@
-import { describe, it, expect, vi } from 'vitest';
-import type { AuditMeta, AuditResult, PageType } from './types';
-import { logger } from './logger';
-import { Audit } from './audit';
-import type { CheckContext } from './check-context';
-import { defaultConfig, type ScanConfig, type AuditRegistration } from './audit-config';
-import { TAG_SKIPPED_NO_EVIDENCE } from './constants';
-import { planAudits, runAudits } from './audit-runner';
-import { AuditResultSchema } from './schemas';
-import type { AuditTrace } from './audit-trace';
-import type { AuditProgressEvent } from './audit-runner';
-import { allEvidenceMet, buildScanEvidence } from './scan-evidence';
-import { mockPageContext } from './__tests__/test-utils';
-import { unreachableContext, bareSiteContext } from './tests/fixtures';
-import { planAllAuditsForTest } from './tests/plan-all-audits';
+import { describe, it, expect, vi } from "vitest";
+import type { AuditMeta, AuditResult, PageType } from "./types";
+import { logger } from "./logger";
+import { Audit } from "./audit";
+import type { CheckContext } from "./check-context";
+import {
+  defaultConfig,
+  type ScanConfig,
+  type AuditRegistration,
+} from "./audit-config";
+import { TAG_SKIPPED_NO_EVIDENCE } from "./constants";
+import { planAudits, runAudits } from "./audit-runner";
+import { AuditResultSchema } from "./schemas";
+import type { AuditTrace } from "./audit-trace";
+import type { AuditProgressEvent } from "./audit-runner";
+import { allEvidenceMet, buildScanEvidence } from "./scan-evidence";
+import { mockPageContext } from "./__tests__/test-utils";
+import { unreachableContext, bareSiteContext } from "./tests/fixtures";
+import { planAllAuditsForTest } from "./tests/plan-all-audits";
 
 // ---------------------------------------------------------------------------
 // Helpers: build tiny fake Audit subclasses + registrations
 // ---------------------------------------------------------------------------
 
-function meta(overrides: Partial<AuditMeta> & { id: string; category: string }): AuditMeta {
+function meta(
+  overrides: Partial<AuditMeta> & { id: string; category: string },
+): AuditMeta {
   return {
-    title: 'T',
-    failureTitle: 'F',
-    description: 'D',
-    scoreDisplayMode: 'ternary',
+    title: "T",
+    failureTitle: "F",
+    description: "D",
+    scoreDisplayMode: "ternary",
     weight: 1,
-    defaultPriority: 'medium',
+    defaultPriority: "medium",
     ...overrides,
   };
 }
@@ -45,20 +51,23 @@ function makeReg(
   return { create: () => new FakeAudit(), meta: regMeta };
 }
 
-const result = (status: AuditResult['status'], score: number): AuditResult => ({
+const result = (status: AuditResult["status"], score: number): AuditResult => ({
   status,
   score,
-  message: 'm',
-  expected: 'e',
-  found: 'f',
+  message: "m",
+  expected: "e",
+  found: "f",
 });
 
 function ctxWith(pageTypes: PageType[]): CheckContext {
   return {
-    pages: pageTypes.map((pt) => ({ pageType: pt, pageTypeSource: 'declared' as const })),
+    pages: pageTypes.map((pt) => ({
+      pageType: pt,
+      pageTypeSource: "declared" as const,
+    })),
     rootFiles: {},
-    domain: 'example.com',
-    baseUrl: 'https://example.com',
+    domain: "example.com",
+    baseUrl: "https://example.com",
     fetch: async () => ({}) as never,
     evidence: allEvidenceMet(),
   } as unknown as CheckContext;
@@ -68,39 +77,54 @@ function ctxWith(pageTypes: PageType[]): CheckContext {
 // Tests
 // ---------------------------------------------------------------------------
 
-describe('runAudits', () => {
-  it('filters by page type, handles sync/async/throwing audits, and scores categories', async () => {
-    const errorSpy = vi.spyOn(logger, 'error').mockImplementation(() => logger);
+describe("runAudits", () => {
+  it("filters by page type, handles sync/async/throwing audits, and scores categories", async () => {
+    const errorSpy = vi.spyOn(logger, "error").mockImplementation(() => logger);
 
     const config: ScanConfig = {
       categories: [
-        { id: 'cat1', name: 'Cat One', weight: 0.5 },
-        { id: 'cat2', name: 'Cat Two', weight: 0.5 }, // no registrations → empty branch
+        { id: "cat1", name: "Cat One", weight: 0.5 },
+        { id: "cat2", name: "Cat Two", weight: 0.5 }, // no registrations → empty branch
       ],
       audits: {
         cat1: [
           // sync pass, applicablePageTypes undefined → always included, weight 2
-          makeReg(meta({ id: 'p1', category: 'cat1', weight: 2 }), () => result('pass', 1)),
+          makeReg(meta({ id: "p1", category: "cat1", weight: 2 }), () =>
+            result("pass", 1),
+          ),
           // async warn, applicable to homepage (present) → included
-          makeReg(meta({ id: 'w1', category: 'cat1', applicablePageTypes: ['homepage'] }), async () =>
-            result('warn', 0.5),
+          makeReg(
+            meta({
+              id: "w1",
+              category: "cat1",
+              applicablePageTypes: ["homepage"],
+            }),
+            async () => result("warn", 0.5),
           ),
           // applicable only to product (absent) → recorded as an `na` stub
-          makeReg(meta({ id: 's1', category: 'cat1', applicablePageTypes: ['product'] }), () =>
-            result('fail', 0),
+          makeReg(
+            meta({
+              id: "s1",
+              category: "cat1",
+              applicablePageTypes: ["product"],
+            }),
+            () => result("fail", 0),
           ),
           // empty applicablePageTypes array → included
-          makeReg(meta({ id: 'e1', category: 'cat1', applicablePageTypes: [] }), () => result('pass', 1)),
+          makeReg(
+            meta({ id: "e1", category: "cat1", applicablePageTypes: [] }),
+            () => result("pass", 1),
+          ),
           // throws → logger.error, recorded as an `na` error stub (not dropped)
-          makeReg(meta({ id: 't1', category: 'cat1' }), () => {
-            throw new Error('boom');
+          makeReg(meta({ id: "t1", category: "cat1" }), () => {
+            throw new Error("boom");
           }),
           // reg.meta.id differs from the instance's static meta.id → the check is
           // stamped from the audit's own static meta (weight 1), not from reg.meta
           makeReg(
-            meta({ id: 'actual-mismatch', category: 'cat1' }),
-            () => result('pass', 1),
-            meta({ id: 'reg-mismatch', category: 'cat1' }),
+            meta({ id: "actual-mismatch", category: "cat1" }),
+            () => result("pass", 1),
+            meta({ id: "reg-mismatch", category: "cat1" }),
           ),
         ],
         // cat2 intentionally has no entry in the audits map
@@ -108,27 +132,29 @@ describe('runAudits', () => {
     };
 
     const events: AuditProgressEvent[] = [];
-    const out = await runAudits(ctxWith(['homepage']), config, (e) => events.push(e));
+    const out = await runAudits(ctxWith(["homepage"]), config, (e) =>
+      events.push(e),
+    );
 
     // s1 skipped (na stub) + t1 throws (na stub) + 4 real checks = 6 total.
     // 5 audits execute (s1 never runs); t1's throw is logged once.
     expect(out.checks).toHaveLength(6);
     expect(errorSpy).toHaveBeenCalledTimes(1);
-    expect(events.filter((e) => e.type === 'unit:done')).toHaveLength(4);
-    const fails = events.filter((e) => e.type === 'unit:fail');
+    expect(events.filter((e) => e.type === "unit:done")).toHaveLength(4);
+    const fails = events.filter((e) => e.type === "unit:fail");
     expect(fails).toHaveLength(1);
-    expect(fails[0]).toMatchObject({ label: 't1 T', error: 'boom' });
+    expect(fails[0]).toMatchObject({ label: "t1 T", error: "boom" });
 
     // s1 → not-applicable stub tagged as a page-type skip.
-    const s1 = out.checks.find((c) => c.id === 's1')!;
-    expect(s1.status).toBe('na');
-    expect(s1.tags).toContain('skipped:page-type');
+    const s1 = out.checks.find((c) => c.id === "s1")!;
+    expect(s1.status).toBe("na");
+    expect(s1.tags).toContain("skipped:page-type");
     // t1 → not-applicable stub tagged as a scan error.
-    const t1 = out.checks.find((c) => c.id === 't1')!;
-    expect(t1.status).toBe('na');
-    expect(t1.tags).toContain('scan-error');
+    const t1 = out.checks.find((c) => c.id === "t1")!;
+    expect(t1.status).toBe("na");
+    expect(t1.tags).toContain("scan-error");
 
-    const cat1 = out.categories.find((c) => c.id === 'cat1')!;
+    const cat1 = out.categories.find((c) => c.id === "cat1")!;
     // na stubs are excluded from the weighted score and the counts.
     // checks: p1(pass,w2), w1(warn,w1), e1(pass,w1), mismatch(pass,w1)
     // weightedSum = 1*2 + 0.5*1 + 1*1 + 1*1 = 4.5 ; totalWeight = 5 → 90
@@ -137,7 +163,7 @@ describe('runAudits', () => {
     expect(cat1.warnCount).toBe(1);
     expect(cat1.failCount).toBe(0);
 
-    const cat2 = out.categories.find((c) => c.id === 'cat2')!;
+    const cat2 = out.categories.find((c) => c.id === "cat2")!;
     expect(cat2.checks).toHaveLength(0);
     expect(cat2.score).toBe(0);
 
@@ -147,232 +173,276 @@ describe('runAudits', () => {
     errorSpy.mockRestore();
   });
 
-  it('stamps meta.weight onto every produced check, real results and na stubs alike', async () => {
-    const errorSpy = vi.spyOn(logger, 'error').mockImplementation(() => logger);
+  it("stamps meta.weight onto every produced check, real results and na stubs alike", async () => {
+    const errorSpy = vi.spyOn(logger, "error").mockImplementation(() => logger);
 
     const config: ScanConfig = {
-      categories: [{ id: 'w', name: 'W', weight: 1 }],
+      categories: [{ id: "w", name: "W", weight: 1 }],
       audits: {
         w: [
           // real audit path → stamped by Audit.toCheckResult
-          makeReg(meta({ id: 'real', category: 'w', weight: 0.6 }), () => result('pass', 1)),
+          makeReg(meta({ id: "real", category: "w", weight: 0.6 }), () =>
+            result("pass", 1),
+          ),
           // page-type skip → stamped by the stub built in planAudits
           makeReg(
-            meta({ id: 'skip', category: 'w', weight: 0.4, applicablePageTypes: ['product'] }),
-            () => result('pass', 1),
+            meta({
+              id: "skip",
+              category: "w",
+              weight: 0.4,
+              applicablePageTypes: ["product"],
+            }),
+            () => result("pass", 1),
           ),
           // throwing audit → stamped by the stub built on the error path
-          makeReg(meta({ id: 'boom', category: 'w', weight: 0.25 }), () => {
-            throw new Error('boom');
+          makeReg(meta({ id: "boom", category: "w", weight: 0.25 }), () => {
+            throw new Error("boom");
           }),
         ],
       },
     };
 
-    const out = await runAudits(ctxWith(['homepage']), config);
+    const out = await runAudits(ctxWith(["homepage"]), config);
     const byId = new Map(out.checks.map((c) => [c.id, c]));
 
-    expect(byId.get('real')!.weight).toBe(0.6);
-    expect(byId.get('skip')!.weight).toBe(0.4);
-    expect(byId.get('boom')!.weight).toBe(0.25);
+    expect(byId.get("real")!.weight).toBe(0.6);
+    expect(byId.get("skip")!.weight).toBe(0.4);
+    expect(byId.get("boom")!.weight).toBe(0.25);
     // Both stub kinds are still `na`, so their stamped weight stays out of the score.
-    expect(byId.get('skip')!.status).toBe('na');
-    expect(byId.get('boom')!.status).toBe('na');
+    expect(byId.get("skip")!.status).toBe("na");
+    expect(byId.get("boom")!.status).toBe("na");
     // Only `real` contributes: 1*0.6 / 0.6 → 100
     expect(out.categories[0].score).toBe(100);
 
     errorSpy.mockRestore();
   });
 
-  it('returns zeroed categories for empty input and works without onProgress', async () => {
+  it("returns zeroed categories for empty input and works without onProgress", async () => {
     const config: ScanConfig = {
-      categories: [{ id: 'only', name: 'Only', weight: 1 }],
+      categories: [{ id: "only", name: "Only", weight: 1 }],
       audits: { only: [] },
     };
 
     const out = await runAudits(ctxWith([]), config);
     expect(out.checks).toHaveLength(0);
     expect(out.overallScore).toBe(0);
-    expect(out.categories[0]).toMatchObject({ id: 'only', score: 0, passCount: 0 });
+    expect(out.categories[0]).toMatchObject({
+      id: "only",
+      score: 0,
+      passCount: 0,
+    });
   });
 
-  it('scores 0 when every contributing weight is zero', async () => {
+  it("scores 0 when every contributing weight is zero", async () => {
     const config: ScanConfig = {
-      categories: [{ id: 'z', name: 'Z', weight: 1 }],
+      categories: [{ id: "z", name: "Z", weight: 1 }],
       audits: {
-        z: [makeReg(meta({ id: 'zero', category: 'z', weight: 0 }), () => result('pass', 1))],
+        z: [
+          makeReg(meta({ id: "zero", category: "z", weight: 0 }), () =>
+            result("pass", 1),
+          ),
+        ],
       },
     };
 
-    const out = await runAudits(ctxWith(['homepage']), config);
+    const out = await runAudits(ctxWith(["homepage"]), config);
     // one check exists (not the empty branch), but totalWeight === 0 → score 0
     expect(out.categories[0].checks).toHaveLength(1);
     expect(out.categories[0].score).toBe(0);
   });
 
-  it('adding a weight-0 informative audit leaves the category score unchanged', async () => {
+  it("adding a weight-0 informative audit leaves the category score unchanged", async () => {
     const baseline: AuditRegistration[] = [
-      makeReg(meta({ id: 'b1', category: 'cat', weight: 1 }), () => result('pass', 1)),
-      makeReg(meta({ id: 'b2', category: 'cat', weight: 1 }), () => result('fail', 0)),
+      makeReg(meta({ id: "b1", category: "cat", weight: 1 }), () =>
+        result("pass", 1),
+      ),
+      makeReg(meta({ id: "b2", category: "cat", weight: 1 }), () =>
+        result("fail", 0),
+      ),
     ];
-    const categories = [{ id: 'cat', name: 'Cat', weight: 1 }];
+    const categories = [{ id: "cat", name: "Cat", weight: 1 }];
 
-    const before = await runAudits(ctxWith(['homepage']), {
+    const before = await runAudits(ctxWith(["homepage"]), {
       categories,
       audits: { cat: baseline },
     });
 
     // A sunset (deprecated) audit: weight 0 + informative display mode. Its
     // failing check must not move the category score in either direction.
-    const withInformative = await runAudits(ctxWith(['homepage']), {
+    const withInformative = await runAudits(ctxWith(["homepage"]), {
       categories,
       audits: {
         cat: [
           ...baseline,
           makeReg(
-            meta({ id: 'i1', category: 'cat', weight: 0, scoreDisplayMode: 'informative' }),
-            () => result('fail', 0),
+            meta({
+              id: "i1",
+              category: "cat",
+              weight: 0,
+              scoreDisplayMode: "informative",
+            }),
+            () => result("fail", 0),
           ),
         ],
       },
     });
 
     expect(before.categories[0].score).toBe(50);
-    expect(withInformative.categories[0].score).toBe(before.categories[0].score);
+    expect(withInformative.categories[0].score).toBe(
+      before.categories[0].score,
+    );
     expect(withInformative.overallScore).toBe(before.overallScore);
     // The informative check is still reported, just not scored.
-    expect(withInformative.checks.map((c) => c.id)).toContain('i1');
+    expect(withInformative.checks.map((c) => c.id)).toContain("i1");
   });
 
-  it('executes audits across multiple batches (more than the batch size)', async () => {
+  it("executes audits across multiple batches (more than the batch size)", async () => {
     const regs: AuditRegistration[] = [];
     for (let i = 0; i < 25; i++) {
-      regs.push(makeReg(meta({ id: `m${i}`, category: 'big' }), () => result('pass', 1)));
+      regs.push(
+        makeReg(meta({ id: `m${i}`, category: "big" }), () =>
+          result("pass", 1),
+        ),
+      );
     }
     const config: ScanConfig = {
-      categories: [{ id: 'big', name: 'Big', weight: 1 }],
+      categories: [{ id: "big", name: "Big", weight: 1 }],
       audits: { big: regs },
     };
 
-    const out = await runAudits(ctxWith(['homepage']), config);
+    const out = await runAudits(ctxWith(["homepage"]), config);
     expect(out.checks).toHaveLength(25);
     expect(out.categories[0].score).toBe(100);
   });
 });
 
-describe('scan-error explanations', () => {
+describe("scan-error explanations", () => {
   /** Run one audit that fails the given way, and return its stub. */
   async function stubFor(fail: () => never) {
-    const errorSpy = vi.spyOn(logger, 'error').mockImplementation(() => {});
-    const m = meta({ id: 'x1', category: 'cat1' });
+    const errorSpy = vi.spyOn(logger, "error").mockImplementation(() => {});
+    const m = meta({ id: "x1", category: "cat1" });
     const config: ScanConfig = {
-      categories: [{ id: 'cat1', name: 'Cat 1', weight: 1 }],
+      categories: [{ id: "cat1", name: "Cat 1", weight: 1 }],
       audits: { cat1: [makeReg(m, fail)] },
     };
-    const out = await runAudits(ctxWith(['homepage']), config);
+    const out = await runAudits(ctxWith(["homepage"]), config);
     errorSpy.mockRestore();
-    return out.checks.find((c) => c.id === 'x1')!;
+    return out.checks.find((c) => c.id === "x1")!;
   }
 
-  it('carries a plain error message through', async () => {
+  it("carries a plain error message through", async () => {
     const stub = await stubFor(() => {
-      throw new Error('Unknown pseudo-class :-tab-0');
+      throw new Error("Unknown pseudo-class :-tab-0");
     });
-    expect(stub.tags).toContain('scan-error');
-    expect(stub.explanation).toBe('Audit failed to run: Unknown pseudo-class :-tab-0');
+    expect(stub.tags).toContain("scan-error");
+    expect(stub.explanation).toBe(
+      "Audit failed to run: Unknown pseudo-class :-tab-0",
+    );
   });
 
   // A Zod rejection stringifies to its whole issue tree — several hundred
   // lines of JSON for one bad field, written into every report the scan
   // produces. The path and the reason are the part that identifies the defect.
-  it('reduces a schema rejection to its field paths', async () => {
+  it("reduces a schema rejection to its field paths", async () => {
     // `parse` is what throws here; the audit body never reaches a `throw` of
     // its own. That is exactly how the real failure happened — the audit
     // returned, and validation rejected the result.
     const stub = await stubFor(
-      () => AuditResultSchema.parse({ status: 'pass', score: 1, details: { ghosts: [{}] } }) as never,
+      () =>
+        AuditResultSchema.parse({
+          status: "pass",
+          score: 1,
+          details: { ghosts: [{}] },
+        }) as never,
     );
-    expect(stub.explanation).toContain('details.ghosts');
+    expect(stub.explanation).toContain("details.ghosts");
     expect(stub.explanation!.length).toBeLessThan(500);
-    expect(stub.explanation).not.toContain('unionErrors');
+    expect(stub.explanation).not.toContain("unionErrors");
   });
 
-  it('names at most three fields, so one bad shape cannot fill the report', async () => {
+  it("names at most three fields, so one bad shape cannot fill the report", async () => {
     const stub = await stubFor(() => {
       throw {
         issues: Array.from({ length: 40 }, (_v, i) => ({
-          path: ['details', 'items', i],
-          message: 'Expected string, received object',
+          path: ["details", "items", i],
+          message: "Expected string, received object",
         })),
       };
     });
-    expect(stub.explanation!.split('; ')).toHaveLength(3);
+    expect(stub.explanation!.split("; ")).toHaveLength(3);
   });
 
-  it('truncates a very long plain message rather than pasting it whole', async () => {
+  it("truncates a very long plain message rather than pasting it whole", async () => {
     const stub = await stubFor(() => {
-      throw new Error('x'.repeat(5000));
+      throw new Error("x".repeat(5000));
     });
     expect(stub.explanation!.length).toBeLessThan(500);
-    expect(stub.explanation!.endsWith('\u2026')).toBe(true);
+    expect(stub.explanation!.endsWith("\u2026")).toBe(true);
   });
 
-  it('handles a thrown non-Error', async () => {
+  it("handles a thrown non-Error", async () => {
     const stub = await stubFor((() => {
-      throw 'just a string';
+      throw "just a string";
     }) as () => never);
-    expect(stub.explanation).toBe('Audit failed to run: just a string');
+    expect(stub.explanation).toBe("Audit failed to run: just a string");
   });
 });
 
-describe('planAudits on a scan that read nothing', () => {
+describe("planAudits on a scan that read nothing", () => {
   // Four audits declare no `requires` and are therefore invisible to the
   // evidence gate. They are correct today only because each hand-rolls
   // `scanReadTheSite` inside `audit()`. That is the arrangement this removes:
   // an audit's protection must not depend on the audit remembering.
-  it('runs nothing at all', () => {
+  it("runs nothing at all", () => {
     const plan = planAudits(unreachableContext(), defaultConfig);
     expect(plan.runnable).toHaveLength(0);
     expect(plan.skipped).toHaveLength(215);
   });
 
-  it('tags every skip with the reason the scan gave', () => {
+  it("tags every skip with the reason the scan gave", () => {
     const plan = planAudits(unreachableContext(), defaultConfig);
     for (const stub of plan.skipped) {
-      expect(stub.status).toBe('na');
+      expect(stub.status).toBe("na");
       expect(stub.tags).toContain(TAG_SKIPPED_NO_EVIDENCE);
-      expect(stub.explanation).toContain('ENOTFOUND');
+      expect(stub.explanation).toContain("ENOTFOUND");
     }
   });
 
   // The precondition must not fire on a site that was read. A bare site is
   // still a site, and every verdict about it is a verdict about the site.
-  it('does not fire on a bare but reachable site', () => {
+  it("does not fire on a bare but reachable site", () => {
     const plan = planAudits(bareSiteContext(), defaultConfig);
     expect(plan.runnable.length).toBeGreaterThan(100);
   });
 });
 
-it('lets tests address every registered audit without weakening production', () => {
+it("lets tests address every registered audit without weakening production", () => {
   const plan = planAllAuditsForTest(defaultConfig);
 
   expect(plan.runnable).toHaveLength(215);
   expect(plan.skipped).toEqual([]);
 });
 
-describe('audit tracing', () => {
+describe("audit tracing", () => {
   /** A config with one passing audit, one page-type skip and one that throws. */
   function tracingConfig(): ScanConfig {
     return {
-      categories: [{ id: 'cat1', name: 'Cat 1', weight: 1 }],
+      categories: [{ id: "cat1", name: "Cat 1", weight: 1 }],
       audits: {
         cat1: [
-          makeReg(meta({ id: 'ok', category: 'cat1' }), () => result('pass', 1)),
-          makeReg(meta({ id: 'skip', category: 'cat1', applicablePageTypes: ['product'] }), () =>
-            result('pass', 1),
+          makeReg(meta({ id: "ok", category: "cat1" }), () =>
+            result("pass", 1),
           ),
-          makeReg(meta({ id: 'boom', category: 'cat1' }), () => {
-            throw new Error('boom');
+          makeReg(
+            meta({
+              id: "skip",
+              category: "cat1",
+              applicablePageTypes: ["product"],
+            }),
+            () => result("pass", 1),
+          ),
+          makeReg(meta({ id: "boom", category: "cat1" }), () => {
+            throw new Error("boom");
           }),
         ],
       },
@@ -380,10 +450,14 @@ describe('audit tracing', () => {
   }
 
   async function tracesOf() {
-    const errorSpy = vi.spyOn(logger, 'error').mockImplementation(() => {});
+    const errorSpy = vi.spyOn(logger, "error").mockImplementation(() => {});
     const traces: AuditTrace[] = [];
-    await runAudits(ctxWith(['homepage']), tracingConfig(), undefined, undefined, (t) =>
-      traces.push(t),
+    await runAudits(
+      ctxWith(["homepage"]),
+      tracingConfig(),
+      undefined,
+      undefined,
+      (t) => traces.push(t),
     );
     errorSpy.mockRestore();
     return traces;
@@ -391,58 +465,58 @@ describe('audit tracing', () => {
 
   // Every registered audit, not only the ones that produced a verdict: an
   // audit missing from the trace is exactly the one worth seeing.
-  it('emits one record per registered audit', async () => {
+  it("emits one record per registered audit", async () => {
     const traces = await tracesOf();
-    expect(traces.map((t) => t.id).sort()).toEqual(['boom', 'ok', 'skip']);
+    expect(traces.map((t) => t.id).sort()).toEqual(["boom", "ok", "skip"]);
   });
 
-  it('distinguishes ran, skipped and errored', async () => {
+  it("distinguishes ran, skipped and errored", async () => {
     const byId = new Map((await tracesOf()).map((t) => [t.id, t]));
-    expect(byId.get('ok')?.outcome).toBe('ran');
-    expect(byId.get('skip')?.outcome).toBe('skipped');
-    expect(byId.get('boom')?.outcome).toBe('error');
+    expect(byId.get("ok")?.outcome).toBe("ran");
+    expect(byId.get("skip")?.outcome).toBe("skipped");
+    expect(byId.get("boom")?.outcome).toBe("error");
   });
 
-  it('explains why a skipped audit never ran', async () => {
+  it("explains why a skipped audit never ran", async () => {
     const byId = new Map((await tracesOf()).map((t) => [t.id, t]));
-    expect(byId.get('skip')?.explanation).toContain('product');
-    expect(byId.get('skip')?.durationMs).toBe(0);
+    expect(byId.get("skip")?.explanation).toContain("product");
+    expect(byId.get("skip")?.durationMs).toBe(0);
   });
 
-  it('carries the failure message on an errored audit', async () => {
+  it("carries the failure message on an errored audit", async () => {
     const byId = new Map((await tracesOf()).map((t) => [t.id, t]));
-    expect(byId.get('boom')?.explanation).toContain('boom');
+    expect(byId.get("boom")?.explanation).toContain("boom");
   });
 
-  it('times an audit that ran', async () => {
+  it("times an audit that ran", async () => {
     const byId = new Map((await tracesOf()).map((t) => [t.id, t]));
-    expect(byId.get('ok')?.durationMs).toBeGreaterThanOrEqual(0);
+    expect(byId.get("ok")?.durationMs).toBeGreaterThanOrEqual(0);
   });
 
   // Building a record per audit is not free, so nothing is built when nobody
   // is listening and the logger is not at debug level.
-  it('builds nothing when no handler is given and the logger is quiet', async () => {
-    const debugSpy = vi.spyOn(logger, 'debug').mockImplementation(() => {});
-    const errorSpy = vi.spyOn(logger, 'error').mockImplementation(() => {});
+  it("builds nothing when no handler is given and the logger is quiet", async () => {
+    const debugSpy = vi.spyOn(logger, "debug").mockImplementation(() => {});
+    const errorSpy = vi.spyOn(logger, "error").mockImplementation(() => {});
     const previous = logger.level;
-    logger.level = 'info';
-    await runAudits(ctxWith(['homepage']), tracingConfig());
+    logger.level = "info";
+    await runAudits(ctxWith(["homepage"]), tracingConfig());
     logger.level = previous;
     errorSpy.mockRestore();
     expect(debugSpy).not.toHaveBeenCalled();
     debugSpy.mockRestore();
   });
 
-  it('logs one debug line per audit when the level asks for it', async () => {
-    const debugSpy = vi.spyOn(logger, 'debug').mockImplementation(() => {});
-    const errorSpy = vi.spyOn(logger, 'error').mockImplementation(() => {});
+  it("logs one debug line per audit when the level asks for it", async () => {
+    const debugSpy = vi.spyOn(logger, "debug").mockImplementation(() => {});
+    const errorSpy = vi.spyOn(logger, "error").mockImplementation(() => {});
     const previous = logger.level;
-    logger.level = 'debug';
-    await runAudits(ctxWith(['homepage']), tracingConfig());
+    logger.level = "debug";
+    await runAudits(ctxWith(["homepage"]), tracingConfig());
     logger.level = previous;
     errorSpy.mockRestore();
     const lines = debugSpy.mock.calls.map((c) => String(c[0]));
-    expect(lines.filter((l) => l.startsWith('[audit] '))).toHaveLength(3);
+    expect(lines.filter((l) => l.startsWith("[audit] "))).toHaveLength(3);
     debugSpy.mockRestore();
   });
 });
@@ -451,71 +525,85 @@ describe('audit tracing', () => {
 // The evidence gate
 // ---------------------------------------------------------------------------
 
-describe('planAudits — evidence gate', () => {
+describe("planAudits — evidence gate", () => {
   /** A scan that reached the origin but read nothing from any page. */
   function shellContext(): CheckContext {
     const evidence = buildScanEvidence({
-      requestedUrl: 'https://example.com',
+      requestedUrl: "https://example.com",
       homepageResult: {
-        url: 'https://example.com/',
-        finalUrl: 'https://example.com/',
+        url: "https://example.com/",
+        finalUrl: "https://example.com/",
         status: 200,
-        headers: { 'content-type': 'text/html' },
+        headers: { "content-type": "text/html" },
         body: '<html><body><div id="root"></div></body></html>',
         ttfbMs: 1,
         totalMs: 1,
-        contentType: 'text/html',
+        contentType: "text/html",
         contentLength: 46,
       },
-      pages: [mockPageContext('https://example.com/', '<html><body><div id="root"></div></body></html>')],
+      pages: [
+        mockPageContext(
+          "https://example.com/",
+          '<html><body><div id="root"></div></body></html>',
+        ),
+      ],
       rootFiles: {},
       wafProtection: null,
     });
     return {
-      pages: [{ pageType: 'homepage' }],
+      pages: [{ pageType: "homepage" }],
       rootFiles: {},
-      domain: 'example.com',
-      baseUrl: 'https://example.com',
+      domain: "example.com",
+      baseUrl: "https://example.com",
       fetch: async () => ({}) as never,
       evidence,
     } as unknown as CheckContext;
   }
 
   const gatedConfig = (): ScanConfig => ({
-    categories: [{ id: 'cat1', name: 'Cat 1', weight: 1 }],
+    categories: [{ id: "cat1", name: "Cat 1", weight: 1 }],
     audits: {
       cat1: [
         makeReg(
           meta({
-            id: 'needs-pages',
-            category: 'cat1',
-            requires: ['origin-reachable', 'unblocked-fetches', 'rendered-body', 'sample-adequate'],
+            id: "needs-pages",
+            category: "cat1",
+            requires: [
+              "origin-reachable",
+              "unblocked-fetches",
+              "rendered-body",
+              "sample-adequate",
+            ],
           }),
-          () => result('pass', 1),
+          () => result("pass", 1),
         ),
         makeReg(
-          meta({ id: 'needs-origin', category: 'cat1', requires: ['origin-reachable'] }),
-          () => result('pass', 1),
+          meta({
+            id: "needs-origin",
+            category: "cat1",
+            requires: ["origin-reachable"],
+          }),
+          () => result("pass", 1),
         ),
       ],
     },
   });
 
-  it('turns a WAF-blocked scan into actionable runner stubs, even with requires disabled', () => {
+  it("turns a WAF-blocked scan into actionable runner stubs, even with requires disabled", () => {
     const page = mockPageContext(
-      'https://example.com/',
-      `<html><body><p>${'Readable site text. '.repeat(60)}</p></body></html>`,
+      "https://example.com/",
+      `<html><body><p>${"Readable site text. ".repeat(60)}</p></body></html>`,
     );
     const evidence = buildScanEvidence({
-      requestedUrl: 'https://example.com/',
-      homepageResult: { ...page.fetchResult, contentType: 'text/html' },
+      requestedUrl: "https://example.com/",
+      homepageResult: { ...page.fetchResult, contentType: "text/html" },
       pages: [page],
       rootFiles: {},
       wafProtection: {
         isBlocked: true,
-        provider: 'cloudflare',
-        name: 'Cloudflare Managed Challenge',
-        reason: 'bot challenge detected',
+        provider: "cloudflare",
+        name: "Cloudflare Managed Challenge",
+        reason: "bot challenge detected",
       },
     });
     const ctx = {
@@ -525,34 +613,36 @@ describe('planAudits — evidence gate', () => {
     };
 
     const plan = planAudits(ctx, defaultConfig, { enforceEvidence: false });
-    const stub = plan.skipped.find((check) => check.id === 'access-crawl-control/no-bot-detection');
+    const stub = plan.skipped.find(
+      (check) => check.id === "access-crawl-control/no-bot-detection",
+    );
 
     expect(plan.runnable).toEqual([]);
     expect(stub).toMatchObject({
-      status: 'na',
+      status: "na",
       score: 0,
       tags: [TAG_SKIPPED_NO_EVIDENCE],
       explanation:
-        'Not assessed: Cloudflare Managed Challenge refused the scan: bot challenge detected.',
+        "Not assessed: Cloudflare Managed Challenge refused the scan: bot challenge detected.",
     });
   });
 
-  it('turns a temporary cross-origin redirect into actionable runner stubs', () => {
+  it("turns a temporary cross-origin redirect into actionable runner stubs", () => {
     const page = mockPageContext(
-      'https://example.com/',
-      `<html><body><p>${'Readable parking text. '.repeat(60)}</p></body></html>`,
+      "https://example.com/",
+      `<html><body><p>${"Readable parking text. ".repeat(60)}</p></body></html>`,
     );
-    page.fetchResult.finalUrl = 'https://parking.test/example.com';
+    page.fetchResult.finalUrl = "https://parking.test/example.com";
     page.fetchResult.redirectChain = [
       {
-        from: 'https://example.com/',
-        to: 'https://parking.test/example.com',
+        from: "https://example.com/",
+        to: "https://parking.test/example.com",
         status: 302,
       },
     ];
     const evidence = buildScanEvidence({
-      requestedUrl: 'https://example.com/',
-      homepageResult: { ...page.fetchResult, contentType: 'text/html' },
+      requestedUrl: "https://example.com/",
+      homepageResult: { ...page.fetchResult, contentType: "text/html" },
       pages: [page],
       rootFiles: {},
       wafProtection: null,
@@ -565,34 +655,34 @@ describe('planAudits — evidence gate', () => {
 
     const plan = planAudits(ctx, defaultConfig, { enforceEvidence: false });
     const stub = plan.skipped.find(
-      (check) => check.id === 'access-crawl-control/no-redirect-chains',
+      (check) => check.id === "access-crawl-control/no-redirect-chains",
     );
 
     expect(plan.runnable).toEqual([]);
     expect(stub).toMatchObject({
-      status: 'na',
+      status: "na",
       score: 0,
       tags: [TAG_SKIPPED_NO_EVIDENCE],
       explanation:
-        'Not assessed: The requested host redirected to parking.test, a different site, without a permanent redirect.',
+        "Not assessed: The requested host redirected to parking.test, a different site, without a permanent redirect.",
     });
   });
 
-  it('turns an unread plain-HTTP scan into actionable runner stubs', () => {
+  it("turns an unread plain-HTTP scan into actionable runner stubs", () => {
     const homepageResult = {
-      url: 'http://example.com/',
-      finalUrl: 'http://example.com/',
+      url: "http://example.com/",
+      finalUrl: "http://example.com/",
       status: 0,
       headers: {},
-      body: '',
+      body: "",
       ttfbMs: 0,
       totalMs: 0,
-      contentType: '',
+      contentType: "",
       contentLength: 0,
-      error: 'ECONNREFUSED',
+      error: "ECONNREFUSED",
     };
     const evidence = buildScanEvidence({
-      requestedUrl: 'http://example.com/',
+      requestedUrl: "http://example.com/",
       homepageResult,
       pages: [],
       rootFiles: {},
@@ -601,48 +691,60 @@ describe('planAudits — evidence gate', () => {
     const ctx = {
       ...shellContext(),
       pages: [],
-      baseUrl: 'http://example.com',
+      baseUrl: "http://example.com",
       evidence,
     };
 
     const plan = planAudits(ctx, defaultConfig, { enforceEvidence: false });
-    const stub = plan.skipped.find((check) => check.id === 'access-crawl-control/https-enabled');
+    const stub = plan.skipped.find(
+      (check) => check.id === "access-crawl-control/https-enabled",
+    );
 
     expect(plan.runnable).toEqual([]);
     expect(stub).toMatchObject({
-      status: 'na',
+      status: "na",
       score: 0,
       tags: [TAG_SKIPPED_NO_EVIDENCE],
-      explanation: 'Not assessed: The homepage could not be fetched: ECONNREFUSED.',
+      explanation:
+        "Not assessed: The homepage could not be fetched: ECONNREFUSED.",
     });
   });
 
-  it('runs everything only when the gate is explicitly off, however little the scan saw', () => {
-    const plan = planAudits(shellContext(), gatedConfig(), { enforceEvidence: false });
-    expect(plan.runnable.map((r) => r.reg.meta.id)).toEqual(['needs-pages', 'needs-origin']);
+  it("runs everything only when the gate is explicitly off, however little the scan saw", () => {
+    const plan = planAudits(shellContext(), gatedConfig(), {
+      enforceEvidence: false,
+    });
+    expect(plan.runnable.map((r) => r.reg.meta.id)).toEqual([
+      "needs-pages",
+      "needs-origin",
+    ]);
     expect(plan.skipped).toHaveLength(0);
   });
 
-  it('skips only the audit whose evidence is missing by default', () => {
+  it("skips only the audit whose evidence is missing by default", () => {
     const plan = planAudits(shellContext(), gatedConfig());
-    expect(plan.runnable.map((r) => r.reg.meta.id)).toEqual(['needs-origin']);
+    expect(plan.runnable.map((r) => r.reg.meta.id)).toEqual(["needs-origin"]);
     expect(plan.skipped).toHaveLength(1);
   });
 
-  it('never constructs a gated audit', async () => {
+  it("never constructs a gated audit", async () => {
     const create = vi.fn(() => {
-      throw new Error('a gated audit must not be constructed');
+      throw new Error("a gated audit must not be constructed");
     });
     const config: ScanConfig = {
-      categories: [{ id: 'cat1', name: 'Cat 1', weight: 1 }],
+      categories: [{ id: "cat1", name: "Cat 1", weight: 1 }],
       audits: {
         cat1: [
           {
             create,
             meta: meta({
-              id: 'needs-pages',
-              category: 'cat1',
-              requires: ['origin-reachable', 'rendered-body', 'sample-adequate'],
+              id: "needs-pages",
+              category: "cat1",
+              requires: [
+                "origin-reachable",
+                "rendered-body",
+                "sample-adequate",
+              ],
             }),
           },
         ],
@@ -654,65 +756,79 @@ describe('planAudits — evidence gate', () => {
     expect(create).not.toHaveBeenCalled();
   });
 
-  it('stubs a gated audit as na, tagged, with the reason in the explanation', () => {
-    const plan = planAudits(shellContext(), gatedConfig(), { enforceEvidence: true });
+  it("stubs a gated audit as na, tagged, with the reason in the explanation", () => {
+    const plan = planAudits(shellContext(), gatedConfig(), {
+      enforceEvidence: true,
+    });
     const stub = plan.skipped[0];
 
-    expect(stub.id).toBe('needs-pages');
-    expect(stub.status).toBe('na');
-    expect(stub.tags).toContain('skipped:no-evidence');
-    expect(stub.explanation).toContain('rendered-body');
-    expect(stub.explanation).toContain('served readable text');
+    expect(stub.id).toBe("needs-pages");
+    expect(stub.status).toBe("na");
+    expect(stub.tags).toContain("skipped:no-evidence");
+    expect(stub.explanation).toContain("rendered-body");
+    expect(stub.explanation).toContain("served readable text");
   });
 
-  it('traces a gated audit as gated, not as skipped', async () => {
+  it("traces a gated audit as gated, not as skipped", async () => {
     const ctx = shellContext();
     const config = gatedConfig();
     const traces: AuditTrace[] = [];
-    await runAudits(ctx, config, undefined, planAudits(ctx, config, { enforceEvidence: true }), (t) =>
-      traces.push(t),
+    await runAudits(
+      ctx,
+      config,
+      undefined,
+      planAudits(ctx, config, { enforceEvidence: true }),
+      (t) => traces.push(t),
     );
 
-    expect(traces.find((t) => t.id === 'needs-pages')?.outcome).toBe('gated');
-    expect(traces.find((t) => t.id === 'needs-origin')?.outcome).toBe('ran');
+    expect(traces.find((t) => t.id === "needs-pages")?.outcome).toBe("gated");
+    expect(traces.find((t) => t.id === "needs-origin")?.outcome).toBe("ran");
   });
 
-  it('reports a page-type mismatch as a page-type skip, not as a gate skip', () => {
+  it("reports a page-type mismatch as a page-type skip, not as a gate skip", () => {
     const config: ScanConfig = {
-      categories: [{ id: 'cat1', name: 'Cat 1', weight: 1 }],
+      categories: [{ id: "cat1", name: "Cat 1", weight: 1 }],
       audits: {
         cat1: [
           makeReg(
             meta({
-              id: 'product-only',
-              category: 'cat1',
-              applicablePageTypes: ['product'],
-              requires: ['origin-reachable', 'rendered-body', 'sample-adequate'],
+              id: "product-only",
+              category: "cat1",
+              applicablePageTypes: ["product"],
+              requires: [
+                "origin-reachable",
+                "rendered-body",
+                "sample-adequate",
+              ],
             }),
-            () => result('pass', 1),
+            () => result("pass", 1),
           ),
         ],
       },
     };
-    const stub = planAudits(shellContext(), config, { enforceEvidence: true }).skipped[0];
-    expect(stub.tags).toContain('skipped:page-type');
+    const stub = planAudits(shellContext(), config, { enforceEvidence: true })
+      .skipped[0];
+    expect(stub.tags).toContain("skipped:page-type");
   });
 
-  it('resolves sample-adequate against the page types the audit declares', () => {
+  it("resolves sample-adequate against the page types the audit declares", () => {
     const pages = [
-      mockPageContext('https://example.com/', `<html><body><main>${'word '.repeat(80)}</main></body></html>`),
+      mockPageContext(
+        "https://example.com/",
+        `<html><body><main>${"word ".repeat(80)}</main></body></html>`,
+      ),
     ];
     const evidence = buildScanEvidence({
-      requestedUrl: 'https://example.com',
+      requestedUrl: "https://example.com",
       homepageResult: {
-        url: 'https://example.com/',
-        finalUrl: 'https://example.com/',
+        url: "https://example.com/",
+        finalUrl: "https://example.com/",
         status: 200,
         headers: {},
-        body: '',
+        body: "",
         ttfbMs: 1,
         totalMs: 1,
-        contentType: 'text/html',
+        contentType: "text/html",
         contentLength: 1,
       },
       pages,
@@ -720,35 +836,38 @@ describe('planAudits — evidence gate', () => {
       wafProtection: null,
     });
     const ctx = {
-      pages: [{ pageType: 'homepage', pageTypeSource: 'declared' }, { pageType: 'product', pageTypeSource: 'declared' }],
+      pages: [
+        { pageType: "homepage", pageTypeSource: "declared" },
+        { pageType: "product", pageTypeSource: "declared" },
+      ],
       rootFiles: {},
-      domain: 'example.com',
-      baseUrl: 'https://example.com',
+      domain: "example.com",
+      baseUrl: "https://example.com",
       fetch: async () => ({}) as never,
       evidence,
     } as unknown as CheckContext;
 
     const config: ScanConfig = {
-      categories: [{ id: 'cat1', name: 'Cat 1', weight: 1 }],
+      categories: [{ id: "cat1", name: "Cat 1", weight: 1 }],
       audits: {
         cat1: [
           makeReg(
             meta({
-              id: 'product-audit',
-              category: 'cat1',
-              applicablePageTypes: ['product'],
-              requires: ['origin-reachable', 'sample-adequate'],
+              id: "product-audit",
+              category: "cat1",
+              applicablePageTypes: ["product"],
+              requires: ["origin-reachable", "sample-adequate"],
             }),
-            () => result('pass', 1),
+            () => result("pass", 1),
           ),
           makeReg(
             meta({
-              id: 'homepage-audit',
-              category: 'cat1',
-              applicablePageTypes: ['homepage'],
-              requires: ['origin-reachable', 'sample-adequate'],
+              id: "homepage-audit",
+              category: "cat1",
+              applicablePageTypes: ["homepage"],
+              requires: ["origin-reachable", "sample-adequate"],
             }),
-            () => result('pass', 1),
+            () => result("pass", 1),
           ),
         ],
       },
@@ -757,7 +876,7 @@ describe('planAudits — evidence gate', () => {
     const plan = planAudits(ctx, config, { enforceEvidence: true });
     // Only the homepage served readable text, so the product audit is gated
     // even though a product page was fetched.
-    expect(plan.runnable.map((r) => r.reg.meta.id)).toEqual(['homepage-audit']);
-    expect(plan.skipped[0].id).toBe('product-audit');
+    expect(plan.runnable.map((r) => r.reg.meta.id)).toEqual(["homepage-audit"]);
+    expect(plan.skipped[0].id).toBe("product-audit");
   });
 });

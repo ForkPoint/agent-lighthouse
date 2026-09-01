@@ -23,16 +23,20 @@
  * docs/evidence/deletions/agent-tools/ai-catalog-exists.md.
  */
 
-import type { CheckContext } from '../../check-context';
+import type { CheckContext } from "../../check-context";
 
 /** The only location a documented consumer (hf-discover) resolves. */
-export const AI_CATALOG_PATH = '/.well-known/ai-catalog.json';
+export const AI_CATALOG_PATH = "/.well-known/ai-catalog.json";
 
 /** Media type the spec says the manifest SHOULD be served with (§3.3). */
-export const AI_CATALOG_MEDIA_TYPE = 'application/ai-catalog+json';
+export const AI_CATALOG_MEDIA_TYPE = "application/ai-catalog+json";
 
 /** The three top-level fields ARD §4.1 makes mandatory. */
-export const ARD_REQUIRED_TOP_LEVEL = ['specVersion', 'host', 'entries'] as const;
+export const ARD_REQUIRED_TOP_LEVEL = [
+  "specVersion",
+  "host",
+  "entries",
+] as const;
 
 export interface ArdEntry {
   identifier?: string;
@@ -76,15 +80,15 @@ export interface ArdManifest {
 export type ArdRead =
   | { ok: true; manifest: ArdManifest }
   /** No 200 response at the well-known path. */
-  | { ok: false; reason: 'absent'; found: string }
+  | { ok: false; reason: "absent"; found: string }
   /** HTTP 200 but an HTML body — a SPA catch-all, not a manifest. */
-  | { ok: false; reason: 'html'; found: string }
-  | { ok: false; reason: 'not-json'; found: string }
+  | { ok: false; reason: "html"; found: string }
+  | { ok: false; reason: "not-json"; found: string }
   /** Valid JSON object, but not an ARD manifest. */
-  | { ok: false; reason: 'shape'; missing: string[]; found: string };
+  | { ok: false; reason: "shape"; missing: string[]; found: string };
 
 function isObject(val: unknown): val is Record<string, unknown> {
-  return typeof val === 'object' && val !== null && !Array.isArray(val);
+  return typeof val === "object" && val !== null && !Array.isArray(val);
 }
 
 function tryParseJson(body: string): unknown {
@@ -97,13 +101,15 @@ function tryParseJson(body: string): unknown {
 
 /** A string that carries information — whitespace-only is not a value. */
 export function nonEmptyString(val: unknown): string | undefined {
-  return typeof val === 'string' && val.trim() !== '' ? val : undefined;
+  return typeof val === "string" && val.trim() !== "" ? val : undefined;
 }
 
 /** Array-of-strings field, with blank members dropped. */
 export function stringList(val: unknown): string[] {
   if (!Array.isArray(val)) return [];
-  return val.map((v) => nonEmptyString(v)).filter((v): v is string => v !== undefined);
+  return val
+    .map((v) => nonEmptyString(v))
+    .filter((v): v is string => v !== undefined);
 }
 
 /** Human-usable label for an entry, for audit messages. */
@@ -123,17 +129,17 @@ function parseEntry(raw: unknown, index: number): ArdEntry {
     };
   }
   return {
-    identifier: nonEmptyString(raw['identifier']),
-    displayName: nonEmptyString(raw['displayName']),
-    type: nonEmptyString(raw['type']),
-    url: nonEmptyString(raw['url']),
-    hasData: raw['data'] !== undefined && raw['data'] !== null,
-    description: nonEmptyString(raw['description']),
-    capabilities: stringList(raw['capabilities']),
-    representativeQueries: stringList(raw['representativeQueries']),
-    tags: stringList(raw['tags']),
-    updatedAt: nonEmptyString(raw['updatedAt']),
-    hasTrustManifest: isObject(raw['trustManifest']),
+    identifier: nonEmptyString(raw["identifier"]),
+    displayName: nonEmptyString(raw["displayName"]),
+    type: nonEmptyString(raw["type"]),
+    url: nonEmptyString(raw["url"]),
+    hasData: raw["data"] !== undefined && raw["data"] !== null,
+    description: nonEmptyString(raw["description"]),
+    capabilities: stringList(raw["capabilities"]),
+    representativeQueries: stringList(raw["representativeQueries"]),
+    tags: stringList(raw["tags"]),
+    updatedAt: nonEmptyString(raw["updatedAt"]),
+    hasTrustManifest: isObject(raw["trustManifest"]),
     index,
   };
 }
@@ -147,39 +153,52 @@ function parseEntry(raw: unknown, index: number): ArdEntry {
  */
 export function readAiCatalog(ctx: CheckContext): ArdRead {
   const result = ctx.rootFiles[AI_CATALOG_PATH];
-  if (!result) return { ok: false, reason: 'absent', found: 'Not fetched' };
+  if (!result) return { ok: false, reason: "absent", found: "Not fetched" };
   if (result.status !== 200 || !result.body) {
-    return { ok: false, reason: 'absent', found: `HTTP ${result.status}` };
+    return { ok: false, reason: "absent", found: `HTTP ${result.status}` };
   }
 
-  const contentType = (result.contentType ?? result.headers?.['content-type'] ?? '').toLowerCase();
-  if (contentType.includes('html') || /^\s*<(!doctype|html)/i.test(result.body)) {
+  const contentType = (
+    result.contentType ??
+    result.headers?.["content-type"] ??
+    ""
+  ).toLowerCase();
+  if (
+    contentType.includes("html") ||
+    /^\s*<(!doctype|html)/i.test(result.body)
+  ) {
     return {
       ok: false,
-      reason: 'html',
-      found: `HTTP 200 but ${contentType || 'an HTML body'} — no manifest is served there`,
+      reason: "html",
+      found: `HTTP 200 but ${contentType || "an HTML body"} — no manifest is served there`,
     };
   }
 
   const parsed = tryParseJson(result.body);
   if (!isObject(parsed)) {
-    return { ok: false, reason: 'not-json', found: 'HTTP 200 but the body is not a JSON object' };
+    return {
+      ok: false,
+      reason: "not-json",
+      found: "HTTP 200 but the body is not a JSON object",
+    };
   }
 
-  const specVersion = nonEmptyString(parsed['specVersion']);
-  const host = isObject(parsed['host']) ? parsed['host'] : undefined;
-  const entries = Array.isArray(parsed['entries']) ? parsed['entries'] : undefined;
+  const specVersion = nonEmptyString(parsed["specVersion"]);
+  const host = isObject(parsed["host"]) ? parsed["host"] : undefined;
+  const entries = Array.isArray(parsed["entries"])
+    ? parsed["entries"]
+    : undefined;
 
   const missing: string[] = [];
-  if (!specVersion) missing.push('specVersion');
-  if (!host) missing.push('host');
-  if (!entries) missing.push('entries');
+  if (!specVersion) missing.push("specVersion");
+  if (!host) missing.push("host");
+  if (!entries) missing.push("entries");
   if (!specVersion || !host || !entries) {
     return {
       ok: false,
-      reason: 'shape',
+      reason: "shape",
       missing,
-      found: `JSON without ARD §4.1 required field(s): ${missing.join(', ')}`,
+      found: `JSON without ARD §4.1 required field(s): ${missing.join(", ")}`,
     };
   }
 
@@ -189,7 +208,7 @@ export function readAiCatalog(ctx: CheckContext): ArdRead {
       specVersion,
       host,
       entries: entries.map(parseEntry),
-      hostHasTrustManifest: isObject(host['trustManifest']),
+      hostHasTrustManifest: isObject(host["trustManifest"]),
       contentType,
     },
   };
@@ -201,13 +220,13 @@ export function readAiCatalog(ctx: CheckContext): ArdRead {
  */
 export function describeFailure(read: Exclude<ArdRead, { ok: true }>): string {
   switch (read.reason) {
-    case 'absent':
+    case "absent":
       return `${AI_CATALOG_PATH} is not served (${read.found}).`;
-    case 'html':
+    case "html":
       return `${AI_CATALOG_PATH} returns HTML, not a manifest — the request is being answered by a catch-all route.`;
-    case 'not-json':
+    case "not-json":
       return `${AI_CATALOG_PATH} is served but is not valid JSON.`;
-    case 'shape':
-      return `${AI_CATALOG_PATH} is not an ARD manifest: it is missing the required field(s) ${read.missing.join(', ')} (ARD §4.1).`;
+    case "shape":
+      return `${AI_CATALOG_PATH} is not an ARD manifest: it is missing the required field(s) ${read.missing.join(", ")} (ARD §4.1).`;
   }
 }

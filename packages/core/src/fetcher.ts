@@ -1,19 +1,25 @@
-import { request, Agent, type Dispatcher } from 'undici';
-import dns from 'node:dns/promises';
+import { request, Agent, type Dispatcher } from "undici";
+import dns from "node:dns/promises";
 import {
   SCANNER_USER_AGENT,
   REQUEST_TIMEOUT_MS,
   MAX_RESPONSE_BODY_BYTES,
-} from './constants';
-import { isPrivateIp } from './url-utils';
-import { logger } from './logger';
+} from "./constants";
+import { isPrivateIp } from "./url-utils";
+import { logger } from "./logger";
 
 export async function isSafeUrl(url: string): Promise<boolean> {
   try {
     const parsed = new URL(url);
-    if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') return false;
-    const hostname = parsed.hostname.replace(/^\[|\]$/g, '');
-    if (hostname === 'localhost' || hostname === '127.0.0.1' || hostname === '::1') return false;
+    if (parsed.protocol !== "http:" && parsed.protocol !== "https:")
+      return false;
+    const hostname = parsed.hostname.replace(/^\[|\]$/g, "");
+    if (
+      hostname === "localhost" ||
+      hostname === "127.0.0.1" ||
+      hostname === "::1"
+    )
+      return false;
     if (isPrivateIp(hostname)) return false;
     const { address } = await dns.lookup(hostname);
     return !isPrivateIp(address);
@@ -38,7 +44,7 @@ export interface FetchOptions {
   timeout?: number;
   followRedirects?: boolean;
   acceptHeader?: string;
-  method?: 'GET' | 'POST' | 'OPTIONS' | 'HEAD' | 'DELETE';
+  method?: "GET" | "POST" | "OPTIONS" | "HEAD" | "DELETE";
   body?: string;
   contentType?: string;
   /** Override the User-Agent header (e.g. to probe a site as a specific AI bot). */
@@ -98,16 +104,19 @@ export interface FetchResult {
  * The `@` fast-path avoids re-serializing the URL in the common (no-credentials)
  * case, which would otherwise normalize it (e.g. append a trailing slash).
  */
-export function splitCredentials(rawUrl: string): { url: string; authHeader?: string } {
-  if (!rawUrl.includes('@')) return { url: rawUrl };
+export function splitCredentials(rawUrl: string): {
+  url: string;
+  authHeader?: string;
+} {
+  if (!rawUrl.includes("@")) return { url: rawUrl };
   try {
     const parsed = new URL(rawUrl);
     if (!parsed.username && !parsed.password) return { url: rawUrl };
     // Basic auth is base64 of the *decoded* user:pass (userinfo is percent-encoded).
     const raw = `${decodeURIComponent(parsed.username)}:${decodeURIComponent(parsed.password)}`;
-    const authHeader = `Basic ${Buffer.from(raw).toString('base64')}`;
-    parsed.username = '';
-    parsed.password = '';
+    const authHeader = `Basic ${Buffer.from(raw).toString("base64")}`;
+    parsed.username = "";
+    parsed.password = "";
     return { url: parsed.href, authHeader };
   } catch {
     // Malformed URL — let request() surface the error.
@@ -122,13 +131,11 @@ export function splitCredentials(rawUrl: string): { url: string; authHeader?: st
  * without it the logs just say "fetch failed" and are undiagnosable.
  */
 function errorCode(err: unknown): string | undefined {
-  if (typeof err !== 'object' || err === null) return undefined;
+  if (typeof err !== "object" || err === null) return undefined;
   const e = err as { code?: unknown; cause?: { code?: unknown } };
   const code = e.cause?.code ?? e.code;
-  return typeof code === 'string' ? code : undefined;
+  return typeof code === "string" ? code : undefined;
 }
-
-
 
 export interface FetcherOptions {
   /**
@@ -157,6 +164,10 @@ export interface FetcherOptions {
    * is the origin.
    */
   maxConcurrent?: number;
+  /**
+   * Extra HTTP headers sent with every request from this fetcher.
+   */
+  headers?: Record<string, string>;
 }
 
 /**
@@ -225,8 +236,8 @@ export function createFetcher(fetcherOptions: FetcherOptions = {}) {
     const {
       url,
       timeout = REQUEST_TIMEOUT_MS,
-      acceptHeader = '*/*',
-      method = 'GET',
+      acceptHeader = "*/*",
+      method = "GET",
       body: requestBody,
       contentType,
       userAgent,
@@ -252,20 +263,24 @@ export function createFetcher(fetcherOptions: FetcherOptions = {}) {
 
     try {
       const reqHeaders: Record<string, string> = {
+        ...fetcherOptions.headers,
         ...extraHeaders,
-        'User-Agent': userAgent ?? SCANNER_USER_AGENT,
+        "User-Agent": userAgent ?? SCANNER_USER_AGENT,
         Accept: acceptHeader,
       };
 
       if (authHeader) {
-        reqHeaders['Authorization'] = authHeader;
+        reqHeaders["Authorization"] = authHeader;
       }
 
-      if (method === 'POST' && contentType) {
-        reqHeaders['Content-Type'] = contentType;
+      if (method === "POST" && contentType) {
+        reqHeaders["Content-Type"] = contentType;
       }
 
-      logger.debug({ url: targetUrl, method }, `[fetcher] Starting fetch: ${method} ${targetUrl}`);
+      logger.debug(
+        { url: targetUrl, method },
+        `[fetcher] Starting fetch: ${method} ${targetUrl}`,
+      );
 
       let currentUrl = targetUrl;
       let currentMethod = method;
@@ -290,16 +305,19 @@ export function createFetcher(fetcherOptions: FetcherOptions = {}) {
       // nothing from having its redirects refused.
       let gateArmed: boolean | undefined;
       let hops = 0;
-      const redirectChain: Array<{ status: number; from: string; to: string }> = [];
+      const redirectChain: Array<{ status: number; from: string; to: string }> =
+        [];
 
       while (
         followRedirects &&
         REDIRECT_STATUS.has(response.statusCode) &&
-        response.headers['location'] !== undefined &&
+        response.headers["location"] !== undefined &&
         hops < MAX_REDIRECTS
       ) {
-        const rawLocation = response.headers['location'];
-        const location = Array.isArray(rawLocation) ? rawLocation[0] : rawLocation;
+        const rawLocation = response.headers["location"];
+        const location = Array.isArray(rawLocation)
+          ? rawLocation[0]
+          : rawLocation;
         let next: string;
         try {
           next = new URL(String(location), currentUrl).href;
@@ -322,12 +340,12 @@ export function createFetcher(fetcherOptions: FetcherOptions = {}) {
             finalUrl: currentUrl,
             status: 0,
             headers: {},
-            body: '',
+            body: "",
             ttfbMs: Math.round(refusedMs),
             totalMs: Math.round(refusedMs),
-            contentType: '',
+            contentType: "",
             contentLength: 0,
-            error: 'redirect-refused',
+            error: "redirect-refused",
           };
         }
 
@@ -337,13 +355,19 @@ export function createFetcher(fetcherOptions: FetcherOptions = {}) {
         // for a POST, as every browser does. 307 and 308 keep both.
         if (
           response.statusCode === 303 ||
-          (currentMethod === 'POST' && response.statusCode !== 307 && response.statusCode !== 308)
+          (currentMethod === "POST" &&
+            response.statusCode !== 307 &&
+            response.statusCode !== 308)
         ) {
-          currentMethod = 'GET';
+          currentMethod = "GET";
           currentBody = undefined;
         }
 
-        redirectChain.push({ status: response.statusCode, from: currentUrl, to: next });
+        redirectChain.push({
+          status: response.statusCode,
+          from: currentUrl,
+          to: next,
+        });
         currentUrl = next;
         hops += 1;
 
@@ -358,9 +382,9 @@ export function createFetcher(fetcherOptions: FetcherOptions = {}) {
 
       ttfbMs = performance.now() - start;
 
-      let body = '';
+      let body = "";
       let bytes: Uint8Array | undefined;
-      if (currentMethod === 'OPTIONS') {
+      if (currentMethod === "OPTIONS") {
         // For OPTIONS requests, consume and discard the body
         await response.body.dump();
       } else if (binary) {
@@ -375,17 +399,24 @@ export function createFetcher(fetcherOptions: FetcherOptions = {}) {
       const totalMs = performance.now() - start;
 
       logger.debug(
-        { url: targetUrl, finalUrl: currentUrl, status: response.statusCode, totalMs: Math.round(totalMs) },
+        {
+          url: targetUrl,
+          finalUrl: currentUrl,
+          status: response.statusCode,
+          totalMs: Math.round(totalMs),
+        },
         `[fetcher] Fetch complete: ${currentUrl} (${response.statusCode}) in ${Math.round(totalMs)}ms`,
       );
 
       const truncatedBody =
-        body.length > MAX_RESPONSE_BODY_BYTES ? body.slice(0, MAX_RESPONSE_BODY_BYTES) : body;
+        body.length > MAX_RESPONSE_BODY_BYTES
+          ? body.slice(0, MAX_RESPONSE_BODY_BYTES)
+          : body;
 
       const headers: Record<string, string> = {};
       for (const [key, value] of Object.entries(response.headers)) {
         const name = key.toLowerCase();
-        if (typeof value === 'string') {
+        if (typeof value === "string") {
           headers[name] = value;
         } else if (Array.isArray(value)) {
           // A field sent on several lines is one field value, combined with
@@ -393,7 +424,7 @@ export function createFetcher(fetcherOptions: FetcherOptions = {}) {
           // example, a second X-Robots-Tag naming a different crawler.
           // Set-Cookie is the standing exception: its values may contain
           // commas, so they are kept on separate lines.
-          headers[name] = value.join(name === 'set-cookie' ? '\n' : ', ');
+          headers[name] = value.join(name === "set-cookie" ? "\n" : ", ");
         }
       }
 
@@ -405,14 +436,15 @@ export function createFetcher(fetcherOptions: FetcherOptions = {}) {
         body: truncatedBody,
         ttfbMs: Math.round(ttfbMs),
         totalMs: Math.round(totalMs),
-        contentType: headers['content-type'] ?? '',
+        contentType: headers["content-type"] ?? "",
         contentLength: bytes ? bytes.byteLength : truncatedBody.length,
         ...(bytes ? { bytes } : {}),
         ...(redirectChain.length > 0 ? { redirectChain } : {}),
       };
     } catch (err) {
       const totalMs = performance.now() - start;
-      const message = err instanceof Error ? err.message : 'Unknown fetch error';
+      const message =
+        err instanceof Error ? err.message : "Unknown fetch error";
       // Surface undici's underlying cause (ENOTFOUND, ECONNREFUSED, timeout, TLS…)
       // so an opaque "fetch failed" becomes diagnosable in the logs.
       const code = errorCode(err);
@@ -428,10 +460,10 @@ export function createFetcher(fetcherOptions: FetcherOptions = {}) {
         finalUrl: targetUrl,
         status: 0,
         headers: {},
-        body: '',
+        body: "",
         ttfbMs: Math.round(ttfbMs || totalMs),
         totalMs: Math.round(totalMs),
-        contentType: '',
+        contentType: "",
         contentLength: 0,
         error: detail,
       };

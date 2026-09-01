@@ -24,15 +24,15 @@ export function normalizeText(text: string): string {
   return text
     .toLowerCase()
     .replace(/[‘’“”]/g, "'")
-    .replace(/[^\p{L}\p{N}'\s]+/gu, ' ')
-    .replace(/\s+/g, ' ')
+    .replace(/[^\p{L}\p{N}'\s]+/gu, " ")
+    .replace(/\s+/g, " ")
     .trim();
 }
 
 /** Words of the normalized text. */
 export function wordCount(text: string): number {
   const normalized = normalizeText(text);
-  return normalized === '' ? 0 : normalized.split(' ').length;
+  return normalized === "" ? 0 : normalized.split(" ").length;
 }
 
 /**
@@ -41,12 +41,16 @@ export function wordCount(text: string): number {
  * Text shorter than `n` words yields one shingle — the whole text — rather than
  * an empty set, so a short paragraph can still match itself across two pages.
  */
-export function shingles(text: string, n: number = DEFAULT_SHINGLE): Set<string> {
-  const words = normalizeText(text).split(' ').filter(Boolean);
+export function shingles(
+  text: string,
+  n: number = DEFAULT_SHINGLE,
+): Set<string> {
+  const words = normalizeText(text).split(" ").filter(Boolean);
   if (words.length === 0) return new Set();
-  if (words.length <= n) return new Set([words.join(' ')]);
+  if (words.length <= n) return new Set([words.join(" ")]);
   const out = new Set<string>();
-  for (let i = 0; i + n <= words.length; i += 1) out.add(words.slice(i, i + n).join(' '));
+  for (let i = 0; i + n <= words.length; i += 1)
+    out.add(words.slice(i, i + n).join(" "));
   return out;
 }
 
@@ -69,7 +73,8 @@ export function jaccard(a: Set<string>, b: Set<string>): number {
  * character before the period must be lowercase, a digit or a closing mark, so
  * `U.S.A` and other single-letter abbreviations stay whole.
  */
-const SENTENCE_BOUNDARY = /(?<=[a-z0-9\u2019'")\]][.!?])(?=[A-Z])|(?<=[.!?])\s+/u;
+const SENTENCE_BOUNDARY =
+  /(?<=[a-z0-9\u2019'")\]][.!?])(?=[A-Z])|(?<=[.!?])\s+/u;
 
 /**
  * Sentences of `text`.
@@ -79,7 +84,7 @@ const SENTENCE_BOUNDARY = /(?<=[a-z0-9\u2019'")\]][.!?])(?=[A-Z])|(?<=[.!?])\s+/
  * whitespace nor a capital follows its period.
  */
 export function sentences(text: string): string[] {
-  const pieces = text.replace(/\s+/g, ' ').trim().split(SENTENCE_BOUNDARY);
+  const pieces = text.replace(/\s+/g, " ").trim().split(SENTENCE_BOUNDARY);
   const out: string[] = [];
   for (const piece of pieces) {
     const previous = out[out.length - 1];
@@ -87,7 +92,7 @@ export function sentences(text: string): string[] {
       out[out.length - 1] = `${previous} ${piece}`;
       continue;
     }
-    if (piece.trim() !== '') out.push(piece.trim());
+    if (piece.trim() !== "") out.push(piece.trim());
   }
   return out;
 }

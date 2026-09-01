@@ -1,11 +1,11 @@
-import { readFileSync, readdirSync, existsSync } from 'node:fs';
-import { gunzipSync } from 'node:zlib';
-import { resolve } from 'node:path';
-import type { FetchResult } from '../fetcher';
-import type { PageContext } from '../check-context';
-import { parseHtml } from '../parser';
-import { pageRendersText } from '../scan-evidence';
-import { detectWafProtection } from '../waf-detector';
+import { readFileSync, readdirSync, existsSync } from "node:fs";
+import { gunzipSync } from "node:zlib";
+import { resolve } from "node:path";
+import type { FetchResult } from "../fetcher";
+import type { PageContext } from "../check-context";
+import { parseHtml } from "../parser";
+import { pageRendersText } from "../scan-evidence";
+import { detectWafProtection } from "../waf-detector";
 
 /**
  * What a captured response turned out to be.
@@ -15,9 +15,9 @@ import { detectWafProtection } from '../waf-detector';
  * poisons the corpus silently, so the kind is part of the record and is
  * decided from the response, never from what the operator meant to capture.
  */
-export type FixtureKind = 'page' | 'wall' | 'shell';
+export type FixtureKind = "page" | "wall" | "shell";
 
-export const FIXTURE_KINDS: readonly FixtureKind[] = ['page', 'wall', 'shell'];
+export const FIXTURE_KINDS: readonly FixtureKind[] = ["page", "wall", "shell"];
 
 /**
  * Where a fixture came from and when. A fixture is a measurement of a page on
@@ -57,7 +57,7 @@ export interface FixtureProvenance {
   redirectChain?: Array<{ status: number; from: string; to: string }>;
 }
 
-const DIR = resolve(__dirname, '../../test-data/corpus/real');
+const DIR = resolve(__dirname, "../../test-data/corpus/real");
 
 /**
  * The narrowest `PageContext` `pageRendersText` reads. Building one keeps the
@@ -66,7 +66,7 @@ const DIR = resolve(__dirname, '../../test-data/corpus/real');
 function asPage(result: FetchResult): PageContext {
   return {
     url: result.finalUrl || result.url,
-    pageType: 'homepage',
+    pageType: "homepage",
     fetchResult: result,
     $: parseHtml(result.body),
     jsonLd: [],
@@ -84,7 +84,7 @@ function asPage(result: FetchResult): PageContext {
  * admits.
  */
 export function classifyCapture(result: FetchResult): FixtureKind {
-  if (result.status < 200 || result.status >= 300) return 'wall';
+  if (result.status < 200 || result.status >= 300) return "wall";
   // The fourth argument is how many pages the scan obtained. Zero is the
   // sentinel for "it obtained nothing", and several provider branches widen
   // to match any marker header when they see it — a capture has a 2xx body in
@@ -95,22 +95,30 @@ export function classifyCapture(result: FetchResult): FixtureKind {
   // Akamai branch and lands as `shell` instead of `wall`. Both are non-page,
   // so nothing is filed as readable content, and the alternative — a second
   // WAF rule written here — is the copy that this module exists to avoid.
-  if (detectWafProtection(result.finalUrl || result.url, result, {}, 1)?.isBlocked) return 'wall';
-  return pageRendersText(asPage(result)) ? 'page' : 'shell';
+  if (
+    detectWafProtection(result.finalUrl || result.url, result, {}, 1)?.isBlocked
+  )
+    return "wall";
+  return pageRendersText(asPage(result)) ? "page" : "shell";
 }
 
 export function listFixtures(): string[] {
   if (!existsSync(DIR)) return [];
   return readdirSync(DIR)
-    .filter((file) => file.endsWith('.html.gz'))
-    .map((file) => file.replace(/\.html\.gz$/, ''))
+    .filter((file) => file.endsWith(".html.gz"))
+    .map((file) => file.replace(/\.html\.gz$/, ""))
     .sort();
 }
 
-export function readFixture(name: string): { html: string; provenance: FixtureProvenance } {
-  const html = gunzipSync(readFileSync(resolve(DIR, `${name}.html.gz`))).toString('utf8');
+export function readFixture(name: string): {
+  html: string;
+  provenance: FixtureProvenance;
+} {
+  const html = gunzipSync(
+    readFileSync(resolve(DIR, `${name}.html.gz`)),
+  ).toString("utf8");
   const provenance = JSON.parse(
-    readFileSync(resolve(DIR, `${name}.json`), 'utf8'),
+    readFileSync(resolve(DIR, `${name}.json`), "utf8"),
   ) as FixtureProvenance;
   return { html, provenance };
 }

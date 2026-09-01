@@ -33,8 +33,8 @@ export interface PublishedPage {
 /** The `## ` headings of already-sliced markdown — its published sections. */
 export function publishedSections(markdown: string): string[] {
   return markdown
-    .split('\n')
-    .filter((line) => line.startsWith('## '))
+    .split("\n")
+    .filter((line) => line.startsWith("## "))
     .map((line) => line.slice(3).trim());
 }
 
@@ -74,7 +74,10 @@ export interface BarSubject {
  * Returned rather than thrown so the build can report all of them at once. A
  * gate that stops at the first failure turns a corpus sweep into a queue.
  */
-export function barViolations(subject: BarSubject, page: PublishedPage): string[] {
+export function barViolations(
+  subject: BarSubject,
+  page: PublishedPage,
+): string[] {
   const problems: string[] = [];
   const has = (name: string) => page.published.includes(name);
 
@@ -85,24 +88,29 @@ export function barViolations(subject: BarSubject, page: PublishedPage): string[
       `frontmatter grade ${subject.dossierGrade} does not match the registry's ${subject.registryGrade}`,
     );
   }
-  if (!has('What it checks')) problems.push('publishes no "What it checks" section');
-  if (!has('Why it matters')) {
-    problems.push('publishes no mechanism — add a `## Claimed mechanism (falsifiable)` section or a `**Mechanism:**` line');
+  if (!has("What it checks"))
+    problems.push('publishes no "What it checks" section');
+  if (!has("Why it matters")) {
+    problems.push(
+      "publishes no mechanism — add a `## Claimed mechanism (falsifiable)` section or a `**Mechanism:**` line",
+    );
   }
-  if (!has('Evidence')) problems.push('publishes no "Evidence" section');
+  if (!has("Evidence")) problems.push('publishes no "Evidence" section');
 
-  if (subject.tier !== 'scored') return problems;
+  if (subject.tier !== "scored") return problems;
 
   // Rules 4-6 are the price of taking weight off a site's score.
   if (!URL_LINK.test(page.markdown)) {
-    problems.push('is scored but cites no source a reader can open');
+    problems.push("is scored but cites no source a reader can open");
   }
   if (!VERIFIED.test(page.markdown)) {
-    problems.push('is scored but no source carries a `(verified <date>)` stamp');
-  }
-  if (!has('How it scores')) {
     problems.push(
-      'is scored but publishes no grade reasoning — add a `## Scoring` section or a `**Grade: X** — …` line',
+      "is scored but no source carries a `(verified <date>)` stamp",
+    );
+  }
+  if (!has("How it scores")) {
+    problems.push(
+      "is scored but publishes no grade reasoning — add a `## Scoring` section or a `**Grade: X** — …` line",
     );
   }
   return problems;
@@ -118,15 +126,18 @@ export function enforceEvidenceBar(
   entries: Array<{ subject: BarSubject; page: PublishedPage }>,
 ): void {
   const failures = entries
-    .map(({ subject, page }) => ({ id: subject.id, problems: barViolations(subject, page) }))
+    .map(({ subject, page }) => ({
+      id: subject.id,
+      problems: barViolations(subject, page),
+    }))
     .filter((entry) => entry.problems.length > 0);
   if (failures.length === 0) return;
 
   const detail = failures
-    .map((entry) => `  ${entry.id}: ${entry.problems.join('; ')}`)
-    .join('\n');
+    .map((entry) => `  ${entry.id}: ${entry.problems.join("; ")}`)
+    .join("\n");
   throw new Error(
     `${failures.length} dossier(s) fall short of the evidence bar in docs/evidence/policy.md:\n${detail}\n\n` +
-      'Either write the missing evidence, or drop the audit to informative — which is what the policy already requires.',
+      "Either write the missing evidence, or drop the audit to informative — which is what the policy already requires.",
   );
 }

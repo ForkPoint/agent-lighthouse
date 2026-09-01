@@ -1,6 +1,6 @@
-import type { AuditMeta, AuditResult } from '../../../types';
-import { Audit } from '../../../audit';
-import type { CheckContext } from '../../../check-context';
+import type { AuditMeta, AuditResult } from "../../../types";
+import { Audit } from "../../../audit";
+import type { CheckContext } from "../../../check-context";
 
 // TODO: implement proposed audit "Overlay Interception Hazard".
 // Status: stub — not registered in any category index; returns notApplicable until implemented.
@@ -23,29 +23,32 @@ import type { CheckContext } from '../../../check-context';
 // height.
 export class OverlayInterceptionHazardAudit extends Audit {
   static override meta: AuditMeta = {
-    id: 'proposed/agent-operability/overlay-interception-hazard',
-    category: 'agent-operability',
+    id: "proposed/agent-operability/overlay-interception-hazard",
+    category: "agent-operability",
     title: "Overlay Interception Hazard",
     failureTitle: "Overlay Interception Hazard",
-    description: "For every interactive element in the viewport, checks whether that element is actually the hit target at its own centre point, and reports the intercepting layer. Catches cookie bars, chat widgets, sticky headers over anchor targets, promo modals, and invisible full-viewport click-catchers.",
-    scoreDisplayMode: 'binary',
+    description:
+      "For every interactive element in the viewport, checks whether that element is actually the hit target at its own centre point, and reports the intercepting layer. Catches cookie bars, chat widgets, sticky headers over anchor targets, promo modals, and invisible full-viewport click-catchers.",
+    scoreDisplayMode: "binary",
     weight: 1,
-    defaultPriority: 'medium',
+    defaultPriority: "medium",
     guidance: {
-      impact: "Falsifiable claim: Playwright's actionability contract includes a 'receives events' check — the element must be the hit target for pointer events at the action point — and aborts the action when an overlay intercepts, which is a hard failure for every Playwright-derived agent. Vision-based agents fail differently but equally: they compute the element's coordinates from the screenshot and click the overlay instead. browser-use's snapshot extractor consumes paint order and stacking contexts for exactly this reason. Test: elementFromPoint at an element's centre returning a node that is neither the element nor its descendant predicts the abort deterministically.",
-      fix: 'TODO: written when the audit is implemented.',
-      effort: 'moderate',
-      docsUrl: 'https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/proposals/agent-operability/overlay-interception-hazard.md',
-      tags: ['proposed', 'agent-operability'],
+      impact:
+        "Falsifiable claim: Playwright's actionability contract includes a 'receives events' check — the element must be the hit target for pointer events at the action point — and aborts the action when an overlay intercepts, which is a hard failure for every Playwright-derived agent. Vision-based agents fail differently but equally: they compute the element's coordinates from the screenshot and click the overlay instead. browser-use's snapshot extractor consumes paint order and stacking contexts for exactly this reason. Test: elementFromPoint at an element's centre returning a node that is neither the element nor its descendant predicts the abort deterministically.",
+      fix: "TODO: written when the audit is implemented.",
+      effort: "moderate",
+      docsUrl:
+        "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/proposals/agent-operability/overlay-interception-hazard.md",
+      tags: ["proposed", "agent-operability"],
     },
   };
 
   audit(_ctx: CheckContext): AuditResult {
     // TODO: implement per the sketch above. Stub is intentionally inert.
     return this.notApplicable(
-      'Proposed audit not implemented yet.',
-      'Implementation per docs/evidence/proposals/agent-operability/overlay-interception-hazard.md',
-      'TODO stub',
+      "Proposed audit not implemented yet.",
+      "Implementation per docs/evidence/proposals/agent-operability/overlay-interception-hazard.md",
+      "TODO stub",
     );
   }
 }

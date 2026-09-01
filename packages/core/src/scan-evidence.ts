@@ -9,20 +9,20 @@
  *
  * Pure: no network, no IO. It reads what the orchestrator already has.
  */
-import type { FetchResult } from './fetcher';
-import type { PageContext } from './check-context';
-import type { EvidenceKey, PageType } from './types';
-import type { WafProtection } from './waf-detector';
-import { getRenderedText } from './parser';
-import { registrableOf } from './gatherers/domains';
+import type { FetchResult } from "./fetcher";
+import type { PageContext } from "./check-context";
+import type { EvidenceKey, PageType } from "./types";
+import type { WafProtection } from "./waf-detector";
+import { getRenderedText } from "./parser";
+import { registrableOf } from "./gatherers/domains";
 
 export type { EvidenceKey };
 
 export const EVIDENCE_KEYS: readonly EvidenceKey[] = [
-  'origin-reachable',
-  'unblocked-fetches',
-  'rendered-body',
-  'sample-adequate',
+  "origin-reachable",
+  "unblocked-fetches",
+  "rendered-body",
+  "sample-adequate",
 ];
 
 export interface ScanEvidence {
@@ -44,10 +44,15 @@ export interface ScanEvidenceInput {
   wafProtection: WafProtection | null;
 }
 
-const ALL_PAGE_TYPES: readonly PageType[] = ['homepage', 'category', 'product', 'content'];
+const ALL_PAGE_TYPES: readonly PageType[] = [
+  "homepage",
+  "category",
+  "product",
+  "content",
+];
 
 /** Content types that parse into a DOM a content audit can read. */
-const HTML_TYPES = ['text/html', 'application/xhtml+xml'];
+const HTML_TYPES = ["text/html", "application/xhtml+xml"];
 
 /** Statuses that move a URL for good. A temporary hop is anything else. */
 const PERMANENT_REDIRECT = new Set([301, 308]);
@@ -55,9 +60,9 @@ const PERMANENT_REDIRECT = new Set([301, 308]);
 /** The host without a leading `www.`, lowercased. */
 function bareHost(url: string): string {
   try {
-    return new URL(url).hostname.toLowerCase().replace(/^www\./, '');
+    return new URL(url).hostname.toLowerCase().replace(/^www\./, "");
   } catch {
-    return '';
+    return "";
   }
 }
 
@@ -67,9 +72,9 @@ function bareHost(url: string): string {
  */
 function registrableName(url: string): string {
   const domain = registrableOf(url);
-  if (!domain) return '';
-  const parts = domain.split('.');
-  return parts.length > 1 ? parts.slice(0, -1).join('.') : domain;
+  if (!domain) return "";
+  const parts = domain.split(".");
+  return parts.length > 1 ? parts.slice(0, -1).join(".") : domain;
 }
 
 /**
@@ -87,7 +92,11 @@ function reachedTheRequestedSite(
 ): { ok: true } | { ok: false; reason: string } {
   const requested = bareHost(requestedUrl);
   const final = bareHost(result.finalUrl || result.url);
-  if (!final) return { ok: false, reason: `The homepage response carried no usable URL.` };
+  if (!final)
+    return {
+      ok: false,
+      reason: `The homepage response carried no usable URL.`,
+    };
   if (requested === final) return { ok: true };
 
   const requestedDomain = registrableOf(requestedUrl);
@@ -101,13 +110,21 @@ function reachedTheRequestedSite(
   // unscored. Matching the registrable name across suffixes is a weaker signal
   // than matching the domain, and it is the one these sites actually give.
   const requestedName = registrableName(requestedUrl);
-  if (requestedName && requestedName === registrableName(result.finalUrl || result.url)) {
+  if (
+    requestedName &&
+    requestedName === registrableName(result.finalUrl || result.url)
+  ) {
     return { ok: true };
   }
 
   const chain = result.redirectChain ?? [];
-  const leaving = chain.filter((hop) => registrableOf(hop.from) !== registrableOf(hop.to));
-  if (leaving.length > 0 && leaving.every((hop) => PERMANENT_REDIRECT.has(hop.status))) {
+  const leaving = chain.filter(
+    (hop) => registrableOf(hop.from) !== registrableOf(hop.to),
+  );
+  if (
+    leaving.length > 0 &&
+    leaving.every((hop) => PERMANENT_REDIRECT.has(hop.status))
+  ) {
     return { ok: true };
   }
   return {
@@ -121,16 +138,22 @@ function originReachable(
   result: FetchResult,
 ): { met: boolean; reason?: string } {
   if (result.error) {
-    return { met: false, reason: `The homepage could not be fetched: ${result.error}.` };
+    return {
+      met: false,
+      reason: `The homepage could not be fetched: ${result.error}.`,
+    };
   }
   if (result.status < 200 || result.status > 299) {
-    return { met: false, reason: `The homepage answered HTTP ${result.status}.` };
+    return {
+      met: false,
+      reason: `The homepage answered HTTP ${result.status}.`,
+    };
   }
-  const type = (result.contentType || '').toLowerCase();
+  const type = (result.contentType || "").toLowerCase();
   if (!HTML_TYPES.some((html) => type.includes(html))) {
     return {
       met: false,
-      reason: `The homepage served ${result.contentType || 'no content type'}, not HTML.`,
+      reason: `The homepage served ${result.contentType || "no content type"}, not HTML.`,
     };
   }
   const reached = reachedTheRequestedSite(requestedUrl, result);
@@ -157,7 +180,10 @@ function unblockedFetches(
       : { met: false, reason: `${waf.name} refused the scan: ${waf.reason}.` };
   }
   if (homepageResult.status === 429) {
-    return { met: false, reason: 'The homepage answered HTTP 429: the scan was throttled.' };
+    return {
+      met: false,
+      reason: "The homepage answered HTTP 429: the scan was throttled.",
+    };
   }
   return { met: true };
 }
@@ -189,26 +215,26 @@ export function buildScanEvidence(input: ScanEvidenceInput): ScanEvidence {
 
   const renderedCount = Object.values(renderedByPage).filter(Boolean).length;
   const met: Record<EvidenceKey, boolean> = {
-    'origin-reachable': origin.met,
-    'unblocked-fetches': unblocked.met,
-    'rendered-body': renderedCount > 0,
-    'sample-adequate': usablePageTypes.size > 0,
+    "origin-reachable": origin.met,
+    "unblocked-fetches": unblocked.met,
+    "rendered-body": renderedCount > 0,
+    "sample-adequate": usablePageTypes.size > 0,
   };
 
   const reasons: Partial<Record<EvidenceKey, string>> = {};
-  if (origin.reason) reasons['origin-reachable'] = origin.reason;
-  if (unblocked.reason) reasons['unblocked-fetches'] = unblocked.reason;
-  if (!met['rendered-body']) {
-    reasons['rendered-body'] =
+  if (origin.reason) reasons["origin-reachable"] = origin.reason;
+  if (unblocked.reason) reasons["unblocked-fetches"] = unblocked.reason;
+  if (!met["rendered-body"]) {
+    reasons["rendered-body"] =
       input.pages.length === 0
-        ? 'The scan fetched no pages.'
+        ? "The scan fetched no pages."
         : `None of the ${input.pages.length} fetched page(s) served readable text.`;
   }
-  if (!met['sample-adequate']) {
-    reasons['sample-adequate'] =
+  if (!met["sample-adequate"]) {
+    reasons["sample-adequate"] =
       input.pages.length === 0
-        ? 'The scan fetched no pages.'
-        : 'No fetched page of any type served readable text.';
+        ? "The scan fetched no pages."
+        : "No fetched page of any type served readable text.";
   }
 
   return {
@@ -218,7 +244,7 @@ export function buildScanEvidence(input: ScanEvidenceInput): ScanEvidence {
     usablePageTypes,
     // A shell site was seen. What it serves is a finding about it, so
     // `rendered-body` and `sample-adequate` do not clear `judgeable`.
-    judgeable: met['origin-reachable'] && met['unblocked-fetches'],
+    judgeable: met["origin-reachable"] && met["unblocked-fetches"],
   };
 }
 
@@ -254,9 +280,9 @@ export function scanReadTheSite(evidence: ScanEvidence): boolean {
 /** Why the scan holds nothing it can attribute to the site. */
 export function unreadSiteReason(evidence: ScanEvidence): string {
   return (
-    evidence.reasons['origin-reachable'] ??
-    evidence.reasons['unblocked-fetches'] ??
-    'The scan obtained no response it could attribute to this site.'
+    evidence.reasons["origin-reachable"] ??
+    evidence.reasons["unblocked-fetches"] ??
+    "The scan obtained no response it could attribute to this site."
   );
 }
 
@@ -276,14 +302,14 @@ export function unreadSiteReason(evidence: ScanEvidence): string {
  * on a shell and must be reported before this guard is reached.
  */
 export function scanReadPageText(evidence: ScanEvidence): boolean {
-  return evidence.met['rendered-body'];
+  return evidence.met["rendered-body"];
 }
 
 /** Why no fetched page served text to read. */
 export function unreadPageTextReason(evidence: ScanEvidence): string {
   return (
-    evidence.reasons['rendered-body'] ??
-    'No fetched page served text a non-JS consumer can read.'
+    evidence.reasons["rendered-body"] ??
+    "No fetched page served text a non-JS consumer can read."
   );
 }
 
@@ -291,10 +317,10 @@ export function unreadPageTextReason(evidence: ScanEvidence): string {
 export function allEvidenceMet(): ScanEvidence {
   return {
     met: {
-      'origin-reachable': true,
-      'unblocked-fetches': true,
-      'rendered-body': true,
-      'sample-adequate': true,
+      "origin-reachable": true,
+      "unblocked-fetches": true,
+      "rendered-body": true,
+      "sample-adequate": true,
     },
     reasons: {},
     renderedByPage: {},

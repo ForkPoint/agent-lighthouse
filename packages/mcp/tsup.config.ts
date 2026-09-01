@@ -1,16 +1,16 @@
-import { defineConfig } from 'tsup';
+import { defineConfig } from "tsup";
 
-const packageVersion = process.env.npm_package_version ?? 'unknown';
+const packageVersion = process.env.npm_package_version ?? "unknown";
 
 export default defineConfig({
   entry: {
-    index: 'src/index.ts',
-    server: 'src/server.ts',
+    index: "src/index.ts",
+    server: "src/server.ts",
   },
-  format: ['cjs', 'esm'],
+  format: ["cjs", "esm"],
   banner: ({ entry }) => {
-    if (entry === 'server') {
-      return { js: '#!/usr/bin/env node' };
+    if (entry === "server") {
+      return { js: "#!/usr/bin/env node" };
     }
     return {};
   },

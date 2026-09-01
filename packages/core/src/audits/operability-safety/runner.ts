@@ -11,16 +11,16 @@
  * `./engine` and runs directly against the parsed DOM. Nothing is injected into
  * the jsdom window, so there is no heavyweight runtime to load per page.
  */
-import { JSDOM } from 'jsdom';
-import { logger } from '../../logger';
-import { runRules } from './engine/rules';
+import { JSDOM } from "jsdom";
+import { logger } from "../../logger";
+import { runRules } from "./engine/rules";
 
 export interface A11yNodeFinding {
   target: string;
   summary: string;
 }
 
-export type A11yStatus = 'pass' | 'fail' | 'incomplete' | 'inapplicable';
+export type A11yStatus = "pass" | "fail" | "incomplete" | "inapplicable";
 
 export interface A11yRuleResult {
   status: A11yStatus;
@@ -33,7 +33,10 @@ export type A11yPageResult = Record<string, A11yRuleResult>;
 // Bound how many jsdom instances are alive at once (process-wide) to cap memory
 // under concurrent scans. Each run is independent, so this is a throughput
 // limiter, not a correctness lock.
-const MAX_CONCURRENT_A11Y = Math.max(1, Number(process.env.A11Y_CONCURRENCY ?? 3));
+const MAX_CONCURRENT_A11Y = Math.max(
+  1,
+  Number(process.env.A11Y_CONCURRENCY ?? 3),
+);
 let activeA11y = 0;
 const a11yQueue: Array<() => void> = [];
 async function acquire(): Promise<void> {
@@ -63,8 +66,8 @@ function release(): void {
  */
 export function stripStyles(html: string): string {
   return html
-    .replace(/<style\b[^>]*>[\s\S]*?<\/style>/gi, '')
-    .replace(/<link\b[^>]*\brel\s*=\s*["']?stylesheet\b[^>]*>/gi, '');
+    .replace(/<style\b[^>]*>[\s\S]*?<\/style>/gi, "")
+    .replace(/<link\b[^>]*\brel\s*=\s*["']?stylesheet\b[^>]*>/gi, "");
 }
 
 /**
@@ -80,7 +83,11 @@ export async function runA11yForHtml(
   await acquire();
   let dom: JSDOM | undefined;
   try {
-    dom = new JSDOM(stripStyles(html), { url, runScripts: 'outside-only', pretendToBeVisual: true });
+    dom = new JSDOM(stripStyles(html), {
+      url,
+      runScripts: "outside-only",
+      pretendToBeVisual: true,
+    });
     const doc = dom.window.document as unknown as Document;
     const results = runRules(doc, ruleIds);
 
@@ -92,13 +99,16 @@ export async function runA11yForHtml(
         status: r.status,
         nodes: r.nodes.slice(0, 5).map((n) => ({
           target: n.target,
-          summary: (n.summary ?? '').replace(/\s+/g, ' ').trim(),
+          summary: (n.summary ?? "").replace(/\s+/g, " ").trim(),
         })),
       };
     }
     return out;
   } catch (err) {
-    logger.warn({ err, url }, '[a11y-runner] accessibility run failed; treating rules as not-applicable');
+    logger.warn(
+      { err, url },
+      "[a11y-runner] accessibility run failed; treating rules as not-applicable",
+    );
     return {};
   } finally {
     try {

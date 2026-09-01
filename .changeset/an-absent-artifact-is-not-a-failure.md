@@ -1,5 +1,5 @@
 ---
-'@forkpoint/agent-lighthouse-core': major
+"@forkpoint/agent-lighthouse-core": major
 ---
 
 Four OpenAPI audits no longer fail a site for publishing no OpenAPI document.

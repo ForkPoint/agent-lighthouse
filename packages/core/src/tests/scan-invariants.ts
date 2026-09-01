@@ -1,8 +1,8 @@
-import { defaultConfig } from '../audit-config';
-import { TAG_SCAN_ERROR } from '../constants';
-import { CheckResultSchema } from '../schemas';
-import { gatedMassShare, GATED_MASS_UNSCORED_THRESHOLD } from '../scorer';
-import type { CheckResult, ScanReport } from '../types';
+import { defaultConfig } from "../audit-config";
+import { TAG_SCAN_ERROR } from "../constants";
+import { CheckResultSchema } from "../schemas";
+import { gatedMassShare, GATED_MASS_UNSCORED_THRESHOLD } from "../scorer";
+import type { CheckResult, ScanReport } from "../types";
 
 /**
  * Everything a scan report must be true about itself, whatever site it describes.
@@ -47,7 +47,7 @@ import type { CheckResult, ScanReport } from '../types';
 export const READS_RENDERED_BODY = new Set(
   Object.values(defaultConfig.audits)
     .flat()
-    .filter((r) => (r.meta.requires ?? []).includes('rendered-body'))
+    .filter((r) => (r.meta.requires ?? []).includes("rendered-body"))
     .map((r) => r.meta.id),
 );
 
@@ -56,10 +56,13 @@ export const READS_RENDERED_BODY = new Set(
  * is self-consistent — not that the site was judged correctly, which no rule
  * here can know.
  */
-export function invariantViolations(report: ScanReport, checks: CheckResult[]): string[] {
+export function invariantViolations(
+  report: ScanReport,
+  checks: CheckResult[],
+): string[] {
   const violations: string[] = [];
   const validity = report.scanValidity;
-  if (!validity) return ['the report carried no scanValidity'];
+  if (!validity) return ["the report carried no scanValidity"];
 
   // Rule 1, load-bearing. An audit that throws is caught by the runner
   // (`audit-runner.ts`) and replaced with a stub, so a scan that ran a broken
@@ -81,7 +84,7 @@ export function invariantViolations(report: ScanReport, checks: CheckResult[]): 
     );
   }
 
-  const passes = checks.filter((c) => c.status === 'pass');
+  const passes = checks.filter((c) => c.status === "pass");
 
   // Rule 3, tripwire. Nothing obtained: the scan holds no response it can
   // attribute to this site, so no audit may congratulate it. Mirrors
@@ -89,7 +92,7 @@ export function invariantViolations(report: ScanReport, checks: CheckResult[]): 
   // a synthetic state. The runner's unread-scan guard skips all 215 audits to
   // `na` before any audit runs. On a live scan this fires only if that guard
   // regresses or another path constructs an inconsistent report.
-  if (validity.evidence['origin-reachable'] === false && passes.length > 0) {
+  if (validity.evidence["origin-reachable"] === false && passes.length > 0) {
     violations.push(
       `origin unreachable but ${passes.length} check(s) passed, e.g. ${passes[0]!.id}`,
     );
@@ -104,8 +107,8 @@ export function invariantViolations(report: ScanReport, checks: CheckResult[]): 
   // regresses. Merging rules 3 and 4 would produce false failures on every
   // client-rendered site in the list.
   if (
-    validity.evidence['origin-reachable'] === true &&
-    validity.evidence['rendered-body'] === false
+    validity.evidence["origin-reachable"] === true &&
+    validity.evidence["rendered-body"] === false
   ) {
     const blind = passes.filter((c) => READS_RENDERED_BODY.has(c.id));
     if (blind.length > 0) {
@@ -121,8 +124,8 @@ export function invariantViolations(report: ScanReport, checks: CheckResult[]): 
   // A report whose flag disagrees with its own evidence is unreadable either
   // way round.
   const expectedJudgeable =
-    validity.evidence['origin-reachable'] === true &&
-    validity.evidence['unblocked-fetches'] === true;
+    validity.evidence["origin-reachable"] === true &&
+    validity.evidence["unblocked-fetches"] === true;
   if (validity.judgeable !== expectedJudgeable) {
     violations.push(
       `judgeable is ${validity.judgeable} but the evidence says ${expectedJudgeable}`,
@@ -136,7 +139,8 @@ export function invariantViolations(report: ScanReport, checks: CheckResult[]): 
   // catch is a report whose categories no longer hold the checks that were
   // scored.
   const gatedShare = gatedMassShare(checks);
-  const mustBeUnscored = !validity.judgeable || gatedShare > GATED_MASS_UNSCORED_THRESHOLD;
+  const mustBeUnscored =
+    !validity.judgeable || gatedShare > GATED_MASS_UNSCORED_THRESHOLD;
   if (mustBeUnscored && report.overallScore !== null) {
     violations.push(
       `scored ${report.overallScore} on a scan that must be unscored ` +
@@ -154,11 +158,16 @@ export function invariantViolations(report: ScanReport, checks: CheckResult[]): 
   // report contradicts itself: a tier without a score, or a reason without a
   // suppression.
   if ((report.overallScore === null) !== (report.scoreTier === null)) {
-    violations.push(`score ${report.overallScore} but tier ${report.scoreTier}`);
-  }
-  if ((report.overallScore === null) !== (validity.unscoredReason !== undefined)) {
     violations.push(
-      `score ${report.overallScore} but unscoredReason ${validity.unscoredReason ? 'set' : 'absent'}`,
+      `score ${report.overallScore} but tier ${report.scoreTier}`,
+    );
+  }
+  if (
+    (report.overallScore === null) !==
+    (validity.unscoredReason !== undefined)
+  ) {
+    violations.push(
+      `score ${report.overallScore} but unscoredReason ${validity.unscoredReason ? "set" : "absent"}`,
     );
   }
 

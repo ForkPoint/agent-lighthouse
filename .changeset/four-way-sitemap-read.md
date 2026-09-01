@@ -1,5 +1,5 @@
 ---
-'@forkpoint/agent-lighthouse-core': major
+"@forkpoint/agent-lighthouse-core": major
 ---
 
 refactor(core)!: perform four-way read of sitemaps and decline on absence

@@ -1,10 +1,14 @@
-import { describe, it, expect } from 'vitest';
-import { defaultConfig } from '../audit-config';
-import { planAudits } from '../audit-runner';
-import { AuditResultSchema } from '../schemas';
-import { NOTHING_OBTAINED, SHELL_STATE } from './hostile-states';
-import { auditSources, readsPagesDirectly, SHELL_STANCE } from './audit-sources';
-import type { AuditResult } from '../types';
+import { describe, it, expect } from "vitest";
+import { defaultConfig } from "../audit-config";
+import { planAudits } from "../audit-runner";
+import { AuditResultSchema } from "../schemas";
+import { NOTHING_OBTAINED, SHELL_STATE } from "./hostile-states";
+import {
+  auditSources,
+  readsPagesDirectly,
+  SHELL_STANCE,
+} from "./audit-sources";
+import type { AuditResult } from "../types";
 
 /**
  * A scan that obtained nothing holds no evidence about the site, so the runner
@@ -24,8 +28,8 @@ const VACUOUS_PASS_ALLOWLIST = new Map<string, string>();
 
 const registrations = Object.values(defaultConfig.audits).flat();
 
-describe('hostile-state contract — nothing obtained', () => {
-  it('has audits to check', () => {
+describe("hostile-state contract — nothing obtained", () => {
+  it("has audits to check", () => {
     expect(registrations.length).toBeGreaterThan(200);
   });
 
@@ -41,8 +45,11 @@ describe('hostile-state contract — nothing obtained', () => {
     it(`${id}: claims nothing when the scan read nothing`, () => {
       for (const { state, plan } of states) {
         const result = plan.skipped.find((stub) => stub.id === id);
-        expect(plan.runnable.map((entry) => entry.reg.meta.id), state.name).not.toContain(id);
-        expect(result?.status, state.name).toBe('na');
+        expect(
+          plan.runnable.map((entry) => entry.reg.meta.id),
+          state.name,
+        ).not.toContain(id);
+        expect(result?.status, state.name).toBe("na");
         expect(result?.explanation, state.name).toMatch(/^Not assessed: /);
       }
     });
@@ -55,7 +62,7 @@ describe('hostile-state contract — nothing obtained', () => {
  * correct. Held to the rule: every audit that declares `rendered-body`, plus
  * every audit that searches a page's served HTML whatever it declares.
  */
-describe('hostile-state contract — a shell page', () => {
+describe("hostile-state contract — a shell page", () => {
   const ctx = SHELL_STATE.build();
   // Held to the rule: an audit that declares `rendered-body`, plus an audit
   // whose source searches a page's served HTML whatever it declares. The
@@ -67,41 +74,48 @@ describe('hostile-state contract — a shell page', () => {
   // the requirement, so the set cannot drift from the exemptions themselves.
   const exempted = registrations.filter(
     (r) =>
-      !(r.meta.requires ?? []).includes('rendered-body') &&
-      readsPagesDirectly(sources.get(r.meta.id) ?? ''),
+      !(r.meta.requires ?? []).includes("rendered-body") &&
+      readsPagesDirectly(sources.get(r.meta.id) ?? ""),
   );
   const readsRenderedBody = registrations.filter(
     (r) =>
-      (r.meta.requires ?? []).includes('rendered-body') ||
-      SHELL_STANCE.get(r.meta.id) === 'body',
+      (r.meta.requires ?? []).includes("rendered-body") ||
+      SHELL_STANCE.get(r.meta.id) === "body",
   );
 
-  it('has page-reading audits to check', () => {
+  it("has page-reading audits to check", () => {
     expect(readsRenderedBody.length).toBeGreaterThan(20);
   });
 
-  it('makes every audit that dropped rendered-body say what a shell proves about it', () => {
+  it("makes every audit that dropped rendered-body say what a shell proves about it", () => {
     // A new exemption is unclassified until someone writes it down, and an
     // unclassified audit is one nothing asks about a shell. That is how
     // `third-party-dom-write-blast-radius` went unwatched: it dropped the key
     // on this branch and the old text filter never noticed.
-    const unclassified = exempted.map((r) => r.meta.id).filter((id) => !SHELL_STANCE.has(id));
+    const unclassified = exempted
+      .map((r) => r.meta.id)
+      .filter((id) => !SHELL_STANCE.has(id));
     expect(unclassified).toEqual([]);
     const stale = [...SHELL_STANCE.keys()].filter(
       (id) => !exempted.some((r) => r.meta.id === id),
     );
-    expect(stale, 'an entry for an audit that no longer drops rendered-body').toEqual([]);
+    expect(
+      stale,
+      "an entry for an audit that no longer drops rendered-body",
+    ).toEqual([]);
   });
 
-  it('holds the audits that dropped rendered-body by exemption to the rule too', () => {
+  it("holds the audits that dropped rendered-body by exemption to the rule too", () => {
     // The regression this filter exists for. All three declare an exemption
     // that lets a shell reach them, and all three decide by reading the served
     // document: two shipped a weight-1.0 vacuous pass on every client-rendered
     // site, and the third grew its guard on this branch with nothing watching.
     const held = new Set(readsRenderedBody.map((r) => r.meta.id));
-    expect(held.has('access-crawl-control/no-bot-detection')).toBe(true);
-    expect(held.has('operability-safety/no-blocking-captcha')).toBe(true);
-    expect(held.has('operability-safety/third-party-dom-write-blast-radius')).toBe(true);
+    expect(held.has("access-crawl-control/no-bot-detection")).toBe(true);
+    expect(held.has("operability-safety/no-blocking-captcha")).toBe(true);
+    expect(
+      held.has("operability-safety/third-party-dom-write-blast-radius"),
+    ).toBe(true);
   });
 
   for (const registration of readsRenderedBody) {
@@ -120,7 +134,7 @@ describe('hostile-state contract — a shell page', () => {
       expect(
         result.status,
         `passed a page that rendered no text — "${result.message}"`,
-      ).not.toBe('pass');
+      ).not.toBe("pass");
     });
   }
 });

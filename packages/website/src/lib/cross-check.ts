@@ -14,7 +14,9 @@ export function crossCheck(registryIds: string[], dossierIds: string[]): void {
   if (missing.length === 0 && orphans.length === 0) return;
 
   const parts: string[] = [];
-  if (missing.length > 0) parts.push(`audits with no dossier: ${missing.join(', ')}`);
-  if (orphans.length > 0) parts.push(`dossiers with no audit: ${orphans.join(', ')}`);
-  throw new Error(`Registry and dossier set disagree — ${parts.join('; ')}`);
+  if (missing.length > 0)
+    parts.push(`audits with no dossier: ${missing.join(", ")}`);
+  if (orphans.length > 0)
+    parts.push(`dossiers with no audit: ${orphans.join(", ")}`);
+  throw new Error(`Registry and dossier set disagree — ${parts.join("; ")}`);
 }

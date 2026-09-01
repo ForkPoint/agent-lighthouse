@@ -1,7 +1,7 @@
-import * as cheerio from 'cheerio';
-import type { CheerioAPI } from 'cheerio';
-import type { AnyNode, Element } from 'domhandler';
-import type { PageType } from './types';
+import * as cheerio from "cheerio";
+import type { CheerioAPI } from "cheerio";
+import type { AnyNode, Element } from "domhandler";
+import type { PageType } from "./types";
 
 export function parseHtml(html: string): CheerioAPI {
   return cheerio.load(html);
@@ -21,7 +21,7 @@ export function extractJsonLd($: CheerioAPI): object[] {
       // valid Product/Review blocks. Retry once with control chars stripped
       // before giving up.
       try {
-        blocks.push(JSON.parse(raw.replace(/[\x00-\x1F]+/g, ' ')));
+        blocks.push(JSON.parse(raw.replace(/[\x00-\x1F]+/g, " ")));
       } catch {
         // Genuinely malformed — left for the schema validation audit to flag.
       }
@@ -43,11 +43,11 @@ export function topLevelJsonLd(blocks: object[]): object[] {
       for (const item of node) visit(item, inheritedContext);
       return;
     }
-    if (!node || typeof node !== 'object') return;
+    if (!node || typeof node !== "object") return;
     const obj = node as Record<string, unknown>;
-    const ctx = obj['@context'] ?? inheritedContext;
-    if (!obj['@context'] && ctx) obj['@context'] = ctx;
-    const graph = obj['@graph'];
+    const ctx = obj["@context"] ?? inheritedContext;
+    if (!obj["@context"] && ctx) obj["@context"] = ctx;
+    const graph = obj["@graph"];
     if (Array.isArray(graph)) {
       for (const member of graph) visit(member, ctx);
       return;
@@ -77,13 +77,13 @@ export function allJsonLdNodes(blocks: object[]): object[] {
       for (const item of node) visit(item, inheritedContext);
       return;
     }
-    if (!node || typeof node !== 'object') return;
+    if (!node || typeof node !== "object") return;
     const obj = node as Record<string, unknown>;
-    const ctx = obj['@context'] ?? inheritedContext;
-    if (!obj['@context'] && ctx) obj['@context'] = ctx;
+    const ctx = obj["@context"] ?? inheritedContext;
+    if (!obj["@context"] && ctx) obj["@context"] = ctx;
     flat.push(obj);
     for (const value of Object.values(obj)) {
-      if (value && typeof value === 'object') visit(value, ctx);
+      if (value && typeof value === "object") visit(value, ctx);
     }
   };
   for (const block of blocks) visit(block);
@@ -108,7 +108,7 @@ export function extractMarkdownLinks(
 ): Array<{ url: string; label: string; description: string }> {
   const out: Array<{ url: string; label: string; description: string }> = [];
   const seen = new Set<string>();
-  const clean = (u: string) => u.replace(/[.,;:!?'")\]`>]+$/, '');
+  const clean = (u: string) => u.replace(/[.,;:!?'")\]`>]+$/, "");
   const push = (url: string, label: string, description: string) => {
     const c = clean(url.trim());
     if (!/^https?:\/\//i.test(c) || seen.has(c)) return;
@@ -119,11 +119,12 @@ export function extractMarkdownLinks(
   // 1. Inline Markdown links anywhere: [label](url) with optional ": desc".
   const inline = /\[([^\]]+)\]\(([^)\s]+)\)(?::\s*([^\n]+))?/g;
   let m: RegExpExecArray | null;
-  while ((m = inline.exec(body)) !== null) push(m[2]!, m[1]!, m[3] ?? '');
+  while ((m = inline.exec(body)) !== null) push(m[2]!, m[1]!, m[3] ?? "");
 
   // 2. Bare-URL list items: "- **Label**: https://… — description".
-  const bullet = /^\s*(?:[-*+]|\d+\.)\s+(?:\*\*([^*]+)\*\*[:\-—]?\s*)?(https?:\/\/\S+)\s*(?:[-—:]\s*(.+))?$/gm;
-  while ((m = bullet.exec(body)) !== null) push(m[2]!, m[1] ?? '', m[3] ?? '');
+  const bullet =
+    /^\s*(?:[-*+]|\d+\.)\s+(?:\*\*([^*]+)\*\*[:\-—]?\s*)?(https?:\/\/\S+)\s*(?:[-—:]\s*(.+))?$/gm;
+  while ((m = bullet.exec(body)) !== null) push(m[2]!, m[1] ?? "", m[3] ?? "");
 
   return out;
 }
@@ -144,7 +145,7 @@ const TEXT_VALUE_MAX = 200;
 function nearestScope(node: AnyNode, attr: string): Element | null {
   let p: AnyNode | null = node.parent as AnyNode | null;
   while (p) {
-    if (p.type === 'tag' && attr in (p as Element).attribs) return p as Element;
+    if (p.type === "tag" && attr in (p as Element).attribs) return p as Element;
     p = p.parent as AnyNode | null;
   }
   return null;
@@ -155,14 +156,20 @@ function termsFromType(raw: string): string | string[] {
   const terms = raw
     .split(/\s+/)
     .filter(Boolean)
-    .map((t) => t.replace(/[/#:]+$/, '').split(/[/#:]/).pop() || t);
+    .map(
+      (t) =>
+        t
+          .replace(/[/#:]+$/, "")
+          .split(/[/#:]/)
+          .pop() || t,
+    );
   return terms.length === 1 ? terms[0]! : terms;
 }
 
 /** First term of a property name, stripped of any vocab prefix/URL. */
 function firstTerm(raw: string | undefined): string {
-  if (!raw) return '';
-  const t = raw.split(/\s+/).filter(Boolean)[0] ?? '';
+  if (!raw) return "";
+  const t = raw.split(/\s+/).filter(Boolean)[0] ?? "";
   return t.split(/[/#:]/).pop() || t;
 }
 
@@ -172,35 +179,42 @@ function propValue($: CheerioAPI, el: Element): string {
   const a = el.attribs ?? {};
   if (a.content) return a.content;
   /* v8 ignore next -- tag elements always have a `name`; the `?? ''` guard is unreachable. */
-  switch ((el.name ?? '').toLowerCase()) {
-    case 'meta':
-      return a.content ?? '';
-    case 'a':
-    case 'link':
-    case 'area':
-      return a.href ?? '';
-    case 'img':
-    case 'audio':
-    case 'video':
-    case 'source':
-    case 'iframe':
-    case 'embed':
-    case 'track':
-      return a.src ?? '';
-    case 'object':
-      return a.data ?? '';
-    case 'data':
-    case 'meter':
-      return a.value ?? '';
-    case 'time':
-      return a.datetime ?? $(el).text().replace(/\s+/g, ' ').trim().slice(0, TEXT_VALUE_MAX);
+  switch ((el.name ?? "").toLowerCase()) {
+    case "meta":
+      return a.content ?? "";
+    case "a":
+    case "link":
+    case "area":
+      return a.href ?? "";
+    case "img":
+    case "audio":
+    case "video":
+    case "source":
+    case "iframe":
+    case "embed":
+    case "track":
+      return a.src ?? "";
+    case "object":
+      return a.data ?? "";
+    case "data":
+    case "meter":
+      return a.value ?? "";
+    case "time":
+      return (
+        a.datetime ??
+        $(el).text().replace(/\s+/g, " ").trim().slice(0, TEXT_VALUE_MAX)
+      );
     default:
-      return $(el).text().replace(/\s+/g, ' ').trim().slice(0, TEXT_VALUE_MAX);
+      return $(el).text().replace(/\s+/g, " ").trim().slice(0, TEXT_VALUE_MAX);
   }
 }
 
 /** Assign a property, collapsing repeats into an array. Splits multi-name props. */
-function addProp(obj: Record<string, unknown>, rawName: string, value: unknown): void {
+function addProp(
+  obj: Record<string, unknown>,
+  rawName: string,
+  value: unknown,
+): void {
   for (const name of rawName.split(/\s+/).filter(Boolean)) {
     const existing = obj[name];
     if (existing === undefined) {
@@ -213,25 +227,30 @@ function addProp(obj: Record<string, unknown>, rawName: string, value: unknown):
   }
 }
 
-function parseMicrodataItem($: CheerioAPI, el: Element): Record<string, unknown> {
+function parseMicrodataItem(
+  $: CheerioAPI,
+  el: Element,
+): Record<string, unknown> {
   const obj: Record<string, unknown> = {};
   const itemtype = el.attribs?.itemtype;
   if (itemtype) {
-    obj['@context'] = 'https://schema.org';
-    obj['@type'] = termsFromType(itemtype);
+    obj["@context"] = "https://schema.org";
+    obj["@type"] = termsFromType(itemtype);
   }
   $(el)
-    .find('[itemprop]')
+    .find("[itemprop]")
     .each((_, raw) => {
       const propEl = raw as Element;
       // Only properties whose nearest itemscope is THIS element belong here;
       // properties of nested items are captured when that item is recursed.
-      if (nearestScope(propEl, 'itemscope') !== el) return;
+      if (nearestScope(propEl, "itemscope") !== el) return;
       const name = propEl.attribs?.itemprop;
       if (!name) return;
       /* v8 ignore next 2 -- domhandler elements always have `attribs`; the `?? {}` guard is unreachable. */
       const value =
-        'itemscope' in (propEl.attribs ?? {}) ? parseMicrodataItem($, propEl) : propValue($, propEl);
+        "itemscope" in (propEl.attribs ?? {})
+          ? parseMicrodataItem($, propEl)
+          : propValue($, propEl);
       addProp(obj, name, value);
     });
   return obj;
@@ -239,28 +258,30 @@ function parseMicrodataItem($: CheerioAPI, el: Element): Record<string, unknown>
 
 export function extractMicrodata($: CheerioAPI): object[] {
   const items: object[] = [];
-  $('[itemscope]').each((_, raw) => {
+  $("[itemscope]").each((_, raw) => {
     const el = raw as Element;
-    if (nearestScope(el, 'itemscope')) return; // nested — handled by its parent item
+    if (nearestScope(el, "itemscope")) return; // nested — handled by its parent item
     items.push(parseMicrodataItem($, el));
   });
   return items;
 }
 
 function parseRdfaItem($: CheerioAPI, el: Element): Record<string, unknown> {
-  const obj: Record<string, unknown> = { '@context': 'https://schema.org' };
+  const obj: Record<string, unknown> = { "@context": "https://schema.org" };
   const typeName = el.attribs?.typeof;
-  if (typeName) obj['@type'] = termsFromType(typeName);
+  if (typeName) obj["@type"] = termsFromType(typeName);
   $(el)
-    .find('[property]')
+    .find("[property]")
     .each((_, raw) => {
       const propEl = raw as Element;
-      if (nearestScope(propEl, 'typeof') !== el) return;
+      if (nearestScope(propEl, "typeof") !== el) return;
       const name = firstTerm(propEl.attribs?.property);
       if (!name) return;
       /* v8 ignore next 2 -- domhandler elements always have `attribs`; the `?? {}` guard is unreachable. */
       const value =
-        'typeof' in (propEl.attribs ?? {}) ? parseRdfaItem($, propEl) : propValue($, propEl);
+        "typeof" in (propEl.attribs ?? {})
+          ? parseRdfaItem($, propEl)
+          : propValue($, propEl);
       addProp(obj, name, value);
     });
   return obj;
@@ -268,9 +289,9 @@ function parseRdfaItem($: CheerioAPI, el: Element): Record<string, unknown> {
 
 export function extractRdfa($: CheerioAPI): object[] {
   const items: object[] = [];
-  $('[typeof]').each((_, raw) => {
+  $("[typeof]").each((_, raw) => {
     const el = raw as Element;
-    if (nearestScope(el, 'typeof')) return; // nested — handled by its parent item
+    if (nearestScope(el, "typeof")) return; // nested — handled by its parent item
     items.push(parseRdfaItem($, el));
   });
   return items;
@@ -278,9 +299,10 @@ export function extractRdfa($: CheerioAPI): object[] {
 
 export function extractMetaTags($: CheerioAPI): Record<string, string> {
   const meta: Record<string, string> = {};
-  $('meta').each((_, el) => {
-    const name = $(el).attr('name') || $(el).attr('property') || $(el).attr('http-equiv');
-    const content = $(el).attr('content');
+  $("meta").each((_, el) => {
+    const name =
+      $(el).attr("name") || $(el).attr("property") || $(el).attr("http-equiv");
+    const content = $(el).attr("content");
     if (name && content) {
       meta[name.toLowerCase()] = content;
     }
@@ -300,26 +322,28 @@ export function extractHeadLinks($: CheerioAPI): HeadLink[] {
   // Search both <head> and the full document for <link> tags.
   // Frameworks like Next.js App Router stream metadata outside the
   // initial <head> shell, so limiting to `head link` misses them.
-  $('link').each((_, el) => {
-    const rel = $(el).attr('rel') ?? '';
+  $("link").each((_, el) => {
+    const rel = $(el).attr("rel") ?? "";
     // Skip stylesheet links outside <head> to avoid noise
-    if (!rel || rel === 'stylesheet' || rel === 'preload') return;
+    if (!rel || rel === "stylesheet" || rel === "preload") return;
     links.push({
       rel,
-      type: $(el).attr('type') ?? '',
-      href: $(el).attr('href') ?? '',
-      title: $(el).attr('title') ?? '',
+      type: $(el).attr("type") ?? "",
+      href: $(el).attr("href") ?? "",
+      title: $(el).attr("title") ?? "",
     });
   });
   return links;
 }
 
-export function extractHeadings($: CheerioAPI): Array<{ level: number; text: string }> {
+export function extractHeadings(
+  $: CheerioAPI,
+): Array<{ level: number; text: string }> {
   const headings: Array<{ level: number; text: string }> = [];
-  $('h1, h2, h3, h4, h5, h6').each((_, el) => {
+  $("h1, h2, h3, h4, h5, h6").each((_, el) => {
     /* v8 ignore next -- matched heading elements always expose `tagName`; the `?? ''` guard is unreachable. */
-    const tag = $(el).prop('tagName')?.toLowerCase() ?? '';
-    const level = parseInt(tag.replace('h', ''), 10);
+    const tag = $(el).prop("tagName")?.toLowerCase() ?? "";
+    const level = parseInt(tag.replace("h", ""), 10);
     headings.push({ level, text: $(el).text().trim() });
   });
   return headings;
@@ -336,8 +360,8 @@ export function extractHeadings($: CheerioAPI): Array<{ level: number; text: str
  */
 function readableText(root: ReturnType<CheerioAPI>): string {
   const clone = root.clone();
-  clone.find('script, style, noscript, template').remove();
-  return clone.text().replace(/\s+/g, ' ').trim();
+  clone.find("script, style, noscript, template").remove();
+  return clone.text().replace(/\s+/g, " ").trim();
 }
 
 /**
@@ -353,20 +377,20 @@ function readableText(root: ReturnType<CheerioAPI>): string {
  * `getRenderedText` instead.
  */
 export function getMainContentText($: CheerioAPI): string {
-  let best = '';
+  let best = "";
   // Scope the search to <body>. A <main> inside a <template> parses into a
   // detached content fragment, which `$('main')` still matches — and the
   // largest-wins rule would let inert markup the page never renders outweigh
   // the real content region. `readableText` drops <template> everywhere else,
   // so counting one here would contradict it.
-  $('body')
-    .find('main')
+  $("body")
+    .find("main")
     .each((_, el) => {
       const text = readableText($(el));
       if (text.length > best.length) best = text;
     });
   if (best) return best;
-  return readableText($('body'));
+  return readableText($("body"));
 }
 
 /**
@@ -378,7 +402,7 @@ export function getMainContentText($: CheerioAPI): string {
  * says rather than whether anything was served.
  */
 export function getRenderedText($: CheerioAPI): string {
-  return readableText($('body'));
+  return readableText($("body"));
 }
 
 export function getWordCount($: CheerioAPI): number {
@@ -412,24 +436,24 @@ export function extractImages($: CheerioAPI): Array<{
     ariaLabelledby?: string;
     title?: string;
   }> = [];
-  $('img').each((_, el) => {
-    const alt = $(el).attr('alt');
+  $("img").each((_, el) => {
+    const alt = $(el).attr("alt");
     images.push({
-      src: $(el).attr('src') ?? '',
-      alt: alt ?? '',
+      src: $(el).attr("src") ?? "",
+      alt: alt ?? "",
       // Whether the alt attribute is present at all. Distinguishes an
       // intentionally empty `alt=""` (decorative) from a missing attribute.
       hasAlt: alt !== undefined,
-      width: $(el).attr('width') ?? undefined,
-      height: $(el).attr('height') ?? undefined,
-      loading: $(el).attr('loading') ?? undefined,
-      role: $(el).attr('role') ?? undefined,
-      ariaHidden: $(el).attr('aria-hidden') ?? undefined,
+      width: $(el).attr("width") ?? undefined,
+      height: $(el).attr("height") ?? undefined,
+      loading: $(el).attr("loading") ?? undefined,
+      role: $(el).attr("role") ?? undefined,
+      ariaHidden: $(el).attr("aria-hidden") ?? undefined,
       // The accname 1.1 text-alternative sources that outrank `alt`, plus the
       // `title` fallback HTML-AAM maps below it.
-      ariaLabel: $(el).attr('aria-label') ?? undefined,
-      ariaLabelledby: $(el).attr('aria-labelledby') ?? undefined,
-      title: $(el).attr('title') ?? undefined,
+      ariaLabel: $(el).attr("aria-label") ?? undefined,
+      ariaLabelledby: $(el).attr("aria-labelledby") ?? undefined,
+      title: $(el).attr("title") ?? undefined,
     });
   });
   return images;
@@ -455,7 +479,7 @@ export function extractForms($: CheerioAPI): Array<{
       required: boolean;
     }>;
   }> = [];
-  $('form').each((_, formEl) => {
+  $("form").each((_, formEl) => {
     const inputs: Array<{
       name: string;
       type: string;
@@ -463,9 +487,9 @@ export function extractForms($: CheerioAPI): Array<{
       required: boolean;
     }> = [];
     $(formEl)
-      .find('input, select, textarea')
+      .find("input, select, textarea")
       .each((_j, inputEl) => {
-        const id = $(inputEl).attr('id');
+        const id = $(inputEl).attr("id");
         let label: string | undefined;
         if (id) {
           const labelEl = $(`label[for="${id}"]`);
@@ -474,17 +498,18 @@ export function extractForms($: CheerioAPI): Array<{
           }
         }
         /* v8 ignore next -- matched form controls always expose `tagName`; the `?? 'input'` guard is unreachable. */
-        const tagName = $(inputEl).prop('tagName')?.toLowerCase() ?? 'input';
+        const tagName = $(inputEl).prop("tagName")?.toLowerCase() ?? "input";
         inputs.push({
-          name: $(inputEl).attr('name') ?? '',
-          type: tagName === 'input' ? ($(inputEl).attr('type') ?? 'text') : tagName,
+          name: $(inputEl).attr("name") ?? "",
+          type:
+            tagName === "input" ? ($(inputEl).attr("type") ?? "text") : tagName,
           label,
-          required: $(inputEl).attr('required') !== undefined,
+          required: $(inputEl).attr("required") !== undefined,
         });
       });
     forms.push({
-      action: $(formEl).attr('action') ?? '',
-      method: ($(formEl).attr('method') ?? 'GET').toUpperCase(),
+      action: $(formEl).attr("action") ?? "",
+      method: ($(formEl).attr("method") ?? "GET").toUpperCase(),
       inputs,
     });
   });
@@ -493,8 +518,8 @@ export function extractForms($: CheerioAPI): Array<{
 
 export function extractInternalLinks($: CheerioAPI, domain: string): string[] {
   const seen = new Set<string>();
-  $('a[href]').each((_, el) => {
-    const href = $(el).attr('href');
+  $("a[href]").each((_, el) => {
+    const href = $(el).attr("href");
     if (!href) return;
     try {
       const url = new URL(href, `https://${domain}`);
@@ -510,8 +535,8 @@ export function extractInternalLinks($: CheerioAPI, domain: string): string[] {
 
 export function extractNavLinks($: CheerioAPI): string[] {
   const links: string[] = [];
-  $('nav a[href]').each((_, el) => {
-    const href = $(el).attr('href');
+  $("nav a[href]").each((_, el) => {
+    const href = $(el).attr("href");
     if (href) {
       links.push(href);
     }
@@ -537,16 +562,16 @@ export function extractScripts($: CheerioAPI): Array<{
     noModule: boolean;
     inline: boolean;
   }> = [];
-  $('script').each((_, el) => {
-    const src = $(el).attr('src') ?? undefined;
-    const type = $(el).attr('type') ?? undefined;
+  $("script").each((_, el) => {
+    const src = $(el).attr("src") ?? undefined;
+    const type = $(el).attr("type") ?? undefined;
     scripts.push({
       src,
-      async: $(el).attr('async') !== undefined,
-      defer: $(el).attr('defer') !== undefined,
+      async: $(el).attr("async") !== undefined,
+      defer: $(el).attr("defer") !== undefined,
       type,
-      isModule: type === 'module',
-      noModule: $(el).attr('nomodule') !== undefined,
+      isModule: type === "module",
+      noModule: $(el).attr("nomodule") !== undefined,
       inline: src === undefined,
     });
   });
@@ -556,7 +581,7 @@ export function extractScripts($: CheerioAPI): Array<{
 export function extractStylesheetUrls($: CheerioAPI): string[] {
   const urls: string[] = [];
   $('link[rel="stylesheet"]').each((_, el) => {
-    const href = $(el).attr('href');
+    const href = $(el).attr("href");
     if (href) {
       urls.push(href);
     }
@@ -581,22 +606,22 @@ export function detectPageType(
   const pathname = new URL(url).pathname.toLowerCase();
 
   // ── 1. Homepage ─────────────────────────────────────────────
-  if (isFirstPage && (pathname === '/' || pathname === '')) {
-    return 'homepage';
+  if (isFirstPage && (pathname === "/" || pathname === "")) {
+    return "homepage";
   }
 
   // ── 2. Product Details Page (check before category) ─────────
   if (isProductPage(pathname, $, jsonLd, meta)) {
-    return 'product';
+    return "product";
   }
 
   // ── 3. Category / Listing Page ──────────────────────────────
   if (isCategoryPage(pathname, $, jsonLd)) {
-    return 'category';
+    return "category";
   }
 
   // ── 4. Fallback: Content Page ───────────────────────────────
-  return 'content';
+  return "content";
 }
 
 function isProductPage(
@@ -606,19 +631,25 @@ function isProductPage(
   meta: Record<string, string>,
 ): boolean {
   // JSON-LD Product schema
-  if (hasJsonLdType(jsonLd, ['Product', 'IndividualProduct', 'ProductModel'])) {
+  if (hasJsonLdType(jsonLd, ["Product", "IndividualProduct", "ProductModel"])) {
     return true;
   }
 
   // og:type = product or product.item
-  const ogType = (meta['og:type'] ?? '').toLowerCase();
-  if (ogType === 'product' || ogType === 'product.item' || ogType === 'og:product') {
+  const ogType = (meta["og:type"] ?? "").toLowerCase();
+  if (
+    ogType === "product" ||
+    ogType === "product.item" ||
+    ogType === "og:product"
+  ) {
     return true;
   }
 
   // URL patterns common in ecommerce product pages
   if (
-    /\/(product|products|p|item|dp|gp\/product|shop\/[^/]+\/[^/]+)\/[^/]+/i.test(pathname) ||
+    /\/(product|products|p|item|dp|gp\/product|shop\/[^/]+\/[^/]+)\/[^/]+/i.test(
+      pathname,
+    ) ||
     /\/(product|item|sku)-[a-z0-9-]+/i.test(pathname)
   ) {
     return true;
@@ -641,9 +672,20 @@ function isProductPage(
   return false;
 }
 
-function isCategoryPage(pathname: string, $: CheerioAPI, jsonLd: object[]): boolean {
+function isCategoryPage(
+  pathname: string,
+  $: CheerioAPI,
+  jsonLd: object[],
+): boolean {
   // JSON-LD CollectionPage or ItemList schema
-  if (hasJsonLdType(jsonLd, ['CollectionPage', 'ItemList', 'OfferCatalog', 'ProductCollection'])) {
+  if (
+    hasJsonLdType(jsonLd, [
+      "CollectionPage",
+      "ItemList",
+      "OfferCatalog",
+      "ProductCollection",
+    ])
+  ) {
     return true;
   }
 
@@ -667,10 +709,12 @@ function isCategoryPage(pathname: string, $: CheerioAPI, jsonLd: object[]): bool
 
   // Pagination + multiple items suggests a listing
   const hasPagination =
-    $('[class*="pagination"], nav[aria-label*="pagination"], .pager, [class*="load-more"]').length >
-    0;
+    $(
+      '[class*="pagination"], nav[aria-label*="pagination"], .pager, [class*="load-more"]',
+    ).length > 0;
   const hasFilterOrSort =
-    $('[class*="filter"], [class*="facet"], [class*="sort-by"], [data-filter]').length > 0;
+    $('[class*="filter"], [class*="facet"], [class*="sort-by"], [data-filter]')
+      .length > 0;
 
   if (hasPagination && hasFilterOrSort) {
     return true;
@@ -684,17 +728,22 @@ function hasJsonLdType(jsonLd: object[], types: string[]): boolean {
     const b = block as Record<string, unknown>;
 
     // Check top-level @type
-    const blockType = b['@type'];
-    if (typeof blockType === 'string' && types.includes(blockType)) return true;
-    if (Array.isArray(blockType) && blockType.some((t) => types.includes(t))) return true;
+    const blockType = b["@type"];
+    if (typeof blockType === "string" && types.includes(blockType)) return true;
+    if (Array.isArray(blockType) && blockType.some((t) => types.includes(t)))
+      return true;
 
     // Check inside @graph
-    if (Array.isArray(b['@graph'])) {
-      for (const item of b['@graph']) {
-        if (item && typeof item === 'object') {
-          const itemType = (item as Record<string, unknown>)['@type'];
-          if (typeof itemType === 'string' && types.includes(itemType)) return true;
-          if (Array.isArray(itemType) && itemType.some((t: unknown) => types.includes(t as string)))
+    if (Array.isArray(b["@graph"])) {
+      for (const item of b["@graph"]) {
+        if (item && typeof item === "object") {
+          const itemType = (item as Record<string, unknown>)["@type"];
+          if (typeof itemType === "string" && types.includes(itemType))
+            return true;
+          if (
+            Array.isArray(itemType) &&
+            itemType.some((t: unknown) => types.includes(t as string))
+          )
             return true;
         }
       }

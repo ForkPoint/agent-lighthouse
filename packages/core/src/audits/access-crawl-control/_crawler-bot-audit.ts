@@ -1,8 +1,12 @@
 import type { AuditResult } from "../../types";
 import { Audit } from "../../audit";
-import type { CheckContext } from '../../check-context';
-import type { CrawlerBot } from './_robots-txt-helpers';
-import { parseRobotsTxt, isAllowed, isAnthropicAllowed } from './_robots-txt-helpers';
+import type { CheckContext } from "../../check-context";
+import type { CrawlerBot } from "./_robots-txt-helpers";
+import {
+  parseRobotsTxt,
+  isAllowed,
+  isAnthropicAllowed,
+} from "./_robots-txt-helpers";
 
 /**
  * Base audit class for crawler bot permission checks (2.1-2.21).
@@ -12,7 +16,7 @@ export abstract class CrawlerBotAudit extends Audit {
   protected abstract bot: CrawlerBot;
 
   audit(ctx: CheckContext): AuditResult {
-    const robotsFile = ctx.rootFiles['/robots.txt'];
+    const robotsFile = ctx.rootFiles["/robots.txt"];
     const { bot } = this;
 
     // If robots.txt is missing or errored, treat as warn
@@ -20,9 +24,9 @@ export abstract class CrawlerBotAudit extends Audit {
       return this.warn(
         `robots.txt not found — ${bot.displayName} is allowed by default but not explicitly.`,
         `Explicit User-agent: ${bot.botName} with Allow: / in robots.txt`,
-        'No robots.txt found',
+        "No robots.txt found",
         {
-          priority: 'medium',
+          priority: "medium",
           description: `Without an explicit robots.txt rule, ${bot.displayName} may still crawl your site but has no signal that it is welcome. Adding an explicit allow rule improves your visibility in AI-powered search and ensures consistent crawler behavior.`,
           code: `User-agent: ${bot.botName}\nAllow: /`,
         },
@@ -51,7 +55,7 @@ export abstract class CrawlerBotAudit extends Audit {
         `No Disallow: / for User-agent: ${bot.botName}; explicit Allow: / preferred`,
         `No explicit rules for ${bot.botName} — allowed via wildcard or default`,
         {
-          priority: 'medium',
+          priority: "medium",
           description: `${bot.displayName} is currently allowed only through the wildcard rule, which could change if you later add a blanket block. An explicit User-agent entry for ${bot.botName} ensures stable access and signals to the crawler that your site is AI-friendly.`,
           code: `User-agent: ${bot.botName}\nAllow: /`,
         },
@@ -64,7 +68,7 @@ export abstract class CrawlerBotAudit extends Audit {
       `No Disallow: / for User-agent: ${bot.botName}; explicit Allow: / preferred`,
       `${bot.botName} is disallowed (Disallow: /)`,
       {
-        priority: 'high',
+        priority: "high",
         description: `Blocking ${bot.displayName} prevents your content from appearing in AI-powered search results and answers. If you want AI assistants to reference your site, remove the Disallow rule and add an explicit Allow.`,
         code: `User-agent: ${bot.botName}\nAllow: /`,
       },

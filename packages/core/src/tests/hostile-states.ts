@@ -5,14 +5,14 @@ import {
   extractHeadLinks,
   extractMicrodata,
   extractRdfa,
-} from '../parser';
-import { buildScanEvidence } from '../scan-evidence';
-import { detectWafProtection } from '../waf-detector';
-import type { CheckContext, PageContext } from '../check-context';
-import type { FetchResult } from '../fetcher';
-import type { EvidenceKey } from '../scan-evidence';
-import type { WafProtection } from '../waf-detector';
-import type { PageType } from '../types';
+} from "../parser";
+import { buildScanEvidence } from "../scan-evidence";
+import { detectWafProtection } from "../waf-detector";
+import type { CheckContext, PageContext } from "../check-context";
+import type { FetchResult } from "../fetcher";
+import type { EvidenceKey } from "../scan-evidence";
+import type { WafProtection } from "../waf-detector";
+import type { PageType } from "../types";
 
 /**
  * Scan states in which an audit has the least to go on and the most freedom to
@@ -42,7 +42,7 @@ export interface HostileState {
   build(): CheckContext;
 }
 
-const BASE_URL = 'https://example.test';
+const BASE_URL = "https://example.test";
 const HOME_URL = `${BASE_URL}/`;
 
 /**
@@ -54,42 +54,44 @@ const HOME_URL = `${BASE_URL}/`;
  * still matches the orchestrator's.
  */
 export const ROOT_PATHS = [
-  '/robots.txt',
-  '/llms.txt',
-  '/llms-full.txt',
-  '/agents.md',
-  '/sitemap.xml',
-  '/sitemap-index.xml',
-  '/rss.xml',
-  '/feed.xml',
-  '/openapi.json',
-  '/openapi.yaml',
-  '/.well-known/api-catalog',
-  '/.well-known/ai-catalog.json',
-  '/.well-known/mcp/servers.json',
-  '/.well-known/ucp',
-  '/.well-known/agents.json',
-  '/.well-known/ai-plugin.json',
-  '/.well-known/security.txt',
-  '/.well-known/tdmrep.json',
-  '/navigation.json',
-  '/about/',
-  '/about-us/',
-  '/about',
-  '/pages/about',
-  '/pages/about-us',
-  '/pages/our-story',
-  '/our-story',
+  "/robots.txt",
+  "/llms.txt",
+  "/llms-full.txt",
+  "/agents.md",
+  "/sitemap.xml",
+  "/sitemap-index.xml",
+  "/rss.xml",
+  "/feed.xml",
+  "/openapi.json",
+  "/openapi.yaml",
+  "/.well-known/api-catalog",
+  "/.well-known/ai-catalog.json",
+  "/.well-known/mcp/servers.json",
+  "/.well-known/ucp",
+  "/.well-known/agents.json",
+  "/.well-known/ai-plugin.json",
+  "/.well-known/security.txt",
+  "/.well-known/tdmrep.json",
+  "/navigation.json",
+  "/about/",
+  "/about-us/",
+  "/about",
+  "/pages/about",
+  "/pages/about-us",
+  "/pages/our-story",
+  "/our-story",
 ];
 
-function fetchResult(over: Partial<FetchResult> & { url: string }): FetchResult {
-  const body = over.body ?? '';
-  const contentType = over.contentType ?? '';
+function fetchResult(
+  over: Partial<FetchResult> & { url: string },
+): FetchResult {
+  const body = over.body ?? "";
+  const contentType = over.contentType ?? "";
   // A real response carries the type in both places. Audits read whichever one
   // they were written against, so a fixture that sets only one lets an audit
   // pass here and fail on a live scan.
   const headers: Record<string, string> = { ...over.headers };
-  if (contentType) headers['content-type'] ??= contentType;
+  if (contentType) headers["content-type"] ??= contentType;
   return {
     finalUrl: over.url,
     status: 200,
@@ -104,7 +106,9 @@ function fetchResult(over: Partial<FetchResult> & { url: string }): FetchResult 
 }
 
 /** Every root path answering the same way — a wall answers uniformly. */
-function rootFiles(build: (path: string) => Partial<FetchResult>): Record<string, FetchResult> {
+function rootFiles(
+  build: (path: string) => Partial<FetchResult>,
+): Record<string, FetchResult> {
   return Object.fromEntries(
     ROOT_PATHS.map((path) => {
       const url = `${BASE_URL}${path}`;
@@ -117,13 +121,17 @@ function rootFiles(build: (path: string) => Partial<FetchResult>): Record<string
  * A page context built exactly as `orchestrator.ts` builds one, including the
  * structured-data union that product audits read.
  */
-function toPageContext(url: string, result: FetchResult, pageType: PageType): PageContext {
+function toPageContext(
+  url: string,
+  result: FetchResult,
+  pageType: PageType,
+): PageContext {
   const $ = parseHtml(result.body);
   const jsonLd = extractJsonLd($);
   return {
     url,
     pageType,
-    pageTypeSource: 'declared',
+    pageTypeSource: "declared",
     fetchResult: result,
     $,
     jsonLd,
@@ -155,7 +163,10 @@ interface StateSpec {
    * Derive the WAF verdict from the responses instead of stating it, for a
    * state whose whole point is that the live detector reaches it.
    */
-  waf?: (homepage: FetchResult, rootFiles: Record<string, FetchResult>) => WafProtection | null;
+  waf?: (
+    homepage: FetchResult,
+    rootFiles: Record<string, FetchResult>,
+  ) => WafProtection | null;
   /** Type the classifier would give the page, when one survives the filter. */
   pageType?: PageType;
 }
@@ -166,12 +177,13 @@ function state(spec: StateSpec): HostileState {
     missing: spec.missing,
     nothingObtained: spec.nothingObtained,
     build: () => {
-      const pages = pagesFrom(spec.homepage, spec.pageType ?? 'homepage');
-      const waf = spec.waf?.(spec.homepage, spec.rootFiles) ?? spec.wafProtection ?? null;
+      const pages = pagesFrom(spec.homepage, spec.pageType ?? "homepage");
+      const waf =
+        spec.waf?.(spec.homepage, spec.rootFiles) ?? spec.wafProtection ?? null;
       return {
         rootFiles: spec.rootFiles,
         pages,
-        domain: 'example.test',
+        domain: "example.test",
         baseUrl: BASE_URL,
         fetch: async ({ url }) => fetchResult({ url, status: 404 }),
         wafProtection: waf ?? undefined,
@@ -188,8 +200,8 @@ function state(spec: StateSpec): HostileState {
 }
 
 const CLOUDFLARE_CHALLENGE =
-  '<html><head><title>Attention Required! | Cloudflare</title></head>' +
-  '<body><h1>Sorry, you have been blocked</h1><p>You are unable to access example.test</p></body></html>';
+  "<html><head><title>Attention Required! | Cloudflare</title></head>" +
+  "<body><h1>Sorry, you have been blocked</h1><p>You are unable to access example.test</p></body></html>";
 
 /**
  * A bot wall: every request refused, nothing read. The challenge HTML is
@@ -197,27 +209,32 @@ const CLOUDFLARE_CHALLENGE =
  * file's body without checking its status.
  */
 const blocked = state({
-  name: 'blocked',
-  missing: ['origin-reachable', 'unblocked-fetches', 'rendered-body', 'sample-adequate'],
+  name: "blocked",
+  missing: [
+    "origin-reachable",
+    "unblocked-fetches",
+    "rendered-body",
+    "sample-adequate",
+  ],
   nothingObtained: true,
   homepage: fetchResult({
     url: HOME_URL,
     status: 403,
-    contentType: 'text/html',
-    headers: { 'cf-ray': '8a0f0000000abc-LHR', server: 'cloudflare' },
+    contentType: "text/html",
+    headers: { "cf-ray": "8a0f0000000abc-LHR", server: "cloudflare" },
     body: CLOUDFLARE_CHALLENGE,
   }),
   rootFiles: rootFiles(() => ({
     status: 403,
-    contentType: 'text/html',
-    headers: { 'cf-ray': '8a0f0000000abc-LHR', server: 'cloudflare' },
+    contentType: "text/html",
+    headers: { "cf-ray": "8a0f0000000abc-LHR", server: "cloudflare" },
     body: CLOUDFLARE_CHALLENGE,
   })),
   wafProtection: {
     isBlocked: true,
-    provider: 'cloudflare',
-    name: 'Cloudflare',
-    reason: 'HTTP 403 with a cf-ray header',
+    provider: "cloudflare",
+    name: "Cloudflare",
+    reason: "HTTP 403 with a cf-ray header",
     statusCode: 403,
   },
 });
@@ -263,33 +280,33 @@ const CHALLENGE_200_HTML =
   '<body class="no-js"><div class="main-wrapper" role="main"><div class="main-content">' +
   '<h1>example.test</h1><p id="challenge-error-text">Enable JavaScript and cookies to continue</p>' +
   '</div></div><script src="/cdn-cgi/challenge-platform/h/b/orchestrate/chl_page/v1"></script>' +
-  '</body></html>';
+  "</body></html>";
 
 const CHALLENGE_200_HEADERS = {
-  'cf-mitigated': 'challenge',
-  'cf-ray': 'a32341f569537bd7-SOF',
-  server: 'cloudflare',
+  "cf-mitigated": "challenge",
+  "cf-ray": "a32341f569537bd7-SOF",
+  server: "cloudflare",
   // Site-wide response headers, added by the same edge that served the wall.
   // A header rule matches every response, the interstitial included, so these
   // arrive on a body that holds none of the site's content.
-  'content-usage': 'train-ai=n',
-  'tdm-reservation': '1',
+  "content-usage": "train-ai=n",
+  "tdm-reservation": "1",
 };
 
 const challengedAt200 = state({
-  name: 'challenged-at-200',
-  missing: ['unblocked-fetches', 'rendered-body', 'sample-adequate'],
+  name: "challenged-at-200",
+  missing: ["unblocked-fetches", "rendered-body", "sample-adequate"],
   nothingObtained: true,
   homepage: fetchResult({
     url: HOME_URL,
     status: 200,
-    contentType: 'text/html',
+    contentType: "text/html",
     headers: CHALLENGE_200_HEADERS,
     body: CHALLENGE_200_HTML,
   }),
   rootFiles: rootFiles(() => ({
     status: 200,
-    contentType: 'text/html',
+    contentType: "text/html",
     headers: CHALLENGE_200_HEADERS,
     body: CHALLENGE_200_HTML,
   })),
@@ -301,27 +318,32 @@ const challengedAt200 = state({
 
 /** A throttle: the scan asked too fast. Says nothing about who the site admits. */
 const throttled = state({
-  name: 'throttled',
-  missing: ['origin-reachable', 'unblocked-fetches', 'rendered-body', 'sample-adequate'],
+  name: "throttled",
+  missing: [
+    "origin-reachable",
+    "unblocked-fetches",
+    "rendered-body",
+    "sample-adequate",
+  ],
   nothingObtained: true,
   homepage: fetchResult({
     url: HOME_URL,
     status: 429,
-    contentType: 'text/html',
-    headers: { 'retry-after': '30' },
-    body: '<html><body>Too Many Requests</body></html>',
+    contentType: "text/html",
+    headers: { "retry-after": "30" },
+    body: "<html><body>Too Many Requests</body></html>",
   }),
   rootFiles: rootFiles(() => ({
     status: 429,
-    contentType: 'text/html',
-    headers: { 'retry-after': '30' },
-    body: '<html><body>Too Many Requests</body></html>',
+    contentType: "text/html",
+    headers: { "retry-after": "30" },
+    body: "<html><body>Too Many Requests</body></html>",
   })),
   wafProtection: {
     isBlocked: true,
-    provider: 'rate-limited',
-    name: 'Rate limit (HTTP 429)',
-    reason: 'The site answered HTTP 429 — too many requests',
+    provider: "rate-limited",
+    name: "Rate limit (HTTP 429)",
+    reason: "The site answered HTTP 429 — too many requests",
     statusCode: 429,
     isRateLimit: true,
   },
@@ -339,27 +361,27 @@ const throttled = state({
  * `example.*` would be judged the same site and this state would silently
  * stop being hostile.
  */
-const PARKED_URL = 'https://parking.brandsale.test/example.test';
+const PARKED_URL = "https://parking.brandsale.test/example.test";
 const PARKED_PAGE =
   '<html lang="en"><head><title>example.test is for sale</title></head><body><main>' +
-  '<h1>The domain example.test is for sale</h1>' +
-  '<p>This premium domain name is available for immediate purchase through our brokerage. ' +
-  'Our team has been connecting buyers and sellers of premium domain names since 2003, and we ' +
-  'handle escrow, transfer and registrar paperwork on every sale we broker for our clients. ' +
-  'Make an offer today and one of our brokers will respond to your enquiry within one business ' +
-  'day to discuss pricing, payment plans and the transfer timeline in full detail.</p>' +
-  '<p>Financing is available on most listings, and every transaction is protected by escrow.</p>' +
-  '</main></body></html>';
+  "<h1>The domain example.test is for sale</h1>" +
+  "<p>This premium domain name is available for immediate purchase through our brokerage. " +
+  "Our team has been connecting buyers and sellers of premium domain names since 2003, and we " +
+  "handle escrow, transfer and registrar paperwork on every sale we broker for our clients. " +
+  "Make an offer today and one of our brokers will respond to your enquiry within one business " +
+  "day to discuss pricing, payment plans and the transfer timeline in full detail.</p>" +
+  "<p>Financing is available on most listings, and every transaction is protected by escrow.</p>" +
+  "</main></body></html>";
 
 const redirectedAway = state({
-  name: 'redirected-away',
-  missing: ['origin-reachable'],
+  name: "redirected-away",
+  missing: ["origin-reachable"],
   nothingObtained: true,
   homepage: fetchResult({
     url: HOME_URL,
     finalUrl: PARKED_URL,
     status: 200,
-    contentType: 'text/html',
+    contentType: "text/html",
     body: PARKED_PAGE,
     redirectChain: [{ status: 302, from: HOME_URL, to: PARKED_URL }],
   }),
@@ -368,7 +390,7 @@ const redirectedAway = state({
     // audit ends up reporting a broker's copy as the site's llms.txt.
     finalUrl: PARKED_URL,
     status: 200,
-    contentType: 'text/html',
+    contentType: "text/html",
     body: PARKED_PAGE,
   })),
 });
@@ -378,16 +400,17 @@ const redirectedAway = state({
  * on its page filter, so this still becomes a `PageContext` — a cheerio parse
  * of PDF source, which is nothing an HTML audit can read but is not nothing.
  */
-const PDF_BODY = '%PDF-1.4\n1 0 obj\n<< /Type /Catalog /Pages 2 0 R >>\nendobj\ntrailer\n%%EOF\n';
+const PDF_BODY =
+  "%PDF-1.4\n1 0 obj\n<< /Type /Catalog /Pages 2 0 R >>\nendobj\ntrailer\n%%EOF\n";
 
 const nonHtml = state({
-  name: 'non-html',
-  missing: ['origin-reachable', 'rendered-body', 'sample-adequate'],
+  name: "non-html",
+  missing: ["origin-reachable", "rendered-body", "sample-adequate"],
   nothingObtained: true,
   homepage: fetchResult({
     url: HOME_URL,
     status: 200,
-    contentType: 'application/pdf',
+    contentType: "application/pdf",
     body: PDF_BODY,
   }),
   rootFiles: rootFiles(() => ({ status: 404 })),
@@ -409,21 +432,21 @@ export const SHELL_HTML =
  * site serves is a finding about the site, not about the scan.
  */
 const shell = state({
-  name: 'shell',
-  missing: ['rendered-body', 'sample-adequate'],
+  name: "shell",
+  missing: ["rendered-body", "sample-adequate"],
   nothingObtained: false,
   homepage: fetchResult({
     url: HOME_URL,
     status: 200,
-    contentType: 'text/html',
+    contentType: "text/html",
     body: SHELL_HTML,
   }),
   rootFiles: rootFiles((path) =>
-    path === '/robots.txt'
+    path === "/robots.txt"
       ? {
           status: 200,
-          contentType: 'text/plain',
-          body: 'User-agent: *\nAllow: /\n',
+          contentType: "text/plain",
+          body: "User-agent: *\nAllow: /\n",
         }
       : { status: 404 },
   ),

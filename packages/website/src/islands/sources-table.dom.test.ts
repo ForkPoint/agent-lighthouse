@@ -1,6 +1,11 @@
 // @vitest-environment jsdom
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { mountSourcesTable, previewOf, REGISTRY_URL, type SourceRecord } from './sources-table';
+import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
+import {
+  mountSourcesTable,
+  previewOf,
+  REGISTRY_URL,
+  type SourceRecord,
+} from "./sources-table";
 
 /**
  * The interaction layer, against a fixture that mirrors what
@@ -11,27 +16,27 @@ import { mountSourcesTable, previewOf, REGISTRY_URL, type SourceRecord } from '.
  * `previewOf` are pure and are tested without a DOM in `sources-table.test.ts`.
  */
 const LONG =
-  'Normative path: `https://{agent-server-domain}/.well-known/agent-card.json`, following RFC 8615. ' +
-  'Three discovery mechanisms are defined: Well-Known URI, Curated Registries, and Direct Configuration.';
+  "Normative path: `https://{agent-server-domain}/.well-known/agent-card.json`, following RFC 8615. " +
+  "Three discovery mechanisms are defined: Well-Known URI, Curated Registries, and Direct Configuration.";
 
 const SOURCES: SourceRecord[] = [
   {
-    id: 'a2a-agent-discovery',
-    title: 'A2A Protocol — Agent Discovery',
-    url: 'https://a2a-protocol.org/latest/topics/agent-discovery/',
-    type: 'spec',
-    publisher: 'Linux Foundation / A2A Project',
-    verified: '2026-08-20',
+    id: "a2a-agent-discovery",
+    title: "A2A Protocol — Agent Discovery",
+    url: "https://a2a-protocol.org/latest/topics/agent-discovery/",
+    type: "spec",
+    publisher: "Linux Foundation / A2A Project",
+    verified: "2026-08-20",
     keyFindings: LONG,
   },
   {
-    id: 'vercel-ai-crawlers',
-    title: 'The rise of the AI crawler',
-    url: 'https://vercel.com/blog/the-rise-of-the-ai-crawler',
-    type: 'study',
-    publisher: 'Vercel',
-    verified: '2026-08-21',
-    keyFindings: 'GPTBot made 569 million requests in one month.',
+    id: "vercel-ai-crawlers",
+    title: "The rise of the AI crawler",
+    url: "https://vercel.com/blog/the-rise-of-the-ai-crawler",
+    type: "study",
+    publisher: "Vercel",
+    verified: "2026-08-21",
+    keyFindings: "GPTBot made 569 million requests in one month.",
   },
 ];
 
@@ -62,16 +67,24 @@ const fixture = () => `
   <p id="sources-empty" hidden>No sources match your search.</p>
 `;
 
-const rows = () => [...document.querySelectorAll<HTMLElement>('#sources-rows tr')];
-const visible = () => rows().filter((row) => !row.hidden).map((row) => row.dataset['sourceId']);
-const status = () => document.querySelector('#sources-status')!.textContent;
+const rows = () => [
+  ...document.querySelectorAll<HTMLElement>("#sources-rows tr"),
+];
+const visible = () =>
+  rows()
+    .filter((row) => !row.hidden)
+    .map((row) => row.dataset["sourceId"]);
+const status = () => document.querySelector("#sources-status")!.textContent;
 const pill = (value: string) =>
-  document.querySelector<HTMLElement>(`[data-filter="type"][data-value="${value}"]`)!;
-const search = () => document.querySelector<HTMLInputElement>('#source-search')!;
+  document.querySelector<HTMLElement>(
+    `[data-filter="type"][data-value="${value}"]`,
+  )!;
+const search = () =>
+  document.querySelector<HTMLInputElement>("#source-search")!;
 
 const type = (text: string) => {
   search().value = text;
-  search().dispatchEvent(new Event('input', { bubbles: true }));
+  search().dispatchEvent(new Event("input", { bubbles: true }));
 };
 
 /** A `fetch` that answers the registry URL, and nothing else. */
@@ -85,22 +98,22 @@ const serve = (body: unknown, ok = true) =>
     } as Response;
   });
 
-describe('previewOf', () => {
-  it('leaves a short finding alone', () => {
-    expect(previewOf('Short enough.', 40)).toBe('Short enough.');
+describe("previewOf", () => {
+  it("leaves a short finding alone", () => {
+    expect(previewOf("Short enough.", 40)).toBe("Short enough.");
   });
 
-  it('cuts a long one at a word boundary and marks the cut', () => {
+  it("cuts a long one at a word boundary and marks the cut", () => {
     const preview = previewOf(LONG, 60);
 
-    expect(preview.endsWith('…')).toBe(true);
+    expect(preview.endsWith("…")).toBe(true);
     expect(preview.length).toBeLessThanOrEqual(61);
     expect(LONG.startsWith(preview.slice(0, -1))).toBe(true);
     expect(preview).not.toMatch(/ …$/);
   });
 });
 
-describe('mountSourcesTable', () => {
+describe("mountSourcesTable", () => {
   beforeEach(() => {
     document.body.innerHTML = fixture();
   });
@@ -109,178 +122,206 @@ describe('mountSourcesTable', () => {
     vi.unstubAllGlobals();
   });
 
-  const mount = async (body: unknown = { accessed: '2026-08-20', sources: SOURCES }, ok = true) => {
-    vi.stubGlobal('fetch', serve(body, ok));
+  const mount = async (
+    body: unknown = { accessed: "2026-08-20", sources: SOURCES },
+    ok = true,
+  ) => {
+    vi.stubGlobal("fetch", serve(body, ok));
     await mountSourcesTable();
   };
 
-  it('fetches the registry rather than reading it out of the page', async () => {
-    const fetcher = serve({ accessed: '2026-08-20', sources: SOURCES });
-    vi.stubGlobal('fetch', fetcher);
+  it("fetches the registry rather than reading it out of the page", async () => {
+    const fetcher = serve({ accessed: "2026-08-20", sources: SOURCES });
+    vi.stubGlobal("fetch", fetcher);
 
-    expect(document.querySelector('#sources-rows')!.children).toHaveLength(0);
+    expect(document.querySelector("#sources-rows")!.children).toHaveLength(0);
     await mountSourcesTable();
 
     expect(fetcher).toHaveBeenCalledTimes(1);
     expect(rows()).toHaveLength(SOURCES.length);
   });
 
-  it('reveals the table and the controls it has just wired up', async () => {
+  it("reveals the table and the controls it has just wired up", async () => {
     await mount();
 
-    expect(document.querySelector<HTMLElement>('#sources-table')!.hidden).toBe(false);
-    expect(document.querySelector<HTMLElement>('#sources-controls')!.hidden).toBe(false);
+    expect(document.querySelector<HTMLElement>("#sources-table")!.hidden).toBe(
+      false,
+    );
+    expect(
+      document.querySelector<HTMLElement>("#sources-controls")!.hidden,
+    ).toBe(false);
   });
 
-  it('only writes into the live region — it never toggles its visibility', async () => {
+  it("only writes into the live region — it never toggles its visibility", async () => {
     // The region is visible from first paint, and the mount must leave it that
     // way: un-hiding it in the same synchronous block that writes the text
     // means assistive tech was not observing the region when it changed. A
     // setter that throws catches the mutation itself, not just its markup.
-    const region = document.querySelector<HTMLElement>('#sources-status')!;
+    const region = document.querySelector<HTMLElement>("#sources-status")!;
     expect(region.hidden).toBe(false);
-    Object.defineProperty(region, 'hidden', {
+    Object.defineProperty(region, "hidden", {
       configurable: true,
       get: () => false,
       set: () => {
-        throw new Error('the mount toggled #sources-status, which loses the announcement');
+        throw new Error(
+          "the mount toggled #sources-status, which loses the announcement",
+        );
       },
     });
 
     await mount();
 
-    expect(status()).toBe('Showing 2 of 2 sources.');
+    expect(status()).toBe("Showing 2 of 2 sources.");
   });
 
-  it('announces the count from the live region', async () => {
+  it("announces the count from the live region", async () => {
     await mount();
 
-    expect(status()).toBe('Showing 2 of 2 sources.');
+    expect(status()).toBe("Showing 2 of 2 sources.");
   });
 
-  it('gives each row a row header carrying the title, the link and the id', async () => {
+  it("gives each row a row header carrying the title, the link and the id", async () => {
     await mount();
 
-    const head = rows()[0]!.querySelector('th')!;
-    expect(head.getAttribute('scope')).toBe('row');
-    const link = head.querySelector('a')!;
-    expect(link.getAttribute('href')).toBe(SOURCES[0]!.url);
+    const head = rows()[0]!.querySelector("th")!;
+    expect(head.getAttribute("scope")).toBe("row");
+    const link = head.querySelector("a")!;
+    expect(link.getAttribute("href")).toBe(SOURCES[0]!.url);
     expect(link.textContent).toBe(SOURCES[0]!.title);
-    expect(head.querySelector('code')!.textContent).toBe(SOURCES[0]!.id);
+    expect(head.querySelector("code")!.textContent).toBe(SOURCES[0]!.id);
   });
 
   // Was a Yes/No rendering of a boolean that every record set to `true`. The
   // column now carries the date the URL was last resolved.
-  it('prints the date each source was last verified', async () => {
+  it("prints the date each source was last verified", async () => {
     await mount();
 
-    const cells = (index: number) => [...rows()[index]!.querySelectorAll('td')].map((c) => c.textContent);
-    expect(cells(0)![2]).toBe('2026-08-20');
-    expect(cells(1)![2]).toBe('2026-08-21');
+    const cells = (index: number) =>
+      [...rows()[index]!.querySelectorAll("td")].map((c) => c.textContent);
+    expect(cells(0)![2]).toBe("2026-08-20");
+    expect(cells(1)![2]).toBe("2026-08-21");
   });
 
-  it('collapses a long finding behind a preview and keeps a short one plain', async () => {
+  it("collapses a long finding behind a preview and keeps a short one plain", async () => {
     await mount();
 
-    const long = rows()[0]!.querySelectorAll('td')[3]!;
-    const details = long.querySelector('details')!;
+    const long = rows()[0]!.querySelectorAll("td")[3]!;
+    const details = long.querySelector("details")!;
     expect(details).not.toBeNull();
-    expect(details.querySelector('summary')!.textContent!.endsWith('…')).toBe(true);
-    expect(details.querySelector('p')!.textContent).toContain('Direct Configuration');
+    expect(details.querySelector("summary")!.textContent!.endsWith("…")).toBe(
+      true,
+    );
+    expect(details.querySelector("p")!.textContent).toContain(
+      "Direct Configuration",
+    );
 
-    const short = rows()[1]!.querySelectorAll('td')[3]!;
-    expect(short.querySelector('details')).toBeNull();
+    const short = rows()[1]!.querySelectorAll("td")[3]!;
+    expect(short.querySelector("details")).toBeNull();
     expect(short.textContent).toBe(SOURCES[1]!.keyFindings);
   });
 
-  it('renders a finding’s backtick spans as code, never as markup', async () => {
+  it("renders a finding’s backtick spans as code, never as markup", async () => {
     await mount({
-      accessed: '2026-08-20',
-      sources: [{ ...SOURCES[1]!, keyFindings: 'Reads `<script>` at `/llms.txt`.' }],
+      accessed: "2026-08-20",
+      sources: [
+        { ...SOURCES[1]!, keyFindings: "Reads `<script>` at `/llms.txt`." },
+      ],
     });
 
-    const cell = rows()[0]!.querySelectorAll('td')[3]!;
-    expect([...cell.querySelectorAll('code')].map((c) => c.textContent)).toEqual([
-      '<script>',
-      '/llms.txt',
-    ]);
+    const cell = rows()[0]!.querySelectorAll("td")[3]!;
+    expect(
+      [...cell.querySelectorAll("code")].map((c) => c.textContent),
+    ).toEqual(["<script>", "/llms.txt"]);
     // The angle brackets came in as text, so nothing in the registry can inject
     // an element into the page.
-    expect(cell.querySelector('script')).toBeNull();
-    expect(cell.textContent).toBe('Reads <script> at /llms.txt.');
+    expect(cell.querySelector("script")).toBeNull();
+    expect(cell.textContent).toBe("Reads <script> at /llms.txt.");
   });
 
-  it('hides the rows a search does not match, and recounts what is left', async () => {
+  it("hides the rows a search does not match, and recounts what is left", async () => {
     await mount();
 
-    type('vercel');
-    expect(visible()).toEqual(['vercel-ai-crawlers']);
-    expect(status()).toBe('Showing 1 of 2 sources.');
+    type("vercel");
+    expect(visible()).toEqual(["vercel-ai-crawlers"]);
+    expect(status()).toBe("Showing 1 of 2 sources.");
     expect(rows()[0]!.hidden).toBe(true);
   });
 
-  it('searches the key findings, which is where the detail is', async () => {
+  it("searches the key findings, which is where the detail is", async () => {
     await mount();
 
-    type('rfc 8615');
-    expect(visible()).toEqual(['a2a-agent-discovery']);
+    type("rfc 8615");
+    expect(visible()).toEqual(["a2a-agent-discovery"]);
   });
 
-  it('moves the pressed state to the clicked pill and off its siblings', async () => {
+  it("moves the pressed state to the clicked pill and off its siblings", async () => {
     await mount();
 
-    pill('study').click();
+    pill("study").click();
 
-    expect(pill('study').getAttribute('aria-pressed')).toBe('true');
-    expect(pill('all').getAttribute('aria-pressed')).toBe('false');
-    expect(visible()).toEqual(['vercel-ai-crawlers']);
+    expect(pill("study").getAttribute("aria-pressed")).toBe("true");
+    expect(pill("all").getAttribute("aria-pressed")).toBe("false");
+    expect(visible()).toEqual(["vercel-ai-crawlers"]);
   });
 
-  it('combines the type facet with the search box, and shows the empty state', async () => {
+  it("combines the type facet with the search box, and shows the empty state", async () => {
     await mount();
-    const empty = () => document.querySelector<HTMLElement>('#sources-empty')!.hidden;
+    const empty = () =>
+      document.querySelector<HTMLElement>("#sources-empty")!.hidden;
     expect(empty()).toBe(true);
 
-    pill('spec').click();
-    type('vercel');
+    pill("spec").click();
+    type("vercel");
 
     expect(visible()).toEqual([]);
-    expect(status()).toBe('Showing 0 of 2 sources.');
+    expect(status()).toBe("Showing 0 of 2 sources.");
     expect(empty()).toBe(false);
   });
 
-  it('lands in the error state when the body parses but is not a registry', async () => {
+  it("lands in the error state when the body parses but is not a registry", async () => {
     // Valid JSON with no `sources` array: the rows cannot be built, and the
     // failure has to surface where the fetch failure does rather than throwing
     // past the page's `void mountSourcesTable()` and stranding the reader on
     // "Loading the source registry…" forever.
-    await mount({ $comment: 'a file, but not this one' });
+    await mount({ $comment: "a file, but not this one" });
 
-    expect(status()).toContain('could not be loaded');
-    expect(document.querySelector<HTMLElement>('#sources-status')!.hidden).toBe(false);
-    expect(document.querySelector<HTMLElement>('#sources-status')!.textContent).not.toBe('');
-    expect(document.querySelector<HTMLElement>('#sources-table')!.hidden).toBe(true);
+    expect(status()).toContain("could not be loaded");
+    expect(document.querySelector<HTMLElement>("#sources-status")!.hidden).toBe(
+      false,
+    );
+    expect(
+      document.querySelector<HTMLElement>("#sources-status")!.textContent,
+    ).not.toBe("");
+    expect(document.querySelector<HTMLElement>("#sources-table")!.hidden).toBe(
+      true,
+    );
     expect(rows()).toHaveLength(0);
   });
 
-  it('blanks one findings cell rather than losing the whole table to it', async () => {
+  it("blanks one findings cell rather than losing the whole table to it", async () => {
     const incomplete = { ...SOURCES[1]! } as Partial<SourceRecord>;
     delete incomplete.keyFindings;
-    await mount({ accessed: '2026-08-20', sources: [incomplete, SOURCES[0]!] });
+    await mount({ accessed: "2026-08-20", sources: [incomplete, SOURCES[0]!] });
 
     expect(rows()).toHaveLength(2);
-    expect(rows()[0]!.querySelectorAll('td')[3]!.textContent).toBe('');
-    expect(rows()[1]!.querySelectorAll('td')[3]!.querySelector('details')).not.toBeNull();
-    expect(status()).toBe('Showing 2 of 2 sources.');
+    expect(rows()[0]!.querySelectorAll("td")[3]!.textContent).toBe("");
+    expect(
+      rows()[1]!.querySelectorAll("td")[3]!.querySelector("details"),
+    ).not.toBeNull();
+    expect(status()).toBe("Showing 2 of 2 sources.");
   });
 
-  it('says so, and offers the raw file, when the registry cannot be fetched', async () => {
+  it("says so, and offers the raw file, when the registry cannot be fetched", async () => {
     await mount({}, false);
 
-    expect(status()).toContain('could not be loaded');
-    expect(document.querySelector('#sources-status a')!.getAttribute('href')).toBe(REGISTRY_URL);
+    expect(status()).toContain("could not be loaded");
+    expect(
+      document.querySelector("#sources-status a")!.getAttribute("href"),
+    ).toBe(REGISTRY_URL);
     // Nothing half-rendered is left on screen.
-    expect(document.querySelector<HTMLElement>('#sources-table')!.hidden).toBe(true);
+    expect(document.querySelector<HTMLElement>("#sources-table")!.hidden).toBe(
+      true,
+    );
     expect(rows()).toHaveLength(0);
   });
 });

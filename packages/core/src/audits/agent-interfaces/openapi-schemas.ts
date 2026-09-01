@@ -1,40 +1,41 @@
 import type { AuditMeta, AuditResult } from "../../types";
 import { Audit } from "../../audit";
-import { weightForGrade } from '../../scorer';
-import type { CheckContext } from '../../check-context';
+import { weightForGrade } from "../../scorer";
+import type { CheckContext } from "../../check-context";
 import {
   defectCount,
   defectNote,
   NO_OPENAPI_SPEC,
   readOpenApiPaths,
   readOpenApiSpec,
-} from '../../gatherers/openapi';
+} from "../../gatherers/openapi";
 
 function isObject(val: unknown): val is Record<string, unknown> {
-  return typeof val === 'object' && val !== null && !Array.isArray(val);
+  return typeof val === "object" && val !== null && !Array.isArray(val);
 }
 
 /** Shared `expected` line, used by every branch below. */
-const EXPECTED = 'Operations have requestBody and responses with schema definitions';
+const EXPECTED =
+  "Operations have requestBody and responses with schema definitions";
 
 export class OpenApiSchemasAudit extends Audit {
   static override meta: AuditMeta = {
-    id: 'agent-interfaces/openapi-schemas',
-    category: 'agent-interfaces',
-    title: 'OpenAPI request/response schemas',
-    failureTitle: 'OpenAPI request/response schemas',
+    id: "agent-interfaces/openapi-schemas",
+    category: "agent-interfaces",
+    title: "OpenAPI request/response schemas",
+    failureTitle: "OpenAPI request/response schemas",
     description:
-      'Without request/response schemas, AI agents must guess the data format for your endpoints. This leads to malformed requests and failed API calls. Define JSON schemas for all request bodies and responses.',
-    scoreDisplayMode: 'ternary',
-    weight: weightForGrade('B', 'scored'),
-    evidenceGrade: 'B',
-    tier: 'scored',
-    dossier: 'docs/evidence/audits/agent-interfaces/openapi-schemas.md',
-    requires: ['origin-reachable'],
-    defaultPriority: 'medium',
+      "Without request/response schemas, AI agents must guess the data format for your endpoints. This leads to malformed requests and failed API calls. Define JSON schemas for all request bodies and responses.",
+    scoreDisplayMode: "ternary",
+    weight: weightForGrade("B", "scored"),
+    evidenceGrade: "B",
+    tier: "scored",
+    dossier: "docs/evidence/audits/agent-interfaces/openapi-schemas.md",
+    requires: ["origin-reachable"],
+    defaultPriority: "medium",
     guidance: {
       impact:
-        'Without request/response schemas, AI agents must guess what data to send and what to expect back. This leads to malformed requests, failed API calls, and agents that cannot reliably use your endpoints.',
+        "Without request/response schemas, AI agents must guess what data to send and what to expect back. This leads to malformed requests, failed API calls, and agents that cannot reliably use your endpoints.",
       fix: 'Define JSON Schema for all request bodies (POST/PUT/PATCH) and response bodies in your OpenAPI spec. Include property types, required fields, and format hints (e.g., "format": "email").',
       code: `"post": {
   "operationId": "submitContact",
@@ -71,15 +72,15 @@ export class OpenApiSchemasAudit extends Audit {
     }
   }
 }`,
-      effort: 'moderate',
-      docsUrl: 'https://swagger.io/specification/#schema-object',
-      tags: ['openapi', 'schemas', 'api', 'validation'],
+      effort: "moderate",
+      docsUrl: "https://swagger.io/specification/#schema-object",
+      tags: ["openapi", "schemas", "api", "validation"],
     },
   };
 
   audit(ctx: CheckContext): AuditResult {
     const recommendation = {
-      priority: 'medium' as const,
+      priority: "medium" as const,
       description: OpenApiSchemasAudit.meta.description,
       code: `"post": {\n  "operationId": "submitContact",\n  "requestBody": {\n    "required": true,\n    "content": {\n      "application/json": {\n        "schema": {\n          "type": "object",\n          "required": ["email", "message"],\n          "properties": {\n            "name": { "type": "string" },\n            "email": { "type": "string", "format": "email" },\n            "message": { "type": "string" }\n          }\n        }\n      }\n    }\n  },\n  "responses": {\n    "200": {\n      "description": "Success",\n      "content": {\n        "application/json": {\n          "schema": {\n            "type": "object",\n            "properties": {\n              "success": { "type": "boolean" },\n              "id": { "type": "string" }\n            }\n          }\n        }\n      }\n    }\n  }\n}`,
     };
@@ -89,7 +90,11 @@ export class OpenApiSchemasAudit extends Audit {
     // to a document's operations; no document means no schema coverage was
     // ever observed.
     if (!spec) {
-      return this.notApplicable(NO_OPENAPI_SPEC.message, EXPECTED, NO_OPENAPI_SPEC.found);
+      return this.notApplicable(
+        NO_OPENAPI_SPEC.message,
+        EXPECTED,
+        NO_OPENAPI_SPEC.found,
+      );
     }
 
     const paths = readOpenApiPaths(spec);
@@ -97,7 +102,7 @@ export class OpenApiSchemasAudit extends Audit {
     // Present and broken is not absent. Nothing under `paths` is readable, so
     // the message below is literally true: no operation's schemas can be read.
     // The author wrote the thing that blocks the agent.
-    if (paths.kind === 'malformed') {
+    if (paths.kind === "malformed") {
       return this.fail(
         `The OpenAPI document's paths object is malformed, so no operation's schemas can be read: ${paths.found}.`,
         EXPECTED,
@@ -109,11 +114,11 @@ export class OpenApiSchemasAudit extends Audit {
     // Declaring no operations is the absence one level down. Coverage of zero
     // operations is a 0/0 measurement, not a finding; `openapi-endpoints` is
     // the audit that reports an empty document, and it reports it once.
-    if (paths.kind === 'empty') {
+    if (paths.kind === "empty") {
       return this.notApplicable(
-        'The OpenAPI document declares no operations, so it carries no request or response schemas to check.',
+        "The OpenAPI document declares no operations, so it carries no request or response schemas to check.",
         EXPECTED,
-        '0 operations',
+        "0 operations",
       );
     }
 
@@ -130,14 +135,14 @@ export class OpenApiSchemasAudit extends Audit {
     let writeMethods = 0; // POST/PUT/PATCH that should have requestBody
 
     for (const { method, op } of ops) {
-      if (['post', 'put', 'patch'].includes(method)) {
+      if (["post", "put", "patch"].includes(method)) {
         writeMethods++;
-        const rb = op['requestBody'];
+        const rb = op["requestBody"];
         if (isObject(rb)) {
-          const content = rb['content'];
+          const content = rb["content"];
           if (isObject(content)) {
             for (const mediaType of Object.values(content)) {
-              if (isObject(mediaType) && mediaType['schema']) {
+              if (isObject(mediaType) && mediaType["schema"]) {
                 withRequestSchema++;
                 break;
               }
@@ -146,14 +151,14 @@ export class OpenApiSchemasAudit extends Audit {
         }
       }
 
-      const responses = op['responses'];
+      const responses = op["responses"];
       if (isObject(responses)) {
         for (const resp of Object.values(responses)) {
           if (isObject(resp)) {
-            const content = (resp as Record<string, unknown>)['content'];
+            const content = (resp as Record<string, unknown>)["content"];
             if (isObject(content)) {
               for (const mediaType of Object.values(content)) {
-                if (isObject(mediaType) && mediaType['schema']) {
+                if (isObject(mediaType) && mediaType["schema"]) {
                   withResponseSchema++;
                   break;
                 }
@@ -175,7 +180,7 @@ export class OpenApiSchemasAudit extends Audit {
       (writeMethods === 0 || withRequestSchema === writeMethods)
     ) {
       return this.pass(
-        `All operations have response schemas${writeMethods > 0 ? ` and all ${writeMethods} write operation(s) have request schemas` : ''}.${note}`,
+        `All operations have response schemas${writeMethods > 0 ? ` and all ${writeMethods} write operation(s) have request schemas` : ""}.${note}`,
         EXPECTED,
         `${withResponseSchema}/${totalCheckable} response schemas, ${withRequestSchema}/${writeMethods} request schemas${suffix}`,
       );

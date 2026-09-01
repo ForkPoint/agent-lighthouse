@@ -1,6 +1,6 @@
-import type { AnyNode, Element } from 'domhandler';
-import type { CheerioAPI } from 'cheerio';
-import type { CssRule } from '../../gatherers/css-rules';
+import type { AnyNode, Element } from "domhandler";
+import type { CheerioAPI } from "cheerio";
+import type { CssRule } from "../../gatherers/css-rules";
 
 /**
  * Shared signal sets for the agent-operability audits.
@@ -13,15 +13,15 @@ import type { CssRule } from '../../gatherers/css-rules';
 
 /** Tags that carry an interactive role with no ARIA attribute needed. */
 export const NATIVE_INTERACTIVE: ReadonlySet<string> = new Set([
-  'a',
-  'button',
-  'input',
-  'select',
-  'textarea',
-  'summary',
-  'details',
-  'option',
-  'label',
+  "a",
+  "button",
+  "input",
+  "select",
+  "textarea",
+  "summary",
+  "details",
+  "option",
+  "label",
 ]);
 
 /** Class and data-attribute names that advertise a click target. */
@@ -33,7 +33,13 @@ export const STATE_CLASS_RE =
   /(^|[-_])(is-)?(active|selected|on|off|open|expanded|checked|current|enabled)([-_]|$)/;
 
 /** Inline handler attributes that make a non-interactive tag clickable. */
-const INLINE_HANDLERS = ['onclick', 'onmousedown', 'onkeydown', 'onmouseup', 'onkeypress'];
+const INLINE_HANDLERS = [
+  "onclick",
+  "onmousedown",
+  "onkeydown",
+  "onmouseup",
+  "onkeypress",
+];
 
 /** A declaration block that sets the hand cursor, whatever else it carries. */
 const CURSOR_POINTER = /(^|;)\s*cursor\s*:\s*pointer\b/;
@@ -57,7 +63,10 @@ export function hasClickSignal(
     if (attribs[handler]) return true;
   }
 
-  const names = [attribs['class'] ?? '', ...Object.keys(attribs).filter((k) => k.startsWith('data-'))];
+  const names = [
+    attribs["class"] ?? "",
+    ...Object.keys(attribs).filter((k) => k.startsWith("data-")),
+  ];
   for (const name of names) {
     for (const token of name.split(/\s+/)) {
       if (token && CLICKABILITY_CLASS_RE.test(token)) return true;
@@ -81,7 +90,7 @@ export function hasClickSignal(
 
 /** Collapse whitespace and trim, the way an accessible name is computed. */
 function flatten(text: string): string {
-  return text.replace(/\s+/g, ' ').trim();
+  return text.replace(/\s+/g, " ").trim();
 }
 
 /**
@@ -95,7 +104,7 @@ function flatten(text: string): string {
 export function accessibleName(el: Element, $: CheerioAPI): string {
   const attribs = el.attribs ?? {};
 
-  const labelledBy = attribs['aria-labelledby'];
+  const labelledBy = attribs["aria-labelledby"];
   if (labelledBy) {
     const parts = labelledBy
       .split(/\s+/)
@@ -103,32 +112,39 @@ export function accessibleName(el: Element, $: CheerioAPI): string {
       // Resolved by attribute rather than by an `#id` selector: an id is
       // author-controlled and may carry characters a selector cannot hold,
       // and `CSS.escape` is a browser global this package does not have.
-      .map((id) => flatten($('[id]').filter((_i, e) => e.attribs['id'] === id).first().text()))
+      .map((id) =>
+        flatten(
+          $("[id]")
+            .filter((_i, e) => e.attribs["id"] === id)
+            .first()
+            .text(),
+        ),
+      )
       .filter(Boolean);
-    if (parts.length > 0) return parts.join(' ');
+    if (parts.length > 0) return parts.join(" ");
   }
 
-  const label = flatten(attribs['aria-label'] ?? '');
+  const label = flatten(attribs["aria-label"] ?? "");
   if (label) return label;
 
   const own = flatten($(el).text());
   if (own) return own;
 
-  const title = flatten(attribs['title'] ?? '');
+  const title = flatten(attribs["title"] ?? "");
   if (title) return title;
 
-  const alt = flatten($(el).find('img[alt]').first().attr('alt') ?? '');
+  const alt = flatten($(el).find("img[alt]").first().attr("alt") ?? "");
   if (alt) return alt;
 
-  const svgTitle = flatten($(el).find('svg > title').first().text());
+  const svgTitle = flatten($(el).find("svg > title").first().text());
   if (svgTitle) return svgTitle;
 
-  return '';
+  return "";
 }
 
 /** True when the node is an element rather than text or a comment. */
 export function isElement(node: AnyNode): node is Element {
-  return node.type === 'tag';
+  return node.type === "tag";
 }
 
 /**
@@ -142,5 +158,5 @@ export function isElement(node: AnyNode): node is Element {
  * quote and the backslash need escaping.
  */
 export function idSelector(id: string): string {
-  return `[id="${id.replace(/["\\]/g, '\\$&')}"]`;
+  return `[id="${id.replace(/["\\]/g, "\\$&")}"]`;
 }

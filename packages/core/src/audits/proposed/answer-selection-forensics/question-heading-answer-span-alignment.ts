@@ -1,6 +1,6 @@
-import type { AuditMeta, AuditResult } from '../../../types';
-import { Audit } from '../../../audit';
-import type { CheckContext } from '../../../check-context';
+import type { AuditMeta, AuditResult } from "../../../types";
+import { Audit } from "../../../audit";
+import type { CheckContext } from "../../../check-context";
 
 // TODO: implement proposed audit "Question-Heading Answer Span Alignment".
 // Status: stub — not registered in any category index; returns notApplicable until implemented.
@@ -24,29 +24,32 @@ import type { CheckContext } from '../../../check-context';
 // informational metric.
 export class QuestionHeadingAnswerSpanAlignmentAudit extends Audit {
   static override meta: AuditMeta = {
-    id: 'proposed/answer-selection-forensics/question-heading-answer-span-alignment',
-    category: 'answer-selection-forensics',
+    id: "proposed/answer-selection-forensics/question-heading-answer-span-alignment",
+    category: "answer-selection-forensics",
     title: "Question-Heading Answer Span Alignment",
     failureTitle: "Question-Heading Answer Span Alignment",
-    description: "For every interrogative heading, checks that the immediately following content is a self-contained declarative answer inside a measurable envelope — appears within the first ~320 characters of the section, is a contiguous span inside one block element, restates a content word from the heading, and is not a teaser or link-out. Roadmap item: the structural half is deterministic, but judging whether the span actually answers the question needs an LLM adjudicator.",
-    scoreDisplayMode: 'binary',
+    description:
+      "For every interrogative heading, checks that the immediately following content is a self-contained declarative answer inside a measurable envelope — appears within the first ~320 characters of the section, is a contiguous span inside one block element, restates a content word from the heading, and is not a teaser or link-out. Roadmap item: the structural half is deterministic, but judging whether the span actually answers the question needs an LLM adjudicator.",
+    scoreDisplayMode: "binary",
     weight: 0,
-    defaultPriority: 'medium',
+    defaultPriority: "medium",
     guidance: {
-      impact: "A citable answer must be a contiguous extractable span: Google's featured snippet is exactly such a span and is deep-linked with an auto-generated text fragment (S12), which the spec constrains to a single block-level element (S2, S3). So a question heading whose answer is spread across three paragraphs, or deferred behind 'here's what you need to know first', has no single span that a citing surface can lift. Chunk segmentation reinforces this: heading-based chunkers (S5) put the heading and the answer in the same chunk only when the answer is near the heading. The honest limitation is that the semantic part — does this sentence answer this question — is not decidable by regex, which is why this is graded C and not scored.",
-      fix: 'TODO: written when the audit is implemented.',
-      effort: 'moderate',
-      docsUrl: 'https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/proposals/answer-selection-forensics/question-heading-answer-span-alignment.md',
-      tags: ['proposed', 'answer-selection-forensics'],
+      impact:
+        "A citable answer must be a contiguous extractable span: Google's featured snippet is exactly such a span and is deep-linked with an auto-generated text fragment (S12), which the spec constrains to a single block-level element (S2, S3). So a question heading whose answer is spread across three paragraphs, or deferred behind 'here's what you need to know first', has no single span that a citing surface can lift. Chunk segmentation reinforces this: heading-based chunkers (S5) put the heading and the answer in the same chunk only when the answer is near the heading. The honest limitation is that the semantic part — does this sentence answer this question — is not decidable by regex, which is why this is graded C and not scored.",
+      fix: "TODO: written when the audit is implemented.",
+      effort: "moderate",
+      docsUrl:
+        "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/proposals/answer-selection-forensics/question-heading-answer-span-alignment.md",
+      tags: ["proposed", "answer-selection-forensics"],
     },
   };
 
   audit(_ctx: CheckContext): AuditResult {
     // TODO: implement per the sketch above. Stub is intentionally inert.
     return this.notApplicable(
-      'Proposed audit not implemented yet.',
-      'Implementation per docs/evidence/proposals/answer-selection-forensics/question-heading-answer-span-alignment.md',
-      'TODO stub',
+      "Proposed audit not implemented yet.",
+      "Implementation per docs/evidence/proposals/answer-selection-forensics/question-heading-answer-span-alignment.md",
+      "TODO stub",
     );
   }
 }

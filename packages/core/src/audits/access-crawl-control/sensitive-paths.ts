@@ -1,10 +1,9 @@
-import type { AuditMeta, AuditResult } from '../../types';
-import { Audit } from '../../audit';
-import type { CheckContext } from '../../check-context';
-import { parseRobotsTxt, isPathAllowed } from './_robots-txt-helpers';
-import { weightForGrade } from '../../scorer';
-import { siteSitemapTree } from '../../gatherers/sitemap';
-
+import type { AuditMeta, AuditResult } from "../../types";
+import { Audit } from "../../audit";
+import type { CheckContext } from "../../check-context";
+import { parseRobotsTxt, isPathAllowed } from "./_robots-txt-helpers";
+import { weightForGrade } from "../../scorer";
+import { siteSitemapTree } from "../../gatherers/sitemap";
 
 /**
  * AI crawler product tokens whose vendors document path-level `Disallow`.
@@ -24,12 +23,12 @@ import { siteSitemapTree } from '../../gatherers/sitemap';
  * arbitration, so this never re-implements matching.
  */
 const AI_CRAWLER_TOKENS = [
-  'GPTBot',
-  'ClaudeBot',
-  'Applebot-Extended',
-  'meta-externalagent',
-  'Google-Extended',
-  'PerplexityBot',
+  "GPTBot",
+  "ClaudeBot",
+  "Applebot-Extended",
+  "meta-externalagent",
+  "Google-Extended",
+  "PerplexityBot",
 ] as const;
 
 interface LowValueFamily {
@@ -54,34 +53,45 @@ interface LowValueFamily {
  */
 const LOW_VALUE_FAMILIES: readonly LowValueFamily[] = [
   {
-    id: 'cart/checkout',
-    why: 'session-bearing and never canonical',
-    segments: ['cart', 'carts', 'checkout', 'basket'],
+    id: "cart/checkout",
+    why: "session-bearing and never canonical",
+    segments: ["cart", "carts", "checkout", "basket"],
   },
   {
-    id: 'site search',
-    why: 'an unbounded, non-canonical URL space',
-    segments: ['search'],
+    id: "site search",
+    why: "an unbounded, non-canonical URL space",
+    segments: ["search"],
   },
   {
-    id: 'authentication',
-    why: 'no citable content',
-    segments: ['login', 'signin', 'sign-in', 'signup', 'sign-up', 'register', 'logout', 'signout'],
+    id: "authentication",
+    why: "no citable content",
+    segments: [
+      "login",
+      "signin",
+      "sign-in",
+      "signup",
+      "sign-up",
+      "register",
+      "logout",
+      "signout",
+    ],
   },
   {
-    id: 'account area',
-    why: 'session-bearing and personalised',
-    segments: ['account', 'my-account', 'dashboard'],
+    id: "account area",
+    why: "session-bearing and personalised",
+    segments: ["account", "my-account", "dashboard"],
   },
   {
-    id: 'admin surface',
-    why: 'no citable content',
-    segments: ['admin', 'wp-admin', 'administrator'],
+    id: "admin surface",
+    why: "no citable content",
+    segments: ["admin", "wp-admin", "administrator"],
   },
 ];
 
 const SEGMENT_TO_FAMILY = new Map<string, LowValueFamily>(
-  LOW_VALUE_FAMILIES.flatMap((family) => family.segments.map((s) => [s, family] as const)),
+  LOW_VALUE_FAMILIES.flatMap((family) =>
+    family.segments.map((s) => [s, family] as const),
+  ),
 );
 
 /** One observed URL family, with the concrete path that evidenced it. */
@@ -105,8 +115,10 @@ interface Candidate {
  * language/locale prefix (`/en/cart`, `/en-gb/checkout`), and return the
  * prefix a robots.txt rule has to carry to actually match it.
  */
-function classify(pathname: string): { segment: string; prefix: string } | undefined {
-  const parts = pathname.split('/').filter(Boolean);
+function classify(
+  pathname: string,
+): { segment: string; prefix: string } | undefined {
+  const parts = pathname.split("/").filter(Boolean);
   if (parts.length === 0) return undefined;
 
   let index = 0;
@@ -119,7 +131,7 @@ function classify(pathname: string): { segment: string; prefix: string } | undef
 
   // Built from the raw (still percent-encoded) segments so the emitted rule is
   // byte-identical to the head of the observed path.
-  return { segment: head, prefix: `/${parts.slice(0, index + 1).join('/')}` };
+  return { segment: head, prefix: `/${parts.slice(0, index + 1).join("/")}` };
 }
 
 /**
@@ -149,7 +161,7 @@ async function collectCandidateUrls(ctx: CheckContext): Promise<Candidate[]> {
     } catch {
       return;
     }
-    if (url.protocol !== 'http:' && url.protocol !== 'https:') return;
+    if (url.protocol !== "http:" && url.protocol !== "https:") return;
     if (url.host !== origin) return;
 
     const hit = classify(url.pathname);
@@ -164,8 +176,8 @@ async function collectCandidateUrls(ctx: CheckContext): Promise<Candidate[]> {
 
   for (const page of ctx.pages) {
     note(page.url, ctx.baseUrl);
-    page.$('a[href]').each((_, el) => {
-      const href = page.$(el).attr('href');
+    page.$("a[href]").each((_, el) => {
+      const href = page.$(el).attr("href");
       if (href) note(href, page.url);
     });
   }
@@ -179,32 +191,32 @@ async function collectCandidateUrls(ctx: CheckContext): Promise<Candidate[]> {
 }
 
 const EXPECTED =
-  'Low-value URL families observed on the site (cart, checkout, search, login, account, admin) are disallowed for AI crawlers in robots.txt';
+  "Low-value URL families observed on the site (cart, checkout, search, login, account, admin) are disallowed for AI crawlers in robots.txt";
 
 export class SensitivePathsAudit extends Audit {
   static override meta: AuditMeta = {
-    id: 'access-crawl-control/sensitive-paths',
-    category: 'access-crawl-control',
-    title: 'Low-value URLs excluded from AI crawls',
-    failureTitle: 'Low-value URLs excluded from AI crawls',
+    id: "access-crawl-control/sensitive-paths",
+    category: "access-crawl-control",
+    title: "Low-value URLs excluded from AI crawls",
+    failureTitle: "Low-value URLs excluded from AI crawls",
     description:
-      'AI crawlers honour path-level Disallow rules (RFC 9309), so robots.txt is the lever for keeping low-value URL spaces — carts, checkouts, site-search results, login and account pages — out of AI crawls and out of the answers built from them. This is crawl hygiene, not access control.',
-    scoreDisplayMode: 'ternary',
-    weight: weightForGrade('A', 'scored'),
-    evidenceGrade: 'A',
-    tier: 'scored',
-    dossier: 'docs/evidence/audits/access-crawl-control/sensitive-paths.md',
+      "AI crawlers honour path-level Disallow rules (RFC 9309), so robots.txt is the lever for keeping low-value URL spaces — carts, checkouts, site-search results, login and account pages — out of AI crawls and out of the answers built from them. This is crawl hygiene, not access control.",
+    scoreDisplayMode: "ternary",
+    weight: weightForGrade("A", "scored"),
+    evidenceGrade: "A",
+    tier: "scored",
+    dossier: "docs/evidence/audits/access-crawl-control/sensitive-paths.md",
     // Gate exemption: being refused is what this category reports.
-    requires: ['origin-reachable', 'rendered-body', 'sample-adequate'],
-    defaultPriority: 'low',
+    requires: ["origin-reachable", "rendered-body", "sample-adequate"],
+    defaultPriority: "low",
     guidance: {
       impact:
         'Cart, checkout, site-search, login and account URLs carry nothing an answer engine can cite, but they are crawled and can surface in AI answers as dead, session-bearing links. Apple documents Applebot and Applebot-Extended honouring "Disallow: /private/", and Meta documents the same for meta-externalagent, so a path-level rule keeps that noise out of AI crawls. Two limits matter: RFC 9309 states the protocol "is not a substitute for valid content security measures" and that listed paths become publicly discoverable, so never use robots.txt to protect anything; and user-initiated fetchers are documented not to obey it — OpenAI says of ChatGPT-User "Because these actions are initiated by a user, robots.txt rules may not apply", and Perplexity says Perplexity-User "generally ignores robots.txt rules".',
-      fix: 'Add Disallow rules for the low-value URL families your site actually has — cart, checkout, site search, login and account areas. Leave API paths crawlable: agents need them. Never list a private directory here expecting it to be protected; use HTTP authentication for that.',
-      code: 'User-agent: *\nAllow: /\nDisallow: /cart\nDisallow: /checkout\nDisallow: /search\nDisallow: /account\n\n# API paths are deliberately left crawlable — agents need them.',
-      effort: 'trivial',
-      docsUrl: 'https://www.rfc-editor.org/rfc/rfc9309.html',
-      tags: ['robots-txt', 'crawl-hygiene', 'crawler-permissions'],
+      fix: "Add Disallow rules for the low-value URL families your site actually has — cart, checkout, site search, login and account areas. Leave API paths crawlable: agents need them. Never list a private directory here expecting it to be protected; use HTTP authentication for that.",
+      code: "User-agent: *\nAllow: /\nDisallow: /cart\nDisallow: /checkout\nDisallow: /search\nDisallow: /account\n\n# API paths are deliberately left crawlable — agents need them.",
+      effort: "trivial",
+      docsUrl: "https://www.rfc-editor.org/rfc/rfc9309.html",
+      tags: ["robots-txt", "crawl-hygiene", "crawler-permissions"],
     },
   };
 
@@ -213,26 +225,32 @@ export class SensitivePathsAudit extends Audit {
 
     if (candidates.length === 0) {
       return this.notApplicable(
-        'The crawl observed no low-value URL family (cart, checkout, search, login, account, admin), so there is nothing to exclude.',
+        "The crawl observed no low-value URL family (cart, checkout, search, login, account, admin), so there is nothing to exclude.",
         EXPECTED,
-        'No low-value URL families observed',
+        "No low-value URL families observed",
       );
     }
 
-    const robotsFile = ctx.rootFiles['/robots.txt'];
+    const robotsFile = ctx.rootFiles["/robots.txt"];
     const hasRobots = Boolean(
-      robotsFile && robotsFile.status === 200 && robotsFile.body && !/^\s*</.test(robotsFile.body),
+      robotsFile &&
+      robotsFile.status === 200 &&
+      robotsFile.body &&
+      !/^\s*</.test(robotsFile.body),
     );
     const groups = hasRobots ? parseRobotsTxt(robotsFile!.body) : [];
 
     // A site that blocks every AI crawler at the root has already excluded all
     // of this; per-path hygiene is moot and would contradict
     // `access-crawl-control/no-blanket-block`, which owns that finding.
-    if (groups.length > 0 && AI_CRAWLER_TOKENS.every((t) => !isPathAllowed(groups, t, '/'))) {
+    if (
+      groups.length > 0 &&
+      AI_CRAWLER_TOKENS.every((t) => !isPathAllowed(groups, t, "/"))
+    ) {
       return this.notApplicable(
-        'robots.txt blanket-blocks AI crawlers, so individual low-value paths are already excluded.',
+        "robots.txt blanket-blocks AI crawlers, so individual low-value paths are already excluded.",
         EXPECTED,
-        'Blanket block in robots.txt — see access-crawl-control/no-blanket-block',
+        "Blanket block in robots.txt — see access-crawl-control/no-blanket-block",
       );
     }
 
@@ -250,7 +268,7 @@ export class SensitivePathsAudit extends Audit {
     const label = (list: Candidate[]) => {
       const shown = list.slice(0, 8).map((c) => `${c.family.id} (${c.path})`);
       const rest = list.length - shown.length;
-      return rest > 0 ? `${shown.join(', ')} +${rest} more` : shown.join(', ');
+      return rest > 0 ? `${shown.join(", ")} +${rest} more` : shown.join(", ");
     };
 
     if (crawled.length === 0) {
@@ -261,11 +279,15 @@ export class SensitivePathsAudit extends Audit {
       );
     }
 
-    const suffix = hasRobots ? '' : ' (no robots.txt is served)';
+    const suffix = hasRobots ? "" : " (no robots.txt is served)";
     // One rule per candidate, each a literal prefix of the path it was
     // classified from — so applying this block verbatim makes the audit pass.
-    const fixCode = [...new Set(crawled.map((c) => `Disallow: ${c.disallow}`))].join('\n');
-    const why = [...new Set(crawled.map((c) => `${c.family.id} is ${c.family.why}`))].join('; ');
+    const fixCode = [
+      ...new Set(crawled.map((c) => `Disallow: ${c.disallow}`)),
+    ].join("\n");
+    const why = [
+      ...new Set(crawled.map((c) => `${c.family.id} is ${c.family.why}`)),
+    ].join("; ");
 
     if (excluded.length > 0) {
       const result = this.warn(
@@ -273,7 +295,7 @@ export class SensitivePathsAudit extends Audit {
         EXPECTED,
         `Excluded: ${label(excluded)}; still crawlable: ${label(crawled)}${suffix}`,
         {
-          priority: 'low',
+          priority: "low",
           description: `${why}. Extend the robots.txt rules to cover the remaining families so AI crawlers spend their budget on citable pages instead. Leave API paths crawlable.`,
         },
       );
@@ -285,10 +307,13 @@ export class SensitivePathsAudit extends Audit {
       EXPECTED,
       `Still crawlable: ${label(crawled)}${suffix}`,
       {
-        priority: 'low',
+        priority: "low",
         description: `${why}. Add path-level Disallow rules so AI crawlers spend their budget on citable pages instead of session-bearing and non-canonical URLs. Leave API paths crawlable — agents need them — and remember robots.txt is not an access control.`,
       },
     );
-    return { ...result, details: { code: `User-agent: *\nAllow: /\n${fixCode}` } };
+    return {
+      ...result,
+      details: { code: `User-agent: *\nAllow: /\n${fixCode}` },
+    };
   }
 }

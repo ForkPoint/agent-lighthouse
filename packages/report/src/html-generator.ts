@@ -1,9 +1,10 @@
-import type { ScanReport } from '@forkpoint/agent-lighthouse-core';
-import { buildReportView } from './view-model';
+import type { ScanReport } from "@forkpoint/agent-lighthouse-core";
+import { buildReportView } from "./view-model";
 
 declare const __PACKAGE_VERSION__: string;
 
-const REPORT_VERSION = typeof __PACKAGE_VERSION__ === 'string' ? __PACKAGE_VERSION__ : 'unknown';
+const REPORT_VERSION =
+  typeof __PACKAGE_VERSION__ === "string" ? __PACKAGE_VERSION__ : "unknown";
 
 /**
  * Generates a standalone, zero-dependency, self-contained HTML report
@@ -14,10 +15,10 @@ export function generateHtmlReport(report: ScanReport): string {
   const view = buildReportView(report);
 
   function getGaugeColor(score: number): string {
-    if (score >= 90) return '#10b981'; // emerald-500
-    if (score >= 70) return '#3b82f6'; // blue-500
-    if (score >= 50) return '#f59e0b'; // amber-500
-    return '#ef4444'; // red-500
+    if (score >= 90) return "#10b981"; // emerald-500
+    if (score >= 70) return "#3b82f6"; // blue-500
+    if (score >= 50) return "#f59e0b"; // amber-500
+    return "#ef4444"; // red-500
   }
 
   function renderGaugeSvg(score: number, size = 120, strokeWidth = 10): string {
@@ -36,8 +37,9 @@ export function generateHtmlReport(report: ScanReport): string {
   }
 
   // Pre-render Category Cards
-  const categoryCards = view.groups.map(group => {
-    return `
+  const categoryCards = view.groups
+    .map((group) => {
+      return `
       <div class="group-section mb-12" data-group="${escapeHtml(group.key)}">
         <div class="flex items-center justify-between pb-3 mb-6 border-b border-slate-200 dark:border-slate-800">
           <div class="flex items-center gap-3">
@@ -49,7 +51,9 @@ export function generateHtmlReport(report: ScanReport): string {
         </div>
 
         <div class="grid grid-cols-1 gap-6">
-          ${group.categories.map(cat => `
+          ${group.categories
+            .map(
+              (cat) => `
             <div class="cat-card bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm">
               <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-100 dark:border-slate-800/80">
                 <div>
@@ -60,8 +64,8 @@ export function generateHtmlReport(report: ScanReport): string {
                     <span class="text-amber-600 dark:text-amber-400 font-semibold">${cat.counts.warn} Warnings</span>
                     <span>•</span>
                     <span class="text-red-600 dark:text-red-400 font-semibold">${cat.counts.fail} Failed</span>
-                    ${cat.counts.na > 0 ? `<span>•</span><span>${cat.counts.na} N/A</span>` : ''}
-                    ${cat.counts.advisory > 0 ? `<span>•</span><span>${cat.counts.advisory} Advisory</span>` : ''}
+                    ${cat.counts.na > 0 ? `<span>•</span><span>${cat.counts.na} N/A</span>` : ""}
+                    ${cat.counts.advisory > 0 ? `<span>•</span><span>${cat.counts.advisory} Advisory</span>` : ""}
                   </div>
                 </div>
                 <div class="flex items-center gap-3">
@@ -71,70 +75,94 @@ export function generateHtmlReport(report: ScanReport): string {
 
               <!-- Checks Accordion -->
               <div class="checks-container mt-4 divide-y divide-slate-100 dark:divide-slate-800/60">
-                ${cat.checks.map(c => `
+                ${cat.checks
+                  .map(
+                    (c) => `
                   <details class="check-item py-3 group cursor-pointer" data-status="${c.status}">
                     <summary class="flex items-start justify-between gap-3 list-none select-none">
                       <div class="flex items-start gap-3">
                         <span class="mt-0.5 w-5 h-5 flex items-center justify-center rounded-full text-xs font-bold shrink-0 ${
-                          c.status === 'pass'
-                            ? 'bg-emerald-100 dark:bg-emerald-950 text-emerald-600 dark:text-emerald-400 border border-emerald-300 dark:border-emerald-800'
-                            : c.status === 'warn'
-                            ? 'bg-amber-100 dark:bg-amber-950 text-amber-600 dark:text-amber-400 border border-amber-300 dark:border-amber-800'
-                            : 'bg-red-100 dark:bg-red-950 text-red-600 dark:text-red-400 border border-red-300 dark:border-red-800'
+                          c.status === "pass"
+                            ? "bg-emerald-100 dark:bg-emerald-950 text-emerald-600 dark:text-emerald-400 border border-emerald-300 dark:border-emerald-800"
+                            : c.status === "warn"
+                              ? "bg-amber-100 dark:bg-amber-950 text-amber-600 dark:text-amber-400 border border-amber-300 dark:border-amber-800"
+                              : "bg-red-100 dark:bg-red-950 text-red-600 dark:text-red-400 border border-red-300 dark:border-red-800"
                         }">
-                          ${c.status === 'pass' ? '✓' : c.status === 'warn' ? '!' : '✗'}
+                          ${c.status === "pass" ? "✓" : c.status === "warn" ? "!" : "✗"}
                         </span>
                         <div>
                           <div class="font-semibold text-slate-800 dark:text-slate-200 text-sm flex items-center gap-2">
                             <span>${escapeHtml(c.title)}</span>
                             <span class="text-[10px] uppercase tracking-wider font-mono text-slate-400">[${escapeHtml(c.id)}]</span>
-                            ${c.deprecated ? '<span class="text-[10px] uppercase tracking-wider font-bold px-1.5 py-0.5 rounded bg-slate-200 dark:bg-slate-700 text-slate-500 dark:text-slate-400">Deprecated</span>' : ''}
-                            ${c.tier && c.tier !== 'scored' ? `<span class="text-[10px] uppercase tracking-wider font-bold px-1.5 py-0.5 rounded bg-sky-100 dark:bg-sky-950 text-sky-700 dark:text-sky-300" title="${c.tier === 'experimental' ? 'Experimental check — excluded from scoring while it is validated.' : 'Advisory check — reported, never scored.'}">${c.tier === 'experimental' ? 'Experimental' : 'Advisory'} — not scored</span>` : ''}
+                            ${c.deprecated ? '<span class="text-[10px] uppercase tracking-wider font-bold px-1.5 py-0.5 rounded bg-slate-200 dark:bg-slate-700 text-slate-500 dark:text-slate-400">Deprecated</span>' : ""}
+                            ${c.tier && c.tier !== "scored" ? `<span class="text-[10px] uppercase tracking-wider font-bold px-1.5 py-0.5 rounded bg-sky-100 dark:bg-sky-950 text-sky-700 dark:text-sky-300" title="${c.tier === "experimental" ? "Experimental check — excluded from scoring while it is validated." : "Advisory check — reported, never scored."}">${c.tier === "experimental" ? "Experimental" : "Advisory"} — not scored</span>` : ""}
                           </div>
-                          ${c.displayValue ? `<div class="text-xs font-mono text-slate-500 dark:text-slate-400 mt-0.5 whitespace-pre-line">${escapeHtml(c.displayValue)}</div>` : ''}
+                          ${c.displayValue ? `<div class="text-xs font-mono text-slate-500 dark:text-slate-400 mt-0.5 whitespace-pre-line">${escapeHtml(c.displayValue)}</div>` : ""}
                         </div>
                       </div>
                       <span class="text-xs text-slate-400 group-open:rotate-180 transition-transform mt-1">▼</span>
                     </summary>
 
                     <div class="mt-3 pl-8 text-xs text-slate-600 dark:text-slate-400 space-y-3 cursor-text">
-                      ${c.deprecated ? `
+                      ${
+                        c.deprecated
+                          ? `
                         <div class="bg-slate-100 dark:bg-slate-800/60 p-3 rounded-lg border border-slate-300 dark:border-slate-700">
                           <strong class="text-slate-700 dark:text-slate-300 block mb-1">Deprecated — no longer a factor</strong>
                           <span>${escapeHtml(c.deprecated.notice)}</span>
                           <a href="${escapeHtml(c.deprecated.link)}" target="_blank" rel="noopener" class="block mt-1 underline text-slate-500">Why this is not a factor</a>
                         </div>
-                      ` : ''}
+                      `
+                          : ""
+                      }
 
-                      ${c.explanation ? `<p class="leading-relaxed font-medium text-slate-700 dark:text-slate-300">${escapeHtml(c.explanation)}</p>` : ''}
+                      ${c.explanation ? `<p class="leading-relaxed font-medium text-slate-700 dark:text-slate-300">${escapeHtml(c.explanation)}</p>` : ""}
                       
-                      ${c.details?.found && c.details.found !== c.displayValue ? `
+                      ${
+                        c.details?.found && c.details.found !== c.displayValue
+                          ? `
                         <div class="bg-slate-50 dark:bg-slate-950/60 p-3 rounded-lg border border-slate-200/60 dark:border-slate-800/60">
                           <strong class="text-slate-900 dark:text-slate-200 block mb-1">What we found:</strong>
                           <span class="font-mono text-[11px] whitespace-pre-line">${escapeHtml(c.details.found)}</span>
                         </div>
-                      ` : ''}
+                      `
+                          : ""
+                      }
 
-                      ${c.impact ? `
+                      ${
+                        c.impact
+                          ? `
                         <div class="bg-slate-50 dark:bg-slate-950/60 p-3 rounded-lg border border-slate-200/60 dark:border-slate-800/60">
                           <strong class="text-slate-900 dark:text-slate-200 block mb-1">Impact on AI Agents:</strong>
                           <span>${escapeHtml(c.impact)}</span>
                         </div>
-                      ` : ''}
+                      `
+                          : ""
+                      }
 
-                      ${c.fix ? `
+                      ${
+                        c.fix
+                          ? `
                         <div class="bg-indigo-50/50 dark:bg-indigo-950/20 p-3 rounded-lg border border-indigo-200/50 dark:border-indigo-900/30">
                           <strong class="text-indigo-900 dark:text-indigo-300 block mb-1">How to Fix:</strong>
                           <span>${escapeHtml(c.fix)}</span>
                         </div>
-                      ` : ''}
+                      `
+                          : ""
+                      }
 
-                      ${c.details?.evidenceUrl ? `
+                      ${
+                        c.details?.evidenceUrl
+                          ? `
                         <a href="${escapeHtml(c.details.evidenceUrl)}" target="_blank" rel="noopener"
                            class="inline-block underline text-indigo-600 dark:text-indigo-400">Why this audit exists — the evidence</a>
-                      ` : ''}
+                      `
+                          : ""
+                      }
 
-                      ${c.details?.code ? `
+                      ${
+                        c.details?.code
+                          ? `
                         <div class="mt-2">
                           <div class="flex items-center justify-between text-[11px] font-mono text-slate-400 mb-1">
                             <span>Recommended Code Snippet:</span>
@@ -142,17 +170,24 @@ export function generateHtmlReport(report: ScanReport): string {
                           </div>
                           <pre class="bg-slate-950 text-slate-200 p-3 rounded-lg font-mono text-[11px] overflow-x-auto border border-slate-800"><code>${escapeHtml(c.details.code)}</code></pre>
                         </div>
-                      ` : ''}
+                      `
+                          : ""
+                      }
                     </div>
                   </details>
-                `).join('')}
+                `,
+                  )
+                  .join("")}
               </div>
             </div>
-          `).join('')}
+          `,
+            )
+            .join("")}
         </div>
       </div>
     `;
-  }).join('');
+    })
+    .join("");
 
   return `<!DOCTYPE html>
 <html lang="en" class="dark">
@@ -212,9 +247,9 @@ export function generateHtmlReport(report: ScanReport): string {
                 view.coverage.skippedNoEvidence > 0
                   ? `<span>•</span>
               <span class="text-amber-300" title="${escapeHtml(
-                view.coverage.noEvidenceReasons.join(' '),
+                view.coverage.noEvidenceReasons.join(" "),
               )}">${view.coverage.skippedNoEvidence} not assessed</span>`
-                  : ''
+                  : ""
               }
               <span>•</span>
               <span>${new Date(report.scannedAt).toLocaleString()}</span>
@@ -228,7 +263,8 @@ export function generateHtmlReport(report: ScanReport): string {
               ? `<div class="px-4 py-3 rounded-xl border border-amber-500/40 bg-amber-500/10 text-center max-w-xs">
               <div class="text-sm font-bold uppercase tracking-wider text-amber-300">Not scored</div>
               <p class="text-xs text-amber-100/80 mt-1">${escapeHtml(
-                view.unscoredReason ?? 'This scan obtained too little evidence to judge the site.',
+                view.unscoredReason ??
+                  "This scan obtained too little evidence to judge the site.",
               )}</p>
             </div>`
               : `${renderGaugeSvg(view.overallScore, 120, 9)}
@@ -258,7 +294,9 @@ export function generateHtmlReport(report: ScanReport): string {
       </div>
     </header>
 
-    ${view.wafProtection?.isBlocked ? `
+    ${
+      view.wafProtection?.isBlocked
+        ? `
     <!-- WAF / Bot Wall Alert Banner -->
     <div class="bg-red-950/70 border-2 border-red-500/80 rounded-2xl p-5 mb-8 text-red-100 flex items-start gap-4 shadow-xl">
       <div class="text-3xl">🛡️</div>
@@ -273,7 +311,9 @@ export function generateHtmlReport(report: ScanReport): string {
         </p>
       </div>
     </div>
-    ` : ''}
+    `
+        : ""
+    }
 
     <!-- Filter Tabs -->
     <div class="flex items-center gap-2 mb-8 overflow-x-auto pb-2">
@@ -333,9 +373,9 @@ export function generateHtmlReport(report: ScanReport): string {
 
 function escapeHtml(str: string): string {
   return str
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#039;');
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
 }

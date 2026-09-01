@@ -1,5 +1,5 @@
-import type { APIRoute } from 'astro';
-import { readSourceRegistryRaw } from '../lib/evidence';
+import type { APIRoute } from "astro";
+import { readSourceRegistryRaw } from "../lib/evidence";
 
 /**
  * The source registry, republished at `/sources.json` for the table on
@@ -11,5 +11,5 @@ import { readSourceRegistryRaw } from '../lib/evidence';
  */
 export const GET: APIRoute = () =>
   new Response(readSourceRegistryRaw(), {
-    headers: { 'content-type': 'application/json' },
+    headers: { "content-type": "application/json" },
   });

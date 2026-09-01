@@ -33,7 +33,9 @@ describe("a bare but real site", () => {
         );
       }
     }
-    expect(rows.map((row) => row.trim().split(/\s+/).at(-1)).sort()).toEqual(expectedIds);
+    expect(rows.map((row) => row.trim().split(/\s+/).at(-1)).sort()).toEqual(
+      expectedIds,
+    );
     expect(rows.sort().join("\n")).toMatchSnapshot();
   });
 });

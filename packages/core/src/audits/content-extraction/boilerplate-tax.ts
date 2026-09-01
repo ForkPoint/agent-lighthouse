@@ -1,10 +1,10 @@
-import type { AuditMeta, AuditResult } from '../../types';
-import { Audit } from '../../audit';
-import type { CheckContext, PageContext } from '../../check-context';
-import { weightForGrade } from '../../scorer';
-import { countTokens } from '../../gatherers/tokens';
-import { readabilityArticle, semanticText } from '../../gatherers/extraction';
-import { shingles } from '../../gatherers/text-metrics';
+import type { AuditMeta, AuditResult } from "../../types";
+import { Audit } from "../../audit";
+import type { CheckContext, PageContext } from "../../check-context";
+import { weightForGrade } from "../../scorer";
+import { countTokens } from "../../gatherers/tokens";
+import { readabilityArticle, semanticText } from "../../gatherers/extraction";
+import { shingles } from "../../gatherers/text-metrics";
 
 /** Below this, document frequency is arithmetic on too few documents. */
 const MIN_PAGES = 3;
@@ -34,7 +34,7 @@ interface PageMeasure {
 /** Path depth of a URL, used only to bucket the sample. */
 function depthOf(url: string): number {
   try {
-    return new URL(url).pathname.split('/').filter(Boolean).length;
+    return new URL(url).pathname.split("/").filter(Boolean).length;
   } catch {
     return 0;
   }
@@ -62,27 +62,33 @@ function stratify(pages: PageContext[]): PageContext[] {
 
 export class BoilerplateTaxAudit extends Audit {
   static override meta: AuditMeta = {
-    id: 'content-extraction/boilerplate-tax',
-    category: 'content-extraction',
-    title: 'Boilerplate tax across the crawl (unique tokens per fetch)',
-    failureTitle: 'Most of what an agent fetches from this site it has already read',
+    id: "content-extraction/boilerplate-tax",
+    category: "content-extraction",
+    title: "Boilerplate tax across the crawl (unique tokens per fetch)",
+    failureTitle:
+      "Most of what an agent fetches from this site it has already read",
     description:
-      'Samples pages across the crawl, finds the five-word windows that appear on at least 80% of them, and reports how many of the tokens an agent pays for are distinct information rather than repeated chrome. Site-level rather than page-level: the cost of boilerplate is only visible across fetches.',
-    scoreDisplayMode: 'ternary',
-    tier: 'scored',
-    evidenceGrade: 'B',
-    weight: weightForGrade('B', 'scored'),
-    defaultPriority: 'medium',
-    dossier: 'docs/evidence/audits/content-extraction/boilerplate-tax.md',
-    requires: ['origin-reachable', 'unblocked-fetches', 'rendered-body', 'sample-adequate'],
+      "Samples pages across the crawl, finds the five-word windows that appear on at least 80% of them, and reports how many of the tokens an agent pays for are distinct information rather than repeated chrome. Site-level rather than page-level: the cost of boilerplate is only visible across fetches.",
+    scoreDisplayMode: "ternary",
+    tier: "scored",
+    evidenceGrade: "B",
+    weight: weightForGrade("B", "scored"),
+    defaultPriority: "medium",
+    dossier: "docs/evidence/audits/content-extraction/boilerplate-tax.md",
+    requires: [
+      "origin-reachable",
+      "unblocked-fetches",
+      "rendered-body",
+      "sample-adequate",
+    ],
     guidance: {
       impact:
-        'An agent answering a question about a site fetches several of its pages. If each fetch delivers the same navigation, the same promotional header and the same footer around a thin body, the agent pays for those tokens once per fetch and learns nothing new from them. The cost compounds with every page, and the distinct content it came for competes for what is left of the context window.',
-      fix: 'Cut repeated chrome down to what a reader needs on every page: collapse mega-menus to a short nav, move legal and marketing boilerplate to the pages that are about it, and let each page carry more of its own content. Where the chrome must stay for humans, keeping it out of `<main>` at least lets an extractor drop it.',
-      effort: 'complex',
+        "An agent answering a question about a site fetches several of its pages. If each fetch delivers the same navigation, the same promotional header and the same footer around a thin body, the agent pays for those tokens once per fetch and learns nothing new from them. The cost compounds with every page, and the distinct content it came for competes for what is left of the context window.",
+      fix: "Cut repeated chrome down to what a reader needs on every page: collapse mega-menus to a short nav, move legal and marketing boilerplate to the pages that are about it, and let each page carry more of its own content. Where the chrome must stay for humans, keeping it out of `<main>` at least lets an extractor drop it.",
+      effort: "complex",
       docsUrl:
-        'https://forkpoint.github.io/agent-lighthouse/audits/content-extraction/boilerplate-tax/',
-      tags: ['tokens', 'context-window', 'content', 'crawl'],
+        "https://forkpoint.github.io/agent-lighthouse/audits/content-extraction/boilerplate-tax/",
+      tags: ["tokens", "context-window", "content", "crawl"],
     },
   };
 
@@ -91,12 +97,13 @@ export class BoilerplateTaxAudit extends Audit {
 
     const measures: PageMeasure[] = [];
     for (const page of sample) {
-      const html = page.$.html() ?? '';
-      const extracted = readabilityArticle(html, page.url) ?? semanticText(html);
-      if (extracted.text.trim() === '') continue;
+      const html = page.$.html() ?? "";
+      const extracted =
+        readabilityArticle(html, page.url) ?? semanticText(html);
+      if (extracted.text.trim() === "") continue;
       measures.push({
         url: page.url,
-        deliveredTokens: countTokens(page.fetchResult.body ?? ''),
+        deliveredTokens: countTokens(page.fetchResult.body ?? ""),
         contentTokens: countTokens(extracted.text),
         shingles: shingles(extracted.text),
       });
@@ -113,7 +120,10 @@ export class BoilerplateTaxAudit extends Audit {
     const documentFrequency = new Map<string, number>();
     for (const measure of measures) {
       for (const shingle of measure.shingles) {
-        documentFrequency.set(shingle, (documentFrequency.get(shingle) ?? 0) + 1);
+        documentFrequency.set(
+          shingle,
+          (documentFrequency.get(shingle) ?? 0) + 1,
+        );
       }
     }
     const boilerplate = new Set(
@@ -128,7 +138,9 @@ export class BoilerplateTaxAudit extends Audit {
     for (const measure of measures) {
       deliveredTokens += measure.deliveredTokens;
       const total = measure.shingles.size;
-      const repeated = [...measure.shingles].filter((s) => boilerplate.has(s)).length;
+      const repeated = [...measure.shingles].filter((s) =>
+        boilerplate.has(s),
+      ).length;
       const uniqueShare = total === 0 ? 0 : (total - repeated) / total;
       const unique = Math.round(measure.contentTokens * uniqueShare);
       uniqueTokens += unique;
@@ -137,7 +149,8 @@ export class BoilerplateTaxAudit extends Audit {
 
     const sorted = [...perPageUnique].sort((a, b) => a - b);
     const medianUnique = sorted[Math.floor(sorted.length / 2)] ?? 0;
-    const uniqueShare = deliveredTokens === 0 ? 0 : uniqueTokens / deliveredTokens;
+    const uniqueShare =
+      deliveredTokens === 0 ? 0 : uniqueTokens / deliveredTokens;
 
     const found = `An agent reading ${measures.length} pages of this site pays ${deliveredTokens} tokens to receive ${uniqueTokens} tokens of distinct information (${(uniqueShare * 100).toFixed(1)}%); median ${medianUnique} distinct tokens per page; ${boilerplate.size} repeated five-word windows.`;
     const expected = `At least ${FAIL_UNIQUE_SHARE * 100}% of fetched tokens distinct, and at least ${FAIL_UNIQUE_TOKENS} distinct tokens per page`;
@@ -156,7 +169,7 @@ export class BoilerplateTaxAudit extends Audit {
           `Only ${(uniqueShare * 100).toFixed(1)}% of what an agent fetches from this site is distinct information.`,
           expected,
           found,
-          'Cut the chrome that repeats on every page, and give each page more of its own content.',
+          "Cut the chrome that repeats on every page, and give each page more of its own content.",
         ),
         displayValue: `${(uniqueShare * 100).toFixed(1)}% distinct`,
         details,
@@ -169,7 +182,7 @@ export class BoilerplateTaxAudit extends Audit {
           `${(uniqueShare * 100).toFixed(1)}% of what an agent fetches is distinct — repeated chrome still dominates.`,
           expected,
           found,
-          'Trim the repeated header, nav and footer text an agent re-reads on every fetch.',
+          "Trim the repeated header, nav and footer text an agent re-reads on every fetch.",
         ),
         displayValue: `${(uniqueShare * 100).toFixed(1)}% distinct`,
         details,

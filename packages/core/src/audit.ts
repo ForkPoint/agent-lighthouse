@@ -1,6 +1,11 @@
-import type { AuditMeta, AuditResult, CheckResult, CheckPriority } from './types';
-import { AuditResultSchema } from './schemas';
-import type { CheckContext } from './check-context';
+import type {
+  AuditMeta,
+  AuditResult,
+  CheckResult,
+  CheckPriority,
+} from "./types";
+import { AuditResultSchema } from "./schemas";
+import type { CheckContext } from "./check-context";
 
 /**
  * Where an audit's evidence dossier is published. A pure function of the id.
@@ -21,10 +26,10 @@ export function evidenceUrl(id: string): string {
 export abstract class Audit {
   static meta: AuditMeta;
   private static readonly PRIORITY_MAP: Record<string, CheckPriority> = {
-    critical: 'critical',
-    high: 'high',
-    medium: 'medium',
-    low: 'low',
+    critical: "critical",
+    high: "high",
+    medium: "medium",
+    low: "low",
   };
 
   /**
@@ -39,8 +44,9 @@ export abstract class Audit {
   private static splitRecommendation(
     value?: { priority: CheckPriority; [key: string]: unknown } | string,
   ): { priority: CheckPriority | undefined; remediation: string | undefined } {
-    if (value === undefined) return { priority: undefined, remediation: undefined };
-    if (typeof value === 'string') {
+    if (value === undefined)
+      return { priority: undefined, remediation: undefined };
+    if (typeof value === "string") {
       const known = Audit.PRIORITY_MAP[value];
       return known
         ? { priority: known, remediation: undefined }
@@ -48,17 +54,20 @@ export abstract class Audit {
     }
     return {
       priority: Audit.PRIORITY_MAP[value.priority] ?? value.priority,
-      remediation: typeof value['description'] === 'string' ? value['description'] : undefined,
+      remediation:
+        typeof value["description"] === "string"
+          ? value["description"]
+          : undefined,
     };
   }
 
   /** Validate an audit result against the schema. */
   protected validate(result: AuditResult): AuditResult {
     if (result.found && result.found.length > 5000) {
-      result.found = result.found.slice(0, 4990) + '... (truncated)';
+      result.found = result.found.slice(0, 4990) + "... (truncated)";
     }
     if (result.expected && result.expected.length > 5000) {
-      result.expected = result.expected.slice(0, 4990) + '... (truncated)';
+      result.expected = result.expected.slice(0, 4990) + "... (truncated)";
     }
     return AuditResultSchema.parse(result);
   }
@@ -67,8 +76,13 @@ export abstract class Audit {
   abstract audit(ctx: CheckContext): AuditResult | Promise<AuditResult>;
 
   /** Create a passing result. */
-  protected pass(message: string, expected: string, found: string, pageUrl?: string): AuditResult {
-    return { status: 'pass', score: 1.0, message, expected, found, pageUrl };
+  protected pass(
+    message: string,
+    expected: string,
+    found: string,
+    pageUrl?: string,
+  ): AuditResult {
+    return { status: "pass", score: 1.0, message, expected, found, pageUrl };
   }
 
   /**
@@ -77,8 +91,13 @@ export abstract class Audit {
    * all). Excluded from score aggregation so it neither inflates nor deflates
    * the category score — unlike a vacuous `pass()`, which rewards absence.
    */
-  protected notApplicable(message: string, expected: string, found: string, pageUrl?: string): AuditResult {
-    return { status: 'na', score: 0, message, expected, found, pageUrl };
+  protected notApplicable(
+    message: string,
+    expected: string,
+    found: string,
+    pageUrl?: string,
+  ): AuditResult {
+    return { status: "na", score: 0, message, expected, found, pageUrl };
   }
 
   /** Create a warning result. */
@@ -87,22 +106,24 @@ export abstract class Audit {
     expected: string,
     found: string,
     recommendationOrPriority?:
-      | { priority: CheckPriority; [key: string]: unknown }
-      | string,
+      { priority: CheckPriority; [key: string]: unknown } | string,
     pageUrl?: string,
   ): AuditResult {
-    const { priority, remediation } = Audit.splitRecommendation(recommendationOrPriority);
+    const { priority, remediation } = Audit.splitRecommendation(
+      recommendationOrPriority,
+    );
 
     // A recommendation object may also carry a fix snippet computed from what
     // this scan actually found. It used to be dropped here, so every report
     // showed the generic snippet from meta.guidance.code.
     const code =
-      typeof recommendationOrPriority === 'object' && typeof recommendationOrPriority.code === 'string'
+      typeof recommendationOrPriority === "object" &&
+      typeof recommendationOrPriority.code === "string"
         ? recommendationOrPriority.code
         : undefined;
 
     return {
-      status: 'warn',
+      status: "warn",
       score: 0.5,
       message,
       expected,
@@ -120,22 +141,24 @@ export abstract class Audit {
     expected: string,
     found: string,
     recommendationOrPriority?:
-      | { priority: CheckPriority; [key: string]: unknown }
-      | string,
+      { priority: CheckPriority; [key: string]: unknown } | string,
     pageUrl?: string,
   ): AuditResult {
-    const { priority, remediation } = Audit.splitRecommendation(recommendationOrPriority);
+    const { priority, remediation } = Audit.splitRecommendation(
+      recommendationOrPriority,
+    );
 
     // A recommendation object may also carry a fix snippet computed from what
     // this scan actually found. It used to be dropped here, so every report
     // showed the generic snippet from meta.guidance.code.
     const code =
-      typeof recommendationOrPriority === 'object' && typeof recommendationOrPriority.code === 'string'
+      typeof recommendationOrPriority === "object" &&
+      typeof recommendationOrPriority.code === "string"
         ? recommendationOrPriority.code
         : undefined;
 
     return {
-      status: 'fail',
+      status: "fail",
       score: 0.0,
       message,
       expected,
@@ -148,11 +171,14 @@ export abstract class Audit {
   }
 
   /** Merge static meta with the runtime result to produce a CheckResult. */
-  toCheckResult(rawResult: AuditResult, overrideDisplayMode?: import('./types').ScoreDisplayMode): CheckResult {
+  toCheckResult(
+    rawResult: AuditResult,
+    overrideDisplayMode?: import("./types").ScoreDisplayMode,
+  ): CheckResult {
     const result = this.validate(rawResult);
     const meta = (this.constructor as typeof Audit).meta;
     const scoreDisplayMode = overrideDisplayMode ?? meta.scoreDisplayMode;
-    const isInformative = scoreDisplayMode === 'informative';
+    const isInformative = scoreDisplayMode === "informative";
 
     // Backward compatibility mapping
     const displayValue = result.displayValue ?? result.found ?? result.message;
@@ -167,7 +193,10 @@ export abstract class Audit {
       // may carry it. A not-applicable check did not fail: the audit's
       // precondition was absent, and printing "… blocked by robots.txt" over a
       // site that serves no robots.txt states something untrue.
-      title: result.status === 'pass' || result.status === 'na' ? meta.title : meta.failureTitle,
+      title:
+        result.status === "pass" || result.status === "na"
+          ? meta.title
+          : meta.failureTitle,
       description: meta.description,
       status: result.status,
       score: isInformative ? 0 : result.score,
@@ -182,7 +211,10 @@ export abstract class Audit {
       // UCP guidance extensions
       priority: result.priority ?? meta.defaultPriority,
       impact: meta.guidance?.impact ?? meta.description,
-      fix: result.remediation ?? meta.guidance?.fix ?? 'No fix instructions available.',
+      fix:
+        result.remediation ??
+        meta.guidance?.fix ??
+        "No fix instructions available.",
 
       // Structured details
       details: {

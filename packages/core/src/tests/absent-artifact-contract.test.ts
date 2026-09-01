@@ -1,9 +1,13 @@
-import { describe, it, expect } from 'vitest';
-import { defaultConfig } from '../audit-config';
-import { AuditResultSchema } from '../schemas';
-import { mockCheckContext, mockFetchResult, mockPageContext } from '../__tests__/test-utils';
-import { auditSources } from './audit-sources';
-import type { CheckContext } from '../check-context';
+import { describe, it, expect } from "vitest";
+import { defaultConfig } from "../audit-config";
+import { AuditResultSchema } from "../schemas";
+import {
+  mockCheckContext,
+  mockFetchResult,
+  mockPageContext,
+} from "../__tests__/test-utils";
+import { auditSources } from "./audit-sources";
+import type { CheckContext } from "../check-context";
 
 /**
  * Absent artifact, absent verdict.
@@ -44,7 +48,7 @@ const sources = auditSources();
 
 /** Audits that declared themselves to be about the OpenAPI document's contents. */
 const openApiContentAudits = registrations.filter((r) =>
-  (sources.get(r.meta.id) ?? '').includes('NO_OPENAPI_SPEC'),
+  (sources.get(r.meta.id) ?? "").includes("NO_OPENAPI_SPEC"),
 );
 
 /**
@@ -53,30 +57,45 @@ const openApiContentAudits = registrations.filter((r) =>
  * only thing missing is the artifact. That isolates the absence from every
  * other reason an audit might decline.
  */
-function siteWithoutASpec(overrides: Record<string, ReturnType<typeof mockFetchResult>> = {}): CheckContext {
+function siteWithoutASpec(
+  overrides: Record<string, ReturnType<typeof mockFetchResult>> = {},
+): CheckContext {
   return mockCheckContext(
-    [mockPageContext('https://example.com/', '<html lang="en"><body><h1>Bakery</h1></body></html>')],
-    { '/robots.txt': mockFetchResult('User-agent: *\nAllow: /', 200), ...overrides },
+    [
+      mockPageContext(
+        "https://example.com/",
+        '<html lang="en"><body><h1>Bakery</h1></body></html>',
+      ),
+    ],
+    {
+      "/robots.txt": mockFetchResult("User-agent: *\nAllow: /", 200),
+      ...overrides,
+    },
   );
 }
 
-describe('absent artifact, absent verdict — the OpenAPI document', () => {
-  it('finds the audits that read the shared precondition', () => {
+describe("absent artifact, absent verdict — the OpenAPI document", () => {
+  it("finds the audits that read the shared precondition", () => {
     expect(openApiContentAudits.map((r) => r.meta.id).sort()).toEqual([
-      'agent-interfaces/openapi-description-quality',
-      'agent-interfaces/openapi-endpoints',
-      'agent-interfaces/openapi-operation-ids',
-      'agent-interfaces/openapi-schemas',
-      'agent-interfaces/openapi-servers',
+      "agent-interfaces/openapi-description-quality",
+      "agent-interfaces/openapi-endpoints",
+      "agent-interfaces/openapi-operation-ids",
+      "agent-interfaces/openapi-schemas",
+      "agent-interfaces/openapi-servers",
     ]);
   });
 
   const states: Array<[string, CheckContext]> = [
-    ['no /openapi.json was fetched at all', siteWithoutASpec()],
-    ['/openapi.json answers 404', siteWithoutASpec({ '/openapi.json': mockFetchResult('', 404) })],
+    ["no /openapi.json was fetched at all", siteWithoutASpec()],
     [
-      '/openapi.json answers 200 with an unreadable body',
-      siteWithoutASpec({ '/openapi.json': mockFetchResult('<!doctype html><p>Docs</p>', 200) }),
+      "/openapi.json answers 404",
+      siteWithoutASpec({ "/openapi.json": mockFetchResult("", 404) }),
+    ],
+    [
+      "/openapi.json answers 200 with an unreadable body",
+      siteWithoutASpec({
+        "/openapi.json": mockFetchResult("<!doctype html><p>Docs</p>", 200),
+      }),
     ],
   ];
 
@@ -92,7 +111,7 @@ describe('absent artifact, absent verdict — the OpenAPI document', () => {
           `${label}: reported "${result.status}" about a document the site never published — ` +
             `"${result.message}". Absence is notApplicable; only a present-and-defective ` +
             `document may fail.`,
-        ).toBe('na');
+        ).toBe("na");
       }
     });
   }
@@ -100,24 +119,28 @@ describe('absent artifact, absent verdict — the OpenAPI document', () => {
 
 /** Audits that declared themselves to be about the sitemap's contents. */
 const sitemapContentAudits = registrations.filter((r) =>
-  (sources.get(r.meta.id) ?? '').includes('NO_SITEMAP'),
+  (sources.get(r.meta.id) ?? "").includes("NO_SITEMAP"),
 );
 
 function siteWithoutASitemap(): CheckContext {
   return mockCheckContext(
-    [mockPageContext('https://example.com/', '<html lang="en"><body><h1>Bakery</h1></body></html>')],
-    { '/robots.txt': mockFetchResult('User-agent: *\nAllow: /', 200) },
+    [
+      mockPageContext(
+        "https://example.com/",
+        '<html lang="en"><body><h1>Bakery</h1></body></html>',
+      ),
+    ],
+    { "/robots.txt": mockFetchResult("User-agent: *\nAllow: /", 200) },
   );
 }
 
-describe('absent artifact, absent verdict — the sitemap', () => {
-  it('finds the audits that read the shared sitemap precondition', () => {
+describe("absent artifact, absent verdict — the sitemap", () => {
+  it("finds the audits that read the shared sitemap precondition", () => {
     expect(sitemapContentAudits.map((r) => r.meta.id).sort()).toEqual([
-      'machine-discovery/sitemap-absolute-urls',
-      'machine-discovery/sitemap-lastmod',
+      "machine-discovery/sitemap-absolute-urls",
+      "machine-discovery/sitemap-lastmod",
     ]);
   });
-
 
   for (const registration of sitemapContentAudits) {
     const { id } = registration.meta;
@@ -131,8 +154,7 @@ describe('absent artifact, absent verdict — the sitemap', () => {
         `${id}: reported "${result.status}" about a sitemap the site never published — ` +
           `"${result.message}". Absence is notApplicable; only a present-and-defective ` +
           `sitemap may fail.`,
-      ).toBe('na');
+      ).toBe("na");
     });
   }
 });
-

@@ -1,14 +1,17 @@
-import type { CheckContext } from '../check-context';
-import type { FetchResult } from '../fetcher';
-import { isSafeUrl } from '../fetcher';
+import type { CheckContext } from "../check-context";
+import type { FetchResult } from "../fetcher";
+import { isSafeUrl } from "../fetcher";
 
-const securityProbeCache = new WeakMap<object, Map<string, Promise<FetchResult | undefined>>>();
+const securityProbeCache = new WeakMap<
+  object,
+  Map<string, Promise<FetchResult | undefined>>
+>();
 
 export function probeSecurityUrl(
-  ctx: { fetch: CheckContext['fetch'] },
+  ctx: { fetch: CheckContext["fetch"] },
   url: string,
   options: {
-    method?: 'GET' | 'POST' | 'HEAD' | 'OPTIONS';
+    method?: "GET" | "POST" | "HEAD" | "OPTIONS";
     followRedirects?: boolean;
     userAgent?: string;
     headers?: Record<string, string>;
@@ -20,7 +23,7 @@ export function probeSecurityUrl(
     cache = new Map();
     securityProbeCache.set(ctx, cache);
   }
-  const key = `${options.method ?? 'GET'}|${options.userAgent ?? ''}|${JSON.stringify(options.headers ?? {})}|${url}`;
+  const key = `${options.method ?? "GET"}|${options.userAgent ?? ""}|${JSON.stringify(options.headers ?? {})}|${url}`;
   let hit = cache.get(key);
   if (!hit) {
     hit = (async () => {
@@ -28,7 +31,7 @@ export function probeSecurityUrl(
       try {
         return await ctx.fetch({
           url,
-          method: options.method ?? 'GET',
+          method: options.method ?? "GET",
           followRedirects: options.followRedirects ?? false,
           ...(options.userAgent ? { userAgent: options.userAgent } : {}),
           ...(options.headers ? { headers: options.headers } : {}),

@@ -1,5 +1,14 @@
-import type { CheckResult, CategoryResult, EvidenceGrade, AuditTier } from './types';
-import { CATEGORY_NAMES, getScoreTier, TAG_SKIPPED_NO_EVIDENCE } from './constants';
+import type {
+  CheckResult,
+  CategoryResult,
+  EvidenceGrade,
+  AuditTier,
+} from "./types";
+import {
+  CATEGORY_NAMES,
+  getScoreTier,
+  TAG_SKIPPED_NO_EVIDENCE,
+} from "./constants";
 
 /**
  * Spec §4 weight law: an audit's scoring weight is a pure function of its
@@ -7,8 +16,8 @@ import { CATEGORY_NAMES, getScoreTier, TAG_SKIPPED_NO_EVIDENCE } from './constan
  * grades A and B are proven enough to move a score.
  */
 export function weightForGrade(grade: EvidenceGrade, tier: AuditTier): number {
-  if (tier !== 'scored') return 0;
-  return grade === 'A' ? 1.0 : grade === 'B' ? 0.6 : 0;
+  if (tier !== "scored") return 0;
+  return grade === "A" ? 1.0 : grade === "B" ? 0.6 : 0;
 }
 
 /**
@@ -19,18 +28,23 @@ export function weightForGrade(grade: EvidenceGrade, tier: AuditTier): number {
  * fails/passes or readiness vitals. Every surface that ranks or scores checks
  * filters through this predicate so the rule cannot drift per package.
  */
-export function isInformative(check: Pick<CheckResult, 'scoreDisplayMode'>): boolean {
-  return check.scoreDisplayMode === 'informative';
+export function isInformative(
+  check: Pick<CheckResult, "scoreDisplayMode">,
+): boolean {
+  return check.scoreDisplayMode === "informative";
 }
 
 export function calculateCategoryScore(checks: CheckResult[]): number {
   // Not-applicable checks leave the denominator entirely: "nothing to
   // assess" must not move a score in either direction. Informative checks
   // are advisory only — excluded even if one ever carried a nonzero weight.
-  const scored = checks.filter((c) => c.status !== 'na' && !isInformative(c));
+  const scored = checks.filter((c) => c.status !== "na" && !isInformative(c));
   const totalWeight = scored.reduce((sum, c) => sum + (c.weight ?? 0), 0);
   if (totalWeight === 0) return 0;
-  const weighted = scored.reduce((sum, c) => sum + c.score * (c.weight ?? 0), 0);
+  const weighted = scored.reduce(
+    (sum, c) => sum + c.score * (c.weight ?? 0),
+    0,
+  );
   return Math.round((weighted / totalWeight) * 100);
 }
 
@@ -48,7 +62,7 @@ export function buildCategoryResult(
   mass = 0,
 ): CategoryResult {
   const assessedMass = checks
-    .filter((c) => c.status !== 'na' && !isInformative(c))
+    .filter((c) => c.status !== "na" && !isInformative(c))
     .reduce((sum, c) => sum + (c.weight ?? 0), 0);
 
   return {
@@ -59,9 +73,9 @@ export function buildCategoryResult(
     assessedMass,
     score: calculateCategoryScore(checks),
     checks,
-    passCount: checks.filter((c) => c.status === 'pass').length,
-    warnCount: checks.filter((c) => c.status === 'warn').length,
-    failCount: checks.filter((c) => c.status === 'fail').length,
+    passCount: checks.filter((c) => c.status === "pass").length,
+    warnCount: checks.filter((c) => c.status === "warn").length,
+    failCount: checks.filter((c) => c.status === "fail").length,
   };
 }
 
@@ -85,7 +99,7 @@ function hasAssessableCheck(cat: CategoryResult): boolean {
   // A category that reported no checks at all is left alone — callers build
   // those from a mass and a score directly, with no check list to inspect.
   if (cat.checks.length === 0) return true;
-  return cat.checks.some((c) => c.status !== 'na' && !isInformative(c));
+  return cat.checks.some((c) => c.status !== "na" && !isInformative(c));
 }
 
 export function calculateOverallScore(categories: CategoryResult[]): number {

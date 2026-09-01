@@ -1,7 +1,7 @@
-import * as cheerio from 'cheerio';
-import type { FetchOptions, FetchResult } from '../fetcher';
-import { isSafeUrl } from '../fetcher';
-import { parseRobotsFile } from './robots';
+import * as cheerio from "cheerio";
+import type { FetchOptions, FetchResult } from "../fetcher";
+import { isSafeUrl } from "../fetcher";
+import { parseRobotsFile } from "./robots";
 
 /** One `<url>` row of a sitemap. */
 export interface SitemapEntry {
@@ -25,7 +25,6 @@ const DEFAULT_MAX_CHILDREN = 10;
 /** How many `<url>` rows to collect in total across the whole tree. */
 const DEFAULT_MAX_ENTRIES = 500;
 
-
 /**
  * Does this value parse as a W3C Datetime, the format the sitemap protocol
  * requires of `<lastmod>`?
@@ -36,56 +35,67 @@ const DEFAULT_MAX_ENTRIES = 500;
  * every prose string a locale parser recognises.
  */
 export function isW3CDateTime(value: string): boolean {
-  const shape = /^\d{4}-\d{2}-\d{2}(T\d{2}:\d{2}(:\d{2}(\.\d+)?)?(Z|[+-]\d{2}:\d{2}))?$/;
+  const shape =
+    /^\d{4}-\d{2}-\d{2}(T\d{2}:\d{2}(:\d{2}(\.\d+)?)?(Z|[+-]\d{2}:\d{2}))?$/;
   if (!shape.test(value)) return false;
   // The shape admits 2026-13-01; only a real parse rejects it.
   const parsed = new Date(value);
   if (Number.isNaN(parsed.getTime())) return false;
   // Round-trip the date part so an out-of-range month or day is caught rather
   // than silently rolled forward.
-  return parsed.toISOString().slice(0, 10) === value.slice(0, 10) || value.length > 10;
+  return (
+    parsed.toISOString().slice(0, 10) === value.slice(0, 10) ||
+    value.length > 10
+  );
 }
 
 /** Same site host or subdomain — a sitemap index may not hand us another origin's URLs. */
 function sameHost(candidate: string, reference: string): boolean {
   try {
-    const candHost = new URL(candidate).hostname.toLowerCase().replace(/^www\./, '');
-    const refHost = new URL(reference).hostname.toLowerCase().replace(/^www\./, '');
-    return candHost === refHost || candHost.endsWith(`.${refHost}`) || refHost.endsWith(`.${candHost}`);
+    const candHost = new URL(candidate).hostname
+      .toLowerCase()
+      .replace(/^www\./, "");
+    const refHost = new URL(reference).hostname
+      .toLowerCase()
+      .replace(/^www\./, "");
+    return (
+      candHost === refHost ||
+      candHost.endsWith(`.${refHost}`) ||
+      refHost.endsWith(`.${candHost}`)
+    );
   } catch {
     return false;
   }
 }
 
-
 interface ParsedSitemap {
-  kind: 'urlset' | 'sitemapindex' | 'none';
+  kind: "urlset" | "sitemapindex" | "none";
   entries: SitemapEntry[];
   children: string[];
 }
 
 function parseSitemap(result: FetchResult | undefined): ParsedSitemap {
-  const empty: ParsedSitemap = { kind: 'none', entries: [], children: [] };
+  const empty: ParsedSitemap = { kind: "none", entries: [], children: [] };
   if (!result || result.status !== 200 || !result.body.trim()) return empty;
 
   const $ = cheerio.load(result.body, { xmlMode: true });
-  if ($('sitemapindex').length > 0) {
+  if ($("sitemapindex").length > 0) {
     const children: string[] = [];
-    $('sitemapindex > sitemap > loc').each((_, el) => {
+    $("sitemapindex > sitemap > loc").each((_, el) => {
       const loc = $(el).text().trim();
       if (loc) children.push(loc);
     });
-    return { kind: 'sitemapindex', entries: [], children };
+    return { kind: "sitemapindex", entries: [], children };
   }
-  if ($('urlset').length > 0) {
+  if ($("urlset").length > 0) {
     const entries: SitemapEntry[] = [];
-    $('urlset > url').each((_, el) => {
-      const loc = $(el).find('loc').first().text().trim();
+    $("urlset > url").each((_, el) => {
+      const loc = $(el).find("loc").first().text().trim();
       if (!loc) return;
-      const lastmod = $(el).find('lastmod').first().text().trim();
+      const lastmod = $(el).find("lastmod").first().text().trim();
       entries.push(lastmod ? { loc, lastmod } : { loc });
     });
-    return { kind: 'urlset', entries, children: [] };
+    return { kind: "urlset", entries, children: [] };
   }
   return empty;
 }
@@ -101,7 +111,11 @@ function parseSitemap(result: FetchResult | undefined): ParsedSitemap {
 export async function collectSitemapEntries(
   fetch: (options: FetchOptions) => Promise<FetchResult>,
   roots: string[],
-  opts: { maxChildren?: number; maxEntries?: number; signal?: AbortSignal } = {},
+  opts: {
+    maxChildren?: number;
+    maxEntries?: number;
+    signal?: AbortSignal;
+  } = {},
 ): Promise<SitemapTree> {
   const maxChildren = opts.maxChildren ?? DEFAULT_MAX_CHILDREN;
   const maxEntries = opts.maxEntries ?? DEFAULT_MAX_ENTRIES;
@@ -132,7 +146,7 @@ export async function collectSitemapEntries(
 
   for (const root of roots) {
     const parsed = await load(root);
-    if (!parsed || parsed.kind === 'none') continue;
+    if (!parsed || parsed.kind === "none") continue;
 
     take(parsed.entries);
 
@@ -153,10 +167,8 @@ export async function collectSitemapEntries(
     break;
   }
 
-
   return { entries, childSitemaps, malformedLastmod, truncated };
 }
-
 
 /**
  * Take an even-strided sample of `n` entries.
@@ -165,7 +177,10 @@ export async function collectSitemapEntries(
  * probe the same URLs, or a finding from one cannot be lined up against a
  * finding from the other.
  */
-export function sampleEntries(entries: SitemapEntry[], n: number): SitemapEntry[] {
+export function sampleEntries(
+  entries: SitemapEntry[],
+  n: number,
+): SitemapEntry[] {
   if (n <= 0) return [];
   if (entries.length <= n) return [...entries];
   const stride = entries.length / n;
@@ -176,11 +191,16 @@ export function sampleEntries(entries: SitemapEntry[], n: number): SitemapEntry[
 
 /** The sitemap roots a site advertises, plus the two conventional paths. */
 function siteRoots(ctx: SitemapContext): string[] {
-  const robots = ctx.rootFiles['/robots.txt'];
-  const declared = robots && robots.status === 200 ? parseRobotsFile(robots.body).sitemaps : [];
+  const robots = ctx.rootFiles["/robots.txt"];
+  const declared =
+    robots && robots.status === 200
+      ? parseRobotsFile(robots.body).sitemaps
+      : [];
   let baseHost: string;
   try {
-    baseHost = new URL(ctx.baseUrl).hostname.toLowerCase().replace(/^www\./, '');
+    baseHost = new URL(ctx.baseUrl).hostname
+      .toLowerCase()
+      .replace(/^www\./, "");
   } catch {
     return [];
   }
@@ -198,8 +218,8 @@ function siteRoots(ctx: SitemapContext): string[] {
     } catch {
       continue;
     }
-    if (url.protocol !== 'http:' && url.protocol !== 'https:') continue;
-    const host = url.hostname.toLowerCase().replace(/^www\./, '');
+    if (url.protocol !== "http:" && url.protocol !== "https:") continue;
+    const host = url.hostname.toLowerCase().replace(/^www\./, "");
     // An off-site sitemap is not this site's to walk, and following it would
     // turn a site-scoped scan into a crawl of somebody else's host.
     if (host !== baseHost && !host.endsWith(`.${baseHost}`)) continue;
@@ -233,13 +253,18 @@ export function siteSitemapTree(ctx: SitemapContext): Promise<SitemapTree> {
   return walk;
 }
 
-export const NO_SITEMAP = 'No readable sitemap found.';
+export const NO_SITEMAP = "No readable sitemap found.";
 
 export type SitemapReadResult =
-  | { kind: 'absent'; reason: string }
-  | { kind: 'empty'; reason: string; result?: FetchResult }
-  | { kind: 'malformed'; reason: string; result?: FetchResult }
-  | { kind: 'readable'; tree: SitemapTree; result?: FetchResult; defects: string[] };
+  | { kind: "absent"; reason: string }
+  | { kind: "empty"; reason: string; result?: FetchResult }
+  | { kind: "malformed"; reason: string; result?: FetchResult }
+  | {
+      kind: "readable";
+      tree: SitemapTree;
+      result?: FetchResult;
+      defects: string[];
+    };
 
 const readResultCache = new WeakMap<object, Promise<SitemapReadResult>>();
 
@@ -250,44 +275,47 @@ const readResultCache = new WeakMap<object, Promise<SitemapReadResult>>();
  * entries, MALFORMED when a sitemap file exists but has invalid XML structure,
  * or READABLE with the parsed tree.
  */
-export async function readSitemap(ctx: SitemapContext): Promise<SitemapReadResult> {
+export async function readSitemap(
+  ctx: SitemapContext,
+): Promise<SitemapReadResult> {
   const cached = readResultCache.get(ctx);
   if (cached) return cached;
 
   const promise = (async (): Promise<SitemapReadResult> => {
     const sitemapFile =
-      ctx.rootFiles['/sitemap.xml'] ??
-      ctx.rootFiles['/sitemap-index.xml'] ??
-      ctx.rootFiles['/sitemap_index.xml'];
+      ctx.rootFiles["/sitemap.xml"] ??
+      ctx.rootFiles["/sitemap-index.xml"] ??
+      ctx.rootFiles["/sitemap_index.xml"];
     const tree = await siteSitemapTree(ctx);
-
 
     if (tree.entries.length === 0 && tree.childSitemaps.length === 0) {
       if (!sitemapFile || sitemapFile.status !== 200) {
-        return { kind: 'absent', reason: NO_SITEMAP };
+        return { kind: "absent", reason: NO_SITEMAP };
       }
 
       const parsed = parseSitemap(sitemapFile);
-      if (parsed.kind === 'none') {
+      if (parsed.kind === "none") {
         return {
-          kind: 'malformed',
-          reason: 'Sitemap file found but does not contain valid <urlset> or <sitemapindex>.',
+          kind: "malformed",
+          reason:
+            "Sitemap file found but does not contain valid <urlset> or <sitemapindex>.",
           result: sitemapFile,
         };
       }
 
-      return { kind: 'empty', reason: NO_SITEMAP, result: sitemapFile };
+      return { kind: "empty", reason: NO_SITEMAP, result: sitemapFile };
     }
 
     const defects: string[] = [];
     if (tree.malformedLastmod > 0) {
-      defects.push(`${tree.malformedLastmod} <lastmod> date(s) fail W3C Datetime shape.`);
+      defects.push(
+        `${tree.malformedLastmod} <lastmod> date(s) fail W3C Datetime shape.`,
+      );
     }
 
-    return { kind: 'readable', tree, result: sitemapFile, defects };
+    return { kind: "readable", tree, result: sitemapFile, defects };
   })();
 
   readResultCache.set(ctx, promise);
   return promise;
 }
-

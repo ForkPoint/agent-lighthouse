@@ -7,9 +7,16 @@
  * degrade to their jsdom (zero-layout) values, so data/layout classification
  * stays stable for our fixtures.
  */
-import { VNode, toVNode, escapeSelector, memoize, findUp, type AnyNode } from './core';
-import { getExplicitRole, getRoleType } from './aria';
-import { isFocusable } from './dom';
+import {
+  VNode,
+  toVNode,
+  escapeSelector,
+  memoize,
+  findUp,
+  type AnyNode,
+} from "./core";
+import { getExplicitRole, getRoleType } from "./aria";
+import { isFocusable } from "./dom";
 
 type Cell = AnyNode & {
   nodeName: string;
@@ -41,9 +48,10 @@ function toGridImpl(node: Table): Cell[][] {
     let columnIndex = 0;
     for (let j = 0; j < cells.length; j++) {
       for (let colSpan = 0; colSpan < cells[j].colSpan; colSpan++) {
-        const rowspanAttr = cells[j].getAttribute('rowspan');
+        const rowspanAttr = cells[j].getAttribute("rowspan");
         const rowspanValue =
-          parseInt(rowspanAttr as string, 10) === 0 || (cells[j] as unknown as { rowspan?: number }).rowspan === 0
+          parseInt(rowspanAttr as string, 10) === 0 ||
+          (cells[j] as unknown as { rowspan?: number }).rowspan === 0
             ? rows.length
             : cells[j].rowSpan;
         for (let rowSpan = 0; rowSpan < rowspanValue; rowSpan++) {
@@ -61,8 +69,11 @@ function toGridImpl(node: Table): Cell[][] {
 export const toGrid = memoize(toGridImpl);
 export const toArray = toGrid;
 
-function getCellPositionImpl(cell: Cell, tableGrid?: Cell[][]): { x: number; y: number } | undefined {
-  if (!tableGrid) tableGrid = toGrid(findUp(cell, 'table') as unknown as Table);
+function getCellPositionImpl(
+  cell: Cell,
+  tableGrid?: Cell[][],
+): { x: number; y: number } | undefined {
+  if (!tableGrid) tableGrid = toGrid(findUp(cell, "table") as unknown as Table);
   for (let rowIndex = 0; rowIndex < tableGrid.length; rowIndex++) {
     if (tableGrid[rowIndex]) {
       const index = tableGrid[rowIndex].indexOf(cell);
@@ -77,71 +88,82 @@ export const getCellPosition = memoize(getCellPositionImpl);
 export function getScope(el: Cell | VNode): boolean | string {
   const vNode = toVNode(el instanceof VNode ? el.actualNode : el);
   const cell = vNode.actualNode as unknown as Cell;
-  const scope = vNode.attr('scope');
+  const scope = vNode.attr("scope");
   const role = getExplicitRole(vNode);
 
-  if (!['td', 'th'].includes(vNode.props.nodeName)) {
-    throw new TypeError('Expected TD or TH element');
+  if (!["td", "th"].includes(vNode.props.nodeName)) {
+    throw new TypeError("Expected TD or TH element");
   }
-  if (role === 'columnheader') return 'col';
-  if (role === 'rowheader') return 'row';
-  if (scope === 'col' || scope === 'row') return scope;
-  if (vNode.props.nodeName !== 'th') return false;
-  if (!vNode.actualNode) return 'auto';
+  if (role === "columnheader") return "col";
+  if (role === "rowheader") return "row";
+  if (scope === "col" || scope === "row") return scope;
+  if (vNode.props.nodeName !== "th") return false;
+  if (!vNode.actualNode) return "auto";
 
-  const tableGrid = toGrid(findUp(cell, 'table') as unknown as Table);
+  const tableGrid = toGrid(findUp(cell, "table") as unknown as Table);
   const pos = getCellPosition(cell, tableGrid)!;
-  const headerRow = tableGrid[pos.y].every((node) => (node as Cell).nodeName.toUpperCase() === 'TH');
-  if (headerRow) return 'col';
+  const headerRow = tableGrid[pos.y].every(
+    (node) => (node as Cell).nodeName.toUpperCase() === "TH",
+  );
+  if (headerRow) return "col";
   const headerCol = tableGrid
     .map((col) => col[pos.x])
-    .every((node) => node && (node as Cell).nodeName.toUpperCase() === 'TH');
-  if (headerCol) return 'row';
-  return 'auto';
+    .every((node) => node && (node as Cell).nodeName.toUpperCase() === "TH");
+  if (headerCol) return "row";
+  return "auto";
 }
 
 export function isColumnHeader(element: Cell | VNode): boolean {
-  return ['col', 'auto'].indexOf(getScope(element) as string) !== -1;
+  return ["col", "auto"].indexOf(getScope(element) as string) !== -1;
 }
 
 export function isRowHeader(cell: Cell | VNode): boolean {
-  return ['row', 'auto'].includes(getScope(cell) as string);
+  return ["row", "auto"].includes(getScope(cell) as string);
 }
 
 export function isDataCell(cell: Cell): boolean {
   if (!cell.children.length && !cell.textContent.trim()) return false;
   const role = getExplicitRole(cell);
-  if (role) return ['cell', 'gridcell'].includes(role);
-  return cell.nodeName.toUpperCase() === 'TD';
+  if (role) return ["cell", "gridcell"].includes(role);
+  return cell.nodeName.toUpperCase() === "TD";
 }
 
 export function isHeader(cell: Cell): boolean {
   if (isColumnHeader(cell) || isRowHeader(cell)) return true;
-  const id = cell.getAttribute('id');
+  const id = cell.getAttribute("id");
   if (id) {
-    const doc = (cell as unknown as { ownerDocument: { querySelector: (s: string) => unknown } }).ownerDocument;
+    const doc = (
+      cell as unknown as {
+        ownerDocument: { querySelector: (s: string) => unknown };
+      }
+    ).ownerDocument;
     return !!doc.querySelector(`[headers~="${escapeSelector(id)}"]`);
   }
   return false;
 }
 
-function traverseForHeaders(headerType: 'row' | 'col', position: { x: number; y: number }, tableGrid: Cell[][]): Cell[] {
-  const property = headerType === 'row' ? '_rowHeaders' : '_colHeaders';
-  const predicate = headerType === 'row' ? isRowHeader : isColumnHeader;
+function traverseForHeaders(
+  headerType: "row" | "col",
+  position: { x: number; y: number },
+  tableGrid: Cell[][],
+): Cell[] {
+  const property = headerType === "row" ? "_rowHeaders" : "_colHeaders";
+  const predicate = headerType === "row" ? isRowHeader : isColumnHeader;
   const startCell = tableGrid[position.y][position.x];
 
   const colspan = startCell.colSpan - 1;
-  const rowspanAttr = startCell.getAttribute('rowspan');
+  const rowspanAttr = startCell.getAttribute("rowspan");
   const rowspanValue =
-    parseInt(rowspanAttr as string, 10) === 0 || (startCell as unknown as { rowspan?: number }).rowspan === 0
+    parseInt(rowspanAttr as string, 10) === 0 ||
+    (startCell as unknown as { rowspan?: number }).rowspan === 0
       ? tableGrid.length
       : startCell.rowSpan;
   const rowspan = rowspanValue - 1;
 
   const rowStart = position.y + rowspan;
   const colStart = position.x + colspan;
-  const rowEnd = headerType === 'row' ? position.y : 0;
-  const colEnd = headerType === 'row' ? 0 : position.x;
+  const rowEnd = headerType === "row" ? position.y : 0;
+  const colEnd = headerType === "row" ? 0 : position.x;
 
   let headers: Cell[] | undefined;
   const cells: Cell[] = [];
@@ -149,7 +171,10 @@ function traverseForHeaders(headerType: 'row' | 'col', position: { x: number; y:
     for (let col = colStart; col >= colEnd; col--) {
       const cell = tableGrid[row] ? tableGrid[row][col] : undefined;
       if (!cell) continue;
-      const vNode = toVNode(cell) as unknown as Record<string, Cell[] | undefined>;
+      const vNode = toVNode(cell) as unknown as Record<
+        string,
+        Cell[] | undefined
+      >;
       if (vNode[property]) {
         headers = vNode[property];
         break;
@@ -159,20 +184,21 @@ function traverseForHeaders(headerType: 'row' | 'col', position: { x: number; y:
   }
   headers = (headers || []).concat(cells.filter(predicate));
   cells.forEach((tableCell) => {
-    (toVNode(tableCell) as unknown as Record<string, Cell[]>)[property] = headers as Cell[];
+    (toVNode(tableCell) as unknown as Record<string, Cell[]>)[property] =
+      headers as Cell[];
   });
   return headers;
 }
 
 export function getHeaders(cell: Cell, tableGrid?: Cell[][]): (Cell | null)[] {
-  if (cell.getAttribute('headers')) {
-    const headers = idrefs(cell, 'headers') as (Cell | null)[];
+  if (cell.getAttribute("headers")) {
+    const headers = idrefs(cell, "headers") as (Cell | null)[];
     if (headers.filter((header) => header).length) return headers;
   }
-  if (!tableGrid) tableGrid = toGrid(findUp(cell, 'table') as unknown as Table);
+  if (!tableGrid) tableGrid = toGrid(findUp(cell, "table") as unknown as Table);
   const position = getCellPosition(cell, tableGrid)!;
-  const rowHeaders = traverseForHeaders('row', position, tableGrid);
-  const colHeaders = traverseForHeaders('col', position, tableGrid);
+  const rowHeaders = traverseForHeaders("row", position, tableGrid);
+  const colHeaders = traverseForHeaders("col", position, tableGrid);
   return ([] as (Cell | null)[]).concat(rowHeaders, colHeaders).reverse();
 }
 
@@ -181,14 +207,25 @@ function traverseTable(
   dir: Dir,
   position: { x: number; y: number },
   tableGrid: Cell[][],
-  callback?: (cell: Cell, pos: { x: number; y: number }, grid: Cell[][]) => boolean | void,
+  callback?: (
+    cell: Cell,
+    pos: { x: number; y: number },
+    grid: Cell[][],
+  ) => boolean | void,
 ): Cell[] {
-  const cell = tableGrid[position.y] ? tableGrid[position.y][position.x] : undefined;
+  const cell = tableGrid[position.y]
+    ? tableGrid[position.y][position.x]
+    : undefined;
   if (!cell) return [];
-  if (typeof callback === 'function') {
+  if (typeof callback === "function") {
     if (callback(cell, position, tableGrid) === true) return [cell];
   }
-  const result = traverseTable(dir, { x: position.x + dir.x, y: position.y + dir.y }, tableGrid, callback);
+  const result = traverseTable(
+    dir,
+    { x: position.x + dir.x, y: position.y + dir.y },
+    tableGrid,
+    callback,
+  );
   result.unshift(cell);
   return result;
 }
@@ -201,7 +238,9 @@ export function traverse(
 ): Cell[] {
   let pos: { x: number; y: number };
   let grid: Cell[][];
-  let cb: ((cell: Cell, p: { x: number; y: number }, g: Cell[][]) => boolean | void) | undefined;
+  let cb:
+    | ((cell: Cell, p: { x: number; y: number }, g: Cell[][]) => boolean | void)
+    | undefined;
   if (Array.isArray(startPos)) {
     cb = tableGrid as (cell: Cell) => boolean | void;
     grid = startPos as Cell[][];
@@ -212,8 +251,13 @@ export function traverse(
     cb = callback as (cell: Cell) => boolean | void;
   }
   let d: Dir;
-  if (typeof dir === 'string') {
-    d = { left: { x: -1, y: 0 }, up: { x: 0, y: -1 }, right: { x: 1, y: 0 }, down: { x: 0, y: 1 } }[dir]!;
+  if (typeof dir === "string") {
+    d = {
+      left: { x: -1, y: 0 },
+      up: { x: 0, y: -1 },
+      right: { x: 1, y: 0 },
+      down: { x: 0, y: 1 },
+    }[dir]!;
   } else {
     d = dir;
   }
@@ -224,7 +268,8 @@ export function traverse(
 
 export function isDataTable(node: Table): boolean {
   const role = getExplicitRole(node);
-  if ((role === 'presentation' || role === 'none') && !isFocusable(node)) return false;
+  if ((role === "presentation" || role === "none") && !isFocusable(node))
+    return false;
 
   const el = node as unknown as {
     getAttribute: (a: string) => string | null;
@@ -237,15 +282,19 @@ export function isDataTable(node: Table): boolean {
     ownerDocument: { defaultView: Window | null };
   };
 
-  if (el.getAttribute('contenteditable') === 'true' || findUp(node, '[contenteditable="true"]')) return true;
-  if (role === 'grid' || role === 'treegrid' || role === 'table') return true;
-  if (getRoleType(role) === 'landmark') return true;
-  if (el.getAttribute('datatable') === '0') return false;
-  if (el.getAttribute('summary')) return true;
+  if (
+    el.getAttribute("contenteditable") === "true" ||
+    findUp(node, '[contenteditable="true"]')
+  )
+    return true;
+  if (role === "grid" || role === "treegrid" || role === "table") return true;
+  if (getRoleType(role) === "landmark") return true;
+  if (el.getAttribute("datatable") === "0") return false;
+  if (el.getAttribute("summary")) return true;
   if (el.tHead || el.tFoot || el.caption) return true;
 
   for (let ci = 0; ci < el.children.length; ci++) {
-    if (el.children[ci].nodeName.toUpperCase() === 'COLGROUP') return true;
+    if (el.children[ci].nodeName.toUpperCase() === "COLGROUP") return true;
   }
 
   let cells = 0;
@@ -255,28 +304,50 @@ export function isDataTable(node: Table): boolean {
   for (let ri = 0; ri < rowLength; ri++) {
     const row = rows[ri];
     for (let cellIndex = 0; cellIndex < row.cells.length; cellIndex++) {
-      const cell = row.cells[cellIndex] as Cell & { offsetWidth?: number; clientWidth?: number; offsetHeight?: number; clientHeight?: number };
-      if (cell.nodeName.toUpperCase() === 'TH') return true;
+      const cell = row.cells[cellIndex] as Cell & {
+        offsetWidth?: number;
+        clientWidth?: number;
+        offsetHeight?: number;
+        clientHeight?: number;
+      };
+      if (cell.nodeName.toUpperCase() === "TH") return true;
       if (
         !hasBorder &&
-        (cell.offsetWidth !== cell.clientWidth || cell.offsetHeight !== cell.clientHeight)
+        (cell.offsetWidth !== cell.clientWidth ||
+          cell.offsetHeight !== cell.clientHeight)
       ) {
         hasBorder = true;
       }
-      if (cell.getAttribute('scope') || cell.getAttribute('headers') || cell.getAttribute('abbr')) return true;
-      if (['columnheader', 'rowheader'].includes(getExplicitRole(cell) as string)) return true;
-      if (cell.children.length === 1 && (cell.children[0] as { nodeName: string }).nodeName.toUpperCase() === 'ABBR') {
+      if (
+        cell.getAttribute("scope") ||
+        cell.getAttribute("headers") ||
+        cell.getAttribute("abbr")
+      )
+        return true;
+      if (
+        ["columnheader", "rowheader"].includes(getExplicitRole(cell) as string)
+      )
+        return true;
+      if (
+        cell.children.length === 1 &&
+        (cell.children[0] as { nodeName: string }).nodeName.toUpperCase() ===
+          "ABBR"
+      ) {
         return true;
       }
       cells++;
     }
   }
 
-  if (el.getElementsByTagName('table').length) return false;
+  if (el.getElementsByTagName("table").length) return false;
   if (rowLength < 2) return false;
 
   const sampleRow = rows[Math.ceil(rowLength / 2)];
-  if (sampleRow.cells.length === 1 && (sampleRow.cells[0] as Cell).colSpan === 1) return false;
+  if (
+    sampleRow.cells.length === 1 &&
+    (sampleRow.cells[0] as Cell).colSpan === 1
+  )
+    return false;
   if (sampleRow.cells.length >= 5) return true;
   if (hasBorder) return true;
 
@@ -286,8 +357,8 @@ export function isDataTable(node: Table): boolean {
   for (let ri = 0; ri < rowLength; ri++) {
     const row = rows[ri] as unknown as Element;
     const style = view ? view.getComputedStyle(row) : null;
-    const rowBgColor = style ? style.getPropertyValue('background-color') : '';
-    const rowBgImage = style ? style.getPropertyValue('background-image') : '';
+    const rowBgColor = style ? style.getPropertyValue("background-color") : "";
+    const rowBgImage = style ? style.getPropertyValue("background-image") : "";
     if (bgColor && bgColor !== rowBgColor) return true;
     bgColor = rowBgColor;
     if (bgImage && bgImage !== rowBgImage) return true;
@@ -296,13 +367,17 @@ export function isDataTable(node: Table): boolean {
 
   if (rowLength >= 20) return true;
 
-  const width = (node as unknown as { getBoundingClientRect?: () => { width: number } }).getBoundingClientRect?.().width ?? 0;
-  const viewportWidth = (view as unknown as { innerWidth?: number })?.innerWidth || 1024;
+  const width =
+    (
+      node as unknown as { getBoundingClientRect?: () => { width: number } }
+    ).getBoundingClientRect?.().width ?? 0;
+  const viewportWidth =
+    (view as unknown as { innerWidth?: number })?.innerWidth || 1024;
   if (width > viewportWidth * 0.95) return false;
   if (cells < 10) return false;
-  if (el.querySelector('object, embed, iframe, applet')) return false;
+  if (el.querySelector("object, embed, iframe, applet")) return false;
   return true;
 }
 
 // Lazy import to break aria/table cycle for idrefs.
-import { idrefs } from './dom';
+import { idrefs } from "./dom";

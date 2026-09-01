@@ -23,7 +23,13 @@ import {
   generateHtmlReport,
   generateMarkdownSummary,
 } from "@forkpoint/agent-lighthouse-report";
-import { writeFileSync, mkdirSync, readFileSync, appendFileSync, rmSync } from "node:fs";
+import {
+  writeFileSync,
+  mkdirSync,
+  readFileSync,
+  appendFileSync,
+  rmSync,
+} from "node:fs";
 import { resolve } from "node:path";
 import { exec } from "node:child_process";
 
@@ -109,14 +115,23 @@ async function audit(targetUrl?: string) {
     process.exit(1);
   }
 
-  const { isSilent, progressJson, shouldView, debugAudit, minScore, outputDir, tracePath } = opts;
+  const {
+    isSilent,
+    progressJson,
+    shouldView,
+    debugAudit,
+    minScore,
+    outputDir,
+    tracePath,
+  } = opts;
   // Keep the NDJSON stream clean: scanner logs also go to stderr.
   if (progressJson) logger.level = "silent";
 
   const presetName = opts.presetName;
   const preset = getPreset(presetName);
 
-  const { categories, unknownCategories, includeExperimental, outputFormats } = opts;
+  const { categories, unknownCategories, includeExperimental, outputFormats } =
+    opts;
   if (unknownCategories.length > 0) {
     console.error(
       `\x1b[31mUnknown category: ${unknownCategories.join(", ")}\x1b[0m\nValid categories: ${CATEGORY_IDS.join(", ")}`,
@@ -149,7 +164,8 @@ async function audit(targetUrl?: string) {
   const traceFile = tracePath ? resolve(tracePath) : undefined;
   if (traceFile) rmSync(traceFile, { force: true });
   const onAuditTrace = traceFile
-    ? (trace: AuditTrace) => appendFileSync(traceFile, `${JSON.stringify(trace)}\n`)
+    ? (trace: AuditTrace) =>
+        appendFileSync(traceFile, `${JSON.stringify(trace)}\n`)
     : undefined;
 
   const report = await runScan(url, {
@@ -169,7 +185,8 @@ async function audit(targetUrl?: string) {
     console.log(
       view.overallScore === null
         ? `\x1b[1mOVERALL AGENT READINESS:\x1b[0m \x1b[33mNOT SCORED\x1b[0m — ${
-            view.unscoredReason ?? 'this scan obtained too little evidence to judge the site.'
+            view.unscoredReason ??
+            "this scan obtained too little evidence to judge the site."
           }`
         : `\x1b[1mOVERALL AGENT READINESS:\x1b[0m \x1b[1m${view.overallScore}/100\x1b[0m (${view.scoreTier?.toUpperCase()})`,
     );
@@ -181,7 +198,7 @@ async function audit(targetUrl?: string) {
       // about the scan.
       console.log(
         `\x1b[33m${view.coverage.skippedNoEvidence} audit(s) not assessed:\x1b[0m ` +
-          `this scan did not obtain the evidence they need. ${view.coverage.noEvidenceReasons.join(' ')}`,
+          `this scan did not obtain the evidence they need. ${view.coverage.noEvidenceReasons.join(" ")}`,
       );
     }
     console.log(
@@ -334,11 +351,16 @@ async function audit(targetUrl?: string) {
   if (minScore > 0 && view.overallScore === null) {
     console.error(
       `\n\x1b[31m✖ CI Assertion Failed:\x1b[0m The scan produced no score, so it cannot clear ${minScore}. ` +
-        (view.unscoredReason ?? 'It obtained too little evidence to judge the site.'),
+        (view.unscoredReason ??
+          "It obtained too little evidence to judge the site."),
     );
     process.exit(1);
   }
-  if (minScore > 0 && view.overallScore !== null && view.overallScore < minScore) {
+  if (
+    minScore > 0 &&
+    view.overallScore !== null &&
+    view.overallScore < minScore
+  ) {
     console.error(
       `\n\x1b[31m✖ CI Assertion Failed:\x1b[0m Overall score ${view.overallScore} is below minimum threshold ${minScore}`,
     );

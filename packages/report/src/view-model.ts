@@ -5,8 +5,8 @@ import type {
   ReadinessVitals,
   ScanReport,
   ScoreTier,
-} from '@forkpoint/agent-lighthouse-core';
-import { isInformative } from '@forkpoint/agent-lighthouse-core';
+} from "@forkpoint/agent-lighthouse-core";
+import { isInformative } from "@forkpoint/agent-lighthouse-core";
 import {
   CATEGORY_ORDER,
   SECTION_GROUPS,
@@ -14,7 +14,7 @@ import {
   TAG_SCAN_ERROR,
   TAG_SKIPPED_NO_EVIDENCE,
   TAG_SKIPPED_PAGE_TYPE,
-} from './sections';
+} from "./sections";
 
 // ── View types — the single shape every surface renders ─────────
 
@@ -98,33 +98,35 @@ export interface ReportView {
   coverage: CoverageView;
   pagesScanned: Array<{ url: string; pageType: string }>;
   durationMs: number;
-  wafProtection?: import('@forkpoint/agent-lighthouse-core').WafProtection;
+  wafProtection?: import("@forkpoint/agent-lighthouse-core").WafProtection;
 }
 
 export interface BuildReportViewOptions {
   /** Limit for topFixes / topPasses (default 10). */
   topN?: number;
   /** Filter all checks to a single priority (used by the MCP tool). */
-  priority?: 'critical' | 'high' | 'medium' | 'low';
+  priority?: "critical" | "high" | "medium" | "low";
 }
 
 // ── Derivation ──────────────────────────────────────────────────
 
 function countChecks(checks: CheckResult[]): CheckCounts {
-  const pass = checks.filter((c) => c.status === 'pass').length;
-  const warn = checks.filter((c) => c.status === 'warn').length;
-  const fail = checks.filter((c) => c.status === 'fail').length;
-  const na = checks.filter((c) => c.status === 'na').length;
+  const pass = checks.filter((c) => c.status === "pass").length;
+  const warn = checks.filter((c) => c.status === "warn").length;
+  const fail = checks.filter((c) => c.status === "fail").length;
+  const na = checks.filter((c) => c.status === "na").length;
   // Tier is not a status: an advisory check passes or fails like any other, it
   // just never moves a score. Counting it separately is what stops a deliberate
   // advisory from reading as a defect.
-  const advisory = checks.filter((c) => c.status !== 'na' && c.tier !== undefined && c.tier !== 'scored').length;
+  const advisory = checks.filter(
+    (c) => c.status !== "na" && c.tier !== undefined && c.tier !== "scored",
+  ).length;
   return { pass, warn, fail, na, advisory, total: pass + warn + fail };
 }
 
 function toCategoryView(cat: CategoryResult): CategoryView {
-  const assessed = cat.checks.filter((c) => c.status !== 'na');
-  const notApplicable = cat.checks.filter((c) => c.status === 'na');
+  const assessed = cat.checks.filter((c) => c.status !== "na");
+  const notApplicable = cat.checks.filter((c) => c.status === "na");
   return {
     id: cat.id,
     name: cat.name,
@@ -147,14 +149,20 @@ function hasTag(check: CheckResult, tag: string): boolean {
  * mcp renderers so derived structures (grouping, counts, vitals, top fixes,
  * coverage) have exactly one implementation.
  */
-export function buildReportView(report: ScanReport, opts: BuildReportViewOptions = {}): ReportView {
+export function buildReportView(
+  report: ScanReport,
+  opts: BuildReportViewOptions = {},
+): ReportView {
   const topN = opts.topN ?? 10;
 
   // Optionally narrow every check to a single priority (MCP priority filter).
   let categories = report.categories;
   if (opts.priority) {
     categories = categories
-      .map((cat) => ({ ...cat, checks: cat.checks.filter((c) => c.priority === opts.priority) }))
+      .map((cat) => ({
+        ...cat,
+        checks: cat.checks.filter((c) => c.priority === opts.priority),
+      }))
       .filter((cat) => cat.checks.length > 0);
   }
 
@@ -187,12 +195,16 @@ export function buildReportView(report: ScanReport, opts: BuildReportViewOptions
 
   // Coverage — bucket every check, attributing na checks by their tag.
   const allChecks = categories.flatMap((c) => c.checks);
-  const naChecks = allChecks.filter((c) => c.status === 'na');
+  const naChecks = allChecks.filter((c) => c.status === "na");
   const erroredChecks = naChecks.filter((c) => hasTag(c, TAG_SCAN_ERROR));
-  const skippedChecks = naChecks.filter((c) => hasTag(c, TAG_SKIPPED_PAGE_TYPE));
-  const gatedChecks = naChecks.filter((c) => hasTag(c, TAG_SKIPPED_NO_EVIDENCE));
+  const skippedChecks = naChecks.filter((c) =>
+    hasTag(c, TAG_SKIPPED_PAGE_TYPE),
+  );
+  const gatedChecks = naChecks.filter((c) =>
+    hasTag(c, TAG_SKIPPED_NO_EVIDENCE),
+  );
   const coverage: CoverageView = {
-    ran: allChecks.filter((c) => c.status !== 'na').length,
+    ran: allChecks.filter((c) => c.status !== "na").length,
     skippedByPageType: skippedChecks.length,
     skippedNoEvidence: gatedChecks.length,
     noEvidenceReasons: Object.values(report.scanValidity?.reasons ?? {}).filter(
@@ -200,29 +212,45 @@ export function buildReportView(report: ScanReport, opts: BuildReportViewOptions
     ),
     errored: erroredChecks.length,
     notApplicable:
-      naChecks.length - erroredChecks.length - skippedChecks.length - gatedChecks.length,
+      naChecks.length -
+      erroredChecks.length -
+      skippedChecks.length -
+      gatedChecks.length,
     erroredChecks,
   };
 
   // Top fixes: highest-priority non-passing assessed checks. Informative checks
   // are advisory-only and never surface as a fix or a highlighted pass.
-  const order: Record<string, number> = { critical: 0, high: 1, medium: 2, low: 3 };
+  const order: Record<string, number> = {
+    critical: 0,
+    high: 1,
+    medium: 2,
+    low: 3,
+  };
   const topFixes = allChecks
-    .filter((c) => (c.status === 'fail' || c.status === 'warn') && !isInformative(c))
+    .filter(
+      (c) => (c.status === "fail" || c.status === "warn") && !isInformative(c),
+    )
     .slice()
     .sort((a, b) => (order[a.priority] ?? 3) - (order[b.priority] ?? 3))
     .slice(0, topN);
 
   // Top passes: highest category-weight passing checks.
   const topPasses = allChecks
-    .filter((c) => c.status === 'pass' && !isInformative(c))
+    .filter((c) => c.status === "pass" && !isInformative(c))
     .slice()
-    .sort((a, b) => (viewById.get(b.category)?.weight ?? 0) - (viewById.get(a.category)?.weight ?? 0))
+    .sort(
+      (a, b) =>
+        (viewById.get(b.category)?.weight ?? 0) -
+        (viewById.get(a.category)?.weight ?? 0),
+    )
     .slice(0, topN);
 
   let recommendations = report.recommendations ?? [];
   if (opts.priority) {
-    recommendations = recommendations.filter((r) => r.priority === opts.priority);
+    recommendations = recommendations.filter(
+      (r) => r.priority === opts.priority,
+    );
   }
 
   const vitals = report.readinessVitals ?? {
@@ -237,7 +265,7 @@ export function buildReportView(report: ScanReport, opts: BuildReportViewOptions
     domain: report.domain,
     overallScore: report.overallScore,
     scoreTier: report.scoreTier,
-    summary: report.summary ?? '',
+    summary: report.summary ?? "",
     ...(report.scanValidity?.unscoredReason
       ? { unscoredReason: report.scanValidity.unscoredReason }
       : {}),

@@ -1,108 +1,108 @@
-import * as fs from 'node:fs';
-import * as path from 'node:path';
-import { runScan, type ScanReport } from '../packages/core/src';
+import * as fs from "node:fs";
+import * as path from "node:path";
+import { runScan, type ScanReport } from "../packages/core/src";
 
 const RAW_STORES = [
-  'https://allbirds.com',
-  'gymshark.com',
-  'https://hiutdenim.co.uk',
-  'fashionnova.com',
-  'taylorstitch.com',
-  'chubbiesshorts.com',
-  'https://kith.com',
-  'velasca.com',
-  'https://aloyoga.com',
-  'https://bombas.com',
-  'deathwishcoffee.com',
-  'https://magicspoon.com',
-  'https://liquiddeath.com',
-  'pipsnacks.com',
-  'https://partakefoods.com',
-  'https://drinkghia.com',
-  'graza.co',
-  'https://kyliecosmetics.com',
-  'glossier.com',
-  'https://beardbrand.com',
-  'https://colourpop.com',
-  'https://jeffreestarcosmetics.com',
-  'https://artisaire.com',
-  'https://popchart.co',
-  'https://biteminute.com',
-  'https://bioliteenergy.com',
-  'popsockets.com',
-  'https://tattly.com',
-  'https://ruggable.com',
-  'https://uppercasemag.com',
-  'https://skims.com',
-  'fentybeauty.com',
-  'stevemadden.com',
-  'mvmt.com',
-  'https://rebeccaminkoff.com',
-  'oishii.com',
-  'houseplant.com',
-  'https://packagefreeshop.com',
-  'https://bestself.co',
-  'https://urbanasacs.com',
-  'https://magdabutrym.com',
-  'https://goodfair.com',
-  'ridge.com',
-  'delacalle.mx',
-  'https://greatjonesgoods.com',
-  'https://westontable.com',
-  'https://heydaycanning.com',
-  'https://freshcap.com',
-  'https://justinreed.com',
-  'quitenice.co',
-  'https://207ouest.com',
-  'https://theouai.com',
-  'https://perfectwhitetee.com',
-  'shocksurplus.com',
-  'https://cookanyday.com',
-  'stefanomarti.no',
-  'https://madsencycles.com',
-  'https://adoredvintage.com',
-  'etq-amsterdam.com',
-  'https://livso.com',
-  'https://sophieratner.com',
-  'https://reddress.com',
-  'oddballs.co.uk',
-  'nutrimuscle.com',
-  'https://paramountshop.com',
-  'https://sokoglam.com',
-  'https://hismileteeth.com',
-  'https://stumptowncoffee.com',
-  'https://puravidabracelets.com',
-  'https://dbjourney.com',
-  'emmabridgewater.co.uk',
-  'https://nickeykehoe.com',
-  'https://madeincookware.com',
-  'ecoflow.com',
-  'https://owala.com',
-  '32degrees.com',
-  'https://ring.com',
-  'decathlon.com',
-  'blueland.com',
-  'brooklinen.com',
-  'casper.com',
-  'awaytravel.com',
-  'meundies.com',
-  'outdoorvoices.com',
-  'warbyparker.com',
-  'thirdlove.com',
-  'quip.com',
-  'harrysofmanchester.com',
-  'dollarshaveclub.com',
-  'nativecos.com',
-  'koparibeauty.com',
-  'tula.com',
-  'drunkelephant.com',
-  'herbivorebotanicals.com',
-  'youthtothepeople.com',
-  'boy-smells.com',
-  'homesick.com',
-  'purnatur.be',
-  'unitedbyblue.com',
-  'lunchskins.com',
+  "https://allbirds.com",
+  "gymshark.com",
+  "https://hiutdenim.co.uk",
+  "fashionnova.com",
+  "taylorstitch.com",
+  "chubbiesshorts.com",
+  "https://kith.com",
+  "velasca.com",
+  "https://aloyoga.com",
+  "https://bombas.com",
+  "deathwishcoffee.com",
+  "https://magicspoon.com",
+  "https://liquiddeath.com",
+  "pipsnacks.com",
+  "https://partakefoods.com",
+  "https://drinkghia.com",
+  "graza.co",
+  "https://kyliecosmetics.com",
+  "glossier.com",
+  "https://beardbrand.com",
+  "https://colourpop.com",
+  "https://jeffreestarcosmetics.com",
+  "https://artisaire.com",
+  "https://popchart.co",
+  "https://biteminute.com",
+  "https://bioliteenergy.com",
+  "popsockets.com",
+  "https://tattly.com",
+  "https://ruggable.com",
+  "https://uppercasemag.com",
+  "https://skims.com",
+  "fentybeauty.com",
+  "stevemadden.com",
+  "mvmt.com",
+  "https://rebeccaminkoff.com",
+  "oishii.com",
+  "houseplant.com",
+  "https://packagefreeshop.com",
+  "https://bestself.co",
+  "https://urbanasacs.com",
+  "https://magdabutrym.com",
+  "https://goodfair.com",
+  "ridge.com",
+  "delacalle.mx",
+  "https://greatjonesgoods.com",
+  "https://westontable.com",
+  "https://heydaycanning.com",
+  "https://freshcap.com",
+  "https://justinreed.com",
+  "quitenice.co",
+  "https://207ouest.com",
+  "https://theouai.com",
+  "https://perfectwhitetee.com",
+  "shocksurplus.com",
+  "https://cookanyday.com",
+  "stefanomarti.no",
+  "https://madsencycles.com",
+  "https://adoredvintage.com",
+  "etq-amsterdam.com",
+  "https://livso.com",
+  "https://sophieratner.com",
+  "https://reddress.com",
+  "oddballs.co.uk",
+  "nutrimuscle.com",
+  "https://paramountshop.com",
+  "https://sokoglam.com",
+  "https://hismileteeth.com",
+  "https://stumptowncoffee.com",
+  "https://puravidabracelets.com",
+  "https://dbjourney.com",
+  "emmabridgewater.co.uk",
+  "https://nickeykehoe.com",
+  "https://madeincookware.com",
+  "ecoflow.com",
+  "https://owala.com",
+  "32degrees.com",
+  "https://ring.com",
+  "decathlon.com",
+  "blueland.com",
+  "brooklinen.com",
+  "casper.com",
+  "awaytravel.com",
+  "meundies.com",
+  "outdoorvoices.com",
+  "warbyparker.com",
+  "thirdlove.com",
+  "quip.com",
+  "harrysofmanchester.com",
+  "dollarshaveclub.com",
+  "nativecos.com",
+  "koparibeauty.com",
+  "tula.com",
+  "drunkelephant.com",
+  "herbivorebotanicals.com",
+  "youthtothepeople.com",
+  "boy-smells.com",
+  "homesick.com",
+  "purnatur.be",
+  "unitedbyblue.com",
+  "lunchskins.com",
 
   // Shopify's own "best Shopify stores" roundup, added 2026-08-25:
   // https://www.shopify.com/blog/shopify-stores
@@ -111,52 +111,52 @@ const RAW_STORES = [
   // single-product brands, wholesale catalogues, magazines, subscription
   // boxes — which is the point: an audit that only ever meets a large
   // apparel storefront is not covered.
-  'tentree.com',
-  'maguireshoes.com',
-  'the-outrage.com',
-  'kirrinfinch.com',
-  'rothys.com',
-  'beefcakeswimwear.com',
-  'suta.in',
-  'uppercasemagazine.com',
-  'terrebleu.ca',
-  'silkandwillow.com',
-  'goodeeworld.com',
-  'bruvi.com',
-  'pelacase.ca',
-  'cowboy.com',
-  'cocofloss.com',
-  'lootcrate.com',
-  'potgang.co.uk',
-  'manitobah.com',
-  'camillebrinch.com',
-  'troubadourgoods.com',
-  'blkandbold.com',
-  'flybyjing.com',
-  'vervecoffee.com',
-  'tazachocolate.com',
-  'yeungmancooking.com',
-  'flourist.com',
-  'thehoneypot.co',
-  'beautybakerie.com',
-  'cheekbonebeauty.com',
-  'meowmeowtweet.com',
-  'beneathyourmask.com',
-  'freshheritage.com',
-  'thenimetyou.com',
-  'lastobject.com',
-  'tofinosoapcompany.com',
-  'satyaorganics.com',
-  'givemetap.com',
-  'bebemoss.com',
+  "tentree.com",
+  "maguireshoes.com",
+  "the-outrage.com",
+  "kirrinfinch.com",
+  "rothys.com",
+  "beefcakeswimwear.com",
+  "suta.in",
+  "uppercasemagazine.com",
+  "terrebleu.ca",
+  "silkandwillow.com",
+  "goodeeworld.com",
+  "bruvi.com",
+  "pelacase.ca",
+  "cowboy.com",
+  "cocofloss.com",
+  "lootcrate.com",
+  "potgang.co.uk",
+  "manitobah.com",
+  "camillebrinch.com",
+  "troubadourgoods.com",
+  "blkandbold.com",
+  "flybyjing.com",
+  "vervecoffee.com",
+  "tazachocolate.com",
+  "yeungmancooking.com",
+  "flourist.com",
+  "thehoneypot.co",
+  "beautybakerie.com",
+  "cheekbonebeauty.com",
+  "meowmeowtweet.com",
+  "beneathyourmask.com",
+  "freshheritage.com",
+  "thenimetyou.com",
+  "lastobject.com",
+  "tofinosoapcompany.com",
+  "satyaorganics.com",
+  "givemetap.com",
+  "bebemoss.com",
 ];
 
 function normalizeUrl(raw: string): string {
   let url = raw.trim();
-  if (!url.startsWith('http://') && !url.startsWith('https://')) {
+  if (!url.startsWith("http://") && !url.startsWith("https://")) {
     url = `https://${url}`;
   }
-  return url.replace(/\/+$/, '');
+  return url.replace(/\/+$/, "");
 }
 
 /**
@@ -166,7 +166,7 @@ function normalizeUrl(raw: string): string {
  * confirm a fix against the site that found it, and the full list takes about
  * two hours.
  */
-const ARG_URLS = process.argv.slice(2).filter((arg) => !arg.startsWith('-'));
+const ARG_URLS = process.argv.slice(2).filter((arg) => !arg.startsWith("-"));
 
 /** Read a `--name=value` flag, falling back to a default. */
 function numericFlag(name: string, fallback: number): number {
@@ -185,8 +185,8 @@ function numericFlag(name: string, fallback: number): number {
  * HTTP 429, while a single `curl` carrying the same user-agent got 200 from
  * every one of them. The benchmark was measuring its own throttling.
  */
-const CONCURRENCY = numericFlag('concurrency', 2);
-const DELAY_MS = numericFlag('delay', 3000);
+const CONCURRENCY = numericFlag("concurrency", 2);
+const DELAY_MS = numericFlag("delay", 3000);
 
 /**
  * Run with the scan evidence gate on (`--gate`).
@@ -194,7 +194,7 @@ const DELAY_MS = numericFlag('delay', 3000);
  * Calibration compares a gated run against an ungated one over the same
  * stores, so the flag has to reach `runScan` rather than being set in code.
  */
-const ENFORCE_GATE = process.argv.slice(2).includes('--gate');
+const ENFORCE_GATE = process.argv.slice(2).includes("--gate");
 
 const pause = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 const UNIQUE_URLS = Array.from(
@@ -203,7 +203,7 @@ const UNIQUE_URLS = Array.from(
 
 interface StoreResult {
   url: string;
-  status: 'success' | 'error' | 'bot_blocked';
+  status: "success" | "error" | "bot_blocked";
   score?: number | null;
   tier?: string | null;
   report?: ScanReport;
@@ -212,7 +212,7 @@ interface StoreResult {
   durationMs: number;
 }
 
-const outDir = path.resolve(__dirname, '../reports/investigation');
+const outDir = path.resolve(__dirname, "../reports/investigation");
 if (!fs.existsSync(outDir)) {
   fs.mkdirSync(outDir, { recursive: true });
 }
@@ -220,28 +220,36 @@ if (!fs.existsSync(outDir)) {
 // file is the published benchmark, and a five-store re-check is not that.
 const outPath = path.join(
   outDir,
-  `${ARG_URLS.length > 0 ? 'benchmark-subset-data' : 'benchmark-stores-data'}${
-    ENFORCE_GATE ? '-gated' : ''
+  `${ARG_URLS.length > 0 ? "benchmark-subset-data" : "benchmark-stores-data"}${
+    ENFORCE_GATE ? "-gated" : ""
   }.json`,
 );
 
-async function auditStore(targetUrl: string, index: number, total: number): Promise<StoreResult> {
+async function auditStore(
+  targetUrl: string,
+  index: number,
+  total: number,
+): Promise<StoreResult> {
   const startTime = Date.now();
   const domain = new URL(targetUrl).hostname;
   console.log(`[${index + 1}/${total}] Auditing: ${domain} (${targetUrl})`);
 
   try {
-    const report = await runScan(targetUrl, { enforceEvidenceGate: ENFORCE_GATE });
+    const report = await runScan(targetUrl, {
+      enforceEvidenceGate: ENFORCE_GATE,
+    });
 
     const durationMs = Date.now() - startTime;
     const isBlocked = report.wafProtection?.isBlocked;
     const wafName = report.wafProtection?.name;
 
     if (isBlocked) {
-      console.log(`  🛑 [${index + 1}/${total}] ${domain}: BOT WALL DETECTED (${wafName}) in ${(durationMs / 1000).toFixed(1)}s`);
+      console.log(
+        `  🛑 [${index + 1}/${total}] ${domain}: BOT WALL DETECTED (${wafName}) in ${(durationMs / 1000).toFixed(1)}s`,
+      );
       return {
         url: targetUrl,
-        status: 'bot_blocked',
+        status: "bot_blocked",
         waf: wafName,
         score: report.overallScore,
         tier: report.scoreTier,
@@ -252,12 +260,14 @@ async function auditStore(targetUrl: string, index: number, total: number): Prom
 
     const verdict =
       report.overallScore === null
-        ? `NOT SCORED — ${report.scanValidity?.unscoredReason ?? 'too little evidence'}`
+        ? `NOT SCORED — ${report.scanValidity?.unscoredReason ?? "too little evidence"}`
         : `Score ${report.overallScore}/100 (${report.scoreTier})`;
-    console.log(`  ✓ [${index + 1}/${total}] ${domain}: ${verdict} in ${(durationMs / 1000).toFixed(1)}s`);
+    console.log(
+      `  ✓ [${index + 1}/${total}] ${domain}: ${verdict} in ${(durationMs / 1000).toFixed(1)}s`,
+    );
     return {
       url: targetUrl,
-      status: 'success',
+      status: "success",
       score: report.overallScore,
       tier: report.scoreTier,
       report,
@@ -265,10 +275,12 @@ async function auditStore(targetUrl: string, index: number, total: number): Prom
     };
   } catch (err: any) {
     const durationMs = Date.now() - startTime;
-    console.error(`  ✗ [${index + 1}/${total}] ${domain}: ERROR - ${err.message}`);
+    console.error(
+      `  ✗ [${index + 1}/${total}] ${domain}: ERROR - ${err.message}`,
+    );
     return {
       url: targetUrl,
-      status: 'error',
+      status: "error",
       error: err.message,
       durationMs,
     };
@@ -277,8 +289,12 @@ async function auditStore(targetUrl: string, index: number, total: number): Prom
 
 async function runBatch() {
   console.log(`\n======================================================`);
-  console.log(`LAUNCHING BENCHMARK AUDIT ON ${UNIQUE_URLS.length} E-COMMERCE STORES`);
-  console.log(`concurrency ${CONCURRENCY}, ${DELAY_MS}ms between stores per worker`);
+  console.log(
+    `LAUNCHING BENCHMARK AUDIT ON ${UNIQUE_URLS.length} E-COMMERCE STORES`,
+  );
+  console.log(
+    `concurrency ${CONCURRENCY}, ${DELAY_MS}ms between stores per worker`,
+  );
   console.log(`======================================================\n`);
 
   const results: Record<string, StoreResult> = {};
@@ -305,7 +321,9 @@ async function runBatch() {
   await Promise.all(workers);
 
   console.log(`\n======================================================`);
-  console.log(`BENCHMARK COMPLETED: ${Object.keys(results).length} stores processed`);
+  console.log(
+    `BENCHMARK COMPLETED: ${Object.keys(results).length} stores processed`,
+  );
   console.log(`Results saved to: ${outPath}`);
   console.log(`======================================================\n`);
 }

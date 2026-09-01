@@ -1,8 +1,8 @@
-import type { AuditMeta, AuditResult } from '../../types';
-import { Audit } from '../../audit';
-import { weightForGrade } from '../../scorer';
-import type { CheckContext, PageContext } from '../../check-context';
-import { findReviewNodes } from './review-signals';
+import type { AuditMeta, AuditResult } from "../../types";
+import { Audit } from "../../audit";
+import { weightForGrade } from "../../scorer";
+import type { CheckContext, PageContext } from "../../check-context";
+import { findReviewNodes } from "./review-signals";
 
 /**
  * Quantified social proof — the factor the GEO benchmark actually measured.
@@ -39,15 +39,15 @@ const NON_CITATION_HOSTS =
 
 /** Whether a page declares a non-English language. The detectors are English. */
 function isNonEnglish(page: PageContext): boolean {
-  const lang = (page.$('html').attr('lang') ?? '').trim().toLowerCase();
-  return lang !== '' && !lang.startsWith('en');
+  const lang = (page.$("html").attr("lang") ?? "").trim().toLowerCase();
+  return lang !== "" && !lang.startsWith("en");
 }
 
 /** Page text with script/style noise stripped, collapsed to single spaces. */
 function readableText(page: PageContext): string {
-  const body = page.$('body').clone();
-  body.find('script, style, noscript, template').remove();
-  return body.text().replace(/\s+/g, ' ').trim();
+  const body = page.$("body").clone();
+  body.find("script, style, noscript, template").remove();
+  return body.text().replace(/\s+/g, " ").trim();
 }
 
 /**
@@ -67,13 +67,13 @@ function evidenceBackedClaims(page: PageContext): string[] {
   try {
     host = new URL(page.url).host;
   } catch {
-    host = '';
+    host = "";
   }
 
   const citations = new Set<string>();
-  $('a[href]').each((_, el) => {
+  $("a[href]").each((_, el) => {
     const node = $(el);
-    const href = node.attr('href');
+    const href = node.attr("href");
     if (!href) return;
     // Icon-only links are chrome; a citation carries readable anchor text.
     if (node.text().trim().length < 3) return;
@@ -83,50 +83,60 @@ function evidenceBackedClaims(page: PageContext): string[] {
     } catch {
       return;
     }
-    if (url.protocol !== 'http:' && url.protocol !== 'https:') return;
-    if (url.host === host || url.host === '') return;
-    if (NON_CITATION_HOSTS.test(url.host.replace(/^www\./, ''))) return;
+    if (url.protocol !== "http:" && url.protocol !== "https:") return;
+    if (url.host === host || url.host === "") return;
+    if (NON_CITATION_HOSTS.test(url.host.replace(/^www\./, ""))) return;
     citations.add(url.host);
   });
 
   if (citations.size >= 2) {
-    found.push(`${citations.size} outbound citation host(s): ${[...citations].slice(0, 3).join(', ')}`);
+    found.push(
+      `${citations.size} outbound citation host(s): ${[...citations].slice(0, 3).join(", ")}`,
+    );
   }
 
-  const cites = $('cite').filter((_, el) => $(el).text().trim().length > 0).length;
-  const citedQuotes = $('blockquote[cite]').length;
-  if (cites + citedQuotes > 0) found.push(`${cites + citedQuotes} attributed source element(s)`);
+  const cites = $("cite").filter(
+    (_, el) => $(el).text().trim().length > 0,
+  ).length;
+  const citedQuotes = $("blockquote[cite]").length;
+  if (cites + citedQuotes > 0)
+    found.push(`${cites + citedQuotes} attributed source element(s)`);
 
   return found;
 }
 
 const EXPECTED =
-  'Homepage carries every GEO-measured factor still in scope: quantified social proof (deferred to answer-readiness/review-signals when review markup is present) and evidence-backed claims';
+  "Homepage carries every GEO-measured factor still in scope: quantified social proof (deferred to answer-readiness/review-signals when review markup is present) and evidence-backed claims";
 
 export class TrustSignalsAudit extends Audit {
   static override meta: AuditMeta = {
-    id: 'answer-readiness/trust-signals',
-    category: 'answer-readiness',
-    title: 'Trust and evidence signals on homepage',
-    failureTitle: 'Trust and evidence signals on homepage',
+    id: "answer-readiness/trust-signals",
+    category: "answer-readiness",
+    title: "Trust and evidence signals on homepage",
+    failureTitle: "Trust and evidence signals on homepage",
     description:
-      'A 252,000-trial controlled study across six LLMs (arXiv 2605.25517) measured two page factors that shift which source an AI answer engine cites: quantified social proof (OR 2.14, significant in 4 of 6 models) and claims paired with evidence (OR 2.09, 5 of 6 models). The same study found promotional tone\'s effect too small and inconsistent to guide, and it named comparison content in its practical implications without measuring it. This audit scores those two page factors and nothing else.',
-    scoreDisplayMode: 'ternary',
-    weight: weightForGrade('B', 'scored'),
-    evidenceGrade: 'B',
-    tier: 'scored',
-    dossier: 'docs/evidence/audits/answer-readiness/trust-signals.md',
-    requires: ['origin-reachable', 'unblocked-fetches', 'rendered-body', 'sample-adequate'],
-    applicablePageTypes: ['homepage'],
-    defaultPriority: 'low',
+      "A 252,000-trial controlled study across six LLMs (arXiv 2605.25517) measured two page factors that shift which source an AI answer engine cites: quantified social proof (OR 2.14, significant in 4 of 6 models) and claims paired with evidence (OR 2.09, 5 of 6 models). The same study found promotional tone's effect too small and inconsistent to guide, and it named comparison content in its practical implications without measuring it. This audit scores those two page factors and nothing else.",
+    scoreDisplayMode: "ternary",
+    weight: weightForGrade("B", "scored"),
+    evidenceGrade: "B",
+    tier: "scored",
+    dossier: "docs/evidence/audits/answer-readiness/trust-signals.md",
+    requires: [
+      "origin-reachable",
+      "unblocked-fetches",
+      "rendered-body",
+      "sample-adequate",
+    ],
+    applicablePageTypes: ["homepage"],
+    defaultPriority: "low",
     guidance: {
       impact:
         'Trust cues in retrieved page text change which source an answer engine cites, but only the measured ones: quantified ratings/review counts (OR 2.14 to >10,000, significant in 4 of 6 models) and claims paired with evidence (OR 2.09 to >10,000, 5 of 6 models). The same study found "Overly Promotional" tone significant in only 3 of 6 models with mixed direction — neutral phrasing won where the effect was significant — so puffery earns nothing. It named comparison content only in its practical implications and never measured it, so comparison content is reported unscored by answer-readiness/comparison-tables rather than counted here. These are the "smaller gains" tier: topic match, price, recency and list position dwarf them.',
       fix: 'Put a number on your social proof ("Rated 4.8/5 across 1,204 reviews", "Trusted by 12,000 teams"), and back factual claims with outbound citations or attributed sources instead of hedging. Delete promotional adjectives — they do not move citation. Comparison content is reported separately and unscored by answer-readiness/comparison-tables — the same study only names it in its practical implications and never measured it.',
       code: '<section>\n  <p>Rated <strong>4.8 out of 5</strong> across <strong>1,204 reviews</strong>.</p>\n  <p>Independent testing confirms a 40% reduction in latency\n     (<a href="https://example.org/benchmark">2026 benchmark report</a>),\n     and <cite>NIST SP 800-90B</cite> documents the method.</p>\n</section>',
-      effort: 'moderate',
-      docsUrl: 'https://arxiv.org/abs/2605.25517',
-      tags: ['trust', 'social-proof', 'generative-engine', 'geo'],
+      effort: "moderate",
+      docsUrl: "https://arxiv.org/abs/2605.25517",
+      tags: ["trust", "social-proof", "generative-engine", "geo"],
     },
   };
 
@@ -135,9 +145,9 @@ export class TrustSignalsAudit extends Audit {
 
     if (!page) {
       return this.notApplicable(
-        'No homepage was scanned, and the measured factors are homepage-scoped.',
+        "No homepage was scanned, and the measured factors are homepage-scoped.",
         EXPECTED,
-        'No homepage in scan',
+        "No homepage in scan",
       );
     }
 
@@ -145,9 +155,9 @@ export class TrustSignalsAudit extends Audit {
     // real trust content it carried. English-only detectors report `na`.
     if (isNonEnglish(page)) {
       return this.notApplicable(
-        `The homepage declares lang="${page.$('html').attr('lang')}"; the trust-signal detectors are English-only.`,
+        `The homepage declares lang="${page.$("html").attr("lang")}"; the trust-signal detectors are English-only.`,
         EXPECTED,
-        'Non-English homepage — detector not applicable',
+        "Non-English homepage — detector not applicable",
       );
     }
 
@@ -166,21 +176,32 @@ export class TrustSignalsAudit extends Audit {
     // same page without it.
     const reviewMarkup = findReviewNodes(page.jsonLd);
     if (reviewMarkup.length > 0) {
-      deferred = `social proof deferred to answer-readiness/review-signals (JSON-LD ${reviewMarkup.join(', ')})`;
+      deferred = `social proof deferred to answer-readiness/review-signals (JSON-LD ${reviewMarkup.join(", ")})`;
     } else {
       counted += 1;
-      const hit = SOCIAL_PROOF_PATTERNS.map((re) => text.match(re)?.[0]).find(Boolean);
+      const hit = SOCIAL_PROOF_PATTERNS.map((re) => text.match(re)?.[0]).find(
+        Boolean,
+      );
       if (hit) satisfied.push(`quantified social proof ("${hit.trim()}")`);
-      else missing.push('quantified social proof (a rating, review count or customer count)');
+      else
+        missing.push(
+          "quantified social proof (a rating, review count or customer count)",
+        );
     }
 
     // ── Factor 2: evidence-backed claims ────────────────────────
     counted += 1;
     const evidence = evidenceBackedClaims(page);
-    if (evidence.length > 0) satisfied.push(`evidence-backed claims (${evidence.join('; ')})`);
-    else missing.push('evidence-backed claims (outbound citations or attributed sources)');
+    if (evidence.length > 0)
+      satisfied.push(`evidence-backed claims (${evidence.join("; ")})`);
+    else
+      missing.push(
+        "evidence-backed claims (outbound citations or attributed sources)",
+      );
 
-    const found = [...satisfied, ...(deferred ? [deferred] : [])].join('; ') || 'None found';
+    const found =
+      [...satisfied, ...(deferred ? [deferred] : [])].join("; ") ||
+      "None found";
 
     // Every factor still in the denominator must be satisfied. There is no
     // longer an unmeasured third factor to take a majority against — both
@@ -194,8 +215,8 @@ export class TrustSignalsAudit extends Audit {
     const required = counted;
     const tally = `${satisfied.length} of the ${counted} GEO-measured trust factor(s)`;
     const deferNote = deferred
-      ? ' Social proof is scored by answer-readiness/review-signals.'
-      : '';
+      ? " Social proof is scored by answer-readiness/review-signals."
+      : "";
 
     if (satisfied.length >= required) {
       return this.pass(
@@ -212,8 +233,8 @@ export class TrustSignalsAudit extends Audit {
         EXPECTED,
         found,
         {
-          priority: 'low',
-          description: `Missing: ${missing.join('; ')}. These are the factors a 252,000-trial study measured as moving AI citation, and a pass needs every one still in scope here. Promotional adjectives are not among them.`,
+          priority: "low",
+          description: `Missing: ${missing.join("; ")}. These are the factors a 252,000-trial study measured as moving AI citation, and a pass needs every one still in scope here. Promotional adjectives are not among them.`,
           code: TrustSignalsAudit.meta.guidance?.code,
         },
         page.url,
@@ -221,12 +242,12 @@ export class TrustSignalsAudit extends Audit {
     }
 
     return this.fail(
-      'Homepage carries neither of the GEO-measured trust factors.',
+      "Homepage carries neither of the GEO-measured trust factors.",
       EXPECTED,
       found,
       {
-        priority: 'low',
-        description: `Missing: ${missing.join('; ')}. A 252,000-trial controlled study across six LLMs measured both as shifting which source an answer engine cites. Quantify your social proof and cite evidence for factual claims. Comparison content is reported separately and unscored by answer-readiness/comparison-tables.`,
+        priority: "low",
+        description: `Missing: ${missing.join("; ")}. A 252,000-trial controlled study across six LLMs measured both as shifting which source an answer engine cites. Quantify your social proof and cite evidence for factual claims. Comparison content is reported separately and unscored by answer-readiness/comparison-tables.`,
         code: TrustSignalsAudit.meta.guidance?.code,
       },
       page.url,

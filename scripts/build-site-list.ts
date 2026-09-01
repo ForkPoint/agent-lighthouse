@@ -1,10 +1,10 @@
-import * as fs from 'node:fs';
-import * as path from 'node:path';
+import * as fs from "node:fs";
+import * as path from "node:path";
 import {
   buildSiteList,
   normalize,
   type SiteEntry,
-} from '../packages/core/src/tests/site-list';
+} from "../packages/core/src/tests/site-list";
 
 /**
  * Build the site list from two public ranked sources.
@@ -49,13 +49,13 @@ function readRanked(file: string, domainColumn: number): string[] {
     process.exit(1);
   }
   return fs
-    .readFileSync(file, 'utf8')
-    .split('\n')
-    .map((line) => normalize(line.split(',')[domainColumn] ?? ''))
+    .readFileSync(file, "utf8")
+    .split("\n")
+    .map((line) => normalize(line.split(",")[domainColumn] ?? ""))
     .filter(Boolean);
 }
 
-const rawLimit = flag('limit', '1000');
+const rawLimit = flag("limit", "1000");
 const limit = Number(rawLimit);
 // Without this, `--limit=abc` yields NaN, `slice(0, NaN)` yields [], and the
 // committed list is silently overwritten with nothing but seed fallbacks.
@@ -64,12 +64,17 @@ if (!Number.isInteger(limit) || limit <= 0) {
   process.exit(1);
 }
 
-const TRANCO = flag('tranco', '/tmp/site-lists/tranco.csv');
-const CRUX = flag('crux', '/tmp/site-lists/crux.csv');
-const OUT = flag('out', 'packages/core/test-data/sites/sites.json');
-const CATEGORIES = flag('categories', 'packages/core/test-data/sites/categories.json');
+const TRANCO = flag("tranco", "/tmp/site-lists/tranco.csv");
+const CRUX = flag("crux", "/tmp/site-lists/crux.csv");
+const OUT = flag("out", "packages/core/test-data/sites/sites.json");
+const CATEGORIES = flag(
+  "categories",
+  "packages/core/test-data/sites/categories.json",
+);
 
-const seed: Record<string, string[]> = JSON.parse(fs.readFileSync(CATEGORIES, 'utf8'));
+const seed: Record<string, string[]> = JSON.parse(
+  fs.readFileSync(CATEGORIES, "utf8"),
+);
 const categoryOf = new Map<string, string>();
 // `normalize` answers '' for anything that is not a bare hostname. Keying the
 // map on that would seed the committed list with `{ domain: '' }`, and the
@@ -80,7 +85,7 @@ const malformed: string[] = [];
 for (const [category, domains] of Object.entries(seed)) {
   for (const domain of domains) {
     const host = normalize(domain);
-    if (host === '') {
+    if (host === "") {
       malformed.push(`${category}: ${JSON.stringify(domain)}`);
       continue;
     }
@@ -90,15 +95,15 @@ for (const [category, domains] of Object.entries(seed)) {
 if (malformed.length > 0) {
   console.error(
     `${CATEGORIES} holds ${malformed.length} entr(y/ies) that are not bare hostnames:\n  ` +
-      `${malformed.join('\n  ')}`,
+      `${malformed.join("\n  ")}`,
   );
   process.exit(1);
 }
 
 const sites = buildSiteList(
   [
-    { domains: readRanked(TRANCO, 1), source: 'tranco' },
-    { domains: readRanked(CRUX, 0), source: 'crux' },
+    { domains: readRanked(TRANCO, 1), source: "tranco" },
+    { domains: readRanked(CRUX, 0), source: "crux" },
   ],
   categoryOf,
   limit,
@@ -107,9 +112,10 @@ const sites = buildSiteList(
 fs.mkdirSync(path.dirname(OUT), { recursive: true });
 fs.writeFileSync(OUT, `${JSON.stringify(sites, null, 2)}\n`);
 
-const count = (source: SiteEntry['source']) => sites.filter((s) => s.source === source).length;
-const unknown = sites.filter((s) => s.category === 'unknown').length;
+const count = (source: SiteEntry["source"]) =>
+  sites.filter((s) => s.source === source).length;
+const unknown = sites.filter((s) => s.category === "unknown").length;
 console.log(
-  `${sites.length} sites -> ${OUT} (tranco ${count('tranco')}, crux ${count('crux')}, ` +
-    `seed ${count('seed')}, unknown category ${unknown})`,
+  `${sites.length} sites -> ${OUT} (tranco ${count("tranco")}, crux ${count("crux")}, ` +
+    `seed ${count("seed")}, unknown category ${unknown})`,
 );

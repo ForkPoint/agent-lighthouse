@@ -173,7 +173,7 @@ export function auditSourceFiles(repoRoot) {
  * the registry knows.
  */
 export function declaredIds(source) {
-  return [...source.matchAll(/^\s*id:\s*'([^']+)'/gm)]
+  return [...source.matchAll(/^\s*id:\s*['"]([^'"]+)['"]/gm)]
     .map((m) => m[1])
     .filter((id) => /^[a-z][a-z-]*\/[a-z0-9-]+$/.test(id));
 }
@@ -182,12 +182,12 @@ export function declaredIds(source) {
 export function declaredRequires(source) {
   const match = source.match(/^\s*requires:\s*\[([^\]]*)\]/m);
   if (!match) return null;
-  return [...match[1].matchAll(/'([^']+)'/g)].map((m) => m[1]);
+  return [...match[1].matchAll(/['"]([^'"]+)['"]/g)].map((m) => m[1]);
 }
 
 /** Gatherer module names an audit imports. */
 export function importedGatherers(source) {
-  return [...source.matchAll(/from\s+'[^']*gatherers\/([a-z-]+)'/g)].map((m) => m[1]);
+  return [...source.matchAll(/from\s+['"][^'"]*gatherers\/([a-z-]+)['"]/g)].map((m) => m[1]);
 }
 
 /** Whether an audit reads the sampled pages itself. */
@@ -202,7 +202,7 @@ export function readsPagesDirectly(source) {
  * declare `requires` once for all of them.
  */
 export function usesA11yBase(source) {
-  return /from\s+'\.\/_shared'/.test(source) && /\.\.\.base\b/.test(source);
+  return /from\s+['"]\.\/_shared['"]/.test(source) && /\.\.\.base\b/.test(source);
 }
 
 /**

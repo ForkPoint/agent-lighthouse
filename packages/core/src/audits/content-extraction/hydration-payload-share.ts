@@ -5,11 +5,11 @@
 // ratio of a page. This audit isolates one named component of that ratio —
 // serialized framework state — because it is the component with a targeted fix
 // and a vendor-published size ceiling.
-import type { AuditMeta, AuditResult } from '../../types';
-import { Audit } from '../../audit';
-import { weightForGrade } from '../../scorer';
-import type { CheckContext, PageContext } from '../../check-context';
-import { getMainContentText } from '../../parser';
+import type { AuditMeta, AuditResult } from "../../types";
+import { Audit } from "../../audit";
+import { weightForGrade } from "../../scorer";
+import type { CheckContext, PageContext } from "../../check-context";
+import { getMainContentText } from "../../parser";
 
 /** The repo-wide rough token estimator; no tokenizer dependency is carried. */
 const CHARS_PER_TOKEN = 4;
@@ -28,12 +28,15 @@ const MAX_SCAN_CHARS = 512 * 1024;
 
 /** Framework state globals, matched on the assignment rather than a mention. */
 const GLOBALS: ReadonlyArray<{ name: string; pattern: RegExp }> = [
-  { name: 'window.__NUXT__', pattern: /__NUXT__\s*=/ },
-  { name: 'window.__APOLLO_STATE__', pattern: /__APOLLO_STATE__\s*=/ },
-  { name: '__remixContext', pattern: /__remixContext\s*=/ },
-  { name: 'window.__INITIAL_STATE__', pattern: /__INITIAL_STATE__\s*=/ },
-  { name: 'window.__NEXT_REDUX_STATE__', pattern: /__NEXT_REDUX_STATE__\s*=/ },
-  { name: 'window.__SVELTEKIT_DATA__', pattern: /__sveltekit_[\w]+\s*=|__SVELTEKIT_DATA__\s*=/ },
+  { name: "window.__NUXT__", pattern: /__NUXT__\s*=/ },
+  { name: "window.__APOLLO_STATE__", pattern: /__APOLLO_STATE__\s*=/ },
+  { name: "__remixContext", pattern: /__remixContext\s*=/ },
+  { name: "window.__INITIAL_STATE__", pattern: /__INITIAL_STATE__\s*=/ },
+  { name: "window.__NEXT_REDUX_STATE__", pattern: /__NEXT_REDUX_STATE__\s*=/ },
+  {
+    name: "window.__SVELTEKIT_DATA__",
+    pattern: /__sveltekit_[\w]+\s*=|__SVELTEKIT_DATA__\s*=/,
+  },
 ];
 
 interface Payload {
@@ -55,12 +58,12 @@ interface Survey {
 function shingles(text: string): Set<string> {
   const words = text
     .toLowerCase()
-    .replace(/[^a-z0-9\s]/g, ' ')
+    .replace(/[^a-z0-9\s]/g, " ")
     .split(/\s+/)
     .filter(Boolean);
   const out = new Set<string>();
   for (let i = 0; i + SHINGLE_N <= words.length; i += 1) {
-    out.add(words.slice(i, i + SHINGLE_N).join(' '));
+    out.add(words.slice(i, i + SHINGLE_N).join(" "));
   }
   return out;
 }
@@ -85,14 +88,19 @@ function unescapedStrings(source: string): string {
     }
   }
   return parts
-    .join(' ')
-    .replace(/<[^>]+>/g, ' ')
-    .replace(/\s+/g, ' ')
+    .join(" ")
+    .replace(/<[^>]+>/g, " ")
+    .replace(/\s+/g, " ")
     .trim();
 }
 
 /** Add a chunk to the named payload, merging repeat frames of one stream. */
-function record(into: Map<string, Payload>, pageUrl: string, name: string, source: string): void {
+function record(
+  into: Map<string, Payload>,
+  pageUrl: string,
+  name: string,
+  source: string,
+): void {
   const existing = into.get(name);
   if (existing) {
     existing.bytes += source.length;
@@ -105,20 +113,20 @@ function record(into: Map<string, Payload>, pageUrl: string, name: string, sourc
 function collect(page: PageContext, into: Map<string, Payload>): void {
   const $ = page.$;
 
-  $('script').each((_i, el) => {
+  $("script").each((_i, el) => {
     const $s = $(el);
-    const source = $s.html() ?? '';
+    const source = $s.html() ?? "";
     if (!source.trim()) return;
-    const id = $s.attr('id') ?? '';
-    const type = ($s.attr('type') ?? '').toLowerCase();
+    const id = $s.attr("id") ?? "";
+    const type = ($s.attr("type") ?? "").toLowerCase();
 
-    if (id === '__NEXT_DATA__') {
-      record(into, page.url, '__NEXT_DATA__', source);
+    if (id === "__NEXT_DATA__") {
+      record(into, page.url, "__NEXT_DATA__", source);
       return;
     }
     // The RSC flight stream arrives as many pushes; the cost is their sum.
-    if (source.includes('self.__next_f.push(')) {
-      record(into, page.url, 'self.__next_f (RSC flight)', source);
+    if (source.includes("self.__next_f.push(")) {
+      record(into, page.url, "self.__next_f (RSC flight)", source);
       return;
     }
     const global = GLOBALS.find(({ pattern }) => pattern.test(source));
@@ -126,14 +134,21 @@ function collect(page: PageContext, into: Map<string, Payload>): void {
       record(into, page.url, global.name, source);
       return;
     }
-    if (type === 'application/json' || type === 'application/ld+json;island') {
-      record(into, page.url, id ? `<script type="application/json" id="${id}">` : '<script type="application/json">', source);
+    if (type === "application/json" || type === "application/ld+json;island") {
+      record(
+        into,
+        page.url,
+        id
+          ? `<script type="application/json" id="${id}">`
+          : '<script type="application/json">',
+        source,
+      );
     }
   });
 
   // Astro serializes island props into an attribute rather than a script body.
-  $('astro-island[props]').each((_i, el) => {
-    record(into, page.url, '<astro-island props>', $(el).attr('props') ?? '');
+  $("astro-island[props]").each((_i, el) => {
+    record(into, page.url, "<astro-island props>", $(el).attr("props") ?? "");
   });
 }
 
@@ -145,13 +160,17 @@ function survey(ctx: CheckContext): Survey {
   for (const page of ctx.pages) {
     documentChars += page.fetchResult.body?.length ?? 0;
     collect(page, byName);
-    for (const shingle of shingles(getMainContentText(page.$))) mainShingles.add(shingle);
+    for (const shingle of shingles(getMainContentText(page.$)))
+      mainShingles.add(shingle);
   }
 
   const payloads = [...byName.values()].sort((a, b) => b.bytes - a.bytes);
-  const stateShingles = shingles(payloads.map((p) => unescapedStrings(p.source)).join(' '));
+  const stateShingles = shingles(
+    payloads.map((p) => unescapedStrings(p.source)).join(" "),
+  );
   let repeated = 0;
-  for (const shingle of mainShingles) if (stateShingles.has(shingle)) repeated += 1;
+  for (const shingle of mainShingles)
+    if (stateShingles.has(shingle)) repeated += 1;
 
   return {
     documentChars,
@@ -161,7 +180,7 @@ function survey(ctx: CheckContext): Survey {
 }
 
 const EXPECTED =
-  'Serialized framework state stays under 128 kB per payload, under 30% of the document, and does not repeat the main content';
+  "Serialized framework state stays under 128 kB per payload, under 30% of the document, and does not repeat the main content";
 
 const SAMPLE = `// Ship identifiers, not the rendered body: the HTML already carries it.
 export async function getServerSideProps() {
@@ -171,34 +190,40 @@ export async function getServerSideProps() {
 
 export class HydrationPayloadShareAudit extends Audit {
   static override meta: AuditMeta = {
-    id: 'content-extraction/hydration-payload-share',
-    category: 'content-extraction',
-    title: 'Inlined hydration-state payload share',
-    failureTitle: 'Inlined hydration-state payload share',
+    id: "content-extraction/hydration-payload-share",
+    category: "content-extraction",
+    title: "Inlined hydration-state payload share",
+    failureTitle: "Inlined hydration-state payload share",
     description:
       'Detect and size serialized framework state inlined in the HTML document: <script id="__NEXT_DATA__">, self.__next_f.push( flight chunks, window.__NUXT__, __remixContext, window.__APOLLO_STATE__, window.__INITIAL_STATE__, <script type="application/json"> islands, and Astro/Svelte island props. Three independent failure conditions: (1) any single state payload > 128 kB, (2) total state payload > 30% of document tokens, (3) state payload duplicates > 50% of the main-content text (content shipped twice in one response).',
-    scoreDisplayMode: 'ternary',
-    weight: weightForGrade('A', 'scored'),
-    evidenceGrade: 'A',
-    tier: 'scored',
-    dossier: 'docs/evidence/audits/content-extraction/hydration-payload-share.md',
-    requires: ['origin-reachable', 'unblocked-fetches', 'rendered-body', 'sample-adequate'],
-    defaultPriority: 'medium',
+    scoreDisplayMode: "ternary",
+    weight: weightForGrade("A", "scored"),
+    evidenceGrade: "A",
+    tier: "scored",
+    dossier:
+      "docs/evidence/audits/content-extraction/hydration-payload-share.md",
+    requires: [
+      "origin-reachable",
+      "unblocked-fetches",
+      "rendered-body",
+      "sample-adequate",
+    ],
+    defaultPriority: "medium",
     guidance: {
       impact:
-        'These blobs are inlined into every HTML response by design, and the framework vendor itself flags > 128 kB as a defect. A browser parses them and throws them away after hydration; a non-rendering AI crawler cannot — it tokenizes the JSON verbatim, including escaped HTML, CDN image variants, GraphQL type metadata and the full body text a second time. The causal claim is falsifiable per page: strip these script nodes, re-tokenize, and the delta is the exact context cost that carries zero incremental information, since duplicate #3 is byte-identical content the agent already has.',
-      fix: 'Return identifiers and view-model fields from the server data function, not the rendered body — the HTML already carries the text. Move large lists behind a client fetch or a route segment, drop GraphQL cache normalization metadata from the serialized store, and keep image variant tables out of props. Where a framework inlines the payload unconditionally, split the route so the heavy data loads on interaction instead of on first paint.',
+        "These blobs are inlined into every HTML response by design, and the framework vendor itself flags > 128 kB as a defect. A browser parses them and throws them away after hydration; a non-rendering AI crawler cannot — it tokenizes the JSON verbatim, including escaped HTML, CDN image variants, GraphQL type metadata and the full body text a second time. The causal claim is falsifiable per page: strip these script nodes, re-tokenize, and the delta is the exact context cost that carries zero incremental information, since duplicate #3 is byte-identical content the agent already has.",
+      fix: "Return identifiers and view-model fields from the server data function, not the rendered body — the HTML already carries the text. Move large lists behind a client fetch or a route segment, drop GraphQL cache normalization metadata from the serialized store, and keep image variant tables out of props. Where a framework inlines the payload unconditionally, split the route so the heavy data loads on interaction instead of on first paint.",
       code: SAMPLE,
-      effort: 'moderate',
+      effort: "moderate",
       docsUrl:
-        'https://forkpoint.github.io/agent-lighthouse/audits/content-extraction/hydration-payload-share/',
-      tags: ['token-economics', 'hydration', 'framework', 'duplication'],
+        "https://forkpoint.github.io/agent-lighthouse/audits/content-extraction/hydration-payload-share/",
+      tags: ["token-economics", "hydration", "framework", "duplication"],
     },
   };
 
   private recommendation() {
     return {
-      priority: 'medium' as const,
+      priority: "medium" as const,
       description: HydrationPayloadShareAudit.meta.description,
       code: SAMPLE,
     };
@@ -209,9 +234,9 @@ export class HydrationPayloadShareAudit extends Audit {
 
     if (s.payloads.length === 0) {
       return this.notApplicable(
-        'No inlined framework state on the scanned pages, so there is no hydration payload to size.',
+        "No inlined framework state on the scanned pages, so there is no hydration payload to size.",
         EXPECTED,
-        'No inlined hydration state found',
+        "No inlined hydration state found",
       );
     }
 
@@ -223,7 +248,7 @@ export class HydrationPayloadShareAudit extends Audit {
     const named = s.payloads
       .slice(0, 4)
       .map((p) => `${p.name} ${(p.bytes / 1000).toFixed(1)} kB`)
-      .join('; ');
+      .join("; ");
     const found = `${s.payloads.length} state payload(s), ${tokens} est. tokens, ${pct} of the document (${named})`;
 
     const reasons: string[] = [];
@@ -244,7 +269,13 @@ export class HydrationPayloadShareAudit extends Audit {
     }
 
     if (reasons.length > 0) {
-      return this.fail(reasons.join(' '), EXPECTED, found, this.recommendation(), worst.pageUrl);
+      return this.fail(
+        reasons.join(" "),
+        EXPECTED,
+        found,
+        this.recommendation(),
+        worst.pageUrl,
+      );
     }
 
     if (share > SHARE_WARN) {

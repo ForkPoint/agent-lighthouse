@@ -1,15 +1,15 @@
-import type { AuditMeta } from './types';
-import type { Audit } from './audit';
-import { CATEGORY_NAMES } from './constants';
+import type { AuditMeta } from "./types";
+import type { Audit } from "./audit";
+import { CATEGORY_NAMES } from "./constants";
 
-import { ACCESS_CRAWL_CONTROL_AUDITS } from './audits/access-crawl-control';
-import { CONTENT_EXTRACTION_AUDITS } from './audits/content-extraction';
-import { MACHINE_DISCOVERY_AUDITS } from './audits/machine-discovery';
-import { STRUCTURED_DATA_AUDITS } from './audits/structured-data';
-import { ANSWER_READINESS_AUDITS } from './audits/answer-readiness';
-import { AGENT_INTERFACES_AUDITS } from './audits/agent-interfaces';
-import { AGENTIC_COMMERCE_AUDITS } from './audits/agentic-commerce';
-import { OPERABILITY_SAFETY_AUDITS } from './audits/operability-safety';
+import { ACCESS_CRAWL_CONTROL_AUDITS } from "./audits/access-crawl-control";
+import { CONTENT_EXTRACTION_AUDITS } from "./audits/content-extraction";
+import { MACHINE_DISCOVERY_AUDITS } from "./audits/machine-discovery";
+import { STRUCTURED_DATA_AUDITS } from "./audits/structured-data";
+import { ANSWER_READINESS_AUDITS } from "./audits/answer-readiness";
+import { AGENT_INTERFACES_AUDITS } from "./audits/agent-interfaces";
+import { AGENTIC_COMMERCE_AUDITS } from "./audits/agentic-commerce";
+import { OPERABILITY_SAFETY_AUDITS } from "./audits/operability-safety";
 
 // ── Category Config ─────────────────────────────────────────────
 
@@ -62,15 +62,17 @@ function reg(AuditClass: AuditClass): AuditRegistration {
  * `@forkpoint/agent-lighthouse-report`'s `sections.ts`, which groups the
  * categories into sections; the two lists are not required to agree.
  */
-const CATEGORY_AUDITS: ReadonlyArray<readonly [id: string, audits: readonly AuditClass[]]> = [
-  ['access-crawl-control', ACCESS_CRAWL_CONTROL_AUDITS],
-  ['content-extraction', CONTENT_EXTRACTION_AUDITS],
-  ['machine-discovery', MACHINE_DISCOVERY_AUDITS],
-  ['structured-data', STRUCTURED_DATA_AUDITS],
-  ['answer-readiness', ANSWER_READINESS_AUDITS],
-  ['agent-interfaces', AGENT_INTERFACES_AUDITS],
-  ['agentic-commerce', AGENTIC_COMMERCE_AUDITS],
-  ['operability-safety', OPERABILITY_SAFETY_AUDITS],
+const CATEGORY_AUDITS: ReadonlyArray<
+  readonly [id: string, audits: readonly AuditClass[]]
+> = [
+  ["access-crawl-control", ACCESS_CRAWL_CONTROL_AUDITS],
+  ["content-extraction", CONTENT_EXTRACTION_AUDITS],
+  ["machine-discovery", MACHINE_DISCOVERY_AUDITS],
+  ["structured-data", STRUCTURED_DATA_AUDITS],
+  ["answer-readiness", ANSWER_READINESS_AUDITS],
+  ["agent-interfaces", AGENT_INTERFACES_AUDITS],
+  ["agentic-commerce", AGENTIC_COMMERCE_AUDITS],
+  ["operability-safety", OPERABILITY_SAFETY_AUDITS],
 ];
 
 /**
@@ -98,12 +100,17 @@ export const defaultConfig: ScanConfig = {
     weight: CATEGORY_MASS[id] ?? 0,
   })),
   audits: Object.fromEntries(
-    CATEGORY_AUDITS.map(([id, audits]) => [id, audits.map((AuditClass) => reg(AuditClass))]),
+    CATEGORY_AUDITS.map(([id, audits]) => [
+      id,
+      audits.map((AuditClass) => reg(AuditClass)),
+    ]),
   ),
 };
 
 /** Every registered category id, in canonical report order. */
-export const CATEGORY_IDS: readonly string[] = CATEGORY_AUDITS.map(([id]) => id);
+export const CATEGORY_IDS: readonly string[] = CATEGORY_AUDITS.map(
+  ([id]) => id,
+);
 
 /**
  * Narrow a scan to a subset of the registry.
@@ -122,18 +129,25 @@ export function filterConfig(
   opts: { categories?: string[]; includeExperimental?: boolean },
 ): ScanConfig {
   const wanted =
-    opts.categories && opts.categories.length > 0 ? new Set(opts.categories) : undefined;
+    opts.categories && opts.categories.length > 0
+      ? new Set(opts.categories)
+      : undefined;
   const dropExperimental =
     opts.includeExperimental !== true &&
-    Object.values(config.audits).some((list) => list.some((r) => r.meta.tier === 'experimental'));
+    Object.values(config.audits).some((list) =>
+      list.some((r) => r.meta.tier === "experimental"),
+    );
   if (!wanted && !dropExperimental) return config;
 
-  const categories = config.categories.filter((cat) => !wanted || wanted.has(cat.id));
+  const categories = config.categories.filter(
+    (cat) => !wanted || wanted.has(cat.id),
+  );
   const audits = Object.fromEntries(
     categories.map((cat) => [
       cat.id,
       (config.audits[cat.id] ?? []).filter(
-        (registration) => !dropExperimental || registration.meta.tier !== 'experimental',
+        (registration) =>
+          !dropExperimental || registration.meta.tier !== "experimental",
       ),
     ]),
   );

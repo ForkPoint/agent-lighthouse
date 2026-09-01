@@ -1,5 +1,5 @@
-import type { ScanReport } from '@forkpoint/agent-lighthouse-core';
-import { buildReportView } from './view-model';
+import type { ScanReport } from "@forkpoint/agent-lighthouse-core";
+import { buildReportView } from "./view-model";
 
 /**
  * Generates a GitHub PR comment markdown summary.
@@ -12,26 +12,29 @@ import { buildReportView } from './view-model';
  */
 function notAssessedLine(view: ReturnType<typeof buildReportView>): string {
   const { skippedNoEvidence, noEvidenceReasons } = view.coverage;
-  if (skippedNoEvidence === 0) return '';
-  const why = noEvidenceReasons.length > 0 ? ` ${noEvidenceReasons.join(' ')}` : '';
-  return `\n> **${skippedNoEvidence} audit${skippedNoEvidence === 1 ? '' : 's'} not assessed:** this scan did not obtain the evidence they need.${why}\n`;
+  if (skippedNoEvidence === 0) return "";
+  const why =
+    noEvidenceReasons.length > 0 ? ` ${noEvidenceReasons.join(" ")}` : "";
+  return `\n> **${skippedNoEvidence} audit${skippedNoEvidence === 1 ? "" : "s"} not assessed:** this scan did not obtain the evidence they need.${why}\n`;
 }
 
 export function generateMarkdownSummary(report: ScanReport): string {
   const view = buildReportView(report);
 
   const getTierEmoji = (score: number) => {
-    if (score >= 90) return '🟢';
-    if (score >= 70) return '🔵';
-    if (score >= 50) return '🟡';
-    return '🔴';
+    if (score >= 90) return "🟢";
+    if (score >= 70) return "🔵";
+    if (score >= 50) return "🟡";
+    return "🔴";
   };
 
-  const rows = view.groups.flatMap(group => {
-    return group.categories.map(cat => {
-      return `| **${cat.name}** | **${cat.score} / 100** | ${getTierEmoji(cat.score)} ${cat.counts.pass}✓ ${cat.counts.warn}! ${cat.counts.fail}✗ |`;
-    });
-  }).join('\n');
+  const rows = view.groups
+    .flatMap((group) => {
+      return group.categories.map((cat) => {
+        return `| **${cat.name}** | **${cat.score} / 100** | ${getTierEmoji(cat.score)} ${cat.counts.pass}✓ ${cat.counts.warn}! ${cat.counts.fail}✗ |`;
+      });
+    })
+    .join("\n");
 
   const advisory = view.groups
     .flatMap((group) => group.categories)
@@ -39,16 +42,17 @@ export function generateMarkdownSummary(report: ScanReport): string {
 
   // Without this line a reviewer sees a reported failure that moved no score
   // and has no way to tell why.
-  const advisoryLine = advisory > 0
-    ? `\n> ${advisory} advisory check${advisory === 1 ? '' : 's'} ran. They are reported but never scored.\n`
-    : '';
+  const advisoryLine =
+    advisory > 0
+      ? `\n> ${advisory} advisory check${advisory === 1 ? "" : "s"} ran. They are reported but never scored.\n`
+      : "";
 
   return `### 🗼 Agent Lighthouse Audit Report
 
 **Target:** \`${report.url}\`  
 **Overall Score:** ${
     view.overallScore === null
-      ? `_Not scored_ — ${view.unscoredReason ?? 'this scan obtained too little evidence to judge the site.'}`
+      ? `_Not scored_ — ${view.unscoredReason ?? "this scan obtained too little evidence to judge the site."}`
       : `**\`${view.overallScore}/100\`** *(${view.scoreTier})*`
   }  
 **Pages Audited:** \`${view.pagesScanned.length}\` | **Duration:** \`${(view.durationMs / 1000).toFixed(1)}s\`

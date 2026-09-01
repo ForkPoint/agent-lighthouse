@@ -5,17 +5,20 @@
 
 import type { AuditMeta, AuditResult } from "../../types";
 import { Audit } from "../../audit";
-import type { CheckContext, PageContext } from '../../check-context';
-import { weightForGrade } from '../../scorer';
-import { flattenJsonLd } from '../../parser';
+import type { CheckContext, PageContext } from "../../check-context";
+import { weightForGrade } from "../../scorer";
+import { flattenJsonLd } from "../../parser";
 
 /** The two in-scope service shapes. Product types belong to 3.22 now. */
-const SERVICE_TYPES = ['Service', 'ProfessionalService'];
+const SERVICE_TYPES = ["Service", "ProfessionalService"];
 
-function matchesAnyType(schema: Record<string, unknown>, types: string[]): boolean {
+function matchesAnyType(
+  schema: Record<string, unknown>,
+  types: string[],
+): boolean {
   return types.some((t) => {
-    const st = schema['@type'];
-    if (typeof st === 'string') return st === t;
+    const st = schema["@type"];
+    if (typeof st === "string") return st === t;
     if (Array.isArray(st)) return st.includes(t);
     return false;
   });
@@ -34,7 +37,8 @@ const SERVICE_PATH_RE =
   /(^|\/)(our-)?services?(\/|$)|(^|\/)what-we-do(\/|$)|(^|\/)solutions?(\/|$)|(^|\/)consulting(\/|$)/;
 
 /** Link text that names an offering rather than a support desk or a policy. */
-const SERVICE_TEXT_RE = /\bour services\b|\bwhat we do\b|\bservices we offer\b|\bservice offerings\b/;
+const SERVICE_TEXT_RE =
+  /\bour services\b|\bwhat we do\b|\bservices we offer\b|\bservice offerings\b/;
 
 function carriesServiceSchema(page: PageContext): boolean {
   return flattenJsonLd(page.structuredData ?? page.jsonLd).some((s) =>
@@ -45,12 +49,12 @@ function carriesServiceSchema(page: PageContext): boolean {
 /** A link/CTA that points at a services section. */
 function hasServicesLink(page: PageContext): boolean {
   let found = false;
-  page.$('a[href]').each((_, el) => {
+  page.$("a[href]").each((_, el) => {
     if (found) return;
     /* v8 ignore next */
-    const href = (page.$(el).attr('href') ?? '').toLowerCase();
+    const href = (page.$(el).attr("href") ?? "").toLowerCase();
     const text = page.$(el).text().toLowerCase();
-    const path = href.split('?')[0]!.split('#')[0]!;
+    const path = href.split("?")[0]!.split("#")[0]!;
     if (SERVICE_PATH_RE.test(path) || SERVICE_TEXT_RE.test(text)) {
       found = true;
     }
@@ -70,7 +74,8 @@ function hasServicesLink(page: PageContext): boolean {
  */
 function hasServiceIntent(page: PageContext): boolean {
   if (carriesServiceSchema(page)) return true;
-  if (SERVICE_PATH_RE.test(new URL(page.url).pathname.toLowerCase())) return true;
+  if (SERVICE_PATH_RE.test(new URL(page.url).pathname.toLowerCase()))
+    return true;
   return hasServicesLink(page);
 }
 
@@ -79,7 +84,7 @@ function hasServiceIntent(page: PageContext): boolean {
  * here: schema.org does not require it and no consumer documents reading it,
  * so 3.8's required fix says to drop it from the required set.
  */
-const REQUIRED_PROPS = ['name', 'provider'] as const;
+const REQUIRED_PROPS = ["name", "provider"] as const;
 
 function missingProps(node: Record<string, unknown>): string[] {
   return REQUIRED_PROPS.filter((prop) => !node[prop]);
@@ -87,29 +92,34 @@ function missingProps(node: Record<string, unknown>): string[] {
 
 export class ServiceSchemaAudit extends Audit {
   static override meta: AuditMeta = {
-    id: 'structured-data/service-schema',
-    category: 'structured-data',
-    title: 'Service schema',
-    failureTitle: 'Service schema',
+    id: "structured-data/service-schema",
+    category: "structured-data",
+    title: "Service schema",
+    failureTitle: "Service schema",
     description:
-      'AI agents use Service schema to understand what you offer and who provides it. Without it, agents must infer your offerings from unstructured text, which leads to inaccurate or incomplete descriptions in AI-generated recommendations.',
-    scoreDisplayMode: 'ternary',
-    weight: weightForGrade('A', 'scored'),
-    evidenceGrade: 'A',
-    tier: 'scored',
-    dossier: 'docs/evidence/audits/structured-data/service-schema.md',
-    requires: ['origin-reachable', 'unblocked-fetches', 'rendered-body', 'sample-adequate'],
+      "AI agents use Service schema to understand what you offer and who provides it. Without it, agents must infer your offerings from unstructured text, which leads to inaccurate or incomplete descriptions in AI-generated recommendations.",
+    scoreDisplayMode: "ternary",
+    weight: weightForGrade("A", "scored"),
+    evidenceGrade: "A",
+    tier: "scored",
+    dossier: "docs/evidence/audits/structured-data/service-schema.md",
+    requires: [
+      "origin-reachable",
+      "unblocked-fetches",
+      "rendered-body",
+      "sample-adequate",
+    ],
     // Where a service business publishes its offerings. NOT ['product'] —
     // that was inherited from the pre-split audit and inverted this check:
     // it skipped every service site (no product page in the scan) and ran only
     // on stores, which do not emit Service markup. The runtime guard below
     // carries the real precondition.
-    applicablePageTypes: ['homepage', 'content'],
-    defaultPriority: 'medium',
+    applicablePageTypes: ["homepage", "content"],
+    defaultPriority: "medium",
     guidance: {
       impact:
-        'Without Service schema, AI agents must infer your offerings from unstructured text. This leads to inaccurate or incomplete descriptions in AI-generated recommendations, and your services may be entirely overlooked when agents compare options for users.',
-      fix: 'Add Service (or ProfessionalService) JSON-LD to pages describing your offerings. Include name and provider (nested Organization) at minimum.',
+        "Without Service schema, AI agents must infer your offerings from unstructured text. This leads to inaccurate or incomplete descriptions in AI-generated recommendations, and your services may be entirely overlooked when agents compare options for users.",
+      fix: "Add Service (or ProfessionalService) JSON-LD to pages describing your offerings. Include name and provider (nested Organization) at minimum.",
       code: `{
   "@context": "https://schema.org",
   "@type": "Service",
@@ -120,18 +130,18 @@ export class ServiceSchemaAudit extends Audit {
     "name": "Your Company"
   }
 }`,
-      effort: 'easy',
-      docsUrl: 'https://schema.org/Service',
-      tags: ['json-ld', 'schema', 'service'],
+      effort: "easy",
+      docsUrl: "https://schema.org/Service",
+      tags: ["json-ld", "schema", "service"],
     },
   };
 
   audit(ctx: CheckContext): AuditResult {
     if (!ctx.pages.some(hasServiceIntent)) {
       return this.notApplicable(
-        'No service offering detected (no Service markup, no services section, no link to one).',
-        'Service schema with name and provider on sites that offer services.',
-        'No service offering found.',
+        "No service offering detected (no Service markup, no services section, no link to one).",
+        "Service schema with name and provider on sites that offer services.",
+        "No service offering found.",
       );
     }
 
@@ -141,11 +151,11 @@ export class ServiceSchemaAudit extends Audit {
 
     if (services.length === 0) {
       return this.fail(
-        'No Service schema found.',
-        'Service schema with name and provider.',
-        'None',
+        "No Service schema found.",
+        "Service schema with name and provider.",
+        "None",
         {
-          priority: 'medium',
+          priority: "medium",
           description: ServiceSchemaAudit.meta.description,
           code: `{
   "@context": "https://schema.org",
@@ -166,19 +176,19 @@ export class ServiceSchemaAudit extends Audit {
 
     if (best.length === 0) {
       return this.pass(
-        'Service schema found with name and provider.',
-        'Service schema with name and provider.',
+        "Service schema found with name and provider.",
+        "Service schema with name and provider.",
         `Complete Service schema (${services.length} total)`,
       );
     }
 
     return this.warn(
-      `Service schema found but missing: ${best.join(', ')}.`,
-      'Service schema with name and provider.',
-      `Service schema missing ${best.join(', ')} (${services.length} total)`,
+      `Service schema found but missing: ${best.join(", ")}.`,
+      "Service schema with name and provider.",
+      `Service schema missing ${best.join(", ")} (${services.length} total)`,
       {
-        priority: 'medium',
-        description: `AI agents use Service schema properties to accurately describe your offerings to users. Missing properties (${best.join(', ')}) mean agents cannot fully represent your service in AI-generated recommendations. Add them to your existing schema.`,
+        priority: "medium",
+        description: `AI agents use Service schema properties to accurately describe your offerings to users. Missing properties (${best.join(", ")}) mean agents cannot fully represent your service in AI-generated recommendations. Add them to your existing schema.`,
         code: `{
   "@type": "Service",
   "name": "Service Name",

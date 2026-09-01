@@ -33,30 +33,35 @@ const TOKEN = /^[a-zA-Z*][a-zA-Z0-9!#$%&'*+\-.^_`|~:/]*$/;
 export function parseDictionary(input: string): DictionaryResult {
   const value = new Map<string, DictionaryValue>();
   const trimmed = input.trim();
-  if (trimmed === '') return { ok: true, value };
+  if (trimmed === "") return { ok: true, value };
 
-  for (const rawMember of trimmed.split(',')) {
-    const member = rawMember.split(';')[0]!.trim();
-    if (member === '') return { ok: false, error: 'empty dictionary member' };
+  for (const rawMember of trimmed.split(",")) {
+    const member = rawMember.split(";")[0]!.trim();
+    if (member === "") return { ok: false, error: "empty dictionary member" };
 
-    const eq = member.indexOf('=');
+    const eq = member.indexOf("=");
     const key = (eq === -1 ? member : member.slice(0, eq)).trim();
-    if (!KEY.test(key)) return { ok: false, error: `"${key}" is not a valid dictionary key` };
+    if (!KEY.test(key))
+      return { ok: false, error: `"${key}" is not a valid dictionary key` };
 
     if (eq === -1) {
-      value.set(key, '?1');
+      value.set(key, "?1");
       continue;
     }
     const raw = member.slice(eq + 1).trim();
-    if (raw === '') return { ok: false, error: `"${key}" has no value` };
-    if (raw === '?0' || raw === '?1') {
+    if (raw === "") return { ok: false, error: `"${key}" has no value` };
+    if (raw === "?0" || raw === "?1") {
       value.set(key, raw);
       continue;
     }
     if (raw.startsWith('"')) {
-      return { ok: false, error: `"${key}" carries a string; AIPREF values are tokens` };
+      return {
+        ok: false,
+        error: `"${key}" carries a string; AIPREF values are tokens`,
+      };
     }
-    if (!TOKEN.test(raw)) return { ok: false, error: `"${raw}" is not a valid token` };
+    if (!TOKEN.test(raw))
+      return { ok: false, error: `"${raw}" is not a valid token` };
     value.set(key, raw);
   }
   return { ok: true, value };
@@ -78,17 +83,17 @@ export function parseLinkHeader(header: string): LinkHeaderEntry[] {
   const entries: LinkHeaderEntry[] = [];
   let depth = 0;
   let quoted = false;
-  let current = '';
+  let current = "";
   const pieces: string[] = [];
 
   for (let i = 0; i < header.length; i += 1) {
     const ch = header[i]!;
-    if (ch === '"' && header[i - 1] !== '\\') quoted = !quoted;
-    if (!quoted && ch === '<') depth += 1;
-    if (!quoted && ch === '>') depth -= 1;
-    if (ch === ',' && depth <= 0 && !quoted) {
+    if (ch === '"' && header[i - 1] !== "\\") quoted = !quoted;
+    if (!quoted && ch === "<") depth += 1;
+    if (!quoted && ch === ">") depth -= 1;
+    if (ch === "," && depth <= 0 && !quoted) {
       pieces.push(current);
-      current = '';
+      current = "";
       continue;
     }
     current += ch;
@@ -99,13 +104,13 @@ export function parseLinkHeader(header: string): LinkHeaderEntry[] {
     const match = /^\s*<([^>]*)>\s*(.*)$/.exec(piece);
     if (!match) continue;
     const params: Record<string, string> = {};
-    for (const param of match[2]!.split(';')) {
-      const eq = param.indexOf('=');
+    for (const param of match[2]!.split(";")) {
+      const eq = param.indexOf("=");
       if (eq === -1) continue;
       const name = param.slice(0, eq).trim().toLowerCase();
       const raw = param.slice(eq + 1).trim();
-      if (name === '') continue;
-      params[name] = raw.replace(/^"(.*)"$/, '$1');
+      if (name === "") continue;
+      params[name] = raw.replace(/^"(.*)"$/, "$1");
     }
     entries.push({ href: match[1]!.trim(), params });
   }
@@ -115,7 +120,7 @@ export function parseLinkHeader(header: string): LinkHeaderEntry[] {
 /** An entry whose `rel` token list contains `rel`, compared case-insensitively. */
 export function linksWithRel(header: string, rel: string): LinkHeaderEntry[] {
   return parseLinkHeader(header).filter((entry) =>
-    (entry.params['rel'] ?? '')
+    (entry.params["rel"] ?? "")
       .toLowerCase()
       .split(/\s+/)
       .includes(rel.toLowerCase()),

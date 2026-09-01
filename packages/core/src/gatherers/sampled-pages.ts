@@ -1,12 +1,15 @@
-import type { FetchOptions, FetchResult } from '../fetcher';
-import { isSafeUrl } from '../fetcher';
+import type { FetchOptions, FetchResult } from "../fetcher";
+import { isSafeUrl } from "../fetcher";
 
 /** The slice of CheckContext this gatherer needs, kept structural to avoid a cycle. */
 interface FetchingContext {
   fetch: (options: FetchOptions) => Promise<FetchResult>;
 }
 
-const pageCache = new WeakMap<object, Map<string, Promise<FetchResult | undefined>>>();
+const pageCache = new WeakMap<
+  object,
+  Map<string, Promise<FetchResult | undefined>>
+>();
 
 /**
  * Fetch a URL a sitemap listed, at most once per scan.

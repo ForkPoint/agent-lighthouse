@@ -1,7 +1,12 @@
-import { z } from 'zod';
+import { z } from "zod";
 
-export const CheckStatusSchema = z.enum(['pass', 'warn', 'fail', 'na']);
-export const CheckPrioritySchema = z.enum(['critical', 'high', 'medium', 'low']);
+export const CheckStatusSchema = z.enum(["pass", "warn", "fail", "na"]);
+export const CheckPrioritySchema = z.enum([
+  "critical",
+  "high",
+  "medium",
+  "low",
+]);
 
 export const AuditResultSchema = z.object({
   status: CheckStatusSchema,
@@ -33,14 +38,25 @@ export const AuditResultSchema = z.object({
       ]),
     )
     .optional(),
-  pageUrl: z.string().max(2048).url().optional().or(z.string().max(2048).startsWith('/')).or(z.string().length(0)),
+  pageUrl: z
+    .string()
+    .max(2048)
+    .url()
+    .optional()
+    .or(z.string().max(2048).startsWith("/"))
+    .or(z.string().length(0)),
   priority: CheckPrioritySchema.optional(),
   /** A fix written from what this scan found, which beats the generic one in meta.guidance. */
   remediation: z.string().max(5000).optional(),
   code: z.string().max(10000).optional(),
 });
 
-export const FixEffortSchema = z.enum(['trivial', 'easy', 'moderate', 'complex']);
+export const FixEffortSchema = z.enum([
+  "trivial",
+  "easy",
+  "moderate",
+  "complex",
+]);
 
 export const AuditGuidanceSchema = z.object({
   impact: z.string().max(5000),
@@ -51,7 +67,11 @@ export const AuditGuidanceSchema = z.object({
   tags: z.array(z.string().max(50)).max(20).optional(),
 });
 
-export const ScoreDisplayModeSchema = z.enum(['binary', 'ternary', 'informative']);
+export const ScoreDisplayModeSchema = z.enum([
+  "binary",
+  "ternary",
+  "informative",
+]);
 
 export const DeprecationNoticeSchema = z.object({
   notice: z.string().min(1).max(500),
@@ -59,22 +79,28 @@ export const DeprecationNoticeSchema = z.object({
 });
 
 /** Evidence strength from the audit's dossier (docs/evidence/policy.md). */
-export const EvidenceGradeSchema = z.enum(['A', 'B', 'C', 'D']);
+export const EvidenceGradeSchema = z.enum(["A", "B", "C", "D"]);
 /** Scoring participation tier (spec §4). */
-export const AuditTierSchema = z.enum(['scored', 'informative', 'experimental']);
+export const AuditTierSchema = z.enum([
+  "scored",
+  "informative",
+  "experimental",
+]);
 
 /** v2 audit identity: `category/slug`, stable across releases (spec §6). */
 export const AUDIT_ID_PATTERN = /^[a-z-]+\/[a-z0-9-]+$/;
 
 export const EvidenceKeySchema = z.enum([
-  'origin-reachable',
-  'unblocked-fetches',
-  'rendered-body',
-  'sample-adequate',
+  "origin-reachable",
+  "unblocked-fetches",
+  "rendered-body",
+  "sample-adequate",
 ]);
 
 export const AuditMetaSchema = z.object({
-  id: z.string().regex(AUDIT_ID_PATTERN, 'audit id must be a `category/slug` path'),
+  id: z
+    .string()
+    .regex(AUDIT_ID_PATTERN, "audit id must be a `category/slug` path"),
   category: z.string(),
   title: z.string(),
   failureTitle: z.string(),
@@ -109,7 +135,13 @@ export const CheckResultSchema = z.object({
   scoreDisplayMode: ScoreDisplayModeSchema,
   displayValue: z.string().max(1000).optional(),
   explanation: z.string().max(5000).optional(),
-  pageUrl: z.string().max(2048).url().optional().or(z.string().max(2048).startsWith('/')).or(z.string().length(0)),
+  pageUrl: z
+    .string()
+    .max(2048)
+    .url()
+    .optional()
+    .or(z.string().max(2048).startsWith("/"))
+    .or(z.string().length(0)),
   priority: CheckPrioritySchema,
   impact: z.string().max(5000),
   fix: z.string().max(5000),

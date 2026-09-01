@@ -1,30 +1,35 @@
 import type { AuditMeta, AuditResult } from "../../types";
 import { Audit } from "../../audit";
-import { weightForGrade } from '../../scorer';
-import type { CheckContext } from '../../check-context';
+import { weightForGrade } from "../../scorer";
+import type { CheckContext } from "../../check-context";
 
 export class UniqueMetaAudit extends Audit {
   static override meta: AuditMeta = {
-    id: 'answer-readiness/unique-meta',
-    category: 'answer-readiness',
-    title: 'Unique meta per page',
-    failureTitle: 'Unique meta per page',
+    id: "answer-readiness/unique-meta",
+    category: "answer-readiness",
+    title: "Unique meta per page",
+    failureTitle: "Unique meta per page",
     description:
-      'AI crawlers use title and description pairs to distinguish between pages. Duplicate meta across pages causes agents to merge or skip content, meaning some of your pages will be invisible in AI-generated answers. Give each page a unique title and description.',
-    scoreDisplayMode: 'informative',
-    weight: weightForGrade('C', 'informative'),
-    evidenceGrade: 'C',
-    tier: 'informative',
-    dossier: 'docs/evidence/audits/answer-readiness/unique-meta.md',
-    requires: ['origin-reachable', 'unblocked-fetches', 'rendered-body', 'sample-adequate'],
-    defaultPriority: 'high',
+      "AI crawlers use title and description pairs to distinguish between pages. Duplicate meta across pages causes agents to merge or skip content, meaning some of your pages will be invisible in AI-generated answers. Give each page a unique title and description.",
+    scoreDisplayMode: "informative",
+    weight: weightForGrade("C", "informative"),
+    evidenceGrade: "C",
+    tier: "informative",
+    dossier: "docs/evidence/audits/answer-readiness/unique-meta.md",
+    requires: [
+      "origin-reachable",
+      "unblocked-fetches",
+      "rendered-body",
+      "sample-adequate",
+    ],
+    defaultPriority: "high",
     guidance: {
       impact:
-        'AI crawlers use title and description pairs to distinguish between pages. Duplicate meta across pages causes agents to merge or skip content, meaning some pages become invisible in AI-generated answers.',
+        "AI crawlers use title and description pairs to distinguish between pages. Duplicate meta across pages causes agents to merge or skip content, meaning some pages become invisible in AI-generated answers.",
       fix: 'Give each page a unique <title> and <meta name="description"> that specifically describes that page\'s content. Avoid template descriptions that repeat across pages.',
       code: '<title>Unique Page Title - Your Site</title>\n<meta name="description" content="Unique description for this specific page.">',
-      effort: 'easy',
-      tags: ['meta-tags', 'seo', 'deduplication'],
+      effort: "easy",
+      tags: ["meta-tags", "seo", "deduplication"],
     },
   };
 
@@ -32,11 +37,11 @@ export class UniqueMetaAudit extends Audit {
     // Group pages by canonical URL so variant query parameters (e.g. ?variant=123) are not counted as duplicate distinct pages
     const canonicalGroups = new Map<string, (typeof ctx.pages)[0]>();
     for (const page of ctx.pages) {
-      let canon = (page.meta?.['canonical'] || page.url).trim();
+      let canon = (page.meta?.["canonical"] || page.url).trim();
       try {
         const u = new URL(canon);
-        u.search = '';
-        u.hash = '';
+        u.search = "";
+        u.hash = "";
         canon = u.href;
       } catch {
         // ignore
@@ -51,9 +56,9 @@ export class UniqueMetaAudit extends Audit {
       // Uniqueness needs two pages to compare. With one there is no verdict,
       // which is what this branch always said in words while scoring a pass.
       return this.notApplicable(
-        'Only one distinct canonical page scanned; uniqueness check not applicable.',
-        'Each page has a unique title + description combination',
-        '1 distinct page scanned',
+        "Only one distinct canonical page scanned; uniqueness check not applicable.",
+        "Each page has a unique title + description combination",
+        "1 distinct page scanned",
       );
     }
 
@@ -62,8 +67,12 @@ export class UniqueMetaAudit extends Audit {
 
     for (const page of uniquePages) {
       /* v8 ignore next */
-      const title = (page.meta?.['title'] ?? page.$?.('title').text() ?? '').trim();
-      const desc = (page.meta?.['description'] ?? '').trim();
+      const title = (
+        page.meta?.["title"] ??
+        page.$?.("title").text() ??
+        ""
+      ).trim();
+      const desc = (page.meta?.["description"] ?? "").trim();
       const key = `${title}|||${desc}`;
 
       if (seen.has(key)) {
@@ -76,19 +85,19 @@ export class UniqueMetaAudit extends Audit {
     if (duplicates.length === 0) {
       return this.pass(
         `All ${uniquePages.length} distinct pages have unique title + description.`,
-        'Each page has a unique title + description combination',
+        "Each page has a unique title + description combination",
         `${uniquePages.length} unique combinations`,
       );
     }
 
     return this.fail(
       `Duplicate title + description found across pages.`,
-      'Each page has a unique title + description combination',
-      duplicates.join('; '),
+      "Each page has a unique title + description combination",
+      duplicates.join("; "),
       {
-        priority: 'high',
+        priority: "high",
         description:
-          'AI crawlers use title and description pairs to distinguish between pages. Duplicate meta across pages causes agents to merge or skip content, meaning some of your pages will be invisible in AI-generated answers. Give each page a unique title and description.',
+          "AI crawlers use title and description pairs to distinguish between pages. Duplicate meta across pages causes agents to merge or skip content, meaning some of your pages will be invisible in AI-generated answers. Give each page a unique title and description.",
         code: '<title>Unique Page Title</title>\n<meta name="description" content="Unique description for this specific page.">',
       },
     );

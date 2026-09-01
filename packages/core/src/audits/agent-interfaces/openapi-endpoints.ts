@@ -1,39 +1,39 @@
 import type { AuditMeta, AuditResult } from "../../types";
 import { Audit } from "../../audit";
-import { weightForGrade } from '../../scorer';
-import type { CheckContext } from '../../check-context';
+import { weightForGrade } from "../../scorer";
+import type { CheckContext } from "../../check-context";
 import {
   defectCount,
   defectNote,
   NO_OPENAPI_SPEC,
   readOpenApiPaths,
   readOpenApiSpec,
-} from '../../gatherers/openapi';
+} from "../../gatherers/openapi";
 
 /** Shared `expected` line: one path, one operation, is the whole requirement. */
-const EXPECTED = 'At least one path with one operation in the OpenAPI spec';
+const EXPECTED = "At least one path with one operation in the OpenAPI spec";
 
 const FIX_CODE = `"paths": {\n  "/search": {\n    "get": {\n      "operationId": "searchContent",\n      "summary": "Search site content",\n      "parameters": [{\n        "name": "q", "in": "query", "schema": { "type": "string" }\n      }],\n      "responses": { "200": { "description": "Search results" } }\n    }\n  }\n}`;
 
 export class OpenApiEndpointsAudit extends Audit {
   static override meta: AuditMeta = {
-    id: 'agent-interfaces/openapi-endpoints',
-    category: 'agent-interfaces',
-    title: 'OpenAPI has endpoints',
-    failureTitle: 'OpenAPI has endpoints',
+    id: "agent-interfaces/openapi-endpoints",
+    category: "agent-interfaces",
+    title: "OpenAPI has endpoints",
+    failureTitle: "OpenAPI has endpoints",
     description:
-      'An OpenAPI spec without endpoints is like a menu with no items. AI agents need at least one path with an operation to know what actions they can perform on your site. Add your most important endpoints first.',
-    scoreDisplayMode: 'binary',
-    weight: weightForGrade('B', 'scored'),
-    evidenceGrade: 'B',
-    tier: 'scored',
-    dossier: 'docs/evidence/audits/agent-interfaces/openapi-endpoints.md',
-    requires: ['origin-reachable'],
-    defaultPriority: 'high',
+      "An OpenAPI spec without endpoints is like a menu with no items. AI agents need at least one path with an operation to know what actions they can perform on your site. Add your most important endpoints first.",
+    scoreDisplayMode: "binary",
+    weight: weightForGrade("B", "scored"),
+    evidenceGrade: "B",
+    tier: "scored",
+    dossier: "docs/evidence/audits/agent-interfaces/openapi-endpoints.md",
+    requires: ["origin-reachable"],
+    defaultPriority: "high",
     guidance: {
       impact:
-        'An OpenAPI spec without endpoints is unusable -- AI agents see a spec file but have zero actions they can perform. Your site remains a passive document that agents cannot interact with programmatically.',
-      fix: 'Add at least one path with an HTTP operation (GET, POST, etc.) to your OpenAPI spec. Start with your most valuable endpoints: search, contact, or product lookup.',
+        "An OpenAPI spec without endpoints is unusable -- AI agents see a spec file but have zero actions they can perform. Your site remains a passive document that agents cannot interact with programmatically.",
+      fix: "Add at least one path with an HTTP operation (GET, POST, etc.) to your OpenAPI spec. Start with your most valuable endpoints: search, contact, or product lookup.",
       code: `"paths": {
   "/search": {
     "get": {
@@ -46,9 +46,9 @@ export class OpenApiEndpointsAudit extends Audit {
     }
   }
 }`,
-      effort: 'moderate',
-      docsUrl: 'https://swagger.io/specification/#paths-object',
-      tags: ['openapi', 'endpoints', 'api'],
+      effort: "moderate",
+      docsUrl: "https://swagger.io/specification/#paths-object",
+      tags: ["openapi", "endpoints", "api"],
     },
   };
 
@@ -58,7 +58,11 @@ export class OpenApiEndpointsAudit extends Audit {
     // restaurant that prints no menu is not. The `fail` below still stands
     // for a document that exists and declares nothing.
     if (!spec) {
-      return this.notApplicable(NO_OPENAPI_SPEC.message, EXPECTED, NO_OPENAPI_SPEC.found);
+      return this.notApplicable(
+        NO_OPENAPI_SPEC.message,
+        EXPECTED,
+        NO_OPENAPI_SPEC.found,
+      );
     }
 
     const paths = readOpenApiPaths(spec);
@@ -67,13 +71,13 @@ export class OpenApiEndpointsAudit extends Audit {
     // the author wrote what blocks it. The `expected` line above is genuinely
     // unmet here — there is no path with an operation — which is why this
     // branch may state it beside a `fail`.
-    if (paths.kind === 'malformed') {
+    if (paths.kind === "malformed") {
       return this.fail(
         `OpenAPI spec has a malformed paths object: ${paths.found}.`,
         EXPECTED,
         paths.found,
         {
-          priority: 'high',
+          priority: "high",
           description: OpenApiEndpointsAudit.meta.description,
           code: FIX_CODE,
         },
@@ -85,7 +89,7 @@ export class OpenApiEndpointsAudit extends Audit {
     // working operations are twenty working operations; the defect is named,
     // not charged, because no source says a broken sibling costs a site the
     // endpoints it does publish.
-    if (paths.kind === 'operations') {
+    if (paths.kind === "operations") {
       const count = paths.operations.length;
       return this.pass(
         `OpenAPI spec defines ${count} operation(s) across its paths.${defectNote(paths.defects)}`,
@@ -96,10 +100,15 @@ export class OpenApiEndpointsAudit extends Audit {
 
     // A menu with no items. This audit is the one place the empty document is
     // reported, which is why the other three decline it rather than repeat it.
-    return this.fail('OpenAPI spec has no operations defined in paths.', EXPECTED, '0 operations', {
-      priority: 'high',
-      description: OpenApiEndpointsAudit.meta.description,
-      code: FIX_CODE,
-    });
+    return this.fail(
+      "OpenAPI spec has no operations defined in paths.",
+      EXPECTED,
+      "0 operations",
+      {
+        priority: "high",
+        description: OpenApiEndpointsAudit.meta.description,
+        code: FIX_CODE,
+      },
+    );
   }
 }

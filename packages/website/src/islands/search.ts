@@ -1,4 +1,4 @@
-import { withBase } from '../lib/routes';
+import { withBase } from "../lib/routes";
 
 /**
  * Site search: the client half of the header's search dialog.
@@ -21,7 +21,7 @@ import { withBase } from '../lib/routes';
 /* -------------------------------------------------------------------------- */
 
 /** Elements where a bare `/` is a character the reader is typing, not a command. */
-const TYPING_TAGS = new Set(['INPUT', 'TEXTAREA', 'SELECT']);
+const TYPING_TAGS = new Set(["INPUT", "TEXTAREA", "SELECT"]);
 
 /**
  * Should this keystroke open the search dialog?
@@ -33,10 +33,15 @@ const TYPING_TAGS = new Set(['INPUT', 'TEXTAREA', 'SELECT']);
  * make a regex or a path impossible to type.
  */
 export function searchShortcut(event: KeyboardEvent): boolean {
-  if ((event.metaKey || event.ctrlKey) && (event.key === 'k' || event.key === 'K')) return true;
-  if (event.key !== '/') return false;
+  if (
+    (event.metaKey || event.ctrlKey) &&
+    (event.key === "k" || event.key === "K")
+  )
+    return true;
+  if (event.key !== "/") return false;
   if (event.metaKey || event.ctrlKey || event.altKey) return false;
-  const target = event.target as (Element & { isContentEditable?: boolean }) | null;
+  const target = event.target as
+    (Element & { isContentEditable?: boolean }) | null;
   if (!target) return true;
   return !TYPING_TAGS.has(target.tagName) && target.isContentEditable !== true;
 }
@@ -53,24 +58,30 @@ export interface ExcerptSegment {
 
 /** The five references Pagefind's escaper can emit, plus the numeric forms. */
 const NAMED_ENTITIES: Record<string, string> = {
-  amp: '&',
-  lt: '<',
-  gt: '>',
+  amp: "&",
+  lt: "<",
+  gt: ">",
   quot: '"',
   apos: "'",
 };
 
 function decodeEntities(text: string): string {
-  return text.replace(/&(#x[0-9a-fA-F]+|#\d+|[a-zA-Z]+);/g, (whole, name: string) => {
-    if (name.startsWith('#')) {
-      const hex = name[1] === 'x' || name[1] === 'X';
-      const code = Number.parseInt(hex ? name.slice(2) : name.slice(1), hex ? 16 : 10);
-      // A reference outside Unicode's range stays literal rather than throwing.
-      if (!Number.isFinite(code) || code < 0 || code > 0x10ffff) return whole;
-      return String.fromCodePoint(code);
-    }
-    return NAMED_ENTITIES[name.toLowerCase()] ?? whole;
-  });
+  return text.replace(
+    /&(#x[0-9a-fA-F]+|#\d+|[a-zA-Z]+);/g,
+    (whole, name: string) => {
+      if (name.startsWith("#")) {
+        const hex = name[1] === "x" || name[1] === "X";
+        const code = Number.parseInt(
+          hex ? name.slice(2) : name.slice(1),
+          hex ? 16 : 10,
+        );
+        // A reference outside Unicode's range stays literal rather than throwing.
+        if (!Number.isFinite(code) || code < 0 || code > 0x10ffff) return whole;
+        return String.fromCodePoint(code);
+      }
+      return NAMED_ENTITIES[name.toLowerCase()] ?? whole;
+    },
+  );
 }
 
 /**
@@ -89,14 +100,14 @@ export function excerptSegments(html: string): ExcerptSegment[] {
   const push = (raw: string, mark: boolean) => {
     // Any other tag is dropped, not trusted: only `<mark>` survives, and it
     // survives as an element this module creates, not as parsed markup.
-    const text = decodeEntities(raw.replace(/<[^>]*>/g, ''));
-    if (text !== '') segments.push({ text, mark });
+    const text = decodeEntities(raw.replace(/<[^>]*>/g, ""));
+    if (text !== "") segments.push({ text, mark });
   };
 
   let last = 0;
   for (const match of html.matchAll(/<mark>([\s\S]*?)<\/mark>/g)) {
     push(html.slice(last, match.index), false);
-    push(match[1] ?? '', true);
+    push(match[1] ?? "", true);
     last = match.index + match[0].length;
   }
   push(html.slice(last), false);
@@ -116,7 +127,7 @@ export function excerptSegments(html: string): ExcerptSegment[] {
  * base path stays in one place rather than being repeated as a Pagefind flag.
  */
 export function resultHref(url: string): string {
-  const base = withBase('');
+  const base = withBase("");
   return url.startsWith(base) ? url : withBase(url);
 }
 
@@ -146,7 +157,7 @@ export interface PagefindApi {
 export type PagefindLoader = () => Promise<PagefindApi>;
 
 /** Where the build puts the generated bundle, under the site's base path. */
-export const PAGEFIND_URL = withBase('pagefind/pagefind.js');
+export const PAGEFIND_URL = withBase("pagefind/pagefind.js");
 
 /**
  * The real loader: one dynamic import, on first open.
@@ -158,7 +169,9 @@ export const PAGEFIND_URL = withBase('pagefind/pagefind.js');
  * which is confined to this function rather than smeared across the module.
  */
 const loadPagefind: PagefindLoader = async () => {
-  const module = (await import(/* @vite-ignore */ PAGEFIND_URL)) as unknown as PagefindApi;
+  const module = (await import(
+    /* @vite-ignore */ PAGEFIND_URL
+  )) as unknown as PagefindApi;
   await module.init?.();
   return module;
 };
@@ -172,40 +185,40 @@ const RESULT_LIMIT = 10;
 
 /** Build one result: a link with its title, its category, and its excerpt. */
 function resultItem(fragment: PagefindFragment): HTMLLIElement {
-  const item = document.createElement('li');
+  const item = document.createElement("li");
 
-  const link = document.createElement('a');
+  const link = document.createElement("a");
   link.href = resultHref(fragment.url);
   link.className =
-    'block rounded-lg border border-transparent px-3 py-2.5 hover:border-brand/50 hover:bg-surface-raised focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand';
+    "block rounded-lg border border-transparent px-3 py-2.5 hover:border-brand/50 hover:bg-surface-raised focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand";
 
-  const title = document.createElement('span');
-  title.className = 'block text-sm font-semibold text-white';
+  const title = document.createElement("span");
+  title.className = "block text-sm font-semibold text-white";
   // `meta.title` is the first heading inside the page's indexed region; a page
   // that somehow reached the index without one falls back to its address.
-  title.textContent = fragment.meta?.['title'] ?? fragment.url;
+  title.textContent = fragment.meta?.["title"] ?? fragment.url;
   link.append(title);
 
   // The category filter is set on the dossier's own badge strip, so it is only
   // ever present on the 215 dossiers — which are exactly the results a reader
   // needs help telling apart.
-  const category = fragment.filters?.['category']?.[0];
+  const category = fragment.filters?.["category"]?.[0];
   if (category) {
-    const tag = document.createElement('span');
-    tag.className = 'mt-0.5 block text-xs text-slate-400';
+    const tag = document.createElement("span");
+    tag.className = "mt-0.5 block text-xs text-slate-400";
     tag.textContent = category;
     link.append(tag);
   }
 
-  const excerpt = document.createElement('p');
-  excerpt.className = 'mt-1 text-xs leading-relaxed text-slate-300';
+  const excerpt = document.createElement("p");
+  excerpt.className = "mt-1 text-xs leading-relaxed text-slate-300";
   for (const segment of excerptSegments(fragment.excerpt)) {
     if (!segment.mark) {
       excerpt.append(document.createTextNode(segment.text));
       continue;
     }
-    const mark = document.createElement('mark');
-    mark.className = 'bg-brand/30 text-white';
+    const mark = document.createElement("mark");
+    mark.className = "bg-brand/30 text-white";
     mark.textContent = segment.text;
     excerpt.append(mark);
   }
@@ -223,11 +236,11 @@ function resultItem(fragment: PagefindFragment): HTMLLIElement {
  * happens — the index is fetched on first open, not on page load.
  */
 export function mountSearch(load: PagefindLoader = loadPagefind): void {
-  const trigger = document.querySelector<HTMLButtonElement>('#search-trigger');
-  const dialog = document.querySelector<HTMLDialogElement>('#search-dialog');
-  const input = document.querySelector<HTMLInputElement>('#search-input');
-  const status = document.querySelector<HTMLElement>('#search-status');
-  const list = document.querySelector<HTMLElement>('#search-results');
+  const trigger = document.querySelector<HTMLButtonElement>("#search-trigger");
+  const dialog = document.querySelector<HTMLDialogElement>("#search-dialog");
+  const input = document.querySelector<HTMLInputElement>("#search-input");
+  const status = document.querySelector<HTMLElement>("#search-status");
+  const list = document.querySelector<HTMLElement>("#search-results");
   if (!trigger || !dialog || !input || !status || !list) return;
 
   // `<dialog>` is doing the work here — the modal backdrop, Escape, and keeping
@@ -235,7 +248,7 @@ export function mountSearch(load: PagefindLoader = loadPagefind): void {
   // without it would get a button that throws, so the button simply stays
   // hidden there, the way the audit explorer's controls stay hidden without
   // JavaScript: the site is entirely navigable without search.
-  if (typeof dialog.showModal !== 'function') return;
+  if (typeof dialog.showModal !== "function") return;
 
   let pagefind: Promise<PagefindApi> | undefined;
   /** The most recent query, so a slow response cannot overwrite a newer one. */
@@ -245,19 +258,19 @@ export function mountSearch(load: PagefindLoader = loadPagefind): void {
   const fail = () => {
     list.replaceChildren();
     status.textContent =
-      'Search is unavailable — its index did not load. Every audit is still listed on the audits page:';
-    const link = document.createElement('a');
-    link.href = withBase('audits/');
-    link.className = 'ml-1 underline hover:text-white';
-    link.textContent = withBase('audits/');
+      "Search is unavailable — its index did not load. Every audit is still listed on the audits page:";
+    const link = document.createElement("a");
+    link.href = withBase("audits/");
+    link.className = "ml-1 underline hover:text-white";
+    link.textContent = withBase("audits/");
     status.append(link);
   };
 
   const run = async (term: string) => {
     const token = ++latest;
-    if (term.trim() === '') {
+    if (term.trim() === "") {
       list.replaceChildren();
-      status.textContent = '';
+      status.textContent = "";
       return;
     }
     // Reuses the promise, rejection included: once the index has failed to
@@ -266,7 +279,9 @@ export function mountSearch(load: PagefindLoader = loadPagefind): void {
     let fragments: PagefindFragment[];
     try {
       const response = await (await pagefind).search(term);
-      fragments = await Promise.all(response.results.slice(0, RESULT_LIMIT).map((hit) => hit.data()));
+      fragments = await Promise.all(
+        response.results.slice(0, RESULT_LIMIT).map((hit) => hit.data()),
+      );
     } catch {
       if (token === latest) fail();
       return;
@@ -277,7 +292,7 @@ export function mountSearch(load: PagefindLoader = loadPagefind): void {
     status.textContent =
       fragments.length === 0
         ? `No results for “${term}”.`
-        : `${fragments.length} result${fragments.length === 1 ? '' : 's'} for “${term}”.`;
+        : `${fragments.length} result${fragments.length === 1 ? "" : "s"} for “${term}”.`;
   };
 
   const open = () => {
@@ -290,7 +305,10 @@ export function mountSearch(load: PagefindLoader = loadPagefind): void {
     // trigger is on screen either way, so nothing is gained by dragging focus
     // back up to it.
     const active = document.activeElement;
-    opener = active instanceof HTMLElement && active !== document.body ? active : trigger;
+    opener =
+      active instanceof HTMLElement && active !== document.body
+        ? active
+        : trigger;
     // Shown *before* the index is asked for, so the status line — a live region
     // that ships empty and visible — is already in the accessibility tree by the
     // time a failure or a result count is written into it. A closed `<dialog>`
@@ -310,9 +328,9 @@ export function mountSearch(load: PagefindLoader = loadPagefind): void {
     })();
   };
 
-  trigger.addEventListener('click', open);
+  trigger.addEventListener("click", open);
 
-  dialog.addEventListener('close', () => {
+  dialog.addEventListener("close", () => {
     // Returning focus is the browser's job too, but only for the element that
     // was focused when `showModal()` ran; doing it here as well keeps the
     // promise the header makes — you land back on the button you left from.
@@ -322,13 +340,13 @@ export function mountSearch(load: PagefindLoader = loadPagefind): void {
 
   // Clicking the backdrop closes the dialog: the click lands on the dialog
   // element itself, never on the panel inside it.
-  dialog.addEventListener('click', (event) => {
+  dialog.addEventListener("click", (event) => {
     if (event.target === dialog) dialog.close();
   });
 
-  input.addEventListener('input', () => void run(input.value));
+  input.addEventListener("input", () => void run(input.value));
 
-  document.addEventListener('keydown', (event) => {
+  document.addEventListener("keydown", (event) => {
     if (dialog.open || !searchShortcut(event)) return;
     // Only now: the shortcut is a command, so the `/` must not also be typed.
     event.preventDefault();

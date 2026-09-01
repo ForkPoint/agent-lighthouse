@@ -1,10 +1,10 @@
-import type { AuditMeta, AuditResult } from '../../types';
-import { Audit } from '../../audit';
-import { weightForGrade } from '../../scorer';
-import type { CheckContext, PageContext } from '../../check-context';
-import type { FetchResult } from '../../fetcher';
-import { probeOpenApiServer } from '../../gatherers/openapi';
-import { isSafeUrl } from '../../url-utils';
+import type { AuditMeta, AuditResult } from "../../types";
+import { Audit } from "../../audit";
+import { weightForGrade } from "../../scorer";
+import type { CheckContext, PageContext } from "../../check-context";
+import type { FetchResult } from "../../fetcher";
+import { probeOpenApiServer } from "../../gatherers/openapi";
+import { isSafeUrl } from "../../url-utils";
 
 function tryParseJson(body: string): unknown {
   try {
@@ -15,16 +15,16 @@ function tryParseJson(body: string): unknown {
 }
 
 function isObject(val: unknown): val is Record<string, unknown> {
-  return typeof val === 'object' && val !== null && !Array.isArray(val);
+  return typeof val === "object" && val !== null && !Array.isArray(val);
 }
 
 /** Strip the parameters off a media type: `application/json; charset=utf-8`. */
 function mediaType(contentType: string | undefined): string {
-  return (contentType ?? '').split(';')[0]!.trim().toLowerCase();
+  return (contentType ?? "").split(";")[0]!.trim().toLowerCase();
 }
 
 function isHtml(result: FetchResult): boolean {
-  return mediaType(result.contentType) === 'text/html';
+  return mediaType(result.contentType) === "text/html";
 }
 
 /**
@@ -35,14 +35,18 @@ function isHtml(result: FetchResult): boolean {
  * audit that only looked at the status code.
  */
 function servedAsData(result: FetchResult | undefined): result is FetchResult {
-  return !!result && result.status === 200 && !!result.body.trim() && !isHtml(result);
+  return (
+    !!result && result.status === 200 && !!result.body.trim() && !isHtml(result)
+  );
 }
 
 /** An OpenAPI 3.x or Swagger 2.0 document: a version key plus a `paths` object. */
 function isOpenApiDocument(parsed: unknown): boolean {
   if (!isObject(parsed)) return false;
-  const versioned = typeof parsed['openapi'] === 'string' || typeof parsed['swagger'] === 'string';
-  return versioned && isObject(parsed['paths']);
+  const versioned =
+    typeof parsed["openapi"] === "string" ||
+    typeof parsed["swagger"] === "string";
+  return versioned && isObject(parsed["paths"]);
 }
 
 /**
@@ -58,11 +62,11 @@ function isOpenApiYaml(body: string): boolean {
 const SPEC_HREF_RE = /(openapi|swagger)[^/?#]*\.(json|ya?ml)(\?|#|$)/i;
 /** Serialization types a spec is legitimately served as — none of them exclusive to OpenAPI. */
 const SPEC_MEDIA_TYPES = new Set([
-  'application/json',
-  'application/yaml',
-  'application/x-yaml',
-  'text/yaml',
-  'text/x-yaml',
+  "application/json",
+  "application/yaml",
+  "application/x-yaml",
+  "text/yaml",
+  "text/x-yaml",
 ]);
 /** The registered OpenAPI media type: unambiguous on its own, whatever the href. */
 const OPENAPI_MEDIA_TYPE_RE = /^application\/vnd\.oai\.openapi/;
@@ -75,7 +79,9 @@ const OPENAPI_MEDIA_TYPE_RE = /^application\/vnd\.oai\.openapi/;
  * says "spec". The old audit keyed on `title.includes('openapi')`, making an
  * optional, English, human-authored attribute the sole discriminator.
  */
-function findSpecLink(pages: readonly PageContext[]): { href: string; pageUrl: string } | undefined {
+function findSpecLink(
+  pages: readonly PageContext[],
+): { href: string; pageUrl: string } | undefined {
   for (const page of pages) {
     for (const link of page.headLinks ?? []) {
       const rels = link.rel.toLowerCase().split(/\s+/);
@@ -83,10 +89,12 @@ function findSpecLink(pages: readonly PageContext[]): { href: string; pageUrl: s
       const hrefLooksLikeSpec = SPEC_HREF_RE.test(link.href);
       if (!link.href) continue;
 
-      if (rels.includes('service-desc')) return { href: link.href, pageUrl: page.url };
-      if (!rels.includes('alternate')) continue;
-      if (OPENAPI_MEDIA_TYPE_RE.test(type)) return { href: link.href, pageUrl: page.url };
-      if (hrefLooksLikeSpec && (type === '' || SPEC_MEDIA_TYPES.has(type))) {
+      if (rels.includes("service-desc"))
+        return { href: link.href, pageUrl: page.url };
+      if (!rels.includes("alternate")) continue;
+      if (OPENAPI_MEDIA_TYPE_RE.test(type))
+        return { href: link.href, pageUrl: page.url };
+      if (hrefLooksLikeSpec && (type === "" || SPEC_MEDIA_TYPES.has(type))) {
         return { href: link.href, pageUrl: page.url };
       }
     }
@@ -96,11 +104,11 @@ function findSpecLink(pages: readonly PageContext[]): { href: string; pageUrl: s
 
 /** RFC 9727: an `application/linkset+json` document with a `linkset` array. */
 function readApiCatalog(ctx: CheckContext): { count: number } | undefined {
-  const result = ctx.rootFiles['/.well-known/api-catalog'];
+  const result = ctx.rootFiles["/.well-known/api-catalog"];
   if (!servedAsData(result)) return undefined;
   const parsed = tryParseJson(result.body);
   if (!isObject(parsed)) return undefined;
-  const linkset = parsed['linkset'];
+  const linkset = parsed["linkset"];
   if (!Array.isArray(linkset) || linkset.length === 0) return undefined;
   return { count: linkset.length };
 }
@@ -123,27 +131,32 @@ const SAMPLE = `// /.well-known/api-catalog — RFC 9727, Content-Type: applicat
 
 export class OpenApiExistsAudit extends Audit {
   static override meta: AuditMeta = {
-    id: 'agent-interfaces/openapi-exists',
-    category: 'agent-interfaces',
-    title: 'API description discoverable',
-    failureTitle: 'API description discoverable',
+    id: "agent-interfaces/openapi-exists",
+    category: "agent-interfaces",
+    title: "API description discoverable",
+    failureTitle: "API description discoverable",
     description:
       'One discovery audit over the mechanisms that actually exist: the RFC 9727 /.well-known/api-catalog linkset, an OpenAPI document at a probed root path, and a <link rel="service-desc"> advertising one. A site with no API surface is not applicable rather than failing.',
-    scoreDisplayMode: 'informative',
-    weight: weightForGrade('B', 'informative'),
-    evidenceGrade: 'B',
-    tier: 'informative',
-    dossier: 'docs/evidence/audits/agent-interfaces/openapi-exists.md',
-    requires: ['origin-reachable', 'unblocked-fetches', 'rendered-body', 'sample-adequate'],
-    defaultPriority: 'medium',
+    scoreDisplayMode: "informative",
+    weight: weightForGrade("B", "informative"),
+    evidenceGrade: "B",
+    tier: "informative",
+    dossier: "docs/evidence/audits/agent-interfaces/openapi-exists.md",
+    requires: [
+      "origin-reachable",
+      "unblocked-fetches",
+      "rendered-body",
+      "sample-adequate",
+    ],
+    defaultPriority: "medium",
     guidance: {
       impact:
-        'An agent that cannot find your API description cannot call it. Note that every documented consumer today (GPT Actions, Microsoft 365 Copilot API plugins) receives the document from a developer rather than fetching it from your site, so this check is informative and unscored.',
+        "An agent that cannot find your API description cannot call it. Note that every documented consumer today (GPT Actions, Microsoft 365 Copilot API plugins) receives the document from a developer rather than fetching it from your site, so this check is informative and unscored.",
       fix: 'Publish an RFC 9727 linkset at /.well-known/api-catalog with a Content-Type of application/linkset+json — the only ratified, IANA-registered domain-level API discovery mechanism. Serve the OpenAPI document itself at /openapi.json or /openapi.yaml, and advertise it with <link rel="service-desc">. Never answer a well-known path with an HTML 200.',
       code: SAMPLE,
-      effort: 'moderate',
-      docsUrl: 'https://www.rfc-editor.org/rfc/rfc9727.html',
-      tags: ['openapi', 'api', 'discovery', 'rfc9727', 'well-known'],
+      effort: "moderate",
+      docsUrl: "https://www.rfc-editor.org/rfc/rfc9727.html",
+      tags: ["openapi", "api", "discovery", "rfc9727", "well-known"],
     },
   };
 
@@ -152,39 +165,43 @@ export class OpenApiExistsAudit extends Audit {
     const catalog = readApiCatalog(ctx);
     if (catalog) {
       return this.pass(
-        `RFC 9727 api-catalog found at /.well-known/api-catalog (${catalog.count} linkset ${catalog.count === 1 ? 'entry' : 'entries'}).`,
+        `RFC 9727 api-catalog found at /.well-known/api-catalog (${catalog.count} linkset ${catalog.count === 1 ? "entry" : "entries"}).`,
         EXPECTED,
         `/.well-known/api-catalog -> application/linkset+json, ${catalog.count} entries`,
       );
     }
 
     // 2. The OpenAPI document itself at a probed root path.
-    const jsonResult = ctx.rootFiles['/openapi.json'];
+    const jsonResult = ctx.rootFiles["/openapi.json"];
     if (servedAsData(jsonResult)) {
       const parsed = tryParseJson(jsonResult.body);
       if (isOpenApiDocument(parsed)) {
         return this.pass(
-          'Valid OpenAPI document found at /openapi.json.',
+          "Valid OpenAPI document found at /openapi.json.",
           EXPECTED,
-          `/openapi.json -> OpenAPI ${(parsed as Record<string, unknown>)['openapi'] ?? (parsed as Record<string, unknown>)['swagger']}`,
+          `/openapi.json -> OpenAPI ${(parsed as Record<string, unknown>)["openapi"] ?? (parsed as Record<string, unknown>)["swagger"]}`,
         );
       }
       // Something is served there, so the site does have an API surface —
       // it is just not a spec. `{"hello":1}` used to pass as "valid OpenAPI".
       return this.warn(
-        '/openapi.json is served but the body is not a valid OpenAPI document (no openapi/swagger version key with a paths object).',
+        "/openapi.json is served but the body is not a valid OpenAPI document (no openapi/swagger version key with a paths object).",
         EXPECTED,
-        '/openapi.json -> 200, not an OpenAPI document',
-        { priority: 'medium', description: OpenApiExistsAudit.meta.description, code: SAMPLE },
+        "/openapi.json -> 200, not an OpenAPI document",
+        {
+          priority: "medium",
+          description: OpenApiExistsAudit.meta.description,
+          code: SAMPLE,
+        },
       );
     }
 
-    const yamlResult = ctx.rootFiles['/openapi.yaml'];
+    const yamlResult = ctx.rootFiles["/openapi.yaml"];
     if (servedAsData(yamlResult) && isOpenApiYaml(yamlResult.body)) {
       return this.pass(
-        'Valid OpenAPI document found at /openapi.yaml.',
+        "Valid OpenAPI document found at /openapi.yaml.",
         EXPECTED,
-        '/openapi.yaml -> YAML with openapi/swagger and paths keys',
+        "/openapi.yaml -> YAML with openapi/swagger and paths keys",
       );
     }
 
@@ -202,15 +219,20 @@ export class OpenApiExistsAudit extends Audit {
           `An API description is advertised at ${link.href} but it is not safe to probe (non-HTTP scheme or private address).`,
           EXPECTED,
           `<link> -> ${url} -> refused`,
-          { priority: 'medium', description: OpenApiExistsAudit.meta.description, code: SAMPLE },
+          {
+            priority: "medium",
+            description: OpenApiExistsAudit.meta.description,
+            code: SAMPLE,
+          },
           link.pageUrl,
         );
       }
-      const result = await probeOpenApiServer(ctx, url, { method: 'GET' });
+      const result = await probeOpenApiServer(ctx, url, { method: "GET" });
       if (result) {
         const valid =
           servedAsData(result) &&
-          (isOpenApiDocument(tryParseJson(result.body)) || isOpenApiYaml(result.body));
+          (isOpenApiDocument(tryParseJson(result.body)) ||
+            isOpenApiYaml(result.body));
         if (valid) {
           return this.pass(
             `API description advertised in <link> and verified at ${link.href}.`,
@@ -224,7 +246,11 @@ export class OpenApiExistsAudit extends Audit {
         `An API description is advertised at ${link.href} but it could not be verified.`,
         EXPECTED,
         `<link> -> ${url} -> no valid OpenAPI document`,
-        { priority: 'medium', description: OpenApiExistsAudit.meta.description, code: SAMPLE },
+        {
+          priority: "medium",
+          description: OpenApiExistsAudit.meta.description,
+          code: SAMPLE,
+        },
         link.pageUrl,
       );
     }
@@ -235,16 +261,20 @@ export class OpenApiExistsAudit extends Audit {
         `API discovery could not be verified — the scan was blocked by ${ctx.wafProtection.name}.`,
         EXPECTED,
         `Blocked by ${ctx.wafProtection.name}`,
-        { priority: 'medium', description: OpenApiExistsAudit.meta.description, code: SAMPLE },
+        {
+          priority: "medium",
+          description: OpenApiExistsAudit.meta.description,
+          code: SAMPLE,
+        },
       );
     }
 
     // 5. No API surface anywhere: a brochure site has nothing to fix, and a
     // scored failure told it its agentic workflows were blocked.
     return this.notApplicable(
-      'No API surface detected, so API discovery does not apply to this site.',
+      "No API surface detected, so API discovery does not apply to this site.",
       EXPECTED,
-      'No api-catalog, no OpenAPI document, no service-desc link',
+      "No api-catalog, no OpenAPI document, no service-desc link",
     );
   }
 }

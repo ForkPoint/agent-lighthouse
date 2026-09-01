@@ -15,7 +15,7 @@ export interface SiteEntry {
    * but in neither source's rank cut, so it carries no measured rank — a
    * consumer picking "real top-traffic sites" must exclude it.
    */
-  source: 'tranco' | 'crux' | 'seed';
+  source: "tranco" | "crux" | "seed";
   category: string;
   /**
    * Rank rounded down to a multiple of `BUCKET_WIDTH`. Seed carry-overs take
@@ -52,10 +52,10 @@ export const HOSTNAME = /^[a-z0-9.-]+\.([a-z]{2,}|xn--[a-z0-9]+)$/;
 export function normalize(raw: string): string {
   const trimmed = raw
     .trim()
-    .replace(/^https?:\/\//, '')
-    .replace(/\/.*$/, '');
-  const host = trimmed.toLowerCase().replace(/^www\./, '');
-  return HOSTNAME.test(host) ? host : '';
+    .replace(/^https?:\/\//, "")
+    .replace(/\/.*$/, "");
+  const host = trimmed.toLowerCase().replace(/^www\./, "");
+  return HOSTNAME.test(host) ? host : "";
 }
 
 /** The bucket a zero-based rank index falls in. */
@@ -70,7 +70,10 @@ export function bucketOf(index: number): number {
  * touching the filesystem.
  */
 export function buildSiteList(
-  ranked: ReadonlyArray<{ domains: readonly string[]; source: 'tranco' | 'crux' }>,
+  ranked: ReadonlyArray<{
+    domains: readonly string[];
+    source: "tranco" | "crux";
+  }>,
   categoryOf: ReadonlyMap<string, string>,
   limit: number,
 ): SiteEntry[] {
@@ -84,7 +87,7 @@ export function buildSiteList(
       byDomain.set(domain, {
         domain,
         source,
-        category: categoryOf.get(domain) ?? 'unknown',
+        category: categoryOf.get(domain) ?? "unknown",
         rankBucket: bucketOf(index),
       });
     });
@@ -101,11 +104,11 @@ export function buildSiteList(
     // list as `{ domain: '' }` — and the nightly would request
     // `https:///robots.txt` for it. The generator refuses such an entry
     // outright; this is the second door.
-    if (domain === '') continue;
+    if (domain === "") continue;
     if (!byDomain.has(domain)) {
       byDomain.set(domain, {
         domain,
-        source: 'seed',
+        source: "seed",
         category,
         // One bucket past the worst RANKED index, which is `limit - 1` — not
         // `bucketOf(limit)`, which collides with the last ranked bucket at any
@@ -119,5 +122,7 @@ export function buildSiteList(
   // Sorted by domain, not by rank: Tranco reorders daily, so a rank-ordered
   // file reshuffles a thousand unchanged lines on every regeneration and the
   // diff stops showing which sites actually joined or left.
-  return [...byDomain.values()].sort((a, b) => a.domain.localeCompare(b.domain));
+  return [...byDomain.values()].sort((a, b) =>
+    a.domain.localeCompare(b.domain),
+  );
 }

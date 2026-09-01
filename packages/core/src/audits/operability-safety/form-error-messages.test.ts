@@ -1,20 +1,20 @@
-import { describe, it, expect } from 'vitest';
-import { FormErrorMessagesAudit } from './form-error-messages';
-import { mockCheckContext, mockPageContext } from '../../__tests__/test-utils';
-import { expectNotApplicableOnEmpty } from '../../tests/na-contract';
+import { describe, it, expect } from "vitest";
+import { FormErrorMessagesAudit } from "./form-error-messages";
+import { mockCheckContext, mockPageContext } from "../../__tests__/test-utils";
+import { expectNotApplicableOnEmpty } from "../../tests/na-contract";
 
-const page = (html: string, url = 'https://example.com/signup') =>
+const page = (html: string, url = "https://example.com/signup") =>
   mockPageContext(url, `<html lang="en"><body>${html}</body></html>`);
 
-describe('FormErrorMessagesAudit', () => {
+describe("FormErrorMessagesAudit", () => {
   const audit = new FormErrorMessagesAudit();
 
-  it('returns na on an empty site', async () => {
+  it("returns na on an empty site", async () => {
     await expectNotApplicableOnEmpty(audit);
   });
 
-  describe('applicability', () => {
-    it('is na when no field declares a validation constraint', () => {
+  describe("applicability", () => {
+    it("is na when no field declares a validation constraint", () => {
       const result = audit.audit(
         mockCheckContext([
           page(`<form>
@@ -23,16 +23,16 @@ describe('FormErrorMessagesAudit', () => {
           </form>`),
         ]),
       );
-      expect(result.status).toBe('na');
-      expect(result.found).toContain('No required or invalid-state field');
+      expect(result.status).toBe("na");
+      expect(result.found).toContain("No required or invalid-state field");
     });
 
-    it('is na when the page has no fields at all', () => {
-      const result = audit.audit(mockCheckContext([page('<p>brochure</p>')]));
-      expect(result.status).toBe('na');
+    it("is na when the page has no fields at all", () => {
+      const result = audit.audit(mockCheckContext([page("<p>brochure</p>")]));
+      expect(result.status).toBe("na");
     });
 
-    it('ignores hidden, submit, button, reset and image controls', () => {
+    it("ignores hidden, submit, button, reset and image controls", () => {
       const result = audit.audit(
         mockCheckContext([
           page(`<form>
@@ -44,12 +44,12 @@ describe('FormErrorMessagesAudit', () => {
           </form>`),
         ]),
       );
-      expect(result.status).toBe('na');
+      expect(result.status).toBe("na");
     });
   });
 
-  describe('invalid-state population (the direct measurement)', () => {
-    it('passes when every aria-invalid field resolves an aria-errormessage', () => {
+  describe("invalid-state population (the direct measurement)", () => {
+    it("passes when every aria-invalid field resolves an aria-errormessage", () => {
       const result = audit.audit(
         mockCheckContext([
           page(`<form>
@@ -60,14 +60,14 @@ describe('FormErrorMessagesAudit', () => {
           </form>`),
         ]),
       );
-      expect(result.status).toBe('pass');
-      expect(result.found).toContain('1 of 1');
-      expect(result.found).toContain('invalid-state');
+      expect(result.status).toBe("pass");
+      expect(result.found).toContain("1 of 1");
+      expect(result.found).toContain("invalid-state");
     });
 
     // The old audit warned here and told the site to add aria-describedby,
     // which is actively wrong guidance for correct ARIA 1.2 error wiring.
-    it('does not warn about aria-describedby when aria-errormessage is used', () => {
+    it("does not warn about aria-describedby when aria-errormessage is used", () => {
       const result = audit.audit(
         mockCheckContext([
           page(`<form>
@@ -76,11 +76,11 @@ describe('FormErrorMessagesAudit', () => {
           </form>`),
         ]),
       );
-      expect(result.status).toBe('pass');
-      expect(result.message).not.toContain('aria-describedby.');
+      expect(result.status).toBe("pass");
+      expect(result.message).not.toContain("aria-describedby.");
     });
 
-    it('fails when an invalid-state field points at nothing', () => {
+    it("fails when an invalid-state field points at nothing", () => {
       const result = audit.audit(
         mockCheckContext([
           page(`<form>
@@ -88,11 +88,11 @@ describe('FormErrorMessagesAudit', () => {
           </form>`),
         ]),
       );
-      expect(result.status).toBe('fail');
-      expect(result.found).toContain('0 of 1');
+      expect(result.status).toBe("fail");
+      expect(result.found).toContain("0 of 1");
     });
 
-    it('fails when the referenced message element does not exist', () => {
+    it("fails when the referenced message element does not exist", () => {
       const result = audit.audit(
         mockCheckContext([
           page(`<form>
@@ -100,10 +100,10 @@ describe('FormErrorMessagesAudit', () => {
           </form>`),
         ]),
       );
-      expect(result.status).toBe('fail');
+      expect(result.status).toBe("fail");
     });
 
-    it('warns on partial coverage of invalid-state fields', () => {
+    it("warns on partial coverage of invalid-state fields", () => {
       const result = audit.audit(
         mockCheckContext([
           page(`<form>
@@ -113,19 +113,21 @@ describe('FormErrorMessagesAudit', () => {
           </form>`),
         ]),
       );
-      expect(result.status).toBe('warn');
-      expect(result.found).toContain('1 of 2');
+      expect(result.status).toBe("warn");
+      expect(result.found).toContain("1 of 2");
     });
 
     // aria-invalid="false" is the valid state and must not enter the population.
     it('treats aria-invalid="false" as not invalid', () => {
       const result = audit.audit(
-        mockCheckContext([page('<form><input id="a" aria-invalid="false"></form>')]),
+        mockCheckContext([
+          page('<form><input id="a" aria-invalid="false"></form>'),
+        ]),
       );
-      expect(result.status).toBe('na');
+      expect(result.status).toBe("na");
     });
 
-    it('prefers the invalid-state population over required fields', () => {
+    it("prefers the invalid-state population over required fields", () => {
       const result = audit.audit(
         mockCheckContext([
           page(`<form>
@@ -136,13 +138,13 @@ describe('FormErrorMessagesAudit', () => {
           </form>`),
         ]),
       );
-      expect(result.status).toBe('pass');
-      expect(result.found).toContain('1 of 1');
+      expect(result.status).toBe("pass");
+      expect(result.found).toContain("1 of 1");
     });
   });
 
-  describe('required-field population (the observable proxy)', () => {
-    it('passes when every required field resolves a description', () => {
+  describe("required-field population (the observable proxy)", () => {
+    it("passes when every required field resolves a description", () => {
       const result = audit.audit(
         mockCheckContext([
           page(`<form>
@@ -151,8 +153,8 @@ describe('FormErrorMessagesAudit', () => {
           </form>`),
         ]),
       );
-      expect(result.status).toBe('pass');
-      expect(result.found).toContain('required');
+      expect(result.status).toBe("pass");
+      expect(result.found).toContain("required");
     });
 
     it('accepts aria-required="true" as a constraint', () => {
@@ -164,16 +166,16 @@ describe('FormErrorMessagesAudit', () => {
           </form>`),
         ]),
       );
-      expect(result.status).toBe('pass');
+      expect(result.status).toBe("pass");
     });
 
     // The vacuous pass the code review found: 1 of 240 wired inputs used to
     // pass the whole site.
-    it('warns rather than passing when only one of many required fields is wired', () => {
+    it("warns rather than passing when only one of many required fields is wired", () => {
       const inputs = Array.from(
         { length: 9 },
         (_, i) => `<input id="f${i}" required>`,
-      ).join('');
+      ).join("");
       const result = audit.audit(
         mockCheckContext([
           page(`<form>
@@ -182,23 +184,25 @@ describe('FormErrorMessagesAudit', () => {
           </form>`),
         ]),
       );
-      expect(result.status).toBe('warn');
-      expect(result.found).toContain('1 of 10');
+      expect(result.status).toBe("warn");
+      expect(result.found).toContain("1 of 10");
     });
 
-    it('fails when no required field is wired at all', () => {
+    it("fails when no required field is wired at all", () => {
       const result = audit.audit(
-        mockCheckContext([page('<form><input id="a" required><input id="b" required></form>')]),
+        mockCheckContext([
+          page('<form><input id="a" required><input id="b" required></form>'),
+        ]),
       );
-      expect(result.status).toBe('fail');
-      expect(result.found).toContain('0 of 2');
+      expect(result.status).toBe("fail");
+      expect(result.found).toContain("0 of 2");
     });
   });
 
-  describe('robustness fixes from the code review', () => {
+  describe("robustness fixes from the code review", () => {
     // React/modern sites render fieldsets with no <form> wrapper and submit via
     // JS; the old selector saw "no form inputs" and returned na.
-    it('counts fields that are not inside a <form>', () => {
+    it("counts fields that are not inside a <form>", () => {
       const result = audit.audit(
         mockCheckContext([
           page(`<div class="signup">
@@ -207,13 +211,13 @@ describe('FormErrorMessagesAudit', () => {
           </div>`),
         ]),
       );
-      expect(result.status).toBe('fail');
-      expect(result.found).toContain('0 of 2');
+      expect(result.status).toBe("fail");
+      expect(result.found).toContain("0 of 2");
     });
 
     // Ids are untrusted page content; the old code interpolated them into a
     // cheerio selector, which throws or silently misses on metacharacters.
-    it('resolves ids containing selector metacharacters', () => {
+    it("resolves ids containing selector metacharacters", () => {
       const result = audit.audit(
         mockCheckContext([
           page(`<form>
@@ -222,49 +226,62 @@ describe('FormErrorMessagesAudit', () => {
           </form>`),
         ]),
       );
-      expect(result.status).toBe('pass');
+      expect(result.status).toBe("pass");
     });
 
-    it('attributes the result to the page it was measured on', () => {
+    it("attributes the result to the page it was measured on", () => {
       const result = audit.audit(
         mockCheckContext([
-          page('<p>home</p>', 'https://example.com/'),
-          page('<form><input id="a" required></form>', 'https://example.com/contact'),
+          page("<p>home</p>", "https://example.com/"),
+          page(
+            '<form><input id="a" required></form>',
+            "https://example.com/contact",
+          ),
         ]),
       );
-      expect(result.pageUrl).toBe('https://example.com/contact');
+      expect(result.pageUrl).toBe("https://example.com/contact");
     });
 
-    it('aggregates every scanned page into one ratio', () => {
+    it("aggregates every scanned page into one ratio", () => {
       const result = audit.audit(
         mockCheckContext([
-          page('<form><input id="a" required aria-describedby="h"><span id="h">x</span></form>'),
-          page('<form><input id="b" required></form>', 'https://example.com/contact'),
+          page(
+            '<form><input id="a" required aria-describedby="h"><span id="h">x</span></form>',
+          ),
+          page(
+            '<form><input id="b" required></form>',
+            "https://example.com/contact",
+          ),
         ]),
       );
-      expect(result.status).toBe('warn');
-      expect(result.found).toContain('1 of 2');
+      expect(result.status).toBe("warn");
+      expect(result.found).toContain("1 of 2");
     });
   });
 
-  describe('meta contract', () => {
+  describe("meta contract", () => {
     const meta = FormErrorMessagesAudit.meta;
 
-    it('keeps the id, and stays grade A / scored / weight 1.0', () => {
-      expect(meta.id).toBe('operability-safety/form-error-messages');
-      expect(meta.evidenceGrade).toBe('A');
-      expect(meta.tier).toBe('scored');
+    it("keeps the id, and stays grade A / scored / weight 1.0", () => {
+      expect(meta.id).toBe("operability-safety/form-error-messages");
+      expect(meta.evidenceGrade).toBe("A");
+      expect(meta.tier).toBe("scored");
       expect(meta.weight).toBe(1.0);
     });
 
     // The dossier's required fix: it must stop being titled and described as a
     // measurement of live error messages, which a GET can never observe.
-    it('no longer claims to observe error messages', () => {
-      const copy = [meta.title, meta.failureTitle, meta.description, meta.guidance?.impact]
-        .join(' ')
+    it("no longer claims to observe error messages", () => {
+      const copy = [
+        meta.title,
+        meta.failureTitle,
+        meta.description,
+        meta.guidance?.impact,
+      ]
+        .join(" ")
         .toLowerCase();
-      expect(copy).not.toContain('error messages linked');
-      expect(copy).toContain('aria-errormessage');
+      expect(copy).not.toContain("error messages linked");
+      expect(copy).toContain("aria-errormessage");
     });
   });
 });
