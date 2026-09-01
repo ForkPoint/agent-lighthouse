@@ -1,9 +1,23 @@
-# Follow-ups from the hostile-state testing branch
+# Architecture and test debt
 
-The branch `test/hostile-state-contract` added a hostile-state contract suite, a
-real-page corpus and a nightly job. Along the way it surfaced defects it
-deliberately did not fix, because each needs a decision or a budget of its own.
-This file is the record so none of them is rediscovered from scratch.
+This file holds unresolved work that has evidence but no implementation phase.
+It is not a plan. A phase plan may take one row only after it re-measures the
+claim. Closed work leaves this file and stays in Git history.
+
+| # | debt | status on 2026-08-31 | next owner |
+| -: | :--- | :------------------- | :--------- |
+| 1 | Four OpenAPI audits fail on absence | Fix open in PR 23; not merged | PR 23 |
+| 2 | Three WAF classifier defects | Open; current corpus pins the wrong kinds | Separate fix |
+| 3 | Corpus skips accessibility results | Open | Test infrastructure |
+| 4 | Page content enters CSS selectors without escaping | Open | Parser and a11y fixes |
+| 5 | Scripts have no typecheck | Open | Build tooling |
+| 6 | Corpus nightly is not reliable | Three scheduled runs failed | Nightly workflow |
+| 7 | Four smaller test and API debts | Open | Separate cleanup |
+| 8 | Text-rich HTTP 200 walls produce wrong verdicts | Open | Hostile-state contract extension |
+| 9 | Offline tests still depend on live DNS | Open; reproduced 2026-08-31 | Test infrastructure |
+
+The hostile-state branch first recorded these items. The sections below retain
+the evidence needed to start each fix.
 
 ## 1. Four OpenAPI audits fail a site for an absence
 
@@ -73,15 +87,17 @@ scripts are already type-broken: `analyze-false-positives.ts:33` and
 `investigate-stores.ts:38`. The branch added three more scripts that are clean
 today with nothing keeping them so.
 
-## 6. The nightly workflow has never run against Actions
+## 6. The nightly workflow runs, but it does not finish reliably
 
-`.github/workflows/corpus-nightly.yml` is unproven end to end. CI covers only the
-`--limit=0` wiring path. Before enabling the schedule, dispatch it once at
-`--limit=50` and read the artifact. The 400-site / 240-minute budget rests on a
-four-site measurement.
+The workflow ran on schedule three times before this review. All three runs
+failed. Run `33379094687` scanned 249 of its 400-site window, skipped 58 sites
+because of robots.txt, and ran out of time with 93 sites unscanned. It also
+reported schema violations on 45 sites. The prior 400-site / 240-minute budget
+was therefore wrong.
 
-Related: the site-level robots gating added late in the branch will raise the
-`skipped` count, by how much is untested against the real list.
+The next plan must separate timeout capacity from result-schema defects. It
+must define success for a partial window and preserve the uploaded summary on
+failure.
 
 ## 7. Smaller items
 

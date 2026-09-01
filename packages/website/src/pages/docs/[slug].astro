@@ -10,7 +10,7 @@ export async function getStaticPaths() {
   // Which dossiers have pages, so a documentation link into `docs/evidence/`
   // lands on this site rather than on GitHub. Ids are `<category>/<slug>`.
   const published = new Set((await getCollection('audits')).map((entry) => entry.id));
-  // One processor for all eleven pages: building it loads Shiki.
+  // One processor for all twelve pages: building it loads Shiki.
   const render = await createDocRenderer(published);
 
   // The sidebar lists every section, in the order the table declares them, so a

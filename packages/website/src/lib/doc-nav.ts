@@ -9,7 +9,7 @@ export interface DocNavEntry {
 
 /**
  * The documentation sidebar, shared by every page that renders repository
- * markdown: the eleven docs sections, then the two evidence pages.
+ * markdown: the twelve docs sections, then the two evidence pages.
  *
  * It lives here rather than in the docs route because the policy page renders
  * the same layout and needs the same rail — a sidebar that listed the docs from

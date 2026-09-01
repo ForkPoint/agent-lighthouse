@@ -18,7 +18,7 @@ import { PAGEFIND_URL } from './islands/search';
  * between the pages and the search dialog, and it is a silent one. A page that
  * loses its region does not fail to build and does not look wrong — it simply
  * stops being findable. Pagefind is explicit that once *any* page declares a
- * body, every page without one is dropped from the index, so "all 238 declare
+ * body, every page without one is dropped from the index, so "all 239 declare
  * exactly one" is the invariant, and it is asserted rather than assumed.
  */
 const DIST = resolve(__dirname, '../dist');
@@ -67,7 +67,7 @@ describe.skipIf(!built)('the built search index', () => {
 
   it('gives every built page exactly one indexed region', () => {
     const pages = builtPages();
-    expect(pages).toHaveLength(auditList().length + 23);
+    expect(pages).toHaveLength(auditList().length + 24);
     for (const page of pages) {
       const declared = page.html.match(/data-pagefind-body/g) ?? [];
       expect(declared, `${page.route} declares ${declared.length} search bodies`).toHaveLength(1);
