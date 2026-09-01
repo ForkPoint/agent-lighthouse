@@ -97,3 +97,42 @@ describe('absent artifact, absent verdict — the OpenAPI document', () => {
     });
   }
 });
+
+/** Audits that declared themselves to be about the sitemap's contents. */
+const sitemapContentAudits = registrations.filter((r) =>
+  (sources.get(r.meta.id) ?? '').includes('NO_SITEMAP'),
+);
+
+function siteWithoutASitemap(): CheckContext {
+  return mockCheckContext(
+    [mockPageContext('https://example.com/', '<html lang="en"><body><h1>Bakery</h1></body></html>')],
+    { '/robots.txt': mockFetchResult('User-agent: *\nAllow: /', 200) },
+  );
+}
+
+describe('absent artifact, absent verdict — the sitemap', () => {
+  it('finds the audits that read the shared sitemap precondition', () => {
+    expect(sitemapContentAudits.map((r) => r.meta.id).sort()).toEqual([
+      'machine-discovery/sitemap-absolute-urls',
+      'machine-discovery/sitemap-lastmod',
+    ]);
+  });
+
+
+  for (const registration of sitemapContentAudits) {
+    const { id } = registration.meta;
+
+    it(`${id}: declines a site that publishes no sitemap`, async () => {
+      const ctx = siteWithoutASitemap();
+      const result = await registration.create().audit(ctx);
+      expect(AuditResultSchema.safeParse(result).success).toBe(true);
+      expect(
+        result.status,
+        `${id}: reported "${result.status}" about a sitemap the site never published — ` +
+          `"${result.message}". Absence is notApplicable; only a present-and-defective ` +
+          `sitemap may fail.`,
+      ).toBe('na');
+    });
+  }
+});
+

@@ -1,22 +1,8 @@
-import * as cheerio from 'cheerio';
 import type { AuditMeta, AuditResult } from "../../types";
 import { Audit } from "../../audit";
 import type { CheckContext } from '../../check-context';
 import { weightForGrade } from '../../scorer';
-import type { FetchResult } from '../../fetcher';
-
-function isOk(result: FetchResult): boolean {
-  return result.status === 200;
-}
-
-/** Try to find the sitemap FetchResult from rootFiles, checking /sitemap.xml first then /sitemap-index.xml */
-function getSitemapResult(ctx: CheckContext): FetchResult | null {
-  const sitemap = ctx.rootFiles['/sitemap.xml'];
-  if (sitemap && isOk(sitemap)) return sitemap;
-  const index = ctx.rootFiles['/sitemap-index.xml'];
-  if (index && isOk(index)) return index;
-  return null;
-}
+import { readSitemap } from '../../gatherers/sitemap';
 
 export class SitemapExistsAudit extends Audit {
   static override meta: AuditMeta = {
@@ -44,10 +30,10 @@ export class SitemapExistsAudit extends Audit {
     },
   };
 
-  audit(ctx: CheckContext): AuditResult {
-    const sitemapResult = getSitemapResult(ctx);
+  async audit(ctx: CheckContext): Promise<AuditResult> {
+    const sitemap = await readSitemap(ctx);
 
-    if (!sitemapResult) {
+    if (sitemap.kind === 'absent') {
       return this.fail(
         'No XML sitemap found at /sitemap.xml or /sitemap-index.xml.',
         'HTTP 200 with valid XML containing <urlset> or <sitemapindex>',
@@ -61,11 +47,7 @@ export class SitemapExistsAudit extends Audit {
       );
     }
 
-    const $ = cheerio.load(sitemapResult.body, { xmlMode: true });
-    const hasUrlset = $('urlset').length > 0;
-    const hasSitemapindex = $('sitemapindex').length > 0;
-
-    if (!hasUrlset && !hasSitemapindex) {
+    if (sitemap.kind === 'malformed') {
       return this.fail(
         'Sitemap file found but does not contain valid <urlset> or <sitemapindex>.',
         'Valid XML with <urlset> or <sitemapindex>',
@@ -82,7 +64,11 @@ export class SitemapExistsAudit extends Audit {
     return this.pass(
       'XML sitemap exists with valid structure.',
       'Valid <urlset> or <sitemapindex>',
-      hasUrlset ? '<urlset> found' : '<sitemapindex> found',
+      sitemap.kind === 'readable' && sitemap.tree.childSitemaps.length > 0
+        ? '<sitemapindex> found'
+        : '<urlset> found',
     );
   }
 }
+
+

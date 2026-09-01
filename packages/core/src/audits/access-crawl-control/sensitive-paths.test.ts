@@ -11,109 +11,109 @@ function pageLinking(...hrefs: string[]) {
 describe('SensitivePathsAudit', () => {
   const audit = new SensitivePathsAudit();
 
-  it('is notApplicable when the crawl observes no low-value URL family', () => {
+  it('is notApplicable when the crawl observes no low-value URL family', async () => {
     const ctx = mockCheckContext([pageLinking('/docs/intro', '/blog/hello')], {});
-    const result = audit.audit(ctx);
+    const result = await audit.audit(ctx);
     expect(result.status).toBe('na');
   });
 
-  it('never demands a Disallow for /api/ — agent surfaces are not low-value', () => {
+  it('never demands a Disallow for /api/ — agent surfaces are not low-value', async () => {
     const ctx = mockCheckContext([pageLinking('/api/v1/products', '/api/openapi.json')], {
       '/robots.txt': mockFetchResult('User-agent: *\nAllow: /', 200),
     });
-    const result = audit.audit(ctx);
+    const result = await audit.audit(ctx);
     expect(result.status).toBe('na');
     expect(JSON.stringify(result)).not.toContain('/api/');
   });
 
-  it('passes when every observed low-value family is disallowed for AI crawlers', () => {
+  it('passes when every observed low-value family is disallowed for AI crawlers', async () => {
     const robots = 'User-agent: *\nAllow: /\nDisallow: /cart\nDisallow: /checkout\nDisallow: /search';
     const ctx = mockCheckContext([pageLinking('/cart', '/checkout', '/search?q=shoes')], {
       '/robots.txt': mockFetchResult(robots, 200),
     });
-    const result = audit.audit(ctx);
+    const result = await audit.audit(ctx);
     expect(result.status).toBe('pass');
   });
 
-  it('passes a WordPress site on its own /wp-admin/ rule without demanding /admin/', () => {
+  it('passes a WordPress site on its own /wp-admin/ rule without demanding /admin/', async () => {
     const ctx = mockCheckContext([pageLinking('/wp-admin/', '/blog/post')], {
       '/robots.txt': mockFetchResult('User-agent: *\nDisallow: /wp-admin/', 200),
     });
-    const result = audit.audit(ctx);
+    const result = await audit.audit(ctx);
     expect(result.status).toBe('pass');
   });
 
-  it('warns when only some observed families are excluded', () => {
+  it('warns when only some observed families are excluded', async () => {
     const ctx = mockCheckContext([pageLinking('/cart', '/search?q=x')], {
       '/robots.txt': mockFetchResult('User-agent: *\nDisallow: /cart', 200),
     });
-    const result = audit.audit(ctx);
+    const result = await audit.audit(ctx);
     expect(result.status).toBe('warn');
   });
 
-  it('fails when robots.txt excludes none of the observed families', () => {
+  it('fails when robots.txt excludes none of the observed families', async () => {
     const ctx = mockCheckContext([pageLinking('/cart', '/checkout')], {
       '/robots.txt': mockFetchResult('User-agent: *\nAllow: /', 200),
     });
-    const result = audit.audit(ctx);
+    const result = await audit.audit(ctx);
     expect(result.status).toBe('fail');
     expect(result.priority).toBe('low');
   });
 
-  it('treats an empty `Disallow:` as protecting nothing (RFC 9309 §2.2.2)', () => {
+  it('treats an empty `Disallow:` as protecting nothing (RFC 9309 §2.2.2)', async () => {
     const ctx = mockCheckContext([pageLinking('/cart')], {
       '/robots.txt': mockFetchResult('User-agent: *\nDisallow:', 200),
     });
-    const result = audit.audit(ctx);
+    const result = await audit.audit(ctx);
     expect(result.status).toBe('fail');
   });
 
-  it('does not count a rule that applies to one bot only as full coverage', () => {
+  it('does not count a rule that applies to one bot only as full coverage', async () => {
     const ctx = mockCheckContext([pageLinking('/cart')], {
       '/robots.txt': mockFetchResult('User-agent: GPTBot\nDisallow: /cart', 200),
     });
-    const result = audit.audit(ctx);
+    const result = await audit.audit(ctx);
     expect(result.status).not.toBe('pass');
   });
 
-  it('is notApplicable when the whole site is blanket-blocked', () => {
+  it('is notApplicable when the whole site is blanket-blocked', async () => {
     const ctx = mockCheckContext([pageLinking('/cart', '/checkout')], {
       '/robots.txt': mockFetchResult('User-agent: *\nDisallow: /', 200),
     });
-    const result = audit.audit(ctx);
+    const result = await audit.audit(ctx);
     expect(result.status).toBe('na');
   });
 
-  it('fails when robots.txt is missing but low-value URLs were observed', () => {
+  it('fails when robots.txt is missing but low-value URLs were observed', async () => {
     const ctx = mockCheckContext([pageLinking('/checkout')], {});
-    const result = audit.audit(ctx);
+    const result = await audit.audit(ctx);
     expect(result.status).toBe('fail');
     expect(result.found).toContain('no robots.txt');
   });
 
-  it('discovers candidate paths from the sitemap as well as from links', () => {
+  it('discovers candidate paths from the sitemap as well as from links', async () => {
     const sitemap =
       '<?xml version="1.0"?><urlset><url><loc>https://example.com/account/orders</loc></url></urlset>';
     const ctx = mockCheckContext([pageLinking('/blog/post')], {
       '/robots.txt': mockFetchResult('User-agent: *\nAllow: /', 200),
       '/sitemap.xml': mockFetchResult(sitemap, 200, 'application/xml'),
     });
-    const result = audit.audit(ctx);
+    const result = await audit.audit(ctx);
     expect(result.status).toBe('fail');
     expect(result.found).toContain('account');
   });
 
-  it('ignores cross-origin links when collecting candidates', () => {
+  it('ignores cross-origin links when collecting candidates', async () => {
     const ctx = mockCheckContext([pageLinking('https://other.example.org/cart')], {
       '/robots.txt': mockFetchResult('User-agent: *\nAllow: /', 200),
     });
-    const result = audit.audit(ctx);
+    const result = await audit.audit(ctx);
     expect(result.status).toBe('na');
   });
 
-  it('emits a fix rule that matches a locale-prefixed path, and applying it passes', () => {
+  it('emits a fix rule that matches a locale-prefixed path, and applying it passes', async () => {
     const pages = [pageLinking('/en-gb/checkout', '/en-gb/cart')];
-    const before = audit.audit(
+    const before = await audit.audit(
       mockCheckContext(pages, { '/robots.txt': mockFetchResult('User-agent: *\nAllow: /', 200) }),
     );
     expect(before.status).toBe('fail');
@@ -125,29 +125,29 @@ describe('SensitivePathsAudit', () => {
     expect(emitted).toContain('Disallow: /en-gb/cart');
 
     // Feed the audit's own recommendation back in as robots.txt.
-    const after = audit.audit(
+    const after = await audit.audit(
       mockCheckContext(pages, { '/robots.txt': mockFetchResult(emitted, 200) }),
     );
     expect(after.status).toBe('pass');
   });
 
-  it('emits one rule per locale rather than collapsing them to one family', () => {
+  it('emits one rule per locale rather than collapsing them to one family', async () => {
     const ctx = mockCheckContext([pageLinking('/en-gb/checkout', '/de/checkout')], {
       '/robots.txt': mockFetchResult('User-agent: *\nAllow: /', 200),
     });
-    const result = audit.audit(ctx);
+    const result = await audit.audit(ctx);
     const emitted = result.details?.code ?? '';
     expect(emitted).toContain('Disallow: /en-gb/checkout');
     expect(emitted).toContain('Disallow: /de/checkout');
   });
 
-  it('emits a rule that makes a non-locale candidate pass too', () => {
+  it('emits a rule that makes a non-locale candidate pass too', async () => {
     const pages = [pageLinking('/search?q=shoes', '/account/orders')];
-    const before = audit.audit(mockCheckContext(pages, {}));
+    const before = await audit.audit(mockCheckContext(pages, {}));
     expect(before.status).toBe('fail');
 
     const emitted = before.details?.code ?? '';
-    const after = audit.audit(
+    const after = await audit.audit(
       mockCheckContext(pages, { '/robots.txt': mockFetchResult(emitted, 200) }),
     );
     expect(after.status).toBe('pass');
@@ -164,3 +164,4 @@ describe('SensitivePathsAudit', () => {
     expect(meta.guidance?.impact).toMatch(/ChatGPT-User|Perplexity-User/);
   });
 });
+

@@ -2,8 +2,9 @@ import type { AuditMeta, AuditResult } from '../../types';
 import { Audit } from '../../audit';
 import type { CheckContext } from '../../check-context';
 import { parseRobotsTxt, isPathAllowed } from './_robots-txt-helpers';
-import { parseHtml } from '../../parser';
 import { weightForGrade } from '../../scorer';
+import { siteSitemapTree } from '../../gatherers/sitemap';
+
 
 /**
  * AI crawler product tokens whose vendors document path-level `Disallow`.
@@ -128,7 +129,7 @@ function classify(pathname: string): { segment: string; prefix: string } | undef
  * Discovering candidates instead of hardcoding a list is what stops the audit
  * failing a WordPress site for not disallowing an `/admin/` it does not have.
  */
-function observedCandidates(ctx: CheckContext): Candidate[] {
+async function collectCandidateUrls(ctx: CheckContext): Promise<Candidate[]> {
   let origin: string;
   try {
     origin = new URL(ctx.baseUrl).host;
@@ -169,13 +170,9 @@ function observedCandidates(ctx: CheckContext): Candidate[] {
     });
   }
 
-  const sitemap = ctx.rootFiles['/sitemap.xml'] ?? ctx.rootFiles['/sitemap-index.xml'];
-  if (sitemap?.status === 200 && sitemap.body) {
-    const $sitemap = parseHtml(sitemap.body);
-    $sitemap('loc').each((_, el) => {
-      const loc = $sitemap(el).text().trim();
-      if (loc) note(loc, ctx.baseUrl);
-    });
+  const sitemapTree = await siteSitemapTree(ctx);
+  for (const entry of sitemapTree.entries) {
+    note(entry.loc, ctx.baseUrl);
   }
 
   return [...byRule.values()];
@@ -211,8 +208,8 @@ export class SensitivePathsAudit extends Audit {
     },
   };
 
-  audit(ctx: CheckContext): AuditResult {
-    const candidates = observedCandidates(ctx);
+  async audit(ctx: CheckContext): Promise<AuditResult> {
+    const candidates = await collectCandidateUrls(ctx);
 
     if (candidates.length === 0) {
       return this.notApplicable(

@@ -21,9 +21,10 @@ export interface SitemapTree {
 }
 
 /** How many child sitemaps a `<sitemapindex>` may expand to. */
-const DEFAULT_MAX_CHILDREN = 5;
+const DEFAULT_MAX_CHILDREN = 10;
 /** How many `<url>` rows to collect in total across the whole tree. */
 const DEFAULT_MAX_ENTRIES = 500;
+
 
 /**
  * Does this value parse as a W3C Datetime, the format the sitemap protocol
@@ -45,14 +46,17 @@ export function isW3CDateTime(value: string): boolean {
   return parsed.toISOString().slice(0, 10) === value.slice(0, 10) || value.length > 10;
 }
 
-/** Same host, exactly — a sitemap index may not hand us another origin's URLs. */
+/** Same site host or subdomain — a sitemap index may not hand us another origin's URLs. */
 function sameHost(candidate: string, reference: string): boolean {
   try {
-    return new URL(candidate).host === new URL(reference).host;
+    const candHost = new URL(candidate).hostname.toLowerCase().replace(/^www\./, '');
+    const refHost = new URL(reference).hostname.toLowerCase().replace(/^www\./, '');
+    return candHost === refHost || candHost.endsWith(`.${refHost}`) || refHost.endsWith(`.${candHost}`);
   } catch {
     return false;
   }
 }
+
 
 interface ParsedSitemap {
   kind: 'urlset' | 'sitemapindex' | 'none';
@@ -128,7 +132,7 @@ export async function collectSitemapEntries(
 
   for (const root of roots) {
     const parsed = await load(root);
-    if (!parsed) continue;
+    if (!parsed || parsed.kind === 'none') continue;
 
     take(parsed.entries);
 
@@ -144,10 +148,15 @@ export async function collectSitemapEntries(
       // One level only: a `sitemapindex` found here is not expanded.
       take(childParsed.entries);
     }
+
+    // Stop probing fallback sitemap paths once a valid sitemap file is found.
+    break;
   }
+
 
   return { entries, childSitemaps, malformedLastmod, truncated };
 }
+
 
 /**
  * Take an even-strided sample of `n` entries.
@@ -177,7 +186,12 @@ function siteRoots(ctx: SitemapContext): string[] {
   }
 
   const out: string[] = [];
-  for (const raw of [...declared, `${ctx.baseUrl}/sitemap.xml`, `${ctx.baseUrl}/sitemap_index.xml`]) {
+  for (const raw of [
+    ...declared,
+    `${ctx.baseUrl}/sitemap.xml`,
+    `${ctx.baseUrl}/sitemap-index.xml`,
+    `${ctx.baseUrl}/sitemap_index.xml`,
+  ]) {
     let url: URL;
     try {
       url = new URL(raw, ctx.baseUrl);
@@ -218,3 +232,62 @@ export function siteSitemapTree(ctx: SitemapContext): Promise<SitemapTree> {
   treeCache.set(ctx, walk);
   return walk;
 }
+
+export const NO_SITEMAP = 'No readable sitemap found.';
+
+export type SitemapReadResult =
+  | { kind: 'absent'; reason: string }
+  | { kind: 'empty'; reason: string; result?: FetchResult }
+  | { kind: 'malformed'; reason: string; result?: FetchResult }
+  | { kind: 'readable'; tree: SitemapTree; result?: FetchResult; defects: string[] };
+
+const readResultCache = new WeakMap<object, Promise<SitemapReadResult>>();
+
+/**
+ * Perform a four-way read of the site's sitemap.
+ *
+ * Returns ABSENT when no sitemap file is served, EMPTY when a sitemap has no
+ * entries, MALFORMED when a sitemap file exists but has invalid XML structure,
+ * or READABLE with the parsed tree.
+ */
+export async function readSitemap(ctx: SitemapContext): Promise<SitemapReadResult> {
+  const cached = readResultCache.get(ctx);
+  if (cached) return cached;
+
+  const promise = (async (): Promise<SitemapReadResult> => {
+    const sitemapFile =
+      ctx.rootFiles['/sitemap.xml'] ??
+      ctx.rootFiles['/sitemap-index.xml'] ??
+      ctx.rootFiles['/sitemap_index.xml'];
+    const tree = await siteSitemapTree(ctx);
+
+
+    if (tree.entries.length === 0 && tree.childSitemaps.length === 0) {
+      if (!sitemapFile || sitemapFile.status !== 200) {
+        return { kind: 'absent', reason: NO_SITEMAP };
+      }
+
+      const parsed = parseSitemap(sitemapFile);
+      if (parsed.kind === 'none') {
+        return {
+          kind: 'malformed',
+          reason: 'Sitemap file found but does not contain valid <urlset> or <sitemapindex>.',
+          result: sitemapFile,
+        };
+      }
+
+      return { kind: 'empty', reason: NO_SITEMAP, result: sitemapFile };
+    }
+
+    const defects: string[] = [];
+    if (tree.malformedLastmod > 0) {
+      defects.push(`${tree.malformedLastmod} <lastmod> date(s) fail W3C Datetime shape.`);
+    }
+
+    return { kind: 'readable', tree, result: sitemapFile, defects };
+  })();
+
+  readResultCache.set(ctx, promise);
+  return promise;
+}
+

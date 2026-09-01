@@ -1,22 +1,8 @@
-import * as cheerio from 'cheerio';
 import type { AuditMeta, AuditResult } from "../../types";
 import { Audit } from "../../audit";
 import type { CheckContext } from '../../check-context';
 import { weightForGrade } from '../../scorer';
-import type { FetchResult } from '../../fetcher';
-
-function isOk(result: FetchResult): boolean {
-  return result.status === 200;
-}
-
-/** Try to find the sitemap FetchResult from rootFiles, checking /sitemap.xml first then /sitemap-index.xml */
-function getSitemapResult(ctx: CheckContext): FetchResult | null {
-  const sitemap = ctx.rootFiles['/sitemap.xml'];
-  if (sitemap && isOk(sitemap)) return sitemap;
-  const index = ctx.rootFiles['/sitemap-index.xml'];
-  if (index && isOk(index)) return index;
-  return null;
-}
+import { readSitemap, NO_SITEMAP } from '../../gatherers/sitemap';
 
 export class SitemapLastmodAudit extends Audit {
   static override meta: AuditMeta = {
@@ -44,45 +30,38 @@ export class SitemapLastmodAudit extends Audit {
     },
   };
 
-  audit(ctx: CheckContext): AuditResult {
-    const sitemapResult = getSitemapResult(ctx);
+  async audit(ctx: CheckContext): Promise<AuditResult> {
+    const sitemap = await readSitemap(ctx);
 
-    if (!sitemapResult) {
-      return this.fail(
-        'No sitemap found; cannot check lastmod.',
+    if (sitemap.kind === 'absent' || sitemap.kind === 'empty') {
+      return this.notApplicable(
+        NO_SITEMAP,
         'At least 80% of <url> entries have <lastmod>',
-        'Sitemap not found',
-        {
-          priority: 'critical',
-          description:
-            'First, create your sitemap.xml file (see check 1.7). The <lastmod> dates help AI crawlers prioritize fresh content and skip pages they have already indexed.',
-          code: `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n  <url>\n    <loc>https://yoursite.com/</loc>\n    <lastmod>2026-01-01</lastmod>\n    <priority>1.0</priority>\n  </url>\n</urlset>`,
-        },
+        'No sitemap entries found',
       );
     }
 
-    const $ = cheerio.load(sitemapResult.body, { xmlMode: true });
-    const urls = $('url');
-    const total = urls.length;
+    if (sitemap.kind === 'malformed') {
+      return this.fail(
+        'Sitemap file found but does not contain valid <urlset> or <sitemapindex>.',
+        'At least 80% of <url> entries have <lastmod>',
+        'Malformed sitemap XML',
+      );
+    }
 
+    const total = sitemap.tree.entries.length;
     if (total === 0) {
-      return this.warn(
-        'Sitemap has no <url> entries.',
+      return this.notApplicable(
+        NO_SITEMAP,
         'At least 80% with <lastmod>',
-        'No <url> entries',
-        {
-          priority: 'high',
-          description:
-            'Your sitemap exists but contains no <url> entries. Add at least your main pages so AI crawlers can discover them.',
-          code: `<url>\n  <loc>https://yoursite.com/</loc>\n  <lastmod>2026-01-01</lastmod>\n</url>`,
-        },
+        'No <url> entries found',
       );
     }
 
     let withLastmod = 0;
-    urls.each((_, el) => {
-      if ($(el).find('lastmod').length > 0) withLastmod++;
-    });
+    for (const entry of sitemap.tree.entries) {
+      if (entry.lastmod) withLastmod++;
+    }
 
     const ratio = withLastmod / total;
 
@@ -107,3 +86,4 @@ export class SitemapLastmodAudit extends Audit {
     );
   }
 }
+

@@ -151,13 +151,12 @@ type Row = {
   details: string;
 };
 
-function runAll(): Record<string, Record<string, Row>> {
+async function runAll(): Promise<Record<string, Record<string, Row>>> {
   const table: Record<string, Record<string, Row>> = {};
   for (const { id, audit } of AUDITS) {
     const perFixture: Record<string, Row> = {};
     for (const fixture of FIXTURES) {
-      // Every robots consumer is synchronous; the base signature is not.
-      const result = audit.audit(contextFor(fixture)) as AuditResult;
+      const result = await audit.audit(contextFor(fixture)) as AuditResult;
       const check = audit.toCheckResult(result);
       // `evidenceUrl` joins docsUrl/effort as framework-derived metadata: it is
       // a pure function of the audit id, not scan output, so it is excluded
@@ -186,18 +185,19 @@ function runAll(): Record<string, Record<string, Row>> {
 }
 
 describe('robots.txt consumers — shared-gatherer differential', () => {
-  it('produces the pinned output for every fixture', () => {
+  it('produces the pinned output for every fixture', async () => {
     if (process.env['AL_REGEN_BASELINE'] === '1') {
       // Deliberate regeneration path, used when a scan-output change is
       // intended and reviewed. Never on by default.
       require('node:fs').writeFileSync(
         require('node:path').resolve(__dirname, '_baseline.generated.json'),
-        JSON.stringify(runAll(), null, 2),
+        JSON.stringify(await runAll(), null, 2),
       );
     }
-    expect(runAll()).toEqual(BASELINE);
+    expect(await runAll()).toEqual(BASELINE);
   });
 });
+
 
 // ── Pinned baseline ───────────────────────────────────────────
 // Captured from the audits before the gatherer-adoption sweep. Do not

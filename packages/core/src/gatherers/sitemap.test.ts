@@ -1,5 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
-import { collectSitemapEntries, sampleEntries, isW3CDateTime, siteSitemapTree } from './sitemap';
+import { collectSitemapEntries, sampleEntries, isW3CDateTime, siteSitemapTree, readSitemap, NO_SITEMAP } from './sitemap';
+
 import { mockFetchResult } from '../__tests__/test-utils';
 import type { FetchOptions, FetchResult } from '../fetcher';
 
@@ -240,3 +241,61 @@ describe('siteSitemapTree', () => {
     expect(scan.calls.some((url) => url.startsWith('https://other.test'))).toBe(false);
   });
 });
+
+describe('readSitemap', () => {
+  it('returns absent when no sitemap is served', async () => {
+    const scan = {
+      baseUrl: 'https://example.com',
+      rootFiles: {},
+      fetch: async () => mockFetchResult('', 404),
+    };
+    const res = await readSitemap(scan);
+    expect(res.kind).toBe('absent');
+    if (res.kind === 'absent') {
+      expect(res.reason).toBe(NO_SITEMAP);
+    }
+  });
+
+  it('returns malformed when sitemap file is HTTP 200 but lacks valid XML', async () => {
+    const scan = {
+      baseUrl: 'https://example.com',
+      rootFiles: { '/sitemap.xml': mockFetchResult('<html>not xml</html>', 200) },
+      fetch: async () => mockFetchResult('<html>not xml</html>', 200),
+    };
+    const res = await readSitemap(scan);
+    expect(res.kind).toBe('malformed');
+    if (res.kind === 'malformed') {
+      expect(res.reason).toContain('valid <urlset> or <sitemapindex>');
+    }
+  });
+
+  it('returns empty when sitemap exists but has 0 entries', async () => {
+    const xml = `<?xml version="1.0"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"></urlset>`;
+    const scan = {
+      baseUrl: 'https://example.com',
+      rootFiles: { '/sitemap.xml': mockFetchResult(xml, 200) },
+      fetch: async () => mockFetchResult(xml, 200),
+    };
+    const res = await readSitemap(scan);
+    expect(res.kind).toBe('empty');
+    if (res.kind === 'empty') {
+      expect(res.reason).toBe(NO_SITEMAP);
+    }
+  });
+
+
+  it('returns readable when valid entries exist', async () => {
+    const xml = `<?xml version="1.0"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"><url><loc>https://example.com/a</loc></url></urlset>`;
+    const scan = {
+      baseUrl: 'https://example.com',
+      rootFiles: { '/sitemap.xml': mockFetchResult(xml, 200) },
+      fetch: async () => mockFetchResult(xml, 200),
+    };
+    const res = await readSitemap(scan);
+    expect(res.kind).toBe('readable');
+    if (res.kind === 'readable') {
+      expect(res.tree.entries).toHaveLength(1);
+    }
+  });
+});
+
