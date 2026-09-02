@@ -3,7 +3,7 @@
   "capturedAt": "2026-08-28T12:15:43.001Z",
   "sha256": "220f253819b7619c0c72d10b0082256465ff532ac3bdbc97143bb6a789debf07",
   "status": 200,
-  "kind": "page",
+  "kind": "wall",
   "headers": {
     "server": "AkamaiNetStorage",
     "content-length": "905",

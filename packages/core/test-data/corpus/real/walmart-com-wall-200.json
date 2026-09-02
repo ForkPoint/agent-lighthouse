@@ -3,7 +3,7 @@
   "capturedAt": "2026-08-28T12:15:12.721Z",
   "sha256": "17cc0d7910434366513459711290d90683a66e202344f0233b6b956815225bab",
   "status": 200,
-  "kind": "wall",
+  "kind": "page",
   "headers": {
     "content-security-policy": "frame-ancestors 'self' *.wal.co *.walmart-customcards.com *.walmart.com:* *.walmart.net *.walmartimages.com; report-uri https://csp.walmart.com/c/r/gl",
     "content-type": "text/html; charset=utf-8",

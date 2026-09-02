@@ -117,8 +117,11 @@ export function detectWafProtection(
       headers["x-perimeterx"] !== undefined ||
       Object.keys(headers).some((h) => h.startsWith("x-px-")) ||
       body.includes("client.perimeterx.net") ||
-      body.includes("_pxappid") ||
-      body.includes("press & hold")
+      body.includes("press & hold") ||
+      body.includes("perimeterx captcha") ||
+      body.includes("px-captcha") ||
+      body.includes("access to this page has been denied because we believe you are using automation tools") ||
+      ((status === 403 || status === 429) && body.includes("_pxappid"))
     ) {
       return {
         isBlocked: true,
@@ -149,7 +152,7 @@ export function detectWafProtection(
     if (
       Object.keys(headers).some((h) => h.startsWith("x-kpsdk-")) ||
       body.includes("149e9513-01fa-4fb0-a84e-5686259205d3") ||
-      body.includes("k-challenge")
+      /(?:^|[^a-zA-Z0-9_-])k-challenge(?:[^a-zA-Z0-9_-]|$)/i.test(body)
     ) {
       return {
         isBlocked: true,
@@ -163,12 +166,19 @@ export function detectWafProtection(
     // Akamai Bot Manager
     if (
       server.includes("akamaighost") ||
+      server.includes("akamainetstorage") ||
       headers["x-akamai-transformed"] !== undefined ||
       headers["akamai-grn"] !== undefined ||
       body.includes("you don't have permission to access") ||
       (status === 403 && body.includes("access denied"))
     ) {
-      if (status === 403 || scannedPagesCount === 0) {
+      const isSoftBlock =
+        body.includes("this page is currently unavailable") ||
+        body.includes("you don't have permission to access") ||
+        (headers["akamai-grn"] !== undefined &&
+          (body.includes("reference number") || body.includes("access denied")));
+
+      if (status === 403 || scannedPagesCount === 0 || isSoftBlock) {
         return {
           isBlocked: true,
           provider: "akamai",
@@ -176,7 +186,9 @@ export function detectWafProtection(
           reason:
             status === 403
               ? "HTTP 403 Akamai access denied"
-              : "Akamai connection challenge / blocking",
+              : isSoftBlock
+                ? "Akamai HTTP 200 soft block page"
+                : "Akamai connection challenge / blocking",
           statusCode: status,
         };
       }

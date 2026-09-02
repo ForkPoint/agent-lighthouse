@@ -6,41 +6,23 @@ claim. Closed work leaves this file and stays in Git history.
 
 | # | debt | status on 2026-09-02 | next owner |
 | -: | :--- | :------------------- | :--------- |
-| 1 | Three WAF classifier defects | Open; current corpus pins the wrong kinds | Separate fix |
-| 2 | Corpus skips accessibility results | Open | Test infrastructure |
-| 3 | Scripts have no typecheck | Open | Build tooling |
-| 4 | Corpus nightly is not reliable | Three scheduled runs failed | Nightly workflow |
-| 5 | Four smaller test and API debts | Open | Separate cleanup |
-| 6 | Text-rich HTTP 200 walls produce wrong verdicts | Open | Hostile-state contract extension |
+| 1 | Corpus skips accessibility results | Open | Test infrastructure |
+| 2 | Scripts have no typecheck | Open | Build tooling |
+| 3 | Corpus nightly is not reliable | Three scheduled runs failed | Nightly workflow |
+| 4 | Four smaller test and API debts | Open | Separate cleanup |
+| 5 | Text-rich HTTP 200 walls produce wrong verdicts | Open | Hostile-state contract extension |
 
 The hostile-state branch first recorded these items. The sections below retain
 the evidence needed to start each fix.
 
-## 1. Three WAF-detector defects found by the corpus
-
-In `packages/core/src/waf-detector.ts`:
-
-- The Kasada branch matches the substring `k-challenge`, so `vercel.com/pricing`
-  — which serves `text/markdown` to the scanner user agent, that is, does the
-  right thing — is reported as a bot wall because its copy links
-  `/changelog/...attack-challenge-mode`.
-- The PerimeterX branch matches `_pxAppId` in the body, which every PerimeterX
-  customer's ordinary pages carry, not only challenges (`walmart.com/help`).
-- A genuine Akamai soft block served at HTTP 200 reads as a readable page: the
-  Akamai branch is gated on `status === 403 || scannedPagesCount === 0`
-  (`tirerack.com`).
-
-`docs/evidence/corpus.md` records which fixtures' recorded `kind` must be
-re-recorded when these are fixed.
-
-## 2. The corpus never exercises the accessibility audits
+## 1. The corpus never exercises the accessibility audits
 
 About 17 audits are `notApplicable` on all 41 fixtures because `page.a11yResults`
 is populated only by the orchestrator. Wiring the a11y runner into the corpus
 harness needs its own runtime budget — the suite already sits at 75–99 s against
 a 120 s cap.
 
-## 3. No script in the repository is typechecked
+## 2. No script in the repository is typechecked
 
 The root `tsconfig.json` includes only `packages/*/src/**/*` and `pnpm typecheck`
 runs per package, so everything under `scripts/` is outside every include.
@@ -48,7 +30,7 @@ Obsolete one-time scripts (`analyze-false-positives.ts`, `analyze-stores.ts`, an
 `investigate-stores.ts`) were pruned; remaining scripts should eventually be
 included under a dedicated tsconfig or typecheck pass.
 
-## 4. The nightly workflow runs, but it does not finish reliably
+## 3. The nightly workflow runs, but it does not finish reliably
 
 The workflow ran on schedule three times before this review. All three runs
 failed. Run `33379094687` scanned 249 of its 400-site window, skipped 58 sites
@@ -60,7 +42,7 @@ The next plan must separate timeout capacity from result-schema defects. It
 must define success for a partial window and preserve the uploaded summary on
 failure.
 
-## 5. Smaller items
+## 4. Smaller items
 
 - `MAX_CONCURRENT_REQUESTS` in `packages/core/src/constants.ts:10` is exported
   and referenced nowhere. Removing it is a published-API change.
@@ -74,7 +56,7 @@ failure.
   can never exercise the evidence gate. The hostile-state suite is the only place
   those guards are proven.
 
-## 6. A text-rich 200 bot wall still draws 28 wrong verdicts
+## 5. A text-rich 200 bot wall still draws 28 wrong verdicts
 
 An audit that reads only root files derives `requires: ['origin-reachable']`, so
 it runs against a wall's files. None returns `pass` — the hostile-state suite

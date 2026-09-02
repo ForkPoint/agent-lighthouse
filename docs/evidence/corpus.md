@@ -162,24 +162,20 @@ defect below. Any baseline taken over it — including a full 215-audit snapshot
 describes an Akamai error page, not a tire retailer's homepage. Read every
 verdict in that baseline with that in mind.
 
-### Fixtures that pin behaviour known to be wrong
+### Fixtures whose recorded kinds were corrected
 
 `fixture-io.test.ts` asserts `classifyCapture(response) === provenance.kind`.
-Three fixtures record a `kind` that a correct classifier would not produce, so
-**fixing any of these defects turns the replay test red, and that is the fix
-landing, not a regression.** Re-record the affected `kind` in the same commit
-as the fix.
+Three fixtures previously recorded a `kind` that a defective classifier produced.
+These have been fixed and their provenance records updated:
 
-| Defect | Fixture that pins it | `kind` after the fix |
+| Defect Fixed | Fixture | Corrected `kind` |
 | :-- | :-- | :-- |
-| `k-challenge` matches any prose containing that substring | `vercel-com-wall-200` | `page` |
-| `_pxappid` matches every page a PerimeterX customer serves | `walmart-com-wall-200` | `page` |
-| The Akamai branch ignores 2xx soft blocks | `tirerack-com-soft-block-200` | `wall` |
+| `k-challenge` matched any prose containing substring | `vercel-com-wall-200` | `page` |
+| `_pxappid` matched normal sensor scripts on 200 pages | `walmart-com-wall-200` | `page` |
+| Akamai branch now detects 200 soft blocks with reference number | `tirerack-com-soft-block-200` | `wall` |
 
-Fixing `_pxappid` costs coverage as well as a fixture: `walmart-com-wall-200`
-is one of only two fixtures reaching the 2xx WAF branch, and `vercel-com-wall-200`
-is the other, so fixing both leaves that branch with no fixture at all. Capture
-a genuine 200 challenge page before, or in, the commit that fixes them.
+With `tirerack-com-soft-block-200` correctly classified as `wall`, the 2xx WAF
+branch remains fully exercised by a genuine HTTP 200 soft block.
 
 ### News
 
