@@ -1010,6 +1010,27 @@ describe("allJsonLdNodes", () => {
     );
     expect(types).toContain("Organization");
   });
+
+  it("does not descend into an object-valued @context", () => {
+    // zapier.com serves `"@context": { "@vocab": "https://schema.org/" }`.
+    // Inheriting that object into the child and then walking it stamped the
+    // context with itself and recursed until the stack ran out, which took
+    // two audits down with an "Audit error".
+    const org = {
+      "@context": { "@vocab": "https://schema.org/" },
+      "@type": "Organization",
+      founder: { "@type": "Person", name: "x" },
+    };
+    const nodes = allJsonLdNodes([org]);
+    expect(nodes).toHaveLength(2);
+    expect(nodes.map((o) => (o as { "@type"?: string })["@type"])).toEqual([
+      "Organization",
+      "Person",
+    ]);
+    expect((nodes[1] as Record<string, unknown>)["@context"]).toBe(
+      org["@context"],
+    );
+  });
 });
 
 // ---------------------------------------------------------------------------
