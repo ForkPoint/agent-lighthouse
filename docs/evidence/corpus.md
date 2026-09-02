@@ -283,8 +283,9 @@ may *claim* — chiefly that a scan the gate could not feed reports no score.
 **The list.** `sites.json` is generated from `seeds.json`, the hand-curated
 source of truth: 13 categories of about 20 to 40 domains each, two per
 category marked `tier: "smoke"`, plus a 50-domain `unknown` slice from the
-Tranco and CrUX top lists and 30 ranked platform tenants in total, seeds
-included — 414 domains in all. `pnpm build:sites` regenerates it.
+Tranco and CrUX top lists — 414 domains in all. One of the 13, `tenant`, is
+capped at 30 and filled from the ranked lists when the seeds fall short.
+`pnpm build:sites` regenerates it.
 `candidates.json` is the draft the last curation started from; `pnpm
 corpus:probe` checks a draft before it is seeded.
 
