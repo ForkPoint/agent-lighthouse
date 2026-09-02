@@ -157,6 +157,15 @@ export class ReflectedParameterInjectionCanaryAudit extends Audit {
       );
     }
 
+    const primary = ctx.pages[0];
+    if (!primary || primary.$("body").text().trim().length === 0) {
+      return this.notApplicable(
+        "The primary page rendered no text content, so input reflection cannot be evaluated.",
+        "A page with rendered text content",
+        "0 rendered characters",
+      );
+    }
+
     const canary = mintCanary();
     // The instruction-shaped variant exists so the audit can tell a raw
     // reflection from an escaped one. It is a detection string: the site is
