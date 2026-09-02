@@ -22,9 +22,6 @@ a 120 s cap.
 
 ## 2. Smaller items
 
-- The `challenged-at-200` hostile state renders 58 characters, so it does not
-  exercise a *text-bearing* 200 wall. `walmart-com-wall-200` covers that shape as
-  a fixture but not as a contract state.
 - `packages/core/src/tests/audit-sources.ts` duplicates about fifteen lines of
   `scripts/lib/requires-analysis.mjs`. Importing the `.mjs` breaks
   `pnpm typecheck`; both available fixes were ruled out.
@@ -32,7 +29,7 @@ a 120 s cap.
   can never exercise the evidence gate. The hostile-state suite is the only place
   those guards are proven.
 
-## 4. Text-rich 200 bot wall verdicts
+## 3. Text-rich 200 bot wall verdicts
 
 An audit that reads only root files derives `requires: ['origin-reachable']`, so
 it runs against a wall's files. None returns `pass` — the hostile-state suite
