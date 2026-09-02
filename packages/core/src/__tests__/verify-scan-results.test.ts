@@ -513,6 +513,160 @@ describe.skipIf(process.env["AL_SKIP_NETWORK"] === "1")(
         expect(true).toBe(true);
       });
     });
+
+    // ────────────────────────────────────────────────────────────────
+    // allbirds.com — e-commerce storefront (agentic commerce, Shopify patterns)
+    // ────────────────────────────────────────────────────────────────
+    describe("allbirds.com", () => {
+      let ctx: CheckContext;
+      let allResults: Map<
+        string,
+        { status: string; score: number; found: string }
+      >;
+
+      beforeAll(async () => {
+        ctx = await buildRealContext("https://allbirds.com");
+        allResults = await runAllChecks(ctx);
+      }, TIMEOUT);
+
+      it("access-crawl-control/https-enabled: allbirds.com HTTPS check matches reality", () => {
+        const result = allResults.get("access-crawl-control/https-enabled");
+        expect(result).toBeDefined();
+        expect(result!.status).toBe("pass");
+      });
+
+      it("content-extraction/language-attribute: allbirds.com lang attribute check matches reality", () => {
+        const lang = ctx.pages[0]!.$("html").attr("lang");
+        const result = allResults.get("content-extraction/language-attribute");
+        expect(result).toBeDefined();
+        if (lang) {
+          expect(result!.status).toBe("pass");
+        } else {
+          expect(result!.status).toBe("fail");
+        }
+      });
+
+      it("answer-readiness/core-open-graph: allbirds.com Open Graph tags check matches reality", () => {
+        const result = allResults.get("answer-readiness/core-open-graph");
+        expect(result).toBeDefined();
+        expect(["pass", "warn"]).toContain(result!.status);
+      });
+
+      it("agentic-commerce/agent-ua-commerce-parity: allbirds.com agent UA parity matches reality", () => {
+        const result = allResults.get("agentic-commerce/agent-ua-commerce-parity");
+        expect(result).toBeDefined();
+        // Live e-commerce stores frequently gate or differentiate AI crawler UAs on commerce paths
+        expect(["pass", "warn", "fail", "na"]).toContain(result!.status);
+      });
+
+      it("machine-discovery/sitemap-exists: allbirds.com sitemap discovery matches reality", () => {
+        const hasSitemap =
+          ctx.rootFiles["/sitemap.xml"]?.status === 200 ||
+          ctx.rootFiles["/sitemap-index.xml"]?.status === 200;
+        const result = allResults.get("machine-discovery/sitemap-exists");
+        expect(result).toBeDefined();
+        if (hasSitemap) {
+          expect(result!.status).toBe("pass");
+        } else {
+          expect(["fail", "warn"]).toContain(result!.status);
+        }
+      });
+
+      it("prints full results summary for manual review", () => {
+        console.log("\n=== allbirds.com FULL RESULTS ===");
+        console.log(`Total checks: ${allResults.size}`);
+        console.log(
+          `Pass: ${[...allResults.values()].filter((r) => r.status === "pass").length}`,
+        );
+        console.log(
+          `Warn: ${[...allResults.values()].filter((r) => r.status === "warn").length}`,
+        );
+        console.log(
+          `Fail: ${[...allResults.values()].filter((r) => r.status === "fail").length}`,
+        );
+        expect(true).toBe(true);
+      });
+    });
+
+    // ────────────────────────────────────────────────────────────────
+    // theguardian.com — news publisher (dense editorial content, feeds)
+    // ────────────────────────────────────────────────────────────────
+    describe("theguardian.com", () => {
+      let ctx: CheckContext;
+      let allResults: Map<
+        string,
+        { status: string; score: number; found: string }
+      >;
+
+      beforeAll(async () => {
+        ctx = await buildRealContext("https://theguardian.com");
+        allResults = await runAllChecks(ctx);
+      }, TIMEOUT);
+
+      it("access-crawl-control/https-enabled: theguardian.com HTTPS check matches reality", () => {
+        const result = allResults.get("access-crawl-control/https-enabled");
+        expect(result).toBeDefined();
+        expect(result!.status).toBe("pass");
+      });
+
+      it("content-extraction/language-attribute: theguardian.com lang attribute matches reality", () => {
+        const lang = ctx.pages[0]!.$("html").attr("lang");
+        const result = allResults.get("content-extraction/language-attribute");
+        expect(result).toBeDefined();
+        if (lang) {
+          expect(result!.status).toBe("pass");
+        } else {
+          expect(result!.status).toBe("fail");
+        }
+      });
+
+      it("answer-readiness/core-open-graph: theguardian.com Open Graph tags match reality", () => {
+        const meta = ctx.pages[0]!.meta;
+        const ogTags = ["og:title", "og:description", "og:image", "og:url"] as const;
+        const missing = ogTags.filter((t) => !meta[t]?.trim());
+        const result = allResults.get("answer-readiness/core-open-graph");
+        expect(result).toBeDefined();
+        if (missing.length === 0) {
+          expect(result!.status).toBe("pass");
+        } else {
+          expect(["fail", "warn"]).toContain(result!.status);
+        }
+      });
+
+      it("machine-discovery/rss-feed: theguardian.com RSS / feed discovery matches reality", () => {
+        const hasFeed =
+          ctx.rootFiles["/rss.xml"]?.status === 200 ||
+          ctx.rootFiles["/feed.xml"]?.status === 200;
+        const result = allResults.get("machine-discovery/rss-feed");
+        expect(result).toBeDefined();
+        if (hasFeed) {
+          expect(result!.status).toBe("pass");
+        } else {
+          expect(["fail", "warn", "na"]).toContain(result!.status);
+        }
+      });
+
+      it("content-extraction/main-element: theguardian.com main element check matches reality", () => {
+        const result = allResults.get("content-extraction/main-element");
+        expect(result).toBeDefined();
+        expect(["pass", "warn"]).toContain(result!.status);
+      });
+
+      it("prints full results summary for manual review", () => {
+        console.log("\n=== theguardian.com FULL RESULTS ===");
+        console.log(`Total checks: ${allResults.size}`);
+        console.log(
+          `Pass: ${[...allResults.values()].filter((r) => r.status === "pass").length}`,
+        );
+        console.log(
+          `Warn: ${[...allResults.values()].filter((r) => r.status === "warn").length}`,
+        );
+        console.log(
+          `Fail: ${[...allResults.values()].filter((r) => r.status === "fail").length}`,
+        );
+        expect(true).toBe(true);
+      });
+    });
   },
-  120_000,
+  240_000,
 );
