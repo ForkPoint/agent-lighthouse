@@ -63,7 +63,7 @@ describe("AiprefContentUsageDeclarationValidityAudit", () => {
       site("User-agent: *\nAllow: /\nContent-Usage: ai-input=n\n"),
     );
     expect(result.status).toBe("fail");
-    expect((result.details?.["syntaxErrors"] as string[])[0]).toContain(
+    expect((result.details!["syntaxErrors"] as string[])[0]).toContain(
       "not an AIPREF category",
     );
   });
@@ -75,7 +75,7 @@ describe("AiprefContentUsageDeclarationValidityAudit", () => {
       site("User-agent: *\nAllow: /\nContent-Usage: train-ai=yes\n"),
     );
     expect(result.status).toBe("fail");
-    expect((result.details?.["syntaxErrors"] as string[])[0]).toContain(
+    expect((result.details!["syntaxErrors"] as string[])[0]).toContain(
       "legacy Content-Signal syntax",
     );
   });
@@ -87,7 +87,7 @@ describe("AiprefContentUsageDeclarationValidityAudit", () => {
       ),
     );
     expect(result.status).toBe("fail");
-    expect((result.details?.["inertDeclarations"] as string[])[0]).toContain(
+    expect((result.details!["inertDeclarations"] as string[])[0]).toContain(
       '"disallow: /private/"',
     );
   });
@@ -109,7 +109,7 @@ describe("AiprefContentUsageDeclarationValidityAudit", () => {
       }),
     );
     expect(result.status).toBe("fail");
-    expect((result.details?.["channelDisagreements"] as string[])[0]).toContain(
+    expect((result.details!["channelDisagreements"] as string[])[0]).toContain(
       "train-ai over /",
     );
   });

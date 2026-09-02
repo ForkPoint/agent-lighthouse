@@ -40,8 +40,8 @@ function needsSummary(entry: FeedEntry): boolean {
   if (type === "") return false;
   return (
     !/^(text|html|xhtml)$/.test(type) &&
-    !/^text\//.test(type) &&
-    !/\+xml$/.test(type)
+    !type.startsWith("text/") &&
+    !type.endsWith("+xml")
   );
 }
 

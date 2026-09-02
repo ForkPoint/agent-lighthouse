@@ -14,7 +14,7 @@ function withDetails(
   result: AuditResult,
   details: Record<string, string | number | boolean | string[]>,
 ): AuditResult {
-  return { ...result, details: { ...(result.details ?? {}), ...details } };
+  return { ...result, details: { ...result.details, ...details } };
 }
 
 export class ServerRenderedAudit extends Audit {

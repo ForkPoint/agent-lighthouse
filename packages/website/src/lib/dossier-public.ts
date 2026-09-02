@@ -454,7 +454,7 @@ const BARE_CODE = new RegExp(
  * linking it would invite the reader to click a quoted value.
  */
 const BARE_URL =
-  /(?<!\]\()(?<![\[+])\bhttps?:\/\/[^\s)<>\]]*[^\s)<>\].,;:!?'"]/g;
+  /(?<!\]\()(?<![[+])\bhttps?:\/\/[^\s)<>\]]*[^\s)<>\].,;:!?'"]/g;
 
 /**
  * What to call a URL the reader is not going to read.
@@ -608,7 +608,7 @@ function compact(body: string): string {
       continue;
     }
 
-    if (/^\*\*Sources:\*\*/.test(line)) {
+    if (line.startsWith("**Sources:**")) {
       out.push(compactSources(line));
       continue;
     }

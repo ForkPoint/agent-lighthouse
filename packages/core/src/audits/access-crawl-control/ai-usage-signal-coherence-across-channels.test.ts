@@ -163,7 +163,7 @@ describe("AiUsageSignalCoherenceAcrossChannelsAudit", () => {
       }),
     );
     expect(result.status).toBe("pass");
-    expect((result.details?.["notes"] as string[])[0]).toContain(
+    expect((result.details!["notes"] as string[])[0]).toContain(
       "array of rules",
     );
   });

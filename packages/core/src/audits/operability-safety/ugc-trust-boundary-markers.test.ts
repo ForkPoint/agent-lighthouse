@@ -122,7 +122,7 @@ describe("UgcTrustBoundaryMarkersAudit", () => {
       ),
     );
     expect(Array.isArray(result.details?.["regions"])).toBe(true);
-    expect((result.details?.["regions"] as unknown[]).length).toBe(2);
+    expect(result.details?.["regions"]).toHaveLength(2);
   });
 
   it("counts a nested comment inside a comments container once", async () => {
@@ -131,7 +131,7 @@ describe("UgcTrustBoundaryMarkersAudit", () => {
         '<section id="comments"><div class="comment">Nice.</div><div class="comment">Also nice.</div></section>',
       ),
     );
-    expect((result.details?.["regions"] as unknown[]).length).toBe(1);
+    expect(result.details?.["regions"]).toHaveLength(1);
   });
 
   it('accepts rel="ugc" on the region\'s outbound links as a boundary', async () => {

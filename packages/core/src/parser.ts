@@ -21,6 +21,7 @@ export function extractJsonLd($: CheerioAPI): object[] {
       // valid Product/Review blocks. Retry once with control chars stripped
       // before giving up.
       try {
+        // oxlint-disable-next-line no-control-regex
         blocks.push(JSON.parse(raw.replace(/[\x00-\x1F]+/g, " ")));
       } catch {
         // Genuinely malformed — left for the schema validation audit to flag.

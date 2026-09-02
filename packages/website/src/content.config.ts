@@ -2,7 +2,7 @@ import { defineCollection } from "astro:content";
 import { glob } from "astro/loaders";
 import { z } from "astro/zod";
 import { publicDossier, type SourceRef } from "./lib/dossier-public";
-import { readSourceRegistry, SOURCES_FILE } from "./lib/evidence";
+import { readSourceRegistry } from "./lib/evidence";
 
 /**
  * The source registry, by id.
