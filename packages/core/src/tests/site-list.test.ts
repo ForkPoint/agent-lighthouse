@@ -8,6 +8,7 @@ import {
   buildSiteList,
   normalize,
   readSeeds,
+  type SeedFile,
   tenantSuffixOf,
   type SiteEntry,
 } from "./site-list";
@@ -15,6 +16,9 @@ import { excludedDomains, type CorpusStatus } from "./corpus-status";
 
 const sites: SiteEntry[] = JSON.parse(
   readFileSync(resolve(__dirname, "../../test-data/sites/sites.json"), "utf8"),
+);
+const seedFile: SeedFile = JSON.parse(
+  readFileSync(resolve(__dirname, "../../test-data/sites/seeds.json"), "utf8"),
 );
 
 describe("the site list", () => {
@@ -51,13 +55,25 @@ describe("the site list", () => {
     }
   });
 
-  it("carries no ranked domain the status file calls dead or blocked", () => {
+  it("carries no unseeded domain the status file calls dead or blocked", () => {
     const statusPath = resolve(__dirname, "../../test-data/sites/status.json");
     const status: CorpusStatus = JSON.parse(readFileSync(statusPath, "utf8"));
     const excluded = excludedDomains(status, {});
+    // A seeded domain keeps its ranked source when a ranked list carries it,
+    // so `source` cannot tell a seed from a slice entry; the seed file can.
+    const seeded = readSeeds(seedFile).categoryOf;
     for (const s of sites) {
-      if (s.source === "seed") continue;
+      if (seeded.has(s.domain)) continue;
       expect(excluded.has(s.domain), s.domain).toBe(false);
+    }
+  });
+
+  it("marks only domains the status file calls ok as smoke", () => {
+    const statusPath = resolve(__dirname, "../../test-data/sites/status.json");
+    const status: CorpusStatus = JSON.parse(readFileSync(statusPath, "utf8"));
+    for (const s of sites) {
+      if (s.tier !== "smoke") continue;
+      expect(status.domains[s.domain]?.state, s.domain).toBe("ok");
     }
   });
 

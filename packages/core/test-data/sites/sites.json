@@ -9,7 +9,8 @@
     "domain": "abc.net.au",
     "source": "tranco",
     "category": "news",
-    "rankBucket": 0
+    "rankBucket": 0,
+    "tier": "smoke"
   },
   {
     "domain": "accor.com",
@@ -39,7 +40,8 @@
     "domain": "ai-sdk.vercel.app",
     "source": "seed",
     "category": "tenant",
-    "rankBucket": 100
+    "rankBucket": 100,
+    "tier": "smoke"
   },
   {
     "domain": "airbnb.com",
@@ -77,8 +79,7 @@
     "domain": "alibaba.com",
     "source": "seed",
     "category": "marketplace",
-    "rankBucket": 100,
-    "tier": "smoke"
+    "rankBucket": 100
   },
   {
     "domain": "aliexpress.com",
@@ -90,8 +91,7 @@
     "domain": "aljazeera.com",
     "source": "seed",
     "category": "news",
-    "rankBucket": 100,
-    "tier": "smoke"
+    "rankBucket": 100
   },
   {
     "domain": "allbirds.com",
@@ -146,8 +146,7 @@
     "domain": "apnews.com",
     "source": "seed",
     "category": "news",
-    "rankBucket": 100,
-    "tier": "smoke"
+    "rankBucket": 100
   },
   {
     "domain": "apple-dns.net",
@@ -165,7 +164,8 @@
     "domain": "arstechnica.com",
     "source": "tranco",
     "category": "news",
-    "rankBucket": 0
+    "rankBucket": 0,
+    "tier": "smoke"
   },
   {
     "domain": "asahi.com",
@@ -184,8 +184,7 @@
     "domain": "askubuntu.com",
     "source": "tranco",
     "category": "forum",
-    "rankBucket": 0,
-    "tier": "smoke"
+    "rankBucket": 0
   },
   {
     "domain": "astro-docs.netlify.app",
@@ -222,7 +221,8 @@
     "domain": "bahn.de",
     "source": "tranco",
     "category": "travel",
-    "rankBucket": 0
+    "rankBucket": 0,
+    "tier": "smoke"
   },
   {
     "domain": "bankofamerica.com",
@@ -296,8 +296,7 @@
     "domain": "bombas.com",
     "source": "seed",
     "category": "storefront",
-    "rankBucket": 100,
-    "tier": "smoke"
+    "rankBucket": 100
   },
   {
     "domain": "bondvet.com",
@@ -321,7 +320,8 @@
     "domain": "brooklinen.com",
     "source": "tranco",
     "category": "storefront",
-    "rankBucket": 0
+    "rankBucket": 0,
+    "tier": "smoke"
   },
   {
     "domain": "bruvi.com",
@@ -333,14 +333,14 @@
     "domain": "bun.sh",
     "source": "tranco",
     "category": "exemplar",
-    "rankBucket": 0
+    "rankBucket": 0,
+    "tier": "smoke"
   },
   {
     "domain": "bund.de",
     "source": "tranco",
     "category": "government",
-    "rankBucket": 0,
-    "tier": "smoke"
+    "rankBucket": 0
   },
   {
     "domain": "cal.com",
@@ -358,7 +358,8 @@
     "domain": "canada.ca",
     "source": "tranco",
     "category": "government",
-    "rankBucket": 0
+    "rankBucket": 0,
+    "tier": "smoke"
   },
   {
     "domain": "capitalone.com",
@@ -425,7 +426,8 @@
     "domain": "clevelandclinic.org",
     "source": "tranco",
     "category": "health",
-    "rankBucket": 0
+    "rankBucket": 0,
+    "tier": "smoke"
   },
   {
     "domain": "clickup.com",
@@ -613,7 +615,8 @@
     "domain": "discuss.python.org",
     "source": "seed",
     "category": "forum",
-    "rankBucket": 100
+    "rankBucket": 100,
+    "tier": "smoke"
   },
   {
     "domain": "discuss.pytorch.org",
@@ -836,8 +839,7 @@
     "domain": "facebook.github.io",
     "source": "seed",
     "category": "tenant",
-    "rankBucket": 100,
-    "tier": "smoke"
+    "rankBucket": 100
   },
   {
     "domain": "fashionnova.com",
@@ -993,8 +995,7 @@
     "domain": "google.github.io",
     "source": "seed",
     "category": "tenant",
-    "rankBucket": 100,
-    "tier": "smoke"
+    "rankBucket": 100
   },
   {
     "domain": "googleapis.com",
@@ -1138,7 +1139,8 @@
     "domain": "hono.pages.dev",
     "source": "seed",
     "category": "tenant",
-    "rankBucket": 100
+    "rankBucket": 100,
+    "tier": "smoke"
   },
   {
     "domain": "hostelworld.com",
@@ -1180,7 +1182,8 @@
     "domain": "ikea.com",
     "source": "tranco",
     "category": "marketplace",
-    "rankBucket": 0
+    "rankBucket": 0,
+    "tier": "smoke"
   },
   {
     "domain": "india.gov.in",
@@ -1914,8 +1917,7 @@
     "domain": "ryanair.com",
     "source": "tranco",
     "category": "travel",
-    "rankBucket": 0,
-    "tier": "smoke"
+    "rankBucket": 0
   },
   {
     "domain": "salesforce.com",
@@ -1945,8 +1947,7 @@
     "domain": "sentry.io",
     "source": "tranco",
     "category": "exemplar",
-    "rankBucket": 0,
-    "tier": "smoke"
+    "rankBucket": 0
   },
   {
     "domain": "serverfault.com",
@@ -2407,10 +2408,9 @@
   },
   {
     "domain": "webmd.com",
-    "source": "tranco",
+    "source": "seed",
     "category": "health",
-    "rankBucket": 0,
-    "tier": "smoke"
+    "rankBucket": 100
   },
   {
     "domain": "wellsfargo.com",
