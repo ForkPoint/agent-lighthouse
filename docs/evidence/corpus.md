@@ -294,8 +294,9 @@ a runner saw it: `ok`, `unscored` with the scan's reason, `blocked` by
 robots.txt, or `dead`. Both runners leave `dead` and `blocked` domains out
 unless asked, and both print how many list entries the status file removed;
 `--include-dead` and `--include-blocked` put them back. `pnpm test:live` also
-takes `--tier=smoke`, the 26-domain smoke tier — two per seeded category, all
-`ok` at the last import. `pnpm corpus:status import <summary.json>` merges a
+takes `--tier=smoke`, the smoke tier — two per seeded category, all `ok` at
+the last import. `news` has none: every news seed disallows an AI crawler in
+`robots.txt`, so the runners skip the whole category unless asked. `pnpm corpus:status import <summary.json>` merges a
 runner summary into it; `pnpm corpus:status report` prints it grouped by state
 and reason. A domain is `dead` only after two imports on different days say
 so. CI never writes the file; import the nightly artifact by hand when

@@ -18,9 +18,11 @@ export interface SiteEntry {
   source: "tranco" | "crux" | "seed";
   category: string;
   /**
-   * Rank rounded down to a multiple of `BUCKET_WIDTH`. Seed carry-overs take
-   * the first bucket past the cut, which is a true lower bound on their rank:
-   * they are ranked worse than everything that made the cut.
+   * Position in the ranked `unknown` slice, rounded down to a multiple of
+   * `BUCKET_WIDTH`. Seeded and tenant entries the ranked lists carry sit in
+   * bucket 0 whatever their rank: the slice is the only thing bucketed. Seed
+   * carry-overs take the first bucket past the cut, a true lower bound on
+   * their position. No runner reads the field today; it orders a top slice.
    */
   rankBucket: number;
   /** Present on the two domains per category the smoke run scans. */

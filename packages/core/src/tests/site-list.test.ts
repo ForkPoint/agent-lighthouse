@@ -37,22 +37,23 @@ describe("the site list", () => {
     }
   });
 
-  it("marks exactly two smoke domains per seeded category, all of them seeds", () => {
+  it("marks two smoke domains per seeded category that has two ok seeds", () => {
+    const statusPath = resolve(__dirname, "../../test-data/sites/status.json");
+    const status: CorpusStatus = JSON.parse(readFileSync(statusPath, "utf8"));
     const smoke = sites.filter((s) => s.tier === "smoke");
     const perCategory = new Map<string, number>();
     for (const s of smoke) {
       perCategory.set(s.category, (perCategory.get(s.category) ?? 0) + 1);
     }
-    const seededCategories = new Set(
-      sites
-        .filter((s) => s.source === "seed" || s.category !== "unknown")
-        .map((s) => s.category),
-    );
-    seededCategories.delete("tenant");
-    seededCategories.delete("unknown");
-    for (const category of seededCategories) {
-      expect(perCategory.get(category), category).toBe(2);
+    // A category whose seeds the runners cannot scan (every news seed
+    // disallows AI crawlers in robots.txt) has no smoke domain rather than a
+    // smoke domain the smoke run skips.
+    for (const [category, { domains }] of Object.entries(seedFile.categories)) {
+      const ok = domains.filter((d) => status.domains[d]?.state === "ok");
+      const want = Math.min(2, ok.length);
+      expect(perCategory.get(category) ?? 0, category).toBe(want);
     }
+    expect(perCategory.has("unknown")).toBe(false);
   });
 
   it("carries no unseeded domain the status file calls dead or blocked", () => {

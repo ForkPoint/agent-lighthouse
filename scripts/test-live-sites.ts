@@ -292,6 +292,9 @@ async function main(): Promise<void> {
       const specified = new Set(options.domains);
       targetSites = pool.filter((s) => specified.has(s.domain));
       for (const d of options.domains) {
+        // A domain outside the list is scanned ad hoc, unless a tier was
+        // asked for: `--tier` intersects, it does not add.
+        if (options.tier) break;
         if (!targetSites.some((s) => s.domain === d)) {
           targetSites.push({
             domain: d,

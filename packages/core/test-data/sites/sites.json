@@ -9,8 +9,7 @@
     "domain": "abc.net.au",
     "source": "tranco",
     "category": "news",
-    "rankBucket": 0,
-    "tier": "smoke"
+    "rankBucket": 0
   },
   {
     "domain": "accor.com",
@@ -40,8 +39,7 @@
     "domain": "ai-sdk.vercel.app",
     "source": "seed",
     "category": "tenant",
-    "rankBucket": 100,
-    "tier": "smoke"
+    "rankBucket": 100
   },
   {
     "domain": "airbnb.com",
@@ -164,8 +162,7 @@
     "domain": "arstechnica.com",
     "source": "tranco",
     "category": "news",
-    "rankBucket": 0,
-    "tier": "smoke"
+    "rankBucket": 0
   },
   {
     "domain": "asahi.com",
@@ -358,8 +355,7 @@
     "domain": "canada.ca",
     "source": "tranco",
     "category": "government",
-    "rankBucket": 0,
-    "tier": "smoke"
+    "rankBucket": 0
   },
   {
     "domain": "capitalone.com",
@@ -377,7 +373,8 @@
     "domain": "cdc.gov",
     "source": "tranco",
     "category": "government",
-    "rankBucket": 0
+    "rankBucket": 0,
+    "tier": "smoke"
   },
   {
     "domain": "cedars-sinai.org",
@@ -426,8 +423,7 @@
     "domain": "clevelandclinic.org",
     "source": "tranco",
     "category": "health",
-    "rankBucket": 0,
-    "tier": "smoke"
+    "rankBucket": 0
   },
   {
     "domain": "clickup.com",
@@ -947,7 +943,8 @@
     "domain": "gatsby-starter-blog.netlify.app",
     "source": "seed",
     "category": "tenant",
-    "rankBucket": 100
+    "rankBucket": 100,
+    "tier": "smoke"
   },
   {
     "domain": "github.com",
@@ -1139,8 +1136,7 @@
     "domain": "hono.pages.dev",
     "source": "seed",
     "category": "tenant",
-    "rankBucket": 100,
-    "tier": "smoke"
+    "rankBucket": 100
   },
   {
     "domain": "hostelworld.com",
@@ -1424,7 +1420,8 @@
     "domain": "medlineplus.gov",
     "source": "tranco",
     "category": "health",
-    "rankBucket": 0
+    "rankBucket": 0,
+    "tier": "smoke"
   },
   {
     "domain": "mejuri.com",
@@ -1562,7 +1559,8 @@
     "domain": "netflix.github.io",
     "source": "seed",
     "category": "tenant",
-    "rankBucket": 100
+    "rankBucket": 100,
+    "tier": "smoke"
   },
   {
     "domain": "newegg.com",

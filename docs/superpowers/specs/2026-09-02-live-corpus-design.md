@@ -120,8 +120,9 @@ observations to be entered.
 | exemplar | 25 | Sites that serve `llms.txt`, `agents.json`, or an MCP or ACP manifest. Near-perfect results expected. |
 | unknown | 50 | Top-ranked reachable sites not seeded anywhere. Breadth. |
 
-About 365 domains. At 40 s per site and concurrency 4, one pass is about one
-hour. The smoke tier is 26 domains, about five minutes.
+About 365 domains by these targets; the first curation landed at 414. At 40 s
+per site and concurrency 4, one pass is about one hour (74 minutes measured).
+The smoke tier is two domains per category, about five minutes.
 
 Today's 132 seeded domains are kept unless the probe finds them dead.
 
@@ -230,3 +231,15 @@ CI's `--limit=0` keeps them loading.
 - `unknown` keeps its name: honest, and no consumer needs to change.
 - Seeds that go dead stay listed with a warning: removal is a curation
   decision, and the file that records it is `seeds.json`.
+
+## Implementation deviations
+
+- `dead` is decided from the scan evidence keys (`origin-reachable === false`
+  while `unblocked-fetches !== false`), not from the reason text. A wall or a
+  throttle stays `unscored`. The rule is sharper than reading prose.
+- Every `news` seed disallows at least one AI crawler in `robots.txt`, and
+  the runners skip a site that walls any probed agent. The category is kept
+  for `--include-blocked` runs and carries no smoke domain: a smoke domain the
+  smoke run skips checks nothing.
+- The probe applies the runners' `robots.txt` gate, so a probe `ok` is a
+  runner `ok`.

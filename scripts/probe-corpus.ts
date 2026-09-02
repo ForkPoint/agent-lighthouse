@@ -2,6 +2,13 @@ import * as fs from "node:fs";
 import * as path from "node:path";
 import { createFetcher, boundedDispatcher } from "../packages/core/src/fetcher";
 import { normalize } from "../packages/core/src/tests/site-list";
+import {
+  parseRobots,
+  groupsForBot,
+  isBlanketBlocked,
+} from "../packages/core/src/gatherers/robots";
+import { SCANNER_USER_AGENT } from "../packages/core/src/constants";
+import { AI_CRAWLER_UAS } from "../packages/core/src/gatherers/ua-parity";
 
 /**
  * Fetch each candidate once and say whether it can join the corpus.
@@ -50,10 +57,46 @@ interface Outcome {
   score: number | null;
   evidence: Record<string, boolean>;
   unscoredReason?: string;
+  /** Set when robots.txt turns the runners away; `stateOf` files it `blocked`. */
+  skipped?: string;
   artifacts?: string[];
 }
 
+/**
+ * The same robots.txt gate the runners apply, so a probe `ok` is a runner
+ * `ok`. Without it the probe passed news sites whose robots.txt disallows
+ * every AI crawler, and the first runner pass filed them `blocked`.
+ */
+const PROBED_TOKENS: readonly string[] = [
+  SCANNER_USER_AGENT.split("/")[0]!.toLowerCase(),
+  ...AI_CRAWLER_UAS.map((u) => u.token),
+];
+
+async function robotsSkip(domain: string): Promise<string | undefined> {
+  const r = await fetcher.fetch({ url: `https://${domain}/robots.txt` });
+  if (r.status === 401 || r.status === 403 || r.status === 429)
+    return "robots-refused";
+  if (r.error || r.status !== 200 || !r.body) return undefined;
+  const parsed = parseRobots(r.body);
+  for (const token of PROBED_TOKENS) {
+    const groups = groupsForBot(parsed, token);
+    if (isBlanketBlocked(groups, token)) return "robots-disallow";
+    if (groups.some((g) => (g.crawlDelay ?? 0) > 0)) return "crawl-delay";
+  }
+  return undefined;
+}
+
 async function probe(domain: string, category: string): Promise<Outcome> {
+  const skipped = await robotsSkip(domain);
+  if (skipped) {
+    return {
+      domain,
+      category,
+      score: null,
+      evidence: {},
+      skipped,
+    };
+  }
   const home = await fetcher.fetch({ url: `https://${domain}/` });
   const finalHost = (() => {
     try {
@@ -135,7 +178,7 @@ async function main(): Promise<void> {
         outcomes.push(outcome);
         const mark = outcome.score === null ? "✗" : "✓";
         console.log(
-          `${mark} ${item.category.padEnd(11)} ${item.domain}${outcome.unscoredReason ? `  ${outcome.unscoredReason}` : ""}${outcome.artifacts?.length ? `  ${outcome.artifacts.join(" ")}` : ""}`,
+          `${mark} ${item.category.padEnd(11)} ${item.domain}${outcome.skipped ? `  robots.txt: ${outcome.skipped}` : ""}${outcome.unscoredReason ? `  ${outcome.unscoredReason}` : ""}${outcome.artifacts?.length ? `  ${outcome.artifacts.join(" ")}` : ""}`,
         );
       }
     }),
