@@ -1,14 +1,14 @@
-import type { AuditMeta, AuditResult } from '../../types';
-import { Audit } from '../../audit';
-import { weightForGrade } from '../../scorer';
-import type { CheckContext } from '../../check-context';
+import type { AuditMeta, AuditResult } from "../../types";
+import { Audit } from "../../audit";
+import { weightForGrade } from "../../scorer";
+import type { CheckContext } from "../../check-context";
 import {
   discoverMcpEndpoint,
   discoverProbe,
   listTools,
   parseRpcResponse,
   isObject,
-} from '../../gatherers/mcp';
+} from "../../gatherers/mcp";
 
 /** How many `nextCursor` pages are followed. Same budget as contract validity. */
 const MAX_PAGES = 4;
@@ -34,16 +34,16 @@ export interface Leaf {
 }
 
 function described(node: Record<string, unknown>): boolean {
-  const value = node['description'];
-  return typeof value === 'string' && value.trim() !== '';
+  const value = node["description"];
+  return typeof value === "string" && value.trim() !== "";
 }
 
 function typeOf(node: Record<string, unknown>): string {
-  const raw = node['type'];
-  if (typeof raw === 'string') return raw;
+  const raw = node["type"];
+  if (typeof raw === "string") return raw;
   // A union type is what the first entry says it is for counting purposes.
-  if (Array.isArray(raw) && typeof raw[0] === 'string') return raw[0];
-  return '';
+  if (Array.isArray(raw) && typeof raw[0] === "string") return raw[0];
+  return "";
 }
 
 /**
@@ -61,25 +61,29 @@ export function collectLeaves(
 ): Leaf[] {
   if (!isObject(schema) || depth > MAX_DEPTH) return [];
 
-  const properties = isObject(schema['properties']) ? schema['properties'] : undefined;
+  const properties = isObject(schema["properties"])
+    ? schema["properties"]
+    : undefined;
   const requiredNames = new Set(
-    Array.isArray(schema['required'])
-      ? (schema['required'] as unknown[]).filter((v): v is string => typeof v === 'string')
+    Array.isArray(schema["required"])
+      ? (schema["required"] as unknown[]).filter(
+          (v): v is string => typeof v === "string",
+        )
       : [],
   );
 
   if (!properties) {
     // A leaf reached through `items`: the array itself carried the path.
-    return prefix === ''
+    return prefix === ""
       ? []
       : [
           {
             path: prefix,
             described: described(schema),
             required: requiredHere,
-            isString: typeOf(schema) === 'string',
+            isString: typeOf(schema) === "string",
             constrained:
-              'enum' in schema || 'format' in schema || 'pattern' in schema,
+              "enum" in schema || "format" in schema || "pattern" in schema,
           },
         ];
   }
@@ -87,15 +91,21 @@ export function collectLeaves(
   const leaves: Leaf[] = [];
   for (const [name, raw] of Object.entries(properties)) {
     if (!isObject(raw)) continue;
-    const path = prefix === '' ? name : `${prefix}.${name}`;
+    const path = prefix === "" ? name : `${prefix}.${name}`;
     const isRequired = requiredNames.has(name);
 
-    if (isObject(raw['properties'])) {
+    if (isObject(raw["properties"])) {
       leaves.push(...collectLeaves(raw, path, depth + 1, isRequired));
       continue;
     }
-    if (typeOf(raw) === 'array' && isObject(raw['items']) && isObject(raw['items']['properties'])) {
-      leaves.push(...collectLeaves(raw['items'], `${path}[]`, depth + 1, isRequired));
+    if (
+      typeOf(raw) === "array" &&
+      isObject(raw["items"]) &&
+      isObject(raw["items"]["properties"])
+    ) {
+      leaves.push(
+        ...collectLeaves(raw["items"], `${path}[]`, depth + 1, isRequired),
+      );
       continue;
     }
 
@@ -103,8 +113,8 @@ export function collectLeaves(
       path,
       described: described(raw),
       required: isRequired,
-      isString: typeOf(raw) === 'string',
-      constrained: 'enum' in raw || 'format' in raw || 'pattern' in raw,
+      isString: typeOf(raw) === "string",
+      constrained: "enum" in raw || "format" in raw || "pattern" in raw,
     });
   }
   return leaves;
@@ -116,27 +126,28 @@ function pct(part: number, total: number): number {
 }
 
 const EXPECTED =
-  'Every tool carries a description, every required parameter carries one, and at least 90% of all parameters do';
+  "Every tool carries a description, every required parameter carries one, and at least 90% of all parameters do";
 
 export class McpToolDescriptionCoverageAudit extends Audit {
   static override meta: AuditMeta = {
-    id: 'agent-interfaces/mcp-tool-description-coverage',
-    category: 'agent-interfaces',
-    title: 'Tool Self-Description Coverage',
-    failureTitle: 'Tool Self-Description Coverage',
+    id: "agent-interfaces/mcp-tool-description-coverage",
+    category: "agent-interfaces",
+    title: "Tool Self-Description Coverage",
+    failureTitle: "Tool Self-Description Coverage",
     description:
-      'Counts, over the tool surface the endpoint already returned, what fraction of tools carry a description, what fraction of every input parameter carries one — walking `properties` recursively and into `items.properties` for arrays of objects — and reports the advisory ratios alongside: constrained string parameters, declared output schemas, titles and the server’s own `instructions`.',
-    scoreDisplayMode: 'ternary',
-    tier: 'scored',
-    evidenceGrade: 'B',
-    weight: weightForGrade('B', 'scored'),
-    defaultPriority: 'medium',
-    dossier: 'docs/evidence/audits/agent-interfaces/mcp-tool-description-coverage.md',
-    requires: ['origin-reachable'],
+      "Counts, over the tool surface the endpoint already returned, what fraction of tools carry a description, what fraction of every input parameter carries one — walking `properties` recursively and into `items.properties` for arrays of objects — and reports the advisory ratios alongside: constrained string parameters, declared output schemas, titles and the server’s own `instructions`.",
+    scoreDisplayMode: "ternary",
+    tier: "scored",
+    evidenceGrade: "B",
+    weight: weightForGrade("B", "scored"),
+    defaultPriority: "medium",
+    dossier:
+      "docs/evidence/audits/agent-interfaces/mcp-tool-description-coverage.md",
+    requires: ["origin-reachable"],
     guidance: {
       impact:
-        'A tool description and its parameter descriptions are the only prose a model ever sees about a tool — they are the whole basis on which it decides whether to call it and what to pass. A required parameter with no description, no enum and no pattern gives the model nothing to derive a legal value from, so it guesses. Guessed values come back as validation errors, and the agent spends retry turns per call until it gives up on the tool.',
-      fix: 'Describe every tool and every parameter, in prose long enough to say what a legal value looks like. Constrain string parameters with `enum`, `format` or `pattern` where the legal set is finite. Declare an `outputSchema` so a client can parse the result rather than re-reading it, give each tool a `title` for the consent prompt, and return top-level `instructions` telling a model how the tools fit together.',
+        "A tool description and its parameter descriptions are the only prose a model ever sees about a tool — they are the whole basis on which it decides whether to call it and what to pass. A required parameter with no description, no enum and no pattern gives the model nothing to derive a legal value from, so it guesses. Guessed values come back as validation errors, and the agent spends retry turns per call until it gives up on the tool.",
+      fix: "Describe every tool and every parameter, in prose long enough to say what a legal value looks like. Constrain string parameters with `enum`, `format` or `pattern` where the legal set is finite. Declare an `outputSchema` so a client can parse the result rather than re-reading it, give each tool a `title` for the consent prompt, and return top-level `instructions` telling a model how the tools fit together.",
       code: `{
   "name": "create_reservation",
   "title": "Create a reservation",
@@ -160,10 +171,10 @@ export class McpToolDescriptionCoverageAudit extends Audit {
   },
   "outputSchema": { "type": "object", "properties": { "confirmation": { "type": "string" } } }
 }`,
-      effort: 'moderate',
+      effort: "moderate",
       docsUrl:
-        'https://forkpoint.github.io/agent-lighthouse/audits/agent-interfaces/mcp-tool-description-coverage/',
-      tags: ['mcp', 'tools', 'documentation', 'json-schema'],
+        "https://forkpoint.github.io/agent-lighthouse/audits/agent-interfaces/mcp-tool-description-coverage/",
+      tags: ["mcp", "tools", "documentation", "json-schema"],
     },
   };
 
@@ -171,9 +182,11 @@ export class McpToolDescriptionCoverageAudit extends Audit {
     const endpoint = discoverMcpEndpoint(ctx);
     if (!endpoint || !endpoint.url) {
       return this.notApplicable(
-        'This site declares no MCP endpoint, so there is no tool surface to measure.',
+        "This site declares no MCP endpoint, so there is no tool surface to measure.",
         EXPECTED,
-        endpoint ? `Malformed declaration (${endpoint.source})` : 'No declared MCP endpoint',
+        endpoint
+          ? `Malformed declaration (${endpoint.source})`
+          : "No declared MCP endpoint",
       );
     }
 
@@ -201,17 +214,20 @@ export class McpToolDescriptionCoverageAudit extends Audit {
     let stringConstrained = 0;
 
     for (const [index, tool] of tools.entries()) {
-      const rawName = tool['name'];
-      const name = typeof rawName === 'string' && rawName ? rawName : `tool #${index + 1}`;
+      const rawName = tool["name"];
+      const name =
+        typeof rawName === "string" && rawName ? rawName : `tool #${index + 1}`;
 
       if (!described(tool)) undescribedTools.push(name);
-      else if ((tool['description'] as string).trim().length < STUB_LENGTH) stubTools.push(name);
+      else if ((tool["description"] as string).trim().length < STUB_LENGTH)
+        stubTools.push(name);
 
-      if (isObject(tool['outputSchema'])) withOutputSchema += 1;
-      const title = tool['title'];
-      if (typeof title === 'string' && title.trim() !== '' && title !== rawName) withTitle += 1;
+      if (isObject(tool["outputSchema"])) withOutputSchema += 1;
+      const title = tool["title"];
+      if (typeof title === "string" && title.trim() !== "" && title !== rawName)
+        withTitle += 1;
 
-      for (const leaf of collectLeaves(tool['inputSchema'], '')) {
+      for (const leaf of collectLeaves(tool["inputSchema"], "")) {
         const path = `${name}.${leaf.path}`;
         leafCount += 1;
         if (leaf.described) leafDescribed += 1;
@@ -234,11 +250,14 @@ export class McpToolDescriptionCoverageAudit extends Audit {
     const discover = await discoverProbe(ctx, url);
     if (discover && discover.status === 200) {
       const parsed = parseRpcResponse(discover);
-      const value = parsed.ok ? parsed.value['instructions'] : undefined;
-      if (typeof value === 'string') instructionsLength = value.trim().length;
+      const value = parsed.ok ? parsed.value["instructions"] : undefined;
+      if (typeof value === "string") instructionsLength = value.trim().length;
     }
 
-    const toolCoverage = pct(tools.length - undescribedTools.length, tools.length);
+    const toolCoverage = pct(
+      tools.length - undescribedTools.length,
+      tools.length,
+    );
     const paramCoverage = pct(leafDescribed, leafCount);
     const requiredCoverage = pct(requiredDescribed, requiredCount);
     const details = {
@@ -265,10 +284,10 @@ export class McpToolDescriptionCoverageAudit extends Audit {
       `parameters ${paramCoverage}%`,
       `required parameters ${requiredCoverage}%`,
       `instructions ${instructionsLength} character(s)`,
-    ].join('; ');
+    ].join("; ");
     const displayValue = `${paramCoverage}% of parameters documented`;
     const list = (items: string[]) => {
-      const shown = items.slice(0, 5).join(', ');
+      const shown = items.slice(0, 5).join(", ");
       return items.length > 5 ? `${shown} (${items.length - 5} more)` : shown;
     };
 
@@ -292,10 +311,10 @@ export class McpToolDescriptionCoverageAudit extends Audit {
     if (failures.length > 0) {
       return {
         ...this.fail(
-          failures.join('. '),
+          failures.join(". "),
           EXPECTED,
           found,
-          'Describe every tool and every required parameter, and say what a legal value looks like.',
+          "Describe every tool and every required parameter, and say what a legal value looks like.",
         ),
         displayValue,
         details,
@@ -310,17 +329,17 @@ export class McpToolDescriptionCoverageAudit extends Audit {
     }
     if (instructionsLength === 0) {
       warnings.push(
-        'The server returns no `instructions`, so a model gets no guidance on how the tools fit together',
+        "The server returns no `instructions`, so a model gets no guidance on how the tools fit together",
       );
     }
 
     if (warnings.length > 0) {
       return {
         ...this.warn(
-          warnings.join('. '),
+          warnings.join(". "),
           EXPECTED,
           found,
-          'Expand the stub descriptions and return top-level `instructions`.',
+          "Expand the stub descriptions and return top-level `instructions`.",
         ),
         displayValue,
         details,

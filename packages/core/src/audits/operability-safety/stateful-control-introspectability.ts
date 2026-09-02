@@ -7,13 +7,18 @@
 // `<div class="toggle is-on">` declares nothing for them to check. This audit
 // asks whether the control's current state is readable, not whether the ARIA it
 // does carry is spelled correctly.
-import type { AuditMeta, AuditResult } from '../../types';
-import { Audit } from '../../audit';
-import { weightForGrade } from '../../scorer';
-import type { CheckContext } from '../../check-context';
-import { collectPageCss } from '../../gatherers/css-rules';
-import { detailLines } from '../../detail-lines';
-import { NATIVE_INTERACTIVE, STATE_CLASS_RE, hasClickSignal, isElement } from './_agent-affordances';
+import type { AuditMeta, AuditResult } from "../../types";
+import { Audit } from "../../audit";
+import { weightForGrade } from "../../scorer";
+import type { CheckContext } from "../../check-context";
+import { collectPageCss } from "../../gatherers/css-rules";
+import { detailLines } from "../../detail-lines";
+import {
+  NATIVE_INTERACTIVE,
+  STATE_CLASS_RE,
+  hasClickSignal,
+  isElement,
+} from "./_agent-affordances";
 
 /** Below this share of introspectable controls the page fails. */
 const RATIO_FLOOR = 0.9;
@@ -25,27 +30,28 @@ const RATIO_FLOOR = 0.9;
  * the attribute is the only place an agent can read that state from.
  */
 const ROLE_STATE: ReadonlyMap<string, string> = new Map([
-  ['switch', 'aria-checked'],
-  ['checkbox', 'aria-checked'],
-  ['radio', 'aria-checked'],
-  ['menuitemcheckbox', 'aria-checked'],
-  ['menuitemradio', 'aria-checked'],
-  ['tab', 'aria-selected'],
-  ['option', 'aria-selected'],
-  ['treeitem', 'aria-selected'],
+  ["switch", "aria-checked"],
+  ["checkbox", "aria-checked"],
+  ["radio", "aria-checked"],
+  ["menuitemcheckbox", "aria-checked"],
+  ["menuitemradio", "aria-checked"],
+  ["tab", "aria-selected"],
+  ["option", "aria-selected"],
+  ["treeitem", "aria-selected"],
 ]);
 
 /** Attributes that publish a control's current state to a snapshot. */
 const STATE_ATTRIBUTES = [
-  'aria-pressed',
-  'aria-checked',
-  'aria-expanded',
-  'aria-selected',
-  'aria-current',
+  "aria-pressed",
+  "aria-checked",
+  "aria-expanded",
+  "aria-selected",
+  "aria-current",
 ];
 
 /** What a class-only state control should have declared instead. */
-const CLASS_STATE_REMEDY = 'aria-pressed, aria-checked, aria-selected or aria-current';
+const CLASS_STATE_REMEDY =
+  "aria-pressed, aria-checked, aria-selected or aria-current";
 
 /** Classes a collapsible region carries when it is the target of a trigger. */
 const PANEL_CLASS = /accordion|collapse|panel|details-content/i;
@@ -54,8 +60,8 @@ const PANEL_CLASS = /accordion|collapse|panel|details-content/i;
 const SORT_CLASS = /sort/i;
 
 /** Native controls whose state is in the DOM without any ARIA. */
-const NATIVE_STATEFUL = new Set(['details', 'select']);
-const NATIVE_STATEFUL_INPUT = new Set(['checkbox', 'radio']);
+const NATIVE_STATEFUL = new Set(["details", "select"]);
+const NATIVE_STATEFUL_INPUT = new Set(["checkbox", "radio"]);
 
 interface Finding {
   pageUrl: string;
@@ -71,7 +77,7 @@ const MAX_NAMED_CLASSES = 3;
 
 /** One finding as a single line. `detailLines` applies the schema's caps. */
 function describeFinding(finding: Finding): string {
-  const where = finding.stateClass ? ` [class "${finding.stateClass}"]` : '';
+  const where = finding.stateClass ? ` [class "${finding.stateClass}"]` : "";
   return `${finding.pageUrl} — ${finding.missing}${where}: ${finding.hint}`;
 }
 
@@ -83,10 +89,10 @@ interface Survey {
 
 /** The first class token that reads as a state marker, or an empty string. */
 function stateClassToken(attribs: Record<string, string>): string {
-  for (const token of (attribs['class'] ?? '').split(/\s+/)) {
+  for (const token of (attribs["class"] ?? "").split(/\s+/)) {
     if (token && STATE_CLASS_RE.test(token)) return token;
   }
-  return '';
+  return "";
 }
 
 /** True when the element already publishes its state to a snapshot. */
@@ -96,9 +102,11 @@ function publishesState(attribs: Record<string, string>): boolean {
 
 /** A short, stable label for the element, for the evidence line. */
 function hintFor(tag: string, attribs: Record<string, string>): string {
-  const id = attribs['id'] ? `#${attribs['id']}` : '';
-  const cls = attribs['class'] ? `.${attribs['class'].split(/\s+/).filter(Boolean).join('.')}` : '';
-  const role = attribs['role'] ? ` role="${attribs['role']}"` : '';
+  const id = attribs["id"] ? `#${attribs["id"]}` : "";
+  const cls = attribs["class"]
+    ? `.${attribs["class"].split(/\s+/).filter(Boolean).join(".")}`
+    : "";
+  const role = attribs["role"] ? ` role="${attribs["role"]}"` : "";
   return `<${tag}${id}${cls}${role}>`;
 }
 
@@ -119,11 +127,11 @@ async function survey(ctx: CheckContext): Promise<Survey> {
       verdicts.set(node, finding);
     };
 
-    $('body *').each((_i, node) => {
+    $("body *").each((_i, node) => {
       if (!isElement(node)) return;
-      const tag = node.tagName?.toLowerCase() ?? '';
+      const tag = node.tagName?.toLowerCase() ?? "";
       const attribs = node.attribs ?? {};
-      const role = (attribs['role'] ?? '').trim().toLowerCase();
+      const role = (attribs["role"] ?? "").trim().toLowerCase();
       const hint = hintFor(tag, attribs);
       const base = { pageUrl: page.url, hint };
 
@@ -133,7 +141,11 @@ async function survey(ctx: CheckContext): Promise<Survey> {
         record(
           node,
           attribs[required] === undefined
-            ? { ...base, missing: required, stateClass: stateClassToken(attribs) }
+            ? {
+                ...base,
+                missing: required,
+                stateClass: stateClassToken(attribs),
+              }
             : null,
         );
         return;
@@ -145,26 +157,36 @@ async function survey(ctx: CheckContext): Promise<Survey> {
         record(node, null);
         return;
       }
-      if (tag === 'input' && NATIVE_STATEFUL_INPUT.has((attribs['type'] ?? '').toLowerCase())) {
+      if (
+        tag === "input" &&
+        NATIVE_STATEFUL_INPUT.has((attribs["type"] ?? "").toLowerCase())
+      ) {
         record(node, null);
         return;
       }
       // A summary's state lives on its parent details, already counted.
-      if (tag === 'summary') return;
+      if (tag === "summary") return;
 
       const clickable =
-        NATIVE_INTERACTIVE.has(tag) || role === 'button' || hasClickSignal(node, $, css.rules);
+        NATIVE_INTERACTIVE.has(tag) ||
+        role === "button" ||
+        hasClickSignal(node, $, css.rules);
 
       // (c) A disclosure trigger: it opens something, so it has an open state.
       if (clickable) {
-        const controls = attribs['aria-controls'] !== undefined;
+        const controls = attribs["aria-controls"] !== undefined;
         const next = $(node).next();
-        const panel = next.length > 0 && PANEL_CLASS.test(next.attr('class') ?? '');
+        const panel =
+          next.length > 0 && PANEL_CLASS.test(next.attr("class") ?? "");
         if (controls || panel) {
           record(
             node,
-            attribs['aria-expanded'] === undefined
-              ? { ...base, missing: 'aria-expanded', stateClass: stateClassToken(attribs) }
+            attribs["aria-expanded"] === undefined
+              ? {
+                  ...base,
+                  missing: "aria-expanded",
+                  stateClass: stateClassToken(attribs),
+                }
               : null,
           );
           return;
@@ -184,16 +206,20 @@ async function survey(ctx: CheckContext): Promise<Survey> {
       }
 
       // (d) A sortable column header carries the current sort direction.
-      if (tag === 'th') {
+      if (tag === "th") {
         const sortable =
-          SORT_CLASS.test(attribs['class'] ?? '') ||
-          Object.keys(attribs).some((key) => key.startsWith('data-sort')) ||
-          $(node).find('button, a[href]').length > 0;
+          SORT_CLASS.test(attribs["class"] ?? "") ||
+          Object.keys(attribs).some((key) => key.startsWith("data-sort")) ||
+          $(node).find("button, a[href]").length > 0;
         if (sortable) {
           record(
             node,
-            attribs['aria-sort'] === undefined
-              ? { ...base, missing: 'aria-sort', stateClass: stateClassToken(attribs) }
+            attribs["aria-sort"] === undefined
+              ? {
+                  ...base,
+                  missing: "aria-sort",
+                  stateClass: stateClassToken(attribs),
+                }
               : null,
           );
         }
@@ -210,7 +236,7 @@ async function survey(ctx: CheckContext): Promise<Survey> {
 }
 
 const EXPECTED =
-  'Every control that holds a state publishes it through an ARIA state attribute or a native element, so an agent can read the state before acting and verify it afterwards';
+  "Every control that holds a state publishes it through an ARIA state attribute or a native element, so an agent can read the state before acting and verify it afterwards";
 
 const SAMPLE = `<!-- The state is in the attribute, so the snapshot changes when it flips. -->
 <button class="toggle is-on" role="switch" aria-checked="true">Share my data</button>
@@ -223,34 +249,40 @@ const SAMPLE = `<!-- The state is in the attribute, so the snapshot changes when
 
 export class StatefulControlIntrospectabilityAudit extends Audit {
   static override meta: AuditMeta = {
-    id: 'operability-safety/stateful-control-introspectability',
-    category: 'operability-safety',
-    title: 'Stateful controls: current state readable by an agent',
-    failureTitle: 'Stateful controls: current state readable by an agent',
+    id: "operability-safety/stateful-control-introspectability",
+    category: "operability-safety",
+    title: "Stateful controls: current state readable by an agent",
+    failureTitle: "Stateful controls: current state readable by an agent",
     description:
-      'Checks that every control whose purpose is to hold a state — toggles, switches, checkboxes, radio groups, tabs, accordions, disclosure triggers, sort direction, filter chips — exposes that state through a machine-readable attribute rather than a CSS class alone. Reports the count of state-bearing controls whose current value an agent cannot read, each with the class that carries the state instead.',
-    scoreDisplayMode: 'ternary',
-    weight: weightForGrade('B', 'scored'),
-    evidenceGrade: 'B',
-    tier: 'scored',
-    dossier: 'docs/evidence/audits/operability-safety/stateful-control-introspectability.md',
-    requires: ['origin-reachable', 'unblocked-fetches', 'rendered-body', 'sample-adequate'],
-    defaultPriority: 'high',
+      "Checks that every control whose purpose is to hold a state — toggles, switches, checkboxes, radio groups, tabs, accordions, disclosure triggers, sort direction, filter chips — exposes that state through a machine-readable attribute rather than a CSS class alone. Reports the count of state-bearing controls whose current value an agent cannot read, each with the class that carries the state instead.",
+    scoreDisplayMode: "ternary",
+    weight: weightForGrade("B", "scored"),
+    evidenceGrade: "B",
+    tier: "scored",
+    dossier:
+      "docs/evidence/audits/operability-safety/stateful-control-introspectability.md",
+    requires: [
+      "origin-reachable",
+      "unblocked-fetches",
+      "rendered-body",
+      "sample-adequate",
+    ],
+    defaultPriority: "high",
     guidance: {
       impact:
-        "An agent works as observe, act, verify. If a toggle's only \"on\" signal is `class=\"is-active\"` and a colour change, the accessibility snapshot is byte-identical before and after the click, so the agent cannot verify the post-condition: it either clicks again and flips the state back, or reports success with no evidence. The accessibility linters cannot catch this, because `aria-required-attr` fires only once the element already declares `role=\"switch\"` or `role=\"checkbox\"` — the common class-only toggle declares no role and passes silently. Benchmarks put the cost high: WebSuite measures switch, accordion and dropdown primitives among the worst-performing interactions for web agents, and Operator's confirmation design assumes the agent can observe a state transition before acting on it.",
+        'An agent works as observe, act, verify. If a toggle\'s only "on" signal is `class="is-active"` and a colour change, the accessibility snapshot is byte-identical before and after the click, so the agent cannot verify the post-condition: it either clicks again and flips the state back, or reports success with no evidence. The accessibility linters cannot catch this, because `aria-required-attr` fires only once the element already declares `role="switch"` or `role="checkbox"` — the common class-only toggle declares no role and passes silently. Benchmarks put the cost high: WebSuite measures switch, accordion and dropdown primitives among the worst-performing interactions for web agents, and Operator\'s confirmation design assumes the agent can observe a state transition before acting on it.',
       fix: 'Publish the state where a snapshot can read it. Give a toggle `role="switch"` with `aria-checked`, a tab `role="tab"` with `aria-selected`, a filter chip `aria-pressed`, a disclosure trigger `aria-expanded` alongside its `aria-controls`, and a sortable column header `aria-sort="ascending"`, `"descending"` or `"none"`. Keep the class for styling and update the attribute in the same handler that updates the class. Where the markup allows it, use `<details>`/`<summary>` or a native checkbox and let the DOM carry the state for free.',
       code: SAMPLE,
-      effort: 'moderate',
+      effort: "moderate",
       docsUrl:
-        'https://forkpoint.github.io/agent-lighthouse/audits/operability-safety/stateful-control-introspectability/',
-      tags: ['agent-operability', 'accessibility-tree', 'state'],
+        "https://forkpoint.github.io/agent-lighthouse/audits/operability-safety/stateful-control-introspectability/",
+      tags: ["agent-operability", "accessibility-tree", "state"],
     },
   };
 
   private recommendation() {
     return {
-      priority: 'high' as const,
+      priority: "high" as const,
       description: StatefulControlIntrospectabilityAudit.meta.description,
       code: SAMPLE,
     };
@@ -260,12 +292,14 @@ export class StatefulControlIntrospectabilityAudit extends Audit {
     const s = await survey(ctx);
     const total = s.introspectable + s.opaque.length;
     const partial =
-      s.crossOrigin > 0 ? `; ${s.crossOrigin} cross-origin stylesheet not fetched` : '';
+      s.crossOrigin > 0
+        ? `; ${s.crossOrigin} cross-origin stylesheet not fetched`
+        : "";
 
     if (total === 0) {
       return {
         ...this.notApplicable(
-          'The scanned pages carry no control that holds a state, so there is nothing to read back.',
+          "The scanned pages carry no control that holds a state, so there is nothing to read back.",
           EXPECTED,
           `0 state-bearing control(s) found${partial}`,
         ),
@@ -278,13 +312,15 @@ export class StatefulControlIntrospectabilityAudit extends Audit {
     // whose components each carry their own state class produced a summary
     // line past the schema's 1000-character cap, which errored the whole audit
     // out. Three names identify the pattern; the rest is a count.
-    const classes = [...new Set(s.opaque.map((f) => f.stateClass).filter(Boolean))];
+    const classes = [
+      ...new Set(s.opaque.map((f) => f.stateClass).filter(Boolean)),
+    ];
     const shown = classes.slice(0, MAX_NAMED_CLASSES).map((c) => `"${c}"`);
     const rest = classes.length - shown.length;
     const classClause =
       classes.length > 0
-        ? ` (state in class ${shown.join(', ')}${rest > 0 ? ` and ${rest} more` : ''} only)`
-        : '';
+        ? ` (state in class ${shown.join(", ")}${rest > 0 ? ` and ${rest} more` : ""} only)`
+        : "";
     const found =
       s.opaque.length === 0
         ? `ratio ${ratio.toFixed(2)} — 0 opaque of ${total} state-bearing control(s)${partial}`
@@ -314,11 +350,17 @@ export class StatefulControlIntrospectabilityAudit extends Audit {
 
     const missing = [...new Set(s.opaque.map((f) => f.missing))];
     const first = s.opaque[0]!;
-    const body = `${s.opaque.length} of ${total} state-bearing control(s) hold their state where no snapshot can read it, so an agent cannot verify that its click did anything. Missing: ${missing.join('; ')}. First: ${first.hint}.`;
+    const body = `${s.opaque.length} of ${total} state-bearing control(s) hold their state where no snapshot can read it, so an agent cannot verify that its click did anything. Missing: ${missing.join("; ")}. First: ${first.hint}.`;
 
     if (ratio < RATIO_FLOOR) {
       return {
-        ...this.fail(body, EXPECTED, found, this.recommendation(), first.pageUrl),
+        ...this.fail(
+          body,
+          EXPECTED,
+          found,
+          this.recommendation(),
+          first.pageUrl,
+        ),
         displayValue: found,
         details,
       };

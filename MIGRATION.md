@@ -75,8 +75,8 @@ major half encoded the old 10-category taxonomy. Both are gone in v2:
   `content-extraction`, `generative-engine/descriptive-urls` under
   `answer-readiness`, and so on. Never reconstruct a v2 id by pasting a v1 slug
   onto a guessed category — look it up.
-- **Category scores are not comparable.** Category weight in v2 is *evidence
-  mass* — the summed weight of the audits registered in that category — so both
+- **Category scores are not comparable.** Category weight in v2 is _evidence
+  mass_ — the summed weight of the audits registered in that category — so both
   the membership and the denominators changed. Overall scores across the major
   version are not comparable either.
 

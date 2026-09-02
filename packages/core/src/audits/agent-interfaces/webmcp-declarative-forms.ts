@@ -1,7 +1,7 @@
-import type { AuditMeta, AuditResult } from '../../types';
-import { Audit } from '../../audit';
-import { weightForGrade } from '../../scorer';
-import type { CheckContext } from '../../check-context';
+import type { AuditMeta, AuditResult } from "../../types";
+import { Audit } from "../../audit";
+import { weightForGrade } from "../../scorer";
+import type { CheckContext } from "../../check-context";
 
 // Re-graded A -> B on 2026-08-24. Chrome's declarative-API page is live and
 // states that the browser reads an annotated form as a tool, but it carries an
@@ -23,9 +23,9 @@ import type { CheckContext } from '../../check-context';
  *                            descriptions in the synthesized JSON Schema.
  *   - `toolautosubmit`       on <form> — submit without a user gesture.
  */
-const TOOL_NAME_ATTR = 'toolname';
-const TOOL_DESCRIPTION_ATTR = 'tooldescription';
-const TOOL_PARAM_DESCRIPTION_ATTR = 'toolparamdescription';
+const TOOL_NAME_ATTR = "toolname";
+const TOOL_DESCRIPTION_ATTR = "tooldescription";
+const TOOL_PARAM_DESCRIPTION_ATTR = "toolparamdescription";
 
 interface FormSurvey {
   total: number;
@@ -47,21 +47,24 @@ function survey(ctx: CheckContext): FormSurvey {
     nameless: 0,
     undescribed: [],
     withParamDescriptions: 0,
-    firstPageUrl: '',
+    firstPageUrl: "",
   };
 
   for (const page of ctx.pages) {
-    page.$('form').each((_, el) => {
+    page.$("form").each((_, el) => {
       result.total++;
       const $form = page.$(el);
-      const toolname = ($form.attr(TOOL_NAME_ATTR) ?? '').trim();
-      const tooldescription = ($form.attr(TOOL_DESCRIPTION_ATTR) ?? '').trim();
+      const toolname = ($form.attr(TOOL_NAME_ATTR) ?? "").trim();
+      const tooldescription = ($form.attr(TOOL_DESCRIPTION_ATTR) ?? "").trim();
 
       if (!toolname) {
         // A description without a name registers nothing. The pre-rewrite
         // audit counted these as WebMCP forms, so a single description-only
         // form produced a full pass with an empty tool list.
-        if (tooldescription || $form.find(`[${TOOL_PARAM_DESCRIPTION_ATTR}]`).length > 0) {
+        if (
+          tooldescription ||
+          $form.find(`[${TOOL_PARAM_DESCRIPTION_ATTR}]`).length > 0
+        ) {
           result.nameless++;
         }
         return;
@@ -104,30 +107,36 @@ const SAMPLE = `<!-- Declarative WebMCP: the browser synthesizes a JSON Schema f
 
 export class WebmcpDeclarativeFormsAudit extends Audit {
   static override meta: AuditMeta = {
-    id: 'agent-interfaces/webmcp-declarative-forms',
-    category: 'agent-interfaces',
-    title: 'WebMCP declarative form tools',
-    failureTitle: 'WebMCP declarative form tools',
+    id: "agent-interfaces/webmcp-declarative-forms",
+    category: "agent-interfaces",
+    title: "WebMCP declarative form tools",
+    failureTitle: "WebMCP declarative form tools",
     description:
       "WebMCP's Declarative API turns an HTML <form> into an agent-callable tool: add toolname and tooldescription and the browser synthesizes a JSON Schema from the form's controls, which an in-browser agent can discover and invoke without any JavaScript. toolname is what registers the tool — a description on its own registers nothing.",
-    scoreDisplayMode: 'ternary',
-    weight: weightForGrade('B', 'scored'),
-    evidenceGrade: 'B',
-    tier: 'scored',
-    dossier: 'docs/evidence/audits/agent-interfaces/webmcp-declarative-forms.md',
-    requires: ['origin-reachable', 'unblocked-fetches', 'rendered-body', 'sample-adequate'],
+    scoreDisplayMode: "ternary",
+    weight: weightForGrade("B", "scored"),
+    evidenceGrade: "B",
+    tier: "scored",
+    dossier:
+      "docs/evidence/audits/agent-interfaces/webmcp-declarative-forms.md",
+    requires: [
+      "origin-reachable",
+      "unblocked-fetches",
+      "rendered-body",
+      "sample-adequate",
+    ],
     // Softened from 'high': the feature is Baseline "limited" (Chrome 149 /
     // Edge 150 origin trials, Brave Leo experimental) and Apple's WebKit
     // standards position is "oppose", so this is worth doing, not urgent.
-    defaultPriority: 'medium',
+    defaultPriority: "medium",
     guidance: {
       impact:
-        'Without the declarative attributes, an agent in a supporting browser has no structured tool for your form and falls back to heuristics or vision to work out which control is which — slower, and wrong more often on anything past a single text input.',
-      fix: 'Add toolname (a short snake_case verb phrase) and tooldescription to each form you want agents to be able to call, and put toolparamdescription on the individual controls so the synthesized JSON Schema explains each property. Add toolautosubmit only to read-only tools.',
+        "Without the declarative attributes, an agent in a supporting browser has no structured tool for your form and falls back to heuristics or vision to work out which control is which — slower, and wrong more often on anything past a single text input.",
+      fix: "Add toolname (a short snake_case verb phrase) and tooldescription to each form you want agents to be able to call, and put toolparamdescription on the individual controls so the synthesized JSON Schema explains each property. Add toolautosubmit only to read-only tools.",
       code: SAMPLE,
-      effort: 'easy',
-      docsUrl: 'https://developer.chrome.com/docs/ai/webmcp/declarative-api',
-      tags: ['webmcp', 'declarative', 'forms', 'agent-protocol'],
+      effort: "easy",
+      docsUrl: "https://developer.chrome.com/docs/ai/webmcp/declarative-api",
+      tags: ["webmcp", "declarative", "forms", "agent-protocol"],
     },
   };
 
@@ -139,39 +148,39 @@ export class WebmcpDeclarativeFormsAudit extends Audit {
     // agent-readiness.
     if (forms.total === 0) {
       return this.notApplicable(
-        'No forms on the scanned pages, so there is nothing to expose as a declarative WebMCP tool.',
+        "No forms on the scanned pages, so there is nothing to expose as a declarative WebMCP tool.",
         EXPECTED,
-        '0 forms on scanned pages',
+        "0 forms on scanned pages",
       );
     }
 
     const paramNote =
       forms.named.length > 0
         ? `; ${forms.withParamDescriptions}/${forms.named.length} with ${TOOL_PARAM_DESCRIPTION_ATTR}`
-        : '';
+        : "";
     const found = `${forms.named.length}/${forms.total} forms registered as tools${paramNote}`;
     const namelessNote =
       forms.nameless > 0
         ? ` ${forms.nameless} form(s) carry WebMCP markup without a ${TOOL_NAME_ATTR}, which registers no tool at all.`
-        : '';
+        : "";
 
     if (forms.named.length === 0) {
       return this.fail(
         `Found ${forms.total} form(s) but none carry a ${TOOL_NAME_ATTR}, so no form is exposed as a WebMCP tool.${namelessNote}`,
         EXPECTED,
         found,
-        'medium',
+        "medium",
       );
     }
 
-    const toolsLabel = ` (tools: ${forms.named.join(', ')})`;
+    const toolsLabel = ` (tools: ${forms.named.join(", ")})`;
 
     if (forms.named.length < forms.total) {
       return this.warn(
         `${forms.named.length}/${forms.total} form(s) are exposed as WebMCP tools${toolsLabel}.${namelessNote}`,
         EXPECTED,
         found,
-        'medium',
+        "medium",
         forms.firstPageUrl,
       );
     }
@@ -179,10 +188,10 @@ export class WebmcpDeclarativeFormsAudit extends Audit {
     // Registered but unselectable: an agent picks a tool by its description.
     if (forms.undescribed.length > 0) {
       return this.warn(
-        `All ${forms.total} form(s) are registered as WebMCP tools, but ${forms.undescribed.join(', ')} ${forms.undescribed.length === 1 ? 'has' : 'have'} no ${TOOL_DESCRIPTION_ATTR}, so an agent has nothing to select the tool on.`,
+        `All ${forms.total} form(s) are registered as WebMCP tools, but ${forms.undescribed.join(", ")} ${forms.undescribed.length === 1 ? "has" : "have"} no ${TOOL_DESCRIPTION_ATTR}, so an agent has nothing to select the tool on.`,
         EXPECTED,
         found,
-        'medium',
+        "medium",
         forms.firstPageUrl,
       );
     }

@@ -15,7 +15,9 @@ import {
 
 describe("getArgValue", () => {
   it("reads --flag=value", () => {
-    expect(getArgValue(["--preset=ecommerce"], "-p", "--preset")).toBe("ecommerce");
+    expect(getArgValue(["--preset=ecommerce"], "-p", "--preset")).toBe(
+      "ecommerce",
+    );
   });
 
   it("reads -p=value", () => {
@@ -23,17 +25,23 @@ describe("getArgValue", () => {
   });
 
   it("reads --flag value", () => {
-    expect(getArgValue(["--preset", "ecommerce"], "-p", "--preset")).toBe("ecommerce");
+    expect(getArgValue(["--preset", "ecommerce"], "-p", "--preset")).toBe(
+      "ecommerce",
+    );
   });
 
   it("reads -p value", () => {
-    expect(getArgValue(["-p", "ecommerce"], "-p", "--preset")).toBe("ecommerce");
+    expect(getArgValue(["-p", "ecommerce"], "-p", "--preset")).toBe(
+      "ecommerce",
+    );
   });
 
   // Without this a `--preset --silent` typo scans with a preset named
   // "--silent" instead of reporting that no preset was given.
   it("does not take the next flag as a value", () => {
-    expect(getArgValue(["--preset", "--silent"], "-p", "--preset")).toBeUndefined();
+    expect(
+      getArgValue(["--preset", "--silent"], "-p", "--preset"),
+    ).toBeUndefined();
   });
 
   it("returns undefined for a flag that is absent", () => {
@@ -49,7 +57,9 @@ describe("getArgValue", () => {
   });
 
   it("prefers the = form when both appear", () => {
-    expect(getArgValue(["--preset=a", "--preset", "b"], "-p", "--preset")).toBe("a");
+    expect(getArgValue(["--preset=a", "--preset", "b"], "-p", "--preset")).toBe(
+      "a",
+    );
   });
 });
 
@@ -75,11 +85,15 @@ describe("splitList", () => {
 
 describe("resolveUrl", () => {
   it("prefers the positional argument", () => {
-    expect(resolveUrl("https://a.test", { url: "https://b.test" })).toBe("https://a.test");
+    expect(resolveUrl("https://a.test", { url: "https://b.test" })).toBe(
+      "https://a.test",
+    );
   });
 
   it("falls back to the config file", () => {
-    expect(resolveUrl(undefined, { url: "https://b.test" })).toBe("https://b.test");
+    expect(resolveUrl(undefined, { url: "https://b.test" })).toBe(
+      "https://b.test",
+    );
   });
 
   it("is undefined when neither is given", () => {
@@ -140,7 +154,12 @@ describe("parseCliOptions", () => {
     const o = parseCliOptions(
       ["--preset=full", "--min-score=90", "-d", "./flag-out", "-o", "html"],
       undefined,
-      { preset: "ecommerce", minScore: 70, outputDir: "./cfg-out", output: ["json"] },
+      {
+        preset: "ecommerce",
+        minScore: 70,
+        outputDir: "./cfg-out",
+        output: ["json"],
+      },
     );
     expect(o).toMatchObject({
       presetName: "full",
@@ -154,18 +173,27 @@ describe("parseCliOptions", () => {
   // never parsed, so a narrowed scan silently ran every category.
   it("parses --categories into a list", () => {
     const [first, second] = CATEGORY_IDS;
-    const o = parseCliOptions([`--categories=${first},${second}`], "https://a.test");
+    const o = parseCliOptions(
+      [`--categories=${first},${second}`],
+      "https://a.test",
+    );
     expect(o.categories).toEqual([first, second]);
     expect(o.unknownCategories).toEqual([]);
   });
 
   it("reports category names that do not exist", () => {
-    const o = parseCliOptions(["--categories=not-a-category,also-not"], "https://a.test");
+    const o = parseCliOptions(
+      ["--categories=not-a-category,also-not"],
+      "https://a.test",
+    );
     expect(o.unknownCategories).toEqual(["not-a-category", "also-not"]);
   });
 
   it("separates the real categories from the unknown ones", () => {
-    const o = parseCliOptions([`--categories=${CATEGORY_IDS[0]},nope`], "https://a.test");
+    const o = parseCliOptions(
+      [`--categories=${CATEGORY_IDS[0]},nope`],
+      "https://a.test",
+    );
     expect(o.categories).toEqual([CATEGORY_IDS[0], "nope"]);
     expect(o.unknownCategories).toEqual(["nope"]);
   });
@@ -188,22 +216,31 @@ describe("parseCliOptions", () => {
   });
 
   it("reads the config path so the file can be loaded before the rest is parsed", () => {
-    expect(parseCliOptions(["-c", "./al.json"], undefined).configPath).toBe("./al.json");
+    expect(parseCliOptions(["-c", "./al.json"], undefined).configPath).toBe(
+      "./al.json",
+    );
   });
 
   it("reads --debug-audit", () => {
-    const o = parseCliOptions(["--debug-audit=structured-data/json-ld-present"], "https://a.test");
+    const o = parseCliOptions(
+      ["--debug-audit=structured-data/json-ld-present"],
+      "https://a.test",
+    );
     expect(o.debugAudit).toBe("structured-data/json-ld-present");
   });
 
   // Number("") is 0, so an empty --min-score must not read as "score 0 is fine".
   it("keeps the config minScore when --min-score is given no value", () => {
-    const o = parseCliOptions(["--min-score"], "https://a.test", { minScore: 60 });
+    const o = parseCliOptions(["--min-score"], "https://a.test", {
+      minScore: 60,
+    });
     expect(o.minScore).toBe(60);
   });
 
   it("produces NaN for a non-numeric --min-score rather than guessing", () => {
-    expect(parseCliOptions(["--min-score=abc"], "https://a.test").minScore).toBeNaN();
+    expect(
+      parseCliOptions(["--min-score=abc"], "https://a.test").minScore,
+    ).toBeNaN();
   });
 });
 
@@ -236,19 +273,26 @@ describe("resolveCommand", () => {
   });
 
   it("audits with no URL when audit is given alone, so the config file supplies it", () => {
-    expect(resolveCommand(["audit"])).toEqual({ action: "audit", url: undefined });
+    expect(resolveCommand(["audit"])).toEqual({
+      action: "audit",
+      url: undefined,
+    });
   });
 });
 
 describe("parseCategoryAssertions", () => {
   it("reads one --assert-category pair", () => {
-    expect(parseCategoryAssertions(["--assert-category", "structured-data:90"])).toEqual({
+    expect(
+      parseCategoryAssertions(["--assert-category", "structured-data:90"]),
+    ).toEqual({
       "structured-data": 90,
     });
   });
 
   it("reads the = form", () => {
-    expect(parseCategoryAssertions(["--assert-category=structured-data:90"])).toEqual({
+    expect(
+      parseCategoryAssertions(["--assert-category=structured-data:90"]),
+    ).toEqual({
       "structured-data": 90,
     });
   });
@@ -285,12 +329,17 @@ describe("parseCategoryAssertions", () => {
   // The loaded config is read again after this, so mutating it would leak.
   it("does not mutate the config file object", () => {
     const fileConfig = { assertCategories: { "structured-data": 50 } };
-    parseCategoryAssertions(["--assert-category", "agent-interfaces:70"], fileConfig);
+    parseCategoryAssertions(
+      ["--assert-category", "agent-interfaces:70"],
+      fileConfig,
+    );
     expect(fileConfig.assertCategories).toEqual({ "structured-data": 50 });
   });
 
   it("ignores a pair with no threshold", () => {
-    expect(parseCategoryAssertions(["--assert-category", "structured-data"])).toEqual({});
+    expect(
+      parseCategoryAssertions(["--assert-category", "structured-data"]),
+    ).toEqual({});
   });
 
   it("ignores a trailing flag with no value", () => {
@@ -309,7 +358,9 @@ describe("failedAssertion", () => {
   ];
 
   it("returns nothing when every threshold is met", () => {
-    expect(failedAssertion(categories, { "agent-interfaces": 80 })).toBeUndefined();
+    expect(
+      failedAssertion(categories, { "agent-interfaces": 80 }),
+    ).toBeUndefined();
   });
 
   it("names the category that fell short", () => {
@@ -321,17 +372,23 @@ describe("failedAssertion", () => {
   });
 
   it("treats a score equal to the threshold as a pass", () => {
-    expect(failedAssertion(categories, { "structured-data": 40 })).toBeUndefined();
+    expect(
+      failedAssertion(categories, { "structured-data": 40 }),
+    ).toBeUndefined();
   });
 
   it("matches on a name substring, so an operator can type a word", () => {
-    expect(failedAssertion(categories, { structured: 90 })?.name).toBe("Structured Data");
+    expect(failedAssertion(categories, { structured: 90 })?.name).toBe(
+      "Structured Data",
+    );
   });
 
   // --preset and --categories both narrow the scan; failing CI over a category
   // the operator excluded on purpose would make the flags unusable together.
   it("ignores a threshold for a category that did not run", () => {
-    expect(failedAssertion(categories, { "agentic-commerce": 90 })).toBeUndefined();
+    expect(
+      failedAssertion(categories, { "agentic-commerce": 90 }),
+    ).toBeUndefined();
   });
 
   it("returns nothing when there are no assertions", () => {
@@ -341,8 +398,16 @@ describe("failedAssertion", () => {
 
 describe("selectDebugChecks", () => {
   const checks = [
-    { id: "structured-data/json-ld-present", title: "JSON-LD present", status: "pass" },
-    { id: "structured-data/faqpage-schema", title: "FAQPage schema", status: "fail" },
+    {
+      id: "structured-data/json-ld-present",
+      title: "JSON-LD present",
+      status: "pass",
+    },
+    {
+      id: "structured-data/faqpage-schema",
+      title: "FAQPage schema",
+      status: "fail",
+    },
     { id: "agent-interfaces/webmcp", title: "WebMCP endpoint", status: "warn" },
     { id: "agent-interfaces/openapi", title: "OpenAPI document", status: "na" },
   ];
@@ -355,7 +420,9 @@ describe("selectDebugChecks", () => {
   });
 
   it("selects an audit by its exact id", () => {
-    expect(selectDebugChecks(checks, "agent-interfaces/webmcp")).toHaveLength(1);
+    expect(selectDebugChecks(checks, "agent-interfaces/webmcp")).toHaveLength(
+      1,
+    );
   });
 
   it("selects by a title substring, case-insensitively", () => {
@@ -371,16 +438,22 @@ describe("selectDebugChecks", () => {
 
 describe("openCommand", () => {
   it("uses open on macOS", () => {
-    expect(openCommand("darwin", "/tmp/report.html")).toBe('open "/tmp/report.html"');
+    expect(openCommand("darwin", "/tmp/report.html")).toBe(
+      'open "/tmp/report.html"',
+    );
   });
 
   // The empty first argument is the window title, which `start` requires when
   // the path is quoted.
   it("uses start with an empty title on Windows", () => {
-    expect(openCommand("win32", "C:\\report.html")).toBe('start "" "C:\\report.html"');
+    expect(openCommand("win32", "C:\\report.html")).toBe(
+      'start "" "C:\\report.html"',
+    );
   });
 
   it("uses xdg-open elsewhere", () => {
-    expect(openCommand("linux", "/tmp/report.html")).toBe('xdg-open "/tmp/report.html"');
+    expect(openCommand("linux", "/tmp/report.html")).toBe(
+      'xdg-open "/tmp/report.html"',
+    );
   });
 });

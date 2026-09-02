@@ -6,13 +6,18 @@
 // `aria-roles` validates the ARIA a widget already declares. Both start from a
 // declared control. This audit counts the click targets that declare nothing at
 // all, so neither of the others can see them.
-import type { AuditMeta, AuditResult } from '../../types';
-import { Audit } from '../../audit';
-import { weightForGrade } from '../../scorer';
-import type { CheckContext } from '../../check-context';
-import { collectPageCss } from '../../gatherers/css-rules';
-import { detailLines } from '../../detail-lines';
-import { NATIVE_INTERACTIVE, accessibleName, hasClickSignal, isElement } from './_agent-affordances';
+import type { AuditMeta, AuditResult } from "../../types";
+import { Audit } from "../../audit";
+import { weightForGrade } from "../../scorer";
+import type { CheckContext } from "../../check-context";
+import { collectPageCss } from "../../gatherers/css-rules";
+import { detailLines } from "../../detail-lines";
+import {
+  NATIVE_INTERACTIVE,
+  accessibleName,
+  hasClickSignal,
+  isElement,
+} from "./_agent-affordances";
 
 /** Below this share of addressable click targets the page fails. */
 const RATIO_FLOOR = 0.9;
@@ -25,12 +30,12 @@ const RATIO_FLOOR = 0.9;
  * `details`). Those must not count towards the ratio in either direction.
  */
 const ADDRESSABLE_TAGS: ReadonlySet<string> = new Set([
-  'a',
-  'button',
-  'input',
-  'select',
-  'textarea',
-  'summary',
+  "a",
+  "button",
+  "input",
+  "select",
+  "textarea",
+  "summary",
 ]);
 
 /**
@@ -41,13 +46,23 @@ const ADDRESSABLE_TAGS: ReadonlySet<string> = new Set([
  * nameless `<input>` would therefore be a guess, so only the tags that name
  * themselves from their own content are held to the empty-name rule.
  */
-const NAMED_BY_CONTENT: ReadonlySet<string> = new Set(['a', 'button', 'summary']);
+const NAMED_BY_CONTENT: ReadonlySet<string> = new Set([
+  "a",
+  "button",
+  "summary",
+]);
 
 /** Roles that explicitly remove an element from the accessibility tree. */
-const NO_ROLE = new Set(['presentation', 'none']);
+const NO_ROLE = new Set(["presentation", "none"]);
 
 /** Tags that never reach a snapshot, whatever they carry. */
-const NON_RENDERED = new Set(['script', 'style', 'noscript', 'template', 'head']);
+const NON_RENDERED = new Set([
+  "script",
+  "style",
+  "noscript",
+  "template",
+  "head",
+]);
 
 interface Ghost {
   pageUrl: string;
@@ -66,20 +81,22 @@ interface Survey {
 
 /** The role attribute, once `presentation`/`none` are treated as no role. */
 function declaredRole(attribs: Record<string, string>): string {
-  const role = (attribs['role'] ?? '').trim().toLowerCase();
-  return NO_ROLE.has(role) ? '' : role;
+  const role = (attribs["role"] ?? "").trim().toLowerCase();
+  return NO_ROLE.has(role) ? "" : role;
 }
 
 /** True when the element is already out of the accessibility tree. */
 function ariaHidden(attribs: Record<string, string>): boolean {
-  if (attribs['hidden'] !== undefined) return true;
-  return (attribs['aria-hidden'] ?? '').toLowerCase() === 'true';
+  if (attribs["hidden"] !== undefined) return true;
+  return (attribs["aria-hidden"] ?? "").toLowerCase() === "true";
 }
 
 /** A short, stable label for the element, for the evidence line. */
 function hintFor(tag: string, attribs: Record<string, string>): string {
-  const id = attribs['id'] ? `#${attribs['id']}` : '';
-  const cls = attribs['class'] ? `.${attribs['class'].split(/\s+/).filter(Boolean).join('.')}` : '';
+  const id = attribs["id"] ? `#${attribs["id"]}` : "";
+  const cls = attribs["class"]
+    ? `.${attribs["class"].split(/\s+/).filter(Boolean).join(".")}`
+    : "";
   return `<${tag}${id}${cls}>`;
 }
 
@@ -100,18 +117,19 @@ async function survey(ctx: CheckContext): Promise<Survey> {
     // holding a ghost inner div is reported once rather than twice.
     const flagged = new Set<unknown>();
 
-    $('body *').each((_i, node) => {
+    $("body *").each((_i, node) => {
       if (!isElement(node)) return;
-      const tag = node.tagName?.toLowerCase() ?? '';
+      const tag = node.tagName?.toLowerCase() ?? "";
       if (NON_RENDERED.has(tag)) return;
       const attribs = node.attribs ?? {};
       if (ariaHidden(attribs)) return;
       // A hidden input carries no click target and no name of its own.
-      if (tag === 'input' && (attribs['type'] ?? '').toLowerCase() === 'hidden') return;
+      if (tag === "input" && (attribs["type"] ?? "").toLowerCase() === "hidden")
+        return;
 
       const role = declaredRole(attribs);
       const addressableTag = ADDRESSABLE_TAGS.has(tag);
-      const name = addressableTag || role ? accessibleName(node, $) : '';
+      const name = addressableTag || role ? accessibleName(node, $) : "";
       const reasons: string[] = [];
 
       if (!NATIVE_INTERACTIVE.has(tag) && !role) {
@@ -122,22 +140,23 @@ async function survey(ctx: CheckContext): Promise<Survey> {
           .toArray()
           .some((parent) => flagged.has(parent));
         if (!ancestorFlagged && hasClickSignal(node, $, css.rules)) {
-          reasons.push('no role');
+          reasons.push("no role");
           flagged.add(node);
         }
       }
 
       // An anchor without href exposes no link role, so no snapshot entry is
       // ever emitted for it however it is styled.
-      if (tag === 'a' && attribs['href'] === undefined) reasons.push('no href');
+      if (tag === "a" && attribs["href"] === undefined) reasons.push("no href");
 
-      if ((NAMED_BY_CONTENT.has(tag) || role) && !name) reasons.push('no accessible name');
+      if ((NAMED_BY_CONTENT.has(tag) || role) && !name)
+        reasons.push("no accessible name");
 
       if (reasons.length > 0) {
         result.ghosts.push({
           pageUrl: page.url,
           tag,
-          reason: reasons.join(', '),
+          reason: reasons.join(", "),
           hint: hintFor(tag, attribs),
         });
         return;
@@ -151,7 +170,7 @@ async function survey(ctx: CheckContext): Promise<Survey> {
 }
 
 const EXPECTED =
-  'Every click target on the page declares a native or ARIA role and carries an accessible name, so an agent can address all of them from a snapshot';
+  "Every click target on the page declares a native or ARIA role and carries an accessible name, so an agent can address all of them from a snapshot";
 
 const SAMPLE = `<!-- A tile an agent can click: real element, real name. -->
 <a class="product-tile" href="/p/42">Ceramic mug, 12oz</a>
@@ -164,34 +183,41 @@ const SAMPLE = `<!-- A tile an agent can click: real element, real name. -->
 
 export class GhostClickableElementRatioAudit extends Audit {
   static override meta: AuditMeta = {
-    id: 'operability-safety/ghost-clickable-element-ratio',
-    category: 'operability-safety',
-    title: 'Ghost-clickable elements: click targets an agent cannot address',
-    failureTitle: 'Ghost-clickable elements: click targets an agent cannot address',
+    id: "operability-safety/ghost-clickable-element-ratio",
+    category: "operability-safety",
+    title: "Ghost-clickable elements: click targets an agent cannot address",
+    failureTitle:
+      "Ghost-clickable elements: click targets an agent cannot address",
     description:
-      'Measures the share of on-page click targets that a DOM/accessibility-tree agent cannot address at all: elements that look and behave clickable to a human or a vision model but expose no native or ARIA role and no accessible name, so they never appear in a Playwright-MCP style snapshot. Reported as semantic / (semantic + ghost) over the served markup and its same-origin stylesheets, with the reason each ghost is unaddressable.',
-    scoreDisplayMode: 'ternary',
-    weight: weightForGrade('B', 'scored'),
-    evidenceGrade: 'B',
-    tier: 'scored',
-    dossier: 'docs/evidence/audits/operability-safety/ghost-clickable-element-ratio.md',
-    requires: ['origin-reachable', 'unblocked-fetches', 'rendered-body', 'sample-adequate'],
-    defaultPriority: 'high',
+      "Measures the share of on-page click targets that a DOM/accessibility-tree agent cannot address at all: elements that look and behave clickable to a human or a vision model but expose no native or ARIA role and no accessible name, so they never appear in a Playwright-MCP style snapshot. Reported as semantic / (semantic + ghost) over the served markup and its same-origin stylesheets, with the reason each ghost is unaddressable.",
+    scoreDisplayMode: "ternary",
+    weight: weightForGrade("B", "scored"),
+    evidenceGrade: "B",
+    tier: "scored",
+    dossier:
+      "docs/evidence/audits/operability-safety/ghost-clickable-element-ratio.md",
+    requires: [
+      "origin-reachable",
+      "unblocked-fetches",
+      "rendered-body",
+      "sample-adequate",
+    ],
+    defaultPriority: "high",
     guidance: {
       impact:
         "An element whose click behaviour comes only from a JS listener on a non-interactive tag, or from cursor:pointer styling, and which carries no role and no accessible name, is omitted from the serialized accessibility snapshot that agent toolkits send to the model. Playwright MCP's default mode is the accessibility tree, not pixel input: every action tool takes an exact element reference from the snapshot, and coordinate clicking exists only behind the optional vision capability. An element absent from the snapshot is therefore unaddressable by the default toolchain — the agent cannot emit a valid click and must fail or guess a URL. The accessibility linters cannot warn about it either: axe's button-name and link-name rules only fire on elements that already declare button or link semantics, so a bare unroled div is invisible to them by construction.",
       fix: 'Make each click target a real control. Use `<a href>` for navigation and `<button>` for actions instead of a div with a click handler; where the markup cannot change, add `role="button"`, `tabindex="0"` and a keyboard handler. Give every icon-only control an accessible name through `aria-label`, `aria-labelledby` or an `<svg><title>`. Never ship an `<a>` without an `href` — it has no link role and no snapshot entry, whatever it is styled to look like.',
       code: SAMPLE,
-      effort: 'moderate',
+      effort: "moderate",
       docsUrl:
-        'https://forkpoint.github.io/agent-lighthouse/audits/operability-safety/ghost-clickable-element-ratio/',
-      tags: ['agent-operability', 'accessibility-tree', 'actionability'],
+        "https://forkpoint.github.io/agent-lighthouse/audits/operability-safety/ghost-clickable-element-ratio/",
+      tags: ["agent-operability", "accessibility-tree", "actionability"],
     },
   };
 
   private recommendation() {
     return {
-      priority: 'high' as const,
+      priority: "high" as const,
       description: GhostClickableElementRatioAudit.meta.description,
       code: SAMPLE,
     };
@@ -201,12 +227,14 @@ export class GhostClickableElementRatioAudit extends Audit {
     const s = await survey(ctx);
     const total = s.semantic + s.ghosts.length;
     const partial =
-      s.crossOrigin > 0 ? `; ${s.crossOrigin} cross-origin stylesheet not fetched` : '';
+      s.crossOrigin > 0
+        ? `; ${s.crossOrigin} cross-origin stylesheet not fetched`
+        : "";
 
     if (total === 0) {
       return {
         ...this.notApplicable(
-          'The scanned pages carry no click target of either kind, so there is no ratio to measure.',
+          "The scanned pages carry no click target of either kind, so there is no ratio to measure.",
           EXPECTED,
           `0 click target(s) found${partial}`,
         ),
@@ -219,7 +247,7 @@ export class GhostClickableElementRatioAudit extends Audit {
     const found =
       s.ghosts.length === 0
         ? `ratio ${ratio.toFixed(2)} — 0 ghost of ${total} click target(s)${partial}`
-        : `ratio ${ratio.toFixed(2)} — ${s.ghosts.length} ghost of ${total} click target(s) (${reasons.join('; ')})${partial}`;
+        : `ratio ${ratio.toFixed(2)} — ${s.ghosts.length} ghost of ${total} click target(s) (${reasons.join("; ")})${partial}`;
     const details = {
       ghostCount: s.ghosts.length,
       semanticCount: s.semantic,

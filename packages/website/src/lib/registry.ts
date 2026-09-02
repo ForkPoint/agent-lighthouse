@@ -1,4 +1,7 @@
-import { defaultConfig, CATEGORY_NAMES } from '@forkpoint/agent-lighthouse-core';
+import {
+  defaultConfig,
+  CATEGORY_NAMES,
+} from "@forkpoint/agent-lighthouse-core";
 
 export interface AuditRecord {
   id: string;
@@ -50,8 +53,8 @@ export interface CategoryRecord {
  * keeps the order stable if a category slug ever becomes a prefix of another.
  */
 function byCategoryThenSlug(a: { id: string }, b: { id: string }): number {
-  const [aCategory = '', aSlug = ''] = a.id.split('/');
-  const [bCategory = '', bSlug = ''] = b.id.split('/');
+  const [aCategory = "", aSlug = ""] = a.id.split("/");
+  const [bCategory = "", bSlug = ""] = b.id.split("/");
   return aCategory.localeCompare(bCategory) || aSlug.localeCompare(bSlug);
 }
 
@@ -67,10 +70,10 @@ export function auditList(): AuditRecord[] {
         categoryTitle: CATEGORY_NAMES[meta.category] ?? meta.category,
         title: meta.title,
         description: meta.description,
-        evidenceGrade: meta.evidenceGrade ?? 'D',
-        tier: meta.tier ?? 'scored',
+        evidenceGrade: meta.evidenceGrade ?? "D",
+        tier: meta.tier ?? "scored",
         weight: meta.weight,
-        priority: meta.defaultPriority ?? 'medium',
+        priority: meta.defaultPriority ?? "medium",
         tags: meta.guidance?.tags ?? [],
       });
     }
@@ -91,10 +94,12 @@ export function auditDataList(): AuditDataRecord[] {
       ...audit,
       failureTitle: meta.failureTitle || meta.title,
       scoreDisplayMode: meta.scoreDisplayMode,
-      dossier: meta.dossier ?? '',
+      dossier: meta.dossier ?? "",
       // Optional fields are omitted rather than emitted as undefined: the v1
       // file left them out entirely, and `JSON.stringify` would drop them anyway.
-      ...(meta.applicablePageTypes ? { applicablePageTypes: meta.applicablePageTypes } : {}),
+      ...(meta.applicablePageTypes
+        ? { applicablePageTypes: meta.applicablePageTypes }
+        : {}),
       ...(meta.guidance
         ? {
             guidance: {
@@ -102,7 +107,9 @@ export function auditDataList(): AuditDataRecord[] {
               fix: meta.guidance.fix,
               ...(meta.guidance.code ? { code: meta.guidance.code } : {}),
               effort: meta.guidance.effort,
-              ...(meta.guidance.docsUrl ? { docsUrl: meta.guidance.docsUrl } : {}),
+              ...(meta.guidance.docsUrl
+                ? { docsUrl: meta.guidance.docsUrl }
+                : {}),
               ...(meta.guidance.tags ? { tags: meta.guidance.tags } : {}),
             },
           }

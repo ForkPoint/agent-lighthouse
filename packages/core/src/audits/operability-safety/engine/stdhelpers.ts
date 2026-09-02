@@ -3,19 +3,25 @@
  * pure data tables in `standards.ts` — element specs, global ARIA attributes,
  * implicit HTML role mapping, content-type lookups.
  */
-import { ariaAttrs, ariaRoles, htmlElms } from './standards';
-import { VNode, matches, closest } from './core';
+import { ariaAttrs, ariaRoles, htmlElms } from "./standards";
+import { VNode, matches, closest } from "./core";
 
 export function getAriaRolesByType(type: string): string[] {
-  return Object.keys(ariaRoles).filter((roleName) => ariaRoles[roleName].type === type);
+  return Object.keys(ariaRoles).filter(
+    (roleName) => ariaRoles[roleName].type === type,
+  );
 }
 
 export function getAriaRolesSupportingNameFromContent(): string[] {
-  return Object.keys(ariaRoles).filter((roleName) => ariaRoles[roleName].nameFromContent);
+  return Object.keys(ariaRoles).filter(
+    (roleName) => ariaRoles[roleName].nameFromContent,
+  );
 }
 
 export function getGlobalAriaAttrs(): string[] {
-  return Object.keys(ariaAttrs).filter((attrName) => ariaAttrs[attrName].global);
+  return Object.keys(ariaAttrs).filter(
+    (attrName) => ariaAttrs[attrName].global,
+  );
 }
 
 export function getElementsByContentType(type: string): string[] {
@@ -41,16 +47,30 @@ export function getElementSpec(
   if (!standard) return {};
   if (!standard.variant) return standard;
 
-  const { variant, ...spec } = standard as { variant: Record<string, unknown> } & Record<string, unknown>;
+  const { variant, ...spec } = standard as {
+    variant: Record<string, unknown>;
+  } & Record<string, unknown>;
 
   for (const variantName in variant) {
-    if (!Object.prototype.hasOwnProperty.call(variant, variantName) || variantName === 'default') {
+    if (
+      !Object.prototype.hasOwnProperty.call(variant, variantName) ||
+      variantName === "default"
+    ) {
       continue;
     }
-    const { matches: variantMatches, ...props } = variant[variantName] as Record<string, unknown>;
-    const matchProperties = Array.isArray(variantMatches) ? variantMatches : [variantMatches];
+    const { matches: variantMatches, ...props } = variant[
+      variantName
+    ] as Record<string, unknown>;
+    const matchProperties = Array.isArray(variantMatches)
+      ? variantMatches
+      : [variantMatches];
     for (let i = 0; i < matchProperties.length && noMatchAccessibleName; i++) {
-      if (Object.prototype.hasOwnProperty.call(matchProperties[i], 'hasAccessibleName')) {
+      if (
+        Object.prototype.hasOwnProperty.call(
+          matchProperties[i],
+          "hasAccessibleName",
+        )
+      ) {
         return standard;
       }
     }
@@ -67,7 +87,7 @@ export function getElementSpec(
   for (const propName in def) {
     if (
       Object.prototype.hasOwnProperty.call(def, propName) &&
-      typeof (spec as Record<string, unknown>)[propName] === 'undefined'
+      typeof (spec as Record<string, unknown>)[propName] === "undefined"
     ) {
       (spec as Record<string, unknown>)[propName] = def[propName];
     }
@@ -78,33 +98,40 @@ export function getElementSpec(
 
 // implicit-html-roles requires aria/dom/text helpers; imported lazily-safe
 // (called only at runtime, never at module init) to tolerate import cycles.
-import { arialabelledbyText, arialabelText, getExplicitRole } from './aria';
-import { idrefs, isFocusable } from './dom';
-import { isColumnHeader, isRowHeader } from './table';
-import { sanitize } from './text';
+import { arialabelledbyText, arialabelText, getExplicitRole } from "./aria";
+import { idrefs, isFocusable } from "./dom";
+import { isColumnHeader, isRowHeader } from "./table";
+import { sanitize } from "./text";
 
 const getSectioningContentSelector = (): string =>
-  getElementsByContentType('sectioning')
+  getElementsByContentType("sectioning")
     .map((nodeName) => `${nodeName}:not([role])`)
-    .join(', ') + ' , [role=article], [role=complementary], [role=navigation], [role=region]';
+    .join(", ") +
+  " , [role=article], [role=complementary], [role=navigation], [role=region]";
 
 const getSectioningContentPlusMainSelector = (): string =>
-  getSectioningContentSelector() + ' , main:not([role]), [role=main]';
+  getSectioningContentSelector() + " , main:not([role]), [role=main]";
 
-function hasAccessibleName(vNode: VNode, { checkTitle = false }: { checkTitle?: boolean } = {}): boolean {
+function hasAccessibleName(
+  vNode: VNode,
+  { checkTitle = false }: { checkTitle?: boolean } = {},
+): boolean {
   return !!(
     sanitize(arialabelledbyText(vNode)) ||
     sanitize(arialabelText(vNode)) ||
-    (checkTitle && vNode?.props.nodeType === 1 && sanitize(vNode.attr('title') || ''))
+    (checkTitle &&
+      vNode?.props.nodeType === 1 &&
+      sanitize(vNode.attr("title") || ""))
   );
 }
 
-type ImplicitRoleResolver = string | ((vNode: VNode) => string | null | undefined);
+type ImplicitRoleResolver =
+  string | ((vNode: VNode) => string | null | undefined);
 
 export const implicitHtmlRoles: Record<string, ImplicitRoleResolver> = {
-  a: (vNode) => (vNode.hasAttr('href') ? 'link' : null),
-  area: (vNode) => (vNode.hasAttr('href') ? 'link' : null),
-  article: 'article',
+  a: (vNode) => (vNode.hasAttr("href") ? "link" : null),
+  area: (vNode) => (vNode.hasAttr("href") ? "link" : null),
+  article: "article",
   aside: (vNode) => {
     if (
       closest(vNode.parent, getSectioningContentSelector()) &&
@@ -112,103 +139,116 @@ export const implicitHtmlRoles: Record<string, ImplicitRoleResolver> = {
     ) {
       return null;
     }
-    return 'complementary';
+    return "complementary";
   },
-  body: 'document',
-  button: 'button',
-  datalist: 'listbox',
-  dd: 'definition',
-  dfn: 'term',
-  details: 'group',
-  dialog: 'dialog',
-  dt: 'term',
-  fieldset: 'group',
-  figure: 'figure',
+  body: "document",
+  button: "button",
+  datalist: "listbox",
+  dd: "definition",
+  dfn: "term",
+  details: "group",
+  dialog: "dialog",
+  dt: "term",
+  fieldset: "group",
+  figure: "figure",
   footer: (vNode) => {
-    const sectioningElement = closest(vNode, getSectioningContentPlusMainSelector());
-    return !sectioningElement ? 'contentinfo' : null;
+    const sectioningElement = closest(
+      vNode,
+      getSectioningContentPlusMainSelector(),
+    );
+    return !sectioningElement ? "contentinfo" : null;
   },
-  form: (vNode) => (hasAccessibleName(vNode) ? 'form' : null),
-  h1: 'heading',
-  h2: 'heading',
-  h3: 'heading',
-  h4: 'heading',
-  h5: 'heading',
-  h6: 'heading',
+  form: (vNode) => (hasAccessibleName(vNode) ? "form" : null),
+  h1: "heading",
+  h2: "heading",
+  h3: "heading",
+  h4: "heading",
+  h5: "heading",
+  h6: "heading",
   header: (vNode) => {
-    const sectioningElement = closest(vNode, getSectioningContentPlusMainSelector());
-    return !sectioningElement ? 'banner' : null;
+    const sectioningElement = closest(
+      vNode,
+      getSectioningContentPlusMainSelector(),
+    );
+    return !sectioningElement ? "banner" : null;
   },
-  hr: 'separator',
+  hr: "separator",
   img: (vNode) => {
-    const emptyAlt = vNode.hasAttr('alt') && !vNode.attr('alt');
-    const hasGlobalAria = getGlobalAriaAttrs().find((attr) => vNode.hasAttr(attr));
-    return emptyAlt && !hasGlobalAria && !isFocusable(vNode) ? 'presentation' : 'img';
+    const emptyAlt = vNode.hasAttr("alt") && !vNode.attr("alt");
+    const hasGlobalAria = getGlobalAriaAttrs().find((attr) =>
+      vNode.hasAttr(attr),
+    );
+    return emptyAlt && !hasGlobalAria && !isFocusable(vNode)
+      ? "presentation"
+      : "img";
   },
   input: (vNode) => {
     let suggestionsSourceElement: boolean | undefined;
-    if (vNode.hasAttr('list')) {
-      const listElement = idrefs(vNode, 'list').filter((node) => !!node)[0];
+    if (vNode.hasAttr("list")) {
+      const listElement = idrefs(vNode, "list").filter((node) => !!node)[0];
       suggestionsSourceElement =
-        !!listElement && (listElement as Element).nodeName.toLowerCase() === 'datalist';
+        !!listElement &&
+        (listElement as Element).nodeName.toLowerCase() === "datalist";
     }
     switch (vNode.props.type) {
-      case 'checkbox':
-        return 'checkbox';
-      case 'number':
-        return 'spinbutton';
-      case 'radio':
-        return 'radio';
-      case 'range':
-        return 'slider';
-      case 'search':
-        return !suggestionsSourceElement ? 'searchbox' : 'combobox';
-      case 'button':
-      case 'image':
-      case 'reset':
-      case 'submit':
-        return 'button';
-      case 'text':
-      case 'tel':
-      case 'url':
-      case 'email':
-      case '':
-        return !suggestionsSourceElement ? 'textbox' : 'combobox';
+      case "checkbox":
+        return "checkbox";
+      case "number":
+        return "spinbutton";
+      case "radio":
+        return "radio";
+      case "range":
+        return "slider";
+      case "search":
+        return !suggestionsSourceElement ? "searchbox" : "combobox";
+      case "button":
+      case "image":
+      case "reset":
+      case "submit":
+        return "button";
+      case "text":
+      case "tel":
+      case "url":
+      case "email":
+      case "":
+        return !suggestionsSourceElement ? "textbox" : "combobox";
       default:
-        return 'textbox';
+        return "textbox";
     }
   },
-  li: 'listitem',
-  main: 'main',
-  math: 'math',
-  menu: 'list',
-  meter: 'meter',
-  nav: 'navigation',
-  ol: 'list',
-  optgroup: 'group',
-  option: 'option',
-  output: 'status',
-  progress: 'progressbar',
-  search: 'search',
-  section: (vNode) => (hasAccessibleName(vNode) ? 'region' : null),
+  li: "listitem",
+  main: "main",
+  math: "math",
+  menu: "list",
+  meter: "meter",
+  nav: "navigation",
+  ol: "list",
+  optgroup: "group",
+  option: "option",
+  output: "status",
+  progress: "progressbar",
+  search: "search",
+  section: (vNode) => (hasAccessibleName(vNode) ? "region" : null),
   select: (vNode) =>
-    vNode.hasAttr('multiple') || parseInt(vNode.attr('size') || '', 10) > 1 ? 'listbox' : 'combobox',
-  summary: 'button',
-  table: 'table',
-  tbody: 'rowgroup',
+    vNode.hasAttr("multiple") || parseInt(vNode.attr("size") || "", 10) > 1
+      ? "listbox"
+      : "combobox",
+  summary: "button",
+  table: "table",
+  tbody: "rowgroup",
   td: (vNode) => {
-    const table = closest(vNode, 'table');
+    const table = closest(vNode, "table");
     const role = table ? getExplicitRole(table) : null;
-    return ['grid', 'treegrid'].includes(role as string) ? 'gridcell' : 'cell';
+    return ["grid", "treegrid"].includes(role as string) ? "gridcell" : "cell";
   },
-  textarea: 'textbox',
-  tfoot: 'rowgroup',
+  textarea: "textbox",
+  tfoot: "rowgroup",
   th: (vNode) => {
-    if (isColumnHeader(vNode)) return 'columnheader';
-    if (isRowHeader(vNode)) return 'rowheader';
+    if (isColumnHeader(vNode)) return "columnheader";
+    if (isRowHeader(vNode)) return "rowheader";
     return undefined;
   },
-  thead: 'rowgroup',
-  tr: 'row',
-  ul: 'list',
+  thead: "rowgroup",
+  tr: "row",
+  ul: "list",
 };

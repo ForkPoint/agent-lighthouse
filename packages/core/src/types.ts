@@ -1,15 +1,15 @@
-import type { WafProtection } from './waf-detector';
+import type { WafProtection } from "./waf-detector";
 export type { WafProtection };
 
 // ── Page Types ────────────────────────────────────────────────
 
-export type PageType = 'homepage' | 'category' | 'product' | 'content';
+export type PageType = "homepage" | "category" | "product" | "content";
 
 export const PAGE_TYPE_LABELS: Record<PageType, string> = {
-  homepage: 'Homepage',
-  category: 'Category Page',
-  product: 'Product Details Page',
-  content: 'Content Page',
+  homepage: "Homepage",
+  category: "Category Page",
+  product: "Product Details Page",
+  content: "Content Page",
 };
 
 /**
@@ -21,7 +21,7 @@ export interface PageOverride {
 }
 
 /** Per-field presence in a product page's structured data. */
-export type FieldStatus = 'found' | 'partial' | 'missing';
+export type FieldStatus = "found" | "partial" | "missing";
 
 /**
  * Field-level verification of a product page, read directly from its structured
@@ -41,7 +41,7 @@ export interface ProductFieldVerification {
 
 // ── Audit Guidance ────────────────────────────────────────────
 
-export type FixEffort = 'trivial' | 'easy' | 'moderate' | 'complex';
+export type FixEffort = "trivial" | "easy" | "moderate" | "complex";
 
 export interface AuditGuidance {
   /** Customer-facing explanation of business impact when this audit fails */
@@ -60,7 +60,7 @@ export interface AuditGuidance {
 
 // ── Audit Meta ────────────────────────────────────────────────
 
-export type ScoreDisplayMode = 'binary' | 'ternary' | 'informative';
+export type ScoreDisplayMode = "binary" | "ternary" | "informative";
 
 /** Public sunset notice for a deprecated audit (see docs/evidence/sunset/not-a-factor.md). */
 export interface DeprecationNotice {
@@ -74,13 +74,13 @@ export interface DeprecationNotice {
  * Strength of the published evidence backing an audit, assigned in the audit's
  * dossier per docs/evidence/policy.md. Only A and B carry scoring weight.
  */
-export type EvidenceGrade = 'A' | 'B' | 'C' | 'D';
+export type EvidenceGrade = "A" | "B" | "C" | "D";
 
 /**
  * How an audit participates in scoring. Derived from its evidence grade
  * (spec §4): only `scored` audits move a category score.
  */
-export type AuditTier = 'scored' | 'informative' | 'experimental';
+export type AuditTier = "scored" | "informative" | "experimental";
 
 export interface AuditMeta {
   id: string;
@@ -122,10 +122,10 @@ export interface AuditMeta {
  * without the audit layer importing the scan layer.
  */
 export type EvidenceKey =
-  | 'origin-reachable'
-  | 'unblocked-fetches'
-  | 'rendered-body'
-  | 'sample-adequate';
+  | "origin-reachable"
+  | "unblocked-fetches"
+  | "rendered-body"
+  | "sample-adequate";
 
 export interface AuditResult {
   status: CheckStatus;
@@ -154,9 +154,9 @@ export interface AuditResult {
 
 // ── Check Results ──────────────────────────────────────────────
 
-export type CheckStatus = 'pass' | 'warn' | 'fail' | 'na';
+export type CheckStatus = "pass" | "warn" | "fail" | "na";
 
-export type CheckPriority = 'critical' | 'high' | 'medium' | 'low';
+export type CheckPriority = "critical" | "high" | "medium" | "low";
 
 export interface CheckRecommendation {
   priority: CheckPriority;
@@ -216,7 +216,8 @@ export interface CategoryResult {
 
 // ── Scan Report ────────────────────────────────────────────────
 
-export type ScoreTier = 'agent-ready' | 'partially-ready' | 'needs-work' | 'not-ready';
+export type ScoreTier =
+  "agent-ready" | "partially-ready" | "needs-work" | "not-ready";
 
 /**
  * Whether a verdict about this site can mean anything, and what is missing.
@@ -262,6 +263,12 @@ export interface ScanReport {
   readinessVitals?: ReadinessVitals;
   productFields?: ProductFieldVerification;
   wafProtection?: WafProtection;
+  originEvidence?: {
+    origin: string;
+    version: string;
+    readAt: string;
+    cached: boolean;
+  };
 }
 
 export interface ReadinessVitals {
@@ -270,5 +277,3 @@ export interface ReadinessVitals {
   botAccessibility: number;
   technical: number;
 }
-
-

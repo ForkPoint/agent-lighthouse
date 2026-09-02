@@ -1,9 +1,9 @@
-import { describe, it, expect } from 'vitest';
-import { defaultConfig } from '../audit-config';
-import { AuditResultSchema } from '../schemas';
-import { mockCheckContext, mockPageContext } from '../__tests__/test-utils';
-import type { CheckContext } from '../check-context';
-import type { AuditResult } from '../types';
+import { describe, it, expect } from "vitest";
+import { defaultConfig } from "../audit-config";
+import { AuditResultSchema } from "../schemas";
+import { mockCheckContext, mockPageContext } from "../__tests__/test-utils";
+import type { CheckContext } from "../check-context";
+import type { AuditResult } from "../types";
 
 /**
  * Every audit must return a result `AuditResultSchema` accepts, on a page
@@ -24,10 +24,10 @@ import type { AuditResult } from '../types';
 const OVER_CAP = 150;
 
 /** Longer than the schema's per-entry limit. */
-const LONG_TEXT = 'agent readiness '.repeat(120);
+const LONG_TEXT = "agent readiness ".repeat(120);
 
 function repeat(build: (i: number) => string): string {
-  return Array.from({ length: OVER_CAP }, (_v, i) => build(i)).join('\n');
+  return Array.from({ length: OVER_CAP }, (_v, i) => build(i)).join("\n");
 }
 
 /**
@@ -37,7 +37,7 @@ function repeat(build: (i: number) => string): string {
  * live storefront killed `aria-layer-injection-scan` with
  * `Unknown pseudo-class :-tab-0`.
  */
-const HOSTILE_ID = ':r0:-tab-0';
+const HOSTILE_ID = ":r0:-tab-0";
 
 /**
  * A page that trips every list-shaped audit at once: unnamed click targets,
@@ -47,15 +47,23 @@ const HOSTILE_ID = ':r0:-tab-0';
  */
 const TORTURE_BODY = [
   `<h1>${LONG_TEXT}</h1>`,
-  repeat((i) => `<div onclick="go(${i})" class="btn-primary">${LONG_TEXT}</div>`),
+  repeat(
+    (i) => `<div onclick="go(${i})" class="btn-primary">${LONG_TEXT}</div>`,
+  ),
   repeat((i) => `<a class="link-${i}">${LONG_TEXT}</a>`),
   // Distinct class names per element, not one shared class. An audit that
   // names what it found in its summary line reads these straight into
   // `displayValue`, which the schema caps at 1000 characters — and a real
   // storefront whose components each carry their own state class is what
   // found that.
-  repeat((i) => `<div role="switch" class="is-open-variant-${i}-toggle">Option ${i}</div>`),
-  repeat((i) => `<div class="ui-state-active-panel-${i}" aria-expanded="false">Panel ${i}</div>`),
+  repeat(
+    (i) =>
+      `<div role="switch" class="is-open-variant-${i}-toggle">Option ${i}</div>`,
+  ),
+  repeat(
+    (i) =>
+      `<div class="ui-state-active-panel-${i}" aria-expanded="false">Panel ${i}</div>`,
+  ),
   repeat((i) => `<input type="text" id="f${i}" autocomplete="not-a-term">`),
   repeat((i) => `<h2>Section ${i}</h2><p>${LONG_TEXT}</p>`),
   `<table>${repeat((i) => `<tr><td>${i}</td><td>${LONG_TEXT}</td></tr>`)}</table>`,
@@ -66,21 +74,21 @@ const TORTURE_BODY = [
   `<div aria-labelledby="${HOSTILE_ID}" aria-describedby="${HOSTILE_ID}">Labelled</div>`,
   `<div role="combobox" aria-controls="${HOSTILE_ID}" aria-expanded="false">Pick</div>`,
   `<label for="${HOSTILE_ID}">Hostile</label><input id="${HOSTILE_ID}" type="text">`,
-].join('');
+].join("");
 
 function tortureContext(): CheckContext {
   const html = `<html lang="en"><head><title>${LONG_TEXT}</title></head><body>${TORTURE_BODY}</body></html>`;
   return mockCheckContext([
-    mockPageContext('https://example.com/', html),
-    mockPageContext('https://example.com/products/hat', html, 1),
-    mockPageContext('https://example.com/collections/all', html, 2),
+    mockPageContext("https://example.com/", html),
+    mockPageContext("https://example.com/products/hat", html, 1),
+    mockPageContext("https://example.com/collections/all", html, 2),
   ]);
 }
 
 const registrations = Object.values(defaultConfig.audits).flat();
 
-describe('audit result contract', () => {
-  it('registers audits to check', () => {
+describe("audit result contract", () => {
+  it("registers audits to check", () => {
     expect(registrations.length).toBeGreaterThan(200);
   });
 
@@ -104,9 +112,9 @@ describe('audit result contract', () => {
       const parsed = AuditResultSchema.safeParse(result);
       if (!parsed.success) {
         const issues = parsed.error.issues
-          .map((issue) => `${issue.path.join('.')}: ${issue.message}`)
+          .map((issue) => `${issue.path.join(".")}: ${issue.message}`)
           .slice(0, 5)
-          .join('; ');
+          .join("; ");
         expect.fail(`result rejected by AuditResultSchema — ${issues}`);
       }
     });

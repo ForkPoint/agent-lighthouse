@@ -1,8 +1,8 @@
-import { defineCollection } from 'astro:content';
-import { glob } from 'astro/loaders';
-import { z } from 'astro/zod';
-import { publicDossier, type SourceRef } from './lib/dossier-public';
-import { readSourceRegistry, SOURCES_FILE } from './lib/evidence';
+import { defineCollection } from "astro:content";
+import { glob } from "astro/loaders";
+import { z } from "astro/zod";
+import { publicDossier, type SourceRef } from "./lib/dossier-public";
+import { readSourceRegistry, SOURCES_FILE } from "./lib/evidence";
 
 /**
  * The source registry, by id.
@@ -26,12 +26,12 @@ const registry = new Map<string, SourceRef>(
 // `*/*.md` — one level down only, so `audits/README.md` (the v1 index, which
 // carries no frontmatter and is not a dossier) stays out of the collection.
 const files = glob({
-  base: '../../docs/evidence/audits',
-  pattern: '*/*.md',
+  base: "../../docs/evidence/audits",
+  pattern: "*/*.md",
   // Derive the id from the path, not from frontmatter: every dossier carries a
   // bare `slug:` field that the loader would otherwise adopt as the id, which
   // would collapse `<category>/<slug>` down to `<slug>` and lose the category.
-  generateId: ({ entry }) => entry.replace(/\.md$/, ''),
+  generateId: ({ entry }) => entry.replace(/\.md$/, ""),
 });
 
 /**
@@ -45,7 +45,7 @@ const files = glob({
  */
 const audits = defineCollection({
   loader: {
-    name: 'audit-dossiers',
+    name: "audit-dossiers",
     async load(context) {
       await files.load(context);
       for (const [id, entry] of context.store.entries()) {
@@ -54,7 +54,7 @@ const audits = defineCollection({
           public_omit?: string[];
           sources?: string[];
         };
-        const { markdown } = publicDossier(entry.body ?? '', {
+        const { markdown } = publicDossier(entry.body ?? "", {
           publicExtra: data.public_extra,
           publicOmit: data.public_omit,
           // Resolved here rather than inside the slicer so that module stays a
@@ -62,7 +62,8 @@ const audits = defineCollection({
           // `check-dossiers.mjs` proves the whole set resolves before this runs.
           sources: (data.sources ?? []).map((id) => {
             const record = registry.get(id);
-            if (!record) throw new Error(`unknown source id \`${id}\` in ${entry.id}`);
+            if (!record)
+              throw new Error(`unknown source id \`${id}\` in ${entry.id}`);
             return record;
           }),
         });
@@ -86,10 +87,10 @@ const audits = defineCollection({
     category: z.string(),
     source_file: z.string(),
     slug: z.string(),
-    evidence_grade: z.enum(['A', 'B', 'C', 'D']),
+    evidence_grade: z.enum(["A", "B", "C", "D"]),
     // Only the v2-native dossiers record a tier; for the 148 v1 survivors the
     // registry (`meta.tier`) is the authoritative source, not the frontmatter.
-    tier: z.enum(['scored', 'informative', 'experimental']).optional(),
+    tier: z.enum(["scored", "informative", "experimental"]).optional(),
     disposition: z.string(),
     // The two whitelist escapes. `public_extra` names a heading exactly as the
     // dossier writes it, because the point is that the whitelist has no public
@@ -108,7 +109,7 @@ const audits = defineCollection({
       .array(
         z.object({
           name: z.string(),
-          grade: z.enum(['A', 'B', 'C', 'D']),
+          grade: z.enum(["A", "B", "C", "D"]),
           domain: z.string().optional(),
         }),
       )
@@ -120,7 +121,9 @@ const audits = defineCollection({
     // is in the vocabulary because the research could recommend retiring the
     // audit outright. Where this disagrees with the registry, `tier_rationale`
     // has to say why — see `sunset.test.ts`.
-    recommended_tier: z.enum(['scored', 'informative', 'experimental', 'delete']).optional(),
+    recommended_tier: z
+      .enum(["scored", "informative", "experimental", "delete"])
+      .optional(),
     tier_rationale: z.string().optional(),
     // Unquoted YAML dates arrive as `Date`, quoted ones as strings; coerce both.
     reviewed: z.coerce.date(),

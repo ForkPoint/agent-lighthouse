@@ -1,4 +1,8 @@
-import { CATEGORY_IDS, type PresetName, type PageType } from "@forkpoint/agent-lighthouse-core";
+import {
+  CATEGORY_IDS,
+  type PresetName,
+  type PageType,
+} from "@forkpoint/agent-lighthouse-core";
 
 /**
  * Argument parsing, lifted out of `main.ts`.
@@ -66,11 +70,19 @@ export function getArgValue(
     }
   }
   const shortIdx = shortFlag ? args.indexOf(shortFlag) : -1;
-  if (shortIdx !== -1 && args[shortIdx + 1] && !args[shortIdx + 1]!.startsWith("-")) {
+  if (
+    shortIdx !== -1 &&
+    args[shortIdx + 1] &&
+    !args[shortIdx + 1]!.startsWith("-")
+  ) {
     return args[shortIdx + 1];
   }
   const longIdx = longFlag ? args.indexOf(longFlag) : -1;
-  if (longIdx !== -1 && args[longIdx + 1] && !args[longIdx + 1]!.startsWith("-")) {
+  if (
+    longIdx !== -1 &&
+    args[longIdx + 1] &&
+    !args[longIdx + 1]!.startsWith("-")
+  ) {
     return args[longIdx + 1];
   }
   return undefined;
@@ -86,7 +98,10 @@ export function splitList(value: string | undefined): string[] | undefined {
 }
 
 /** The target URL: the positional argument wins over the config file. */
-export function resolveUrl(positional: string | undefined, fileConfig: FileConfig): string | undefined {
+export function resolveUrl(
+  positional: string | undefined,
+  fileConfig: FileConfig,
+): string | undefined {
   return positional || fileConfig.url;
 }
 
@@ -117,14 +132,20 @@ export function parseCliOptions(
   return {
     url: resolveUrl(positionalUrl, fileConfig),
     configPath: getArgValue(args, "-c", "--config"),
-    presetName: (getArgValue(args, "-p", "--preset") || fileConfig.preset || "full") as PresetName,
+    presetName: (getArgValue(args, "-p", "--preset") ||
+      fileConfig.preset ||
+      "full") as PresetName,
     minScore: minScoreArg ? Number(minScoreArg) : (fileConfig.minScore ?? 0),
-    outputDir: getArgValue(args, "-d", "--output-dir") || fileConfig.outputDir || "./reports",
-    outputFormats:
-      splitList(getArgValue(args, "-o", "--output")) ??
+    outputDir:
+      getArgValue(args, "-d", "--output-dir") ||
+      fileConfig.outputDir ||
+      "./reports",
+    outputFormats: splitList(getArgValue(args, "-o", "--output")) ??
       fileConfig.output ?? ["terminal", "html", "json"],
     categories,
-    unknownCategories: (categories ?? []).filter((c) => !CATEGORY_IDS.includes(c)),
+    unknownCategories: (categories ?? []).filter(
+      (c) => !CATEGORY_IDS.includes(c),
+    ),
     includeExperimental: args.includes("--experimental"),
     isSilent: args.includes("--silent"),
     progressJson: args.includes("--progress-json"),
@@ -145,9 +166,13 @@ export function parseCliOptions(
  * `al audit <url>`, `al <url>` and a bare `al` with a config file all reach the
  * same scan; anything starting with `-` is a flag, never a URL.
  */
-export function resolveCommand(args: string[]): { action: "help" | "audit"; url?: string } {
+export function resolveCommand(args: string[]): {
+  action: "help" | "audit";
+  url?: string;
+} {
   const command = args[0];
-  if (!command || command === "-h" || command === "--help") return { action: "help" };
+  if (!command || command === "-h" || command === "--help")
+    return { action: "help" };
   if (command === "audit") return { action: "audit", url: args[1] };
   if (!command.startsWith("-")) return { action: "audit", url: command };
   return { action: "audit" };
@@ -165,7 +190,9 @@ export function parseCategoryAssertions(
   args: string[],
   fileConfig: FileConfig & { assertCategories?: Record<string, number> } = {},
 ): Record<string, number> {
-  const out: Record<string, number> = { ...(fileConfig.assertCategories ?? {}) };
+  const out: Record<string, number> = {
+    ...(fileConfig.assertCategories ?? {}),
+  };
 
   const record = (pair: string | undefined) => {
     if (!pair) return;
@@ -175,7 +202,8 @@ export function parseCategoryAssertions(
 
   for (let i = 0; i < args.length; i++) {
     const arg = args[i]!;
-    if (arg.startsWith("--assert-category=")) record(arg.slice("--assert-category=".length));
+    if (arg.startsWith("--assert-category="))
+      record(arg.slice("--assert-category=".length));
     else if (arg === "--assert-category") record(args[i + 1]);
   }
   return out;
@@ -207,7 +235,8 @@ export function failedAssertion(
 ): FailedAssertion | undefined {
   for (const [catId, threshold] of Object.entries(assertions)) {
     const matched = categories.find(
-      (c) => c.id === catId || c.name.toLowerCase().includes(catId.toLowerCase()),
+      (c) =>
+        c.id === catId || c.name.toLowerCase().includes(catId.toLowerCase()),
     );
     if (matched && matched.score < threshold) {
       return { name: matched.name, score: matched.score, threshold };
@@ -230,16 +259,24 @@ export interface DebuggableCheck {
  * else matches an audit id exactly or a title substring, so an operator can
  * type `faqpage` instead of the full id.
  */
-export function selectDebugChecks<T extends DebuggableCheck>(checks: T[], debugAudit: string): T[] {
+export function selectDebugChecks<T extends DebuggableCheck>(
+  checks: T[],
+  debugAudit: string,
+): T[] {
   if (debugAudit === "fails") {
     return checks.filter((c) => c.status === "fail" || c.status === "warn");
   }
   const needle = debugAudit.toLowerCase();
-  return checks.filter((c) => c.id === debugAudit || c.title.toLowerCase().includes(needle));
+  return checks.filter(
+    (c) => c.id === debugAudit || c.title.toLowerCase().includes(needle),
+  );
 }
 
 /** The shell command that opens a file in the platform's default application. */
-export function openCommand(platform: NodeJS.Platform, filePath: string): string {
+export function openCommand(
+  platform: NodeJS.Platform,
+  filePath: string,
+): string {
   if (platform === "darwin") return `open "${filePath}"`;
   if (platform === "win32") return `start "" "${filePath}"`;
   return `xdg-open "${filePath}"`;

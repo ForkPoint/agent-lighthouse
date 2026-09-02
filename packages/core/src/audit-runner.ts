@@ -1,11 +1,26 @@
-import type { CheckResult, CategoryResult, EvidenceKey, PageType, AuditMeta, ScoreDisplayMode } from './types';
-import { logger } from './logger';
-import { TAG_SKIPPED_PAGE_TYPE, TAG_SCAN_ERROR, TAG_SKIPPED_NO_EVIDENCE } from './constants';
-import type { CheckContext, PageContext } from './check-context';
-import type { ScanConfig, CategoryConfig, AuditRegistration } from './audit-config';
-import { calculateCategoryScore, calculateOverallScore } from './scorer';
-import { traceFromCheck, formatTrace, type AuditTrace } from './audit-trace';
-import { scanReadTheSite, unreadSiteReason } from './scan-evidence';
+import type {
+  CheckResult,
+  CategoryResult,
+  EvidenceKey,
+  PageType,
+  AuditMeta,
+  ScoreDisplayMode,
+} from "./types";
+import { logger } from "./logger";
+import {
+  TAG_SKIPPED_PAGE_TYPE,
+  TAG_SCAN_ERROR,
+  TAG_SKIPPED_NO_EVIDENCE,
+} from "./constants";
+import type { CheckContext, PageContext } from "./check-context";
+import type {
+  ScanConfig,
+  CategoryConfig,
+  AuditRegistration,
+} from "./audit-config";
+import { calculateCategoryScore, calculateOverallScore } from "./scorer";
+import { traceFromCheck, formatTrace, type AuditTrace } from "./audit-trace";
+import { scanReadTheSite, unreadSiteReason } from "./scan-evidence";
 
 /** How much of a failure message a report is willing to carry. */
 const MAX_ERROR_CHARS = 400;
@@ -20,38 +35,46 @@ const MAX_ERROR_CHARS = 400;
  * tree it came from. Anything else is truncated instead of pasted whole.
  */
 function describeError(err: unknown): string {
-  const issues = (err as { issues?: Array<{ path?: unknown[]; message?: string }> })?.issues;
+  const issues = (
+    err as { issues?: Array<{ path?: unknown[]; message?: string }> }
+  )?.issues;
   if (Array.isArray(issues) && issues.length > 0) {
     const seen = new Set<string>();
     for (const issue of issues) {
-      const where = (issue.path ?? []).join('.');
+      const where = (issue.path ?? []).join(".");
       seen.add(where ? `${where}: ${issue.message}` : String(issue.message));
       if (seen.size >= 3) break;
     }
-    return [...seen].join('; ').slice(0, MAX_ERROR_CHARS);
+    return [...seen].join("; ").slice(0, MAX_ERROR_CHARS);
   }
   const message = err instanceof Error ? err.message : String(err);
-  return message.length > MAX_ERROR_CHARS ? `${message.slice(0, MAX_ERROR_CHARS - 1)}\u2026` : message;
+  return message.length > MAX_ERROR_CHARS
+    ? `${message.slice(0, MAX_ERROR_CHARS - 1)}\u2026`
+    : message;
 }
 
 /**
  * Build a not-applicable stub for an audit that never produced a real verdict,
  * so it stays visible in the report (tagged with why) instead of vanishing.
  */
-function stubCheck(meta: AuditMeta, tag: string, explanation: string): CheckResult {
+function stubCheck(
+  meta: AuditMeta,
+  tag: string,
+  explanation: string,
+): CheckResult {
   return {
     id: meta.id,
     category: meta.category,
     title: meta.title,
     description: meta.description,
-    status: 'na',
+    status: "na",
     score: 0,
     weight: meta.weight,
     scoreDisplayMode: meta.scoreDisplayMode,
     explanation,
     priority: meta.defaultPriority,
-    impact: meta.guidance?.impact ?? '',
-    fix: meta.guidance?.fix ?? '',
+    impact: meta.guidance?.impact ?? "",
+    fix: meta.guidance?.fix ?? "",
     tags: [tag],
     deprecated: meta.deprecated,
     evidenceGrade: meta.evidenceGrade,
@@ -70,8 +93,8 @@ export interface AuditRunResult {
  * ProgressTracker, which owns counting and fraction/elapsed stamping.
  */
 export type AuditProgressEvent =
-  | { type: 'unit:done'; label: string }
-  | { type: 'unit:fail'; label: string; error: string };
+  | { type: "unit:done"; label: string }
+  | { type: "unit:fail"; label: string; error: string };
 
 /**
  * Called once per registered audit, with what it did.
@@ -127,24 +150,27 @@ export interface AuditScope {
   scoreDisplayMode: ScoreDisplayMode;
 }
 
-export function scopeAudit(ctx: CheckContext, meta: AuditMeta): AuditScope | null {
+export function scopeAudit(
+  ctx: CheckContext,
+  meta: AuditMeta,
+): AuditScope | null {
   const pageTypes = meta.pageTypes ?? meta.applicablePageTypes;
   if (!pageTypes || pageTypes.length === 0) {
     return { pages: ctx.pages, scoreDisplayMode: meta.scoreDisplayMode };
   }
 
   const declaredPages = ctx.pages.filter(
-    (p) => pageTypes.includes(p.pageType) && p.pageTypeSource === 'declared',
+    (p) => pageTypes.includes(p.pageType) && p.pageTypeSource === "declared",
   );
   if (declaredPages.length > 0) {
     return { pages: declaredPages, scoreDisplayMode: meta.scoreDisplayMode };
   }
 
   const detectedPages = ctx.pages.filter(
-    (p) => pageTypes.includes(p.pageType) && p.pageTypeSource === 'detected',
+    (p) => pageTypes.includes(p.pageType) && p.pageTypeSource === "detected",
   );
   if (detectedPages.length > 0) {
-    return { pages: detectedPages, scoreDisplayMode: 'informative' };
+    return { pages: detectedPages, scoreDisplayMode: "informative" };
   }
 
   return null;
@@ -159,12 +185,13 @@ function unmetRequirements(ctx: CheckContext, meta: AuditMeta): EvidenceKey[] {
   const wanted = meta.pageTypes?.length
     ? meta.pageTypes
     : meta.applicablePageTypes?.length
-    ? meta.applicablePageTypes
-    : (['homepage'] as PageType[]);
+      ? meta.applicablePageTypes
+      : (["homepage"] as PageType[]);
 
   for (const key of required) {
-    if (key === 'sample-adequate') {
-      if (!wanted.some((type) => evidence.usablePageTypes.has(type))) unmet.push(key);
+    if (key === "sample-adequate") {
+      if (!wanted.some((type) => evidence.usablePageTypes.has(type)))
+        unmet.push(key);
       continue;
     }
     if (!evidence.met[key]) unmet.push(key);
@@ -173,20 +200,24 @@ function unmetRequirements(ctx: CheckContext, meta: AuditMeta): EvidenceKey[] {
 }
 
 /** The sentence a gated stub carries: the key, and why the scan lacks it. */
-function gateExplanation(ctx: CheckContext, meta: AuditMeta, unmet: EvidenceKey[]): string {
+function gateExplanation(
+  ctx: CheckContext,
+  meta: AuditMeta,
+  unmet: EvidenceKey[],
+): string {
   const reasons = unmet.map((key) => ctx.evidence.reasons[key]).filter(Boolean);
 
-  if (unmet.includes('sample-adequate') && reasons.length === 0) {
+  if (unmet.includes("sample-adequate") && reasons.length === 0) {
     const wanted = meta.pageTypes?.length
-      ? meta.pageTypes.join('/')
+      ? meta.pageTypes.join("/")
       : meta.applicablePageTypes?.length
-      ? meta.applicablePageTypes.join('/')
-      : 'homepage';
+        ? meta.applicablePageTypes.join("/")
+        : "homepage";
     return `Not assessed: no scanned ${wanted} page served readable text.`;
   }
 
-  const why = reasons.length > 0 ? ` ${reasons.join(' ')}` : '';
-  return `Not assessed: this scan has no ${unmet.join(', ')} evidence.${why}`;
+  const why = reasons.length > 0 ? ` ${reasons.join(" ")}` : "";
+  return `Not assessed: this scan has no ${unmet.join(", ")} evidence.${why}`;
 }
 
 export interface RunnableAudit {
@@ -210,7 +241,9 @@ export function planAudits(
   const skipped: CheckResult[] = [];
 
   const unread = !scanReadTheSite(ctx.evidence);
-  const unreadWhy = unread ? `Not assessed: ${unreadSiteReason(ctx.evidence)}` : '';
+  const unreadWhy = unread
+    ? `Not assessed: ${unreadSiteReason(ctx.evidence)}`
+    : "";
   for (const cat of config.categories) {
     const regs = config.audits[cat.id] ?? [];
     for (const reg of regs) {
@@ -220,7 +253,11 @@ export function planAudits(
       }
       const scope = scopeAudit(ctx, reg.meta);
       if (!scope) {
-        const wanted = (reg.meta.pageTypes ?? reg.meta.applicablePageTypes ?? []).join('/');
+        const wanted = (
+          reg.meta.pageTypes ??
+          reg.meta.applicablePageTypes ??
+          []
+        ).join("/");
         skipped.push(
           stubCheck(
             reg.meta,
@@ -234,7 +271,11 @@ export function planAudits(
         const unmet = unmetRequirements(ctx, reg.meta);
         if (unmet.length > 0) {
           skipped.push(
-            stubCheck(reg.meta, TAG_SKIPPED_NO_EVIDENCE, gateExplanation(ctx, reg.meta, unmet)),
+            stubCheck(
+              reg.meta,
+              TAG_SKIPPED_NO_EVIDENCE,
+              gateExplanation(ctx, reg.meta, unmet),
+            ),
           );
           continue;
         }
@@ -265,7 +306,7 @@ export async function runAudits(
   const { runnable, skipped } = plan ?? planAudits(ctx, config);
   const allChecks: CheckResult[] = [...skipped];
 
-  const tracing = Boolean(onTrace) || logger.level === 'debug';
+  const tracing = Boolean(onTrace) || logger.level === "debug";
   const trace = (check: CheckResult, durationMs: number): void => {
     if (!tracing) return;
     const record = traceFromCheck(check, durationMs);
@@ -282,20 +323,27 @@ export async function runAudits(
       batch.map(async ({ reg, scopedPages, scoreDisplayMode }) => {
         const label = `${reg.meta.id} ${reg.meta.title}`;
         const startedAt = tracing ? performance.now() : 0;
-        const elapsed = () => (tracing ? Math.round(performance.now() - startedAt) : 0);
+        const elapsed = () =>
+          tracing ? Math.round(performance.now() - startedAt) : 0;
         try {
           const instance = reg.create();
           const scopedCtx = scopedPages ? { ...ctx, pages: scopedPages } : ctx;
           const result = await instance.audit(scopedCtx);
           const check = instance.toCheckResult(result, scoreDisplayMode);
-          if (typeof onEvent === 'function') onEvent({ type: 'unit:done', label });
+          if (typeof onEvent === "function")
+            onEvent({ type: "unit:done", label });
           trace(check, elapsed());
           return check;
         } catch (err) {
-          logger.error({ err, auditId: reg.meta.id }, '[scanner] Audit error');
+          logger.error({ err, auditId: reg.meta.id }, "[scanner] Audit error");
           const message = describeError(err);
-          if (typeof onEvent === 'function') onEvent({ type: 'unit:fail', label, error: message });
-          const stub = stubCheck(reg.meta, TAG_SCAN_ERROR, `Audit failed to run: ${message}`);
+          if (typeof onEvent === "function")
+            onEvent({ type: "unit:fail", label, error: message });
+          const stub = stubCheck(
+            reg.meta,
+            TAG_SCAN_ERROR,
+            `Audit failed to run: ${message}`,
+          );
           trace(stub, elapsed());
           return stub;
         }
@@ -317,7 +365,10 @@ export async function runAudits(
   return { checks: allChecks, categories, overallScore };
 }
 
-function buildWeightedCategoryResult(cat: CategoryConfig, checks: CheckResult[]): CategoryResult {
+function buildWeightedCategoryResult(
+  cat: CategoryConfig,
+  checks: CheckResult[],
+): CategoryResult {
   return {
     id: cat.id,
     name: cat.name,
@@ -327,8 +378,8 @@ function buildWeightedCategoryResult(cat: CategoryConfig, checks: CheckResult[])
     // unproven evidence that must not move the score.
     score: calculateCategoryScore(checks),
     checks,
-    passCount: checks.filter((c) => c.status === 'pass').length,
-    warnCount: checks.filter((c) => c.status === 'warn').length,
-    failCount: checks.filter((c) => c.status === 'fail').length,
+    passCount: checks.filter((c) => c.status === "pass").length,
+    warnCount: checks.filter((c) => c.status === "warn").length,
+    failCount: checks.filter((c) => c.status === "fail").length,
   };
 }

@@ -1,12 +1,9 @@
 import type { AuditMeta, AuditResult } from "../../types";
 import { Audit } from "../../audit";
-import { weightForGrade } from '../../scorer';
-import type { CheckContext } from '../../check-context';
-import { getMainContentText, getWordCount } from '../../parser';
-import {
-  scanReadPageText,
-  unreadPageTextReason,
-} from '../../scan-evidence';
+import { weightForGrade } from "../../scorer";
+import type { CheckContext } from "../../check-context";
+import { getMainContentText, getWordCount } from "../../parser";
+import { scanReadPageText, unreadPageTextReason } from "../../scan-evidence";
 
 const TEASER_PATTERNS = [
   /click\s+(here\s+)?to\s+read\s+more/i,
@@ -21,26 +18,32 @@ const TEASER_PATTERNS = [
 
 export class ContentWithoutClickthroughAudit extends Audit {
   static override meta: AuditMeta = {
-    id: 'answer-readiness/content-without-clickthrough',
-    category: 'answer-readiness',
-    title: 'Content answers without click-through',
-    failureTitle: 'Content answers without click-through',
+    id: "answer-readiness/content-without-clickthrough",
+    category: "answer-readiness",
+    title: "Content answers without click-through",
+    failureTitle: "Content answers without click-through",
     description:
-      'AI answer engines skip teaser content that gates answers behind sign-ups or downloads. Provide substantive answers directly on the page.',
-    scoreDisplayMode: 'ternary',
-    weight: weightForGrade('B', 'scored'),
-    evidenceGrade: 'B',
-    tier: 'scored',
-    dossier: 'docs/evidence/audits/answer-readiness/content-without-clickthrough.md',
-    requires: ['origin-reachable', 'unblocked-fetches', 'rendered-body', 'sample-adequate'],
-    defaultPriority: 'high',
+      "AI answer engines skip teaser content that gates answers behind sign-ups or downloads. Provide substantive answers directly on the page.",
+    scoreDisplayMode: "ternary",
+    weight: weightForGrade("B", "scored"),
+    evidenceGrade: "B",
+    tier: "scored",
+    dossier:
+      "docs/evidence/audits/answer-readiness/content-without-clickthrough.md",
+    requires: [
+      "origin-reachable",
+      "unblocked-fetches",
+      "rendered-body",
+      "sample-adequate",
+    ],
+    defaultPriority: "high",
     guidance: {
       impact:
         'AI answer engines skip pages dominated by teaser content ("click to read more", "sign up to access"). These pages provide no extractable answers, so agents will never surface your content in AI-generated responses, costing you visibility in AI search.',
-      fix: 'Replace gated teasers with substantive, self-contained answers directly on the page. Move lead-generation CTAs to secondary positions after the main content.',
+      fix: "Replace gated teasers with substantive, self-contained answers directly on the page. Move lead-generation CTAs to secondary positions after the main content.",
       code: '<!-- Instead of: "Download our guide to learn more" -->\n<h2>How It Works</h2>\n<p>Our API supports REST and GraphQL endpoints with OAuth 2.0 authentication, processing up to 50,000 requests per second.</p>',
-      effort: 'moderate',
-      tags: ['content-quality', 'answer-engine'],
+      effort: "moderate",
+      tags: ["content-quality", "answer-engine"],
     },
   };
 
@@ -48,13 +51,13 @@ export class ContentWithoutClickthroughAudit extends Audit {
     const page = ctx.pages[0];
     if (!page) {
       return this.fail(
-        'No pages scanned.',
+        "No pages scanned.",
         'No "click to read more" or "contact us to learn" teasers dominating the page',
-        'No pages scanned',
+        "No pages scanned",
         {
-          priority: 'high',
+          priority: "high",
           description: ContentWithoutClickthroughAudit.meta.description,
-          code: '<!-- Replace gated content with direct answers -->\n<p>Our API supports REST and GraphQL endpoints with OAuth 2.0 authentication.</p>',
+          code: "<!-- Replace gated content with direct answers -->\n<p>Our API supports REST and GraphQL endpoints with OAuth 2.0 authentication.</p>",
         },
       );
     }
@@ -80,30 +83,34 @@ export class ContentWithoutClickthroughAudit extends Audit {
       // homepages legitimately render little server-side text, so a word-count
       // warning there is noise. Evaluate a non-homepage page instead.
       const checkPage = ctx.pages.find((p) => {
-        if (p.url.replace(/\/$/, '') === ctx.baseUrl.replace(/\/$/, '')) return false;
-        let pathname = '';
+        if (p.url.replace(/\/$/, "") === ctx.baseUrl.replace(/\/$/, ""))
+          return false;
+        let pathname = "";
         try {
           pathname = new URL(p.url).pathname.toLowerCase();
         } catch {
-          pathname = '';
+          pathname = "";
         }
-        if (pathname.endsWith('.xml')) return false;
+        if (pathname.endsWith(".xml")) return false;
         /* v8 ignore next -- FetchResult.body is typed as required string; null guard is defensive */
-        const head = (p.fetchResult.body ?? '').slice(0, 64).trimStart().toLowerCase();
-        return !head.startsWith('<?xml');
+        const head = (p.fetchResult.body ?? "")
+          .slice(0, 64)
+          .trimStart()
+          .toLowerCase();
+        return !head.startsWith("<?xml");
       });
       if (checkPage) {
         const wordCount = getWordCount(checkPage.$);
         if (wordCount < 50) {
           return this.warn(
-            'Insufficient content to evaluate.',
+            "Insufficient content to evaluate.",
             'No "click to read more" or "contact us to learn" teasers dominating the page',
             `Only ${wordCount} words on ${checkPage.url}`,
             {
-              priority: 'medium',
+              priority: "medium",
               description:
-                'The page has very little content (fewer than 50 words), making it impossible to determine whether it provides substantive answers. AI answer engines need sufficient content to extract meaningful answers.',
-              code: '<main>\n  <p>Provide at least 50 words of substantive content that directly answers user questions.</p>\n</main>',
+                "The page has very little content (fewer than 50 words), making it impossible to determine whether it provides substantive answers. AI answer engines need sufficient content to extract meaningful answers.",
+              code: "<main>\n  <p>Provide at least 50 words of substantive content that directly answers user questions.</p>\n</main>",
             },
             checkPage.url,
           );
@@ -115,28 +122,30 @@ export class ContentWithoutClickthroughAudit extends Audit {
       // which on a shell scan is often the only page there is.
       if (!scanReadPageText(ctx.evidence)) {
         return this.notApplicable(
-          'The scanned page served no readable text, so there was no content to judge for teasers.',
+          "The scanned page served no readable text, so there was no content to judge for teasers.",
           'No "click to read more" or "contact us to learn" teasers dominating the page',
           unreadPageTextReason(ctx.evidence),
         );
       }
 
       return this.pass(
-        'No excessive click-through teasers found.',
+        "No excessive click-through teasers found.",
         'No "click to read more" or "contact us to learn" teasers dominating the page',
-        'Content is self-contained',
+        "Content is self-contained",
         page.url,
       );
     }
 
-    const details = teaserPages.map((tp) => `${tp.url}: ${tp.teasers.join(', ')}`).join('; ');
+    const details = teaserPages
+      .map((tp) => `${tp.url}: ${tp.teasers.join(", ")}`)
+      .join("; ");
 
     return this.fail(
       `Found click-through teasers on ${teaserPages.length} page(s).`,
       'No "click to read more" or "contact us to learn" teasers dominating the page',
-      details.length > 200 ? details.slice(0, 200) + '...' : details,
+      details.length > 200 ? details.slice(0, 200) + "..." : details,
       {
-        priority: 'high',
+        priority: "high",
         description:
           'AI answer engines skip pages dominated by teaser content ("click to read more", "contact us to learn"). These pages provide no extractable answers, so agents will never surface your content in AI-generated responses. Provide substantive answers directly on the page.',
         code: '<!-- Replace "Download our guide to learn more" with: -->\n<h2>How It Works</h2>\n<p>Direct, substantive answer that AI agents can extract and cite.</p>',

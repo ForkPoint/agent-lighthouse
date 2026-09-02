@@ -1,43 +1,62 @@
-import { describe, it, expect } from 'vitest';
-import { defaultConfig } from '../audit-config';
-import { AuditMetaSchema, AuditResultSchema, CheckResultSchema } from '../schemas';
-import { mockCheckContext, mockPageContext, mockFetchResult } from './test-utils';
+import { describe, it, expect } from "vitest";
+import { defaultConfig } from "../audit-config";
+import {
+  AuditMetaSchema,
+  AuditResultSchema,
+  CheckResultSchema,
+} from "../schemas";
+import {
+  mockCheckContext,
+  mockPageContext,
+  mockFetchResult,
+} from "./test-utils";
 
-describe('AuditMetaSchema.weight', () => {
+describe("AuditMetaSchema.weight", () => {
   const meta = {
-    id: 'content-extraction/single-h1',
-    category: 'content-extraction',
-    title: 't',
-    failureTitle: 'ft',
-    description: 'd',
-    scoreDisplayMode: 'informative' as const,
+    id: "content-extraction/single-h1",
+    category: "content-extraction",
+    title: "t",
+    failureTitle: "ft",
+    description: "d",
+    scoreDisplayMode: "informative" as const,
     weight: 0,
-    defaultPriority: 'low' as const,
-    evidenceGrade: 'C' as const,
-    tier: 'informative' as const,
-    dossier: 'docs/evidence/audits/content-extraction/single-h1.md',
+    defaultPriority: "low" as const,
+    evidenceGrade: "C" as const,
+    tier: "informative" as const,
+    dossier: "docs/evidence/audits/content-extraction/single-h1.md",
   };
 
-  it('accepts weight 0 (informative tier — reported but not scored)', () => {
+  it("accepts weight 0 (informative tier — reported but not scored)", () => {
     expect(AuditMetaSchema.safeParse(meta).success).toBe(true);
   });
 
-  it('accepts the A (1.0) and B (0.6) evidence weights', () => {
-    expect(AuditMetaSchema.safeParse({ ...meta, weight: 1 }).success).toBe(true);
-    expect(AuditMetaSchema.safeParse({ ...meta, weight: 0.6 }).success).toBe(true);
+  it("accepts the A (1.0) and B (0.6) evidence weights", () => {
+    expect(AuditMetaSchema.safeParse({ ...meta, weight: 1 }).success).toBe(
+      true,
+    );
+    expect(AuditMetaSchema.safeParse({ ...meta, weight: 0.6 }).success).toBe(
+      true,
+    );
   });
 
-  it('rejects a negative weight', () => {
-    expect(AuditMetaSchema.safeParse({ ...meta, weight: -0.1 }).success).toBe(false);
+  it("rejects a negative weight", () => {
+    expect(AuditMetaSchema.safeParse({ ...meta, weight: -0.1 }).success).toBe(
+      false,
+    );
   });
 });
 
-describe('Audit Schema Validation (All 183+ Audits)', () => {
+describe("Audit Schema Validation (All 183+ Audits)", () => {
   const ctx = mockCheckContext(
-    [mockPageContext('https://example.com/', '<html><body><h1>Test</h1></body></html>')],
+    [
+      mockPageContext(
+        "https://example.com/",
+        "<html><body><h1>Test</h1></body></html>",
+      ),
+    ],
     {
-      '/llms.txt': mockFetchResult('# Test'),
-      '/robots.txt': mockFetchResult('User-agent: *\nAllow: /'),
+      "/llms.txt": mockFetchResult("# Test"),
+      "/robots.txt": mockFetchResult("User-agent: *\nAllow: /"),
     },
   );
 
@@ -79,7 +98,7 @@ describe('Audit Schema Validation (All 183+ Audits)', () => {
           } catch (err: any) {
             // If it's a ZodError, it means our built-in validation caught it
             // If it's a TypeError/other, it's a bug in the audit logic
-            if (err.name === 'ZodError') {
+            if (err.name === "ZodError") {
               console.error(`Result schema error in ${meta.id}:`, err.format());
               throw err;
             }

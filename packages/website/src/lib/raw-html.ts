@@ -1,7 +1,7 @@
-import type { SatteriProcessorOptions } from '@astrojs/markdown-satteri';
+import type { SatteriProcessorOptions } from "@astrojs/markdown-satteri";
 
 /** One entry of `satteri({ hastPlugins })`, named without importing `satteri` itself. */
-type HastPlugin = NonNullable<SatteriProcessorOptions['hastPlugins']>[number];
+type HastPlugin = NonNullable<SatteriProcessorOptions["hastPlugins"]>[number];
 
 /**
  * Render angle brackets in the markdown body as text, not as markup.
@@ -20,16 +20,18 @@ type HastPlugin = NonNullable<SatteriProcessorOptions['hastPlugins']>[number];
  */
 export function escapeRawHtmlPlugin(): HastPlugin {
   return {
-    name: 'agent-lighthouse:escape-raw-html',
+    name: "agent-lighthouse:escape-raw-html",
     raw(node, ctx) {
-      const text = { type: 'text', value: node.value } as const;
+      const text = { type: "text", value: node.value } as const;
       // A raw node directly under the root stood alone on its own line, so it
       // takes a paragraph of its own; anywhere else it is mid-sentence and the
       // surrounding block already provides one.
-      const isBlock = ctx.parent(node)?.type === 'root';
+      const isBlock = ctx.parent(node)?.type === "root";
       ctx.replaceNode(
         node,
-        isBlock ? { type: 'element', tagName: 'p', properties: {}, children: [text] } : text,
+        isBlock
+          ? { type: "element", tagName: "p", properties: {}, children: [text] }
+          : text,
       );
     },
   };

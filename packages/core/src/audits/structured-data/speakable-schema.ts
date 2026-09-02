@@ -20,17 +20,16 @@
 
 import type { AuditMeta, AuditResult } from "../../types";
 import { Audit } from "../../audit";
-import type { CheckContext, PageContext } from '../../check-context';
-import { weightForGrade } from '../../scorer';
-import { flattenJsonLd } from '../../parser';
-
-
+import type { CheckContext, PageContext } from "../../check-context";
+import { weightForGrade } from "../../scorer";
+import { flattenJsonLd } from "../../parser";
 
 /** Every `@type` token on a node, as a flat list of strings. */
 function typeNames(schema: Record<string, unknown>): string[] {
-  const st = schema['@type'];
-  if (typeof st === 'string') return [st];
-  if (Array.isArray(st)) return st.filter((t): t is string => typeof t === 'string');
+  const st = schema["@type"];
+  if (typeof st === "string") return [st];
+  if (Array.isArray(st))
+    return st.filter((t): t is string => typeof t === "string");
   return [];
 }
 
@@ -44,14 +43,18 @@ function typeNames(schema: Record<string, unknown>): string[] {
  */
 function isSpeakableHost(schema: Record<string, unknown>): boolean {
   return typeNames(schema).some(
-    (name) => name.endsWith('Article') || name.endsWith('Page') || name.endsWith('Posting'),
+    (name) =>
+      name.endsWith("Article") ||
+      name.endsWith("Page") ||
+      name.endsWith("Posting"),
   );
 }
 
 /** A selector value is usable when it is a non-blank string, or a list holding one. */
 function hasSelectorValue(value: unknown): boolean {
-  if (typeof value === 'string') return value.trim().length > 0;
-  if (Array.isArray(value)) return value.some((v) => typeof v === 'string' && v.trim().length > 0);
+  if (typeof value === "string") return value.trim().length > 0;
+  if (Array.isArray(value))
+    return value.some((v) => typeof v === "string" && v.trim().length > 0);
   return false;
 }
 
@@ -62,15 +65,17 @@ function hasSelectorValue(value: unknown): boolean {
  * test rejected the perfectly valid `"cssSelector": ".article-body"` form.
  */
 function isUsableSpec(node: unknown): boolean {
-  if (!node || typeof node !== 'object') return false;
+  if (!node || typeof node !== "object") return false;
   const spec = node as Record<string, unknown>;
-  return hasSelectorValue(spec['cssSelector']) || hasSelectorValue(spec['xpath']);
+  return (
+    hasSelectorValue(spec["cssSelector"]) || hasSelectorValue(spec["xpath"])
+  );
 }
 
 /** Does this node carry a usable `speakable` on a type that defines it? */
 function hasValidSpeakable(schema: Record<string, unknown>): boolean {
   if (!isSpeakableHost(schema)) return false;
-  const speakable = schema['speakable'];
+  const speakable = schema["speakable"];
   const specs = Array.isArray(speakable) ? speakable : [speakable];
   return specs.some(isUsableSpec);
 }
@@ -94,7 +99,7 @@ function pageHasSpeakable(page: PageContext): boolean {
 }
 
 const EXPECTED =
-  'SpeakableSpecification with a cssSelector or xpath on the Article/WebPage node of each news or article page.';
+  "SpeakableSpecification with a cssSelector or xpath on the Article/WebPage node of each news or article page.";
 
 const FIX_CODE = `{
   "@context": "https://schema.org",
@@ -108,32 +113,38 @@ const FIX_CODE = `{
 
 export class SpeakableSchemaAudit extends Audit {
   static override meta: AuditMeta = {
-    id: 'structured-data/speakable-schema',
-    category: 'structured-data',
-    title: 'Speakable schema',
-    failureTitle: 'Speakable schema',
+    id: "structured-data/speakable-schema",
+    category: "structured-data",
+    title: "Speakable schema",
+    failureTitle: "Speakable schema",
     description:
-      'Google Assistant uses the speakable property to pick which sentences of a news article it reads aloud on Assistant-enabled devices. Without it, the assistant has to guess, and often vocalizes navigation or boilerplate instead of your headline and summary. Mark the headline and summary with cssSelector on your Article or WebPage node.',
-    scoreDisplayMode: 'ternary',
-    weight: weightForGrade('B', 'scored'),
-    evidenceGrade: 'B',
-    tier: 'scored',
-    dossier: 'docs/evidence/audits/structured-data/speakable-schema.md',
-    requires: ['origin-reachable', 'unblocked-fetches', 'rendered-body', 'sample-adequate'],
+      "Google Assistant uses the speakable property to pick which sentences of a news article it reads aloud on Assistant-enabled devices. Without it, the assistant has to guess, and often vocalizes navigation or boilerplate instead of your headline and summary. Mark the headline and summary with cssSelector on your Article or WebPage node.",
+    scoreDisplayMode: "ternary",
+    weight: weightForGrade("B", "scored"),
+    evidenceGrade: "B",
+    tier: "scored",
+    dossier: "docs/evidence/audits/structured-data/speakable-schema.md",
+    requires: [
+      "origin-reachable",
+      "unblocked-fetches",
+      "rendered-body",
+      "sample-adequate",
+    ],
     // News and article publishing is the whole documented scope of the
     // feature, so a scan with no content page never runs this audit at all.
     // The runtime guard below repeats the precondition for the pages that
     // were scanned, so an Article-carrying homepage is still assessed.
-    applicablePageTypes: ['content'],
-    defaultPriority: 'low',
+    applicablePageTypes: ["content"],
+    defaultPriority: "low",
     guidance: {
       impact:
-        'Google Assistant returns news articles for spoken queries and uses speakable to select the sections it reads aloud with TTS. Without it, the assistant picks its own excerpt from the page — often navigation text or boilerplate rather than your headline and summary. The feature is in beta and limited to English-language news publishers and U.S. Google Home users, so treat it as an upside for news content rather than a general requirement.',
-      fix: 'Add a speakable property with a SpeakableSpecification to the Article (or WebPage) node of each news article. Point cssSelector — or xpath — at the headline and a short summary; both a single selector and an array of selectors are valid.',
+        "Google Assistant returns news articles for spoken queries and uses speakable to select the sections it reads aloud with TTS. Without it, the assistant picks its own excerpt from the page — often navigation text or boilerplate rather than your headline and summary. The feature is in beta and limited to English-language news publishers and U.S. Google Home users, so treat it as an upside for news content rather than a general requirement.",
+      fix: "Add a speakable property with a SpeakableSpecification to the Article (or WebPage) node of each news article. Point cssSelector — or xpath — at the headline and a short summary; both a single selector and an array of selectors are valid.",
       code: FIX_CODE,
-      effort: 'easy',
-      docsUrl: 'https://developers.google.com/search/docs/appearance/structured-data/speakable',
-      tags: ['json-ld', 'schema', 'voice', 'news', 'speakable'],
+      effort: "easy",
+      docsUrl:
+        "https://developers.google.com/search/docs/appearance/structured-data/speakable",
+      tags: ["json-ld", "schema", "voice", "news", "speakable"],
     },
   };
 
@@ -142,9 +153,9 @@ export class SpeakableSchemaAudit extends Audit {
 
     if (articlePages.length === 0) {
       return this.notApplicable(
-        'No news or article page was scanned; speakable applies to news content only.',
+        "No news or article page was scanned; speakable applies to news content only.",
         EXPECTED,
-        'No news or article pages found.',
+        "No news or article pages found.",
       );
     }
 
@@ -165,7 +176,7 @@ export class SpeakableSchemaAudit extends Audit {
         EXPECTED,
         found,
         {
-          priority: 'low',
+          priority: "low",
           description: SpeakableSchemaAudit.meta.description,
           code: FIX_CODE,
         },
@@ -177,7 +188,7 @@ export class SpeakableSchemaAudit extends Audit {
       EXPECTED,
       found,
       {
-        priority: 'low',
+        priority: "low",
         description: SpeakableSchemaAudit.meta.description,
         code: FIX_CODE,
       },

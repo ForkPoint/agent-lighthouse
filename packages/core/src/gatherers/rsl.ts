@@ -1,20 +1,23 @@
-import type { CheckContext } from '../check-context';
-import type { FetchResult } from '../fetcher';
-import { isSafeUrl } from '../fetcher';
+import type { CheckContext } from "../check-context";
+import type { FetchResult } from "../fetcher";
+import { isSafeUrl } from "../fetcher";
 
-const rslProbeCache = new WeakMap<object, Map<string, Promise<FetchResult | undefined>>>();
+const rslProbeCache = new WeakMap<
+  object,
+  Map<string, Promise<FetchResult | undefined>>
+>();
 
 export function probeRsl(
-  ctx: { fetch: CheckContext['fetch'] },
+  ctx: { fetch: CheckContext["fetch"] },
   url: string,
-  options: { method?: 'GET' | 'HEAD'; followRedirects?: boolean } = {},
+  options: { method?: "GET" | "HEAD"; followRedirects?: boolean } = {},
 ): Promise<FetchResult | undefined> {
   let cache = rslProbeCache.get(ctx);
   if (!cache) {
     cache = new Map();
     rslProbeCache.set(ctx, cache);
   }
-  const key = `${options.method ?? 'GET'}|${options.followRedirects ?? false}|${url}`;
+  const key = `${options.method ?? "GET"}|${options.followRedirects ?? false}|${url}`;
   let hit = cache.get(key);
   if (!hit) {
     hit = (async () => {
@@ -22,7 +25,7 @@ export function probeRsl(
       try {
         return await ctx.fetch({
           url,
-          method: options.method ?? 'GET',
+          method: options.method ?? "GET",
           followRedirects: options.followRedirects ?? false,
         });
       } catch {

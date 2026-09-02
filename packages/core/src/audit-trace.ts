@@ -1,5 +1,9 @@
-import type { CheckResult, CheckStatus } from './types';
-import { TAG_SCAN_ERROR, TAG_SKIPPED_NO_EVIDENCE, TAG_SKIPPED_PAGE_TYPE } from './constants';
+import type { CheckResult, CheckStatus } from "./types";
+import {
+  TAG_SCAN_ERROR,
+  TAG_SKIPPED_NO_EVIDENCE,
+  TAG_SKIPPED_PAGE_TYPE,
+} from "./constants";
 
 /**
  * What one audit did, in a form that can be diffed.
@@ -22,7 +26,7 @@ export interface AuditTrace {
    * `gated` — the scan never obtained evidence the audit needs.
    * `error` — it threw, or its result was rejected by the schema.
    */
-  outcome: 'ran' | 'skipped' | 'gated' | 'error';
+  outcome: "ran" | "skipped" | "gated" | "error";
   status: CheckStatus;
   score: number;
   weight: number;
@@ -34,20 +38,23 @@ export interface AuditTrace {
   explanation?: string;
   pageUrl?: string;
   /** The structured evidence behind the verdict, as the report carries it. */
-  details?: CheckResult['details'];
+  details?: CheckResult["details"];
 }
 
 /** Which outcome a finished check represents. */
-export function outcomeOf(check: CheckResult): AuditTrace['outcome'] {
+export function outcomeOf(check: CheckResult): AuditTrace["outcome"] {
   const tags = check.tags ?? [];
-  if (tags.includes(TAG_SCAN_ERROR)) return 'error';
-  if (tags.includes(TAG_SKIPPED_PAGE_TYPE)) return 'skipped';
-  if (tags.includes(TAG_SKIPPED_NO_EVIDENCE)) return 'gated';
-  return 'ran';
+  if (tags.includes(TAG_SCAN_ERROR)) return "error";
+  if (tags.includes(TAG_SKIPPED_PAGE_TYPE)) return "skipped";
+  if (tags.includes(TAG_SKIPPED_NO_EVIDENCE)) return "gated";
+  return "ran";
 }
 
 /** Build a trace record from a finished check. */
-export function traceFromCheck(check: CheckResult, durationMs: number): AuditTrace {
+export function traceFromCheck(
+  check: CheckResult,
+  durationMs: number,
+): AuditTrace {
   return {
     id: check.id,
     category: check.category,
@@ -67,7 +74,7 @@ export function traceFromCheck(check: CheckResult, durationMs: number): AuditTra
 
 /** One trace as a log line: the shape a human scans, not the full record. */
 export function formatTrace(trace: AuditTrace): string {
-  const timing = trace.outcome === 'ran' ? ` ${trace.durationMs}ms` : '';
-  const value = trace.displayValue ? ` — ${trace.displayValue}` : '';
+  const timing = trace.outcome === "ran" ? ` ${trace.durationMs}ms` : "";
+  const value = trace.displayValue ? ` — ${trace.displayValue}` : "";
   return `[audit] ${trace.id} ${trace.outcome}/${trace.status} score=${trace.score} weight=${trace.weight}${timing}${value}`;
 }

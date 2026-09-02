@@ -82,10 +82,10 @@ branch.
 ## 5. No script in the repository is typechecked
 
 The root `tsconfig.json` includes only `packages/*/src/**/*` and `pnpm typecheck`
-runs per package, so everything under `scripts/` is outside every include. Two
-scripts are already type-broken: `analyze-false-positives.ts:33` and
-`investigate-stores.ts:38`. The branch added three more scripts that are clean
-today with nothing keeping them so.
+runs per package, so everything under `scripts/` is outside every include.
+Obsolete one-time scripts (`analyze-false-positives.ts`, `analyze-stores.ts`, and
+`investigate-stores.ts`) were pruned; remaining scripts should eventually be
+included under a dedicated tsconfig or typecheck pass.
 
 ## 6. The nightly workflow runs, but it does not finish reliably
 

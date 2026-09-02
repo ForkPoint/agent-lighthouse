@@ -1,6 +1,6 @@
-import { existsSync, readFileSync } from 'node:fs';
-import { resolve } from 'node:path';
-import type { PresetName } from './presets';
+import { existsSync, readFileSync } from "node:fs";
+import { resolve } from "node:path";
+import type { PresetName } from "./presets";
 
 export interface AgentLighthouseConfig {
   /** Target URL (if not supplied via CLI) */
@@ -14,7 +14,7 @@ export interface AgentLighthouseConfig {
   /** Per-category minimum score assertions */
   assertCategories?: Record<string, number>;
   /** Output report formats (terminal, html, json, md) */
-  output?: Array<'terminal' | 'html' | 'json' | 'md'>;
+  output?: Array<"terminal" | "html" | "json" | "md">;
   /** Output directory for reports */
   outputDir?: string;
   /** Maximum number of pages to discover & scan */
@@ -22,14 +22,16 @@ export interface AgentLighthouseConfig {
 }
 
 /** Helper function for type-safe configuration files */
-export function defineConfig(config: AgentLighthouseConfig): AgentLighthouseConfig {
+export function defineConfig(
+  config: AgentLighthouseConfig,
+): AgentLighthouseConfig {
   return config;
 }
 
 const DEFAULT_CONFIG_FILES = [
-  'agent-lighthouse.config.json',
-  '.agent-lighthouserc.json',
-  '.agent-lighthouserc',
+  "agent-lighthouse.config.json",
+  ".agent-lighthouserc.json",
+  ".agent-lighthouserc",
 ];
 
 /**
@@ -41,7 +43,7 @@ export function loadConfigFile(customPath?: string): AgentLighthouseConfig {
     if (!existsSync(fullPath)) {
       throw new Error(`Config file not found at: ${fullPath}`);
     }
-    const content = readFileSync(fullPath, 'utf8');
+    const content = readFileSync(fullPath, "utf8");
     return JSON.parse(content) as AgentLighthouseConfig;
   }
 
@@ -49,7 +51,7 @@ export function loadConfigFile(customPath?: string): AgentLighthouseConfig {
     const fullPath = resolve(process.cwd(), filename);
     if (existsSync(fullPath)) {
       try {
-        const content = readFileSync(fullPath, 'utf8');
+        const content = readFileSync(fullPath, "utf8");
         return JSON.parse(content) as AgentLighthouseConfig;
       } catch (err) {
         console.warn(`[config] Failed to parse ${filename}:`, err);

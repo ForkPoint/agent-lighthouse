@@ -1,5 +1,5 @@
-import type { ScanReport } from '@forkpoint/agent-lighthouse-core';
-import { SCORE_TIER_LABELS } from '@forkpoint/agent-lighthouse-core';
+import type { ScanReport } from "@forkpoint/agent-lighthouse-core";
+import { SCORE_TIER_LABELS } from "@forkpoint/agent-lighthouse-core";
 
 /**
  * Generates a pragmatic, rule-based summary for a scan report.
@@ -15,12 +15,19 @@ export function generateScanSummary(report: Partial<ScanReport>): string {
     scoreTier,
     categories = [],
     recommendations = [],
-    readinessVitals = { commerce: 0, content: 0, botAccessibility: 0, technical: 0 },
+    readinessVitals = {
+      commerce: 0,
+      content: 0,
+      botAccessibility: 0,
+      technical: 0,
+    },
   } = report;
 
-  const tierLabel = scoreTier ? SCORE_TIER_LABELS[scoreTier] : 'N/A';
-  const criticalCount = recommendations.filter((r) => r.priority === 'critical').length;
-  const highCount = recommendations.filter((r) => r.priority === 'high').length;
+  const tierLabel = scoreTier ? SCORE_TIER_LABELS[scoreTier] : "N/A";
+  const criticalCount = recommendations.filter(
+    (r) => r.priority === "critical",
+  ).length;
+  const highCount = recommendations.filter((r) => r.priority === "high").length;
 
   // Use the per-category counts, which already exclude `na` ("nothing to
   // assess"), so the headline reflects only what was actually evaluated.
@@ -32,9 +39,12 @@ export function generateScanSummary(report: Partial<ScanReport>): string {
 
   // Find strongest and weakest categories
   const sortedCategories = [...categories].sort((a, b) => b.score - a.score);
-  const strongest = sortedCategories.length > 0 ? sortedCategories[0] : undefined;
+  const strongest =
+    sortedCategories.length > 0 ? sortedCategories[0] : undefined;
   const weakest =
-    sortedCategories.length > 1 ? sortedCategories[sortedCategories.length - 1] : undefined;
+    sortedCategories.length > 1
+      ? sortedCategories[sortedCategories.length - 1]
+      : undefined;
 
   const v = readinessVitals;
   const summary = [
@@ -50,7 +60,7 @@ export function generateScanSummary(report: Partial<ScanReport>): string {
       : null,
   ]
     .filter(Boolean)
-    .join(' ');
+    .join(" ");
 
   return summary;
 }

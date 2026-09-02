@@ -1,42 +1,47 @@
 import type { AuditMeta, AuditResult } from "../../types";
 import { Audit } from "../../audit";
-import { weightForGrade } from '../../scorer';
-import type { CheckContext } from '../../check-context';
-import { extractForms } from '../../parser';
-import { openApiOperations, readOpenApiSpec } from '../../gatherers/openapi';
+import { weightForGrade } from "../../scorer";
+import type { CheckContext } from "../../check-context";
+import { extractForms } from "../../parser";
+import { openApiOperations, readOpenApiSpec } from "../../gatherers/openapi";
 
 const CONTACT_INDICATORS = [
-  'contact',
-  'inquiry',
-  'enquiry',
-  'lead',
-  'get-in-touch',
-  'getintouch',
-  'reach-out',
-  'message',
-  'feedback',
-  'support',
+  "contact",
+  "inquiry",
+  "enquiry",
+  "lead",
+  "get-in-touch",
+  "getintouch",
+  "reach-out",
+  "message",
+  "feedback",
+  "support",
 ];
 
 export class ContactFormAudit extends Audit {
   static override meta: AuditMeta = {
-    id: 'operability-safety/contact-form',
-    category: 'operability-safety',
-    title: 'Contact/lead form endpoint',
-    failureTitle: 'Contact/lead form endpoint',
+    id: "operability-safety/contact-form",
+    category: "operability-safety",
+    title: "Contact/lead form endpoint",
+    failureTitle: "Contact/lead form endpoint",
     description:
       'AI agents increasingly handle tasks like "contact this company for a quote" on behalf of users. Without a machine-submittable contact form, agents cannot complete these requests, sending users to competitors who have one. Provide an HTML form or an API endpoint.',
-    scoreDisplayMode: 'informative',
-    weight: weightForGrade('C', 'informative'),
-    evidenceGrade: 'C',
-    tier: 'informative',
-    dossier: 'docs/evidence/audits/operability-safety/contact-form.md',
-    requires: ['origin-reachable', 'unblocked-fetches', 'rendered-body', 'sample-adequate'],
-    defaultPriority: 'high',
+    scoreDisplayMode: "informative",
+    weight: weightForGrade("C", "informative"),
+    evidenceGrade: "C",
+    tier: "informative",
+    dossier: "docs/evidence/audits/operability-safety/contact-form.md",
+    requires: [
+      "origin-reachable",
+      "unblocked-fetches",
+      "rendered-body",
+      "sample-adequate",
+    ],
+    defaultPriority: "high",
     guidance: {
       impact:
         'When users ask AI agents to "contact this company for a quote" or "send a message to their support team," the agent needs a machine-submittable form or API endpoint. Without one, the agent cannot complete the request and users turn to competitors.',
-      fix: 'Add an HTML <form> with a standard action and method attribute for contact/inquiry submission, or expose a POST endpoint in your OpenAPI spec for contact requests.',
+      fix: "Add an HTML <form> with a standard action and method attribute for contact/inquiry submission, or expose a POST endpoint in your OpenAPI spec for contact requests.",
       code: `<!-- HTML form approach -->
 <form action="/api/contact" method="POST">
   <input type="text" name="name" placeholder="Name" required />
@@ -54,8 +59,8 @@ export class ContactFormAudit extends Audit {
     }
   }
 }`,
-      effort: 'moderate',
-      tags: ['forms', 'contact', 'lead-generation'],
+      effort: "moderate",
+      tags: ["forms", "contact", "lead-generation"],
     },
   };
 
@@ -65,11 +70,13 @@ export class ContactFormAudit extends Audit {
       const forms = extractForms(page.$);
       for (const form of forms) {
         const formStr = JSON.stringify(form).toLowerCase();
-        const matchedIndicator = CONTACT_INDICATORS.find((ind) => formStr.includes(ind));
+        const matchedIndicator = CONTACT_INDICATORS.find((ind) =>
+          formStr.includes(ind),
+        );
         if (matchedIndicator) {
           return this.pass(
             `Contact/lead form found on ${page.url} (indicator: "${matchedIndicator}").`,
-            'Page has a contact/inquiry form or OpenAPI has a POST contact endpoint',
+            "Page has a contact/inquiry form or OpenAPI has a POST contact endpoint",
             `Form with "${matchedIndicator}" on ${page.url}`,
             page.url,
           );
@@ -82,13 +89,15 @@ export class ContactFormAudit extends Audit {
     if (spec) {
       const ops = openApiOperations(spec);
       for (const { path, method } of ops) {
-        if (method === 'post') {
+        if (method === "post") {
           const pathLower = path.toLowerCase();
-          const matchedIndicator = CONTACT_INDICATORS.find((ind) => pathLower.includes(ind));
+          const matchedIndicator = CONTACT_INDICATORS.find((ind) =>
+            pathLower.includes(ind),
+          );
           if (matchedIndicator) {
             return this.pass(
               `OpenAPI has POST endpoint "${path}" matching contact indicator "${matchedIndicator}".`,
-              'Page has a contact/inquiry form or OpenAPI has a POST contact endpoint',
+              "Page has a contact/inquiry form or OpenAPI has a POST contact endpoint",
               `POST ${path}`,
             );
           }
@@ -97,11 +106,11 @@ export class ContactFormAudit extends Audit {
     }
 
     return this.fail(
-      'No contact/lead form or POST contact endpoint found.',
-      'Page has a contact/inquiry form or OpenAPI has a POST contact endpoint',
-      'No contact form detected',
+      "No contact/lead form or POST contact endpoint found.",
+      "Page has a contact/inquiry form or OpenAPI has a POST contact endpoint",
+      "No contact form detected",
       {
-        priority: 'high',
+        priority: "high",
         description: ContactFormAudit.meta.description,
         code: `<!-- HTML form approach -->\n<form action="/api/contact" method="POST">\n  <input type="text" name="name" placeholder="Name" required />\n  <input type="email" name="email" placeholder="Email" required />\n  <textarea name="message" placeholder="Message" required></textarea>\n  <button type="submit">Send</button>\n</form>\n\n<!-- Or OpenAPI approach -->\n"paths": {\n  "/api/contact": {\n    "post": {\n      "operationId": "submitContact",\n      "summary": "Submit a contact inquiry"\n    }\n  }\n}`,
       },

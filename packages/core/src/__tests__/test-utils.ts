@@ -4,24 +4,28 @@ import {
   extractMetaTags,
   extractHeadLinks,
   detectPageType,
-} from '../parser';
-import type { CheckContext, PageContext } from '../check-context';
-import type { FetchResult } from '../fetcher';
-import { allEvidenceMet, buildScanEvidence } from '../scan-evidence';
-import { SHELL_HTML } from '../tests/hostile-states';
+} from "../parser";
+import type { CheckContext, PageContext } from "../check-context";
+import type { FetchResult } from "../fetcher";
+import { allEvidenceMet, buildScanEvidence } from "../scan-evidence";
+import { SHELL_HTML } from "../tests/hostile-states";
 
-export function mockPageContext(url: string, html: string, index: number = 0): PageContext {
+export function mockPageContext(
+  url: string,
+  html: string,
+  index: number = 0,
+): PageContext {
   const $ = parseHtml(html);
   const jsonLd = extractJsonLd($);
   const meta = extractMetaTags($);
-  const fetchResult = mockFetchResult(html, 200, 'text/html');
+  const fetchResult = mockFetchResult(html, 200, "text/html");
   fetchResult.url = url;
   fetchResult.finalUrl = url;
 
   return {
     url,
     pageType: detectPageType(url, $, jsonLd, meta, index === 0),
-    pageTypeSource: 'declared',
+    pageTypeSource: "declared",
     fetchResult,
     $,
     jsonLd,
@@ -37,21 +41,20 @@ export function mockCheckContext(
   return {
     pages,
     rootFiles,
-    domain: 'example.com',
-    baseUrl: 'https://example.com',
+    domain: "example.com",
+    baseUrl: "https://example.com",
     fetch: async ({ url }) => {
       try {
         const pathname = new URL(url).pathname;
         if (rootFiles[pathname]) return rootFiles[pathname];
       } catch {}
-      return mockFetchResult('', 404);
+      return mockFetchResult("", 404);
     },
     // Unit tests judge the audit, not the gate: hand every requirement to them
     // so a two-page fixture never gates itself out.
     evidence: allEvidenceMet(),
   };
 }
-
 
 /**
  * A page and a set of root files complete enough that every audit reading them
@@ -65,20 +68,25 @@ export function attributableFixture(): {
 } {
   const body = Array.from(
     { length: 60 },
-    () => 'Widgets are machined from bar stock and finished by hand in our workshop.',
-  ).join(' ');
+    () =>
+      "Widgets are machined from bar stock and finished by hand in our workshop.",
+  ).join(" ");
   const html =
     '<html lang="en"><head><title>Widgets</title>' +
     '<meta name="description" content="Hand-finished widgets, machined from bar stock." />' +
     '<link rel="alternate" type="application/rss+xml" href="/rss.xml" /></head>' +
-    '<body><header>Navigation</header><main><article><h1>Widgets</h1>' +
+    "<body><header>Navigation</header><main><article><h1>Widgets</h1>" +
     `<p>${body}</p>` +
     '<figure><img src="/widget.png" alt="A widget" /><figcaption>A widget.</figcaption></figure>' +
-    '<table><thead><tr><th>Name</th></tr></thead><tbody><tr><td>Widget</td></tr></tbody></table>' +
+    "<table><thead><tr><th>Name</th></tr></thead><tbody><tr><td>Widget</td></tr></tbody></table>" +
     '<a href="/widgets/hand-finished-widget">Hand-finished widget</a>' +
-    '</article></main><footer>Contact us</footer></body></html>';
+    "</article></main><footer>Contact us</footer></body></html>";
 
-  const file = (path: string, bodyText: string, contentType: string): FetchResult => {
+  const file = (
+    path: string,
+    bodyText: string,
+    contentType: string,
+  ): FetchResult => {
     const result = mockFetchResult(bodyText, 200, contentType);
     result.url = `https://example.com${path}`;
     result.finalUrl = result.url;
@@ -86,17 +94,31 @@ export function attributableFixture(): {
   };
 
   return {
-    pages: [mockPageContext('https://example.com/widgets/hand-finished-widget', html)],
+    pages: [
+      mockPageContext("https://example.com/widgets/hand-finished-widget", html),
+    ],
     rootFiles: {
-      '/robots.txt': file('/robots.txt', 'User-agent: *\nAllow: /\n', 'text/plain'),
-      '/llms.txt': file('/llms.txt', '# Widgets\n\n- [Widgets](/widgets)\n', 'text/plain'),
-      '/llms-full.txt': file('/llms-full.txt', `# Widgets\n\n${body}\n`, 'text/plain'),
-      '/rss.xml': file(
-        '/rss.xml',
+      "/robots.txt": file(
+        "/robots.txt",
+        "User-agent: *\nAllow: /\n",
+        "text/plain",
+      ),
+      "/llms.txt": file(
+        "/llms.txt",
+        "# Widgets\n\n- [Widgets](/widgets)\n",
+        "text/plain",
+      ),
+      "/llms-full.txt": file(
+        "/llms-full.txt",
+        `# Widgets\n\n${body}\n`,
+        "text/plain",
+      ),
+      "/rss.xml": file(
+        "/rss.xml",
         '<?xml version="1.0"?><rss version="2.0"><channel><title>Widgets</title>' +
-          '<item><title>A widget</title><link>https://example.com/widgets/a</link></item>' +
-          '</channel></rss>',
-        'application/rss+xml',
+          "<item><title>A widget</title><link>https://example.com/widgets/a</link></item>" +
+          "</channel></rss>",
+        "application/rss+xml",
       ),
     },
   };
@@ -116,11 +138,11 @@ export function unreachedSiteContext(
     ...ctx,
     evidence: {
       ...ctx.evidence,
-      met: { ...ctx.evidence.met, 'origin-reachable': false },
+      met: { ...ctx.evidence.met, "origin-reachable": false },
       reasons: {
-        'origin-reachable':
-          'The requested host redirected to parking.brandsale.test, a different site, ' +
-          'without a permanent redirect.',
+        "origin-reachable":
+          "The requested host redirected to parking.brandsale.test, a different site, " +
+          "without a permanent redirect.",
       },
       judgeable: false,
     },
@@ -136,24 +158,27 @@ export function unreachedSiteContext(
  * branch still passes there. Here it does not: the audits whose subject is the
  * refusal must return the refusal, and ordering is what this context pins.
  */
-export function walledSiteContext(overrides: Partial<CheckContext> = {}): CheckContext {
+export function walledSiteContext(
+  overrides: Partial<CheckContext> = {},
+): CheckContext {
   const ctx = unreachedSiteContext();
   return {
     ...ctx,
     wafProtection: {
       isBlocked: true,
-      provider: 'cloudflare',
-      name: 'Cloudflare',
-      reason: 'HTTP 403 with a cf-ray header',
+      provider: "cloudflare",
+      name: "Cloudflare",
+      reason: "HTTP 403 with a cf-ray header",
       statusCode: 403,
     },
     evidence: {
       ...ctx.evidence,
-      met: { ...ctx.evidence.met, 'unblocked-fetches': false },
+      met: { ...ctx.evidence.met, "unblocked-fetches": false },
       reasons: {
         ...ctx.evidence.reasons,
-        'origin-reachable': 'The homepage answered HTTP 403.',
-        'unblocked-fetches': 'Cloudflare refused the scan: HTTP 403 with a cf-ray header.',
+        "origin-reachable": "The homepage answered HTTP 403.",
+        "unblocked-fetches":
+          "Cloudflare refused the scan: HTTP 403 with a cf-ray header.",
       },
     },
     ...overrides,
@@ -182,18 +207,18 @@ export function challengedSiteContext(
     ...ctx,
     wafProtection: {
       isBlocked: true,
-      provider: 'cloudflare',
-      name: 'Cloudflare',
-      reason: 'HTTP 200 with cf-mitigated: challenge',
+      provider: "cloudflare",
+      name: "Cloudflare",
+      reason: "HTTP 200 with cf-mitigated: challenge",
       statusCode: 200,
     },
     evidence: {
       ...ctx.evidence,
-      met: { ...ctx.evidence.met, 'unblocked-fetches': false },
+      met: { ...ctx.evidence.met, "unblocked-fetches": false },
       reasons: {
         ...ctx.evidence.reasons,
-        'unblocked-fetches':
-          'Cloudflare refused the scan: HTTP 200 with cf-mitigated: challenge.',
+        "unblocked-fetches":
+          "Cloudflare refused the scan: HTTP 200 with cf-mitigated: challenge.",
       },
       judgeable: false,
     },
@@ -213,7 +238,7 @@ export function shellSiteContext(
   html: string = SHELL_HTML,
   rootFiles: Record<string, FetchResult> = {},
 ): CheckContext {
-  const url = 'https://example.com/';
+  const url = "https://example.com/";
   const page = mockPageContext(url, html);
   const ctx = mockCheckContext([page], rootFiles);
   return {
@@ -231,14 +256,14 @@ export function shellSiteContext(
 export function mockFetchResult(
   body: string,
   status: number = 200,
-  contentType: string = 'text/plain',
+  contentType: string = "text/plain",
 ): FetchResult {
   return {
-    url: '',
-    finalUrl: '',
+    url: "",
+    finalUrl: "",
     status,
     body,
-    headers: { 'content-type': contentType },
+    headers: { "content-type": contentType },
     ttfbMs: 0,
     totalMs: 0,
     contentType,

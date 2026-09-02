@@ -1,4 +1,4 @@
-import { badgeColor } from './badge-generator';
+import { badgeColor } from "./badge-generator";
 
 /**
  * The report inspector's client half.
@@ -45,7 +45,7 @@ export interface ReportSummary {
 
 /** Thrown when a file parses but is not an Agent Lighthouse report. */
 export class ReportShapeError extends Error {
-  override name = 'ReportShapeError';
+  override name = "ReportShapeError";
 }
 
 /**
@@ -69,21 +69,23 @@ export const MAX_REPORT_BYTES = 8 * 1024 * 1024;
 
 /** A plain object, or nothing. Arrays are not records here. */
 function asRecord(value: unknown): Record<string, unknown> | undefined {
-  return typeof value === 'object' && value !== null && !Array.isArray(value)
+  return typeof value === "object" && value !== null && !Array.isArray(value)
     ? (value as Record<string, unknown>)
     : undefined;
 }
 
 /** A finite number, or nothing — `NaN` and `Infinity` are not scores. */
 function asNumber(value: unknown): number | undefined {
-  return typeof value === 'number' && Number.isFinite(value) ? value : undefined;
+  return typeof value === "number" && Number.isFinite(value)
+    ? value
+    : undefined;
 }
 
 /** A non-empty string, cut to a length the page can lay out. */
 function asText(value: unknown): string | undefined {
-  if (typeof value !== 'string') return undefined;
+  if (typeof value !== "string") return undefined;
   const trimmed = value.trim();
-  if (trimmed === '') return undefined;
+  if (trimmed === "") return undefined;
   return trimmed.length > MAX_TEXT ? `${trimmed.slice(0, MAX_TEXT)}…` : trimmed;
 }
 
@@ -115,18 +117,22 @@ function count(value: unknown): number {
 export function summarize(report: unknown): ReportSummary {
   const record = asRecord(report);
   if (!record) {
-    throw new ReportShapeError('That file is not a JSON object, so it cannot be a scan report.');
-  }
-
-  const unscored = record['overallScore'] === null;
-  const score = asNumber(record['overallScore']);
-  if (score === undefined && !unscored) {
     throw new ReportShapeError(
-      'That JSON file has no numeric overallScore, so it is not an Agent Lighthouse report.',
+      "That file is not a JSON object, so it cannot be a scan report.",
     );
   }
 
-  const rawCategories = Array.isArray(record['categories']) ? record['categories'] : [];
+  const unscored = record["overallScore"] === null;
+  const score = asNumber(record["overallScore"]);
+  if (score === undefined && !unscored) {
+    throw new ReportShapeError(
+      "That JSON file has no numeric overallScore, so it is not an Agent Lighthouse report.",
+    );
+  }
+
+  const rawCategories = Array.isArray(record["categories"])
+    ? record["categories"]
+    : [];
   const categories: CategorySummary[] = [];
   for (const entry of rawCategories) {
     const category = asRecord(entry);
@@ -135,26 +141,29 @@ export function summarize(report: unknown): ReportSummary {
     if (!category) continue;
     categories.push({
       name:
-        asText(category['name']) ??
-        asText(category['title']) ??
-        asText(category['id']) ??
-        'Unnamed category',
-      score: asScore(category['score']),
-      checks: count(category['checks']),
+        asText(category["name"]) ??
+        asText(category["title"]) ??
+        asText(category["id"]) ??
+        "Unnamed category",
+      score: asScore(category["score"]),
+      checks: count(category["checks"]),
     });
   }
 
-  const pages = count(record['pagesScanned']) || count(record['pagesData']) || count(record['pages']);
-  const duration = asNumber(record['durationMs']) ?? 0;
+  const pages =
+    count(record["pagesScanned"]) ||
+    count(record["pagesData"]) ||
+    count(record["pages"]);
+  const duration = asNumber(record["durationMs"]) ?? 0;
 
   return {
     url:
-      asText(record['url']) ??
-      asText(record['targetUrl']) ??
-      asText(record['domain']) ??
-      'Unnamed target',
+      asText(record["url"]) ??
+      asText(record["targetUrl"]) ??
+      asText(record["domain"]) ??
+      "Unnamed target",
     score: unscored || score === undefined ? null : asScore(score),
-    tier: asText(record['scoreTier']) ?? '',
+    tier: asText(record["scoreTier"]) ?? "",
     pages,
     durationMs: Math.max(0, Math.round(duration)),
     categories,
@@ -169,15 +178,15 @@ export function summarize(report: unknown): ReportSummary {
  * a green badge on.
  */
 const TONE: Record<string, string> = {
-  '22c55e': 'text-emerald-400',
-  '4f46e5': 'text-indigo-300',
-  f59e0b: 'text-amber-300',
-  ef4444: 'text-red-400',
+  "22c55e": "text-emerald-400",
+  "4f46e5": "text-indigo-300",
+  f59e0b: "text-amber-300",
+  ef4444: "text-red-400",
 };
 
 /** The Tailwind text colour for a score, following the published bands. */
 export function scoreClass(score: number): string {
-  return TONE[badgeColor(score)] ?? 'text-slate-300';
+  return TONE[badgeColor(score)] ?? "text-slate-300";
 }
 
 /** Seconds, to one decimal, from a duration in milliseconds. */
@@ -187,7 +196,7 @@ export function formatDuration(ms: number): string {
 
 /** The line under the target: how much was scanned, and how long it took. */
 export function scanLine(summary: ReportSummary): string {
-  const pages = summary.pages === 1 ? '1 page' : `${summary.pages} pages`;
+  const pages = summary.pages === 1 ? "1 page" : `${summary.pages} pages`;
   return summary.durationMs > 0
     ? `${pages} scanned in ${formatDuration(summary.durationMs)}`
     : `${pages} scanned`;
@@ -195,7 +204,7 @@ export function scanLine(summary: ReportSummary): string {
 
 /** A `<div>` with a class and text, the shape most of this panel is made of. */
 function div(className: string, text?: string): HTMLDivElement {
-  const element = document.createElement('div');
+  const element = document.createElement("div");
   element.className = className;
   if (text !== undefined) element.textContent = text;
   return element;
@@ -204,20 +213,22 @@ function div(className: string, text?: string): HTMLDivElement {
 /** One category card. Built from nodes, never from an HTML string. */
 function categoryCard(category: CategorySummary): HTMLElement {
   const card = div(
-    'flex items-center justify-between gap-4 rounded-xl border border-border-subtle bg-surface p-4',
+    "flex items-center justify-between gap-4 rounded-xl border border-border-subtle bg-surface p-4",
   );
 
-  const label = document.createElement('div');
-  const name = document.createElement('h4');
-  name.className = 'text-sm font-semibold text-white';
+  const label = document.createElement("div");
+  const name = document.createElement("h4");
+  name.className = "text-sm font-semibold text-white";
   name.textContent = category.name;
   const checks = div(
-    'mt-0.5 text-xs text-slate-400',
-    category.checks === 1 ? '1 audit evaluated' : `${category.checks} audits evaluated`,
+    "mt-0.5 text-xs text-slate-400",
+    category.checks === 1
+      ? "1 audit evaluated"
+      : `${category.checks} audits evaluated`,
   );
   label.append(name, checks);
 
-  const score = document.createElement('span');
+  const score = document.createElement("span");
   score.className = `shrink-0 text-sm font-bold ${scoreClass(category.score)}`;
   score.textContent = `${category.score}/100`;
 
@@ -228,40 +239,50 @@ function categoryCard(category: CategorySummary): HTMLElement {
 /** The header block: the target, what was scanned, and the overall score. */
 function header(summary: ReportSummary): HTMLElement {
   const wrap = div(
-    'flex flex-col items-start justify-between gap-6 border-b border-border-subtle pb-6 sm:flex-row sm:items-center',
+    "flex flex-col items-start justify-between gap-6 border-b border-border-subtle pb-6 sm:flex-row sm:items-center",
   );
 
-  const left = document.createElement('div');
+  const left = document.createElement("div");
   const eyebrow = div(
-    'text-xs font-bold uppercase tracking-wider text-slate-400',
-    'Scanned target',
+    "text-xs font-bold uppercase tracking-wider text-slate-400",
+    "Scanned target",
   );
-  const target = document.createElement('h3');
+  const target = document.createElement("h3");
   // `break-all`: the target is arbitrary text from the file and may have no
   // spaces to wrap at.
-  target.className = 'mt-1 break-all text-xl font-extrabold text-white';
+  target.className = "mt-1 break-all text-xl font-extrabold text-white";
   target.textContent = summary.url;
-  left.append(eyebrow, target, div('mt-1 text-xs text-slate-400', scanLine(summary)));
+  left.append(
+    eyebrow,
+    target,
+    div("mt-1 text-xs text-slate-400", scanLine(summary)),
+  );
 
-  const right = div('text-left sm:text-right');
+  const right = div("text-left sm:text-right");
   // A scan that saw too little carries no number. Showing 0 here would read as
   // a verdict about the site rather than about the scan.
   const score =
     summary.score === null
-      ? div('text-2xl font-black text-amber-300', 'Not scored')
-      : div(`text-4xl font-black ${scoreClass(summary.score)}`, `${summary.score}/100`);
+      ? div("text-2xl font-black text-amber-300", "Not scored")
+      : div(
+          `text-4xl font-black ${scoreClass(summary.score)}`,
+          `${summary.score}/100`,
+        );
   right.append(score);
   if (summary.score === null) {
     right.append(
       div(
-        'mt-1 max-w-xs text-xs text-slate-400',
-        'This scan obtained too little evidence to judge the site.',
+        "mt-1 max-w-xs text-xs text-slate-400",
+        "This scan obtained too little evidence to judge the site.",
       ),
     );
   }
   if (summary.tier) {
     right.append(
-      div('mt-1 text-xs font-semibold uppercase tracking-wider text-slate-400', summary.tier),
+      div(
+        "mt-1 text-xs font-semibold uppercase tracking-wider text-slate-400",
+        summary.tier,
+      ),
     );
   }
 
@@ -277,14 +298,14 @@ export function renderSummary(summary: ReportSummary): DocumentFragment {
   if (summary.categories.length === 0) {
     fragment.append(
       div(
-        'text-sm text-slate-400',
-        'The report carries no category scores, so there is nothing to break down.',
+        "text-sm text-slate-400",
+        "The report carries no category scores, so there is nothing to break down.",
       ),
     );
     return fragment;
   }
 
-  const grid = div('grid grid-cols-1 gap-4 sm:grid-cols-2');
+  const grid = div("grid grid-cols-1 gap-4 sm:grid-cols-2");
   const shown = summary.categories.slice(0, MAX_CATEGORIES);
   for (const category of shown) grid.append(categoryCard(category));
   fragment.append(grid);
@@ -292,7 +313,10 @@ export function renderSummary(summary: ReportSummary): DocumentFragment {
   const hidden = summary.categories.length - shown.length;
   if (hidden > 0) {
     fragment.append(
-      div('text-xs text-slate-400', `…and ${hidden} more categories this view does not render.`),
+      div(
+        "text-xs text-slate-400",
+        `…and ${hidden} more categories this view does not render.`,
+      ),
     );
   }
   return fragment;
@@ -314,7 +338,7 @@ export async function readReport(file: File): Promise<ReportSummary> {
     parsed = JSON.parse(await file.text());
   } catch {
     throw new ReportShapeError(
-      'That file is not valid JSON. Open the report your scan wrote, not the HTML version.',
+      "That file is not valid JSON. Open the report your scan wrote, not the HTML version.",
     );
   }
   return summarize(parsed);
@@ -325,10 +349,10 @@ export async function readReport(file: File): Promise<ReportSummary> {
  * builders above, and the only one that reads a file.
  */
 export function mountReportViewer(): void {
-  const input = document.querySelector<HTMLInputElement>('#report-file');
-  const zone = document.querySelector<HTMLElement>('#report-dropzone');
-  const status = document.querySelector<HTMLElement>('#report-status');
-  const output = document.querySelector<HTMLElement>('#report-output');
+  const input = document.querySelector<HTMLInputElement>("#report-file");
+  const zone = document.querySelector<HTMLElement>("#report-dropzone");
+  const status = document.querySelector<HTMLElement>("#report-status");
+  const output = document.querySelector<HTMLElement>("#report-output");
   if (!input || !zone || !status || !output) return;
 
   // Only the text changes. The region is in the document, visible and empty from
@@ -353,21 +377,23 @@ export function mountReportViewer(): void {
       say(
         error instanceof ReportShapeError
           ? error.message
-          : 'That file could not be read as a scan report.',
+          : "That file could not be read as a scan report.",
       );
       return;
     }
 
     output.replaceChildren(renderSummary(summary));
     output.hidden = false;
-    say(`Showing ${file.name}: ${summary.url} scored ${summary.score} out of 100.`);
+    say(
+      `Showing ${file.name}: ${summary.url} scored ${summary.score} out of 100.`,
+    );
     // Optional-chained because it is genuinely optional: jsdom has no layout and
     // so no `scrollIntoView`. No `behavior` is passed, which leaves the choice
     // to the stylesheet — and to its `prefers-reduced-motion` rule.
     output.scrollIntoView?.();
   };
 
-  input.addEventListener('change', () => {
+  input.addEventListener("change", () => {
     void show(input.files?.[0]);
   });
 
@@ -375,18 +401,18 @@ export function mountReportViewer(): void {
   // so leaving the resting one in place would make the highlight depend on the
   // order Tailwind emitted them in — which is not something this file controls.
   const light = (on: boolean): void => {
-    zone.classList.toggle('border-brand', on);
-    zone.classList.toggle('border-border-subtle', !on);
+    zone.classList.toggle("border-brand", on);
+    zone.classList.toggle("border-border-subtle", !on);
   };
 
-  zone.addEventListener('dragover', (event) => {
+  zone.addEventListener("dragover", (event) => {
     // Without this the browser navigates to the dropped file and the page is
     // gone: `dragover` is the event that has to be cancelled, not just `drop`.
     event.preventDefault();
     light(true);
   });
-  zone.addEventListener('dragleave', () => light(false));
-  zone.addEventListener('drop', (event) => {
+  zone.addEventListener("dragleave", () => light(false));
+  zone.addEventListener("drop", (event) => {
     event.preventDefault();
     light(false);
     void show(event.dataTransfer?.files?.[0]);

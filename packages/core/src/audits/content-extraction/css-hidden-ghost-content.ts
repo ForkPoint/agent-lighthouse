@@ -6,11 +6,11 @@
 // instruction addressed to a model. This audit asks what it costs — tokens and
 // duplicated context — and fails on size, not on wording. A page can fail one
 // and pass the other.
-import type { AuditMeta, AuditResult } from '../../types';
-import { Audit } from '../../audit';
-import { weightForGrade } from '../../scorer';
-import type { CheckContext, PageContext } from '../../check-context';
-import { collectPageCss, type CssRule } from '../../gatherers/css-rules';
+import type { AuditMeta, AuditResult } from "../../types";
+import { Audit } from "../../audit";
+import { weightForGrade } from "../../scorer";
+import type { CheckContext, PageContext } from "../../check-context";
+import { collectPageCss, type CssRule } from "../../gatherers/css-rules";
 
 /** The repo-wide rough token estimator; no tokenizer dependency is carried. */
 const CHARS_PER_TOKEN = 4;
@@ -30,10 +30,16 @@ const DUPLICATE_OVERLAP = 0.8;
  * the byte stream every non-rendering extractor reads.
  */
 const HIDING_DECLARATIONS: ReadonlyArray<{ pattern: RegExp; label: string }> = [
-  { pattern: /display\s*:\s*none/i, label: 'display:none' },
-  { pattern: /visibility\s*:\s*hidden/i, label: 'visibility:hidden' },
-  { pattern: /content-visibility\s*:\s*hidden/i, label: 'content-visibility:hidden' },
-  { pattern: /clip(-path)?\s*:\s*(rect\(\s*0|inset\(\s*50%)/i, label: 'clip idiom' },
+  { pattern: /display\s*:\s*none/i, label: "display:none" },
+  { pattern: /visibility\s*:\s*hidden/i, label: "visibility:hidden" },
+  {
+    pattern: /content-visibility\s*:\s*hidden/i,
+    label: "content-visibility:hidden",
+  },
+  {
+    pattern: /clip(-path)?\s*:\s*(rect\(\s*0|inset\(\s*50%)/i,
+    label: "clip idiom",
+  },
 ];
 
 /** Inline markers Readability already honours, so their text is not ingested. */
@@ -61,7 +67,7 @@ interface Survey {
   crossOrigin: number;
 }
 
-function $el($: PageContext['$'], el: unknown) {
+function $el($: PageContext["$"], el: unknown) {
   return $(el as never);
 }
 
@@ -69,12 +75,12 @@ function $el($: PageContext['$'], el: unknown) {
 function shingles(text: string): Set<string> {
   const words = text
     .toLowerCase()
-    .replace(/[^a-z0-9\s]/g, ' ')
+    .replace(/[^a-z0-9\s]/g, " ")
     .split(/\s+/)
     .filter(Boolean);
   const out = new Set<string>();
   for (let i = 0; i + SHINGLE_N <= words.length; i += 1) {
-    out.add(words.slice(i, i + SHINGLE_N).join(' '));
+    out.add(words.slice(i, i + SHINGLE_N).join(" "));
   }
   return out;
 }
@@ -93,19 +99,21 @@ function inlineHidden(page: PageContext, el: unknown): boolean {
   let found = false;
   chain.each((_i, node) => {
     const $n = $el(page.$, node);
-    if ($n.attr('hidden') !== undefined) found = true;
-    if (($n.attr('aria-hidden') ?? '').toLowerCase() === 'true') found = true;
-    if (INLINE_HIDDEN.test($n.attr('style') ?? '')) found = true;
+    if ($n.attr("hidden") !== undefined) found = true;
+    if (($n.attr("aria-hidden") ?? "").toLowerCase() === "true") found = true;
+    if (INLINE_HIDDEN.test($n.attr("style") ?? "")) found = true;
   });
   return found;
 }
 
 /** Every rule that hides its matches, ignoring print-only and unattributable at-rules. */
-function hidingRules(rules: CssRule[]): Array<{ rule: CssRule; technique: string }> {
+function hidingRules(
+  rules: CssRule[],
+): Array<{ rule: CssRule; technique: string }> {
   const out: Array<{ rule: CssRule; technique: string }> = [];
   for (const rule of rules) {
     // Hiding text from a printer is not hiding it from a reader.
-    if (rule.atRule?.startsWith('media print')) continue;
+    if (rule.atRule?.startsWith("media print")) continue;
     for (const { pattern, label } of HIDING_DECLARATIONS) {
       if (pattern.test(rule.declarations)) {
         out.push({ rule, technique: label });
@@ -122,26 +130,31 @@ function visibleText(page: PageContext, hidden: Set<unknown>): string {
   const parts: string[] = [];
   const walk = (node: unknown) => {
     if (hidden.has(node)) return;
-    const tag = (node as { tagName?: string }).tagName?.toLowerCase() ?? '';
-    if (tag === 'script' || tag === 'style' || tag === 'noscript') return;
+    const tag = (node as { tagName?: string }).tagName?.toLowerCase() ?? "";
+    if (tag === "script" || tag === "style" || tag === "noscript") return;
     $el($, node)
       .contents()
       .each((_i, child) => {
         const type = (child as { type?: string }).type;
-        if (type === 'text') parts.push($el($, child).text());
-        else if (type === 'tag') walk(child);
+        if (type === "text") parts.push($el($, child).text());
+        else if (type === "tag") walk(child);
       });
   };
-  $('body').each((_i, body) => walk(body));
-  return parts.join(' ').replace(/\s+/g, ' ').trim();
+  $("body").each((_i, body) => walk(body));
+  return parts.join(" ").replace(/\s+/g, " ").trim();
 }
 
 async function survey(ctx: CheckContext): Promise<Survey> {
-  const result: Survey = { totalChars: 0, hiddenChars: 0, blocks: [], crossOrigin: 0 };
+  const result: Survey = {
+    totalChars: 0,
+    hiddenChars: 0,
+    blocks: [],
+    crossOrigin: 0,
+  };
 
   for (const page of ctx.pages) {
     const $ = page.$;
-    const pageText = $('body').text().replace(/\s+/g, ' ').trim();
+    const pageText = $("body").text().replace(/\s+/g, " ").trim();
     result.totalChars += pageText.length;
     if (!pageText) continue;
 
@@ -150,20 +163,24 @@ async function survey(ctx: CheckContext): Promise<Survey> {
 
     // Candidate elements first, then one pass to drop nested duplicates, so a
     // hidden wrapper is counted once rather than once per hidden descendant.
-    const candidates = new Map<unknown, { selector: string; technique: string }>();
+    const candidates = new Map<
+      unknown,
+      { selector: string; technique: string }
+    >();
     for (const { rule, technique } of hidingRules(css.rules)) {
       try {
         $(rule.selector).each((_i, el) => {
-          const tag = (el as { tagName?: string }).tagName?.toLowerCase() ?? '';
-          if (tag === 'script' || tag === 'style' || tag === 'noscript') return;
-          if ($el($, el).closest('body').length === 0) return;
+          const tag = (el as { tagName?: string }).tagName?.toLowerCase() ?? "";
+          if (tag === "script" || tag === "style" || tag === "noscript") return;
+          if ($el($, el).closest("body").length === 0) return;
           // Readability drops these already, so their text costs nothing.
           if (inlineHidden(page, el)) return;
-          const text = $el($, el).text().replace(/\s+/g, ' ').trim();
+          const text = $el($, el).text().replace(/\s+/g, " ").trim();
           if (!text) return;
           // A short sr-only string is assistive text, not ghost content.
-          if (technique === 'clip idiom' && text.length < SR_ONLY_CHARS) return;
-          if (!candidates.has(el)) candidates.set(el, { selector: rule.selector, technique });
+          if (technique === "clip idiom" && text.length < SR_ONLY_CHARS) return;
+          if (!candidates.has(el))
+            candidates.set(el, { selector: rule.selector, technique });
         });
       } catch {
         // A selector cheerio cannot compile matches nothing rather than
@@ -183,7 +200,7 @@ async function survey(ctx: CheckContext): Promise<Survey> {
     const visible = shingles(visibleText(page, outermost));
     for (const el of outermost) {
       const { selector, technique } = candidates.get(el)!;
-      const text = $el($, el).text().replace(/\s+/g, ' ').trim();
+      const text = $el($, el).text().replace(/\s+/g, " ").trim();
       result.hiddenChars += text.length;
       result.blocks.push({
         pageUrl: page.url,
@@ -201,7 +218,7 @@ async function survey(ctx: CheckContext): Promise<Survey> {
 }
 
 const EXPECTED =
-  'No text hidden by a stylesheet class, or so little of it that an extractor which cannot evaluate CSS still reads the page a human sees';
+  "No text hidden by a stylesheet class, or so little of it that an extractor which cannot evaluate CSS still reads the page a human sees";
 
 const SAMPLE = `<!-- Do not ship parallel copies behind display:none. Render one copy and
      let CSS reposition it, or load the alternate view on demand. -->
@@ -212,34 +229,40 @@ const SAMPLE = `<!-- Do not ship parallel copies behind display:none. Render one
 
 export class CssHiddenGhostContentAudit extends Audit {
   static override meta: AuditMeta = {
-    id: 'content-extraction/css-hidden-ghost-content',
-    category: 'content-extraction',
-    title: 'Ghost content: CSS-hidden text ingested as visible',
-    failureTitle: 'Ghost content: CSS-hidden text ingested as visible',
+    id: "content-extraction/css-hidden-ghost-content",
+    category: "content-extraction",
+    title: "Ghost content: CSS-hidden text ingested as visible",
+    failureTitle: "Ghost content: CSS-hidden text ingested as visible",
     description:
       "Find text that is hidden from human readers by an external stylesheet class but is invisible-as-hidden to every extractor an agent uses, and size it in tokens. Fail if class-hidden text exceeds 15% of the page's total text tokens or 1,000 tokens absolute; separately fail on near-duplicate hidden blocks (a mobile nav or tab-panel set duplicating visible content). Report contradiction risk when hidden text contains prices, availability, or dated claims.",
-    scoreDisplayMode: 'ternary',
-    weight: weightForGrade('A', 'scored'),
-    evidenceGrade: 'A',
-    tier: 'scored',
-    dossier: 'docs/evidence/audits/content-extraction/css-hidden-ghost-content.md',
-    requires: ['origin-reachable', 'unblocked-fetches', 'rendered-body', 'sample-adequate'],
-    defaultPriority: 'medium',
+    scoreDisplayMode: "ternary",
+    weight: weightForGrade("A", "scored"),
+    evidenceGrade: "A",
+    tier: "scored",
+    dossier:
+      "docs/evidence/audits/content-extraction/css-hidden-ghost-content.md",
+    requires: [
+      "origin-reachable",
+      "unblocked-fetches",
+      "rendered-body",
+      "sample-adequate",
+    ],
+    defaultPriority: "medium",
     guidance: {
       impact:
         "This is provable from source, not inferred. Readability's visibility test consults only node.style.display, node.style.visibility, the hidden attribute and aria-hidden — it explicitly does not evaluate class-based CSS rules from stylesheets. AI crawlers do not render, so no cascade is ever computed. Therefore any subtree hidden by `.mobile-only{display:none}`, `.tab-panel:not(.active){display:none}` or `[data-state=closed]{display:none}` reaches the model as ordinary body text with full weight. Consequence is not just cost: the agent sees three parallel copies of a nav, both the collapsed and expanded FAQ answers, and often stale price text from a hidden variant block, and irrelevant/contradictory context measurably degrades answers.",
-      fix: 'Stop shipping parallel copies of the same content behind a hiding class. Render one copy and let CSS reposition or restyle it, or load the alternate view on demand. Where a hidden block must stay in the markup — a collapsed tab panel, an off-canvas menu — add the `hidden` attribute or an inline `display:none` alongside the class, because those are the markers a non-rendering extractor does honour. Keep the visually-hidden idiom for short assistive strings only.',
+      fix: "Stop shipping parallel copies of the same content behind a hiding class. Render one copy and let CSS reposition or restyle it, or load the alternate view on demand. Where a hidden block must stay in the markup — a collapsed tab panel, an off-canvas menu — add the `hidden` attribute or an inline `display:none` alongside the class, because those are the markers a non-rendering extractor does honour. Keep the visually-hidden idiom for short assistive strings only.",
       code: SAMPLE,
-      effort: 'moderate',
+      effort: "moderate",
       docsUrl:
-        'https://forkpoint.github.io/agent-lighthouse/audits/content-extraction/css-hidden-ghost-content/',
-      tags: ['token-economics', 'extraction', 'ghost-content', 'duplication'],
+        "https://forkpoint.github.io/agent-lighthouse/audits/content-extraction/css-hidden-ghost-content/",
+      tags: ["token-economics", "extraction", "ghost-content", "duplication"],
     },
   };
 
   private recommendation() {
     return {
-      priority: 'medium' as const,
+      priority: "medium" as const,
       description: CssHiddenGhostContentAudit.meta.description,
       code: SAMPLE,
     };
@@ -248,11 +271,13 @@ export class CssHiddenGhostContentAudit extends Audit {
   async audit(ctx: CheckContext): Promise<AuditResult> {
     const s = await survey(ctx);
     const partial =
-      s.crossOrigin > 0 ? `; ${s.crossOrigin} cross-origin stylesheet not fetched` : '';
+      s.crossOrigin > 0
+        ? `; ${s.crossOrigin} cross-origin stylesheet not fetched`
+        : "";
 
     if (s.totalChars === 0) {
       return this.notApplicable(
-        'No body text on the scanned pages, so there is no ghost content to size.',
+        "No body text on the scanned pages, so there is no ghost content to size.",
         EXPECTED,
         `No body text on the scanned pages${partial}`,
       );
@@ -260,7 +285,7 @@ export class CssHiddenGhostContentAudit extends Audit {
 
     if (s.blocks.length === 0) {
       return this.pass(
-        'No text is hidden by a stylesheet rule an extractor cannot evaluate.',
+        "No text is hidden by a stylesheet rule an extractor cannot evaluate.",
         EXPECTED,
         `0 est. tokens hidden by CSS class${partial}`,
         ctx.pages[0]?.url,
@@ -279,11 +304,11 @@ export class CssHiddenGhostContentAudit extends Audit {
     const dupeClause =
       duplicates.length > 0
         ? ` ${duplicates.length} block(s) duplicate text that is already visible, so the agent reads the same copy twice.`
-        : '';
+        : "";
     const riskClause =
       contradictory.length > 0
         ? ` ${contradictory.length} block(s) carry prices, availability or dated claims that can contradict the visible copy.`
-        : '';
+        : "";
 
     if (
       duplicates.length > 0 ||

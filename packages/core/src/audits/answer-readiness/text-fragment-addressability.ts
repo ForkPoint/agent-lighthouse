@@ -4,21 +4,21 @@
 // Simulates the text-fragment matching algorithm over the parsed DOM: can a
 // citing surface build a `#:~:text=` link that lands on this page's answer
 // sentence, or does the link silently degrade to page-top?
-import type { AuditMeta, AuditResult } from '../../types';
-import { Audit } from '../../audit';
-import { weightForGrade } from '../../scorer';
-import type { CheckContext, PageContext } from '../../check-context';
-import { allJsonLdNodes } from '../../parser';
+import type { AuditMeta, AuditResult } from "../../types";
+import { Audit } from "../../audit";
+import { weightForGrade } from "../../scorer";
+import type { CheckContext, PageContext } from "../../check-context";
+import { allJsonLdNodes } from "../../parser";
 
 /** Elements the spec's block-boundary rule treats as block-level. */
 const BLOCK_SELECTOR =
-  'p,div,li,td,th,h1,h2,h3,h4,h5,h6,section,article,blockquote,dd,dt,figcaption,pre,details,summary,main,aside,header,footer';
+  "p,div,li,td,th,h1,h2,h3,h4,h5,h6,section,article,blockquote,dd,dt,figcaption,pre,details,summary,main,aside,header,footer";
 
 /** Characters that survive in the source but not in the matcher's comparison. */
 const HAZARDS: ReadonlyArray<{ pattern: RegExp; label: string }> = [
-  { pattern: /­/, label: 'soft hyphen (U+00AD)' },
-  { pattern: /[​‌‍]/, label: 'zero-width character (U+200B–U+200D)' },
-  { pattern: /[‘’“”]/, label: 'smart quote' },
+  { pattern: /­/, label: "soft hyphen (U+00AD)" },
+  { pattern: /[​‌‍]/, label: "zero-width character (U+200B–U+200D)" },
+  { pattern: /[‘’“”]/, label: "smart quote" },
 ];
 
 /** Longest span emitted whole; longer answers use the start,end form. */
@@ -27,7 +27,7 @@ const MAX_START_CHARS = 300;
 const CONTEXT_WORDS = 5;
 
 function normalize(text: string): string {
-  return text.replace(/\s+/g, ' ').trim();
+  return text.replace(/\s+/g, " ").trim();
 }
 
 function firstSentence(text: string): string {
@@ -38,7 +38,7 @@ function firstSentence(text: string): string {
 
 /** Percent-encode a fragment term, including the `-` and `,` delimiters. */
 function encodeTerm(text: string): string {
-  return encodeURIComponent(text).replace(/-/g, '%2D').replace(/,/g, '%2C');
+  return encodeURIComponent(text).replace(/-/g, "%2D").replace(/,/g, "%2C");
 }
 
 interface LeafBlock {
@@ -74,24 +74,36 @@ function candidates(page: PageContext): Candidate[] {
     out.push({ origin, text: clean });
   };
 
-  $('h2, h3').each((_i, heading) => {
+  $("h2, h3").each((_i, heading) => {
     const next = $(heading).next();
     if (next.length === 0) return;
-    add(`first sentence after "${normalize($(heading).text()).slice(0, 60)}"`, firstSentence(next.text()));
+    add(
+      `first sentence after "${normalize($(heading).text()).slice(0, 60)}"`,
+      firstSentence(next.text()),
+    );
   });
-  $('dd').each((_i, el) => {
-    add('definition list answer', $(el).text().slice(0, MAX_START_CHARS * 2));
+  $("dd").each((_i, el) => {
+    add(
+      "definition list answer",
+      $(el)
+        .text()
+        .slice(0, MAX_START_CHARS * 2),
+    );
   });
 
-  const documentText = normalize($('body').text());
+  const documentText = normalize($("body").text());
   for (const node of allJsonLdNodes(page.jsonLd)) {
-    const entities = (node as Record<string, unknown>)['mainEntity'];
-    for (const entity of Array.isArray(entities) ? entities : entities ? [entities] : []) {
-      const answer = (entity as Record<string, unknown>)['acceptedAnswer'];
-      const text = answer && (answer as Record<string, unknown>)['text'];
+    const entities = (node as Record<string, unknown>)["mainEntity"];
+    for (const entity of Array.isArray(entities)
+      ? entities
+      : entities
+        ? [entities]
+        : []) {
+      const answer = (entity as Record<string, unknown>)["acceptedAnswer"];
+      const text = answer && (answer as Record<string, unknown>)["text"];
       // Only markup that is also on the page can be cited from the page.
-      if (typeof text === 'string' && documentText.includes(normalize(text))) {
-        add('FAQPage answer', text);
+      if (typeof text === "string" && documentText.includes(normalize(text))) {
+        add("FAQPage answer", text);
       }
     }
   }
@@ -108,15 +120,24 @@ interface Verdict {
   hazards: string[];
 }
 
-function assess(page: PageContext, candidate: Candidate, blocks: LeafBlock[]): Verdict {
-  const hazards = HAZARDS.filter(({ pattern }) => pattern.test(candidate.text)).map((h) => h.label);
-  const containing = blocks.filter((block) => block.text.includes(candidate.text));
+function assess(
+  page: PageContext,
+  candidate: Candidate,
+  blocks: LeafBlock[],
+): Verdict {
+  const hazards = HAZARDS.filter(({ pattern }) =>
+    pattern.test(candidate.text),
+  ).map((h) => h.label);
+  const containing = blocks.filter((block) =>
+    block.text.includes(candidate.text),
+  );
 
   if (containing.length === 0) {
     return {
       candidate,
       addressable: false,
-      reason: 'the span crosses a block boundary, and the spec requires each term to match inside one block-level element',
+      reason:
+        "the span crosses a block boundary, and the spec requires each term to match inside one block-level element",
       hazards,
     };
   }
@@ -142,31 +163,41 @@ function assess(page: PageContext, candidate: Candidate, blocks: LeafBlock[]): V
     return {
       candidate,
       addressable: false,
-      reason: 'the span occurs more than once and its block offers no prefix or suffix to disambiguate it',
+      reason:
+        "the span occurs more than once and its block offers no prefix or suffix to disambiguate it",
       hazards,
     };
   }
 
   const words = (text: string, fromEnd: boolean) => {
-    const parts = text.split(' ').filter(Boolean);
-    return (fromEnd ? parts.slice(-CONTEXT_WORDS) : parts.slice(0, CONTEXT_WORDS)).join(' ');
+    const parts = text.split(" ").filter(Boolean);
+    return (
+      fromEnd ? parts.slice(-CONTEXT_WORDS) : parts.slice(0, CONTEXT_WORDS)
+    ).join(" ");
   };
 
   const terms: string[] = [];
-  if (occurrences > 1 && before) terms.push(`${encodeTerm(words(before, true))}-`);
+  if (occurrences > 1 && before)
+    terms.push(`${encodeTerm(words(before, true))}-`);
   if (candidate.text.length > MAX_START_CHARS) {
     terms.push(encodeTerm(words(candidate.text, false)));
     terms.push(encodeTerm(words(candidate.text, true)));
   } else {
     terms.push(encodeTerm(candidate.text));
   }
-  if (occurrences > 1 && !before && after) terms.push(`-${encodeTerm(words(after, false))}`);
+  if (occurrences > 1 && !before && after)
+    terms.push(`-${encodeTerm(words(after, false))}`);
 
-  return { candidate, addressable: true, url: `${page.url}#:~:text=${terms.join(',')}`, hazards };
+  return {
+    candidate,
+    addressable: true,
+    url: `${page.url}#:~:text=${terms.join(",")}`,
+    hazards,
+  };
 }
 
 const EXPECTED =
-  'Every answer span sits inside one block-level element, is unique or disambiguable with same-block context, carries no normalization hazard, and the page does not send Document-Policy: force-load-at-top';
+  "Every answer span sits inside one block-level element, is unique or disambiguable with same-block context, carries no normalization hazard, and the page does not send Document-Policy: force-load-at-top";
 
 const SAMPLE = `<!-- Keep the answer sentence inside one block element. -->
 <h2>What is resoling?</h2>
@@ -178,34 +209,40 @@ const SAMPLE = `<!-- Keep the answer sentence inside one block element. -->
 
 export class TextFragmentAddressabilityAudit extends Audit {
   static override meta: AuditMeta = {
-    id: 'answer-readiness/text-fragment-addressability',
-    category: 'answer-readiness',
-    title: 'Text-fragment citation addressability',
-    failureTitle: 'Text-fragment citation addressability',
+    id: "answer-readiness/text-fragment-addressability",
+    category: "answer-readiness",
+    title: "Text-fragment citation addressability",
+    failureTitle: "Text-fragment citation addressability",
     description:
       "Determines whether a citing surface can construct a working `#:~:text=` deep link to the page's actual answer sentences. Hard-fails on the documented `Document-Policy: force-load-at-top` opt-out header, then simulates the spec's matching algorithm over the parsed DOM to prove each candidate answer span is (a) contained in a single block-level element, (b) unambiguous or disambiguable with a same-block prefix/suffix, and (c) free of characters that break normalization. Outputs the working fragment URLs as a fix artifact.",
-    scoreDisplayMode: 'ternary',
-    weight: weightForGrade('A', 'scored'),
-    evidenceGrade: 'A',
-    tier: 'scored',
-    dossier: 'docs/evidence/audits/answer-readiness/text-fragment-addressability.md',
-    requires: ['origin-reachable', 'unblocked-fetches', 'rendered-body', 'sample-adequate'],
-    defaultPriority: 'medium',
+    scoreDisplayMode: "ternary",
+    weight: weightForGrade("A", "scored"),
+    evidenceGrade: "A",
+    tier: "scored",
+    dossier:
+      "docs/evidence/audits/answer-readiness/text-fragment-addressability.md",
+    requires: [
+      "origin-reachable",
+      "unblocked-fetches",
+      "rendered-body",
+      "sample-adequate",
+    ],
+    defaultPriority: "medium",
     guidance: {
       impact:
-        'Google Search auto-generates text-fragment URLs to land users on the exact featured-snippet text, and the spec requires each of prefix/start/end/suffix to match within a single block-level element. When an answer sentence is fragmented across block boundaries, or the header opt-out is set, the fragment silently fails and the link degrades to page-top. Falsifiable and directly testable: take the citing surface’s own generated URL, load it, and observe whether the browser scrolls and highlights. Two failure classes are binary and deterministic — the opt-out header, and a start string that straddles two blocks.',
-      fix: 'Remove `force-load-at-top` from the `Document-Policy` response header; it is header-only, so there is nothing to remove in the markup. Keep each answer sentence inside one block-level element rather than splitting it across sibling paragraphs, spans-in-divs or table cells. Strip soft hyphens and zero-width characters from body copy. Where an answer sentence repeats verbatim across the page, give at least one occurrence some same-block context so a citing surface can pin it.',
+        "Google Search auto-generates text-fragment URLs to land users on the exact featured-snippet text, and the spec requires each of prefix/start/end/suffix to match within a single block-level element. When an answer sentence is fragmented across block boundaries, or the header opt-out is set, the fragment silently fails and the link degrades to page-top. Falsifiable and directly testable: take the citing surface’s own generated URL, load it, and observe whether the browser scrolls and highlights. Two failure classes are binary and deterministic — the opt-out header, and a start string that straddles two blocks.",
+      fix: "Remove `force-load-at-top` from the `Document-Policy` response header; it is header-only, so there is nothing to remove in the markup. Keep each answer sentence inside one block-level element rather than splitting it across sibling paragraphs, spans-in-divs or table cells. Strip soft hyphens and zero-width characters from body copy. Where an answer sentence repeats verbatim across the page, give at least one occurrence some same-block context so a citing surface can pin it.",
       code: SAMPLE,
-      effort: 'moderate',
+      effort: "moderate",
       docsUrl:
-        'https://forkpoint.github.io/agent-lighthouse/audits/answer-readiness/text-fragment-addressability/',
-      tags: ['citation', 'text-fragment', 'deep-link', 'answer-selection'],
+        "https://forkpoint.github.io/agent-lighthouse/audits/answer-readiness/text-fragment-addressability/",
+      tags: ["citation", "text-fragment", "deep-link", "answer-selection"],
     },
   };
 
   private recommendation() {
     return {
-      priority: 'medium' as const,
+      priority: "medium" as const,
       description: TextFragmentAddressabilityAudit.meta.description,
       code: SAMPLE,
     };
@@ -215,13 +252,13 @@ export class TextFragmentAddressabilityAudit extends Audit {
     const page = ctx.pages[0];
     if (!page) {
       return this.notApplicable(
-        'No pages were scanned, so there is no answer span to address.',
+        "No pages were scanned, so there is no answer span to address.",
         EXPECTED,
-        'No pages scanned',
+        "No pages scanned",
       );
     }
 
-    const policy = page.fetchResult.headers['document-policy'] ?? '';
+    const policy = page.fetchResult.headers["document-policy"] ?? "";
     if (/force-load-at-top/i.test(policy)) {
       return this.fail(
         'The response sends Document-Policy: force-load-at-top, which disables text-fragment scrolling for the whole document, so every generated citation link lands at page-top. Document Policy is header-only: a <meta http-equiv="Document-Policy"> is neither a valid way to set it nor a valid place to detect it, so the fix belongs in the server or CDN configuration.',
@@ -235,9 +272,9 @@ export class TextFragmentAddressabilityAudit extends Audit {
     const spans = candidates(page);
     if (spans.length === 0) {
       return this.notApplicable(
-        'The page carries no h2/h3 answer spans, no definition-list answers and no FAQPage answers, so there is nothing a citing surface would deep-link to.',
+        "The page carries no h2/h3 answer spans, no definition-list answers and no FAQPage answers, so there is nothing a citing surface would deep-link to.",
         EXPECTED,
-        'No candidate answer spans',
+        "No candidate answer spans",
       );
     }
 
@@ -250,8 +287,8 @@ export class TextFragmentAddressabilityAudit extends Audit {
     const examples = addressable
       .slice(0, 3)
       .map((v) => v.url!)
-      .join(' ');
-    const found = `${addressable.length}/${verdicts.length} answer span(s) addressable${examples ? `; e.g. ${examples}` : ''}`;
+      .join(" ");
+    const found = `${addressable.length}/${verdicts.length} answer span(s) addressable${examples ? `; e.g. ${examples}` : ""}`;
 
     if (broken.length > 0) {
       const worst = broken[0]!;
@@ -267,7 +304,7 @@ export class TextFragmentAddressabilityAudit extends Audit {
     if (hazardous.length > 0) {
       const worst = hazardous[0]!;
       return this.warn(
-        `${hazardous.length} answer span(s) carry a normalization hazard — ${worst.hazards.join(', ')} — which the matcher compares literally, so a fragment copied from rendered text can miss. Example: "${worst.candidate.text.slice(0, 120)}".`,
+        `${hazardous.length} answer span(s) carry a normalization hazard — ${worst.hazards.join(", ")} — which the matcher compares literally, so a fragment copied from rendered text can miss. Example: "${worst.candidate.text.slice(0, 120)}".`,
         EXPECTED,
         found,
         this.recommendation(),

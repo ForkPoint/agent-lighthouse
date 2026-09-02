@@ -6,30 +6,27 @@
 // addressed to a model. This audit looks at text nothing hides — it is in plain
 // sight and still unreadable, because the codepoints themselves render as
 // nothing. A page can fail one and pass the other.
-import type { AuditMeta, AuditResult } from '../../types';
-import { Audit } from '../../audit';
-import { weightForGrade } from '../../scorer';
-import type { CheckContext, PageContext } from '../../check-context';
-import {
-  scanReadPageText,
-  unreadPageTextReason,
-} from '../../scan-evidence';
+import type { AuditMeta, AuditResult } from "../../types";
+import { Audit } from "../../audit";
+import { weightForGrade } from "../../scorer";
+import type { CheckContext, PageContext } from "../../check-context";
+import { scanReadPageText, unreadPageTextReason } from "../../scan-evidence";
 
 /** Attributes whose value reaches a model as ordinary text. */
 const SCANNED_ATTRIBUTES = [
-  'alt',
-  'title',
-  'aria-label',
-  'aria-description',
-  'aria-placeholder',
-  'placeholder',
-  'value',
-  'content',
-  'label',
+  "alt",
+  "title",
+  "aria-label",
+  "aria-description",
+  "aria-placeholder",
+  "placeholder",
+  "value",
+  "content",
+  "label",
 ];
 
 /** Root files an agent ingests with high trust and a human rarely reads. */
-const ROOT_FILES = ['/robots.txt', '/llms.txt', '/sitemap.xml'];
+const ROOT_FILES = ["/robots.txt", "/llms.txt", "/sitemap.xml"];
 
 /** The Unicode Tags block. It mirrors ASCII and renders as nothing. */
 const TAG_BLOCK = /[\u{E0000}-\u{E007F}]+/gu;
@@ -62,7 +59,7 @@ const JOINING_SCRIPT = /[؀-ۿऀ-෿က-႟]/;
 /** How much of a decoded payload to print. */
 const MAX_PAYLOAD = 120;
 
-type Kind = 'tag-block' | 'bidi' | 'zero-width' | 'filler';
+type Kind = "tag-block" | "bidi" | "zero-width" | "filler";
 
 interface Hit {
   kind: Kind;
@@ -79,12 +76,14 @@ interface Hit {
 function escape(text: string): string {
   return [...text]
     .map((c) => `\\u{${c.codePointAt(0)!.toString(16).toUpperCase()}}`)
-    .join('');
+    .join("");
 }
 
 /** The ASCII a tag-block run mirrors. */
 function decodeTags(run: string): string {
-  return [...run].map((c) => String.fromCharCode(c.codePointAt(0)! - 0xe0000)).join('');
+  return [...run]
+    .map((c) => String.fromCharCode(c.codePointAt(0)! - 0xe0000))
+    .join("");
 }
 
 function scan(text: string, source: string): Hit[] {
@@ -95,7 +94,7 @@ function scan(text: string, source: string): Hit[] {
   for (const match of text.matchAll(TAG_BLOCK)) {
     const run = match[0];
     hits.push({
-      kind: 'tag-block',
+      kind: "tag-block",
       source,
       decoded: decodeTags(run).slice(0, MAX_PAYLOAD),
       escaped: escape(run.slice(0, 8)),
@@ -108,21 +107,21 @@ function scan(text: string, source: string): Hit[] {
   const pushes = (text.match(BIDI_PUSH) ?? []).length;
   const pops = (text.match(BIDI_POP) ?? []).length;
   if (pushes !== pops) {
-    const first = /[‪-‮⁦-⁩]/.exec(text)?.[0] ?? '';
+    const first = /[‪-‮⁦-⁩]/.exec(text)?.[0] ?? "";
     hits.push({
-      kind: 'bidi',
+      kind: "bidi",
       source,
-      decoded: '',
+      decoded: "",
       escaped: escape(first),
       count: Math.abs(pushes - pops),
     });
   } else if (pushes > 0 && !RTL_SCRIPT.test(text)) {
     // Balanced, but around text that never needed a direction scope.
     hits.push({
-      kind: 'bidi',
+      kind: "bidi",
       source,
-      decoded: '',
-      escaped: escape(/[‪-‮⁦-⁩]/.exec(text)?.[0] ?? ''),
+      decoded: "",
+      escaped: escape(/[‪-‮⁦-⁩]/.exec(text)?.[0] ?? ""),
       count: pushes,
     });
   }
@@ -131,13 +130,13 @@ function scan(text: string, source: string): Hit[] {
   // substring match without changing what a reader sees.
   const chars = [...text];
   let zeroWidth = 0;
-  let firstZeroWidth = '';
+  let firstZeroWidth = "";
   for (let i = 0; i < chars.length; i += 1) {
     const c = chars[i]!;
     if (!ZERO_WIDTH.test(c)) continue;
     ZERO_WIDTH.lastIndex = 0;
-    const before = chars[i - 1] ?? '';
-    const after = chars[i + 1] ?? '';
+    const before = chars[i - 1] ?? "";
+    const after = chars[i + 1] ?? "";
     // An emoji ZWJ sequence and Arabic or Indic shaping are the legitimate uses.
     if (PICTOGRAPHIC.test(before) || PICTOGRAPHIC.test(after)) continue;
     if (JOINING_SCRIPT.test(before) || JOINING_SCRIPT.test(after)) continue;
@@ -147,9 +146,9 @@ function scan(text: string, source: string): Hit[] {
   }
   if (zeroWidth > 0) {
     hits.push({
-      kind: 'zero-width',
+      kind: "zero-width",
       source,
-      decoded: '',
+      decoded: "",
       escaped: escape(firstZeroWidth),
       count: zeroWidth,
     });
@@ -157,17 +156,24 @@ function scan(text: string, source: string): Hit[] {
 
   // (4) Soft hyphens and Hangul fillers do the same job with different bytes.
   let filler = 0;
-  let firstFiller = '';
+  let firstFiller = "";
   for (let i = 0; i < chars.length; i += 1) {
     const c = chars[i]!;
     if (!FILLER.test(c)) continue;
     FILLER.lastIndex = 0;
-    if (!LETTER.test(chars[i - 1] ?? '') || !LETTER.test(chars[i + 1] ?? '')) continue;
+    if (!LETTER.test(chars[i - 1] ?? "") || !LETTER.test(chars[i + 1] ?? ""))
+      continue;
     filler += 1;
     if (!firstFiller) firstFiller = c;
   }
   if (filler > 0) {
-    hits.push({ kind: 'filler', source, decoded: '', escaped: escape(firstFiller), count: filler });
+    hits.push({
+      kind: "filler",
+      source,
+      decoded: "",
+      escaped: escape(firstFiller),
+      count: filler,
+    });
   }
 
   return hits;
@@ -175,7 +181,7 @@ function scan(text: string, source: string): Hit[] {
 
 /** Every string value in a JSON-LD block, however deeply nested. */
 function jsonStrings(node: unknown, out: string[]): void {
-  if (typeof node === 'string') {
+  if (typeof node === "string") {
     out.push(node);
     return;
   }
@@ -183,7 +189,7 @@ function jsonStrings(node: unknown, out: string[]): void {
     for (const item of node) jsonStrings(item, out);
     return;
   }
-  if (node && typeof node === 'object') {
+  if (node && typeof node === "object") {
     for (const value of Object.values(node)) jsonStrings(value, out);
   }
 }
@@ -194,20 +200,20 @@ function scanPage(page: PageContext): Hit[] {
   const where = `page ${page.url}`;
 
   // Script and style bodies never reach a reader or a model as prose.
-  const $body = $('body').clone();
-  $body.find('script, style, noscript').remove();
+  const $body = $("body").clone();
+  $body.find("script, style, noscript").remove();
   hits.push(...scan($body.text(), where));
 
   for (const name of SCANNED_ATTRIBUTES) {
     $(`[${name}]`).each((_i, node) => {
-      const value = $(node as never).attr(name) ?? '';
+      const value = $(node as never).attr(name) ?? "";
       hits.push(...scan(value, `${where} (${name})`));
     });
   }
 
-  $('[href], [src]').each((_i, node) => {
+  $("[href], [src]").each((_i, node) => {
     const $n = $(node as never);
-    for (const name of ['href', 'src']) {
+    for (const name of ["href", "src"]) {
       const raw = $n.attr(name);
       if (!raw) continue;
       let value = raw;
@@ -229,7 +235,7 @@ function scanPage(page: PageContext): Hit[] {
 }
 
 const EXPECTED =
-  'No text on the site or in its root files carries codepoints that render as nothing: no Unicode Tags block, no unbalanced bidi override, and no zero-width or filler characters splitting words';
+  "No text on the site or in its root files carries codepoints that render as nothing: no Unicode Tags block, no unbalanced bidi override, and no zero-width or filler characters splitting words";
 
 const SAMPLE = `# Find them before shipping. Every one of these renders as nothing.
 grep -P '[\\x{E0000}-\\x{E007F}]' page.html      # Unicode Tags block
@@ -238,34 +244,40 @@ grep -P '[\\x{200B}-\\x{200D}\\x{2060}\\x{FEFF}\\x{00AD}]' page.html  # zero-wid
 
 export class UnicodeCovertChannelScanAudit extends Audit {
   static override meta: AuditMeta = {
-    id: 'operability-safety/unicode-covert-channel-scan',
-    category: 'operability-safety',
-    title: 'Invisible codepoints carrying hidden text',
-    failureTitle: 'Invisible codepoints carrying hidden text',
+    id: "operability-safety/unicode-covert-channel-scan",
+    category: "operability-safety",
+    title: "Invisible codepoints carrying hidden text",
+    failureTitle: "Invisible codepoints carrying hidden text",
     description:
-      'Scans rendered text, the attributes an agent reads, every JSON-LD string value and the site’s root files for codepoints that carry information invisibly: the Unicode Tags block (U+E0000–U+E007F), bidirectional overrides and isolates (U+202A–U+202E, U+2066–U+2069), and zero-width or filler characters (U+200B–U+200D, U+2060, U+FEFF, U+00AD, U+115F, U+1160, U+3164, U+FFA0). Decodes any tag-block run back to ASCII and prints the invisible sentence sitting on the page.',
-    scoreDisplayMode: 'ternary',
-    weight: weightForGrade('B', 'scored'),
-    evidenceGrade: 'B',
-    tier: 'scored',
-    dossier: 'docs/evidence/audits/operability-safety/unicode-covert-channel-scan.md',
-    requires: ['origin-reachable', 'unblocked-fetches', 'rendered-body', 'sample-adequate'],
-    defaultPriority: 'critical',
+      "Scans rendered text, the attributes an agent reads, every JSON-LD string value and the site’s root files for codepoints that carry information invisibly: the Unicode Tags block (U+E0000–U+E007F), bidirectional overrides and isolates (U+202A–U+202E, U+2066–U+2069), and zero-width or filler characters (U+200B–U+200D, U+2060, U+FEFF, U+00AD, U+115F, U+1160, U+3164, U+FFA0). Decodes any tag-block run back to ASCII and prints the invisible sentence sitting on the page.",
+    scoreDisplayMode: "ternary",
+    weight: weightForGrade("B", "scored"),
+    evidenceGrade: "B",
+    tier: "scored",
+    dossier:
+      "docs/evidence/audits/operability-safety/unicode-covert-channel-scan.md",
+    requires: [
+      "origin-reachable",
+      "unblocked-fetches",
+      "rendered-body",
+      "sample-adequate",
+    ],
+    defaultPriority: "critical",
     guidance: {
       impact:
-        'Tag-block codepoints mirror ASCII and, per Unicode, render as nothing in tag-unaware implementations — while modern LLM tokenizers process them normally. A complete instruction can therefore ride inside a product description that no human and no visual QA pass can see. Bidi controls make the rendered order differ from the logical order a text-extracting agent reads, which is the Trojan Source class (CVE-2021-42574). Zero-width characters defeat naive substring matching on both sides at once: the site’s own filters and the agent’s. None of this is visible in a screenshot, a browser, or a review — only in the bytes.',
-      fix: 'Strip these codepoints at the boundary where text enters the site: user-generated content, imported feeds, translated copy, and anything pasted from a rich-text editor. Reject the Unicode Tags block outright — it has no legitimate web use. Allow bidi controls only in balanced pairs and only around text that is actually right-to-left. Allow ZWJ and ZWNJ only inside emoji sequences and in scripts whose shaping needs them. Run the same filter over robots.txt, llms.txt and sitemap.xml, which agents ingest with high trust and humans almost never read.',
+        "Tag-block codepoints mirror ASCII and, per Unicode, render as nothing in tag-unaware implementations — while modern LLM tokenizers process them normally. A complete instruction can therefore ride inside a product description that no human and no visual QA pass can see. Bidi controls make the rendered order differ from the logical order a text-extracting agent reads, which is the Trojan Source class (CVE-2021-42574). Zero-width characters defeat naive substring matching on both sides at once: the site’s own filters and the agent’s. None of this is visible in a screenshot, a browser, or a review — only in the bytes.",
+      fix: "Strip these codepoints at the boundary where text enters the site: user-generated content, imported feeds, translated copy, and anything pasted from a rich-text editor. Reject the Unicode Tags block outright — it has no legitimate web use. Allow bidi controls only in balanced pairs and only around text that is actually right-to-left. Allow ZWJ and ZWNJ only inside emoji sequences and in scripts whose shaping needs them. Run the same filter over robots.txt, llms.txt and sitemap.xml, which agents ingest with high trust and humans almost never read.",
       code: SAMPLE,
-      effort: 'moderate',
+      effort: "moderate",
       docsUrl:
-        'https://forkpoint.github.io/agent-lighthouse/audits/operability-safety/unicode-covert-channel-scan/',
-      tags: ['injection-safety', 'unicode', 'prompt-injection'],
+        "https://forkpoint.github.io/agent-lighthouse/audits/operability-safety/unicode-covert-channel-scan/",
+      tags: ["injection-safety", "unicode", "prompt-injection"],
     },
   };
 
   private recommendation() {
     return {
-      priority: 'critical' as const,
+      priority: "critical" as const,
       description: UnicodeCovertChannelScanAudit.meta.description,
       code: SAMPLE,
     };
@@ -282,17 +294,17 @@ export class UnicodeCovertChannelScanAudit extends Audit {
 
     if (ctx.pages.length === 0 && Object.keys(ctx.rootFiles).length === 0) {
       return this.notApplicable(
-        'No page and no root file was fetched, so there is no text to scan.',
+        "No page and no root file was fetched, so there is no text to scan.",
         EXPECTED,
-        'Nothing scanned',
+        "Nothing scanned",
       );
     }
 
     const byKind = (kind: Kind) => hits.filter((h) => h.kind === kind);
-    const tagBlock = byKind('tag-block');
-    const bidi = byKind('bidi');
-    const zeroWidth = byKind('zero-width').reduce((n, h) => n + h.count, 0);
-    const filler = byKind('filler').reduce((n, h) => n + h.count, 0);
+    const tagBlock = byKind("tag-block");
+    const bidi = byKind("bidi");
+    const zeroWidth = byKind("zero-width").reduce((n, h) => n + h.count, 0);
+    const filler = byKind("filler").reduce((n, h) => n + h.count, 0);
     const details = {
       tagBlockRuns: tagBlock.length,
       bidiFindings: bidi.length,
@@ -315,7 +327,7 @@ export class UnicodeCovertChannelScanAudit extends Audit {
       if (!scanReadPageText(ctx.evidence)) {
         return {
           ...this.notApplicable(
-            'The scanned page served no readable text, so its codepoints were not judged.',
+            "The scanned page served no readable text, so its codepoints were not judged.",
             EXPECTED,
             unreadPageTextReason(ctx.evidence),
           ),
@@ -324,9 +336,9 @@ export class UnicodeCovertChannelScanAudit extends Audit {
       }
       return {
         ...this.pass(
-          'No invisible codepoint carries text on the scanned pages or in the root files.',
+          "No invisible codepoint carries text on the scanned pages or in the root files.",
           EXPECTED,
-          'No Unicode covert channel found',
+          "No Unicode covert channel found",
           ctx.pages[0]?.url,
         ),
         details,
@@ -335,8 +347,11 @@ export class UnicodeCovertChannelScanAudit extends Audit {
 
     const parts = hits
       .slice(0, 5)
-      .map((h) => `${h.kind} in ${h.source}: ${h.escaped}${h.count > 1 ? ` ×${h.count}` : ''}`);
-    const found = parts.join('; ');
+      .map(
+        (h) =>
+          `${h.kind} in ${h.source}: ${h.escaped}${h.count > 1 ? ` ×${h.count}` : ""}`,
+      );
+    const found = parts.join("; ");
 
     if (tagBlock.length > 0) {
       const worst = tagBlock[0]!;

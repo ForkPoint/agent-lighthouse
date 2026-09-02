@@ -1,4 +1,4 @@
-import { withBase } from '../lib/routes';
+import { withBase } from "../lib/routes";
 
 /**
  * The sources browser's client half.
@@ -43,7 +43,9 @@ export interface SourceRegistry {
 
 /** The distinct `type` values present, sorted — the facet list, never a guess. */
 export function sourceTypes(sources: SourceRecord[]): string[] {
-  return [...new Set(sources.map((source) => source.type).filter(Boolean))].sort();
+  return [
+    ...new Set(sources.map((source) => source.type).filter(Boolean)),
+  ].sort();
 }
 
 /**
@@ -53,11 +55,15 @@ export function sourceTypes(sources: SourceRecord[]): string[] {
  * are where the detail is — a spec section, a header name, a crawler's request
  * count — and they are the reason to search this registry at all.
  */
-export function filterSources(sources: SourceRecord[], text: string, type: string): SourceRecord[] {
+export function filterSources(
+  sources: SourceRecord[],
+  text: string,
+  type: string,
+): SourceRecord[] {
   const needle = text.trim().toLowerCase();
   return sources.filter((source) => {
-    if (type !== 'all' && source.type !== type) return false;
-    if (needle === '') return true;
+    if (type !== "all" && source.type !== type) return false;
+    if (needle === "") return true;
     const haystack =
       `${source.id} ${source.title} ${source.publisher} ${source.type} ${source.keyFindings}`.toLowerCase();
     return haystack.includes(needle);
@@ -76,7 +82,7 @@ const PREVIEW_LIMIT = 140;
 export function previewOf(text: string, limit = PREVIEW_LIMIT): string {
   if (text.length <= limit) return text;
   const cut = text.slice(0, limit);
-  const space = cut.lastIndexOf(' ');
+  const space = cut.lastIndexOf(" ");
   return `${(space > limit / 2 ? cut.slice(0, space) : cut).trimEnd()}…`;
 }
 
@@ -94,26 +100,28 @@ function setProseWithCode(target: HTMLElement, text: string): void {
   const spans = /`([^`]+)`/g;
   let last = 0;
   for (const match of text.matchAll(spans)) {
-    if (match.index > last) target.append(document.createTextNode(text.slice(last, match.index)));
-    const code = document.createElement('code');
+    if (match.index > last)
+      target.append(document.createTextNode(text.slice(last, match.index)));
+    const code = document.createElement("code");
     code.textContent = match[1]!;
     target.append(code);
     last = match.index + match[0].length;
   }
-  if (last < text.length) target.append(document.createTextNode(text.slice(last)));
+  if (last < text.length)
+    target.append(document.createTextNode(text.slice(last)));
 }
 
-const CELL = 'align-top px-3 py-2.5 text-sm text-slate-300';
+const CELL = "align-top px-3 py-2.5 text-sm text-slate-300";
 
 /** The key-findings cell: short findings read straight, long ones expand. */
 function findingsCell(source: SourceRecord): HTMLTableCellElement {
-  const cell = document.createElement('td');
+  const cell = document.createElement("td");
   cell.className = `${CELL} min-w-[18rem] max-w-prose`;
 
   // Coalesced: a record that reaches here without its findings blanks one cell.
   // Reading `.length` off `undefined` would throw, and one incomplete record is
   // no reason for the reader to lose the other 646 rows.
-  const findings = source.keyFindings ?? '';
+  const findings = source.keyFindings ?? "";
   if (findings.length <= PREVIEW_LIMIT) {
     setProseWithCode(cell, findings);
     return cell;
@@ -122,12 +130,12 @@ function findingsCell(source: SourceRecord): HTMLTableCellElement {
   // `<details>` rather than a clamp-and-toggle: it is one element, it needs no
   // script of its own, it is keyboard-operable, and a collapsed row stays one
   // or two lines tall on a phone.
-  const details = document.createElement('details');
-  const summary = document.createElement('summary');
-  summary.className = 'cursor-pointer text-slate-300 marker:text-slate-500';
+  const details = document.createElement("details");
+  const summary = document.createElement("summary");
+  summary.className = "cursor-pointer text-slate-300 marker:text-slate-500";
   setProseWithCode(summary, previewOf(findings));
-  const full = document.createElement('p');
-  full.className = 'mt-2 text-slate-400';
+  const full = document.createElement("p");
+  full.className = "mt-2 text-slate-400";
   setProseWithCode(full, findings);
   details.append(summary, full);
   cell.append(details);
@@ -136,32 +144,33 @@ function findingsCell(source: SourceRecord): HTMLTableCellElement {
 
 /** One `<tr>` for one source. Built from nodes, never from an HTML string. */
 function sourceRow(source: SourceRecord): HTMLTableRowElement {
-  const row = document.createElement('tr');
-  row.className = 'border-t border-border-subtle align-top';
-  row.dataset['sourceId'] = source.id;
+  const row = document.createElement("tr");
+  row.className = "border-t border-border-subtle align-top";
+  row.dataset["sourceId"] = source.id;
 
-  const head = document.createElement('th');
-  head.scope = 'row';
+  const head = document.createElement("th");
+  head.scope = "row";
   head.className = `${CELL} text-left font-medium text-white`;
-  const link = document.createElement('a');
+  const link = document.createElement("a");
   link.href = source.url;
-  link.rel = 'noopener';
-  link.className = 'text-brand-soft underline decoration-slate-600 hover:text-white';
+  link.rel = "noopener";
+  link.className =
+    "text-brand-soft underline decoration-slate-600 hover:text-white";
   link.textContent = source.title;
-  const id = document.createElement('code');
-  id.className = 'mt-1 block text-xs font-normal text-slate-500';
+  const id = document.createElement("code");
+  id.className = "mt-1 block text-xs font-normal text-slate-500";
   id.textContent = source.id;
   head.append(link, id);
 
-  const publisher = document.createElement('td');
+  const publisher = document.createElement("td");
   publisher.className = CELL;
   publisher.textContent = source.publisher;
 
-  const type = document.createElement('td');
+  const type = document.createElement("td");
   type.className = `${CELL} whitespace-nowrap`;
   type.textContent = source.type;
 
-  const verified = document.createElement('td');
+  const verified = document.createElement("td");
   verified.className = `${CELL} whitespace-nowrap`;
   verified.textContent = source.verified;
 
@@ -170,7 +179,7 @@ function sourceRow(source: SourceRecord): HTMLTableRowElement {
 }
 
 /** Where the fetched registry lives, next to the pages that cite it. */
-export const REGISTRY_URL = withBase('sources.json');
+export const REGISTRY_URL = withBase("sources.json");
 
 /**
  * Bind the browser to the page. The only DOM-touching export.
@@ -179,11 +188,11 @@ export const REGISTRY_URL = withBase('sources.json');
  * racing the fetch.
  */
 export async function mountSourcesTable(): Promise<void> {
-  const status = document.querySelector<HTMLElement>('#sources-status');
-  const wrap = document.querySelector<HTMLElement>('#sources-table');
-  const body = document.querySelector<HTMLTableSectionElement>('#sources-rows');
-  const controls = document.querySelector<HTMLElement>('#sources-controls');
-  const empty = document.querySelector<HTMLElement>('#sources-empty');
+  const status = document.querySelector<HTMLElement>("#sources-status");
+  const wrap = document.querySelector<HTMLElement>("#sources-table");
+  const body = document.querySelector<HTMLTableSectionElement>("#sources-rows");
+  const controls = document.querySelector<HTMLElement>("#sources-controls");
+  const empty = document.querySelector<HTMLElement>("#sources-empty");
   if (!status || !wrap || !body) return;
 
   // Said before the fetch, not after: the registry is large enough that the
@@ -192,7 +201,7 @@ export async function mountSourcesTable(): Promise<void> {
   // The region's visibility is never touched here. It renders empty and visible
   // from first paint, so assistive tech is already observing it when this line
   // and every line after it is written.
-  status.textContent = 'Loading the source registry…';
+  status.textContent = "Loading the source registry…";
 
   let sources: SourceRecord[];
   let rows: Array<readonly [SourceRecord, HTMLTableRowElement]>;
@@ -208,10 +217,11 @@ export async function mountSourcesTable(): Promise<void> {
     // puts it in the same branch a failed fetch lands in.
     rows = sources.map((source) => [source, sourceRow(source)] as const);
   } catch {
-    status.textContent = 'The source registry could not be loaded. Open sources.json directly:';
-    const link = document.createElement('a');
+    status.textContent =
+      "The source registry could not be loaded. Open sources.json directly:";
+    const link = document.createElement("a");
     link.href = REGISTRY_URL;
-    link.className = 'ml-1 underline';
+    link.className = "ml-1 underline";
     link.textContent = REGISTRY_URL;
     status.append(link);
     return;
@@ -220,26 +230,30 @@ export async function mountSourcesTable(): Promise<void> {
   body.replaceChildren(...rows.map(([, row]) => row));
   wrap.hidden = false;
 
-  const input = document.querySelector<HTMLInputElement>('#source-search');
-  const state = { text: '', type: 'all' };
+  const input = document.querySelector<HTMLInputElement>("#source-search");
+  const state = { text: "", type: "all" };
 
   const apply = () => {
-    const visible = new Set(filterSources(sources, state.text, state.type).map((s) => s.id));
+    const visible = new Set(
+      filterSources(sources, state.text, state.type).map((s) => s.id),
+    );
     for (const [source, row] of rows) row.hidden = !visible.has(source.id);
     status.textContent = `Showing ${visible.size} of ${sources.length} sources.`;
     if (empty) empty.hidden = visible.size > 0;
   };
 
-  input?.addEventListener('input', () => {
+  input?.addEventListener("input", () => {
     state.text = input.value;
     apply();
   });
 
-  for (const pill of document.querySelectorAll<HTMLElement>('[data-filter="type"]')) {
-    pill.addEventListener('click', () => {
-      state.type = pill.dataset['value'] ?? 'all';
+  for (const pill of document.querySelectorAll<HTMLElement>(
+    '[data-filter="type"]',
+  )) {
+    pill.addEventListener("click", () => {
+      state.type = pill.dataset["value"] ?? "all";
       for (const sibling of document.querySelectorAll('[data-filter="type"]')) {
-        sibling.setAttribute('aria-pressed', String(sibling === pill));
+        sibling.setAttribute("aria-pressed", String(sibling === pill));
       }
       apply();
     });

@@ -1,9 +1,10 @@
 ---
-'@forkpoint/agent-lighthouse-core': major
-'@forkpoint/agent-lighthouse': major
+"@forkpoint/agent-lighthouse-core": major
+"@forkpoint/agent-lighthouse": major
 ---
 
 Page type becomes consent (Phase 3 of audit architecture migration):
+
 - Added `ScanOptions.pageType?: PageType` and CLI `--page-type` flag.
 - Added `PageContext.pageTypeSource: 'declared' | 'detected'`.
 - Renamed `AuditMeta.applicablePageTypes` to `AuditMeta.pageTypes`.

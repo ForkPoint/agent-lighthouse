@@ -1,5 +1,5 @@
-import type { ScanReport } from '@forkpoint/agent-lighthouse-core';
-import type { buildReportView } from '@forkpoint/agent-lighthouse-report';
+import type { ScanReport } from "@forkpoint/agent-lighthouse-core";
+import type { buildReportView } from "@forkpoint/agent-lighthouse-report";
 
 /**
  * The tool contract, lifted out of `server.ts`.
@@ -11,18 +11,19 @@ import type { buildReportView } from '@forkpoint/agent-lighthouse-report';
  */
 
 export const AUDIT_TOOL = {
-  name: 'audit_website',
+  name: "audit_website",
   description:
-    'Audit a website or storefront for Agentic Readiness (WebMCP, OpenAPI, JSON-LD, robots.txt, and answer engines). Returns overall score, category breakdown, and actionable fix recommendations.',
+    "Audit a website or storefront for Agentic Readiness (WebMCP, OpenAPI, JSON-LD, robots.txt, and answer engines). Returns overall score, category breakdown, and actionable fix recommendations.",
   inputSchema: {
-    type: 'object',
+    type: "object",
     properties: {
       url: {
-        type: 'string',
-        description: 'The target website or storefront URL to audit (e.g. https://example.com)',
+        type: "string",
+        description:
+          "The target website or storefront URL to audit (e.g. https://example.com)",
       },
     },
-    required: ['url'],
+    required: ["url"],
   },
 } as const;
 
@@ -37,7 +38,7 @@ export interface AuditSummary {
   /** Present when the score was suppressed: what the scan is missing. */
   unscoredReason?: string;
   durationSeconds: string;
-  vitals: ReportView['vitals'];
+  vitals: ReportView["vitals"];
   categories: Array<{
     name: string;
     score: number;
@@ -64,7 +65,10 @@ export const MAX_OPPORTUNITIES = 10;
  * no use for the report's visual grouping, and the duration is pre-formatted so
  * the caller never has to divide by 1000 itself.
  */
-export function buildAuditSummary(report: ScanReport, view: ReportView): AuditSummary {
+export function buildAuditSummary(
+  report: ScanReport,
+  view: ReportView,
+): AuditSummary {
   return {
     url: report.url,
     overallScore: view.overallScore,
@@ -100,9 +104,9 @@ export function buildAuditSummary(report: ScanReport, view: ReportView): AuditSu
  * the boundary.
  */
 export function targetUrl(args: Record<string, unknown> | undefined): string {
-  const raw = args?.['url'];
-  if (typeof raw !== 'string' || raw.trim() === '') {
-    throw new Error('Missing target URL');
+  const raw = args?.["url"];
+  if (typeof raw !== "string" || raw.trim() === "") {
+    throw new Error("Missing target URL");
   }
   return raw.trim();
 }

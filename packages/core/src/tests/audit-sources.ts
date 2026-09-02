@@ -1,5 +1,5 @@
-import { readFileSync, readdirSync, statSync } from 'node:fs';
-import { join, resolve } from 'node:path';
+import { readFileSync, readdirSync, statSync } from "node:fs";
+import { join, resolve } from "node:path";
 
 /**
  * Each registered audit's own source text, keyed by its id.
@@ -16,18 +16,25 @@ import { join, resolve } from 'node:path';
  * throws loudly rather than skipping if that stops being true.
  */
 export function auditSources(): Map<string, string> {
-  const base = resolve(process.cwd(), 'packages/core/src/audits');
+  const base = resolve(process.cwd(), "packages/core/src/audits");
   const byId = new Map<string, string>();
   for (const category of readdirSync(base)) {
     const dir = join(base, category);
     if (!statSync(dir).isDirectory()) continue;
     for (const file of readdirSync(dir)) {
-      if (!file.endsWith('.ts') || file.endsWith('.test.ts') || file === 'index.ts') continue;
-      const source = readFileSync(join(dir, file), 'utf8');
+      if (
+        !file.endsWith(".ts") ||
+        file.endsWith(".test.ts") ||
+        file === "index.ts"
+      )
+        continue;
+      const source = readFileSync(join(dir, file), "utf8");
       // A source may hold other `id:` fields — `sensitive-paths` names its URL
       // spaces that way — so only `category/slug` shapes are taken, and the
       // caller picks the one the registry knows.
-      for (const match of source.matchAll(/^\s*id:\s*'([a-z][a-z-]*\/[a-z0-9-]+)'/gm)) {
+      for (const match of source.matchAll(
+        /^\s*id:\s*['"]([a-z][a-z-]*\/[a-z0-9-]+)['"]/gm,
+      )) {
         byId.set(match[1]!, source);
       }
     }
@@ -71,31 +78,34 @@ export function readsPagesDirectly(source: string): boolean {
  * The contract suite asserts this table covers every exempted audit, so a new
  * exemption fails there until someone says which kind it is.
  */
-export type ShellStance = 'envelope' | 'body';
+export type ShellStance = "envelope" | "body";
 
-export const SHELL_STANCE: ReadonlyMap<string, ShellStance> = new Map<string, ShellStance>([
+export const SHELL_STANCE: ReadonlyMap<string, ShellStance> = new Map<
+  string,
+  ShellStance
+>([
   // Reads `<meta name="robots">` and the X-Robots-Tag header.
-  ['access-crawl-control/no-nofollow', 'envelope'],
+  ["access-crawl-control/no-nofollow", "envelope"],
   // Reads the redirect chain the response carries.
-  ['access-crawl-control/no-redirect-chains', 'envelope'],
+  ["access-crawl-control/no-redirect-chains", "envelope"],
   // Reads robots directives from meta tags and the X-Robots-Tag header.
-  ['access-crawl-control/robots-directives', 'envelope'],
+  ["access-crawl-control/robots-directives", "envelope"],
   // Reads the request scheme and the response status.
-  ['access-crawl-control/https-enabled', 'envelope'],
+  ["access-crawl-control/https-enabled", "envelope"],
   // The verdict comes from robots.txt; pages only contribute probe paths.
-  ['access-crawl-control/robots-ai-group-shadowing', 'envelope'],
+  ["access-crawl-control/robots-ai-group-shadowing", "envelope"],
   // Measures TTFB, which a shell answers with as anything else.
-  ['content-extraction/server-responsiveness', 'envelope'],
+  ["content-extraction/server-responsiveness", "envelope"],
   // Reads the `lang` attribute on `<html>`, served before any body renders.
-  ['content-extraction/language-attribute', 'envelope'],
+  ["content-extraction/language-attribute", "envelope"],
   // Judges the URL strings of the pages the scan fetched.
-  ['answer-readiness/descriptive-urls', 'envelope'],
+  ["answer-readiness/descriptive-urls", "envelope"],
   // A shell is this audit's finding: it must report it, never pass it.
-  ['content-extraction/server-rendered', 'body'],
+  ["content-extraction/server-rendered", "body"],
   // Substring search over the served HTML for a bot-defense loader.
-  ['access-crawl-control/no-bot-detection', 'body'],
+  ["access-crawl-control/no-bot-detection", "body"],
   // Substring search over the served HTML for CAPTCHA markup.
-  ['operability-safety/no-blocking-captcha', 'body'],
+  ["operability-safety/no-blocking-captcha", "body"],
   // Censuses the origins the served document names, through `page.$`.
-  ['operability-safety/third-party-dom-write-blast-radius', 'body'],
+  ["operability-safety/third-party-dom-write-blast-radius", "body"],
 ]);

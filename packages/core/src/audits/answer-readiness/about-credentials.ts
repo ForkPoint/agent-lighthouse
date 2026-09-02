@@ -1,59 +1,65 @@
 import type { AuditMeta, AuditResult } from "../../types";
 import { Audit } from "../../audit";
-import { weightForGrade } from '../../scorer';
-import type { CheckContext } from '../../check-context';
-import { probeAuthorUrl } from '../../gatherers/author';
+import { weightForGrade } from "../../scorer";
+import type { CheckContext } from "../../check-context";
+import { probeAuthorUrl } from "../../gatherers/author";
 
 const CREDENTIAL_KEYWORDS = [
-  'team',
-  'experience',
-  'expertise',
-  'credentials',
-  'background',
-  'qualified',
-  'certified',
-  'years of experience',
-  'specializ',
-  'professional',
+  "team",
+  "experience",
+  "expertise",
+  "credentials",
+  "background",
+  "qualified",
+  "certified",
+  "years of experience",
+  "specializ",
+  "professional",
 ];
 
 export class AboutCredentialsAudit extends Audit {
   static override meta: AuditMeta = {
-    id: 'answer-readiness/about-credentials',
-    category: 'answer-readiness',
-    title: 'About page with credentials',
-    failureTitle: 'About page with credentials',
+    id: "answer-readiness/about-credentials",
+    category: "answer-readiness",
+    title: "About page with credentials",
+    failureTitle: "About page with credentials",
     description:
       "AI engines crawl your about page to build an organizational authority profile. Without an about page containing team credentials, expertise, and experience details, agents cannot assess your organization's authority, reducing your content's trust score in AI-generated recommendations.",
-    scoreDisplayMode: 'informative',
-    weight: weightForGrade('C', 'informative'),
-    evidenceGrade: 'C',
-    tier: 'informative',
-    dossier: 'docs/evidence/audits/answer-readiness/about-credentials.md',
-    requires: ['origin-reachable', 'unblocked-fetches', 'rendered-body', 'sample-adequate'],
-    defaultPriority: 'medium',
+    scoreDisplayMode: "informative",
+    weight: weightForGrade("C", "informative"),
+    evidenceGrade: "C",
+    tier: "informative",
+    dossier: "docs/evidence/audits/answer-readiness/about-credentials.md",
+    requires: [
+      "origin-reachable",
+      "unblocked-fetches",
+      "rendered-body",
+      "sample-adequate",
+    ],
+    defaultPriority: "medium",
     guidance: {
       impact:
         "AI engines crawl your about page to build an organizational authority profile. Without credential-rich content (team bios, expertise areas, certifications), agents cannot assess your organization's authority, reducing your content's trust score in AI-generated recommendations.",
-      fix: 'Create or expand your /about/ page to include team member bios with qualifications, years of experience, expertise areas, and professional certifications. Use specific credential keywords.',
-      code: '<section>\n  <h2>Our Team</h2>\n  <p>With 15+ years of experience in software engineering, our team of certified professionals specializes in AI-powered search optimization.</p>\n</section>',
-      effort: 'moderate',
-      tags: ['trust', 'e-e-a-t', 'generative-engine'],
+      fix: "Create or expand your /about/ page to include team member bios with qualifications, years of experience, expertise areas, and professional certifications. Use specific credential keywords.",
+      code: "<section>\n  <h2>Our Team</h2>\n  <p>With 15+ years of experience in software engineering, our team of certified professionals specializes in AI-powered search optimization.</p>\n</section>",
+      effort: "moderate",
+      tags: ["trust", "e-e-a-t", "generative-engine"],
     },
   };
 
   async audit(ctx: CheckContext): Promise<AuditResult> {
     const aboutPaths = [
-      '/about/',
-      '/about-us/',
-      '/about',
-      '/pages/about',
-      '/pages/about-us',
-      '/pages/our-story',
-      '/our-story',
+      "/about/",
+      "/about-us/",
+      "/about",
+      "/pages/about",
+      "/pages/about-us",
+      "/pages/our-story",
+      "/our-story",
     ];
 
-    let aboutResult: import('../../fetcher').FetchResult | undefined = undefined;
+    let aboutResult: import("../../fetcher").FetchResult | undefined =
+      undefined;
 
     // Check root files first
     for (const path of aboutPaths) {
@@ -69,12 +75,15 @@ export class AboutCredentialsAudit extends Audit {
       const matchingPage = ctx.pages.find((p) => {
         const urlLower = p.url.toLowerCase();
         return (
-          urlLower.includes('/about') ||
-          urlLower.includes('/our-story') ||
-          urlLower.includes('/who-we-are')
+          urlLower.includes("/about") ||
+          urlLower.includes("/our-story") ||
+          urlLower.includes("/who-we-are")
         );
       });
-      if (matchingPage?.fetchResult?.status === 200 && matchingPage.fetchResult.body) {
+      if (
+        matchingPage?.fetchResult?.status === 200 &&
+        matchingPage.fetchResult.body
+      ) {
         aboutResult = matchingPage.fetchResult;
       }
     }
@@ -96,26 +105,28 @@ export class AboutCredentialsAudit extends Audit {
 
     if (!aboutResult || aboutResult.status !== 200 || !aboutResult.body) {
       return this.fail(
-        'No about page found at /about/ or /about-us/.',
+        "No about page found at /about/ or /about-us/.",
         'About page returns 200 with content mentioning "team", "experience", "expertise"',
-        'About page not found',
+        "About page not found",
         {
-          priority: 'medium',
+          priority: "medium",
           description:
             "AI engines crawl your about page to build an organizational authority profile. Without an about page containing team credentials, expertise, and experience details, agents cannot assess your organization's authority, reducing your content's trust score in AI-generated recommendations.",
-          code: '<!-- Create /about/ with sections for:\n  - Company mission and history\n  - Team member bios with qualifications\n  - Years of experience and expertise areas\n  - Certifications and awards -->',
+          code: "<!-- Create /about/ with sections for:\n  - Company mission and history\n  - Team member bios with qualifications\n  - Years of experience and expertise areas\n  - Certifications and awards -->",
         },
       );
     }
 
     const bodyLower = aboutResult.body.toLowerCase();
-    const foundKeywords = CREDENTIAL_KEYWORDS.filter((kw) => bodyLower.includes(kw));
+    const foundKeywords = CREDENTIAL_KEYWORDS.filter((kw) =>
+      bodyLower.includes(kw),
+    );
 
     if (foundKeywords.length >= 2) {
       return this.pass(
-        `About page found with credential signals: ${foundKeywords.join(', ')}.`,
+        `About page found with credential signals: ${foundKeywords.join(", ")}.`,
         'About page returns 200 with content mentioning "team", "experience", "expertise"',
-        `Keywords: ${foundKeywords.join(', ')}`,
+        `Keywords: ${foundKeywords.join(", ")}`,
       );
     }
 
@@ -125,22 +136,22 @@ export class AboutCredentialsAudit extends Audit {
         'About page returns 200 with content mentioning "team", "experience", "expertise"',
         `Keywords: ${foundKeywords[0]}`,
         {
-          priority: 'medium',
+          priority: "medium",
           description:
-            'AI engines scan about pages for credential keywords (team, experience, expertise, certified) to build authority profiles. A single keyword provides weak signal. Expand to include team backgrounds, years of experience, expertise areas, and certifications for stronger AI trust scoring.',
+            "AI engines scan about pages for credential keywords (team, experience, expertise, certified) to build authority profiles. A single keyword provides weak signal. Expand to include team backgrounds, years of experience, expertise areas, and certifications for stronger AI trust scoring.",
           code: '<!-- Add sections covering:\n  - "Our team has 15+ years of experience in..."\n  - "Certified by..." or "Qualified in..."\n  - Specific expertise areas and specializations -->',
         },
       );
     }
 
     return this.warn(
-      'About page exists but lacks credential keywords (team, experience, expertise).',
+      "About page exists but lacks credential keywords (team, experience, expertise).",
       'About page returns 200 with content mentioning "team", "experience", "expertise"',
-      'No credential keywords found',
+      "No credential keywords found",
       {
-        priority: 'medium',
+        priority: "medium",
         description:
-          'AI engines scan about pages for credential keywords to build authority profiles but found none on yours. Add credential-rich content: team backgrounds with named experts, years of industry experience, expertise areas, and professional certifications. These signals directly influence AI trust scoring.',
+          "AI engines scan about pages for credential keywords to build authority profiles but found none on yours. Add credential-rich content: team backgrounds with named experts, years of industry experience, expertise areas, and professional certifications. These signals directly influence AI trust scoring.",
         code: '<!-- Add credential-rich content like:\n  - "Our team of 20+ engineers specializes in..."\n  - "With 10 years of experience in..."\n  - "Certified professionals in..." -->',
       },
     );

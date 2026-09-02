@@ -1,13 +1,13 @@
-import { describe, it, expect } from 'vitest';
-import { BrandNameAudit } from './brand-name';
-import { mockCheckContext, mockPageContext } from '../../__tests__/test-utils';
+import { describe, it, expect } from "vitest";
+import { BrandNameAudit } from "./brand-name";
+import { mockCheckContext, mockPageContext } from "../../__tests__/test-utils";
 
-describe('BrandNameAudit', () => {
+describe("BrandNameAudit", () => {
   const audit = new BrandNameAudit();
 
-  it('passes when the brand (legal-suffix stripped) appears in the footer', () => {
+  it("passes when the brand (legal-suffix stripped) appears in the footer", () => {
     const page = mockPageContext(
-      'https://example.com/',
+      "https://example.com/",
       `<html><body>
         <script type="application/ld+json">
         {"@context":"https://schema.org","@type":"Organization","name":"Knix Inc."}
@@ -17,25 +17,25 @@ describe('BrandNameAudit', () => {
       </body></html>`,
     );
     const result = audit.audit(mockCheckContext([page]));
-    expect(result.status).toBe('pass');
-    expect(result.message).toContain('Knix');
-    expect(result.message).toContain('appears in body text');
+    expect(result.status).toBe("pass");
+    expect(result.message).toContain("Knix");
+    expect(result.message).toContain("appears in body text");
   });
 
-  it('passes when og:site_name brand appears in body text', () => {
+  it("passes when og:site_name brand appears in body text", () => {
     const page = mockPageContext(
-      'https://example.com/',
+      "https://example.com/",
       `<html><head><meta property="og:site_name" content="Acme Tools"></head>
         <body><p>At Acme Tools we build great things.</p></body></html>`,
     );
     const result = audit.audit(mockCheckContext([page]));
-    expect(result.status).toBe('pass');
-    expect(result.message).toContain('Acme Tools');
+    expect(result.status).toBe("pass");
+    expect(result.message).toContain("Acme Tools");
   });
 
-  it('fails when the brand name is absent from body text', () => {
+  it("fails when the brand name is absent from body text", () => {
     const page = mockPageContext(
-      'https://example.com/',
+      "https://example.com/",
       `<html><body>
         <script type="application/ld+json">
         {"@context":"https://schema.org","@type":"Organization","name":"Knix"}
@@ -44,29 +44,29 @@ describe('BrandNameAudit', () => {
       </body></html>`,
     );
     const result = audit.audit(mockCheckContext([page]));
-    expect(result.status).toBe('fail');
-    expect(result.message).toContain('not found in body text');
+    expect(result.status).toBe("fail");
+    expect(result.message).toContain("not found in body text");
   });
 
-  it('warns when there is no org name in schema or og:site_name', () => {
+  it("warns when there is no org name in schema or og:site_name", () => {
     const page = mockPageContext(
-      'https://example.com/',
+      "https://example.com/",
       `<html><body><p>Some generic content.</p></body></html>`,
     );
     const result = audit.audit(mockCheckContext([page]));
-    expect(result.status).toBe('warn');
-    expect(result.message).toContain('No organization name found');
+    expect(result.status).toBe("warn");
+    expect(result.message).toContain("No organization name found");
   });
 
-  it('fails when no pages scanned', () => {
+  it("fails when no pages scanned", () => {
     const result = audit.audit(mockCheckContext([]));
-    expect(result.status).toBe('fail');
-    expect(result.message).toContain('No pages scanned');
+    expect(result.status).toBe("fail");
+    expect(result.message).toContain("No pages scanned");
   });
 
-  it('passes when brand name found via WebSite JSON-LD with publisher name in body', () => {
+  it("passes when brand name found via WebSite JSON-LD with publisher name in body", () => {
     const page = mockPageContext(
-      'https://example.com/',
+      "https://example.com/",
       `<html><body>
         <script type="application/ld+json">
         {"@context":"https://schema.org","@type":"WebSite","name":"Acme","publisher":{"@type":"Organization","name":"Acme Corp"}}
@@ -75,13 +75,13 @@ describe('BrandNameAudit', () => {
       </body></html>`,
     );
     const result = audit.audit(mockCheckContext([page]));
-    expect(result.status).toBe('pass');
-    expect(result.message).toContain('Acme');
+    expect(result.status).toBe("pass");
+    expect(result.message).toContain("Acme");
   });
 
-  it('passes when brand name found via Article JSON-LD publisher', () => {
+  it("passes when brand name found via Article JSON-LD publisher", () => {
     const page = mockPageContext(
-      'https://example.com/blog/post',
+      "https://example.com/blog/post",
       `<html><body>
         <script type="application/ld+json">
         {"@context":"https://schema.org","@type":"Article","name":"Some Article","publisher":{"@type":"Organization","name":"TechCo"}}
@@ -90,13 +90,13 @@ describe('BrandNameAudit', () => {
       </body></html>`,
     );
     const result = audit.audit(mockCheckContext([page]));
-    expect(result.status).toBe('pass');
-    expect(result.message).toContain('TechCo');
+    expect(result.status).toBe("pass");
+    expect(result.message).toContain("TechCo");
   });
 
-  it('handles Article JSON-LD without publisher gracefully', () => {
+  it("handles Article JSON-LD without publisher gracefully", () => {
     const page = mockPageContext(
-      'https://example.com/blog/post',
+      "https://example.com/blog/post",
       `<html><body>
         <script type="application/ld+json">
         {"@context":"https://schema.org","@type":"Article","name":"Some Article"}
@@ -105,13 +105,13 @@ describe('BrandNameAudit', () => {
       </body></html>`,
     );
     const result = audit.audit(mockCheckContext([page]));
-    expect(result.status).toBe('pass');
-    expect(result.message).toContain('appears in body text');
+    expect(result.status).toBe("pass");
+    expect(result.message).toContain("appears in body text");
   });
 
-  it('handles nodes without @type from flattenJsonLd (covers line 16 !objType return false)', () => {
+  it("handles nodes without @type from flattenJsonLd (covers line 16 !objType return false)", () => {
     const page = mockPageContext(
-      'https://example.com/',
+      "https://example.com/",
       `<html><body>
         <script type="application/ld+json">
         {"@context":"https://schema.org","@type":"Organization","name":"Acme","contact":{"email":"info@acme.com"}}
@@ -120,13 +120,13 @@ describe('BrandNameAudit', () => {
       </body></html>`,
     );
     const result = audit.audit(mockCheckContext([page]));
-    expect(result.status).toBe('pass');
-    expect(result.message).toContain('Acme');
+    expect(result.status).toBe("pass");
+    expect(result.message).toContain("Acme");
   });
 
-  it('handles @type as array in findJsonLdByType filter (covers line 17 Array.isArray true branch)', () => {
+  it("handles @type as array in findJsonLdByType filter (covers line 17 Array.isArray true branch)", () => {
     const page = mockPageContext(
-      'https://example.com/',
+      "https://example.com/",
       `<html><body>
         <script type="application/ld+json">
         {"@context":"https://schema.org","@type":["Organization","LocalBusiness"],"name":"WidgetCo"}
@@ -135,7 +135,7 @@ describe('BrandNameAudit', () => {
       </body></html>`,
     );
     const result = audit.audit(mockCheckContext([page]));
-    expect(result.status).toBe('pass');
-    expect(result.message).toContain('WidgetCo');
+    expect(result.status).toBe("pass");
+    expect(result.message).toContain("WidgetCo");
   });
 });

@@ -1,6 +1,6 @@
-import type { FetchOptions, FetchResult } from '../fetcher';
-import { isSafeUrl } from '../fetcher';
-import { parseHtml, getMainContentText } from '../parser';
+import type { FetchOptions, FetchResult } from "../fetcher";
+import { isSafeUrl } from "../fetcher";
+import { parseHtml, getMainContentText } from "../parser";
 
 /**
  * The AI crawlers whose published User-Agent strings can actually be sent.
@@ -9,42 +9,46 @@ import { parseHtml, getMainContentText } from '../parser';
  * only, with no user agent of its own, so a UA probe for it would compare the
  * site against a string that never appears in real traffic.
  */
-export const AI_CRAWLER_UAS: ReadonlyArray<{ token: string; ua: string; label: string }> = [
+export const AI_CRAWLER_UAS: ReadonlyArray<{
+  token: string;
+  ua: string;
+  label: string;
+}> = [
   {
-    token: 'gptbot',
-    label: 'GPTBot',
-    ua: 'Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko); compatible; GPTBot/1.4; +https://openai.com/gptbot',
+    token: "gptbot",
+    label: "GPTBot",
+    ua: "Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko); compatible; GPTBot/1.4; +https://openai.com/gptbot",
   },
   {
-    token: 'oai-searchbot',
-    label: 'OAI-SearchBot',
-    ua: 'Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko); compatible; OAI-SearchBot/1.0; +https://openai.com/searchbot',
+    token: "oai-searchbot",
+    label: "OAI-SearchBot",
+    ua: "Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko); compatible; OAI-SearchBot/1.0; +https://openai.com/searchbot",
   },
   {
-    token: 'chatgpt-user',
-    label: 'ChatGPT-User',
-    ua: 'Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko); compatible; ChatGPT-User/1.0; +https://openai.com/bot',
+    token: "chatgpt-user",
+    label: "ChatGPT-User",
+    ua: "Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko); compatible; ChatGPT-User/1.0; +https://openai.com/bot",
   },
   {
-    token: 'claudebot',
-    label: 'ClaudeBot',
-    ua: 'Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko; compatible; ClaudeBot/1.0; +claudebot@anthropic.com)',
+    token: "claudebot",
+    label: "ClaudeBot",
+    ua: "Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko; compatible; ClaudeBot/1.0; +claudebot@anthropic.com)",
   },
   {
-    token: 'claude-user',
-    label: 'Claude-User',
-    ua: 'Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko; compatible; Claude-User/1.0; +Claude-User@anthropic.com)',
+    token: "claude-user",
+    label: "Claude-User",
+    ua: "Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko; compatible; Claude-User/1.0; +Claude-User@anthropic.com)",
   },
   {
-    token: 'perplexitybot',
-    label: 'PerplexityBot',
-    ua: 'Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko; compatible; PerplexityBot/1.0; +https://perplexity.ai/perplexitybot)',
+    token: "perplexitybot",
+    label: "PerplexityBot",
+    ua: "Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko; compatible; PerplexityBot/1.0; +https://perplexity.ai/perplexitybot)",
   },
 ];
 
 /** A mainstream browser UA. The control half of every pair. */
 export const BASELINE_UA =
-  'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36';
+  "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36";
 
 /**
  * How a site answered a crawler UA, relative to the same request as a browser.
@@ -55,14 +59,14 @@ export const BASELINE_UA =
  * may even be correct impersonation defence.
  */
 export type BlockClass =
-  | 'ok'
-  | 'cf-challenge'
-  | 'pay-per-crawl'
-  | 'anubis-pow'
-  | 'rate-limited'
-  | 'opaque-403'
-  | 'soft-block'
-  | 'transport-error';
+  | "ok"
+  | "cf-challenge"
+  | "pay-per-crawl"
+  | "anubis-pow"
+  | "rate-limited"
+  | "opaque-403"
+  | "soft-block"
+  | "transport-error";
 
 export interface UaProbe {
   url: string;
@@ -91,10 +95,13 @@ export interface UaProbe {
 const SOFT_BLOCK_RATIO = 0.4;
 
 /** Anubis serves this script path and this phrase on its interstitial. */
-const ANUBIS_MARKERS = ['/.within.website/x/cmd/anubis/', 'Protected by Anubis'];
+const ANUBIS_MARKERS = [
+  "/.within.website/x/cmd/anubis/",
+  "Protected by Anubis",
+];
 
 function mainText(body: string): string {
-  if (!body.trim()) return '';
+  if (!body.trim()) return "";
   return getMainContentText(parseHtml(body));
 }
 
@@ -122,11 +129,11 @@ export function classifyResponse(
   const baselineOk = baseline.status >= 200 && baseline.status < 300;
   if (!baselineOk) {
     return {
-      blockClass: 'ok',
+      blockClass: "ok",
       textRatio: 1,
-      evidence: 'baseline blocked; nothing bot-specific to report',
-      baselineText: '',
-      probeText: '',
+      evidence: "baseline blocked; nothing bot-specific to report",
+      baselineText: "",
+      probeText: "",
       baselineBody: baseline.body,
       probeBody: probe.body,
       baselineHeaders: baseline.headers,
@@ -138,7 +145,8 @@ export function classifyResponse(
   const probeText = mainText(probe.body);
   // No baseline text means no denominator; a ratio of 1 says "no shortfall
   // measured" rather than inventing a division by zero.
-  const textRatio = baselineText.length === 0 ? 1 : probeText.length / baselineText.length;
+  const textRatio =
+    baselineText.length === 0 ? 1 : probeText.length / baselineText.length;
   const done = (blockClass: BlockClass, evidence: string) => ({
     blockClass,
     textRatio,
@@ -151,27 +159,31 @@ export function classifyResponse(
     probeHeaders: probe.headers,
   });
 
-  const cfMitigated = probe.headers['cf-mitigated'];
-  if (cfMitigated && cfMitigated.toLowerCase().includes('challenge')) {
-    return done('cf-challenge', `cf-mitigated: ${cfMitigated}`);
+  const cfMitigated = probe.headers["cf-mitigated"];
+  if (cfMitigated && cfMitigated.toLowerCase().includes("challenge")) {
+    return done("cf-challenge", `cf-mitigated: ${cfMitigated}`);
   }
-  if (probe.status === 402 && probe.headers['crawler-price'] !== undefined) {
-    return done('pay-per-crawl', `402 with crawler-price: ${probe.headers['crawler-price']}`);
+  if (probe.status === 402 && probe.headers["crawler-price"] !== undefined) {
+    return done(
+      "pay-per-crawl",
+      `402 with crawler-price: ${probe.headers["crawler-price"]}`,
+    );
   }
   const marker = ANUBIS_MARKERS.find((m) => probe.body.includes(m));
-  if (marker) return done('anubis-pow', `body contains "${marker}"`);
-  if (probe.status === 429) return done('rate-limited', 'HTTP 429');
-  if (probe.status === 403) return done('opaque-403', 'HTTP 403 with no challenge header');
+  if (marker) return done("anubis-pow", `body contains "${marker}"`);
+  if (probe.status === 429) return done("rate-limited", "HTTP 429");
+  if (probe.status === 403)
+    return done("opaque-403", "HTTP 403 with no challenge header");
   if (probe.error || probe.status === 0) {
-    return done('transport-error', probe.error ?? 'no response');
+    return done("transport-error", probe.error ?? "no response");
   }
   if (probe.status === 200 && textRatio < SOFT_BLOCK_RATIO) {
     return done(
-      'soft-block',
+      "soft-block",
       `HTTP 200 with ${Math.round(textRatio * 100)}% of the baseline main-content text`,
     );
   }
-  return done('ok', `HTTP ${probe.status}`);
+  return done("ok", `HTTP ${probe.status}`);
 }
 
 /**
@@ -240,7 +252,12 @@ const probeCache = new WeakMap<object, ProbeCache>();
 function cacheFor(ctx: object): ProbeCache {
   let cache = probeCache.get(ctx);
   if (!cache) {
-    cache = { baselines: new Map(), probes: new Map(), controls: new Map(), raw: new Map() };
+    cache = {
+      baselines: new Map(),
+      probes: new Map(),
+      controls: new Map(),
+      raw: new Map(),
+    };
     probeCache.set(ctx, cache);
   }
   return cache;
@@ -272,7 +289,12 @@ export async function sharedUaProbes(
     if (!baseline) {
       baseline = (async () => {
         if (!(await isSafeUrl(url))) return undefined;
-        return ctx.fetch({ url, userAgent: BASELINE_UA, followRedirects: true, signal: opts.signal });
+        return ctx.fetch({
+          url,
+          userAgent: BASELINE_UA,
+          followRedirects: true,
+          signal: opts.signal,
+        });
       })();
       cache.baselines.set(url, baseline);
     }
@@ -316,7 +338,7 @@ export async function sharedUaProbes(
  * point is to be unrecognised, not to be disguised.
  */
 export const CONTROL_UA =
-  'Mozilla/5.0 (compatible; AgentLighthouseControl/1.0; +https://github.com/ForkPoint/agent-lighthouse)';
+  "Mozilla/5.0 (compatible; AgentLighthouseControl/1.0; +https://github.com/ForkPoint/agent-lighthouse)";
 
 /**
  * Fetch one URL as the unrecognised control bot, at most once per scan.
@@ -334,7 +356,12 @@ export function sharedControlProbe(
   if (!pending) {
     pending = (async () => {
       if (!(await isSafeUrl(url))) return undefined;
-      return ctx.fetch({ url, userAgent: CONTROL_UA, followRedirects: true, signal: opts.signal });
+      return ctx.fetch({
+        url,
+        userAgent: CONTROL_UA,
+        followRedirects: true,
+        signal: opts.signal,
+      });
     })();
     cache.controls.set(url, pending);
   }
@@ -364,7 +391,12 @@ export function sharedUaFetch(
   if (!pending) {
     pending = (async () => {
       if (!(await isSafeUrl(url))) return undefined;
-      return ctx.fetch({ url, userAgent, followRedirects: true, signal: opts.signal });
+      return ctx.fetch({
+        url,
+        userAgent,
+        followRedirects: true,
+        signal: opts.signal,
+      });
     })();
     map.set(key, pending);
   }

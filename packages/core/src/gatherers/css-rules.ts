@@ -1,6 +1,6 @@
-import type { CheckContext, PageContext } from '../check-context';
-import { isSafeUrl } from '../fetcher';
-import { extractStylesheetUrls } from '../parser';
+import type { CheckContext, PageContext } from "../check-context";
+import { isSafeUrl } from "../fetcher";
+import { extractStylesheetUrls } from "../parser";
 
 /** One `selector { declarations }` rule, with the at-rule it sits inside. */
 export interface CssRule {
@@ -11,7 +11,7 @@ export interface CssRule {
   /** The enclosing at-rule prelude (`media print`, `supports (...)`), if any. */
   atRule?: string;
   /** Where the rule came from, for evidence. */
-  origin: 'inline' | string;
+  origin: "inline" | string;
 }
 
 /** How many bytes of a single stylesheet to scan. */
@@ -20,7 +20,8 @@ const MAX_SHEET_BYTES = 512 * 1024;
 const MAX_SHEETS = 5;
 
 /** At-rules that hold declarations rather than nested rules, so carry no selector. */
-const DECLARATION_AT_RULES = /^@(font-face|page|viewport|counter-style|property|layer\b[^{]*$)/i;
+const DECLARATION_AT_RULES =
+  /^@(font-face|page|viewport|counter-style|property|layer\b[^{]*$)/i;
 
 /**
  * Scan a stylesheet into flat selector/declaration pairs.
@@ -31,36 +32,41 @@ const DECLARATION_AT_RULES = /^@(font-face|page|viewport|counter-style|property|
  * reports the matched selector text so a human can check the answer. A full CSS
  * engine would need a dependency the core package does not carry.
  */
-export function parseCssRules(source: string, origin = 'inline'): CssRule[] {
+export function parseCssRules(source: string, origin = "inline"): CssRule[] {
   const text = stripComments(source).slice(0, MAX_SHEET_BYTES);
   const rules: CssRule[] = [];
   // The at-rule preludes currently open, outermost first.
   const atStack: string[] = [];
-  let buffer = '';
+  let buffer = "";
 
   for (let i = 0; i < text.length; i += 1) {
     const ch = text[i]!;
-    if (ch === '{') {
+    if (ch === "{") {
       const prelude = buffer.trim();
-      buffer = '';
-      if (prelude.startsWith('@')) {
-        if (DECLARATION_AT_RULES.test(prelude) || /^@keyframes/i.test(prelude)) {
+      buffer = "";
+      if (prelude.startsWith("@")) {
+        if (
+          DECLARATION_AT_RULES.test(prelude) ||
+          /^@keyframes/i.test(prelude)
+        ) {
           // The body holds declarations or keyframe steps, not selectors. Skip
           // it wholesale rather than reading its contents as rules.
           i = skipBlock(text, i);
           continue;
         }
-        atStack.push(prelude.replace(/^@/, '').replace(/\s+/g, ' ').trim());
+        atStack.push(prelude.replace(/^@/, "").replace(/\s+/g, " ").trim());
         continue;
       }
-      const end = text.indexOf('}', i);
-      const declarations = (end === -1 ? text.slice(i + 1) : text.slice(i + 1, end))
+      const end = text.indexOf("}", i);
+      const declarations = (
+        end === -1 ? text.slice(i + 1) : text.slice(i + 1, end)
+      )
         .toLowerCase()
-        .replace(/\s+/g, ' ')
+        .replace(/\s+/g, " ")
         .trim();
       if (prelude) {
         rules.push({
-          selector: prelude.replace(/\s+/g, ' '),
+          selector: prelude.replace(/\s+/g, " "),
           declarations,
           ...(atStack.length ? { atRule: atStack[atStack.length - 1]! } : {}),
           origin,
@@ -69,8 +75,8 @@ export function parseCssRules(source: string, origin = 'inline'): CssRule[] {
       i = end === -1 ? text.length : end;
       continue;
     }
-    if (ch === '}') {
-      buffer = '';
+    if (ch === "}") {
+      buffer = "";
       atStack.pop();
       continue;
     }
@@ -84,8 +90,8 @@ export function parseCssRules(source: string, origin = 'inline'): CssRule[] {
 function skipBlock(text: string, open: number): number {
   let depth = 0;
   for (let i = open; i < text.length; i += 1) {
-    if (text[i] === '{') depth += 1;
-    else if (text[i] === '}') {
+    if (text[i] === "{") depth += 1;
+    else if (text[i] === "}") {
       depth -= 1;
       if (depth === 0) return i;
     }
@@ -94,7 +100,7 @@ function skipBlock(text: string, open: number): number {
 }
 
 function stripComments(source: string): string {
-  return source.replace(/\/\*[\s\S]*?\*\//g, '');
+  return source.replace(/\/\*[\s\S]*?\*\//g, "");
 }
 
 export interface PageCss {
@@ -112,14 +118,17 @@ export interface PageCss {
  * party on the scanned site's behalf. They are reported instead, so a result
  * built on partial CSS says so rather than reading as complete.
  */
-export async function collectPageCss(ctx: CheckContext, page: PageContext): Promise<PageCss> {
+export async function collectPageCss(
+  ctx: CheckContext,
+  page: PageContext,
+): Promise<PageCss> {
   const $ = page.$;
   const rules: CssRule[] = [];
   const skippedCrossOrigin: string[] = [];
   const fetched: string[] = [];
 
-  $('style').each((_, el) => {
-    rules.push(...parseCssRules($(el).text(), 'inline <style>'));
+  $("style").each((_, el) => {
+    rules.push(...parseCssRules($(el).text(), "inline <style>"));
   });
 
   const pageOrigin = safeOrigin(page.url);

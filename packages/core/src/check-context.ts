@@ -1,12 +1,12 @@
-import type { CheerioAPI } from 'cheerio';
-import type { CheckResult, PageType } from './types';
-import type { FetchOptions, FetchResult } from './fetcher';
-import type { A11yPageResult } from './audits/operability-safety/runner';
+import type { CheerioAPI } from "cheerio";
+import type { CheckResult, PageType } from "./types";
+import type { FetchOptions, FetchResult } from "./fetcher";
+import type { A11yPageResult } from "./audits/operability-safety/runner";
 
 export interface PageContext {
   url: string;
   pageType: PageType;
-  pageTypeSource?: 'declared' | 'detected';
+  pageTypeSource?: "declared" | "detected";
   fetchResult: FetchResult;
   $: CheerioAPI;
   /** Parsed JSON-LD blocks only (used by JSON-LD-specific audits). */
@@ -39,7 +39,7 @@ export interface CheckContext {
   domain: string;
   baseUrl: string;
   fetch: (options: FetchOptions) => Promise<FetchResult>;
-  wafProtection?: import('./waf-detector').WafProtection;
+  wafProtection?: import("./waf-detector").WafProtection;
   /**
    * What the scan actually obtained, decided once before any audit ran.
    *
@@ -47,7 +47,17 @@ export interface CheckContext {
    * forgets is exactly the silent-nothing verdict this exists to remove. Test
    * harnesses that do not exercise the gate pass `allEvidenceMet()`.
    */
-  evidence: import('./scan-evidence').ScanEvidence;
+  evidence: import("./scan-evidence").ScanEvidence;
+  /**
+   * Origin evidence metadata and cached homepage response.
+   */
+  originEvidence?: {
+    origin: string;
+    version: string;
+    readAt: string;
+    cached: boolean;
+    originHomepage?: FetchResult;
+  };
 }
 
 export type CheckFn = (ctx: CheckContext) => CheckResult | Promise<CheckResult>;

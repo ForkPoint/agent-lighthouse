@@ -7,16 +7,13 @@
 // imported from there rather than copied, so the two cannot drift apart.
 // `accessible-names` asks whether an element has a name at all; `label` asks
 // whether a field has one. Neither reads what the name says.
-import type { AuditMeta, AuditResult } from '../../types';
-import { Audit } from '../../audit';
-import { weightForGrade } from '../../scorer';
-import type { CheckContext } from '../../check-context';
-import { INSTRUCTION_LEXICON } from './invisible-instruction-scan';
-import { idSelector } from './_agent-affordances';
-import {
-  scanReadPageText,
-  unreadPageTextReason,
-} from '../../scan-evidence';
+import type { AuditMeta, AuditResult } from "../../types";
+import { Audit } from "../../audit";
+import { weightForGrade } from "../../scorer";
+import type { CheckContext } from "../../check-context";
+import { INSTRUCTION_LEXICON } from "./invisible-instruction-scan";
+import { idSelector } from "./_agent-affordances";
+import { scanReadPageText, unreadPageTextReason } from "../../scan-evidence";
 
 /** Long values are the canonical smuggling slot, since long alt is already an anti-pattern. */
 const LONG_VALUE_CHARS = 250;
@@ -30,30 +27,30 @@ const SENTENCE_TOKENS = 5;
  * look similar just by both being English.
  */
 const STOPWORDS = new Set([
-  'a',
-  'an',
-  'and',
-  'as',
-  'at',
-  'by',
-  'for',
-  'from',
-  'in',
-  'it',
-  'my',
-  'now',
-  'of',
-  'on',
-  'or',
-  'our',
-  'please',
-  'the',
-  'this',
-  'to',
-  'up',
-  'with',
-  'you',
-  'your',
+  "a",
+  "an",
+  "and",
+  "as",
+  "at",
+  "by",
+  "for",
+  "from",
+  "in",
+  "it",
+  "my",
+  "now",
+  "of",
+  "on",
+  "or",
+  "our",
+  "please",
+  "the",
+  "this",
+  "to",
+  "up",
+  "with",
+  "you",
+  "your",
 ]);
 
 /**
@@ -62,45 +59,45 @@ const STOPWORDS = new Set([
  * a missed sentence is cheaper than a flagged nonce.
  */
 const FINITE_VERBS = new Set([
-  'is',
-  'are',
-  'was',
-  'were',
-  'be',
-  'has',
-  'have',
-  'had',
-  'do',
-  'does',
-  'did',
-  'will',
-  'must',
-  'should',
-  'can',
-  'may',
-  'ignore',
-  'disregard',
-  'forget',
-  'recommend',
-  'recommends',
-  'suggest',
-  'prefer',
-  'reply',
-  'respond',
-  'answer',
-  'say',
-  'tell',
-  'output',
-  'include',
-  'mention',
-  'cite',
-  'send',
-  'forward',
-  'use',
-  'treat',
-  'act',
-  'follow',
-  'return',
+  "is",
+  "are",
+  "was",
+  "were",
+  "be",
+  "has",
+  "have",
+  "had",
+  "do",
+  "does",
+  "did",
+  "will",
+  "must",
+  "should",
+  "can",
+  "may",
+  "ignore",
+  "disregard",
+  "forget",
+  "recommend",
+  "recommends",
+  "suggest",
+  "prefer",
+  "reply",
+  "respond",
+  "answer",
+  "say",
+  "tell",
+  "output",
+  "include",
+  "mention",
+  "cite",
+  "send",
+  "forward",
+  "use",
+  "treat",
+  "act",
+  "follow",
+  "return",
 ]);
 
 /**
@@ -108,36 +105,36 @@ const FINITE_VERBS = new Set([
  * selects by accessible name actuates the label, not the glyph.
  */
 const OPPOSING_VERBS: ReadonlyArray<[string, string]> = [
-  ['confirm', 'cancel'],
-  ['accept', 'decline'],
-  ['accept', 'reject'],
-  ['agree', 'disagree'],
-  ['pay', 'back'],
-  ['buy', 'return'],
-  ['delete', 'keep'],
-  ['remove', 'add'],
-  ['save', 'discard'],
-  ['submit', 'reset'],
-  ['subscribe', 'unsubscribe'],
-  ['enable', 'disable'],
-  ['approve', 'deny'],
-  ['yes', 'no'],
+  ["confirm", "cancel"],
+  ["accept", "decline"],
+  ["accept", "reject"],
+  ["agree", "disagree"],
+  ["pay", "back"],
+  ["buy", "return"],
+  ["delete", "keep"],
+  ["remove", "add"],
+  ["save", "discard"],
+  ["submit", "reset"],
+  ["subscribe", "unsubscribe"],
+  ["enable", "disable"],
+  ["approve", "deny"],
+  ["yes", "no"],
 ];
 
 type Channel =
-  | 'alt'
-  | 'aria-label'
-  | 'aria-describedby target'
-  | 'aria-labelledby target'
-  | 'aria-description'
-  | 'title'
-  | 'placeholder'
-  | 'hidden input value'
-  | 'option text'
-  | 'document title'
-  | 'og:title'
-  | 'og:description'
-  | 'href';
+  | "alt"
+  | "aria-label"
+  | "aria-describedby target"
+  | "aria-labelledby target"
+  | "aria-description"
+  | "title"
+  | "placeholder"
+  | "hidden input value"
+  | "option text"
+  | "document title"
+  | "og:title"
+  | "og:description"
+  | "href";
 
 interface Finding {
   pageUrl: string;
@@ -178,7 +175,8 @@ function opposingVerbs(a: string, b: string): boolean {
   const right = new Set(tokens(b));
   return OPPOSING_VERBS.some(
     ([one, other]) =>
-      (left.has(one) && right.has(other)) || (left.has(other) && right.has(one)),
+      (left.has(one) && right.has(other)) ||
+      (left.has(other) && right.has(one)),
   );
 }
 
@@ -196,9 +194,9 @@ function hits(text: string): boolean {
 /** A URL's own text, with percent-encoding and `+` separators decoded. */
 function decodeUrlText(href: string): string {
   try {
-    return decodeURIComponent(href.replace(/\+/g, ' '));
+    return decodeURIComponent(href.replace(/\+/g, " "));
   } catch {
-    return href.replace(/\+/g, ' ');
+    return href.replace(/\+/g, " ");
   }
 }
 
@@ -214,39 +212,55 @@ function survey(ctx: CheckContext): Survey {
   for (const page of ctx.pages) {
     const $ = page.$;
     const record = (channel: Channel, text: string, visible?: string) => {
-      const value = text.replace(/\s+/g, ' ').trim();
+      const value = text.replace(/\s+/g, " ").trim();
       if (!value) return;
       result.valuesSeen += 1;
-      const finding: Finding = { pageUrl: page.url, channel, text: value, ...(visible ? { visible } : {}) };
+      const finding: Finding = {
+        pageUrl: page.url,
+        channel,
+        text: value,
+        ...(visible ? { visible } : {}),
+      };
       if (hits(value)) {
         result.injections.push(finding);
         return;
       }
-      if (value.length > LONG_VALUE_CHARS && (channel === 'alt' || channel === 'aria-label')) {
+      if (
+        value.length > LONG_VALUE_CHARS &&
+        (channel === "alt" || channel === "aria-label")
+      ) {
         result.longValues.push(finding);
       }
     };
 
-    $('[alt]').each((_, el) => record('alt', $(el).attr('alt') ?? ''));
-    $('[title]').each((_, el) => record('title', $(el).attr('title') ?? ''));
-    $('[placeholder]').each((_, el) => record('placeholder', $(el).attr('placeholder') ?? ''));
-    $('[aria-description]').each((_, el) =>
-      record('aria-description', $(el).attr('aria-description') ?? ''),
+    $("[alt]").each((_, el) => record("alt", $(el).attr("alt") ?? ""));
+    $("[title]").each((_, el) => record("title", $(el).attr("title") ?? ""));
+    $("[placeholder]").each((_, el) =>
+      record("placeholder", $(el).attr("placeholder") ?? ""),
     );
-    $('option').each((_, el) => record('option text', $(el).text()));
-    $('title').each((_, el) => record('document title', $(el).text()));
-    $('meta[property="og:title"]').each((_, el) => record('og:title', $(el).attr('content') ?? ''));
+    $("[aria-description]").each((_, el) =>
+      record("aria-description", $(el).attr("aria-description") ?? ""),
+    );
+    $("option").each((_, el) => record("option text", $(el).text()));
+    $("title").each((_, el) => record("document title", $(el).text()));
+    $('meta[property="og:title"]').each((_, el) =>
+      record("og:title", $(el).attr("content") ?? ""),
+    );
     $('meta[property="og:description"]').each((_, el) =>
-      record('og:description', $(el).attr('content') ?? ''),
+      record("og:description", $(el).attr("content") ?? ""),
     );
 
-    for (const attr of ['aria-labelledby', 'aria-describedby'] as const) {
+    for (const attr of ["aria-labelledby", "aria-describedby"] as const) {
       $(`[${attr}]`).each((_, el) => {
-        for (const id of ($(el).attr(attr) ?? '').split(/\s+/).filter(Boolean)) {
+        for (const id of ($(el).attr(attr) ?? "")
+          .split(/\s+/)
+          .filter(Boolean)) {
           const target = $(idSelector(id));
           if (target.length > 0) {
             record(
-              attr === 'aria-labelledby' ? 'aria-labelledby target' : 'aria-describedby target',
+              attr === "aria-labelledby"
+                ? "aria-labelledby target"
+                : "aria-describedby target",
               target.text(),
             );
           }
@@ -254,41 +268,55 @@ function survey(ctx: CheckContext): Survey {
       });
     }
 
-    $('a[href]').each((_, el) => {
-      const href = $(el).attr('href') ?? '';
+    $("a[href]").each((_, el) => {
+      const href = $(el).attr("href") ?? "";
       if (!href) return;
       result.valuesSeen += 1;
       const decoded = decodeUrlText(href);
       if (hits(decoded)) {
-        result.injections.push({ pageUrl: page.url, channel: 'href', text: decoded });
+        result.injections.push({
+          pageUrl: page.url,
+          channel: "href",
+          text: decoded,
+        });
       }
     });
 
     // A hidden input holds an identifier, a token or a numeric id. Prose in one
     // is addressing something that reads prose.
     $('input[type="hidden"]').each((_, el) => {
-      const value = ($(el).attr('value') ?? '').replace(/\s+/g, ' ').trim();
+      const value = ($(el).attr("value") ?? "").replace(/\s+/g, " ").trim();
       if (!value) return;
       result.valuesSeen += 1;
       if (hits(value) || isSentence(value)) {
-        result.injections.push({ pageUrl: page.url, channel: 'hidden input value', text: value });
+        result.injections.push({
+          pageUrl: page.url,
+          channel: "hidden input value",
+          text: value,
+        });
       }
     });
 
     // aria-label against the element's own rendered text.
-    $('[aria-label]').each((_, el) => {
+    $("[aria-label]").each((_, el) => {
       const $e = $(el);
-      const label = ($e.attr('aria-label') ?? '').replace(/\s+/g, ' ').trim();
-      record('aria-label', label);
+      const label = ($e.attr("aria-label") ?? "").replace(/\s+/g, " ").trim();
+      record("aria-label", label);
       if (!label || hits(label)) return;
-      const visible = $e.text().replace(/\s+/g, ' ').trim();
+      const visible = $e.text().replace(/\s+/g, " ").trim();
       if (!visible) return;
-      const finding: Finding = { pageUrl: page.url, channel: 'aria-label', text: label, visible };
+      const finding: Finding = {
+        pageUrl: page.url,
+        channel: "aria-label",
+        text: label,
+        visible,
+      };
       if (opposingVerbs(label, visible)) {
         result.opposing.push(finding);
         return;
       }
-      if (tokenOverlap(label, visible) < OVERLAP_FLOOR) result.divergent.push(finding);
+      if (tokenOverlap(label, visible) < OVERLAP_FLOOR)
+        result.divergent.push(finding);
     });
   }
 
@@ -296,7 +324,7 @@ function survey(ctx: CheckContext): Survey {
 }
 
 const EXPECTED =
-  'Every accessible name, description and non-visual attribute is a short description that agrees with its element, and carries no instruction addressed to an AI';
+  "Every accessible name, description and non-visual attribute is a short description that agrees with its element, and carries no instruction addressed to an AI";
 
 const SAMPLE = `<!-- The accessible name describes the element and agrees with its label. -->
 <img src="/shoe.png" alt="A blue running shoe on a white background">
@@ -305,34 +333,46 @@ const SAMPLE = `<!-- The accessible name describes the element and agrees with i
 
 export class AriaLayerInjectionScanAudit extends Audit {
   static override meta: AuditMeta = {
-    id: 'operability-safety/aria-layer-injection-scan',
-    category: 'operability-safety',
-    title: 'Accessibility-Layer Injection Scan',
-    failureTitle: 'Accessibility-Layer Injection Scan',
+    id: "operability-safety/aria-layer-injection-scan",
+    category: "operability-safety",
+    title: "Accessibility-Layer Injection Scan",
+    failureTitle: "Accessibility-Layer Injection Scan",
     description:
-      'Audit the text that reaches an agent through the accessibility tree and non-visual attributes rather than through body copy: alt, aria-label, aria-labelledby targets, aria-description, title, placeholder, hidden input values, <option> labels, document title and og:* metadata. Flag instruction-shaped content, anomalously long values, and aria-label/visible-text divergence.',
-    scoreDisplayMode: 'binary',
-    weight: weightForGrade('A', 'scored'),
-    evidenceGrade: 'A',
-    tier: 'scored',
-    dossier: 'docs/evidence/audits/operability-safety/aria-layer-injection-scan.md',
-    requires: ['origin-reachable', 'unblocked-fetches', 'rendered-body', 'sample-adequate'],
-    defaultPriority: 'critical',
+      "Audit the text that reaches an agent through the accessibility tree and non-visual attributes rather than through body copy: alt, aria-label, aria-labelledby targets, aria-description, title, placeholder, hidden input values, <option> labels, document title and og:* metadata. Flag instruction-shaped content, anomalously long values, and aria-label/visible-text divergence.",
+    scoreDisplayMode: "binary",
+    weight: weightForGrade("A", "scored"),
+    evidenceGrade: "A",
+    tier: "scored",
+    dossier:
+      "docs/evidence/audits/operability-safety/aria-layer-injection-scan.md",
+    requires: [
+      "origin-reachable",
+      "unblocked-fetches",
+      "rendered-body",
+      "sample-adequate",
+    ],
+    defaultPriority: "critical",
     guidance: {
       impact:
         "Computer-use and browser agents drive pages through the DOM and accessibility tree, not pixels, so a11y attributes enter the model context with the same weight as visible text while remaining invisible to a sighted human. Anthropic names the vector explicitly: 'hidden malicious form fields in a webpage's DOM invisible to humans, and other hard-to-catch injections such as through the URL text and tab title that only an agent might see.' The divergence sub-check is a defect in its own right independent of injection: an agent that clicks by accessible name will actuate an aria-label that contradicts the rendered label. Falsifier: if every a11y attribute is short, descriptive, and token-consistent with its element's visible text, this channel carries no payload.",
       fix: 'Remove any instruction-shaped text from alt, aria-label, title, placeholder, option labels, hidden input values, the document title and og:* metadata. Keep accessible names short and descriptive, and make each one agree with the element it names — an aria-label reading "Confirm payment" on a button labelled "Cancel" fires the wrong action for every agent that selects by accessible name. Keep hidden inputs to identifiers, tokens and ids rather than prose.',
       code: SAMPLE,
-      effort: 'moderate',
+      effort: "moderate",
       docsUrl:
-        'https://forkpoint.github.io/agent-lighthouse/audits/operability-safety/aria-layer-injection-scan/',
-      tags: ['injection-safety', 'prompt-injection', 'aria', 'security', 'agent-safety'],
+        "https://forkpoint.github.io/agent-lighthouse/audits/operability-safety/aria-layer-injection-scan/",
+      tags: [
+        "injection-safety",
+        "prompt-injection",
+        "aria",
+        "security",
+        "agent-safety",
+      ],
     },
   };
 
   private recommendation() {
     return {
-      priority: 'critical' as const,
+      priority: "critical" as const,
       description: AriaLayerInjectionScanAudit.meta.description,
       code: SAMPLE,
     };
@@ -343,15 +383,16 @@ export class AriaLayerInjectionScanAudit extends Audit {
 
     if (s.valuesSeen === 0) {
       return this.notApplicable(
-        'No accessible name, description or non-visual attribute on the scanned pages.',
+        "No accessible name, description or non-visual attribute on the scanned pages.",
         EXPECTED,
-        'No accessible-name text on the scanned pages',
+        "No accessible-name text on the scanned pages",
       );
     }
 
     if (s.injections.length > 0) {
       const worst = s.injections[0]!;
-      const quoted = worst.text.length > 300 ? `${worst.text.slice(0, 297)}...` : worst.text;
+      const quoted =
+        worst.text.length > 300 ? `${worst.text.slice(0, 297)}...` : worst.text;
       return this.fail(
         `${s.injections.length} non-visual value(s) carry text addressed to an AI rather than a description. In ${worst.channel}: "${quoted}"`,
         EXPECTED,
@@ -377,13 +418,15 @@ export class AriaLayerInjectionScanAudit extends Audit {
       const long = s.longValues.length;
       const divergent = s.divergent.length;
       const parts = [
-        long > 0 ? `${long} alt or aria-label value(s) exceed ${LONG_VALUE_CHARS} characters` : '',
+        long > 0
+          ? `${long} alt or aria-label value(s) exceed ${LONG_VALUE_CHARS} characters`
+          : "",
         divergent > 0
           ? `${divergent} aria-label(s) share under ${Math.round(OVERLAP_FLOOR * 100)}% of their element's own visible tokens`
-          : '',
+          : "",
       ].filter(Boolean);
       return this.warn(
-        `${parts.join('; ')}. Neither matches an instruction pattern, but both are the slot a payload is smuggled in and both are already accessibility defects.`,
+        `${parts.join("; ")}. Neither matches an instruction pattern, but both are the slot a payload is smuggled in and both are already accessibility defects.`,
         EXPECTED,
         `${warnings.length} anomalous value(s) across ${s.valuesSeen} scanned`,
         this.recommendation(),
@@ -404,7 +447,7 @@ export class AriaLayerInjectionScanAudit extends Audit {
     // is served by a shell, so the payload branches above must run first.
     if (!scanReadPageText(ctx.evidence)) {
       return this.notApplicable(
-        'The scanned page served no readable text, so its accessibility layer was not judged.',
+        "The scanned page served no readable text, so its accessibility layer was not judged.",
         EXPECTED,
         unreadPageTextReason(ctx.evidence),
       );

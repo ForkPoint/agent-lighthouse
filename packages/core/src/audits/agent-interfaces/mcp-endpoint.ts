@@ -1,8 +1,8 @@
-import type { AuditMeta, AuditResult } from '../../types';
-import { Audit } from '../../audit';
-import { weightForGrade } from '../../scorer';
-import type { CheckContext } from '../../check-context';
-import { isSafeUrl } from '../../url-utils';
+import type { AuditMeta, AuditResult } from "../../types";
+import { Audit } from "../../audit";
+import { weightForGrade } from "../../scorer";
+import type { CheckContext } from "../../check-context";
+import { isSafeUrl } from "../../url-utils";
 import {
   discoverMcpEndpoint,
   parseRpcResponse,
@@ -10,12 +10,12 @@ import {
   mcpFetch,
   isObject,
   MCP_PROTOCOL_VERSION as PROTOCOL_VERSION,
-} from '../../gatherers/mcp';
+} from "../../gatherers/mcp";
 
-const CAPABILITY_KEYS = ['tools', 'resources', 'prompts'];
+const CAPABILITY_KEYS = ["tools", "resources", "prompts"];
 
 const EXPECTED =
-  'A declared MCP endpoint answers a spec-compliant initialize handshake, negotiates capabilities, and annotates its tools';
+  "A declared MCP endpoint answers a spec-compliant initialize handshake, negotiates capabilities, and annotates its tools";
 
 const SAMPLE = `// Request (Streamable HTTP — both Accept types are required)
 POST /mcp
@@ -39,33 +39,41 @@ Content-Type: application/json
 
 export class McpEndpointAudit extends Audit {
   static override meta: AuditMeta = {
-    id: 'agent-interfaces/mcp-endpoint',
-    category: 'agent-interfaces',
-    title: 'MCP endpoint functional',
-    failureTitle: 'MCP endpoint functional',
+    id: "agent-interfaces/mcp-endpoint",
+    category: "agent-interfaces",
+    title: "MCP endpoint functional",
+    failureTitle: "MCP endpoint functional",
     description:
-      'One MCP endpoint audit: it finds the endpoint your site declares, speaks a spec-compliant JSON-RPC 2.0 initialize handshake to it, reports the capabilities the server negotiates on the wire, and checks that the tools it lists carry safety annotations.',
-    scoreDisplayMode: 'informative',
-    weight: weightForGrade('C', 'informative'),
-    evidenceGrade: 'C',
-    tier: 'informative',
-    dossier: 'docs/evidence/audits/agent-interfaces/mcp-endpoint.md',
-    requires: ['origin-reachable'],
-    defaultPriority: 'high',
+      "One MCP endpoint audit: it finds the endpoint your site declares, speaks a spec-compliant JSON-RPC 2.0 initialize handshake to it, reports the capabilities the server negotiates on the wire, and checks that the tools it lists carry safety annotations.",
+    scoreDisplayMode: "informative",
+    weight: weightForGrade("C", "informative"),
+    evidenceGrade: "C",
+    tier: "informative",
+    dossier: "docs/evidence/audits/agent-interfaces/mcp-endpoint.md",
+    requires: ["origin-reachable"],
+    defaultPriority: "high",
     guidance: {
       impact:
-        'If your MCP endpoint does not answer an initialize handshake, AI assistants cannot connect at all. Capabilities and tool annotations come off the same connection: without them an agent cannot tell whether your server offers tools, or which of them are destructive enough to need user confirmation.',
-      fix: 'Declare your MCP endpoint somewhere machine-readable, make it answer a JSON-RPC 2.0 initialize request over Streamable HTTP, return your real capabilities in the initialize result, and give every tool returned by tools/list a boolean readOnlyHint annotation.',
+        "If your MCP endpoint does not answer an initialize handshake, AI assistants cannot connect at all. Capabilities and tool annotations come off the same connection: without them an agent cannot tell whether your server offers tools, or which of them are destructive enough to need user confirmation.",
+      fix: "Declare your MCP endpoint somewhere machine-readable, make it answer a JSON-RPC 2.0 initialize request over Streamable HTTP, return your real capabilities in the initialize result, and give every tool returned by tools/list a boolean readOnlyHint annotation.",
       code: SAMPLE,
-      effort: 'complex',
-      docsUrl: 'https://modelcontextprotocol.io/specification/2026-07-28/server/discover',
-      tags: ['mcp', 'endpoint', 'json-rpc', 'capabilities', 'annotations', 'agent-protocol'],
+      effort: "complex",
+      docsUrl:
+        "https://modelcontextprotocol.io/specification/2026-07-28/server/discover",
+      tags: [
+        "mcp",
+        "endpoint",
+        "json-rpc",
+        "capabilities",
+        "annotations",
+        "agent-protocol",
+      ],
     },
   };
 
   private recommendation() {
     return {
-      priority: 'high' as const,
+      priority: "high" as const,
       description: McpEndpointAudit.meta.description,
       code: SAMPLE,
     };
@@ -76,25 +84,25 @@ export class McpEndpointAudit extends Audit {
 
     if (!endpoint) {
       return this.fail(
-        'No MCP endpoint is declared by this site (no servers.json, UCP service, or ai-catalog MCP entry).',
+        "No MCP endpoint is declared by this site (no servers.json, UCP service, or ai-catalog MCP entry).",
         EXPECTED,
-        'No declared MCP endpoint',
+        "No declared MCP endpoint",
         this.recommendation(),
       );
     }
-    if (endpoint.source === 'no-array') {
+    if (endpoint.source === "no-array") {
       return this.fail(
-        'servers.json has no servers array.',
+        "servers.json has no servers array.",
         EXPECTED,
-        'No servers array',
+        "No servers array",
         this.recommendation(),
       );
     }
-    if (endpoint.source === 'no-url') {
+    if (endpoint.source === "no-url") {
       return this.fail(
-        'No server URL found in servers.json.',
+        "No server URL found in servers.json.",
         EXPECTED,
-        'No server URL',
+        "No server URL",
         this.recommendation(),
       );
     }
@@ -114,15 +122,15 @@ export class McpEndpointAudit extends Audit {
     let response;
     try {
       response = await mcpFetch(ctx, url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: rpcRequest(1, 'initialize', {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: rpcRequest(1, "initialize", {
           protocolVersion: PROTOCOL_VERSION,
           capabilities: {},
-          clientInfo: { name: 'agent-lighthouse', version: '1.0.0' },
+          clientInfo: { name: "agent-lighthouse", version: "1.0.0" },
         }),
       });
-      if (!response) throw new Error('Unreachable');
+      if (!response) throw new Error("Unreachable");
     } catch {
       return this.fail(
         `MCP endpoint at ${url} is not reachable.`,
@@ -135,11 +143,11 @@ export class McpEndpointAudit extends Audit {
     // An OAuth-protected server answering an unauthenticated initialize with
     // 401 + WWW-Authenticate is behaving correctly, and is the norm for
     // anything non-public. That is a present server, not a broken one.
-    if (response.status === 401 && response.headers?.['www-authenticate']) {
+    if (response.status === 401 && response.headers?.["www-authenticate"]) {
       return this.pass(
         `MCP endpoint at ${url} is present but authorization required (HTTP 401 with WWW-Authenticate).`,
         EXPECTED,
-        `${url} -> HTTP 401, ${response.headers['www-authenticate']}`,
+        `${url} -> HTTP 401, ${response.headers["www-authenticate"]}`,
       );
     }
 
@@ -154,7 +162,7 @@ export class McpEndpointAudit extends Audit {
 
     const outcome = parseRpcResponse(response);
     const result = outcome.ok ? outcome.value : undefined;
-    if (!result || typeof result['protocolVersion'] !== 'string') {
+    if (!result || typeof result["protocolVersion"] !== "string") {
       return this.warn(
         `MCP endpoint at ${url} returned HTTP 200 but the response is not valid JSON-RPC.`,
         EXPECTED,
@@ -166,10 +174,18 @@ export class McpEndpointAudit extends Audit {
     // Absorbed from mcp-capabilities (5.14): capabilities are protocol state
     // negotiated here, not a static file. A null/0/"" value is not a
     // declaration — the old audit counted anything that was not `false`.
-    const negotiated = isObject(result['capabilities']) ? result['capabilities'] : {};
+    const negotiated = isObject(result["capabilities"])
+      ? result["capabilities"]
+      : {};
     const capabilities = CAPABILITY_KEYS.filter((key) => {
       const value = negotiated[key];
-      return value !== undefined && value !== null && value !== false && value !== 0 && value !== '';
+      return (
+        value !== undefined &&
+        value !== null &&
+        value !== false &&
+        value !== 0 &&
+        value !== ""
+      );
     });
 
     if (capabilities.length === 0) {
@@ -181,10 +197,10 @@ export class McpEndpointAudit extends Audit {
       );
     }
 
-    const base = `${url} -> HTTP 200, valid JSON-RPC, capabilities: ${capabilities.join(', ')}`;
-    if (!capabilities.includes('tools')) {
+    const base = `${url} -> HTTP 200, valid JSON-RPC, capabilities: ${capabilities.join(", ")}`;
+    if (!capabilities.includes("tools")) {
       return this.pass(
-        `MCP endpoint at ${url} responded with valid JSON-RPC initialize result and negotiated ${capabilities.join(', ')}.`,
+        `MCP endpoint at ${url} responded with valid JSON-RPC initialize result and negotiated ${capabilities.join(", ")}.`,
         EXPECTED,
         base,
       );
@@ -196,14 +212,14 @@ export class McpEndpointAudit extends Audit {
     let tools: unknown[] | undefined;
     try {
       const listed = await mcpFetch(ctx, url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: rpcRequest(2, 'tools/list'),
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: rpcRequest(2, "tools/list"),
       });
       if (listed && listed.status === 200) {
         const listOutcome = parseRpcResponse(listed);
-        if (listOutcome.ok && Array.isArray(listOutcome.value['tools'])) {
-          tools = listOutcome.value['tools'] as unknown[];
+        if (listOutcome.ok && Array.isArray(listOutcome.value["tools"])) {
+          tools = listOutcome.value["tools"] as unknown[];
         }
       }
     } catch {
@@ -212,7 +228,7 @@ export class McpEndpointAudit extends Audit {
 
     if (!tools) {
       return this.pass(
-        `MCP endpoint at ${url} responded with valid JSON-RPC initialize result and negotiated ${capabilities.join(', ')}.`,
+        `MCP endpoint at ${url} responded with valid JSON-RPC initialize result and negotiated ${capabilities.join(", ")}.`,
         EXPECTED,
         `${base}; tools/list not answered, annotations not assessed`,
       );
@@ -220,8 +236,11 @@ export class McpEndpointAudit extends Audit {
 
     const annotated = tools.filter((tool) => {
       if (!isObject(tool)) return false;
-      const annotations = tool['annotations'];
-      return isObject(annotations) && typeof annotations['readOnlyHint'] === 'boolean';
+      const annotations = tool["annotations"];
+      return (
+        isObject(annotations) &&
+        typeof annotations["readOnlyHint"] === "boolean"
+      );
     }).length;
 
     const coverage = `${annotated}/${tools.length} tools with a boolean readOnlyHint`;
@@ -235,7 +254,7 @@ export class McpEndpointAudit extends Audit {
     }
 
     return this.pass(
-      `MCP endpoint at ${url} responded with valid JSON-RPC initialize result, negotiated ${capabilities.join(', ')}, and annotates every listed tool.`,
+      `MCP endpoint at ${url} responded with valid JSON-RPC initialize result, negotiated ${capabilities.join(", ")}, and annotates every listed tool.`,
       EXPECTED,
       `${base}; ${coverage}`,
     );

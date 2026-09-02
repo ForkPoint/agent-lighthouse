@@ -1,9 +1,9 @@
-import type { AuditMeta, AuditResult } from '../../types';
-import { Audit } from '../../audit';
-import type { CheckContext, PageContext } from '../../check-context';
-import { weightForGrade } from '../../scorer';
-import type { FetchResult } from '../../fetcher';
-import { siteSitemapTree } from '../../gatherers/sitemap';
+import type { AuditMeta, AuditResult } from "../../types";
+import { Audit } from "../../audit";
+import type { CheckContext, PageContext } from "../../check-context";
+import { weightForGrade } from "../../scorer";
+import type { FetchResult } from "../../fetcher";
+import { siteSitemapTree } from "../../gatherers/sitemap";
 
 function isOk(result: FetchResult): boolean {
   return result.status === 200;
@@ -21,7 +21,7 @@ function isOk(result: FetchResult): boolean {
 function coverageKey(rawUrl: string, base?: string): string | null {
   try {
     const url = new URL(rawUrl, base);
-    const host = url.hostname.toLowerCase().replace(/^www\./, '');
+    const host = url.hostname.toLowerCase().replace(/^www\./, "");
     // A stray `%` is legal in a path and throws in decodeURI. Discarding the
     // whole key left the page permanently uncovered, however the sitemap
     // spelled it; the raw path still compares equal on both sides.
@@ -31,18 +31,13 @@ function coverageKey(rawUrl: string, base?: string): string | null {
     } catch {
       decoded = url.pathname;
     }
-    let path = decoded.replace(/\/+$/, '');
+    let path = decoded.replace(/\/+$/, "");
     path = path.toLowerCase();
     return `${host}${path}`;
   } catch {
     return null;
   }
 }
-
-
-
-
-
 
 /**
  * Markdown links from llms.txt, relative ones included.
@@ -56,34 +51,41 @@ function llmsTxtLinks(body: string): string[] {
   const inline = /\[[^\]]+\]\(([^)\s]+)\)/g;
   let match: RegExpExecArray | null;
   while ((match = inline.exec(body)) !== null) out.push(match[1]!);
-  const bullet = /^\s*(?:[-*+]|\d+\.)\s+(?:\*\*[^*]+\*\*[:\-—]?\s*)?(https?:\/\/\S+)/gm;
+  const bullet =
+    /^\s*(?:[-*+]|\d+\.)\s+(?:\*\*[^*]+\*\*[:\-—]?\s*)?(https?:\/\/\S+)/gm;
   while ((match = bullet.exec(body)) !== null) out.push(match[1]!);
   return out;
 }
 
 export class DiscoveryIndexCoverageAudit extends Audit {
   static override meta: AuditMeta = {
-    id: 'machine-discovery/discovery-index-coverage',
-    category: 'machine-discovery',
-    title: 'Pages are covered by a discovery index',
-    failureTitle: 'Pages are covered by a discovery index',
+    id: "machine-discovery/discovery-index-coverage",
+    category: "machine-discovery",
+    title: "Pages are covered by a discovery index",
+    failureTitle: "Pages are covered by a discovery index",
     description:
-      'Every scanned page should be listed in a discovery index — the sitemap (including its sub-sitemaps) or llms.txt — so AI crawlers can find it without relying on the link graph.',
-    scoreDisplayMode: 'ternary',
-    weight: weightForGrade('B', 'scored'),
-    evidenceGrade: 'B',
-    tier: 'scored',
-    dossier: 'docs/evidence/audits/machine-discovery/discovery-index-coverage.md',
-    requires: ['origin-reachable', 'unblocked-fetches', 'rendered-body', 'sample-adequate'],
-    defaultPriority: 'medium',
+      "Every scanned page should be listed in a discovery index — the sitemap (including its sub-sitemaps) or llms.txt — so AI crawlers can find it without relying on the link graph.",
+    scoreDisplayMode: "ternary",
+    weight: weightForGrade("B", "scored"),
+    evidenceGrade: "B",
+    tier: "scored",
+    dossier:
+      "docs/evidence/audits/machine-discovery/discovery-index-coverage.md",
+    requires: [
+      "origin-reachable",
+      "unblocked-fetches",
+      "rendered-body",
+      "sample-adequate",
+    ],
+    defaultPriority: "medium",
     guidance: {
       impact:
-        'A page listed in no discovery index is reachable only through the link graph, and the major AI crawlers do not execute JavaScript — so a page missing from both the sitemap and llms.txt can stay invisible to AI search even though it exists on your site.',
-      fix: 'List every important page in sitemap.xml (or in one of the sub-sitemaps its index points at), and/or reference it from llms.txt. Configure your CMS or build tool to add new pages automatically.',
-      code: '<!-- sitemap.xml -->\n<url>\n  <loc>https://yoursite.com/missing-page</loc>\n  <lastmod>2026-01-01</lastmod>\n</url>\n\n<!-- or llms.txt -->\n- [Missing Page](/missing-page): Description of the page',
-      effort: 'easy',
-      docsUrl: 'https://www.sitemaps.org/protocol.html',
-      tags: ['sitemap', 'llms-txt', 'discoverability'],
+        "A page listed in no discovery index is reachable only through the link graph, and the major AI crawlers do not execute JavaScript — so a page missing from both the sitemap and llms.txt can stay invisible to AI search even though it exists on your site.",
+      fix: "List every important page in sitemap.xml (or in one of the sub-sitemaps its index points at), and/or reference it from llms.txt. Configure your CMS or build tool to add new pages automatically.",
+      code: "<!-- sitemap.xml -->\n<url>\n  <loc>https://yoursite.com/missing-page</loc>\n  <lastmod>2026-01-01</lastmod>\n</url>\n\n<!-- or llms.txt -->\n- [Missing Page](/missing-page): Description of the page",
+      effort: "easy",
+      docsUrl: "https://www.sitemaps.org/protocol.html",
+      tags: ["sitemap", "llms-txt", "discoverability"],
     },
   };
 
@@ -98,7 +100,7 @@ export class DiscoveryIndexCoverageAudit extends Audit {
     const sitemapTree = await siteSitemapTree(ctx);
     for (const entry of sitemapTree.entries) add(entry.loc);
 
-    const llmsResult = ctx.rootFiles['/llms.txt'];
+    const llmsResult = ctx.rootFiles["/llms.txt"];
     if (llmsResult && isOk(llmsResult)) {
       for (const link of llmsTxtLinks(llmsResult.body)) add(link, ctx.baseUrl);
     }
@@ -106,22 +108,25 @@ export class DiscoveryIndexCoverageAudit extends Audit {
     return keys;
   }
 
-
   /** A page's own keys: its URL plus its declared canonical, if any. */
   private pageKeys(page: PageContext): string[] {
     const keys = [coverageKey(page.url)];
     // v1 read `page.meta['canonical']`, which extractMetaTags never populates —
     // canonical is a <link>, so the fallback silently never ran.
-    const canonical = page.$('link[rel="canonical"]').attr('href');
+    const canonical = page.$('link[rel="canonical"]').attr("href");
     if (canonical) keys.push(coverageKey(canonical, page.url));
     return keys.filter((k): k is string => k !== null);
   }
 
   async audit(ctx: CheckContext): Promise<AuditResult> {
-    const expected = 'Every scanned page appears in the sitemap or llms.txt';
+    const expected = "Every scanned page appears in the sitemap or llms.txt";
 
     if (ctx.pages.length === 0) {
-      return this.notApplicable('No pages scanned; there is no coverage to check.', expected, 'No pages scanned');
+      return this.notApplicable(
+        "No pages scanned; there is no coverage to check.",
+        expected,
+        "No pages scanned",
+      );
     }
 
     const indexKeys = await this.indexKeys(ctx);
@@ -130,13 +135,13 @@ export class DiscoveryIndexCoverageAudit extends Audit {
     // too levied two penalties for one missing file.
     if (indexKeys.size === 0) {
       return this.warn(
-        'No sitemap URLs or llms.txt links to compare the scanned pages against.',
+        "No sitemap URLs or llms.txt links to compare the scanned pages against.",
         expected,
-        'No discovery index entries found',
+        "No discovery index entries found",
         {
-          priority: 'medium',
+          priority: "medium",
           description:
-            'Without a sitemap or an llms.txt link list, AI crawlers have no reference list of your pages and must rely entirely on the link graph. Publish at least one.',
+            "Without a sitemap or an llms.txt link list, AI crawlers have no reference list of your pages and must rely entirely on the link graph. Publish at least one.",
           code: `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n  <url>\n    <loc>https://yoursite.com/</loc>\n    <lastmod>2026-01-01</lastmod>\n  </url>\n</urlset>`,
         },
       );
@@ -147,22 +152,22 @@ export class DiscoveryIndexCoverageAudit extends Audit {
       .map((page) => page.url);
 
     if (uncovered.length > 0) {
-      const shown = `Not indexed: ${uncovered.slice(0, 5).join(', ')}${uncovered.length > 5 ? ` (+${uncovered.length - 5} more)` : ''}`;
+      const shown = `Not indexed: ${uncovered.slice(0, 5).join(", ")}${uncovered.length > 5 ? ` (+${uncovered.length - 5} more)` : ""}`;
       const message = `${uncovered.length}/${ctx.pages.length} scanned page(s) are in no discovery index.`;
 
       if (uncovered.length / ctx.pages.length > 0.5) {
         return this.fail(message, expected, shown, {
-          priority: 'medium',
+          priority: "medium",
           description:
-            'Most scanned pages are listed in neither the sitemap nor llms.txt. AI crawlers that do not execute JavaScript may never reach them. Add them to your sitemap or llms.txt.',
+            "Most scanned pages are listed in neither the sitemap nor llms.txt. AI crawlers that do not execute JavaScript may never reach them. Add them to your sitemap or llms.txt.",
           code: `<url>\n  <loc>https://yoursite.com/missing-page</loc>\n  <lastmod>2026-01-01</lastmod>\n</url>`,
         });
       }
 
       return this.warn(message, expected, shown, {
-        priority: 'low',
+        priority: "low",
         description:
-          'Some scanned pages are listed in neither the sitemap nor llms.txt. Adding them helps AI crawlers discover all your content.',
+          "Some scanned pages are listed in neither the sitemap nor llms.txt. Adding them helps AI crawlers discover all your content.",
         code: `<url>\n  <loc>https://yoursite.com/missing-page</loc>\n  <lastmod>2026-01-01</lastmod>\n</url>`,
       });
     }

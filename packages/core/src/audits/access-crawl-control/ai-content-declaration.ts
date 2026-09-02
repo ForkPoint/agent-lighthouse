@@ -19,10 +19,10 @@
 // Scope note (non-double-counting): `tdm-reservation` and `tdm-policy` are
 // read by `access-crawl-control/tdm-rep`, which owns the TDM-Rep protocol
 // end to end. This audit ignores them.
-import type { AuditMeta, AuditResult } from '../../types';
-import { Audit } from '../../audit';
-import type { CheckContext, PageContext } from '../../check-context';
-import { weightForGrade } from '../../scorer';
+import type { AuditMeta, AuditResult } from "../../types";
+import { Audit } from "../../audit";
+import type { CheckContext, PageContext } from "../../check-context";
+import { weightForGrade } from "../../scorer";
 
 /**
  * The AIPREF attachment header. draft-ietf-aipref-attach defines exactly two
@@ -30,18 +30,18 @@ import { weightForGrade } from '../../scorer';
  * robots.txt — and explicitly leaves embedded (head-level) preferences out of
  * scope, which is why it ranks above everything else here.
  */
-const CONTENT_USAGE_HEADER = 'content-usage';
+const CONTENT_USAGE_HEADER = "content-usage";
 const ROBOTS_CONTENT_USAGE_RE = /^\s*content-usage\s*:\s*(.+)$/im;
 
 /** The DeviantArt-origin convention, by far the most adopted of the head-level names. */
-const OPT_OUT_NAMES = ['noai', 'noimageai'] as const;
+const OPT_OUT_NAMES = ["noai", "noimageai"] as const;
 
 /** The name this audit used to demand. Kept only so it can be reported as invented. */
-const INVENTED_NAME = 'ai-content-declaration';
+const INVENTED_NAME = "ai-content-declaration";
 
 interface Declaration {
   /** `Content-Usage` value plus where it came from. */
-  aipref?: { value: string; source: 'HTTP response header' | 'robots.txt' };
+  aipref?: { value: string; source: "HTTP response header" | "robots.txt" };
   /** noai / noimageai names observed, deduplicated. */
   optOuts: string[];
   /** The invented `ai-content-declaration` name is present. */
@@ -59,7 +59,7 @@ function readOptOuts(page: PageContext): string[] {
     if (page.$(`meta[name="${name}" i]`).length > 0) found.push(name);
   }
 
-  const robots = (page.meta['robots'] ?? '').toLowerCase();
+  const robots = (page.meta["robots"] ?? "").toLowerCase();
   // Split into tokens: a substring match would read `noai` out of `noarchive`.
   const tokens = new Set(robots.split(/[\s,]+/).filter(Boolean));
   for (const name of OPT_OUT_NAMES) {
@@ -76,7 +76,10 @@ function survey(ctx: CheckContext): Declaration {
     if (!result.aipref) {
       const header = page.fetchResult?.headers?.[CONTENT_USAGE_HEADER];
       if (header?.trim()) {
-        result.aipref = { value: header.trim(), source: 'HTTP response header' };
+        result.aipref = {
+          value: header.trim(),
+          source: "HTTP response header",
+        };
       }
     }
 
@@ -94,10 +97,11 @@ function survey(ctx: CheckContext): Declaration {
   }
 
   if (!result.aipref) {
-    const robots = ctx.rootFiles['/robots.txt'];
+    const robots = ctx.rootFiles["/robots.txt"];
     if (robots && robots.status === 200 && robots.body) {
       const match = ROBOTS_CONTENT_USAGE_RE.exec(robots.body);
-      if (match) result.aipref = { value: match[1]!.trim(), source: 'robots.txt' };
+      if (match)
+        result.aipref = { value: match[1]!.trim(), source: "robots.txt" };
     }
   }
 
@@ -105,7 +109,7 @@ function survey(ctx: CheckContext): Declaration {
 }
 
 const EXPECTED =
-  'An AI-usage preference attached where the standards work puts it: a Content-Usage response header or robots.txt rule';
+  "An AI-usage preference attached where the standards work puts it: a Content-Usage response header or robots.txt rule";
 
 const SAMPLE = `# robots.txt — draft-ietf-aipref-attach defines the rule form
 User-agent: *
@@ -116,30 +120,38 @@ Content-Usage: ai-train=n`;
 
 export class AiContentDeclarationAudit extends Audit {
   static override meta: AuditMeta = {
-    id: 'access-crawl-control/ai-content-declaration',
-    category: 'access-crawl-control',
-    title: 'AI usage-preference declaration',
-    failureTitle: 'AI usage-preference declaration',
+    id: "access-crawl-control/ai-content-declaration",
+    category: "access-crawl-control",
+    title: "AI usage-preference declaration",
+    failureTitle: "AI usage-preference declaration",
     description:
-      'Where a site declares how AI systems may use its content. The IETF AIPREF work attaches that preference to a Content-Usage response header or a robots.txt rule, and explicitly leaves the HTML head out of scope; the head-level noai/noimageai convention has real adoption but no AI vendor documents honoring it. This audit reports what a site declares and where, and never treats declaring nothing as a defect.',
-    scoreDisplayMode: 'informative',
-    weight: weightForGrade('D', 'experimental'),
-    evidenceGrade: 'D',
-    tier: 'experimental',
-    dossier: 'docs/evidence/audits/access-crawl-control/ai-content-declaration.md',
+      "Where a site declares how AI systems may use its content. The IETF AIPREF work attaches that preference to a Content-Usage response header or a robots.txt rule, and explicitly leaves the HTML head out of scope; the head-level noai/noimageai convention has real adoption but no AI vendor documents honoring it. This audit reports what a site declares and where, and never treats declaring nothing as a defect.",
+    scoreDisplayMode: "informative",
+    weight: weightForGrade("D", "experimental"),
+    evidenceGrade: "D",
+    tier: "experimental",
+    dossier:
+      "docs/evidence/audits/access-crawl-control/ai-content-declaration.md",
     // Gate exemption: being refused is what this category reports.
-    requires: ['origin-reachable', 'rendered-body', 'sample-adequate'],
+    requires: ["origin-reachable", "rendered-body", "sample-adequate"],
     // Was `medium` on an invented directive; the whole class of signals is
     // pre-consumer, so nothing here should outrank an actionable item.
-    defaultPriority: 'low',
+    defaultPriority: "low",
     guidance: {
       impact:
-        'None of these declarations is documented as honored by any AI vendor today, so none of them protects content on its own. The reason to attach one is that the AIPREF form is where the standards work is heading, and a preference expressed there is the one an implementing crawler will look for. Access control that has to hold today belongs in robots.txt user-agent rules and in server-side enforcement.',
-      fix: 'Express the preference where AIPREF attaches it: a Content-Usage rule in robots.txt, or a Content-Usage response header. Keep any noai/noimageai tags you already ship — they cost nothing — but do not rely on them, and do not treat either as a substitute for robots.txt directives or for access control.',
+        "None of these declarations is documented as honored by any AI vendor today, so none of them protects content on its own. The reason to attach one is that the AIPREF form is where the standards work is heading, and a preference expressed there is the one an implementing crawler will look for. Access control that has to hold today belongs in robots.txt user-agent rules and in server-side enforcement.",
+      fix: "Express the preference where AIPREF attaches it: a Content-Usage rule in robots.txt, or a Content-Usage response header. Keep any noai/noimageai tags you already ship — they cost nothing — but do not rely on them, and do not treat either as a substitute for robots.txt directives or for access control.",
       code: SAMPLE,
-      effort: 'trivial',
-      docsUrl: 'https://ietf-wg-aipref.github.io/drafts/draft-ietf-aipref-attach.html',
-      tags: ['ai-policy', 'aipref', 'content-usage', 'crawler-permissions', 'experimental'],
+      effort: "trivial",
+      docsUrl:
+        "https://ietf-wg-aipref.github.io/drafts/draft-ietf-aipref-attach.html",
+      tags: [
+        "ai-policy",
+        "aipref",
+        "content-usage",
+        "crawler-permissions",
+        "experimental",
+      ],
     },
   };
 
@@ -169,20 +181,20 @@ export class AiContentDeclarationAudit extends Audit {
 
     if (notes.length > 0) {
       return this.warn(
-        `${notes.join(' ')} The mechanisms that are actually read are robots.txt user-agent rules today and the AIPREF Content-Usage attachment as it lands.`,
+        `${notes.join(" ")} The mechanisms that are actually read are robots.txt user-agent rules today and the AIPREF Content-Usage attachment as it lands.`,
         EXPECTED,
         found.optOuts.length > 0
-          ? `Head-level declarations only: ${found.optOuts.join(', ')}${found.invented ? `, ${INVENTED_NAME}` : ''}`
+          ? `Head-level declarations only: ${found.optOuts.join(", ")}${found.invented ? `, ${INVENTED_NAME}` : ""}`
           : `Head-level declarations only: ${INVENTED_NAME}`,
-        'low',
+        "low",
         found.pageUrl,
       );
     }
 
     return this.notApplicable(
-      'This site attaches no AI-usage preference. No mechanism in this family has a documented consumer yet, so declaring nothing is a choice rather than a defect — the directives crawlers do read are covered by the robots.txt audits.',
+      "This site attaches no AI-usage preference. No mechanism in this family has a documented consumer yet, so declaring nothing is a choice rather than a defect — the directives crawlers do read are covered by the robots.txt audits.",
       EXPECTED,
-      'No Content-Usage attachment and no head-level declaration',
+      "No Content-Usage attachment and no head-level declaration",
     );
   }
 }

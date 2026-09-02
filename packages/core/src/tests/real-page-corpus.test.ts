@@ -1,8 +1,8 @@
-import { describe, it, expect } from 'vitest';
-import { defaultConfig } from '../audit-config';
-import { mockCheckContext } from '../__tests__/test-utils';
-import type { CheckContext, PageContext } from '../check-context';
-import type { FetchResult } from '../fetcher';
+import { describe, it, expect } from "vitest";
+import { defaultConfig } from "../audit-config";
+import { mockCheckContext } from "../__tests__/test-utils";
+import type { CheckContext, PageContext } from "../check-context";
+import type { FetchResult } from "../fetcher";
 import {
   parseHtml,
   extractJsonLd,
@@ -11,9 +11,13 @@ import {
   extractMetaTags,
   extractHeadLinks,
   detectPageType,
-} from '../parser';
-import { detectWafProtection } from '../waf-detector';
-import { listFixtures, readFixture, type FixtureProvenance } from './fixture-io';
+} from "../parser";
+import { detectWafProtection } from "../waf-detector";
+import {
+  listFixtures,
+  readFixture,
+  type FixtureProvenance,
+} from "./fixture-io";
 
 /**
  * Every registered audit, run against real pages, with its verdict snapshotted.
@@ -50,7 +54,10 @@ const fixtures = listFixtures();
  * and TTFB verdict taken on a header the site never sent. The provenance
  * record carries the real ones, so use them.
  */
-function fixtureFetchResult(html: string, provenance: FixtureProvenance): FetchResult {
+function fixtureFetchResult(
+  html: string,
+  provenance: FixtureProvenance,
+): FetchResult {
   return {
     // The first hop is what was requested; `provenance.url` is where it landed.
     url: provenance.redirectChain?.[0]?.from ?? provenance.url,
@@ -62,11 +69,16 @@ function fixtureFetchResult(html: string, provenance: FixtureProvenance): FetchR
     totalMs: provenance.totalMs,
     contentType: provenance.contentType,
     contentLength: provenance.contentLength,
-    ...(provenance.redirectChain ? { redirectChain: provenance.redirectChain } : {}),
+    ...(provenance.redirectChain
+      ? { redirectChain: provenance.redirectChain }
+      : {}),
   };
 }
 
-function fixturePageContext(html: string, provenance: FixtureProvenance): PageContext {
+function fixturePageContext(
+  html: string,
+  provenance: FixtureProvenance,
+): PageContext {
   const $ = parseHtml(html);
   const jsonLd = extractJsonLd($);
   // The union of every structured-data format, exactly as the orchestrator
@@ -135,7 +147,10 @@ function fixturePageContext(html: string, provenance: FixtureProvenance): PageCo
  * with no code change behind it, which is the one failure mode this baseline
  * must never have.
  */
-function fixtureContext(html: string, provenance: FixtureProvenance): CheckContext {
+function fixtureContext(
+  html: string,
+  provenance: FixtureProvenance,
+): CheckContext {
   const page = fixturePageContext(html, provenance);
   const parsed = new URL(provenance.url);
   // One page was obtained — the fixture is it. Passing zero would widen the
@@ -150,8 +165,8 @@ function fixtureContext(html: string, provenance: FixtureProvenance): CheckConte
   };
 }
 
-describe('real-page corpus', () => {
-  it('has fixtures and audits to run', () => {
+describe("real-page corpus", () => {
+  it("has fixtures and audits to run", () => {
     expect(fixtures.length).toBeGreaterThan(0);
     expect(registrations.length).toBeGreaterThan(200);
   });
@@ -187,8 +202,13 @@ describe('real-page corpus', () => {
       // runner turns it into a `scan-error` stub and the site is told nothing.
       // Asserted after the snapshot so the failing run still writes the
       // evidence. A fixture added later cannot bring a silent one with it.
-      const threw = Object.entries(verdicts).filter(([, status]) => status.startsWith('THREW'));
-      expect(threw, `audits threw on ${name} instead of reaching a verdict`).toEqual([]);
+      const threw = Object.entries(verdicts).filter(([, status]) =>
+        status.startsWith("THREW"),
+      );
+      expect(
+        threw,
+        `audits threw on ${name} instead of reaching a verdict`,
+      ).toEqual([]);
     });
   }
 });

@@ -1,11 +1,14 @@
-import { createSatteriMarkdownProcessor } from '@astrojs/markdown-satteri';
-import { githubUrl, repoTarget, type MdastPlugin } from './dossier-links';
-import { DOC_SECTIONS } from './markdown-slice';
-import { auditPath, docPath, withBase } from './routes';
+import { createSatteriMarkdownProcessor } from "@astrojs/markdown-satteri";
+import { githubUrl, repoTarget, type MdastPlugin } from "./dossier-links";
+import { DOC_SECTIONS } from "./markdown-slice";
+import { auditPath, docPath, withBase } from "./routes";
 
 /** The repository files this site publishes whole, mapped to their docs slug. */
 const PUBLISHED_FILES = new Map(
-  DOC_SECTIONS.filter((section) => !section.heading).map((section) => [section.file, section.slug]),
+  DOC_SECTIONS.filter((section) => !section.heading).map((section) => [
+    section.file,
+    section.slug,
+  ]),
 );
 
 /**
@@ -16,20 +19,27 @@ const PUBLISHED_FILES = new Map(
  * `docs/` are written for GitHub and stay that way on disk — only the directory
  * they resolve from differs, which is what `fromDir` carries.
  */
-export function resolveDocLink(href: string, fromDir: string, published: Set<string>): string {
+export function resolveDocLink(
+  href: string,
+  fromDir: string,
+  published: Set<string>,
+): string {
   const target = repoTarget(href, fromDir);
   if (!target) return href;
 
   const slug = PUBLISHED_FILES.get(target.path);
   if (slug) return docPath(slug) + target.fragment;
 
-  if (target.path === 'docs/evidence/policy.md') return withBase('policy/') + target.fragment;
+  if (target.path === "docs/evidence/policy.md")
+    return withBase("policy/") + target.fragment;
   // The policy's one relative link. A reader following it wants the registry
   // they can search, not 465 KB of JSON; the sources page offers the raw file.
-  if (target.path === 'docs/evidence/sources.json') return withBase('sources/') + target.fragment;
+  if (target.path === "docs/evidence/sources.json")
+    return withBase("sources/") + target.fragment;
 
   const dossier = /^docs\/evidence\/audits\/(.+)\.md$/.exec(target.path);
-  if (dossier && published.has(dossier[1]!)) return auditPath(dossier[1]!) + target.fragment;
+  if (dossier && published.has(dossier[1]!))
+    return auditPath(dossier[1]!) + target.fragment;
 
   // The README also links a section of itself (`#-quickstart`); a bare fragment
   // is not a relative path, so `repoTarget` has already returned it untouched.
@@ -45,12 +55,12 @@ export function resolveDocLink(href: string, fromDir: string, published: Set<str
  */
 function docLinksPlugin(published: Set<string>): MdastPlugin {
   return {
-    name: 'agent-lighthouse:doc-links',
+    name: "agent-lighthouse:doc-links",
     link(node, ctx) {
-      const fromDir = ctx.data.astro?.frontmatter['fromDir'];
-      if (typeof fromDir !== 'string') return;
+      const fromDir = ctx.data.astro?.frontmatter["fromDir"];
+      if (typeof fromDir !== "string") return;
       const url = resolveDocLink(node.url, fromDir, published);
-      if (url !== node.url) ctx.setProperty(node, 'url', url);
+      if (url !== node.url) ctx.setProperty(node, "url", url);
     },
   };
 }
@@ -79,8 +89,13 @@ export async function createDocRenderer(published: Set<string>) {
     mdastPlugins: [docLinksPlugin(published)],
   });
 
-  return async function render(markdown: string, fromDir: string): Promise<RenderedDoc> {
-    const { code, metadata } = await processor.render(markdown, { frontmatter: { fromDir } });
+  return async function render(
+    markdown: string,
+    fromDir: string,
+  ): Promise<RenderedDoc> {
+    const { code, metadata } = await processor.render(markdown, {
+      frontmatter: { fromDir },
+    });
     return { html: code, headings: metadata.headings };
   };
 }

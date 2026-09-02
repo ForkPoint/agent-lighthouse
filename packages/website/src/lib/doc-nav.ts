@@ -1,5 +1,5 @@
-import { DOC_SECTIONS } from './markdown-slice';
-import { docPath, withBase } from './routes';
+import { DOC_SECTIONS } from "./markdown-slice";
+import { docPath, withBase } from "./routes";
 
 /** One entry of the documentation sidebar — the shape `SidebarNav` takes. */
 export interface DocNavEntry {
@@ -22,8 +22,11 @@ export interface DocNavEntry {
  */
 export function documentationNav(): DocNavEntry[] {
   return [
-    ...DOC_SECTIONS.map((section) => ({ label: section.title, href: docPath(section.slug) })),
-    { label: 'Evidence policy', href: withBase('policy/') },
-    { label: 'Source registry', href: withBase('sources/') },
+    ...DOC_SECTIONS.map((section) => ({
+      label: section.title,
+      href: docPath(section.slug),
+    })),
+    { label: "Evidence policy", href: withBase("policy/") },
+    { label: "Source registry", href: withBase("sources/") },
   ];
 }

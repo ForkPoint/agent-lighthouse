@@ -1,7 +1,7 @@
-import * as cheerio from 'cheerio';
-import type { FetchOptions, FetchResult } from '../fetcher';
-import { isSafeUrl } from '../fetcher';
-import { linksWithRel } from './structured-fields';
+import * as cheerio from "cheerio";
+import type { FetchOptions, FetchResult } from "../fetcher";
+import { isSafeUrl } from "../fetcher";
+import { linksWithRel } from "./structured-fields";
 
 /**
  * Feed discovery and parsing, once per scan.
@@ -14,14 +14,20 @@ import { linksWithRel } from './structured-fields';
 
 /** Feed media types, MIME parameters stripped. */
 const FEED_TYPES = new Set([
-  'application/rss+xml',
-  'application/atom+xml',
-  'application/feed+json',
-  'application/rdf+xml',
+  "application/rss+xml",
+  "application/atom+xml",
+  "application/feed+json",
+  "application/rdf+xml",
 ]);
 
 /** Paths a feed conventionally lives at when nothing advertises it. */
-const CONVENTIONAL_PATHS = ['/feed', '/feed.xml', '/rss.xml', '/atom.xml', '/index.xml'];
+const CONVENTIONAL_PATHS = [
+  "/feed",
+  "/feed.xml",
+  "/rss.xml",
+  "/atom.xml",
+  "/index.xml",
+];
 
 /** Entries parsed per feed. The newest twenty is what every consumer reads. */
 const MAX_ENTRIES = 50;
@@ -53,7 +59,7 @@ export interface FeedDocument {
   /** Response `Content-Type`, parameters included. */
   contentType: string;
   /** What the document actually is, decided by its root element. */
-  declaredType: 'rss' | 'atom' | 'json' | 'unknown';
+  declaredType: "rss" | "atom" | "json" | "unknown";
   status: number;
   /** A byte-order mark or whitespace before the first element. Both break strict parsers. */
   bomOrLeadingSpace: boolean;
@@ -77,7 +83,10 @@ export interface FeedDocument {
 interface FeedContext {
   fetch: (options: FetchOptions) => Promise<FetchResult>;
   baseUrl: string;
-  pages: Array<{ url: string; headLinks: Array<{ rel: string; type: string; href: string }> }>;
+  pages: Array<{
+    url: string;
+    headLinks: Array<{ rel: string; type: string; href: string }>;
+  }>;
   rootFiles?: Record<string, FetchResult>;
 }
 
@@ -102,7 +111,7 @@ export function sharedFeed(
         try {
           return new URL(url).pathname;
         } catch {
-          return '';
+          return "";
         }
       })();
       const rootRes = ctx.rootFiles?.[pathname];
@@ -112,7 +121,8 @@ export function sharedFeed(
       const result = await ctx.fetch({
         url,
         followRedirects: true,
-        acceptHeader: 'application/atom+xml, application/rss+xml, application/feed+json, */*',
+        acceptHeader:
+          "application/atom+xml, application/rss+xml, application/feed+json, */*",
         signal: opts.signal,
       });
       if (result.status >= 200 && result.status < 300) {
@@ -136,11 +146,16 @@ export function sharedFeed(
  */
 export function parseFeedDate(raw: string): number | undefined {
   const value = raw.trim();
-  if (value === '') return undefined;
-  const isoWithZone = /^\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}(:\d{2}(\.\d+)?)?(Z|[+-]\d{2}:?\d{2})$/i;
+  if (value === "") return undefined;
+  const isoWithZone =
+    /^\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}(:\d{2}(\.\d+)?)?(Z|[+-]\d{2}:?\d{2})$/i;
   const rfc822WithZone = /(GMT|UT|[A-Z]{3}|[+-]\d{4})$/;
   const dateOnly = /^\d{4}-\d{2}-\d{2}$/;
-  if (!isoWithZone.test(value) && !rfc822WithZone.test(value) && !dateOnly.test(value)) {
+  if (
+    !isoWithZone.test(value) &&
+    !rfc822WithZone.test(value) &&
+    !dateOnly.test(value)
+  ) {
     return undefined;
   }
   const parsed = Date.parse(value);
@@ -149,11 +164,11 @@ export function parseFeedDate(raw: string): number | undefined {
 
 /** Resolve `href` against `base`, or return an empty string. */
 function resolve(href: string, base: string): string {
-  if (!href) return '';
+  if (!href) return "";
   try {
     return new URL(href, base).toString();
   } catch {
-    return '';
+    return "";
   }
 }
 
@@ -170,15 +185,15 @@ export function discoverFeedHeadUrls(ctx: FeedContext): string[] {
     try {
       return new URL(ctx.baseUrl).host;
     } catch {
-      return '';
+      return "";
     }
   })();
 
   for (const page of ctx.pages) {
     for (const link of page.headLinks) {
       const rels = link.rel.toLowerCase().trim().split(/\s+/);
-      if (!rels.includes('alternate')) continue;
-      const type = link.type.split(';')[0]!.trim().toLowerCase();
+      if (!rels.includes("alternate")) continue;
+      const type = link.type.split(";")[0]!.trim().toLowerCase();
       if (!FEED_TYPES.has(type) || !link.href) continue;
       const resolved = resolve(link.href, page.url);
       if (resolved) urls.push(resolved);
@@ -187,7 +202,7 @@ export function discoverFeedHeadUrls(ctx: FeedContext): string[] {
 
   const seen = new Set<string>();
   return urls.filter((url) => {
-    if (url === '' || seen.has(url)) return false;
+    if (url === "" || seen.has(url)) return false;
     try {
       if (new URL(url).host !== host) return false;
     } catch {
@@ -200,7 +215,9 @@ export function discoverFeedHeadUrls(ctx: FeedContext): string[] {
 
 export function discoverFeedUrls(ctx: FeedContext): string[] {
   const head = discoverFeedHeadUrls(ctx);
-  const conv = CONVENTIONAL_PATHS.map((path) => resolve(path, ctx.baseUrl)).filter(Boolean) as string[];
+  const conv = CONVENTIONAL_PATHS.map((path) =>
+    resolve(path, ctx.baseUrl),
+  ).filter(Boolean) as string[];
   const seen = new Set<string>();
   return [...head, ...conv].filter((url) => {
     if (seen.has(url)) return false;
@@ -216,12 +233,12 @@ function headerLinks(result: FetchResult): {
   selfRaw: string[];
   hubsRaw: string[];
 } {
-  const header = result.headers['link'] ?? '';
-  if (header === '') return { self: '', hubs: [], selfRaw: [], hubsRaw: [] };
-  const selfRaw = linksWithRel(header, 'self').map((entry) => entry.href);
-  const hubsRaw = linksWithRel(header, 'hub').map((entry) => entry.href);
+  const header = result.headers["link"] ?? "";
+  if (header === "") return { self: "", hubs: [], selfRaw: [], hubsRaw: [] };
+  const selfRaw = linksWithRel(header, "self").map((entry) => entry.href);
+  const hubsRaw = linksWithRel(header, "hub").map((entry) => entry.href);
   return {
-    self: resolve(selfRaw[0] ?? '', result.url),
+    self: resolve(selfRaw[0] ?? "", result.url),
     hubs: hubsRaw.map((h) => resolve(h, result.url)),
     selfRaw,
     hubsRaw,
@@ -235,22 +252,27 @@ function parseJsonFeed(url: string, result: FetchResult): FeedEntry[] {
       items?: Array<Record<string, unknown>>;
     };
     return (doc.items ?? []).slice(0, MAX_ENTRIES).map((item) => ({
-      id: typeof item['id'] === 'string' ? item['id'] : '',
+      id: typeof item["id"] === "string" ? item["id"] : "",
       idIsPermalink: false,
-      link: typeof item['url'] === 'string' ? resolve(item['url'], url) : '',
+      link: typeof item["url"] === "string" ? resolve(item["url"], url) : "",
       updated: parseFeedDate(
-        typeof item['date_modified'] === 'string'
-          ? item['date_modified']
-          : typeof item['date_published'] === 'string'
-            ? item['date_published']
-            : '',
+        typeof item["date_modified"] === "string"
+          ? item["date_modified"]
+          : typeof item["date_published"] === "string"
+            ? item["date_published"]
+            : "",
       ),
-      title: typeof item['title'] === 'string' ? item['title'] : '',
-      summaryPresent: typeof item['summary'] === 'string' && item['summary'] !== '',
-      contentSrc: '',
-      contentType: '',
-      idCount: typeof item['id'] === 'string' ? 1 : 0,
-      updatedCount: item['date_published'] === undefined && item['date_modified'] === undefined ? 0 : 1,
+      title: typeof item["title"] === "string" ? item["title"] : "",
+      summaryPresent:
+        typeof item["summary"] === "string" && item["summary"] !== "",
+      contentSrc: "",
+      contentType: "",
+      idCount: typeof item["id"] === "string" ? 1 : 0,
+      updatedCount:
+        item["date_published"] === undefined &&
+        item["date_modified"] === undefined
+          ? 0
+          : 1,
     }));
   } catch {
     return [];
@@ -259,14 +281,14 @@ function parseJsonFeed(url: string, result: FetchResult): FeedEntry[] {
 
 /** Parse an RSS, Atom or RDF document into the shape every audit reads. */
 export function parseFeed(url: string, result: FetchResult): FeedDocument {
-  const body = result.body ?? '';
-  const bomOrLeadingSpace = /^[﻿\s]/.test(body) && body.trim() !== '';
+  const body = result.body ?? "";
+  const bomOrLeadingSpace = /^[﻿\s]/.test(body) && body.trim() !== "";
   const header = headerLinks(result);
   const base: FeedDocument = {
     url,
     body,
-    contentType: result.headers['content-type'] ?? result.contentType ?? '',
-    declaredType: 'unknown',
+    contentType: result.headers["content-type"] ?? result.contentType ?? "",
+    declaredType: "unknown",
     status: result.status,
     bomOrLeadingSpace,
     parsed: false,
@@ -274,22 +296,28 @@ export function parseFeed(url: string, result: FetchResult): FeedDocument {
     selfLinksRaw: header.selfRaw,
     hubLinks: header.hubs,
     hubLinksRaw: header.hubsRaw,
-    linksFromHeader: header.self !== '' || header.hubs.length > 0,
+    linksFromHeader: header.self !== "" || header.hubs.length > 0,
     lastBuild: undefined,
     entries: [],
   };
 
   const trimmed = body.trim();
-  if (trimmed === '') return base;
+  if (trimmed === "") return base;
 
-  if (trimmed.startsWith('{')) {
+  if (trimmed.startsWith("{")) {
     const entries = parseJsonFeed(url, result);
-    return { ...base, declaredType: 'json', parsed: entries.length > 0, entries };
+    return {
+      ...base,
+      declaredType: "json",
+      parsed: entries.length > 0,
+      entries,
+    };
   }
 
   const $ = cheerio.load(trimmed, { xmlMode: true });
-  const isAtom = $('feed').length > 0;
-  const isRss = $('rss').length > 0 || $('rdf\\:RDF').length > 0 || $('channel').length > 0;
+  const isAtom = $("feed").length > 0;
+  const isRss =
+    $("rss").length > 0 || $("rdf\\:RDF").length > 0 || $("channel").length > 0;
   if (!isAtom && !isRss) return base;
 
   // Header links win: WebSub gives the response headers discovery precedence,
@@ -297,87 +325,100 @@ export function parseFeed(url: string, result: FetchResult): FeedDocument {
   if (base.selfLinksRaw.length === 0) {
     base.selfLinksRaw = $('link[rel="self"]')
       .toArray()
-      .map((el) => $(el).attr('href') ?? '')
-      .filter((href) => href !== '');
-    base.selfLink = resolve(base.selfLinksRaw[0] ?? '', url);
+      .map((el) => $(el).attr("href") ?? "")
+      .filter((href) => href !== "");
+    base.selfLink = resolve(base.selfLinksRaw[0] ?? "", url);
   }
   if (base.hubLinksRaw.length === 0) {
     base.hubLinksRaw = $('link[rel="hub"]')
       .toArray()
-      .map((el) => $(el).attr('href') ?? '')
-      .filter((href) => href !== '');
-    base.hubLinks = base.hubLinksRaw.map((href) => resolve(href, url)).filter((href) => href !== '');
+      .map((el) => $(el).attr("href") ?? "")
+      .filter((href) => href !== "");
+    base.hubLinks = base.hubLinksRaw
+      .map((href) => resolve(href, url))
+      .filter((href) => href !== "");
   }
 
   if (isAtom) {
-    const entries = $('entry')
+    const entries = $("entry")
       .toArray()
       .slice(0, MAX_ENTRIES)
       .map((el): FeedEntry => {
         const $entry = $(el);
-        const content = $entry.children('content').first();
-        const links = $entry.children('link').toArray();
+        const content = $entry.children("content").first();
+        const links = $entry.children("link").toArray();
         const alternate =
-          links.find((l) => ($(l).attr('rel') ?? 'alternate') === 'alternate') ?? links[0];
+          links.find(
+            (l) => ($(l).attr("rel") ?? "alternate") === "alternate",
+          ) ?? links[0];
         return {
-          id: $entry.children('id').first().text().trim(),
+          id: $entry.children("id").first().text().trim(),
           idIsPermalink: false,
-          link: resolve(alternate ? ($(alternate).attr('href') ?? '') : '', url),
-          updated: parseFeedDate(
-            $entry.children('updated').first().text() || $entry.children('published').first().text(),
+          link: resolve(
+            alternate ? ($(alternate).attr("href") ?? "") : "",
+            url,
           ),
-          title: $entry.children('title').first().text().trim(),
-          summaryPresent: $entry.children('summary').first().length > 0,
-          contentSrc: content.attr('src') ?? '',
-          contentType: content.attr('type') ?? '',
-          idCount: $entry.children('id').length,
-          updatedCount: $entry.children('updated').length,
+          updated: parseFeedDate(
+            $entry.children("updated").first().text() ||
+              $entry.children("published").first().text(),
+          ),
+          title: $entry.children("title").first().text().trim(),
+          summaryPresent: $entry.children("summary").first().length > 0,
+          contentSrc: content.attr("src") ?? "",
+          contentType: content.attr("type") ?? "",
+          idCount: $entry.children("id").length,
+          updatedCount: $entry.children("updated").length,
         };
       });
     return {
       ...base,
-      declaredType: 'atom',
+      declaredType: "atom",
       parsed: true,
-      lastBuild: parseFeedDate($('feed > updated').first().text()),
+      lastBuild: parseFeedDate($("feed > updated").first().text()),
       entries,
     };
   }
 
-  const entries = $('item')
+  const entries = $("item")
     .toArray()
     .slice(0, MAX_ENTRIES)
     .map((el): FeedEntry => {
       const $item = $(el);
-      const guid = $item.children('guid').first();
+      const guid = $item.children("guid").first();
       const guidText = guid.text().trim();
       return {
         id: guidText,
         // RSS says isPermaLink defaults to true, which is why a guid that is not
         // a URL is a conformance defect rather than a style choice.
-        idIsPermalink: guidText !== '' && (guid.attr('isPermaLink') ?? 'true') !== 'false',
-        link: resolve($item.children('link').first().text().trim(), url),
-        updated: parseFeedDate($item.children('pubDate').first().text()),
-        title: $item.children('title').first().text().trim(),
-        summaryPresent: $item.children('description').first().length > 0,
-        contentSrc: '',
-        contentType: '',
-        idCount: $item.children('guid').length,
-        updatedCount: $item.children('pubDate').length,
+        idIsPermalink:
+          guidText !== "" && (guid.attr("isPermaLink") ?? "true") !== "false",
+        link: resolve($item.children("link").first().text().trim(), url),
+        updated: parseFeedDate($item.children("pubDate").first().text()),
+        title: $item.children("title").first().text().trim(),
+        summaryPresent: $item.children("description").first().length > 0,
+        contentSrc: "",
+        contentType: "",
+        idCount: $item.children("guid").length,
+        updatedCount: $item.children("pubDate").length,
       };
     });
 
   return {
     ...base,
-    declaredType: 'rss',
+    declaredType: "rss",
     parsed: true,
     lastBuild: parseFeedDate(
-      $('channel > lastBuildDate').first().text() || $('channel > pubDate').first().text(),
+      $("channel > lastBuildDate").first().text() ||
+        $("channel > pubDate").first().text(),
     ),
     entries,
   };
 }
 
-const feedCache = new WeakMap<object, Map<string, Promise<FeedDocument | undefined>>>();
+const feedCache = new WeakMap<
+  object,
+  Map<string, Promise<FeedDocument | undefined>>
+>();
 
 function cacheFor(ctx: object): Map<string, Promise<FeedDocument | undefined>> {
   let cache = feedCache.get(ctx);
@@ -388,8 +429,6 @@ function cacheFor(ctx: object): Map<string, Promise<FeedDocument | undefined>> {
   return cache;
 }
 
-
-
 /** Every discoverable feed that fetched and parsed, newest-entry data included. */
 export async function sharedFeeds(
   ctx: FeedContext,
@@ -399,7 +438,8 @@ export async function sharedFeeds(
   const docs: FeedDocument[] = [];
   for (const url of headUrls.slice(0, opts.max ?? 4)) {
     const doc = await sharedFeed(ctx, url, opts);
-    if (doc && doc.status >= 200 && doc.status < 300 && doc.parsed) docs.push(doc);
+    if (doc && doc.status >= 200 && doc.status < 300 && doc.parsed)
+      docs.push(doc);
   }
   if (docs.length === 0) {
     for (const path of CONVENTIONAL_PATHS) {
@@ -415,7 +455,10 @@ export async function sharedFeeds(
   return docs;
 }
 
-const canonicalCheckCache = new WeakMap<object, Map<string, Promise<FetchResult | undefined>>>();
+const canonicalCheckCache = new WeakMap<
+  object,
+  Map<string, Promise<FetchResult | undefined>>
+>();
 
 export function sharedCanonicalCheck(
   ctx: FeedContext,
@@ -441,9 +484,15 @@ export function sharedCanonicalCheck(
   return hit;
 }
 
-const hubHeadCache = new WeakMap<object, Map<string, Promise<FetchResult | undefined>>>();
+const hubHeadCache = new WeakMap<
+  object,
+  Map<string, Promise<FetchResult | undefined>>
+>();
 
-export function probeHubHead(ctx: FeedContext, url: string): Promise<FetchResult | undefined> {
+export function probeHubHead(
+  ctx: FeedContext,
+  url: string,
+): Promise<FetchResult | undefined> {
   let cache = hubHeadCache.get(ctx);
   if (!cache) {
     cache = new Map();
@@ -454,7 +503,7 @@ export function probeHubHead(ctx: FeedContext, url: string): Promise<FetchResult
     hit = (async () => {
       if (!(await isSafeUrl(url))) return undefined;
       try {
-        return await ctx.fetch({ url, method: 'HEAD', followRedirects: true });
+        return await ctx.fetch({ url, method: "HEAD", followRedirects: true });
       } catch {
         return undefined;
       }

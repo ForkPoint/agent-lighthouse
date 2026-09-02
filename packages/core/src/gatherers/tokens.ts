@@ -1,4 +1,4 @@
-import { encode } from 'gpt-tokenizer/encoding/o200k_base';
+import { encode } from "gpt-tokenizer/encoding/o200k_base";
 
 /**
  * BPE token counting, in the encoding the models this tool is about actually use.
@@ -26,7 +26,10 @@ export function countTokens(text: string): number {
   if (!text) return 0;
   if (text.length <= MAX_ENCODED_CHARS) return encode(text).length;
   const head = encode(text.slice(0, MAX_ENCODED_CHARS)).length;
-  return head + Math.round((text.length - MAX_ENCODED_CHARS) / ESTIMATE_CHARS_PER_TOKEN);
+  return (
+    head +
+    Math.round((text.length - MAX_ENCODED_CHARS) / ESTIMATE_CHARS_PER_TOKEN)
+  );
 }
 
 /**
@@ -36,8 +39,11 @@ export function countTokens(text: string): number {
  * what makes the finding actionable: "62k tokens, 58k of them one inline style
  * block" names the fix, where "62k tokens" only names the problem.
  */
-export function tokenBudget(parts: Record<string, string>): Record<string, number> {
+export function tokenBudget(
+  parts: Record<string, string>,
+): Record<string, number> {
   const out: Record<string, number> = {};
-  for (const [name, text] of Object.entries(parts)) out[name] = countTokens(text);
+  for (const [name, text] of Object.entries(parts))
+    out[name] = countTokens(text);
   return out;
 }

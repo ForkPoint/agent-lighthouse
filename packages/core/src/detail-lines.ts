@@ -40,6 +40,9 @@ export function truncateLine(line: string): string {
 }
 
 /** Cap a list of already-rendered strings, so both limits hold. */
-export function capDetailList(lines: readonly string[], limit: number = MAX_DETAIL_ITEMS): string[] {
+export function capDetailList(
+  lines: readonly string[],
+  limit: number = MAX_DETAIL_ITEMS,
+): string[] {
   return detailLines(lines, (line) => line, limit);
 }

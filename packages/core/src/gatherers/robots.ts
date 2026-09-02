@@ -1,7 +1,7 @@
-import { stripBom, normalizeNewlines } from './fetch-classify';
+import { stripBom, normalizeNewlines } from "./fetch-classify";
 
 export interface RobotsRule {
-  type: 'allow' | 'disallow';
+  type: "allow" | "disallow";
   path: string;
 }
 
@@ -55,7 +55,9 @@ export function parseRobotsFile(body: string): RobotsFile {
         userAgent: agent,
         rules: [...rules],
         crawlDelay,
-        ...(otherDirectives.length ? { otherDirectives: [...otherDirectives] } : {}),
+        ...(otherDirectives.length
+          ? { otherDirectives: [...otherDirectives] }
+          : {}),
       });
     }
     agents = [];
@@ -65,25 +67,25 @@ export function parseRobotsFile(body: string): RobotsFile {
     inRules = false;
   };
 
-  for (const rawLine of text.split('\n')) {
-    const line = rawLine.replace(/#.*$/, '').trim();
+  for (const rawLine of text.split("\n")) {
+    const line = rawLine.replace(/#.*$/, "").trim();
     if (!line) continue;
-    const idx = line.indexOf(':');
+    const idx = line.indexOf(":");
     if (idx === -1) continue;
     const directive = line.slice(0, idx).trim().toLowerCase();
     const value = line.slice(idx + 1).trim();
 
-    if (directive === 'user-agent') {
+    if (directive === "user-agent") {
       if (inRules) flush();
       agents.push(value);
-    } else if (directive === 'disallow' || directive === 'allow') {
+    } else if (directive === "disallow" || directive === "allow") {
       inRules = true;
       rules.push({ type: directive, path: value });
-    } else if (directive === 'crawl-delay') {
+    } else if (directive === "crawl-delay") {
       inRules = true;
       const parsed = Number.parseFloat(value);
       if (!Number.isNaN(parsed)) crawlDelay = parsed;
-    } else if (directive === 'sitemap') {
+    } else if (directive === "sitemap") {
       // Host-global, outside every group. Deliberately does NOT set inRules — a
       // Sitemap line sitting between two rules must not split their group.
       if (value) sitemaps.push(value);
@@ -123,27 +125,31 @@ export function directiveLines(body: string, name: string): RobotsDirective[] {
   let agents: string[] = [];
   let inRules = false;
 
-  text.split('\n').forEach((rawLine, index) => {
-    const line = rawLine.replace(/#.*$/, '').trim();
+  text.split("\n").forEach((rawLine, index) => {
+    const line = rawLine.replace(/#.*$/, "").trim();
     if (!line) return;
-    const idx = line.indexOf(':');
+    const idx = line.indexOf(":");
     if (idx === -1) return;
     const directive = line.slice(0, idx).trim().toLowerCase();
     const value = line.slice(idx + 1).trim();
 
-    if (directive === 'user-agent') {
+    if (directive === "user-agent") {
       if (inRules) agents = [];
       agents.push(value);
       inRules = false;
       return;
     }
-    if (directive === 'allow' || directive === 'disallow' || directive === 'crawl-delay') {
+    if (
+      directive === "allow" ||
+      directive === "disallow" ||
+      directive === "crawl-delay"
+    ) {
       inRules = true;
       return;
     }
-    if (directive !== wanted || value === '') return;
+    if (directive !== wanted || value === "") return;
     if (agents.length === 0) {
-      out.push({ name: directive, value, group: '', line: index + 1 });
+      out.push({ name: directive, value, group: "", line: index + 1 });
       return;
     }
     for (const agent of agents) {
@@ -159,8 +165,11 @@ export function parseRobots(body: string): RobotsGroup[] {
 }
 
 /** Group UA "GPTBot/1.1" matches bot token "gptbot": compare the product token. */
-export function matchesUserAgent(groupUserAgent: string, botToken: string): boolean {
-  const product = groupUserAgent.trim().toLowerCase().split('/')[0];
+export function matchesUserAgent(
+  groupUserAgent: string,
+  botToken: string,
+): boolean {
+  const product = groupUserAgent.trim().toLowerCase().split("/")[0];
   return product === botToken.trim().toLowerCase();
 }
 
@@ -172,14 +181,22 @@ export function matchesUserAgent(groupUserAgent: string, botToken: string): bool
  * is not an answer for a bot with its own group, and this predicate is what
  * lets an audit report which set of rules actually applied.
  */
-export function hasNamedGroup(groups: RobotsGroup[], botToken: string): boolean {
+export function hasNamedGroup(
+  groups: RobotsGroup[],
+  botToken: string,
+): boolean {
   return groups.some((g) => matchesUserAgent(g.userAgent, botToken));
 }
 
-export function groupsForBot(groups: RobotsGroup[], botToken: string): RobotsGroup[] {
-  const specific = groups.filter((g) => matchesUserAgent(g.userAgent, botToken));
+export function groupsForBot(
+  groups: RobotsGroup[],
+  botToken: string,
+): RobotsGroup[] {
+  const specific = groups.filter((g) =>
+    matchesUserAgent(g.userAgent, botToken),
+  );
   if (specific.length > 0) return specific;
-  return groups.filter((g) => g.userAgent.trim() === '*');
+  return groups.filter((g) => g.userAgent.trim() === "*");
 }
 
 /**
@@ -194,7 +211,7 @@ export function groupsForBot(groups: RobotsGroup[], botToken: string): RobotsGro
  * backtrack exponentially — seconds to non-termination on a long path.
  */
 function matchesPathPattern(pattern: string, path: string): boolean {
-  const anchored = pattern.endsWith('$');
+  const anchored = pattern.endsWith("$");
   const pat = anchored ? pattern.slice(0, -1) : pattern;
 
   let p = 0;
@@ -204,7 +221,7 @@ function matchesPathPattern(pattern: string, path: string): boolean {
   let mark = 0;
 
   for (;;) {
-    if (p < pat.length && pat[p] === '*') {
+    if (p < pat.length && pat[p] === "*") {
       star = p;
       p += 1;
       mark = s;
@@ -246,12 +263,16 @@ export function decidingRule(
   let best: { length: number; rule: RobotsRule } | undefined;
   for (const group of applicable) {
     for (const rule of group.rules) {
-      if (rule.path === '') continue; // empty Disallow/Allow matches nothing
-      const normalized = rule.path === '*' ? '/*' : rule.path;
+      if (rule.path === "") continue; // empty Disallow/Allow matches nothing
+      const normalized = rule.path === "*" ? "/*" : rule.path;
       if (!matchesPathPattern(normalized, path)) continue;
-      const length = normalized.replace(/\*/g, '').length;
+      const length = normalized.replace(/\*/g, "").length;
       // Longest match wins; on a tie, allow wins (RFC 9309 §2.2.2).
-      if (!best || length > best.length || (length === best.length && rule.type === 'allow')) {
+      if (
+        !best ||
+        length > best.length ||
+        (length === best.length && rule.type === "allow")
+      ) {
         best = { length, rule };
       }
     }
@@ -259,11 +280,18 @@ export function decidingRule(
   return best?.rule;
 }
 
-export function isPathAllowed(groups: RobotsGroup[], botToken: string, path: string): boolean {
+export function isPathAllowed(
+  groups: RobotsGroup[],
+  botToken: string,
+  path: string,
+): boolean {
   const rule = decidingRule(groups, botToken, path);
-  return !rule || rule.type === 'allow';
+  return !rule || rule.type === "allow";
 }
 
-export function isBlanketBlocked(groups: RobotsGroup[], botToken: string): boolean {
-  return !isPathAllowed(groups, botToken, '/');
+export function isBlanketBlocked(
+  groups: RobotsGroup[],
+  botToken: string,
+): boolean {
+  return !isPathAllowed(groups, botToken, "/");
 }

@@ -1,14 +1,14 @@
 import type { AuditMeta, AuditResult } from "../../types";
 import { Audit } from "../../audit";
-import { weightForGrade } from '../../scorer';
-import type { CheckContext } from '../../check-context';
+import { weightForGrade } from "../../scorer";
+import type { CheckContext } from "../../check-context";
 import {
   defectCount,
   defectNote,
   NO_OPENAPI_SPEC,
   readOpenApiPaths,
   readOpenApiSpec,
-} from '../../gatherers/openapi';
+} from "../../gatherers/openapi";
 
 /**
  * The naming rule folded in from v1 5.23 (webmcp-tool-naming) on 2026-08-22.
@@ -27,26 +27,27 @@ import {
 const LEGAL_OPERATION_ID = /^[a-zA-Z0-9_-]{1,64}$/;
 
 /** Shared `expected` line: uniqueness and registrability are one requirement. */
-const EXPECTED = 'Every operation has a unique operationId that is a legal tool-call function name';
+const EXPECTED =
+  "Every operation has a unique operationId that is a legal tool-call function name";
 
 export class OpenApiOperationIdsAudit extends Audit {
   static override meta: AuditMeta = {
-    id: 'agent-interfaces/openapi-operation-ids',
-    category: 'agent-interfaces',
-    title: 'OpenAPI has operationIds',
-    failureTitle: 'OpenAPI has operationIds',
+    id: "agent-interfaces/openapi-operation-ids",
+    category: "agent-interfaces",
+    title: "OpenAPI has operationIds",
+    failureTitle: "OpenAPI has operationIds",
     description:
-      'AI agents use operationIds as stable function names when calling your API. Without unique operationIds, agents must guess endpoint names from paths, leading to ambiguity and errors. An operationId that is not a legal function name (spaces, punctuation, or more than 64 characters) cannot be registered as a tool at all.',
-    scoreDisplayMode: 'ternary',
-    weight: weightForGrade('B', 'scored'),
-    evidenceGrade: 'B',
-    tier: 'scored',
-    dossier: 'docs/evidence/audits/agent-interfaces/openapi-operation-ids.md',
-    requires: ['origin-reachable'],
-    defaultPriority: 'medium',
+      "AI agents use operationIds as stable function names when calling your API. Without unique operationIds, agents must guess endpoint names from paths, leading to ambiguity and errors. An operationId that is not a legal function name (spaces, punctuation, or more than 64 characters) cannot be registered as a tool at all.",
+    scoreDisplayMode: "ternary",
+    weight: weightForGrade("B", "scored"),
+    evidenceGrade: "B",
+    tier: "scored",
+    dossier: "docs/evidence/audits/agent-interfaces/openapi-operation-ids.md",
+    requires: ["origin-reachable"],
+    defaultPriority: "medium",
     guidance: {
       impact:
-        'AI agents use operationIds as stable function names when calling your API. Without unique operationIds, agents must infer endpoint names from URL paths, leading to ambiguous calls, naming collisions, and broken integrations.',
+        "AI agents use operationIds as stable function names when calling your API. Without unique operationIds, agents must infer endpoint names from URL paths, leading to ambiguous calls, naming collisions, and broken integrations.",
       fix: 'Add a unique, descriptive operationId to every operation in your OpenAPI spec, and keep it inside ^[a-zA-Z0-9_-]{1,64}$ so a tool-calling runtime can register it verbatim. Verb-noun names read best — "searchContent", "submitContactForm", "get_product_details" — but casing style is not the constraint; spaces, punctuation and length are.',
       code: `"paths": {
   "/contact": {
@@ -62,9 +63,9 @@ export class OpenApiOperationIdsAudit extends Audit {
     }
   }
 }`,
-      effort: 'easy',
-      docsUrl: 'https://swagger.io/specification/#operation-object',
-      tags: ['openapi', 'operation-ids', 'api'],
+      effort: "easy",
+      docsUrl: "https://swagger.io/specification/#operation-object",
+      tags: ["openapi", "operation-ids", "api"],
     },
   };
 
@@ -74,7 +75,11 @@ export class OpenApiOperationIdsAudit extends Audit {
     // operation, so a site with no document carries nothing this audit can
     // have read.
     if (!spec) {
-      return this.notApplicable(NO_OPENAPI_SPEC.message, EXPECTED, NO_OPENAPI_SPEC.found);
+      return this.notApplicable(
+        NO_OPENAPI_SPEC.message,
+        EXPECTED,
+        NO_OPENAPI_SPEC.found,
+      );
     }
 
     const paths = readOpenApiPaths(spec);
@@ -83,13 +88,13 @@ export class OpenApiOperationIdsAudit extends Audit {
     // the message below is literally true: no operationId can be read. No
     // tool-calling runtime can walk this document to register a function name,
     // and the author wrote the thing that blocks it.
-    if (paths.kind === 'malformed') {
+    if (paths.kind === "malformed") {
       return this.fail(
         `The OpenAPI document's paths object is malformed, so no operationId can be read: ${paths.found}.`,
         EXPECTED,
         paths.found,
         {
-          priority: 'medium',
+          priority: "medium",
           description: OpenApiOperationIdsAudit.meta.description,
           code: `"paths": {\n  "/contact": {\n    "post": {\n      "operationId": "submitContactForm"\n    }\n  }\n}`,
         },
@@ -99,11 +104,11 @@ export class OpenApiOperationIdsAudit extends Audit {
     // Declaring no operations is the absence one level down: there is no
     // operation for an operationId to be a property of. `openapi-endpoints` is
     // the audit that reports an empty document, and it reports it once.
-    if (paths.kind === 'empty') {
+    if (paths.kind === "empty") {
       return this.notApplicable(
-        'The OpenAPI document declares no operations, so it carries no operationIds to check.',
+        "The OpenAPI document declares no operations, so it carries no operationIds to check.",
         EXPECTED,
-        '0 operations',
+        "0 operations",
       );
     }
 
@@ -120,8 +125,8 @@ export class OpenApiOperationIdsAudit extends Audit {
     const illegal: string[] = [];
 
     for (const { op } of ops) {
-      const id = op['operationId'];
-      if (typeof id !== 'string' || !id) {
+      const id = op["operationId"];
+      if (typeof id !== "string" || !id) {
         missing++;
         continue;
       }
@@ -142,7 +147,8 @@ export class OpenApiOperationIdsAudit extends Audit {
     }
 
     const issues: string[] = [];
-    if (illegal.length > 0) issues.push(`${illegal.length} cannot be registered as a tool name`);
+    if (illegal.length > 0)
+      issues.push(`${illegal.length} cannot be registered as a tool name`);
     if (missing > 0) issues.push(`${missing} missing`);
     if (duplicates > 0) issues.push(`${duplicates} duplicate(s)`);
 
@@ -150,24 +156,24 @@ export class OpenApiOperationIdsAudit extends Audit {
     // call outright; a missing or duplicated id only degrades naming.
     if (illegal.length > 0) {
       return this.fail(
-        `operationId issues: ${issues.join(', ')} out of ${ops.length} operation(s).${note}`,
+        `operationId issues: ${issues.join(", ")} out of ${ops.length} operation(s).${note}`,
         EXPECTED,
-        `Illegal operationId(s): ${[...new Set(illegal)].join(', ')}${missing > 0 ? `; ${missing} missing` : ''}${duplicates > 0 ? `; ${duplicates} duplicate(s)` : ''}${suffix}`,
+        `Illegal operationId(s): ${[...new Set(illegal)].join(", ")}${missing > 0 ? `; ${missing} missing` : ""}${duplicates > 0 ? `; ${duplicates} duplicate(s)` : ""}${suffix}`,
         {
-          priority: 'medium',
+          priority: "medium",
           description:
-            'A tool-calling runtime registers each operationId as a function name. Anthropic requires that name to match ^[a-zA-Z0-9_-]{1,64}$, so an operationId carrying spaces, punctuation or more than 64 characters cannot be registered verbatim and the operation is unreachable.',
+            "A tool-calling runtime registers each operationId as a function name. Anthropic requires that name to match ^[a-zA-Z0-9_-]{1,64}$, so an operationId carrying spaces, punctuation or more than 64 characters cannot be registered verbatim and the operation is unreachable.",
           code: `"paths": {\n  "/contact": {\n    "post": {\n      "operationId": "submitContactForm"\n    }\n  }\n}`,
         },
       );
     }
 
     return this.warn(
-      `operationId issues: ${issues.join(', ')} out of ${ops.length} operation(s).${note}`,
+      `operationId issues: ${issues.join(", ")} out of ${ops.length} operation(s).${note}`,
       EXPECTED,
-      `${issues.join(', ')}${suffix}`,
+      `${issues.join(", ")}${suffix}`,
       {
-        priority: 'medium',
+        priority: "medium",
         description: OpenApiOperationIdsAudit.meta.description,
         code: `"paths": {\n  "/contact": {\n    "post": {\n      "operationId": "submitContactForm",\n      "summary": "Submit a contact inquiry"\n    }\n  },\n  "/search": {\n    "get": {\n      "operationId": "searchContent",\n      "summary": "Search site content"\n    }\n  }\n}`,
       },

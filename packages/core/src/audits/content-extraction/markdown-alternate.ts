@@ -1,12 +1,12 @@
-import type { AuditMeta, AuditResult } from '../../types';
-import { Audit } from '../../audit';
-import type { CheckContext, PageContext } from '../../check-context';
-import type { FetchResult } from '../../fetcher';
-import { isSafeUrl } from '../../url-utils';
-import { probeAuthorUrl } from '../../gatherers/author';
-import { weightForGrade } from '../../scorer';
-import { countTokens } from '../../gatherers/tokens';
-import { shingles, jaccard } from '../../gatherers/text-metrics';
+import type { AuditMeta, AuditResult } from "../../types";
+import { Audit } from "../../audit";
+import type { CheckContext, PageContext } from "../../check-context";
+import type { FetchResult } from "../../fetcher";
+import { isSafeUrl } from "../../url-utils";
+import { probeAuthorUrl } from "../../gatherers/author";
+import { weightForGrade } from "../../scorer";
+import { countTokens } from "../../gatherers/tokens";
+import { shingles, jaccard } from "../../gatherers/text-metrics";
 
 /** Read-only GETs this audit may spend looking for an alternate. */
 const MAX_PROBES = 3;
@@ -50,21 +50,22 @@ const MDX_COMPONENT = /<([A-Z][A-Za-z0-9]*)[\s/>]/g;
  */
 function withoutCode(markdown: string): string {
   const kept: string[] = [];
-  let fence = '';
-  for (const line of markdown.split('\n')) {
+  let fence = "";
+  for (const line of markdown.split("\n")) {
     const marker = /^ {0,3}(`{3,}|~{3,})/.exec(line)?.[1];
     if (fence) {
       // A fence closes on the same character, at the same length or longer.
-      if (marker && marker[0] === fence[0] && marker.length >= fence.length) fence = '';
+      if (marker && marker[0] === fence[0] && marker.length >= fence.length)
+        fence = "";
       continue;
     }
     if (marker) {
       fence = marker;
       continue;
     }
-    kept.push(line.replace(/(`+)[^\n]*?\1/g, ' '));
+    kept.push(line.replace(/(`+)[^\n]*?\1/g, " "));
   }
-  return kept.join('\n');
+  return kept.join("\n");
 }
 
 /**
@@ -75,30 +76,35 @@ function withoutCode(markdown: string): string {
  * crosses that seam is a word the markdown side will never contain. Reading the
  * blocks individually keeps both sides comparable.
  */
-const BLOCK_SELECTOR = 'h1, h2, h3, h4, h5, h6, p, li, td, th, caption, figcaption, blockquote, dt, dd';
+const BLOCK_SELECTOR =
+  "h1, h2, h3, h4, h5, h6, p, li, td, th, caption, figcaption, blockquote, dt, dd";
 
 /** ATX headings of a markdown document, in document order. */
 function markdownHeadings(markdown: string): string[] {
-  return [...markdown.matchAll(/^#{1,6}\s+(.+?)\s*#*$/gm)].map((m) => (m[1] ?? '').trim());
+  return [...markdown.matchAll(/^#{1,6}\s+(.+?)\s*#*$/gm)].map((m) =>
+    (m[1] ?? "").trim(),
+  );
 }
 
 /** Prose of a markdown document: headings, markers and links stripped. */
 function markdownProse(markdown: string): string {
   return markdown
-    .replace(/```[\s\S]*?```/g, ' ')
-    .replace(/^#{1,6}\s+/gm, '')
-    .replace(/!?\[([^\]]*)\]\([^)]*\)/g, '$1')
-    .replace(/[*_`>|-]/g, ' ');
+    .replace(/```[\s\S]*?```/g, " ")
+    .replace(/^#{1,6}\s+/gm, "")
+    .replace(/!?\[([^\]]*)\]\([^)]*\)/g, "$1")
+    .replace(/[*_`>|-]/g, " ");
 }
 
 /** An alternate URL declared in the document head or in a `Link` header. */
 function declaredAlternate(page: PageContext): string | undefined {
   const fromHead = page.headLinks.find(
-    (link) => link.rel.toLowerCase().includes('alternate') && MARKDOWN_TYPE.test(link.type),
+    (link) =>
+      link.rel.toLowerCase().includes("alternate") &&
+      MARKDOWN_TYPE.test(link.type),
   );
   if (fromHead?.href) return new URL(fromHead.href, page.url).toString();
 
-  const header = page.fetchResult.headers['link'] ?? '';
+  const header = page.fetchResult.headers["link"] ?? "";
   for (const part of header.split(/,(?=\s*<)/)) {
     if (!/rel\s*=\s*"?alternate/i.test(part)) continue;
     if (!/type\s*=\s*"?text\/markdown/i.test(part)) continue;
@@ -132,30 +138,35 @@ const RANK_FAITHFUL = 3;
 
 export class MarkdownAlternateAudit extends Audit {
   static override meta: AuditMeta = {
-    id: 'content-extraction/markdown-alternate',
-    category: 'content-extraction',
-    title: 'Markdown alternate: resolvable, faithful, cheaper',
-    failureTitle: 'The markdown alternate this site serves is not usable',
+    id: "content-extraction/markdown-alternate",
+    category: "content-extraction",
+    title: "Markdown alternate: resolvable, faithful, cheaper",
+    failureTitle: "The markdown alternate this site serves is not usable",
     description:
       'Where a site serves a markdown alternate of a page — by a declared `alternate` link, by `url + ".md"`, or by `Accept: text/markdown` — checks that it resolves as `text/markdown`, still carries the page\'s headings and prose, and costs fewer tokens than the HTML. A site that serves no markdown alternate at all is reported as not applicable: the documented consumers are interactive coding agents, and no cited source measures a cost to a site that serves none.',
-    scoreDisplayMode: 'ternary',
-    tier: 'scored',
-    evidenceGrade: 'A',
-    weight: weightForGrade('A', 'scored'),
-    defaultPriority: 'medium',
-    dossier: 'docs/evidence/audits/content-extraction/markdown-alternate.md',
-    requires: ['origin-reachable', 'unblocked-fetches', 'rendered-body', 'sample-adequate'],
+    scoreDisplayMode: "ternary",
+    tier: "scored",
+    evidenceGrade: "A",
+    weight: weightForGrade("A", "scored"),
+    defaultPriority: "medium",
+    dossier: "docs/evidence/audits/content-extraction/markdown-alternate.md",
+    requires: [
+      "origin-reachable",
+      "unblocked-fetches",
+      "rendered-body",
+      "sample-adequate",
+    ],
     guidance: {
       impact:
-        'A markdown alternate is a promise that an agent can read the page cheaply and get the same answer. A stale or partial alternate breaks that promise silently: the agent gets a document that looks authoritative, costs less, and says less than the page it claims to mirror. Serving it as `text/plain` or `text/html` is the same failure one level down — the client that negotiated for markdown cannot tell it got any. The consumers this is graded on are interactive coding agents — Claude Code, Cursor, Copilot Chat and CLI, Codex CLI — and GPTBot, measured taking markdown on 34.8% of fetches where a `.md` URL exists.',
+        "A markdown alternate is a promise that an agent can read the page cheaply and get the same answer. A stale or partial alternate breaks that promise silently: the agent gets a document that looks authoritative, costs less, and says less than the page it claims to mirror. Serving it as `text/plain` or `text/html` is the same failure one level down — the client that negotiated for markdown cannot tell it got any. The consumers this is graded on are interactive coding agents — Claude Code, Cursor, Copilot Chat and CLI, Codex CLI — and GPTBot, measured taking markdown on 34.8% of fetches where a `.md` URL exists.",
       fix: 'Serve the alternate from the same source as the HTML, so headings and prose cannot drift, with `Content-Type: text/markdown` (a `charset` parameter is fine). Publish it on the page URL plus `.md`, or answer `Accept: text/markdown` on the page URL itself — those are the two routes with documented consumers. Declaring it with `<link rel="alternate" type="text/markdown" href="...">` saves an agent a guess, but the link relation itself has one single-sourced consumer, so this audit reports it rather than scoring it.',
       code: `<link rel="alternate" type="text/markdown" href="/kettles.md">
 
 # Content-Type: text/markdown; charset=utf-8`,
-      effort: 'moderate',
+      effort: "moderate",
       docsUrl:
-        'https://forkpoint.github.io/agent-lighthouse/audits/content-extraction/markdown-alternate/',
-      tags: ['markdown', 'tokens', 'content', 'llms-txt'],
+        "https://forkpoint.github.io/agent-lighthouse/audits/content-extraction/markdown-alternate/",
+      tags: ["markdown", "tokens", "content", "llms-txt"],
     },
   };
 
@@ -166,45 +177,58 @@ export class MarkdownAlternateAudit extends Audit {
    * best, so a stale declared link cannot outrank the alternate the site really
    * serves on its `.md` URL.
    */
-  private assess(page: PageContext, result: FetchResult, route: string, url: string): Assessment {
+  private assess(
+    page: PageContext,
+    result: FetchResult,
+    route: string,
+    url: string,
+  ): Assessment {
     const markdown = result.body;
-    const htmlBody = page.fetchResult.body ?? '';
+    const htmlBody = page.fetchResult.body ?? "";
     const markdownTokens = countTokens(markdown);
     const htmlTokens = countTokens(htmlBody);
     const saving = htmlTokens === 0 ? 0 : 1 - markdownTokens / htmlTokens;
 
     const htmlHeadings = page
-      .$('h1, h2, h3, h4, h5, h6')
+      .$("h1, h2, h3, h4, h5, h6")
       .toArray()
-      .map((el) => page.$(el).text().replace(/\s+/g, ' ').trim())
+      .map((el) => page.$(el).text().replace(/\s+/g, " ").trim())
       .filter(Boolean);
-    const mdHeadings = markdownHeadings(markdown).map((heading) => heading.toLowerCase());
+    const mdHeadings = markdownHeadings(markdown).map((heading) =>
+      heading.toLowerCase(),
+    );
     const missingHeadings = htmlHeadings.filter(
       (heading) => !mdHeadings.includes(heading.toLowerCase()),
     );
     const headingRecall =
-      htmlHeadings.length === 0 ? 1 : 1 - missingHeadings.length / htmlHeadings.length;
+      htmlHeadings.length === 0
+        ? 1
+        : 1 - missingHeadings.length / htmlHeadings.length;
 
     const htmlText = page
-      .$('body')
+      .$("body")
       .find(BLOCK_SELECTOR)
       .toArray()
       // Innermost blocks only: a <blockquote> wrapping a <p> would otherwise
       // contribute the same sentence twice and depress recall on both sides.
       .filter((el) => page.$(el).find(BLOCK_SELECTOR).length === 0)
-      .map((el) => page.$(el).text().replace(/\s+/g, ' ').trim())
+      .map((el) => page.$(el).text().replace(/\s+/g, " ").trim())
       .filter(Boolean)
-      .join(' ');
+      .join(" ");
     const htmlShingles = shingles(htmlText);
     const mdShingles = shingles(markdownProse(markdown));
     const shared = [...htmlShingles].filter((s) => mdShingles.has(s)).length;
     const recall = htmlShingles.size === 0 ? 1 : shared / htmlShingles.size;
 
     const components = [
-      ...new Set([...withoutCode(markdown).matchAll(MDX_COMPONENT)].map((m) => m[1] ?? '')),
+      ...new Set(
+        [...withoutCode(markdown).matchAll(MDX_COMPONENT)].map(
+          (m) => m[1] ?? "",
+        ),
+      ),
     ];
 
-    const rank: Assessment['rank'] = !MARKDOWN_TYPE.test(result.contentType)
+    const rank: Assessment["rank"] = !MARKDOWN_TYPE.test(result.contentType)
       ? RANK_WRONG_TYPE
       : headingRecall < HEADING_FLOOR || recall < RECALL_FLOOR
         ? RANK_DRIFTED
@@ -233,32 +257,42 @@ export class MarkdownAlternateAudit extends Audit {
     // has one even on sites where every content page does. Prefer the page that
     // declares an alternate, then any non-homepage. Costs no fetch.
     const page =
-      ctx.pages.find((candidate) => declaredAlternate(candidate) !== undefined) ??
-      ctx.pages.find((candidate) => candidate.url.replace(/\/$/, '') !== ctx.baseUrl.replace(/\/$/, '')) ??
+      ctx.pages.find(
+        (candidate) => declaredAlternate(candidate) !== undefined,
+      ) ??
+      ctx.pages.find(
+        (candidate) =>
+          candidate.url.replace(/\/$/, "") !== ctx.baseUrl.replace(/\/$/, ""),
+      ) ??
       ctx.pages[0];
     if (!page) {
       return this.notApplicable(
-        'No page was fetched, so no markdown alternate could be looked for.',
-        'A page to look for a markdown alternate of',
-        'No page fetched.',
+        "No page was fetched, so no markdown alternate could be looked for.",
+        "A page to look for a markdown alternate of",
+        "No page fetched.",
       );
     }
 
     const declared = declaredAlternate(page);
     const dotMd = (() => {
       const url = new URL(page.url);
-      url.pathname = url.pathname.replace(/\/$/, '') + '.md';
+      url.pathname = url.pathname.replace(/\/$/, "") + ".md";
       return url.toString();
     })();
 
     // Three routes, three probes, in the order an agent would try them. A
     // declared link pointing at the same URL as the `.md` convention is one
     // route, not two.
-    const probes: Array<{ url: string; acceptHeader?: string; route: string }> = [
-      ...(declared ? [{ url: declared, route: 'declared link' }] : []),
-      ...(declared === dotMd ? [] : [{ url: dotMd, route: 'url + ".md"' }]),
-      { url: page.url, acceptHeader: 'text/markdown', route: 'Accept: text/markdown' },
-    ].slice(0, MAX_PROBES);
+    const probes: Array<{ url: string; acceptHeader?: string; route: string }> =
+      [
+        ...(declared ? [{ url: declared, route: "declared link" }] : []),
+        ...(declared === dotMd ? [] : [{ url: dotMd, route: 'url + ".md"' }]),
+        {
+          url: page.url,
+          acceptHeader: "text/markdown",
+          route: "Accept: text/markdown",
+        },
+      ].slice(0, MAX_PROBES);
 
     let best: Assessment | undefined;
     /** Set when the declared link answers at all, for the not-applicable detail. */
@@ -267,16 +301,22 @@ export class MarkdownAlternateAudit extends Audit {
       if (!(await isSafeUrl(probe.url))) continue;
       const result = await probeAuthorUrl(ctx, probe.url, {
         followRedirects: true,
-        ...(probe.acceptHeader ? { headers: { Accept: probe.acceptHeader } } : {}),
+        ...(probe.acceptHeader
+          ? { headers: { Accept: probe.acceptHeader } }
+          : {}),
       });
       if (!result) continue;
-      if (probe.route === 'declared link') declaredStatus = result.status;
-      if (result.status !== 200 || result.body.trim() === '') continue;
+      if (probe.route === "declared link") declaredStatus = result.status;
+      if (result.status !== 200 || result.body.trim() === "") continue;
       // The HTML document answering again is a catch-all route, not an
       // alternate — whatever content type it carries.
       if (HTML_DOCUMENT.test(result.body)) continue;
       // A 200 that is neither typed nor shaped as markdown is a soft 404.
-      if (!MARKDOWN_TYPE.test(result.contentType) && !MARKDOWN_SHAPE.test(result.body)) continue;
+      if (
+        !MARKDOWN_TYPE.test(result.contentType) &&
+        !MARKDOWN_SHAPE.test(result.body)
+      )
+        continue;
 
       const assessment = this.assess(page, result, probe.route, probe.url);
       if (!best || assessment.rank > best.rank) best = assessment;
@@ -295,7 +335,7 @@ export class MarkdownAlternateAudit extends Audit {
       // needed for Search or its AI features.
       const expected =
         'A markdown document served as text/markdown, reachable on the ".md" URL, by Accept: text/markdown, or at a declared alternate link';
-      const tried = `${probes.length} route(s) tried — ${probes.map((probe) => probe.route).join(', ')}`;
+      const tried = `${probes.length} route(s) tried — ${probes.map((probe) => probe.route).join(", ")}`;
       return {
         ...this.notApplicable(
           declared
@@ -303,12 +343,12 @@ export class MarkdownAlternateAudit extends Audit {
             : `This page serves no markdown alternate: nothing answered on the ".md" URL or on Accept: text/markdown. The documented consumers of markdown alternates are interactive coding agents, and no cited source measures a cost to a site that serves none, so absence is not scored.`,
           expected,
           declared
-            ? `Declared at ${declared}; HTTP ${declaredStatus || 'no response'}; no markdown document read on any route. ${tried}.`
+            ? `Declared at ${declared}; HTTP ${declaredStatus || "no response"}; no markdown document read on any route. ${tried}.`
             : `${tried} — none returned a markdown document.`,
           page.url,
         ),
         details: {
-          route: 'none',
+          route: "none",
           probes: probes.length,
           ...(declared ? { declared, declaredStatus, verified: false } : {}),
         },
@@ -326,7 +366,9 @@ export class MarkdownAlternateAudit extends Audit {
       shingleRecall: Number(best.recall.toFixed(3)),
       similarity: Number(best.similarity.toFixed(3)),
       mdxComponents: best.components.slice(0, 100),
-      missingHeadings: best.missingHeadings.slice(0, 100).map((heading) => heading.slice(0, 1000)),
+      missingHeadings: best.missingHeadings
+        .slice(0, 100)
+        .map((heading) => heading.slice(0, 1000)),
       ...(declared ? { declared } : {}),
     };
     const savingNote = `${best.markdownTokens} tokens against ${best.htmlTokens} for the HTML — ${Math.round(best.saving * 100)}% fewer tokens`;
@@ -335,10 +377,10 @@ export class MarkdownAlternateAudit extends Audit {
     if (best.rank === RANK_WRONG_TYPE) {
       return {
         ...this.fail(
-          `The alternate at ${best.url} is served as ${best.contentType || 'no content type'}, not text/markdown.`,
+          `The alternate at ${best.url} is served as ${best.contentType || "no content type"}, not text/markdown.`,
           expected,
           `Found via ${best.route}; Content-Type "${best.contentType}" — RFC 7763 registers text/markdown, and a client that negotiated for it cannot tell it received markdown. ${savingNote}.`,
-          'Serve the alternate with `Content-Type: text/markdown`; a charset parameter is fine.',
+          "Serve the alternate with `Content-Type: text/markdown`; a charset parameter is fine.",
           page.url,
         ),
         details,
@@ -350,8 +392,8 @@ export class MarkdownAlternateAudit extends Audit {
         ...this.fail(
           `The alternate has drifted from the page: ${Math.round(best.recall * 100)}% of its prose and ${Math.round(best.headingRecall * 100)}% of its headings survive.`,
           expected,
-          `Found via ${best.route}. Missing headings: ${best.missingHeadings.join(' | ') || 'none'}. ${savingNote}.`,
-          'Generate the alternate from the same source as the HTML so the two cannot drift.',
+          `Found via ${best.route}. Missing headings: ${best.missingHeadings.join(" | ") || "none"}. ${savingNote}.`,
+          "Generate the alternate from the same source as the HTML so the two cannot drift.",
           page.url,
         ),
         details,
@@ -363,8 +405,8 @@ export class MarkdownAlternateAudit extends Audit {
         ...this.warn(
           `The alternate is faithful but carries ${best.components.length} unresolved component tag(s).`,
           expected,
-          `Found via ${best.route}. Component tags an agent cannot interpret: ${best.components.join(', ')}. ${savingNote}.`,
-          'Render component tags to markdown before serving the alternate.',
+          `Found via ${best.route}. Component tags an agent cannot interpret: ${best.components.join(", ")}. ${savingNote}.`,
+          "Render component tags to markdown before serving the alternate.",
           page.url,
         ),
         details,

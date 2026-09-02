@@ -1,5 +1,5 @@
-import { existsSync, readFileSync } from 'node:fs';
-import { dirname, join } from 'node:path';
+import { existsSync, readFileSync } from "node:fs";
+import { dirname, join } from "node:path";
 
 /**
  * A fenced code block's opening or closing run — three or more backticks or
@@ -19,7 +19,7 @@ const FENCE = /^ {0,3}(`{3,}|~{3,})/;
  */
 export function sliceSection(markdown: string, heading: string): string {
   const wanted = heading.trim();
-  const lines = markdown.split('\n');
+  const lines = markdown.split("\n");
 
   // The fence currently open, as the character it is built from and the length
   // it must be closed by: a fence closes only on a run of the same character,
@@ -36,7 +36,7 @@ export function sliceSection(markdown: string, heading: string): string {
         run !== undefined &&
         run[0] === fence.char &&
         run.length >= fence.length &&
-        line.slice(line.indexOf(run) + run.length).trim() === '';
+        line.slice(line.indexOf(run) + run.length).trim() === "";
       if (closes) fence = null;
       continue;
     }
@@ -51,14 +51,14 @@ export function sliceSection(markdown: string, heading: string): string {
       continue;
     }
 
-    if (line.startsWith('## ')) {
+    if (line.startsWith("## ")) {
       end = index;
       break;
     }
   }
 
   if (start === -1) throw new Error(`Heading not found: ${heading}`);
-  return lines.slice(start + 1, end === -1 ? undefined : end).join('\n');
+  return lines.slice(start + 1, end === -1 ? undefined : end).join("\n");
 }
 
 /** One documentation page, and the markdown it is rendered from. */
@@ -82,18 +82,52 @@ export interface DocSection {
  * every one of them against the file on disk.
  */
 export const DOC_SECTIONS: readonly DocSection[] = [
-  { slug: 'quickstart', title: 'Quickstart', file: 'README.md', heading: '## ⚡ Quickstart' },
-  { slug: 'architecture', title: 'Packages & architecture', file: 'README.md', heading: '## 📦 Packages & Architecture' },
-  { slug: 'sdk', title: 'Node.js / TypeScript SDK', file: 'README.md', heading: '## 💻 Programmatic Node.js / TypeScript SDK' },
-  { slug: 'mcp', title: 'MCP server', file: 'README.md', heading: '## 🤖 Model Context Protocol (MCP) Server' },
-  { slug: 'ci', title: 'GitHub Actions CI', file: 'README.md', heading: '## 🛡️ GitHub Actions CI' },
-  { slug: 'share', title: 'Share your score', file: 'README.md', heading: '## 📣 Share Your Score' },
-  { slug: 'badge', title: 'Badge', file: 'docs/badge.md' },
-  { slug: 'benchmark', title: 'Benchmark', file: 'docs/benchmark.md' },
-  { slug: 'scoring', title: 'Scoring', file: 'docs/scoring.md' },
-  { slug: 'audit-architecture', title: 'Audit architecture', file: 'docs/architecture/audits.md' },
-  { slug: 'cli', title: 'CLI reference', file: 'docs/cli.md' },
-  { slug: 'config', title: 'Configuration', file: 'docs/config.md' },
+  {
+    slug: "quickstart",
+    title: "Quickstart",
+    file: "README.md",
+    heading: "## ⚡ Quickstart",
+  },
+  {
+    slug: "architecture",
+    title: "Packages & architecture",
+    file: "README.md",
+    heading: "## 📦 Packages & Architecture",
+  },
+  {
+    slug: "sdk",
+    title: "Node.js / TypeScript SDK",
+    file: "README.md",
+    heading: "## 💻 Programmatic Node.js / TypeScript SDK",
+  },
+  {
+    slug: "mcp",
+    title: "MCP server",
+    file: "README.md",
+    heading: "## 🤖 Model Context Protocol (MCP) Server",
+  },
+  {
+    slug: "ci",
+    title: "GitHub Actions CI",
+    file: "README.md",
+    heading: "## 🛡️ GitHub Actions CI",
+  },
+  {
+    slug: "share",
+    title: "Share your score",
+    file: "README.md",
+    heading: "## 📣 Share Your Score",
+  },
+  { slug: "badge", title: "Badge", file: "docs/badge.md" },
+  { slug: "benchmark", title: "Benchmark", file: "docs/benchmark.md" },
+  { slug: "scoring", title: "Scoring", file: "docs/scoring.md" },
+  {
+    slug: "audit-architecture",
+    title: "Audit architecture",
+    file: "docs/architecture/audits.md",
+  },
+  { slug: "cli", title: "CLI reference", file: "docs/cli.md" },
+  { slug: "config", title: "Configuration", file: "docs/config.md" },
 ];
 
 /**
@@ -102,8 +136,8 @@ export const DOC_SECTIONS: readonly DocSection[] = [
  * prose resolve against this, not against the route the page is published at.
  */
 export function docSourceDir(section: DocSection): string {
-  const cut = section.file.lastIndexOf('/');
-  return cut === -1 ? '' : section.file.slice(0, cut);
+  const cut = section.file.lastIndexOf("/");
+  return cut === -1 ? "" : section.file.slice(0, cut);
 }
 
 /**
@@ -116,9 +150,10 @@ export function docSourceDir(section: DocSection): string {
  */
 function repoRoot(): string {
   let dir = process.cwd();
-  while (!existsSync(join(dir, 'pnpm-workspace.yaml'))) {
+  while (!existsSync(join(dir, "pnpm-workspace.yaml"))) {
     const parent = dirname(dir);
-    if (parent === dir) throw new Error(`No pnpm-workspace.yaml above ${process.cwd()}`);
+    if (parent === dir)
+      throw new Error(`No pnpm-workspace.yaml above ${process.cwd()}`);
     dir = parent;
   }
   return dir;
@@ -142,10 +177,12 @@ export function repoPath(file: string): string {
  * page and the repository cannot drift apart.
  */
 export function readDocSource(section: DocSection): string {
-  const source = readFileSync(repoPath(section.file), 'utf8');
+  const source = readFileSync(repoPath(section.file), "utf8");
   if (!section.heading) return source;
   // The README separates its sections with a `---` rule. Sliced off with the
   // section it belongs to neither, and renders as a stray divider directly
   // above the one `PrevNext` already draws.
-  return sliceSection(source, section.heading).trimEnd().replace(/\n-{3,}$/, '');
+  return sliceSection(source, section.heading)
+    .trimEnd()
+    .replace(/\n-{3,}$/, "");
 }

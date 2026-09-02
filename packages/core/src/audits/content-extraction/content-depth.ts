@@ -1,30 +1,35 @@
 import type { AuditMeta, AuditResult } from "../../types";
 import { Audit } from "../../audit";
-import type { CheckContext } from '../../check-context';
-import { getWordCount } from '../../parser';
-import { weightForGrade } from '../../scorer';
+import type { CheckContext } from "../../check-context";
+import { getWordCount } from "../../parser";
+import { weightForGrade } from "../../scorer";
 
 export class ContentDepthAudit extends Audit {
   static override meta: AuditMeta = {
-    id: 'content-extraction/content-depth',
-    category: 'content-extraction',
-    title: 'Sufficient content depth',
-    failureTitle: 'Sufficient content depth',
+    id: "content-extraction/content-depth",
+    category: "content-extraction",
+    title: "Sufficient content depth",
+    failureTitle: "Sufficient content depth",
     description:
-      'AI RAG systems need sufficient content depth to generate accurate, detailed answers. Pages with fewer than 300 words provide too little context for meaningful vector embeddings, causing your content to rank poorly in retrieval and be excluded from AI-generated responses.',
-    scoreDisplayMode: 'ternary',
-    weight: weightForGrade('B', 'scored'),
-    evidenceGrade: 'B',
-    tier: 'scored',
-    dossier: 'docs/evidence/audits/content-extraction/content-depth.md',
-    requires: ['origin-reachable', 'unblocked-fetches', 'rendered-body', 'sample-adequate'],
-    defaultPriority: 'medium',
+      "AI RAG systems need sufficient content depth to generate accurate, detailed answers. Pages with fewer than 300 words provide too little context for meaningful vector embeddings, causing your content to rank poorly in retrieval and be excluded from AI-generated responses.",
+    scoreDisplayMode: "ternary",
+    weight: weightForGrade("B", "scored"),
+    evidenceGrade: "B",
+    tier: "scored",
+    dossier: "docs/evidence/audits/content-extraction/content-depth.md",
+    requires: [
+      "origin-reachable",
+      "unblocked-fetches",
+      "rendered-body",
+      "sample-adequate",
+    ],
+    defaultPriority: "medium",
     guidance: {
       impact:
-        'Pages with fewer than 300 words provide too little context for AI RAG systems to generate accurate, detailed answers. Thin content produces weak vector embeddings that rank poorly in retrieval, causing your pages to be excluded from AI-generated responses entirely.',
-      fix: 'Expand thin pages with substantive content: add detailed explanations, practical examples, FAQs, and relevant context. Aim for at least 300 words of meaningful content per page. Avoid filler text -- focus on answering real user questions comprehensively.',
-      effort: 'moderate',
-      tags: ['content', 'depth', 'quality'],
+        "Pages with fewer than 300 words provide too little context for AI RAG systems to generate accurate, detailed answers. Thin content produces weak vector embeddings that rank poorly in retrieval, causing your pages to be excluded from AI-generated responses entirely.",
+      fix: "Expand thin pages with substantive content: add detailed explanations, practical examples, FAQs, and relevant context. Aim for at least 300 words of meaningful content per page. Avoid filler text -- focus on answering real user questions comprehensively.",
+      effort: "moderate",
+      tags: ["content", "depth", "quality"],
     },
   };
 
@@ -44,13 +49,13 @@ export class ContentDepthAudit extends Audit {
 
     const lowestPage = wordCounts.reduce(
       (min, wc) => (wc.count < min.count ? wc : min),
-      wordCounts[0] ?? { url: '', count: 0 },
+      wordCounts[0] ?? { url: "", count: 0 },
     );
 
     if (allPass) {
       return this.pass(
-        'All pages have sufficient content depth (>300 words).',
-        'More than 300 words of content per page',
+        "All pages have sufficient content depth (>300 words).",
+        "More than 300 words of content per page",
         `${pagesAboveThreshold}/${ctx.pages.length} pages above threshold`,
       );
     }
@@ -58,26 +63,26 @@ export class ContentDepthAudit extends Audit {
     if (majorityPass || homepagePass) {
       return this.warn(
         `${pagesAboveThreshold}/${ctx.pages.length} page(s) have >300 words. Lowest: ${lowestPage.count} words.`,
-        'More than 300 words of content per page',
+        "More than 300 words of content per page",
         `${pagesAboveThreshold}/${ctx.pages.length} pages above threshold`,
         {
-          priority: 'medium',
+          priority: "medium",
           description:
-            'AI RAG systems need sufficient content depth to generate accurate, detailed answers. Pages with fewer than 300 words provide too little context for meaningful vector embeddings, causing your content to rank poorly in retrieval and be excluded from AI-generated responses.',
-          code: '<!-- Ensure each page has 300+ words of substantive content -->\n<!-- Expand thin pages with detailed explanations, examples, and context -->',
+            "AI RAG systems need sufficient content depth to generate accurate, detailed answers. Pages with fewer than 300 words provide too little context for meaningful vector embeddings, causing your content to rank poorly in retrieval and be excluded from AI-generated responses.",
+          code: "<!-- Ensure each page has 300+ words of substantive content -->\n<!-- Expand thin pages with detailed explanations, examples, and context -->",
         },
       );
     }
 
     return this.fail(
       `${pagesAboveThreshold}/${ctx.pages.length} page(s) have >300 words. Lowest: ${lowestPage.count} words.`,
-      'More than 300 words of content per page',
+      "More than 300 words of content per page",
       `${pagesAboveThreshold}/${ctx.pages.length} pages above threshold`,
       {
-        priority: 'medium',
+        priority: "medium",
         description:
-          'AI RAG systems need sufficient content depth to generate accurate, detailed answers. Pages with fewer than 300 words provide too little context for meaningful vector embeddings, causing your content to rank poorly in retrieval and be excluded from AI-generated responses.',
-        code: '<!-- Ensure each page has 300+ words of substantive content -->\n<!-- Expand thin pages with detailed explanations, examples, and context -->',
+          "AI RAG systems need sufficient content depth to generate accurate, detailed answers. Pages with fewer than 300 words provide too little context for meaningful vector embeddings, causing your content to rank poorly in retrieval and be excluded from AI-generated responses.",
+        code: "<!-- Ensure each page has 300+ words of substantive content -->\n<!-- Expand thin pages with detailed explanations, examples, and context -->",
       },
     );
   }

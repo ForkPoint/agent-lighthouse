@@ -1,6 +1,6 @@
-import { createHash } from 'node:crypto';
-import type { FetchOptions, FetchResult } from '../fetcher';
-import { isSafeUrl } from '../fetcher';
+import { createHash } from "node:crypto";
+import type { FetchOptions, FetchResult } from "../fetcher";
+import { isSafeUrl } from "../fetcher";
 
 /**
  * The conditional-request probe, once per URL per scan.
@@ -36,11 +36,16 @@ interface RevalidationContext {
   fetch: (options: FetchOptions) => Promise<FetchResult>;
 }
 
-const hash = (body: string) => createHash('sha256').update(body).digest('hex');
+const hash = (body: string) => createHash("sha256").update(body).digest("hex");
 
-const cache = new WeakMap<object, Map<string, Promise<RevalidationResult | undefined>>>();
+const cache = new WeakMap<
+  object,
+  Map<string, Promise<RevalidationResult | undefined>>
+>();
 
-function cacheFor(ctx: object): Map<string, Promise<RevalidationResult | undefined>> {
+function cacheFor(
+  ctx: object,
+): Map<string, Promise<RevalidationResult | undefined>> {
   let map = cache.get(ctx);
   if (!map) {
     map = new Map();
@@ -59,8 +64,8 @@ async function probe(
   const first = await ctx.fetch({ url, followRedirects: true, signal });
   if (first.status < 200 || first.status >= 300) return undefined;
 
-  const etag = first.headers['etag'] ?? '';
-  const lastModified = first.headers['last-modified'] ?? '';
+  const etag = first.headers["etag"] ?? "";
+  const lastModified = first.headers["last-modified"] ?? "";
   let requests = 1;
 
   // The second GET is identical to the first, including how it negotiates
@@ -68,14 +73,14 @@ async function probe(
   const second = await ctx.fetch({ url, followRedirects: true, signal });
   requests += 1;
   const bodyStable = hash(first.body) === hash(second.body);
-  const etagStable = (second.headers['etag'] ?? '') === etag;
+  const etagStable = (second.headers["etag"] ?? "") === etag;
 
   let honoursIfNoneMatch: boolean | undefined;
-  if (etag !== '') {
+  if (etag !== "") {
     const conditional = await ctx.fetch({
       url,
       followRedirects: true,
-      headers: { 'If-None-Match': etag },
+      headers: { "If-None-Match": etag },
       signal,
     });
     requests += 1;
@@ -83,11 +88,11 @@ async function probe(
   }
 
   let honoursIfModifiedSince: boolean | undefined;
-  if (lastModified !== '') {
+  if (lastModified !== "") {
     const conditional = await ctx.fetch({
       url,
       followRedirects: true,
-      headers: { 'If-Modified-Since': lastModified },
+      headers: { "If-Modified-Since": lastModified },
       signal,
     });
     requests += 1;
@@ -99,7 +104,7 @@ async function probe(
     status: first.status,
     etag,
     lastModified,
-    cacheControl: first.headers['cache-control'] ?? '',
+    cacheControl: first.headers["cache-control"] ?? "",
     bytes: first.body.length,
     bodyStable,
     etagStable,

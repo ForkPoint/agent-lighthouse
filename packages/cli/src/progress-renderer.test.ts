@@ -104,7 +104,9 @@ describe("formatStatusLine", () => {
 });
 
 describe("createProgressRenderer", () => {
-  const unitDone = (over: Partial<Extract<ScanEvent, { type: "unit:done" }>> = {}): ScanEvent => ({
+  const unitDone = (
+    over: Partial<Extract<ScanEvent, { type: "unit:done" }>> = {},
+  ): ScanEvent => ({
     type: "unit:done",
     phase: "audits",
     completed: 1,
@@ -116,10 +118,32 @@ describe("createProgressRenderer", () => {
 
   it("non-TTY writes only plain phase:done lines", () => {
     const out: string[] = [];
-    const handle = createProgressRenderer({ tty: false, write: (t) => out.push(t) });
-    handle({ type: "phase:start", phase: "fetch-root", totalUnits: 34, fraction: 0, elapsedMs: 0 });
-    handle(unitDone({ phase: "fetch-root", completed: 34, total: 34, fraction: 0.35 }));
-    handle({ type: "phase:done", phase: "fetch-root", durationMs: 2000, fraction: 0.35, elapsedMs: 2000 });
+    const handle = createProgressRenderer({
+      tty: false,
+      write: (t) => out.push(t),
+    });
+    handle({
+      type: "phase:start",
+      phase: "fetch-root",
+      totalUnits: 34,
+      fraction: 0,
+      elapsedMs: 0,
+    });
+    handle(
+      unitDone({
+        phase: "fetch-root",
+        completed: 34,
+        total: 34,
+        fraction: 0.35,
+      }),
+    );
+    handle({
+      type: "phase:done",
+      phase: "fetch-root",
+      durationMs: 2000,
+      fraction: 0.35,
+      elapsedMs: 2000,
+    });
     expect(out).toEqual(["✓ Root files 34/34 · 2.0s\n"]);
     expect(out.join("")).not.toContain("\x1b");
   });
@@ -133,7 +157,13 @@ describe("createProgressRenderer", () => {
       now: () => t,
       minRenderIntervalMs: 30,
     });
-    handle({ type: "phase:start", phase: "audits", totalUnits: 207, fraction: 0.45, elapsedMs: 0 });
+    handle({
+      type: "phase:start",
+      phase: "audits",
+      totalUnits: 207,
+      fraction: 0.45,
+      elapsedMs: 0,
+    });
     handle(unitDone()); // t=0 → renders (first render always allowed)
     t = 10;
     handle(unitDone({ completed: 2 })); // within 30ms → skipped
@@ -142,23 +172,57 @@ describe("createProgressRenderer", () => {
     const sticky = out.filter((s) => s.startsWith("\r"));
     expect(sticky).toHaveLength(2);
 
-    handle({ type: "phase:done", phase: "audits", durationMs: 100, fraction: 0.75, elapsedMs: 100 });
+    handle({
+      type: "phase:done",
+      phase: "audits",
+      durationMs: 100,
+      fraction: 0.75,
+      elapsedMs: 100,
+    });
     // phase:done erases the sticky line, then writes the permanent summary.
     expect(out[2]).toBe("\r\x1b[K");
     expect(out[3]).toContain("Audits 3/207");
 
     out.length = 0;
-    handle({ type: "scan:done", durationMs: 5000, score: 80, fraction: 1, elapsedMs: 5000 });
+    handle({
+      type: "scan:done",
+      durationMs: 5000,
+      score: 80,
+      fraction: 1,
+      elapsedMs: 5000,
+    });
     expect(out).toEqual([]); // sticky already erased; report output follows
   });
 
   it("counts unit:fail silently and reports them on phase:done", () => {
     const out: string[] = [];
-    const handle = createProgressRenderer({ tty: false, write: (s) => out.push(s) });
-    handle({ type: "phase:start", phase: "audits", totalUnits: 2, fraction: 0.45, elapsedMs: 0 });
+    const handle = createProgressRenderer({
+      tty: false,
+      write: (s) => out.push(s),
+    });
+    handle({
+      type: "phase:start",
+      phase: "audits",
+      totalUnits: 2,
+      fraction: 0.45,
+      elapsedMs: 0,
+    });
     handle(unitDone({ completed: 1, total: 2 }));
-    handle({ type: "unit:fail", phase: "audits", label: "3.1 JSON-LD present", error: "boom", fraction: 0.46, elapsedMs: 10 });
-    handle({ type: "phase:done", phase: "audits", durationMs: 100, fraction: 0.75, elapsedMs: 100 });
+    handle({
+      type: "unit:fail",
+      phase: "audits",
+      label: "3.1 JSON-LD present",
+      error: "boom",
+      fraction: 0.46,
+      elapsedMs: 10,
+    });
+    handle({
+      type: "phase:done",
+      phase: "audits",
+      durationMs: 100,
+      fraction: 0.75,
+      elapsedMs: 100,
+    });
     expect(out).toEqual(["✓ Audits 2/2 · 0.1s · 1 errored\n"]);
   });
 });

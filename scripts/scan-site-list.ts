@@ -1,14 +1,18 @@
-import * as fs from 'node:fs';
-import * as path from 'node:path';
-import { runScan } from '../packages/core/src';
-import { boundedDispatcher, createFetcher } from '../packages/core/src/fetcher';
-import { parseRobots, groupsForBot, isBlanketBlocked } from '../packages/core/src/gatherers/robots';
-import { SCANNER_USER_AGENT } from '../packages/core/src/constants';
-import { AI_CRAWLER_UAS } from '../packages/core/src/gatherers/ua-parity';
-import { invariantViolations } from '../packages/core/src/tests/scan-invariants';
-import type { SiteEntry } from '../packages/core/src/tests/site-list';
-import type { FetchResult } from '../packages/core/src/fetcher';
-import type { EvidenceKey } from '../packages/core/src/types';
+import * as fs from "node:fs";
+import * as path from "node:path";
+import { runScan } from "../packages/core/src";
+import { boundedDispatcher, createFetcher } from "../packages/core/src/fetcher";
+import {
+  parseRobots,
+  groupsForBot,
+  isBlanketBlocked,
+} from "../packages/core/src/gatherers/robots";
+import { SCANNER_USER_AGENT } from "../packages/core/src/constants";
+import { AI_CRAWLER_UAS } from "../packages/core/src/gatherers/ua-parity";
+import { invariantViolations } from "../packages/core/src/tests/scan-invariants";
+import type { SiteEntry } from "../packages/core/src/tests/site-list";
+import type { FetchResult } from "../packages/core/src/fetcher";
+import type { EvidenceKey } from "../packages/core/src/types";
 
 /**
  * Scan a window of the site list and assert what a scan may claim.
@@ -56,7 +60,7 @@ const EXIT = {
 } as const;
 
 /** The `robots.txt` product token for {@link SCANNER_USER_AGENT}. */
-const BOT_TOKEN = SCANNER_USER_AGENT.split('/')[0]!.toLowerCase();
+const BOT_TOKEN = SCANNER_USER_AGENT.split("/")[0]!.toLowerCase();
 
 /**
  * Every product token this job's requests will carry.
@@ -73,13 +77,16 @@ const BOT_TOKEN = SCANNER_USER_AGENT.split('/')[0]!.toLowerCase();
  * suppressing one probe, and it is the granularity this script has: the probes
  * are issued deep inside `runScan`, which offers no per-token switch.
  */
-const PROBED_TOKENS: readonly string[] = [BOT_TOKEN, ...AI_CRAWLER_UAS.map((u) => u.token)];
+const PROBED_TOKENS: readonly string[] = [
+  BOT_TOKEN,
+  ...AI_CRAWLER_UAS.map((u) => u.token),
+];
 
 /**
  * Why a site produced no scan. Kept apart from a violation: a site we chose not
  * to scan says nothing about the scanner.
  */
-type SkipReason = 'robots-disallow' | 'robots-refused' | 'crawl-delay';
+type SkipReason = "robots-disallow" | "robots-refused" | "crawl-delay";
 
 interface SiteOutcome {
   domain: string;
@@ -144,7 +151,7 @@ const DEFAULTS = {
    * `timeout-minutes`, so the run writes its summary instead of being
    * cancelled without one.
    */
-  'deadline-minutes': 240,
+  "deadline-minutes": 240,
   /** Where the window starts. Defaults to the date-seeded offset below. */
   offset: Number.NaN,
 } as const;
@@ -166,12 +173,14 @@ function parseFlags(argv: string[]): Record<FlagName, number> {
     const name = match[1]!;
     const raw = match[2]!;
     if (!Object.hasOwn(DEFAULTS, name)) {
-      die(`unknown flag --${name}. Known flags: ${Object.keys(DEFAULTS).join(', ')}.`);
+      die(
+        `unknown flag --${name}. Known flags: ${Object.keys(DEFAULTS).join(", ")}.`,
+      );
     }
     // `Number('')` is 0, which passes every test below and sends `--limit=`
     // down the `LIMIT === 0` smoke-test path with a clean exit. An operator
     // whose shell dropped a variable meant to scan something.
-    if (raw.trim() === '') {
+    if (raw.trim() === "") {
       die(`--${name} was given no value. Every flag is --name=value.`);
     }
     const value = Number(raw);
@@ -191,10 +200,13 @@ const LIMIT = Math.floor(FLAGS.limit);
 const CONCURRENCY = Math.max(1, Math.floor(FLAGS.concurrency));
 const DELAY_MS = FLAGS.delay;
 const CONNECTIONS = Math.max(1, Math.floor(FLAGS.connections));
-const DEADLINE_MS = FLAGS['deadline-minutes'] * 60_000;
+const DEADLINE_MS = FLAGS["deadline-minutes"] * 60_000;
 
-const SITES_PATH = path.resolve(__dirname, '../packages/core/test-data/sites/sites.json');
-const OUT_PATH = path.resolve(__dirname, '../reports/corpus-nightly.json');
+const SITES_PATH = path.resolve(
+  __dirname,
+  "../packages/core/test-data/sites/sites.json",
+);
+const OUT_PATH = path.resolve(__dirname, "../reports/corpus-nightly.json");
 
 /** How often the summary is rewritten mid-run. See {@link writeSummary}. */
 const FLUSH_EVERY = 10;
@@ -227,7 +239,11 @@ const dispatcher = boundedDispatcher(CONNECTIONS);
 
 /** Day of the year, UTC, so a run on the same date picks the same window. */
 function dayOfYear(now: Date): number {
-  const midnight = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate());
+  const midnight = Date.UTC(
+    now.getUTCFullYear(),
+    now.getUTCMonth(),
+    now.getUTCDate(),
+  );
   const yearStart = Date.UTC(now.getUTCFullYear(), 0, 1);
   return Math.floor((midnight - yearStart) / 86_400_000);
 }
@@ -245,14 +261,15 @@ function windowOf<T>(all: T[], size: number, offset: number): T[] {
   if (size >= all.length) return [...all];
   const start = ((offset % all.length) + all.length) % all.length;
   const head = all.slice(start, start + size);
-  return head.length === size ? head : [...head, ...all.slice(0, size - head.length)];
+  return head.length === size
+    ? head
+    : [...head, ...all.slice(0, size - head.length)];
 }
 
 // ── robots.txt ─────────────────────────────────────────────────
 
 type RobotsVerdict =
-  | { scan: true; robotsTxt: FetchResult }
-  | { scan: false; reason: SkipReason };
+  { scan: true; robotsTxt: FetchResult } | { scan: false; reason: SkipReason };
 
 /**
  * Whether `robots.txt` lets this job scan the site at all.
@@ -274,11 +291,14 @@ type RobotsVerdict =
  * and absence is not consent withheld.
  */
 async function robotsVerdict(domain: string): Promise<RobotsVerdict> {
-  const result = await createFetcher({ dispatcher, maxConcurrent: CONNECTIONS }).fetch({
+  const result = await createFetcher({
+    dispatcher,
+    maxConcurrent: CONNECTIONS,
+  }).fetch({
     url: `https://${domain}/robots.txt`,
   });
   if (result.status === 401 || result.status === 403 || result.status === 429) {
-    return { scan: false, reason: 'robots-refused' };
+    return { scan: false, reason: "robots-refused" };
   }
   // Handed to `runScan` either way, so the one file an operator watches is
   // requested once per site instead of twice.
@@ -289,8 +309,10 @@ async function robotsVerdict(domain: string): Promise<RobotsVerdict> {
   const parsed = parseRobots(result.body);
   for (const token of PROBED_TOKENS) {
     const groups = groupsForBot(parsed, token);
-    if (isBlanketBlocked(groups, token)) return { scan: false, reason: 'robots-disallow' };
-    if (groups.some((g) => (g.crawlDelay ?? 0) > 0)) return { scan: false, reason: 'crawl-delay' };
+    if (isBlanketBlocked(groups, token))
+      return { scan: false, reason: "robots-disallow" };
+    if (groups.some((g) => (g.crawlDelay ?? 0) > 0))
+      return { scan: false, reason: "crawl-delay" };
   }
   return { scan: true, robotsTxt: result };
 }
@@ -323,7 +345,8 @@ async function scanOne(site: SiteEntry): Promise<SiteOutcome> {
     const checks = report.categories.flatMap((c) => c.checks);
 
     for (const check of checks) {
-      base.statusCounts[check.status] = (base.statusCounts[check.status] ?? 0) + 1;
+      base.statusCounts[check.status] =
+        (base.statusCounts[check.status] ?? 0) + 1;
     }
     base.evidence = report.scanValidity?.evidence;
     base.unscoredReason = report.scanValidity?.unscoredReason;
@@ -342,13 +365,14 @@ async function scanOne(site: SiteEntry): Promise<SiteOutcome> {
 // ── The run ────────────────────────────────────────────────────
 
 async function main(): Promise<void> {
-  const all: SiteEntry[] = JSON.parse(fs.readFileSync(SITES_PATH, 'utf8'));
+  const all: SiteEntry[] = JSON.parse(fs.readFileSync(SITES_PATH, "utf8"));
   const offset = Number.isFinite(FLAGS.offset)
     ? Math.floor(FLAGS.offset)
     : dayOfYear(new Date()) * LIMIT;
   const planned = windowOf(all, LIMIT, offset);
   // Where the window actually starts, for the summary and the closing line.
-  const windowStart = all.length === 0 ? 0 : ((offset % all.length) + all.length) % all.length;
+  const windowStart =
+    all.length === 0 ? 0 : ((offset % all.length) + all.length) % all.length;
 
   const startedAt = new Date();
   const startedMs = Date.now();
@@ -383,9 +407,11 @@ async function main(): Promise<void> {
   }
 
   // A cancelled step gets a signal, not an exception, so `finally` never runs.
-  for (const signal of ['SIGINT', 'SIGTERM'] as const) {
+  for (const signal of ["SIGINT", "SIGTERM"] as const) {
     process.on(signal, () => {
-      console.error(`\n[scan-site-list] ${signal} after ${outcomes.length} sites; flushing summary`);
+      console.error(
+        `\n[scan-site-list] ${signal} after ${outcomes.length} sites; flushing summary`,
+      );
       writeSummary();
       process.exit(EXIT.cancelled);
     });
@@ -402,8 +428,12 @@ async function main(): Promise<void> {
       const outcome = await scanOne(site);
       outcomes.push(outcome);
       // Deliberately no score, here or in the summary.
-      const verdict = outcome.violations.length ? 'VIOLATION' : (outcome.skipped ?? 'ok');
-      console.log(`[${outcomes.length}/${planned.length}] ${site.domain}: ${verdict}`);
+      const verdict = outcome.violations.length
+        ? "VIOLATION"
+        : (outcome.skipped ?? "ok");
+      console.log(
+        `[${outcomes.length}/${planned.length}] ${site.domain}: ${verdict}`,
+      );
       if (outcomes.length % FLUSH_EVERY === 0) writeSummary();
       if (queue.length > 0) await pause(DELAY_MS);
     }
@@ -427,20 +457,20 @@ async function main(): Promise<void> {
       `${unreached} not reached, ${broken.length} with violations`,
   );
   for (const outcome of broken.slice(0, 10)) {
-    console.log(`  ${outcome.domain}: ${outcome.violations.join('; ')}`);
+    console.log(`  ${outcome.domain}: ${outcome.violations.join("; ")}`);
   }
 
   if (LIMIT === 0) {
     console.log(
-      '\nNO SITES WERE SCANNED: --limit=0 is the wiring smoke test, not a run. ' +
-        'It reads the list, builds the window and writes an empty summary.',
+      "\nNO SITES WERE SCANNED: --limit=0 is the wiring smoke test, not a run. " +
+        "It reads the list, builds the window and writes an empty summary.",
     );
     return;
   }
   // A run that produced nothing on a non-empty window is a failure however it
   // exited: an empty summary is indistinguishable from a clean one.
   if (planned.length > 0 && outcomes.length === 0) {
-    console.error('\nno site produced an outcome — the run scanned nothing');
+    console.error("\nno site produced an outcome — the run scanned nothing");
     process.exit(EXIT.scannedNothing);
   }
   // Violations decide the exit code, deadline or not. A night that found a
@@ -452,7 +482,7 @@ async function main(): Promise<void> {
       `\nran out of time with ${unreached} of ${planned.length} sites unscanned` +
         (broken.length > 0
           ? ` — exiting ${EXIT.violation} for ${broken.length} site(s) with violations, not ${EXIT.deadline}`
-          : ''),
+          : ""),
     );
   }
   if (broken.length > 0) process.exit(EXIT.violation);

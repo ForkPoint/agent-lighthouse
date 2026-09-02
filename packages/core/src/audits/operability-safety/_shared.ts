@@ -24,11 +24,11 @@ import type {
   EvidenceGrade,
   EvidenceKey,
   ScoreDisplayMode,
-} from '../../types';
-import { Audit } from '../../audit';
-import type { CheckContext } from '../../check-context';
-import { weightForGrade } from '../../scorer';
-import type { A11yStatus } from './runner';
+} from "../../types";
+import { Audit } from "../../audit";
+import type { CheckContext } from "../../check-context";
+import { weightForGrade } from "../../scorer";
+import type { A11yStatus } from "./runner";
 
 export interface A11yAuditSpec {
   meta: AuditMeta;
@@ -42,7 +42,7 @@ export abstract class A11yBackedAudit extends Audit {
 
   audit(ctx: CheckContext): AuditResult {
     const meta = (this.constructor as typeof Audit).meta;
-    const expected = `accessibility rules pass: ${this.rules.join(', ')}`;
+    const expected = `accessibility rules pass: ${this.rules.join(", ")}`;
 
     let sawFail = false;
     let sawIncomplete = false;
@@ -56,27 +56,31 @@ export abstract class A11yBackedAudit extends Audit {
       for (const ruleId of this.rules) {
         const r = results[ruleId];
         if (!r) continue;
-        if (r.status === ('fail' as A11yStatus)) {
+        if (r.status === ("fail" as A11yStatus)) {
           sawFail = true;
           failPage ??= p.url;
           for (const n of r.nodes) {
             if (failings.length < 5) failings.push(n.target);
           }
-        } else if (r.status === ('incomplete' as A11yStatus)) {
+        } else if (r.status === ("incomplete" as A11yStatus)) {
           sawIncomplete = true;
-        } else if (r.status === ('pass' as A11yStatus)) {
+        } else if (r.status === ("pass" as A11yStatus)) {
           sawPass = true;
         }
       }
     }
 
     if (sawFail) {
-      const found = `Failing element(s): ${failings.join('; ') || 'see report'}`;
+      const found = `Failing element(s): ${failings.join("; ") || "see report"}`;
       return this.fail(
         `${meta.failureTitle} — accessibility violations found.`,
         expected,
         found,
-        { priority: meta.defaultPriority, description: meta.description, code: meta.guidance?.code },
+        {
+          priority: meta.defaultPriority,
+          description: meta.description,
+          code: meta.guidance?.code,
+        },
         failPage,
       );
     }
@@ -84,17 +88,21 @@ export abstract class A11yBackedAudit extends Audit {
       return this.warn(
         `${meta.title} — accessibility checks could not fully determine; manual review advised.`,
         expected,
-        'Incomplete (needs review)',
+        "Incomplete (needs review)",
         meta.defaultPriority,
       );
     }
     if (sawPass) {
-      return this.pass(`${meta.title} — accessibility checks pass.`, expected, 'No violations');
+      return this.pass(
+        `${meta.title} — accessibility checks pass.`,
+        expected,
+        "No violations",
+      );
     }
     return this.notApplicable(
       `${meta.title} — no applicable elements on scanned pages.`,
       expected,
-      'Not applicable',
+      "Not applicable",
     );
   }
 }
@@ -121,7 +129,7 @@ export function defineA11yAudit(spec: A11yAuditSpec): typeof Audit {
 // consumer reads it. See docs/evidence/sunset/not-a-factor.md#accessibilitymarquee.
 
 export const base = {
-  category: 'operability-safety' as const,
+  category: "operability-safety" as const,
   /**
    * Every audit built on this base reads the sampled pages through
    * `A11yBackedAudit`, so they all carry the same requirement set. Declared
@@ -129,10 +137,10 @@ export const base = {
    * spreads `base`.
    */
   requires: [
-    'origin-reachable',
-    'unblocked-fetches',
-    'rendered-body',
-    'sample-adequate',
+    "origin-reachable",
+    "unblocked-fetches",
+    "rendered-body",
+    "sample-adequate",
   ] as EvidenceKey[],
 };
 
@@ -143,9 +151,12 @@ export const base = {
  * (see audits/sunset.test.ts).
  */
 export function graded(grade: EvidenceGrade, slug: string) {
-  const tier: AuditTier = grade === 'A' || grade === 'B' ? 'scored' : 'informative';
+  const tier: AuditTier =
+    grade === "A" || grade === "B" ? "scored" : "informative";
   return {
-    scoreDisplayMode: (tier === 'scored' ? 'binary' : 'informative') as ScoreDisplayMode,
+    scoreDisplayMode: (tier === "scored"
+      ? "binary"
+      : "informative") as ScoreDisplayMode,
     weight: weightForGrade(grade, tier),
     evidenceGrade: grade,
     tier,

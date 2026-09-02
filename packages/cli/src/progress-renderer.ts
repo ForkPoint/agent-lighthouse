@@ -106,7 +106,14 @@ export function createProgressRenderer(
     spinnerIndex += 1;
     write(
       "\r" +
-        formatStatusLine({ spinnerIndex, label, completed, total, fraction, elapsedMs }) +
+        formatStatusLine({
+          spinnerIndex,
+          label,
+          completed,
+          total,
+          fraction,
+          elapsedMs,
+        }) +
         "\x1b[K",
     );
     stickyShown = true;

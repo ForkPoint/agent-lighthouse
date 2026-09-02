@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi } from "vitest";
 import {
   discoverMcpEndpoint,
   rpcRequest,
@@ -8,23 +8,23 @@ import {
   discoverProbe,
   MCP_PROTOCOL_VERSION,
   MCP_ACCEPT,
-} from './mcp';
-import { mockCheckContext, mockFetchResult } from '../__tests__/test-utils';
-import type { CheckContext } from '../check-context';
-import type { FetchOptions, FetchResult } from '../fetcher';
+} from "./mcp";
+import { mockCheckContext, mockFetchResult } from "../__tests__/test-utils";
+import type { CheckContext } from "../check-context";
+import type { FetchOptions, FetchResult } from "../fetcher";
 
 // isSafeUrl performs a real DNS lookup before the client POSTs to a URL it read
 // out of a site-controlled root file. Stub it with an offline stand-in that
 // still blocks loopback and private ranges, so the refusal test proves the gate
 // rather than the mock.
-vi.mock('../fetcher', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('../fetcher')>();
+vi.mock("../fetcher", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("../fetcher")>();
   return {
     ...actual,
     isSafeUrl: async (url: string) => {
       try {
         const { protocol, hostname } = new URL(url);
-        if (protocol !== 'http:' && protocol !== 'https:') return false;
+        if (protocol !== "http:" && protocol !== "https:") return false;
         return !/^(localhost$|127\.|\[?::1\]?$|10\.|192\.168\.)/.test(hostname);
       } catch {
         return false;
@@ -36,148 +36,185 @@ vi.mock('../fetcher', async (importOriginal) => {
 function ctxWith(rootFiles: Record<string, string>): CheckContext {
   const files: Record<string, FetchResult> = {};
   for (const [path, body] of Object.entries(rootFiles)) {
-    files[path] = mockFetchResult(body, 200, 'application/json');
+    files[path] = mockFetchResult(body, 200, "application/json");
   }
   return mockCheckContext([], files);
 }
 
-const SERVERS_JSON = JSON.stringify({ servers: [{ url: 'https://a.test/mcp' }] });
+const SERVERS_JSON = JSON.stringify({
+  servers: [{ url: "https://a.test/mcp" }],
+});
 const UCP = JSON.stringify({
-  services: { commerce: [{ transport: 'mcp', endpoint: 'https://a.test/ucp-mcp' }] },
+  services: {
+    commerce: [{ transport: "mcp", endpoint: "https://a.test/ucp-mcp" }],
+  },
 });
 const CATALOG = JSON.stringify({
-  entries: [{ type: 'application/mcp-server-card+json', url: 'https://a.test/catalog-mcp' }],
+  entries: [
+    {
+      type: "application/mcp-server-card+json",
+      url: "https://a.test/catalog-mcp",
+    },
+  ],
 });
 
-describe('discoverMcpEndpoint', () => {
-  it('reads the endpoint out of /.well-known/mcp/servers.json', () => {
-    const found = discoverMcpEndpoint(ctxWith({ '/.well-known/mcp/servers.json': SERVERS_JSON }));
-    expect(found).toEqual({ url: 'https://a.test/mcp', source: 'servers.json' });
+describe("discoverMcpEndpoint", () => {
+  it("reads the endpoint out of /.well-known/mcp/servers.json", () => {
+    const found = discoverMcpEndpoint(
+      ctxWith({ "/.well-known/mcp/servers.json": SERVERS_JSON }),
+    );
+    expect(found).toEqual({
+      url: "https://a.test/mcp",
+      source: "servers.json",
+    });
   });
 
-  it('reads an mcp-transport service out of /.well-known/ucp', () => {
-    const found = discoverMcpEndpoint(ctxWith({ '/.well-known/ucp': UCP }));
-    expect(found).toEqual({ url: 'https://a.test/ucp-mcp', source: 'ucp' });
+  it("reads an mcp-transport service out of /.well-known/ucp", () => {
+    const found = discoverMcpEndpoint(ctxWith({ "/.well-known/ucp": UCP }));
+    expect(found).toEqual({ url: "https://a.test/ucp-mcp", source: "ucp" });
   });
 
-  it('reads an mcp-server-card entry out of /.well-known/ai-catalog.json', () => {
-    const found = discoverMcpEndpoint(ctxWith({ '/.well-known/ai-catalog.json': CATALOG }));
-    expect(found).toEqual({ url: 'https://a.test/catalog-mcp', source: 'ai-catalog' });
+  it("reads an mcp-server-card entry out of /.well-known/ai-catalog.json", () => {
+    const found = discoverMcpEndpoint(
+      ctxWith({ "/.well-known/ai-catalog.json": CATALOG }),
+    );
+    expect(found).toEqual({
+      url: "https://a.test/catalog-mcp",
+      source: "ai-catalog",
+    });
   });
 
   // servers.json is the MCP-native declaration, so it decides even when the
   // other two files also name an endpoint.
-  it('prefers servers.json, then ucp, then the catalog', () => {
+  it("prefers servers.json, then ucp, then the catalog", () => {
     const all = ctxWith({
-      '/.well-known/mcp/servers.json': SERVERS_JSON,
-      '/.well-known/ucp': UCP,
-      '/.well-known/ai-catalog.json': CATALOG,
+      "/.well-known/mcp/servers.json": SERVERS_JSON,
+      "/.well-known/ucp": UCP,
+      "/.well-known/ai-catalog.json": CATALOG,
     });
-    expect(discoverMcpEndpoint(all)?.source).toBe('servers.json');
+    expect(discoverMcpEndpoint(all)?.source).toBe("servers.json");
     const twoLeft = ctxWith({
-      '/.well-known/ucp': UCP,
-      '/.well-known/ai-catalog.json': CATALOG,
+      "/.well-known/ucp": UCP,
+      "/.well-known/ai-catalog.json": CATALOG,
     });
-    expect(discoverMcpEndpoint(twoLeft)?.source).toBe('ucp');
+    expect(discoverMcpEndpoint(twoLeft)?.source).toBe("ucp");
   });
 
-  it('returns undefined when no root file declares one', () => {
+  it("returns undefined when no root file declares one", () => {
     expect(discoverMcpEndpoint(ctxWith({}))).toBeUndefined();
   });
 
   // A malformed declaration is not the same as no declaration: the site said it
   // has a server and got the shape wrong, which an audit must report.
-  it('reports a servers.json with no servers array', () => {
+  it("reports a servers.json with no servers array", () => {
     const found = discoverMcpEndpoint(
-      ctxWith({ '/.well-known/mcp/servers.json': JSON.stringify({ mcp: [] }) }),
+      ctxWith({ "/.well-known/mcp/servers.json": JSON.stringify({ mcp: [] }) }),
     );
-    expect(found).toEqual({ url: '', source: 'no-array' });
+    expect(found).toEqual({ url: "", source: "no-array" });
   });
 
-  it('reports a servers array with no usable url', () => {
+  it("reports a servers array with no usable url", () => {
     const found = discoverMcpEndpoint(
-      ctxWith({ '/.well-known/mcp/servers.json': JSON.stringify({ servers: [{ name: 'x' }] }) }),
+      ctxWith({
+        "/.well-known/mcp/servers.json": JSON.stringify({
+          servers: [{ name: "x" }],
+        }),
+      }),
     );
-    expect(found).toEqual({ url: '', source: 'no-url' });
+    expect(found).toEqual({ url: "", source: "no-url" });
   });
 });
 
-describe('rpcRequest', () => {
-  it('frames a JSON-RPC 2.0 request with params', () => {
-    expect(JSON.parse(rpcRequest(1, 'initialize', { protocolVersion: MCP_PROTOCOL_VERSION }))).toEqual({
-      jsonrpc: '2.0',
+describe("rpcRequest", () => {
+  it("frames a JSON-RPC 2.0 request with params", () => {
+    expect(
+      JSON.parse(
+        rpcRequest(1, "initialize", { protocolVersion: MCP_PROTOCOL_VERSION }),
+      ),
+    ).toEqual({
+      jsonrpc: "2.0",
       id: 1,
-      method: 'initialize',
+      method: "initialize",
       params: { protocolVersion: MCP_PROTOCOL_VERSION },
     });
   });
 
-  it('omits params entirely when there are none', () => {
-    expect(rpcRequest(2, 'tools/list')).toBe('{"jsonrpc":"2.0","id":2,"method":"tools/list"}');
+  it("omits params entirely when there are none", () => {
+    expect(rpcRequest(2, "tools/list")).toBe(
+      '{"jsonrpc":"2.0","id":2,"method":"tools/list"}',
+    );
   });
 
-  it('pins the current MCP specification revision', () => {
-    expect(MCP_PROTOCOL_VERSION).toBe('2026-07-28');
+  it("pins the current MCP specification revision", () => {
+    expect(MCP_PROTOCOL_VERSION).toBe("2026-07-28");
   });
 });
 
-describe('parseRpcResponse', () => {
-  const json = (body: string) => mockFetchResult(body, 200, 'application/json');
+describe("parseRpcResponse", () => {
+  const json = (body: string) => mockFetchResult(body, 200, "application/json");
 
-  it('returns the result object of a successful response', () => {
-    const out = parseRpcResponse(json('{"jsonrpc":"2.0","id":1,"result":{"tools":[]}}'));
+  it("returns the result object of a successful response", () => {
+    const out = parseRpcResponse(
+      json('{"jsonrpc":"2.0","id":1,"result":{"tools":[]}}'),
+    );
     expect(out).toEqual({ ok: true, value: { tools: [] } });
   });
 
-  it('returns the JSON-RPC error object when the server reports one', () => {
+  it("returns the JSON-RPC error object when the server reports one", () => {
     const out = parseRpcResponse(
-      json('{"jsonrpc":"2.0","id":1,"error":{"code":-32601,"message":"Method not found"}}'),
+      json(
+        '{"jsonrpc":"2.0","id":1,"error":{"code":-32601,"message":"Method not found"}}',
+      ),
     );
     expect(out).toEqual({
       ok: false,
-      error: { code: -32601, message: 'Method not found' },
-      reason: 'JSON-RPC error -32601: Method not found',
+      error: { code: -32601, message: "Method not found" },
+      reason: "JSON-RPC error -32601: Method not found",
     });
   });
 
   // Streamable HTTP may answer with an SSE stream. The final data frame carries
   // the response; earlier frames are progress notifications.
-  it('reads the last data frame of an SSE stream', () => {
+  it("reads the last data frame of an SSE stream", () => {
     const sse = mockFetchResult(
       'event: message\ndata: {"jsonrpc":"2.0","method":"notifications/progress"}\n\n' +
         'event: message\ndata: {"jsonrpc":"2.0","id":1,"result":{"protocolVersion":"2026-07-28"}}\n\n',
       200,
-      'text/event-stream',
+      "text/event-stream",
     );
     expect(parseRpcResponse(sse)).toEqual({
       ok: true,
-      value: { protocolVersion: '2026-07-28' },
+      value: { protocolVersion: "2026-07-28" },
     });
   });
 
-  it('rejects a body that is not JSON', () => {
-    const out = parseRpcResponse(mockFetchResult('<html>nope</html>', 200, 'text/html'));
+  it("rejects a body that is not JSON", () => {
+    const out = parseRpcResponse(
+      mockFetchResult("<html>nope</html>", 200, "text/html"),
+    );
     expect(out).toMatchObject({ ok: false });
-    expect((out as { reason: string }).reason).toContain('not valid JSON-RPC');
+    expect((out as { reason: string }).reason).toContain("not valid JSON-RPC");
   });
 
-  it('rejects an empty body', () => {
-    const out = parseRpcResponse(json(''));
-    expect(out).toMatchObject({ ok: false, reason: 'empty response body' });
+  it("rejects an empty body", () => {
+    const out = parseRpcResponse(json(""));
+    expect(out).toMatchObject({ ok: false, reason: "empty response body" });
   });
 
-  it('rejects a JSON object that is not JSON-RPC 2.0', () => {
+  it("rejects a JSON object that is not JSON-RPC 2.0", () => {
     const out = parseRpcResponse(json('{"result":{"tools":[]}}'));
     expect(out).toMatchObject({ ok: false });
   });
 
-  it('rejects a response whose result is not an object', () => {
-    const out = parseRpcResponse(json('{"jsonrpc":"2.0","id":1,"result":"ok"}'));
+  it("rejects a response whose result is not an object", () => {
+    const out = parseRpcResponse(
+      json('{"jsonrpc":"2.0","id":1,"result":"ok"}'),
+    );
     expect(out).toMatchObject({ ok: false });
   });
 });
 
-describe('postRpc', () => {
+describe("postRpc", () => {
   function recorder(answer: FetchResult) {
     const seen: FetchOptions[] = [];
     const ctx = mockCheckContext([]);
@@ -188,43 +225,56 @@ describe('postRpc', () => {
     return { seen, ctx };
   }
 
-  it('POSTs the framed request with both Streamable HTTP Accept types', async () => {
-    const r = recorder(mockFetchResult('{"jsonrpc":"2.0","id":1,"result":{}}', 200, 'application/json'));
-    const out = await postRpc(r.ctx, 'https://a.test/mcp', 1, 'initialize', { capabilities: {} });
+  it("POSTs the framed request with both Streamable HTTP Accept types", async () => {
+    const r = recorder(
+      mockFetchResult(
+        '{"jsonrpc":"2.0","id":1,"result":{}}',
+        200,
+        "application/json",
+      ),
+    );
+    const out = await postRpc(r.ctx, "https://a.test/mcp", 1, "initialize", {
+      capabilities: {},
+    });
     expect(out).toEqual({ ok: true, value: {} });
     expect(r.seen[0]).toMatchObject({
-      url: 'https://a.test/mcp',
-      method: 'POST',
+      url: "https://a.test/mcp",
+      method: "POST",
       acceptHeader: MCP_ACCEPT,
-      contentType: 'application/json',
+      contentType: "application/json",
     });
-    expect(JSON.parse(r.seen[0]!.body!)).toMatchObject({ method: 'initialize' });
+    expect(JSON.parse(r.seen[0]!.body!)).toMatchObject({
+      method: "initialize",
+    });
   });
 
-  it('refuses a loopback URL without fetching it', async () => {
-    const r = recorder(mockFetchResult('{}', 200));
-    const out = await postRpc(r.ctx, 'http://127.0.0.1/mcp', 1, 'initialize');
-    expect(out).toMatchObject({ ok: false, reason: expect.stringContaining('refused') });
+  it("refuses a loopback URL without fetching it", async () => {
+    const r = recorder(mockFetchResult("{}", 200));
+    const out = await postRpc(r.ctx, "http://127.0.0.1/mcp", 1, "initialize");
+    expect(out).toMatchObject({
+      ok: false,
+      reason: expect.stringContaining("refused"),
+    });
     expect(r.seen).toEqual([]);
   });
 
-  it('reports a non-200 status rather than parsing the body', async () => {
-    const r = recorder(mockFetchResult('nope', 503, 'text/html'));
-    const out = await postRpc(r.ctx, 'https://a.test/mcp', 1, 'initialize');
-    expect(out).toMatchObject({ ok: false, reason: 'HTTP 503' });
+  it("reports a non-200 status rather than parsing the body", async () => {
+    const r = recorder(mockFetchResult("nope", 503, "text/html"));
+    const out = await postRpc(r.ctx, "https://a.test/mcp", 1, "initialize");
+    expect(out).toMatchObject({ ok: false, reason: "HTTP 503" });
   });
 
-  it('reports an unreachable endpoint rather than throwing', async () => {
+  it("reports an unreachable endpoint rather than throwing", async () => {
     const ctx = mockCheckContext([]);
     ctx.fetch = async () => {
-      throw new Error('socket hang up');
+      throw new Error("socket hang up");
     };
-    const out = await postRpc(ctx, 'https://a.test/mcp', 1, 'initialize');
-    expect(out).toMatchObject({ ok: false, reason: 'unreachable' });
+    const out = await postRpc(ctx, "https://a.test/mcp", 1, "initialize");
+    expect(out).toMatchObject({ ok: false, reason: "unreachable" });
   });
 });
 
-describe('mcpFetch and the shared probe cache', () => {
+describe("mcpFetch and the shared probe cache", () => {
   function recorder2(...responses: FetchResult[]) {
     const seen: FetchOptions[] = [];
     const ctx = mockCheckContext([]);
@@ -238,54 +288,72 @@ describe('mcpFetch and the shared probe cache', () => {
     return { ctx, seen };
   }
 
-  it('returns the whole response, including a non-200 status and its headers', async () => {
-    const body = JSON.stringify({ jsonrpc: '2.0', id: 1, error: { code: -32022, message: 'old' } });
-    const res = mockFetchResult(body, 400, 'application/json');
-    res.headers['www-authenticate'] = 'Bearer';
+  it("returns the whole response, including a non-200 status and its headers", async () => {
+    const body = JSON.stringify({
+      jsonrpc: "2.0",
+      id: 1,
+      error: { code: -32022, message: "old" },
+    });
+    const res = mockFetchResult(body, 400, "application/json");
+    res.headers["www-authenticate"] = "Bearer";
     const r = recorder2(res);
-    const out = await mcpFetch(r.ctx, 'https://a.test/mcp', { method: 'POST', body: '{}' });
+    const out = await mcpFetch(r.ctx, "https://a.test/mcp", {
+      method: "POST",
+      body: "{}",
+    });
     expect(out?.status).toBe(400);
-    expect(out?.headers['www-authenticate']).toBe('Bearer');
+    expect(out?.headers["www-authenticate"]).toBe("Bearer");
   });
 
-  it('sends a GET with no JSON content type', async () => {
-    const r = recorder2(mockFetchResult('', 405));
-    await mcpFetch(r.ctx, 'https://a.test/mcp', { method: 'GET' });
-    expect(r.seen[0]).toMatchObject({ method: 'GET', acceptHeader: MCP_ACCEPT });
+  it("sends a GET with no JSON content type", async () => {
+    const r = recorder2(mockFetchResult("", 405));
+    await mcpFetch(r.ctx, "https://a.test/mcp", { method: "GET" });
+    expect(r.seen[0]).toMatchObject({
+      method: "GET",
+      acceptHeader: MCP_ACCEPT,
+    });
     expect(r.seen[0]!.contentType).toBeUndefined();
   });
 
-  it('refuses a private-range URL without fetching it', async () => {
-    const r = recorder2(mockFetchResult('{}', 200));
-    expect(await mcpFetch(r.ctx, 'http://10.0.0.1/mcp')).toBeUndefined();
+  it("refuses a private-range URL without fetching it", async () => {
+    const r = recorder2(mockFetchResult("{}", 200));
+    expect(await mcpFetch(r.ctx, "http://10.0.0.1/mcp")).toBeUndefined();
     expect(r.seen).toEqual([]);
   });
 
-  it('returns undefined rather than throwing when the socket dies', async () => {
+  it("returns undefined rather than throwing when the socket dies", async () => {
     const ctx = mockCheckContext([]);
     ctx.fetch = async () => {
-      throw new Error('socket hang up');
+      throw new Error("socket hang up");
     };
-    expect(await mcpFetch(ctx, 'https://a.test/mcp')).toBeUndefined();
+    expect(await mcpFetch(ctx, "https://a.test/mcp")).toBeUndefined();
   });
 
-  it('issues one discover probe per endpoint per scan', async () => {
-    const r = recorder2(mockFetchResult('{"jsonrpc":"2.0","id":1,"result":{}}', 200));
-    await discoverProbe(r.ctx, 'https://a.test/mcp');
-    await discoverProbe(r.ctx, 'https://a.test/mcp');
+  it("issues one discover probe per endpoint per scan", async () => {
+    const r = recorder2(
+      mockFetchResult('{"jsonrpc":"2.0","id":1,"result":{}}', 200),
+    );
+    await discoverProbe(r.ctx, "https://a.test/mcp");
+    await discoverProbe(r.ctx, "https://a.test/mcp");
     expect(r.seen).toHaveLength(1);
-    expect(r.seen[0]!.headers).toMatchObject({ 'MCP-Protocol-Version': MCP_PROTOCOL_VERSION });
+    expect(r.seen[0]!.headers).toMatchObject({
+      "MCP-Protocol-Version": MCP_PROTOCOL_VERSION,
+    });
     expect(JSON.parse(r.seen[0]!.body!)).toMatchObject({
-      method: 'server/discover',
-      params: { _meta: { 'io.modelcontextprotocol/protocolVersion': MCP_PROTOCOL_VERSION } },
+      method: "server/discover",
+      params: {
+        _meta: {
+          "io.modelcontextprotocol/protocolVersion": MCP_PROTOCOL_VERSION,
+        },
+      },
     });
   });
 
-  it('keeps two scans apart', async () => {
-    const a = recorder2(mockFetchResult('{}', 200));
-    const b = recorder2(mockFetchResult('{}', 200));
-    await discoverProbe(a.ctx, 'https://a.test/mcp');
-    await discoverProbe(b.ctx, 'https://a.test/mcp');
+  it("keeps two scans apart", async () => {
+    const a = recorder2(mockFetchResult("{}", 200));
+    const b = recorder2(mockFetchResult("{}", 200));
+    await discoverProbe(a.ctx, "https://a.test/mcp");
+    await discoverProbe(b.ctx, "https://a.test/mcp");
     expect(a.seen).toHaveLength(1);
     expect(b.seen).toHaveLength(1);
   });

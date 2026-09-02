@@ -7,274 +7,274 @@
 
 // Source: https://www.w3.org/TR/wai-aria-1.1/#states_and_properties
 const ariaAttrs: Record<string, any> = {
-  'aria-activedescendant': {
-    type: 'idref',
-    prop: 'ariaActiveDescendantElement',
-    allowEmpty: true
-  },
-  'aria-atomic': {
-    type: 'boolean',
-    prop: 'ariaAtomic',
-    global: true
-  },
-  'aria-autocomplete': {
-    type: 'nmtoken',
-    prop: 'ariaAutoComplete',
-    values: ['inline', 'list', 'both', 'none']
-  },
-  'aria-braillelabel': {
-    type: 'string',
-    prop: 'ariaBrailleLabel',
+  "aria-activedescendant": {
+    type: "idref",
+    prop: "ariaActiveDescendantElement",
     allowEmpty: true,
-    global: true
   },
-  'aria-brailleroledescription': {
-    type: 'string',
-    prop: 'ariaBrailleRoleDescription',
+  "aria-atomic": {
+    type: "boolean",
+    prop: "ariaAtomic",
+    global: true,
+  },
+  "aria-autocomplete": {
+    type: "nmtoken",
+    prop: "ariaAutoComplete",
+    values: ["inline", "list", "both", "none"],
+  },
+  "aria-braillelabel": {
+    type: "string",
+    prop: "ariaBrailleLabel",
     allowEmpty: true,
-    global: true
+    global: true,
   },
-  'aria-busy': {
-    type: 'boolean',
-    prop: 'ariaBusy',
-    global: true
-  },
-  'aria-checked': {
-    type: 'nmtoken',
-    prop: 'ariaChecked',
-    values: ['false', 'mixed', 'true', 'undefined']
-  },
-  'aria-colcount': {
-    type: 'int',
-    prop: 'ariaColCount',
-    minValue: -1
-  },
-  'aria-colindex': {
-    type: 'int',
-    prop: 'ariaColIndex',
-    minValue: 1
-  },
-  'aria-colspan': {
-    type: 'int',
-    prop: 'ariaColSpan',
-    minValue: 1
-  },
-  'aria-controls': {
-    type: 'idrefs',
-    prop: 'ariaControlsElements',
+  "aria-brailleroledescription": {
+    type: "string",
+    prop: "ariaBrailleRoleDescription",
     allowEmpty: true,
-    global: true
+    global: true,
   },
-  'aria-current': {
-    type: 'nmtoken',
-    prop: 'ariaCurrent',
+  "aria-busy": {
+    type: "boolean",
+    prop: "ariaBusy",
+    global: true,
+  },
+  "aria-checked": {
+    type: "nmtoken",
+    prop: "ariaChecked",
+    values: ["false", "mixed", "true", "undefined"],
+  },
+  "aria-colcount": {
+    type: "int",
+    prop: "ariaColCount",
+    minValue: -1,
+  },
+  "aria-colindex": {
+    type: "int",
+    prop: "ariaColIndex",
+    minValue: 1,
+  },
+  "aria-colspan": {
+    type: "int",
+    prop: "ariaColSpan",
+    minValue: 1,
+  },
+  "aria-controls": {
+    type: "idrefs",
+    prop: "ariaControlsElements",
     allowEmpty: true,
-    values: ['page', 'step', 'location', 'date', 'time', 'true', 'false'],
-    global: true
+    global: true,
   },
-  'aria-describedby': {
-    type: 'idrefs',
-    prop: 'ariaDescribedByElements',
+  "aria-current": {
+    type: "nmtoken",
+    prop: "ariaCurrent",
     allowEmpty: true,
-    global: true
+    values: ["page", "step", "location", "date", "time", "true", "false"],
+    global: true,
   },
-  'aria-description': {
-    type: 'string',
-    prop: 'ariaDescription',
+  "aria-describedby": {
+    type: "idrefs",
+    prop: "ariaDescribedByElements",
     allowEmpty: true,
-    global: true
+    global: true,
   },
-  'aria-details': {
-    type: 'idref',
-    prop: 'ariaDetailsElements',
+  "aria-description": {
+    type: "string",
+    prop: "ariaDescription",
     allowEmpty: true,
-    global: true
+    global: true,
   },
-  'aria-disabled': {
-    type: 'boolean',
-    prop: 'ariaDisabled',
-    global: true
-  },
-  'aria-dropeffect': {
-    type: 'nmtokens',
-    values: ['copy', 'execute', 'link', 'move', 'none', 'popup'],
-    global: true
-  },
-  'aria-errormessage': {
-    type: 'idref',
-    prop: 'ariaErrorMessageElements',
+  "aria-details": {
+    type: "idref",
+    prop: "ariaDetailsElements",
     allowEmpty: true,
-    global: true
+    global: true,
   },
-  'aria-expanded': {
-    type: 'nmtoken',
-    prop: 'ariaExpanded',
-    values: ['true', 'false', 'undefined']
+  "aria-disabled": {
+    type: "boolean",
+    prop: "ariaDisabled",
+    global: true,
   },
-  'aria-flowto': {
-    type: 'idrefs',
-    prop: 'ariaFlowToElements',
+  "aria-dropeffect": {
+    type: "nmtokens",
+    values: ["copy", "execute", "link", "move", "none", "popup"],
+    global: true,
+  },
+  "aria-errormessage": {
+    type: "idref",
+    prop: "ariaErrorMessageElements",
     allowEmpty: true,
-    global: true
+    global: true,
   },
-  'aria-grabbed': {
-    type: 'nmtoken',
-    values: ['true', 'false', 'undefined'],
-    global: true
+  "aria-expanded": {
+    type: "nmtoken",
+    prop: "ariaExpanded",
+    values: ["true", "false", "undefined"],
   },
-  'aria-haspopup': {
-    type: 'nmtoken',
-    prop: 'ariaHasPopup',
+  "aria-flowto": {
+    type: "idrefs",
+    prop: "ariaFlowToElements",
     allowEmpty: true,
-    values: ['true', 'false', 'menu', 'listbox', 'tree', 'grid', 'dialog'],
-    global: true
+    global: true,
   },
-  'aria-hidden': {
-    type: 'nmtoken',
-    prop: 'ariaHidden',
-    values: ['true', 'false', 'undefined'],
-    global: true
+  "aria-grabbed": {
+    type: "nmtoken",
+    values: ["true", "false", "undefined"],
+    global: true,
   },
-  'aria-invalid': {
-    type: 'nmtoken',
-    prop: 'ariaInvalid',
-    values: ['grammar', 'false', 'spelling', 'true'],
-    global: true
-  },
-  'aria-keyshortcuts': {
-    type: 'string',
-    prop: 'ariaKeyShortcuts',
+  "aria-haspopup": {
+    type: "nmtoken",
+    prop: "ariaHasPopup",
     allowEmpty: true,
-    global: true
+    values: ["true", "false", "menu", "listbox", "tree", "grid", "dialog"],
+    global: true,
   },
-  'aria-label': {
-    type: 'string',
-    prop: 'ariaLabel',
+  "aria-hidden": {
+    type: "nmtoken",
+    prop: "ariaHidden",
+    values: ["true", "false", "undefined"],
+    global: true,
+  },
+  "aria-invalid": {
+    type: "nmtoken",
+    prop: "ariaInvalid",
+    values: ["grammar", "false", "spelling", "true"],
+    global: true,
+  },
+  "aria-keyshortcuts": {
+    type: "string",
+    prop: "ariaKeyShortcuts",
     allowEmpty: true,
-    global: true
+    global: true,
   },
-  'aria-labelledby': {
-    type: 'idrefs',
-    prop: 'ariaLabelledByElements',
+  "aria-label": {
+    type: "string",
+    prop: "ariaLabel",
     allowEmpty: true,
-    global: true
+    global: true,
   },
-  'aria-level': {
-    type: 'int',
-    prop: 'ariaLevel',
-    minValue: 1
-  },
-  'aria-live': {
-    type: 'nmtoken',
-    prop: 'ariaLive',
-    values: ['assertive', 'off', 'polite'],
-    global: true
-  },
-  'aria-modal': {
-    type: 'boolean',
-    prop: 'ariaModal'
-  },
-  'aria-multiline': {
-    type: 'boolean',
-    prop: 'ariaMultiline'
-  },
-  'aria-multiselectable': {
-    type: 'boolean',
-    prop: 'ariaMultiSelectable'
-  },
-  'aria-orientation': {
-    type: 'nmtoken',
-    prop: 'ariaOrientation',
-    values: ['horizontal', 'undefined', 'vertical']
-  },
-  'aria-owns': {
-    type: 'idrefs',
-    prop: 'ariaOwnsElements',
+  "aria-labelledby": {
+    type: "idrefs",
+    prop: "ariaLabelledByElements",
     allowEmpty: true,
-    global: true
+    global: true,
   },
-  'aria-placeholder': {
-    type: 'string',
-    prop: 'ariaPlaceholder',
-    allowEmpty: true
+  "aria-level": {
+    type: "int",
+    prop: "ariaLevel",
+    minValue: 1,
   },
-  'aria-posinset': {
-    type: 'int',
-    prop: 'ariaPosInSet',
-    minValue: 1
+  "aria-live": {
+    type: "nmtoken",
+    prop: "ariaLive",
+    values: ["assertive", "off", "polite"],
+    global: true,
   },
-  'aria-pressed': {
-    type: 'nmtoken',
-    prop: 'ariaPressed',
-    values: ['false', 'mixed', 'true', 'undefined']
+  "aria-modal": {
+    type: "boolean",
+    prop: "ariaModal",
   },
-  'aria-readonly': {
-    type: 'boolean',
-    prop: 'ariaReadOnly'
+  "aria-multiline": {
+    type: "boolean",
+    prop: "ariaMultiline",
   },
-  'aria-relevant': {
-    type: 'nmtokens',
-    prop: 'ariaRelevant',
-    values: ['additions', 'all', 'removals', 'text'],
-    global: true
+  "aria-multiselectable": {
+    type: "boolean",
+    prop: "ariaMultiSelectable",
   },
-  'aria-required': {
-    type: 'boolean',
-    prop: 'ariaRequired'
+  "aria-orientation": {
+    type: "nmtoken",
+    prop: "ariaOrientation",
+    values: ["horizontal", "undefined", "vertical"],
   },
-  'aria-roledescription': {
-    type: 'string',
-    prop: 'ariaRoleDescription',
+  "aria-owns": {
+    type: "idrefs",
+    prop: "ariaOwnsElements",
     allowEmpty: true,
-    global: true
+    global: true,
   },
-  'aria-rowcount': {
-    type: 'int',
-    prop: 'ariaRowCount',
-    minValue: -1
+  "aria-placeholder": {
+    type: "string",
+    prop: "ariaPlaceholder",
+    allowEmpty: true,
   },
-  'aria-rowindex': {
-    type: 'int',
-    prop: 'ariaRowIndex',
-    minValue: 1
+  "aria-posinset": {
+    type: "int",
+    prop: "ariaPosInSet",
+    minValue: 1,
   },
-  'aria-rowspan': {
-    type: 'int',
-    prop: 'ariaRowSpan',
-    minValue: 0
+  "aria-pressed": {
+    type: "nmtoken",
+    prop: "ariaPressed",
+    values: ["false", "mixed", "true", "undefined"],
   },
-  'aria-selected': {
-    type: 'nmtoken',
-    prop: 'ariaSelected',
-    values: ['false', 'true', 'undefined']
+  "aria-readonly": {
+    type: "boolean",
+    prop: "ariaReadOnly",
   },
-  'aria-setsize': {
-    type: 'int',
-    prop: 'ariaSetSize',
-    minValue: -1
+  "aria-relevant": {
+    type: "nmtokens",
+    prop: "ariaRelevant",
+    values: ["additions", "all", "removals", "text"],
+    global: true,
   },
-  'aria-sort': {
-    type: 'nmtoken',
-    prop: 'ariaSort',
-    values: ['ascending', 'descending', 'none', 'other']
+  "aria-required": {
+    type: "boolean",
+    prop: "ariaRequired",
   },
-  'aria-valuemax': {
-    type: 'decimal',
-    prop: 'ariaValueMax'
+  "aria-roledescription": {
+    type: "string",
+    prop: "ariaRoleDescription",
+    allowEmpty: true,
+    global: true,
   },
-  'aria-valuemin': {
-    type: 'decimal',
-    prop: 'ariaValueMin'
+  "aria-rowcount": {
+    type: "int",
+    prop: "ariaRowCount",
+    minValue: -1,
   },
-  'aria-valuenow': {
-    type: 'decimal',
-    prop: 'ariaValueNow'
+  "aria-rowindex": {
+    type: "int",
+    prop: "ariaRowIndex",
+    minValue: 1,
   },
-  'aria-valuetext': {
-    type: 'string',
-    prop: 'ariaValueText',
-    allowEmpty: true
-  }
+  "aria-rowspan": {
+    type: "int",
+    prop: "ariaRowSpan",
+    minValue: 0,
+  },
+  "aria-selected": {
+    type: "nmtoken",
+    prop: "ariaSelected",
+    values: ["false", "true", "undefined"],
+  },
+  "aria-setsize": {
+    type: "int",
+    prop: "ariaSetSize",
+    minValue: -1,
+  },
+  "aria-sort": {
+    type: "nmtoken",
+    prop: "ariaSort",
+    values: ["ascending", "descending", "none", "other"],
+  },
+  "aria-valuemax": {
+    type: "decimal",
+    prop: "ariaValueMax",
+  },
+  "aria-valuemin": {
+    type: "decimal",
+    prop: "ariaValueMin",
+  },
+  "aria-valuenow": {
+    type: "decimal",
+    prop: "ariaValueNow",
+  },
+  "aria-valuetext": {
+    type: "string",
+    prop: "ariaValueText",
+    allowEmpty: true,
+  },
 };
 
 export { ariaAttrs };
@@ -299,581 +299,581 @@ export { ariaAttrs };
 */
 const ariaRolesBase: Record<string, any> = {
   alert: {
-    type: 'structure',
+    type: "structure",
     // Spec difference: Aria-expanded removed in 1.2
-    allowedAttrs: ['aria-expanded'],
-    superclassRole: ['section']
+    allowedAttrs: ["aria-expanded"],
+    superclassRole: ["section"],
   },
   alertdialog: {
-    type: 'window',
+    type: "window",
     // Spec difference: Aria-expanded removed in 1.2
-    allowedAttrs: ['aria-expanded', 'aria-modal'],
-    superclassRole: ['alert', 'dialog'],
-    accessibleNameRequired: true
+    allowedAttrs: ["aria-expanded", "aria-modal"],
+    superclassRole: ["alert", "dialog"],
+    accessibleNameRequired: true,
   },
   application: {
     // Note: spec difference
-    type: 'landmark',
+    type: "landmark",
     // Note: aria-expanded is not in the 1.1 spec but is
     // consistently supported in ATs and was added in 1.2
-    allowedAttrs: ['aria-activedescendant', 'aria-expanded'],
-    superclassRole: ['structure'],
-    accessibleNameRequired: true
+    allowedAttrs: ["aria-activedescendant", "aria-expanded"],
+    superclassRole: ["structure"],
+    accessibleNameRequired: true,
   },
   article: {
-    type: 'structure',
+    type: "structure",
     // Spec difference: Aria-expanded removed in 1.2
-    allowedAttrs: ['aria-posinset', 'aria-setsize', 'aria-expanded'],
-    superclassRole: ['document']
+    allowedAttrs: ["aria-posinset", "aria-setsize", "aria-expanded"],
+    superclassRole: ["document"],
   },
   banner: {
-    type: 'landmark',
+    type: "landmark",
     // Spec difference: Aria-expanded removed in 1.2
-    allowedAttrs: ['aria-expanded'],
-    superclassRole: ['landmark']
+    allowedAttrs: ["aria-expanded"],
+    superclassRole: ["landmark"],
   },
   blockquote: {
-    type: 'structure',
-    superclassRole: ['section']
+    type: "structure",
+    superclassRole: ["section"],
   },
   button: {
-    type: 'widget',
-    allowedAttrs: ['aria-expanded', 'aria-pressed'],
-    superclassRole: ['command'],
+    type: "widget",
+    allowedAttrs: ["aria-expanded", "aria-pressed"],
+    superclassRole: ["command"],
     accessibleNameRequired: true,
     nameFromContent: true,
-    childrenPresentational: true
+    childrenPresentational: true,
   },
   caption: {
-    type: 'structure',
-    requiredContext: ['figure', 'table', 'grid', 'treegrid'],
-    superclassRole: ['section'],
-    prohibitedAttrs: ['aria-label', 'aria-labelledby']
+    type: "structure",
+    requiredContext: ["figure", "table", "grid", "treegrid"],
+    superclassRole: ["section"],
+    prohibitedAttrs: ["aria-label", "aria-labelledby"],
   },
   cell: {
-    type: 'structure',
-    requiredContext: ['row'],
+    type: "structure",
+    requiredContext: ["row"],
     // Spec difference: Aria-expanded removed in 1.2
     allowedAttrs: [
-      'aria-colindex',
-      'aria-colspan',
-      'aria-rowindex',
-      'aria-rowspan',
-      'aria-expanded'
+      "aria-colindex",
+      "aria-colspan",
+      "aria-rowindex",
+      "aria-rowspan",
+      "aria-expanded",
     ],
-    superclassRole: ['section'],
-    nameFromContent: true
+    superclassRole: ["section"],
+    nameFromContent: true,
   },
   checkbox: {
-    type: 'widget',
+    type: "widget",
     // Note: aria-required is not in the 1.1 spec but is
     // consistently supported in ATs and was added in 1.2
-    requiredAttrs: ['aria-checked'],
-    allowedAttrs: ['aria-readonly', 'aria-expanded', 'aria-required'],
-    superclassRole: ['input'],
+    requiredAttrs: ["aria-checked"],
+    allowedAttrs: ["aria-readonly", "aria-expanded", "aria-required"],
+    superclassRole: ["input"],
     accessibleNameRequired: true,
     nameFromContent: true,
-    childrenPresentational: true
+    childrenPresentational: true,
   },
   code: {
-    type: 'structure',
-    superclassRole: ['section'],
-    prohibitedAttrs: ['aria-label', 'aria-labelledby']
+    type: "structure",
+    superclassRole: ["section"],
+    prohibitedAttrs: ["aria-label", "aria-labelledby"],
   },
   columnheader: {
-    type: 'structure',
-    requiredContext: ['row'],
+    type: "structure",
+    requiredContext: ["row"],
     // Spec difference: Aria-expanded removed in 1.2
     allowedAttrs: [
-      'aria-sort',
-      'aria-colindex',
-      'aria-colspan',
-      'aria-expanded',
-      'aria-readonly',
-      'aria-required',
-      'aria-rowindex',
-      'aria-rowspan',
-      'aria-selected'
+      "aria-sort",
+      "aria-colindex",
+      "aria-colspan",
+      "aria-expanded",
+      "aria-readonly",
+      "aria-required",
+      "aria-rowindex",
+      "aria-rowspan",
+      "aria-selected",
     ],
-    superclassRole: ['cell', 'gridcell', 'sectionhead'],
+    superclassRole: ["cell", "gridcell", "sectionhead"],
     // Note: spec difference
     accessibleNameRequired: false,
-    nameFromContent: true
+    nameFromContent: true,
   },
   combobox: {
     // Note: spec difference
-    type: 'widget',
-    requiredAttrs: ['aria-expanded', 'aria-controls'],
+    type: "widget",
+    requiredAttrs: ["aria-expanded", "aria-controls"],
     allowedAttrs: [
-      'aria-owns',
-      'aria-autocomplete',
-      'aria-readonly',
-      'aria-required',
-      'aria-activedescendant',
-      'aria-orientation'
+      "aria-owns",
+      "aria-autocomplete",
+      "aria-readonly",
+      "aria-required",
+      "aria-activedescendant",
+      "aria-orientation",
     ],
-    superclassRole: ['select'],
-    accessibleNameRequired: true
+    superclassRole: ["select"],
+    accessibleNameRequired: true,
   },
   command: {
-    type: 'abstract',
-    superclassRole: ['widget']
+    type: "abstract",
+    superclassRole: ["widget"],
   },
   complementary: {
-    type: 'landmark',
+    type: "landmark",
     // Spec difference: Aria-expanded removed in 1.2
-    allowedAttrs: ['aria-expanded'],
-    superclassRole: ['landmark']
+    allowedAttrs: ["aria-expanded"],
+    superclassRole: ["landmark"],
   },
   composite: {
-    type: 'abstract',
-    superclassRole: ['widget']
+    type: "abstract",
+    superclassRole: ["widget"],
   },
   contentinfo: {
-    type: 'landmark',
+    type: "landmark",
     // Spec difference: Aria-expanded removed in 1.2
-    allowedAttrs: ['aria-expanded'],
-    superclassRole: ['landmark']
+    allowedAttrs: ["aria-expanded"],
+    superclassRole: ["landmark"],
   },
   comment: {
-    type: 'structure',
-    allowedAttrs: ['aria-level', 'aria-posinset', 'aria-setsize'],
-    superclassRole: ['article']
+    type: "structure",
+    allowedAttrs: ["aria-level", "aria-posinset", "aria-setsize"],
+    superclassRole: ["article"],
   },
   definition: {
-    type: 'structure',
+    type: "structure",
     // Spec difference: Aria-expanded removed in 1.2
-    allowedAttrs: ['aria-expanded'],
-    superclassRole: ['section']
+    allowedAttrs: ["aria-expanded"],
+    superclassRole: ["section"],
   },
   deletion: {
-    type: 'structure',
-    superclassRole: ['section'],
-    prohibitedAttrs: ['aria-label', 'aria-labelledby']
+    type: "structure",
+    superclassRole: ["section"],
+    prohibitedAttrs: ["aria-label", "aria-labelledby"],
   },
   dialog: {
-    type: 'window',
+    type: "window",
     // Spec difference: Aria-expanded removed in 1.2
-    allowedAttrs: ['aria-expanded', 'aria-modal'],
-    superclassRole: ['window'],
-    accessibleNameRequired: true
+    allowedAttrs: ["aria-expanded", "aria-modal"],
+    superclassRole: ["window"],
+    accessibleNameRequired: true,
   },
   directory: {
-    type: 'structure',
+    type: "structure",
     deprecated: true,
     // Spec difference: Aria-expanded removed in 1.2
-    allowedAttrs: ['aria-expanded'],
-    superclassRole: ['list'],
+    allowedAttrs: ["aria-expanded"],
+    superclassRole: ["list"],
     // Note: spec difference
-    nameFromContent: true
+    nameFromContent: true,
   },
   document: {
-    type: 'structure',
+    type: "structure",
     // Spec difference: Aria-expanded removed in 1.2
-    allowedAttrs: ['aria-expanded'],
-    superclassRole: ['structure']
+    allowedAttrs: ["aria-expanded"],
+    superclassRole: ["structure"],
   },
   emphasis: {
-    type: 'structure',
-    superclassRole: ['section'],
-    prohibitedAttrs: ['aria-label', 'aria-labelledby']
+    type: "structure",
+    superclassRole: ["section"],
+    prohibitedAttrs: ["aria-label", "aria-labelledby"],
   },
   feed: {
-    type: 'structure',
-    requiredOwned: ['article'],
+    type: "structure",
+    requiredOwned: ["article"],
     // Spec difference: Aria-expanded removed in 1.2
-    allowedAttrs: ['aria-expanded'],
-    superclassRole: ['list']
+    allowedAttrs: ["aria-expanded"],
+    superclassRole: ["list"],
   },
   figure: {
-    type: 'structure',
+    type: "structure",
     // Spec difference: Aria-expanded removed in 1.2
-    allowedAttrs: ['aria-expanded'],
-    superclassRole: ['section'],
+    allowedAttrs: ["aria-expanded"],
+    superclassRole: ["section"],
     // Note: spec difference
-    nameFromContent: true
+    nameFromContent: true,
   },
   form: {
-    type: 'landmark',
+    type: "landmark",
     // Spec difference: Aria-expanded removed in 1.2
-    allowedAttrs: ['aria-expanded'],
-    superclassRole: ['landmark']
+    allowedAttrs: ["aria-expanded"],
+    superclassRole: ["landmark"],
   },
   grid: {
-    type: 'composite',
-    requiredOwned: ['rowgroup', 'row'],
+    type: "composite",
+    requiredOwned: ["rowgroup", "row"],
     // Spec difference: Aria-expanded removed in 1.2
     allowedAttrs: [
-      'aria-level',
-      'aria-multiselectable',
-      'aria-readonly',
-      'aria-activedescendant',
-      'aria-colcount',
-      'aria-expanded',
-      'aria-rowcount'
+      "aria-level",
+      "aria-multiselectable",
+      "aria-readonly",
+      "aria-activedescendant",
+      "aria-colcount",
+      "aria-expanded",
+      "aria-rowcount",
     ],
-    superclassRole: ['composite', 'table'],
-    // Note: spec difference
-    accessibleNameRequired: false
-  },
-  gridcell: {
-    type: 'widget',
-    requiredContext: ['row'],
-    allowedAttrs: [
-      'aria-readonly',
-      'aria-required',
-      'aria-selected',
-      'aria-colindex',
-      'aria-colspan',
-      'aria-expanded',
-      'aria-rowindex',
-      'aria-rowspan'
-    ],
-    superclassRole: ['cell', 'widget'],
-    nameFromContent: true
-  },
-  group: {
-    type: 'structure',
-    // Spec difference: Aria-expanded removed in 1.2
-    allowedAttrs: ['aria-activedescendant', 'aria-expanded'],
-    superclassRole: ['section']
-  },
-  heading: {
-    type: 'structure',
-    requiredAttrs: ['aria-level'],
-    // Spec difference: Aria-expanded removed in 1.2
-    allowedAttrs: ['aria-expanded'],
-    superclassRole: ['sectionhead'],
+    superclassRole: ["composite", "table"],
     // Note: spec difference
     accessibleNameRequired: false,
-    nameFromContent: true
+  },
+  gridcell: {
+    type: "widget",
+    requiredContext: ["row"],
+    allowedAttrs: [
+      "aria-readonly",
+      "aria-required",
+      "aria-selected",
+      "aria-colindex",
+      "aria-colspan",
+      "aria-expanded",
+      "aria-rowindex",
+      "aria-rowspan",
+    ],
+    superclassRole: ["cell", "widget"],
+    nameFromContent: true,
+  },
+  group: {
+    type: "structure",
+    // Spec difference: Aria-expanded removed in 1.2
+    allowedAttrs: ["aria-activedescendant", "aria-expanded"],
+    superclassRole: ["section"],
+  },
+  heading: {
+    type: "structure",
+    requiredAttrs: ["aria-level"],
+    // Spec difference: Aria-expanded removed in 1.2
+    allowedAttrs: ["aria-expanded"],
+    superclassRole: ["sectionhead"],
+    // Note: spec difference
+    accessibleNameRequired: false,
+    nameFromContent: true,
   },
   img: {
-    type: 'structure',
+    type: "structure",
     // Spec difference: Aria-expanded removed in 1.2
-    allowedAttrs: ['aria-expanded'],
-    superclassRole: ['section'],
+    allowedAttrs: ["aria-expanded"],
+    superclassRole: ["section"],
     accessibleNameRequired: true,
-    childrenPresentational: true
+    childrenPresentational: true,
   },
   input: {
-    type: 'abstract',
-    superclassRole: ['widget']
+    type: "abstract",
+    superclassRole: ["widget"],
   },
   insertion: {
-    type: 'structure',
-    superclassRole: ['section'],
-    prohibitedAttrs: ['aria-label', 'aria-labelledby']
+    type: "structure",
+    superclassRole: ["section"],
+    prohibitedAttrs: ["aria-label", "aria-labelledby"],
   },
   landmark: {
-    type: 'abstract',
-    superclassRole: ['section']
+    type: "abstract",
+    superclassRole: ["section"],
   },
   link: {
-    type: 'widget',
-    allowedAttrs: ['aria-expanded'],
-    superclassRole: ['command'],
+    type: "widget",
+    allowedAttrs: ["aria-expanded"],
+    superclassRole: ["command"],
     accessibleNameRequired: true,
-    nameFromContent: true
+    nameFromContent: true,
   },
   list: {
-    type: 'structure',
-    requiredOwned: ['listitem'],
+    type: "structure",
+    requiredOwned: ["listitem"],
     // Spec difference: Aria-expanded removed in 1.2
-    allowedAttrs: ['aria-expanded'],
-    superclassRole: ['section']
+    allowedAttrs: ["aria-expanded"],
+    superclassRole: ["section"],
   },
   listbox: {
     // Note: spec difference
-    type: 'widget',
-    requiredOwned: ['group', 'option'],
+    type: "widget",
+    requiredOwned: ["group", "option"],
     allowedAttrs: [
-      'aria-multiselectable',
-      'aria-readonly',
-      'aria-required',
-      'aria-activedescendant',
-      'aria-expanded',
-      'aria-orientation'
+      "aria-multiselectable",
+      "aria-readonly",
+      "aria-required",
+      "aria-activedescendant",
+      "aria-expanded",
+      "aria-orientation",
     ],
-    superclassRole: ['select'],
-    accessibleNameRequired: true
+    superclassRole: ["select"],
+    accessibleNameRequired: true,
   },
   listitem: {
-    type: 'structure',
-    requiredContext: ['list'],
+    type: "structure",
+    requiredContext: ["list"],
     allowedAttrs: [
-      'aria-level',
-      'aria-posinset',
-      'aria-setsize',
-      'aria-expanded'
+      "aria-level",
+      "aria-posinset",
+      "aria-setsize",
+      "aria-expanded",
     ],
-    superclassRole: ['section'],
+    superclassRole: ["section"],
     // Note: spec difference
-    nameFromContent: true
+    nameFromContent: true,
   },
   log: {
-    type: 'structure',
+    type: "structure",
     // Spec difference: Aria-expanded removed in 1.2
-    allowedAttrs: ['aria-expanded'],
-    superclassRole: ['section']
+    allowedAttrs: ["aria-expanded"],
+    superclassRole: ["section"],
   },
   main: {
-    type: 'landmark',
+    type: "landmark",
     // Spec difference: Aria-expanded removed in 1.2
-    allowedAttrs: ['aria-expanded'],
-    superclassRole: ['landmark']
+    allowedAttrs: ["aria-expanded"],
+    superclassRole: ["landmark"],
   },
   marquee: {
-    type: 'structure',
+    type: "structure",
     // Spec difference: Aria-expanded removed in 1.2
-    allowedAttrs: ['aria-expanded'],
-    superclassRole: ['section']
+    allowedAttrs: ["aria-expanded"],
+    superclassRole: ["section"],
   },
   math: {
-    type: 'structure',
+    type: "structure",
     // Spec difference: Aria-expanded removed in 1.2
-    allowedAttrs: ['aria-expanded'],
-    superclassRole: ['section'],
-    childrenPresentational: true
+    allowedAttrs: ["aria-expanded"],
+    superclassRole: ["section"],
+    childrenPresentational: true,
   },
   menu: {
-    type: 'composite',
+    type: "composite",
     // Note: spec difference (menu & separator as required owned)
     requiredOwned: [
-      'group',
-      'menuitemradio',
-      'menuitem',
-      'menuitemcheckbox',
-      'menu',
-      'separator'
+      "group",
+      "menuitemradio",
+      "menuitem",
+      "menuitemcheckbox",
+      "menu",
+      "separator",
     ],
     // Spec difference: Aria-expanded removed in 1.2
     allowedAttrs: [
-      'aria-activedescendant',
-      'aria-expanded',
-      'aria-orientation'
+      "aria-activedescendant",
+      "aria-expanded",
+      "aria-orientation",
     ],
-    superclassRole: ['select']
+    superclassRole: ["select"],
   },
   menubar: {
-    type: 'composite',
+    type: "composite",
     // Note: spec difference (menu & separator as required owned)
     requiredOwned: [
-      'group',
-      'menuitemradio',
-      'menuitem',
-      'menuitemcheckbox',
-      'menu',
-      'separator'
+      "group",
+      "menuitemradio",
+      "menuitem",
+      "menuitemcheckbox",
+      "menu",
+      "separator",
     ],
     // Spec difference: Aria-expanded removed in 1.2
     allowedAttrs: [
-      'aria-activedescendant',
-      'aria-expanded',
-      'aria-orientation'
+      "aria-activedescendant",
+      "aria-expanded",
+      "aria-orientation",
     ],
-    superclassRole: ['menu']
+    superclassRole: ["menu"],
   },
   menuitem: {
-    type: 'widget',
-    requiredContext: ['menu', 'menubar', 'group'],
+    type: "widget",
+    requiredContext: ["menu", "menubar", "group"],
     // Note: aria-expanded is not in the 1.1 spec but is
     // consistently supported in ATs and was added in 1.2
-    allowedAttrs: ['aria-posinset', 'aria-setsize', 'aria-expanded'],
-    superclassRole: ['command'],
+    allowedAttrs: ["aria-posinset", "aria-setsize", "aria-expanded"],
+    superclassRole: ["command"],
     accessibleNameRequired: true,
-    nameFromContent: true
+    nameFromContent: true,
   },
   menuitemcheckbox: {
-    type: 'widget',
-    requiredContext: ['menu', 'menubar', 'group'],
-    requiredAttrs: ['aria-checked'],
+    type: "widget",
+    requiredContext: ["menu", "menubar", "group"],
+    requiredAttrs: ["aria-checked"],
     allowedAttrs: [
-      'aria-expanded',
-      'aria-posinset',
-      'aria-readonly',
-      'aria-setsize'
+      "aria-expanded",
+      "aria-posinset",
+      "aria-readonly",
+      "aria-setsize",
     ],
-    superclassRole: ['checkbox', 'menuitem'],
+    superclassRole: ["checkbox", "menuitem"],
     accessibleNameRequired: true,
     nameFromContent: true,
-    childrenPresentational: true
+    childrenPresentational: true,
   },
   menuitemradio: {
-    type: 'widget',
-    requiredContext: ['menu', 'menubar', 'group'],
-    requiredAttrs: ['aria-checked'],
+    type: "widget",
+    requiredContext: ["menu", "menubar", "group"],
+    requiredAttrs: ["aria-checked"],
     allowedAttrs: [
-      'aria-expanded',
-      'aria-posinset',
-      'aria-readonly',
-      'aria-setsize'
+      "aria-expanded",
+      "aria-posinset",
+      "aria-readonly",
+      "aria-setsize",
     ],
-    superclassRole: ['menuitemcheckbox', 'radio'],
+    superclassRole: ["menuitemcheckbox", "radio"],
     accessibleNameRequired: true,
     nameFromContent: true,
-    childrenPresentational: true
+    childrenPresentational: true,
   },
   meter: {
-    type: 'structure',
-    requiredAttrs: ['aria-valuenow'],
-    allowedAttrs: ['aria-valuemax', 'aria-valuemin', 'aria-valuetext'],
-    superclassRole: ['range'],
+    type: "structure",
+    requiredAttrs: ["aria-valuenow"],
+    allowedAttrs: ["aria-valuemax", "aria-valuemin", "aria-valuetext"],
+    superclassRole: ["range"],
     accessibleNameRequired: true,
-    childrenPresentational: true
+    childrenPresentational: true,
   },
   mark: {
-    type: 'structure',
-    superclassRole: ['section'],
-    prohibitedAttrs: ['aria-label', 'aria-labelledby']
+    type: "structure",
+    superclassRole: ["section"],
+    prohibitedAttrs: ["aria-label", "aria-labelledby"],
   },
   navigation: {
-    type: 'landmark',
+    type: "landmark",
     // Spec difference: Aria-expanded removed in 1.2
-    allowedAttrs: ['aria-expanded'],
-    superclassRole: ['landmark']
+    allowedAttrs: ["aria-expanded"],
+    superclassRole: ["landmark"],
   },
   none: {
-    type: 'structure',
-    superclassRole: ['structure'],
-    prohibitedAttrs: ['aria-label', 'aria-labelledby']
+    type: "structure",
+    superclassRole: ["structure"],
+    prohibitedAttrs: ["aria-label", "aria-labelledby"],
   },
   note: {
-    type: 'structure',
+    type: "structure",
     // Spec difference: Aria-expanded removed in 1.2
-    allowedAttrs: ['aria-expanded'],
-    superclassRole: ['section']
+    allowedAttrs: ["aria-expanded"],
+    superclassRole: ["section"],
   },
   option: {
-    type: 'widget',
-    requiredContext: ['group', 'listbox'],
+    type: "widget",
+    requiredContext: ["group", "listbox"],
     // Note: since the option role has an implicit
     // aria-selected value it is not required to be added by
     // the user
     allowedAttrs: [
-      'aria-selected',
-      'aria-checked',
-      'aria-posinset',
-      'aria-setsize'
+      "aria-selected",
+      "aria-checked",
+      "aria-posinset",
+      "aria-setsize",
     ],
-    superclassRole: ['input'],
+    superclassRole: ["input"],
     accessibleNameRequired: true,
     nameFromContent: true,
-    childrenPresentational: true
+    childrenPresentational: true,
   },
   paragraph: {
-    type: 'structure',
-    superclassRole: ['section'],
-    prohibitedAttrs: ['aria-label', 'aria-labelledby']
+    type: "structure",
+    superclassRole: ["section"],
+    prohibitedAttrs: ["aria-label", "aria-labelledby"],
   },
   presentation: {
-    type: 'structure',
-    superclassRole: ['structure'],
-    prohibitedAttrs: ['aria-label', 'aria-labelledby']
+    type: "structure",
+    superclassRole: ["structure"],
+    prohibitedAttrs: ["aria-label", "aria-labelledby"],
   },
   progressbar: {
-    type: 'widget',
+    type: "widget",
     // Spec difference: Aria-expanded removed in 1.2
     allowedAttrs: [
-      'aria-expanded',
-      'aria-valuemax',
-      'aria-valuemin',
-      'aria-valuenow',
-      'aria-valuetext'
+      "aria-expanded",
+      "aria-valuemax",
+      "aria-valuemin",
+      "aria-valuenow",
+      "aria-valuetext",
     ],
-    superclassRole: ['range'],
+    superclassRole: ["range"],
     accessibleNameRequired: true,
-    childrenPresentational: true
+    childrenPresentational: true,
   },
   radio: {
-    type: 'widget',
+    type: "widget",
     // Note: aria-required is not in the 1.1 or 1.2 specs but is
     // consistently supported in ATs on the individual radio element
-    requiredAttrs: ['aria-checked'],
-    allowedAttrs: ['aria-posinset', 'aria-setsize', 'aria-required'],
-    superclassRole: ['input'],
+    requiredAttrs: ["aria-checked"],
+    allowedAttrs: ["aria-posinset", "aria-setsize", "aria-required"],
+    superclassRole: ["input"],
     accessibleNameRequired: true,
     nameFromContent: true,
-    childrenPresentational: true
+    childrenPresentational: true,
   },
   radiogroup: {
-    type: 'composite',
+    type: "composite",
     // Note: spec difference (no required owned)
     // Spec difference: Aria-expanded removed in 1.2
     allowedAttrs: [
-      'aria-readonly',
-      'aria-required',
-      'aria-activedescendant',
-      'aria-expanded',
-      'aria-orientation'
+      "aria-readonly",
+      "aria-required",
+      "aria-activedescendant",
+      "aria-expanded",
+      "aria-orientation",
     ],
-    superclassRole: ['select'],
-    // Note: spec difference
-    accessibleNameRequired: false
-  },
-  range: {
-    type: 'abstract',
-    superclassRole: ['widget']
-  },
-  region: {
-    type: 'landmark',
-    // Spec difference: Aria-expanded removed in 1.2
-    allowedAttrs: ['aria-expanded'],
-    superclassRole: ['landmark'],
-    // Note: spec difference
-    accessibleNameRequired: false
-  },
-  roletype: {
-    type: 'abstract',
-    superclassRole: []
-  },
-  row: {
-    type: 'structure',
-    requiredContext: ['grid', 'rowgroup', 'table', 'treegrid'],
-    requiredOwned: ['cell', 'columnheader', 'gridcell', 'rowheader'],
-    allowedAttrs: [
-      'aria-colindex',
-      'aria-level',
-      'aria-rowindex',
-      'aria-selected',
-      'aria-activedescendant',
-      'aria-expanded',
-      'aria-posinset',
-      'aria-setsize'
-    ],
-    superclassRole: ['group', 'widget'],
-    nameFromContent: true
-  },
-  rowgroup: {
-    type: 'structure',
-    requiredContext: ['grid', 'table', 'treegrid'],
-    requiredOwned: ['row'],
-    superclassRole: ['structure'],
-    nameFromContent: true
-  },
-  rowheader: {
-    type: 'structure',
-    requiredContext: ['row'],
-    // Spec difference: Aria-expanded removed in 1.2
-    allowedAttrs: [
-      'aria-sort',
-      'aria-colindex',
-      'aria-colspan',
-      'aria-expanded',
-      'aria-readonly',
-      'aria-required',
-      'aria-rowindex',
-      'aria-rowspan',
-      'aria-selected'
-    ],
-    superclassRole: ['cell', 'gridcell', 'sectionhead'],
+    superclassRole: ["select"],
     // Note: spec difference
     accessibleNameRequired: false,
-    nameFromContent: true
+  },
+  range: {
+    type: "abstract",
+    superclassRole: ["widget"],
+  },
+  region: {
+    type: "landmark",
+    // Spec difference: Aria-expanded removed in 1.2
+    allowedAttrs: ["aria-expanded"],
+    superclassRole: ["landmark"],
+    // Note: spec difference
+    accessibleNameRequired: false,
+  },
+  roletype: {
+    type: "abstract",
+    superclassRole: [],
+  },
+  row: {
+    type: "structure",
+    requiredContext: ["grid", "rowgroup", "table", "treegrid"],
+    requiredOwned: ["cell", "columnheader", "gridcell", "rowheader"],
+    allowedAttrs: [
+      "aria-colindex",
+      "aria-level",
+      "aria-rowindex",
+      "aria-selected",
+      "aria-activedescendant",
+      "aria-expanded",
+      "aria-posinset",
+      "aria-setsize",
+    ],
+    superclassRole: ["group", "widget"],
+    nameFromContent: true,
+  },
+  rowgroup: {
+    type: "structure",
+    requiredContext: ["grid", "table", "treegrid"],
+    requiredOwned: ["row"],
+    superclassRole: ["structure"],
+    nameFromContent: true,
+  },
+  rowheader: {
+    type: "structure",
+    requiredContext: ["row"],
+    // Spec difference: Aria-expanded removed in 1.2
+    allowedAttrs: [
+      "aria-sort",
+      "aria-colindex",
+      "aria-colspan",
+      "aria-expanded",
+      "aria-readonly",
+      "aria-required",
+      "aria-rowindex",
+      "aria-rowspan",
+      "aria-selected",
+    ],
+    superclassRole: ["cell", "gridcell", "sectionhead"],
+    // Note: spec difference
+    accessibleNameRequired: false,
+    nameFromContent: true,
   },
   scrollbar: {
-    type: 'widget',
-    requiredAttrs: ['aria-valuenow'],
+    type: "widget",
+    requiredAttrs: ["aria-valuenow"],
     // Note: since the scrollbar role has implicit
     // aria-orientation, aria-valuemax, aria-valuemin values it
     // is not required to be added by the user
@@ -882,544 +882,544 @@ const ariaRolesBase: Record<string, any> = {
     // make it a required attribute even though it is required in the
     // spec
     allowedAttrs: [
-      'aria-controls',
-      'aria-orientation',
-      'aria-valuemax',
-      'aria-valuemin',
-      'aria-valuetext'
+      "aria-controls",
+      "aria-orientation",
+      "aria-valuemax",
+      "aria-valuemin",
+      "aria-valuetext",
     ],
-    superclassRole: ['range'],
-    childrenPresentational: true
+    superclassRole: ["range"],
+    childrenPresentational: true,
   },
   search: {
-    type: 'landmark',
+    type: "landmark",
     // Spec difference: Aria-expanded removed in 1.2
-    allowedAttrs: ['aria-expanded'],
-    superclassRole: ['landmark']
+    allowedAttrs: ["aria-expanded"],
+    superclassRole: ["landmark"],
   },
   searchbox: {
-    type: 'widget',
+    type: "widget",
     allowedAttrs: [
-      'aria-activedescendant',
-      'aria-autocomplete',
-      'aria-multiline',
-      'aria-placeholder',
-      'aria-readonly',
-      'aria-required'
+      "aria-activedescendant",
+      "aria-autocomplete",
+      "aria-multiline",
+      "aria-placeholder",
+      "aria-readonly",
+      "aria-required",
     ],
-    superclassRole: ['textbox'],
-    accessibleNameRequired: true
+    superclassRole: ["textbox"],
+    accessibleNameRequired: true,
   },
   section: {
-    type: 'abstract',
-    superclassRole: ['structure'],
+    type: "abstract",
+    superclassRole: ["structure"],
     // Note: spec difference
-    nameFromContent: true
+    nameFromContent: true,
   },
   sectionhead: {
-    type: 'abstract',
-    superclassRole: ['structure'],
+    type: "abstract",
+    superclassRole: ["structure"],
     // Note: spec difference
-    nameFromContent: true
+    nameFromContent: true,
   },
   select: {
-    type: 'abstract',
-    superclassRole: ['composite', 'group']
+    type: "abstract",
+    superclassRole: ["composite", "group"],
   },
   separator: {
-    type: 'structure',
-    requiredAttrs: ['aria-valuenow'],
+    type: "structure",
+    requiredAttrs: ["aria-valuenow"],
     // Note: since the separator role has implicit
     // aria-orientation, aria-valuemax, aria-valuemin, and
     // values it is not required to be added by
     // the user
     allowedAttrs: [
-      'aria-valuemax',
-      'aria-valuemin',
-      'aria-orientation',
-      'aria-valuetext'
+      "aria-valuemax",
+      "aria-valuemin",
+      "aria-orientation",
+      "aria-valuetext",
     ],
-    superclassRole: ['structure', 'widget'],
-    childrenPresentational: true
+    superclassRole: ["structure", "widget"],
+    childrenPresentational: true,
   },
   slider: {
-    type: 'widget',
-    requiredAttrs: ['aria-valuenow'],
+    type: "widget",
+    requiredAttrs: ["aria-valuenow"],
     // Note: since the slider role has implicit
     // aria-orientation, aria-valuemax, aria-valuemin values it
     // is not required to be added by the user
     // Note: aria-required is not in the 1.1 or 1.2 specs but is
     // consistently supported in ATs
     allowedAttrs: [
-      'aria-valuemax',
-      'aria-valuemin',
-      'aria-orientation',
-      'aria-readonly',
-      'aria-required',
-      'aria-valuetext'
+      "aria-valuemax",
+      "aria-valuemin",
+      "aria-orientation",
+      "aria-readonly",
+      "aria-required",
+      "aria-valuetext",
     ],
-    superclassRole: ['input', 'range'],
+    superclassRole: ["input", "range"],
     accessibleNameRequired: true,
-    childrenPresentational: true
+    childrenPresentational: true,
   },
   spinbutton: {
-    type: 'widget',
+    type: "widget",
     // Note: since the spinbutton role has implicit
     // aria-valuenow, aria-valuemax, aria-valuemin values it
     // is not required to be added by the user
     allowedAttrs: [
-      'aria-valuemax',
-      'aria-valuemin',
-      'aria-readonly',
-      'aria-required',
-      'aria-activedescendant',
-      'aria-valuetext',
-      'aria-valuenow'
+      "aria-valuemax",
+      "aria-valuemin",
+      "aria-readonly",
+      "aria-required",
+      "aria-activedescendant",
+      "aria-valuetext",
+      "aria-valuenow",
     ],
-    superclassRole: ['composite', 'input', 'range'],
-    accessibleNameRequired: true
+    superclassRole: ["composite", "input", "range"],
+    accessibleNameRequired: true,
   },
   status: {
-    type: 'structure',
+    type: "structure",
     // Spec difference: Aria-expanded removed in 1.2
-    allowedAttrs: ['aria-expanded'],
-    superclassRole: ['section']
+    allowedAttrs: ["aria-expanded"],
+    superclassRole: ["section"],
   },
   strong: {
-    type: 'structure',
-    superclassRole: ['section'],
-    prohibitedAttrs: ['aria-label', 'aria-labelledby']
+    type: "structure",
+    superclassRole: ["section"],
+    prohibitedAttrs: ["aria-label", "aria-labelledby"],
   },
   structure: {
-    type: 'abstract',
-    superclassRole: ['roletype']
+    type: "abstract",
+    superclassRole: ["roletype"],
   },
   subscript: {
-    type: 'structure',
-    superclassRole: ['section'],
-    prohibitedAttrs: ['aria-label', 'aria-labelledby']
+    type: "structure",
+    superclassRole: ["section"],
+    prohibitedAttrs: ["aria-label", "aria-labelledby"],
   },
   superscript: {
-    type: 'structure',
-    superclassRole: ['section'],
-    prohibitedAttrs: ['aria-label', 'aria-labelledby']
+    type: "structure",
+    superclassRole: ["section"],
+    prohibitedAttrs: ["aria-label", "aria-labelledby"],
   },
   switch: {
-    type: 'widget',
-    requiredAttrs: ['aria-checked'],
-    allowedAttrs: ['aria-expanded', 'aria-readonly', 'aria-required'],
-    superclassRole: ['checkbox'],
+    type: "widget",
+    requiredAttrs: ["aria-checked"],
+    allowedAttrs: ["aria-expanded", "aria-readonly", "aria-required"],
+    superclassRole: ["checkbox"],
     accessibleNameRequired: true,
     nameFromContent: true,
-    childrenPresentational: true
+    childrenPresentational: true,
   },
   suggestion: {
-    type: 'structure',
-    requiredOwned: ['insertion', 'deletion'],
-    superclassRole: ['section'],
-    prohibitedAttrs: ['aria-label', 'aria-labelledby']
+    type: "structure",
+    requiredOwned: ["insertion", "deletion"],
+    superclassRole: ["section"],
+    prohibitedAttrs: ["aria-label", "aria-labelledby"],
   },
   tab: {
-    type: 'widget',
-    requiredContext: ['tablist'],
+    type: "widget",
+    requiredContext: ["tablist"],
     // Spec difference: Aria-expanded removed in 1.2
     allowedAttrs: [
-      'aria-posinset',
-      'aria-selected',
-      'aria-setsize',
-      'aria-expanded'
+      "aria-posinset",
+      "aria-selected",
+      "aria-setsize",
+      "aria-expanded",
     ],
-    superclassRole: ['sectionhead', 'widget'],
+    superclassRole: ["sectionhead", "widget"],
     nameFromContent: true,
-    childrenPresentational: true
+    childrenPresentational: true,
   },
   table: {
-    type: 'structure',
-    requiredOwned: ['rowgroup', 'row'],
+    type: "structure",
+    requiredOwned: ["rowgroup", "row"],
     // Spec difference: Aria-expanded removed in 1.2
-    allowedAttrs: ['aria-colcount', 'aria-rowcount', 'aria-expanded'],
+    allowedAttrs: ["aria-colcount", "aria-rowcount", "aria-expanded"],
     // NOTE: although the spec says this is not named from contents,
     // the accessible text acceptance tests (#139 and #140) require
     // table be named from content (we even had to special case
     // table in commons/aria/named-from-contents)
-    superclassRole: ['section'],
+    superclassRole: ["section"],
     // Note: spec difference
     accessibleNameRequired: false,
-    nameFromContent: true
+    nameFromContent: true,
   },
   tablist: {
-    type: 'composite',
-    requiredOwned: ['tab'],
+    type: "composite",
+    requiredOwned: ["tab"],
     // NOTE: aria-expanded is from the 1.0 spec but is still
     // consistently supported in ATs
     allowedAttrs: [
-      'aria-level',
-      'aria-multiselectable',
-      'aria-orientation',
-      'aria-activedescendant',
-      'aria-expanded'
+      "aria-level",
+      "aria-multiselectable",
+      "aria-orientation",
+      "aria-activedescendant",
+      "aria-expanded",
     ],
-    superclassRole: ['composite']
+    superclassRole: ["composite"],
   },
   tabpanel: {
     // Spec ambiguity: Aria 1.1 and 1.2 both say that tabpanel rolls up to
     // structure via its section superclass, but also include it as a widget
     // in §5.3.2 Widget Roles.
-    type: 'structure',
+    type: "structure",
     // Spec difference: Aria-expanded removed in 1.2
-    allowedAttrs: ['aria-expanded'],
-    superclassRole: ['section'],
+    allowedAttrs: ["aria-expanded"],
+    superclassRole: ["section"],
     // Note: spec difference
-    accessibleNameRequired: false
+    accessibleNameRequired: false,
   },
   term: {
-    type: 'structure',
+    type: "structure",
     // Spec difference: Aria-expanded removed in 1.2
-    allowedAttrs: ['aria-expanded'],
-    superclassRole: ['section'],
+    allowedAttrs: ["aria-expanded"],
+    superclassRole: ["section"],
     // Note: spec difference
-    nameFromContent: true
+    nameFromContent: true,
   },
   text: {
-    type: 'structure',
-    superclassRole: ['section'],
-    nameFromContent: true
+    type: "structure",
+    superclassRole: ["section"],
+    nameFromContent: true,
   },
   textbox: {
-    type: 'widget',
+    type: "widget",
     allowedAttrs: [
-      'aria-activedescendant',
-      'aria-autocomplete',
-      'aria-multiline',
-      'aria-placeholder',
-      'aria-readonly',
-      'aria-required'
+      "aria-activedescendant",
+      "aria-autocomplete",
+      "aria-multiline",
+      "aria-placeholder",
+      "aria-readonly",
+      "aria-required",
     ],
-    superclassRole: ['input'],
-    accessibleNameRequired: true
+    superclassRole: ["input"],
+    accessibleNameRequired: true,
   },
   time: {
-    type: 'structure',
-    superclassRole: ['section']
+    type: "structure",
+    superclassRole: ["section"],
   },
   timer: {
-    type: 'structure',
+    type: "structure",
     // Spec difference: Aria-expanded removed in 1.2
-    allowedAttrs: ['aria-expanded'],
-    superclassRole: ['status']
+    allowedAttrs: ["aria-expanded"],
+    superclassRole: ["status"],
   },
   toolbar: {
-    type: 'structure',
+    type: "structure",
     // Spec difference: Aria-expanded removed in 1.2
     allowedAttrs: [
-      'aria-orientation',
-      'aria-activedescendant',
-      'aria-expanded'
+      "aria-orientation",
+      "aria-activedescendant",
+      "aria-expanded",
     ],
-    superclassRole: ['group'],
-    accessibleNameRequired: true
+    superclassRole: ["group"],
+    accessibleNameRequired: true,
   },
   tooltip: {
-    type: 'structure',
+    type: "structure",
     // Spec difference: Aria-expanded removed in 1.2
-    allowedAttrs: ['aria-expanded'],
-    superclassRole: ['section'],
-    nameFromContent: true
+    allowedAttrs: ["aria-expanded"],
+    superclassRole: ["section"],
+    nameFromContent: true,
   },
   tree: {
-    type: 'composite',
-    requiredOwned: ['group', 'treeitem'],
+    type: "composite",
+    requiredOwned: ["group", "treeitem"],
     // Spec difference: Aria-expanded removed in 1.2
     allowedAttrs: [
-      'aria-multiselectable',
-      'aria-required',
-      'aria-activedescendant',
-      'aria-expanded',
-      'aria-orientation'
+      "aria-multiselectable",
+      "aria-required",
+      "aria-activedescendant",
+      "aria-expanded",
+      "aria-orientation",
     ],
-    superclassRole: ['select'],
+    superclassRole: ["select"],
     // Note: spec difference
-    accessibleNameRequired: false
+    accessibleNameRequired: false,
   },
   treegrid: {
-    type: 'composite',
-    requiredOwned: ['rowgroup', 'row'],
+    type: "composite",
+    requiredOwned: ["rowgroup", "row"],
     // Spec difference: Aria-expanded removed in 1.2
     allowedAttrs: [
-      'aria-activedescendant',
-      'aria-colcount',
-      'aria-expanded',
-      'aria-level',
-      'aria-multiselectable',
-      'aria-orientation',
-      'aria-readonly',
-      'aria-required',
-      'aria-rowcount'
+      "aria-activedescendant",
+      "aria-colcount",
+      "aria-expanded",
+      "aria-level",
+      "aria-multiselectable",
+      "aria-orientation",
+      "aria-readonly",
+      "aria-required",
+      "aria-rowcount",
     ],
-    superclassRole: ['grid', 'tree'],
+    superclassRole: ["grid", "tree"],
     // Note: spec difference
-    accessibleNameRequired: false
+    accessibleNameRequired: false,
   },
   treeitem: {
-    type: 'widget',
-    requiredContext: ['group', 'tree'],
+    type: "widget",
+    requiredContext: ["group", "tree"],
     allowedAttrs: [
-      'aria-checked',
-      'aria-expanded',
-      'aria-level',
-      'aria-posinset',
-      'aria-selected',
-      'aria-setsize'
+      "aria-checked",
+      "aria-expanded",
+      "aria-level",
+      "aria-posinset",
+      "aria-selected",
+      "aria-setsize",
     ],
-    superclassRole: ['listitem', 'option'],
+    superclassRole: ["listitem", "option"],
     accessibleNameRequired: true,
-    nameFromContent: true
+    nameFromContent: true,
   },
   widget: {
-    type: 'abstract',
-    superclassRole: ['roletype']
+    type: "abstract",
+    superclassRole: ["roletype"],
   },
   window: {
-    type: 'abstract',
-    superclassRole: ['roletype']
-  }
+    type: "abstract",
+    superclassRole: ["roletype"],
+  },
 };
 
 // Source https://www.w3.org/TR/dpub-aria-1.0/
 const dpubRoles: Record<string, any> = {
-  'doc-abstract': {
-    type: 'section',
-    allowedAttrs: ['aria-expanded'],
-    superclassRole: ['section']
+  "doc-abstract": {
+    type: "section",
+    allowedAttrs: ["aria-expanded"],
+    superclassRole: ["section"],
   },
-  'doc-acknowledgments': {
-    type: 'landmark',
-    allowedAttrs: ['aria-expanded'],
-    superclassRole: ['landmark']
+  "doc-acknowledgments": {
+    type: "landmark",
+    allowedAttrs: ["aria-expanded"],
+    superclassRole: ["landmark"],
   },
-  'doc-afterword': {
-    type: 'landmark',
-    allowedAttrs: ['aria-expanded'],
-    superclassRole: ['landmark']
+  "doc-afterword": {
+    type: "landmark",
+    allowedAttrs: ["aria-expanded"],
+    superclassRole: ["landmark"],
   },
-  'doc-appendix': {
-    type: 'landmark',
-    allowedAttrs: ['aria-expanded'],
-    superclassRole: ['landmark']
+  "doc-appendix": {
+    type: "landmark",
+    allowedAttrs: ["aria-expanded"],
+    superclassRole: ["landmark"],
   },
-  'doc-backlink': {
-    type: 'link',
-    allowedAttrs: ['aria-expanded'],
+  "doc-backlink": {
+    type: "link",
+    allowedAttrs: ["aria-expanded"],
     nameFromContent: true,
-    superclassRole: ['link']
+    superclassRole: ["link"],
   },
-  'doc-biblioentry': {
-    type: 'listitem',
+  "doc-biblioentry": {
+    type: "listitem",
     allowedAttrs: [
-      'aria-expanded',
-      'aria-level',
-      'aria-posinset',
-      'aria-setsize'
+      "aria-expanded",
+      "aria-level",
+      "aria-posinset",
+      "aria-setsize",
     ],
-    superclassRole: ['listitem'],
-    deprecated: true
+    superclassRole: ["listitem"],
+    deprecated: true,
   },
-  'doc-bibliography': {
-    type: 'landmark',
-    allowedAttrs: ['aria-expanded'],
-    superclassRole: ['landmark']
+  "doc-bibliography": {
+    type: "landmark",
+    allowedAttrs: ["aria-expanded"],
+    superclassRole: ["landmark"],
   },
-  'doc-biblioref': {
-    type: 'link',
-    allowedAttrs: ['aria-expanded'],
+  "doc-biblioref": {
+    type: "link",
+    allowedAttrs: ["aria-expanded"],
     nameFromContent: true,
-    superclassRole: ['link']
+    superclassRole: ["link"],
   },
-  'doc-chapter': {
-    type: 'landmark',
-    allowedAttrs: ['aria-expanded'],
-    superclassRole: ['landmark']
+  "doc-chapter": {
+    type: "landmark",
+    allowedAttrs: ["aria-expanded"],
+    superclassRole: ["landmark"],
   },
-  'doc-colophon': {
-    type: 'section',
-    allowedAttrs: ['aria-expanded'],
-    superclassRole: ['section']
+  "doc-colophon": {
+    type: "section",
+    allowedAttrs: ["aria-expanded"],
+    superclassRole: ["section"],
   },
-  'doc-conclusion': {
-    type: 'landmark',
-    allowedAttrs: ['aria-expanded'],
-    superclassRole: ['landmark']
+  "doc-conclusion": {
+    type: "landmark",
+    allowedAttrs: ["aria-expanded"],
+    superclassRole: ["landmark"],
   },
-  'doc-cover': {
-    type: 'img',
-    allowedAttrs: ['aria-expanded'],
-    superclassRole: ['img']
+  "doc-cover": {
+    type: "img",
+    allowedAttrs: ["aria-expanded"],
+    superclassRole: ["img"],
   },
-  'doc-credit': {
-    type: 'section',
-    allowedAttrs: ['aria-expanded'],
-    superclassRole: ['section']
+  "doc-credit": {
+    type: "section",
+    allowedAttrs: ["aria-expanded"],
+    superclassRole: ["section"],
   },
-  'doc-credits': {
-    type: 'landmark',
-    allowedAttrs: ['aria-expanded'],
-    superclassRole: ['landmark']
+  "doc-credits": {
+    type: "landmark",
+    allowedAttrs: ["aria-expanded"],
+    superclassRole: ["landmark"],
   },
-  'doc-dedication': {
-    type: 'section',
-    allowedAttrs: ['aria-expanded'],
-    superclassRole: ['section']
+  "doc-dedication": {
+    type: "section",
+    allowedAttrs: ["aria-expanded"],
+    superclassRole: ["section"],
   },
-  'doc-endnote': {
-    type: 'listitem',
+  "doc-endnote": {
+    type: "listitem",
     allowedAttrs: [
-      'aria-expanded',
-      'aria-level',
-      'aria-posinset',
-      'aria-setsize'
+      "aria-expanded",
+      "aria-level",
+      "aria-posinset",
+      "aria-setsize",
     ],
-    superclassRole: ['listitem'],
-    deprecated: true
+    superclassRole: ["listitem"],
+    deprecated: true,
   },
-  'doc-endnotes': {
-    type: 'landmark',
-    allowedAttrs: ['aria-expanded'],
-    superclassRole: ['landmark']
+  "doc-endnotes": {
+    type: "landmark",
+    allowedAttrs: ["aria-expanded"],
+    superclassRole: ["landmark"],
   },
-  'doc-epigraph': {
-    type: 'section',
-    allowedAttrs: ['aria-expanded'],
-    superclassRole: ['section']
+  "doc-epigraph": {
+    type: "section",
+    allowedAttrs: ["aria-expanded"],
+    superclassRole: ["section"],
   },
-  'doc-epilogue': {
-    type: 'landmark',
-    allowedAttrs: ['aria-expanded'],
-    superclassRole: ['landmark']
+  "doc-epilogue": {
+    type: "landmark",
+    allowedAttrs: ["aria-expanded"],
+    superclassRole: ["landmark"],
   },
-  'doc-errata': {
-    type: 'landmark',
-    allowedAttrs: ['aria-expanded'],
-    superclassRole: ['landmark']
+  "doc-errata": {
+    type: "landmark",
+    allowedAttrs: ["aria-expanded"],
+    superclassRole: ["landmark"],
   },
-  'doc-example': {
-    type: 'section',
-    allowedAttrs: ['aria-expanded'],
-    superclassRole: ['section']
+  "doc-example": {
+    type: "section",
+    allowedAttrs: ["aria-expanded"],
+    superclassRole: ["section"],
   },
-  'doc-footnote': {
-    type: 'section',
-    allowedAttrs: ['aria-expanded'],
-    superclassRole: ['section']
+  "doc-footnote": {
+    type: "section",
+    allowedAttrs: ["aria-expanded"],
+    superclassRole: ["section"],
   },
-  'doc-foreword': {
-    type: 'landmark',
-    allowedAttrs: ['aria-expanded'],
-    superclassRole: ['landmark']
+  "doc-foreword": {
+    type: "landmark",
+    allowedAttrs: ["aria-expanded"],
+    superclassRole: ["landmark"],
   },
-  'doc-glossary': {
-    type: 'landmark',
-    allowedAttrs: ['aria-expanded'],
-    superclassRole: ['landmark']
+  "doc-glossary": {
+    type: "landmark",
+    allowedAttrs: ["aria-expanded"],
+    superclassRole: ["landmark"],
   },
-  'doc-glossref': {
-    type: 'link',
-    allowedAttrs: ['aria-expanded'],
+  "doc-glossref": {
+    type: "link",
+    allowedAttrs: ["aria-expanded"],
     nameFromContent: true,
-    superclassRole: ['link']
+    superclassRole: ["link"],
   },
-  'doc-index': {
-    type: 'navigation',
-    allowedAttrs: ['aria-expanded'],
-    superclassRole: ['navigation']
+  "doc-index": {
+    type: "navigation",
+    allowedAttrs: ["aria-expanded"],
+    superclassRole: ["navigation"],
   },
-  'doc-introduction': {
-    type: 'landmark',
-    allowedAttrs: ['aria-expanded'],
-    superclassRole: ['landmark']
+  "doc-introduction": {
+    type: "landmark",
+    allowedAttrs: ["aria-expanded"],
+    superclassRole: ["landmark"],
   },
-  'doc-noteref': {
-    type: 'link',
-    allowedAttrs: ['aria-expanded'],
+  "doc-noteref": {
+    type: "link",
+    allowedAttrs: ["aria-expanded"],
     nameFromContent: true,
-    superclassRole: ['link']
+    superclassRole: ["link"],
   },
-  'doc-notice': {
-    type: 'note',
-    allowedAttrs: ['aria-expanded'],
-    superclassRole: ['note']
+  "doc-notice": {
+    type: "note",
+    allowedAttrs: ["aria-expanded"],
+    superclassRole: ["note"],
   },
-  'doc-pagebreak': {
-    type: 'separator',
-    allowedAttrs: ['aria-expanded', 'aria-orientation'],
-    superclassRole: ['separator'],
-    childrenPresentational: true
+  "doc-pagebreak": {
+    type: "separator",
+    allowedAttrs: ["aria-expanded", "aria-orientation"],
+    superclassRole: ["separator"],
+    childrenPresentational: true,
   },
-  'doc-pagelist': {
-    type: 'navigation',
-    allowedAttrs: ['aria-expanded'],
-    superclassRole: ['navigation']
+  "doc-pagelist": {
+    type: "navigation",
+    allowedAttrs: ["aria-expanded"],
+    superclassRole: ["navigation"],
   },
-  'doc-part': {
-    type: 'landmark',
-    allowedAttrs: ['aria-expanded'],
-    superclassRole: ['landmark']
+  "doc-part": {
+    type: "landmark",
+    allowedAttrs: ["aria-expanded"],
+    superclassRole: ["landmark"],
   },
-  'doc-preface': {
-    type: 'landmark',
-    allowedAttrs: ['aria-expanded'],
-    superclassRole: ['landmark']
+  "doc-preface": {
+    type: "landmark",
+    allowedAttrs: ["aria-expanded"],
+    superclassRole: ["landmark"],
   },
-  'doc-prologue': {
-    type: 'landmark',
-    allowedAttrs: ['aria-expanded'],
-    superclassRole: ['landmark']
+  "doc-prologue": {
+    type: "landmark",
+    allowedAttrs: ["aria-expanded"],
+    superclassRole: ["landmark"],
   },
-  'doc-pullquote': {
-    type: 'none',
-    superclassRole: ['none']
+  "doc-pullquote": {
+    type: "none",
+    superclassRole: ["none"],
   },
-  'doc-qna': {
-    type: 'section',
-    allowedAttrs: ['aria-expanded'],
-    superclassRole: ['section']
+  "doc-qna": {
+    type: "section",
+    allowedAttrs: ["aria-expanded"],
+    superclassRole: ["section"],
   },
-  'doc-subtitle': {
-    type: 'sectionhead',
-    allowedAttrs: ['aria-expanded'],
-    superclassRole: ['sectionhead']
+  "doc-subtitle": {
+    type: "sectionhead",
+    allowedAttrs: ["aria-expanded"],
+    superclassRole: ["sectionhead"],
   },
-  'doc-tip': {
-    type: 'note',
-    allowedAttrs: ['aria-expanded'],
-    superclassRole: ['note']
+  "doc-tip": {
+    type: "note",
+    allowedAttrs: ["aria-expanded"],
+    superclassRole: ["note"],
   },
-  'doc-toc': {
-    type: 'navigation',
-    allowedAttrs: ['aria-expanded'],
-    superclassRole: ['navigation']
-  }
+  "doc-toc": {
+    type: "navigation",
+    allowedAttrs: ["aria-expanded"],
+    superclassRole: ["navigation"],
+  },
 };
 export { dpubRoles };
 
 // Source: https://www.w3.org/TR/graphics-aria-1.0/
 
 const graphicsRoles: Record<string, any> = {
-  'graphics-document': {
-    type: 'structure',
-    superclassRole: ['document'],
-    accessibleNameRequired: true
-  },
-  'graphics-object': {
-    type: 'structure',
-    superclassRole: ['group'],
-    nameFromContent: true
-  },
-  'graphics-symbol': {
-    type: 'structure',
-    superclassRole: ['img'],
+  "graphics-document": {
+    type: "structure",
+    superclassRole: ["document"],
     accessibleNameRequired: true,
-    childrenPresentational: true
-  }
+  },
+  "graphics-object": {
+    type: "structure",
+    superclassRole: ["group"],
+    nameFromContent: true,
+  },
+  "graphics-symbol": {
+    type: "structure",
+    superclassRole: ["img"],
+    accessibleNameRequired: true,
+    childrenPresentational: true,
+  },
 };
 export { graphicsRoles };
 
@@ -1435,183 +1435,183 @@ const htmlElms: Record<string, any> = {
     // otherwise we move on to the next matching variant
     variant: {
       href: {
-        matches: '[href]',
-        contentTypes: ['interactive', 'phrasing', 'flow'],
+        matches: "[href]",
+        contentTypes: ["interactive", "phrasing", "flow"],
         allowedRoles: [
-          'button',
-          'checkbox',
-          'menuitem',
-          'menuitemcheckbox',
-          'menuitemradio',
-          'option',
-          'radio',
-          'switch',
-          'tab',
-          'treeitem',
-          'doc-backlink',
-          'doc-biblioref',
-          'doc-glossref',
-          'doc-noteref'
+          "button",
+          "checkbox",
+          "menuitem",
+          "menuitemcheckbox",
+          "menuitemradio",
+          "option",
+          "radio",
+          "switch",
+          "tab",
+          "treeitem",
+          "doc-backlink",
+          "doc-biblioref",
+          "doc-glossref",
+          "doc-noteref",
         ],
-        namingMethods: ['subtreeText']
+        namingMethods: ["subtreeText"],
       },
       // Note: the default variant is a special variant and is
       // used as the last match if none of the other variants
       // match or have the desired attribute
       default: {
-        contentTypes: ['phrasing', 'flow'],
-        allowedRoles: true
-      }
-    }
+        contentTypes: ["phrasing", "flow"],
+        allowedRoles: true,
+      },
+    },
   },
   abbr: {
-    contentTypes: ['phrasing', 'flow'],
-    allowedRoles: true
+    contentTypes: ["phrasing", "flow"],
+    allowedRoles: true,
   },
   address: {
-    contentTypes: ['flow'],
-    allowedRoles: true
+    contentTypes: ["flow"],
+    allowedRoles: true,
   },
   area: {
     variant: {
       href: {
-        matches: '[href]',
-        allowedRoles: false
+        matches: "[href]",
+        allowedRoles: false,
       },
       default: {
-        allowedRoles: ['button', 'link']
-      }
+        allowedRoles: ["button", "link"],
+      },
     },
-    contentTypes: ['phrasing', 'flow'],
-    namingMethods: ['altText']
+    contentTypes: ["phrasing", "flow"],
+    namingMethods: ["altText"],
   },
   article: {
-    contentTypes: ['sectioning', 'flow'],
+    contentTypes: ["sectioning", "flow"],
     allowedRoles: [
-      'feed',
-      'presentation',
-      'none',
-      'document',
-      'application',
-      'main',
-      'region'
+      "feed",
+      "presentation",
+      "none",
+      "document",
+      "application",
+      "main",
+      "region",
     ],
-    shadowRoot: true
+    shadowRoot: true,
   },
   aside: {
-    contentTypes: ['sectioning', 'flow'],
+    contentTypes: ["sectioning", "flow"],
     allowedRoles: [
-      'feed',
-      'note',
-      'presentation',
-      'none',
-      'region',
-      'search',
-      'doc-dedication',
-      'doc-example',
-      'doc-footnote',
-      'doc-glossary',
-      'doc-pullquote',
-      'doc-tip'
-    ]
+      "feed",
+      "note",
+      "presentation",
+      "none",
+      "region",
+      "search",
+      "doc-dedication",
+      "doc-example",
+      "doc-footnote",
+      "doc-glossary",
+      "doc-pullquote",
+      "doc-tip",
+    ],
   },
   audio: {
     variant: {
       controls: {
-        matches: '[controls]',
-        contentTypes: ['interactive', 'embedded', 'phrasing', 'flow']
+        matches: "[controls]",
+        contentTypes: ["interactive", "embedded", "phrasing", "flow"],
       },
       default: {
-        contentTypes: ['embedded', 'phrasing', 'flow']
-      }
+        contentTypes: ["embedded", "phrasing", "flow"],
+      },
     },
     // Note: if the property applies regardless of variants it is
     // placed at the top level instead of the default variant
-    allowedRoles: ['application'],
-    chromiumRole: 'Audio'
+    allowedRoles: ["application"],
+    chromiumRole: "Audio",
   },
   b: {
-    contentTypes: ['phrasing', 'flow'],
-    allowedRoles: true
+    contentTypes: ["phrasing", "flow"],
+    allowedRoles: true,
   },
   base: {
     allowedRoles: false,
-    noAriaAttrs: true
+    noAriaAttrs: true,
   },
   bdi: {
-    contentTypes: ['phrasing', 'flow'],
-    allowedRoles: true
+    contentTypes: ["phrasing", "flow"],
+    allowedRoles: true,
   },
   bdo: {
-    contentTypes: ['phrasing', 'flow'],
-    allowedRoles: true
+    contentTypes: ["phrasing", "flow"],
+    allowedRoles: true,
   },
   blockquote: {
-    contentTypes: ['flow'],
+    contentTypes: ["flow"],
     allowedRoles: true,
-    shadowRoot: true
+    shadowRoot: true,
   },
   body: {
     allowedRoles: false,
-    shadowRoot: true
+    shadowRoot: true,
   },
   br: {
-    contentTypes: ['phrasing', 'flow'],
-    allowedRoles: ['presentation', 'none'],
-    namingMethods: ['titleText', 'singleSpace'],
-    allowedAriaAttrs: ['aria-hidden']
+    contentTypes: ["phrasing", "flow"],
+    allowedRoles: ["presentation", "none"],
+    namingMethods: ["titleText", "singleSpace"],
+    allowedAriaAttrs: ["aria-hidden"],
   },
   button: {
-    contentTypes: ['interactive', 'phrasing', 'flow'],
+    contentTypes: ["interactive", "phrasing", "flow"],
     allowedRoles: [
-      'checkbox',
-      'combobox',
-      'gridcell',
-      'link',
-      'menuitem',
-      'menuitemcheckbox',
-      'menuitemradio',
-      'option',
-      'radio',
-      'separator',
-      'slider',
-      'switch',
-      'tab',
-      'treeitem'
+      "checkbox",
+      "combobox",
+      "gridcell",
+      "link",
+      "menuitem",
+      "menuitemcheckbox",
+      "menuitemradio",
+      "option",
+      "radio",
+      "separator",
+      "slider",
+      "switch",
+      "tab",
+      "treeitem",
     ],
     // 5.4 button Element
-    namingMethods: ['subtreeText']
+    namingMethods: ["subtreeText"],
   },
   canvas: {
     allowedRoles: true,
-    contentTypes: ['embedded', 'phrasing', 'flow'],
-    chromiumRole: 'Canvas'
+    contentTypes: ["embedded", "phrasing", "flow"],
+    chromiumRole: "Canvas",
   },
   caption: {
-    allowedRoles: false
+    allowedRoles: false,
   },
   cite: {
-    contentTypes: ['phrasing', 'flow'],
-    allowedRoles: true
+    contentTypes: ["phrasing", "flow"],
+    allowedRoles: true,
   },
   code: {
-    contentTypes: ['phrasing', 'flow'],
-    allowedRoles: true
+    contentTypes: ["phrasing", "flow"],
+    allowedRoles: true,
   },
   col: {
     allowedRoles: false,
-    noAriaAttrs: true
+    noAriaAttrs: true,
   },
   colgroup: {
     allowedRoles: false,
-    noAriaAttrs: true
+    noAriaAttrs: true,
   },
   data: {
-    contentTypes: ['phrasing', 'flow'],
-    allowedRoles: true
+    contentTypes: ["phrasing", "flow"],
+    allowedRoles: true,
   },
   datalist: {
-    contentTypes: ['phrasing', 'flow'],
+    contentTypes: ["phrasing", "flow"],
     allowedRoles: false,
     noAriaAttrs: true,
     implicitAttrs: {
@@ -1619,154 +1619,154 @@ const htmlElms: Record<string, any> = {
       // on the attributes, we don't currently need to know the
       // precise value. however, this allows us to make the attribute
       // future proof in case we ever do need to know it
-      'aria-multiselectable': 'false'
-    }
+      "aria-multiselectable": "false",
+    },
   },
   dd: {
-    allowedRoles: false
+    allowedRoles: false,
   },
   del: {
-    contentTypes: ['phrasing', 'flow'],
-    allowedRoles: true
+    contentTypes: ["phrasing", "flow"],
+    allowedRoles: true,
   },
   dfn: {
-    contentTypes: ['phrasing', 'flow'],
-    allowedRoles: true
+    contentTypes: ["phrasing", "flow"],
+    allowedRoles: true,
   },
   details: {
-    contentTypes: ['interactive', 'flow'],
-    allowedRoles: false
+    contentTypes: ["interactive", "flow"],
+    allowedRoles: false,
   },
   dialog: {
-    contentTypes: ['flow'],
-    allowedRoles: ['alertdialog']
+    contentTypes: ["flow"],
+    allowedRoles: ["alertdialog"],
   },
   div: {
-    contentTypes: ['flow'],
+    contentTypes: ["flow"],
     allowedRoles: true,
-    shadowRoot: true
+    shadowRoot: true,
   },
   dl: {
-    contentTypes: ['flow'],
-    allowedRoles: ['group', 'list', 'presentation', 'none'],
-    chromiumRole: 'DescriptionList'
+    contentTypes: ["flow"],
+    allowedRoles: ["group", "list", "presentation", "none"],
+    chromiumRole: "DescriptionList",
   },
   dt: {
-    allowedRoles: ['listitem']
+    allowedRoles: ["listitem"],
   },
   em: {
-    contentTypes: ['phrasing', 'flow'],
-    allowedRoles: true
+    contentTypes: ["phrasing", "flow"],
+    allowedRoles: true,
   },
   embed: {
-    contentTypes: ['interactive', 'embedded', 'phrasing', 'flow'],
-    allowedRoles: ['application', 'document', 'img', 'presentation', 'none'],
-    chromiumRole: 'EmbeddedObject'
+    contentTypes: ["interactive", "embedded", "phrasing", "flow"],
+    allowedRoles: ["application", "document", "img", "presentation", "none"],
+    chromiumRole: "EmbeddedObject",
   },
   fieldset: {
-    contentTypes: ['flow'],
-    allowedRoles: ['none', 'presentation', 'radiogroup'],
+    contentTypes: ["flow"],
+    allowedRoles: ["none", "presentation", "radiogroup"],
     // 5.5 fieldset and legend Elements
-    namingMethods: ['fieldsetLegendText']
+    namingMethods: ["fieldsetLegendText"],
   },
   figcaption: {
-    allowedRoles: ['group', 'none', 'presentation']
+    allowedRoles: ["group", "none", "presentation"],
   },
   figure: {
-    contentTypes: ['flow'],
+    contentTypes: ["flow"],
     // Note: technically you're allowed no role when a figcaption
     // descendant, but we can't match that so we'll go with any role
     allowedRoles: true,
     // 5.9 figure and figcaption Elements
-    namingMethods: ['figureText', 'titleText']
+    namingMethods: ["figureText", "titleText"],
   },
   footer: {
-    contentTypes: ['flow'],
-    allowedRoles: ['group', 'none', 'presentation', 'doc-footnote'],
-    shadowRoot: true
+    contentTypes: ["flow"],
+    allowedRoles: ["group", "none", "presentation", "doc-footnote"],
+    shadowRoot: true,
   },
   form: {
-    contentTypes: ['flow'],
-    allowedRoles: ['form', 'search', 'none', 'presentation']
+    contentTypes: ["flow"],
+    allowedRoles: ["form", "search", "none", "presentation"],
   },
   h1: {
-    contentTypes: ['heading', 'flow'],
-    allowedRoles: ['none', 'presentation', 'tab', 'doc-subtitle'],
+    contentTypes: ["heading", "flow"],
+    allowedRoles: ["none", "presentation", "tab", "doc-subtitle"],
     shadowRoot: true,
     implicitAttrs: {
-      'aria-level': '1'
-    }
+      "aria-level": "1",
+    },
   },
   h2: {
-    contentTypes: ['heading', 'flow'],
-    allowedRoles: ['none', 'presentation', 'tab', 'doc-subtitle'],
+    contentTypes: ["heading", "flow"],
+    allowedRoles: ["none", "presentation", "tab", "doc-subtitle"],
     shadowRoot: true,
     implicitAttrs: {
-      'aria-level': '2'
-    }
+      "aria-level": "2",
+    },
   },
   h3: {
-    contentTypes: ['heading', 'flow'],
-    allowedRoles: ['none', 'presentation', 'tab', 'doc-subtitle'],
+    contentTypes: ["heading", "flow"],
+    allowedRoles: ["none", "presentation", "tab", "doc-subtitle"],
     shadowRoot: true,
     implicitAttrs: {
-      'aria-level': '3'
-    }
+      "aria-level": "3",
+    },
   },
   h4: {
-    contentTypes: ['heading', 'flow'],
-    allowedRoles: ['none', 'presentation', 'tab', 'doc-subtitle'],
+    contentTypes: ["heading", "flow"],
+    allowedRoles: ["none", "presentation", "tab", "doc-subtitle"],
     shadowRoot: true,
     implicitAttrs: {
-      'aria-level': '4'
-    }
+      "aria-level": "4",
+    },
   },
   h5: {
-    contentTypes: ['heading', 'flow'],
-    allowedRoles: ['none', 'presentation', 'tab', 'doc-subtitle'],
+    contentTypes: ["heading", "flow"],
+    allowedRoles: ["none", "presentation", "tab", "doc-subtitle"],
     shadowRoot: true,
     implicitAttrs: {
-      'aria-level': '5'
-    }
+      "aria-level": "5",
+    },
   },
   h6: {
-    contentTypes: ['heading', 'flow'],
-    allowedRoles: ['none', 'presentation', 'tab', 'doc-subtitle'],
+    contentTypes: ["heading", "flow"],
+    allowedRoles: ["none", "presentation", "tab", "doc-subtitle"],
     shadowRoot: true,
     implicitAttrs: {
-      'aria-level': '6'
-    }
+      "aria-level": "6",
+    },
   },
   head: {
     allowedRoles: false,
-    noAriaAttrs: true
+    noAriaAttrs: true,
   },
   header: {
-    contentTypes: ['flow'],
-    allowedRoles: ['group', 'none', 'presentation', 'doc-footnote'],
-    shadowRoot: true
+    contentTypes: ["flow"],
+    allowedRoles: ["group", "none", "presentation", "doc-footnote"],
+    shadowRoot: true,
   },
   hgroup: {
-    contentTypes: ['heading', 'flow'],
-    allowedRoles: true
+    contentTypes: ["heading", "flow"],
+    allowedRoles: true,
   },
   hr: {
-    contentTypes: ['flow'],
-    allowedRoles: ['none', 'presentation', 'doc-pagebreak'],
-    namingMethods: ['titleText', 'singleSpace']
+    contentTypes: ["flow"],
+    allowedRoles: ["none", "presentation", "doc-pagebreak"],
+    namingMethods: ["titleText", "singleSpace"],
   },
   html: {
     allowedRoles: false,
-    noAriaAttrs: true
+    noAriaAttrs: true,
   },
   i: {
-    contentTypes: ['phrasing', 'flow'],
-    allowedRoles: true
+    contentTypes: ["phrasing", "flow"],
+    allowedRoles: true,
   },
   iframe: {
-    contentTypes: ['interactive', 'embedded', 'phrasing', 'flow'],
-    allowedRoles: ['application', 'document', 'img', 'none', 'presentation'],
-    chromiumRole: 'Iframe'
+    contentTypes: ["interactive", "embedded", "phrasing", "flow"],
+    allowedRoles: ["application", "document", "img", "none", "presentation"],
+    chromiumRole: "Iframe",
   },
   img: {
     variant: {
@@ -1775,109 +1775,109 @@ const htmlElms: Record<string, any> = {
           {
             // Because <img role="none" alt="foo" /> has no accessible name:
             attributes: {
-              alt: '/.+/'
-            }
+              alt: "/.+/",
+            },
           },
           {
-            hasAccessibleName: true
-          }
+            hasAccessibleName: true,
+          },
         ],
         allowedRoles: [
-          'button',
-          'checkbox',
-          'link',
-          'math',
-          'menuitem',
-          'menuitemcheckbox',
-          'menuitemradio',
-          'meter',
-          'option',
-          'progressbar',
-          'radio',
-          'scrollbar',
-          'separator',
-          'slider',
-          'switch',
-          'tab',
-          'treeitem',
-          'doc-cover'
-        ]
+          "button",
+          "checkbox",
+          "link",
+          "math",
+          "menuitem",
+          "menuitemcheckbox",
+          "menuitemradio",
+          "meter",
+          "option",
+          "progressbar",
+          "radio",
+          "scrollbar",
+          "separator",
+          "slider",
+          "switch",
+          "tab",
+          "treeitem",
+          "doc-cover",
+        ],
       },
       usemap: {
-        matches: '[usemap]',
-        contentTypes: ['interactive', 'embedded', 'flow']
+        matches: "[usemap]",
+        contentTypes: ["interactive", "embedded", "flow"],
       },
       default: {
         // Note: allow role presentation and none on image with no
         // alt as a way to prevent the image from being flagged as
         // needing an alt
-        allowedRoles: ['presentation', 'none'],
+        allowedRoles: ["presentation", "none"],
         // Note: spec change (do not count as phrasing), because browsers
         // insert a space between an img's accessible name and other
         // elements' accessible names
-        contentTypes: ['embedded', 'flow']
-      }
+        contentTypes: ["embedded", "flow"],
+      },
     },
     // 5.10 img Element
-    namingMethods: ['altText']
+    namingMethods: ["altText"],
   },
   input: {
     variant: {
       button: {
         matches: {
           properties: {
-            type: 'button'
-          }
+            type: "button",
+          },
         },
         allowedRoles: [
-          'checkbox',
-          'combobox',
-          'link',
-          'menuitem',
-          'menuitemcheckbox',
-          'menuitemradio',
-          'option',
-          'radio',
-          'switch',
-          'tab'
-        ]
+          "checkbox",
+          "combobox",
+          "link",
+          "menuitem",
+          "menuitemcheckbox",
+          "menuitemradio",
+          "option",
+          "radio",
+          "switch",
+          "tab",
+        ],
       },
       // 5.2 input type="button", input type="submit" and input type="reset"
       buttonType: {
         matches: {
           properties: {
-            type: ['button', 'submit', 'reset']
-          }
+            type: ["button", "submit", "reset"],
+          },
         },
-        namingMethods: ['valueText', 'titleText', 'buttonDefaultText']
+        namingMethods: ["valueText", "titleText", "buttonDefaultText"],
       },
       checkboxPressed: {
         matches: {
           properties: {
-            type: 'checkbox'
+            type: "checkbox",
           },
           attributes: {
-            'aria-pressed': '/.*/'
-          }
+            "aria-pressed": "/.*/",
+          },
         },
-        allowedRoles: ['button', 'menuitemcheckbox', 'option', 'switch'],
+        allowedRoles: ["button", "menuitemcheckbox", "option", "switch"],
         implicitAttrs: {
-          'aria-checked': 'false'
-        }
+          "aria-checked": "false",
+        },
       },
       checkbox: {
         matches: {
           properties: {
-            type: 'checkbox'
+            type: "checkbox",
           },
           attributes: {
-            'aria-pressed': null
-          }
+            "aria-pressed": null,
+          },
         },
-        allowedRoles: ['menuitemcheckbox', 'option', 'switch'],
+        allowedRoles: ["menuitemcheckbox", "option", "switch"],
         implicitAttrs: {
-          'aria-checked': 'false'
-        }
+          "aria-checked": "false",
+        },
       },
       noRoles: {
         matches: {
@@ -1886,357 +1886,357 @@ const htmlElms: Record<string, any> = {
             // as not allowed roles however since they are text
             // types they should be allowed to have role=combobox
             type: [
-              'color',
-              'date',
-              'datetime-local',
-              'file',
-              'month',
-              'number',
-              'password',
-              'range',
-              'reset',
-              'submit',
-              'time',
-              'week'
-            ]
-          }
+              "color",
+              "date",
+              "datetime-local",
+              "file",
+              "month",
+              "number",
+              "password",
+              "range",
+              "reset",
+              "submit",
+              "time",
+              "week",
+            ],
+          },
         },
-        allowedRoles: false
+        allowedRoles: false,
       },
       hidden: {
         matches: {
           properties: {
-            type: 'hidden'
-          }
+            type: "hidden",
+          },
         },
         // Note: spec change (do not count as phrasing)
-        contentTypes: ['flow'],
+        contentTypes: ["flow"],
         allowedRoles: false,
-        noAriaAttrs: true
+        noAriaAttrs: true,
       },
       image: {
         matches: {
           properties: {
-            type: 'image'
-          }
+            type: "image",
+          },
         },
         allowedRoles: [
-          'link',
-          'menuitem',
-          'menuitemcheckbox',
-          'menuitemradio',
-          'radio',
-          'switch'
+          "link",
+          "menuitem",
+          "menuitemcheckbox",
+          "menuitemradio",
+          "radio",
+          "switch",
         ],
         // 5.3 input type="image"
         namingMethods: [
-          'altText',
-          'valueText',
-          'labelText',
-          'titleText',
-          'buttonDefaultText'
-        ]
+          "altText",
+          "valueText",
+          "labelText",
+          "titleText",
+          "buttonDefaultText",
+        ],
       },
       radio: {
         matches: {
           properties: {
-            type: 'radio'
-          }
+            type: "radio",
+          },
         },
-        allowedRoles: ['menuitemradio'],
+        allowedRoles: ["menuitemradio"],
         implicitAttrs: {
-          'aria-checked': 'false'
-        }
+          "aria-checked": "false",
+        },
       },
       textWithList: {
         matches: {
           properties: {
-            type: 'text'
+            type: "text",
           },
           attributes: {
-            list: '/.*/'
-          }
+            list: "/.*/",
+          },
         },
-        allowedRoles: false
+        allowedRoles: false,
       },
       default: {
         // Note: spec change (do not count as phrasing)
-        contentTypes: ['interactive', 'flow'],
-        allowedRoles: ['combobox', 'searchbox', 'spinbutton'],
+        contentTypes: ["interactive", "flow"],
+        allowedRoles: ["combobox", "searchbox", "spinbutton"],
         implicitAttrs: {
-          'aria-valuenow': ''
+          "aria-valuenow": "",
         },
         // 5.1 input type="text", input type="password", input type="search", input type="tel", input type="url"
         // 5.7 Other Form Elements
-        namingMethods: ['labelText', 'placeholderText']
-      }
-    }
+        namingMethods: ["labelText", "placeholderText"],
+      },
+    },
   },
   ins: {
-    contentTypes: ['phrasing', 'flow'],
-    allowedRoles: true
+    contentTypes: ["phrasing", "flow"],
+    allowedRoles: true,
   },
   kbd: {
-    contentTypes: ['phrasing', 'flow'],
-    allowedRoles: true
+    contentTypes: ["phrasing", "flow"],
+    allowedRoles: true,
   },
   label: {
-    contentTypes: ['interactive', 'phrasing', 'flow'],
+    contentTypes: ["interactive", "phrasing", "flow"],
     allowedRoles: false,
-    chromiumRole: 'Label'
+    chromiumRole: "Label",
   },
   legend: {
-    allowedRoles: false
+    allowedRoles: false,
   },
   li: {
     allowedRoles: [
-      'menuitem',
-      'menuitemcheckbox',
-      'menuitemradio',
-      'option',
-      'none',
-      'presentation',
-      'radio',
-      'separator',
-      'tab',
-      'treeitem',
-      'doc-biblioentry',
-      'doc-endnote'
+      "menuitem",
+      "menuitemcheckbox",
+      "menuitemradio",
+      "option",
+      "none",
+      "presentation",
+      "radio",
+      "separator",
+      "tab",
+      "treeitem",
+      "doc-biblioentry",
+      "doc-endnote",
     ],
     implicitAttrs: {
-      'aria-setsize': '1',
-      'aria-posinset': '1'
-    }
+      "aria-setsize": "1",
+      "aria-posinset": "1",
+    },
   },
   link: {
-    contentTypes: ['phrasing', 'flow'],
+    contentTypes: ["phrasing", "flow"],
     allowedRoles: false,
-    noAriaAttrs: true
+    noAriaAttrs: true,
   },
   main: {
-    contentTypes: ['flow'],
+    contentTypes: ["flow"],
     allowedRoles: false,
-    shadowRoot: true
+    shadowRoot: true,
   },
   map: {
-    contentTypes: ['phrasing', 'flow'],
+    contentTypes: ["phrasing", "flow"],
     allowedRoles: false,
-    noAriaAttrs: true
+    noAriaAttrs: true,
   },
   math: {
-    contentTypes: ['embedded', 'phrasing', 'flow'],
-    allowedRoles: false
+    contentTypes: ["embedded", "phrasing", "flow"],
+    allowedRoles: false,
   },
   mark: {
-    contentTypes: ['phrasing', 'flow'],
-    allowedRoles: true
+    contentTypes: ["phrasing", "flow"],
+    allowedRoles: true,
   },
   menu: {
-    contentTypes: ['flow'],
+    contentTypes: ["flow"],
     allowedRoles: [
-      'directory',
-      'group',
-      'listbox',
-      'menu',
-      'menubar',
-      'none',
-      'presentation',
-      'radiogroup',
-      'tablist',
-      'toolbar',
-      'tree'
-    ]
+      "directory",
+      "group",
+      "listbox",
+      "menu",
+      "menubar",
+      "none",
+      "presentation",
+      "radiogroup",
+      "tablist",
+      "toolbar",
+      "tree",
+    ],
   },
   meta: {
     variant: {
       itemprop: {
-        matches: '[itemprop]',
-        contentTypes: ['phrasing', 'flow']
-      }
+        matches: "[itemprop]",
+        contentTypes: ["phrasing", "flow"],
+      },
     },
     allowedRoles: false,
-    noAriaAttrs: true
+    noAriaAttrs: true,
   },
   meter: {
-    contentTypes: ['phrasing', 'flow'],
+    contentTypes: ["phrasing", "flow"],
     allowedRoles: false,
-    chromiumRole: 'progressbar'
+    chromiumRole: "progressbar",
   },
   nav: {
-    contentTypes: ['sectioning', 'flow'],
+    contentTypes: ["sectioning", "flow"],
     allowedRoles: [
-      'doc-index',
-      'doc-pagelist',
-      'doc-toc',
-      'menu',
-      'menubar',
-      'none',
-      'presentation',
-      'tablist'
+      "doc-index",
+      "doc-pagelist",
+      "doc-toc",
+      "menu",
+      "menubar",
+      "none",
+      "presentation",
+      "tablist",
     ],
-    shadowRoot: true
+    shadowRoot: true,
   },
   noscript: {
-    contentTypes: ['phrasing', 'flow'],
+    contentTypes: ["phrasing", "flow"],
     allowedRoles: false,
-    noAriaAttrs: true
+    noAriaAttrs: true,
   },
   object: {
     variant: {
       usemap: {
-        matches: '[usemap]',
-        contentTypes: ['interactive', 'embedded', 'phrasing', 'flow']
+        matches: "[usemap]",
+        contentTypes: ["interactive", "embedded", "phrasing", "flow"],
       },
       default: {
-        contentTypes: ['embedded', 'phrasing', 'flow']
-      }
+        contentTypes: ["embedded", "phrasing", "flow"],
+      },
     },
-    allowedRoles: ['application', 'document', 'img'],
-    chromiumRole: 'PluginObject'
+    allowedRoles: ["application", "document", "img"],
+    chromiumRole: "PluginObject",
   },
   ol: {
-    contentTypes: ['flow'],
+    contentTypes: ["flow"],
     allowedRoles: [
-      'directory',
-      'group',
-      'listbox',
-      'menu',
-      'menubar',
-      'none',
-      'presentation',
-      'radiogroup',
-      'tablist',
-      'toolbar',
-      'tree'
-    ]
+      "directory",
+      "group",
+      "listbox",
+      "menu",
+      "menubar",
+      "none",
+      "presentation",
+      "radiogroup",
+      "tablist",
+      "toolbar",
+      "tree",
+    ],
   },
   optgroup: {
-    allowedRoles: false
+    allowedRoles: false,
   },
   option: {
     allowedRoles: false,
     implicitAttrs: {
-      'aria-selected': 'false'
-    }
+      "aria-selected": "false",
+    },
   },
   output: {
-    contentTypes: ['phrasing', 'flow'],
+    contentTypes: ["phrasing", "flow"],
     allowedRoles: true,
     // 5.6 output Element
-    namingMethods: ['subtreeText']
+    namingMethods: ["subtreeText"],
   },
   p: {
-    contentTypes: ['flow'],
+    contentTypes: ["flow"],
     allowedRoles: true,
-    shadowRoot: true
+    shadowRoot: true,
   },
   param: {
     allowedRoles: false,
-    noAriaAttrs: true
+    noAriaAttrs: true,
   },
   picture: {
     // Note: spec change (do not count as embedded), because browsers do not hide text inside the picture element
-    contentTypes: ['phrasing', 'flow'],
+    contentTypes: ["phrasing", "flow"],
     allowedRoles: false,
-    noAriaAttrs: true
+    noAriaAttrs: true,
   },
   pre: {
-    contentTypes: ['flow'],
-    allowedRoles: true
+    contentTypes: ["flow"],
+    allowedRoles: true,
   },
   progress: {
-    contentTypes: ['phrasing', 'flow'],
+    contentTypes: ["phrasing", "flow"],
     allowedRoles: false,
     implicitAttrs: {
-      'aria-valuemax': '100',
-      'aria-valuemin': '0',
-      'aria-valuenow': '0'
-    }
+      "aria-valuemax": "100",
+      "aria-valuemin": "0",
+      "aria-valuenow": "0",
+    },
   },
   q: {
-    contentTypes: ['phrasing', 'flow'],
-    allowedRoles: true
+    contentTypes: ["phrasing", "flow"],
+    allowedRoles: true,
   },
   rp: {
-    allowedRoles: true
+    allowedRoles: true,
   },
   rt: {
-    allowedRoles: true
+    allowedRoles: true,
   },
   ruby: {
-    contentTypes: ['phrasing', 'flow'],
-    allowedRoles: true
+    contentTypes: ["phrasing", "flow"],
+    allowedRoles: true,
   },
   s: {
-    contentTypes: ['phrasing', 'flow'],
-    allowedRoles: true
+    contentTypes: ["phrasing", "flow"],
+    allowedRoles: true,
   },
   samp: {
-    contentTypes: ['phrasing', 'flow'],
-    allowedRoles: true
+    contentTypes: ["phrasing", "flow"],
+    allowedRoles: true,
   },
   script: {
-    contentTypes: ['phrasing', 'flow'],
+    contentTypes: ["phrasing", "flow"],
     allowedRoles: false,
-    noAriaAttrs: true
+    noAriaAttrs: true,
   },
   search: {
-    contentTypes: ['flow'],
-    allowedRoles: ['form', 'group', 'none', 'presentation', 'region', 'search']
+    contentTypes: ["flow"],
+    allowedRoles: ["form", "group", "none", "presentation", "region", "search"],
   },
   section: {
-    contentTypes: ['sectioning', 'flow'],
+    contentTypes: ["sectioning", "flow"],
     allowedRoles: [
-      'alert',
-      'alertdialog',
-      'application',
-      'banner',
-      'complementary',
-      'contentinfo',
-      'dialog',
-      'document',
-      'feed',
-      'group',
-      'log',
-      'main',
-      'marquee',
-      'navigation',
-      'none',
-      'note',
-      'presentation',
-      'search',
-      'status',
-      'tabpanel',
-      'doc-abstract',
-      'doc-acknowledgments',
-      'doc-afterword',
-      'doc-appendix',
-      'doc-bibliography',
-      'doc-chapter',
-      'doc-colophon',
-      'doc-conclusion',
-      'doc-credit',
-      'doc-credits',
-      'doc-dedication',
-      'doc-endnotes',
-      'doc-epigraph',
-      'doc-epilogue',
-      'doc-errata',
-      'doc-example',
-      'doc-foreword',
-      'doc-glossary',
-      'doc-index',
-      'doc-introduction',
-      'doc-notice',
-      'doc-pagelist',
-      'doc-part',
-      'doc-preface',
-      'doc-prologue',
-      'doc-pullquote',
-      'doc-qna',
-      'doc-toc'
+      "alert",
+      "alertdialog",
+      "application",
+      "banner",
+      "complementary",
+      "contentinfo",
+      "dialog",
+      "document",
+      "feed",
+      "group",
+      "log",
+      "main",
+      "marquee",
+      "navigation",
+      "none",
+      "note",
+      "presentation",
+      "search",
+      "status",
+      "tabpanel",
+      "doc-abstract",
+      "doc-acknowledgments",
+      "doc-afterword",
+      "doc-appendix",
+      "doc-bibliography",
+      "doc-chapter",
+      "doc-colophon",
+      "doc-conclusion",
+      "doc-credit",
+      "doc-credits",
+      "doc-dedication",
+      "doc-endnotes",
+      "doc-epigraph",
+      "doc-epilogue",
+      "doc-errata",
+      "doc-example",
+      "doc-foreword",
+      "doc-glossary",
+      "doc-index",
+      "doc-introduction",
+      "doc-notice",
+      "doc-pagelist",
+      "doc-part",
+      "doc-preface",
+      "doc-prologue",
+      "doc-pullquote",
+      "doc-qna",
+      "doc-toc",
     ],
-    shadowRoot: true
+    shadowRoot: true,
   },
   select: {
     variant: {
@@ -2244,163 +2244,166 @@ const htmlElms: Record<string, any> = {
         matches: {
           attributes: {
             multiple: null,
-            size: [null, '1']
-          }
+            size: [null, "1"],
+          },
         },
-        allowedRoles: ['menu']
+        allowedRoles: ["menu"],
       },
       default: {
-        allowedRoles: false
-      }
+        allowedRoles: false,
+      },
     },
-    contentTypes: ['interactive', 'phrasing', 'flow'],
+    contentTypes: ["interactive", "phrasing", "flow"],
     implicitAttrs: {
-      'aria-valuenow': ''
+      "aria-valuenow": "",
     },
     // 5.7 Other form elements
-    namingMethods: ['labelText']
+    namingMethods: ["labelText"],
   },
   slot: {
-    contentTypes: ['phrasing', 'flow'],
+    contentTypes: ["phrasing", "flow"],
     allowedRoles: false,
-    noAriaAttrs: true
+    noAriaAttrs: true,
   },
   small: {
-    contentTypes: ['phrasing', 'flow'],
-    allowedRoles: true
+    contentTypes: ["phrasing", "flow"],
+    allowedRoles: true,
   },
   source: {
     allowedRoles: false,
-    noAriaAttrs: true
+    noAriaAttrs: true,
   },
   span: {
-    contentTypes: ['phrasing', 'flow'],
+    contentTypes: ["phrasing", "flow"],
     allowedRoles: true,
-    shadowRoot: true
+    shadowRoot: true,
   },
   strong: {
-    contentTypes: ['phrasing', 'flow'],
-    allowedRoles: true
+    contentTypes: ["phrasing", "flow"],
+    allowedRoles: true,
   },
   style: {
     allowedRoles: false,
-    noAriaAttrs: true
+    noAriaAttrs: true,
   },
   svg: {
-    contentTypes: ['embedded', 'phrasing', 'flow'],
+    contentTypes: ["embedded", "phrasing", "flow"],
     allowedRoles: true,
-    chromiumRole: 'SVGRoot',
-    namingMethods: ['svgTitleText']
+    chromiumRole: "SVGRoot",
+    namingMethods: ["svgTitleText"],
   },
   sub: {
-    contentTypes: ['phrasing', 'flow'],
-    allowedRoles: true
+    contentTypes: ["phrasing", "flow"],
+    allowedRoles: true,
   },
   summary: {
     allowedRoles: false,
     // 5.8 summary Element
-    namingMethods: ['subtreeText']
+    namingMethods: ["subtreeText"],
   },
   sup: {
-    contentTypes: ['phrasing', 'flow'],
-    allowedRoles: true
+    contentTypes: ["phrasing", "flow"],
+    allowedRoles: true,
   },
   table: {
-    contentTypes: ['flow'],
+    contentTypes: ["flow"],
     allowedRoles: true,
     // 5.11 table Element
-    namingMethods: ['tableCaptionText', 'tableSummaryText']
+    namingMethods: ["tableCaptionText", "tableSummaryText"],
   },
   tbody: {
-    allowedRoles: true
+    allowedRoles: true,
   },
   template: {
-    contentTypes: ['phrasing', 'flow'],
+    contentTypes: ["phrasing", "flow"],
     allowedRoles: false,
-    noAriaAttrs: true
+    noAriaAttrs: true,
   },
   textarea: {
-    contentTypes: ['interactive', 'phrasing', 'flow'],
+    contentTypes: ["interactive", "phrasing", "flow"],
     allowedRoles: false,
     implicitAttrs: {
-      'aria-valuenow': '',
-      'aria-multiline': 'true'
+      "aria-valuenow": "",
+      "aria-multiline": "true",
     },
     // 5.1 textarea
-    namingMethods: ['labelText', 'placeholderText']
+    namingMethods: ["labelText", "placeholderText"],
   },
   tfoot: {
-    allowedRoles: true
+    allowedRoles: true,
   },
   thead: {
-    allowedRoles: true
+    allowedRoles: true,
   },
   time: {
-    contentTypes: ['phrasing', 'flow'],
-    allowedRoles: true
+    contentTypes: ["phrasing", "flow"],
+    allowedRoles: true,
   },
   title: {
     allowedRoles: false,
-    noAriaAttrs: true
+    noAriaAttrs: true,
   },
   td: {
-    allowedRoles: true
+    allowedRoles: true,
   },
   th: {
-    allowedRoles: true
+    allowedRoles: true,
   },
   tr: {
-    allowedRoles: true
+    allowedRoles: true,
   },
   track: {
     allowedRoles: false,
-    noAriaAttrs: true
+    noAriaAttrs: true,
   },
   u: {
-    contentTypes: ['phrasing', 'flow'],
-    allowedRoles: true
+    contentTypes: ["phrasing", "flow"],
+    allowedRoles: true,
   },
   ul: {
-    contentTypes: ['flow'],
+    contentTypes: ["flow"],
     allowedRoles: [
-      'directory',
-      'group',
-      'listbox',
-      'menu',
-      'menubar',
-      'none',
-      'presentation',
-      'radiogroup',
-      'tablist',
-      'toolbar',
-      'tree'
-    ]
+      "directory",
+      "group",
+      "listbox",
+      "menu",
+      "menubar",
+      "none",
+      "presentation",
+      "radiogroup",
+      "tablist",
+      "toolbar",
+      "tree",
+    ],
   },
   var: {
-    contentTypes: ['phrasing', 'flow'],
-    allowedRoles: true
+    contentTypes: ["phrasing", "flow"],
+    allowedRoles: true,
   },
   video: {
     variant: {
       controls: {
-        matches: '[controls]',
-        contentTypes: ['interactive', 'embedded', 'phrasing', 'flow']
+        matches: "[controls]",
+        contentTypes: ["interactive", "embedded", "phrasing", "flow"],
       },
       default: {
-        contentTypes: ['embedded', 'phrasing', 'flow']
-      }
+        contentTypes: ["embedded", "phrasing", "flow"],
+      },
     },
-    allowedRoles: ['application'],
-    chromiumRole: 'video'
+    allowedRoles: ["application"],
+    chromiumRole: "video",
   },
   wbr: {
-    contentTypes: ['phrasing', 'flow'],
-    allowedRoles: ['presentation', 'none'],
-    allowedAriaAttrs: ['aria-hidden']
-  }
+    contentTypes: ["phrasing", "flow"],
+    allowedRoles: ["presentation", "none"],
+    allowedAriaAttrs: ["aria-hidden"],
+  },
 };
 export { htmlElms };
 
-
 // dpub + graphics roles are merged into the ariaRoles table.
-export const ariaRoles: Record<string, any> = { ...ariaRolesBase, ...dpubRoles, ...graphicsRoles };
+export const ariaRoles: Record<string, any> = {
+  ...ariaRolesBase,
+  ...dpubRoles,
+  ...graphicsRoles,
+};

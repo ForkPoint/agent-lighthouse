@@ -1,7 +1,7 @@
-import type { AuditMeta, AuditResult } from '../../types';
-import { Audit } from '../../audit';
-import { weightForGrade } from '../../scorer';
-import type { CheckContext } from '../../check-context';
+import type { AuditMeta, AuditResult } from "../../types";
+import { Audit } from "../../audit";
+import { weightForGrade } from "../../scorer";
+import type { CheckContext } from "../../check-context";
 
 /**
  * One root file, one signal: does a published `/.well-known/security.txt`
@@ -42,15 +42,15 @@ import type { CheckContext } from '../../check-context';
  */
 
 const EXPECTED =
-  'A /.well-known/security.txt served as plain text with an RFC 9116 Contact field ' +
-  'and an Expires date in the future';
+  "A /.well-known/security.txt served as plain text with an RFC 9116 Contact field " +
+  "and an Expires date in the future";
 
 /** Read the first value of an RFC 9116 field, ignoring case and comment lines. */
 function securityTxtField(body: string, field: string): string | undefined {
   for (const rawLine of body.split(/\r?\n/)) {
     const line = rawLine.trim();
-    if (!line || line.startsWith('#')) continue;
-    const sep = line.indexOf(':');
+    if (!line || line.startsWith("#")) continue;
+    const sep = line.indexOf(":");
     if (sep === -1) continue;
     if (line.slice(0, sep).trim().toLowerCase() !== field) continue;
     const value = line.slice(sep + 1).trim();
@@ -62,59 +62,71 @@ function securityTxtField(body: string, field: string): string | undefined {
 /** A 200 that is really the SPA HTML fallback, not a text file. */
 function looksLikeHtml(body: string): boolean {
   const head = body.trimStart().slice(0, 200).toLowerCase();
-  return head.startsWith('<!doctype') || head.startsWith('<html') || head.includes('<html');
+  return (
+    head.startsWith("<!doctype") ||
+    head.startsWith("<html") ||
+    head.includes("<html")
+  );
 }
 
 export class SecurityHeaderHygieneAudit extends Audit {
   static override meta: AuditMeta = {
-    id: 'operability-safety/security-header-hygiene',
-    category: 'operability-safety',
-    title: 'security.txt (RFC 9116)',
-    failureTitle: 'security.txt does not conform to RFC 9116',
+    id: "operability-safety/security-header-hygiene",
+    category: "operability-safety",
+    title: "security.txt (RFC 9116)",
+    failureTitle: "security.txt does not conform to RFC 9116",
     description:
-      'Reports whether a published /.well-known/security.txt conforms to RFC 9116 — plain text, a Contact field, and an Expires date in the future. RFC 9116 is an Informational document whose stated consumers are human security researchers and vulnerability-notification tooling; no AI crawler, retrieval pipeline or answer engine is documented to read it, so this audit is informative only — it carries weight 0 and never affects your score. A site that publishes no security.txt is reported as not applicable rather than warned.',
-    scoreDisplayMode: 'informative',
-    weight: weightForGrade('C', 'informative'),
-    evidenceGrade: 'C',
-    tier: 'informative',
-    dossier: 'docs/evidence/audits/operability-safety/security-header-hygiene.md',
-    requires: ['origin-reachable'],
-    defaultPriority: 'low',
+      "Reports whether a published /.well-known/security.txt conforms to RFC 9116 — plain text, a Contact field, and an Expires date in the future. RFC 9116 is an Informational document whose stated consumers are human security researchers and vulnerability-notification tooling; no AI crawler, retrieval pipeline or answer engine is documented to read it, so this audit is informative only — it carries weight 0 and never affects your score. A site that publishes no security.txt is reported as not applicable rather than warned.",
+    scoreDisplayMode: "informative",
+    weight: weightForGrade("C", "informative"),
+    evidenceGrade: "C",
+    tier: "informative",
+    dossier:
+      "docs/evidence/audits/operability-safety/security-header-hygiene.md",
+    requires: ["origin-reachable"],
+    defaultPriority: "low",
     guidance: {
       impact:
-        'Vulnerability-disclosure hygiene, reported for completeness. A conformant security.txt tells a security researcher who to contact; it is read by researchers and disclosure scanners, not by AI agents. Publishing one changes nothing about how an agent retrieves, parses or cites the site, which is why nothing here moves your score. If you do publish one, an expired or contactless file is worse than none: it advertises a disclosure route that no longer works.',
-      fix: 'Only relevant if you already publish, or want to publish, a security.txt. Serve it as plain text at /.well-known/security.txt (the legacy top-level /security.txt is still accepted as a fallback), give it a Contact field, and give it an Expires date in the future — RFC 9116 requires both, and a file that returns your SPA index.html instead of text counts as absent. Refresh the Expires date before it passes.',
+        "Vulnerability-disclosure hygiene, reported for completeness. A conformant security.txt tells a security researcher who to contact; it is read by researchers and disclosure scanners, not by AI agents. Publishing one changes nothing about how an agent retrieves, parses or cites the site, which is why nothing here moves your score. If you do publish one, an expired or contactless file is worse than none: it advertises a disclosure route that no longer works.",
+      fix: "Only relevant if you already publish, or want to publish, a security.txt. Serve it as plain text at /.well-known/security.txt (the legacy top-level /security.txt is still accepted as a fallback), give it a Contact field, and give it an Expires date in the future — RFC 9116 requires both, and a file that returns your SPA index.html instead of text counts as absent. Refresh the Expires date before it passes.",
       code: [
-        '# /.well-known/security.txt',
-        'Contact: mailto:security@example.com',
-        'Expires: 2027-12-31T23:59:59.000Z',
-      ].join('\n'),
-      effort: 'trivial',
-      docsUrl: 'https://www.rfc-editor.org/rfc/rfc9116.html',
-      tags: ['security', 'security.txt', 'rfc9116'],
+        "# /.well-known/security.txt",
+        "Contact: mailto:security@example.com",
+        "Expires: 2027-12-31T23:59:59.000Z",
+      ].join("\n"),
+      effort: "trivial",
+      docsUrl: "https://www.rfc-editor.org/rfc/rfc9116.html",
+      tags: ["security", "security.txt", "rfc9116"],
     },
   };
 
   audit(ctx: CheckContext): AuditResult {
-    const wellKnown = ctx.rootFiles['/.well-known/security.txt'];
-    const legacy = ctx.rootFiles['/security.txt'];
+    const wellKnown = ctx.rootFiles["/.well-known/security.txt"];
+    const legacy = ctx.rootFiles["/security.txt"];
 
     // The scanner always fetches the well-known location, so an absent key is
     // not "no file" — it is "nothing was measured", and the two must not read
     // the same in the report.
     if (wellKnown === undefined && legacy === undefined) {
       return this.notApplicable(
-        'The security.txt location was never fetched, so nothing could be measured.',
+        "The security.txt location was never fetched, so nothing could be measured.",
         EXPECTED,
-        'no response recorded for /.well-known/security.txt',
+        "no response recorded for /.well-known/security.txt",
         `${ctx.baseUrl}/.well-known/security.txt`,
       );
     }
 
-    const file = wellKnown?.status === 200 ? wellKnown : legacy?.status === 200 ? legacy : undefined;
+    const file =
+      wellKnown?.status === 200
+        ? wellKnown
+        : legacy?.status === 200
+          ? legacy
+          : undefined;
     const usedLegacy = file !== undefined && file === legacy;
-    const path = usedLegacy ? '/security.txt (legacy location)' : '/.well-known/security.txt';
-    const url = `${ctx.baseUrl}${usedLegacy ? '/security.txt' : '/.well-known/security.txt'}`;
+    const path = usedLegacy
+      ? "/security.txt (legacy location)"
+      : "/.well-known/security.txt";
+    const url = `${ctx.baseUrl}${usedLegacy ? "/security.txt" : "/.well-known/security.txt"}`;
 
     // Publishing the file is optional: RFC 9116 is Informational and defines
     // conformance for a file that exists. Warning ~99% of the web for not doing
@@ -122,7 +134,7 @@ export class SecurityHeaderHygieneAudit extends Audit {
     if (!file) {
       const status = wellKnown?.status ?? legacy?.status;
       return this.notApplicable(
-        'This site does not publish a security.txt. RFC 9116 is an Informational document — publishing the file is optional, and no AI agent is documented to read it.',
+        "This site does not publish a security.txt. RFC 9116 is an Informational document — publishing the file is optional, and no AI agent is documented to read it.",
         EXPECTED,
         `/.well-known/security.txt returned ${status}`,
         url,
@@ -134,29 +146,29 @@ export class SecurityHeaderHygieneAudit extends Audit {
         `${path} returned 200 but the body is HTML, so no security.txt is really published there.`,
         EXPECTED,
         `${path} returned 200 but the body is HTML (soft-404)`,
-        { priority: 'low' },
+        { priority: "low" },
         url,
       );
     }
 
-    const contact = securityTxtField(file.body, 'contact');
+    const contact = securityTxtField(file.body, "contact");
     if (!contact) {
       return this.warn(
         `${path} is published but has no Contact field, which RFC 9116 requires.`,
         EXPECTED,
         `${path} has no Contact field (RFC 9116 requires it)`,
-        { priority: 'low' },
+        { priority: "low" },
         url,
       );
     }
 
-    const expires = securityTxtField(file.body, 'expires');
+    const expires = securityTxtField(file.body, "expires");
     if (!expires) {
       return this.warn(
         `${path} is published but has no Expires field, which RFC 9116 requires.`,
         EXPECTED,
         `${path} has no Expires field (RFC 9116 requires it)`,
-        { priority: 'low' },
+        { priority: "low" },
         url,
       );
     }
@@ -167,7 +179,7 @@ export class SecurityHeaderHygieneAudit extends Audit {
         `${path} has an Expires value that cannot be parsed as a date.`,
         EXPECTED,
         `${path} has an unparseable Expires value — "${expires}"`,
-        { priority: 'low' },
+        { priority: "low" },
         url,
       );
     }
@@ -177,7 +189,7 @@ export class SecurityHeaderHygieneAudit extends Audit {
         `${path} expired on ${expires}, so RFC 9116 treats its contents as no longer valid.`,
         EXPECTED,
         `${path} expired on ${expires}`,
-        { priority: 'low' },
+        { priority: "low" },
         url,
       );
     }

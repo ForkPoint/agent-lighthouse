@@ -1,10 +1,17 @@
-export type PhaseId = 'fetch-root' | 'fetch-pages' | 'analyze' | 'audits' | 'report';
+export type PhaseId =
+  "fetch-root" | "fetch-pages" | "analyze" | "audits" | "report";
 
 export type ScanEvent =
-  | { type: 'scan:start'; url: string; fraction: number; elapsedMs: number }
-  | { type: 'phase:start'; phase: PhaseId; totalUnits: number; fraction: number; elapsedMs: number }
+  | { type: "scan:start"; url: string; fraction: number; elapsedMs: number }
   | {
-      type: 'unit:done';
+      type: "phase:start";
+      phase: PhaseId;
+      totalUnits: number;
+      fraction: number;
+      elapsedMs: number;
+    }
+  | {
+      type: "unit:done";
       phase: PhaseId;
       completed: number;
       total: number;
@@ -12,10 +19,23 @@ export type ScanEvent =
       fraction: number;
       elapsedMs: number;
     }
-  | { type: 'unit:fail'; phase: PhaseId; label: string; error: string; fraction: number; elapsedMs: number }
-  | { type: 'phase:done'; phase: PhaseId; durationMs: number; fraction: number; elapsedMs: number }
   | {
-      type: 'scan:done';
+      type: "unit:fail";
+      phase: PhaseId;
+      label: string;
+      error: string;
+      fraction: number;
+      elapsedMs: number;
+    }
+  | {
+      type: "phase:done";
+      phase: PhaseId;
+      durationMs: number;
+      fraction: number;
+      elapsedMs: number;
+    }
+  | {
+      type: "scan:done";
       durationMs: number;
       /** Null when the scan obtained too little evidence to judge the site. */
       score: number | null;
@@ -28,8 +48,8 @@ export type ScanEvent =
  * fraction of a finished scan is exactly 1.
  */
 export const PHASE_WEIGHTS: Record<PhaseId, number> = {
-  'fetch-root': 0.35,
-  'fetch-pages': 0.2,
+  "fetch-root": 0.35,
+  "fetch-pages": 0.2,
   analyze: 0.1,
   audits: 0.3,
   report: 0.05,
@@ -60,7 +80,10 @@ export class ProgressTracker {
   get fraction(): number {
     let f = this.doneWeight;
     if (this.phase !== null) {
-      const ratio = this.totalUnits > 0 ? Math.min(1, this.completedUnits / this.totalUnits) : 0;
+      const ratio =
+        this.totalUnits > 0
+          ? Math.min(1, this.completedUnits / this.totalUnits)
+          : 0;
       f += PHASE_WEIGHTS[this.phase] * ratio;
     }
     // Mid-phase total corrections (setPhaseTotal) and float noise must never
@@ -80,7 +103,7 @@ export class ProgressTracker {
   }
 
   scanStart(url: string): void {
-    this.onEvent({ type: 'scan:start', url, ...this.stamp() });
+    this.onEvent({ type: "scan:start", url, ...this.stamp() });
   }
 
   phaseStart(phase: PhaseId, totalUnits: number): void {
@@ -89,7 +112,7 @@ export class ProgressTracker {
     this.totalUnits = Math.max(0, totalUnits);
     this.completedUnits = 0;
     this.onEvent({
-      type: 'phase:start',
+      type: "phase:start",
       phase,
       totalUnits: this.totalUnits,
       ...this.stamp(),
@@ -106,7 +129,7 @@ export class ProgressTracker {
     if (phase === null) return;
     this.completedUnits += 1;
     this.onEvent({
-      type: 'unit:done',
+      type: "unit:done",
       phase,
       completed: this.completedUnits,
       total: this.totalUnits,
@@ -121,7 +144,7 @@ export class ProgressTracker {
     if (phase === null) return;
     this.completedUnits += 1;
     this.onEvent({
-      type: 'unit:fail',
+      type: "unit:fail",
       phase,
       label,
       error,
@@ -134,11 +157,14 @@ export class ProgressTracker {
     if (phase === null) return;
     this.phase = null;
     this.doneWeight += PHASE_WEIGHTS[phase];
-    const durationMs = Math.max(0, Math.round(performance.now() - this.phaseStartMs));
+    const durationMs = Math.max(
+      0,
+      Math.round(performance.now() - this.phaseStartMs),
+    );
     this.totalUnits = 0;
     this.completedUnits = 0;
     this.onEvent({
-      type: 'phase:done',
+      type: "phase:done",
       phase,
       durationMs,
       ...this.stamp(),
@@ -146,6 +172,11 @@ export class ProgressTracker {
   }
 
   scanDone(score: number | null): void {
-    this.onEvent({ type: 'scan:done', durationMs: this.elapsedMs(), score, ...this.stamp() });
+    this.onEvent({
+      type: "scan:done",
+      durationMs: this.elapsedMs(),
+      score,
+      ...this.stamp(),
+    });
   }
 }

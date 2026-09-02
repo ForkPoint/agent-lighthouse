@@ -1,4 +1,4 @@
-import type { ScanEvent } from '@forkpoint/agent-lighthouse-core';
+import type { ScanEvent } from "@forkpoint/agent-lighthouse-core";
 
 export interface ProgressNotification {
   progressToken: string | number;
@@ -37,12 +37,12 @@ export function createProgressNotifier(
 
   return (event) => {
     switch (event.type) {
-      case 'unit:done':
-      case 'phase:start':
-      case 'phase:done':
+      case "unit:done":
+      case "phase:start":
+      case "phase:done":
         send(event.fraction, false);
         break;
-      case 'scan:done':
+      case "scan:done":
         send(event.fraction, true);
         break;
       default:

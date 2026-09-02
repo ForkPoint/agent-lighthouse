@@ -29,20 +29,20 @@ export interface BadgeBand {
  * table.
  */
 export const BADGE_BANDS: readonly BadgeBand[] = [
-  { min: 90, max: 100, color: '22c55e', meaning: 'Agent-ready' },
-  { min: 70, max: 89, color: '4f46e5', meaning: 'Good' },
-  { min: 50, max: 69, color: 'f59e0b', meaning: 'Needs work' },
-  { min: 0, max: 49, color: 'ef4444', meaning: 'Blocked' },
+  { min: 90, max: 100, color: "22c55e", meaning: "Agent-ready" },
+  { min: 70, max: 89, color: "4f46e5", meaning: "Good" },
+  { min: 50, max: 69, color: "f59e0b", meaning: "Needs work" },
+  { min: 0, max: 49, color: "ef4444", meaning: "Blocked" },
 ];
 
 /** Where the badge links, exactly as `docs/badge.md` writes it. */
-export const BADGE_LINK = 'https://github.com/ForkPoint/agent-lighthouse';
+export const BADGE_LINK = "https://github.com/ForkPoint/agent-lighthouse";
 
 /** The score the generator opens on, and the one `docs/badge.md` illustrates. */
 export const DEFAULT_SCORE = 87;
 
 /** The site the generator opens on, a placeholder rather than a real target. */
-export const DEFAULT_URL = 'https://example.com';
+export const DEFAULT_URL = "https://example.com";
 
 /**
  * A score reduced to the integer 0–100 a badge can carry.
@@ -62,7 +62,7 @@ export function badgeColor(score: number): string {
   // `BADGE_BANDS` is descending and its last band starts at 0, so the fallback
   // is unreachable for a clamped score; it is there so the return type is a
   // string rather than `string | undefined`.
-  return BADGE_BANDS.find((band) => clamped >= band.min)?.color ?? 'ef4444';
+  return BADGE_BANDS.find((band) => clamped >= band.min)?.color ?? "ef4444";
 }
 
 /** The shields.io image URL for a score — the form `docs/badge.md` publishes. */
@@ -80,7 +80,7 @@ export function badgeImageUrl(score: number): string {
  * sequence's ends, and no URL needs them unencoded.
  */
 function commentSafe(url: string): string {
-  return url.replace(/[<>]/g, '').replace(/\s+/g, ' ').trim();
+  return url.replace(/[<>]/g, "").replace(/\s+/g, " ").trim();
 }
 
 /**
@@ -105,10 +105,10 @@ export function badgeMarkdown(score: number, url: string): string {
  * in a blank: with scripting off the panel still shows a usable badge.
  */
 export function mountBadgeGenerator(): void {
-  const scoreInput = document.querySelector<HTMLInputElement>('#badge-score');
-  const urlInput = document.querySelector<HTMLInputElement>('#badge-url');
-  const preview = document.querySelector<HTMLElement>('#badge-preview');
-  const markdown = document.querySelector<HTMLElement>('#badge-markdown');
+  const scoreInput = document.querySelector<HTMLInputElement>("#badge-score");
+  const urlInput = document.querySelector<HTMLInputElement>("#badge-url");
+  const preview = document.querySelector<HTMLElement>("#badge-preview");
+  const markdown = document.querySelector<HTMLElement>("#badge-markdown");
   if (!scoreInput || !urlInput || !preview || !markdown) return;
 
   const update = (): void => {
@@ -119,34 +119,37 @@ export function mountBadgeGenerator(): void {
     // and the snippet is meant to be read as text anyway.
     markdown.textContent = badgeMarkdown(score, url);
 
-    const image = document.createElement('img');
+    const image = document.createElement("img");
     // The src is assembled from a clamped integer and a colour out of
     // `BADGE_BANDS` — no part of it comes from the URL field.
     image.src = badgeImageUrl(score);
     image.alt = `Agent Lighthouse ${score}/100 badge`;
     image.height = 20;
-    image.decoding = 'async';
-    image.referrerPolicy = 'no-referrer';
+    image.decoding = "async";
+    image.referrerPolicy = "no-referrer";
     preview.replaceChildren(image);
   };
 
-  scoreInput.addEventListener('input', update);
-  urlInput.addEventListener('input', update);
+  scoreInput.addEventListener("input", update);
+  urlInput.addEventListener("input", update);
 
-  const copy = document.querySelector<HTMLButtonElement>('#badge-copy');
-  const status = document.querySelector<HTMLElement>('#badge-copy-status');
+  const copy = document.querySelector<HTMLButtonElement>("#badge-copy");
+  const status = document.querySelector<HTMLElement>("#badge-copy-status");
   if (copy) {
-    copy.addEventListener('click', () => {
+    copy.addEventListener("click", () => {
       // Feature-detected rather than assumed: the Clipboard API needs a secure
       // context, and a reader on plain http would otherwise get an unhandled
       // rejection and no explanation.
       void navigator.clipboard
-        ?.writeText(markdown.textContent ?? '')
+        ?.writeText(markdown.textContent ?? "")
         .then(() => {
-          if (status) status.textContent = 'Badge markdown copied to the clipboard.';
+          if (status)
+            status.textContent = "Badge markdown copied to the clipboard.";
         })
         .catch(() => {
-          if (status) status.textContent = 'Copying failed — select the snippet and copy it.';
+          if (status)
+            status.textContent =
+              "Copying failed — select the snippet and copy it.";
         });
     });
     // Revealed only now that it works, the way the other islands reveal their

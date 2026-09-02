@@ -1,38 +1,38 @@
 import type { AuditMeta } from "../../types";
-import type { CrawlerBot } from './_robots-txt-helpers';
-import { CrawlerBotAudit } from './_crawler-bot-audit';
-import { weightForGrade } from '../../scorer';
+import type { CrawlerBot } from "./_robots-txt-helpers";
+import { CrawlerBotAudit } from "./_crawler-bot-audit";
+import { weightForGrade } from "../../scorer";
 
 export class ApplebotExtendedAudit extends CrawlerBotAudit {
   static override meta: AuditMeta = {
-    id: 'access-crawl-control/applebot-extended',
-    category: 'access-crawl-control',
-    title: 'Applebot-Extended allowed',
-    failureTitle: 'Applebot-Extended allowed',
+    id: "access-crawl-control/applebot-extended",
+    category: "access-crawl-control",
+    title: "Applebot-Extended allowed",
+    failureTitle: "Applebot-Extended allowed",
     description:
-      'Without an explicit robots.txt rule, Applebot-Extended may still crawl your site but has no signal that it is welcome. Adding an explicit allow rule improves your visibility in AI-powered search and ensures consistent crawler behavior.',
-    scoreDisplayMode: 'ternary',
-    weight: weightForGrade('A', 'scored'),
-    evidenceGrade: 'A',
-    tier: 'scored',
-    dossier: 'docs/evidence/audits/access-crawl-control/applebot-extended.md',
+      "Without an explicit robots.txt rule, Applebot-Extended may still crawl your site but has no signal that it is welcome. Adding an explicit allow rule improves your visibility in AI-powered search and ensures consistent crawler behavior.",
+    scoreDisplayMode: "ternary",
+    weight: weightForGrade("A", "scored"),
+    evidenceGrade: "A",
+    tier: "scored",
+    dossier: "docs/evidence/audits/access-crawl-control/applebot-extended.md",
     // Gate exemption: being refused is what this category reports.
-    requires: ['origin-reachable'],
-    defaultPriority: 'medium',
+    requires: ["origin-reachable"],
+    defaultPriority: "medium",
     guidance: {
       impact:
         "Blocking Applebot-Extended prevents your content from being used in Apple Intelligence features, Siri AI answers, and Safari Highlights. Allowing it ensures visibility across Apple's AI ecosystem.",
-      fix: 'Add an explicit User-agent: Applebot-Extended with Allow: / rule in your robots.txt file.',
-      code: 'User-agent: Applebot-Extended\nAllow: /',
-      effort: 'trivial',
-      docsUrl: 'https://support.apple.com/en-us/111042',
-      tags: ['robots-txt', 'apple', 'crawler-permissions'],
+      fix: "Add an explicit User-agent: Applebot-Extended with Allow: / rule in your robots.txt file.",
+      code: "User-agent: Applebot-Extended\nAllow: /",
+      effort: "trivial",
+      docsUrl: "https://support.apple.com/en-us/111042",
+      tags: ["robots-txt", "apple", "crawler-permissions"],
     },
   };
 
   protected bot: CrawlerBot = {
-    botName: 'Applebot-Extended',
-    displayName: 'Applebot-Extended',
-    category: 'training',
+    botName: "Applebot-Extended",
+    displayName: "Applebot-Extended",
+    category: "training",
   };
 }

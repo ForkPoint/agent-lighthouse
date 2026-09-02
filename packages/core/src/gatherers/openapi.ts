@@ -1,6 +1,6 @@
-import type { CheckContext } from '../check-context';
-import type { FetchResult } from '../fetcher';
-import { isSafeUrl } from '../fetcher';
+import type { CheckContext } from "../check-context";
+import type { FetchResult } from "../fetcher";
+import { isSafeUrl } from "../fetcher";
 
 /** An OpenAPI document as served: an untyped object, walked key by key. */
 export type OpenApiSpec = Record<string, unknown>;
@@ -10,14 +10,14 @@ export type OpenApiOperation = Record<string, unknown>;
 
 /** The method keys a Path Item Object may carry, per OpenAPI 3.1 §4.8.9. */
 const HTTP_METHODS = [
-  'get',
-  'post',
-  'put',
-  'patch',
-  'delete',
-  'options',
-  'head',
-  'trace',
+  "get",
+  "post",
+  "put",
+  "patch",
+  "delete",
+  "options",
+  "head",
+  "trace",
 ] as const;
 
 /**
@@ -47,12 +47,13 @@ export const NO_OPENAPI_SPEC = {
   // also returns nothing for a 200 whose body will not parse, and for JSON
   // that is not an object — a site that does publish a document, badly. Saying
   // "no document is published" there would claim something never observed.
-  message: 'No readable OpenAPI document at /openapi.json, so there is nothing to check.',
-  found: 'No readable OpenAPI document',
+  message:
+    "No readable OpenAPI document at /openapi.json, so there is nothing to check.",
+  found: "No readable OpenAPI document",
 } as const;
 
 function isObject(val: unknown): val is Record<string, unknown> {
-  return typeof val === 'object' && val !== null && !Array.isArray(val);
+  return typeof val === "object" && val !== null && !Array.isArray(val);
 }
 
 /**
@@ -76,7 +77,7 @@ interface OpenApiContext {
  * copies. The family's dossiers record it as the standing YAML blind spot.
  */
 export function readOpenApiSpec(ctx: OpenApiContext): OpenApiSpec | undefined {
-  const jsonResult = ctx.rootFiles['/openapi.json'];
+  const jsonResult = ctx.rootFiles["/openapi.json"];
   if (jsonResult && jsonResult.status === 200 && jsonResult.body) {
     try {
       const parsed: unknown = JSON.parse(jsonResult.body);
@@ -119,18 +120,18 @@ export interface LocatedOperation {
  * readable operations and one defect — while `{"/x": {}}` still declines.
  */
 export type OpenApiPathsReading =
-  | { kind: 'empty' }
-  | { kind: 'malformed'; found: string; defects: string[] }
-  | { kind: 'operations'; operations: LocatedOperation[]; defects: string[] };
+  | { kind: "empty" }
+  | { kind: "malformed"; found: string; defects: string[] }
+  | { kind: "operations"; operations: LocatedOperation[]; defects: string[] };
 
 /** Names a JSON value's shape for a `found` line, e.g. "an array", "a string". */
 function describeShape(val: unknown): string {
-  if (val === null) return 'null';
-  if (Array.isArray(val)) return 'an array';
-  if (typeof val === 'string') return 'a string';
-  if (typeof val === 'number') return 'a number';
-  if (typeof val === 'boolean') return 'a boolean';
-  return 'not an object';
+  if (val === null) return "null";
+  if (Array.isArray(val)) return "an array";
+  if (typeof val === "string") return "a string";
+  if (typeof val === "number") return "a number";
+  if (typeof val === "boolean") return "a boolean";
+  return "not an object";
 }
 
 /**
@@ -142,7 +143,7 @@ function describeShape(val: unknown): string {
  */
 function describeDefects(defects: string[]): string {
   const [first, ...rest] = defects;
-  if (first === undefined) return '';
+  if (first === undefined) return "";
   return rest.length > 0 ? `${first} (+${rest.length} more)` : first;
 }
 
@@ -153,14 +154,14 @@ function describeDefects(defects: string[]): string {
  * when there is nothing to name, so a caller can append it unconditionally.
  */
 export function defectNote(defects: string[]): string {
-  if (defects.length === 0) return '';
-  const entry = defects.length === 1 ? 'entry' : 'entries';
+  if (defects.length === 0) return "";
+  const entry = defects.length === 1 ? "entry" : "entries";
   return ` Skipped ${defects.length} unreadable ${entry}: ${describeDefects(defects)}.`;
 }
 
 /** The matching `found` suffix: a count, because `found` stays short. */
 export function defectCount(defects: string[]): string {
-  return defects.length > 0 ? `; ${defects.length} unreadable` : '';
+  return defects.length > 0 ? `; ${defects.length} unreadable` : "";
 }
 
 /**
@@ -174,24 +175,28 @@ export function defectCount(defects: string[]): string {
  * are legal members that are not Operation Objects.
  */
 export function readOpenApiPaths(spec: OpenApiSpec): OpenApiPathsReading {
-  const paths = spec['paths'];
+  const paths = spec["paths"];
   // Only an absent key is an absent `paths`. `"paths": null` is a value the
   // author wrote, and it is not a Paths Object.
-  if (paths === undefined) return { kind: 'empty' };
+  if (paths === undefined) return { kind: "empty" };
   if (!isObject(paths)) {
     const defects = [`paths is ${describeShape(paths)}, not an object`];
-    return { kind: 'malformed', found: describeDefects(defects), defects };
+    return { kind: "malformed", found: describeDefects(defects), defects };
   }
 
-  const entries = Object.entries(paths).filter(([key]) => !key.startsWith('x-'));
-  if (entries.length === 0) return { kind: 'empty' };
+  const entries = Object.entries(paths).filter(
+    ([key]) => !key.startsWith("x-"),
+  );
+  if (entries.length === 0) return { kind: "empty" };
 
   const operations: LocatedOperation[] = [];
   const defects: string[] = [];
 
   for (const [path, pathItem] of entries) {
     if (!isObject(pathItem)) {
-      defects.push(`paths entry "${path}" is ${describeShape(pathItem)}, not a path item object`);
+      defects.push(
+        `paths entry "${path}" is ${describeShape(pathItem)}, not a path item object`,
+      );
       continue;
     }
     for (const method of HTTP_METHODS) {
@@ -211,12 +216,13 @@ export function readOpenApiPaths(spec: OpenApiSpec): OpenApiPathsReading {
   // Something is readable. Report it *and* the defects: discarding twenty
   // working operations to name one broken sibling states something false about
   // the document, and it is a verdict this family used to get wrong.
-  if (operations.length > 0) return { kind: 'operations', operations, defects };
+  if (operations.length > 0) return { kind: "operations", operations, defects };
   // Nothing readable, and the author wrote what blocks it.
-  if (defects.length > 0) return { kind: 'malformed', found: describeDefects(defects), defects };
+  if (defects.length > 0)
+    return { kind: "malformed", found: describeDefects(defects), defects };
   // Well-formed path items that declare no method are legal and announce
   // nothing, so they land with the other empties.
-  return { kind: 'empty' };
+  return { kind: "empty" };
 }
 
 /**
@@ -233,12 +239,12 @@ export function readOpenApiPaths(spec: OpenApiSpec): OpenApiPathsReading {
  * `readOpenApiPaths` instead, so it can fail the malformed case.
  */
 export function openApiOperations(spec: OpenApiSpec): LocatedOperation[] {
-  const paths = spec['paths'];
+  const paths = spec["paths"];
   if (!isObject(paths)) return [];
 
   const operations: LocatedOperation[] = [];
   for (const [path, pathItem] of Object.entries(paths)) {
-    if (path.startsWith('x-') || !isObject(pathItem)) continue;
+    if (path.startsWith("x-") || !isObject(pathItem)) continue;
     for (const method of HTTP_METHODS) {
       const op = pathItem[method];
       if (isObject(op)) operations.push({ path, method, op });
@@ -247,19 +253,25 @@ export function openApiOperations(spec: OpenApiSpec): LocatedOperation[] {
   return operations;
 }
 
-const openApiServerCache = new WeakMap<object, Map<string, Promise<FetchResult | undefined>>>();
+const openApiServerCache = new WeakMap<
+  object,
+  Map<string, Promise<FetchResult | undefined>>
+>();
 
 export function probeOpenApiServer(
-  ctx: { fetch: CheckContext['fetch'] },
+  ctx: { fetch: CheckContext["fetch"] },
   url: string,
-  options: { method?: 'GET' | 'OPTIONS'; headers?: Record<string, string> } = {},
+  options: {
+    method?: "GET" | "OPTIONS";
+    headers?: Record<string, string>;
+  } = {},
 ): Promise<FetchResult | undefined> {
   let cache = openApiServerCache.get(ctx);
   if (!cache) {
     cache = new Map();
     openApiServerCache.set(ctx, cache);
   }
-  const key = `${options.method ?? 'OPTIONS'}|${url}`;
+  const key = `${options.method ?? "OPTIONS"}|${url}`;
   let hit = cache.get(key);
   if (!hit) {
     hit = (async () => {
@@ -267,7 +279,7 @@ export function probeOpenApiServer(
       try {
         return await ctx.fetch({
           url,
-          method: options.method ?? 'OPTIONS',
+          method: options.method ?? "OPTIONS",
           ...(options.headers ? { headers: options.headers } : {}),
         });
       } catch {

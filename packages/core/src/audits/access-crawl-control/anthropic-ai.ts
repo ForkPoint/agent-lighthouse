@@ -1,52 +1,57 @@
-import type { AuditMeta, AuditResult } from '../../types';
-import type { CheckContext } from '../../check-context';
-import type { CrawlerBot } from './_robots-txt-helpers';
-import { CrawlerBotAudit } from './_crawler-bot-audit';
-import { parseRobotsFile, hasNamedGroup, isPathAllowed, matchesUserAgent } from '../../gatherers/robots';
-import { weightForGrade } from '../../scorer';
+import type { AuditMeta, AuditResult } from "../../types";
+import type { CheckContext } from "../../check-context";
+import type { CrawlerBot } from "./_robots-txt-helpers";
+import { CrawlerBotAudit } from "./_crawler-bot-audit";
+import {
+  parseRobotsFile,
+  hasNamedGroup,
+  isPathAllowed,
+  matchesUserAgent,
+} from "../../gatherers/robots";
+import { weightForGrade } from "../../scorer";
 
 /** The token this audit scores, spelled as Anthropic documents it. */
-const TOKEN = 'ClaudeBot';
+const TOKEN = "ClaudeBot";
 
 /**
  * Anthropic tokens that circulate in robots.txt templates but appear in no
  * current Anthropic documentation. Reported, never scored.
  */
-const LEGACY_TOKENS = ['anthropic-ai', 'Claude-Web'] as const;
+const LEGACY_TOKENS = ["anthropic-ai", "Claude-Web"] as const;
 
 /** The remedy for the one state this audit fails. */
 const FIX_SNIPPET = `User-agent: ${TOKEN}\nAllow: /`;
 
 export class AnthropicAudit extends CrawlerBotAudit {
   static override meta: AuditMeta = {
-    id: 'access-crawl-control/anthropic-ai',
-    category: 'access-crawl-control',
-    title: 'ClaudeBot crawl access',
-    failureTitle: 'ClaudeBot disallowed by robots.txt',
+    id: "access-crawl-control/anthropic-ai",
+    category: "access-crawl-control",
+    title: "ClaudeBot crawl access",
+    failureTitle: "ClaudeBot disallowed by robots.txt",
     description:
       "ClaudeBot collects web content that may contribute to Anthropic's model training, and Anthropic states its bots honour robots.txt. This check reads the robots.txt rules that actually apply to ClaudeBot — its own group if it has one, otherwise the catch-all — and reports whether they let it fetch the site root. A named group is not required: under RFC 9309 §2.2.1 an open catch-all grants the same access. The legacy `anthropic-ai` and `Claude-Web` tokens are reported when present but never scored, because Anthropic's current crawler documentation names neither.",
-    scoreDisplayMode: 'ternary',
-    weight: weightForGrade('A', 'scored'),
-    evidenceGrade: 'A',
-    tier: 'scored',
-    dossier: 'docs/evidence/audits/access-crawl-control/anthropic-ai.md',
+    scoreDisplayMode: "ternary",
+    weight: weightForGrade("A", "scored"),
+    evidenceGrade: "A",
+    tier: "scored",
+    dossier: "docs/evidence/audits/access-crawl-control/anthropic-ai.md",
     // Gate exemption: being refused is what this category reports.
-    requires: ['origin-reachable'],
-    defaultPriority: 'medium',
+    requires: ["origin-reachable"],
+    defaultPriority: "medium",
     guidance: {
       impact:
         "Disallowing ClaudeBot keeps the site out of the web content Anthropic collects for potential model training. It is an effective, documented control, so it is only a problem where the block was not intended. It buys back very little traffic either way: Cloudflare Radar measures Anthropic's crawl-to-refer ratio at roughly 50,000:1, so the allow-side case is about corpus inclusion rather than referral visibility.",
-      fix: 'If the block was not intended, remove the Disallow rule that applies to ClaudeBot, or add a named `User-agent: ClaudeBot` group with `Allow: /` — under RFC 9309 §2.2.1 a named group overrides the catch-all for that crawler. A `User-agent: anthropic-ai` group is not a substitute: Anthropic documents only ClaudeBot, Claude-User and Claude-SearchBot.',
+      fix: "If the block was not intended, remove the Disallow rule that applies to ClaudeBot, or add a named `User-agent: ClaudeBot` group with `Allow: /` — under RFC 9309 §2.2.1 a named group overrides the catch-all for that crawler. A `User-agent: anthropic-ai` group is not a substitute: Anthropic documents only ClaudeBot, Claude-User and Claude-SearchBot.",
       code: FIX_SNIPPET,
-      effort: 'trivial',
-      tags: ['robots-txt', 'anthropic', 'crawler-permissions'],
+      effort: "trivial",
+      tags: ["robots-txt", "anthropic", "crawler-permissions"],
     },
   };
 
   protected bot: CrawlerBot = {
     botName: TOKEN,
     displayName: TOKEN,
-    category: 'training',
+    category: "training",
   };
 
   /**
@@ -78,14 +83,14 @@ export class AnthropicAudit extends CrawlerBotAudit {
    * the base rule; changing it there would move every one of them.
    */
   override audit(ctx: CheckContext): AuditResult {
-    const robotsFile = ctx.rootFiles['/robots.txt'];
+    const robotsFile = ctx.rootFiles["/robots.txt"];
     const expected = `robots.txt rules that leave ${TOKEN} able to fetch /`;
 
     if (!robotsFile || robotsFile.status !== 200 || !robotsFile.body) {
       return this.notApplicable(
         `No robots.txt to read, so there are no crawl rules to evaluate for ${TOKEN}.`,
         expected,
-        'No robots.txt found',
+        "No robots.txt found",
       );
     }
 
@@ -97,7 +102,7 @@ export class AnthropicAudit extends CrawlerBotAudit {
       return this.notApplicable(
         `The response at /robots.txt carries no crawl rules, so there is nothing to evaluate for ${TOKEN}.`,
         expected,
-        'robots.txt contains no user-agent groups and no directives',
+        "robots.txt contains no user-agent groups and no directives",
       );
     }
 
@@ -108,14 +113,14 @@ export class AnthropicAudit extends CrawlerBotAudit {
     // Anthropic documents no consumer for these tokens — and stops there.
     const legacyNote =
       legacyTokens.length === 0
-        ? ''
-        : ` · legacy ${legacyTokens.join(' / ')} group present — Anthropic's current crawler documentation` +
-          ' names only ClaudeBot, Claude-User and Claude-SearchBot, so this group is not a documented' +
-          ' Anthropic access control and does not affect this result.';
+        ? ""
+        : ` · legacy ${legacyTokens.join(" / ")} group present — Anthropic's current crawler documentation` +
+          " names only ClaudeBot, Claude-User and Claude-SearchBot, so this group is not a documented" +
+          " Anthropic access control and does not affect this result.";
 
     const named = hasNamedGroup(groups, TOKEN);
-    const hasCatchAll = groups.some((group) => group.userAgent.trim() === '*');
-    const allowed = isPathAllowed(groups, TOKEN, '/');
+    const hasCatchAll = groups.some((group) => group.userAgent.trim() === "*");
+    const allowed = isPathAllowed(groups, TOKEN, "/");
     const details = {
       namedGroup: named,
       hasCatchAll,
@@ -125,21 +130,27 @@ export class AnthropicAudit extends CrawlerBotAudit {
 
     if (allowed) {
       const [message, found] = named
-        ? [`${TOKEN} is allowed by its own robots.txt group.`, `User-agent: ${TOKEN} group permits /`]
+        ? [
+            `${TOKEN} is allowed by its own robots.txt group.`,
+            `User-agent: ${TOKEN} group permits /`,
+          ]
         : hasCatchAll
           ? [
               `${TOKEN} is allowed. No group names it, so under RFC 9309 §2.2.1 it obeys the catch-all group, which permits /.`,
-              'Allowed through the catch-all group',
+              "Allowed through the catch-all group",
             ]
           : [
               `${TOKEN} is allowed. No group in robots.txt applies to it, so nothing restricts its crawl.`,
               `No group applies to ${TOKEN}`,
             ];
-      return { ...this.pass(message, expected, `${found}${legacyNote}`), details };
+      return {
+        ...this.pass(message, expected, `${found}${legacyNote}`),
+        details,
+      };
     }
 
     const found = named
-      ? 'Its own group disallows /'
+      ? "Its own group disallows /"
       : `The catch-all group disallows / and no group names ${TOKEN}`;
 
     return {
@@ -147,7 +158,7 @@ export class AnthropicAudit extends CrawlerBotAudit {
         `${TOKEN} is disallowed at the site root. Anthropic states its bots honour robots.txt, so the block takes effect: the site is excluded from the web content Anthropic collects for potential model training.`,
         expected,
         `${found}${legacyNote}`,
-        { priority: 'medium' },
+        { priority: "medium" },
       ),
       details: { ...details, code: FIX_SNIPPET },
     };
