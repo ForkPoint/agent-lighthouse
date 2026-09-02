@@ -2,22 +2,14 @@ import { readFileSync, readdirSync, statSync } from "node:fs";
 import { join, resolve } from "node:path";
 
 /**
- * Each registered audit's own source text, keyed by its id.
+ * All registered audit source file paths under `packages/core/src/audits`.
  *
- * A few contract suites need to ask what an audit's file *does*, not what its
- * meta *declares* — because the interesting failures are the ones where the
- * two disagree on purpose. `scripts/lib/requires-analysis.mjs` asks the same
- * question at build time, but it is an untyped CI script that reads the built
- * bundle, and importing it from a `tsc`-checked test file drags a `.d.mts` and
- * a rootDir escape in behind it. The walk is nine lines; the duplication is
- * cheaper than the coupling.
- *
- * Anchored on the repo root: vitest is only ever run from there, and the read
- * throws loudly rather than skipping if that stops being true.
+ * Canonical filesystem scanner shared by contract test suites and CI scripts
+ * (such as `scripts/check-requires.ts`).
  */
-export function auditSources(): Map<string, string> {
-  const base = resolve(process.cwd(), "packages/core/src/audits");
-  const byId = new Map<string, string>();
+export function auditSourceFiles(repoRoot = process.cwd()): string[] {
+  const base = resolve(repoRoot, "packages/core/src/audits");
+  const files: string[] = [];
   for (const category of readdirSync(base)) {
     const dir = join(base, category);
     if (!statSync(dir).isDirectory()) continue;
@@ -28,15 +20,40 @@ export function auditSources(): Map<string, string> {
         file === "index.ts"
       )
         continue;
-      const source = readFileSync(join(dir, file), "utf8");
-      // A source may hold other `id:` fields — `sensitive-paths` names its URL
-      // spaces that way — so only `category/slug` shapes are taken, and the
-      // caller picks the one the registry knows.
-      for (const match of source.matchAll(
-        /^\s*id:\s*['"]([a-z][a-z-]*\/[a-z0-9-]+)['"]/gm,
-      )) {
-        byId.set(match[1]!, source);
-      }
+      files.push(join(dir, file));
+    }
+  }
+  return files.sort();
+}
+
+/**
+ * Every `category/slug` id an audit source declares.
+ *
+ * A source may hold other `id:` fields — `sensitive-paths` names its URL
+ * spaces that way — so only `category/slug` shapes are taken.
+ */
+export function declaredIds(source: string): string[] {
+  return [...source.matchAll(/^\s*id:\s*['"]([^'"]+)['"]/gm)]
+    .map((m) => m[1])
+    .filter((id): id is string => Boolean(id && /^[a-z][a-z-]*\/[a-z0-9-]+$/.test(id)));
+}
+
+/**
+ * Each registered audit's own source text, keyed by its id.
+ *
+ * A few contract suites need to ask what an audit's file *does*, not what its
+ * meta *declares* — because the interesting failures are the ones where the
+ * two disagree on purpose.
+ *
+ * Anchored on the repo root: vitest is only ever run from there, and the read
+ * throws loudly rather than skipping if that stops being true.
+ */
+export function auditSources(): Map<string, string> {
+  const byId = new Map<string, string>();
+  for (const file of auditSourceFiles()) {
+    const source = readFileSync(file, "utf8");
+    for (const id of declaredIds(source)) {
+      byId.set(id, source);
     }
   }
   return byId;
