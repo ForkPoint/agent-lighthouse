@@ -6,7 +6,7 @@ on:
     # A scheduled workflow in a public repository is disabled automatically
     # after 60 days without repository activity, so a job that goes quiet is
     # worth checking here before it is debugged.
-    - cron: '17 3 * * *'
+    - cron: "17 3 * * *"
   workflow_dispatch:
 
 # One at a time. Two concurrent runs would double the request rate every
@@ -19,14 +19,12 @@ permissions:
 jobs:
   scan:
     runs-on: ubuntu-latest
-    # The job cap is 6 hours. Measured: 4 sites took 122 s wall at concurrency
-    # 2, about 60 s per site per worker, and one site alone took 120 s. With the
-    # 3 s inter-site delay a window costs `limit / 2 * 63 s`: 400 sites is 210
-    # minutes, inside the script's own 240-minute deadline with half an hour of
-    # slack. 500 was the first budget and it cost 262 minutes — past the
-    # deadline, so the job would have exited "ran out of time" on any night
-    # whose window held few robots-skipped sites. This cap is the backstop
-    # behind the deadline, not the plan.
+    # The list is about 400 curated domains, held under 500 by its test, and
+    # a night scans all of it: at concurrency 2 and about 63 s per site per
+    # worker that is about 220 minutes, inside the script's 240-minute
+    # deadline. status.json keeps dead and robots-blocked domains out, which
+    # is most of what made the old 1913-entry list slow. This cap is the
+    # backstop behind the deadline.
     timeout-minutes: 300
     steps:
       - uses: actions/checkout@v7
@@ -38,7 +36,7 @@ jobs:
         uses: actions/setup-node@v7
         with:
           node-version: 22
-          cache: 'pnpm'
+          cache: "pnpm"
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
@@ -54,7 +52,7 @@ jobs:
       # 4 (deadline), 5 (scanned nothing) and 6 (the runner threw) are the job
       # failing rather than a site. `scan-site-list.ts` documents the set.
       - name: Scan the site list
-        run: node --import tsx scripts/scan-site-list.ts --limit=200 --allow-partial=1
+        run: node --import tsx scripts/scan-site-list.ts --limit=500 --allow-partial=1
 
       # `if: always()` on purpose: the summary is most wanted on the run that
       # failed, and the scan step exits non-zero exactly when it found something.

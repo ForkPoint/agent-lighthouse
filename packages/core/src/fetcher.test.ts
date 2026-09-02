@@ -379,6 +379,46 @@ describe("fetcher.fetch — HTTP methods", () => {
 // ---------------------------------------------------------------------------
 
 describe("fetcher.fetch — request headers", () => {
+  // Header names are case-insensitive on the wire. A caller's lowercase
+  // `user-agent` must be replaced by the scanner's, not sent beside it as
+  // one joined value.
+  it("replaces a caller header of the same name in another casing", async () => {
+    mockRequest.mockResolvedValue(mockResponse(200, "") as any);
+
+    const fetcher = createFetcher({
+      headers: { "user-agent": "CallerBot/1.0" },
+    });
+    await fetcher.fetch({
+      url: "https://user:pw@example.com",
+      headers: { authorization: "Bearer stale" },
+    });
+
+    const headers = mockRequest.mock.calls[0][1]?.headers as Record<
+      string,
+      string
+    >;
+    const names = Object.keys(headers).map((k) => k.toLowerCase());
+    expect(names.filter((n) => n === "user-agent")).toHaveLength(1);
+    expect(names.filter((n) => n === "authorization")).toHaveLength(1);
+    expect(headers["User-Agent"]).toBe(SCANNER_USER_AGENT);
+    expect(headers["Authorization"]).toBe(
+      `Basic ${Buffer.from("user:pw").toString("base64")}`,
+    );
+  });
+
+  it("keeps a caller header the scanner does not set", async () => {
+    mockRequest.mockResolvedValue(mockResponse(200, "") as any);
+
+    const fetcher = createFetcher({ headers: { "X-Scan-Id": "abc" } });
+    await fetcher.fetch({ url: "https://example.com" });
+
+    const headers = mockRequest.mock.calls[0][1]?.headers as Record<
+      string,
+      string
+    >;
+    expect(headers["X-Scan-Id"]).toBe("abc");
+  });
+
   it("sets the custom User-Agent header", async () => {
     mockRequest.mockResolvedValue(mockResponse(200, "") as any);
 

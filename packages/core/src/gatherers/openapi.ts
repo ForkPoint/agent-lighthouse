@@ -1,3 +1,4 @@
+import { cacheOwner } from "./cache-owner";
 import type { CheckContext } from "../check-context";
 import type { FetchResult } from "../fetcher";
 import { isSafeUrl } from "../fetcher";
@@ -266,10 +267,10 @@ export function probeOpenApiServer(
     headers?: Record<string, string>;
   } = {},
 ): Promise<FetchResult | undefined> {
-  let cache = openApiServerCache.get(ctx);
+  let cache = openApiServerCache.get(cacheOwner(ctx));
   if (!cache) {
     cache = new Map();
-    openApiServerCache.set(ctx, cache);
+    openApiServerCache.set(cacheOwner(ctx), cache);
   }
   const key = `${options.method ?? "OPTIONS"}|${url}`;
   let hit = cache.get(key);

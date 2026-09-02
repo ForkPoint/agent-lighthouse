@@ -3,15 +3,23 @@ import * as path from "node:path";
 import {
   buildSiteList,
   normalize,
+  readSeeds,
+  type SeedFile,
+  type Seeds,
   type SiteEntry,
 } from "../packages/core/src/tests/site-list";
+import {
+  excludedDomains,
+  type CorpusStatus,
+} from "../packages/core/src/tests/corpus-status";
 
 /**
  * Build the site list from two public ranked sources.
  *
- * Neither source carries categories, so `categories.json` is a hand-maintained
- * seed map and everything unmatched stays `'unknown'`. Saying `'unknown'` is
- * honest; guessing a category from a domain name is not.
+ * `seeds.json` is the hand-maintained source of truth: every seeded domain
+ * carries its category, and everything unmatched in the ranked slice stays
+ * `'unknown'`. `status.json`, when present, keeps dead and blocked domains
+ * out of the ranked slice.
  *
  * Both inputs are local files, downloaded by hand:
  *
@@ -20,6 +28,8 @@ import {
  *   unzip -p /tmp/site-lists/tranco.zip > /tmp/site-lists/tranco.csv
  *   curl -sL https://raw.githubusercontent.com/zakird/crux-top-lists/main/data/global/current.csv.gz \
  *     | gunzip > /tmp/site-lists/crux.csv
+ *
+ * `--limit` is the ranked slice size, default 50.
  *
  * A generator that fetches cannot be re-run to the same output, and this one is
  * meant to be.
@@ -55,67 +65,66 @@ function readRanked(file: string, domainColumn: number): string[] {
     .filter(Boolean);
 }
 
-const rawLimit = flag("limit", "1000");
+const rawLimit = flag("limit", "50");
 const limit = Number(rawLimit);
-// Without this, `--limit=abc` yields NaN, `slice(0, NaN)` yields [], and the
-// committed list is silently overwritten with nothing but seed fallbacks.
-if (!Number.isInteger(limit) || limit <= 0) {
-  console.error(`--limit must be a positive integer, got: ${rawLimit}`);
+// Without this, `--limit=abc` yields NaN and the ranked slice is empty.
+if (!Number.isInteger(limit) || limit < 0) {
+  console.error(`--limit must be a non-negative integer, got: ${rawLimit}`);
   process.exit(1);
 }
 
 const TRANCO = flag("tranco", "/tmp/site-lists/tranco.csv");
 const CRUX = flag("crux", "/tmp/site-lists/crux.csv");
 const OUT = flag("out", "packages/core/test-data/sites/sites.json");
-const CATEGORIES = flag(
-  "categories",
-  "packages/core/test-data/sites/categories.json",
-);
+const SEEDS = flag("seeds", "packages/core/test-data/sites/seeds.json");
+const STATUS = flag("status", "packages/core/test-data/sites/status.json");
 
-const seed: Record<string, string[]> = JSON.parse(
-  fs.readFileSync(CATEGORIES, "utf8"),
-);
-const categoryOf = new Map<string, string>();
-// `normalize` answers '' for anything that is not a bare hostname. Keying the
-// map on that would seed the committed list with `{ domain: '' }`, and the
-// nightly would then request `https:///robots.txt` for it. A malformed entry
-// here is a typo in a hand-maintained file, so it is worth stopping for rather
-// than dropping: a seeded site that silently vanishes is never scanned.
-const malformed: string[] = [];
-for (const [category, domains] of Object.entries(seed)) {
-  for (const domain of domains) {
-    const host = normalize(domain);
-    if (host === "") {
-      malformed.push(`${category}: ${JSON.stringify(domain)}`);
-      continue;
-    }
-    categoryOf.set(host, category);
-  }
-}
-if (malformed.length > 0) {
-  console.error(
-    `${CATEGORIES} holds ${malformed.length} entr(y/ies) that are not bare hostnames:\n  ` +
-      `${malformed.join("\n  ")}`,
-  );
+let seeds: Seeds;
+try {
+  seeds = readSeeds(JSON.parse(fs.readFileSync(SEEDS, "utf8")) as SeedFile);
+} catch (err) {
+  console.error(String(err instanceof Error ? err.message : err));
   process.exit(1);
 }
+
+const status: CorpusStatus | undefined = fs.existsSync(STATUS)
+  ? (JSON.parse(fs.readFileSync(STATUS, "utf8")) as CorpusStatus)
+  : undefined;
+const exclude = excludedDomains(status, {});
 
 const sites = buildSiteList(
   [
     { domains: readRanked(TRANCO, 1), source: "tranco" },
     { domains: readRanked(CRUX, 0), source: "crux" },
   ],
-  categoryOf,
-  limit,
+  seeds,
+  { limit, exclude },
 );
 
 fs.mkdirSync(path.dirname(OUT), { recursive: true });
 fs.writeFileSync(OUT, `${JSON.stringify(sites, null, 2)}\n`);
 
+// A seed the status file calls dead or blocked is still emitted. It is a
+// person's decision to drop it, and the file that records that decision is
+// seeds.json — so it is said out loud here rather than silently dropped.
+const seededButExcluded = sites.filter(
+  (s) => seeds.categoryOf.has(s.domain) && exclude.has(s.domain),
+);
+for (const s of seededButExcluded) {
+  console.warn(
+    `warning: ${s.domain} (${s.category}) is ${status?.domains[s.domain]?.state} in status.json but stays seeded`,
+  );
+}
+
 const count = (source: SiteEntry["source"]) =>
   sites.filter((s) => s.source === source).length;
-const unknown = sites.filter((s) => s.category === "unknown").length;
+const byCategory = new Map<string, number>();
+for (const s of sites)
+  byCategory.set(s.category, (byCategory.get(s.category) ?? 0) + 1);
 console.log(
   `${sites.length} sites -> ${OUT} (tranco ${count("tranco")}, crux ${count("crux")}, ` +
-    `seed ${count("seed")}, unknown category ${unknown})`,
+    `seed ${count("seed")}; excluded ${exclude.size} by status)`,
 );
+for (const [category, n] of [...byCategory.entries()].sort()) {
+  console.log(`  ${category.padEnd(12)} ${n}`);
+}

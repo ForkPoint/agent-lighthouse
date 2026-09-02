@@ -11,6 +11,7 @@ import {
   failedAssertion,
   selectDebugChecks,
   openCommand,
+  PAGE_TYPE_IDS,
 } from "./options";
 
 describe("getArgValue", () => {
@@ -126,6 +127,8 @@ describe("parseCliOptions", () => {
       outputFormats: ["terminal", "html", "json"],
       categories: undefined,
       unknownCategories: [],
+      pageType: undefined,
+      invalidPageType: undefined,
       includeExperimental: false,
       isSilent: false,
       progressJson: false,
@@ -455,5 +458,36 @@ describe("openCommand", () => {
     expect(openCommand("linux", "/tmp/report.html")).toBe(
       'xdg-open "/tmp/report.html"',
     );
+  });
+});
+
+describe("--page-type", () => {
+  it("passes a known page type through", () => {
+    const o = parseCliOptions(["--page-type=product"], "https://example.com");
+    expect(o.pageType).toBe("product");
+    expect(o.invalidPageType).toBeUndefined();
+  });
+
+  it("accepts the space-separated form", () => {
+    const o = parseCliOptions(
+      ["--page-type", "category"],
+      "https://example.com",
+    );
+    expect(o.pageType).toBe("category");
+  });
+
+  it("rejects a value that names no page type, at parse time", () => {
+    const o = parseCliOptions(["--page-type=produtc"], "https://example.com");
+    expect(o.pageType).toBeUndefined();
+    expect(o.invalidPageType).toBe("produtc");
+  });
+
+  it("lists every page type the core knows", () => {
+    expect(PAGE_TYPE_IDS).toEqual([
+      "homepage",
+      "category",
+      "product",
+      "content",
+    ]);
   });
 });

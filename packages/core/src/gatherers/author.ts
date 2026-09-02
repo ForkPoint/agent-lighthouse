@@ -1,3 +1,4 @@
+import { cacheOwner } from "./cache-owner";
 import type { CheckContext } from "../check-context";
 import type { FetchResult } from "../fetcher";
 import { isSafeUrl } from "../fetcher";
@@ -16,10 +17,10 @@ export function probeAuthorUrl(
     headers?: Record<string, string>;
   } = {},
 ): Promise<FetchResult | undefined> {
-  let cache = authorProbeCache.get(ctx);
+  let cache = authorProbeCache.get(cacheOwner(ctx));
   if (!cache) {
     cache = new Map();
-    authorProbeCache.set(ctx, cache);
+    authorProbeCache.set(cacheOwner(ctx), cache);
   }
   const key = `${options.method ?? "GET"}|${options.followRedirects ?? false}|${url}`;
   let hit = cache.get(key);

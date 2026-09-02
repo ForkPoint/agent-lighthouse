@@ -210,6 +210,39 @@ export function boundedDispatcher(connections: number): Dispatcher {
   return new Agent({ connections });
 }
 
+/**
+ * Set one request header, replacing any existing header of the same name in
+ * any casing. The casing of `name` is what gets sent.
+ */
+export function setHeader(
+  headers: Record<string, string>,
+  name: string,
+  value: string,
+): void {
+  const wanted = name.toLowerCase();
+  for (const key of Object.keys(headers)) {
+    if (key !== name && key.toLowerCase() === wanted) delete headers[key];
+  }
+  headers[name] = value;
+}
+
+/**
+ * Merge header layers by case-insensitive name. A later layer wins over an
+ * earlier one, and keeps its own casing.
+ */
+export function mergeHeaders(
+  ...layers: Array<Record<string, string> | undefined>
+): Record<string, string> {
+  const out: Record<string, string> = {};
+  for (const layer of layers) {
+    if (!layer) continue;
+    for (const [name, value] of Object.entries(layer)) {
+      setHeader(out, name, value);
+    }
+  }
+  return out;
+}
+
 export function createFetcher(fetcherOptions: FetcherOptions = {}) {
   const dispatcher = fetcherOptions.dispatcher ?? noRedirectAgent;
   const gate =
@@ -262,19 +295,20 @@ export function createFetcher(fetcherOptions: FetcherOptions = {}) {
     let ttfbMs = 0;
 
     try {
-      const reqHeaders: Record<string, string> = {
-        ...fetcherOptions.headers,
-        ...extraHeaders,
+      // Header names are case-insensitive on the wire, so the layers merge
+      // by name and not by exact key: a caller's `user-agent` is replaced by
+      // the scanner's `User-Agent`, never sent beside it as a joined value.
+      const reqHeaders = mergeHeaders(fetcherOptions.headers, extraHeaders, {
         "User-Agent": userAgent ?? SCANNER_USER_AGENT,
         Accept: acceptHeader,
-      };
+      });
 
       if (authHeader) {
-        reqHeaders["Authorization"] = authHeader;
+        setHeader(reqHeaders, "Authorization", authHeader);
       }
 
       if (method === "POST" && contentType) {
-        reqHeaders["Content-Type"] = contentType;
+        setHeader(reqHeaders, "Content-Type", contentType);
       }
 
       logger.debug(

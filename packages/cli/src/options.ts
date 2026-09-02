@@ -1,8 +1,16 @@
 import {
   CATEGORY_IDS,
+  PAGE_TYPE_LABELS,
   type PresetName,
   type PageType,
 } from "@forkpoint/agent-lighthouse-core";
+
+/** Every value `--page-type` accepts, in the order the help text lists them. */
+export const PAGE_TYPE_IDS = Object.keys(PAGE_TYPE_LABELS) as PageType[];
+
+function isPageType(value: string): value is PageType {
+  return (PAGE_TYPE_IDS as string[]).includes(value);
+}
 
 /**
  * Argument parsing, lifted out of `main.ts`.
@@ -44,7 +52,10 @@ export interface CliOptions {
   progressJson: boolean;
   shouldView: boolean;
   debugAudit: string | undefined;
+  /** The page type declared with `--page-type`, once it passed the enum. */
   pageType: PageType | undefined;
+  /** A `--page-type` value that names no page type; `main` refuses it. */
+  invalidPageType: string | undefined;
   /** Where to write the per-audit NDJSON trace, if `--trace` was given. */
   tracePath: string | undefined;
 }
@@ -128,6 +139,7 @@ export function parseCliOptions(
 ): CliOptions {
   const categories = splitList(getArgValue(args, "", "--categories"));
   const minScoreArg = getArgValue(args, "", "--min-score");
+  const pageTypeArg = getArgValue(args, "", "--page-type");
 
   return {
     url: resolveUrl(positionalUrl, fileConfig),
@@ -151,7 +163,9 @@ export function parseCliOptions(
     progressJson: args.includes("--progress-json"),
     shouldView: args.includes("-v") || args.includes("--view"),
     debugAudit: getArgValue(args, "", "--debug-audit"),
-    pageType: getArgValue(args, "", "--page-type") as PageType | undefined,
+    pageType: pageTypeArg && isPageType(pageTypeArg) ? pageTypeArg : undefined,
+    invalidPageType:
+      pageTypeArg && !isPageType(pageTypeArg) ? pageTypeArg : undefined,
     // A bare `--trace` with no path is still a request to trace, so it gets
     // the default file rather than being read as "no trace".
     tracePath: args.includes("--trace")

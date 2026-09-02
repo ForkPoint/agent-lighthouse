@@ -18,9 +18,14 @@ import type {
   CategoryConfig,
   AuditRegistration,
 } from "./audit-config";
-import { calculateCategoryScore, calculateOverallScore } from "./scorer";
+import {
+  assessedMassOf,
+  calculateCategoryScore,
+  calculateOverallScore,
+} from "./scorer";
 import { traceFromCheck, formatTrace, type AuditTrace } from "./audit-trace";
 import { scanReadTheSite, unreadSiteReason } from "./scan-evidence";
+import { cacheOwner } from "./gatherers/cache-owner";
 
 /** How much of a failure message a report is willing to carry. */
 const MAX_ERROR_CHARS = 400;
@@ -327,7 +332,12 @@ export async function runAudits(
           tracing ? Math.round(performance.now() - startedAt) : 0;
         try {
           const instance = reg.create();
-          const scopedCtx = scopedPages ? { ...ctx, pages: scopedPages } : ctx;
+          // A scoped copy must keep the scan's cache identity, or every
+          // gatherer WeakMap misses once per audit and repeats its fetch.
+          const scopedCtx =
+            scopedPages && scopedPages !== ctx.pages
+              ? { ...ctx, pages: scopedPages, cacheOwner: cacheOwner(ctx) }
+              : ctx;
           const result = await instance.audit(scopedCtx);
           const check = instance.toCheckResult(result, scoreDisplayMode);
           if (typeof onEvent === "function")
@@ -373,6 +383,11 @@ function buildWeightedCategoryResult(
     id: cat.id,
     name: cat.name,
     weight: cat.weight,
+    // `calculateOverallScore` weights a category by what it assessed, and
+    // falls back to the registry mass only when this is absent. It must be
+    // set here, on the path every scan takes, or the fallback is the rule.
+    registryMass: cat.weight,
+    assessedMass: assessedMassOf(checks),
     // One scorer for the whole engine: each check carries its own weight
     // (stamped by `toCheckResult`/`stubCheck`), and a check without one is
     // unproven evidence that must not move the score.

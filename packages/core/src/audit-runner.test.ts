@@ -17,6 +17,7 @@ import { allEvidenceMet, buildScanEvidence } from "./scan-evidence";
 import { mockPageContext } from "./__tests__/test-utils";
 import { unreachableContext, bareSiteContext } from "./tests/fixtures";
 import { planAllAuditsForTest } from "./tests/plan-all-audits";
+import { cacheOwner } from "./gatherers/cache-owner";
 
 // ---------------------------------------------------------------------------
 // Helpers: build tiny fake Audit subclasses + registrations
@@ -167,8 +168,10 @@ describe("runAudits", () => {
     expect(cat2.checks).toHaveLength(0);
     expect(cat2.score).toBe(0);
 
-    // overall = round(90*0.5 + 0*0.5) = 45
-    expect(out.overallScore).toBe(45);
+    // cat2 assessed nothing, so it carries no mass and drops out of the
+    // overall mean: overall = 90*5 / 5 = 90. Under the registry-mass
+    // fallback it used to be round(90*0.5 + 0*0.5) = 45.
+    expect(out.overallScore).toBe(90);
 
     errorSpy.mockRestore();
   });
@@ -313,6 +316,111 @@ describe("runAudits", () => {
     const out = await runAudits(ctxWith(["homepage"]), config);
     expect(out.checks).toHaveLength(25);
     expect(out.categories[0].score).toBe(100);
+  });
+});
+
+describe("category mass on the scan path", () => {
+  it("sets assessedMass and registryMass on every category runAudits builds", async () => {
+    const ctx = ctxWith(["homepage"]);
+    const config: ScanConfig = {
+      categories: [{ id: "cat1", name: "Cat One", weight: 5 }],
+      audits: {
+        cat1: [
+          makeReg(meta({ id: "a", category: "cat1", weight: 2 }), () =>
+            result("pass", 1),
+          ),
+          makeReg(meta({ id: "b", category: "cat1", weight: 3 }), () =>
+            result("na", 0),
+          ),
+          makeReg(
+            meta({
+              id: "c",
+              category: "cat1",
+              weight: 0,
+              scoreDisplayMode: "informative",
+            }),
+            () => result("fail", 0),
+          ),
+        ],
+      },
+    };
+
+    const { categories } = await runAudits(ctx, config);
+    expect(categories[0]?.registryMass).toBe(5);
+    expect(categories[0]?.assessedMass).toBe(2);
+  });
+
+  it("weights the overall score by assessed mass, not registry mass", async () => {
+    const ctx = ctxWith(["homepage"]);
+    const config: ScanConfig = {
+      categories: [
+        { id: "big", name: "Big", weight: 10 },
+        { id: "small", name: "Small", weight: 1 },
+      ],
+      audits: {
+        // Registry mass 10, but only 1 of it assessed, at score 0.
+        big: [
+          makeReg(meta({ id: "b1", category: "big", weight: 1 }), () =>
+            result("fail", 0),
+          ),
+          makeReg(meta({ id: "b2", category: "big", weight: 9 }), () =>
+            result("na", 0),
+          ),
+        ],
+        // Registry mass 1, all assessed, at score 100.
+        small: [
+          makeReg(meta({ id: "s1", category: "small", weight: 1 }), () =>
+            result("pass", 1),
+          ),
+        ],
+      },
+    };
+
+    const { overallScore } = await runAudits(ctx, config);
+    // Assessed: (0 * 1 + 100 * 1) / 2 = 50. Registry would give 9.
+    expect(overallScore).toBe(50);
+  });
+});
+
+describe("gatherer cache identity", () => {
+  it("shares one gatherer cache across every audit of a scan", async () => {
+    const fetch = vi.fn(async () => ({}) as never);
+    const ctx = ctxWith(["homepage"]);
+    ctx.fetch = fetch;
+
+    // Each audit memoises on the context it is handed, the way every
+    // gatherer WeakMap does. Two audits, one universal and one typed, must
+    // resolve to the same cache owner or the fetch runs twice.
+    const seen = new Set<object>();
+    const probe = async (c: CheckContext) => {
+      const owner = cacheOwner(c);
+      if (!seen.has(owner)) {
+        seen.add(owner);
+        await c.fetch({ url: "https://example.com/x" });
+      }
+      return result("pass", 1);
+    };
+
+    const config: ScanConfig = {
+      categories: [{ id: "cat1", name: "Cat One", weight: 1 }],
+      audits: {
+        cat1: [
+          makeReg(meta({ id: "u1", category: "cat1" }), probe),
+          makeReg(
+            meta({
+              id: "t1",
+              category: "cat1",
+              applicablePageTypes: ["homepage"],
+            }),
+            probe,
+          ),
+        ],
+      },
+    };
+
+    const { checks } = await runAudits(ctx, config);
+    expect(checks.map((c) => c.status)).toEqual(["pass", "pass"]);
+    expect(fetch).toHaveBeenCalledTimes(1);
   });
 });
 

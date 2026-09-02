@@ -276,14 +276,37 @@ mostly closed to an honest user agent, and that is the finding.
 `.github/workflows/corpus-nightly.yml` runs `scripts/scan-site-list.ts` at
 03:17 UTC. It is not the fixture corpus: it scans live sites from
 `packages/core/test-data/sites/sites.json` and asserts invariants, never
-verdicts. There is no ground truth for 1913 third-party sites, so the rules it
+verdicts. There is no ground truth for 414 third-party sites, so the rules it
 checks live in `packages/core/src/tests/scan-invariants.ts` and say what a scan
 may *claim* — chiefly that a scan the gate could not feed reports no score.
 
-**The window.** 400 sites a night, starting at a date-seeded offset, wrapping
-past the end of the list. Full coverage takes five nights. 400 is sized against
-the 240-minute deadline, not against the list: a site costs about 63 s of one
-worker, and two workers finish 400 in about 210 minutes.
+**The list.** `sites.json` is generated from `seeds.json`, the hand-curated
+source of truth: 13 categories of about 20 to 40 domains each, two per
+category marked `tier: "smoke"`, plus a 50-domain `unknown` slice from the
+Tranco and CrUX top lists — 414 domains in all. One of the 13, `tenant`, is
+capped at 30 and filled from the ranked lists when the seeds fall short.
+`pnpm build:sites` regenerates it.
+`candidates.json` is the draft the last curation started from; `pnpm
+corpus:probe` checks a draft before it is seeded.
+
+**The status file.** `status.json` records what each domain did the last time
+a runner saw it: `ok`, `unscored` with the scan's reason, `blocked` by
+robots.txt, or `dead`. Both runners leave `dead` and `blocked` domains out
+unless asked, and both print how many list entries the status file removed;
+`--include-dead` and `--include-blocked` put them back. `pnpm test:live` also
+takes `--tier=smoke`, the smoke tier — two per seeded category, all `ok` at
+the last import. `news` has none: every news seed disallows an AI crawler in
+`robots.txt`, so the runners skip the whole category unless asked.
+`pnpm corpus:status import <summary.json>` merges a runner summary into it;
+`pnpm corpus:status report` prints it grouped by state and reason. A domain
+is `dead` only after two imports on different days say so. CI never writes
+the file; import the nightly artifact by hand when wanted.
+
+**The window.** The whole list, every night. 414 sites at 63 s over two
+workers is about 220 minutes, inside the 240-minute deadline. The nightly's
+`--limit` is 500, the ceiling `site-list.test.ts` holds the list under, and
+`windowOf` returns the whole list whenever the limit is at least the list
+size.
 
 **The summary.** `reports/corpus-nightly.json`, uploaded as the
 `corpus-nightly` artifact on every run, failed or not. It is rewritten every 10

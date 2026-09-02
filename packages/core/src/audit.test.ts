@@ -227,6 +227,25 @@ describe("Audit.toCheckResult", () => {
     expect(c.tags).toEqual(["tag-a", "tag-b"]);
   });
 
+  // An informative check reports a number without moving the score. Its
+  // weight is what keeps it out of every sum; the score it measured stays.
+  it("keeps the measured score on an informative check, with weight 0", () => {
+    const a = new NoGuidanceAudit();
+    const c = a.toCheckResult(
+      {
+        status: "warn",
+        score: 0.5,
+        found: "f",
+        expected: "e",
+        message: "MSG",
+      },
+      "informative",
+    );
+    expect(c.score).toBe(0.5);
+    expect(c.weight).toBe(0);
+    expect(c.scoreDisplayMode).toBe("informative");
+  });
+
   // `failureTitle` names what went wrong. A not-applicable check did not go
   // wrong — its precondition was absent — so it keeps the plain title.
   it("titles a not-applicable result with the plain title, not the failure title", () => {

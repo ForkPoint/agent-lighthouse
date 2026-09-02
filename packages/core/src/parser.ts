@@ -83,7 +83,11 @@ export function allJsonLdNodes(blocks: object[]): object[] {
     const ctx = obj["@context"] ?? inheritedContext;
     if (!obj["@context"] && ctx) obj["@context"] = ctx;
     flat.push(obj);
-    for (const value of Object.values(obj)) {
+    for (const [key, value] of Object.entries(obj)) {
+      // A context is a vocabulary, not a node. When it is an object (`{
+      // "@vocab": … }`), descending into it would stamp it with itself as its
+      // own context, and the walk would never end.
+      if (key === "@context") continue;
       if (value && typeof value === "object") visit(value, ctx);
     }
   };

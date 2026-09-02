@@ -7,16 +7,75 @@ import {
   bucketOf,
   buildSiteList,
   normalize,
+  readSeeds,
+  type SeedFile,
+  tenantSuffixOf,
   type SiteEntry,
 } from "./site-list";
+import { excludedDomains, type CorpusStatus } from "./corpus-status";
 
 const sites: SiteEntry[] = JSON.parse(
   readFileSync(resolve(__dirname, "../../test-data/sites/sites.json"), "utf8"),
 );
+const seedFile: SeedFile = JSON.parse(
+  readFileSync(resolve(__dirname, "../../test-data/sites/seeds.json"), "utf8"),
+);
 
 describe("the site list", () => {
-  it("holds enough sites to be worth scanning", () => {
-    expect(sites.length).toBeGreaterThan(500);
+  it("holds enough sites to be worth scanning, and few enough to finish in an hour", () => {
+    expect(sites.length).toBeGreaterThanOrEqual(250);
+    expect(sites.length).toBeLessThanOrEqual(500);
+  });
+
+  it("gives every category at least 10 domains", () => {
+    const counts = new Map<string, number>();
+    for (const s of sites)
+      counts.set(s.category, (counts.get(s.category) ?? 0) + 1);
+    for (const [category, n] of counts) {
+      if (category === "unknown") continue;
+      expect(n, category).toBeGreaterThanOrEqual(10);
+    }
+  });
+
+  it("marks two smoke domains per seeded category that has two ok seeds", () => {
+    const statusPath = resolve(__dirname, "../../test-data/sites/status.json");
+    const status: CorpusStatus = JSON.parse(readFileSync(statusPath, "utf8"));
+    const smoke = sites.filter((s) => s.tier === "smoke");
+    const perCategory = new Map<string, number>();
+    for (const s of smoke) {
+      perCategory.set(s.category, (perCategory.get(s.category) ?? 0) + 1);
+    }
+    // A category whose seeds the runners cannot scan (every news seed
+    // disallows AI crawlers in robots.txt) has no smoke domain rather than a
+    // smoke domain the smoke run skips.
+    for (const [category, { domains }] of Object.entries(seedFile.categories)) {
+      const ok = domains.filter((d) => status.domains[d]?.state === "ok");
+      const want = Math.min(2, ok.length);
+      expect(perCategory.get(category) ?? 0, category).toBe(want);
+    }
+    expect(perCategory.has("unknown")).toBe(false);
+  });
+
+  it("carries no unseeded domain the status file calls dead or blocked", () => {
+    const statusPath = resolve(__dirname, "../../test-data/sites/status.json");
+    const status: CorpusStatus = JSON.parse(readFileSync(statusPath, "utf8"));
+    const excluded = excludedDomains(status, {});
+    // A seeded domain keeps its ranked source when a ranked list carries it,
+    // so `source` cannot tell a seed from a slice entry; the seed file can.
+    const seeded = readSeeds(seedFile).categoryOf;
+    for (const s of sites) {
+      if (seeded.has(s.domain)) continue;
+      expect(excluded.has(s.domain), s.domain).toBe(false);
+    }
+  });
+
+  it("marks only domains the status file calls ok as smoke", () => {
+    const statusPath = resolve(__dirname, "../../test-data/sites/status.json");
+    const status: CorpusStatus = JSON.parse(readFileSync(statusPath, "utf8"));
+    for (const s of sites) {
+      if (s.tier !== "smoke") continue;
+      expect(status.domains[s.domain]?.state, s.domain).toBe("ok");
+    }
   });
 
   it("carries a bare hostname per entry, never a URL", () => {
@@ -118,11 +177,74 @@ describe("bucketOf", () => {
   });
 });
 
+describe("readSeeds", () => {
+  it("maps every seeded domain to its category and keeps the smoke set", () => {
+    const seeds = readSeeds({
+      smoke: ["a.com"],
+      categories: {
+        news: { why: "x", domains: ["a.com", "B.com"] },
+        forum: { why: "y", domains: ["offlist.com"] },
+      },
+    });
+    expect(seeds.categoryOf.get("a.com")).toBe("news");
+    expect(seeds.categoryOf.get("b.com")).toBe("news");
+    expect(seeds.categoryOf.get("offlist.com")).toBe("forum");
+    expect([...seeds.smoke]).toEqual(["a.com"]);
+  });
+
+  it("refuses a domain that is not a bare hostname, naming it", () => {
+    expect(() =>
+      readSeeds({
+        smoke: [],
+        categories: { news: { why: "x", domains: ["https://a.com/path"] } },
+      }),
+    ).toThrow(/news: "https:\/\/a.com\/path"/);
+  });
+
+  it("refuses a smoke domain that no category lists", () => {
+    expect(() =>
+      readSeeds({
+        smoke: ["ghost.com"],
+        categories: { news: { why: "x", domains: ["a.com"] } },
+      }),
+    ).toThrow(/smoke: "ghost.com"/);
+  });
+
+  it("refuses a domain seeded under two categories", () => {
+    expect(() =>
+      readSeeds({
+        smoke: [],
+        categories: {
+          news: { why: "x", domains: ["a.com"] },
+          docs: { why: "y", domains: ["a.com"] },
+        },
+      }),
+    ).toThrow(/a.com.*news.*docs/);
+  });
+});
+
+describe("tenantSuffixOf", () => {
+  it("names the platform a tenant hostname sits on", () => {
+    expect(tenantSuffixOf("foo.github.io")).toBe("github.io");
+    expect(tenantSuffixOf("shop.myshopify.com")).toBe("myshopify.com");
+    expect(tenantSuffixOf("docs.example.pages.dev")).toBe("pages.dev");
+  });
+
+  it("does not match the platform apex itself or an unrelated host", () => {
+    expect(tenantSuffixOf("github.io")).toBeUndefined();
+    expect(tenantSuffixOf("github.com")).toBeUndefined();
+    expect(tenantSuffixOf("example.com")).toBeUndefined();
+  });
+});
+
 describe("buildSiteList", () => {
-  const categoryOf = new Map([
-    ["a.com", "news"],
-    ["offlist.com", "forum"],
-  ]);
+  const seeds = readSeeds({
+    smoke: ["a.com"],
+    categories: {
+      news: { why: "x", domains: ["a.com"] },
+      forum: { why: "y", domains: ["offlist.com"] },
+    },
+  });
 
   it("prefers the better-ranked source when a domain appears in both", () => {
     const built = buildSiteList(
@@ -130,8 +252,8 @@ describe("buildSiteList", () => {
         { domains: ["a.com", "b.com"], source: "tranco" },
         { domains: ["b.com", "c.com"], source: "crux" },
       ],
-      categoryOf,
-      10,
+      seeds,
+      { limit: 10 },
     );
     expect(built.find((s) => s.domain === "b.com")?.source).toBe("tranco");
     expect(built.find((s) => s.domain === "c.com")?.source).toBe("crux");
@@ -140,35 +262,132 @@ describe("buildSiteList", () => {
   it("marks a seed carry-over 'seed' and ranks it past the cut", () => {
     const built = buildSiteList(
       [{ domains: ["a.com"], source: "tranco" }],
-      categoryOf,
-      10,
+      seeds,
+      { limit: 10 },
     );
     const carried = built.find((s) => s.domain === "offlist.com");
     expect(carried?.source).toBe("seed");
     expect(built.find((s) => s.domain === "a.com")?.source).toBe("tranco");
   });
 
+  it("stamps the smoke tier on a seeded domain, ranked or not", () => {
+    const built = buildSiteList(
+      [{ domains: ["a.com"], source: "tranco" }],
+      seeds,
+      { limit: 10 },
+    );
+    expect(built.find((s) => s.domain === "a.com")?.tier).toBe("smoke");
+    expect(built.find((s) => s.domain === "offlist.com")?.tier).toBeUndefined();
+  });
+
+  it("never emits an excluded ranked domain, and does not let it eat a slot", () => {
+    const built = buildSiteList(
+      [{ domains: ["dead.com", "b.com", "c.com"], source: "tranco" }],
+      seeds,
+      { limit: 2, exclude: new Set(["dead.com"]) },
+    );
+    const ranked = built
+      .filter((s) => s.source !== "seed")
+      .map((s) => s.domain);
+    expect(ranked).toEqual(["b.com", "c.com"]);
+  });
+
+  it("keeps the ranked source of an excluded domain that is seeded", () => {
+    const built = buildSiteList(
+      [{ domains: ["a.com", "b.com"], source: "tranco" }],
+      seeds,
+      { limit: 1, exclude: new Set(["a.com"]) },
+    );
+    const a = built.find((s) => s.domain === "a.com");
+    expect(a?.source).toBe("tranco");
+    expect(a?.rankBucket).toBe(0);
+    expect(built.find((s) => s.domain === "b.com")?.source).toBe("tranco");
+  });
+
+  it("still emits an excluded domain when it is seeded", () => {
+    const built = buildSiteList([], seeds, {
+      limit: 0,
+      exclude: new Set(["offlist.com"]),
+    });
+    expect(built.find((s) => s.domain === "offlist.com")?.source).toBe("seed");
+  });
+
+  it("files a ranked tenant hostname under tenant, up to tenantLimit, outside the slice", () => {
+    const built = buildSiteList(
+      [
+        {
+          domains: [
+            "one.github.io",
+            "b.com",
+            "two.pages.dev",
+            "three.vercel.app",
+            "c.com",
+          ],
+          source: "crux",
+        },
+      ],
+      seeds,
+      { limit: 2, tenantLimit: 2 },
+    );
+    const tenants = built
+      .filter((s) => s.category === "tenant")
+      .map((s) => s.domain);
+    expect(tenants).toEqual(["one.github.io", "two.pages.dev"]);
+    const unknown = built
+      .filter((s) => s.category === "unknown")
+      .map((s) => s.domain);
+    expect(unknown).toEqual(["b.com", "c.com"]);
+  });
+
+  it("spends one slice budget across both sources, not one per source", () => {
+    const built = buildSiteList(
+      [
+        { domains: ["b.com", "c.com"], source: "tranco" },
+        { domains: ["d.com", "e.com"], source: "crux" },
+      ],
+      seeds,
+      { limit: 3 },
+    );
+    const unknown = built
+      .filter((s) => s.category === "unknown")
+      .map((s) => s.domain);
+    expect(unknown).toEqual(["b.com", "c.com", "d.com"]);
+  });
+
+  it("counts seeded tenants against tenantLimit", () => {
+    const seededTenant = readSeeds({
+      smoke: [],
+      categories: {
+        tenant: { why: "t", domains: ["home.github.io"] },
+      },
+    });
+    const built = buildSiteList(
+      [{ domains: ["one.pages.dev", "two.vercel.app"], source: "tranco" }],
+      seededTenant,
+      { limit: 0, tenantLimit: 2 },
+    );
+    const tenants = built
+      .filter((s) => s.category === "tenant")
+      .map((s) => s.domain);
+    expect(tenants).toEqual(["home.github.io", "one.pages.dev"]);
+  });
+
   it.each([10, 99, 100, 150, 1000])(
     "keeps the seed bucket clear of every ranked bucket at limit %i",
     (limit) => {
-      // The invariant, not the arithmetic. `bucketOf(limit)` satisfied this at
-      // multiples of the width and collided everywhere else: at limit 150 the
-      // seed bucket was 100 and so was the worst ranked bucket, and at limit 10
-      // a hand-seeded domain sat in bucket 0 beside rank #1.
       const ranked = Array.from(
         { length: limit },
         (_, i) => `r${String(i).padStart(5, "0")}.com`,
       );
       const built = buildSiteList(
         [{ domains: ranked, source: "tranco" }],
-        categoryOf,
-        limit,
+        seeds,
+        { limit },
       );
       const seeded = built.filter((s) => s.source === "seed");
       const worstRanked = Math.max(
         ...built.filter((s) => s.source !== "seed").map((s) => s.rankBucket),
       );
-
       expect(seeded.length).toBeGreaterThan(0);
       for (const site of seeded) {
         expect(
@@ -180,16 +399,14 @@ describe("buildSiteList", () => {
   );
 
   it("spreads ranked entries across more than one bucket", () => {
-    // The generator-level counterpart to the committed-file check above: this
-    // is what goes red if BUCKET_WIDTH is widened back to the limit.
     const ranked = Array.from(
       { length: 250 },
       (_, i) => `r${String(i).padStart(5, "0")}.com`,
     );
     const built = buildSiteList(
       [{ domains: ranked, source: "tranco" }],
-      new Map(),
-      250,
+      readSeeds({ smoke: [], categories: {} }),
+      { limit: 250 },
     );
     const buckets = [...new Set(built.map((s) => s.rankBucket))].sort(
       (a, b) => a - b,
@@ -198,46 +415,11 @@ describe("buildSiteList", () => {
   });
 
   it("returns entries ordered by domain, whatever order the sources arrive in", () => {
-    // The committed-file order test above cannot catch a change here until the
-    // list is regenerated, so the generator's own ordering is pinned too.
     const built = buildSiteList(
-      [
-        { domains: ["zebra.com", "apple.com"], source: "tranco" },
-        { domains: ["mango.com"], source: "crux" },
-      ],
-      new Map(),
-      10,
+      [{ domains: ["z.com", "m.com", "a.com"], source: "tranco" }],
+      readSeeds({ smoke: [], categories: {} }),
+      { limit: 10 },
     );
-    expect(built.map((s) => s.domain)).toEqual([
-      "apple.com",
-      "mango.com",
-      "zebra.com",
-    ]);
-  });
-
-  // `normalize` answers '' for a seed entry that is not a bare hostname, and
-  // the seed map is keyed by its output. Carried through, that entry became
-  // `{ domain: '' }` in the committed list and `https:///robots.txt` in the
-  // nightly. No entry in `categories.json` trips it today; the guard is what
-  // keeps that true.
-  it("drops a seed entry whose domain did not survive normalization", () => {
-    const built = buildSiteList(
-      [{ domains: ["a.com"], source: "tranco" }],
-      new Map([
-        ["", "retail"],
-        ["seeded.com", "retail"],
-      ]),
-      10,
-    );
-    expect(built.map((s) => s.domain)).toEqual(["a.com", "seeded.com"]);
-  });
-
-  it("honours the limit", () => {
-    const built = buildSiteList(
-      [{ domains: ["a.com", "b.com", "c.com"], source: "tranco" }],
-      new Map(),
-      2,
-    );
-    expect(built.map((s) => s.domain)).toEqual(["a.com", "b.com"]);
+    expect(built.map((s) => s.domain)).toEqual(["a.com", "m.com", "z.com"]);
   });
 });

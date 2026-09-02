@@ -6,6 +6,12 @@ export const DEFAULT_SCAN_LIMIT = 1;
 export const MAX_PAGES_PER_SCAN = 1; // Single-page scan unit
 export const ORIGIN_EVIDENCE_VERSION = "v1";
 export const DEFAULT_ORIGIN_CACHE_TTL_MS = 60 * 60 * 1000; // 1 hour
+/**
+ * How many origins the shared cache holds at once. Each entry carries every
+ * root file of one origin, so a long-lived process (the MCP server, a looped
+ * live run) needs a ceiling, not only a TTL.
+ */
+export const DEFAULT_ORIGIN_CACHE_MAX_ENTRIES = 256;
 export const REQUEST_TIMEOUT_MS = 10_000;
 export const SCAN_TIMEOUT_MS = 60_000;
 export const MAX_RESPONSE_BODY_BYTES = 5 * 1024 * 1024; // 5MB

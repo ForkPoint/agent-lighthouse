@@ -28,6 +28,10 @@ import { invariantViolations } from "../packages/core/src/tests/scan-invariants"
 import type { SiteEntry } from "../packages/core/src/tests/site-list";
 import type { FetchResult } from "../packages/core/src/fetcher";
 import type { EvidenceKey } from "../packages/core/src/types";
+import {
+  excludedDomains,
+  type CorpusStatus,
+} from "../packages/core/src/tests/corpus-status";
 
 const SITES_PATH = path.resolve(
   process.cwd(),
@@ -54,6 +58,9 @@ interface CliOptions {
   stratified: boolean;
   shuffle: boolean;
   loop: number;
+  tier?: "smoke";
+  includeDead: boolean;
+  includeBlocked: boolean;
 }
 
 function parseCliArgs(argv: string[]): CliOptions {
@@ -69,6 +76,8 @@ function parseCliArgs(argv: string[]): CliOptions {
     stratified: false,
     shuffle: false,
     loop: 1,
+    includeDead: false,
+    includeBlocked: false,
   };
 
   for (const arg of argv) {
@@ -90,6 +99,14 @@ function parseCliArgs(argv: string[]): CliOptions {
     }
     if (arg === "--shuffle" || arg === "--random" || arg === "-r") {
       options.shuffle = true;
+      continue;
+    }
+    if (arg === "--include-dead") {
+      options.includeDead = true;
+      continue;
+    }
+    if (arg === "--include-blocked") {
+      options.includeBlocked = true;
       continue;
     }
     const match = /^--([a-z-]+)=(.*)$/.exec(arg);
@@ -136,6 +153,13 @@ function parseCliArgs(argv: string[]): CliOptions {
       case "out":
         options.outPath = path.resolve(process.cwd(), val.trim());
         break;
+      case "tier":
+        if (val.trim().toLowerCase() !== "smoke") {
+          console.error(`--tier accepts "smoke", got "${val}"`);
+          process.exit(2);
+        }
+        options.tier = "smoke";
+        break;
     }
   }
 
@@ -158,6 +182,11 @@ Options:
   --domain=<domain>   Test a single domain (e.g. --domain=lobste.rs)
   --domains=<list>    Test comma-separated domains (e.g. --domains=stripe.com,bbc.com)
   --stratified, -s    Sample evenly across all available site categories
+  --tier=smoke        Only the smoke tier: two seeded sites per category, about five minutes
+  --include-dead      Also scan domains status.json calls dead
+  --include-blocked   Also scan domains status.json calls blocked (robots)
+  --loop=<n>          Repeat the selection n times (default: 1)
+  --shuffle, -r       Shuffle the pool before selecting
   --ignore-robots     Proceed with scan even if third-party robots.txt disallows crawlers
   --out=<path>        Output JSON file path (default: reports/live-sites-test.json)
   --verbose, -v       Print detailed per-check breakdown
@@ -169,6 +198,7 @@ Examples:
   pnpm test:live --category=storefront --limit=5 --concurrency=2
   pnpm test:live --domain=theguardian.com --ignore-robots
   pnpm test:live --domain=theguardian.com --verbose
+  pnpm test:live --tier=smoke --limit=100 --concurrency=4
 `);
 }
 
@@ -215,6 +245,32 @@ async function main(): Promise<void> {
   console.log("─────────────────────────────────────────────────────────────");
 
   const allSites: SiteEntry[] = JSON.parse(fs.readFileSync(SITES_PATH, "utf8"));
+  const STATUS_PATH = path.resolve(
+    process.cwd(),
+    "packages/core/test-data/sites/status.json",
+  );
+  const status: CorpusStatus | undefined = fs.existsSync(STATUS_PATH)
+    ? (JSON.parse(fs.readFileSync(STATUS_PATH, "utf8")) as CorpusStatus)
+    : undefined;
+  const excluded = excludedDomains(status, {
+    dead: options.includeDead,
+    blocked: options.includeBlocked,
+  });
+  const pool = allSites.filter((s) => {
+    if (options.tier && s.tier !== options.tier) return false;
+    return !excluded.has(s.domain);
+  });
+  // Count list entries removed, not the exclusion set: status.json remembers
+  // domains the list no longer carries.
+  const leftOut = allSites.filter(
+    (s) => (!options.tier || s.tier === options.tier) && excluded.has(s.domain),
+  ).length;
+  if (leftOut > 0) {
+    console.log(
+      `Status file: ${leftOut} dead or blocked domain(s) left out (--include-dead, --include-blocked to add them)`,
+    );
+  }
+  if (options.tier) console.log(`Tier: ${options.tier} (${pool.length} sites)`);
   const grandStartTime = Date.now();
   const allOutcomes: TestSiteOutcome[] = [];
   let totalViolations = 0;
@@ -234,8 +290,11 @@ async function main(): Promise<void> {
 
     if (options.domains && options.domains.length > 0) {
       const specified = new Set(options.domains);
-      targetSites = allSites.filter((s) => specified.has(s.domain));
+      targetSites = pool.filter((s) => specified.has(s.domain));
       for (const d of options.domains) {
+        // A domain outside the list is scanned ad hoc, unless a tier was
+        // asked for: `--tier` intersects, it does not add.
+        if (options.tier) break;
         if (!targetSites.some((s) => s.domain === d)) {
           targetSites.push({
             domain: d,
@@ -246,14 +305,14 @@ async function main(): Promise<void> {
         }
       }
     } else if (options.category && options.category !== "all") {
-      targetSites = allSites.filter(
+      targetSites = pool.filter(
         (s) => s.category.toLowerCase() === options.category,
       );
       console.log(
         `Filtered by category: "${options.category}" (${targetSites.length} available)`,
       );
     } else {
-      targetSites = allSites.slice();
+      targetSites = pool.slice();
     }
 
     if (options.shuffle) {
@@ -299,8 +358,10 @@ async function main(): Promise<void> {
     }
 
     if (selected.length === 0) {
+      // An empty round is not the end of the run: later rounds may still
+      // select sites, and the summary must be written either way.
       console.log("⚠️ No sites matched the selection criteria.");
-      return;
+      continue;
     }
 
     console.log(
