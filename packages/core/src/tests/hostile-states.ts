@@ -316,6 +316,56 @@ const challengedAt200 = state({
   waf: (homepage, files) => detectWafProtection(HOME_URL, homepage, files, 1),
 });
 
+/**
+ * A bot wall served at HTTP 200 with the site's own full template around it.
+ *
+ * Unlike `challengedAt200` (which serves a bare 58-character Cloudflare page),
+ * this wall carries full navigation, headers, and footers (>50 words, >200 chars).
+ * `pageRendersText` therefore returns true, satisfying `rendered-body` and
+ * `sample-adequate`. Only `unblocked-fetches` is denied.
+ *
+ * This contract state proves that an audit cannot slip past the evidence gate
+ * simply because a bot wall is wrapped in text-rich site branding.
+ */
+const TEXT_BEARING_WALL_HTML =
+  '<!DOCTYPE html><html lang="en-US"><head><title>Verify you are human | example.test</title>' +
+  '<meta name="robots" content="noindex,nofollow">' +
+  `<link rel="canonical" href="${HOME_URL}">` +
+  '<meta name="viewport" content="width=device-width,initial-scale=1"></head>' +
+  '<body class="challenge-page">' +
+  '<header><nav><a href="/">Home</a><a href="/products">Products</a><a href="/about">About Us</a>' +
+  '<a href="/contact">Contact Support</a><a href="/terms">Terms of Service</a><a href="/privacy">Privacy Policy</a></nav></header>' +
+  '<main><div class="challenge-container">' +
+  '<h1>Please verify you are a human visitor to continue to example.test</h1>' +
+  '<p id="challenge-error-text">Our systems have detected automated traffic from your network address. ' +
+  'Please complete the security check below to verify your identity and access the requested page. ' +
+  'If you believe this is in error, please contact our web administration team with the Cloudflare Ray ID displayed below.</p>' +
+  '<div id="turnstile-wrapper" class="cf-turnstile"></div>' +
+  '</div></main>' +
+  '<footer><p>&copy; 2026 example.test Inc. All rights reserved. Registered trademark. For support inquiries email support@example.test or call customer service.</p></footer>' +
+  '<script src="/cdn-cgi/challenge-platform/h/b/orchestrate/chl_page/v1"></script>' +
+  '</body></html>';
+
+const textBearingWall = state({
+  name: "text-bearing-wall",
+  missing: ["unblocked-fetches"],
+  nothingObtained: true,
+  homepage: fetchResult({
+    url: HOME_URL,
+    status: 200,
+    contentType: "text/html",
+    headers: CHALLENGE_200_HEADERS,
+    body: TEXT_BEARING_WALL_HTML,
+  }),
+  rootFiles: rootFiles(() => ({
+    status: 200,
+    contentType: "text/html",
+    headers: CHALLENGE_200_HEADERS,
+    body: TEXT_BEARING_WALL_HTML,
+  })),
+  waf: (homepage, files) => detectWafProtection(HOME_URL, homepage, files, 1),
+});
+
 /** A throttle: the scan asked too fast. Says nothing about who the site admits. */
 const throttled = state({
   name: "throttled",
@@ -455,6 +505,7 @@ const shell = state({
 export const NOTHING_OBTAINED: HostileState[] = [
   blocked,
   challengedAt200,
+  textBearingWall,
   throttled,
   redirectedAway,
   nonHtml,

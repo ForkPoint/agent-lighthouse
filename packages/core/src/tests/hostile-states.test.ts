@@ -10,9 +10,9 @@ import {
 import { EVIDENCE_KEYS } from "../scan-evidence";
 
 describe("hostile scan states", () => {
-  it("offers six states, five of which hold no evidence about the site", () => {
-    expect(HOSTILE_STATES).toHaveLength(6);
-    expect(NOTHING_OBTAINED).toHaveLength(5);
+  it("offers seven states, six of which hold no evidence about the site", () => {
+    expect(HOSTILE_STATES).toHaveLength(7);
+    expect(NOTHING_OBTAINED).toHaveLength(6);
     expect(SHELL_STATE.nothingObtained).toBe(false);
   });
 
