@@ -1,0 +1,47 @@
+name: Audit Review Sweep
+
+on:
+  schedule:
+    # Run on the 1st of every month at 04:00 UTC
+    - cron: '0 4 1 * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  sweep:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Run audit evidence freshness sweep
+        run: |
+          node scripts/sweep-audit-reviews.mjs --markdown > sweep-report.md
+          cat sweep-report.md
+
+      - name: Open or update rolling sweep issue
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          OVERDUE_COUNT=$(node scripts/sweep-audit-reviews.mjs --json | grep -o '"overdueCount": [0-9]*' | awk '{print $2}')
+          echo "Overdue count: $OVERDUE_COUNT"
+
+          # Look for an existing open sweep issue
+          EXISTING_ISSUE=$(gh issue list --search "Scheduled Audit Evidence Review Sweep in:title" --state open --json number --jq '.[0].number')
+
+          if [ -n "$EXISTING_ISSUE" ]; then
+            echo "Updating existing issue #$EXISTING_ISSUE"
+            gh issue edit "$EXISTING_ISSUE" --body-file sweep-report.md
+          elif [ "$OVERDUE_COUNT" -gt 0 ]; then
+            echo "Creating new tracking issue for $OVERDUE_COUNT overdue audit dossiers"
+            gh issue create --title "Scheduled Audit Evidence Review Sweep" --body-file sweep-report.md
+          else
+            echo "No overdue dossiers and no existing issue; nothing to create."
+          fi

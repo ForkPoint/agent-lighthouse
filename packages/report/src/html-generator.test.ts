@@ -254,4 +254,107 @@ describe("evidence link", () => {
     );
     expect(html).not.toContain("Why this audit exists");
   });
+
+  it("renders scan conditions badges when conditions are present", () => {
+    const html = generateHtmlReport({
+      ...report([]),
+      conditions: {
+        url: "https://x.test/",
+        pageType: { type: "homepage", source: "detected" },
+        origin: {
+          origin: "https://x.test",
+          version: "v1",
+          readAt: "2026-09-02T08:00:00.000Z",
+          cached: true,
+        },
+        coverage: {
+          registryMass: 102.6,
+          assessedMass: 94.2,
+          pageMass: 70.8,
+          originMass: 31.8,
+          gatedMass: 0,
+        },
+        unscored: {
+          totalCount: 15,
+          informativeCount: 8,
+          gatedCount: 0,
+          reasons: { informative: 8, "not-applicable": 7 },
+        },
+      },
+    });
+
+    expect(html).toContain(
+      'Page: <strong class="text-indigo-400">homepage</strong>',
+    );
+    expect(html).toContain("cached");
+    expect(html).toContain("94.2/102.6");
+  });
+
+  it("escapes malicious HTML characters in scan conditions to prevent XSS", () => {
+    const html = generateHtmlReport({
+      ...report([]),
+      conditions: {
+        url: "https://x.test/",
+        // @ts-expect-error - testing malicious injection
+        pageType: { type: '<script>alert("xss")</script>', source: '"><img src=x onerror=alert(1)>' },
+        origin: {
+          origin: "https://x.test",
+          version: "v1",
+          readAt: '"><script>alert(2)</script>',
+          cached: false,
+        },
+        coverage: {
+          registryMass: 100,
+          assessedMass: 80,
+          pageMass: 50,
+          originMass: 50,
+          gatedMass: 0,
+        },
+        unscored: {
+          totalCount: 0,
+          informativeCount: 0,
+          gatedCount: 0,
+          reasons: {},
+        },
+      },
+    });
+
+    expect(html).not.toContain("<script>alert(\"xss\")</script>");
+    expect(html).not.toContain("<img src=x");
+    expect(html).toContain("&lt;script&gt;alert(&quot;xss&quot;)&lt;/script&gt;");
+    expect(html).toContain("text-emerald-400"); // Fresh origin color
+    expect(html).toContain("fresh");
+  });
+
+  it("handles zero registryMass cleanly without producing NaN%", () => {
+    const html = generateHtmlReport({
+      ...report([]),
+      conditions: {
+        url: "https://x.test/",
+        pageType: { type: "homepage", source: "detected" },
+        origin: {
+          origin: "https://x.test",
+          version: "v1",
+          readAt: "2026-09-02T08:00:00.000Z",
+          cached: false,
+        },
+        coverage: {
+          registryMass: 0,
+          assessedMass: 0,
+          pageMass: 0,
+          originMass: 0,
+          gatedMass: 0,
+        },
+        unscored: {
+          totalCount: 0,
+          informativeCount: 0,
+          gatedCount: 0,
+          reasons: {},
+        },
+      },
+    });
+
+    expect(html).not.toContain("NaN%");
+    expect(html).toContain("0/0</strong> mass (0%)");
+  });
 });

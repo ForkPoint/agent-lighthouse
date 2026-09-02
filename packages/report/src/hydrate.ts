@@ -33,6 +33,8 @@ export interface PersistedScanRow {
   readinessScore: number | null;
   readinessVitals: ReadinessVitals | null;
   productFields?: ScanReport["productFields"] | null;
+  originEvidence?: ScanReport["originEvidence"] | null;
+  conditions?: import("@forkpoint/agent-lighthouse-core").ScanConditions | null;
   previousScore?: number | null;
   scoreDelta?: number | null;
   createdAt?: Date | string | null;
@@ -130,6 +132,8 @@ export function hydrateReport(row: PersistedScanRow): ScanReport {
     readinessScore: row.readinessScore ?? undefined,
     readinessVitals: row.readinessVitals ?? undefined,
     productFields: row.productFields ?? undefined,
+    originEvidence: row.originEvidence ?? undefined,
+    conditions: row.conditions ?? undefined,
   };
 
   report.summary = generateScanSummary(report);

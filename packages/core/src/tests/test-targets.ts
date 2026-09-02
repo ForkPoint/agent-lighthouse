@@ -26,21 +26,24 @@ export const LIVE_TEST_SITES: readonly TestSiteTarget[] = [
     url: "https://example.com",
     category: "minimal",
     roles: ["live-smoke"],
-    description: "Minimal reference domain without robots, sitemap, or structured data (negative-case baseline)",
+    description:
+      "Minimal reference domain without robots, sitemap, or structured data (negative-case baseline)",
   },
   {
     domain: "docs.anthropic.com",
     url: "https://docs.anthropic.com",
     category: "docs",
     roles: ["live-smoke"],
-    description: "AI vendor documentation site with valid llms.txt and OpenGraph metadata",
+    description:
+      "AI vendor documentation site with valid llms.txt and OpenGraph metadata",
   },
   {
     domain: "allbirds.com",
     url: "https://allbirds.com",
     category: "storefront",
     roles: ["live-smoke", "benchmark-store", "fixture"],
-    description: "D2C retail storefront with Shopify root files, product schema, and shopping bot governance",
+    description:
+      "D2C retail storefront with Shopify root files, product schema, and shopping bot governance",
     fixtureSlug: "allbirds-com-collection",
   },
   {
@@ -48,7 +51,8 @@ export const LIVE_TEST_SITES: readonly TestSiteTarget[] = [
     url: "https://theguardian.com",
     category: "news",
     roles: ["live-smoke", "fixture"],
-    description: "Major news publisher with rich semantic HTML, RSS feeds, and granular AI training vs retrieval policies",
+    description:
+      "Major news publisher with rich semantic HTML, RSS feeds, and granular AI training vs retrieval policies",
     fixtureSlug: "theguardian-com-article",
   },
 ];

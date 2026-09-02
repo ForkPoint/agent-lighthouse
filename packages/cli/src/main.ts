@@ -193,6 +193,21 @@ async function audit(targetUrl?: string) {
     console.log(
       `Target: ${report.url} | Preset: ${preset.name} | Pages: ${view.pagesScanned.length} | Duration: ${(view.durationMs / 1000).toFixed(1)}s`,
     );
+    if (view.conditions) {
+      const cond = view.conditions;
+      const pct =
+        cond.coverage.registryMass > 0
+          ? Math.round(
+              (cond.coverage.assessedMass / cond.coverage.registryMass) * 100,
+            )
+          : 0;
+      console.log(
+        `Conditions: Page: \x1b[1m${cond.pageType.type}\x1b[0m (${cond.pageType.source}) | ` +
+          `Origin: \x1b[1m${cond.origin.cached ? "cached" : "fresh"}\x1b[0m | ` +
+          `Coverage: \x1b[1m${cond.coverage.assessedMass}/${cond.coverage.registryMass}\x1b[0m mass (${pct}%) | ` +
+          `Unscored: \x1b[1m${cond.unscored.totalCount}\x1b[0m (${cond.unscored.informativeCount} advisory, ${cond.unscored.gatedCount} gated)`,
+      );
+    }
     if (view.coverage.skippedNoEvidence > 0) {
       // The count alone reads as a broken scanner; the reason makes it a fact
       // about the scan.

@@ -198,4 +198,41 @@ describe("hydrateReport", () => {
     expect(r.pagesScanned).toEqual([]);
     expect(r.durationMs).toBe(0);
   });
+
+  it("hydrates originEvidence and conditions when present", () => {
+    const originEvidence = {
+      origin: "https://x.test",
+      version: "v1",
+      readAt: "2026-09-02T08:00:00.000Z",
+      cached: true,
+    };
+    const conditions = {
+      url: "https://x.test/",
+      pageType: { type: "homepage" as const, source: "detected" as const },
+      origin: originEvidence,
+      coverage: {
+        registryMass: 100,
+        assessedMass: 85,
+        pageMass: 60,
+        originMass: 40,
+        gatedMass: 0,
+      },
+      unscored: {
+        totalCount: 10,
+        informativeCount: 4,
+        gatedCount: 0,
+        reasons: { informative: 4 },
+      },
+    };
+
+    const r = hydrateReport(
+      row({
+        originEvidence,
+        conditions,
+      }),
+    );
+
+    expect(r.originEvidence).toEqual(originEvidence);
+    expect(r.conditions).toEqual(conditions);
+  });
 });

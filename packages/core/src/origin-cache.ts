@@ -76,11 +76,15 @@ export class OriginCache {
   get(key: string): OriginEvidence | undefined {
     const entry = this.cache.get(key);
     if (!entry) return undefined;
-    if (Date.now() > entry.expiresAt) {
+    if (Date.now() >= entry.expiresAt) {
       this.cache.delete(key);
       return undefined;
     }
     return entry.evidence;
+  }
+
+  has(key: string): boolean {
+    return this.get(key) !== undefined;
   }
 
   set(key: string, evidence: OriginEvidence, ttlMs?: number): void {

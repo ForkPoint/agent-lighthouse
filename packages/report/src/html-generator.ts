@@ -254,6 +254,25 @@ export function generateHtmlReport(report: ScanReport): string {
               <span>•</span>
               <span>${new Date(report.scannedAt).toLocaleString()}</span>
             </div>
+            ${
+              view.conditions
+                ? `
+            <div class="flex flex-wrap items-center gap-2 mt-3 text-xs">
+              <span class="px-2.5 py-1 rounded-md bg-slate-950/70 border border-slate-800 text-slate-300 font-mono">
+                Page: <strong class="text-indigo-400">${escapeHtml(view.conditions.pageType.type)}</strong> (${escapeHtml(view.conditions.pageType.source)})
+              </span>
+              <span class="px-2.5 py-1 rounded-md bg-slate-950/70 border border-slate-800 text-slate-300 font-mono">
+                Origin: <strong class="${view.conditions.origin.cached ? "text-amber-400" : "text-emerald-400"}">${view.conditions.origin.cached ? "cached" : "fresh"}</strong> (${escapeHtml(view.conditions.origin.readAt)})
+              </span>
+              <span class="px-2.5 py-1 rounded-md bg-slate-950/70 border border-slate-800 text-slate-300 font-mono">
+                Coverage: <strong class="text-slate-100">${view.conditions.coverage.assessedMass}/${view.conditions.coverage.registryMass}</strong> mass (${view.conditions.coverage.registryMass > 0 ? Math.round((view.conditions.coverage.assessedMass / view.conditions.coverage.registryMass) * 100) : 0}%)
+              </span>
+              <span class="px-2.5 py-1 rounded-md bg-slate-950/70 border border-slate-800 text-slate-300 font-mono">
+                Unscored: <strong class="text-slate-300">${view.conditions.unscored.totalCount}</strong> (${view.conditions.unscored.informativeCount} advisory, ${view.conditions.unscored.gatedCount} gated)
+              </span>
+            </div>`
+                : ""
+            }
           </div>
         </div>
         
