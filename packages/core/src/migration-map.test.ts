@@ -59,7 +59,7 @@ const REMOVED_IDS = [
 ];
 
 // The 181 v1 audits that survive into v2 — every non-sunset row of
-// docs/evidence/v2-audit-map.md, one entry each.
+// docs/evidence/audit-map.json, one entry each.
 const SURVIVING_COUNT = 181;
 
 // Pinned end state of the v2 migration wave. 26 + 181 = 207, the full v1 audit

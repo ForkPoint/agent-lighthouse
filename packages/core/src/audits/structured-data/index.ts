@@ -1,5 +1,5 @@
 // Structured Data — v2 taxonomy category (Plan 3, Task 6).
-// STRUCTURED_DATA_AUDITS order mirrors docs/evidence/v2-audit-map.md so Task 11 can consume the
+// STRUCTURED_DATA_AUDITS order mirrors docs/evidence/audit-map.json so Task 11 can consume the
 // list verbatim.
 
 export { JsonLdPresentAudit } from "./json-ld-present";

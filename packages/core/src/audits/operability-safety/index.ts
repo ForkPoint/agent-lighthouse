@@ -1,5 +1,5 @@
 // Operability & Safety — v2 taxonomy category (Plan 3, Task 10).
-// Order mirrors docs/evidence/v2-audit-map.md so Task 11 can consume the list verbatim.
+// Order mirrors docs/evidence/audit-map.json so Task 11 can consume the list verbatim.
 //
 // The category absorbs all of v1 `agent-tools` (form action surfaces), all of v1
 // `accessibility` (accessibility-tree semantics an agent reads before it acts) and

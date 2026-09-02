@@ -1,5 +1,5 @@
 // Agent Interfaces — v2 taxonomy category (Plan 3, Task 8).
-// Order mirrors docs/evidence/v2-audit-map.md so Task 11 can consume the list verbatim.
+// Order mirrors docs/evidence/audit-map.json so Task 11 can consume the list verbatim.
 
 export { OpenApiExistsAudit } from "./openapi-exists";
 export { OpenApiEndpointsAudit } from "./openapi-endpoints";

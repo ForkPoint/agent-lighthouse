@@ -1,5 +1,5 @@
 // Machine Discovery — v2 taxonomy category (Plan 3, Task 5).
-// Order mirrors docs/evidence/v2-audit-map.md so Task 11 can consume the list verbatim.
+// Order mirrors docs/evidence/audit-map.json so Task 11 can consume the list verbatim.
 
 export { LlmsTxtExistsAudit } from "./llms-txt-exists";
 export { LlmsTxtStructureAudit } from "./llms-txt-structure";

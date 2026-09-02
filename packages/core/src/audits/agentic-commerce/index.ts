@@ -1,5 +1,5 @@
 // Agentic Commerce — v2 taxonomy category (Plan 3, Task 9).
-// Order mirrors docs/evidence/v2-audit-map.md so Task 11 can consume the list verbatim.
+// Order mirrors docs/evidence/audit-map.json so Task 11 can consume the list verbatim.
 // Thin on purpose: only three v1 rows map here (the commerce halves of Product schema).
 // The bulk of the category arrives with the ACP proposal set in packages/core/src/audits/proposed.
 
