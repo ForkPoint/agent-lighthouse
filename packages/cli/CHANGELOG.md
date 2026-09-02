@@ -1,5 +1,120 @@
 # @forkpoint/agent-lighthouse
 
+## 4.0.0
+
+### Major Changes
+
+- 9caf97b: Audit boundary enforcement & gatherer uniformity (Phase 4 of audit architecture migration):
+
+  - Enforced architectural boundary: zero direct `ctx.fetch`, bare `fetch()`, or HTTP client imports in `packages/core/src/audits/`.
+  - Created AST contract script `scripts/check-audit-boundaries.mjs` and added `"check:audit-boundaries"` script to `package.json`.
+  - Created dedicated gatherer modules `gatherers/mcp.ts`, `gatherers/discovery.ts`, `gatherers/rsl.ts`, `gatherers/security.ts`, and `gatherers/author.ts` with WeakMap per-scan fetch caching.
+  - Moved `_mcp-client.ts` out of `audits/` into `gatherers/mcp.ts`.
+  - Refactored all 235 production audits across 8 categories to consume gatherers exclusively.
+  - Updated `scripts/lib/requires-analysis.mjs` with gatherer evidence mappings.
+
+- 64c23e7: One URL, One Score, The Origin Cached (Phase 5 of audit architecture migration):
+
+  - Fixed `MAX_PAGES_PER_SCAN = 1` and `DEFAULT_SCAN_LIMIT = 1`, removing legacy multi-page discovery heuristics and regex guessers.
+  - Scans now evaluate the exact target URL as the single page unit while preserving explicit page overrides (`options.pages`).
+  - Introduced `OriginCache` module (`computeOriginCacheKey`, `shouldBypassOriginCache`, TTL eviction, and credential stripping) with versioned cache keys (`${origin}|${ORIGIN_EVIDENCE_VERSION}`).
+  - Scans on the same origin reuse cached origin evidence (root files and homepage), making multi-page evaluations fast, isolated, and idempotent.
+  - Authenticated scans (`Authorization`, `Cookie`, or basic-auth credentials) automatically bypass the shared origin cache to guarantee secret isolation.
+  - Stamped `originEvidence` metadata (`origin`, `version`, `readAt`, `cached`) into `ScanReport`.
+  - Added comprehensive unit tests in `packages/core/src/tests/origin-idempotence.test.ts` verifying all three Phase 5 gates: Idempotence across URLs, Cache Isolation & Credential Protection, and Version Invalidation.
+
+- 111cdbf: Page type becomes consent (Phase 3 of audit architecture migration):
+
+  - Added `ScanOptions.pageType?: PageType` and CLI `--page-type` flag.
+  - Added `PageContext.pageTypeSource: 'declared' | 'detected'`.
+  - Renamed `AuditMeta.applicablePageTypes` to `AuditMeta.pageTypes`.
+  - Introduced runner scope function: typed audits matching detected page types run in `informative` mode (unscored); only user-declared page types authorize scoring.
+  - Category mass calculations updated to use `assessedMass`.
+  - Removed direct `page.pageType` accesses across all 17 audit sources.
+
+- cebbba0: The Score States Its Conditions & The Warrant Expires (Phase 6 of audit architecture migration):
+
+  - Added `conditions` to `ScanReport` and `ScanConditionsSchema`: transparently reports the target URL, page type (`declared` vs `detected`), origin evidence status (`cached` vs `fresh`, version, and `readAt`), evidence coverage breakdown (`registryMass`, `assessedMass`, `pageMass`, `originMass`, `gatedMass`), and unscored audit breakdown.
+  - Updated all report renderers (`terminal`, `markdown`, `html`) to display the Scan Conditions block beside and beneath the headline score.
+  - Implemented `scripts/sweep-audit-reviews.mjs` and scheduled GitHub workflow `.github/workflows/audit-review-sweep.yml` to track evidence dossiers older than 6 months (180 days).
+
+### Patch Changes
+
+- a719d16: `--page-type` now reaches the scan. The flag was parsed and then dropped before `runScan`, so every page-typed audit ran as informative and a product scan silently lost 9.8 weight of score. The value is validated against the four page types at argument parsing; an unknown value exits with the valid list, the way an unknown category does. The flag is documented in `--help`.
+- 88cb080: Code hygiene and linter zero-warning hardening:
+
+  - Configured `.oxlintrc.json` with ignore pattern for `.astro` templates (which are compiled and verified by `astro check`).
+  - Resolved all unsafe optional chaining operations, redundant fallbacks in object spreads, and regex character escapes across core audits and test suites.
+  - Removed unused imports and eliminated all compiler warnings in `content.config.ts`.
+  - Brought `pnpm lint` and `pnpm typecheck` to 0 errors, 0 warnings, and 0 hints across the entire codebase.
+
+- 2cbdd13: Widen the oxlint surface from `correctness` alone to `correctness` plus
+  `suspicious`, and add the `import` and `promise` plugins.
+
+  `.oxlintrc.json` previously declared nothing but an ignore pattern, so oxlint
+  ran its default set: the `correctness` category over the default plugins. The
+  config now names the plugin list explicitly — `eslint`, `typescript`,
+  `unicorn`, `oxc`, `import`, `promise` — enables `suspicious` as an error
+  category, and turns on three rules that the categories leave off:
+  `no-return-await`, `unicorn/no-unnecessary-await` and
+  `unicorn/prefer-regexp-test`. Rule count rises from 96 to 113.
+
+  The five findings the wider set surfaced are fixed, none of them behavioural:
+
+  - `agent-interfaces/openapi-servers`, `operability-safety/engine/dom` and
+    `operability-safety/engine/table` each imported one module twice. The second
+    import in the two engine files carried a comment calling itself lazy; an ESM
+    import is hoisted either way, so the comment described something the module
+    graph never did. Merged into the single import at the top.
+  - `getGaugeColor` in the HTML renderer was declared inside
+    `generateHtmlReport` and captured nothing from it. Moved to module scope.
+  - `isValidUrl` in the CLI constructed a `URL` purely for its throw. The
+    construction is now `void`-marked so the intent reads as a parse probe.
+  - `metaRefresh` in the a11y engine called `String#match` on a non-global regex
+    and used only its truthiness. Now `RegExp#test`.
+
+  `pnpm lint` stays at 0 errors and 0 warnings.
+
+  `promise/prefer-await-to-then` was evaluated and left off: its 16 hits are
+  almost all top-level `main().catch()` entry points, where `then`/`catch` is the
+  correct shape. `import/no-cycle` was also left off; the a11y engine has 7
+  deliberate cycles that need untangling before the rule can be an error.
+
+- Updated dependencies [2dbff0b]
+- Updated dependencies [67876d7]
+- Updated dependencies [9caf97b]
+- Updated dependencies [adf2bce]
+- Updated dependencies [5e9b931]
+- Updated dependencies [a719d16]
+- Updated dependencies [4cce959]
+- Updated dependencies [9c0f4b8]
+- Updated dependencies [8b5e768]
+- Updated dependencies [7dea552]
+- Updated dependencies [1a20739]
+- Updated dependencies [85e77e1]
+- Updated dependencies [88cb080]
+- Updated dependencies [dcef5af]
+- Updated dependencies [56ab5ea]
+- Updated dependencies [e86bf9a]
+- Updated dependencies [18c3416]
+- Updated dependencies [a719d16]
+- Updated dependencies [a719d16]
+- Updated dependencies [a719d16]
+- Updated dependencies [64c23e7]
+- Updated dependencies [a719d16]
+- Updated dependencies [a719d16]
+- Updated dependencies [a719d16]
+- Updated dependencies [2cbdd13]
+- Updated dependencies [111cdbf]
+- Updated dependencies [a719d16]
+- Updated dependencies [a719d16]
+- Updated dependencies [cebbba0]
+- Updated dependencies [a719d16]
+- Updated dependencies [5f612b6]
+- Updated dependencies [4cce959]
+  - @forkpoint/agent-lighthouse-core@4.0.0
+  - @forkpoint/agent-lighthouse-report@4.0.0
+
 ## 3.1.0
 
 ### Patch Changes

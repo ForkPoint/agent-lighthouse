@@ -1,5 +1,271 @@
 # @forkpoint/agent-lighthouse-core
 
+## 4.0.0
+
+### Major Changes
+
+- 2dbff0b: Four OpenAPI audits no longer fail a site for publishing no OpenAPI document.
+
+  **What was wrong.** `agent-interfaces/openapi-servers`, `openapi-endpoints`,
+  `openapi-schemas` and `openapi-operation-ids` are each grade B, tier `scored`,
+  weight 0.6 — 2.4 combined. All four are about a document's contents, and all
+  four returned `fail` at high or medium priority when there was no document at
+  all. Nothing gated them: `requires: ['origin-reachable']` and no
+  `applicablePageTypes`, so every site that answers a 200 and has no API — a
+  bakery, a blog, a law firm — took four high-priority failures telling it to add
+  a `servers` array to a spec it had never written. Measured `fail` on 41 of 41
+  corpus fixtures.
+
+  `agent-interfaces/openapi-exists` already declined the identical absence, and
+  `openapi-servers`' own dossier records counter-evidence arguing that an absent
+  `servers` array is legal under OpenAPI 3.1 and resolvable against the
+  document's own location. Where the dossier and the code disagree, the dossier
+  governs.
+
+  **What changed.** No document read means `notApplicable`, and no weight. Two of
+  the four also decline a document that declares no operations, which is the same
+  absence one level down — `openapi-endpoints` is the audit that reports an empty
+  document, and it now reports it once.
+
+  **Absent means absent; broken means broken.** A `paths` member that is present
+  and yields nothing readable — `paths` is not an object at all, or every entry
+  under it is defective — is a defective document, not an absent one.
+  `openapi-endpoints`, `openapi-schemas` and `openapi-operation-ids` fail it and
+  name the defect in `found`, where all three previously reported "0 operations".
+  A defect counts at either level: a non-object where a Path Item Object belongs
+  and a non-object where an Operation Object belongs are the same error. An empty
+  `paths` object, no `paths` key, and a path item that declares no method are
+  legal and declare nothing, so they still decline.
+
+  **A broken entry does not erase the operations beside it.** A document with
+  twenty readable operations and one `null` path item is graded on its twenty:
+  `openapi-endpoints` counts them, `openapi-schemas` measures coverage over them,
+  `openapi-operation-ids` checks their ids. The entries that could not be read are
+  named in the message and counted in `found`, and they do not change the verdict.
+
+  **What did not change.** Every verdict on a document that exists and is
+  defective. A missing `servers` array, entries with no `url`, an unreachable
+  server URL, low schema coverage, an unregistrable or duplicated `operationId` —
+  all still fail or warn exactly as before. That is the finding the grade B was
+  earned for. A document that declares no operations is still failed, by
+  `openapi-endpoints`, which is the audit whose subject it is.
+
+  **Also.** The seven byte-identical copies of `getOpenApiSpec`, and the four of
+  the `paths` traversal, collapse into `packages/core/src/gatherers/openapi.ts`,
+  which now owns the read, the traversal and the precondition.
+  `agent-interfaces/search-endpoint` and `operability-safety/contact-form` keep
+  judging a site that publishes no document — they have other evidence — and no
+  verdict of theirs moved. `agent-interfaces/openapi-description-quality` already
+  declined the absence and still does; only the wording of its decline changed,
+  so that it says what the rest of the family says.
+
+  The shared decline now reads "No readable OpenAPI document at /openapi.json"
+  rather than "No OpenAPI document is published at /openapi.json". The read also
+  comes back empty for a 200 whose body will not parse, and a site that publishes
+  a broken document has not published none.
+
+  `operability-safety/contact-form` and `agent-interfaces/search-endpoint` read
+  the same document without judging it, and they keep the traversal they had: a
+  site with a `POST /contact` and one malformed sibling entry still has a contact
+  endpoint. They do stop counting a `x-` specification extension as a path item,
+  which OpenAPI 3.1 §4.8.8 says it never was. Both are informative, so no score
+  moves either way.
+
+- 9caf97b: Audit boundary enforcement & gatherer uniformity (Phase 4 of audit architecture migration):
+
+  - Enforced architectural boundary: zero direct `ctx.fetch`, bare `fetch()`, or HTTP client imports in `packages/core/src/audits/`.
+  - Created AST contract script `scripts/check-audit-boundaries.mjs` and added `"check:audit-boundaries"` script to `package.json`.
+  - Created dedicated gatherer modules `gatherers/mcp.ts`, `gatherers/discovery.ts`, `gatherers/rsl.ts`, `gatherers/security.ts`, and `gatherers/author.ts` with WeakMap per-scan fetch caching.
+  - Moved `_mcp-client.ts` out of `audits/` into `gatherers/mcp.ts`.
+  - Refactored all 235 production audits across 8 categories to consume gatherers exclusively.
+  - Updated `scripts/lib/requires-analysis.mjs` with gatherer evidence mappings.
+
+- 9c0f4b8: refactor(core)!: perform four-way read of sitemaps and decline on absence
+
+  An absent sitemap now returns `notApplicable` for `sitemap-lastmod` and `sitemap-absolute-urls` instead of failing the site for an unwritten document.
+
+- a719d16: An informative check reports the score it measured. `toCheckResult` overwrote it with 0, so JSON and SDK consumers saw 0 for every informative check regardless of the measurement. `weight` stays 0 and keeps the check out of every sum; the score in the report changes.
+- 64c23e7: One URL, One Score, The Origin Cached (Phase 5 of audit architecture migration):
+
+  - Fixed `MAX_PAGES_PER_SCAN = 1` and `DEFAULT_SCAN_LIMIT = 1`, removing legacy multi-page discovery heuristics and regex guessers.
+  - Scans now evaluate the exact target URL as the single page unit while preserving explicit page overrides (`options.pages`).
+  - Introduced `OriginCache` module (`computeOriginCacheKey`, `shouldBypassOriginCache`, TTL eviction, and credential stripping) with versioned cache keys (`${origin}|${ORIGIN_EVIDENCE_VERSION}`).
+  - Scans on the same origin reuse cached origin evidence (root files and homepage), making multi-page evaluations fast, isolated, and idempotent.
+  - Authenticated scans (`Authorization`, `Cookie`, or basic-auth credentials) automatically bypass the shared origin cache to guarantee secret isolation.
+  - Stamped `originEvidence` metadata (`origin`, `version`, `readAt`, `cached`) into `ScanReport`.
+  - Added comprehensive unit tests in `packages/core/src/tests/origin-idempotence.test.ts` verifying all three Phase 5 gates: Idempotence across URLs, Cache Isolation & Credential Protection, and Version Invalidation.
+
+- a719d16: The overall score weights each category by the mass it assessed. `runAudits` now sets `assessedMass` and `registryMass` on every category it builds, so `calculateOverallScore` no longer falls back to registry mass on every scan. A category that could assess little of its registry moves the overall score by what it assessed, as `conditions.coverage` already reported. Overall scores change on any site where a category's assessed mass differs from its registry mass, which is most sites.
+- 111cdbf: Page type becomes consent (Phase 3 of audit architecture migration):
+
+  - Added `ScanOptions.pageType?: PageType` and CLI `--page-type` flag.
+  - Added `PageContext.pageTypeSource: 'declared' | 'detected'`.
+  - Renamed `AuditMeta.applicablePageTypes` to `AuditMeta.pageTypes`.
+  - Introduced runner scope function: typed audits matching detected page types run in `informative` mode (unscored); only user-declared page types authorize scoring.
+  - Category mass calculations updated to use `assessedMass`.
+  - Removed direct `page.pageType` accesses across all 17 audit sources.
+
+- cebbba0: The Score States Its Conditions & The Warrant Expires (Phase 6 of audit architecture migration):
+
+  - Added `conditions` to `ScanReport` and `ScanConditionsSchema`: transparently reports the target URL, page type (`declared` vs `detected`), origin evidence status (`cached` vs `fresh`, version, and `readAt`), evidence coverage breakdown (`registryMass`, `assessedMass`, `pageMass`, `originMass`, `gatedMass`), and unscored audit breakdown.
+  - Updated all report renderers (`terminal`, `markdown`, `html`) to display the Scan Conditions block beside and beneath the headline score.
+  - Implemented `scripts/sweep-audit-reviews.mjs` and scheduled GitHub workflow `.github/workflows/audit-review-sweep.yml` to track evidence dossiers older than 6 months (180 days).
+
+- a719d16: The sitemap walk reads every sitemap robots.txt declares, and a broken sitemap is reported as broken.
+
+  - Every `Sitemap:` line in robots.txt is read. The walk used to stop at the first file that parsed, so a site declaring three sitemaps was judged on one. The conventional paths (`/sitemap.xml`, `/sitemap-index.xml`, `/sitemap_index.xml`) are probed only when no declared sitemap answers, and the first that does is taken.
+  - `readSitemap` follows the walk, not the first root file. A site whose only sitemap is a broken `/sitemap-index.xml`, or a broken file declared in robots.txt, now reads `malformed` instead of `absent`. `sitemap-exists`, `sitemap-lastmod` and `sitemap-absolute-urls` change verdict on such a site.
+  - A sitemap index may no longer pull in a child from a parent domain. `foo.github.io` reads children on `foo.github.io` and its subdomains only, never on `github.io`.
+  - `SitemapTree` gains `readableFiles` and `malformedFiles`; `collectSitemapEntries` gains `opts.fallbackRoots`.
+
+- 5f612b6: A scan that could not read the site now runs no audit at all.
+
+  The rule previously depended on separate mechanisms. The `requires` gate
+  skipped 211 of 215 audits. The other four declared no requirements and checked
+  the unread state inside `audit()`. In total, 42 audit files carried a local copy
+  of that check, while 142 of 215 audits had no test that would catch a missing
+  declaration.
+
+  `planAudits` now applies the check once, above every audit's own `requires`, and
+  `unreachable-contract.test.ts` holds the whole registry to it with no exemption
+  list. The 42 copies are gone.
+
+  What changes for a `runScan` caller: every audit on an unread scan now carries
+  the runner's `na` stub. This replaces more than the four local `na`
+  explanations. It also suppresses direct-audit WAF failures, cross-origin
+  redirect failures, and plain-HTTP failures because none may verdict when the
+  scan read no attributable site response. These changes affect the findings and
+  any score derived from them. Each stub names the scan reason, for example
+  `Not assessed: The homepage could not be fetched: ENOTFOUND.`
+
+  What changes for an SDK caller: the `requires` gate in `planAudits` is now on by
+  default. `PlanOptions.enforceEvidence` previously defaulted to `false`, so
+  `planAudits(ctx, config)` ran audits without checking their declared evidence.
+  Pass `{ enforceEvidence: false }` as the third argument to bypass only those
+  `requires` checks. `runAudits` has no `PlanOptions` argument. A caller that needs
+  that diagnostic mode first builds a plan with `planAudits`, then passes the
+  precomputed plan as the fourth `runAudits` argument. Without a plan, `runAudits`
+  uses the default gated plan.
+
+  `runScan`'s `enforceEvidenceGate` option stays available as the explicit
+  diagnostic opt-out for `requires`, and it already defaulted to `true`. Passing
+  `false` never bypasses the unread-scan precondition. The only full bypass of
+  every gate is a test-only helper that is not exported from the package.
+
+### Minor Changes
+
+- 67876d7: Hardened CSS selector escaping in parser and operability audits, eliminated false positives/negatives in WAF bot wall detector, and added true offline safety for corpus tests:
+
+  - Exported and applied `escapeAttrValue` to prevent Cheerio syntax crashes when HTML attributes (such as form element IDs, `aria-controls`, `aria-describedby`, and `aria-labelledby`) contain quotes or backslashes.
+  - Fixed 3 WAF classifier defects: prevented `attack-challenge-mode` prose from falsely tripping Kasada, prevented normal PerimeterX telemetry scripts on 200 OK pages from falsely tripping PerimeterX blocks, and added Akamai HTTP 200 soft-block detection for reference-numbered error pages.
+  - Corrected corpus fixture kinds for `vercel-com-wall-200` (`page`), `walmart-com-wall-200` (`page`), and `tirerack-com-soft-block-200` (`wall`).
+  - Hermetically stubbed DNS in corpus test suites, guaranteeing offline test reproducibility under `AL_SKIP_NETWORK=1`.
+  - Resolved documented architectural debts in `docs/architecture/debt.md`.
+
+- 1a20739: Scoped all root-file audits to require `unblocked-fetches`:
+
+  - Updated `ORIGIN_ONLY_REQUIRES` in `scripts/lib/requires-analysis.mjs` to require `unblocked-fetches`, removing the blanket category drop in `access-crawl-control`.
+  - Updated all 65 root-file and crawler-token audits across `access-crawl-control`, `agent-interfaces`, `machine-discovery`, and `operability-safety` to declare `unblocked-fetches`.
+  - Guarantees that when a site is blocked by a bot wall or WAF at HTTP 200, all root-file audits gracefully decline with `notApplicable` rather than emitting false failure or warning verdicts.
+  - Fixed emphasis regex in `dossier-public.test.ts` for Prettier formatting resilience.
+
+- 18c3416: Hardened script typechecking, bot wall evidence gating, and API deprecation:
+
+  - Added `tsconfig.scripts.json` and integrated script typechecking into root `pnpm typecheck`.
+  - Corrected evidence requirements for `access-crawl-control/sensitive-paths` and `access-crawl-control/rsl-licensing-terms-conformance` to require `unblocked-fetches`, preventing false scored `fail` verdicts when a scan is blocked by a bot wall.
+  - Marked `MAX_CONCURRENT_REQUESTS` in `constants.ts` as `@deprecated`.
+
+### Patch Changes
+
+- adf2bce: Consolidate legacy v1 audit map into canonical `docs/evidence/audit-map.json`, add automated rebuild and verification script (`pnpm check:audit-map`), and enrich `migration-map.json` notes.
+- 5e9b931: Follow redirects in `machine-discovery/no-broken-links` so HTTP 3xx responses are not treated as broken, and guard `displayValue` and `explanation` against schema overflow in `Audit.toCheckResult`.
+- a719d16: `conditions.pageType` describes the target URL. When the target did not answer 200 and a page override did, the first surviving page was the override and the conditions block described it under the target's URL. The page type now comes from the target's own entry, or from the explicit fallback when the target was not read.
+- 4cce959: A failed fetch logs one warning line instead of the error object with its stack. The object is still there at `LOG_LEVEL=debug`. A scan of a walled site no longer prints a screen of frames per request.
+- 8b5e768: Hardened corpus nightly scan workflow and site-list runner:
+
+  - Sized the nightly site scan window against the 240-minute deadline (200 sites per run at the time; the curated list later made the window the whole list).
+  - Added `--allow-partial` flag to `scripts/scan-site-list.ts` and enabled it in `.github/workflows/corpus-nightly.yml`, separating timeout capacity from invariant violations so partial runs complete with code 0 and preserve their uploaded summaries.
+
+- 7dea552: Added `text-bearing-wall` to hostile-state contract suite:
+
+  - Extended `NOTHING_OBTAINED` with a text-bearing HTTP 200 bot wall containing full site template navigation and branding (>50 words, >200 characters).
+  - Proved that `planAudits` properly enforces the evidence gate across all 215 audits when faced with a text-rich interstitial bot wall, guaranteeing `notApplicable` verdicts rather than false findings.
+
+- 85e77e1: Moved corpus analysis script from test suite to `scripts/analyze-corpus.ts`:
+
+  - Migrated `packages/core/src/tests/analyze-corpus.test.ts` to `scripts/analyze-corpus.ts`.
+  - Eliminates CI `ENOENT` failure caused by the test attempting to write an analysis report to a local workstation artifact path.
+  - Removes 75 seconds of redundant corpus re-execution from vitest test runs while preserving on-demand corpus diagnostic reporting via `pnpm exec tsx scripts/analyze-corpus.ts`.
+
+- 88cb080: Code hygiene and linter zero-warning hardening:
+
+  - Configured `.oxlintrc.json` with ignore pattern for `.astro` templates (which are compiled and verified by `astro check`).
+  - Resolved all unsafe optional chaining operations, redundant fallbacks in object spreads, and regex character escapes across core audits and test suites.
+  - Removed unused imports and eliminated all compiler warnings in `content.config.ts`.
+  - Brought `pnpm lint` and `pnpm typecheck` to 0 errors, 0 warnings, and 0 hints across the entire codebase.
+
+- dcef5af: Resolve architecture debt item 1: accessibility audits on real-page corpus:
+
+  - Added dedicated conformance test suite `packages/core/src/tests/a11y-corpus.test.ts`.
+  - Exercises all 17 `A11yBackedAudit`s over representative real-world HTML documents across public sector, public health, forum, storefront, and SPA shell pages in ~3.2 s.
+  - Proves schema compliance, node target findings on failures, and valid transitions between pass, fail, warn, and na states on real DOMs without inflating the 120 s runtime cap of `real-page-corpus.test.ts`.
+  - Updated `docs/architecture/debt.md` closing debt item 1.
+
+- 56ab5ea: Refactor audit source extraction to eliminate code duplication across contract tests and CI scripts:
+
+  - Exported canonical `auditSourceFiles` and `declaredIds` helpers from `packages/core/src/tests/audit-sources.ts`.
+  - Migrated `scripts/lib/requires-analysis.mjs` and `scripts/check-requires.mjs` to fully-typed TypeScript (`.ts`) consuming `audit-sources.ts`.
+  - Eliminated 15 lines of duplicated filesystem traversal and regex extraction code.
+  - Updated `docs/architecture/debt.md` closing the audit-sources reflection debt item.
+
+- e86bf9a: Add corpus evidence gate test suite (`packages/core/src/tests/corpus-evidence-gate.test.ts`):
+
+  - Exercises `buildScanEvidence()` and `planAudits()` over all 41 real-page fixtures in the corpus.
+  - Proves real bot walls are classified as unjudgeable and run zero page-fed audits.
+  - Proves real JavaScript shells gate `rendered-body` and skip text-reading audits.
+  - Proves real content pages clear all evidence gates and plan runnable audits.
+  - Closes the final standing debt item in `docs/architecture/debt.md`.
+
+- a719d16: Audits no longer throw on a page whose JSON-LD carries an object-valued `@context` (`{ "@vocab": "https://schema.org/" }`). The deep node walk inherited that object into every child, then walked into it and stamped it with itself, recursing until the stack ran out. Two audits reported `[scanner] Audit error` on zapier.com instead of a result. The walk now treats `@context` as a vocabulary, not a node.
+- a719d16: The live site corpus is curated. `sites.json` shrinks from 1913 blind entries to 414 categorised domains across 13 categories plus an unknown slice, with a smoke tier of two per category. A new `status.json` records what each domain did last time, and both live runners skip dead and robots-blocked domains by default. `pnpm corpus:status`, `pnpm corpus:probe` and `pnpm build:sites` maintain it. Scan output is unchanged; only test data and scripts move.
+- a719d16: The origin cache is bounded and keyed by request headers. It sweeps expired entries on every write and drops the oldest when it holds more than `DEFAULT_ORIGIN_CACHE_MAX_ENTRIES` origins, so a long-lived process cannot grow it without limit. `computeOriginCacheKey` folds non-credential request headers into the key, so a scan with a bot user agent never reads what a default scan wrote. Credential headers still bypass the cache and never enter a key.
+- a719d16: Origin evidence is delivered and cached in one order. The origin homepage a non-homepage scan fetched never reached the audits, and a homepage scan wrote `undefined` into the origin cache before repairing it, so whether a later scan of the origin saw a homepage depended on which URL was scanned first. The cache is now written after the page fetch, and `CheckContext.originEvidence` carries the origin, version, read time, cache status and homepage.
+- 2cbdd13: Widen the oxlint surface from `correctness` alone to `correctness` plus
+  `suspicious`, and add the `import` and `promise` plugins.
+
+  `.oxlintrc.json` previously declared nothing but an ignore pattern, so oxlint
+  ran its default set: the `correctness` category over the default plugins. The
+  config now names the plugin list explicitly — `eslint`, `typescript`,
+  `unicorn`, `oxc`, `import`, `promise` — enables `suspicious` as an error
+  category, and turns on three rules that the categories leave off:
+  `no-return-await`, `unicorn/no-unnecessary-await` and
+  `unicorn/prefer-regexp-test`. Rule count rises from 96 to 113.
+
+  The five findings the wider set surfaced are fixed, none of them behavioural:
+
+  - `agent-interfaces/openapi-servers`, `operability-safety/engine/dom` and
+    `operability-safety/engine/table` each imported one module twice. The second
+    import in the two engine files carried a comment calling itself lazy; an ESM
+    import is hoisted either way, so the comment described something the module
+    graph never did. Merged into the single import at the top.
+  - `getGaugeColor` in the HTML renderer was declared inside
+    `generateHtmlReport` and captured nothing from it. Moved to module scope.
+  - `isValidUrl` in the CLI constructed a `URL` purely for its throw. The
+    construction is now `void`-marked so the intent reads as a parse probe.
+  - `metaRefresh` in the a11y engine called `String#match` on a non-global regex
+    and used only its truthiness. Now `RegExp#test`.
+
+  `pnpm lint` stays at 0 errors and 0 warnings.
+
+  `promise/prefer-await-to-then` was evaluated and left off: its 16 hits are
+  almost all top-level `main().catch()` entry points, where `then`/`catch` is the
+  correct shape. `import/no-cycle` was also left off; the a11y engine has 7
+  deliberate cycles that need untangling before the rule can be an error.
+
+- a719d16: Request header layers merge by case-insensitive name. A caller's `user-agent` or `authorization` in another casing was sent beside the scanner's own header as one joined value; it is now replaced. `mergeHeaders` and `setHeader` are exported from the fetcher.
+- a719d16: Gatherer caches survive audit scoping. The runner hands every audit a scoped copy of the scan context, and the sixteen per-scan gatherer caches were keyed on that copy, so each audit missed the cache and repeated its fetch: three quarters of a scan's audit-time requests were duplicates. The copy now carries a `cacheOwner` stamp pointing at the scan's context, and every gatherer keys on it. One scan, one walk of the sitemap tree, one probe per feed.
+- 4cce959: An unscored scan's reason names each cause once. Two evidence keys carried the same sentence when nothing was fetched, and the report read "The scan fetched no pages. The scan fetched no pages." on every walled site.
+
 ## 3.1.0
 
 ### Minor Changes
