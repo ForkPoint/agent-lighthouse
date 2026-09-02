@@ -143,6 +143,12 @@
       "runs": 1,
       "reason": "The homepage could not be fetched: getaddrinfo ENOTFOUND a2z.com (ENOTFOUND). Bot Wall / Aggressive Connection Drop refused the scan: Connection dropped or timed out repeatedly on crawler requests. The scan fetched no pages. The scan fetched no pages."
     },
+    "aa.com": {
+      "state": "unscored",
+      "seenAt": "2026-09-02",
+      "runs": 1,
+      "reason": "The homepage answered HTTP 403."
+    },
     "aajtak.in": {
       "state": "unscored",
       "seenAt": "2026-09-02",
@@ -154,6 +160,17 @@
       "seenAt": "2026-09-02",
       "runs": 1,
       "reason": "The homepage could not be fetched: getaddrinfo ENOTFOUND aaplimg.com (ENOTFOUND). Bot Wall / Aggressive Connection Drop refused the scan: Connection dropped or timed out repeatedly on crawler requests. The scan fetched no pages. The scan fetched no pages."
+    },
+    "abbvie.com": {
+      "state": "unscored",
+      "seenAt": "2026-09-02",
+      "runs": 1,
+      "reason": "The homepage answered HTTP 403."
+    },
+    "abc.net.au": {
+      "state": "ok",
+      "seenAt": "2026-09-02",
+      "runs": 1
     },
     "abola.pt": {
       "state": "ok",
@@ -182,6 +199,11 @@
       "runs": 1,
       "reason": "robots-disallow"
     },
+    "accor.com": {
+      "state": "ok",
+      "seenAt": "2026-09-02",
+      "runs": 1
+    },
     "accounts.digitallocker.gov.in": {
       "state": "ok",
       "seenAt": "2026-09-02",
@@ -209,6 +231,11 @@
       "seenAt": "2026-09-02",
       "runs": 1,
       "reason": "The homepage could not be fetched: The operation was aborted due to timeout. Bot Wall / Aggressive Connection Drop refused the scan: Connection dropped or timed out repeatedly on crawler requests. The scan fetched no pages. The scan fetched no pages."
+    },
+    "acehotel.com": {
+      "state": "ok",
+      "seenAt": "2026-09-02",
+      "runs": 1
     },
     "achmea.nl": {
       "state": "ok",
@@ -271,6 +298,11 @@
       "seenAt": "2026-09-02",
       "runs": 1,
       "reason": "robots-refused"
+    },
+    "admin.ch": {
+      "state": "ok",
+      "seenAt": "2026-09-02",
+      "runs": 1
     },
     "admin.shopify.com": {
       "state": "blocked",
@@ -364,6 +396,12 @@
       "runs": 1,
       "reason": "robots-disallow"
     },
+    "agents.md": {
+      "state": "unscored",
+      "seenAt": "2026-09-02",
+      "runs": 1,
+      "reason": "No agent artifact: none of /llms.txt, /.well-known/agents.json, /.well-known/mcp.json answered 200."
+    },
     "agkn.com": {
       "state": "unscored",
       "seenAt": "2026-09-02",
@@ -371,12 +409,16 @@
       "reason": "The homepage could not be fetched: getaddrinfo ENOTFOUND agkn.com (ENOTFOUND). Bot Wall / Aggressive Connection Drop refused the scan: Connection dropped or timed out repeatedly on crawler requests. The scan fetched no pages. The scan fetched no pages."
     },
     "agoda.com": {
-      "state": "unscored",
+      "state": "ok",
       "seenAt": "2026-09-02",
-      "runs": 1,
-      "reason": "The scan could not feed 57% of the registry's evidence mass, so what remains is not a reading of this site."
+      "runs": 2
     },
     "agora.io": {
+      "state": "ok",
+      "seenAt": "2026-09-02",
+      "runs": 1
+    },
+    "ai-sdk.vercel.app": {
       "state": "ok",
       "seenAt": "2026-09-02",
       "runs": 1
@@ -391,6 +433,18 @@
       "state": "ok",
       "seenAt": "2026-09-02",
       "runs": 1
+    },
+    "airbnb.github.io": {
+      "state": "unscored",
+      "seenAt": "2026-09-02",
+      "runs": 1,
+      "reason": "The requested host redirected to airbnb.tech, a different site."
+    },
+    "airfrance.com": {
+      "state": "unscored",
+      "seenAt": "2026-09-02",
+      "runs": 1,
+      "reason": "The homepage could not be fetched: The operation was aborted due to timeout."
     },
     "airtable.com": {
       "state": "ok",
@@ -536,6 +590,11 @@
       "seenAt": "2026-09-02",
       "runs": 1
     },
+    "allbirds.myshopify.com": {
+      "state": "ok",
+      "seenAt": "2026-09-02",
+      "runs": 1
+    },
     "allegro.pl": {
       "state": "unscored",
       "seenAt": "2026-09-02",
@@ -547,6 +606,11 @@
       "seenAt": "2026-09-02",
       "runs": 1,
       "reason": "Cloudflare Turnstile / Managed Challenge refused the scan: HTTP 403 Cloudflare challenge page."
+    },
+    "aloyoga.com": {
+      "state": "ok",
+      "seenAt": "2026-09-02",
+      "runs": 1
     },
     "alphapolis.co.jp": {
       "state": "ok",
@@ -696,6 +760,12 @@
       "seenAt": "2026-09-02",
       "runs": 1
     },
+    "amtrak.com": {
+      "state": "unscored",
+      "seenAt": "2026-09-02",
+      "runs": 1,
+      "reason": "The homepage answered HTTP 403."
+    },
     "amzn.to": {
       "state": "unscored",
       "seenAt": "2026-09-02",
@@ -718,11 +788,21 @@
       "seenAt": "2026-09-02",
       "runs": 1
     },
+    "angular.dev": {
+      "state": "ok",
+      "seenAt": "2026-09-02",
+      "runs": 1
+    },
     "annunci69.it": {
       "state": "blocked",
       "seenAt": "2026-09-02",
       "runs": 1,
       "reason": "crawl-delay"
+    },
+    "answer.ai": {
+      "state": "ok",
+      "seenAt": "2026-09-02",
+      "runs": 1
     },
     "antarvasna3.com": {
       "state": "unscored",
@@ -731,9 +811,10 @@
       "reason": "Cloudflare Turnstile / Managed Challenge refused the scan: HTTP 403 Cloudflare challenge page."
     },
     "anthropic.com": {
-      "state": "ok",
+      "state": "unscored",
       "seenAt": "2026-09-02",
-      "runs": 1
+      "runs": 2,
+      "reason": "No agent artifact: none of /llms.txt, /.well-known/agents.json, /.well-known/mcp.json answered 200."
     },
     "anybunny.org": {
       "state": "ok",
@@ -923,6 +1004,11 @@
       "runs": 1,
       "reason": "robots-refused"
     },
+    "arstechnica.com": {
+      "state": "ok",
+      "seenAt": "2026-09-02",
+      "runs": 1
+    },
     "artfight.net": {
       "state": "blocked",
       "seenAt": "2026-09-02",
@@ -964,11 +1050,40 @@
       "runs": 1,
       "reason": "The scan was throttled (Rate limit (HTTP 429)): The site answered HTTP 429 — too many requests. The scan asked for pages faster than this origin allows, so it saw no content. This says nothing about whether AI agents are welcome; re-run the scan after a pause.."
     },
+    "aspendental.com": {
+      "state": "unscored",
+      "seenAt": "2026-09-02",
+      "runs": 1,
+      "reason": "The homepage answered HTTP 403."
+    },
     "assamesesexvideos.com": {
       "state": "unscored",
       "seenAt": "2026-09-02",
       "runs": 1,
       "reason": "The scan could not feed 57% of the registry's evidence mass, so what remains is not a reading of this site."
+    },
+    "astralcodexten.substack.com": {
+      "state": "unscored",
+      "seenAt": "2026-09-02",
+      "runs": 1,
+      "reason": "The requested host redirected to astralcodexten.com, a different site."
+    },
+    "astrazeneca.com": {
+      "state": "unscored",
+      "seenAt": "2026-09-02",
+      "runs": 1,
+      "reason": "The homepage answered HTTP 403."
+    },
+    "astro-docs.netlify.app": {
+      "state": "ok",
+      "seenAt": "2026-09-02",
+      "runs": 1
+    },
+    "astro.build": {
+      "state": "unscored",
+      "seenAt": "2026-09-02",
+      "runs": 1,
+      "reason": "No agent artifact: none of /llms.txt, /.well-known/agents.json, /.well-known/mcp.json answered 200."
     },
     "asurascans.com": {
       "state": "ok",
@@ -1064,6 +1179,11 @@
       "runs": 1,
       "reason": "crawl-delay"
     },
+    "awaytravel.com": {
+      "state": "ok",
+      "seenAt": "2026-09-02",
+      "runs": 1
+    },
     "aws.dev": {
       "state": "unscored",
       "seenAt": "2026-09-02",
@@ -1087,6 +1207,12 @@
       "seenAt": "2026-09-02",
       "runs": 1,
       "reason": "The homepage could not be fetched: getaddrinfo ENOTFOUND ax-msedge.net (ENOTFOUND). Bot Wall / Aggressive Connection Drop refused the scan: Connection dropped or timed out repeatedly on crawler requests. The scan fetched no pages. The scan fetched no pages."
+    },
+    "axios.com": {
+      "state": "unscored",
+      "seenAt": "2026-09-02",
+      "runs": 1,
+      "reason": "The homepage answered HTTP 403."
     },
     "ay267.com": {
       "state": "blocked",
@@ -1157,6 +1283,11 @@
       "seenAt": "2026-09-02",
       "runs": 1
     },
+    "bahn.de": {
+      "state": "ok",
+      "seenAt": "2026-09-02",
+      "runs": 1
+    },
     "baidu.com": {
       "state": "unscored",
       "seenAt": "2026-09-02",
@@ -1196,11 +1327,22 @@
       "seenAt": "2026-09-02",
       "runs": 1
     },
+    "barrys.com": {
+      "state": "ok",
+      "seenAt": "2026-09-02",
+      "runs": 1
+    },
     "baseball.yahoo.co.jp": {
       "state": "blocked",
       "seenAt": "2026-09-02",
       "runs": 1,
       "reason": "robots-refused"
+    },
+    "bayer.com": {
+      "state": "unscored",
+      "seenAt": "2026-09-02",
+      "runs": 1,
+      "reason": "The homepage answered HTTP 403."
     },
     "bbc.co.uk": {
       "state": "blocked",
@@ -1238,6 +1380,11 @@
       "runs": 1,
       "reason": "The homepage could not be fetched: getaddrinfo ENOTFOUND bdydns.com (ENOTFOUND). Bot Wall / Aggressive Connection Drop refused the scan: Connection dropped or timed out repeatedly on crawler requests. The scan fetched no pages. The scan fetched no pages."
     },
+    "beardbrand.com": {
+      "state": "ok",
+      "seenAt": "2026-09-02",
+      "runs": 1
+    },
     "beauty.hotpepper.jp": {
       "state": "unscored",
       "seenAt": "2026-09-02",
@@ -1262,6 +1409,11 @@
       "runs": 1,
       "reason": "The homepage could not be fetched: getaddrinfo ENOTFOUND beian.gov.cn (ENOTFOUND). Bot Wall / Aggressive Connection Drop refused the scan: Connection dropped or timed out repeatedly on crawler requests. The scan fetched no pages. The scan fetched no pages."
     },
+    "belgium.be": {
+      "state": "ok",
+      "seenAt": "2026-09-02",
+      "runs": 1
+    },
     "berkeley.edu": {
       "state": "ok",
       "seenAt": "2026-09-02",
@@ -1270,8 +1422,14 @@
     "bestbuy.com": {
       "state": "unscored",
       "seenAt": "2026-09-02",
+      "runs": 2,
+      "reason": "The homepage could not be fetched: The operation was aborted due to timeout."
+    },
+    "bestwestern.com": {
+      "state": "unscored",
+      "seenAt": "2026-09-02",
       "runs": 1,
-      "reason": "The homepage could not be fetched: The operation was aborted due to timeout. Bot Wall / Aggressive Connection Drop refused the scan: Connection dropped or timed out repeatedly on crawler requests. The scan fetched no pages. The scan fetched no pages."
+      "reason": "The homepage answered HTTP 403."
     },
     "bet365.bet.br": {
       "state": "blocked",
@@ -1403,6 +1561,12 @@
       "runs": 1,
       "reason": "robots-refused"
     },
+    "biomejs.dev": {
+      "state": "unscored",
+      "seenAt": "2026-09-02",
+      "runs": 1,
+      "reason": "No agent artifact: none of /llms.txt, /.well-known/agents.json, /.well-known/mcp.json answered 200."
+    },
     "bit.ly": {
       "state": "unscored",
       "seenAt": "2026-09-02",
@@ -1460,16 +1624,32 @@
       "reason": "The requested host redirected to blogger.com, a different site, without a permanent redirect."
     },
     "bloomberg.com": {
-      "state": "blocked",
+      "state": "ok",
+      "seenAt": "2026-09-02",
+      "runs": 2
+    },
+    "bluebottlecoffee.com": {
+      "state": "unscored",
       "seenAt": "2026-09-02",
       "runs": 1,
-      "reason": "robots-disallow"
+      "reason": "The homepage answered HTTP 403."
     },
     "bluehost.com": {
       "state": "blocked",
       "seenAt": "2026-09-02",
       "runs": 1,
       "reason": "robots-refused"
+    },
+    "blueland.com": {
+      "state": "ok",
+      "seenAt": "2026-09-02",
+      "runs": 1
+    },
+    "bmo.com": {
+      "state": "unscored",
+      "seenAt": "2026-09-02",
+      "runs": 1,
+      "reason": "The homepage could not be fetched: The operation was aborted due to timeout."
     },
     "bn.xhamster46.desi": {
       "state": "ok",
@@ -1500,11 +1680,16 @@
       "runs": 1,
       "reason": "robots-refused"
     },
+    "bondvet.com": {
+      "state": "ok",
+      "seenAt": "2026-09-02",
+      "runs": 1
+    },
     "booking.com": {
       "state": "unscored",
       "seenAt": "2026-09-02",
-      "runs": 1,
-      "reason": "The scan could not feed 53% of the registry's evidence mass, so what remains is not a reading of this site."
+      "runs": 2,
+      "reason": "The homepage answered HTTP 202."
     },
     "bookmark.xxx": {
       "state": "unscored",
@@ -1517,6 +1702,12 @@
       "seenAt": "2026-09-02",
       "runs": 1,
       "reason": "Cloudflare Turnstile / Managed Challenge refused the scan: HTTP 403 Cloudflare challenge page."
+    },
+    "boy-smells.com": {
+      "state": "unscored",
+      "seenAt": "2026-09-02",
+      "runs": 1,
+      "reason": "The homepage could not be fetched: getaddrinfo ENOTFOUND boy-smells.com (ENOTFOUND)."
     },
     "boyfriendtv.com": {
       "state": "unscored",
@@ -1562,6 +1753,11 @@
       "runs": 1,
       "reason": "Cloudflare Turnstile / Managed Challenge refused the scan: HTTP 403 Cloudflare challenge page."
     },
+    "britishairways.com": {
+      "state": "ok",
+      "seenAt": "2026-09-02",
+      "runs": 1
+    },
     "brooklinen.com": {
       "state": "ok",
       "seenAt": "2026-09-02",
@@ -1572,6 +1768,11 @@
       "seenAt": "2026-09-02",
       "runs": 1,
       "reason": "robots-refused"
+    },
+    "bruvi.com": {
+      "state": "ok",
+      "seenAt": "2026-09-02",
+      "runs": 1
     },
     "bsky.app": {
       "state": "unscored",
@@ -1592,6 +1793,11 @@
       "reason": "robots-disallow"
     },
     "bugsnag.com": {
+      "state": "ok",
+      "seenAt": "2026-09-02",
+      "runs": 1
+    },
+    "bun.sh": {
       "state": "ok",
       "seenAt": "2026-09-02",
       "runs": 1
@@ -1672,6 +1878,11 @@
       "runs": 1,
       "reason": "The homepage answered HTTP 302. The scan fetched no pages. The scan fetched no pages."
     },
+    "cal.com": {
+      "state": "ok",
+      "seenAt": "2026-09-02",
+      "runs": 1
+    },
     "calculator.net": {
       "state": "ok",
       "seenAt": "2026-09-02",
@@ -1685,7 +1896,7 @@
     "calendly.com": {
       "state": "ok",
       "seenAt": "2026-09-02",
-      "runs": 1
+      "runs": 2
     },
     "cambridge.org": {
       "state": "blocked",
@@ -1694,16 +1905,15 @@
       "reason": "robots-disallow"
     },
     "canada.ca": {
-      "state": "unscored",
+      "state": "ok",
       "seenAt": "2026-09-02",
-      "runs": 1,
-      "reason": "The scan could not feed 57% of the registry's evidence mass, so what remains is not a reading of this site."
+      "runs": 2
     },
     "canva.com": {
-      "state": "blocked",
+      "state": "unscored",
       "seenAt": "2026-09-02",
-      "runs": 1,
-      "reason": "robots-disallow"
+      "runs": 2,
+      "reason": "The homepage answered HTTP 403."
     },
     "capcut.com": {
       "state": "ok",
@@ -1765,6 +1975,18 @@
       "seenAt": "2026-09-02",
       "runs": 1
     },
+    "cathaypacific.com": {
+      "state": "unscored",
+      "seenAt": "2026-09-02",
+      "runs": 1,
+      "reason": "The homepage could not be fetched: The operation was aborted due to timeout."
+    },
+    "cbc.ca": {
+      "state": "unscored",
+      "seenAt": "2026-09-02",
+      "runs": 1,
+      "reason": "The homepage could not be fetched: The operation was aborted due to timeout."
+    },
     "cbsnews.com": {
       "state": "blocked",
       "seenAt": "2026-09-02",
@@ -1777,10 +1999,10 @@
       "runs": 1
     },
     "cdiscount.com": {
-      "state": "blocked",
+      "state": "unscored",
       "seenAt": "2026-09-02",
-      "runs": 1,
-      "reason": "robots-refused"
+      "runs": 2,
+      "reason": "The homepage answered HTTP 403."
     },
     "cdn-apple.com": {
       "state": "unscored",
@@ -1850,6 +2072,11 @@
       "seenAt": "2026-09-02",
       "runs": 1
     },
+    "cedars-sinai.org": {
+      "state": "ok",
+      "seenAt": "2026-09-02",
+      "runs": 1
+    },
     "cetonline.karnataka.gov.in": {
       "state": "unscored",
       "seenAt": "2026-09-02",
@@ -1868,6 +2095,11 @@
       "reason": "The homepage answered HTTP 403. Cloudflare Turnstile / Managed Challenge refused the scan: HTTP 403 Cloudflare challenge page. The scan fetched no pages. The scan fetched no pages."
     },
     "chase.com": {
+      "state": "ok",
+      "seenAt": "2026-09-02",
+      "runs": 1
+    },
+    "chateaumarmont.com": {
       "state": "ok",
       "seenAt": "2026-09-02",
       "runs": 1
@@ -1901,16 +2133,32 @@
       "runs": 1,
       "reason": "The homepage could not be fetched: Connect Timeout Error (attempted address: chinamobile.com:443, timeout: 10000ms) (UND_ERR_CONNECT_TIMEOUT). Bot Wall / Aggressive Connection Drop refused the scan: Connection dropped or timed out repeatedly on crawler requests. The scan fetched no pages. The scan fetched no pages."
     },
+    "chipotle.com": {
+      "state": "ok",
+      "seenAt": "2026-09-02",
+      "runs": 1
+    },
     "choiceadvantage.com": {
       "state": "ok",
       "seenAt": "2026-09-02",
       "runs": 1
+    },
+    "choicehotels.com": {
+      "state": "unscored",
+      "seenAt": "2026-09-02",
+      "runs": 1,
+      "reason": "The homepage could not be fetched: The operation was aborted due to timeout."
     },
     "chordtela.com": {
       "state": "unscored",
       "seenAt": "2026-09-02",
       "runs": 1,
       "reason": "The homepage answered HTTP 403. Cloudflare Turnstile / Managed Challenge refused the scan: HTTP 403 Cloudflare challenge page. The scan fetched no pages. The scan fetched no pages."
+    },
+    "chubbiesshorts.com": {
+      "state": "ok",
+      "seenAt": "2026-09-02",
+      "runs": 1
     },
     "cibnext.icici.bank.in": {
       "state": "unscored",
@@ -1935,6 +2183,12 @@
       "runs": 1,
       "reason": "robots-refused"
     },
+    "citylights.com": {
+      "state": "unscored",
+      "seenAt": "2026-09-02",
+      "runs": 1,
+      "reason": "The homepage answered HTTP 307."
+    },
     "clarin.com": {
       "state": "ok",
       "seenAt": "2026-09-02",
@@ -1958,6 +2212,21 @@
       "runs": 1,
       "reason": "robots-disallow"
     },
+    "clerk.com": {
+      "state": "ok",
+      "seenAt": "2026-09-02",
+      "runs": 1
+    },
+    "clevelandclinic.org": {
+      "state": "ok",
+      "seenAt": "2026-09-02",
+      "runs": 1
+    },
+    "clickup.com": {
+      "state": "ok",
+      "seenAt": "2026-09-02",
+      "runs": 1
+    },
     "cloud.microsoft": {
       "state": "unscored",
       "seenAt": "2026-09-02",
@@ -1972,7 +2241,7 @@
     "cloudflare.com": {
       "state": "ok",
       "seenAt": "2026-09-02",
-      "runs": 1
+      "runs": 2
     },
     "cloudflare.net": {
       "state": "blocked",
@@ -2045,11 +2314,33 @@
       "runs": 1,
       "reason": "robots-refused"
     },
+    "cocofloss.com": {
+      "state": "unscored",
+      "seenAt": "2026-09-02",
+      "runs": 1,
+      "reason": "The requested host redirected to cocolab.com, a different site."
+    },
+    "code.claude.com": {
+      "state": "unscored",
+      "seenAt": "2026-09-02",
+      "runs": 1,
+      "reason": "The requested host redirected to claude.com, a different site."
+    },
+    "cohere.com": {
+      "state": "ok",
+      "seenAt": "2026-09-02",
+      "runs": 1
+    },
     "colliderporn.com": {
       "state": "blocked",
       "seenAt": "2026-09-02",
       "runs": 1,
       "reason": "robots-disallow"
+    },
+    "colourpop.com": {
+      "state": "ok",
+      "seenAt": "2026-09-02",
+      "runs": 1
     },
     "comcast.com": {
       "state": "unscored",
@@ -2069,7 +2360,38 @@
       "runs": 1,
       "reason": "robots-disallow"
     },
+    "commbank.com.au": {
+      "state": "ok",
+      "seenAt": "2026-09-02",
+      "runs": 1
+    },
+    "community.cloudflare.com": {
+      "state": "unscored",
+      "seenAt": "2026-09-02",
+      "runs": 1,
+      "reason": "The homepage answered HTTP 403."
+    },
+    "community.home-assistant.io": {
+      "state": "ok",
+      "seenAt": "2026-09-02",
+      "runs": 1
+    },
+    "community.openai.com": {
+      "state": "ok",
+      "seenAt": "2026-09-02",
+      "runs": 1
+    },
+    "community.spiceworks.com": {
+      "state": "ok",
+      "seenAt": "2026-09-02",
+      "runs": 1
+    },
     "consultant.ru": {
+      "state": "ok",
+      "seenAt": "2026-09-02",
+      "runs": 1
+    },
+    "convex.dev": {
       "state": "ok",
       "seenAt": "2026-09-02",
       "runs": 1
@@ -2091,6 +2413,11 @@
       "runs": 1,
       "reason": "robots-disallow"
     },
+    "cooley.com": {
+      "state": "ok",
+      "seenAt": "2026-09-02",
+      "runs": 1
+    },
     "cornell.edu": {
       "state": "blocked",
       "seenAt": "2026-09-02",
@@ -2103,22 +2430,26 @@
       "runs": 1
     },
     "corriere.it": {
-      "state": "blocked",
+      "state": "ok",
       "seenAt": "2026-09-02",
-      "runs": 1,
-      "reason": "robots-disallow"
+      "runs": 2
     },
     "costco.com": {
       "state": "unscored",
       "seenAt": "2026-09-02",
-      "runs": 1,
-      "reason": "The homepage could not be fetched: The operation was aborted due to timeout. Bot Wall / Aggressive Connection Drop refused the scan: Connection dropped or timed out repeatedly on crawler requests. The scan fetched no pages. The scan fetched no pages."
+      "runs": 2,
+      "reason": "The homepage could not be fetched: The operation was aborted due to timeout."
+    },
+    "counterculturecoffee.com": {
+      "state": "ok",
+      "seenAt": "2026-09-02",
+      "runs": 1
     },
     "coupang.com": {
-      "state": "blocked",
+      "state": "unscored",
       "seenAt": "2026-09-02",
-      "runs": 1,
-      "reason": "robots-refused"
+      "runs": 2,
+      "reason": "The homepage answered HTTP 403."
     },
     "cpanel.net": {
       "state": "ok",
@@ -2148,6 +2479,11 @@
       "reason": "robots-disallow"
     },
     "creativecommons.org": {
+      "state": "ok",
+      "seenAt": "2026-09-02",
+      "runs": 1
+    },
+    "credit-agricole.fr": {
       "state": "ok",
       "seenAt": "2026-09-02",
       "runs": 1
@@ -2208,10 +2544,21 @@
       "runs": 1,
       "reason": "robots-refused"
     },
+    "cursor.com": {
+      "state": "ok",
+      "seenAt": "2026-09-02",
+      "runs": 1
+    },
     "cursor.sh": {
       "state": "ok",
       "seenAt": "2026-09-02",
       "runs": 1
+    },
+    "cvs.com": {
+      "state": "unscored",
+      "seenAt": "2026-09-02",
+      "runs": 1,
+      "reason": "The homepage answered HTTP 403."
     },
     "cz.pornhub.com": {
       "state": "ok",
@@ -2272,7 +2619,7 @@
     "datadoghq.com": {
       "state": "ok",
       "seenAt": "2026-09-02",
-      "runs": 1
+      "runs": 2
     },
     "daum.net": {
       "state": "unscored",
@@ -2296,6 +2643,11 @@
       "seenAt": "2026-09-02",
       "runs": 1,
       "reason": "The homepage could not be fetched: getaddrinfo ENOTFOUND dbankcloud.ru (ENOTFOUND). Bot Wall / Aggressive Connection Drop refused the scan: Connection dropped or timed out repeatedly on crawler requests. The scan fetched no pages. The scan fetched no pages."
+    },
+    "dbs.com.sg": {
+      "state": "ok",
+      "seenAt": "2026-09-02",
+      "runs": 1
     },
     "ddns.net": {
       "state": "unscored",
@@ -2350,11 +2702,22 @@
       "runs": 1,
       "reason": "The homepage could not be fetched: read ECONNRESET (ECONNRESET). Akamai Bot Manager refused the scan: Akamai connection challenge / blocking. The scan fetched no pages. The scan fetched no pages."
     },
+    "delta.com": {
+      "state": "unscored",
+      "seenAt": "2026-09-02",
+      "runs": 1,
+      "reason": "The homepage could not be fetched: connect ECONNREFUSED 204.74.99.103:443 (ECONNREFUSED)."
+    },
     "demdex.net": {
       "state": "unscored",
       "seenAt": "2026-09-02",
       "runs": 1,
       "reason": "The homepage could not be fetched: getaddrinfo ENOTFOUND demdex.net (ENOTFOUND). Bot Wall / Aggressive Connection Drop refused the scan: Connection dropped or timed out repeatedly on crawler requests. The scan fetched no pages. The scan fetched no pages."
+    },
+    "deno.com": {
+      "state": "ok",
+      "seenAt": "2026-09-02",
+      "runs": 1
     },
     "desitales2.com": {
       "state": "unscored",
@@ -2378,6 +2741,11 @@
       "runs": 1,
       "reason": "robots-refused"
     },
+    "developer.android.com": {
+      "state": "ok",
+      "seenAt": "2026-09-02",
+      "runs": 1
+    },
     "developer.apple.com": {
       "state": "ok",
       "seenAt": "2026-09-02",
@@ -2389,6 +2757,11 @@
       "runs": 1
     },
     "developer.mozilla.org": {
+      "state": "ok",
+      "seenAt": "2026-09-02",
+      "runs": 1
+    },
+    "developers.cloudflare.com": {
       "state": "ok",
       "seenAt": "2026-09-02",
       "runs": 1
@@ -2412,6 +2785,11 @@
       "reason": "The scan was throttled (Rate limit (HTTP 429)): The site answered HTTP 429 — too many requests. The scan asked for pages faster than this origin allows, so it saw no content. This says nothing about whether AI agents are welcome; re-run the scan after a pause.. None of the 1 fetched page(s) served readable text. No fetched page of any type served readable text."
     },
     "digital.fidelity.com": {
+      "state": "ok",
+      "seenAt": "2026-09-02",
+      "runs": 1
+    },
+    "digital.gov": {
       "state": "ok",
       "seenAt": "2026-09-02",
       "runs": 1
@@ -2460,11 +2838,26 @@
       "seenAt": "2026-09-02",
       "runs": 1
     },
+    "discourse.mozilla.org": {
+      "state": "ok",
+      "seenAt": "2026-09-02",
+      "runs": 1
+    },
+    "discuss.python.org": {
+      "state": "ok",
+      "seenAt": "2026-09-02",
+      "runs": 1
+    },
     "discuss.pytorch.org": {
       "state": "unscored",
       "seenAt": "2026-09-02",
       "runs": 1,
       "reason": "The scan was throttled (Rate limit (HTTP 429)): The site answered HTTP 429 — too many requests. The scan asked for pages faster than this origin allows, so it saw no content. This says nothing about whether AI agents are welcome; re-run the scan after a pause.."
+    },
+    "dishoom.com": {
+      "state": "ok",
+      "seenAt": "2026-09-02",
+      "runs": 1
     },
     "disneyplus.com": {
       "state": "blocked",
@@ -2547,6 +2940,17 @@
       "seenAt": "2026-09-02",
       "runs": 1
     },
+    "docs.anthropic.com": {
+      "state": "unscored",
+      "seenAt": "2026-09-02",
+      "runs": 1,
+      "reason": "The requested host redirected to platform.claude.com, a different site."
+    },
+    "docs.astro.build": {
+      "state": "ok",
+      "seenAt": "2026-09-02",
+      "runs": 1
+    },
     "docs.aws.amazon.com": {
       "state": "blocked",
       "seenAt": "2026-09-02",
@@ -2560,6 +2964,11 @@
       "reason": "The scan was throttled (Rate limit (HTTP 429)): The site answered HTTP 429 — too many requests. The scan asked for pages faster than this origin allows, so it saw no content. This says nothing about whether AI agents are welcome; re-run the scan after a pause.."
     },
     "docs.docker.com": {
+      "state": "ok",
+      "seenAt": "2026-09-02",
+      "runs": 1
+    },
+    "docs.flutter.dev": {
       "state": "ok",
       "seenAt": "2026-09-02",
       "runs": 1
@@ -2581,7 +2990,43 @@
       "runs": 1,
       "reason": "crawl-delay"
     },
+    "docs.netlify.app": {
+      "state": "unscored",
+      "seenAt": "2026-09-02",
+      "runs": 1,
+      "reason": "The requested host redirected to docs.netlify.com, a different site."
+    },
+    "docs.npmjs.com": {
+      "state": "ok",
+      "seenAt": "2026-09-02",
+      "runs": 1
+    },
+    "docs.oracle.com": {
+      "state": "ok",
+      "seenAt": "2026-09-02",
+      "runs": 1
+    },
+    "docs.perplexity.ai": {
+      "state": "ok",
+      "seenAt": "2026-09-02",
+      "runs": 1
+    },
     "docs.python.org": {
+      "state": "ok",
+      "seenAt": "2026-09-02",
+      "runs": 1
+    },
+    "docs.rs": {
+      "state": "ok",
+      "seenAt": "2026-09-02",
+      "runs": 1
+    },
+    "docs.stripe.com": {
+      "state": "ok",
+      "seenAt": "2026-09-02",
+      "runs": 1
+    },
+    "docusign.com": {
       "state": "ok",
       "seenAt": "2026-09-02",
       "runs": 1
@@ -2598,11 +3043,21 @@
       "runs": 1,
       "reason": "Cloudflare Turnstile / Managed Challenge refused the scan: Cloudflare bot challenge detected."
     },
+    "dollarshaveclub.com": {
+      "state": "ok",
+      "seenAt": "2026-09-02",
+      "runs": 1
+    },
     "domaincontrol.com": {
       "state": "unscored",
       "seenAt": "2026-09-02",
       "runs": 1,
       "reason": "The homepage could not be fetched: connect ECONNREFUSED 127.0.0.1:443 (ECONNREFUSED). Bot Wall / Aggressive Connection Drop refused the scan: Connection dropped or timed out repeatedly on crawler requests. The scan fetched no pages. The scan fetched no pages."
+    },
+    "dominiqueansel.com": {
+      "state": "ok",
+      "seenAt": "2026-09-02",
+      "runs": 1
     },
     "dotaplabs.net": {
       "state": "unscored",
@@ -2655,6 +3110,11 @@
       "runs": 1,
       "reason": "robots-disallow"
     },
+    "drizzle.team": {
+      "state": "ok",
+      "seenAt": "2026-09-02",
+      "runs": 1
+    },
     "drom.ru": {
       "state": "unscored",
       "seenAt": "2026-09-02",
@@ -2672,11 +3132,28 @@
       "runs": 1,
       "reason": "Cloudflare Turnstile / Managed Challenge refused the scan: HTTP 403 Cloudflare challenge page. None of the 1 fetched page(s) served readable text. No fetched page of any type served readable text."
     },
+    "drugs.com": {
+      "state": "unscored",
+      "seenAt": "2026-09-02",
+      "runs": 1,
+      "reason": "The homepage answered HTTP 403."
+    },
+    "drybar.com": {
+      "state": "unscored",
+      "seenAt": "2026-09-02",
+      "runs": 1,
+      "reason": "The homepage answered HTTP 403."
+    },
     "dual-s-msedge.net": {
       "state": "unscored",
       "seenAt": "2026-09-02",
       "runs": 1,
       "reason": "The homepage could not be fetched: getaddrinfo ENOTFOUND dual-s-msedge.net (ENOTFOUND). Bot Wall / Aggressive Connection Drop refused the scan: Connection dropped or timed out repeatedly on crawler requests. The scan fetched no pages. The scan fetched no pages."
+    },
+    "dub.co": {
+      "state": "ok",
+      "seenAt": "2026-09-02",
+      "runs": 1
     },
     "duckdns.org": {
       "state": "ok",
@@ -2700,6 +3177,11 @@
       "seenAt": "2026-09-02",
       "runs": 1,
       "reason": "The homepage could not be fetched: Client network socket disconnected before secure TLS connection was established (ECONNRESET). Bot Wall / Aggressive Connection Drop refused the scan: Connection dropped or timed out repeatedly on crawler requests. The scan fetched no pages. The scan fetched no pages."
+    },
+    "dw.com": {
+      "state": "ok",
+      "seenAt": "2026-09-02",
+      "runs": 1
     },
     "dyingbirds.com": {
       "state": "unscored",
@@ -2751,6 +3233,12 @@
       "seenAt": "2026-09-02",
       "runs": 1,
       "reason": "The homepage could not be fetched: getaddrinfo ENOTFOUND easebar.com (ENOTFOUND). Bot Wall / Aggressive Connection Drop refused the scan: Connection dropped or timed out repeatedly on crawler requests. The scan fetched no pages. The scan fetched no pages."
+    },
+    "easyjet.com": {
+      "state": "unscored",
+      "seenAt": "2026-09-02",
+      "runs": 1,
+      "reason": "The homepage answered HTTP 403."
     },
     "ebay.co.uk": {
       "state": "blocked",
@@ -2840,6 +3328,12 @@
       "runs": 1,
       "reason": "The homepage answered HTTP 404. The scan fetched no pages. The scan fetched no pages."
     },
+    "effect.website": {
+      "state": "unscored",
+      "seenAt": "2026-09-02",
+      "runs": 1,
+      "reason": "No agent artifact: none of /llms.txt, /.well-known/agents.json, /.well-known/mcp.json answered 200."
+    },
     "ekstrabladet.dk": {
       "state": "blocked",
       "seenAt": "2026-09-02",
@@ -2863,6 +3357,17 @@
       "seenAt": "2026-09-02",
       "runs": 1,
       "reason": "robots-disallow"
+    },
+    "electron.github.io": {
+      "state": "unscored",
+      "seenAt": "2026-09-02",
+      "runs": 1,
+      "reason": "The homepage answered HTTP 404."
+    },
+    "elevenlabs.io": {
+      "state": "ok",
+      "seenAt": "2026-09-02",
+      "runs": 1
     },
     "elmundo.es": {
       "state": "blocked",
@@ -2891,6 +3396,12 @@
       "seenAt": "2026-09-02",
       "runs": 1
     },
+    "emirates.com": {
+      "state": "unscored",
+      "seenAt": "2026-09-02",
+      "runs": 1,
+      "reason": "The homepage answered HTTP 403."
+    },
     "en.luxuretv.com": {
       "state": "unscored",
       "seenAt": "2026-09-02",
@@ -2916,7 +3427,7 @@
     "epa.gov": {
       "state": "ok",
       "seenAt": "2026-09-02",
-      "runs": 1
+      "runs": 2
     },
     "epam.com": {
       "state": "blocked",
@@ -3060,6 +3571,11 @@
       "runs": 1,
       "reason": "crawl-delay"
     },
+    "eurostar.com": {
+      "state": "ok",
+      "seenAt": "2026-09-02",
+      "runs": 1
+    },
     "eventbrite.com": {
       "state": "unscored",
       "seenAt": "2026-09-02",
@@ -3104,14 +3620,20 @@
     "expedia.com": {
       "state": "unscored",
       "seenAt": "2026-09-02",
-      "runs": 1,
-      "reason": "The homepage answered HTTP 429. The scan was throttled (Rate limit (HTTP 429)): The site answered HTTP 429 — too many requests. The scan asked for pages faster than this origin allows, so it saw no content. This says nothing about whether AI agents are welcome; re-run the scan after a pause.. The scan fetched no pages. The scan fetched no pages."
+      "runs": 2,
+      "reason": "The homepage answered HTTP 429."
     },
     "expireddomains.com": {
       "state": "unscored",
       "seenAt": "2026-09-02",
       "runs": 1,
       "reason": "The homepage answered HTTP 403. Cloudflare Turnstile / Managed Challenge refused the scan: HTTP 403 Cloudflare challenge page. The scan fetched no pages. The scan fetched no pages."
+    },
+    "expo.dev": {
+      "state": "unscored",
+      "seenAt": "2026-09-02",
+      "runs": 1,
+      "reason": "No agent artifact: none of /llms.txt, /.well-known/agents.json, /.well-known/mcp.json answered 200."
     },
     "ey43.com": {
       "state": "blocked",
@@ -3165,11 +3687,22 @@
       "runs": 1,
       "reason": "robots-disallow"
     },
+    "facebook.github.io": {
+      "state": "ok",
+      "seenAt": "2026-09-02",
+      "runs": 1
+    },
     "facebook.net": {
       "state": "unscored",
       "seenAt": "2026-09-02",
       "runs": 1,
       "reason": "The homepage could not be fetched: getaddrinfo ENOTFOUND facebook.net (ENOTFOUND). Bot Wall / Aggressive Connection Drop refused the scan: Connection dropped or timed out repeatedly on crawler requests. The scan fetched no pages. The scan fetched no pages."
+    },
+    "fal.ai": {
+      "state": "unscored",
+      "seenAt": "2026-09-02",
+      "runs": 1,
+      "reason": "The homepage answered HTTP 429."
     },
     "fandom.com": {
       "state": "blocked",
@@ -3200,6 +3733,17 @@
       "seenAt": "2026-09-02",
       "runs": 1,
       "reason": "The scan could not feed 57% of the registry's evidence mass, so what remains is not a reading of this site."
+    },
+    "farmgirlflowers.com": {
+      "state": "unscored",
+      "seenAt": "2026-09-02",
+      "runs": 1,
+      "reason": "The homepage answered HTTP 403."
+    },
+    "fashionnova.com": {
+      "state": "ok",
+      "seenAt": "2026-09-02",
+      "runs": 1
     },
     "fast.com": {
       "state": "ok",
@@ -3255,8 +3799,8 @@
     "fda.gov": {
       "state": "unscored",
       "seenAt": "2026-09-02",
-      "runs": 1,
-      "reason": "The homepage answered HTTP 404. Akamai Bot Manager refused the scan: Akamai connection challenge / blocking. The scan fetched no pages. The scan fetched no pages."
+      "runs": 2,
+      "reason": "The homepage answered HTTP 404."
     },
     "fdown.net": {
       "state": "unscored",
@@ -3373,6 +3917,11 @@
       "seenAt": "2026-09-02",
       "runs": 1
     },
+    "finnair.com": {
+      "state": "ok",
+      "seenAt": "2026-09-02",
+      "runs": 1
+    },
     "firefox.com": {
       "state": "ok",
       "seenAt": "2026-09-02",
@@ -3406,6 +3955,12 @@
       "runs": 1,
       "reason": "The homepage could not be fetched: unable to verify the first certificate; if the root CA is installed locally, try running Node.js with --use-system-ca (UNABLE_TO_VERIFY_LEAF_SIGNATURE). Bot Wall / Aggressive Connection Drop refused the scan: Connection dropped or timed out repeatedly on crawler requests. The scan fetched no pages. The scan fetched no pages."
     },
+    "flask.readthedocs.io": {
+      "state": "unscored",
+      "seenAt": "2026-09-02",
+      "runs": 1,
+      "reason": "The requested host redirected to flask.palletsprojects.com, a different site."
+    },
     "flickr.com": {
       "state": "blocked",
       "seenAt": "2026-09-02",
@@ -3423,6 +3978,17 @@
       "seenAt": "2026-09-02",
       "runs": 1,
       "reason": "The homepage could not be fetched: The operation was aborted due to timeout. Bot Wall / Aggressive Connection Drop refused the scan: Connection dropped or timed out repeatedly on crawler requests. The scan fetched no pages. The scan fetched no pages."
+    },
+    "fly.io": {
+      "state": "ok",
+      "seenAt": "2026-09-02",
+      "runs": 1
+    },
+    "flysas.com": {
+      "state": "unscored",
+      "seenAt": "2026-09-02",
+      "runs": 1,
+      "reason": "The homepage answered HTTP 403."
     },
     "fmkorea.com": {
       "state": "unscored",
@@ -3506,11 +4072,42 @@
       "seenAt": "2026-09-02",
       "runs": 1
     },
+    "forum.freecodecamp.org": {
+      "state": "ok",
+      "seenAt": "2026-09-02",
+      "runs": 1
+    },
+    "forum.gitlab.com": {
+      "state": "ok",
+      "seenAt": "2026-09-02",
+      "runs": 1
+    },
+    "forum.obsidian.md": {
+      "state": "ok",
+      "seenAt": "2026-09-02",
+      "runs": 1
+    },
+    "forum.xda-developers.com": {
+      "state": "unscored",
+      "seenAt": "2026-09-02",
+      "runs": 1,
+      "reason": "The homepage answered HTTP 403."
+    },
     "forums.macrumors.com": {
       "state": "unscored",
       "seenAt": "2026-09-02",
       "runs": 1,
       "reason": "Cloudflare Turnstile / Managed Challenge refused the scan: HTTP 403 Cloudflare challenge page."
+    },
+    "forums.swift.org": {
+      "state": "ok",
+      "seenAt": "2026-09-02",
+      "runs": 1
+    },
+    "forums.unrealengine.com": {
+      "state": "ok",
+      "seenAt": "2026-09-02",
+      "runs": 1
     },
     "foxnews.com": {
       "state": "ok",
@@ -3547,11 +4144,22 @@
       "seenAt": "2026-09-02",
       "runs": 1
     },
+    "france24.com": {
+      "state": "ok",
+      "seenAt": "2026-09-02",
+      "runs": 1
+    },
     "franceinfo.fr": {
       "state": "blocked",
       "seenAt": "2026-09-02",
       "runs": 1,
       "reason": "robots-disallow"
+    },
+    "franklinbarbecue.com": {
+      "state": "unscored",
+      "seenAt": "2026-09-02",
+      "runs": 1,
+      "reason": "The requested host redirected to franklinbbq.com, a different site."
     },
     "free.fr": {
       "state": "ok",
@@ -3683,6 +4291,11 @@
       "seenAt": "2026-09-02",
       "runs": 1
     },
+    "gatsby-starter-blog.netlify.app": {
+      "state": "ok",
+      "seenAt": "2026-09-02",
+      "runs": 1
+    },
     "gazzetta.it": {
       "state": "blocked",
       "seenAt": "2026-09-02",
@@ -3739,6 +4352,12 @@
       "runs": 1,
       "reason": "The homepage could not be fetched: getaddrinfo ENOTFOUND geobasket.ru (ENOTFOUND). Bot Wall / Aggressive Connection Drop refused the scan: Connection dropped or timed out repeatedly on crawler requests. The scan fetched no pages. The scan fetched no pages."
     },
+    "getyourguide.com": {
+      "state": "unscored",
+      "seenAt": "2026-09-02",
+      "runs": 1,
+      "reason": "The homepage answered HTTP 403."
+    },
     "ggpht.com": {
       "state": "unscored",
       "seenAt": "2026-09-02",
@@ -3763,7 +4382,7 @@
     "github.com": {
       "state": "ok",
       "seenAt": "2026-09-02",
-      "runs": 1
+      "runs": 2
     },
     "github.io": {
       "state": "ok",
@@ -3777,10 +4396,9 @@
       "reason": "The homepage could not be fetched: getaddrinfo ENOTFOUND githubusercontent.com (ENOTFOUND). Bot Wall / Aggressive Connection Drop refused the scan: Connection dropped or timed out repeatedly on crawler requests. The scan fetched no pages. The scan fetched no pages."
     },
     "gitlab.com": {
-      "state": "unscored",
+      "state": "ok",
       "seenAt": "2026-09-02",
-      "runs": 1,
-      "reason": "Cloudflare Turnstile / Managed Challenge refused the scan: HTTP 403 Cloudflare challenge page."
+      "runs": 2
     },
     "globalsign.com": {
       "state": "blocked",
@@ -3907,6 +4525,11 @@
       "runs": 1,
       "reason": "The scan could not feed 57% of the registry's evidence mass, so what remains is not a reading of this site."
     },
+    "google.github.io": {
+      "state": "ok",
+      "seenAt": "2026-09-02",
+      "runs": 1
+    },
     "googleadservices.com": {
       "state": "unscored",
       "seenAt": "2026-09-02",
@@ -3990,6 +4613,22 @@
       "runs": 1,
       "reason": "Akamai Bot Manager refused the scan: HTTP 403 Akamai access denied."
     },
+    "gov.ie": {
+      "state": "unscored",
+      "seenAt": "2026-09-02",
+      "runs": 1,
+      "reason": "The homepage answered HTTP 403."
+    },
+    "gov.pl": {
+      "state": "ok",
+      "seenAt": "2026-09-02",
+      "runs": 1
+    },
+    "gov.scot": {
+      "state": "ok",
+      "seenAt": "2026-09-02",
+      "runs": 1
+    },
     "gov.sg": {
       "state": "ok",
       "seenAt": "2026-09-02",
@@ -3999,6 +4638,22 @@
       "state": "ok",
       "seenAt": "2026-09-02",
       "runs": 1
+    },
+    "gov.wales": {
+      "state": "ok",
+      "seenAt": "2026-09-02",
+      "runs": 1
+    },
+    "government.nl": {
+      "state": "ok",
+      "seenAt": "2026-09-02",
+      "runs": 1
+    },
+    "govt.nz": {
+      "state": "unscored",
+      "seenAt": "2026-09-02",
+      "runs": 1,
+      "reason": "The homepage could not be fetched: getaddrinfo ENOTFOUND govt.nz (ENOTFOUND)."
     },
     "grammarly.com": {
       "state": "ok",
@@ -4023,7 +4678,18 @@
       "runs": 1,
       "reason": "The requested host redirected to xhamster.com, a different site, without a permanent redirect."
     },
+    "groq.com": {
+      "state": "unscored",
+      "seenAt": "2026-09-02",
+      "runs": 1,
+      "reason": "No agent artifact: none of /llms.txt, /.well-known/agents.json, /.well-known/mcp.json answered 200."
+    },
     "grow.google": {
+      "state": "ok",
+      "seenAt": "2026-09-02",
+      "runs": 1
+    },
+    "gsk.com": {
       "state": "ok",
       "seenAt": "2026-09-02",
       "runs": 1
@@ -4069,6 +4735,12 @@
       "runs": 1,
       "reason": "The scan could not feed 57% of the registry's evidence mass, so what remains is not a reading of this site."
     },
+    "gymshark.myshopify.com": {
+      "state": "unscored",
+      "seenAt": "2026-09-02",
+      "runs": 1,
+      "reason": "The requested host redirected to uk.checkout.gymshark.com, a different site."
+    },
     "haberler.com": {
       "state": "ok",
       "seenAt": "2026-09-02",
@@ -4087,6 +4759,11 @@
       "reason": "The homepage answered HTTP 403. Cloudflare Turnstile / Managed Challenge refused the scan: HTTP 403 Cloudflare challenge page. The scan fetched no pages. The scan fetched no pages."
     },
     "harvard.edu": {
+      "state": "ok",
+      "seenAt": "2026-09-02",
+      "runs": 1
+    },
+    "hawksmoor.com": {
       "state": "ok",
       "seenAt": "2026-09-02",
       "runs": 1
@@ -4121,10 +4798,20 @@
       "reason": "robots-disallow"
     },
     "healthline.com": {
-      "state": "blocked",
+      "state": "ok",
+      "seenAt": "2026-09-02",
+      "runs": 2
+    },
+    "hellotend.com": {
+      "state": "unscored",
       "seenAt": "2026-09-02",
       "runs": 1,
-      "reason": "crawl-delay"
+      "reason": "The homepage answered HTTP 403."
+    },
+    "help.notion.site": {
+      "state": "ok",
+      "seenAt": "2026-09-02",
+      "runs": 1
     },
     "hentai.name": {
       "state": "ok",
@@ -4209,8 +4896,8 @@
     "hilton.com": {
       "state": "unscored",
       "seenAt": "2026-09-02",
-      "runs": 1,
-      "reason": "The homepage could not be fetched: The operation was aborted due to timeout. Bot Wall / Aggressive Connection Drop refused the scan: Connection dropped or timed out repeatedly on crawler requests. The scan fetched no pages. The scan fetched no pages."
+      "runs": 2,
+      "reason": "The homepage answered HTTP 403."
     },
     "hiroba.dpoint.docomo.ne.jp": {
       "state": "unscored",
@@ -4223,6 +4910,11 @@
       "seenAt": "2026-09-02",
       "runs": 1,
       "reason": "The scan could not feed 57% of the registry's evidence mass, so what remains is not a reading of this site."
+    },
+    "hiutdenim.co.uk": {
+      "state": "ok",
+      "seenAt": "2026-09-02",
+      "runs": 1
     },
     "hln.be": {
       "state": "blocked",
@@ -4249,16 +4941,37 @@
       "reason": "robots-refused"
     },
     "homedepot.com": {
-      "state": "blocked",
+      "state": "unscored",
       "seenAt": "2026-09-02",
-      "runs": 1,
-      "reason": "robots-refused"
+      "runs": 2,
+      "reason": "The homepage answered HTTP 403."
     },
     "homepage.vivo.com": {
       "state": "unscored",
       "seenAt": "2026-09-02",
       "runs": 1,
       "reason": "The scan could not feed 57% of the registry's evidence mass, so what remains is not a reading of this site."
+    },
+    "hono.dev": {
+      "state": "ok",
+      "seenAt": "2026-09-02",
+      "runs": 1
+    },
+    "hono.pages.dev": {
+      "state": "ok",
+      "seenAt": "2026-09-02",
+      "runs": 1
+    },
+    "hopkinsmedicine.org": {
+      "state": "unscored",
+      "seenAt": "2026-09-02",
+      "runs": 1,
+      "reason": "The homepage answered HTTP 403."
+    },
+    "hostelworld.com": {
+      "state": "ok",
+      "seenAt": "2026-09-02",
+      "runs": 1
     },
     "hostgator.com": {
       "state": "blocked",
@@ -4277,6 +4990,12 @@
       "seenAt": "2026-09-02",
       "runs": 1,
       "reason": "The homepage answered HTTP 403. Cloudflare Turnstile / Managed Challenge refused the scan: HTTP 403 Cloudflare challenge page. The scan fetched no pages. The scan fetched no pages."
+    },
+    "hotels.com": {
+      "state": "unscored",
+      "seenAt": "2026-09-02",
+      "runs": 1,
+      "reason": "The homepage could not be fetched: The operation was aborted due to timeout."
     },
     "hotjar.com": {
       "state": "ok",
@@ -4326,6 +5045,23 @@
       "seenAt": "2026-09-02",
       "runs": 1
     },
+    "hugeinc.com": {
+      "state": "ok",
+      "seenAt": "2026-09-02",
+      "runs": 1
+    },
+    "huggingface.co": {
+      "state": "unscored",
+      "seenAt": "2026-09-02",
+      "runs": 1,
+      "reason": "No agent artifact: none of /llms.txt, /.well-known/agents.json, /.well-known/mcp.json answered 200."
+    },
+    "hyatt.com": {
+      "state": "unscored",
+      "seenAt": "2026-09-02",
+      "runs": 1,
+      "reason": "The homepage answered HTTP 403."
+    },
     "ibm.com": {
       "state": "ok",
       "seenAt": "2026-09-02",
@@ -4336,6 +5072,12 @@
       "seenAt": "2026-09-02",
       "runs": 1,
       "reason": "The homepage could not be fetched: getaddrinfo ENOTFOUND ibyteimg.com (ENOTFOUND). Bot Wall / Aggressive Connection Drop refused the scan: Connection dropped or timed out repeatedly on crawler requests. The scan fetched no pages. The scan fetched no pages."
+    },
+    "icelandair.com": {
+      "state": "unscored",
+      "seenAt": "2026-09-02",
+      "runs": 1,
+      "reason": "The homepage answered HTTP 403."
     },
     "icloud-content.com": {
       "state": "ok",
@@ -4399,6 +5141,11 @@
       "seenAt": "2026-09-02",
       "runs": 1
     },
+    "ihg.com": {
+      "state": "ok",
+      "seenAt": "2026-09-02",
+      "runs": 1
+    },
     "iiko.it": {
       "state": "unscored",
       "seenAt": "2026-09-02",
@@ -4408,7 +5155,7 @@
     "ikea.com": {
       "state": "ok",
       "seenAt": "2026-09-02",
-      "runs": 1
+      "runs": 2
     },
     "ilfattoquotidiano.it": {
       "state": "unscored",
@@ -4574,11 +5321,21 @@
       "runs": 1,
       "reason": "The homepage could not be fetched: Connect Timeout Error (attempted addresses: 54.225.119.21:443, 62.219.50.32:443, timeout: 10000ms) (UND_ERR_CONNECT_TIMEOUT). Bot Wall / Aggressive Connection Drop refused the scan: Connection dropped or timed out repeatedly on crawler requests. The scan fetched no pages. The scan fetched no pages."
     },
+    "inngest.com": {
+      "state": "ok",
+      "seenAt": "2026-09-02",
+      "runs": 1
+    },
     "instagram.com": {
       "state": "blocked",
       "seenAt": "2026-09-02",
       "runs": 1,
       "reason": "robots-disallow"
+    },
+    "instrument.com": {
+      "state": "ok",
+      "seenAt": "2026-09-02",
+      "runs": 1
     },
     "intel.com": {
       "state": "unscored",
@@ -4586,12 +5343,27 @@
       "runs": 1,
       "reason": "The scan could not feed 57% of the registry's evidence mass, so what remains is not a reading of this site."
     },
+    "intelligentsia.com": {
+      "state": "ok",
+      "seenAt": "2026-09-02",
+      "runs": 1
+    },
+    "intercom.com": {
+      "state": "ok",
+      "seenAt": "2026-09-02",
+      "runs": 1
+    },
     "intercom.io": {
       "state": "ok",
       "seenAt": "2026-09-02",
       "runs": 1
     },
     "internetwarriors.net": {
+      "state": "ok",
+      "seenAt": "2026-09-02",
+      "runs": 1
+    },
+    "intesasanpaolo.com": {
       "state": "ok",
       "seenAt": "2026-09-02",
       "runs": 1
@@ -4786,7 +5558,7 @@
     "jd.com": {
       "state": "ok",
       "seenAt": "2026-09-02",
-      "runs": 1
+      "runs": 2
     },
     "jennymovies.com": {
       "state": "ok",
@@ -4798,6 +5570,16 @@
       "seenAt": "2026-09-02",
       "runs": 1,
       "reason": "The scan could not feed 57% of the registry's evidence mass, so what remains is not a reading of this site."
+    },
+    "jnj.com": {
+      "state": "ok",
+      "seenAt": "2026-09-02",
+      "runs": 1
+    },
+    "joesstonecrab.com": {
+      "state": "ok",
+      "seenAt": "2026-09-02",
+      "runs": 1
     },
     "joinindianarmy.nic.in": {
       "state": "unscored",
@@ -4862,6 +5644,12 @@
       "runs": 1,
       "reason": "The homepage could not be fetched: Connect Timeout Error (attempted address: jsdelivr.net:443, timeout: 10000ms) (UND_ERR_CONNECT_TIMEOUT). Bot Wall / Aggressive Connection Drop refused the scan: Connection dropped or timed out repeatedly on crawler requests. The scan fetched no pages. The scan fetched no pages."
     },
+    "jupyter.github.io": {
+      "state": "unscored",
+      "seenAt": "2026-09-02",
+      "runs": 1,
+      "reason": "The requested host redirected to jupyter.org, a different site."
+    },
     "jusbrasil.com.br": {
       "state": "blocked",
       "seenAt": "2026-09-02",
@@ -4892,6 +5680,11 @@
       "runs": 1,
       "reason": "The homepage answered HTTP 451. The scan fetched no pages. The scan fetched no pages."
     },
+    "kaiserpermanente.org": {
+      "state": "ok",
+      "seenAt": "2026-09-02",
+      "runs": 1
+    },
     "kakuyomu.jp": {
       "state": "blocked",
       "seenAt": "2026-09-02",
@@ -4909,6 +5702,17 @@
       "seenAt": "2026-09-02",
       "runs": 1,
       "reason": "The homepage could not be fetched: read ECONNRESET (ECONNRESET). Bot Wall / Aggressive Connection Drop refused the scan: Connection dropped or timed out repeatedly on crawler requests. The scan fetched no pages. The scan fetched no pages."
+    },
+    "katzsdelicatessen.com": {
+      "state": "unscored",
+      "seenAt": "2026-09-02",
+      "runs": 1,
+      "reason": "The homepage answered HTTP 405."
+    },
+    "kayak.com": {
+      "state": "ok",
+      "seenAt": "2026-09-02",
+      "runs": 1
     },
     "keenetic.io": {
       "state": "unscored",
@@ -4945,6 +5749,11 @@
       "runs": 1,
       "reason": "robots-disallow"
     },
+    "kirkland.com": {
+      "state": "ok",
+      "seenAt": "2026-09-02",
+      "runs": 1
+    },
     "klaviyo.com": {
       "state": "ok",
       "seenAt": "2026-09-02",
@@ -4954,6 +5763,12 @@
       "state": "ok",
       "seenAt": "2026-09-02",
       "runs": 1
+    },
+    "klm.com": {
+      "state": "unscored",
+      "seenAt": "2026-09-02",
+      "runs": 1,
+      "reason": "The homepage could not be fetched: The operation was aborted due to timeout."
     },
     "ko.xhname.com": {
       "state": "ok",
@@ -4992,6 +5807,12 @@
       "seenAt": "2026-09-02",
       "runs": 1
     },
+    "kroger.com": {
+      "state": "unscored",
+      "seenAt": "2026-09-02",
+      "runs": 1,
+      "reason": "The homepage could not be fetched: getaddrinfo ENOTFOUND kroger.com (ENOTFOUND)."
+    },
     "ks-cdn.com": {
       "state": "unscored",
       "seenAt": "2026-09-02",
@@ -5003,6 +5824,12 @@
       "seenAt": "2026-09-02",
       "runs": 1,
       "reason": "The homepage could not be fetched: getaddrinfo ENOTFOUND ksyuncdn.com (ENOTFOUND). Bot Wall / Aggressive Connection Drop refused the scan: Connection dropped or timed out repeatedly on crawler requests. The scan fetched no pages. The scan fetched no pages."
+    },
+    "kubernetes.github.io": {
+      "state": "unscored",
+      "seenAt": "2026-09-02",
+      "runs": 1,
+      "reason": "The homepage answered HTTP 404."
     },
     "kubernetes.io": {
       "state": "ok",
@@ -5038,6 +5865,11 @@
       "runs": 1,
       "reason": "The homepage could not be fetched: getaddrinfo ENOTFOUND kwaipros.com (ENOTFOUND). Bot Wall / Aggressive Connection Drop refused the scan: Connection dropped or timed out repeatedly on crawler requests. The scan fetched no pages. The scan fetched no pages."
     },
+    "kyliecosmetics.com": {
+      "state": "ok",
+      "seenAt": "2026-09-02",
+      "runs": 1
+    },
     "labs.google": {
       "state": "ok",
       "seenAt": "2026-09-02",
@@ -5050,6 +5882,17 @@
       "reason": "robots-disallow"
     },
     "lanacion.com.ar": {
+      "state": "ok",
+      "seenAt": "2026-09-02",
+      "runs": 1
+    },
+    "langchain.com": {
+      "state": "unscored",
+      "seenAt": "2026-09-02",
+      "runs": 1,
+      "reason": "No agent artifact: none of /llms.txt, /.well-known/agents.json, /.well-known/mcp.json answered 200."
+    },
+    "laravel.com": {
       "state": "ok",
       "seenAt": "2026-09-02",
       "runs": 1
@@ -5072,6 +5915,11 @@
       "reason": "robots-disallow"
     },
     "learn.microsoft.com": {
+      "state": "ok",
+      "seenAt": "2026-09-02",
+      "runs": 1
+    },
+    "learn.notion.site": {
       "state": "ok",
       "seenAt": "2026-09-02",
       "runs": 1
@@ -5169,6 +6017,11 @@
       "runs": 1,
       "reason": "robots-disallow"
     },
+    "levainbakery.com": {
+      "state": "ok",
+      "seenAt": "2026-09-02",
+      "runs": 1
+    },
     "lg.com": {
       "state": "ok",
       "seenAt": "2026-09-02",
@@ -5220,6 +6073,12 @@
       "seenAt": "2026-09-02",
       "runs": 1,
       "reason": "robots-refused"
+    },
+    "lilly.com": {
+      "state": "unscored",
+      "seenAt": "2026-09-02",
+      "runs": 1,
+      "reason": "The homepage answered HTTP 403."
     },
     "line.me": {
       "state": "ok",
@@ -5301,6 +6160,11 @@
       "runs": 1,
       "reason": "The homepage could not be fetched: getaddrinfo ENOTFOUND live.net (ENOTFOUND). Bot Wall / Aggressive Connection Drop refused the scan: Connection dropped or timed out repeatedly on crawler requests. The scan fetched no pages. The scan fetched no pages."
     },
+    "liveblocks.io": {
+      "state": "ok",
+      "seenAt": "2026-09-02",
+      "runs": 1
+    },
     "livejournal.com": {
       "state": "ok",
       "seenAt": "2026-09-02",
@@ -5312,6 +6176,17 @@
       "runs": 1
     },
     "livescore.cz": {
+      "state": "ok",
+      "seenAt": "2026-09-02",
+      "runs": 1
+    },
+    "llamaindex.ai": {
+      "state": "unscored",
+      "seenAt": "2026-09-02",
+      "runs": 1,
+      "reason": "No agent artifact: none of /llms.txt, /.well-known/agents.json, /.well-known/mcp.json answered 200."
+    },
+    "llmstxt.org": {
       "state": "ok",
       "seenAt": "2026-09-02",
       "runs": 1
@@ -5362,6 +6237,11 @@
       "seenAt": "2026-09-02",
       "runs": 1
     },
+    "loom.com": {
+      "state": "ok",
+      "seenAt": "2026-09-02",
+      "runs": 1
+    },
     "loteriadehoy.com": {
       "state": "blocked",
       "seenAt": "2026-09-02",
@@ -5381,16 +6261,21 @@
       "reason": "Cloudflare Turnstile / Managed Challenge refused the scan: HTTP 403 Cloudflare challenge page."
     },
     "lowes.com": {
-      "state": "blocked",
+      "state": "ok",
       "seenAt": "2026-09-02",
-      "runs": 1,
-      "reason": "robots-refused"
+      "runs": 2
     },
     "lsrelayaccess.com": {
       "state": "unscored",
       "seenAt": "2026-09-02",
       "runs": 1,
       "reason": "The homepage could not be fetched: read ECONNRESET (ECONNRESET). Bot Wall / Aggressive Connection Drop refused the scan: Connection dropped or timed out repeatedly on crawler requests. The scan fetched no pages. The scan fetched no pages."
+    },
+    "lufthansa.com": {
+      "state": "unscored",
+      "seenAt": "2026-09-02",
+      "runs": 1,
+      "reason": "The homepage answered HTTP 403."
     },
     "luticlip.com": {
       "state": "ok",
@@ -5664,6 +6549,11 @@
       "seenAt": "2026-09-02",
       "runs": 1
     },
+    "magnoliabakery.com": {
+      "state": "ok",
+      "seenAt": "2026-09-02",
+      "runs": 1
+    },
     "mail.google.com": {
       "state": "ok",
       "seenAt": "2026-09-02",
@@ -5744,10 +6634,10 @@
       "runs": 1
     },
     "marriott.com": {
-      "state": "blocked",
+      "state": "unscored",
       "seenAt": "2026-09-02",
-      "runs": 1,
-      "reason": "robots-refused"
+      "runs": 2,
+      "reason": "The homepage answered HTTP 403."
     },
     "massarservice.men.gov.ma": {
       "state": "unscored",
@@ -5755,7 +6645,18 @@
       "runs": 1,
       "reason": "The homepage could not be fetched: connect ECONNREFUSED 196.200.143.196:443 (ECONNREFUSED). Bot Wall / Aggressive Connection Drop refused the scan: Connection dropped or timed out repeatedly on crawler requests. The scan fetched no pages. The scan fetched no pages."
     },
+    "massgeneral.org": {
+      "state": "unscored",
+      "seenAt": "2026-09-02",
+      "runs": 1,
+      "reason": "The requested host redirected to massgeneralbrigham.org, a different site."
+    },
     "mat6tube.com": {
+      "state": "ok",
+      "seenAt": "2026-09-02",
+      "runs": 1
+    },
+    "mathoverflow.net": {
       "state": "ok",
       "seenAt": "2026-09-02",
       "runs": 1
@@ -5766,10 +6667,10 @@
       "runs": 1
     },
     "mayoclinic.org": {
-      "state": "blocked",
+      "state": "unscored",
       "seenAt": "2026-09-02",
-      "runs": 1,
-      "reason": "robots-refused"
+      "runs": 2,
+      "reason": "The homepage answered HTTP 403."
     },
     "mcafee.com": {
       "state": "unscored",
@@ -5838,6 +6739,11 @@
       "runs": 1,
       "reason": "robots-disallow"
     },
+    "medlineplus.gov": {
+      "state": "ok",
+      "seenAt": "2026-09-02",
+      "runs": 1
+    },
     "meet.google.com": {
       "state": "ok",
       "seenAt": "2026-09-02",
@@ -5848,6 +6754,11 @@
       "seenAt": "2026-09-02",
       "runs": 1,
       "reason": "The scan could not feed 57% of the registry's evidence mass, so what remains is not a reading of this site."
+    },
+    "mejuri.com": {
+      "state": "ok",
+      "seenAt": "2026-09-02",
+      "runs": 1
     },
     "member.rakuten-sec.co.jp": {
       "state": "blocked",
@@ -5885,6 +6796,11 @@
       "runs": 1,
       "reason": "robots-refused"
     },
+    "merck.com": {
+      "state": "ok",
+      "seenAt": "2026-09-02",
+      "runs": 1
+    },
     "meta.com": {
       "state": "unscored",
       "seenAt": "2026-09-02",
@@ -5892,6 +6808,11 @@
       "reason": "The scan could not feed 57% of the registry's evidence mass, so what remains is not a reading of this site."
     },
     "meta.discourse.org": {
+      "state": "ok",
+      "seenAt": "2026-09-02",
+      "runs": 1
+    },
+    "metalab.com": {
       "state": "ok",
       "seenAt": "2026-09-02",
       "runs": 1
@@ -5928,6 +6849,11 @@
       "seenAt": "2026-09-02",
       "runs": 1
     },
+    "microsoft.github.io": {
+      "state": "ok",
+      "seenAt": "2026-09-02",
+      "runs": 1
+    },
     "microsoftonline.com": {
       "state": "unscored",
       "seenAt": "2026-09-02",
@@ -5956,6 +6882,16 @@
       "seenAt": "2026-09-02",
       "runs": 1
     },
+    "mintlify.com": {
+      "state": "ok",
+      "seenAt": "2026-09-02",
+      "runs": 1
+    },
+    "miro.com": {
+      "state": "ok",
+      "seenAt": "2026-09-02",
+      "runs": 1
+    },
     "missav.ai": {
       "state": "unscored",
       "seenAt": "2026-09-02",
@@ -5979,6 +6915,11 @@
       "seenAt": "2026-09-02",
       "runs": 1,
       "reason": "Cloudflare Turnstile / Managed Challenge refused the scan: HTTP 403 Cloudflare challenge page."
+    },
+    "mistral.ai": {
+      "state": "ok",
+      "seenAt": "2026-09-02",
+      "runs": 1
     },
     "mit.edu": {
       "state": "ok",
@@ -6054,6 +6995,11 @@
       "runs": 1,
       "reason": "The homepage answered HTTP 500. The scan fetched no pages. The scan fetched no pages."
     },
+    "modelcontextprotocol.io": {
+      "state": "ok",
+      "seenAt": "2026-09-02",
+      "runs": 1
+    },
     "moloco.com": {
       "state": "unscored",
       "seenAt": "2026-09-02",
@@ -6066,7 +7012,22 @@
       "runs": 1,
       "reason": "robots-disallow"
     },
+    "monday.com": {
+      "state": "ok",
+      "seenAt": "2026-09-02",
+      "runs": 1
+    },
     "moneycontrol.com": {
+      "state": "ok",
+      "seenAt": "2026-09-02",
+      "runs": 1
+    },
+    "monzo.com": {
+      "state": "ok",
+      "seenAt": "2026-09-02",
+      "runs": 1
+    },
+    "mountsinai.org": {
       "state": "ok",
       "seenAt": "2026-09-02",
       "runs": 1
@@ -6116,6 +7077,12 @@
       "state": "ok",
       "seenAt": "2026-09-02",
       "runs": 1
+    },
+    "mozilla.github.io": {
+      "state": "unscored",
+      "seenAt": "2026-09-02",
+      "runs": 1,
+      "reason": "The homepage answered HTTP 404."
     },
     "mozilla.org": {
       "state": "ok",
@@ -6312,6 +7279,16 @@
       "runs": 1,
       "reason": "robots-disallow"
     },
+    "n26.com": {
+      "state": "ok",
+      "seenAt": "2026-09-02",
+      "runs": 1
+    },
+    "nab.com.au": {
+      "state": "ok",
+      "seenAt": "2026-09-02",
+      "runs": 1
+    },
     "namasha.com": {
       "state": "ok",
       "seenAt": "2026-09-02",
@@ -6346,6 +7323,12 @@
       "runs": 1,
       "reason": "The homepage answered HTTP 403. Cloudflare Turnstile / Managed Challenge refused the scan: HTTP 403 Cloudflare challenge page. The scan fetched no pages. The scan fetched no pages."
     },
+    "nasa.github.io": {
+      "state": "unscored",
+      "seenAt": "2026-09-02",
+      "runs": 1,
+      "reason": "The homepage answered HTTP 404."
+    },
     "nasa.gov": {
       "state": "ok",
       "seenAt": "2026-09-02",
@@ -6361,6 +7344,11 @@
       "seenAt": "2026-09-02",
       "runs": 1,
       "reason": "robots-disallow"
+    },
+    "natwest.com": {
+      "state": "ok",
+      "seenAt": "2026-09-02",
+      "runs": 1
     },
     "naukri.com": {
       "state": "unscored",
@@ -6404,6 +7392,12 @@
       "runs": 1,
       "reason": "The homepage could not be fetched: getaddrinfo ENOTFOUND nel.goog (ENOTFOUND). Bot Wall / Aggressive Connection Drop refused the scan: Connection dropped or timed out repeatedly on crawler requests. The scan fetched no pages. The scan fetched no pages."
     },
+    "neon.tech": {
+      "state": "unscored",
+      "seenAt": "2026-09-02",
+      "runs": 1,
+      "reason": "The requested host redirected to neon.com, a different site."
+    },
     "nesine.com": {
       "state": "ok",
       "seenAt": "2026-09-02",
@@ -6425,6 +7419,11 @@
       "seenAt": "2026-09-02",
       "runs": 1,
       "reason": "robots-disallow"
+    },
+    "netflix.github.io": {
+      "state": "ok",
+      "seenAt": "2026-09-02",
+      "runs": 1
     },
     "netflix.net": {
       "state": "blocked",
@@ -6459,6 +7458,11 @@
       "seenAt": "2026-09-02",
       "runs": 1,
       "reason": "The scan was throttled (Rate limit (HTTP 429)): The site answered HTTP 429 — too many requests. The scan asked for pages faster than this origin allows, so it saw no content. This says nothing about whether AI agents are welcome; re-run the scan after a pause.. None of the 1 fetched page(s) served readable text. No fetched page of any type served readable text."
+    },
+    "newegg.com": {
+      "state": "ok",
+      "seenAt": "2026-09-02",
+      "runs": 1
     },
     "newrelic.com": {
       "state": "unscored",
@@ -6501,6 +7505,16 @@
       "seenAt": "2026-09-02",
       "runs": 1,
       "reason": "Akamai Bot Manager refused the scan: HTTP 403 Akamai access denied."
+    },
+    "next-blog-starter.vercel.app": {
+      "state": "ok",
+      "seenAt": "2026-09-02",
+      "runs": 1
+    },
+    "nextjs-commerce.vercel.app": {
+      "state": "ok",
+      "seenAt": "2026-09-02",
+      "runs": 1
     },
     "nextlgsdp.com": {
       "state": "unscored",
@@ -6553,6 +7567,17 @@
       "state": "ok",
       "seenAt": "2026-09-02",
       "runs": 1
+    },
+    "nhs.uk": {
+      "state": "ok",
+      "seenAt": "2026-09-02",
+      "runs": 1
+    },
+    "nhsinform.scot": {
+      "state": "unscored",
+      "seenAt": "2026-09-02",
+      "runs": 1,
+      "reason": "The homepage answered HTTP 403."
     },
     "nic.ru": {
       "state": "unscored",
@@ -6678,6 +7703,11 @@
       "seenAt": "2026-09-02",
       "runs": 1
     },
+    "novartis.com": {
+      "state": "ok",
+      "seenAt": "2026-09-02",
+      "runs": 1
+    },
     "novel18.syosetu.com": {
       "state": "blocked",
       "seenAt": "2026-09-02",
@@ -6724,11 +7754,21 @@
       "runs": 1,
       "reason": "robots-disallow"
     },
+    "numpy.readthedocs.io": {
+      "state": "ok",
+      "seenAt": "2026-09-02",
+      "runs": 1
+    },
     "nustargame.com": {
       "state": "unscored",
       "seenAt": "2026-09-02",
       "runs": 1,
       "reason": "The homepage answered HTTP 403. Cloudflare Turnstile / Managed Challenge refused the scan: HTTP 403 Cloudflare challenge page. The scan fetched no pages. The scan fetched no pages."
+    },
+    "nuxt.com": {
+      "state": "ok",
+      "seenAt": "2026-09-02",
+      "runs": 1
     },
     "nvidia.com": {
       "state": "unscored",
@@ -6748,7 +7788,27 @@
       "runs": 1,
       "reason": "robots-disallow"
     },
+    "nyulangone.org": {
+      "state": "ok",
+      "seenAt": "2026-09-02",
+      "runs": 1
+    },
+    "nzherald.co.nz": {
+      "state": "ok",
+      "seenAt": "2026-09-02",
+      "runs": 1
+    },
+    "ocbc.com": {
+      "state": "ok",
+      "seenAt": "2026-09-02",
+      "runs": 1
+    },
     "odoo.com": {
+      "state": "ok",
+      "seenAt": "2026-09-02",
+      "runs": 1
+    },
+    "oebb.at": {
       "state": "ok",
       "seenAt": "2026-09-02",
       "runs": 1
@@ -6796,7 +7856,7 @@
     "okta.com": {
       "state": "ok",
       "seenAt": "2026-09-02",
-      "runs": 1
+      "runs": 2
     },
     "okxxx1.com": {
       "state": "ok",
@@ -6860,6 +7920,12 @@
       "seenAt": "2026-09-02",
       "runs": 1
     },
+    "onemedical.com": {
+      "state": "unscored",
+      "seenAt": "2026-09-02",
+      "runs": 1,
+      "reason": "The homepage answered HTTP 403."
+    },
     "onet.pl": {
       "state": "ok",
       "seenAt": "2026-09-02",
@@ -6898,8 +7964,8 @@
     "openai.com": {
       "state": "unscored",
       "seenAt": "2026-09-02",
-      "runs": 1,
-      "reason": "Cloudflare Turnstile / Managed Challenge refused the scan: HTTP 403 Cloudflare challenge page."
+      "runs": 2,
+      "reason": "The homepage answered HTTP 403."
     },
     "opendns.com": {
       "state": "ok",
@@ -7125,6 +8191,11 @@
       "seenAt": "2026-09-02",
       "runs": 1
     },
+    "pentagram.com": {
+      "state": "ok",
+      "seenAt": "2026-09-02",
+      "runs": 1
+    },
     "people.com": {
       "state": "blocked",
       "seenAt": "2026-09-02",
@@ -7134,8 +8205,8 @@
     "perplexity.ai": {
       "state": "unscored",
       "seenAt": "2026-09-02",
-      "runs": 1,
-      "reason": "Cloudflare Turnstile / Managed Challenge refused the scan: HTTP 403 Cloudflare challenge page. None of the 1 fetched page(s) served readable text. No fetched page of any type served readable text."
+      "runs": 2,
+      "reason": "The homepage answered HTTP 403."
     },
     "persona.patria.org.ve": {
       "state": "unscored",
@@ -7155,12 +8226,22 @@
       "runs": 1,
       "reason": "robots-disallow"
     },
+    "pfizer.com": {
+      "state": "ok",
+      "seenAt": "2026-09-02",
+      "runs": 1
+    },
     "photos.google.com": {
       "state": "ok",
       "seenAt": "2026-09-02",
       "runs": 1
     },
     "php.net": {
+      "state": "ok",
+      "seenAt": "2026-09-02",
+      "runs": 1
+    },
+    "physics.stackexchange.com": {
       "state": "ok",
       "seenAt": "2026-09-02",
       "runs": 1
@@ -7180,6 +8261,11 @@
       "seenAt": "2026-09-02",
       "runs": 1,
       "reason": "crawl-delay"
+    },
+    "pinecone.io": {
+      "state": "ok",
+      "seenAt": "2026-09-02",
+      "runs": 1
     },
     "pinimg.com": {
       "state": "blocked",
@@ -7205,6 +8291,11 @@
       "runs": 1,
       "reason": "robots-disallow"
     },
+    "pizzeriabianco.com": {
+      "state": "ok",
+      "seenAt": "2026-09-02",
+      "runs": 1
+    },
     "pki.goog": {
       "state": "ok",
       "seenAt": "2026-09-02",
@@ -7227,6 +8318,11 @@
       "runs": 1
     },
     "pl.xhamster.com": {
+      "state": "ok",
+      "seenAt": "2026-09-02",
+      "runs": 1
+    },
+    "platformer.substack.com": {
       "state": "ok",
       "seenAt": "2026-09-02",
       "runs": 1
@@ -7266,6 +8362,12 @@
       "runs": 1,
       "reason": "The homepage could not be fetched: getaddrinfo ENOTFOUND playstation.net (ENOTFOUND). Bot Wall / Aggressive Connection Drop refused the scan: Connection dropped or timed out repeatedly on crawler requests. The scan fetched no pages. The scan fetched no pages."
     },
+    "playwright.dev": {
+      "state": "unscored",
+      "seenAt": "2026-09-02",
+      "runs": 1,
+      "reason": "No agent artifact: none of /llms.txt, /.well-known/agents.json, /.well-known/mcp.json answered 200."
+    },
     "plesk.com": {
       "state": "ok",
       "seenAt": "2026-09-02",
@@ -7302,6 +8404,12 @@
       "state": "ok",
       "seenAt": "2026-09-02",
       "runs": 1
+    },
+    "politico.com": {
+      "state": "unscored",
+      "seenAt": "2026-09-02",
+      "runs": 1,
+      "reason": "The homepage answered HTTP 403."
     },
     "polybuzz.ai": {
       "state": "ok",
@@ -7365,11 +8473,27 @@
       "seenAt": "2026-09-02",
       "runs": 1
     },
+    "posthog.com": {
+      "state": "ok",
+      "seenAt": "2026-09-02",
+      "runs": 1
+    },
+    "powells.com": {
+      "state": "unscored",
+      "seenAt": "2026-09-02",
+      "runs": 1,
+      "reason": "The homepage answered HTTP 403."
+    },
     "presage.io": {
       "state": "unscored",
       "seenAt": "2026-09-02",
       "runs": 1,
       "reason": "The homepage could not be fetched: certificate has expired (CERT_HAS_EXPIRED). Bot Wall / Aggressive Connection Drop refused the scan: Connection dropped or timed out repeatedly on crawler requests. The scan fetched no pages. The scan fetched no pages."
+    },
+    "priceline.com": {
+      "state": "ok",
+      "seenAt": "2026-09-02",
+      "runs": 1
     },
     "primevideo.com": {
       "state": "blocked",
@@ -7378,6 +8502,11 @@
       "reason": "robots-disallow"
     },
     "princeton.edu": {
+      "state": "ok",
+      "seenAt": "2026-09-02",
+      "runs": 1
+    },
+    "prisma.io": {
       "state": "ok",
       "seenAt": "2026-09-02",
       "runs": 1
@@ -7498,6 +8627,22 @@
       "seenAt": "2026-09-02",
       "runs": 1
     },
+    "pytorch.github.io": {
+      "state": "unscored",
+      "seenAt": "2026-09-02",
+      "runs": 1,
+      "reason": "The requested host redirected to docs.pytorch.org, a different site."
+    },
+    "pytorch.org": {
+      "state": "ok",
+      "seenAt": "2026-09-02",
+      "runs": 1
+    },
+    "qantas.com": {
+      "state": "ok",
+      "seenAt": "2026-09-02",
+      "runs": 1
+    },
     "qlivecdn.com": {
       "state": "unscored",
       "seenAt": "2026-09-02",
@@ -7549,6 +8694,18 @@
       "seenAt": "2026-09-02",
       "runs": 1
     },
+    "radissonhotels.com": {
+      "state": "unscored",
+      "seenAt": "2026-09-02",
+      "runs": 1,
+      "reason": "The homepage answered HTTP 403."
+    },
+    "railway.app": {
+      "state": "unscored",
+      "seenAt": "2026-09-02",
+      "runs": 1,
+      "reason": "The requested host redirected to railway.com, a different site."
+    },
     "rajshaladarpan.rajasthan.gov.in": {
       "state": "unscored",
       "seenAt": "2026-09-02",
@@ -7562,6 +8719,11 @@
       "reason": "The homepage could not be fetched: The operation was aborted due to timeout. Bot Wall / Aggressive Connection Drop refused the scan: Connection dropped or timed out repeatedly on crawler requests. The scan fetched no pages. The scan fetched no pages."
     },
     "rakuten.com": {
+      "state": "ok",
+      "seenAt": "2026-09-02",
+      "runs": 1
+    },
+    "ramotion.com": {
       "state": "ok",
       "seenAt": "2026-09-02",
       "runs": 1
@@ -7616,6 +8778,11 @@
       "runs": 1,
       "reason": "crawl-delay"
     },
+    "redis.io": {
+      "state": "ok",
+      "seenAt": "2026-09-02",
+      "runs": 1
+    },
     "redtube.com": {
       "state": "ok",
       "seenAt": "2026-09-02",
@@ -7638,6 +8805,17 @@
       "runs": 1,
       "reason": "robots-disallow"
     },
+    "remix-run.pages.dev": {
+      "state": "ok",
+      "seenAt": "2026-09-02",
+      "runs": 1
+    },
+    "remix.run": {
+      "state": "unscored",
+      "seenAt": "2026-09-02",
+      "runs": 1,
+      "reason": "No agent artifact: none of /llms.txt, /.well-known/agents.json, /.well-known/mcp.json answered 200."
+    },
     "remotedesktop.google.com": {
       "state": "ok",
       "seenAt": "2026-09-02",
@@ -7648,17 +8826,42 @@
       "seenAt": "2026-09-02",
       "runs": 1
     },
+    "render.com": {
+      "state": "ok",
+      "seenAt": "2026-09-02",
+      "runs": 1
+    },
+    "renfe.com": {
+      "state": "ok",
+      "seenAt": "2026-09-02",
+      "runs": 1
+    },
+    "replicate.com": {
+      "state": "ok",
+      "seenAt": "2026-09-02",
+      "runs": 1
+    },
     "repubblica.it": {
       "state": "blocked",
       "seenAt": "2026-09-02",
       "runs": 1,
       "reason": "robots-disallow"
     },
+    "requests.readthedocs.io": {
+      "state": "ok",
+      "seenAt": "2026-09-02",
+      "runs": 1
+    },
     "researchgate.net": {
       "state": "unscored",
       "seenAt": "2026-09-02",
       "runs": 1,
       "reason": "The homepage answered HTTP 403. Cloudflare Turnstile / Managed Challenge refused the scan: HTTP 403 Cloudflare challenge page. The scan fetched no pages. The scan fetched no pages."
+    },
+    "resend.com": {
+      "state": "ok",
+      "seenAt": "2026-09-02",
+      "runs": 1
     },
     "resolver.arpa": {
       "state": "unscored",
@@ -7678,6 +8881,18 @@
       "runs": 1,
       "reason": "robots-disallow"
     },
+    "reverb.com": {
+      "state": "unscored",
+      "seenAt": "2026-09-02",
+      "runs": 1,
+      "reason": "The homepage answered HTTP 403."
+    },
+    "revolut.com": {
+      "state": "unscored",
+      "seenAt": "2026-09-02",
+      "runs": 1,
+      "reason": "The homepage answered HTTP 403."
+    },
     "rexify.com.ng": {
       "state": "blocked",
       "seenAt": "2026-09-02",
@@ -7694,6 +8909,12 @@
       "seenAt": "2026-09-02",
       "runs": 1,
       "reason": "robots-refused"
+    },
+    "ridgewallet.com": {
+      "state": "unscored",
+      "seenAt": "2026-09-02",
+      "runs": 1,
+      "reason": "The homepage answered HTTP 403."
     },
     "rightmove.co.uk": {
       "state": "blocked",
@@ -7724,6 +8945,11 @@
       "runs": 1,
       "reason": "The scan could not feed 57% of the registry's evidence mass, so what remains is not a reading of this site."
     },
+    "roche.com": {
+      "state": "ok",
+      "seenAt": "2026-09-02",
+      "runs": 1
+    },
     "rocket-cdn.com": {
       "state": "unscored",
       "seenAt": "2026-09-02",
@@ -7741,6 +8967,12 @@
       "seenAt": "2026-09-02",
       "runs": 1,
       "reason": "Cloudflare Turnstile / Managed Challenge refused the scan: HTTP 403 Cloudflare challenge page. None of the 1 fetched page(s) served readable text. No fetched page of any type served readable text."
+    },
+    "rome2rio.com": {
+      "state": "unscored",
+      "seenAt": "2026-09-02",
+      "runs": 1,
+      "reason": "The homepage answered HTTP 403."
     },
     "root-servers.net": {
       "state": "unscored",
@@ -7770,6 +9002,11 @@
       "runs": 1
     },
     "rt.ru": {
+      "state": "ok",
+      "seenAt": "2026-09-02",
+      "runs": 1
+    },
+    "rte.ie": {
       "state": "ok",
       "seenAt": "2026-09-02",
       "runs": 1
@@ -7816,6 +9053,11 @@
       "runs": 1,
       "reason": "The homepage answered HTTP 404. The scan fetched no pages. The scan fetched no pages."
     },
+    "russanddaughters.com": {
+      "state": "ok",
+      "seenAt": "2026-09-02",
+      "runs": 1
+    },
     "rust-lang.org": {
       "state": "ok",
       "seenAt": "2026-09-02",
@@ -7827,10 +9069,9 @@
       "runs": 1
     },
     "ryanair.com": {
-      "state": "unscored",
+      "state": "ok",
       "seenAt": "2026-09-02",
-      "runs": 1,
-      "reason": "The scan could not feed 57% of the registry's evidence mass, so what remains is not a reading of this site."
+      "runs": 2
     },
     "s.dto.jp": {
       "state": "blocked",
@@ -7931,6 +9172,11 @@
       "runs": 1,
       "reason": "The homepage could not be fetched: getaddrinfo ENOTFOUND samsungqbe.com (ENOTFOUND). Bot Wall / Aggressive Connection Drop refused the scan: Connection dropped or timed out repeatedly on crawler requests. The scan fetched no pages. The scan fetched no pages."
     },
+    "sanofi.com": {
+      "state": "ok",
+      "seenAt": "2026-09-02",
+      "runs": 1
+    },
     "santander.com": {
       "state": "unscored",
       "seenAt": "2026-09-02",
@@ -7957,6 +9203,12 @@
       "state": "ok",
       "seenAt": "2026-09-02",
       "runs": 1
+    },
+    "sbb.ch": {
+      "state": "unscored",
+      "seenAt": "2026-09-02",
+      "runs": 1,
+      "reason": "The homepage answered HTTP 403."
     },
     "sberbank.ru": {
       "state": "unscored",
@@ -7994,6 +9246,11 @@
       "reason": "robots-refused"
     },
     "scorecardresearch.com": {
+      "state": "ok",
+      "seenAt": "2026-09-02",
+      "runs": 1
+    },
+    "scotiabank.com": {
       "state": "ok",
       "seenAt": "2026-09-02",
       "runs": 1
@@ -8050,6 +9307,12 @@
       "runs": 1,
       "reason": "robots-disallow"
     },
+    "sec.gov": {
+      "state": "unscored",
+      "seenAt": "2026-09-02",
+      "runs": 1,
+      "reason": "The homepage answered HTTP 403."
+    },
     "secure.bankofamerica.com": {
       "state": "unscored",
       "seenAt": "2026-09-02",
@@ -8105,10 +9368,9 @@
       "reason": "The homepage could not be fetched: Connect Timeout Error (attempted address: sentinelone.net:443, timeout: 10000ms) (UND_ERR_CONNECT_TIMEOUT). Bot Wall / Aggressive Connection Drop refused the scan: Connection dropped or timed out repeatedly on crawler requests. The scan fetched no pages. The scan fetched no pages."
     },
     "sentry.io": {
-      "state": "unscored",
+      "state": "ok",
       "seenAt": "2026-09-02",
-      "runs": 1,
-      "reason": "The scan was throttled (Rate limit (HTTP 429)): The site answered HTTP 429 — too many requests. The scan asked for pages faster than this origin allows, so it saw no content. This says nothing about whether AI agents are welcome; re-run the scan after a pause.."
+      "runs": 2
     },
     "serverfault.com": {
       "state": "unscored",
@@ -8216,6 +9478,12 @@
       "runs": 1,
       "reason": "robots-disallow"
     },
+    "shakeshack.com": {
+      "state": "unscored",
+      "seenAt": "2026-09-02",
+      "runs": 1,
+      "reason": "The homepage answered HTTP 403."
+    },
     "shalltry.com": {
       "state": "blocked",
       "seenAt": "2026-09-02",
@@ -8248,7 +9516,7 @@
     "shein.com": {
       "state": "ok",
       "seenAt": "2026-09-02",
-      "runs": 1
+      "runs": 2
     },
     "shiabank.com": {
       "state": "unscored",
@@ -8320,6 +9588,12 @@
       "seenAt": "2026-09-02",
       "runs": 1
     },
+    "singaporeairlines.com": {
+      "state": "unscored",
+      "seenAt": "2026-09-02",
+      "runs": 1,
+      "reason": "The homepage answered HTTP 404."
+    },
     "singular.net": {
       "state": "blocked",
       "seenAt": "2026-09-02",
@@ -8332,6 +9606,11 @@
       "runs": 1
     },
     "sites.google.com": {
+      "state": "ok",
+      "seenAt": "2026-09-02",
+      "runs": 1
+    },
+    "skadden.com": {
       "state": "ok",
       "seenAt": "2026-09-02",
       "runs": 1
@@ -8355,6 +9634,17 @@
       "reason": "The requested host redirected to skyhighsecurity.com, a different site, without a permanent redirect."
     },
     "skype.com": {
+      "state": "ok",
+      "seenAt": "2026-09-02",
+      "runs": 1
+    },
+    "skyscanner.com": {
+      "state": "unscored",
+      "seenAt": "2026-09-02",
+      "runs": 1,
+      "reason": "The requested host redirected to skyscanner.net, a different site."
+    },
+    "skyscanner.net": {
       "state": "ok",
       "seenAt": "2026-09-02",
       "runs": 1
@@ -8410,11 +9700,27 @@
       "runs": 1,
       "reason": "Cloudflare Turnstile / Managed Challenge refused the scan: HTTP 403 Cloudflare challenge page."
     },
+    "sncf-connect.com": {
+      "state": "unscored",
+      "seenAt": "2026-09-02",
+      "runs": 1,
+      "reason": "The homepage answered HTTP 403."
+    },
+    "snowflake.com": {
+      "state": "ok",
+      "seenAt": "2026-09-02",
+      "runs": 1
+    },
     "socialregistry.wb.gov.in": {
       "state": "unscored",
       "seenAt": "2026-09-02",
       "runs": 1,
       "reason": "The homepage could not be fetched: Connect Timeout Error (attempted address: socialregistry.wb.gov.in:443, timeout: 10000ms) (UND_ERR_CONNECT_TIMEOUT). Bot Wall / Aggressive Connection Drop refused the scan: Connection dropped or timed out repeatedly on crawler requests. The scan fetched no pages. The scan fetched no pages."
+    },
+    "societegenerale.com": {
+      "state": "ok",
+      "seenAt": "2026-09-02",
+      "runs": 1
     },
     "sofascore.com": {
       "state": "blocked",
@@ -8443,6 +9749,11 @@
       "seenAt": "2026-09-02",
       "runs": 1,
       "reason": "The homepage answered HTTP 403. Cloudflare Turnstile / Managed Challenge refused the scan: HTTP 403 Cloudflare challenge page. The scan fetched no pages. The scan fetched no pages."
+    },
+    "soulcycle.com": {
+      "state": "ok",
+      "seenAt": "2026-09-02",
+      "runs": 1
     },
     "soundcloud.com": {
       "state": "unscored",
@@ -8553,6 +9864,11 @@
       "seenAt": "2026-09-02",
       "runs": 1
     },
+    "spotify.github.io": {
+      "state": "ok",
+      "seenAt": "2026-09-02",
+      "runs": 1
+    },
     "spotifycdn.com": {
       "state": "unscored",
       "seenAt": "2026-09-02",
@@ -8570,6 +9886,11 @@
       "seenAt": "2026-09-02",
       "runs": 1
     },
+    "square.github.io": {
+      "state": "ok",
+      "seenAt": "2026-09-02",
+      "runs": 1
+    },
     "squarespace.com": {
       "state": "ok",
       "seenAt": "2026-09-02",
@@ -8580,6 +9901,12 @@
       "seenAt": "2026-09-02",
       "runs": 1,
       "reason": "The homepage could not be fetched: getaddrinfo ENOTFOUND squarespacedns.com (ENOTFOUND). Bot Wall / Aggressive Connection Drop refused the scan: Connection dropped or timed out repeatedly on crawler requests. The scan fetched no pages. The scan fetched no pages."
+    },
+    "ssa.gov": {
+      "state": "unscored",
+      "seenAt": "2026-09-02",
+      "runs": 1,
+      "reason": "The homepage could not be fetched: unable to verify the first certificate; if the root CA is installed locally, try running Node.js with --use-system-ca (UNABLE_TO_VERIFY_LEAF_SIGNATURE)."
     },
     "ssl-images-amazon.com": {
       "state": "unscored",
@@ -8610,6 +9937,16 @@
       "reason": "The homepage answered HTTP 403. The scan was throttled (Rate limit (HTTP 429)): The site answered HTTP 429 — too many requests. The scan asked for pages faster than this origin allows, so it saw no content. This says nothing about whether AI agents are welcome; re-run the scan after a pause.. The scan fetched no pages. The scan fetched no pages."
     },
     "stanford.edu": {
+      "state": "ok",
+      "seenAt": "2026-09-02",
+      "runs": 1
+    },
+    "stanfordhealthcare.org": {
+      "state": "ok",
+      "seenAt": "2026-09-02",
+      "runs": 1
+    },
+    "starlingbank.com": {
       "state": "ok",
       "seenAt": "2026-09-02",
       "runs": 1
@@ -8695,6 +10032,17 @@
       "runs": 1,
       "reason": "Akamai Bot Manager refused the scan: HTTP 403 Akamai access denied."
     },
+    "strandbooks.com": {
+      "state": "unscored",
+      "seenAt": "2026-09-02",
+      "runs": 1,
+      "reason": "The homepage answered HTTP 403."
+    },
+    "stratechery.substack.com": {
+      "state": "ok",
+      "seenAt": "2026-09-02",
+      "runs": 1
+    },
     "stripchat.com": {
       "state": "blocked",
       "seenAt": "2026-09-02",
@@ -8704,13 +10052,18 @@
     "stripe.com": {
       "state": "ok",
       "seenAt": "2026-09-02",
-      "runs": 1
+      "runs": 2
     },
     "studio.youtube.com": {
       "state": "blocked",
       "seenAt": "2026-09-02",
       "runs": 1,
       "reason": "crawl-delay"
+    },
+    "stumptowncoffee.com": {
+      "state": "ok",
+      "seenAt": "2026-09-02",
+      "runs": 1
     },
     "subito.it": {
       "state": "ok",
@@ -8727,6 +10080,11 @@
       "seenAt": "2026-09-02",
       "runs": 1,
       "reason": "The homepage could not be fetched: getaddrinfo ENOTFOUND sugotoku.docomo.ne.jp (ENOTFOUND). Bot Wall / Aggressive Connection Drop refused the scan: Connection dropped or timed out repeatedly on crawler requests. The scan fetched no pages. The scan fetched no pages."
+    },
+    "supabase.com": {
+      "state": "ok",
+      "seenAt": "2026-09-02",
+      "runs": 1
     },
     "superbet.bet.br": {
       "state": "blocked",
@@ -8793,6 +10151,22 @@
       "seenAt": "2026-09-02",
       "runs": 1,
       "reason": "The homepage could not be fetched: getaddrinfo ENOTFOUND svc.ms (ENOTFOUND). Bot Wall / Aggressive Connection Drop refused the scan: Connection dropped or timed out repeatedly on crawler requests. The scan fetched no pages. The scan fetched no pages."
+    },
+    "svelte.dev": {
+      "state": "ok",
+      "seenAt": "2026-09-02",
+      "runs": 2
+    },
+    "sweetgreen.com": {
+      "state": "ok",
+      "seenAt": "2026-09-02",
+      "runs": 1
+    },
+    "swr.vercel.app": {
+      "state": "unscored",
+      "seenAt": "2026-09-02",
+      "runs": 1,
+      "reason": "The requested host redirected to vercel.com, a different site."
     },
     "sxyprn.com": {
       "state": "blocked",
@@ -8864,6 +10238,12 @@
       "seenAt": "2026-09-02",
       "runs": 1
     },
+    "tailwindcss.com": {
+      "state": "unscored",
+      "seenAt": "2026-09-02",
+      "runs": 2,
+      "reason": "No agent artifact: none of /llms.txt, /.well-known/agents.json, /.well-known/mcp.json answered 200."
+    },
     "taktube.net": {
       "state": "ok",
       "seenAt": "2026-09-02",
@@ -8887,12 +10267,22 @@
       "runs": 1,
       "reason": "crawl-delay"
     },
+    "tanstack.com": {
+      "state": "ok",
+      "seenAt": "2026-09-02",
+      "runs": 1
+    },
     "taobao.com": {
       "state": "ok",
       "seenAt": "2026-09-02",
       "runs": 1
     },
     "target.com": {
+      "state": "ok",
+      "seenAt": "2026-09-02",
+      "runs": 1
+    },
+    "tartinebakery.com": {
       "state": "ok",
       "seenAt": "2026-09-02",
       "runs": 1
@@ -8984,10 +10374,9 @@
       "reason": "The homepage could not be fetched: The operation was aborted due to timeout. Bot Wall / Aggressive Connection Drop refused the scan: Connection dropped or timed out repeatedly on crawler requests. The scan fetched no pages. The scan fetched no pages."
     },
     "temu.com": {
-      "state": "unscored",
+      "state": "ok",
       "seenAt": "2026-09-02",
-      "runs": 1,
-      "reason": "Cloudflare Turnstile / Managed Challenge refused the scan: HTTP 403 Cloudflare challenge page. None of the 1 fetched page(s) served readable text. No fetched page of any type served readable text."
+      "runs": 2
     },
     "tencent-cloud.net": {
       "state": "unscored",
@@ -9005,6 +10394,12 @@
       "state": "ok",
       "seenAt": "2026-09-02",
       "runs": 1
+    },
+    "tensorflow.github.io": {
+      "state": "unscored",
+      "seenAt": "2026-09-02",
+      "runs": 1,
+      "reason": "The homepage answered HTTP 404."
     },
     "tentree.com": {
       "state": "ok",
@@ -9032,10 +10427,9 @@
       "runs": 1
     },
     "theatlantic.com": {
-      "state": "blocked",
+      "state": "ok",
       "seenAt": "2026-09-02",
-      "runs": 1,
-      "reason": "crawl-delay"
+      "runs": 2
     },
     "theblowers.com": {
       "state": "unscored",
@@ -9043,11 +10437,27 @@
       "runs": 1,
       "reason": "Cloudflare Turnstile / Managed Challenge refused the scan: HTTP 403 Cloudflare challenge page."
     },
+    "thefrenchlaundry.com": {
+      "state": "unscored",
+      "seenAt": "2026-09-02",
+      "runs": 1,
+      "reason": "The homepage could not be fetched: Client network socket disconnected before secure TLS connection was established (ECONNRESET)."
+    },
     "theguardian.com": {
       "state": "blocked",
       "seenAt": "2026-09-02",
       "runs": 1,
       "reason": "robots-disallow"
+    },
+    "thehindu.com": {
+      "state": "ok",
+      "seenAt": "2026-09-02",
+      "runs": 1
+    },
+    "thehoxton.com": {
+      "state": "ok",
+      "seenAt": "2026-09-02",
+      "runs": 1
     },
     "themeforest.net": {
       "state": "ok",
@@ -9065,11 +10475,15 @@
       "runs": 1,
       "reason": "robots-refused"
     },
-    "theverge.com": {
-      "state": "blocked",
+    "thetrainline.com": {
+      "state": "ok",
       "seenAt": "2026-09-02",
-      "runs": 1,
-      "reason": "robots-disallow"
+      "runs": 1
+    },
+    "theverge.com": {
+      "state": "ok",
+      "seenAt": "2026-09-02",
+      "runs": 2
     },
     "thisvid.com": {
       "state": "ok",
@@ -9172,6 +10586,12 @@
       "runs": 1,
       "reason": "The homepage could not be fetched: getaddrinfo ENOTFOUND tld-servers.ru (ENOTFOUND). Bot Wall / Aggressive Connection Drop refused the scan: Connection dropped or timed out repeatedly on crawler requests. The scan fetched no pages. The scan fetched no pages."
     },
+    "tldraw.com": {
+      "state": "unscored",
+      "seenAt": "2026-09-02",
+      "runs": 1,
+      "reason": "No agent artifact: none of /llms.txt, /.well-known/agents.json, /.well-known/mcp.json answered 200."
+    },
     "tm-azurefd.net": {
       "state": "unscored",
       "seenAt": "2026-09-02",
@@ -9179,6 +10599,11 @@
       "reason": "The homepage could not be fetched: getaddrinfo ENOTFOUND tm-azurefd.net (ENOTFOUND). Bot Wall / Aggressive Connection Drop refused the scan: Connection dropped or timed out repeatedly on crawler requests. The scan fetched no pages. The scan fetched no pages."
     },
     "tnaflix.com": {
+      "state": "ok",
+      "seenAt": "2026-09-02",
+      "runs": 1
+    },
+    "together.ai": {
       "state": "ok",
       "seenAt": "2026-09-02",
       "runs": 1
@@ -9251,6 +10676,12 @@
       "runs": 1,
       "reason": "The homepage could not be fetched: getaddrinfo ENOTFOUND trafficmanager.net (ENOTFOUND). Bot Wall / Aggressive Connection Drop refused the scan: Connection dropped or timed out repeatedly on crawler requests. The scan fetched no pages. The scan fetched no pages."
     },
+    "trainline.com": {
+      "state": "unscored",
+      "seenAt": "2026-09-02",
+      "runs": 1,
+      "reason": "The requested host redirected to thetrainline.com, a different site."
+    },
     "transit.yahoo.co.jp": {
       "state": "blocked",
       "seenAt": "2026-09-02",
@@ -9274,6 +10705,12 @@
       "runs": 1,
       "reason": "The homepage could not be fetched: getaddrinfo ENOTFOUND transsion-os.com (ENOTFOUND). Bot Wall / Aggressive Connection Drop refused the scan: Connection dropped or timed out repeatedly on crawler requests. The scan fetched no pages. The scan fetched no pages."
     },
+    "travelocity.com": {
+      "state": "unscored",
+      "seenAt": "2026-09-02",
+      "runs": 1,
+      "reason": "The homepage answered HTTP 429."
+    },
     "trbcdn.net": {
       "state": "unscored",
       "seenAt": "2026-09-02",
@@ -9291,16 +10728,26 @@
       "runs": 1,
       "reason": "The homepage answered HTTP 403. Cloudflare Turnstile / Managed Challenge refused the scan: HTTP 403 Cloudflare challenge page. The scan fetched no pages. The scan fetched no pages."
     },
+    "trenitalia.com": {
+      "state": "ok",
+      "seenAt": "2026-09-02",
+      "runs": 1
+    },
+    "trigger.dev": {
+      "state": "ok",
+      "seenAt": "2026-09-02",
+      "runs": 1
+    },
     "trilltrill.jp": {
       "state": "ok",
       "seenAt": "2026-09-02",
       "runs": 1
     },
     "tripadvisor.com": {
-      "state": "blocked",
+      "state": "unscored",
       "seenAt": "2026-09-02",
-      "runs": 1,
-      "reason": "robots-disallow"
+      "runs": 2,
+      "reason": "The homepage answered HTTP 403."
     },
     "triplinkintl.com": {
       "state": "ok",
@@ -9312,6 +10759,12 @@
       "seenAt": "2026-09-02",
       "runs": 1,
       "reason": "robots-refused"
+    },
+    "trivago.com": {
+      "state": "unscored",
+      "seenAt": "2026-09-02",
+      "runs": 1,
+      "reason": "The homepage answered HTTP 403."
     },
     "trueconf.net": {
       "state": "unscored",
@@ -9360,6 +10813,18 @@
       "runs": 1,
       "reason": "robots-refused"
     },
+    "turbo.build": {
+      "state": "unscored",
+      "seenAt": "2026-09-02",
+      "runs": 1,
+      "reason": "The requested host redirected to turborepo.dev, a different site."
+    },
+    "turkishairlines.com": {
+      "state": "unscored",
+      "seenAt": "2026-09-02",
+      "runs": 1,
+      "reason": "The homepage could not be fetched: The operation was aborted due to timeout."
+    },
     "turkiye.gov.tr": {
       "state": "ok",
       "seenAt": "2026-09-02",
@@ -9370,6 +10835,11 @@
       "seenAt": "2026-09-02",
       "runs": 1,
       "reason": "The homepage could not be fetched: getaddrinfo ENOTFOUND turn.com (ENOTFOUND). Bot Wall / Aggressive Connection Drop refused the scan: Connection dropped or timed out repeatedly on crawler requests. The scan fetched no pages. The scan fetched no pages."
+    },
+    "turso.tech": {
+      "state": "ok",
+      "seenAt": "2026-09-02",
+      "runs": 1
     },
     "tv11.lk21official.cc": {
       "state": "unscored",
@@ -9460,6 +10930,11 @@
       "runs": 1,
       "reason": "The requested host redirected to xnxx.com, a different site, without a permanent redirect."
     },
+    "typeform.com": {
+      "state": "ok",
+      "seenAt": "2026-09-02",
+      "runs": 1
+    },
     "typekit.net": {
       "state": "unscored",
       "seenAt": "2026-09-02",
@@ -9476,6 +10951,11 @@
       "seenAt": "2026-09-02",
       "runs": 1,
       "reason": "The homepage answered HTTP 429. The scan was throttled (Rate limit (HTTP 429)): The site answered HTTP 429 — too many requests. The scan asked for pages faster than this origin allows, so it saw no content. This says nothing about whether AI agents are welcome; re-run the scan after a pause.. The scan fetched no pages. The scan fetched no pages."
+    },
+    "uber.github.io": {
+      "state": "ok",
+      "seenAt": "2026-09-02",
+      "runs": 1
     },
     "ubi.com": {
       "state": "ok",
@@ -9498,6 +10978,11 @@
       "runs": 1,
       "reason": "crawl-delay"
     },
+    "uclahealth.org": {
+      "state": "ok",
+      "seenAt": "2026-09-02",
+      "runs": 1
+    },
     "ui-dns.com": {
       "state": "unscored",
       "seenAt": "2026-09-02",
@@ -9505,6 +10990,11 @@
       "reason": "The homepage could not be fetched: getaddrinfo ENOTFOUND ui-dns.com (ENOTFOUND). Bot Wall / Aggressive Connection Drop refused the scan: Connection dropped or timed out repeatedly on crawler requests. The scan fetched no pages. The scan fetched no pages."
     },
     "ui.com": {
+      "state": "ok",
+      "seenAt": "2026-09-02",
+      "runs": 1
+    },
+    "ui.shadcn.com": {
       "state": "ok",
       "seenAt": "2026-09-02",
       "runs": 1
@@ -9542,11 +11032,23 @@
       "runs": 1,
       "reason": "robots-disallow"
     },
+    "unicredit.it": {
+      "state": "unscored",
+      "seenAt": "2026-09-02",
+      "runs": 1,
+      "reason": "The homepage answered HTTP 403."
+    },
     "unifiedportal-mem.epfindia.gov.in": {
       "state": "unscored",
       "seenAt": "2026-09-02",
       "runs": 1,
       "reason": "The homepage could not be fetched: Connect Timeout Error (attempted address: unifiedportal-mem.epfindia.gov.in:80, timeout: 10000ms) (UND_ERR_CONNECT_TIMEOUT). Bot Wall / Aggressive Connection Drop refused the scan: Connection dropped or timed out repeatedly on crawler requests. The scan fetched no pages. The scan fetched no pages."
+    },
+    "united.com": {
+      "state": "unscored",
+      "seenAt": "2026-09-02",
+      "runs": 1,
+      "reason": "The homepage could not be fetched: The operation was aborted due to timeout."
     },
     "unity3d.com": {
       "state": "unscored",
@@ -9584,6 +11086,11 @@
       "reason": "The homepage could not be fetched: The operation was aborted due to timeout. Bot Wall / Aggressive Connection Drop refused the scan: Connection dropped or timed out repeatedly on crawler requests. The scan fetched no pages. The scan fetched no pages."
     },
     "upskirt.tv": {
+      "state": "ok",
+      "seenAt": "2026-09-02",
+      "runs": 1
+    },
+    "upstash.com": {
       "state": "ok",
       "seenAt": "2026-09-02",
       "runs": 1
@@ -9629,11 +11136,21 @@
       "runs": 1,
       "reason": "The homepage answered HTTP 404. The scan fetched no pages. The scan fetched no pages."
     },
+    "users.rust-lang.org": {
+      "state": "ok",
+      "seenAt": "2026-09-02",
+      "runs": 1
+    },
     "usgovcloudapi.net": {
       "state": "unscored",
       "seenAt": "2026-09-02",
       "runs": 1,
       "reason": "The homepage could not be fetched: getaddrinfo ENOTFOUND usgovcloudapi.net (ENOTFOUND). Bot Wall / Aggressive Connection Drop refused the scan: Connection dropped or timed out repeatedly on crawler requests. The scan fetched no pages. The scan fetched no pages."
+    },
+    "ustwo.com": {
+      "state": "ok",
+      "seenAt": "2026-09-02",
+      "runs": 1
     },
     "uucms.karnataka.gov.in": {
       "state": "unscored",
@@ -9726,8 +11243,8 @@
     "vercel.com": {
       "state": "unscored",
       "seenAt": "2026-09-02",
-      "runs": 1,
-      "reason": "The homepage served text/markdown; charset=utf-8, not HTML. Akamai Bot Manager refused the scan: Akamai HTTP 200 soft block page."
+      "runs": 2,
+      "reason": "The homepage served text/markdown; charset=utf-8, not HTML."
     },
     "verisign.com": {
       "state": "ok",
@@ -9744,6 +11261,17 @@
       "state": "ok",
       "seenAt": "2026-09-02",
       "runs": 1
+    },
+    "viarail.ca": {
+      "state": "ok",
+      "seenAt": "2026-09-02",
+      "runs": 1
+    },
+    "viator.com": {
+      "state": "unscored",
+      "seenAt": "2026-09-02",
+      "runs": 1,
+      "reason": "The homepage answered HTTP 403."
     },
     "viber.com": {
       "state": "ok",
@@ -9791,6 +11319,11 @@
       "runs": 1,
       "reason": "crawl-delay"
     },
+    "vinted.com": {
+      "state": "ok",
+      "seenAt": "2026-09-02",
+      "runs": 1
+    },
     "virginm.net": {
       "state": "unscored",
       "seenAt": "2026-09-02",
@@ -9803,6 +11336,16 @@
       "runs": 1
     },
     "visualstudio.com": {
+      "state": "ok",
+      "seenAt": "2026-09-02",
+      "runs": 1
+    },
+    "vite.dev": {
+      "state": "ok",
+      "seenAt": "2026-09-02",
+      "runs": 1
+    },
+    "vitest.dev": {
       "state": "ok",
       "seenAt": "2026-09-02",
       "runs": 1
@@ -9878,6 +11421,22 @@
       "runs": 1,
       "reason": "The homepage could not be fetched: The operation was aborted due to timeout. Bot Wall / Aggressive Connection Drop refused the scan: Connection dropped or timed out repeatedly on crawler requests. The scan fetched no pages. The scan fetched no pages."
     },
+    "vrbo.com": {
+      "state": "unscored",
+      "seenAt": "2026-09-02",
+      "runs": 1,
+      "reason": "The homepage answered HTTP 429."
+    },
+    "vuejs.org": {
+      "state": "ok",
+      "seenAt": "2026-09-02",
+      "runs": 1
+    },
+    "vueling.com": {
+      "state": "ok",
+      "seenAt": "2026-09-02",
+      "runs": 1
+    },
     "vungle.com": {
       "state": "blocked",
       "seenAt": "2026-09-02",
@@ -9906,6 +11465,11 @@
       "seenAt": "2026-09-02",
       "runs": 1,
       "reason": "The homepage could not be fetched: getaddrinfo ENOTFOUND wac-msedge.net (ENOTFOUND). Bot Wall / Aggressive Connection Drop refused the scan: Connection dropped or timed out repeatedly on crawler requests. The scan fetched no pages. The scan fetched no pages."
+    },
+    "walgreens.com": {
+      "state": "ok",
+      "seenAt": "2026-09-02",
+      "runs": 1
     },
     "walmart.com": {
       "state": "unscored",
@@ -9982,6 +11546,11 @@
       "seenAt": "2026-09-02",
       "runs": 1
     },
+    "weaviate.io": {
+      "state": "ok",
+      "seenAt": "2026-09-02",
+      "runs": 1
+    },
     "web.facebook.com": {
       "state": "blocked",
       "seenAt": "2026-09-02",
@@ -10006,6 +11575,11 @@
       "runs": 1,
       "reason": "Akamai Bot Manager refused the scan: HTTP 403 Akamai access denied."
     },
+    "webflow.com": {
+      "state": "ok",
+      "seenAt": "2026-09-02",
+      "runs": 1
+    },
     "webhostbox.net": {
       "state": "unscored",
       "seenAt": "2026-09-02",
@@ -10013,10 +11587,9 @@
       "reason": "The homepage could not be fetched: getaddrinfo ENOTFOUND webhostbox.net (ENOTFOUND). Bot Wall / Aggressive Connection Drop refused the scan: Connection dropped or timed out repeatedly on crawler requests. The scan fetched no pages. The scan fetched no pages."
     },
     "webmd.com": {
-      "state": "blocked",
+      "state": "ok",
       "seenAt": "2026-09-02",
-      "runs": 1,
-      "reason": "robots-disallow"
+      "runs": 2
     },
     "weebly.com": {
       "state": "ok",
@@ -10084,7 +11657,7 @@
     "who.int": {
       "state": "ok",
       "seenAt": "2026-09-02",
-      "runs": 1
+      "runs": 2
     },
     "wiadomosci.wp.pl": {
       "state": "blocked",
@@ -10159,6 +11732,12 @@
       "runs": 1,
       "reason": "The homepage could not be fetched: getaddrinfo ENOTFOUND wixsite.com (ENOTFOUND). Bot Wall / Aggressive Connection Drop refused the scan: Connection dropped or timed out repeatedly on crawler requests. The scan fetched no pages. The scan fetched no pages."
     },
+    "wizzair.com": {
+      "state": "unscored",
+      "seenAt": "2026-09-02",
+      "runs": 1,
+      "reason": "The homepage answered HTTP 405."
+    },
     "wl1.loobygamesonline.com": {
       "state": "blocked",
       "seenAt": "2026-09-02",
@@ -10199,6 +11778,11 @@
       "runs": 1
     },
     "wordpress.org": {
+      "state": "ok",
+      "seenAt": "2026-09-02",
+      "runs": 1
+    },
+    "work.co": {
       "state": "ok",
       "seenAt": "2026-09-02",
       "runs": 1
@@ -10257,17 +11841,29 @@
       "seenAt": "2026-09-02",
       "runs": 1
     },
+    "wrangler.pages.dev": {
+      "state": "unscored",
+      "seenAt": "2026-09-02",
+      "runs": 1,
+      "reason": "The homepage could not be fetched: getaddrinfo ENOTFOUND wrangler.pages.dev (ENOTFOUND)."
+    },
     "wsdvs.com": {
       "state": "unscored",
       "seenAt": "2026-09-02",
       "runs": 1,
       "reason": "The homepage could not be fetched: getaddrinfo ENOTFOUND wsdvs.com (ENOTFOUND). Bot Wall / Aggressive Connection Drop refused the scan: Connection dropped or timed out repeatedly on crawler requests. The scan fetched no pages. The scan fetched no pages."
     },
-    "wsj.com": {
-      "state": "blocked",
+    "wsgr.com": {
+      "state": "unscored",
       "seenAt": "2026-09-02",
       "runs": 1,
-      "reason": "robots-disallow"
+      "reason": "The homepage answered HTTP 403."
+    },
+    "wsj.com": {
+      "state": "unscored",
+      "seenAt": "2026-09-02",
+      "runs": 2,
+      "reason": "The homepage answered HTTP 401."
     },
     "wswebcdn.com": {
       "state": "unscored",
@@ -10296,6 +11892,11 @@
       "seenAt": "2026-09-02",
       "runs": 1
     },
+    "wyndhamhotels.com": {
+      "state": "ok",
+      "seenAt": "2026-09-02",
+      "runs": 1
+    },
     "wyzecam.com": {
       "state": "ok",
       "seenAt": "2026-09-02",
@@ -10306,6 +11907,12 @@
       "seenAt": "2026-09-02",
       "runs": 1,
       "reason": "robots-disallow"
+    },
+    "x.ai": {
+      "state": "unscored",
+      "seenAt": "2026-09-02",
+      "runs": 1,
+      "reason": "The homepage answered HTTP 403."
     },
     "x.com": {
       "state": "blocked",
@@ -10758,11 +12365,22 @@
       "runs": 1,
       "reason": "The homepage could not be fetched: getaddrinfo ENOTFOUND ytimg.com (ENOTFOUND). Bot Wall / Aggressive Connection Drop refused the scan: Connection dropped or timed out repeatedly on crawler requests. The scan fetched no pages. The scan fetched no pages."
     },
+    "zalando.com": {
+      "state": "unscored",
+      "seenAt": "2026-09-02",
+      "runs": 1,
+      "reason": "The homepage answered HTTP 403."
+    },
     "zalando.de": {
       "state": "blocked",
       "seenAt": "2026-09-02",
       "runs": 1,
       "reason": "robots-refused"
+    },
+    "zapier.com": {
+      "state": "ok",
+      "seenAt": "2026-09-02",
+      "runs": 1
     },
     "zbporn.tv": {
       "state": "ok",
@@ -10807,6 +12425,17 @@
       "seenAt": "2026-09-02",
       "runs": 1,
       "reason": "The homepage answered HTTP 403. HUMAN / PerimeterX Bot Defense refused the scan: PerimeterX challenge detected. The scan fetched no pages. The scan fetched no pages."
+    },
+    "zingermans.com": {
+      "state": "ok",
+      "seenAt": "2026-09-02",
+      "runs": 1
+    },
+    "zocdoc.com": {
+      "state": "unscored",
+      "seenAt": "2026-09-02",
+      "runs": 1,
+      "reason": "The homepage answered HTTP 403."
     },
     "zoho.com": {
       "state": "ok",

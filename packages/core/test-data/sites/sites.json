@@ -24,6 +24,18 @@
     "rankBucket": 0
   },
   {
+    "domain": "abc.net.au",
+    "source": "tranco",
+    "category": "news",
+    "rankBucket": 0
+  },
+  {
+    "domain": "accor.com",
+    "source": "tranco",
+    "category": "travel",
+    "rankBucket": 0
+  },
+  {
     "domain": "account.squarespace.com",
     "source": "crux",
     "category": "tenant",
@@ -34,6 +46,30 @@
     "source": "crux",
     "category": "unknown",
     "rankBucket": 0
+  },
+  {
+    "domain": "acehotel.com",
+    "source": "tranco",
+    "category": "local",
+    "rankBucket": 0
+  },
+  {
+    "domain": "admin.ch",
+    "source": "tranco",
+    "category": "government",
+    "rankBucket": 0
+  },
+  {
+    "domain": "agoda.com",
+    "source": "tranco",
+    "category": "travel",
+    "rankBucket": 0
+  },
+  {
+    "domain": "ai-sdk.vercel.app",
+    "source": "seed",
+    "category": "tenant",
+    "rankBucket": 100
   },
   {
     "domain": "airbnb.com",
@@ -95,9 +131,21 @@
     "tier": "smoke"
   },
   {
+    "domain": "allbirds.myshopify.com",
+    "source": "seed",
+    "category": "tenant",
+    "rankBucket": 100
+  },
+  {
     "domain": "allegro.pl",
     "source": "tranco",
     "category": "marketplace",
+    "rankBucket": 0
+  },
+  {
+    "domain": "aloyoga.com",
+    "source": "tranco",
+    "category": "storefront",
     "rankBucket": 0
   },
   {
@@ -110,6 +158,18 @@
     "domain": "amazonaws.com",
     "source": "tranco",
     "category": "unknown",
+    "rankBucket": 0
+  },
+  {
+    "domain": "angular.dev",
+    "source": "tranco",
+    "category": "docs",
+    "rankBucket": 0
+  },
+  {
+    "domain": "answer.ai",
+    "source": "tranco",
+    "category": "exemplar",
     "rankBucket": 0
   },
   {
@@ -138,6 +198,12 @@
     "rankBucket": 0
   },
   {
+    "domain": "arstechnica.com",
+    "source": "tranco",
+    "category": "news",
+    "rankBucket": 0
+  },
+  {
     "domain": "asahi.com",
     "source": "seed",
     "category": "news",
@@ -158,6 +224,12 @@
     "tier": "smoke"
   },
   {
+    "domain": "astro-docs.netlify.app",
+    "source": "seed",
+    "category": "tenant",
+    "rankBucket": 100
+  },
+  {
     "domain": "atlassian.com",
     "source": "tranco",
     "category": "saas",
@@ -171,9 +243,21 @@
     "tier": "smoke"
   },
   {
+    "domain": "awaytravel.com",
+    "source": "tranco",
+    "category": "storefront",
+    "rankBucket": 0
+  },
+  {
     "domain": "azure.com",
     "source": "tranco",
     "category": "unknown",
+    "rankBucket": 0
+  },
+  {
+    "domain": "bahn.de",
+    "source": "tranco",
+    "category": "travel",
     "rankBucket": 0
   },
   {
@@ -191,6 +275,12 @@
     "tier": "smoke"
   },
   {
+    "domain": "barrys.com",
+    "source": "tranco",
+    "category": "local",
+    "rankBucket": 0
+  },
+  {
     "domain": "battlecatsinfo.github.io",
     "source": "crux",
     "category": "tenant",
@@ -201,6 +291,18 @@
     "source": "seed",
     "category": "news",
     "rankBucket": 100
+  },
+  {
+    "domain": "beardbrand.com",
+    "source": "tranco",
+    "category": "storefront",
+    "rankBucket": 0
+  },
+  {
+    "domain": "belgium.be",
+    "source": "tranco",
+    "category": "government",
+    "rankBucket": 0
   },
   {
     "domain": "bing.com",
@@ -218,6 +320,18 @@
     "domain": "bit.ly",
     "source": "crux",
     "category": "unknown",
+    "rankBucket": 0
+  },
+  {
+    "domain": "bloomberg.com",
+    "source": "tranco",
+    "category": "news",
+    "rankBucket": 0
+  },
+  {
+    "domain": "blueland.com",
+    "source": "tranco",
+    "category": "storefront",
     "rankBucket": 0
   },
   {
@@ -240,9 +354,21 @@
     "tier": "smoke"
   },
   {
+    "domain": "bondvet.com",
+    "source": "tranco",
+    "category": "local",
+    "rankBucket": 0
+  },
+  {
     "domain": "booking.com",
     "source": "tranco",
     "category": "marketplace",
+    "rankBucket": 0
+  },
+  {
+    "domain": "britishairways.com",
+    "source": "tranco",
+    "category": "travel",
     "rankBucket": 0
   },
   {
@@ -252,11 +378,35 @@
     "rankBucket": 0
   },
   {
+    "domain": "bruvi.com",
+    "source": "seed",
+    "category": "storefront",
+    "rankBucket": 100
+  },
+  {
+    "domain": "bun.sh",
+    "source": "tranco",
+    "category": "exemplar",
+    "rankBucket": 0
+  },
+  {
     "domain": "bund.de",
     "source": "tranco",
     "category": "government",
     "rankBucket": 0,
     "tier": "smoke"
+  },
+  {
+    "domain": "cal.com",
+    "source": "tranco",
+    "category": "exemplar",
+    "rankBucket": 0
+  },
+  {
+    "domain": "calendly.com",
+    "source": "tranco",
+    "category": "saas",
+    "rankBucket": 0
   },
   {
     "domain": "canada.ca",
@@ -268,6 +418,12 @@
     "domain": "canalnatelinhaonline.blogspot.com",
     "source": "crux",
     "category": "tenant",
+    "rankBucket": 0
+  },
+  {
+    "domain": "canva.com",
+    "source": "crux",
+    "category": "unknown",
     "rankBucket": 0
   },
   {
@@ -295,15 +451,58 @@
     "rankBucket": 0
   },
   {
+    "domain": "cedars-sinai.org",
+    "source": "tranco",
+    "category": "health",
+    "rankBucket": 0
+  },
+  {
     "domain": "chase.com",
     "source": "tranco",
     "category": "bank",
     "rankBucket": 0
   },
   {
+    "domain": "chateaumarmont.com",
+    "source": "tranco",
+    "category": "local",
+    "rankBucket": 0
+  },
+  {
+    "domain": "chipotle.com",
+    "source": "tranco",
+    "category": "local",
+    "rankBucket": 0,
+    "tier": "smoke"
+  },
+  {
+    "domain": "chubbiesshorts.com",
+    "source": "tranco",
+    "category": "storefront",
+    "rankBucket": 0
+  },
+  {
     "domain": "citi.com",
     "source": "tranco",
     "category": "bank",
+    "rankBucket": 0
+  },
+  {
+    "domain": "clerk.com",
+    "source": "tranco",
+    "category": "exemplar",
+    "rankBucket": 0
+  },
+  {
+    "domain": "clevelandclinic.org",
+    "source": "tranco",
+    "category": "health",
+    "rankBucket": 0
+  },
+  {
+    "domain": "clickup.com",
+    "source": "tranco",
+    "category": "saas",
     "rankBucket": 0
   },
   {
@@ -331,13 +530,97 @@
     "rankBucket": 100
   },
   {
+    "domain": "cohere.com",
+    "source": "tranco",
+    "category": "exemplar",
+    "rankBucket": 0
+  },
+  {
+    "domain": "colourpop.com",
+    "source": "tranco",
+    "category": "storefront",
+    "rankBucket": 0
+  },
+  {
+    "domain": "commbank.com.au",
+    "source": "tranco",
+    "category": "bank",
+    "rankBucket": 0
+  },
+  {
+    "domain": "community.home-assistant.io",
+    "source": "seed",
+    "category": "forum",
+    "rankBucket": 100
+  },
+  {
+    "domain": "community.openai.com",
+    "source": "seed",
+    "category": "forum",
+    "rankBucket": 100
+  },
+  {
+    "domain": "community.spiceworks.com",
+    "source": "seed",
+    "category": "forum",
+    "rankBucket": 100
+  },
+  {
+    "domain": "convex.dev",
+    "source": "tranco",
+    "category": "exemplar",
+    "rankBucket": 0
+  },
+  {
+    "domain": "cooley.com",
+    "source": "tranco",
+    "category": "local",
+    "rankBucket": 0
+  },
+  {
+    "domain": "corriere.it",
+    "source": "tranco",
+    "category": "news",
+    "rankBucket": 0
+  },
+  {
+    "domain": "counterculturecoffee.com",
+    "source": "tranco",
+    "category": "local",
+    "rankBucket": 0
+  },
+  {
+    "domain": "credit-agricole.fr",
+    "source": "tranco",
+    "category": "bank",
+    "rankBucket": 0
+  },
+  {
+    "domain": "cursor.com",
+    "source": "tranco",
+    "category": "exemplar",
+    "rankBucket": 0
+  },
+  {
     "domain": "darkero.com",
     "source": "crux",
     "category": "unknown",
     "rankBucket": 0
   },
   {
+    "domain": "datadoghq.com",
+    "source": "tranco",
+    "category": "saas",
+    "rankBucket": 0
+  },
+  {
     "domain": "db.com",
+    "source": "tranco",
+    "category": "bank",
+    "rankBucket": 0
+  },
+  {
+    "domain": "dbs.com.sg",
     "source": "tranco",
     "category": "bank",
     "rankBucket": 0
@@ -352,6 +635,18 @@
     "domain": "degykrtshar7.pages.dev",
     "source": "crux",
     "category": "tenant",
+    "rankBucket": 0
+  },
+  {
+    "domain": "deno.com",
+    "source": "tranco",
+    "category": "exemplar",
+    "rankBucket": 0
+  },
+  {
+    "domain": "developer.android.com",
+    "source": "crux",
+    "category": "docs",
     "rankBucket": 0
   },
   {
@@ -375,10 +670,34 @@
     "rankBucket": 0
   },
   {
+    "domain": "developers.cloudflare.com",
+    "source": "crux",
+    "category": "exemplar",
+    "rankBucket": 0
+  },
+  {
     "domain": "digicert.com",
     "source": "tranco",
     "category": "unknown",
     "rankBucket": 0
+  },
+  {
+    "domain": "digital.gov",
+    "source": "tranco",
+    "category": "government",
+    "rankBucket": 0
+  },
+  {
+    "domain": "discourse.mozilla.org",
+    "source": "seed",
+    "category": "forum",
+    "rankBucket": 100
+  },
+  {
+    "domain": "discuss.python.org",
+    "source": "seed",
+    "category": "forum",
+    "rankBucket": 100
   },
   {
     "domain": "discuss.pytorch.org",
@@ -386,6 +705,18 @@
     "category": "forum",
     "rankBucket": 100,
     "tier": "smoke"
+  },
+  {
+    "domain": "dishoom.com",
+    "source": "tranco",
+    "category": "local",
+    "rankBucket": 0
+  },
+  {
+    "domain": "docs.astro.build",
+    "source": "seed",
+    "category": "docs",
+    "rankBucket": 100
   },
   {
     "domain": "docs.aws.amazon.com",
@@ -406,6 +737,12 @@
     "rankBucket": 100
   },
   {
+    "domain": "docs.flutter.dev",
+    "source": "seed",
+    "category": "docs",
+    "rankBucket": 100
+  },
+  {
     "domain": "docs.github.com",
     "source": "crux",
     "category": "docs",
@@ -418,15 +755,63 @@
     "rankBucket": 100
   },
   {
+    "domain": "docs.npmjs.com",
+    "source": "seed",
+    "category": "docs",
+    "rankBucket": 100
+  },
+  {
+    "domain": "docs.oracle.com",
+    "source": "seed",
+    "category": "docs",
+    "rankBucket": 100
+  },
+  {
+    "domain": "docs.perplexity.ai",
+    "source": "seed",
+    "category": "exemplar",
+    "rankBucket": 100
+  },
+  {
     "domain": "docs.python.org",
     "source": "seed",
     "category": "docs",
     "rankBucket": 100
   },
   {
+    "domain": "docs.rs",
+    "source": "tranco",
+    "category": "docs",
+    "rankBucket": 0
+  },
+  {
+    "domain": "docs.stripe.com",
+    "source": "seed",
+    "category": "docs",
+    "rankBucket": 100
+  },
+  {
+    "domain": "docusign.com",
+    "source": "tranco",
+    "category": "saas",
+    "rankBucket": 0
+  },
+  {
+    "domain": "dollarshaveclub.com",
+    "source": "tranco",
+    "category": "storefront",
+    "rankBucket": 0
+  },
+  {
     "domain": "domaincontrol.com",
     "source": "tranco",
     "category": "unknown",
+    "rankBucket": 0
+  },
+  {
+    "domain": "dominiqueansel.com",
+    "source": "tranco",
+    "category": "local",
     "rankBucket": 0
   },
   {
@@ -436,9 +821,27 @@
     "rankBucket": 0
   },
   {
+    "domain": "drizzle.team",
+    "source": "tranco",
+    "category": "exemplar",
+    "rankBucket": 0
+  },
+  {
     "domain": "dropbox.com",
     "source": "tranco",
     "category": "saas",
+    "rankBucket": 0
+  },
+  {
+    "domain": "dub.co",
+    "source": "tranco",
+    "category": "exemplar",
+    "rankBucket": 0
+  },
+  {
+    "domain": "dw.com",
+    "source": "tranco",
+    "category": "news",
     "rankBucket": 0
   },
   {
@@ -472,10 +875,22 @@
     "rankBucket": 0
   },
   {
+    "domain": "elevenlabs.io",
+    "source": "tranco",
+    "category": "exemplar",
+    "rankBucket": 0
+  },
+  {
     "domain": "elpais.com",
     "source": "seed",
     "category": "news",
     "rankBucket": 100
+  },
+  {
+    "domain": "epa.gov",
+    "source": "tranco",
+    "category": "government",
+    "rankBucket": 0
   },
   {
     "domain": "erome.com",
@@ -496,6 +911,12 @@
     "rankBucket": 100
   },
   {
+    "domain": "eurostar.com",
+    "source": "tranco",
+    "category": "travel",
+    "rankBucket": 0
+  },
+  {
     "domain": "exposed-bd4315.blogspot.com",
     "source": "crux",
     "category": "tenant",
@@ -508,9 +929,22 @@
     "rankBucket": 0
   },
   {
+    "domain": "facebook.github.io",
+    "source": "seed",
+    "category": "tenant",
+    "rankBucket": 100,
+    "tier": "smoke"
+  },
+  {
     "domain": "faphouse.com",
     "source": "crux",
     "category": "unknown",
+    "rankBucket": 0
+  },
+  {
+    "domain": "fashionnova.com",
+    "source": "tranco",
+    "category": "storefront",
     "rankBucket": 0
   },
   {
@@ -532,6 +966,12 @@
     "rankBucket": 0
   },
   {
+    "domain": "finnair.com",
+    "source": "tranco",
+    "category": "travel",
+    "rankBucket": 0
+  },
+  {
     "domain": "flashscore.mobi",
     "source": "crux",
     "category": "unknown",
@@ -541,6 +981,12 @@
     "domain": "flipkart.com",
     "source": "tranco",
     "category": "marketplace",
+    "rankBucket": 0
+  },
+  {
+    "domain": "fly.io",
+    "source": "tranco",
+    "category": "exemplar",
     "rankBucket": 0
   },
   {
@@ -562,7 +1008,37 @@
     "rankBucket": 100
   },
   {
+    "domain": "forum.freecodecamp.org",
+    "source": "seed",
+    "category": "forum",
+    "rankBucket": 100
+  },
+  {
+    "domain": "forum.gitlab.com",
+    "source": "seed",
+    "category": "forum",
+    "rankBucket": 100
+  },
+  {
+    "domain": "forum.obsidian.md",
+    "source": "seed",
+    "category": "forum",
+    "rankBucket": 100
+  },
+  {
     "domain": "forums.macrumors.com",
+    "source": "seed",
+    "category": "forum",
+    "rankBucket": 100
+  },
+  {
+    "domain": "forums.swift.org",
+    "source": "seed",
+    "category": "forum",
+    "rankBucket": 100
+  },
+  {
+    "domain": "forums.unrealengine.com",
     "source": "seed",
     "category": "forum",
     "rankBucket": 100
@@ -571,6 +1047,12 @@
     "domain": "fr.wikipedia.org",
     "source": "crux",
     "category": "unknown",
+    "rankBucket": 0
+  },
+  {
+    "domain": "france24.com",
+    "source": "tranco",
+    "category": "news",
     "rankBucket": 0
   },
   {
@@ -590,6 +1072,12 @@
     "source": "tranco",
     "category": "unknown",
     "rankBucket": 0
+  },
+  {
+    "domain": "gatsby-starter-blog.netlify.app",
+    "source": "seed",
+    "category": "tenant",
+    "rankBucket": 100
   },
   {
     "domain": "gcr11play.pages.dev",
@@ -612,7 +1100,13 @@
   {
     "domain": "github.com",
     "source": "tranco",
-    "category": "unknown",
+    "category": "saas",
+    "rankBucket": 0
+  },
+  {
+    "domain": "gitlab.com",
+    "source": "tranco",
+    "category": "saas",
     "rankBucket": 0
   },
   {
@@ -644,6 +1138,13 @@
     "source": "tranco",
     "category": "unknown",
     "rankBucket": 0
+  },
+  {
+    "domain": "google.github.io",
+    "source": "seed",
+    "category": "tenant",
+    "rankBucket": 100,
+    "tier": "smoke"
   },
   {
     "domain": "googleapis.com",
@@ -688,6 +1189,18 @@
     "rankBucket": 0
   },
   {
+    "domain": "gov.pl",
+    "source": "tranco",
+    "category": "government",
+    "rankBucket": 0
+  },
+  {
+    "domain": "gov.scot",
+    "source": "tranco",
+    "category": "government",
+    "rankBucket": 0
+  },
+  {
     "domain": "gov.sg",
     "source": "tranco",
     "category": "government",
@@ -697,6 +1210,24 @@
     "domain": "gov.uk",
     "source": "tranco",
     "category": "government",
+    "rankBucket": 0
+  },
+  {
+    "domain": "gov.wales",
+    "source": "tranco",
+    "category": "government",
+    "rankBucket": 0
+  },
+  {
+    "domain": "government.nl",
+    "source": "tranco",
+    "category": "government",
+    "rankBucket": 0
+  },
+  {
+    "domain": "gsk.com",
+    "source": "tranco",
+    "category": "health",
     "rankBucket": 0
   },
   {
@@ -718,15 +1249,57 @@
     "rankBucket": 0
   },
   {
+    "domain": "hawksmoor.com",
+    "source": "seed",
+    "category": "local",
+    "rankBucket": 100
+  },
+  {
     "domain": "hdhub4u.med",
     "source": "crux",
     "category": "unknown",
     "rankBucket": 0
   },
   {
+    "domain": "healthline.com",
+    "source": "tranco",
+    "category": "health",
+    "rankBucket": 0
+  },
+  {
+    "domain": "help.notion.site",
+    "source": "seed",
+    "category": "tenant",
+    "rankBucket": 100
+  },
+  {
     "domain": "hicloudcam.com",
     "source": "tranco",
     "category": "unknown",
+    "rankBucket": 0
+  },
+  {
+    "domain": "hiutdenim.co.uk",
+    "source": "seed",
+    "category": "storefront",
+    "rankBucket": 100
+  },
+  {
+    "domain": "hono.dev",
+    "source": "tranco",
+    "category": "exemplar",
+    "rankBucket": 0
+  },
+  {
+    "domain": "hono.pages.dev",
+    "source": "seed",
+    "category": "tenant",
+    "rankBucket": 100
+  },
+  {
+    "domain": "hostelworld.com",
+    "source": "tranco",
+    "category": "travel",
     "rankBucket": 0
   },
   {
@@ -742,9 +1315,27 @@
     "rankBucket": 0
   },
   {
+    "domain": "hugeinc.com",
+    "source": "tranco",
+    "category": "local",
+    "rankBucket": 0
+  },
+  {
     "domain": "icloud.com",
     "source": "tranco",
     "category": "unknown",
+    "rankBucket": 0
+  },
+  {
+    "domain": "ihg.com",
+    "source": "tranco",
+    "category": "travel",
+    "rankBucket": 0
+  },
+  {
+    "domain": "ikea.com",
+    "source": "tranco",
+    "category": "marketplace",
     "rankBucket": 0
   },
   {
@@ -766,6 +1357,36 @@
     "rankBucket": 0
   },
   {
+    "domain": "inngest.com",
+    "source": "tranco",
+    "category": "exemplar",
+    "rankBucket": 0
+  },
+  {
+    "domain": "instrument.com",
+    "source": "tranco",
+    "category": "local",
+    "rankBucket": 0
+  },
+  {
+    "domain": "intelligentsia.com",
+    "source": "tranco",
+    "category": "local",
+    "rankBucket": 0
+  },
+  {
+    "domain": "intercom.com",
+    "source": "tranco",
+    "category": "saas",
+    "rankBucket": 0
+  },
+  {
+    "domain": "intesasanpaolo.com",
+    "source": "tranco",
+    "category": "bank",
+    "rankBucket": 0
+  },
+  {
     "domain": "irs.gov",
     "source": "tranco",
     "category": "government",
@@ -776,6 +1397,24 @@
     "source": "seed",
     "category": "news",
     "rankBucket": 100
+  },
+  {
+    "domain": "jd.com",
+    "source": "tranco",
+    "category": "marketplace",
+    "rankBucket": 0
+  },
+  {
+    "domain": "jnj.com",
+    "source": "tranco",
+    "category": "health",
+    "rankBucket": 0
+  },
+  {
+    "domain": "joesstonecrab.com",
+    "source": "tranco",
+    "category": "local",
+    "rankBucket": 0
   },
   {
     "domain": "jp.xhamster.com",
@@ -790,7 +1429,38 @@
     "rankBucket": 0
   },
   {
+    "domain": "kaiserpermanente.org",
+    "source": "tranco",
+    "category": "health",
+    "rankBucket": 0
+  },
+  {
+    "domain": "kayak.com",
+    "source": "tranco",
+    "category": "travel",
+    "rankBucket": 0,
+    "tier": "smoke"
+  },
+  {
+    "domain": "kirkland.com",
+    "source": "tranco",
+    "category": "local",
+    "rankBucket": 0
+  },
+  {
     "domain": "kubernetes.io",
+    "source": "tranco",
+    "category": "docs",
+    "rankBucket": 0
+  },
+  {
+    "domain": "kyliecosmetics.com",
+    "source": "tranco",
+    "category": "storefront",
+    "rankBucket": 0
+  },
+  {
+    "domain": "laravel.com",
     "source": "tranco",
     "category": "docs",
     "rankBucket": 0
@@ -800,6 +1470,12 @@
     "source": "crux",
     "category": "docs",
     "rankBucket": 0
+  },
+  {
+    "domain": "learn.notion.site",
+    "source": "seed",
+    "category": "tenant",
+    "rankBucket": 100
   },
   {
     "domain": "leboncoin.fr",
@@ -812,6 +1488,12 @@
     "source": "seed",
     "category": "news",
     "rankBucket": 100
+  },
+  {
+    "domain": "levainbakery.com",
+    "source": "tranco",
+    "category": "local",
+    "rankBucket": 0
   },
   {
     "domain": "lichess.org",
@@ -850,6 +1532,12 @@
     "rankBucket": 0
   },
   {
+    "domain": "liveblocks.io",
+    "source": "tranco",
+    "category": "exemplar",
+    "rankBucket": 0
+  },
+  {
     "domain": "livezwc37.blogspot.com",
     "source": "crux",
     "category": "tenant",
@@ -865,6 +1553,12 @@
     "domain": "livezwc94.blogspot.com",
     "source": "crux",
     "category": "tenant",
+    "rankBucket": 0
+  },
+  {
+    "domain": "llmstxt.org",
+    "source": "tranco",
+    "category": "exemplar",
     "rankBucket": 0
   },
   {
@@ -892,9 +1586,21 @@
     "rankBucket": 0
   },
   {
+    "domain": "loom.com",
+    "source": "tranco",
+    "category": "saas",
+    "rankBucket": 0
+  },
+  {
     "domain": "los-and-lms-credit-sea.vercel.app",
     "source": "crux",
     "category": "tenant",
+    "rankBucket": 0
+  },
+  {
+    "domain": "lowes.com",
+    "source": "tranco",
+    "category": "marketplace",
     "rankBucket": 0
   },
   {
@@ -913,6 +1619,12 @@
     "domain": "magicspoon.com",
     "source": "tranco",
     "category": "storefront",
+    "rankBucket": 0
+  },
+  {
+    "domain": "magnoliabakery.com",
+    "source": "tranco",
+    "category": "local",
     "rankBucket": 0
   },
   {
@@ -940,6 +1652,12 @@
     "rankBucket": 0
   },
   {
+    "domain": "mathoverflow.net",
+    "source": "tranco",
+    "category": "forum",
+    "rankBucket": 0
+  },
+  {
     "domain": "mediafire.com",
     "source": "crux",
     "category": "unknown",
@@ -952,15 +1670,39 @@
     "rankBucket": 0
   },
   {
+    "domain": "medlineplus.gov",
+    "source": "tranco",
+    "category": "health",
+    "rankBucket": 0
+  },
+  {
+    "domain": "mejuri.com",
+    "source": "tranco",
+    "category": "storefront",
+    "rankBucket": 0
+  },
+  {
     "domain": "mercadolibre.com",
     "source": "seed",
     "category": "marketplace",
     "rankBucket": 100
   },
   {
+    "domain": "merck.com",
+    "source": "tranco",
+    "category": "health",
+    "rankBucket": 0
+  },
+  {
     "domain": "meta.discourse.org",
     "source": "seed",
     "category": "forum",
+    "rankBucket": 100
+  },
+  {
+    "domain": "metalab.com",
+    "source": "seed",
+    "category": "local",
     "rankBucket": 100
   },
   {
@@ -970,9 +1712,27 @@
     "rankBucket": 0
   },
   {
+    "domain": "microsoft.github.io",
+    "source": "seed",
+    "category": "tenant",
+    "rankBucket": 100
+  },
+  {
     "domain": "microsoftonline.com",
     "source": "tranco",
     "category": "unknown",
+    "rankBucket": 0
+  },
+  {
+    "domain": "mintlify.com",
+    "source": "tranco",
+    "category": "exemplar",
+    "rankBucket": 0
+  },
+  {
+    "domain": "miro.com",
+    "source": "tranco",
+    "category": "saas",
     "rankBucket": 0
   },
   {
@@ -982,9 +1742,39 @@
     "rankBucket": 0
   },
   {
+    "domain": "mistral.ai",
+    "source": "tranco",
+    "category": "exemplar",
+    "rankBucket": 0
+  },
+  {
+    "domain": "modelcontextprotocol.io",
+    "source": "tranco",
+    "category": "exemplar",
+    "rankBucket": 0
+  },
+  {
     "domain": "moe-gov-eg.pages.dev",
     "source": "crux",
     "category": "tenant",
+    "rankBucket": 0
+  },
+  {
+    "domain": "monday.com",
+    "source": "tranco",
+    "category": "saas",
+    "rankBucket": 0
+  },
+  {
+    "domain": "monzo.com",
+    "source": "tranco",
+    "category": "bank",
+    "rankBucket": 0
+  },
+  {
+    "domain": "mountsinai.org",
+    "source": "tranco",
+    "category": "health",
     "rankBucket": 0
   },
   {
@@ -1018,9 +1808,39 @@
     "rankBucket": 0
   },
   {
+    "domain": "n26.com",
+    "source": "tranco",
+    "category": "bank",
+    "rankBucket": 0
+  },
+  {
+    "domain": "nab.com.au",
+    "source": "tranco",
+    "category": "bank",
+    "rankBucket": 0
+  },
+  {
     "domain": "nasa.gov",
     "source": "tranco",
     "category": "government",
+    "rankBucket": 0
+  },
+  {
+    "domain": "natwest.com",
+    "source": "tranco",
+    "category": "bank",
+    "rankBucket": 0
+  },
+  {
+    "domain": "netflix.github.io",
+    "source": "seed",
+    "category": "tenant",
+    "rankBucket": 100
+  },
+  {
+    "domain": "newegg.com",
+    "source": "tranco",
+    "category": "marketplace",
     "rankBucket": 0
   },
   {
@@ -1028,6 +1848,24 @@
     "source": "seed",
     "category": "forum",
     "rankBucket": 100
+  },
+  {
+    "domain": "next-blog-starter.vercel.app",
+    "source": "seed",
+    "category": "tenant",
+    "rankBucket": 100
+  },
+  {
+    "domain": "nextjs-commerce.vercel.app",
+    "source": "seed",
+    "category": "tenant",
+    "rankBucket": 100
+  },
+  {
+    "domain": "nhs.uk",
+    "source": "tranco",
+    "category": "government",
+    "rankBucket": 0
   },
   {
     "domain": "nih.gov",
@@ -1054,6 +1892,12 @@
     "rankBucket": 0
   },
   {
+    "domain": "novartis.com",
+    "source": "tranco",
+    "category": "health",
+    "rankBucket": 0
+  },
+  {
     "domain": "npr.org",
     "source": "seed",
     "category": "news",
@@ -1066,10 +1910,46 @@
     "rankBucket": 0
   },
   {
+    "domain": "numpy.readthedocs.io",
+    "source": "seed",
+    "category": "tenant",
+    "rankBucket": 100
+  },
+  {
+    "domain": "nuxt.com",
+    "source": "tranco",
+    "category": "exemplar",
+    "rankBucket": 0
+  },
+  {
     "domain": "nytimes.com",
     "source": "seed",
     "category": "news",
     "rankBucket": 100
+  },
+  {
+    "domain": "nyulangone.org",
+    "source": "tranco",
+    "category": "health",
+    "rankBucket": 0
+  },
+  {
+    "domain": "nzherald.co.nz",
+    "source": "tranco",
+    "category": "news",
+    "rankBucket": 0
+  },
+  {
+    "domain": "ocbc.com",
+    "source": "tranco",
+    "category": "bank",
+    "rankBucket": 0
+  },
+  {
+    "domain": "oebb.at",
+    "source": "tranco",
+    "category": "travel",
+    "rankBucket": 0
   },
   {
     "domain": "office.com",
@@ -1093,6 +1973,12 @@
     "domain": "okdiario.com",
     "source": "crux",
     "category": "unknown",
+    "rankBucket": 0
+  },
+  {
+    "domain": "okta.com",
+    "source": "tranco",
+    "category": "saas",
     "rankBucket": 0
   },
   {
@@ -1120,6 +2006,42 @@
     "rankBucket": 0
   },
   {
+    "domain": "pentagram.com",
+    "source": "tranco",
+    "category": "local",
+    "rankBucket": 0
+  },
+  {
+    "domain": "pfizer.com",
+    "source": "tranco",
+    "category": "health",
+    "rankBucket": 0
+  },
+  {
+    "domain": "physics.stackexchange.com",
+    "source": "seed",
+    "category": "forum",
+    "rankBucket": 100
+  },
+  {
+    "domain": "pinecone.io",
+    "source": "tranco",
+    "category": "exemplar",
+    "rankBucket": 0
+  },
+  {
+    "domain": "pizzeriabianco.com",
+    "source": "seed",
+    "category": "local",
+    "rankBucket": 100
+  },
+  {
+    "domain": "platformer.substack.com",
+    "source": "seed",
+    "category": "tenant",
+    "rankBucket": 100
+  },
+  {
     "domain": "playhop.com",
     "source": "crux",
     "category": "unknown",
@@ -1138,6 +2060,43 @@
     "rankBucket": 0
   },
   {
+    "domain": "posthog.com",
+    "source": "tranco",
+    "category": "exemplar",
+    "rankBucket": 0,
+    "tier": "smoke"
+  },
+  {
+    "domain": "priceline.com",
+    "source": "tranco",
+    "category": "travel",
+    "rankBucket": 0
+  },
+  {
+    "domain": "prisma.io",
+    "source": "tranco",
+    "category": "exemplar",
+    "rankBucket": 0
+  },
+  {
+    "domain": "pv-cdn.net",
+    "source": "tranco",
+    "category": "unknown",
+    "rankBucket": 0
+  },
+  {
+    "domain": "pytorch.org",
+    "source": "tranco",
+    "category": "docs",
+    "rankBucket": 0
+  },
+  {
+    "domain": "qantas.com",
+    "source": "tranco",
+    "category": "travel",
+    "rankBucket": 0
+  },
+  {
     "domain": "quora.com",
     "source": "seed",
     "category": "forum",
@@ -1147,6 +2106,12 @@
     "domain": "rakuten.co.jp",
     "source": "tranco",
     "category": "marketplace",
+    "rankBucket": 0
+  },
+  {
+    "domain": "ramotion.com",
+    "source": "tranco",
+    "category": "local",
     "rankBucket": 0
   },
   {
@@ -1168,6 +2133,48 @@
     "rankBucket": 100
   },
   {
+    "domain": "redis.io",
+    "source": "tranco",
+    "category": "docs",
+    "rankBucket": 0
+  },
+  {
+    "domain": "remix-run.pages.dev",
+    "source": "seed",
+    "category": "tenant",
+    "rankBucket": 100
+  },
+  {
+    "domain": "render.com",
+    "source": "tranco",
+    "category": "exemplar",
+    "rankBucket": 0
+  },
+  {
+    "domain": "renfe.com",
+    "source": "tranco",
+    "category": "travel",
+    "rankBucket": 0
+  },
+  {
+    "domain": "replicate.com",
+    "source": "tranco",
+    "category": "exemplar",
+    "rankBucket": 0
+  },
+  {
+    "domain": "requests.readthedocs.io",
+    "source": "seed",
+    "category": "tenant",
+    "rankBucket": 100
+  },
+  {
+    "domain": "resend.com",
+    "source": "tranco",
+    "category": "exemplar",
+    "rankBucket": 0
+  },
+  {
     "domain": "reuters.com",
     "source": "seed",
     "category": "news",
@@ -1180,9 +2187,21 @@
     "rankBucket": 0
   },
   {
+    "domain": "roche.com",
+    "source": "tranco",
+    "category": "health",
+    "rankBucket": 0
+  },
+  {
     "domain": "rothys.com",
     "source": "tranco",
     "category": "storefront",
+    "rankBucket": 0
+  },
+  {
+    "domain": "rte.ie",
+    "source": "tranco",
+    "category": "news",
     "rankBucket": 0
   },
   {
@@ -1204,10 +2223,23 @@
     "rankBucket": 0
   },
   {
+    "domain": "russanddaughters.com",
+    "source": "tranco",
+    "category": "local",
+    "rankBucket": 0
+  },
+  {
     "domain": "rust-lang.org",
     "source": "tranco",
     "category": "docs",
     "rankBucket": 0
+  },
+  {
+    "domain": "ryanair.com",
+    "source": "tranco",
+    "category": "travel",
+    "rankBucket": 0,
+    "tier": "smoke"
   },
   {
     "domain": "salesforce.com",
@@ -1216,10 +2248,29 @@
     "rankBucket": 0
   },
   {
+    "domain": "sanofi.com",
+    "source": "tranco",
+    "category": "health",
+    "rankBucket": 0
+  },
+  {
     "domain": "santander.com",
     "source": "tranco",
     "category": "bank",
     "rankBucket": 0
+  },
+  {
+    "domain": "scotiabank.com",
+    "source": "tranco",
+    "category": "bank",
+    "rankBucket": 0
+  },
+  {
+    "domain": "sentry.io",
+    "source": "tranco",
+    "category": "exemplar",
+    "rankBucket": 0,
+    "tier": "smoke"
   },
   {
     "domain": "serverfault.com",
@@ -1237,6 +2288,12 @@
     "domain": "sharepoint.com",
     "source": "tranco",
     "category": "unknown",
+    "rankBucket": 0
+  },
+  {
+    "domain": "shein.com",
+    "source": "tranco",
+    "category": "marketplace",
     "rankBucket": 0
   },
   {
@@ -1258,9 +2315,21 @@
     "rankBucket": 0
   },
   {
+    "domain": "skadden.com",
+    "source": "tranco",
+    "category": "local",
+    "rankBucket": 0
+  },
+  {
     "domain": "skype.com",
     "source": "tranco",
     "category": "unknown",
+    "rankBucket": 0
+  },
+  {
+    "domain": "skyscanner.net",
+    "source": "tranco",
+    "category": "travel",
     "rankBucket": 0
   },
   {
@@ -1276,6 +2345,24 @@
     "rankBucket": 100
   },
   {
+    "domain": "snowflake.com",
+    "source": "tranco",
+    "category": "saas",
+    "rankBucket": 0
+  },
+  {
+    "domain": "societegenerale.com",
+    "source": "tranco",
+    "category": "bank",
+    "rankBucket": 0
+  },
+  {
+    "domain": "soulcycle.com",
+    "source": "seed",
+    "category": "local",
+    "rankBucket": 100
+  },
+  {
     "domain": "spiegel.de",
     "source": "seed",
     "category": "news",
@@ -1288,15 +2375,57 @@
     "rankBucket": 0
   },
   {
+    "domain": "spotify.github.io",
+    "source": "seed",
+    "category": "tenant",
+    "rankBucket": 100
+  },
+  {
+    "domain": "square.github.io",
+    "source": "seed",
+    "category": "tenant",
+    "rankBucket": 100
+  },
+  {
     "domain": "stackoverflow.com",
     "source": "tranco",
     "category": "forum",
     "rankBucket": 0
   },
   {
+    "domain": "stanfordhealthcare.org",
+    "source": "tranco",
+    "category": "health",
+    "rankBucket": 0
+  },
+  {
+    "domain": "starlingbank.com",
+    "source": "tranco",
+    "category": "bank",
+    "rankBucket": 0
+  },
+  {
+    "domain": "stratechery.substack.com",
+    "source": "seed",
+    "category": "tenant",
+    "rankBucket": 100
+  },
+  {
     "domain": "stripe.com",
     "source": "tranco",
     "category": "saas",
+    "rankBucket": 0
+  },
+  {
+    "domain": "stumptowncoffee.com",
+    "source": "tranco",
+    "category": "local",
+    "rankBucket": 0
+  },
+  {
+    "domain": "supabase.com",
+    "source": "tranco",
+    "category": "exemplar",
     "rankBucket": 0
   },
   {
@@ -1312,6 +2441,31 @@
     "rankBucket": 0
   },
   {
+    "domain": "svelte.dev",
+    "source": "tranco",
+    "category": "docs",
+    "rankBucket": 0
+  },
+  {
+    "domain": "sweetgreen.com",
+    "source": "tranco",
+    "category": "local",
+    "rankBucket": 0,
+    "tier": "smoke"
+  },
+  {
+    "domain": "tailwindcss.com",
+    "source": "tranco",
+    "category": "docs",
+    "rankBucket": 0
+  },
+  {
+    "domain": "tanstack.com",
+    "source": "tranco",
+    "category": "exemplar",
+    "rankBucket": 0
+  },
+  {
     "domain": "taobao.com",
     "source": "tranco",
     "category": "marketplace",
@@ -1321,6 +2475,12 @@
     "domain": "target.com",
     "source": "tranco",
     "category": "marketplace",
+    "rankBucket": 0
+  },
+  {
+    "domain": "tartinebakery.com",
+    "source": "tranco",
+    "category": "local",
     "rankBucket": 0
   },
   {
@@ -1337,8 +2497,8 @@
   },
   {
     "domain": "temu.com",
-    "source": "crux",
-    "category": "unknown",
+    "source": "tranco",
+    "category": "marketplace",
     "rankBucket": 0
   },
   {
@@ -1366,10 +2526,46 @@
     "rankBucket": 0
   },
   {
+    "domain": "theatlantic.com",
+    "source": "tranco",
+    "category": "news",
+    "rankBucket": 0
+  },
+  {
     "domain": "theguardian.com",
     "source": "seed",
     "category": "news",
     "rankBucket": 100
+  },
+  {
+    "domain": "thehindu.com",
+    "source": "tranco",
+    "category": "news",
+    "rankBucket": 0
+  },
+  {
+    "domain": "thehoxton.com",
+    "source": "tranco",
+    "category": "local",
+    "rankBucket": 0
+  },
+  {
+    "domain": "thetrainline.com",
+    "source": "tranco",
+    "category": "travel",
+    "rankBucket": 0
+  },
+  {
+    "domain": "theverge.com",
+    "source": "tranco",
+    "category": "news",
+    "rankBucket": 0
+  },
+  {
+    "domain": "together.ai",
+    "source": "tranco",
+    "category": "exemplar",
+    "rankBucket": 0
   },
   {
     "domain": "toto11real.pages.dev",
@@ -1390,13 +2586,37 @@
     "rankBucket": 0
   },
   {
+    "domain": "trenitalia.com",
+    "source": "tranco",
+    "category": "travel",
+    "rankBucket": 0
+  },
+  {
+    "domain": "trigger.dev",
+    "source": "tranco",
+    "category": "exemplar",
+    "rankBucket": 0
+  },
+  {
     "domain": "ttkm-789bet.pages.dev",
     "source": "crux",
     "category": "tenant",
     "rankBucket": 0
   },
   {
+    "domain": "turso.tech",
+    "source": "tranco",
+    "category": "exemplar",
+    "rankBucket": 0
+  },
+  {
     "domain": "twilio.com",
+    "source": "tranco",
+    "category": "saas",
+    "rankBucket": 0
+  },
+  {
+    "domain": "typeform.com",
     "source": "tranco",
     "category": "saas",
     "rankBucket": 0
@@ -1408,10 +2628,28 @@
     "rankBucket": 0
   },
   {
+    "domain": "uber.github.io",
+    "source": "seed",
+    "category": "tenant",
+    "rankBucket": 100
+  },
+  {
     "domain": "ubs.com",
     "source": "tranco",
     "category": "bank",
     "rankBucket": 0
+  },
+  {
+    "domain": "uclahealth.org",
+    "source": "tranco",
+    "category": "health",
+    "rankBucket": 0
+  },
+  {
+    "domain": "ui.shadcn.com",
+    "source": "seed",
+    "category": "exemplar",
+    "rankBucket": 100
   },
   {
     "domain": "unifiedportal-mem.epfindia.gov.in",
@@ -1426,6 +2664,12 @@
     "rankBucket": 0
   },
   {
+    "domain": "upstash.com",
+    "source": "tranco",
+    "category": "exemplar",
+    "rankBucket": 0
+  },
+  {
     "domain": "usa.gov",
     "source": "seed",
     "category": "government",
@@ -1435,6 +2679,18 @@
     "domain": "usbank.com",
     "source": "tranco",
     "category": "bank",
+    "rankBucket": 0
+  },
+  {
+    "domain": "users.rust-lang.org",
+    "source": "seed",
+    "category": "forum",
+    "rankBucket": 100
+  },
+  {
+    "domain": "ustwo.com",
+    "source": "tranco",
+    "category": "local",
     "rankBucket": 0
   },
   {
@@ -1462,9 +2718,51 @@
     "rankBucket": 0
   },
   {
+    "domain": "viarail.ca",
+    "source": "tranco",
+    "category": "travel",
+    "rankBucket": 0
+  },
+  {
+    "domain": "vinted.com",
+    "source": "tranco",
+    "category": "marketplace",
+    "rankBucket": 0
+  },
+  {
+    "domain": "vite.dev",
+    "source": "tranco",
+    "category": "docs",
+    "rankBucket": 0
+  },
+  {
+    "domain": "vitest.dev",
+    "source": "tranco",
+    "category": "exemplar",
+    "rankBucket": 0
+  },
+  {
+    "domain": "vuejs.org",
+    "source": "tranco",
+    "category": "docs",
+    "rankBucket": 0
+  },
+  {
+    "domain": "vueling.com",
+    "source": "tranco",
+    "category": "travel",
+    "rankBucket": 0
+  },
+  {
     "domain": "w3.org",
     "source": "tranco",
     "category": "docs",
+    "rankBucket": 0
+  },
+  {
+    "domain": "walgreens.com",
+    "source": "tranco",
+    "category": "health",
     "rankBucket": 0
   },
   {
@@ -1492,6 +2790,25 @@
     "rankBucket": 0
   },
   {
+    "domain": "weaviate.io",
+    "source": "tranco",
+    "category": "exemplar",
+    "rankBucket": 0
+  },
+  {
+    "domain": "webflow.com",
+    "source": "tranco",
+    "category": "saas",
+    "rankBucket": 0
+  },
+  {
+    "domain": "webmd.com",
+    "source": "tranco",
+    "category": "health",
+    "rankBucket": 0,
+    "tier": "smoke"
+  },
+  {
     "domain": "wellsfargo.com",
     "source": "tranco",
     "category": "bank",
@@ -1502,6 +2819,13 @@
     "source": "tranco",
     "category": "government",
     "rankBucket": 0
+  },
+  {
+    "domain": "who.int",
+    "source": "tranco",
+    "category": "health",
+    "rankBucket": 0,
+    "tier": "smoke"
   },
   {
     "domain": "wikipedia.org",
@@ -1525,6 +2849,18 @@
     "domain": "wordpress.org",
     "source": "tranco",
     "category": "unknown",
+    "rankBucket": 0
+  },
+  {
+    "domain": "work.co",
+    "source": "tranco",
+    "category": "local",
+    "rankBucket": 0
+  },
+  {
+    "domain": "wyndhamhotels.com",
+    "source": "tranco",
+    "category": "travel",
     "rankBucket": 0
   },
   {
@@ -1576,9 +2912,21 @@
     "rankBucket": 0
   },
   {
+    "domain": "zapier.com",
+    "source": "tranco",
+    "category": "exemplar",
+    "rankBucket": 0
+  },
+  {
     "domain": "zendesk.com",
     "source": "tranco",
     "category": "saas",
+    "rankBucket": 0
+  },
+  {
+    "domain": "zingermans.com",
+    "source": "tranco",
+    "category": "local",
     "rankBucket": 0
   },
   {
