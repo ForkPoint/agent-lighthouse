@@ -51,6 +51,7 @@ interface CliOptions {
   verbose: boolean;
   help: boolean;
   ignoreRobots: boolean;
+  stratified: boolean;
 }
 
 function parseCliArgs(argv: string[]): CliOptions {
@@ -63,6 +64,7 @@ function parseCliArgs(argv: string[]): CliOptions {
     verbose: false,
     help: false,
     ignoreRobots: false,
+    stratified: false,
   };
 
   for (const arg of argv) {
@@ -76,6 +78,10 @@ function parseCliArgs(argv: string[]): CliOptions {
     }
     if (arg === "--ignore-robots") {
       options.ignoreRobots = true;
+      continue;
+    }
+    if (arg === "--stratified" || arg === "-s") {
+      options.stratified = true;
       continue;
     }
     const match = /^--([a-z-]+)=(.*)$/.exec(arg);
@@ -130,6 +136,7 @@ Options:
   --category=<name>   Filter by category (e.g. storefront, saas, news, docs, etc.)
   --domain=<domain>   Test a single domain (e.g. --domain=lobste.rs)
   --domains=<list>    Test comma-separated domains (e.g. --domains=stripe.com,bbc.com)
+  --stratified, -s    Sample evenly across all available site categories
   --ignore-robots     Proceed with scan even if third-party robots.txt disallows crawlers
   --out=<path>        Output JSON file path (default: reports/live-sites-test.json)
   --verbose, -v       Print detailed per-check breakdown
@@ -137,6 +144,7 @@ Options:
 
 Examples:
   pnpm test:live --limit=3
+  pnpm test:live --stratified --limit=30 --concurrency=4
   pnpm test:live --category=storefront --limit=5 --concurrency=2
   pnpm test:live --domain=theguardian.com --ignore-robots
   pnpm test:live --domain=theguardian.com --verbose
@@ -213,10 +221,37 @@ async function main(): Promise<void> {
     targetSites = allSites;
   }
 
-  const selected = targetSites.slice(
-    options.offset,
-    options.offset + options.limit,
-  );
+  let selected: SiteEntry[] = [];
+  if (options.stratified && (!options.domains || options.domains.length === 0)) {
+    const byCategory = new Map<string, SiteEntry[]>();
+    for (const site of targetSites) {
+      const list = byCategory.get(site.category) ?? [];
+      list.push(site);
+      byCategory.set(site.category, list);
+    }
+    const categories = Array.from(byCategory.keys()).sort();
+    let added = 0;
+    let round = 0;
+    while (added < options.limit && round < 1000) {
+      for (const cat of categories) {
+        const list = byCategory.get(cat);
+        if (list && list[round]) {
+          selected.push(list[round]);
+          added++;
+          if (added >= options.limit) break;
+        }
+      }
+      round++;
+    }
+    console.log(
+      `Stratified sampling: selected ${selected.length} sites across ${categories.length} categories`,
+    );
+  } else {
+    selected = targetSites.slice(
+      options.offset,
+      options.offset + options.limit,
+    );
+  }
 
   if (selected.length === 0) {
     console.log("⚠️ No sites matched the selection criteria.");
