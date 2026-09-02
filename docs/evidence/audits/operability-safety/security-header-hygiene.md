@@ -68,7 +68,7 @@ One root file, one signal.
 
 *Historical record, 2026-08-22. Three of the four signals described below were removed on 2026-08-24 — see [Narrowed to security.txt](#narrowed-to-securitytxt-contradiction-sweep-2026-08-24).*
 
-The approved v2 map row for 8.2 rules the consolidated signal "weight 0, never fails a site" (`docs/evidence/v2-audit-map.md`, §5 consolidation, audits 8.2–8.7). The four v1 audits levied four independent penalties for one unproven mechanism:
+The approved v2 map row for 8.2 rules the consolidated signal "weight 0, never fails a site" (`docs/evidence/audit-map.md`, §5 consolidation, audits 8.2–8.7). The four v1 audits levied four independent penalties for one unproven mechanism:
 
 - **8.2 hsts-header** — presence-only, priority `high`, motivated by a fabricated claim that AI crawlers waste a redirect hop and that enterprise RAG pipelines reject non-HSTS sites. HSTS is browser-enforced state; GPTBot and ClaudeBot maintain none.
 - **8.3 csp-header** — presence-only, priority `high`, motivated by "AI trust-scoring systems check for CSP headers". No such system is documented. Its own detection failed static hosts that ship CSP as a meta tag and passed `default-src *`.

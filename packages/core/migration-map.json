@@ -3,25 +3,29 @@
     "slug": "content-discoverability/llms-txt-exists",
     "status": "renamed",
     "to": "machine-discovery/llms-txt-exists",
-    "link": "docs/evidence/audits/machine-discovery/llms-txt-exists.md"
+    "link": "docs/evidence/audits/machine-discovery/llms-txt-exists.md",
+    "note": "C3 collapse: absorbs meta-tags/llms-txt-link (4.11) — one audit checks the file and its discovery link together"
   },
   "1.2": {
     "slug": "content-discoverability/llms-txt-blockquote",
     "status": "renamed",
     "to": "machine-discovery/llms-txt-structure",
-    "link": "docs/evidence/audits/machine-discovery/llms-txt-structure.md"
+    "link": "docs/evidence/audits/machine-discovery/llms-txt-structure.md",
+    "note": "§5: llms-txt-blockquote + llms-txt-sections → one llms.txt structure audit"
   },
   "1.3": {
     "slug": "content-discoverability/llms-txt-sections",
     "status": "renamed",
     "to": "machine-discovery/llms-txt-structure",
-    "link": "docs/evidence/audits/machine-discovery/llms-txt-structure.md"
+    "link": "docs/evidence/audits/machine-discovery/llms-txt-structure.md",
+    "note": "§5: same combined llms.txt structure audit (this row supplies the section-shape half)"
   },
   "1.4": {
     "slug": "content-discoverability/llms-txt-link-descriptions",
     "status": "renamed",
     "to": "machine-discovery/llms-txt-link-descriptions",
-    "link": "docs/evidence/audits/machine-discovery/llms-txt-link-descriptions.md"
+    "link": "docs/evidence/audits/machine-discovery/llms-txt-link-descriptions.md",
+    "note": "stays separate — §5 merges only blockquote + sections"
   },
   "1.5": {
     "slug": "content-discoverability/llms-txt-links-valid",
@@ -45,7 +49,8 @@
     "slug": "content-discoverability/sitemap-key-pages",
     "status": "renamed",
     "to": "machine-discovery/discovery-index-coverage",
-    "link": "docs/evidence/audits/machine-discovery/discovery-index-coverage.md"
+    "link": "docs/evidence/audits/machine-discovery/discovery-index-coverage.md",
+    "note": "§5 rename (\"discovery index coverage\"); merge target for no-orphan-pages (1.22)"
   },
   "1.9": {
     "slug": "content-discoverability/sitemap-absolute-urls",
@@ -63,7 +68,8 @@
     "slug": "content-discoverability/rss-feed",
     "status": "renamed",
     "to": "machine-discovery/rss-feed",
-    "link": "docs/evidence/audits/machine-discovery/rss-feed.md"
+    "link": "docs/evidence/audits/machine-discovery/rss-feed.md",
+    "note": "C3 collapse: absorbs meta-tags/rss-feed-link (4.16)"
   },
   "1.12": {
     "slug": "content-discoverability/rss-feed-content",
@@ -75,49 +81,57 @@
     "slug": "content-discoverability/no-noindex",
     "status": "renamed",
     "to": "access-crawl-control/robots-directives",
-    "link": "docs/evidence/audits/access-crawl-control/robots-directives.md"
+    "link": "docs/evidence/audits/access-crawl-control/robots-directives.md",
+    "note": "decided 2026-08-21: merge-away into access-crawl-control/robots-directives (2.25 is the surviving row)"
   },
   "1.14": {
     "slug": "content-discoverability/no-nofollow",
     "status": "renamed",
     "to": "access-crawl-control/no-nofollow",
-    "link": "docs/evidence/audits/access-crawl-control/no-nofollow.md"
+    "link": "docs/evidence/audits/access-crawl-control/no-nofollow.md",
+    "note": "crawl directive"
   },
   "1.15": {
     "slug": "content-discoverability/internal-linking",
     "status": "renamed",
     "to": "machine-discovery/in-content-links",
-    "link": "docs/evidence/audits/machine-discovery/in-content-links.md"
+    "link": "docs/evidence/audits/machine-discovery/in-content-links.md",
+    "note": "decided 2026-08-21: merged with 10.11 internal-cross-linking into one rewritten audit `machine-discovery/in-content-links` — in-content links only"
   },
   "1.16": {
     "slug": "content-discoverability/no-redirect-chains",
     "status": "renamed",
     "to": "access-crawl-control/no-redirect-chains",
-    "link": "docs/evidence/audits/access-crawl-control/no-redirect-chains.md"
+    "link": "docs/evidence/audits/access-crawl-control/no-redirect-chains.md",
+    "note": "reachability, not discovery"
   },
   "1.17": {
     "slug": "content-discoverability/canonical-links",
     "status": "renamed",
     "to": "access-crawl-control/canonical",
-    "link": "docs/evidence/audits/access-crawl-control/canonical.md"
+    "link": "docs/evidence/audits/access-crawl-control/canonical.md",
+    "note": "decided 2026-08-21: merged with 4.3 canonical-url into one audit `access-crawl-control/canonical` — resolved hrefs, homepage-collapse detection"
   },
   "1.18": {
     "slug": "content-discoverability/mobile-friendly",
     "status": "removed",
     "reason": "not-a-factor",
-    "link": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/sunset/not-a-factor.md#content-discoverabilitymobile-friendly"
+    "link": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/sunset/not-a-factor.md#content-discoverabilitymobile-friendly",
+    "note": "decided 2026-08-21: sunset — no proven consumer, viewport tag ubiquitous"
   },
   "1.19": {
     "slug": "content-discoverability/fast-page-load",
     "status": "renamed",
     "to": "content-extraction/server-responsiveness",
-    "link": "docs/evidence/audits/content-extraction/server-responsiveness.md"
+    "link": "docs/evidence/audits/content-extraction/server-responsiveness.md",
+    "note": "decided 2026-08-21: merged with 8.12 fast-response-time into one audit `content-extraction/server-responsiveness` — median TTFB, banded"
   },
   "1.20": {
     "slug": "content-discoverability/no-broken-links",
     "status": "renamed",
     "to": "machine-discovery/no-broken-links",
-    "link": "docs/evidence/audits/machine-discovery/no-broken-links.md"
+    "link": "docs/evidence/audits/machine-discovery/no-broken-links.md",
+    "note": "decided 2026-08-21: confirmed — machine-discovery"
   },
   "1.21": {
     "slug": "content-discoverability/navigation-json",
@@ -129,13 +143,15 @@
     "slug": "content-discoverability/no-orphan-pages",
     "status": "renamed",
     "to": "machine-discovery/discovery-index-coverage",
-    "link": "docs/evidence/audits/machine-discovery/discovery-index-coverage.md"
+    "link": "docs/evidence/audits/machine-discovery/discovery-index-coverage.md",
+    "note": "§5: no-orphan-pages → sitemap-key-pages (\"discovery index coverage\")"
   },
   "1.23": {
     "slug": "content-discoverability/commerce-links",
     "status": "removed",
     "reason": "not-a-factor",
-    "link": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/sunset/not-a-factor.md#content-discoverabilitycommerce-links"
+    "link": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/sunset/not-a-factor.md#content-discoverabilitycommerce-links",
+    "note": "decided 2026-08-21: sunset — grade D, no documented consumer"
   },
   "2.1": {
     "slug": "crawler-permissions/gptbot",
@@ -153,7 +169,8 @@
     "slug": "crawler-permissions/anthropic",
     "status": "renamed",
     "to": "access-crawl-control/anthropic-ai",
-    "link": "docs/evidence/audits/access-crawl-control/anthropic-ai.md"
+    "link": "docs/evidence/audits/access-crawl-control/anthropic-ai.md",
+    "note": "slug de-numericised/clarified to the UA token it checks"
   },
   "2.4": {
     "slug": "crawler-permissions/perplexitybot",
@@ -189,31 +206,36 @@
     "slug": "crawler-permissions/bytespider",
     "status": "renamed",
     "to": "access-crawl-control/ai-bot-directives",
-    "link": "docs/evidence/audits/access-crawl-control/ai-bot-directives.md"
+    "link": "docs/evidence/audits/access-crawl-control/ai-bot-directives.md",
+    "note": "redemption rewrite — REWORK-TODO folds all low-signal per-bot audits into one `ai-bot-directives` audit"
   },
   "2.10": {
     "slug": "crawler-permissions/cohere-ai",
     "status": "renamed",
     "to": "access-crawl-control/ai-bot-directives",
-    "link": "docs/evidence/audits/access-crawl-control/ai-bot-directives.md"
+    "link": "docs/evidence/audits/access-crawl-control/ai-bot-directives.md",
+    "note": "redemption rewrite — same `ai-bot-directives` consolidation"
   },
   "2.11": {
     "slug": "crawler-permissions/youbot",
     "status": "renamed",
     "to": "access-crawl-control/ai-bot-directives",
-    "link": "docs/evidence/audits/access-crawl-control/ai-bot-directives.md"
+    "link": "docs/evidence/audits/access-crawl-control/ai-bot-directives.md",
+    "note": "redemption rewrite — same `ai-bot-directives` consolidation"
   },
   "2.12": {
     "slug": "crawler-permissions/diffbot",
     "status": "renamed",
     "to": "access-crawl-control/ai-bot-directives",
-    "link": "docs/evidence/audits/access-crawl-control/ai-bot-directives.md"
+    "link": "docs/evidence/audits/access-crawl-control/ai-bot-directives.md",
+    "note": "redemption rewrite — same `ai-bot-directives` consolidation"
   },
   "2.13": {
     "slug": "crawler-permissions/ai2bot",
     "status": "renamed",
     "to": "access-crawl-control/ai-bot-directives",
-    "link": "docs/evidence/audits/access-crawl-control/ai-bot-directives.md"
+    "link": "docs/evidence/audits/access-crawl-control/ai-bot-directives.md",
+    "note": "redemption rewrite — same `ai-bot-directives` consolidation"
   },
   "2.14": {
     "slug": "crawler-permissions/chatgpt-user",
@@ -273,7 +295,8 @@
     "slug": "crawler-permissions/sensitive-paths",
     "status": "renamed",
     "to": "access-crawl-control/sensitive-paths",
-    "link": "docs/evidence/audits/access-crawl-control/sensitive-paths.md"
+    "link": "docs/evidence/audits/access-crawl-control/sensitive-paths.md",
+    "note": "redemption rewrite — grade A mechanism, needs path-matching surgery per RFC 9309"
   },
   "2.24": {
     "slug": "crawler-permissions/crawl-delay",
@@ -285,25 +308,29 @@
     "slug": "crawler-permissions/meta-robots-not-blocking",
     "status": "renamed",
     "to": "access-crawl-control/robots-directives",
-    "link": "docs/evidence/audits/access-crawl-control/robots-directives.md"
+    "link": "docs/evidence/audits/access-crawl-control/robots-directives.md",
+    "note": "decided 2026-08-21: merged with 1.13 no-noindex + 4.20 meta-robots into one audit `access-crawl-control/robots-directives` — all pages, meta + `X-Robots-Tag`, token-parsed"
   },
   "2.26": {
     "slug": "crawler-permissions/no-bot-detection",
     "status": "renamed",
     "to": "access-crawl-control/no-bot-detection",
-    "link": "docs/evidence/audits/access-crawl-control/no-bot-detection.md"
+    "link": "docs/evidence/audits/access-crawl-control/no-bot-detection.md",
+    "note": "§3 cat 1 names it explicitly"
   },
   "2.27": {
     "slug": "crawler-permissions/tdm-rep",
     "status": "renamed",
     "to": "access-crawl-control/tdm-rep",
-    "link": "docs/evidence/audits/access-crawl-control/tdm-rep.md"
+    "link": "docs/evidence/audits/access-crawl-control/tdm-rep.md",
+    "note": "redemption rewrite — experimental tier, fix internal incoherence"
   },
   "2.28": {
     "slug": "crawler-permissions/agent-governance",
     "status": "renamed",
     "to": "access-crawl-control/agent-governance",
-    "link": "docs/evidence/audits/access-crawl-control/agent-governance.md"
+    "link": "docs/evidence/audits/access-crawl-control/agent-governance.md",
+    "note": "decided 2026-08-21: confirmed — access-crawl-control"
   },
   "3.1": {
     "slug": "structured-data/json-ld-present",
@@ -327,7 +354,8 @@
     "slug": "structured-data/website-search-action",
     "status": "renamed",
     "to": "agent-interfaces/search-endpoint",
-    "link": "docs/evidence/audits/agent-interfaces/search-endpoint.md"
+    "link": "docs/evidence/audits/agent-interfaces/search-endpoint.md",
+    "note": "decided 2026-08-21: merge-away into agent-interfaces/search-endpoint (5.16 is the surviving row)"
   },
   "3.5": {
     "slug": "structured-data/breadcrumb-schema",
@@ -345,20 +373,22 @@
     "slug": "structured-data/faqpage-schema",
     "status": "renamed",
     "to": "structured-data/faqpage-schema",
-    "link": "docs/evidence/audits/structured-data/faqpage-schema.md"
+    "link": "docs/evidence/audits/structured-data/faqpage-schema.md",
+    "note": "C9 FAQ cluster resolves via shared gatherer, not a merge"
   },
   "3.8": {
     "slug": "structured-data/service-product-schema",
     "status": "renamed",
     "to": "structured-data/service-schema",
     "link": "docs/evidence/audits/structured-data/service-schema.md",
-    "note": "§5 split landed 2026-08-22 (Plan 4, Task 9): the Service half is this row's target, renamed to structured-data/service-schema and narrowed to Service/ProfessionalService; the Product half (the `name` requirement over the Product shape) moved into structured-data/advanced-product-details (3.22), whose dossier documents the ported checks"
+    "note": "§5 split: Product half → structured-data/advanced-product-details (3.22); Service half stays standalone, narrowed to Service/ProfessionalService"
   },
   "3.9": {
     "slug": "structured-data/speakable-schema",
     "status": "renamed",
     "to": "structured-data/speakable-schema",
-    "link": "docs/evidence/audits/structured-data/speakable-schema.md"
+    "link": "docs/evidence/audits/structured-data/speakable-schema.md",
+    "note": "redemption rewrite — narrow to news/article publishers, drop the Alexa/Siri claim. decided 2026-08-21: confirmed — structured-data"
   },
   "3.10": {
     "slug": "structured-data/potential-action",
@@ -382,19 +412,22 @@
     "slug": "structured-data/review-schema",
     "status": "renamed",
     "to": "structured-data/review-schema",
-    "link": "docs/evidence/audits/structured-data/review-schema.md"
+    "link": "docs/evidence/audits/structured-data/review-schema.md",
+    "note": "merge target for product-reviews (3.23); C8 reviews cluster resolves via shared gatherer"
   },
   "3.14": {
     "slug": "structured-data/offer-schema",
     "status": "renamed",
     "to": "agentic-commerce/offer-schema",
-    "link": "docs/evidence/audits/agentic-commerce/offer-schema.md"
+    "link": "docs/evidence/audits/agentic-commerce/offer-schema.md",
+    "note": "§3 cat 7 \"commerce halves of product schema\" — price/availability is the buy path"
   },
   "3.15": {
     "slug": "structured-data/author-schema",
     "status": "renamed",
     "to": "structured-data/author-schema",
-    "link": "docs/evidence/audits/structured-data/author-schema.md"
+    "link": "docs/evidence/audits/structured-data/author-schema.md",
+    "note": "C4 authors cluster resolves via shared gatherer with 10.1–10.3, not a merge"
   },
   "3.16": {
     "slug": "structured-data/action-schema",
@@ -406,61 +439,71 @@
     "slug": "structured-data/product-identifiers",
     "status": "renamed",
     "to": "agentic-commerce/product-identifiers",
-    "link": "docs/evidence/audits/agentic-commerce/product-identifiers.md"
+    "link": "docs/evidence/audits/agentic-commerce/product-identifiers.md",
+    "note": "decided 2026-08-21: confirmed — agentic-commerce (GTIN/MPN are consumed by shopping agents)"
   },
   "3.22": {
     "slug": "structured-data/product-details",
     "status": "renamed",
     "to": "structured-data/advanced-product-details",
-    "link": "docs/evidence/audits/structured-data/advanced-product-details.md"
+    "link": "docs/evidence/audits/structured-data/advanced-product-details.md",
+    "note": "§5 rename; absorbs the Product half of service-product-schema (3.8)"
   },
   "3.23": {
     "slug": "structured-data/product-reviews",
     "status": "renamed",
     "to": "structured-data/review-schema",
-    "link": "docs/evidence/audits/structured-data/review-schema.md"
+    "link": "docs/evidence/audits/structured-data/review-schema.md",
+    "note": "§5: product-reviews → review-schema"
   },
   "3.24": {
     "slug": "structured-data/product-transaction-certainty",
     "status": "renamed",
     "to": "agentic-commerce/product-transaction-certainty",
-    "link": "docs/evidence/audits/agentic-commerce/product-transaction-certainty.md"
+    "link": "docs/evidence/audits/agentic-commerce/product-transaction-certainty.md",
+    "note": "transaction-certainty fields are the checkout half of product schema (§3 cat 7)"
   },
   "4.1": {
     "slug": "meta-tags/meta-description",
     "status": "renamed",
     "to": "answer-readiness/meta-description",
-    "link": "docs/evidence/audits/answer-readiness/meta-description.md"
+    "link": "docs/evidence/audits/answer-readiness/meta-description.md",
+    "note": "meta-tags dissolves; consumer is snippet/answer selection. Merge target for meta-description-aeo (9.11); C15 cluster"
   },
   "4.2": {
     "slug": "meta-tags/meta-author",
     "status": "renamed",
     "to": "answer-readiness/meta-author",
-    "link": "docs/evidence/audits/answer-readiness/meta-author.md"
+    "link": "docs/evidence/audits/answer-readiness/meta-author.md",
+    "note": "author/E-E-A-T signal, C4 cluster via shared gatherer"
   },
   "4.3": {
     "slug": "meta-tags/canonical-url",
     "status": "renamed",
     "to": "access-crawl-control/canonical",
-    "link": "docs/evidence/audits/access-crawl-control/canonical.md"
+    "link": "docs/evidence/audits/access-crawl-control/canonical.md",
+    "note": "decided 2026-08-21: merge-away into access-crawl-control/canonical (1.17 is the surviving row)"
   },
   "4.4": {
     "slug": "meta-tags/language-attribute",
     "status": "renamed",
     "to": "content-extraction/language-attribute",
-    "link": "docs/evidence/audits/content-extraction/language-attribute.md"
+    "link": "docs/evidence/audits/content-extraction/language-attribute.md",
+    "note": "`lang` drives extractor/tokenizer behaviour"
   },
   "4.5": {
     "slug": "meta-tags/unique-meta",
     "status": "renamed",
     "to": "answer-readiness/unique-meta",
-    "link": "docs/evidence/audits/answer-readiness/unique-meta.md"
+    "link": "docs/evidence/audits/answer-readiness/unique-meta.md",
+    "note": "duplicate titles/descriptions degrade answer selection"
   },
   "4.6": {
     "slug": "meta-tags/core-open-graph",
     "status": "renamed",
     "to": "answer-readiness/core-open-graph",
-    "link": "docs/evidence/audits/answer-readiness/core-open-graph.md"
+    "link": "docs/evidence/audits/answer-readiness/core-open-graph.md",
+    "note": "§3 cat 5 \"og/display tags from meta-tags\"; merge target for og-site-name (4.8) and the social-meta fold of twitter-card (4.10)"
   },
   "4.7": {
     "slug": "meta-tags/og-type",
@@ -472,7 +515,8 @@
     "slug": "meta-tags/og-site-name",
     "status": "renamed",
     "to": "answer-readiness/core-open-graph",
-    "link": "docs/evidence/audits/answer-readiness/core-open-graph.md"
+    "link": "docs/evidence/audits/answer-readiness/core-open-graph.md",
+    "note": "§5: og-site-name → core-open-graph"
   },
   "4.9": {
     "slug": "meta-tags/og-image-alt",
@@ -484,13 +528,15 @@
     "slug": "meta-tags/twitter-card",
     "status": "renamed",
     "to": "answer-readiness/core-open-graph",
-    "link": "docs/evidence/audits/answer-readiness/core-open-graph.md"
+    "link": "docs/evidence/audits/answer-readiness/core-open-graph.md",
+    "note": "redemption rewrite — fix the twitter:*/og:* fallback errors and fold into the social-meta diagnostic alongside core-open-graph, informative tier"
   },
   "4.11": {
     "slug": "meta-tags/llms-txt-link",
     "status": "renamed",
     "to": "machine-discovery/llms-txt-exists",
-    "link": "docs/evidence/audits/machine-discovery/llms-txt-exists.md"
+    "link": "docs/evidence/audits/machine-discovery/llms-txt-exists.md",
+    "note": "C3 collapse: file + discovery link become one audit"
   },
   "4.12": {
     "slug": "meta-tags/llms-full-txt-link",
@@ -502,7 +548,8 @@
     "slug": "meta-tags/ai-content-declaration",
     "status": "renamed",
     "to": "access-crawl-control/ai-content-declaration",
-    "link": "docs/evidence/audits/access-crawl-control/ai-content-declaration.md"
+    "link": "docs/evidence/audits/access-crawl-control/ai-content-declaration.md",
+    "note": "redemption rewrite — experimental tier, check the real opt-out directive names; decided 2026-08-21: experimental tier (active declaration-spec trajectory)"
   },
   "4.14": {
     "slug": "meta-tags/ai-instructions",
@@ -514,13 +561,15 @@
     "slug": "meta-tags/markdown-alternate",
     "status": "renamed",
     "to": "content-extraction/markdown-alternate",
-    "link": "docs/evidence/audits/content-extraction/markdown-alternate.md"
+    "link": "docs/evidence/audits/content-extraction/markdown-alternate.md",
+    "note": "§3 cat 2 \"markdown alternates\""
   },
   "4.16": {
     "slug": "meta-tags/rss-feed-link",
     "status": "renamed",
     "to": "machine-discovery/rss-feed",
-    "link": "docs/evidence/audits/machine-discovery/rss-feed.md"
+    "link": "docs/evidence/audits/machine-discovery/rss-feed.md",
+    "note": "C3 collapse: feed file + its `<link rel=alternate>` become one audit"
   },
   "4.17": {
     "slug": "meta-tags/mcp-discovery-link",
@@ -532,25 +581,29 @@
     "slug": "meta-tags/openapi-link",
     "status": "renamed",
     "to": "agent-interfaces/openapi-exists",
-    "link": "docs/evidence/audits/agent-interfaces/openapi-exists.md"
+    "link": "docs/evidence/audits/agent-interfaces/openapi-exists.md",
+    "note": "TODO(redeem) resolves as a merge: one discovery audit incl. RFC 9727 api-catalog; drop the link-tag requirement"
   },
   "4.19": {
     "slug": "meta-tags/ai-catalog-link",
     "status": "renamed",
     "to": "agent-interfaces/ai-catalog-exists",
-    "link": "docs/evidence/audits/agent-interfaces/ai-catalog-exists.md"
+    "link": "docs/evidence/audits/agent-interfaces/ai-catalog-exists.md",
+    "note": "TODO(redeem) grade B; C3 collapse — manifest file + `rel` link checked by one audit"
   },
   "4.20": {
     "slug": "meta-tags/meta-robots",
     "status": "renamed",
     "to": "access-crawl-control/robots-directives",
-    "link": "docs/evidence/audits/access-crawl-control/robots-directives.md"
+    "link": "docs/evidence/audits/access-crawl-control/robots-directives.md",
+    "note": "decided 2026-08-21: merge-away into access-crawl-control/robots-directives (2.25 is the surviving row)"
   },
   "5.1": {
     "slug": "agent-tools/openapi-exists",
     "status": "renamed",
     "to": "agent-interfaces/openapi-exists",
-    "link": "docs/evidence/audits/agent-interfaces/openapi-exists.md"
+    "link": "docs/evidence/audits/agent-interfaces/openapi-exists.md",
+    "note": "absorbs meta-tags/openapi-link (4.18)"
   },
   "5.2": {
     "slug": "agent-tools/openapi-endpoints",
@@ -562,7 +615,8 @@
     "slug": "agent-tools/openapi-operation-ids",
     "status": "renamed",
     "to": "agent-interfaces/openapi-operation-ids",
-    "link": "docs/evidence/audits/agent-interfaces/openapi-operation-ids.md"
+    "link": "docs/evidence/audits/agent-interfaces/openapi-operation-ids.md",
+    "note": "receives the naming-rule half of webmcp-tool-naming (5.23) per §5"
   },
   "5.4": {
     "slug": "agent-tools/openapi-ai-instructions",
@@ -586,19 +640,22 @@
     "slug": "agent-tools/ai-catalog-exists",
     "status": "renamed",
     "to": "agent-interfaces/ai-catalog-exists",
-    "link": "docs/evidence/audits/agent-interfaces/ai-catalog-exists.md"
+    "link": "docs/evidence/audits/agent-interfaces/ai-catalog-exists.md",
+    "note": "redemption rewrite — grade A; pass condition becomes specVersion + host + entries[] per ARD §4.1; absorbs 4.19"
   },
   "5.8": {
     "slug": "agent-tools/ai-catalog-metadata",
     "status": "renamed",
     "to": "agent-interfaces/ai-catalog-metadata",
-    "link": "docs/evidence/audits/agent-interfaces/ai-catalog-metadata.md"
+    "link": "docs/evidence/audits/agent-interfaces/ai-catalog-metadata.md",
+    "note": "redemption rewrite — grade B; every checked field is currently wrong"
   },
   "5.9": {
     "slug": "agent-tools/ai-catalog-urls",
     "status": "renamed",
     "to": "agent-interfaces/ai-catalog-urls",
-    "link": "docs/evidence/audits/agent-interfaces/ai-catalog-urls.md"
+    "link": "docs/evidence/audits/agent-interfaces/ai-catalog-urls.md",
+    "note": "redemption rewrite — grade B; liveness of manifest-listed endpoints"
   },
   "5.10": {
     "slug": "agent-tools/agents-json",
@@ -622,25 +679,29 @@
     "slug": "agent-tools/mcp-endpoint",
     "status": "renamed",
     "to": "agent-interfaces/mcp-endpoint",
-    "link": "docs/evidence/audits/agent-interfaces/mcp-endpoint.md"
+    "link": "docs/evidence/audits/agent-interfaces/mcp-endpoint.md",
+    "note": "merge target for mcp-capabilities (5.14) and webmcp-tool-annotations (5.24)"
   },
   "5.14": {
     "slug": "agent-tools/mcp-capabilities",
     "status": "renamed",
     "to": "agent-interfaces/mcp-endpoint",
-    "link": "docs/evidence/audits/agent-interfaces/mcp-endpoint.md"
+    "link": "docs/evidence/audits/agent-interfaces/mcp-endpoint.md",
+    "note": "§5: mcp-capabilities → mcp-endpoint"
   },
   "5.15": {
     "slug": "agent-tools/contact-form",
     "status": "renamed",
     "to": "operability-safety/contact-form",
-    "link": "docs/evidence/audits/operability-safety/contact-form.md"
+    "link": "docs/evidence/audits/operability-safety/contact-form.md",
+    "note": "decided 2026-08-21: confirmed — operability-safety"
   },
   "5.16": {
     "slug": "agent-tools/search-endpoint",
     "status": "renamed",
     "to": "agent-interfaces/search-endpoint",
-    "link": "docs/evidence/audits/agent-interfaces/search-endpoint.md"
+    "link": "docs/evidence/audits/agent-interfaces/search-endpoint.md",
+    "note": "decided 2026-08-21: confirmed — agent-interfaces; absorbs 3.4 website-search-action, rewritten to read SearchAction array-safe and verify that results come back"
   },
   "5.17": {
     "slug": "agent-tools/data-action-ctas",
@@ -652,44 +713,50 @@
     "slug": "agent-tools/no-blocking-captcha",
     "status": "renamed",
     "to": "operability-safety/no-blocking-captcha",
-    "link": "docs/evidence/audits/operability-safety/no-blocking-captcha.md"
+    "link": "docs/evidence/audits/operability-safety/no-blocking-captcha.md",
+    "note": "decided 2026-08-21: confirmed — operability-safety, form-scoped rewrite"
   },
   "5.19": {
     "slug": "agent-tools/forms-no-js",
     "status": "renamed",
     "to": "operability-safety/forms-no-js",
-    "link": "docs/evidence/audits/operability-safety/forms-no-js.md"
+    "link": "docs/evidence/audits/operability-safety/forms-no-js.md",
+    "note": "§3 cat 8 \"form actionability\""
   },
   "5.20": {
     "slug": "agent-tools/webmcp-manifest",
     "status": "renamed",
     "to": "agent-interfaces/webmcp-registered-tools",
-    "link": "docs/evidence/audits/agent-interfaces/webmcp-registered-tools.md"
+    "link": "docs/evidence/audits/agent-interfaces/webmcp-registered-tools.md",
+    "note": "redemption rewrite — the `.well-known` manifest is invented (grade D); replace with runtime registered-tools detection, experimental tier"
   },
   "5.21": {
     "slug": "agent-tools/webmcp-declarative-forms",
     "status": "renamed",
     "to": "agent-interfaces/webmcp-declarative-forms",
-    "link": "docs/evidence/audits/agent-interfaces/webmcp-declarative-forms.md"
+    "link": "docs/evidence/audits/agent-interfaces/webmcp-declarative-forms.md",
+    "note": "redemption rewrite — grade A (W3C WebML CG explainer, `declarative-webmcp` Baseline feature)"
   },
   "5.22": {
     "slug": "agent-tools/webmcp-input-quality",
     "status": "renamed",
     "to": "operability-safety/form-actionability",
-    "link": "docs/evidence/audits/operability-safety/form-actionability.md"
+    "link": "docs/evidence/audits/operability-safety/form-actionability.md",
+    "note": "§5: webmcp-input-quality → form-actionability"
   },
   "5.23": {
     "slug": "agent-tools/webmcp-tool-naming",
     "status": "renamed",
     "to": "agent-interfaces/openapi-operation-ids",
     "link": "docs/evidence/audits/agent-interfaces/openapi-operation-ids.md",
-    "note": "§5 split landed 2026-08-22 (Plan 4, Task 9): the naming rule folded into agent-interfaces/openapi-operation-ids as a structural legality check; the runtime half (reading a live MCP tools/list response) is deferred out of v2.0 and is recorded in that audit's dossier"
+    "note": "§5 split: naming rule → openapi-operation-ids; runtime part deferred to a future MCP tools/list check (not a v2.0 audit)"
   },
   "5.24": {
     "slug": "agent-tools/webmcp-tool-annotations",
     "status": "renamed",
     "to": "agent-interfaces/mcp-endpoint",
-    "link": "docs/evidence/audits/agent-interfaces/mcp-endpoint.md"
+    "link": "docs/evidence/audits/agent-interfaces/mcp-endpoint.md",
+    "note": "§5: webmcp-tool-annotations → mcp-endpoint (tools/list annotations)"
   },
   "5.25": {
     "slug": "agent-tools/webmcp-action-coverage",
@@ -707,7 +774,8 @@
     "slug": "agent-tools/form-actionability",
     "status": "renamed",
     "to": "operability-safety/form-actionability",
-    "link": "docs/evidence/audits/operability-safety/form-actionability.md"
+    "link": "docs/evidence/audits/operability-safety/form-actionability.md",
+    "note": "§3 cat 8 \"form actionability\"; merge target for 5.22"
   },
   "6.1": {
     "slug": "semantic-html/single-h1",
@@ -743,7 +811,8 @@
     "slug": "semantic-html/aside-element",
     "status": "renamed",
     "to": "content-extraction/aside-element",
-    "link": "docs/evidence/audits/content-extraction/aside-element.md"
+    "link": "docs/evidence/audits/content-extraction/aside-element.md",
+    "note": "redemption rewrite — grade B (Readability/trafilatura strip `<aside>`; Chromium exposes it as `complementary`)"
   },
   "6.7": {
     "slug": "semantic-html/section-headings",
@@ -755,7 +824,8 @@
     "slug": "semantic-html/semantic-lists",
     "status": "renamed",
     "to": "content-extraction/semantic-lists",
-    "link": "docs/evidence/audits/content-extraction/semantic-lists.md"
+    "link": "docs/evidence/audits/content-extraction/semantic-lists.md",
+    "note": "merge target for definition-elements (6.13)"
   },
   "6.9": {
     "slug": "semantic-html/data-tables",
@@ -773,7 +843,8 @@
     "slug": "semantic-html/time-element",
     "status": "renamed",
     "to": "content-extraction/time-element",
-    "link": "docs/evidence/audits/content-extraction/time-element.md"
+    "link": "docs/evidence/audits/content-extraction/time-element.md",
+    "note": "C1 dates cluster resolves via shared gatherer"
   },
   "6.12": {
     "slug": "semantic-html/address-element",
@@ -785,7 +856,8 @@
     "slug": "semantic-html/definition-elements",
     "status": "renamed",
     "to": "content-extraction/semantic-lists",
-    "link": "docs/evidence/audits/content-extraction/semantic-lists.md"
+    "link": "docs/evidence/audits/content-extraction/semantic-lists.md",
+    "note": "§5: definition-elements → semantic-lists"
   },
   "6.14": {
     "slug": "semantic-html/content-depth",
@@ -797,7 +869,8 @@
     "slug": "semantic-html/image-alt-text",
     "status": "renamed",
     "to": "content-extraction/image-alt-text",
-    "link": "docs/evidence/audits/content-extraction/image-alt-text.md"
+    "link": "docs/evidence/audits/content-extraction/image-alt-text.md",
+    "note": "decided 2026-08-21: confirmed — content-extraction"
   },
   "6.16": {
     "slug": "semantic-html/decorative-images",
@@ -815,13 +888,15 @@
     "slug": "semantic-html/svg-bloat",
     "status": "renamed",
     "to": "content-extraction/svg-bloat",
-    "link": "docs/evidence/audits/content-extraction/svg-bloat.md"
+    "link": "docs/evidence/audits/content-extraction/svg-bloat.md",
+    "note": "pairs with the token-economics proposals (§6 maps token-economics → cat 2)"
   },
   "6.19": {
     "slug": "semantic-html/token-ratio",
     "status": "renamed",
     "to": "content-extraction/token-ratio",
-    "link": "docs/evidence/audits/content-extraction/token-ratio.md"
+    "link": "docs/evidence/audits/content-extraction/token-ratio.md",
+    "note": "token-economics home"
   },
   "6.20": {
     "slug": "semantic-html/fake-headings",
@@ -839,151 +914,176 @@
     "slug": "accessibility/aria-landmarks",
     "status": "renamed",
     "to": "operability-safety/aria-landmarks",
-    "link": "docs/evidence/audits/operability-safety/aria-landmarks.md"
+    "link": "docs/evidence/audits/operability-safety/aria-landmarks.md",
+    "note": "accessibility renames to operability-safety (§3)"
   },
   "7.3": {
     "slug": "accessibility/nav-aria-label",
     "status": "renamed",
     "to": "operability-safety/landmark-unique",
-    "link": "docs/evidence/audits/operability-safety/landmark-unique.md"
+    "link": "docs/evidence/audits/operability-safety/landmark-unique.md",
+    "note": "§5: nav-aria-label → landmark-unique"
   },
   "7.4": {
     "slug": "accessibility/landmark-unique",
     "status": "renamed",
     "to": "operability-safety/landmark-unique",
-    "link": "docs/evidence/audits/operability-safety/landmark-unique.md"
+    "link": "docs/evidence/audits/operability-safety/landmark-unique.md",
+    "note": "§6: split out of `_a11y.ts` into its own file; merge target for 7.3"
   },
   "7.5": {
     "slug": "accessibility/form-labels",
     "status": "renamed",
     "to": "operability-safety/label",
-    "link": "docs/evidence/audits/operability-safety/label.md"
+    "link": "docs/evidence/audits/operability-safety/label.md",
+    "note": "§6 file split. decided 2026-08-21: confirmed — slug `label`"
   },
   "7.6": {
     "slug": "accessibility/form-error-messages",
     "status": "renamed",
     "to": "operability-safety/form-error-messages",
-    "link": "docs/evidence/audits/operability-safety/form-error-messages.md"
+    "link": "docs/evidence/audits/operability-safety/form-error-messages.md",
+    "note": "redemption rewrite — verify aria-describedby/aria-errormessage on invalid inputs instead of the current heuristic"
   },
   "7.7": {
     "slug": "accessibility/accessible-names",
     "status": "renamed",
     "to": "operability-safety/accessible-names",
-    "link": "docs/evidence/audits/operability-safety/accessible-names.md"
+    "link": "docs/evidence/audits/operability-safety/accessible-names.md",
+    "note": "§6 file split; wraps `button-name` + `link-name`"
   },
   "7.9": {
     "slug": "accessibility/dialog-name",
     "status": "renamed",
     "to": "operability-safety/dialog-name",
-    "link": "docs/evidence/audits/operability-safety/dialog-name.md"
+    "link": "docs/evidence/audits/operability-safety/dialog-name.md",
+    "note": "§6 file split; wraps `aria-dialog-name`"
   },
   "7.10": {
     "slug": "accessibility/aria-hidden-body",
     "status": "renamed",
     "to": "operability-safety/aria-hidden-body",
-    "link": "docs/evidence/audits/operability-safety/aria-hidden-body.md"
+    "link": "docs/evidence/audits/operability-safety/aria-hidden-body.md",
+    "note": "§6 file split"
   },
   "7.11": {
     "slug": "accessibility/aria-roles",
     "status": "renamed",
     "to": "operability-safety/aria-roles",
-    "link": "docs/evidence/audits/operability-safety/aria-roles.md"
+    "link": "docs/evidence/audits/operability-safety/aria-roles.md",
+    "note": "§6 file split; wraps `aria-roles`, `aria-deprecated-role`, `aria-allowed-role`"
   },
   "7.12": {
     "slug": "accessibility/aria-attributes",
     "status": "renamed",
     "to": "operability-safety/aria-attributes",
-    "link": "docs/evidence/audits/operability-safety/aria-attributes.md"
+    "link": "docs/evidence/audits/operability-safety/aria-attributes.md",
+    "note": "§6 file split; wraps the four aria-attr rules"
   },
   "7.13": {
     "slug": "accessibility/aria-relationships",
     "status": "renamed",
     "to": "operability-safety/aria-relationships",
-    "link": "docs/evidence/audits/operability-safety/aria-relationships.md"
+    "link": "docs/evidence/audits/operability-safety/aria-relationships.md",
+    "note": "§6 file split; wraps the three aria-required-* rules"
   },
   "7.14": {
     "slug": "accessibility/duplicate-id",
     "status": "renamed",
     "to": "operability-safety/duplicate-id",
-    "link": "docs/evidence/audits/operability-safety/duplicate-id.md"
+    "link": "docs/evidence/audits/operability-safety/duplicate-id.md",
+    "note": "§6 file split; wraps `duplicate-id-aria`"
   },
   "7.15": {
     "slug": "accessibility/autocomplete",
     "status": "renamed",
     "to": "operability-safety/autocomplete",
-    "link": "docs/evidence/audits/operability-safety/autocomplete.md"
+    "link": "docs/evidence/audits/operability-safety/autocomplete.md",
+    "note": "§6 file split; pairs with the form-autofill-token-coverage proposal"
   },
   "7.16": {
     "slug": "accessibility/nested-interactive",
     "status": "renamed",
     "to": "operability-safety/nested-interactive",
-    "link": "docs/evidence/audits/operability-safety/nested-interactive.md"
+    "link": "docs/evidence/audits/operability-safety/nested-interactive.md",
+    "note": "§6 file split"
   },
   "7.17": {
     "slug": "accessibility/table-headers",
     "status": "renamed",
     "to": "operability-safety/table-headers",
-    "link": "docs/evidence/audits/operability-safety/table-headers.md"
+    "link": "docs/evidence/audits/operability-safety/table-headers.md",
+    "note": "§6 file split; wraps the four table rules"
   },
   "7.18": {
     "slug": "accessibility/document-title",
     "status": "renamed",
     "to": "operability-safety/document-title",
-    "link": "docs/evidence/audits/operability-safety/document-title.md"
+    "link": "docs/evidence/audits/operability-safety/document-title.md",
+    "note": "§6 file split"
   },
   "7.19": {
     "slug": "accessibility/frame-title",
     "status": "renamed",
     "to": "operability-safety/frame-title",
-    "link": "docs/evidence/audits/operability-safety/frame-title.md"
+    "link": "docs/evidence/audits/operability-safety/frame-title.md",
+    "note": "§6 file split; wraps `frame-title` + `frame-title-unique`"
   },
   "7.20": {
     "slug": "accessibility/meta-refresh",
     "status": "renamed",
     "to": "operability-safety/meta-refresh",
-    "link": "docs/evidence/audits/operability-safety/meta-refresh.md"
+    "link": "docs/evidence/audits/operability-safety/meta-refresh.md",
+    "note": "§6 file split"
   },
   "7.21": {
     "slug": "accessibility/tabindex",
     "status": "renamed",
     "to": "operability-safety/tabindex",
-    "link": "docs/evidence/audits/operability-safety/tabindex.md"
+    "link": "docs/evidence/audits/operability-safety/tabindex.md",
+    "note": "§6 file split"
   },
   "7.22": {
     "slug": "accessibility/marquee",
     "status": "removed",
     "reason": "not-a-factor",
-    "link": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/sunset/not-a-factor.md#accessibilitymarquee"
+    "link": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/sunset/not-a-factor.md#accessibilitymarquee",
+    "note": "decided 2026-08-21: sunset — grade D, mechanism proven false (marquee text is stable DOM text)"
   },
   "7.23": {
     "slug": "accessibility/presentation-conflict",
     "status": "renamed",
     "to": "operability-safety/presentation-conflict",
-    "link": "docs/evidence/audits/operability-safety/presentation-conflict.md"
+    "link": "docs/evidence/audits/operability-safety/presentation-conflict.md",
+    "note": "§6 file split"
   },
   "8.1": {
     "slug": "technical-readiness/https-enabled",
     "status": "renamed",
     "to": "access-crawl-control/https-enabled",
-    "link": "docs/evidence/audits/access-crawl-control/https-enabled.md"
+    "link": "docs/evidence/audits/access-crawl-control/https-enabled.md",
+    "note": "decided 2026-08-21: confirmed — access-crawl-control, scored; judge the protocol after redirects"
   },
   "8.2": {
     "slug": "technical-readiness/hsts-header",
     "status": "renamed",
     "to": "operability-safety/security-header-hygiene",
-    "link": "docs/evidence/audits/operability-safety/security-header-hygiene.md"
+    "link": "docs/evidence/audits/operability-safety/security-header-hygiene.md",
+    "note": "§5 consolidation, weight 0, never fails a site"
   },
   "8.3": {
     "slug": "technical-readiness/csp-header",
     "status": "renamed",
     "to": "operability-safety/security-header-hygiene",
-    "link": "docs/evidence/audits/operability-safety/security-header-hygiene.md"
+    "link": "docs/evidence/audits/operability-safety/security-header-hygiene.md",
+    "note": "§5 consolidation (audits 8.3–8.7)"
   },
   "8.4": {
     "slug": "technical-readiness/content-type-options",
     "status": "renamed",
     "to": "operability-safety/security-header-hygiene",
-    "link": "docs/evidence/audits/operability-safety/security-header-hygiene.md"
+    "link": "docs/evidence/audits/operability-safety/security-header-hygiene.md",
+    "note": "§5 consolidation; nosniff additionally becomes a sub-signal of machine-discovery/ai-file-delivery"
   },
   "8.5": {
     "slug": "technical-readiness/referrer-policy",
@@ -1001,61 +1101,71 @@
     "slug": "technical-readiness/security-txt",
     "status": "renamed",
     "to": "operability-safety/security-header-hygiene",
-    "link": "docs/evidence/audits/operability-safety/security-header-hygiene.md"
+    "link": "docs/evidence/audits/operability-safety/security-header-hygiene.md",
+    "note": "§5 consolidation (audits 8.3–8.7)"
   },
   "8.8": {
     "slug": "technical-readiness/cors-ai-files",
     "status": "renamed",
     "to": "machine-discovery/cors-ai-files",
-    "link": "docs/evidence/audits/machine-discovery/cors-ai-files.md"
+    "link": "docs/evidence/audits/machine-discovery/cors-ai-files.md",
+    "note": "§3 cat 3 \"delivery checks from technical-readiness\""
   },
   "8.9": {
     "slug": "technical-readiness/cors-api-routes",
     "status": "renamed",
     "to": "agent-interfaces/cors-api-routes",
-    "link": "docs/evidence/audits/agent-interfaces/cors-api-routes.md"
+    "link": "docs/evidence/audits/agent-interfaces/cors-api-routes.md",
+    "note": "redemption rewrite — stays scored but `notApplicable` unless the site exposes a public cross-origin API surface"
   },
   "8.10": {
     "slug": "technical-readiness/correct-content-types",
     "status": "renamed",
     "to": "machine-discovery/ai-file-delivery",
-    "link": "docs/evidence/audits/machine-discovery/ai-file-delivery.md"
+    "link": "docs/evidence/audits/machine-discovery/ai-file-delivery.md",
+    "note": "§5 rename (\"AI file delivery\"); merge target for cache-headers (8.11); gains nosniff sub-signal from 8.4"
   },
   "8.11": {
     "slug": "technical-readiness/cache-headers",
     "status": "renamed",
     "to": "machine-discovery/ai-file-delivery",
-    "link": "docs/evidence/audits/machine-discovery/ai-file-delivery.md"
+    "link": "docs/evidence/audits/machine-discovery/ai-file-delivery.md",
+    "note": "§5: cache-headers → correct-content-types (\"AI file delivery\")"
   },
   "8.12": {
     "slug": "technical-readiness/fast-response-time",
     "status": "renamed",
     "to": "content-extraction/server-responsiveness",
-    "link": "docs/evidence/audits/content-extraction/server-responsiveness.md"
+    "link": "docs/evidence/audits/content-extraction/server-responsiveness.md",
+    "note": "decided 2026-08-21: merge-away into content-extraction/server-responsiveness (1.19 is the surviving row)"
   },
   "8.13": {
     "slug": "technical-readiness/server-rendered",
     "status": "renamed",
     "to": "content-extraction/server-rendered",
-    "link": "docs/evidence/audits/content-extraction/server-rendered.md"
+    "link": "docs/evidence/audits/content-extraction/server-rendered.md",
+    "note": "§3 cat 2 \"rendering checks from technical-readiness\""
   },
   "8.14": {
     "slug": "technical-readiness/no-render-blocking",
     "status": "removed",
     "reason": "not-a-factor",
-    "link": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/sunset/not-a-factor.md#technical-readinessno-render-blocking"
+    "link": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/sunset/not-a-factor.md#technical-readinessno-render-blocking",
+    "note": "decided 2026-08-21: sunset — grade D, human-viewport performance signal, no agent consumer"
   },
   "8.15": {
     "slug": "technical-readiness/image-dimensions",
     "status": "removed",
     "reason": "not-a-factor",
-    "link": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/sunset/not-a-factor.md#technical-readinessimage-dimensions"
+    "link": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/sunset/not-a-factor.md#technical-readinessimage-dimensions",
+    "note": "decided 2026-08-21: sunset — grade D CLS proxy, no agent consumer"
   },
   "8.16": {
     "slug": "technical-readiness/lcp-not-lazy",
     "status": "removed",
     "reason": "not-a-factor",
-    "link": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/sunset/not-a-factor.md#technical-readinesslcp-not-lazy"
+    "link": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/sunset/not-a-factor.md#technical-readinesslcp-not-lazy",
+    "note": "decided 2026-08-21: sunset — grade D, `images[0]` is not an LCP proxy"
   },
   "8.17": {
     "slug": "technical-readiness/preconnect-hints",
@@ -1067,19 +1177,22 @@
     "slug": "technical-readiness/no-broken-ai-endpoints",
     "status": "renamed",
     "to": "machine-discovery/no-broken-ai-endpoints",
-    "link": "docs/evidence/audits/machine-discovery/no-broken-ai-endpoints.md"
+    "link": "docs/evidence/audits/machine-discovery/no-broken-ai-endpoints.md",
+    "note": "decided 2026-08-21: confirmed — machine-discovery whole, no per-surface split; same-origin fix, drop the navigation.json source"
   },
   "8.19": {
     "slug": "technical-readiness/privacy-policy",
     "status": "removed",
     "reason": "not-a-factor",
-    "link": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/sunset/not-a-factor.md#technical-readinessprivacy-policy"
+    "link": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/sunset/not-a-factor.md#technical-readinessprivacy-policy",
+    "note": "decided 2026-08-21: sunset — grade D generic trust claim; the ACP link-surface proposal covers the evidenced commerce case"
   },
   "8.20": {
     "slug": "technical-readiness/terms-of-service",
     "status": "removed",
     "reason": "not-a-factor",
-    "link": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/sunset/not-a-factor.md#technical-readinessterms-of-service"
+    "link": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/sunset/not-a-factor.md#technical-readinessterms-of-service",
+    "note": "decided 2026-08-21: sunset — grade D, no documented consumer, English-only detector"
   },
   "8.21": {
     "slug": "technical-readiness/framework-detection",
@@ -1091,7 +1204,8 @@
     "slug": "answer-engine/faq-sections",
     "status": "renamed",
     "to": "answer-readiness/faq-sections",
-    "link": "docs/evidence/audits/answer-readiness/faq-sections.md"
+    "link": "docs/evidence/audits/answer-readiness/faq-sections.md",
+    "note": "answer-engine + generative-engine fuse (§3)"
   },
   "9.2": {
     "slug": "answer-engine/question-headings",
@@ -1109,7 +1223,8 @@
     "slug": "answer-engine/direct-definitions",
     "status": "renamed",
     "to": "answer-readiness/direct-definitions",
-    "link": "docs/evidence/audits/answer-readiness/direct-definitions.md"
+    "link": "docs/evidence/audits/answer-readiness/direct-definitions.md",
+    "note": "redemption rewrite — language-neutral structural detector, `notApplicable` without definitional intent"
   },
   "9.5": {
     "slug": "answer-engine/comparison-tables",
@@ -1122,7 +1237,7 @@
     "status": "renamed",
     "to": "content-extraction/semantic-lists",
     "link": "docs/evidence/audits/content-extraction/semantic-lists.md",
-    "note": "Renamed to answer-readiness/numbered-steps in Plan 3, then folded into content-extraction/semantic-lists in Plan 4 (Task 8, 2026-08-22): 9.6's own grading records that its signal is not independent of 6.8's and that scoring both double-counts one mechanism."
+    "note": "grading pass: evidence duplicates semantic-lists (B) — candidate to fold during Plan 4 rewrites"
   },
   "9.7": {
     "slug": "answer-engine/specific-numbers",
@@ -1134,7 +1249,8 @@
     "slug": "answer-engine/dates-on-content",
     "status": "renamed",
     "to": "answer-readiness/dates-on-content",
-    "link": "docs/evidence/audits/answer-readiness/dates-on-content.md"
+    "link": "docs/evidence/audits/answer-readiness/dates-on-content.md",
+    "note": "merge target for last-updated-indicator (9.10); C1/C16 clusters resolve via shared gatherer"
   },
   "9.9": {
     "slug": "answer-engine/content-without-clickthrough",
@@ -1146,19 +1262,22 @@
     "slug": "answer-engine/last-updated-indicator",
     "status": "renamed",
     "to": "answer-readiness/dates-on-content",
-    "link": "docs/evidence/audits/answer-readiness/dates-on-content.md"
+    "link": "docs/evidence/audits/answer-readiness/dates-on-content.md",
+    "note": "§5: last-updated-indicator → dates-on-content"
   },
   "9.11": {
     "slug": "answer-engine/meta-description-aeo",
     "status": "renamed",
     "to": "answer-readiness/meta-description",
-    "link": "docs/evidence/audits/answer-readiness/meta-description.md"
+    "link": "docs/evidence/audits/answer-readiness/meta-description.md",
+    "note": "TODO(redeem) resolves as a merge into meta-description (4.1); the invented \"AEO formula\" is dropped"
   },
   "10.1": {
     "slug": "generative-engine/named-author",
     "status": "renamed",
     "to": "answer-readiness/named-author",
-    "link": "docs/evidence/audits/answer-readiness/named-author.md"
+    "link": "docs/evidence/audits/answer-readiness/named-author.md",
+    "note": "C4 authors cluster via shared gatherer"
   },
   "10.2": {
     "slug": "generative-engine/author-same-as",
@@ -1194,31 +1313,36 @@
     "slug": "generative-engine/trust-signals",
     "status": "renamed",
     "to": "answer-readiness/trust-signals",
-    "link": "docs/evidence/audits/answer-readiness/trust-signals.md"
+    "link": "docs/evidence/audits/answer-readiness/trust-signals.md",
+    "note": "redemption rewrite — grade B (252k-trial citation study, KDD'24 \"Authoritative\" effect)"
   },
   "10.8": {
     "slug": "generative-engine/review-signals",
     "status": "renamed",
     "to": "answer-readiness/review-signals",
-    "link": "docs/evidence/audits/answer-readiness/review-signals.md"
+    "link": "docs/evidence/audits/answer-readiness/review-signals.md",
+    "note": "merge target for blockquote-usage (10.14); C8 reviews cluster via shared gatherer"
   },
   "10.9": {
     "slug": "generative-engine/publication-date",
     "status": "renamed",
     "to": "answer-readiness/publication-date",
-    "link": "docs/evidence/audits/answer-readiness/publication-date.md"
+    "link": "docs/evidence/audits/answer-readiness/publication-date.md",
+    "note": "C1 dates cluster via shared gatherer"
   },
   "10.10": {
     "slug": "generative-engine/last-modified-schema",
     "status": "renamed",
     "to": "answer-readiness/last-modified-schema",
-    "link": "docs/evidence/audits/answer-readiness/last-modified-schema.md"
+    "link": "docs/evidence/audits/answer-readiness/last-modified-schema.md",
+    "note": "C16 freshness cluster resolves via shared gatherer, not a merge"
   },
   "10.11": {
     "slug": "generative-engine/internal-cross-linking",
     "status": "renamed",
     "to": "machine-discovery/in-content-links",
-    "link": "docs/evidence/audits/machine-discovery/in-content-links.md"
+    "link": "docs/evidence/audits/machine-discovery/in-content-links.md",
+    "note": "decided 2026-08-21: merge-away into machine-discovery/in-content-links (1.15 is the surviving row)"
   },
   "10.12": {
     "slug": "generative-engine/pagination-links",
@@ -1236,12 +1360,14 @@
     "slug": "generative-engine/blockquote-usage",
     "status": "renamed",
     "to": "answer-readiness/review-signals",
-    "link": "docs/evidence/audits/answer-readiness/review-signals.md"
+    "link": "docs/evidence/audits/answer-readiness/review-signals.md",
+    "note": "§5: blockquote-usage → review-signals"
   },
   "10.15": {
     "slug": "generative-engine/descriptive-urls",
     "status": "renamed",
     "to": "answer-readiness/descriptive-urls",
-    "link": "docs/evidence/audits/answer-readiness/descriptive-urls.md"
+    "link": "docs/evidence/audits/answer-readiness/descriptive-urls.md",
+    "note": "decided 2026-08-21: confirmed — answer-readiness, informative tier"
   }
 }

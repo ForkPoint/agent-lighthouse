@@ -1,0 +1,6015 @@
+{
+  "version": 4,
+  "summary": {
+    "totalActiveAudits": 215,
+    "categories": {
+      "access-crawl-control": 37,
+      "content-extraction": 27,
+      "machine-discovery": 24,
+      "structured-data": 14,
+      "answer-readiness": 33,
+      "agent-interfaces": 24,
+      "agentic-commerce": 10,
+      "operability-safety": 46
+    },
+    "totalSunsetDossiers": 27,
+    "totalMergedDossiers": 42,
+    "totalLegacyAudits": 207
+  },
+  "categories": [
+    "access-crawl-control",
+    "agent-interfaces",
+    "agentic-commerce",
+    "answer-readiness",
+    "content-extraction",
+    "machine-discovery",
+    "operability-safety",
+    "structured-data"
+  ],
+  "audits": [
+    {
+      "id": "access-crawl-control/agent-governance",
+      "category": "access-crawl-control",
+      "slug": "agent-governance",
+      "title": "AI crawler vs conversational agent separation",
+      "tier": "scored",
+      "evidenceGrade": "A",
+      "weight": 1,
+      "scoreDisplayMode": "ternary",
+      "dossier": "docs/evidence/audits/access-crawl-control/agent-governance.md",
+      "requires": [
+        "origin-reachable",
+        "unblocked-fetches"
+      ],
+      "legacyIds": [
+        "2.28"
+      ]
+    },
+    {
+      "id": "access-crawl-control/ai-bot-directives",
+      "category": "access-crawl-control",
+      "slug": "ai-bot-directives",
+      "title": "AI bot directives are explicit",
+      "tier": "scored",
+      "evidenceGrade": "B",
+      "weight": 0.6,
+      "scoreDisplayMode": "ternary",
+      "dossier": "docs/evidence/audits/access-crawl-control/ai-bot-directives.md",
+      "requires": [
+        "origin-reachable",
+        "unblocked-fetches"
+      ],
+      "legacyIds": [
+        "2.9",
+        "2.10",
+        "2.11",
+        "2.12",
+        "2.13"
+      ]
+    },
+    {
+      "id": "access-crawl-control/ai-content-declaration",
+      "category": "access-crawl-control",
+      "slug": "ai-content-declaration",
+      "title": "AI usage-preference declaration",
+      "tier": "experimental",
+      "evidenceGrade": "D",
+      "weight": 0,
+      "scoreDisplayMode": "informative",
+      "dossier": "docs/evidence/audits/access-crawl-control/ai-content-declaration.md",
+      "requires": [
+        "origin-reachable",
+        "unblocked-fetches",
+        "rendered-body",
+        "sample-adequate"
+      ],
+      "legacyIds": [
+        "4.13"
+      ]
+    },
+    {
+      "id": "access-crawl-control/ai-crawler-edge-parity",
+      "category": "access-crawl-control",
+      "slug": "ai-crawler-edge-parity",
+      "title": "AI crawlers get the same response from the edge that browsers get",
+      "tier": "scored",
+      "evidenceGrade": "A",
+      "weight": 1,
+      "scoreDisplayMode": "ternary",
+      "dossier": "docs/evidence/audits/access-crawl-control/ai-crawler-edge-parity.md",
+      "requires": [
+        "origin-reachable",
+        "unblocked-fetches",
+        "rendered-body",
+        "sample-adequate"
+      ],
+      "legacyIds": []
+    },
+    {
+      "id": "access-crawl-control/ai-usage-signal-coherence-across-channels",
+      "category": "access-crawl-control",
+      "slug": "ai-usage-signal-coherence-across-channels",
+      "title": "AI usage signals agree across every channel that carries them",
+      "tier": "scored",
+      "evidenceGrade": "B",
+      "weight": 0.6,
+      "scoreDisplayMode": "ternary",
+      "dossier": "docs/evidence/audits/access-crawl-control/ai-usage-signal-coherence-across-channels.md",
+      "requires": [
+        "origin-reachable",
+        "unblocked-fetches",
+        "rendered-body",
+        "sample-adequate"
+      ],
+      "legacyIds": []
+    },
+    {
+      "id": "access-crawl-control/aipref-content-usage-declaration-validity",
+      "category": "access-crawl-control",
+      "slug": "aipref-content-usage-declaration-validity",
+      "title": "AIPREF Content-Usage declarations are valid and can be read",
+      "tier": "scored",
+      "evidenceGrade": "B",
+      "weight": 0.6,
+      "scoreDisplayMode": "ternary",
+      "dossier": "docs/evidence/audits/access-crawl-control/aipref-content-usage-declaration-validity.md",
+      "requires": [
+        "origin-reachable",
+        "unblocked-fetches",
+        "rendered-body",
+        "sample-adequate"
+      ],
+      "legacyIds": []
+    },
+    {
+      "id": "access-crawl-control/amazonbot",
+      "category": "access-crawl-control",
+      "slug": "amazonbot",
+      "title": "Amazonbot allowed",
+      "tier": "scored",
+      "evidenceGrade": "A",
+      "weight": 1,
+      "scoreDisplayMode": "ternary",
+      "dossier": "docs/evidence/audits/access-crawl-control/amazonbot.md",
+      "requires": [
+        "origin-reachable",
+        "unblocked-fetches"
+      ],
+      "legacyIds": [
+        "2.8"
+      ]
+    },
+    {
+      "id": "access-crawl-control/anthropic-ai",
+      "category": "access-crawl-control",
+      "slug": "anthropic-ai",
+      "title": "ClaudeBot crawl access",
+      "tier": "scored",
+      "evidenceGrade": "A",
+      "weight": 1,
+      "scoreDisplayMode": "ternary",
+      "dossier": "docs/evidence/audits/access-crawl-control/anthropic-ai.md",
+      "requires": [
+        "origin-reachable",
+        "unblocked-fetches"
+      ],
+      "legacyIds": [
+        "2.3"
+      ]
+    },
+    {
+      "id": "access-crawl-control/applebot-extended",
+      "category": "access-crawl-control",
+      "slug": "applebot-extended",
+      "title": "Applebot-Extended allowed",
+      "tier": "scored",
+      "evidenceGrade": "A",
+      "weight": 1,
+      "scoreDisplayMode": "ternary",
+      "dossier": "docs/evidence/audits/access-crawl-control/applebot-extended.md",
+      "requires": [
+        "origin-reachable",
+        "unblocked-fetches"
+      ],
+      "legacyIds": [
+        "2.5"
+      ]
+    },
+    {
+      "id": "access-crawl-control/bot-content-delta-declared",
+      "category": "access-crawl-control",
+      "slug": "bot-content-delta-declared",
+      "title": "Content served to AI crawlers matches the browser, or is declared",
+      "tier": "scored",
+      "evidenceGrade": "A",
+      "weight": 1,
+      "scoreDisplayMode": "ternary",
+      "dossier": "docs/evidence/audits/access-crawl-control/bot-content-delta-declared.md",
+      "requires": [
+        "origin-reachable",
+        "unblocked-fetches",
+        "rendered-body",
+        "sample-adequate"
+      ],
+      "legacyIds": []
+    },
+    {
+      "id": "access-crawl-control/bravebot",
+      "category": "access-crawl-control",
+      "slug": "bravebot",
+      "title": "Bravebot allowed",
+      "tier": "informative",
+      "evidenceGrade": "C",
+      "weight": 0,
+      "scoreDisplayMode": "informative",
+      "dossier": "docs/evidence/audits/access-crawl-control/bravebot.md",
+      "requires": [
+        "origin-reachable",
+        "unblocked-fetches"
+      ],
+      "legacyIds": [
+        "2.18"
+      ]
+    },
+    {
+      "id": "access-crawl-control/canonical",
+      "category": "access-crawl-control",
+      "slug": "canonical",
+      "title": "Canonical URLs point at the right page",
+      "tier": "scored",
+      "evidenceGrade": "A",
+      "weight": 1,
+      "scoreDisplayMode": "ternary",
+      "dossier": "docs/evidence/audits/access-crawl-control/canonical.md",
+      "requires": [
+        "origin-reachable",
+        "unblocked-fetches",
+        "rendered-body",
+        "sample-adequate"
+      ],
+      "legacyIds": [
+        "1.17",
+        "4.3"
+      ]
+    },
+    {
+      "id": "access-crawl-control/ccbot",
+      "category": "access-crawl-control",
+      "slug": "ccbot",
+      "title": "CCBot allowed",
+      "tier": "scored",
+      "evidenceGrade": "A",
+      "weight": 1,
+      "scoreDisplayMode": "ternary",
+      "dossier": "docs/evidence/audits/access-crawl-control/ccbot.md",
+      "requires": [
+        "origin-reachable",
+        "unblocked-fetches"
+      ],
+      "legacyIds": [
+        "2.6"
+      ]
+    },
+    {
+      "id": "access-crawl-control/chatgpt-user",
+      "category": "access-crawl-control",
+      "slug": "chatgpt-user",
+      "title": "ChatGPT-User allowed",
+      "tier": "informative",
+      "evidenceGrade": "C",
+      "weight": 0,
+      "scoreDisplayMode": "informative",
+      "dossier": "docs/evidence/audits/access-crawl-control/chatgpt-user.md",
+      "requires": [
+        "origin-reachable",
+        "unblocked-fetches"
+      ],
+      "legacyIds": [
+        "2.14"
+      ]
+    },
+    {
+      "id": "access-crawl-control/claude-searchbot",
+      "category": "access-crawl-control",
+      "slug": "claude-searchbot",
+      "title": "Claude-SearchBot allowed",
+      "tier": "scored",
+      "evidenceGrade": "A",
+      "weight": 1,
+      "scoreDisplayMode": "ternary",
+      "dossier": "docs/evidence/audits/access-crawl-control/claude-searchbot.md",
+      "requires": [
+        "origin-reachable",
+        "unblocked-fetches"
+      ],
+      "legacyIds": [
+        "2.21"
+      ]
+    },
+    {
+      "id": "access-crawl-control/claude-user",
+      "category": "access-crawl-control",
+      "slug": "claude-user",
+      "title": "Claude-User allowed",
+      "tier": "scored",
+      "evidenceGrade": "A",
+      "weight": 1,
+      "scoreDisplayMode": "ternary",
+      "dossier": "docs/evidence/audits/access-crawl-control/claude-user.md",
+      "requires": [
+        "origin-reachable",
+        "unblocked-fetches"
+      ],
+      "legacyIds": [
+        "2.15"
+      ]
+    },
+    {
+      "id": "access-crawl-control/crawl-delay",
+      "category": "access-crawl-control",
+      "slug": "crawl-delay",
+      "title": "Crawl-delay is reasonable",
+      "tier": "informative",
+      "evidenceGrade": "C",
+      "weight": 0,
+      "scoreDisplayMode": "informative",
+      "dossier": "docs/evidence/audits/access-crawl-control/crawl-delay.md",
+      "requires": [
+        "origin-reachable",
+        "unblocked-fetches"
+      ],
+      "legacyIds": [
+        "2.24"
+      ]
+    },
+    {
+      "id": "access-crawl-control/duckassistbot",
+      "category": "access-crawl-control",
+      "slug": "duckassistbot",
+      "title": "DuckAssistBot allowed",
+      "tier": "scored",
+      "evidenceGrade": "A",
+      "weight": 1,
+      "scoreDisplayMode": "ternary",
+      "dossier": "docs/evidence/audits/access-crawl-control/duckassistbot.md",
+      "requires": [
+        "origin-reachable",
+        "unblocked-fetches"
+      ],
+      "legacyIds": [
+        "2.19"
+      ]
+    },
+    {
+      "id": "access-crawl-control/google-extended",
+      "category": "access-crawl-control",
+      "slug": "google-extended",
+      "title": "Google-Extended allowed",
+      "tier": "scored",
+      "evidenceGrade": "A",
+      "weight": 1,
+      "scoreDisplayMode": "ternary",
+      "dossier": "docs/evidence/audits/access-crawl-control/google-extended.md",
+      "requires": [
+        "origin-reachable",
+        "unblocked-fetches"
+      ],
+      "legacyIds": [
+        "2.2"
+      ]
+    },
+    {
+      "id": "access-crawl-control/gptbot",
+      "category": "access-crawl-control",
+      "slug": "gptbot",
+      "title": "GPTBot allowed",
+      "tier": "scored",
+      "evidenceGrade": "A",
+      "weight": 1,
+      "scoreDisplayMode": "ternary",
+      "dossier": "docs/evidence/audits/access-crawl-control/gptbot.md",
+      "requires": [
+        "origin-reachable",
+        "unblocked-fetches"
+      ],
+      "legacyIds": [
+        "2.1"
+      ]
+    },
+    {
+      "id": "access-crawl-control/https-enabled",
+      "category": "access-crawl-control",
+      "slug": "https-enabled",
+      "title": "HTTPS enabled",
+      "tier": "scored",
+      "evidenceGrade": "A",
+      "weight": 1,
+      "scoreDisplayMode": "ternary",
+      "dossier": "docs/evidence/audits/access-crawl-control/https-enabled.md",
+      "requires": [],
+      "legacyIds": [
+        "8.1"
+      ]
+    },
+    {
+      "id": "access-crawl-control/machine-actionable-402-paid-access",
+      "category": "access-crawl-control",
+      "slug": "machine-actionable-402-paid-access",
+      "title": "A 402 tells a crawler how to pay",
+      "tier": "scored",
+      "evidenceGrade": "B",
+      "weight": 0.6,
+      "scoreDisplayMode": "ternary",
+      "dossier": "docs/evidence/audits/access-crawl-control/machine-actionable-402-paid-access.md",
+      "requires": [
+        "origin-reachable",
+        "unblocked-fetches",
+        "rendered-body",
+        "sample-adequate"
+      ],
+      "legacyIds": []
+    },
+    {
+      "id": "access-crawl-control/meta-external-agent",
+      "category": "access-crawl-control",
+      "slug": "meta-external-agent",
+      "title": "Meta-ExternalAgent allowed",
+      "tier": "scored",
+      "evidenceGrade": "A",
+      "weight": 1,
+      "scoreDisplayMode": "ternary",
+      "dossier": "docs/evidence/audits/access-crawl-control/meta-external-agent.md",
+      "requires": [
+        "origin-reachable",
+        "unblocked-fetches"
+      ],
+      "legacyIds": [
+        "2.7"
+      ]
+    },
+    {
+      "id": "access-crawl-control/meta-external-fetcher",
+      "category": "access-crawl-control",
+      "slug": "meta-external-fetcher",
+      "title": "Meta-ExternalFetcher allowed",
+      "tier": "scored",
+      "evidenceGrade": "A",
+      "weight": 1,
+      "scoreDisplayMode": "ternary",
+      "dossier": "docs/evidence/audits/access-crawl-control/meta-external-fetcher.md",
+      "requires": [
+        "origin-reachable",
+        "unblocked-fetches"
+      ],
+      "legacyIds": [
+        "2.17"
+      ]
+    },
+    {
+      "id": "access-crawl-control/mistralai-user",
+      "category": "access-crawl-control",
+      "slug": "mistralai-user",
+      "title": "MistralAI-User allowed",
+      "tier": "scored",
+      "evidenceGrade": "A",
+      "weight": 1,
+      "scoreDisplayMode": "ternary",
+      "dossier": "docs/evidence/audits/access-crawl-control/mistralai-user.md",
+      "requires": [
+        "origin-reachable",
+        "unblocked-fetches"
+      ],
+      "legacyIds": [
+        "2.20"
+      ]
+    },
+    {
+      "id": "access-crawl-control/no-blanket-block",
+      "category": "access-crawl-control",
+      "slug": "no-blanket-block",
+      "title": "No blanket AI block",
+      "tier": "scored",
+      "evidenceGrade": "B",
+      "weight": 0.6,
+      "scoreDisplayMode": "ternary",
+      "dossier": "docs/evidence/audits/access-crawl-control/no-blanket-block.md",
+      "requires": [
+        "origin-reachable",
+        "unblocked-fetches"
+      ],
+      "legacyIds": [
+        "2.22"
+      ]
+    },
+    {
+      "id": "access-crawl-control/no-bot-detection",
+      "category": "access-crawl-control",
+      "slug": "no-bot-detection",
+      "title": "No aggressive bot-detection blocking agents",
+      "tier": "scored",
+      "evidenceGrade": "A",
+      "weight": 1,
+      "scoreDisplayMode": "ternary",
+      "dossier": "docs/evidence/audits/access-crawl-control/no-bot-detection.md",
+      "requires": [],
+      "legacyIds": [
+        "2.26"
+      ]
+    },
+    {
+      "id": "access-crawl-control/no-nofollow",
+      "category": "access-crawl-control",
+      "slug": "no-nofollow",
+      "title": "No nofollow on important links",
+      "tier": "scored",
+      "evidenceGrade": "A",
+      "weight": 1,
+      "scoreDisplayMode": "ternary",
+      "dossier": "docs/evidence/audits/access-crawl-control/no-nofollow.md",
+      "requires": [
+        "origin-reachable",
+        "unblocked-fetches"
+      ],
+      "legacyIds": [
+        "1.14"
+      ]
+    },
+    {
+      "id": "access-crawl-control/no-redirect-chains",
+      "category": "access-crawl-control",
+      "slug": "no-redirect-chains",
+      "title": "No redirect chains",
+      "tier": "scored",
+      "evidenceGrade": "A",
+      "weight": 1,
+      "scoreDisplayMode": "ternary",
+      "dossier": "docs/evidence/audits/access-crawl-control/no-redirect-chains.md",
+      "requires": [],
+      "legacyIds": [
+        "1.16"
+      ]
+    },
+    {
+      "id": "access-crawl-control/oai-searchbot",
+      "category": "access-crawl-control",
+      "slug": "oai-searchbot",
+      "title": "OAI-SearchBot allowed",
+      "tier": "scored",
+      "evidenceGrade": "A",
+      "weight": 1,
+      "scoreDisplayMode": "ternary",
+      "dossier": "docs/evidence/audits/access-crawl-control/oai-searchbot.md",
+      "requires": [
+        "origin-reachable",
+        "unblocked-fetches"
+      ],
+      "legacyIds": [
+        "2.16"
+      ]
+    },
+    {
+      "id": "access-crawl-control/perplexitybot",
+      "category": "access-crawl-control",
+      "slug": "perplexitybot",
+      "title": "PerplexityBot allowed",
+      "tier": "scored",
+      "evidenceGrade": "A",
+      "weight": 1,
+      "scoreDisplayMode": "ternary",
+      "dossier": "docs/evidence/audits/access-crawl-control/perplexitybot.md",
+      "requires": [
+        "origin-reachable",
+        "unblocked-fetches"
+      ],
+      "legacyIds": [
+        "2.4"
+      ]
+    },
+    {
+      "id": "access-crawl-control/robots-ai-group-shadowing",
+      "category": "access-crawl-control",
+      "slug": "robots-ai-group-shadowing",
+      "title": "robots.txt AI group shadowing",
+      "tier": "scored",
+      "evidenceGrade": "A",
+      "weight": 1,
+      "scoreDisplayMode": "ternary",
+      "dossier": "docs/evidence/audits/access-crawl-control/robots-ai-group-shadowing.md",
+      "requires": [
+        "origin-reachable",
+        "unblocked-fetches"
+      ],
+      "legacyIds": []
+    },
+    {
+      "id": "access-crawl-control/robots-directives",
+      "category": "access-crawl-control",
+      "slug": "robots-directives",
+      "title": "Robots directives do not block AI indexing",
+      "tier": "scored",
+      "evidenceGrade": "A",
+      "weight": 1,
+      "scoreDisplayMode": "ternary",
+      "dossier": "docs/evidence/audits/access-crawl-control/robots-directives.md",
+      "requires": [
+        "origin-reachable",
+        "unblocked-fetches"
+      ],
+      "legacyIds": [
+        "1.13",
+        "2.25",
+        "4.20"
+      ]
+    },
+    {
+      "id": "access-crawl-control/rsl-licensing-terms-conformance",
+      "category": "access-crawl-control",
+      "slug": "rsl-licensing-terms-conformance",
+      "title": "RSL licensing terms are discoverable and conformant",
+      "tier": "scored",
+      "evidenceGrade": "B",
+      "weight": 0.6,
+      "scoreDisplayMode": "ternary",
+      "dossier": "docs/evidence/audits/access-crawl-control/rsl-licensing-terms-conformance.md",
+      "requires": [
+        "origin-reachable",
+        "unblocked-fetches",
+        "rendered-body",
+        "sample-adequate"
+      ],
+      "legacyIds": []
+    },
+    {
+      "id": "access-crawl-control/sensitive-paths",
+      "category": "access-crawl-control",
+      "slug": "sensitive-paths",
+      "title": "Low-value URLs excluded from AI crawls",
+      "tier": "scored",
+      "evidenceGrade": "A",
+      "weight": 1,
+      "scoreDisplayMode": "ternary",
+      "dossier": "docs/evidence/audits/access-crawl-control/sensitive-paths.md",
+      "requires": [
+        "origin-reachable",
+        "unblocked-fetches",
+        "rendered-body",
+        "sample-adequate"
+      ],
+      "legacyIds": [
+        "2.23"
+      ]
+    },
+    {
+      "id": "access-crawl-control/tdm-rep",
+      "category": "access-crawl-control",
+      "slug": "tdm-rep",
+      "title": "TDM-Rep declaration",
+      "tier": "experimental",
+      "evidenceGrade": "C",
+      "weight": 0,
+      "scoreDisplayMode": "informative",
+      "dossier": "docs/evidence/audits/access-crawl-control/tdm-rep.md",
+      "requires": [
+        "origin-reachable",
+        "unblocked-fetches",
+        "rendered-body",
+        "sample-adequate"
+      ],
+      "legacyIds": [
+        "2.27"
+      ]
+    },
+    {
+      "id": "access-crawl-control/web-bot-auth-request-tolerance",
+      "category": "access-crawl-control",
+      "slug": "web-bot-auth-request-tolerance",
+      "title": "A signed agent request is not rejected for being signed",
+      "tier": "scored",
+      "evidenceGrade": "B",
+      "weight": 0.6,
+      "scoreDisplayMode": "ternary",
+      "dossier": "docs/evidence/audits/access-crawl-control/web-bot-auth-request-tolerance.md",
+      "requires": [
+        "origin-reachable",
+        "unblocked-fetches"
+      ],
+      "legacyIds": []
+    },
+    {
+      "id": "agent-interfaces/agents-json",
+      "category": "agent-interfaces",
+      "slug": "agents-json",
+      "title": "agents.json at /.well-known/agents.json",
+      "tier": "informative",
+      "evidenceGrade": "C",
+      "weight": 0,
+      "scoreDisplayMode": "informative",
+      "dossier": "docs/evidence/audits/agent-interfaces/agents-json.md",
+      "requires": [
+        "origin-reachable",
+        "unblocked-fetches"
+      ],
+      "legacyIds": [
+        "5.10"
+      ]
+    },
+    {
+      "id": "agent-interfaces/ai-catalog-exists",
+      "category": "agent-interfaces",
+      "slug": "ai-catalog-exists",
+      "title": "AI Catalog exists",
+      "tier": "informative",
+      "evidenceGrade": "C",
+      "weight": 0,
+      "scoreDisplayMode": "informative",
+      "dossier": "docs/evidence/audits/agent-interfaces/ai-catalog-exists.md",
+      "requires": [
+        "origin-reachable",
+        "unblocked-fetches",
+        "rendered-body",
+        "sample-adequate"
+      ],
+      "legacyIds": [
+        "4.19",
+        "5.7"
+      ]
+    },
+    {
+      "id": "agent-interfaces/ai-catalog-metadata",
+      "category": "agent-interfaces",
+      "slug": "ai-catalog-metadata",
+      "title": "AI Catalog complete metadata",
+      "tier": "scored",
+      "evidenceGrade": "B",
+      "weight": 0.6,
+      "scoreDisplayMode": "ternary",
+      "dossier": "docs/evidence/audits/agent-interfaces/ai-catalog-metadata.md",
+      "requires": [
+        "origin-reachable",
+        "unblocked-fetches"
+      ],
+      "legacyIds": [
+        "5.8"
+      ]
+    },
+    {
+      "id": "agent-interfaces/ai-catalog-urls",
+      "category": "agent-interfaces",
+      "slug": "ai-catalog-urls",
+      "title": "AI Catalog entry URLs valid",
+      "tier": "scored",
+      "evidenceGrade": "B",
+      "weight": 0.6,
+      "scoreDisplayMode": "ternary",
+      "dossier": "docs/evidence/audits/agent-interfaces/ai-catalog-urls.md",
+      "requires": [
+        "origin-reachable",
+        "unblocked-fetches"
+      ],
+      "legacyIds": [
+        "5.9"
+      ]
+    },
+    {
+      "id": "agent-interfaces/cors-api-routes",
+      "category": "agent-interfaces",
+      "slug": "cors-api-routes",
+      "title": "CORS on declared API routes",
+      "tier": "informative",
+      "evidenceGrade": "C",
+      "weight": 0,
+      "scoreDisplayMode": "informative",
+      "dossier": "docs/evidence/audits/agent-interfaces/cors-api-routes.md",
+      "requires": [
+        "origin-reachable",
+        "unblocked-fetches"
+      ],
+      "legacyIds": [
+        "8.9"
+      ]
+    },
+    {
+      "id": "agent-interfaces/mcp-discovery",
+      "category": "agent-interfaces",
+      "slug": "mcp-discovery",
+      "title": "MCP server discovery file",
+      "tier": "informative",
+      "evidenceGrade": "C",
+      "weight": 0,
+      "scoreDisplayMode": "informative",
+      "dossier": "docs/evidence/audits/agent-interfaces/mcp-discovery.md",
+      "requires": [
+        "origin-reachable",
+        "unblocked-fetches"
+      ],
+      "legacyIds": [
+        "5.12"
+      ]
+    },
+    {
+      "id": "agent-interfaces/mcp-endpoint",
+      "category": "agent-interfaces",
+      "slug": "mcp-endpoint",
+      "title": "MCP endpoint functional",
+      "tier": "informative",
+      "evidenceGrade": "C",
+      "weight": 0,
+      "scoreDisplayMode": "informative",
+      "dossier": "docs/evidence/audits/agent-interfaces/mcp-endpoint.md",
+      "requires": [
+        "origin-reachable",
+        "unblocked-fetches"
+      ],
+      "legacyIds": [
+        "5.13",
+        "5.14",
+        "5.24"
+      ]
+    },
+    {
+      "id": "agent-interfaces/mcp-modern-era-reachability",
+      "category": "agent-interfaces",
+      "slug": "mcp-modern-era-reachability",
+      "title": "Modern-Era Reachability Probe (server/discover)",
+      "tier": "scored",
+      "evidenceGrade": "A",
+      "weight": 1,
+      "scoreDisplayMode": "ternary",
+      "dossier": "docs/evidence/audits/agent-interfaces/mcp-modern-era-reachability.md",
+      "requires": [
+        "origin-reachable",
+        "unblocked-fetches"
+      ],
+      "legacyIds": []
+    },
+    {
+      "id": "agent-interfaces/mcp-oauth-discovery-chain",
+      "category": "agent-interfaces",
+      "slug": "mcp-oauth-discovery-chain",
+      "title": "OAuth Discovery Chain Integrity (RFC 9728 → RFC 8414)",
+      "tier": "scored",
+      "evidenceGrade": "A",
+      "weight": 1,
+      "scoreDisplayMode": "ternary",
+      "dossier": "docs/evidence/audits/agent-interfaces/mcp-oauth-discovery-chain.md",
+      "requires": [
+        "origin-reachable",
+        "unblocked-fetches"
+      ],
+      "legacyIds": []
+    },
+    {
+      "id": "agent-interfaces/mcp-origin-validation-cors",
+      "category": "agent-interfaces",
+      "slug": "mcp-origin-validation-cors",
+      "title": "The MCP endpoint validates Origin and its CORS policy matches its auth posture",
+      "tier": "scored",
+      "evidenceGrade": "B",
+      "weight": 0.6,
+      "scoreDisplayMode": "ternary",
+      "dossier": "docs/evidence/audits/agent-interfaces/mcp-origin-validation-cors.md",
+      "requires": [
+        "origin-reachable",
+        "unblocked-fetches"
+      ],
+      "legacyIds": []
+    },
+    {
+      "id": "agent-interfaces/mcp-registry-listing-ownership",
+      "category": "agent-interfaces",
+      "slug": "mcp-registry-listing-ownership",
+      "title": "The MCP server is listed in the official registry under a namespace this domain owns",
+      "tier": "scored",
+      "evidenceGrade": "B",
+      "weight": 0.6,
+      "scoreDisplayMode": "ternary",
+      "dossier": "docs/evidence/audits/agent-interfaces/mcp-registry-listing-ownership.md",
+      "requires": [
+        "origin-reachable",
+        "unblocked-fetches"
+      ],
+      "legacyIds": []
+    },
+    {
+      "id": "agent-interfaces/mcp-tool-contract-validity",
+      "category": "agent-interfaces",
+      "slug": "mcp-tool-contract-validity",
+      "title": "Tool Contract Validity and Silent-Drop Risk",
+      "tier": "scored",
+      "evidenceGrade": "A",
+      "weight": 1,
+      "scoreDisplayMode": "ternary",
+      "dossier": "docs/evidence/audits/agent-interfaces/mcp-tool-contract-validity.md",
+      "requires": [
+        "origin-reachable",
+        "unblocked-fetches"
+      ],
+      "legacyIds": []
+    },
+    {
+      "id": "agent-interfaces/mcp-tool-description-coverage",
+      "category": "agent-interfaces",
+      "slug": "mcp-tool-description-coverage",
+      "title": "Tool Self-Description Coverage",
+      "tier": "scored",
+      "evidenceGrade": "B",
+      "weight": 0.6,
+      "scoreDisplayMode": "ternary",
+      "dossier": "docs/evidence/audits/agent-interfaces/mcp-tool-description-coverage.md",
+      "requires": [
+        "origin-reachable",
+        "unblocked-fetches"
+      ],
+      "legacyIds": []
+    },
+    {
+      "id": "agent-interfaces/mcp-tools-list-determinism",
+      "category": "agent-interfaces",
+      "slug": "mcp-tools-list-determinism",
+      "title": "tools/list Determinism and Cache-Hint Compliance",
+      "tier": "scored",
+      "evidenceGrade": "A",
+      "weight": 1,
+      "scoreDisplayMode": "ternary",
+      "dossier": "docs/evidence/audits/agent-interfaces/mcp-tools-list-determinism.md",
+      "requires": [
+        "origin-reachable",
+        "unblocked-fetches"
+      ],
+      "legacyIds": []
+    },
+    {
+      "id": "agent-interfaces/mcp-version-downgrade",
+      "category": "agent-interfaces",
+      "slug": "mcp-version-downgrade",
+      "title": "Version Downgrade Recoverability",
+      "tier": "scored",
+      "evidenceGrade": "A",
+      "weight": 1,
+      "scoreDisplayMode": "ternary",
+      "dossier": "docs/evidence/audits/agent-interfaces/mcp-version-downgrade.md",
+      "requires": [
+        "origin-reachable",
+        "unblocked-fetches"
+      ],
+      "legacyIds": []
+    },
+    {
+      "id": "agent-interfaces/openapi-description-quality",
+      "category": "agent-interfaces",
+      "slug": "openapi-description-quality",
+      "title": "OpenAPI description quality for tool-calling",
+      "tier": "scored",
+      "evidenceGrade": "A",
+      "weight": 1,
+      "scoreDisplayMode": "ternary",
+      "dossier": "docs/evidence/audits/agent-interfaces/openapi-description-quality.md",
+      "requires": [
+        "origin-reachable",
+        "unblocked-fetches"
+      ],
+      "legacyIds": [
+        "5.26"
+      ]
+    },
+    {
+      "id": "agent-interfaces/openapi-endpoints",
+      "category": "agent-interfaces",
+      "slug": "openapi-endpoints",
+      "title": "OpenAPI has endpoints",
+      "tier": "scored",
+      "evidenceGrade": "B",
+      "weight": 0.6,
+      "scoreDisplayMode": "binary",
+      "dossier": "docs/evidence/audits/agent-interfaces/openapi-endpoints.md",
+      "requires": [
+        "origin-reachable",
+        "unblocked-fetches"
+      ],
+      "legacyIds": [
+        "5.2"
+      ]
+    },
+    {
+      "id": "agent-interfaces/openapi-exists",
+      "category": "agent-interfaces",
+      "slug": "openapi-exists",
+      "title": "API description discoverable",
+      "tier": "informative",
+      "evidenceGrade": "B",
+      "weight": 0,
+      "scoreDisplayMode": "informative",
+      "dossier": "docs/evidence/audits/agent-interfaces/openapi-exists.md",
+      "requires": [
+        "origin-reachable",
+        "unblocked-fetches",
+        "rendered-body",
+        "sample-adequate"
+      ],
+      "legacyIds": [
+        "4.18",
+        "5.1"
+      ]
+    },
+    {
+      "id": "agent-interfaces/openapi-operation-ids",
+      "category": "agent-interfaces",
+      "slug": "openapi-operation-ids",
+      "title": "OpenAPI has operationIds",
+      "tier": "scored",
+      "evidenceGrade": "B",
+      "weight": 0.6,
+      "scoreDisplayMode": "ternary",
+      "dossier": "docs/evidence/audits/agent-interfaces/openapi-operation-ids.md",
+      "requires": [
+        "origin-reachable",
+        "unblocked-fetches"
+      ],
+      "legacyIds": [
+        "5.3",
+        "5.23"
+      ]
+    },
+    {
+      "id": "agent-interfaces/openapi-schemas",
+      "category": "agent-interfaces",
+      "slug": "openapi-schemas",
+      "title": "OpenAPI request/response schemas",
+      "tier": "scored",
+      "evidenceGrade": "B",
+      "weight": 0.6,
+      "scoreDisplayMode": "ternary",
+      "dossier": "docs/evidence/audits/agent-interfaces/openapi-schemas.md",
+      "requires": [
+        "origin-reachable",
+        "unblocked-fetches"
+      ],
+      "legacyIds": [
+        "5.6"
+      ]
+    },
+    {
+      "id": "agent-interfaces/openapi-servers",
+      "category": "agent-interfaces",
+      "slug": "openapi-servers",
+      "title": "OpenAPI servers array valid",
+      "tier": "scored",
+      "evidenceGrade": "B",
+      "weight": 0.6,
+      "scoreDisplayMode": "ternary",
+      "dossier": "docs/evidence/audits/agent-interfaces/openapi-servers.md",
+      "requires": [
+        "origin-reachable",
+        "unblocked-fetches"
+      ],
+      "legacyIds": [
+        "5.5"
+      ]
+    },
+    {
+      "id": "agent-interfaces/search-endpoint",
+      "category": "agent-interfaces",
+      "slug": "search-endpoint",
+      "title": "Site search reachable by agents",
+      "tier": "informative",
+      "evidenceGrade": "C",
+      "weight": 0,
+      "scoreDisplayMode": "informative",
+      "dossier": "docs/evidence/audits/agent-interfaces/search-endpoint.md",
+      "requires": [
+        "origin-reachable",
+        "unblocked-fetches",
+        "rendered-body",
+        "sample-adequate"
+      ],
+      "legacyIds": [
+        "3.4",
+        "5.16"
+      ]
+    },
+    {
+      "id": "agent-interfaces/webmcp-declarative-forms",
+      "category": "agent-interfaces",
+      "slug": "webmcp-declarative-forms",
+      "title": "WebMCP declarative form tools",
+      "tier": "scored",
+      "evidenceGrade": "B",
+      "weight": 0.6,
+      "scoreDisplayMode": "ternary",
+      "dossier": "docs/evidence/audits/agent-interfaces/webmcp-declarative-forms.md",
+      "requires": [
+        "origin-reachable",
+        "unblocked-fetches",
+        "rendered-body",
+        "sample-adequate"
+      ],
+      "legacyIds": [
+        "5.21"
+      ]
+    },
+    {
+      "id": "agent-interfaces/webmcp-registered-tools",
+      "category": "agent-interfaces",
+      "slug": "webmcp-registered-tools",
+      "title": "WebMCP registered tools",
+      "tier": "experimental",
+      "evidenceGrade": "B",
+      "weight": 0,
+      "scoreDisplayMode": "informative",
+      "dossier": "docs/evidence/audits/agent-interfaces/webmcp-registered-tools.md",
+      "requires": [
+        "origin-reachable",
+        "unblocked-fetches",
+        "rendered-body",
+        "sample-adequate"
+      ],
+      "legacyIds": [
+        "5.20"
+      ]
+    },
+    {
+      "id": "agentic-commerce/acp-policy-link-surface",
+      "category": "agentic-commerce",
+      "slug": "acp-policy-link-surface",
+      "title": "ACP link-surface completeness",
+      "tier": "scored",
+      "evidenceGrade": "A",
+      "weight": 1,
+      "scoreDisplayMode": "ternary",
+      "dossier": "docs/evidence/audits/agentic-commerce/acp-policy-link-surface.md",
+      "requires": [
+        "origin-reachable",
+        "unblocked-fetches",
+        "rendered-body",
+        "sample-adequate"
+      ],
+      "legacyIds": []
+    },
+    {
+      "id": "agentic-commerce/agent-ua-commerce-parity",
+      "category": "agentic-commerce",
+      "slug": "agent-ua-commerce-parity",
+      "title": "Shopping agents can fetch the commerce paths",
+      "tier": "scored",
+      "evidenceGrade": "A",
+      "weight": 1,
+      "scoreDisplayMode": "ternary",
+      "dossier": "docs/evidence/audits/agentic-commerce/agent-ua-commerce-parity.md",
+      "requires": [
+        "origin-reachable",
+        "unblocked-fetches",
+        "rendered-body",
+        "sample-adequate"
+      ],
+      "legacyIds": []
+    },
+    {
+      "id": "agentic-commerce/buyable-variant-resolution",
+      "category": "agentic-commerce",
+      "slug": "buyable-variant-resolution",
+      "title": "Buyable Variant Resolution",
+      "tier": "scored",
+      "evidenceGrade": "B",
+      "weight": 0.6,
+      "scoreDisplayMode": "ternary",
+      "dossier": "docs/evidence/audits/agentic-commerce/buyable-variant-resolution.md",
+      "requires": [
+        "origin-reachable",
+        "unblocked-fetches",
+        "rendered-body",
+        "sample-adequate"
+      ],
+      "legacyIds": []
+    },
+    {
+      "id": "agentic-commerce/cart-handoff-reachability",
+      "category": "agentic-commerce",
+      "slug": "cart-handoff-reachability",
+      "title": "Cart Handoff Reachability",
+      "tier": "scored",
+      "evidenceGrade": "B",
+      "weight": 0.6,
+      "scoreDisplayMode": "ternary",
+      "dossier": "docs/evidence/audits/agentic-commerce/cart-handoff-reachability.md",
+      "requires": [
+        "origin-reachable",
+        "unblocked-fetches",
+        "rendered-body",
+        "sample-adequate"
+      ],
+      "legacyIds": []
+    },
+    {
+      "id": "agentic-commerce/checkout-offer-field-mapping",
+      "category": "agentic-commerce",
+      "slug": "checkout-offer-field-mapping",
+      "title": "Checkout-eligible offer field mapping",
+      "tier": "scored",
+      "evidenceGrade": "A",
+      "weight": 1,
+      "scoreDisplayMode": "ternary",
+      "dossier": "docs/evidence/audits/agentic-commerce/checkout-offer-field-mapping.md",
+      "requires": [
+        "origin-reachable",
+        "unblocked-fetches",
+        "rendered-body",
+        "sample-adequate"
+      ],
+      "legacyIds": []
+    },
+    {
+      "id": "agentic-commerce/landed-cost-and-returns",
+      "category": "agentic-commerce",
+      "slug": "landed-cost-and-returns",
+      "title": "Landed-cost and returns machine readability",
+      "tier": "scored",
+      "evidenceGrade": "A",
+      "weight": 1,
+      "scoreDisplayMode": "ternary",
+      "dossier": "docs/evidence/audits/agentic-commerce/landed-cost-and-returns.md",
+      "requires": [
+        "origin-reachable",
+        "unblocked-fetches",
+        "rendered-body",
+        "sample-adequate"
+      ],
+      "legacyIds": []
+    },
+    {
+      "id": "agentic-commerce/offer-schema",
+      "category": "agentic-commerce",
+      "slug": "offer-schema",
+      "title": "Offer schema on pricing pages",
+      "tier": "scored",
+      "evidenceGrade": "A",
+      "weight": 1,
+      "scoreDisplayMode": "ternary",
+      "dossier": "docs/evidence/audits/agentic-commerce/offer-schema.md",
+      "requires": [
+        "origin-reachable",
+        "unblocked-fetches",
+        "rendered-body",
+        "sample-adequate"
+      ],
+      "legacyIds": [
+        "3.14"
+      ]
+    },
+    {
+      "id": "agentic-commerce/offer-truth-consistency",
+      "category": "agentic-commerce",
+      "slug": "offer-truth-consistency",
+      "title": "Offer Truth Consistency",
+      "tier": "scored",
+      "evidenceGrade": "B",
+      "weight": 0.6,
+      "scoreDisplayMode": "ternary",
+      "dossier": "docs/evidence/audits/agentic-commerce/offer-truth-consistency.md",
+      "requires": [
+        "origin-reachable",
+        "unblocked-fetches",
+        "rendered-body",
+        "sample-adequate"
+      ],
+      "legacyIds": []
+    },
+    {
+      "id": "agentic-commerce/product-identifiers",
+      "category": "agentic-commerce",
+      "slug": "product-identifiers",
+      "title": "Product identifiers (GTIN/UPC/MPN)",
+      "tier": "scored",
+      "evidenceGrade": "A",
+      "weight": 1,
+      "scoreDisplayMode": "ternary",
+      "dossier": "docs/evidence/audits/agentic-commerce/product-identifiers.md",
+      "requires": [
+        "origin-reachable",
+        "unblocked-fetches",
+        "rendered-body",
+        "sample-adequate"
+      ],
+      "legacyIds": [
+        "3.21"
+      ]
+    },
+    {
+      "id": "agentic-commerce/product-transaction-certainty",
+      "category": "agentic-commerce",
+      "slug": "product-transaction-certainty",
+      "title": "Product transactional certainty",
+      "tier": "scored",
+      "evidenceGrade": "A",
+      "weight": 1,
+      "scoreDisplayMode": "ternary",
+      "dossier": "docs/evidence/audits/agentic-commerce/product-transaction-certainty.md",
+      "requires": [
+        "origin-reachable",
+        "unblocked-fetches",
+        "rendered-body",
+        "sample-adequate"
+      ],
+      "legacyIds": [
+        "3.24"
+      ]
+    },
+    {
+      "id": "answer-readiness/about-credentials",
+      "category": "answer-readiness",
+      "slug": "about-credentials",
+      "title": "About page with credentials",
+      "tier": "informative",
+      "evidenceGrade": "C",
+      "weight": 0,
+      "scoreDisplayMode": "informative",
+      "dossier": "docs/evidence/audits/answer-readiness/about-credentials.md",
+      "requires": [
+        "origin-reachable",
+        "unblocked-fetches",
+        "rendered-body",
+        "sample-adequate"
+      ],
+      "legacyIds": [
+        "10.4"
+      ]
+    },
+    {
+      "id": "answer-readiness/author-page",
+      "category": "answer-readiness",
+      "slug": "author-page",
+      "title": "Author page exists",
+      "tier": "informative",
+      "evidenceGrade": "C",
+      "weight": 0,
+      "scoreDisplayMode": "informative",
+      "dossier": "docs/evidence/audits/answer-readiness/author-page.md",
+      "requires": [
+        "origin-reachable",
+        "unblocked-fetches",
+        "rendered-body",
+        "sample-adequate"
+      ],
+      "legacyIds": [
+        "10.3"
+      ]
+    },
+    {
+      "id": "answer-readiness/author-same-as",
+      "category": "answer-readiness",
+      "slug": "author-same-as",
+      "title": "Author schema with sameAs",
+      "tier": "informative",
+      "evidenceGrade": "C",
+      "weight": 0,
+      "scoreDisplayMode": "informative",
+      "dossier": "docs/evidence/audits/answer-readiness/author-same-as.md",
+      "requires": [
+        "origin-reachable",
+        "unblocked-fetches",
+        "rendered-body",
+        "sample-adequate"
+      ],
+      "legacyIds": [
+        "10.2"
+      ]
+    },
+    {
+      "id": "answer-readiness/brand-name",
+      "category": "answer-readiness",
+      "slug": "brand-name",
+      "title": "Brand name in body text",
+      "tier": "informative",
+      "evidenceGrade": "C",
+      "weight": 0,
+      "scoreDisplayMode": "informative",
+      "dossier": "docs/evidence/audits/answer-readiness/brand-name.md",
+      "requires": [
+        "origin-reachable",
+        "unblocked-fetches",
+        "rendered-body",
+        "sample-adequate"
+      ],
+      "legacyIds": [
+        "10.6"
+      ]
+    },
+    {
+      "id": "answer-readiness/chunk-boundary-referent-integrity",
+      "category": "answer-readiness",
+      "slug": "chunk-boundary-referent-integrity",
+      "title": "Chunk-boundary referent integrity",
+      "tier": "scored",
+      "evidenceGrade": "B",
+      "weight": 0.6,
+      "scoreDisplayMode": "ternary",
+      "dossier": "docs/evidence/audits/answer-readiness/chunk-boundary-referent-integrity.md",
+      "requires": [
+        "origin-reachable",
+        "unblocked-fetches",
+        "rendered-body",
+        "sample-adequate"
+      ],
+      "legacyIds": []
+    },
+    {
+      "id": "answer-readiness/comparison-tables",
+      "category": "answer-readiness",
+      "slug": "comparison-tables",
+      "title": "Comparison tables present",
+      "tier": "informative",
+      "evidenceGrade": "C",
+      "weight": 0,
+      "scoreDisplayMode": "informative",
+      "dossier": "docs/evidence/audits/answer-readiness/comparison-tables.md",
+      "requires": [
+        "origin-reachable",
+        "unblocked-fetches",
+        "rendered-body",
+        "sample-adequate"
+      ],
+      "legacyIds": [
+        "9.5"
+      ]
+    },
+    {
+      "id": "answer-readiness/content-without-clickthrough",
+      "category": "answer-readiness",
+      "slug": "content-without-clickthrough",
+      "title": "Content answers without click-through",
+      "tier": "scored",
+      "evidenceGrade": "B",
+      "weight": 0.6,
+      "scoreDisplayMode": "ternary",
+      "dossier": "docs/evidence/audits/answer-readiness/content-without-clickthrough.md",
+      "requires": [
+        "origin-reachable",
+        "unblocked-fetches",
+        "rendered-body",
+        "sample-adequate"
+      ],
+      "legacyIds": [
+        "9.9"
+      ]
+    },
+    {
+      "id": "answer-readiness/core-open-graph",
+      "category": "answer-readiness",
+      "slug": "core-open-graph",
+      "title": "Core Open Graph tags",
+      "tier": "scored",
+      "evidenceGrade": "A",
+      "weight": 1,
+      "scoreDisplayMode": "ternary",
+      "dossier": "docs/evidence/audits/answer-readiness/core-open-graph.md",
+      "requires": [
+        "origin-reachable",
+        "unblocked-fetches",
+        "rendered-body",
+        "sample-adequate"
+      ],
+      "legacyIds": [
+        "4.6",
+        "4.8",
+        "4.10"
+      ]
+    },
+    {
+      "id": "answer-readiness/dates-on-content",
+      "category": "answer-readiness",
+      "slug": "dates-on-content",
+      "title": "Dates on content pages",
+      "tier": "scored",
+      "evidenceGrade": "A",
+      "weight": 1,
+      "scoreDisplayMode": "ternary",
+      "dossier": "docs/evidence/audits/answer-readiness/dates-on-content.md",
+      "requires": [
+        "origin-reachable",
+        "unblocked-fetches",
+        "rendered-body",
+        "sample-adequate"
+      ],
+      "legacyIds": [
+        "9.8",
+        "9.10"
+      ]
+    },
+    {
+      "id": "answer-readiness/descriptive-urls",
+      "category": "answer-readiness",
+      "slug": "descriptive-urls",
+      "title": "Descriptive URL slugs",
+      "tier": "informative",
+      "evidenceGrade": "C",
+      "weight": 0,
+      "scoreDisplayMode": "informative",
+      "dossier": "docs/evidence/audits/answer-readiness/descriptive-urls.md",
+      "requires": [
+        "origin-reachable",
+        "unblocked-fetches"
+      ],
+      "legacyIds": [
+        "10.15"
+      ]
+    },
+    {
+      "id": "answer-readiness/direct-definitions",
+      "category": "answer-readiness",
+      "slug": "direct-definitions",
+      "title": "Definition markup on definitional pages",
+      "tier": "informative",
+      "evidenceGrade": "C",
+      "weight": 0,
+      "scoreDisplayMode": "informative",
+      "dossier": "docs/evidence/audits/answer-readiness/direct-definitions.md",
+      "requires": [
+        "origin-reachable",
+        "unblocked-fetches",
+        "rendered-body",
+        "sample-adequate"
+      ],
+      "legacyIds": [
+        "9.4"
+      ]
+    },
+    {
+      "id": "answer-readiness/external-citations",
+      "category": "answer-readiness",
+      "slug": "external-citations",
+      "title": "External citations",
+      "tier": "scored",
+      "evidenceGrade": "B",
+      "weight": 0.6,
+      "scoreDisplayMode": "ternary",
+      "dossier": "docs/evidence/audits/answer-readiness/external-citations.md",
+      "requires": [
+        "origin-reachable",
+        "unblocked-fetches",
+        "rendered-body",
+        "sample-adequate"
+      ],
+      "legacyIds": [
+        "10.5"
+      ]
+    },
+    {
+      "id": "answer-readiness/extractor-survival-recall",
+      "category": "answer-readiness",
+      "slug": "extractor-survival-recall",
+      "title": "Extractor survival recall",
+      "tier": "scored",
+      "evidenceGrade": "B",
+      "weight": 0.6,
+      "scoreDisplayMode": "ternary",
+      "dossier": "docs/evidence/audits/answer-readiness/extractor-survival-recall.md",
+      "requires": [
+        "origin-reachable",
+        "unblocked-fetches",
+        "rendered-body",
+        "sample-adequate"
+      ],
+      "legacyIds": []
+    },
+    {
+      "id": "answer-readiness/faq-sections",
+      "category": "answer-readiness",
+      "slug": "faq-sections",
+      "title": "FAQ sections present",
+      "tier": "informative",
+      "evidenceGrade": "C",
+      "weight": 0,
+      "scoreDisplayMode": "informative",
+      "dossier": "docs/evidence/audits/answer-readiness/faq-sections.md",
+      "requires": [
+        "origin-reachable",
+        "unblocked-fetches",
+        "rendered-body",
+        "sample-adequate"
+      ],
+      "legacyIds": [
+        "9.1"
+      ]
+    },
+    {
+      "id": "answer-readiness/first-paragraph-answers",
+      "category": "answer-readiness",
+      "slug": "first-paragraph-answers",
+      "title": "First paragraph answers primary question",
+      "tier": "informative",
+      "evidenceGrade": "C",
+      "weight": 0,
+      "scoreDisplayMode": "informative",
+      "dossier": "docs/evidence/audits/answer-readiness/first-paragraph-answers.md",
+      "requires": [
+        "origin-reachable",
+        "unblocked-fetches",
+        "rendered-body",
+        "sample-adequate"
+      ],
+      "legacyIds": [
+        "9.3"
+      ]
+    },
+    {
+      "id": "answer-readiness/last-modified-schema",
+      "category": "answer-readiness",
+      "slug": "last-modified-schema",
+      "title": "Last modified date in schema",
+      "tier": "scored",
+      "evidenceGrade": "B",
+      "weight": 0.6,
+      "scoreDisplayMode": "ternary",
+      "dossier": "docs/evidence/audits/answer-readiness/last-modified-schema.md",
+      "requires": [
+        "origin-reachable",
+        "unblocked-fetches",
+        "rendered-body",
+        "sample-adequate"
+      ],
+      "legacyIds": [
+        "10.10"
+      ]
+    },
+    {
+      "id": "answer-readiness/meta-author",
+      "category": "answer-readiness",
+      "slug": "meta-author",
+      "title": "Meta author present",
+      "tier": "informative",
+      "evidenceGrade": "C",
+      "weight": 0,
+      "scoreDisplayMode": "informative",
+      "dossier": "docs/evidence/audits/answer-readiness/meta-author.md",
+      "requires": [
+        "origin-reachable",
+        "unblocked-fetches",
+        "rendered-body",
+        "sample-adequate"
+      ],
+      "legacyIds": [
+        "4.2"
+      ]
+    },
+    {
+      "id": "answer-readiness/meta-description",
+      "category": "answer-readiness",
+      "slug": "meta-description",
+      "title": "Meta description quality",
+      "tier": "scored",
+      "evidenceGrade": "B",
+      "weight": 0.6,
+      "scoreDisplayMode": "ternary",
+      "dossier": "docs/evidence/audits/answer-readiness/meta-description.md",
+      "requires": [
+        "origin-reachable",
+        "unblocked-fetches",
+        "rendered-body",
+        "sample-adequate"
+      ],
+      "legacyIds": [
+        "4.1",
+        "9.11"
+      ]
+    },
+    {
+      "id": "answer-readiness/named-author",
+      "category": "answer-readiness",
+      "slug": "named-author",
+      "title": "Named author attribution",
+      "tier": "informative",
+      "evidenceGrade": "C",
+      "weight": 0,
+      "scoreDisplayMode": "informative",
+      "dossier": "docs/evidence/audits/answer-readiness/named-author.md",
+      "requires": [
+        "origin-reachable",
+        "unblocked-fetches",
+        "rendered-body",
+        "sample-adequate"
+      ],
+      "legacyIds": [
+        "10.1"
+      ]
+    },
+    {
+      "id": "answer-readiness/og-image-alt",
+      "category": "answer-readiness",
+      "slug": "og-image-alt",
+      "title": "og:image:alt present",
+      "tier": "informative",
+      "evidenceGrade": "C",
+      "weight": 0,
+      "scoreDisplayMode": "informative",
+      "dossier": "docs/evidence/audits/answer-readiness/og-image-alt.md",
+      "requires": [
+        "origin-reachable",
+        "unblocked-fetches",
+        "rendered-body",
+        "sample-adequate"
+      ],
+      "legacyIds": [
+        "4.9"
+      ]
+    },
+    {
+      "id": "answer-readiness/og-type",
+      "category": "answer-readiness",
+      "slug": "og-type",
+      "title": "og:type set and appropriate",
+      "tier": "scored",
+      "evidenceGrade": "B",
+      "weight": 0.6,
+      "scoreDisplayMode": "ternary",
+      "dossier": "docs/evidence/audits/answer-readiness/og-type.md",
+      "requires": [
+        "origin-reachable",
+        "unblocked-fetches",
+        "rendered-body",
+        "sample-adequate"
+      ],
+      "legacyIds": [
+        "4.7"
+      ]
+    },
+    {
+      "id": "answer-readiness/publication-date",
+      "category": "answer-readiness",
+      "slug": "publication-date",
+      "title": "Publication date visible",
+      "tier": "scored",
+      "evidenceGrade": "B",
+      "weight": 0.6,
+      "scoreDisplayMode": "binary",
+      "dossier": "docs/evidence/audits/answer-readiness/publication-date.md",
+      "requires": [
+        "origin-reachable",
+        "unblocked-fetches",
+        "rendered-body",
+        "sample-adequate"
+      ],
+      "legacyIds": [
+        "10.9"
+      ]
+    },
+    {
+      "id": "answer-readiness/question-headings",
+      "category": "answer-readiness",
+      "slug": "question-headings",
+      "title": "Question-formatted headings",
+      "tier": "informative",
+      "evidenceGrade": "C",
+      "weight": 0,
+      "scoreDisplayMode": "informative",
+      "dossier": "docs/evidence/audits/answer-readiness/question-headings.md",
+      "requires": [
+        "origin-reachable",
+        "unblocked-fetches",
+        "rendered-body",
+        "sample-adequate"
+      ],
+      "legacyIds": [
+        "9.2"
+      ]
+    },
+    {
+      "id": "answer-readiness/review-signals",
+      "category": "answer-readiness",
+      "slug": "review-signals",
+      "title": "Review/testimonial signals",
+      "tier": "scored",
+      "evidenceGrade": "B",
+      "weight": 0.6,
+      "scoreDisplayMode": "ternary",
+      "dossier": "docs/evidence/audits/answer-readiness/review-signals.md",
+      "requires": [
+        "origin-reachable",
+        "unblocked-fetches",
+        "rendered-body",
+        "sample-adequate"
+      ],
+      "legacyIds": [
+        "10.8",
+        "10.14"
+      ]
+    },
+    {
+      "id": "answer-readiness/section-split-risk-profile",
+      "category": "answer-readiness",
+      "slug": "section-split-risk-profile",
+      "title": "Section split-risk profile",
+      "tier": "scored",
+      "evidenceGrade": "B",
+      "weight": 0.6,
+      "scoreDisplayMode": "ternary",
+      "dossier": "docs/evidence/audits/answer-readiness/section-split-risk-profile.md",
+      "requires": [
+        "origin-reachable",
+        "unblocked-fetches",
+        "rendered-body",
+        "sample-adequate"
+      ],
+      "legacyIds": []
+    },
+    {
+      "id": "answer-readiness/site-wide-passage-uniqueness-ratio",
+      "category": "answer-readiness",
+      "slug": "site-wide-passage-uniqueness-ratio",
+      "title": "Site-wide passage uniqueness ratio",
+      "tier": "scored",
+      "evidenceGrade": "B",
+      "weight": 0.6,
+      "scoreDisplayMode": "ternary",
+      "dossier": "docs/evidence/audits/answer-readiness/site-wide-passage-uniqueness-ratio.md",
+      "requires": [
+        "origin-reachable",
+        "unblocked-fetches",
+        "rendered-body",
+        "sample-adequate"
+      ],
+      "legacyIds": []
+    },
+    {
+      "id": "answer-readiness/snippet-gate-coverage",
+      "category": "answer-readiness",
+      "slug": "snippet-gate-coverage",
+      "title": "Snippet-gate coverage analysis",
+      "tier": "scored",
+      "evidenceGrade": "A",
+      "weight": 1,
+      "scoreDisplayMode": "ternary",
+      "dossier": "docs/evidence/audits/answer-readiness/snippet-gate-coverage.md",
+      "requires": [
+        "origin-reachable",
+        "unblocked-fetches",
+        "rendered-body",
+        "sample-adequate"
+      ],
+      "legacyIds": []
+    },
+    {
+      "id": "answer-readiness/specific-numbers",
+      "category": "answer-readiness",
+      "slug": "specific-numbers",
+      "title": "Specific numbers and data points",
+      "tier": "scored",
+      "evidenceGrade": "B",
+      "weight": 0.6,
+      "scoreDisplayMode": "binary",
+      "dossier": "docs/evidence/audits/answer-readiness/specific-numbers.md",
+      "requires": [
+        "origin-reachable",
+        "unblocked-fetches",
+        "rendered-body",
+        "sample-adequate"
+      ],
+      "legacyIds": [
+        "9.7"
+      ]
+    },
+    {
+      "id": "answer-readiness/table-markdown-round-trip-loss",
+      "category": "answer-readiness",
+      "slug": "table-markdown-round-trip-loss",
+      "title": "Tables survive conversion to markdown",
+      "tier": "scored",
+      "evidenceGrade": "B",
+      "weight": 0.6,
+      "scoreDisplayMode": "ternary",
+      "dossier": "docs/evidence/audits/answer-readiness/table-markdown-round-trip-loss.md",
+      "requires": [
+        "origin-reachable",
+        "unblocked-fetches",
+        "rendered-body",
+        "sample-adequate"
+      ],
+      "legacyIds": []
+    },
+    {
+      "id": "answer-readiness/text-fragment-addressability",
+      "category": "answer-readiness",
+      "slug": "text-fragment-addressability",
+      "title": "Text-fragment citation addressability",
+      "tier": "scored",
+      "evidenceGrade": "A",
+      "weight": 1,
+      "scoreDisplayMode": "ternary",
+      "dossier": "docs/evidence/audits/answer-readiness/text-fragment-addressability.md",
+      "requires": [
+        "origin-reachable",
+        "unblocked-fetches",
+        "rendered-body",
+        "sample-adequate"
+      ],
+      "legacyIds": []
+    },
+    {
+      "id": "answer-readiness/trust-signals",
+      "category": "answer-readiness",
+      "slug": "trust-signals",
+      "title": "Trust and evidence signals on homepage",
+      "tier": "scored",
+      "evidenceGrade": "B",
+      "weight": 0.6,
+      "scoreDisplayMode": "ternary",
+      "dossier": "docs/evidence/audits/answer-readiness/trust-signals.md",
+      "requires": [
+        "origin-reachable",
+        "unblocked-fetches",
+        "rendered-body",
+        "sample-adequate"
+      ],
+      "legacyIds": [
+        "10.7"
+      ]
+    },
+    {
+      "id": "answer-readiness/unique-data",
+      "category": "answer-readiness",
+      "slug": "unique-data",
+      "title": "Unique data or statistics",
+      "tier": "scored",
+      "evidenceGrade": "B",
+      "weight": 0.6,
+      "scoreDisplayMode": "ternary",
+      "dossier": "docs/evidence/audits/answer-readiness/unique-data.md",
+      "requires": [
+        "origin-reachable",
+        "unblocked-fetches",
+        "rendered-body",
+        "sample-adequate"
+      ],
+      "legacyIds": [
+        "10.13"
+      ]
+    },
+    {
+      "id": "answer-readiness/unique-meta",
+      "category": "answer-readiness",
+      "slug": "unique-meta",
+      "title": "Unique meta per page",
+      "tier": "informative",
+      "evidenceGrade": "C",
+      "weight": 0,
+      "scoreDisplayMode": "informative",
+      "dossier": "docs/evidence/audits/answer-readiness/unique-meta.md",
+      "requires": [
+        "origin-reachable",
+        "unblocked-fetches",
+        "rendered-body",
+        "sample-adequate"
+      ],
+      "legacyIds": [
+        "4.5"
+      ]
+    },
+    {
+      "id": "content-extraction/article-element",
+      "category": "content-extraction",
+      "slug": "article-element",
+      "title": "<article> used for content",
+      "tier": "scored",
+      "evidenceGrade": "A",
+      "weight": 1,
+      "scoreDisplayMode": "ternary",
+      "dossier": "docs/evidence/audits/content-extraction/article-element.md",
+      "requires": [
+        "origin-reachable",
+        "unblocked-fetches",
+        "rendered-body",
+        "sample-adequate"
+      ],
+      "legacyIds": [
+        "6.4"
+      ]
+    },
+    {
+      "id": "content-extraction/aside-element",
+      "category": "content-extraction",
+      "slug": "aside-element",
+      "title": "<aside> for supplementary content",
+      "tier": "scored",
+      "evidenceGrade": "B",
+      "weight": 0.6,
+      "scoreDisplayMode": "ternary",
+      "dossier": "docs/evidence/audits/content-extraction/aside-element.md",
+      "requires": [
+        "origin-reachable",
+        "unblocked-fetches",
+        "rendered-body",
+        "sample-adequate"
+      ],
+      "legacyIds": [
+        "6.6"
+      ]
+    },
+    {
+      "id": "content-extraction/boilerplate-tax",
+      "category": "content-extraction",
+      "slug": "boilerplate-tax",
+      "title": "Boilerplate tax across the crawl (unique tokens per fetch)",
+      "tier": "scored",
+      "evidenceGrade": "B",
+      "weight": 0.6,
+      "scoreDisplayMode": "ternary",
+      "dossier": "docs/evidence/audits/content-extraction/boilerplate-tax.md",
+      "requires": [
+        "origin-reachable",
+        "unblocked-fetches",
+        "rendered-body",
+        "sample-adequate"
+      ],
+      "legacyIds": []
+    },
+    {
+      "id": "content-extraction/code-language",
+      "category": "content-extraction",
+      "slug": "code-language",
+      "title": "Code blocks have language annotations",
+      "tier": "informative",
+      "evidenceGrade": "C",
+      "weight": 0,
+      "scoreDisplayMode": "informative",
+      "dossier": "docs/evidence/audits/content-extraction/code-language.md",
+      "requires": [
+        "origin-reachable",
+        "unblocked-fetches",
+        "rendered-body",
+        "sample-adequate"
+      ],
+      "legacyIds": [
+        "6.10"
+      ]
+    },
+    {
+      "id": "content-extraction/content-depth",
+      "category": "content-extraction",
+      "slug": "content-depth",
+      "title": "Sufficient content depth",
+      "tier": "scored",
+      "evidenceGrade": "B",
+      "weight": 0.6,
+      "scoreDisplayMode": "ternary",
+      "dossier": "docs/evidence/audits/content-extraction/content-depth.md",
+      "requires": [
+        "origin-reachable",
+        "unblocked-fetches",
+        "rendered-body",
+        "sample-adequate"
+      ],
+      "legacyIds": [
+        "6.14"
+      ]
+    },
+    {
+      "id": "content-extraction/css-hidden-ghost-content",
+      "category": "content-extraction",
+      "slug": "css-hidden-ghost-content",
+      "title": "Ghost content: CSS-hidden text ingested as visible",
+      "tier": "scored",
+      "evidenceGrade": "A",
+      "weight": 1,
+      "scoreDisplayMode": "ternary",
+      "dossier": "docs/evidence/audits/content-extraction/css-hidden-ghost-content.md",
+      "requires": [
+        "origin-reachable",
+        "unblocked-fetches",
+        "rendered-body",
+        "sample-adequate"
+      ],
+      "legacyIds": []
+    },
+    {
+      "id": "content-extraction/data-tables",
+      "category": "content-extraction",
+      "slug": "data-tables",
+      "title": "Data tables properly structured",
+      "tier": "scored",
+      "evidenceGrade": "B",
+      "weight": 0.6,
+      "scoreDisplayMode": "ternary",
+      "dossier": "docs/evidence/audits/content-extraction/data-tables.md",
+      "requires": [
+        "origin-reachable",
+        "unblocked-fetches",
+        "rendered-body",
+        "sample-adequate"
+      ],
+      "legacyIds": [
+        "6.9"
+      ]
+    },
+    {
+      "id": "content-extraction/extraction-determinism",
+      "category": "content-extraction",
+      "slug": "extraction-determinism",
+      "title": "Extraction determinism (multi-extractor agreement)",
+      "tier": "scored",
+      "evidenceGrade": "B",
+      "weight": 0.6,
+      "scoreDisplayMode": "ternary",
+      "dossier": "docs/evidence/audits/content-extraction/extraction-determinism.md",
+      "requires": [
+        "origin-reachable",
+        "unblocked-fetches",
+        "rendered-body",
+        "sample-adequate"
+      ],
+      "legacyIds": []
+    },
+    {
+      "id": "content-extraction/fake-headings",
+      "category": "content-extraction",
+      "slug": "fake-headings",
+      "title": "No fake headings",
+      "tier": "scored",
+      "evidenceGrade": "B",
+      "weight": 0.6,
+      "scoreDisplayMode": "ternary",
+      "dossier": "docs/evidence/audits/content-extraction/fake-headings.md",
+      "requires": [
+        "origin-reachable",
+        "unblocked-fetches",
+        "rendered-body",
+        "sample-adequate"
+      ],
+      "legacyIds": [
+        "6.20"
+      ]
+    },
+    {
+      "id": "content-extraction/figure-figcaption",
+      "category": "content-extraction",
+      "slug": "figure-figcaption",
+      "title": "<figure> + <figcaption> usage",
+      "tier": "informative",
+      "evidenceGrade": "C",
+      "weight": 0,
+      "scoreDisplayMode": "informative",
+      "dossier": "docs/evidence/audits/content-extraction/figure-figcaption.md",
+      "requires": [
+        "origin-reachable",
+        "unblocked-fetches",
+        "rendered-body",
+        "sample-adequate"
+      ],
+      "legacyIds": [
+        "6.17"
+      ]
+    },
+    {
+      "id": "content-extraction/header-footer",
+      "category": "content-extraction",
+      "slug": "header-footer",
+      "title": "<header> and <footer> landmarks",
+      "tier": "scored",
+      "evidenceGrade": "A",
+      "weight": 1,
+      "scoreDisplayMode": "ternary",
+      "dossier": "docs/evidence/audits/content-extraction/header-footer.md",
+      "requires": [
+        "origin-reachable",
+        "unblocked-fetches",
+        "rendered-body",
+        "sample-adequate"
+      ],
+      "legacyIds": [
+        "6.5"
+      ]
+    },
+    {
+      "id": "content-extraction/hydration-payload-share",
+      "category": "content-extraction",
+      "slug": "hydration-payload-share",
+      "title": "Inlined hydration-state payload share",
+      "tier": "scored",
+      "evidenceGrade": "A",
+      "weight": 1,
+      "scoreDisplayMode": "ternary",
+      "dossier": "docs/evidence/audits/content-extraction/hydration-payload-share.md",
+      "requires": [
+        "origin-reachable",
+        "unblocked-fetches",
+        "rendered-body",
+        "sample-adequate"
+      ],
+      "legacyIds": []
+    },
+    {
+      "id": "content-extraction/image-alt-text",
+      "category": "content-extraction",
+      "slug": "image-alt-text",
+      "title": "Image text-alternative coverage",
+      "tier": "scored",
+      "evidenceGrade": "A",
+      "weight": 1,
+      "scoreDisplayMode": "ternary",
+      "dossier": "docs/evidence/audits/content-extraction/image-alt-text.md",
+      "requires": [
+        "origin-reachable",
+        "unblocked-fetches",
+        "rendered-body",
+        "sample-adequate"
+      ],
+      "legacyIds": [
+        "6.15"
+      ]
+    },
+    {
+      "id": "content-extraction/json-ld-duplication-mass",
+      "category": "content-extraction",
+      "slug": "json-ld-duplication-mass",
+      "title": "JSON-LD duplication mass",
+      "tier": "informative",
+      "evidenceGrade": "C",
+      "weight": 0,
+      "scoreDisplayMode": "informative",
+      "dossier": "docs/evidence/audits/content-extraction/json-ld-duplication-mass.md",
+      "requires": [
+        "origin-reachable",
+        "unblocked-fetches",
+        "rendered-body",
+        "sample-adequate"
+      ],
+      "legacyIds": []
+    },
+    {
+      "id": "content-extraction/language-attribute",
+      "category": "content-extraction",
+      "slug": "language-attribute",
+      "title": "Language attribute",
+      "tier": "scored",
+      "evidenceGrade": "A",
+      "weight": 1,
+      "scoreDisplayMode": "binary",
+      "dossier": "docs/evidence/audits/content-extraction/language-attribute.md",
+      "requires": [
+        "origin-reachable",
+        "unblocked-fetches"
+      ],
+      "legacyIds": [
+        "4.4"
+      ]
+    },
+    {
+      "id": "content-extraction/main-element",
+      "category": "content-extraction",
+      "slug": "main-element",
+      "title": "<main> element present",
+      "tier": "scored",
+      "evidenceGrade": "A",
+      "weight": 1,
+      "scoreDisplayMode": "ternary",
+      "dossier": "docs/evidence/audits/content-extraction/main-element.md",
+      "requires": [
+        "origin-reachable",
+        "unblocked-fetches",
+        "rendered-body",
+        "sample-adequate"
+      ],
+      "legacyIds": [
+        "6.3"
+      ]
+    },
+    {
+      "id": "content-extraction/markdown-alternate",
+      "category": "content-extraction",
+      "slug": "markdown-alternate",
+      "title": "Markdown alternate: resolvable, faithful, cheaper",
+      "tier": "scored",
+      "evidenceGrade": "A",
+      "weight": 1,
+      "scoreDisplayMode": "ternary",
+      "dossier": "docs/evidence/audits/content-extraction/markdown-alternate.md",
+      "requires": [
+        "origin-reachable",
+        "unblocked-fetches",
+        "rendered-body",
+        "sample-adequate"
+      ],
+      "legacyIds": [
+        "4.15"
+      ]
+    },
+    {
+      "id": "content-extraction/preamble-tax",
+      "category": "content-extraction",
+      "slug": "preamble-tax",
+      "title": "Preamble tax: tokens before the first content token",
+      "tier": "scored",
+      "evidenceGrade": "B",
+      "weight": 0.6,
+      "scoreDisplayMode": "ternary",
+      "dossier": "docs/evidence/audits/content-extraction/preamble-tax.md",
+      "requires": [
+        "origin-reachable",
+        "unblocked-fetches",
+        "rendered-body",
+        "sample-adequate"
+      ],
+      "legacyIds": []
+    },
+    {
+      "id": "content-extraction/section-headings",
+      "category": "content-extraction",
+      "slug": "section-headings",
+      "title": "<section> elements have headings or labels",
+      "tier": "scored",
+      "evidenceGrade": "B",
+      "weight": 0.6,
+      "scoreDisplayMode": "ternary",
+      "dossier": "docs/evidence/audits/content-extraction/section-headings.md",
+      "requires": [
+        "origin-reachable",
+        "unblocked-fetches",
+        "rendered-body",
+        "sample-adequate"
+      ],
+      "legacyIds": [
+        "6.7"
+      ]
+    },
+    {
+      "id": "content-extraction/semantic-lists",
+      "category": "content-extraction",
+      "slug": "semantic-lists",
+      "title": "Semantic list usage",
+      "tier": "scored",
+      "evidenceGrade": "B",
+      "weight": 0.6,
+      "scoreDisplayMode": "ternary",
+      "dossier": "docs/evidence/audits/content-extraction/semantic-lists.md",
+      "requires": [
+        "origin-reachable",
+        "unblocked-fetches",
+        "rendered-body",
+        "sample-adequate"
+      ],
+      "legacyIds": [
+        "6.8",
+        "6.13",
+        "9.6"
+      ]
+    },
+    {
+      "id": "content-extraction/sequential-headings",
+      "category": "content-extraction",
+      "slug": "sequential-headings",
+      "title": "Sequential heading hierarchy",
+      "tier": "scored",
+      "evidenceGrade": "B",
+      "weight": 0.6,
+      "scoreDisplayMode": "ternary",
+      "dossier": "docs/evidence/audits/content-extraction/sequential-headings.md",
+      "requires": [
+        "origin-reachable",
+        "unblocked-fetches",
+        "rendered-body",
+        "sample-adequate"
+      ],
+      "legacyIds": [
+        "6.2"
+      ]
+    },
+    {
+      "id": "content-extraction/server-rendered",
+      "category": "content-extraction",
+      "slug": "server-rendered",
+      "title": "Server-rendered content",
+      "tier": "scored",
+      "evidenceGrade": "B",
+      "weight": 0.6,
+      "scoreDisplayMode": "ternary",
+      "dossier": "docs/evidence/audits/content-extraction/server-rendered.md",
+      "requires": [
+        "origin-reachable",
+        "unblocked-fetches"
+      ],
+      "legacyIds": [
+        "8.13"
+      ]
+    },
+    {
+      "id": "content-extraction/server-responsiveness",
+      "category": "content-extraction",
+      "slug": "server-responsiveness",
+      "title": "Server responsiveness",
+      "tier": "scored",
+      "evidenceGrade": "B",
+      "weight": 0.6,
+      "scoreDisplayMode": "ternary",
+      "dossier": "docs/evidence/audits/content-extraction/server-responsiveness.md",
+      "requires": [
+        "origin-reachable",
+        "unblocked-fetches"
+      ],
+      "legacyIds": [
+        "1.19",
+        "8.12"
+      ]
+    },
+    {
+      "id": "content-extraction/single-h1",
+      "category": "content-extraction",
+      "slug": "single-h1",
+      "title": "Single h1 per page",
+      "tier": "scored",
+      "evidenceGrade": "B",
+      "weight": 0.6,
+      "scoreDisplayMode": "binary",
+      "dossier": "docs/evidence/audits/content-extraction/single-h1.md",
+      "requires": [
+        "origin-reachable",
+        "unblocked-fetches",
+        "rendered-body",
+        "sample-adequate"
+      ],
+      "legacyIds": [
+        "6.1"
+      ]
+    },
+    {
+      "id": "content-extraction/svg-bloat",
+      "category": "content-extraction",
+      "slug": "svg-bloat",
+      "title": "SVGs not bloating agent context",
+      "tier": "scored",
+      "evidenceGrade": "B",
+      "weight": 0.6,
+      "scoreDisplayMode": "ternary",
+      "dossier": "docs/evidence/audits/content-extraction/svg-bloat.md",
+      "requires": [
+        "origin-reachable",
+        "unblocked-fetches",
+        "rendered-body",
+        "sample-adequate"
+      ],
+      "legacyIds": [
+        "6.18"
+      ]
+    },
+    {
+      "id": "content-extraction/time-element",
+      "category": "content-extraction",
+      "slug": "time-element",
+      "title": "<time datetime=\"\"> used for dates",
+      "tier": "informative",
+      "evidenceGrade": "C",
+      "weight": 0,
+      "scoreDisplayMode": "informative",
+      "dossier": "docs/evidence/audits/content-extraction/time-element.md",
+      "requires": [
+        "origin-reachable",
+        "unblocked-fetches",
+        "rendered-body",
+        "sample-adequate"
+      ],
+      "legacyIds": [
+        "6.11"
+      ]
+    },
+    {
+      "id": "content-extraction/token-ratio",
+      "category": "content-extraction",
+      "slug": "token-ratio",
+      "title": "Lean token-to-content ratio",
+      "tier": "scored",
+      "evidenceGrade": "B",
+      "weight": 0.6,
+      "scoreDisplayMode": "ternary",
+      "dossier": "docs/evidence/audits/content-extraction/token-ratio.md",
+      "requires": [
+        "origin-reachable",
+        "unblocked-fetches",
+        "rendered-body",
+        "sample-adequate"
+      ],
+      "legacyIds": [
+        "6.19"
+      ]
+    },
+    {
+      "id": "machine-discovery/agent-commerce-feed-parity",
+      "category": "machine-discovery",
+      "slug": "agent-commerce-feed-parity",
+      "title": "Product pages carry the fields an agent-commerce feed needs",
+      "tier": "scored",
+      "evidenceGrade": "A",
+      "weight": 1,
+      "scoreDisplayMode": "ternary",
+      "dossier": "docs/evidence/audits/machine-discovery/agent-commerce-feed-parity.md",
+      "requires": [
+        "origin-reachable",
+        "unblocked-fetches",
+        "rendered-body",
+        "sample-adequate"
+      ],
+      "legacyIds": []
+    },
+    {
+      "id": "machine-discovery/ai-crawler-surface-reachability",
+      "category": "machine-discovery",
+      "slug": "ai-crawler-surface-reachability",
+      "title": "AI crawlers can reach the discovery surfaces the site advertises",
+      "tier": "scored",
+      "evidenceGrade": "A",
+      "weight": 1,
+      "scoreDisplayMode": "ternary",
+      "dossier": "docs/evidence/audits/machine-discovery/ai-crawler-surface-reachability.md",
+      "requires": [
+        "origin-reachable",
+        "unblocked-fetches",
+        "rendered-body",
+        "sample-adequate"
+      ],
+      "legacyIds": []
+    },
+    {
+      "id": "machine-discovery/ai-file-delivery",
+      "category": "machine-discovery",
+      "slug": "ai-file-delivery",
+      "title": "AI files are delivered correctly",
+      "tier": "informative",
+      "evidenceGrade": "B",
+      "weight": 0,
+      "scoreDisplayMode": "informative",
+      "dossier": "docs/evidence/audits/machine-discovery/ai-file-delivery.md",
+      "requires": [
+        "origin-reachable",
+        "unblocked-fetches",
+        "rendered-body",
+        "sample-adequate"
+      ],
+      "legacyIds": [
+        "8.10",
+        "8.11"
+      ]
+    },
+    {
+      "id": "machine-discovery/conditional-request-support",
+      "category": "machine-discovery",
+      "slug": "conditional-request-support",
+      "title": "Discovery surfaces answer conditional requests",
+      "tier": "scored",
+      "evidenceGrade": "B",
+      "weight": 0.6,
+      "scoreDisplayMode": "ternary",
+      "dossier": "docs/evidence/audits/machine-discovery/conditional-request-support.md",
+      "requires": [
+        "origin-reachable",
+        "unblocked-fetches"
+      ],
+      "legacyIds": []
+    },
+    {
+      "id": "machine-discovery/cors-ai-files",
+      "category": "machine-discovery",
+      "slug": "cors-ai-files",
+      "title": "CORS on AI files",
+      "tier": "informative",
+      "evidenceGrade": "C",
+      "weight": 0,
+      "scoreDisplayMode": "informative",
+      "dossier": "docs/evidence/audits/machine-discovery/cors-ai-files.md",
+      "requires": [
+        "origin-reachable",
+        "unblocked-fetches",
+        "rendered-body",
+        "sample-adequate"
+      ],
+      "legacyIds": [
+        "8.8"
+      ]
+    },
+    {
+      "id": "machine-discovery/discovery-index-coverage",
+      "category": "machine-discovery",
+      "slug": "discovery-index-coverage",
+      "title": "Pages are covered by a discovery index",
+      "tier": "scored",
+      "evidenceGrade": "B",
+      "weight": 0.6,
+      "scoreDisplayMode": "ternary",
+      "dossier": "docs/evidence/audits/machine-discovery/discovery-index-coverage.md",
+      "requires": [
+        "origin-reachable",
+        "unblocked-fetches",
+        "rendered-body",
+        "sample-adequate"
+      ],
+      "legacyIds": [
+        "1.8",
+        "1.22"
+      ]
+    },
+    {
+      "id": "machine-discovery/feed-entry-identity-and-canonical-integrity",
+      "category": "machine-discovery",
+      "slug": "feed-entry-identity-and-canonical-integrity",
+      "title": "Feed entries have stable identities that resolve to their canonical pages",
+      "tier": "scored",
+      "evidenceGrade": "B",
+      "weight": 0.6,
+      "scoreDisplayMode": "ternary",
+      "dossier": "docs/evidence/audits/machine-discovery/feed-entry-identity-and-canonical-integrity.md",
+      "requires": [
+        "origin-reachable",
+        "unblocked-fetches"
+      ],
+      "legacyIds": []
+    },
+    {
+      "id": "machine-discovery/in-content-links",
+      "category": "machine-discovery",
+      "slug": "in-content-links",
+      "title": "In-content internal links",
+      "tier": "scored",
+      "evidenceGrade": "A",
+      "weight": 1,
+      "scoreDisplayMode": "ternary",
+      "dossier": "docs/evidence/audits/machine-discovery/in-content-links.md",
+      "requires": [
+        "origin-reachable",
+        "unblocked-fetches",
+        "rendered-body",
+        "sample-adequate"
+      ],
+      "legacyIds": [
+        "1.15",
+        "10.11"
+      ]
+    },
+    {
+      "id": "machine-discovery/llms-full-txt",
+      "category": "machine-discovery",
+      "slug": "llms-full-txt",
+      "title": "llms-full.txt present",
+      "tier": "informative",
+      "evidenceGrade": "C",
+      "weight": 0,
+      "scoreDisplayMode": "informative",
+      "dossier": "docs/evidence/audits/machine-discovery/llms-full-txt.md",
+      "requires": [
+        "origin-reachable",
+        "unblocked-fetches"
+      ],
+      "legacyIds": [
+        "1.6"
+      ]
+    },
+    {
+      "id": "machine-discovery/llms-txt-exists",
+      "category": "machine-discovery",
+      "slug": "llms-txt-exists",
+      "title": "llms.txt exists",
+      "tier": "informative",
+      "evidenceGrade": "C",
+      "weight": 0,
+      "scoreDisplayMode": "informative",
+      "dossier": "docs/evidence/audits/machine-discovery/llms-txt-exists.md",
+      "requires": [
+        "origin-reachable",
+        "unblocked-fetches",
+        "rendered-body",
+        "sample-adequate"
+      ],
+      "legacyIds": [
+        "1.1",
+        "4.11"
+      ]
+    },
+    {
+      "id": "machine-discovery/llms-txt-link-descriptions",
+      "category": "machine-discovery",
+      "slug": "llms-txt-link-descriptions",
+      "title": "llms.txt links include descriptions",
+      "tier": "informative",
+      "evidenceGrade": "C",
+      "weight": 0,
+      "scoreDisplayMode": "informative",
+      "dossier": "docs/evidence/audits/machine-discovery/llms-txt-link-descriptions.md",
+      "requires": [
+        "origin-reachable",
+        "unblocked-fetches"
+      ],
+      "legacyIds": [
+        "1.4"
+      ]
+    },
+    {
+      "id": "machine-discovery/llms-txt-links-valid",
+      "category": "machine-discovery",
+      "slug": "llms-txt-links-valid",
+      "title": "llms.txt links are valid",
+      "tier": "informative",
+      "evidenceGrade": "C",
+      "weight": 0,
+      "scoreDisplayMode": "informative",
+      "dossier": "docs/evidence/audits/machine-discovery/llms-txt-links-valid.md",
+      "requires": [
+        "origin-reachable",
+        "unblocked-fetches"
+      ],
+      "legacyIds": [
+        "1.5"
+      ]
+    },
+    {
+      "id": "machine-discovery/llms-txt-structure",
+      "category": "machine-discovery",
+      "slug": "llms-txt-structure",
+      "title": "llms.txt is well-formed",
+      "tier": "informative",
+      "evidenceGrade": "C",
+      "weight": 0,
+      "scoreDisplayMode": "informative",
+      "dossier": "docs/evidence/audits/machine-discovery/llms-txt-structure.md",
+      "requires": [
+        "origin-reachable",
+        "unblocked-fetches"
+      ],
+      "legacyIds": [
+        "1.2",
+        "1.3"
+      ]
+    },
+    {
+      "id": "machine-discovery/no-broken-ai-endpoints",
+      "category": "machine-discovery",
+      "slug": "no-broken-ai-endpoints",
+      "title": "No broken AI endpoints",
+      "tier": "scored",
+      "evidenceGrade": "A",
+      "weight": 1,
+      "scoreDisplayMode": "ternary",
+      "dossier": "docs/evidence/audits/machine-discovery/no-broken-ai-endpoints.md",
+      "requires": [
+        "origin-reachable",
+        "unblocked-fetches",
+        "rendered-body",
+        "sample-adequate"
+      ],
+      "legacyIds": [
+        "8.18"
+      ]
+    },
+    {
+      "id": "machine-discovery/no-broken-links",
+      "category": "machine-discovery",
+      "slug": "no-broken-links",
+      "title": "No broken internal links",
+      "tier": "scored",
+      "evidenceGrade": "A",
+      "weight": 1,
+      "scoreDisplayMode": "ternary",
+      "dossier": "docs/evidence/audits/machine-discovery/no-broken-links.md",
+      "requires": [
+        "origin-reachable",
+        "unblocked-fetches",
+        "rendered-body",
+        "sample-adequate"
+      ],
+      "legacyIds": [
+        "1.20"
+      ]
+    },
+    {
+      "id": "machine-discovery/root-text-file-resolution-integrity",
+      "category": "machine-discovery",
+      "slug": "root-text-file-resolution-integrity",
+      "title": "The origin serves and correctly 404s root-level .txt resources",
+      "tier": "scored",
+      "evidenceGrade": "B",
+      "weight": 0.6,
+      "scoreDisplayMode": "ternary",
+      "dossier": "docs/evidence/audits/machine-discovery/root-text-file-resolution-integrity.md",
+      "requires": [
+        "origin-reachable",
+        "unblocked-fetches",
+        "rendered-body",
+        "sample-adequate"
+      ],
+      "legacyIds": []
+    },
+    {
+      "id": "machine-discovery/rss-feed",
+      "category": "machine-discovery",
+      "slug": "rss-feed",
+      "title": "RSS/Atom feed link present",
+      "tier": "scored",
+      "evidenceGrade": "B",
+      "weight": 0.6,
+      "scoreDisplayMode": "binary",
+      "dossier": "docs/evidence/audits/machine-discovery/rss-feed.md",
+      "requires": [
+        "origin-reachable",
+        "unblocked-fetches"
+      ],
+      "legacyIds": [
+        "1.11",
+        "4.16"
+      ]
+    },
+    {
+      "id": "machine-discovery/rss-feed-content",
+      "category": "machine-discovery",
+      "slug": "rss-feed-content",
+      "title": "RSS feed content complete",
+      "tier": "informative",
+      "evidenceGrade": "C",
+      "weight": 0,
+      "scoreDisplayMode": "informative",
+      "dossier": "docs/evidence/audits/machine-discovery/rss-feed-content.md",
+      "requires": [
+        "origin-reachable",
+        "unblocked-fetches"
+      ],
+      "legacyIds": [
+        "1.12"
+      ]
+    },
+    {
+      "id": "machine-discovery/sitemap-absolute-urls",
+      "category": "machine-discovery",
+      "slug": "sitemap-absolute-urls",
+      "title": "Sitemap uses absolute URLs",
+      "tier": "scored",
+      "evidenceGrade": "B",
+      "weight": 0.6,
+      "scoreDisplayMode": "binary",
+      "dossier": "docs/evidence/audits/machine-discovery/sitemap-absolute-urls.md",
+      "requires": [
+        "origin-reachable",
+        "unblocked-fetches"
+      ],
+      "legacyIds": [
+        "1.9"
+      ]
+    },
+    {
+      "id": "machine-discovery/sitemap-exists",
+      "category": "machine-discovery",
+      "slug": "sitemap-exists",
+      "title": "sitemap.xml exists",
+      "tier": "scored",
+      "evidenceGrade": "A",
+      "weight": 1,
+      "scoreDisplayMode": "binary",
+      "dossier": "docs/evidence/audits/machine-discovery/sitemap-exists.md",
+      "requires": [
+        "origin-reachable",
+        "unblocked-fetches"
+      ],
+      "legacyIds": [
+        "1.7"
+      ]
+    },
+    {
+      "id": "machine-discovery/sitemap-lastmod",
+      "category": "machine-discovery",
+      "slug": "sitemap-lastmod",
+      "title": "Sitemap has lastmod dates",
+      "tier": "scored",
+      "evidenceGrade": "A",
+      "weight": 1,
+      "scoreDisplayMode": "ternary",
+      "dossier": "docs/evidence/audits/machine-discovery/sitemap-lastmod.md",
+      "requires": [
+        "origin-reachable",
+        "unblocked-fetches"
+      ],
+      "legacyIds": [
+        "1.10"
+      ]
+    },
+    {
+      "id": "machine-discovery/sitemap-lastmod-verifiability",
+      "category": "machine-discovery",
+      "slug": "sitemap-lastmod-verifiability",
+      "title": "Sitemap lastmod values are verifiable against the pages",
+      "tier": "scored",
+      "evidenceGrade": "A",
+      "weight": 1,
+      "scoreDisplayMode": "ternary",
+      "dossier": "docs/evidence/audits/machine-discovery/sitemap-lastmod-verifiability.md",
+      "requires": [
+        "origin-reachable",
+        "unblocked-fetches",
+        "rendered-body",
+        "sample-adequate"
+      ],
+      "legacyIds": []
+    },
+    {
+      "id": "machine-discovery/three-way-freshness-lag",
+      "category": "machine-discovery",
+      "slug": "three-way-freshness-lag",
+      "title": "The sitemap and the feed are as fresh as the site itself",
+      "tier": "scored",
+      "evidenceGrade": "B",
+      "weight": 0.6,
+      "scoreDisplayMode": "ternary",
+      "dossier": "docs/evidence/audits/machine-discovery/three-way-freshness-lag.md",
+      "requires": [
+        "origin-reachable",
+        "unblocked-fetches",
+        "rendered-body",
+        "sample-adequate"
+      ],
+      "legacyIds": []
+    },
+    {
+      "id": "machine-discovery/websub-hub-advertisement",
+      "category": "machine-discovery",
+      "slug": "websub-hub-advertisement",
+      "title": "Feeds advertise a WebSub hub and exactly one canonical self link",
+      "tier": "informative",
+      "evidenceGrade": "C",
+      "weight": 0,
+      "scoreDisplayMode": "informative",
+      "dossier": "docs/evidence/audits/machine-discovery/websub-hub-advertisement.md",
+      "requires": [
+        "origin-reachable",
+        "unblocked-fetches"
+      ],
+      "legacyIds": []
+    },
+    {
+      "id": "operability-safety/accessible-names",
+      "category": "operability-safety",
+      "slug": "accessible-names",
+      "title": "Buttons and links have accessible names",
+      "tier": "scored",
+      "evidenceGrade": "A",
+      "weight": 1,
+      "scoreDisplayMode": "binary",
+      "dossier": "docs/evidence/audits/operability-safety/accessible-names.md",
+      "requires": [
+        "origin-reachable",
+        "unblocked-fetches",
+        "rendered-body",
+        "sample-adequate"
+      ],
+      "legacyIds": [
+        "7.7"
+      ]
+    },
+    {
+      "id": "operability-safety/agent-ua-content-divergence-diff",
+      "category": "operability-safety",
+      "slug": "agent-ua-content-divergence-diff",
+      "title": "Agent-UA Content Divergence Diff",
+      "tier": "scored",
+      "evidenceGrade": "B",
+      "weight": 0.6,
+      "scoreDisplayMode": "ternary",
+      "dossier": "docs/evidence/audits/operability-safety/agent-ua-content-divergence-diff.md",
+      "requires": [
+        "origin-reachable",
+        "unblocked-fetches",
+        "rendered-body",
+        "sample-adequate"
+      ],
+      "legacyIds": []
+    },
+    {
+      "id": "operability-safety/aria-attributes",
+      "category": "operability-safety",
+      "slug": "aria-attributes",
+      "title": "Valid ARIA attributes",
+      "tier": "scored",
+      "evidenceGrade": "A",
+      "weight": 1,
+      "scoreDisplayMode": "binary",
+      "dossier": "docs/evidence/audits/operability-safety/aria-attributes.md",
+      "requires": [
+        "origin-reachable",
+        "unblocked-fetches",
+        "rendered-body",
+        "sample-adequate"
+      ],
+      "legacyIds": [
+        "7.12"
+      ]
+    },
+    {
+      "id": "operability-safety/aria-hidden-body",
+      "category": "operability-safety",
+      "slug": "aria-hidden-body",
+      "title": "Page exposed to the accessibility tree",
+      "tier": "scored",
+      "evidenceGrade": "A",
+      "weight": 1,
+      "scoreDisplayMode": "binary",
+      "dossier": "docs/evidence/audits/operability-safety/aria-hidden-body.md",
+      "requires": [
+        "origin-reachable",
+        "unblocked-fetches",
+        "rendered-body",
+        "sample-adequate"
+      ],
+      "legacyIds": [
+        "7.10"
+      ]
+    },
+    {
+      "id": "operability-safety/aria-landmarks",
+      "category": "operability-safety",
+      "slug": "aria-landmarks",
+      "title": "ARIA landmarks complete",
+      "tier": "scored",
+      "evidenceGrade": "A",
+      "weight": 1,
+      "scoreDisplayMode": "ternary",
+      "dossier": "docs/evidence/audits/operability-safety/aria-landmarks.md",
+      "requires": [
+        "origin-reachable",
+        "unblocked-fetches",
+        "rendered-body",
+        "sample-adequate"
+      ],
+      "legacyIds": [
+        "7.2"
+      ]
+    },
+    {
+      "id": "operability-safety/aria-layer-injection-scan",
+      "category": "operability-safety",
+      "slug": "aria-layer-injection-scan",
+      "title": "Accessibility-Layer Injection Scan",
+      "tier": "scored",
+      "evidenceGrade": "A",
+      "weight": 1,
+      "scoreDisplayMode": "binary",
+      "dossier": "docs/evidence/audits/operability-safety/aria-layer-injection-scan.md",
+      "requires": [
+        "origin-reachable",
+        "unblocked-fetches",
+        "rendered-body",
+        "sample-adequate"
+      ],
+      "legacyIds": []
+    },
+    {
+      "id": "operability-safety/aria-relationships",
+      "category": "operability-safety",
+      "slug": "aria-relationships",
+      "title": "Complete ARIA relationships",
+      "tier": "scored",
+      "evidenceGrade": "A",
+      "weight": 1,
+      "scoreDisplayMode": "binary",
+      "dossier": "docs/evidence/audits/operability-safety/aria-relationships.md",
+      "requires": [
+        "origin-reachable",
+        "unblocked-fetches",
+        "rendered-body",
+        "sample-adequate"
+      ],
+      "legacyIds": [
+        "7.13"
+      ]
+    },
+    {
+      "id": "operability-safety/aria-roles",
+      "category": "operability-safety",
+      "slug": "aria-roles",
+      "title": "Valid ARIA roles",
+      "tier": "scored",
+      "evidenceGrade": "A",
+      "weight": 1,
+      "scoreDisplayMode": "binary",
+      "dossier": "docs/evidence/audits/operability-safety/aria-roles.md",
+      "requires": [
+        "origin-reachable",
+        "unblocked-fetches",
+        "rendered-body",
+        "sample-adequate"
+      ],
+      "legacyIds": [
+        "7.11"
+      ]
+    },
+    {
+      "id": "operability-safety/autocomplete",
+      "category": "operability-safety",
+      "slug": "autocomplete",
+      "title": "Form fields use valid autocomplete tokens",
+      "tier": "scored",
+      "evidenceGrade": "A",
+      "weight": 1,
+      "scoreDisplayMode": "binary",
+      "dossier": "docs/evidence/audits/operability-safety/autocomplete.md",
+      "requires": [
+        "origin-reachable",
+        "unblocked-fetches",
+        "rendered-body",
+        "sample-adequate"
+      ],
+      "legacyIds": [
+        "7.15"
+      ]
+    },
+    {
+      "id": "operability-safety/c2pa-manifest-survives-delivery",
+      "category": "operability-safety",
+      "slug": "c2pa-manifest-survives-delivery",
+      "title": "Content Credentials survive the image delivery pipeline",
+      "tier": "scored",
+      "evidenceGrade": "B",
+      "weight": 0.6,
+      "scoreDisplayMode": "ternary",
+      "dossier": "docs/evidence/audits/operability-safety/c2pa-manifest-survives-delivery.md",
+      "requires": [
+        "origin-reachable",
+        "unblocked-fetches",
+        "rendered-body",
+        "sample-adequate"
+      ],
+      "legacyIds": []
+    },
+    {
+      "id": "operability-safety/c2pa-signer-trust-status",
+      "category": "operability-safety",
+      "slug": "c2pa-signer-trust-status",
+      "title": "Content Credentials are signed by a certificate that can be trusted",
+      "tier": "scored",
+      "evidenceGrade": "B",
+      "weight": 0.6,
+      "scoreDisplayMode": "ternary",
+      "dossier": "docs/evidence/audits/operability-safety/c2pa-signer-trust-status.md",
+      "requires": [
+        "origin-reachable",
+        "unblocked-fetches",
+        "rendered-body",
+        "sample-adequate"
+      ],
+      "legacyIds": []
+    },
+    {
+      "id": "operability-safety/contact-form",
+      "category": "operability-safety",
+      "slug": "contact-form",
+      "title": "Contact/lead form endpoint",
+      "tier": "informative",
+      "evidenceGrade": "C",
+      "weight": 0,
+      "scoreDisplayMode": "informative",
+      "dossier": "docs/evidence/audits/operability-safety/contact-form.md",
+      "requires": [
+        "origin-reachable",
+        "unblocked-fetches",
+        "rendered-body",
+        "sample-adequate"
+      ],
+      "legacyIds": [
+        "5.15"
+      ]
+    },
+    {
+      "id": "operability-safety/dialog-name",
+      "category": "operability-safety",
+      "slug": "dialog-name",
+      "title": "Dialogs have accessible names",
+      "tier": "scored",
+      "evidenceGrade": "A",
+      "weight": 1,
+      "scoreDisplayMode": "binary",
+      "dossier": "docs/evidence/audits/operability-safety/dialog-name.md",
+      "requires": [
+        "origin-reachable",
+        "unblocked-fetches",
+        "rendered-body",
+        "sample-adequate"
+      ],
+      "legacyIds": [
+        "7.9"
+      ]
+    },
+    {
+      "id": "operability-safety/document-title",
+      "category": "operability-safety",
+      "slug": "document-title",
+      "title": "Page has a non-empty <title>",
+      "tier": "scored",
+      "evidenceGrade": "A",
+      "weight": 1,
+      "scoreDisplayMode": "binary",
+      "dossier": "docs/evidence/audits/operability-safety/document-title.md",
+      "requires": [
+        "origin-reachable",
+        "unblocked-fetches",
+        "rendered-body",
+        "sample-adequate"
+      ],
+      "legacyIds": [
+        "7.18"
+      ]
+    },
+    {
+      "id": "operability-safety/drag-and-slider-dependency",
+      "category": "operability-safety",
+      "slug": "drag-and-slider-dependency",
+      "title": "Gesture-only controls with no discrete alternative",
+      "tier": "scored",
+      "evidenceGrade": "B",
+      "weight": 0.6,
+      "scoreDisplayMode": "binary",
+      "dossier": "docs/evidence/audits/operability-safety/drag-and-slider-dependency.md",
+      "requires": [
+        "origin-reachable",
+        "unblocked-fetches",
+        "rendered-body",
+        "sample-adequate"
+      ],
+      "legacyIds": []
+    },
+    {
+      "id": "operability-safety/duplicate-id",
+      "category": "operability-safety",
+      "slug": "duplicate-id",
+      "title": "Unique IDs for ARIA references",
+      "tier": "scored",
+      "evidenceGrade": "A",
+      "weight": 1,
+      "scoreDisplayMode": "binary",
+      "dossier": "docs/evidence/audits/operability-safety/duplicate-id.md",
+      "requires": [
+        "origin-reachable",
+        "unblocked-fetches",
+        "rendered-body",
+        "sample-adequate"
+      ],
+      "legacyIds": [
+        "7.14"
+      ]
+    },
+    {
+      "id": "operability-safety/first-contact-consent-gate-operability",
+      "category": "operability-safety",
+      "slug": "first-contact-consent-gate-operability",
+      "title": "First-contact consent gate: cost to get past it",
+      "tier": "informative",
+      "evidenceGrade": "C",
+      "weight": 0,
+      "scoreDisplayMode": "informative",
+      "dossier": "docs/evidence/audits/operability-safety/first-contact-consent-gate-operability.md",
+      "requires": [
+        "origin-reachable",
+        "unblocked-fetches",
+        "rendered-body",
+        "sample-adequate"
+      ],
+      "legacyIds": []
+    },
+    {
+      "id": "operability-safety/form-actionability",
+      "category": "operability-safety",
+      "slug": "form-actionability",
+      "title": "Form backend actionability",
+      "tier": "scored",
+      "evidenceGrade": "A",
+      "weight": 1,
+      "scoreDisplayMode": "ternary",
+      "dossier": "docs/evidence/audits/operability-safety/form-actionability.md",
+      "requires": [
+        "origin-reachable",
+        "unblocked-fetches",
+        "rendered-body",
+        "sample-adequate"
+      ],
+      "legacyIds": [
+        "5.22",
+        "5.27"
+      ]
+    },
+    {
+      "id": "operability-safety/form-autofill-token-coverage",
+      "category": "operability-safety",
+      "slug": "form-autofill-token-coverage",
+      "title": "Form Autofill Token Coverage",
+      "tier": "scored",
+      "evidenceGrade": "A",
+      "weight": 1,
+      "scoreDisplayMode": "ternary",
+      "dossier": "docs/evidence/audits/operability-safety/form-autofill-token-coverage.md",
+      "requires": [
+        "origin-reachable",
+        "unblocked-fetches",
+        "rendered-body",
+        "sample-adequate"
+      ],
+      "legacyIds": []
+    },
+    {
+      "id": "operability-safety/form-error-messages",
+      "category": "operability-safety",
+      "slug": "form-error-messages",
+      "title": "Form fields wired to their validation messages",
+      "tier": "scored",
+      "evidenceGrade": "A",
+      "weight": 1,
+      "scoreDisplayMode": "ternary",
+      "dossier": "docs/evidence/audits/operability-safety/form-error-messages.md",
+      "requires": [
+        "origin-reachable",
+        "unblocked-fetches",
+        "rendered-body",
+        "sample-adequate"
+      ],
+      "legacyIds": [
+        "7.6"
+      ]
+    },
+    {
+      "id": "operability-safety/forms-no-js",
+      "category": "operability-safety",
+      "slug": "forms-no-js",
+      "title": "Forms work without JavaScript",
+      "tier": "informative",
+      "evidenceGrade": "C",
+      "weight": 0,
+      "scoreDisplayMode": "informative",
+      "dossier": "docs/evidence/audits/operability-safety/forms-no-js.md",
+      "requires": [
+        "origin-reachable",
+        "unblocked-fetches",
+        "rendered-body",
+        "sample-adequate"
+      ],
+      "legacyIds": [
+        "5.19"
+      ]
+    },
+    {
+      "id": "operability-safety/frame-title",
+      "category": "operability-safety",
+      "slug": "frame-title",
+      "title": "Frames are titled",
+      "tier": "informative",
+      "evidenceGrade": "C",
+      "weight": 0,
+      "scoreDisplayMode": "informative",
+      "dossier": "docs/evidence/audits/operability-safety/frame-title.md",
+      "requires": [
+        "origin-reachable",
+        "unblocked-fetches",
+        "rendered-body",
+        "sample-adequate"
+      ],
+      "legacyIds": [
+        "7.19"
+      ]
+    },
+    {
+      "id": "operability-safety/ghost-clickable-element-ratio",
+      "category": "operability-safety",
+      "slug": "ghost-clickable-element-ratio",
+      "title": "Ghost-clickable elements: click targets an agent cannot address",
+      "tier": "scored",
+      "evidenceGrade": "B",
+      "weight": 0.6,
+      "scoreDisplayMode": "ternary",
+      "dossier": "docs/evidence/audits/operability-safety/ghost-clickable-element-ratio.md",
+      "requires": [
+        "origin-reachable",
+        "unblocked-fetches",
+        "rendered-body",
+        "sample-adequate"
+      ],
+      "legacyIds": []
+    },
+    {
+      "id": "operability-safety/hover-only-content-and-navigation",
+      "category": "operability-safety",
+      "slug": "hover-only-content-and-navigation",
+      "title": "Hover-only navigation and content",
+      "tier": "scored",
+      "evidenceGrade": "B",
+      "weight": 0.6,
+      "scoreDisplayMode": "binary",
+      "dossier": "docs/evidence/audits/operability-safety/hover-only-content-and-navigation.md",
+      "requires": [
+        "origin-reachable",
+        "unblocked-fetches",
+        "rendered-body",
+        "sample-adequate"
+      ],
+      "legacyIds": []
+    },
+    {
+      "id": "operability-safety/invisible-instruction-scan",
+      "category": "operability-safety",
+      "slug": "invisible-instruction-scan",
+      "title": "Invisible Instruction Payload Scan",
+      "tier": "scored",
+      "evidenceGrade": "A",
+      "weight": 1,
+      "scoreDisplayMode": "binary",
+      "dossier": "docs/evidence/audits/operability-safety/invisible-instruction-scan.md",
+      "requires": [
+        "origin-reachable",
+        "unblocked-fetches",
+        "rendered-body",
+        "sample-adequate"
+      ],
+      "legacyIds": []
+    },
+    {
+      "id": "operability-safety/label",
+      "category": "operability-safety",
+      "slug": "label",
+      "title": "Form inputs have associated labels",
+      "tier": "scored",
+      "evidenceGrade": "A",
+      "weight": 1,
+      "scoreDisplayMode": "binary",
+      "dossier": "docs/evidence/audits/operability-safety/label.md",
+      "requires": [
+        "origin-reachable",
+        "unblocked-fetches",
+        "rendered-body",
+        "sample-adequate"
+      ],
+      "legacyIds": [
+        "7.5"
+      ]
+    },
+    {
+      "id": "operability-safety/landmark-unique",
+      "category": "operability-safety",
+      "slug": "landmark-unique",
+      "title": "Landmarks are uniquely identifiable",
+      "tier": "scored",
+      "evidenceGrade": "A",
+      "weight": 1,
+      "scoreDisplayMode": "binary",
+      "dossier": "docs/evidence/audits/operability-safety/landmark-unique.md",
+      "requires": [
+        "origin-reachable",
+        "unblocked-fetches",
+        "rendered-body",
+        "sample-adequate"
+      ],
+      "legacyIds": [
+        "7.3",
+        "7.4"
+      ]
+    },
+    {
+      "id": "operability-safety/meta-refresh",
+      "category": "operability-safety",
+      "slug": "meta-refresh",
+      "title": "No time-based auto-refresh/redirect",
+      "tier": "scored",
+      "evidenceGrade": "A",
+      "weight": 1,
+      "scoreDisplayMode": "binary",
+      "dossier": "docs/evidence/audits/operability-safety/meta-refresh.md",
+      "requires": [
+        "origin-reachable",
+        "unblocked-fetches",
+        "rendered-body",
+        "sample-adequate"
+      ],
+      "legacyIds": [
+        "7.20"
+      ]
+    },
+    {
+      "id": "operability-safety/native-control-substitution",
+      "category": "operability-safety",
+      "slug": "native-control-substitution",
+      "title": "Native Control Substitution Index",
+      "tier": "scored",
+      "evidenceGrade": "A",
+      "weight": 1,
+      "scoreDisplayMode": "ternary",
+      "dossier": "docs/evidence/audits/operability-safety/native-control-substitution.md",
+      "requires": [
+        "origin-reachable",
+        "unblocked-fetches",
+        "rendered-body",
+        "sample-adequate"
+      ],
+      "legacyIds": []
+    },
+    {
+      "id": "operability-safety/nested-interactive",
+      "category": "operability-safety",
+      "slug": "nested-interactive",
+      "title": "No nested interactive controls",
+      "tier": "scored",
+      "evidenceGrade": "A",
+      "weight": 1,
+      "scoreDisplayMode": "binary",
+      "dossier": "docs/evidence/audits/operability-safety/nested-interactive.md",
+      "requires": [
+        "origin-reachable",
+        "unblocked-fetches",
+        "rendered-body",
+        "sample-adequate"
+      ],
+      "legacyIds": [
+        "7.16"
+      ]
+    },
+    {
+      "id": "operability-safety/no-blocking-captcha",
+      "category": "operability-safety",
+      "slug": "no-blocking-captcha",
+      "title": "Forms don't use blocking CAPTCHA",
+      "tier": "scored",
+      "evidenceGrade": "A",
+      "weight": 1,
+      "scoreDisplayMode": "ternary",
+      "dossier": "docs/evidence/audits/operability-safety/no-blocking-captcha.md",
+      "requires": [],
+      "legacyIds": [
+        "5.18"
+      ]
+    },
+    {
+      "id": "operability-safety/organization-identifier-registry-resolution",
+      "category": "operability-safety",
+      "slug": "organization-identifier-registry-resolution",
+      "title": "The organization identifier resolves in the authoritative registry",
+      "tier": "scored",
+      "evidenceGrade": "B",
+      "weight": 0.6,
+      "scoreDisplayMode": "ternary",
+      "dossier": "docs/evidence/audits/operability-safety/organization-identifier-registry-resolution.md",
+      "requires": [
+        "origin-reachable",
+        "unblocked-fetches",
+        "rendered-body",
+        "sample-adequate"
+      ],
+      "legacyIds": []
+    },
+    {
+      "id": "operability-safety/presentation-conflict",
+      "category": "operability-safety",
+      "slug": "presentation-conflict",
+      "title": "No presentation-role conflicts",
+      "tier": "scored",
+      "evidenceGrade": "A",
+      "weight": 1,
+      "scoreDisplayMode": "binary",
+      "dossier": "docs/evidence/audits/operability-safety/presentation-conflict.md",
+      "requires": [
+        "origin-reachable",
+        "unblocked-fetches",
+        "rendered-body",
+        "sample-adequate"
+      ],
+      "legacyIds": [
+        "7.23"
+      ]
+    },
+    {
+      "id": "operability-safety/reflected-parameter-injection-canary",
+      "category": "operability-safety",
+      "slug": "reflected-parameter-injection-canary",
+      "title": "Reflected-Parameter Injection Canary",
+      "tier": "scored",
+      "evidenceGrade": "B",
+      "weight": 0.6,
+      "scoreDisplayMode": "ternary",
+      "dossier": "docs/evidence/audits/operability-safety/reflected-parameter-injection-canary.md",
+      "requires": [
+        "origin-reachable",
+        "unblocked-fetches",
+        "rendered-body",
+        "sample-adequate"
+      ],
+      "legacyIds": []
+    },
+    {
+      "id": "operability-safety/security-header-hygiene",
+      "category": "operability-safety",
+      "slug": "security-header-hygiene",
+      "title": "security.txt (RFC 9116)",
+      "tier": "informative",
+      "evidenceGrade": "C",
+      "weight": 0,
+      "scoreDisplayMode": "informative",
+      "dossier": "docs/evidence/audits/operability-safety/security-header-hygiene.md",
+      "requires": [
+        "origin-reachable",
+        "unblocked-fetches"
+      ],
+      "legacyIds": [
+        "8.2",
+        "8.3",
+        "8.4",
+        "8.7"
+      ]
+    },
+    {
+      "id": "operability-safety/stateful-control-introspectability",
+      "category": "operability-safety",
+      "slug": "stateful-control-introspectability",
+      "title": "Stateful controls: current state readable by an agent",
+      "tier": "scored",
+      "evidenceGrade": "B",
+      "weight": 0.6,
+      "scoreDisplayMode": "ternary",
+      "dossier": "docs/evidence/audits/operability-safety/stateful-control-introspectability.md",
+      "requires": [
+        "origin-reachable",
+        "unblocked-fetches",
+        "rendered-body",
+        "sample-adequate"
+      ],
+      "legacyIds": []
+    },
+    {
+      "id": "operability-safety/synthetic-media-disclosure-validity",
+      "category": "operability-safety",
+      "slug": "synthetic-media-disclosure-validity",
+      "title": "AI-generated-image disclosure is machine-readable and self-consistent",
+      "tier": "scored",
+      "evidenceGrade": "B",
+      "weight": 0.6,
+      "scoreDisplayMode": "ternary",
+      "dossier": "docs/evidence/audits/operability-safety/synthetic-media-disclosure-validity.md",
+      "requires": [
+        "origin-reachable",
+        "unblocked-fetches",
+        "rendered-body",
+        "sample-adequate"
+      ],
+      "legacyIds": []
+    },
+    {
+      "id": "operability-safety/tabindex",
+      "category": "operability-safety",
+      "slug": "tabindex",
+      "title": "No positive tabindex (logical focus order)",
+      "tier": "informative",
+      "evidenceGrade": "C",
+      "weight": 0,
+      "scoreDisplayMode": "informative",
+      "dossier": "docs/evidence/audits/operability-safety/tabindex.md",
+      "requires": [
+        "origin-reachable",
+        "unblocked-fetches",
+        "rendered-body",
+        "sample-adequate"
+      ],
+      "legacyIds": [
+        "7.21"
+      ]
+    },
+    {
+      "id": "operability-safety/table-headers",
+      "category": "operability-safety",
+      "slug": "table-headers",
+      "title": "Data tables have header associations",
+      "tier": "scored",
+      "evidenceGrade": "B",
+      "weight": 0.6,
+      "scoreDisplayMode": "binary",
+      "dossier": "docs/evidence/audits/operability-safety/table-headers.md",
+      "requires": [
+        "origin-reachable",
+        "unblocked-fetches",
+        "rendered-body",
+        "sample-adequate"
+      ],
+      "legacyIds": [
+        "7.17"
+      ]
+    },
+    {
+      "id": "operability-safety/third-party-dom-write-blast-radius",
+      "category": "operability-safety",
+      "slug": "third-party-dom-write-blast-radius",
+      "title": "Third-party DOM-write blast radius",
+      "tier": "scored",
+      "evidenceGrade": "B",
+      "weight": 0.6,
+      "scoreDisplayMode": "ternary",
+      "dossier": "docs/evidence/audits/operability-safety/third-party-dom-write-blast-radius.md",
+      "requires": [
+        "origin-reachable",
+        "unblocked-fetches"
+      ],
+      "legacyIds": []
+    },
+    {
+      "id": "operability-safety/trust-txt-reciprocity-coherence",
+      "category": "operability-safety",
+      "slug": "trust-txt-reciprocity-coherence",
+      "title": "trust.txt associations are reciprocated and agree with robots.txt",
+      "tier": "informative",
+      "evidenceGrade": "C",
+      "weight": 0,
+      "scoreDisplayMode": "informative",
+      "dossier": "docs/evidence/audits/operability-safety/trust-txt-reciprocity-coherence.md",
+      "requires": [
+        "origin-reachable",
+        "unblocked-fetches"
+      ],
+      "legacyIds": []
+    },
+    {
+      "id": "operability-safety/ugc-trust-boundary-markers",
+      "category": "operability-safety",
+      "slug": "ugc-trust-boundary-markers",
+      "title": "UGC Trust-Boundary Markers",
+      "tier": "scored",
+      "evidenceGrade": "B",
+      "weight": 0.6,
+      "scoreDisplayMode": "ternary",
+      "dossier": "docs/evidence/audits/operability-safety/ugc-trust-boundary-markers.md",
+      "requires": [
+        "origin-reachable",
+        "unblocked-fetches",
+        "rendered-body",
+        "sample-adequate"
+      ],
+      "legacyIds": []
+    },
+    {
+      "id": "operability-safety/unicode-covert-channel-scan",
+      "category": "operability-safety",
+      "slug": "unicode-covert-channel-scan",
+      "title": "Invisible codepoints carrying hidden text",
+      "tier": "scored",
+      "evidenceGrade": "B",
+      "weight": 0.6,
+      "scoreDisplayMode": "ternary",
+      "dossier": "docs/evidence/audits/operability-safety/unicode-covert-channel-scan.md",
+      "requires": [
+        "origin-reachable",
+        "unblocked-fetches",
+        "rendered-body",
+        "sample-adequate"
+      ],
+      "legacyIds": []
+    },
+    {
+      "id": "operability-safety/unsafe-agent-triggerable-affordances",
+      "category": "operability-safety",
+      "slug": "unsafe-agent-triggerable-affordances",
+      "title": "State-changing links an agent can trigger by fetching them",
+      "tier": "scored",
+      "evidenceGrade": "B",
+      "weight": 0.6,
+      "scoreDisplayMode": "ternary",
+      "dossier": "docs/evidence/audits/operability-safety/unsafe-agent-triggerable-affordances.md",
+      "requires": [
+        "origin-reachable",
+        "unblocked-fetches",
+        "rendered-body",
+        "sample-adequate"
+      ],
+      "legacyIds": []
+    },
+    {
+      "id": "operability-safety/url-addressable-state-and-pagination-fallback",
+      "category": "operability-safety",
+      "slug": "url-addressable-state-and-pagination-fallback",
+      "title": "Listings walkable by URL: pagination and facet fallback",
+      "tier": "scored",
+      "evidenceGrade": "B",
+      "weight": 0.6,
+      "scoreDisplayMode": "ternary",
+      "dossier": "docs/evidence/audits/operability-safety/url-addressable-state-and-pagination-fallback.md",
+      "requires": [
+        "origin-reachable",
+        "unblocked-fetches",
+        "rendered-body",
+        "sample-adequate"
+      ],
+      "legacyIds": []
+    },
+    {
+      "id": "operability-safety/wikidata-round-trip-verification",
+      "category": "operability-safety",
+      "slug": "wikidata-round-trip-verification",
+      "title": "The Wikidata entity this site claims points back at this site",
+      "tier": "scored",
+      "evidenceGrade": "B",
+      "weight": 0.6,
+      "scoreDisplayMode": "ternary",
+      "dossier": "docs/evidence/audits/operability-safety/wikidata-round-trip-verification.md",
+      "requires": [
+        "origin-reachable",
+        "unblocked-fetches",
+        "rendered-body",
+        "sample-adequate"
+      ],
+      "legacyIds": []
+    },
+    {
+      "id": "structured-data/advanced-product-details",
+      "category": "structured-data",
+      "slug": "advanced-product-details",
+      "title": "Advanced product details",
+      "tier": "scored",
+      "evidenceGrade": "A",
+      "weight": 1,
+      "scoreDisplayMode": "ternary",
+      "dossier": "docs/evidence/audits/structured-data/advanced-product-details.md",
+      "requires": [
+        "origin-reachable",
+        "unblocked-fetches",
+        "rendered-body",
+        "sample-adequate"
+      ],
+      "legacyIds": [
+        "3.22"
+      ]
+    },
+    {
+      "id": "structured-data/article-schema",
+      "category": "structured-data",
+      "slug": "article-schema",
+      "title": "Article schema",
+      "tier": "scored",
+      "evidenceGrade": "A",
+      "weight": 1,
+      "scoreDisplayMode": "ternary",
+      "dossier": "docs/evidence/audits/structured-data/article-schema.md",
+      "requires": [
+        "origin-reachable",
+        "unblocked-fetches",
+        "rendered-body",
+        "sample-adequate"
+      ],
+      "legacyIds": [
+        "3.6"
+      ]
+    },
+    {
+      "id": "structured-data/author-schema",
+      "category": "structured-data",
+      "slug": "author-schema",
+      "title": "Author schema with credentials",
+      "tier": "informative",
+      "evidenceGrade": "C",
+      "weight": 0,
+      "scoreDisplayMode": "informative",
+      "dossier": "docs/evidence/audits/structured-data/author-schema.md",
+      "requires": [
+        "origin-reachable",
+        "unblocked-fetches",
+        "rendered-body",
+        "sample-adequate"
+      ],
+      "legacyIds": [
+        "3.15"
+      ]
+    },
+    {
+      "id": "structured-data/breadcrumb-schema",
+      "category": "structured-data",
+      "slug": "breadcrumb-schema",
+      "title": "BreadcrumbList schema",
+      "tier": "scored",
+      "evidenceGrade": "A",
+      "weight": 1,
+      "scoreDisplayMode": "ternary",
+      "dossier": "docs/evidence/audits/structured-data/breadcrumb-schema.md",
+      "requires": [
+        "origin-reachable",
+        "unblocked-fetches",
+        "rendered-body",
+        "sample-adequate"
+      ],
+      "legacyIds": [
+        "3.5"
+      ]
+    },
+    {
+      "id": "structured-data/claimreview-advisory",
+      "category": "structured-data",
+      "slug": "claimreview-advisory",
+      "title": "ClaimReview investment advisory",
+      "tier": "informative",
+      "evidenceGrade": "A",
+      "weight": 0,
+      "scoreDisplayMode": "informative",
+      "dossier": "docs/evidence/audits/structured-data/claimreview-advisory.md",
+      "requires": [
+        "origin-reachable",
+        "unblocked-fetches",
+        "rendered-body",
+        "sample-adequate"
+      ],
+      "legacyIds": []
+    },
+    {
+      "id": "structured-data/faqpage-schema",
+      "category": "structured-data",
+      "slug": "faqpage-schema",
+      "title": "FAQPage schema",
+      "tier": "informative",
+      "evidenceGrade": "C",
+      "weight": 0,
+      "scoreDisplayMode": "informative",
+      "dossier": "docs/evidence/audits/structured-data/faqpage-schema.md",
+      "requires": [
+        "origin-reachable",
+        "unblocked-fetches",
+        "rendered-body",
+        "sample-adequate"
+      ],
+      "legacyIds": [
+        "3.7"
+      ]
+    },
+    {
+      "id": "structured-data/howto-schema",
+      "category": "structured-data",
+      "slug": "howto-schema",
+      "title": "HowTo schema",
+      "tier": "informative",
+      "evidenceGrade": "C",
+      "weight": 0,
+      "scoreDisplayMode": "informative",
+      "dossier": "docs/evidence/audits/structured-data/howto-schema.md",
+      "requires": [
+        "origin-reachable",
+        "unblocked-fetches",
+        "rendered-body",
+        "sample-adequate"
+      ],
+      "legacyIds": [
+        "3.11"
+      ]
+    },
+    {
+      "id": "structured-data/json-ld-present",
+      "category": "structured-data",
+      "slug": "json-ld-present",
+      "title": "JSON-LD present",
+      "tier": "scored",
+      "evidenceGrade": "A",
+      "weight": 1,
+      "scoreDisplayMode": "binary",
+      "dossier": "docs/evidence/audits/structured-data/json-ld-present.md",
+      "requires": [
+        "origin-reachable",
+        "unblocked-fetches",
+        "rendered-body",
+        "sample-adequate"
+      ],
+      "legacyIds": [
+        "3.1"
+      ]
+    },
+    {
+      "id": "structured-data/local-business-schema",
+      "category": "structured-data",
+      "slug": "local-business-schema",
+      "title": "LocalBusiness/ProfessionalService schema",
+      "tier": "scored",
+      "evidenceGrade": "A",
+      "weight": 1,
+      "scoreDisplayMode": "ternary",
+      "dossier": "docs/evidence/audits/structured-data/local-business-schema.md",
+      "requires": [
+        "origin-reachable",
+        "unblocked-fetches",
+        "rendered-body",
+        "sample-adequate"
+      ],
+      "legacyIds": [
+        "3.12"
+      ]
+    },
+    {
+      "id": "structured-data/organization-schema",
+      "category": "structured-data",
+      "slug": "organization-schema",
+      "title": "Organization schema",
+      "tier": "scored",
+      "evidenceGrade": "A",
+      "weight": 1,
+      "scoreDisplayMode": "ternary",
+      "dossier": "docs/evidence/audits/structured-data/organization-schema.md",
+      "requires": [
+        "origin-reachable",
+        "unblocked-fetches",
+        "rendered-body",
+        "sample-adequate"
+      ],
+      "legacyIds": [
+        "3.3"
+      ]
+    },
+    {
+      "id": "structured-data/review-schema",
+      "category": "structured-data",
+      "slug": "review-schema",
+      "title": "Review/AggregateRating schema",
+      "tier": "scored",
+      "evidenceGrade": "A",
+      "weight": 1,
+      "scoreDisplayMode": "ternary",
+      "dossier": "docs/evidence/audits/structured-data/review-schema.md",
+      "requires": [
+        "origin-reachable",
+        "unblocked-fetches",
+        "rendered-body",
+        "sample-adequate"
+      ],
+      "legacyIds": [
+        "3.13",
+        "3.23"
+      ]
+    },
+    {
+      "id": "structured-data/schema-validation",
+      "category": "structured-data",
+      "slug": "schema-validation",
+      "title": "Schema validation",
+      "tier": "scored",
+      "evidenceGrade": "A",
+      "weight": 1,
+      "scoreDisplayMode": "binary",
+      "dossier": "docs/evidence/audits/structured-data/schema-validation.md",
+      "requires": [
+        "origin-reachable",
+        "unblocked-fetches",
+        "rendered-body",
+        "sample-adequate"
+      ],
+      "legacyIds": [
+        "3.2"
+      ]
+    },
+    {
+      "id": "structured-data/service-schema",
+      "category": "structured-data",
+      "slug": "service-schema",
+      "title": "Service schema",
+      "tier": "scored",
+      "evidenceGrade": "A",
+      "weight": 1,
+      "scoreDisplayMode": "ternary",
+      "dossier": "docs/evidence/audits/structured-data/service-schema.md",
+      "requires": [
+        "origin-reachable",
+        "unblocked-fetches",
+        "rendered-body",
+        "sample-adequate"
+      ],
+      "legacyIds": [
+        "3.8"
+      ]
+    },
+    {
+      "id": "structured-data/speakable-schema",
+      "category": "structured-data",
+      "slug": "speakable-schema",
+      "title": "Speakable schema",
+      "tier": "scored",
+      "evidenceGrade": "B",
+      "weight": 0.6,
+      "scoreDisplayMode": "ternary",
+      "dossier": "docs/evidence/audits/structured-data/speakable-schema.md",
+      "requires": [
+        "origin-reachable",
+        "unblocked-fetches",
+        "rendered-body",
+        "sample-adequate"
+      ],
+      "legacyIds": [
+        "3.9"
+      ]
+    }
+  ],
+  "legacy": {
+    "1.1": {
+      "slug": "content-discoverability/llms-txt-exists",
+      "status": "renamed",
+      "action": "move",
+      "link": "docs/evidence/audits/machine-discovery/llms-txt-exists.md",
+      "to": "machine-discovery/llms-txt-exists",
+      "notes": "C3 collapse: absorbs meta-tags/llms-txt-link (4.11) — one audit checks the file and its discovery link together"
+    },
+    "1.2": {
+      "slug": "content-discoverability/llms-txt-blockquote",
+      "status": "renamed",
+      "action": "merge-away",
+      "link": "docs/evidence/audits/machine-discovery/llms-txt-structure.md",
+      "to": "machine-discovery/llms-txt-structure",
+      "notes": "§5: llms-txt-blockquote + llms-txt-sections → one llms.txt structure audit"
+    },
+    "1.3": {
+      "slug": "content-discoverability/llms-txt-sections",
+      "status": "renamed",
+      "action": "merge-away",
+      "link": "docs/evidence/audits/machine-discovery/llms-txt-structure.md",
+      "to": "machine-discovery/llms-txt-structure",
+      "notes": "§5: same combined llms.txt structure audit (this row supplies the section-shape half)"
+    },
+    "1.4": {
+      "slug": "content-discoverability/llms-txt-link-descriptions",
+      "status": "renamed",
+      "action": "move",
+      "link": "docs/evidence/audits/machine-discovery/llms-txt-link-descriptions.md",
+      "to": "machine-discovery/llms-txt-link-descriptions",
+      "notes": "stays separate — §5 merges only blockquote + sections"
+    },
+    "1.5": {
+      "slug": "content-discoverability/llms-txt-links-valid",
+      "status": "renamed",
+      "action": "move",
+      "link": "docs/evidence/audits/machine-discovery/llms-txt-links-valid.md",
+      "to": "machine-discovery/llms-txt-links-valid"
+    },
+    "1.6": {
+      "slug": "content-discoverability/llms-full-txt",
+      "status": "renamed",
+      "action": "move",
+      "link": "docs/evidence/audits/machine-discovery/llms-full-txt.md",
+      "to": "machine-discovery/llms-full-txt"
+    },
+    "1.7": {
+      "slug": "content-discoverability/sitemap-exists",
+      "status": "renamed",
+      "action": "move",
+      "link": "docs/evidence/audits/machine-discovery/sitemap-exists.md",
+      "to": "machine-discovery/sitemap-exists"
+    },
+    "1.8": {
+      "slug": "content-discoverability/sitemap-key-pages",
+      "status": "renamed",
+      "action": "move",
+      "link": "docs/evidence/audits/machine-discovery/discovery-index-coverage.md",
+      "to": "machine-discovery/discovery-index-coverage",
+      "notes": "§5 rename (\"discovery index coverage\"); merge target for no-orphan-pages (1.22)"
+    },
+    "1.9": {
+      "slug": "content-discoverability/sitemap-absolute-urls",
+      "status": "renamed",
+      "action": "move",
+      "link": "docs/evidence/audits/machine-discovery/sitemap-absolute-urls.md",
+      "to": "machine-discovery/sitemap-absolute-urls"
+    },
+    "1.10": {
+      "slug": "content-discoverability/sitemap-lastmod",
+      "status": "renamed",
+      "action": "move",
+      "link": "docs/evidence/audits/machine-discovery/sitemap-lastmod.md",
+      "to": "machine-discovery/sitemap-lastmod"
+    },
+    "1.11": {
+      "slug": "content-discoverability/rss-feed",
+      "status": "renamed",
+      "action": "move",
+      "link": "docs/evidence/audits/machine-discovery/rss-feed.md",
+      "to": "machine-discovery/rss-feed",
+      "notes": "C3 collapse: absorbs meta-tags/rss-feed-link (4.16)"
+    },
+    "1.12": {
+      "slug": "content-discoverability/rss-feed-content",
+      "status": "renamed",
+      "action": "move",
+      "link": "docs/evidence/audits/machine-discovery/rss-feed-content.md",
+      "to": "machine-discovery/rss-feed-content"
+    },
+    "1.13": {
+      "slug": "content-discoverability/no-noindex",
+      "status": "renamed",
+      "action": "merge-away",
+      "link": "docs/evidence/audits/access-crawl-control/robots-directives.md",
+      "to": "access-crawl-control/robots-directives",
+      "notes": "decided 2026-08-21: merge-away into access-crawl-control/robots-directives (2.25 is the surviving row)"
+    },
+    "1.14": {
+      "slug": "content-discoverability/no-nofollow",
+      "status": "renamed",
+      "action": "move",
+      "link": "docs/evidence/audits/access-crawl-control/no-nofollow.md",
+      "to": "access-crawl-control/no-nofollow",
+      "notes": "crawl directive"
+    },
+    "1.15": {
+      "slug": "content-discoverability/internal-linking",
+      "status": "renamed",
+      "action": "rewrite",
+      "link": "docs/evidence/audits/machine-discovery/in-content-links.md",
+      "to": "machine-discovery/in-content-links",
+      "notes": "decided 2026-08-21: merged with 10.11 internal-cross-linking into one rewritten audit `machine-discovery/in-content-links` — in-content links only"
+    },
+    "1.16": {
+      "slug": "content-discoverability/no-redirect-chains",
+      "status": "renamed",
+      "action": "move",
+      "link": "docs/evidence/audits/access-crawl-control/no-redirect-chains.md",
+      "to": "access-crawl-control/no-redirect-chains",
+      "notes": "reachability, not discovery"
+    },
+    "1.17": {
+      "slug": "content-discoverability/canonical-links",
+      "status": "renamed",
+      "action": "rewrite",
+      "link": "docs/evidence/audits/access-crawl-control/canonical.md",
+      "to": "access-crawl-control/canonical",
+      "notes": "decided 2026-08-21: merged with 4.3 canonical-url into one audit `access-crawl-control/canonical` — resolved hrefs, homepage-collapse detection"
+    },
+    "1.18": {
+      "slug": "content-discoverability/mobile-friendly",
+      "status": "removed",
+      "action": "sunset",
+      "link": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/sunset/not-a-factor.md#content-discoverabilitymobile-friendly",
+      "reason": "not-a-factor",
+      "notes": "decided 2026-08-21: sunset — no proven consumer, viewport tag ubiquitous"
+    },
+    "1.19": {
+      "slug": "content-discoverability/fast-page-load",
+      "status": "renamed",
+      "action": "rewrite",
+      "link": "docs/evidence/audits/content-extraction/server-responsiveness.md",
+      "to": "content-extraction/server-responsiveness",
+      "notes": "decided 2026-08-21: merged with 8.12 fast-response-time into one audit `content-extraction/server-responsiveness` — median TTFB, banded"
+    },
+    "1.20": {
+      "slug": "content-discoverability/no-broken-links",
+      "status": "renamed",
+      "action": "move",
+      "link": "docs/evidence/audits/machine-discovery/no-broken-links.md",
+      "to": "machine-discovery/no-broken-links",
+      "notes": "decided 2026-08-21: confirmed — machine-discovery"
+    },
+    "1.21": {
+      "slug": "content-discoverability/navigation-json",
+      "status": "removed",
+      "action": "sunset",
+      "link": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/sunset/not-a-factor.md#content-discoverabilitynavigation-json",
+      "reason": "not-a-factor"
+    },
+    "1.22": {
+      "slug": "content-discoverability/no-orphan-pages",
+      "status": "renamed",
+      "action": "merge-away",
+      "link": "docs/evidence/audits/machine-discovery/discovery-index-coverage.md",
+      "to": "machine-discovery/discovery-index-coverage",
+      "notes": "§5: no-orphan-pages → sitemap-key-pages (\"discovery index coverage\")"
+    },
+    "1.23": {
+      "slug": "content-discoverability/commerce-links",
+      "status": "removed",
+      "action": "sunset",
+      "link": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/sunset/not-a-factor.md#content-discoverabilitycommerce-links",
+      "reason": "not-a-factor",
+      "notes": "decided 2026-08-21: sunset — grade D, no documented consumer"
+    },
+    "2.1": {
+      "slug": "crawler-permissions/gptbot",
+      "status": "renamed",
+      "action": "move",
+      "link": "docs/evidence/audits/access-crawl-control/gptbot.md",
+      "to": "access-crawl-control/gptbot"
+    },
+    "2.2": {
+      "slug": "crawler-permissions/google-extended",
+      "status": "renamed",
+      "action": "move",
+      "link": "docs/evidence/audits/access-crawl-control/google-extended.md",
+      "to": "access-crawl-control/google-extended"
+    },
+    "2.3": {
+      "slug": "crawler-permissions/anthropic",
+      "status": "renamed",
+      "action": "move",
+      "link": "docs/evidence/audits/access-crawl-control/anthropic-ai.md",
+      "to": "access-crawl-control/anthropic-ai",
+      "notes": "slug de-numericised/clarified to the UA token it checks"
+    },
+    "2.4": {
+      "slug": "crawler-permissions/perplexitybot",
+      "status": "renamed",
+      "action": "move",
+      "link": "docs/evidence/audits/access-crawl-control/perplexitybot.md",
+      "to": "access-crawl-control/perplexitybot"
+    },
+    "2.5": {
+      "slug": "crawler-permissions/applebot-extended",
+      "status": "renamed",
+      "action": "move",
+      "link": "docs/evidence/audits/access-crawl-control/applebot-extended.md",
+      "to": "access-crawl-control/applebot-extended"
+    },
+    "2.6": {
+      "slug": "crawler-permissions/ccbot",
+      "status": "renamed",
+      "action": "move",
+      "link": "docs/evidence/audits/access-crawl-control/ccbot.md",
+      "to": "access-crawl-control/ccbot"
+    },
+    "2.7": {
+      "slug": "crawler-permissions/meta-external-agent",
+      "status": "renamed",
+      "action": "move",
+      "link": "docs/evidence/audits/access-crawl-control/meta-external-agent.md",
+      "to": "access-crawl-control/meta-external-agent"
+    },
+    "2.8": {
+      "slug": "crawler-permissions/amazonbot",
+      "status": "renamed",
+      "action": "move",
+      "link": "docs/evidence/audits/access-crawl-control/amazonbot.md",
+      "to": "access-crawl-control/amazonbot"
+    },
+    "2.9": {
+      "slug": "crawler-permissions/bytespider",
+      "status": "renamed",
+      "action": "rewrite",
+      "link": "docs/evidence/audits/access-crawl-control/ai-bot-directives.md",
+      "to": "access-crawl-control/ai-bot-directives",
+      "notes": "redemption rewrite — REWORK-TODO folds all low-signal per-bot audits into one `ai-bot-directives` audit"
+    },
+    "2.10": {
+      "slug": "crawler-permissions/cohere-ai",
+      "status": "renamed",
+      "action": "rewrite",
+      "link": "docs/evidence/audits/access-crawl-control/ai-bot-directives.md",
+      "to": "access-crawl-control/ai-bot-directives",
+      "notes": "redemption rewrite — same `ai-bot-directives` consolidation"
+    },
+    "2.11": {
+      "slug": "crawler-permissions/youbot",
+      "status": "renamed",
+      "action": "rewrite",
+      "link": "docs/evidence/audits/access-crawl-control/ai-bot-directives.md",
+      "to": "access-crawl-control/ai-bot-directives",
+      "notes": "redemption rewrite — same `ai-bot-directives` consolidation"
+    },
+    "2.12": {
+      "slug": "crawler-permissions/diffbot",
+      "status": "renamed",
+      "action": "rewrite",
+      "link": "docs/evidence/audits/access-crawl-control/ai-bot-directives.md",
+      "to": "access-crawl-control/ai-bot-directives",
+      "notes": "redemption rewrite — same `ai-bot-directives` consolidation"
+    },
+    "2.13": {
+      "slug": "crawler-permissions/ai2bot",
+      "status": "renamed",
+      "action": "rewrite",
+      "link": "docs/evidence/audits/access-crawl-control/ai-bot-directives.md",
+      "to": "access-crawl-control/ai-bot-directives",
+      "notes": "redemption rewrite — same `ai-bot-directives` consolidation"
+    },
+    "2.14": {
+      "slug": "crawler-permissions/chatgpt-user",
+      "status": "renamed",
+      "action": "move",
+      "link": "docs/evidence/audits/access-crawl-control/chatgpt-user.md",
+      "to": "access-crawl-control/chatgpt-user"
+    },
+    "2.15": {
+      "slug": "crawler-permissions/claude-user",
+      "status": "renamed",
+      "action": "move",
+      "link": "docs/evidence/audits/access-crawl-control/claude-user.md",
+      "to": "access-crawl-control/claude-user"
+    },
+    "2.16": {
+      "slug": "crawler-permissions/oai-searchbot",
+      "status": "renamed",
+      "action": "move",
+      "link": "docs/evidence/audits/access-crawl-control/oai-searchbot.md",
+      "to": "access-crawl-control/oai-searchbot"
+    },
+    "2.17": {
+      "slug": "crawler-permissions/meta-external-fetcher",
+      "status": "renamed",
+      "action": "move",
+      "link": "docs/evidence/audits/access-crawl-control/meta-external-fetcher.md",
+      "to": "access-crawl-control/meta-external-fetcher"
+    },
+    "2.18": {
+      "slug": "crawler-permissions/bravebot",
+      "status": "renamed",
+      "action": "move",
+      "link": "docs/evidence/audits/access-crawl-control/bravebot.md",
+      "to": "access-crawl-control/bravebot"
+    },
+    "2.19": {
+      "slug": "crawler-permissions/duckassistbot",
+      "status": "renamed",
+      "action": "move",
+      "link": "docs/evidence/audits/access-crawl-control/duckassistbot.md",
+      "to": "access-crawl-control/duckassistbot"
+    },
+    "2.20": {
+      "slug": "crawler-permissions/mistralai-user",
+      "status": "renamed",
+      "action": "move",
+      "link": "docs/evidence/audits/access-crawl-control/mistralai-user.md",
+      "to": "access-crawl-control/mistralai-user"
+    },
+    "2.21": {
+      "slug": "crawler-permissions/claude-searchbot",
+      "status": "renamed",
+      "action": "move",
+      "link": "docs/evidence/audits/access-crawl-control/claude-searchbot.md",
+      "to": "access-crawl-control/claude-searchbot"
+    },
+    "2.22": {
+      "slug": "crawler-permissions/no-blanket-block",
+      "status": "renamed",
+      "action": "move",
+      "link": "docs/evidence/audits/access-crawl-control/no-blanket-block.md",
+      "to": "access-crawl-control/no-blanket-block"
+    },
+    "2.23": {
+      "slug": "crawler-permissions/sensitive-paths",
+      "status": "renamed",
+      "action": "rewrite",
+      "link": "docs/evidence/audits/access-crawl-control/sensitive-paths.md",
+      "to": "access-crawl-control/sensitive-paths",
+      "notes": "redemption rewrite — grade A mechanism, needs path-matching surgery per RFC 9309"
+    },
+    "2.24": {
+      "slug": "crawler-permissions/crawl-delay",
+      "status": "renamed",
+      "action": "move",
+      "link": "docs/evidence/audits/access-crawl-control/crawl-delay.md",
+      "to": "access-crawl-control/crawl-delay"
+    },
+    "2.25": {
+      "slug": "crawler-permissions/meta-robots-not-blocking",
+      "status": "renamed",
+      "action": "rewrite",
+      "link": "docs/evidence/audits/access-crawl-control/robots-directives.md",
+      "to": "access-crawl-control/robots-directives",
+      "notes": "decided 2026-08-21: merged with 1.13 no-noindex + 4.20 meta-robots into one audit `access-crawl-control/robots-directives` — all pages, meta + `X-Robots-Tag`, token-parsed"
+    },
+    "2.26": {
+      "slug": "crawler-permissions/no-bot-detection",
+      "status": "renamed",
+      "action": "move",
+      "link": "docs/evidence/audits/access-crawl-control/no-bot-detection.md",
+      "to": "access-crawl-control/no-bot-detection",
+      "notes": "§3 cat 1 names it explicitly"
+    },
+    "2.27": {
+      "slug": "crawler-permissions/tdm-rep",
+      "status": "renamed",
+      "action": "rewrite",
+      "link": "docs/evidence/audits/access-crawl-control/tdm-rep.md",
+      "to": "access-crawl-control/tdm-rep",
+      "notes": "redemption rewrite — experimental tier, fix internal incoherence"
+    },
+    "2.28": {
+      "slug": "crawler-permissions/agent-governance",
+      "status": "renamed",
+      "action": "move",
+      "link": "docs/evidence/audits/access-crawl-control/agent-governance.md",
+      "to": "access-crawl-control/agent-governance",
+      "notes": "decided 2026-08-21: confirmed — access-crawl-control"
+    },
+    "3.1": {
+      "slug": "structured-data/json-ld-present",
+      "status": "renamed",
+      "action": "move",
+      "link": "docs/evidence/audits/structured-data/json-ld-present.md",
+      "to": "structured-data/json-ld-present"
+    },
+    "3.2": {
+      "slug": "structured-data/schema-validation",
+      "status": "renamed",
+      "action": "move",
+      "link": "docs/evidence/audits/structured-data/schema-validation.md",
+      "to": "structured-data/schema-validation"
+    },
+    "3.3": {
+      "slug": "structured-data/organization-schema",
+      "status": "renamed",
+      "action": "move",
+      "link": "docs/evidence/audits/structured-data/organization-schema.md",
+      "to": "structured-data/organization-schema"
+    },
+    "3.4": {
+      "slug": "structured-data/website-search-action",
+      "status": "renamed",
+      "action": "merge-away",
+      "link": "docs/evidence/audits/agent-interfaces/search-endpoint.md",
+      "to": "agent-interfaces/search-endpoint",
+      "notes": "decided 2026-08-21: merge-away into agent-interfaces/search-endpoint (5.16 is the surviving row)"
+    },
+    "3.5": {
+      "slug": "structured-data/breadcrumb-schema",
+      "status": "renamed",
+      "action": "move",
+      "link": "docs/evidence/audits/structured-data/breadcrumb-schema.md",
+      "to": "structured-data/breadcrumb-schema"
+    },
+    "3.6": {
+      "slug": "structured-data/article-schema",
+      "status": "renamed",
+      "action": "move",
+      "link": "docs/evidence/audits/structured-data/article-schema.md",
+      "to": "structured-data/article-schema"
+    },
+    "3.7": {
+      "slug": "structured-data/faqpage-schema",
+      "status": "renamed",
+      "action": "move",
+      "link": "docs/evidence/audits/structured-data/faqpage-schema.md",
+      "to": "structured-data/faqpage-schema",
+      "notes": "C9 FAQ cluster resolves via shared gatherer, not a merge"
+    },
+    "3.8": {
+      "slug": "structured-data/service-product-schema",
+      "status": "renamed",
+      "action": "split",
+      "link": "docs/evidence/audits/structured-data/service-schema.md",
+      "to": "structured-data/service-schema",
+      "notes": "§5 split: Product half → structured-data/advanced-product-details (3.22); Service half stays standalone, narrowed to Service/ProfessionalService"
+    },
+    "3.9": {
+      "slug": "structured-data/speakable-schema",
+      "status": "renamed",
+      "action": "rewrite",
+      "link": "docs/evidence/audits/structured-data/speakable-schema.md",
+      "to": "structured-data/speakable-schema",
+      "notes": "redemption rewrite — narrow to news/article publishers, drop the Alexa/Siri claim. decided 2026-08-21: confirmed — structured-data"
+    },
+    "3.10": {
+      "slug": "structured-data/potential-action",
+      "status": "removed",
+      "action": "sunset",
+      "link": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/sunset/not-a-factor.md#structured-datapotential-action",
+      "reason": "not-a-factor"
+    },
+    "3.11": {
+      "slug": "structured-data/howto-schema",
+      "status": "renamed",
+      "action": "move",
+      "link": "docs/evidence/audits/structured-data/howto-schema.md",
+      "to": "structured-data/howto-schema"
+    },
+    "3.12": {
+      "slug": "structured-data/local-business-schema",
+      "status": "renamed",
+      "action": "move",
+      "link": "docs/evidence/audits/structured-data/local-business-schema.md",
+      "to": "structured-data/local-business-schema"
+    },
+    "3.13": {
+      "slug": "structured-data/review-schema",
+      "status": "renamed",
+      "action": "move",
+      "link": "docs/evidence/audits/structured-data/review-schema.md",
+      "to": "structured-data/review-schema",
+      "notes": "merge target for product-reviews (3.23); C8 reviews cluster resolves via shared gatherer"
+    },
+    "3.14": {
+      "slug": "structured-data/offer-schema",
+      "status": "renamed",
+      "action": "move",
+      "link": "docs/evidence/audits/agentic-commerce/offer-schema.md",
+      "to": "agentic-commerce/offer-schema",
+      "notes": "§3 cat 7 \"commerce halves of product schema\" — price/availability is the buy path"
+    },
+    "3.15": {
+      "slug": "structured-data/author-schema",
+      "status": "renamed",
+      "action": "move",
+      "link": "docs/evidence/audits/structured-data/author-schema.md",
+      "to": "structured-data/author-schema",
+      "notes": "C4 authors cluster resolves via shared gatherer with 10.1–10.3, not a merge"
+    },
+    "3.16": {
+      "slug": "structured-data/action-schema",
+      "status": "removed",
+      "action": "sunset",
+      "link": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/sunset/not-a-factor.md#structured-dataaction-schema",
+      "reason": "not-a-factor"
+    },
+    "3.21": {
+      "slug": "structured-data/product-identifiers",
+      "status": "renamed",
+      "action": "move",
+      "link": "docs/evidence/audits/agentic-commerce/product-identifiers.md",
+      "to": "agentic-commerce/product-identifiers",
+      "notes": "decided 2026-08-21: confirmed — agentic-commerce (GTIN/MPN are consumed by shopping agents)"
+    },
+    "3.22": {
+      "slug": "structured-data/product-details",
+      "status": "renamed",
+      "action": "move",
+      "link": "docs/evidence/audits/structured-data/advanced-product-details.md",
+      "to": "structured-data/advanced-product-details",
+      "notes": "§5 rename; absorbs the Product half of service-product-schema (3.8)"
+    },
+    "3.23": {
+      "slug": "structured-data/product-reviews",
+      "status": "renamed",
+      "action": "merge-away",
+      "link": "docs/evidence/audits/structured-data/review-schema.md",
+      "to": "structured-data/review-schema",
+      "notes": "§5: product-reviews → review-schema"
+    },
+    "3.24": {
+      "slug": "structured-data/product-transaction-certainty",
+      "status": "renamed",
+      "action": "move",
+      "link": "docs/evidence/audits/agentic-commerce/product-transaction-certainty.md",
+      "to": "agentic-commerce/product-transaction-certainty",
+      "notes": "transaction-certainty fields are the checkout half of product schema (§3 cat 7)"
+    },
+    "4.1": {
+      "slug": "meta-tags/meta-description",
+      "status": "renamed",
+      "action": "move",
+      "link": "docs/evidence/audits/answer-readiness/meta-description.md",
+      "to": "answer-readiness/meta-description",
+      "notes": "meta-tags dissolves; consumer is snippet/answer selection. Merge target for meta-description-aeo (9.11); C15 cluster"
+    },
+    "4.2": {
+      "slug": "meta-tags/meta-author",
+      "status": "renamed",
+      "action": "move",
+      "link": "docs/evidence/audits/answer-readiness/meta-author.md",
+      "to": "answer-readiness/meta-author",
+      "notes": "author/E-E-A-T signal, C4 cluster via shared gatherer"
+    },
+    "4.3": {
+      "slug": "meta-tags/canonical-url",
+      "status": "renamed",
+      "action": "merge-away",
+      "link": "docs/evidence/audits/access-crawl-control/canonical.md",
+      "to": "access-crawl-control/canonical",
+      "notes": "decided 2026-08-21: merge-away into access-crawl-control/canonical (1.17 is the surviving row)"
+    },
+    "4.4": {
+      "slug": "meta-tags/language-attribute",
+      "status": "renamed",
+      "action": "move",
+      "link": "docs/evidence/audits/content-extraction/language-attribute.md",
+      "to": "content-extraction/language-attribute",
+      "notes": "`lang` drives extractor/tokenizer behaviour"
+    },
+    "4.5": {
+      "slug": "meta-tags/unique-meta",
+      "status": "renamed",
+      "action": "move",
+      "link": "docs/evidence/audits/answer-readiness/unique-meta.md",
+      "to": "answer-readiness/unique-meta",
+      "notes": "duplicate titles/descriptions degrade answer selection"
+    },
+    "4.6": {
+      "slug": "meta-tags/core-open-graph",
+      "status": "renamed",
+      "action": "move",
+      "link": "docs/evidence/audits/answer-readiness/core-open-graph.md",
+      "to": "answer-readiness/core-open-graph",
+      "notes": "§3 cat 5 \"og/display tags from meta-tags\"; merge target for og-site-name (4.8) and the social-meta fold of twitter-card (4.10)"
+    },
+    "4.7": {
+      "slug": "meta-tags/og-type",
+      "status": "renamed",
+      "action": "move",
+      "link": "docs/evidence/audits/answer-readiness/og-type.md",
+      "to": "answer-readiness/og-type"
+    },
+    "4.8": {
+      "slug": "meta-tags/og-site-name",
+      "status": "renamed",
+      "action": "merge-away",
+      "link": "docs/evidence/audits/answer-readiness/core-open-graph.md",
+      "to": "answer-readiness/core-open-graph",
+      "notes": "§5: og-site-name → core-open-graph"
+    },
+    "4.9": {
+      "slug": "meta-tags/og-image-alt",
+      "status": "renamed",
+      "action": "move",
+      "link": "docs/evidence/audits/answer-readiness/og-image-alt.md",
+      "to": "answer-readiness/og-image-alt"
+    },
+    "4.10": {
+      "slug": "meta-tags/twitter-card",
+      "status": "renamed",
+      "action": "rewrite",
+      "link": "docs/evidence/audits/answer-readiness/core-open-graph.md",
+      "to": "answer-readiness/core-open-graph",
+      "notes": "redemption rewrite — fix the twitter:*/og:* fallback errors and fold into the social-meta diagnostic alongside core-open-graph, informative tier"
+    },
+    "4.11": {
+      "slug": "meta-tags/llms-txt-link",
+      "status": "renamed",
+      "action": "merge-away",
+      "link": "docs/evidence/audits/machine-discovery/llms-txt-exists.md",
+      "to": "machine-discovery/llms-txt-exists",
+      "notes": "C3 collapse: file + discovery link become one audit"
+    },
+    "4.12": {
+      "slug": "meta-tags/llms-full-txt-link",
+      "status": "removed",
+      "action": "sunset",
+      "link": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/sunset/not-a-factor.md#meta-tagsllms-full-txt-link",
+      "reason": "not-a-factor"
+    },
+    "4.13": {
+      "slug": "meta-tags/ai-content-declaration",
+      "status": "renamed",
+      "action": "rewrite",
+      "link": "docs/evidence/audits/access-crawl-control/ai-content-declaration.md",
+      "to": "access-crawl-control/ai-content-declaration",
+      "notes": "redemption rewrite — experimental tier, check the real opt-out directive names; decided 2026-08-21: experimental tier (active declaration-spec trajectory)"
+    },
+    "4.14": {
+      "slug": "meta-tags/ai-instructions",
+      "status": "removed",
+      "action": "sunset",
+      "link": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/sunset/not-a-factor.md#meta-tagsai-instructions",
+      "reason": "not-a-factor"
+    },
+    "4.15": {
+      "slug": "meta-tags/markdown-alternate",
+      "status": "renamed",
+      "action": "move",
+      "link": "docs/evidence/audits/content-extraction/markdown-alternate.md",
+      "to": "content-extraction/markdown-alternate",
+      "notes": "§3 cat 2 \"markdown alternates\""
+    },
+    "4.16": {
+      "slug": "meta-tags/rss-feed-link",
+      "status": "renamed",
+      "action": "merge-away",
+      "link": "docs/evidence/audits/machine-discovery/rss-feed.md",
+      "to": "machine-discovery/rss-feed",
+      "notes": "C3 collapse: feed file + its `<link rel=alternate>` become one audit"
+    },
+    "4.17": {
+      "slug": "meta-tags/mcp-discovery-link",
+      "status": "removed",
+      "action": "sunset",
+      "link": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/sunset/not-a-factor.md#meta-tagsmcp-discovery-link",
+      "reason": "not-a-factor"
+    },
+    "4.18": {
+      "slug": "meta-tags/openapi-link",
+      "status": "renamed",
+      "action": "merge-away",
+      "link": "docs/evidence/audits/agent-interfaces/openapi-exists.md",
+      "to": "agent-interfaces/openapi-exists",
+      "notes": "TODO(redeem) resolves as a merge: one discovery audit incl. RFC 9727 api-catalog; drop the link-tag requirement"
+    },
+    "4.19": {
+      "slug": "meta-tags/ai-catalog-link",
+      "status": "renamed",
+      "action": "merge-away",
+      "link": "docs/evidence/audits/agent-interfaces/ai-catalog-exists.md",
+      "to": "agent-interfaces/ai-catalog-exists",
+      "notes": "TODO(redeem) grade B; C3 collapse — manifest file + `rel` link checked by one audit"
+    },
+    "4.20": {
+      "slug": "meta-tags/meta-robots",
+      "status": "renamed",
+      "action": "merge-away",
+      "link": "docs/evidence/audits/access-crawl-control/robots-directives.md",
+      "to": "access-crawl-control/robots-directives",
+      "notes": "decided 2026-08-21: merge-away into access-crawl-control/robots-directives (2.25 is the surviving row)"
+    },
+    "5.1": {
+      "slug": "agent-tools/openapi-exists",
+      "status": "renamed",
+      "action": "move",
+      "link": "docs/evidence/audits/agent-interfaces/openapi-exists.md",
+      "to": "agent-interfaces/openapi-exists",
+      "notes": "absorbs meta-tags/openapi-link (4.18)"
+    },
+    "5.2": {
+      "slug": "agent-tools/openapi-endpoints",
+      "status": "renamed",
+      "action": "move",
+      "link": "docs/evidence/audits/agent-interfaces/openapi-endpoints.md",
+      "to": "agent-interfaces/openapi-endpoints"
+    },
+    "5.3": {
+      "slug": "agent-tools/openapi-operation-ids",
+      "status": "renamed",
+      "action": "move",
+      "link": "docs/evidence/audits/agent-interfaces/openapi-operation-ids.md",
+      "to": "agent-interfaces/openapi-operation-ids",
+      "notes": "receives the naming-rule half of webmcp-tool-naming (5.23) per §5"
+    },
+    "5.4": {
+      "slug": "agent-tools/openapi-ai-instructions",
+      "status": "removed",
+      "action": "sunset",
+      "link": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/sunset/not-a-factor.md#agent-toolsopenapi-ai-instructions",
+      "reason": "not-a-factor"
+    },
+    "5.5": {
+      "slug": "agent-tools/openapi-servers",
+      "status": "renamed",
+      "action": "move",
+      "link": "docs/evidence/audits/agent-interfaces/openapi-servers.md",
+      "to": "agent-interfaces/openapi-servers"
+    },
+    "5.6": {
+      "slug": "agent-tools/openapi-schemas",
+      "status": "renamed",
+      "action": "move",
+      "link": "docs/evidence/audits/agent-interfaces/openapi-schemas.md",
+      "to": "agent-interfaces/openapi-schemas"
+    },
+    "5.7": {
+      "slug": "agent-tools/ai-catalog-exists",
+      "status": "renamed",
+      "action": "rewrite",
+      "link": "docs/evidence/audits/agent-interfaces/ai-catalog-exists.md",
+      "to": "agent-interfaces/ai-catalog-exists",
+      "notes": "redemption rewrite — grade A; pass condition becomes specVersion + host + entries[] per ARD §4.1; absorbs 4.19"
+    },
+    "5.8": {
+      "slug": "agent-tools/ai-catalog-metadata",
+      "status": "renamed",
+      "action": "rewrite",
+      "link": "docs/evidence/audits/agent-interfaces/ai-catalog-metadata.md",
+      "to": "agent-interfaces/ai-catalog-metadata",
+      "notes": "redemption rewrite — grade B; every checked field is currently wrong"
+    },
+    "5.9": {
+      "slug": "agent-tools/ai-catalog-urls",
+      "status": "renamed",
+      "action": "rewrite",
+      "link": "docs/evidence/audits/agent-interfaces/ai-catalog-urls.md",
+      "to": "agent-interfaces/ai-catalog-urls",
+      "notes": "redemption rewrite — grade B; liveness of manifest-listed endpoints"
+    },
+    "5.10": {
+      "slug": "agent-tools/agents-json",
+      "status": "renamed",
+      "action": "move",
+      "link": "docs/evidence/audits/agent-interfaces/agents-json.md",
+      "to": "agent-interfaces/agents-json"
+    },
+    "5.11": {
+      "slug": "agent-tools/ai-plugin-json",
+      "status": "removed",
+      "action": "sunset",
+      "link": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/sunset/not-a-factor.md#agent-toolsai-plugin-json",
+      "reason": "not-a-factor"
+    },
+    "5.12": {
+      "slug": "agent-tools/mcp-discovery",
+      "status": "renamed",
+      "action": "move",
+      "link": "docs/evidence/audits/agent-interfaces/mcp-discovery.md",
+      "to": "agent-interfaces/mcp-discovery"
+    },
+    "5.13": {
+      "slug": "agent-tools/mcp-endpoint",
+      "status": "renamed",
+      "action": "move",
+      "link": "docs/evidence/audits/agent-interfaces/mcp-endpoint.md",
+      "to": "agent-interfaces/mcp-endpoint",
+      "notes": "merge target for mcp-capabilities (5.14) and webmcp-tool-annotations (5.24)"
+    },
+    "5.14": {
+      "slug": "agent-tools/mcp-capabilities",
+      "status": "renamed",
+      "action": "merge-away",
+      "link": "docs/evidence/audits/agent-interfaces/mcp-endpoint.md",
+      "to": "agent-interfaces/mcp-endpoint",
+      "notes": "§5: mcp-capabilities → mcp-endpoint"
+    },
+    "5.15": {
+      "slug": "agent-tools/contact-form",
+      "status": "renamed",
+      "action": "move",
+      "link": "docs/evidence/audits/operability-safety/contact-form.md",
+      "to": "operability-safety/contact-form",
+      "notes": "decided 2026-08-21: confirmed — operability-safety"
+    },
+    "5.16": {
+      "slug": "agent-tools/search-endpoint",
+      "status": "renamed",
+      "action": "rewrite",
+      "link": "docs/evidence/audits/agent-interfaces/search-endpoint.md",
+      "to": "agent-interfaces/search-endpoint",
+      "notes": "decided 2026-08-21: confirmed — agent-interfaces; absorbs 3.4 website-search-action, rewritten to read SearchAction array-safe and verify that results come back"
+    },
+    "5.17": {
+      "slug": "agent-tools/data-action-ctas",
+      "status": "removed",
+      "action": "sunset",
+      "link": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/sunset/not-a-factor.md#agent-toolsdata-action-ctas",
+      "reason": "not-a-factor"
+    },
+    "5.18": {
+      "slug": "agent-tools/no-blocking-captcha",
+      "status": "renamed",
+      "action": "rewrite",
+      "link": "docs/evidence/audits/operability-safety/no-blocking-captcha.md",
+      "to": "operability-safety/no-blocking-captcha",
+      "notes": "decided 2026-08-21: confirmed — operability-safety, form-scoped rewrite"
+    },
+    "5.19": {
+      "slug": "agent-tools/forms-no-js",
+      "status": "renamed",
+      "action": "move",
+      "link": "docs/evidence/audits/operability-safety/forms-no-js.md",
+      "to": "operability-safety/forms-no-js",
+      "notes": "§3 cat 8 \"form actionability\""
+    },
+    "5.20": {
+      "slug": "agent-tools/webmcp-manifest",
+      "status": "renamed",
+      "action": "rewrite",
+      "link": "docs/evidence/audits/agent-interfaces/webmcp-registered-tools.md",
+      "to": "agent-interfaces/webmcp-registered-tools",
+      "notes": "redemption rewrite — the `.well-known` manifest is invented (grade D); replace with runtime registered-tools detection, experimental tier"
+    },
+    "5.21": {
+      "slug": "agent-tools/webmcp-declarative-forms",
+      "status": "renamed",
+      "action": "rewrite",
+      "link": "docs/evidence/audits/agent-interfaces/webmcp-declarative-forms.md",
+      "to": "agent-interfaces/webmcp-declarative-forms",
+      "notes": "redemption rewrite — grade A (W3C WebML CG explainer, `declarative-webmcp` Baseline feature)"
+    },
+    "5.22": {
+      "slug": "agent-tools/webmcp-input-quality",
+      "status": "renamed",
+      "action": "merge-away",
+      "link": "docs/evidence/audits/operability-safety/form-actionability.md",
+      "to": "operability-safety/form-actionability",
+      "notes": "§5: webmcp-input-quality → form-actionability"
+    },
+    "5.23": {
+      "slug": "agent-tools/webmcp-tool-naming",
+      "status": "renamed",
+      "action": "split",
+      "link": "docs/evidence/audits/agent-interfaces/openapi-operation-ids.md",
+      "to": "agent-interfaces/openapi-operation-ids",
+      "notes": "§5 split: naming rule → openapi-operation-ids; runtime part deferred to a future MCP tools/list check (not a v2.0 audit)"
+    },
+    "5.24": {
+      "slug": "agent-tools/webmcp-tool-annotations",
+      "status": "renamed",
+      "action": "merge-away",
+      "link": "docs/evidence/audits/agent-interfaces/mcp-endpoint.md",
+      "to": "agent-interfaces/mcp-endpoint",
+      "notes": "§5: webmcp-tool-annotations → mcp-endpoint (tools/list annotations)"
+    },
+    "5.25": {
+      "slug": "agent-tools/webmcp-action-coverage",
+      "status": "removed",
+      "action": "sunset",
+      "link": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/sunset/not-a-factor.md#agent-toolswebmcp-action-coverage",
+      "reason": "not-a-factor"
+    },
+    "5.26": {
+      "slug": "agent-tools/openapi-description-quality",
+      "status": "renamed",
+      "action": "move",
+      "link": "docs/evidence/audits/agent-interfaces/openapi-description-quality.md",
+      "to": "agent-interfaces/openapi-description-quality"
+    },
+    "5.27": {
+      "slug": "agent-tools/form-actionability",
+      "status": "renamed",
+      "action": "move",
+      "link": "docs/evidence/audits/operability-safety/form-actionability.md",
+      "to": "operability-safety/form-actionability",
+      "notes": "§3 cat 8 \"form actionability\"; merge target for 5.22"
+    },
+    "6.1": {
+      "slug": "semantic-html/single-h1",
+      "status": "renamed",
+      "action": "move",
+      "link": "docs/evidence/audits/content-extraction/single-h1.md",
+      "to": "content-extraction/single-h1"
+    },
+    "6.2": {
+      "slug": "semantic-html/sequential-headings",
+      "status": "renamed",
+      "action": "move",
+      "link": "docs/evidence/audits/content-extraction/sequential-headings.md",
+      "to": "content-extraction/sequential-headings"
+    },
+    "6.3": {
+      "slug": "semantic-html/main-element",
+      "status": "renamed",
+      "action": "move",
+      "link": "docs/evidence/audits/content-extraction/main-element.md",
+      "to": "content-extraction/main-element"
+    },
+    "6.4": {
+      "slug": "semantic-html/article-element",
+      "status": "renamed",
+      "action": "move",
+      "link": "docs/evidence/audits/content-extraction/article-element.md",
+      "to": "content-extraction/article-element"
+    },
+    "6.5": {
+      "slug": "semantic-html/header-footer",
+      "status": "renamed",
+      "action": "move",
+      "link": "docs/evidence/audits/content-extraction/header-footer.md",
+      "to": "content-extraction/header-footer"
+    },
+    "6.6": {
+      "slug": "semantic-html/aside-element",
+      "status": "renamed",
+      "action": "rewrite",
+      "link": "docs/evidence/audits/content-extraction/aside-element.md",
+      "to": "content-extraction/aside-element",
+      "notes": "redemption rewrite — grade B (Readability/trafilatura strip `<aside>`; Chromium exposes it as `complementary`)"
+    },
+    "6.7": {
+      "slug": "semantic-html/section-headings",
+      "status": "renamed",
+      "action": "move",
+      "link": "docs/evidence/audits/content-extraction/section-headings.md",
+      "to": "content-extraction/section-headings"
+    },
+    "6.8": {
+      "slug": "semantic-html/semantic-lists",
+      "status": "renamed",
+      "action": "move",
+      "link": "docs/evidence/audits/content-extraction/semantic-lists.md",
+      "to": "content-extraction/semantic-lists",
+      "notes": "merge target for definition-elements (6.13)"
+    },
+    "6.9": {
+      "slug": "semantic-html/data-tables",
+      "status": "renamed",
+      "action": "move",
+      "link": "docs/evidence/audits/content-extraction/data-tables.md",
+      "to": "content-extraction/data-tables"
+    },
+    "6.10": {
+      "slug": "semantic-html/code-language",
+      "status": "renamed",
+      "action": "move",
+      "link": "docs/evidence/audits/content-extraction/code-language.md",
+      "to": "content-extraction/code-language"
+    },
+    "6.11": {
+      "slug": "semantic-html/time-element",
+      "status": "renamed",
+      "action": "move",
+      "link": "docs/evidence/audits/content-extraction/time-element.md",
+      "to": "content-extraction/time-element",
+      "notes": "C1 dates cluster resolves via shared gatherer"
+    },
+    "6.12": {
+      "slug": "semantic-html/address-element",
+      "status": "removed",
+      "action": "sunset",
+      "link": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/sunset/not-a-factor.md#semantic-htmladdress-element",
+      "reason": "not-a-factor"
+    },
+    "6.13": {
+      "slug": "semantic-html/definition-elements",
+      "status": "renamed",
+      "action": "merge-away",
+      "link": "docs/evidence/audits/content-extraction/semantic-lists.md",
+      "to": "content-extraction/semantic-lists",
+      "notes": "§5: definition-elements → semantic-lists"
+    },
+    "6.14": {
+      "slug": "semantic-html/content-depth",
+      "status": "renamed",
+      "action": "move",
+      "link": "docs/evidence/audits/content-extraction/content-depth.md",
+      "to": "content-extraction/content-depth"
+    },
+    "6.15": {
+      "slug": "semantic-html/image-alt-text",
+      "status": "renamed",
+      "action": "move",
+      "link": "docs/evidence/audits/content-extraction/image-alt-text.md",
+      "to": "content-extraction/image-alt-text",
+      "notes": "decided 2026-08-21: confirmed — content-extraction"
+    },
+    "6.16": {
+      "slug": "semantic-html/decorative-images",
+      "status": "removed",
+      "action": "sunset",
+      "link": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/sunset/not-a-factor.md#semantic-htmldecorative-images",
+      "reason": "not-a-factor"
+    },
+    "6.17": {
+      "slug": "semantic-html/figure-figcaption",
+      "status": "renamed",
+      "action": "move",
+      "link": "docs/evidence/audits/content-extraction/figure-figcaption.md",
+      "to": "content-extraction/figure-figcaption"
+    },
+    "6.18": {
+      "slug": "semantic-html/svg-bloat",
+      "status": "renamed",
+      "action": "move",
+      "link": "docs/evidence/audits/content-extraction/svg-bloat.md",
+      "to": "content-extraction/svg-bloat",
+      "notes": "pairs with the token-economics proposals (§6 maps token-economics → cat 2)"
+    },
+    "6.19": {
+      "slug": "semantic-html/token-ratio",
+      "status": "renamed",
+      "action": "move",
+      "link": "docs/evidence/audits/content-extraction/token-ratio.md",
+      "to": "content-extraction/token-ratio",
+      "notes": "token-economics home"
+    },
+    "6.20": {
+      "slug": "semantic-html/fake-headings",
+      "status": "renamed",
+      "action": "move",
+      "link": "docs/evidence/audits/content-extraction/fake-headings.md",
+      "to": "content-extraction/fake-headings"
+    },
+    "7.1": {
+      "slug": "accessibility/skip-nav",
+      "status": "removed",
+      "action": "sunset",
+      "link": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/sunset/not-a-factor.md#accessibilityskip-nav",
+      "reason": "not-a-factor"
+    },
+    "7.2": {
+      "slug": "accessibility/aria-landmarks",
+      "status": "renamed",
+      "action": "move",
+      "link": "docs/evidence/audits/operability-safety/aria-landmarks.md",
+      "to": "operability-safety/aria-landmarks",
+      "notes": "accessibility renames to operability-safety (§3)"
+    },
+    "7.3": {
+      "slug": "accessibility/nav-aria-label",
+      "status": "renamed",
+      "action": "merge-away",
+      "link": "docs/evidence/audits/operability-safety/landmark-unique.md",
+      "to": "operability-safety/landmark-unique",
+      "notes": "§5: nav-aria-label → landmark-unique"
+    },
+    "7.4": {
+      "slug": "accessibility/landmark-unique",
+      "status": "renamed",
+      "action": "move",
+      "link": "docs/evidence/audits/operability-safety/landmark-unique.md",
+      "to": "operability-safety/landmark-unique",
+      "notes": "§6: split out of `_a11y.ts` into its own file; merge target for 7.3"
+    },
+    "7.5": {
+      "slug": "accessibility/form-labels",
+      "status": "renamed",
+      "action": "move",
+      "link": "docs/evidence/audits/operability-safety/label.md",
+      "to": "operability-safety/label",
+      "notes": "§6 file split. decided 2026-08-21: confirmed — slug `label`"
+    },
+    "7.6": {
+      "slug": "accessibility/form-error-messages",
+      "status": "renamed",
+      "action": "rewrite",
+      "link": "docs/evidence/audits/operability-safety/form-error-messages.md",
+      "to": "operability-safety/form-error-messages",
+      "notes": "redemption rewrite — verify aria-describedby/aria-errormessage on invalid inputs instead of the current heuristic"
+    },
+    "7.7": {
+      "slug": "accessibility/accessible-names",
+      "status": "renamed",
+      "action": "move",
+      "link": "docs/evidence/audits/operability-safety/accessible-names.md",
+      "to": "operability-safety/accessible-names",
+      "notes": "§6 file split; wraps `button-name` + `link-name`"
+    },
+    "7.9": {
+      "slug": "accessibility/dialog-name",
+      "status": "renamed",
+      "action": "move",
+      "link": "docs/evidence/audits/operability-safety/dialog-name.md",
+      "to": "operability-safety/dialog-name",
+      "notes": "§6 file split; wraps `aria-dialog-name`"
+    },
+    "7.10": {
+      "slug": "accessibility/aria-hidden-body",
+      "status": "renamed",
+      "action": "move",
+      "link": "docs/evidence/audits/operability-safety/aria-hidden-body.md",
+      "to": "operability-safety/aria-hidden-body",
+      "notes": "§6 file split"
+    },
+    "7.11": {
+      "slug": "accessibility/aria-roles",
+      "status": "renamed",
+      "action": "move",
+      "link": "docs/evidence/audits/operability-safety/aria-roles.md",
+      "to": "operability-safety/aria-roles",
+      "notes": "§6 file split; wraps `aria-roles`, `aria-deprecated-role`, `aria-allowed-role`"
+    },
+    "7.12": {
+      "slug": "accessibility/aria-attributes",
+      "status": "renamed",
+      "action": "move",
+      "link": "docs/evidence/audits/operability-safety/aria-attributes.md",
+      "to": "operability-safety/aria-attributes",
+      "notes": "§6 file split; wraps the four aria-attr rules"
+    },
+    "7.13": {
+      "slug": "accessibility/aria-relationships",
+      "status": "renamed",
+      "action": "move",
+      "link": "docs/evidence/audits/operability-safety/aria-relationships.md",
+      "to": "operability-safety/aria-relationships",
+      "notes": "§6 file split; wraps the three aria-required-* rules"
+    },
+    "7.14": {
+      "slug": "accessibility/duplicate-id",
+      "status": "renamed",
+      "action": "move",
+      "link": "docs/evidence/audits/operability-safety/duplicate-id.md",
+      "to": "operability-safety/duplicate-id",
+      "notes": "§6 file split; wraps `duplicate-id-aria`"
+    },
+    "7.15": {
+      "slug": "accessibility/autocomplete",
+      "status": "renamed",
+      "action": "move",
+      "link": "docs/evidence/audits/operability-safety/autocomplete.md",
+      "to": "operability-safety/autocomplete",
+      "notes": "§6 file split; pairs with the form-autofill-token-coverage proposal"
+    },
+    "7.16": {
+      "slug": "accessibility/nested-interactive",
+      "status": "renamed",
+      "action": "move",
+      "link": "docs/evidence/audits/operability-safety/nested-interactive.md",
+      "to": "operability-safety/nested-interactive",
+      "notes": "§6 file split"
+    },
+    "7.17": {
+      "slug": "accessibility/table-headers",
+      "status": "renamed",
+      "action": "move",
+      "link": "docs/evidence/audits/operability-safety/table-headers.md",
+      "to": "operability-safety/table-headers",
+      "notes": "§6 file split; wraps the four table rules"
+    },
+    "7.18": {
+      "slug": "accessibility/document-title",
+      "status": "renamed",
+      "action": "move",
+      "link": "docs/evidence/audits/operability-safety/document-title.md",
+      "to": "operability-safety/document-title",
+      "notes": "§6 file split"
+    },
+    "7.19": {
+      "slug": "accessibility/frame-title",
+      "status": "renamed",
+      "action": "move",
+      "link": "docs/evidence/audits/operability-safety/frame-title.md",
+      "to": "operability-safety/frame-title",
+      "notes": "§6 file split; wraps `frame-title` + `frame-title-unique`"
+    },
+    "7.20": {
+      "slug": "accessibility/meta-refresh",
+      "status": "renamed",
+      "action": "move",
+      "link": "docs/evidence/audits/operability-safety/meta-refresh.md",
+      "to": "operability-safety/meta-refresh",
+      "notes": "§6 file split"
+    },
+    "7.21": {
+      "slug": "accessibility/tabindex",
+      "status": "renamed",
+      "action": "move",
+      "link": "docs/evidence/audits/operability-safety/tabindex.md",
+      "to": "operability-safety/tabindex",
+      "notes": "§6 file split"
+    },
+    "7.22": {
+      "slug": "accessibility/marquee",
+      "status": "removed",
+      "action": "sunset",
+      "link": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/sunset/not-a-factor.md#accessibilitymarquee",
+      "reason": "not-a-factor",
+      "notes": "decided 2026-08-21: sunset — grade D, mechanism proven false (marquee text is stable DOM text)"
+    },
+    "7.23": {
+      "slug": "accessibility/presentation-conflict",
+      "status": "renamed",
+      "action": "move",
+      "link": "docs/evidence/audits/operability-safety/presentation-conflict.md",
+      "to": "operability-safety/presentation-conflict",
+      "notes": "§6 file split"
+    },
+    "8.1": {
+      "slug": "technical-readiness/https-enabled",
+      "status": "renamed",
+      "action": "move",
+      "link": "docs/evidence/audits/access-crawl-control/https-enabled.md",
+      "to": "access-crawl-control/https-enabled",
+      "notes": "decided 2026-08-21: confirmed — access-crawl-control, scored; judge the protocol after redirects"
+    },
+    "8.2": {
+      "slug": "technical-readiness/hsts-header",
+      "status": "renamed",
+      "action": "consolidate",
+      "link": "docs/evidence/audits/operability-safety/security-header-hygiene.md",
+      "to": "operability-safety/security-header-hygiene",
+      "notes": "§5 consolidation, weight 0, never fails a site"
+    },
+    "8.3": {
+      "slug": "technical-readiness/csp-header",
+      "status": "renamed",
+      "action": "consolidate",
+      "link": "docs/evidence/audits/operability-safety/security-header-hygiene.md",
+      "to": "operability-safety/security-header-hygiene",
+      "notes": "§5 consolidation (audits 8.3–8.7)"
+    },
+    "8.4": {
+      "slug": "technical-readiness/content-type-options",
+      "status": "renamed",
+      "action": "consolidate",
+      "link": "docs/evidence/audits/operability-safety/security-header-hygiene.md",
+      "to": "operability-safety/security-header-hygiene",
+      "notes": "§5 consolidation; nosniff additionally becomes a sub-signal of machine-discovery/ai-file-delivery"
+    },
+    "8.5": {
+      "slug": "technical-readiness/referrer-policy",
+      "status": "removed",
+      "action": "sunset",
+      "link": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/sunset/not-a-factor.md#technical-readinessreferrer-policy",
+      "reason": "not-a-factor"
+    },
+    "8.6": {
+      "slug": "technical-readiness/permissions-policy",
+      "status": "removed",
+      "action": "sunset",
+      "link": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/sunset/not-a-factor.md#technical-readinesspermissions-policy",
+      "reason": "not-a-factor"
+    },
+    "8.7": {
+      "slug": "technical-readiness/security-txt",
+      "status": "renamed",
+      "action": "consolidate",
+      "link": "docs/evidence/audits/operability-safety/security-header-hygiene.md",
+      "to": "operability-safety/security-header-hygiene",
+      "notes": "§5 consolidation (audits 8.3–8.7)"
+    },
+    "8.8": {
+      "slug": "technical-readiness/cors-ai-files",
+      "status": "renamed",
+      "action": "move",
+      "link": "docs/evidence/audits/machine-discovery/cors-ai-files.md",
+      "to": "machine-discovery/cors-ai-files",
+      "notes": "§3 cat 3 \"delivery checks from technical-readiness\""
+    },
+    "8.9": {
+      "slug": "technical-readiness/cors-api-routes",
+      "status": "renamed",
+      "action": "rewrite",
+      "link": "docs/evidence/audits/agent-interfaces/cors-api-routes.md",
+      "to": "agent-interfaces/cors-api-routes",
+      "notes": "redemption rewrite — stays scored but `notApplicable` unless the site exposes a public cross-origin API surface"
+    },
+    "8.10": {
+      "slug": "technical-readiness/correct-content-types",
+      "status": "renamed",
+      "action": "move",
+      "link": "docs/evidence/audits/machine-discovery/ai-file-delivery.md",
+      "to": "machine-discovery/ai-file-delivery",
+      "notes": "§5 rename (\"AI file delivery\"); merge target for cache-headers (8.11); gains nosniff sub-signal from 8.4"
+    },
+    "8.11": {
+      "slug": "technical-readiness/cache-headers",
+      "status": "renamed",
+      "action": "merge-away",
+      "link": "docs/evidence/audits/machine-discovery/ai-file-delivery.md",
+      "to": "machine-discovery/ai-file-delivery",
+      "notes": "§5: cache-headers → correct-content-types (\"AI file delivery\")"
+    },
+    "8.12": {
+      "slug": "technical-readiness/fast-response-time",
+      "status": "renamed",
+      "action": "merge-away",
+      "link": "docs/evidence/audits/content-extraction/server-responsiveness.md",
+      "to": "content-extraction/server-responsiveness",
+      "notes": "decided 2026-08-21: merge-away into content-extraction/server-responsiveness (1.19 is the surviving row)"
+    },
+    "8.13": {
+      "slug": "technical-readiness/server-rendered",
+      "status": "renamed",
+      "action": "move",
+      "link": "docs/evidence/audits/content-extraction/server-rendered.md",
+      "to": "content-extraction/server-rendered",
+      "notes": "§3 cat 2 \"rendering checks from technical-readiness\""
+    },
+    "8.14": {
+      "slug": "technical-readiness/no-render-blocking",
+      "status": "removed",
+      "action": "sunset",
+      "link": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/sunset/not-a-factor.md#technical-readinessno-render-blocking",
+      "reason": "not-a-factor",
+      "notes": "decided 2026-08-21: sunset — grade D, human-viewport performance signal, no agent consumer"
+    },
+    "8.15": {
+      "slug": "technical-readiness/image-dimensions",
+      "status": "removed",
+      "action": "sunset",
+      "link": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/sunset/not-a-factor.md#technical-readinessimage-dimensions",
+      "reason": "not-a-factor",
+      "notes": "decided 2026-08-21: sunset — grade D CLS proxy, no agent consumer"
+    },
+    "8.16": {
+      "slug": "technical-readiness/lcp-not-lazy",
+      "status": "removed",
+      "action": "sunset",
+      "link": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/sunset/not-a-factor.md#technical-readinesslcp-not-lazy",
+      "reason": "not-a-factor",
+      "notes": "decided 2026-08-21: sunset — grade D, `images[0]` is not an LCP proxy"
+    },
+    "8.17": {
+      "slug": "technical-readiness/preconnect-hints",
+      "status": "removed",
+      "action": "sunset",
+      "link": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/sunset/not-a-factor.md#technical-readinesspreconnect-hints",
+      "reason": "not-a-factor"
+    },
+    "8.18": {
+      "slug": "technical-readiness/no-broken-ai-endpoints",
+      "status": "renamed",
+      "action": "move",
+      "link": "docs/evidence/audits/machine-discovery/no-broken-ai-endpoints.md",
+      "to": "machine-discovery/no-broken-ai-endpoints",
+      "notes": "decided 2026-08-21: confirmed — machine-discovery whole, no per-surface split; same-origin fix, drop the navigation.json source"
+    },
+    "8.19": {
+      "slug": "technical-readiness/privacy-policy",
+      "status": "removed",
+      "action": "sunset",
+      "link": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/sunset/not-a-factor.md#technical-readinessprivacy-policy",
+      "reason": "not-a-factor",
+      "notes": "decided 2026-08-21: sunset — grade D generic trust claim; the ACP link-surface proposal covers the evidenced commerce case"
+    },
+    "8.20": {
+      "slug": "technical-readiness/terms-of-service",
+      "status": "removed",
+      "action": "sunset",
+      "link": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/sunset/not-a-factor.md#technical-readinessterms-of-service",
+      "reason": "not-a-factor",
+      "notes": "decided 2026-08-21: sunset — grade D, no documented consumer, English-only detector"
+    },
+    "8.21": {
+      "slug": "technical-readiness/framework-detection",
+      "status": "removed",
+      "action": "sunset",
+      "link": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/sunset/not-a-factor.md#technical-readinessframework-detection",
+      "reason": "not-a-factor"
+    },
+    "9.1": {
+      "slug": "answer-engine/faq-sections",
+      "status": "renamed",
+      "action": "move",
+      "link": "docs/evidence/audits/answer-readiness/faq-sections.md",
+      "to": "answer-readiness/faq-sections",
+      "notes": "answer-engine + generative-engine fuse (§3)"
+    },
+    "9.2": {
+      "slug": "answer-engine/question-headings",
+      "status": "renamed",
+      "action": "move",
+      "link": "docs/evidence/audits/answer-readiness/question-headings.md",
+      "to": "answer-readiness/question-headings"
+    },
+    "9.3": {
+      "slug": "answer-engine/first-paragraph-answers",
+      "status": "renamed",
+      "action": "move",
+      "link": "docs/evidence/audits/answer-readiness/first-paragraph-answers.md",
+      "to": "answer-readiness/first-paragraph-answers"
+    },
+    "9.4": {
+      "slug": "answer-engine/direct-definitions",
+      "status": "renamed",
+      "action": "rewrite",
+      "link": "docs/evidence/audits/answer-readiness/direct-definitions.md",
+      "to": "answer-readiness/direct-definitions",
+      "notes": "redemption rewrite — language-neutral structural detector, `notApplicable` without definitional intent"
+    },
+    "9.5": {
+      "slug": "answer-engine/comparison-tables",
+      "status": "renamed",
+      "action": "move",
+      "link": "docs/evidence/audits/answer-readiness/comparison-tables.md",
+      "to": "answer-readiness/comparison-tables"
+    },
+    "9.6": {
+      "slug": "answer-engine/numbered-steps",
+      "status": "renamed",
+      "action": "move",
+      "link": "docs/evidence/audits/content-extraction/semantic-lists.md",
+      "to": "content-extraction/semantic-lists",
+      "notes": "grading pass: evidence duplicates semantic-lists (B) — candidate to fold during Plan 4 rewrites"
+    },
+    "9.7": {
+      "slug": "answer-engine/specific-numbers",
+      "status": "renamed",
+      "action": "move",
+      "link": "docs/evidence/audits/answer-readiness/specific-numbers.md",
+      "to": "answer-readiness/specific-numbers"
+    },
+    "9.8": {
+      "slug": "answer-engine/dates-on-content",
+      "status": "renamed",
+      "action": "move",
+      "link": "docs/evidence/audits/answer-readiness/dates-on-content.md",
+      "to": "answer-readiness/dates-on-content",
+      "notes": "merge target for last-updated-indicator (9.10); C1/C16 clusters resolve via shared gatherer"
+    },
+    "9.9": {
+      "slug": "answer-engine/content-without-clickthrough",
+      "status": "renamed",
+      "action": "move",
+      "link": "docs/evidence/audits/answer-readiness/content-without-clickthrough.md",
+      "to": "answer-readiness/content-without-clickthrough"
+    },
+    "9.10": {
+      "slug": "answer-engine/last-updated-indicator",
+      "status": "renamed",
+      "action": "merge-away",
+      "link": "docs/evidence/audits/answer-readiness/dates-on-content.md",
+      "to": "answer-readiness/dates-on-content",
+      "notes": "§5: last-updated-indicator → dates-on-content"
+    },
+    "9.11": {
+      "slug": "answer-engine/meta-description-aeo",
+      "status": "renamed",
+      "action": "merge-away",
+      "link": "docs/evidence/audits/answer-readiness/meta-description.md",
+      "to": "answer-readiness/meta-description",
+      "notes": "TODO(redeem) resolves as a merge into meta-description (4.1); the invented \"AEO formula\" is dropped"
+    },
+    "10.1": {
+      "slug": "generative-engine/named-author",
+      "status": "renamed",
+      "action": "move",
+      "link": "docs/evidence/audits/answer-readiness/named-author.md",
+      "to": "answer-readiness/named-author",
+      "notes": "C4 authors cluster via shared gatherer"
+    },
+    "10.2": {
+      "slug": "generative-engine/author-same-as",
+      "status": "renamed",
+      "action": "move",
+      "link": "docs/evidence/audits/answer-readiness/author-same-as.md",
+      "to": "answer-readiness/author-same-as"
+    },
+    "10.3": {
+      "slug": "generative-engine/author-page",
+      "status": "renamed",
+      "action": "move",
+      "link": "docs/evidence/audits/answer-readiness/author-page.md",
+      "to": "answer-readiness/author-page"
+    },
+    "10.4": {
+      "slug": "generative-engine/about-credentials",
+      "status": "renamed",
+      "action": "move",
+      "link": "docs/evidence/audits/answer-readiness/about-credentials.md",
+      "to": "answer-readiness/about-credentials"
+    },
+    "10.5": {
+      "slug": "generative-engine/external-citations",
+      "status": "renamed",
+      "action": "move",
+      "link": "docs/evidence/audits/answer-readiness/external-citations.md",
+      "to": "answer-readiness/external-citations"
+    },
+    "10.6": {
+      "slug": "generative-engine/brand-name",
+      "status": "renamed",
+      "action": "move",
+      "link": "docs/evidence/audits/answer-readiness/brand-name.md",
+      "to": "answer-readiness/brand-name"
+    },
+    "10.7": {
+      "slug": "generative-engine/trust-signals",
+      "status": "renamed",
+      "action": "rewrite",
+      "link": "docs/evidence/audits/answer-readiness/trust-signals.md",
+      "to": "answer-readiness/trust-signals",
+      "notes": "redemption rewrite — grade B (252k-trial citation study, KDD'24 \"Authoritative\" effect)"
+    },
+    "10.8": {
+      "slug": "generative-engine/review-signals",
+      "status": "renamed",
+      "action": "move",
+      "link": "docs/evidence/audits/answer-readiness/review-signals.md",
+      "to": "answer-readiness/review-signals",
+      "notes": "merge target for blockquote-usage (10.14); C8 reviews cluster via shared gatherer"
+    },
+    "10.9": {
+      "slug": "generative-engine/publication-date",
+      "status": "renamed",
+      "action": "move",
+      "link": "docs/evidence/audits/answer-readiness/publication-date.md",
+      "to": "answer-readiness/publication-date",
+      "notes": "C1 dates cluster via shared gatherer"
+    },
+    "10.10": {
+      "slug": "generative-engine/last-modified-schema",
+      "status": "renamed",
+      "action": "move",
+      "link": "docs/evidence/audits/answer-readiness/last-modified-schema.md",
+      "to": "answer-readiness/last-modified-schema",
+      "notes": "C16 freshness cluster resolves via shared gatherer, not a merge"
+    },
+    "10.11": {
+      "slug": "generative-engine/internal-cross-linking",
+      "status": "renamed",
+      "action": "merge-away",
+      "link": "docs/evidence/audits/machine-discovery/in-content-links.md",
+      "to": "machine-discovery/in-content-links",
+      "notes": "decided 2026-08-21: merge-away into machine-discovery/in-content-links (1.15 is the surviving row)"
+    },
+    "10.12": {
+      "slug": "generative-engine/pagination-links",
+      "status": "removed",
+      "action": "sunset",
+      "link": "https://github.com/ForkPoint/agent-lighthouse/blob/main/docs/evidence/sunset/not-a-factor.md#generative-enginepagination-links",
+      "reason": "not-a-factor"
+    },
+    "10.13": {
+      "slug": "generative-engine/unique-data",
+      "status": "renamed",
+      "action": "move",
+      "link": "docs/evidence/audits/answer-readiness/unique-data.md",
+      "to": "answer-readiness/unique-data"
+    },
+    "10.14": {
+      "slug": "generative-engine/blockquote-usage",
+      "status": "renamed",
+      "action": "merge-away",
+      "link": "docs/evidence/audits/answer-readiness/review-signals.md",
+      "to": "answer-readiness/review-signals",
+      "notes": "§5: blockquote-usage → review-signals"
+    },
+    "10.15": {
+      "slug": "generative-engine/descriptive-urls",
+      "status": "renamed",
+      "action": "move",
+      "link": "docs/evidence/audits/answer-readiness/descriptive-urls.md",
+      "to": "answer-readiness/descriptive-urls",
+      "notes": "decided 2026-08-21: confirmed — answer-readiness, informative tier"
+    }
+  },
+  "sunsetDossiers": [
+    {
+      "category": "accessibility",
+      "slug": "marquee",
+      "path": "docs/evidence/sunset/accessibility/marquee.md"
+    },
+    {
+      "category": "accessibility",
+      "slug": "skip-nav",
+      "path": "docs/evidence/sunset/accessibility/skip-nav.md"
+    },
+    {
+      "category": "agent-tools",
+      "slug": "ai-plugin-json",
+      "path": "docs/evidence/sunset/agent-tools/ai-plugin-json.md"
+    },
+    {
+      "category": "agent-tools",
+      "slug": "data-action-ctas",
+      "path": "docs/evidence/sunset/agent-tools/data-action-ctas.md"
+    },
+    {
+      "category": "agent-tools",
+      "slug": "openapi-ai-instructions",
+      "path": "docs/evidence/sunset/agent-tools/openapi-ai-instructions.md"
+    },
+    {
+      "category": "agent-tools",
+      "slug": "webmcp-action-coverage",
+      "path": "docs/evidence/sunset/agent-tools/webmcp-action-coverage.md"
+    },
+    {
+      "category": "content-discoverability",
+      "slug": "commerce-links",
+      "path": "docs/evidence/sunset/content-discoverability/commerce-links.md"
+    },
+    {
+      "category": "content-discoverability",
+      "slug": "mobile-friendly",
+      "path": "docs/evidence/sunset/content-discoverability/mobile-friendly.md"
+    },
+    {
+      "category": "content-discoverability",
+      "slug": "navigation-json",
+      "path": "docs/evidence/sunset/content-discoverability/navigation-json.md"
+    },
+    {
+      "category": "generative-engine",
+      "slug": "pagination-links",
+      "path": "docs/evidence/sunset/generative-engine/pagination-links.md"
+    },
+    {
+      "category": "meta-tags",
+      "slug": "ai-instructions",
+      "path": "docs/evidence/sunset/meta-tags/ai-instructions.md"
+    },
+    {
+      "category": "meta-tags",
+      "slug": "llms-full-txt-link",
+      "path": "docs/evidence/sunset/meta-tags/llms-full-txt-link.md"
+    },
+    {
+      "category": "meta-tags",
+      "slug": "mcp-discovery-link",
+      "path": "docs/evidence/sunset/meta-tags/mcp-discovery-link.md"
+    },
+    {
+      "category": "general",
+      "slug": "not-a-factor",
+      "path": "docs/evidence/sunset/not-a-factor.md"
+    },
+    {
+      "category": "semantic-html",
+      "slug": "address-element",
+      "path": "docs/evidence/sunset/semantic-html/address-element.md"
+    },
+    {
+      "category": "semantic-html",
+      "slug": "decorative-images",
+      "path": "docs/evidence/sunset/semantic-html/decorative-images.md"
+    },
+    {
+      "category": "structured-data",
+      "slug": "action-schema",
+      "path": "docs/evidence/sunset/structured-data/action-schema.md"
+    },
+    {
+      "category": "structured-data",
+      "slug": "potential-action",
+      "path": "docs/evidence/sunset/structured-data/potential-action.md"
+    },
+    {
+      "category": "technical-readiness",
+      "slug": "framework-detection",
+      "path": "docs/evidence/sunset/technical-readiness/framework-detection.md"
+    },
+    {
+      "category": "technical-readiness",
+      "slug": "image-dimensions",
+      "path": "docs/evidence/sunset/technical-readiness/image-dimensions.md"
+    },
+    {
+      "category": "technical-readiness",
+      "slug": "lcp-not-lazy",
+      "path": "docs/evidence/sunset/technical-readiness/lcp-not-lazy.md"
+    },
+    {
+      "category": "technical-readiness",
+      "slug": "no-render-blocking",
+      "path": "docs/evidence/sunset/technical-readiness/no-render-blocking.md"
+    },
+    {
+      "category": "technical-readiness",
+      "slug": "permissions-policy",
+      "path": "docs/evidence/sunset/technical-readiness/permissions-policy.md"
+    },
+    {
+      "category": "technical-readiness",
+      "slug": "preconnect-hints",
+      "path": "docs/evidence/sunset/technical-readiness/preconnect-hints.md"
+    },
+    {
+      "category": "technical-readiness",
+      "slug": "privacy-policy",
+      "path": "docs/evidence/sunset/technical-readiness/privacy-policy.md"
+    },
+    {
+      "category": "technical-readiness",
+      "slug": "referrer-policy",
+      "path": "docs/evidence/sunset/technical-readiness/referrer-policy.md"
+    },
+    {
+      "category": "technical-readiness",
+      "slug": "terms-of-service",
+      "path": "docs/evidence/sunset/technical-readiness/terms-of-service.md"
+    }
+  ],
+  "mergedDossiers": [
+    {
+      "category": "access-crawl-control",
+      "slug": "ai-crawler-edge-parity",
+      "path": "docs/evidence/merged/access-crawl-control/ai-crawler-edge-parity.md"
+    },
+    {
+      "category": "access-crawl-control",
+      "slug": "ai2bot",
+      "path": "docs/evidence/merged/access-crawl-control/ai2bot.md"
+    },
+    {
+      "category": "access-crawl-control",
+      "slug": "bytespider",
+      "path": "docs/evidence/merged/access-crawl-control/bytespider.md"
+    },
+    {
+      "category": "access-crawl-control",
+      "slug": "canonical-url",
+      "path": "docs/evidence/merged/access-crawl-control/canonical-url.md"
+    },
+    {
+      "category": "access-crawl-control",
+      "slug": "cohere-ai",
+      "path": "docs/evidence/merged/access-crawl-control/cohere-ai.md"
+    },
+    {
+      "category": "access-crawl-control",
+      "slug": "content-signal-coherence",
+      "path": "docs/evidence/merged/access-crawl-control/content-signal-coherence.md"
+    },
+    {
+      "category": "access-crawl-control",
+      "slug": "diffbot",
+      "path": "docs/evidence/merged/access-crawl-control/diffbot.md"
+    },
+    {
+      "category": "access-crawl-control",
+      "slug": "meta-robots",
+      "path": "docs/evidence/merged/access-crawl-control/meta-robots.md"
+    },
+    {
+      "category": "access-crawl-control",
+      "slug": "no-noindex",
+      "path": "docs/evidence/merged/access-crawl-control/no-noindex.md"
+    },
+    {
+      "category": "access-crawl-control",
+      "slug": "youbot",
+      "path": "docs/evidence/merged/access-crawl-control/youbot.md"
+    },
+    {
+      "category": "agent-interfaces",
+      "slug": "ai-catalog-link",
+      "path": "docs/evidence/merged/agent-interfaces/ai-catalog-link.md"
+    },
+    {
+      "category": "agent-interfaces",
+      "slug": "mcp-capabilities",
+      "path": "docs/evidence/merged/agent-interfaces/mcp-capabilities.md"
+    },
+    {
+      "category": "agent-interfaces",
+      "slug": "openapi-link",
+      "path": "docs/evidence/merged/agent-interfaces/openapi-link.md"
+    },
+    {
+      "category": "agent-interfaces",
+      "slug": "webmcp-tool-annotations",
+      "path": "docs/evidence/merged/agent-interfaces/webmcp-tool-annotations.md"
+    },
+    {
+      "category": "agent-interfaces",
+      "slug": "webmcp-tool-naming",
+      "path": "docs/evidence/merged/agent-interfaces/webmcp-tool-naming.md"
+    },
+    {
+      "category": "agent-interfaces",
+      "slug": "website-search-action",
+      "path": "docs/evidence/merged/agent-interfaces/website-search-action.md"
+    },
+    {
+      "category": "agentic-commerce",
+      "slug": "offer-dom-price-parity",
+      "path": "docs/evidence/merged/agentic-commerce/offer-dom-price-parity.md"
+    },
+    {
+      "category": "answer-readiness",
+      "slug": "blockquote-usage",
+      "path": "docs/evidence/merged/answer-readiness/blockquote-usage.md"
+    },
+    {
+      "category": "answer-readiness",
+      "slug": "last-updated-indicator",
+      "path": "docs/evidence/merged/answer-readiness/last-updated-indicator.md"
+    },
+    {
+      "category": "answer-readiness",
+      "slug": "meta-description-aeo",
+      "path": "docs/evidence/merged/answer-readiness/meta-description-aeo.md"
+    },
+    {
+      "category": "answer-readiness",
+      "slug": "numbered-steps",
+      "path": "docs/evidence/merged/answer-readiness/numbered-steps.md"
+    },
+    {
+      "category": "answer-readiness",
+      "slug": "og-site-name",
+      "path": "docs/evidence/merged/answer-readiness/og-site-name.md"
+    },
+    {
+      "category": "answer-readiness",
+      "slug": "twitter-card",
+      "path": "docs/evidence/merged/answer-readiness/twitter-card.md"
+    },
+    {
+      "category": "content-extraction",
+      "slug": "data-uri-and-inline-svg-token-bloat",
+      "path": "docs/evidence/merged/content-extraction/data-uri-and-inline-svg-token-bloat.md"
+    },
+    {
+      "category": "content-extraction",
+      "slug": "definition-elements",
+      "path": "docs/evidence/merged/content-extraction/definition-elements.md"
+    },
+    {
+      "category": "content-extraction",
+      "slug": "fast-response-time",
+      "path": "docs/evidence/merged/content-extraction/fast-response-time.md"
+    },
+    {
+      "category": "content-extraction",
+      "slug": "markdown-alternate-discoverable-resolvable-faithful-cheaper",
+      "path": "docs/evidence/merged/content-extraction/markdown-alternate-discoverable-resolvable-faithful-cheaper.md"
+    },
+    {
+      "category": "content-extraction",
+      "slug": "signal-density-index-content-tokens-delivered-tokens",
+      "path": "docs/evidence/merged/content-extraction/signal-density-index-content-tokens-delivered-tokens.md"
+    },
+    {
+      "category": "machine-discovery",
+      "slug": "cache-headers",
+      "path": "docs/evidence/merged/machine-discovery/cache-headers.md"
+    },
+    {
+      "category": "machine-discovery",
+      "slug": "internal-cross-linking",
+      "path": "docs/evidence/merged/machine-discovery/internal-cross-linking.md"
+    },
+    {
+      "category": "machine-discovery",
+      "slug": "llms-txt-blockquote",
+      "path": "docs/evidence/merged/machine-discovery/llms-txt-blockquote.md"
+    },
+    {
+      "category": "machine-discovery",
+      "slug": "llms-txt-link",
+      "path": "docs/evidence/merged/machine-discovery/llms-txt-link.md"
+    },
+    {
+      "category": "machine-discovery",
+      "slug": "llms-txt-sections",
+      "path": "docs/evidence/merged/machine-discovery/llms-txt-sections.md"
+    },
+    {
+      "category": "machine-discovery",
+      "slug": "no-orphan-pages",
+      "path": "docs/evidence/merged/machine-discovery/no-orphan-pages.md"
+    },
+    {
+      "category": "machine-discovery",
+      "slug": "rss-feed-link",
+      "path": "docs/evidence/merged/machine-discovery/rss-feed-link.md"
+    },
+    {
+      "category": "operability-safety",
+      "slug": "content-type-options",
+      "path": "docs/evidence/merged/operability-safety/content-type-options.md"
+    },
+    {
+      "category": "operability-safety",
+      "slug": "csp-header",
+      "path": "docs/evidence/merged/operability-safety/csp-header.md"
+    },
+    {
+      "category": "operability-safety",
+      "slug": "hsts-header",
+      "path": "docs/evidence/merged/operability-safety/hsts-header.md"
+    },
+    {
+      "category": "operability-safety",
+      "slug": "nav-aria-label",
+      "path": "docs/evidence/merged/operability-safety/nav-aria-label.md"
+    },
+    {
+      "category": "operability-safety",
+      "slug": "security-txt",
+      "path": "docs/evidence/merged/operability-safety/security-txt.md"
+    },
+    {
+      "category": "operability-safety",
+      "slug": "webmcp-input-quality",
+      "path": "docs/evidence/merged/operability-safety/webmcp-input-quality.md"
+    },
+    {
+      "category": "structured-data",
+      "slug": "product-reviews",
+      "path": "docs/evidence/merged/structured-data/product-reviews.md"
+    }
+  ]
+}

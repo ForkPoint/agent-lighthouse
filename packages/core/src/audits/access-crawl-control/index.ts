@@ -1,5 +1,5 @@
 // Access & Crawl Control — v2 taxonomy category (Plan 3, Task 3).
-// Order mirrors docs/evidence/v2-audit-map.md; audit-config.ts consumes the
+// Order mirrors docs/evidence/audit-map.json; audit-config.ts consumes the
 // list verbatim, so this file is the category's single source of truth.
 
 export { NoNofollowAudit } from "./no-nofollow";

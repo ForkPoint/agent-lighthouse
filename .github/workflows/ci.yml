@@ -37,6 +37,9 @@ jobs:
       - name: Check audit-evidence requirements
         run: pnpm check:requires
 
+      - name: Check audit map agreement
+        run: pnpm check:audit-map
+
       - name: Typecheck
         run: pnpm typecheck
 

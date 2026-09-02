@@ -15,6 +15,8 @@
     "check:dossiers": "node scripts/check-dossiers.mjs",
     "check:requires": "node --import tsx scripts/check-requires.ts",
     "check:audit-boundaries": "node scripts/check-audit-boundaries.mjs",
+    "check:audit-map": "node --import tsx scripts/build-audit-map.ts --check",
+    "build:audit-map": "node --import tsx scripts/build-audit-map.ts",
     "format": "prettier --write \"**/*.{ts,tsx,js,json,md}\"",
     "format:check": "prettier --check \"**/*.{ts,tsx,js,json,md}\"",
     "changeset": "changeset",

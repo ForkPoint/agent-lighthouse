@@ -151,4 +151,4 @@ branch that can no longer be taken. A test in `packages/core` fails the build if
 either ever reappears.
 
 The full v1 → v2 table, with the reasoning behind every move, merge and split,
-is in [docs/evidence/v2-audit-map.md](docs/evidence/v2-audit-map.md).
+is in [docs/evidence/audit-map.md](docs/evidence/audit-map.md).

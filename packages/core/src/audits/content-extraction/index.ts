@@ -1,5 +1,5 @@
 // Content Extraction — v2 taxonomy category (Plan 3, Task 4).
-// Order mirrors docs/evidence/v2-audit-map.md so Task 11 can consume the list verbatim.
+// Order mirrors docs/evidence/audit-map.json so Task 11 can consume the list verbatim.
 
 export { ServerResponsivenessAudit } from "./server-responsiveness";
 export { LanguageAttributeAudit } from "./language-attribute";
