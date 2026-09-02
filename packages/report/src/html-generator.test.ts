@@ -254,4 +254,39 @@ describe("evidence link", () => {
     );
     expect(html).not.toContain("Why this audit exists");
   });
+
+  it("renders scan conditions badges when conditions are present", () => {
+    const html = generateHtmlReport({
+      ...report([]),
+      conditions: {
+        url: "https://x.test/",
+        pageType: { type: "homepage", source: "detected" },
+        origin: {
+          origin: "https://x.test",
+          version: "v1",
+          readAt: "2026-09-02T08:00:00.000Z",
+          cached: true,
+        },
+        coverage: {
+          registryMass: 102.6,
+          assessedMass: 94.2,
+          pageMass: 70.8,
+          originMass: 31.8,
+          gatedMass: 0,
+        },
+        unscored: {
+          totalCount: 15,
+          informativeCount: 8,
+          gatedCount: 0,
+          reasons: { informative: 8, "not-applicable": 7 },
+        },
+      },
+    });
+
+    expect(html).toContain(
+      'Page: <strong class="text-indigo-400">homepage</strong>',
+    );
+    expect(html).toContain("cached");
+    expect(html).toContain("94.2/102.6");
+  });
 });

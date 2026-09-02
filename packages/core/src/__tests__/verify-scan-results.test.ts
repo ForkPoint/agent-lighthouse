@@ -553,7 +553,9 @@ describe.skipIf(process.env["AL_SKIP_NETWORK"] === "1")(
       });
 
       it("agentic-commerce/agent-ua-commerce-parity: allbirds.com agent UA parity matches reality", () => {
-        const result = allResults.get("agentic-commerce/agent-ua-commerce-parity");
+        const result = allResults.get(
+          "agentic-commerce/agent-ua-commerce-parity",
+        );
         expect(result).toBeDefined();
         // Live e-commerce stores frequently gate or differentiate AI crawler UAs on commerce paths
         expect(["pass", "warn", "fail", "na"]).toContain(result!.status);
@@ -622,7 +624,12 @@ describe.skipIf(process.env["AL_SKIP_NETWORK"] === "1")(
 
       it("answer-readiness/core-open-graph: theguardian.com Open Graph tags match reality", () => {
         const meta = ctx.pages[0]!.meta;
-        const ogTags = ["og:title", "og:description", "og:image", "og:url"] as const;
+        const ogTags = [
+          "og:title",
+          "og:description",
+          "og:image",
+          "og:url",
+        ] as const;
         const missing = ogTags.filter((t) => !meta[t]?.trim());
         const result = allResults.get("answer-readiness/core-open-graph");
         expect(result).toBeDefined();

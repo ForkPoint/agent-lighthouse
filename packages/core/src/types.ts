@@ -269,6 +269,34 @@ export interface ScanReport {
     readAt: string;
     cached: boolean;
   };
+  conditions?: ScanConditions;
+}
+
+export interface ScanConditions {
+  url: string;
+  pageType: {
+    type: PageType;
+    source: "declared" | "detected";
+  };
+  origin: {
+    origin: string;
+    version: string;
+    readAt: string;
+    cached: boolean;
+  };
+  coverage: {
+    registryMass: number;
+    assessedMass: number;
+    pageMass: number;
+    originMass: number;
+    gatedMass: number;
+  };
+  unscored: {
+    totalCount: number;
+    informativeCount: number;
+    gatedCount: number;
+    reasons: Record<string, number>;
+  };
 }
 
 export interface ReadinessVitals {

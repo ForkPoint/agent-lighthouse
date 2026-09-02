@@ -1,9 +1,17 @@
 import type { Dispatcher } from "undici";
-import type { CheckStatus, PageOverride, PageType, ScanReport } from "./types";
+import type {
+  CheckStatus,
+  PageOverride,
+  PageType,
+  ScanReport,
+  ScanConditions,
+} from "./types";
 import {
   getScoreTier,
   READINESS_WEIGHTS,
   ORIGIN_EVIDENCE_VERSION,
+  TAG_SKIPPED_NO_EVIDENCE,
+  TAG_SKIPPED_PAGE_TYPE,
 } from "./constants";
 import { logger } from "./logger";
 import { createFetcher, splitCredentials } from "./fetcher";
@@ -501,6 +509,108 @@ export async function runScan(
       : undefined;
   const scored = unscoredReason === undefined;
 
+  // ── Conditions Calculation (Phase 6: Law 8) ──────────────────
+  const allScoredAudits = Object.values(config.audits)
+    .flat()
+    .filter((a) => a.meta.tier === "scored");
+
+  let registryMass = 0;
+  let pageMass = 0;
+  let originMass = 0;
+
+  for (const reg of allScoredAudits) {
+    const weight = reg.meta.weight;
+    registryMass += weight;
+    const isPageScoped =
+      reg.meta.requires?.includes("rendered-body") ||
+      reg.meta.requires?.includes("sample-adequate") ||
+      Boolean(
+        reg.meta.applicablePageTypes && reg.meta.applicablePageTypes.length > 0,
+      );
+    if (isPageScoped) {
+      pageMass += weight;
+    } else {
+      originMass += weight;
+    }
+  }
+
+  const assessedMass = allChecks
+    .filter((c) => c.status !== "na" && !isInformative(c))
+    .reduce((sum, c) => sum + (c.weight ?? 0), 0);
+
+  const gatedMass = allChecks
+    .filter(
+      (c) => !isInformative(c) && c.tags?.includes(TAG_SKIPPED_NO_EVIDENCE),
+    )
+    .reduce((sum, c) => sum + (c.weight ?? 0), 0);
+
+  let informativeCount = 0;
+  let gatedCount = 0;
+  const unscoredReasons: Record<string, number> = {};
+
+  for (const check of allChecks) {
+    if (isInformative(check)) {
+      informativeCount++;
+      unscoredReasons["informative"] =
+        (unscoredReasons["informative"] ?? 0) + 1;
+    } else if (check.status === "na") {
+      if (check.tags?.includes(TAG_SKIPPED_NO_EVIDENCE)) {
+        gatedCount++;
+        unscoredReasons["skipped-no-evidence"] =
+          (unscoredReasons["skipped-no-evidence"] ?? 0) + 1;
+      } else if (check.tags?.includes(TAG_SKIPPED_PAGE_TYPE)) {
+        unscoredReasons["skipped-page-type"] =
+          (unscoredReasons["skipped-page-type"] ?? 0) + 1;
+      } else {
+        unscoredReasons["not-applicable"] =
+          (unscoredReasons["not-applicable"] ?? 0) + 1;
+      }
+    }
+  }
+
+  const totalUnscored =
+    informativeCount +
+    allChecks.filter((c) => c.status === "na" && !isInformative(c)).length;
+
+  const primaryPage = pages[0];
+  const pageTypeCondition = primaryPage
+    ? {
+        type: primaryPage.pageType,
+        source: primaryPage.pageTypeSource ?? ("detected" as const),
+      }
+    : {
+        type: (options?.pageType ?? "homepage") as PageType,
+        source: options?.pageType
+          ? ("declared" as const)
+          : ("detected" as const),
+      };
+
+  const originCondition = {
+    origin: baseUrl,
+    version: ORIGIN_EVIDENCE_VERSION,
+    readAt: originReadAt,
+    cached: originCached,
+  };
+
+  const conditions: ScanConditions = {
+    url: displayUrl,
+    pageType: pageTypeCondition,
+    origin: originCondition,
+    coverage: {
+      registryMass: Number(registryMass.toFixed(1)),
+      assessedMass: Number(assessedMass.toFixed(1)),
+      pageMass: Number(pageMass.toFixed(1)),
+      originMass: Number(originMass.toFixed(1)),
+      gatedMass: Number(gatedMass.toFixed(1)),
+    },
+    unscored: {
+      totalCount: totalUnscored,
+      informativeCount,
+      gatedCount,
+      reasons: unscoredReasons,
+    },
+  };
+
   const report: ScanReport = {
     scanId: "", // Set by the caller
     url: displayUrl,
@@ -530,12 +640,8 @@ export async function runScan(
     productFields: [...overrideTypeByKey.values()].includes("product")
       ? extractProductFieldVerification(pages)
       : undefined,
-    originEvidence: {
-      origin: baseUrl,
-      version: ORIGIN_EVIDENCE_VERSION,
-      readAt: originReadAt,
-      cached: originCached,
-    },
+    originEvidence: originCondition,
+    conditions,
   };
 
   report.summary = generateScanSummary(report);

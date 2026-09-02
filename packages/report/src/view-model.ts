@@ -4,6 +4,7 @@ import type {
   CheckResult,
   ReadinessVitals,
   ScanReport,
+  ScanConditions,
   ScoreTier,
 } from "@forkpoint/agent-lighthouse-core";
 import { isInformative } from "@forkpoint/agent-lighthouse-core";
@@ -99,6 +100,7 @@ export interface ReportView {
   pagesScanned: Array<{ url: string; pageType: string }>;
   durationMs: number;
   wafProtection?: import("@forkpoint/agent-lighthouse-core").WafProtection;
+  conditions?: ScanConditions;
 }
 
 export interface BuildReportViewOptions {
@@ -280,5 +282,6 @@ export function buildReportView(
     pagesScanned: report.pagesScanned ?? [],
     durationMs: report.durationMs ?? 0,
     wafProtection: report.wafProtection,
+    conditions: report.conditions,
   };
 }

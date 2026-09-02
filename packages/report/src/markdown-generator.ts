@@ -18,6 +18,20 @@ function notAssessedLine(view: ReturnType<typeof buildReportView>): string {
   return `\n> **${skippedNoEvidence} audit${skippedNoEvidence === 1 ? "" : "s"} not assessed:** this scan did not obtain the evidence they need.${why}\n`;
 }
 
+function conditionsBlock(view: ReturnType<typeof buildReportView>): string {
+  if (!view.conditions) return "";
+  const c = view.conditions;
+  const pct =
+    c.coverage.registryMass > 0
+      ? Math.round((c.coverage.assessedMass / c.coverage.registryMass) * 100)
+      : 0;
+  return `\n**Scan Conditions:**  
+- **Page Type:** \`${c.pageType.type}\` (${c.pageType.source})
+- **Origin Evidence:** \`${c.origin.cached ? "cached" : "fresh"}\` (version: \`${c.origin.version}\`, read at: \`${c.origin.readAt}\`)
+- **Evidence Coverage:** \`${c.coverage.assessedMass} / ${c.coverage.registryMass}\` mass (${pct}%) — page: \`${c.coverage.pageMass}\`, origin: \`${c.coverage.originMass}\`, gated: \`${c.coverage.gatedMass}\`
+- **Unscored Checks:** \`${c.unscored.totalCount}\` (${c.unscored.informativeCount} advisory, ${c.unscored.gatedCount} gated)\n`;
+}
+
 export function generateMarkdownSummary(report: ScanReport): string {
   const view = buildReportView(report);
 
@@ -56,7 +70,7 @@ export function generateMarkdownSummary(report: ScanReport): string {
       : `**\`${view.overallScore}/100\`** *(${view.scoreTier})*`
   }  
 **Pages Audited:** \`${view.pagesScanned.length}\` | **Duration:** \`${(view.durationMs / 1000).toFixed(1)}s\`
-${notAssessedLine(view)}
+${conditionsBlock(view)}${notAssessedLine(view)}
 
 | Category | Score | Breakdown |
 | :--- | :---: | :--- |

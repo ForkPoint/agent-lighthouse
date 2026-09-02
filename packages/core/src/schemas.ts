@@ -175,3 +175,37 @@ export const CheckResultSchema = z.object({
   evidenceGrade: EvidenceGradeSchema.optional(),
   tier: AuditTierSchema.optional(),
 });
+
+export const PageTypeSchema = z.enum([
+  "homepage",
+  "category",
+  "product",
+  "content",
+]);
+
+export const ScanConditionsSchema = z.object({
+  url: z.string().url().max(2048),
+  pageType: z.object({
+    type: PageTypeSchema,
+    source: z.enum(["declared", "detected"]),
+  }),
+  origin: z.object({
+    origin: z.string().max(2048),
+    version: z.string().max(64),
+    readAt: z.string().max(64),
+    cached: z.boolean(),
+  }),
+  coverage: z.object({
+    registryMass: z.number().nonnegative(),
+    assessedMass: z.number().nonnegative(),
+    pageMass: z.number().nonnegative(),
+    originMass: z.number().nonnegative(),
+    gatedMass: z.number().nonnegative(),
+  }),
+  unscored: z.object({
+    totalCount: z.number().int().nonnegative(),
+    informativeCount: z.number().int().nonnegative(),
+    gatedCount: z.number().int().nonnegative(),
+    reasons: z.record(z.string(), z.number().int().nonnegative()),
+  }),
+});

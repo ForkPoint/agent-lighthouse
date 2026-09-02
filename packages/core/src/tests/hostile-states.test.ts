@@ -147,7 +147,9 @@ describe("hostile scan states", () => {
     const declared = block![1]!
       .split("\n")
       .filter((line) => !line.trim().startsWith("//"))
-      .flatMap((line) => [...line.matchAll(/['"]([^'"]+)['"]/g)].map((m) => m[1]!));
+      .flatMap((line) =>
+        [...line.matchAll(/['"]([^'"]+)['"]/g)].map((m) => m[1]!),
+      );
 
     expect(declared.length).toBeGreaterThan(20);
     expect([...ROOT_PATHS].sort()).toEqual([...declared].sort());
