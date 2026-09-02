@@ -296,11 +296,11 @@ unless asked, and both print how many list entries the status file removed;
 `--include-dead` and `--include-blocked` put them back. `pnpm test:live` also
 takes `--tier=smoke`, the smoke tier — two per seeded category, all `ok` at
 the last import. `news` has none: every news seed disallows an AI crawler in
-`robots.txt`, so the runners skip the whole category unless asked. `pnpm corpus:status import <summary.json>` merges a
-runner summary into it; `pnpm corpus:status report` prints it grouped by state
-and reason. A domain is `dead` only after two imports on different days say
-so. CI never writes the file; import the nightly artifact by hand when
-wanted.
+`robots.txt`, so the runners skip the whole category unless asked.
+`pnpm corpus:status import <summary.json>` merges a runner summary into it;
+`pnpm corpus:status report` prints it grouped by state and reason. A domain
+is `dead` only after two imports on different days say so. CI never writes
+the file; import the nightly artifact by hand when wanted.
 
 **The window.** The whole list, every night. 414 sites at 63 s over two
 workers is about 220 minutes, inside the 240-minute deadline. The nightly's

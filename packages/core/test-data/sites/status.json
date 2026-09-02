@@ -437,7 +437,7 @@
     "airbnb.com": {
       "state": "ok",
       "seenAt": "2026-09-02",
-      "runs": 3
+      "runs": 4
     },
     "airbnb.github.io": {
       "state": "unscored",
@@ -454,7 +454,7 @@
     "airtable.com": {
       "state": "ok",
       "seenAt": "2026-09-02",
-      "runs": 3
+      "runs": 4
     },
     "ais.osym.gov.tr": {
       "state": "ok",
@@ -593,7 +593,7 @@
     "allbirds.com": {
       "state": "ok",
       "seenAt": "2026-09-02",
-      "runs": 3
+      "runs": 4
     },
     "allbirds.myshopify.com": {
       "state": "unscored",
@@ -1049,7 +1049,7 @@
     "asana.com": {
       "state": "ok",
       "seenAt": "2026-09-02",
-      "runs": 3
+      "runs": 4
     },
     "askubuntu.com": {
       "state": "unscored",
@@ -1140,7 +1140,7 @@
     "australia.gov.au": {
       "state": "ok",
       "seenAt": "2026-09-02",
-      "runs": 3
+      "runs": 4
     },
     "auth.platorelay.com": {
       "state": "unscored",
@@ -1295,7 +1295,7 @@
     "bahn.de": {
       "state": "ok",
       "seenAt": "2026-09-02",
-      "runs": 2
+      "runs": 3
     },
     "baidu.com": {
       "state": "unscored",
@@ -1329,12 +1329,12 @@
     "bankofamerica.com": {
       "state": "ok",
       "seenAt": "2026-09-02",
-      "runs": 3
+      "runs": 4
     },
     "barclays.co.uk": {
       "state": "ok",
       "seenAt": "2026-09-02",
-      "runs": 3
+      "runs": 4
     },
     "barrys.com": {
       "state": "ok",
@@ -1772,7 +1772,7 @@
     "brooklinen.com": {
       "state": "ok",
       "seenAt": "2026-09-02",
-      "runs": 2
+      "runs": 3
     },
     "browser-intake-datadoghq.com": {
       "state": "blocked",
@@ -1811,7 +1811,7 @@
     "bun.sh": {
       "state": "ok",
       "seenAt": "2026-09-02",
-      "runs": 2
+      "runs": 3
     },
     "bund.de": {
       "state": "unscored",
@@ -2009,7 +2009,7 @@
     "cdc.gov": {
       "state": "ok",
       "seenAt": "2026-09-02",
-      "runs": 2
+      "runs": 3
     },
     "cdiscount.com": {
       "state": "unscored",
@@ -2151,7 +2151,7 @@
     "chipotle.com": {
       "state": "ok",
       "seenAt": "2026-09-02",
-      "runs": 3
+      "runs": 4
     },
     "choiceadvantage.com": {
       "state": "ok",
@@ -2766,12 +2766,12 @@
     "developer.apple.com": {
       "state": "ok",
       "seenAt": "2026-09-02",
-      "runs": 3
+      "runs": 4
     },
     "developer.chrome.com": {
       "state": "ok",
       "seenAt": "2026-09-02",
-      "runs": 3
+      "runs": 4
     },
     "developer.mozilla.org": {
       "state": "ok",
@@ -2865,12 +2865,12 @@
     "discuss.python.org": {
       "state": "ok",
       "seenAt": "2026-09-02",
-      "runs": 2
+      "runs": 3
     },
     "discuss.pytorch.org": {
       "state": "ok",
       "seenAt": "2026-09-02",
-      "runs": 3
+      "runs": 4
     },
     "dishoom.com": {
       "state": "ok",
@@ -4331,7 +4331,7 @@
     "gatsby-starter-blog.netlify.app": {
       "state": "ok",
       "seenAt": "2026-09-02",
-      "runs": 2
+      "runs": 3
     },
     "gazzetta.it": {
       "state": "blocked",
@@ -5198,7 +5198,7 @@
     "ikea.com": {
       "state": "ok",
       "seenAt": "2026-09-02",
-      "runs": 3
+      "runs": 4
     },
     "ilfattoquotidiano.it": {
       "state": "unscored",
@@ -5755,7 +5755,7 @@
     "kayak.com": {
       "state": "ok",
       "seenAt": "2026-09-02",
-      "runs": 3
+      "runs": 4
     },
     "keenetic.io": {
       "state": "unscored",
@@ -6797,7 +6797,7 @@
     "medlineplus.gov": {
       "state": "ok",
       "seenAt": "2026-09-02",
-      "runs": 2
+      "runs": 3
     },
     "meet.google.com": {
       "state": "ok",
@@ -7496,7 +7496,7 @@
     "netflix.github.io": {
       "state": "ok",
       "seenAt": "2026-09-02",
-      "runs": 2
+      "runs": 3
     },
     "netflix.net": {
       "state": "blocked",
@@ -8553,7 +8553,7 @@
     "posthog.com": {
       "state": "ok",
       "seenAt": "2026-09-02",
-      "runs": 3
+      "runs": 4
     },
     "powells.com": {
       "state": "unscored",
@@ -10249,7 +10249,7 @@
     "sweetgreen.com": {
       "state": "ok",
       "seenAt": "2026-09-02",
-      "runs": 3
+      "runs": 4
     },
     "swr.vercel.app": {
       "state": "unscored",
@@ -11760,7 +11760,7 @@
     "who.int": {
       "state": "ok",
       "seenAt": "2026-09-02",
-      "runs": 4
+      "runs": 5
     },
     "wiadomosci.wp.pl": {
       "state": "blocked",
