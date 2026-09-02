@@ -186,7 +186,11 @@ export async function runScan(
       continue;
     }
     const key = resolved.replace(/\/$/, "");
-    if (key === targetKey || overrideTypeByKey.has(key)) continue;
+    if (key === targetKey) {
+      overrideTypeByKey.set(key, ov.pageType);
+      continue;
+    }
+    if (overrideTypeByKey.has(key)) continue;
     overrideTypeByKey.set(key, ov.pageType);
     overrideUrls.push(resolved);
   }
@@ -572,6 +576,9 @@ export async function runScan(
     informativeCount +
     allChecks.filter((c) => c.status === "na" && !isInformative(c)).length;
 
+  const declaredOverrideType =
+    overrideTypeByKey.get(targetKey) ?? options?.pageType;
+
   const primaryPage = pages[0];
   const pageTypeCondition = primaryPage
     ? {
@@ -579,8 +586,8 @@ export async function runScan(
         source: primaryPage.pageTypeSource ?? ("detected" as const),
       }
     : {
-        type: (options?.pageType ?? "homepage") as PageType,
-        source: options?.pageType
+        type: (declaredOverrideType ?? "homepage") as PageType,
+        source: declaredOverrideType
           ? ("declared" as const)
           : ("detected" as const),
       };

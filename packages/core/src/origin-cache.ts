@@ -83,6 +83,10 @@ export class OriginCache {
     return entry.evidence;
   }
 
+  has(key: string): boolean {
+    return this.get(key) !== undefined;
+  }
+
   set(key: string, evidence: OriginEvidence, ttlMs?: number): void {
     const expiresAt = Date.now() + (ttlMs ?? this.ttlMs);
     this.cache.set(key, { evidence, expiresAt });

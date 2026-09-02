@@ -414,4 +414,42 @@ describe("tier counts", () => {
     );
     expect(view.categories[0]!.counts.advisory).toBe(1);
   });
+
+  it("passes through conditions from ScanReport to ReportView", () => {
+    const conditions = {
+      url: "https://x.test/",
+      pageType: { type: "homepage" as const, source: "detected" as const },
+      origin: {
+        origin: "https://x.test",
+        version: "v1",
+        readAt: "2026-09-02T08:00:00.000Z",
+        cached: true,
+      },
+      coverage: {
+        registryMass: 100,
+        assessedMass: 85,
+        pageMass: 60,
+        originMass: 40,
+        gatedMass: 0,
+      },
+      unscored: {
+        totalCount: 10,
+        informativeCount: 4,
+        gatedCount: 0,
+        reasons: { informative: 4, "not-applicable": 6 },
+      },
+    };
+
+    const view = buildReportView({
+      ...report([]),
+      conditions,
+    });
+
+    expect(view.conditions).toEqual(conditions);
+  });
+
+  it("handles reports without conditions gracefully (backward compatibility)", () => {
+    const view = buildReportView(report([]));
+    expect(view.conditions).toBeUndefined();
+  });
 });
