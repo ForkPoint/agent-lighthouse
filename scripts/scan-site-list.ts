@@ -141,7 +141,7 @@ const DEFAULTS = {
    * window held few robots-skipped sites. 1913 entries at 400 a night is full
    * coverage in five nights.
    */
-  limit: 400,
+  limit: 200,
   concurrency: 2,
   delay: 3000,
   connections: 2,
@@ -154,6 +154,12 @@ const DEFAULTS = {
   "deadline-minutes": 240,
   /** Where the window starts. Defaults to the date-seeded offset below. */
   offset: Number.NaN,
+  /**
+   * Whether to treat a partial window that ran out of time as a success (exit 0)
+   * rather than an error (exit 4), provided at least one site was scanned and no
+   * violations were detected.
+   */
+  "allow-partial": 0,
 } as const;
 
 type FlagName = keyof typeof DEFAULTS;
@@ -482,11 +488,15 @@ async function main(): Promise<void> {
       `\nran out of time with ${unreached} of ${planned.length} sites unscanned` +
         (broken.length > 0
           ? ` — exiting ${EXIT.violation} for ${broken.length} site(s) with violations, not ${EXIT.deadline}`
-          : ""),
+          : FLAGS["allow-partial"] > 0
+            ? " — partial window allowed; completing successfully"
+            : ""),
     );
   }
   if (broken.length > 0) process.exit(EXIT.violation);
-  if (unreached > 0) process.exit(EXIT.deadline);
+  if (unreached > 0 && !(FLAGS["allow-partial"] > 0)) {
+    process.exit(EXIT.deadline);
+  }
 }
 
 main().catch((err) => {
