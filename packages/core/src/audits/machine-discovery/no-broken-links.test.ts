@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { NoBrokenLinksAudit } from "./no-broken-links";
+import { AuditResultSchema } from "../../schemas";
 import {
   mockCheckContext,
   mockPageContext,
@@ -90,4 +91,47 @@ describe("NoBrokenLinksAudit", () => {
     expect(result.status).toBe("pass");
     expect(result.message).toContain("return HTTP 200");
   });
+
+  it("follows redirects and treats 3xx leading to 200 as healthy", async () => {
+    const html =
+      '<html><body><a href="/redirect-me">Redirect</a></body></html>';
+    const ctx = mockCheckContext([
+      mockPageContext("https://example.com/", html),
+    ]);
+    ctx.fetch = async ({
+      followRedirects,
+    }: {
+      url: string;
+      followRedirects?: boolean;
+    }) => {
+      expect(followRedirects).toBe(true);
+      return mockFetchResult("<html>OK</html>", 200);
+    };
+    const result = await audit.audit(ctx);
+    expect(result.status).toBe("pass");
+    expect(AuditResultSchema.safeParse(result).success).toBe(true);
+  });
+
+  it("truncates long broken link lists and conforms to AuditResultSchema", async () => {
+    const links = Array.from(
+      { length: 20 },
+      (_, i) => `<a href="/very-long-path-segment-with-query-parameters-that-keeps-going-${i}?param1=value1&param2=value2&param3=value3">Link ${i}</a>`,
+    ).join("");
+    const ctx = mockCheckContext([
+      mockPageContext("https://example.com/", `<html><body>${links}</body></html>`),
+    ]);
+    ctx.fetch = fetchStub(
+      Object.fromEntries(
+        Array.from({ length: 20 }, (_, i) => [
+          `https://example.com/very-long-path-segment-with-query-parameters-that-keeps-going-${i}?param1=value1&param2=value2&param3=value3`,
+          404,
+        ]),
+      ),
+    );
+    const result = await audit.audit(ctx);
+    expect(result.status).toBe("fail");
+    expect(AuditResultSchema.safeParse(result).success).toBe(true);
+    expect(result.displayValue!.length).toBeLessThanOrEqual(1000);
+  });
 });
+

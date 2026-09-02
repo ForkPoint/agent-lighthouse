@@ -121,6 +121,11 @@ export abstract class Audit {
       typeof recommendationOrPriority.code === "string"
         ? recommendationOrPriority.code
         : undefined;
+    const displayValue =
+      typeof recommendationOrPriority === "object" &&
+      typeof recommendationOrPriority.displayValue === "string"
+        ? recommendationOrPriority.displayValue
+        : undefined;
 
     return {
       status: "warn",
@@ -128,6 +133,7 @@ export abstract class Audit {
       message,
       expected,
       found,
+      ...(displayValue ? { displayValue } : {}),
       ...(code ? { details: { code } } : {}),
       ...(remediation ? { remediation } : {}),
       priority,
@@ -156,6 +162,11 @@ export abstract class Audit {
       typeof recommendationOrPriority.code === "string"
         ? recommendationOrPriority.code
         : undefined;
+    const displayValue =
+      typeof recommendationOrPriority === "object" &&
+      typeof recommendationOrPriority.displayValue === "string"
+        ? recommendationOrPriority.displayValue
+        : undefined;
 
     return {
       status: "fail",
@@ -163,6 +174,7 @@ export abstract class Audit {
       message,
       expected,
       found,
+      ...(displayValue ? { displayValue } : {}),
       ...(code ? { details: { code } } : {}),
       ...(remediation ? { remediation } : {}),
       priority,
@@ -181,8 +193,16 @@ export abstract class Audit {
     const isInformative = scoreDisplayMode === "informative";
 
     // Backward compatibility mapping
-    const displayValue = result.displayValue ?? result.found ?? result.message;
-    const explanation = result.explanation ?? result.message;
+    const rawDisplay = result.displayValue ?? result.found ?? result.message;
+    const displayValue =
+      rawDisplay && rawDisplay.length > 1000
+        ? rawDisplay.slice(0, 997) + "..."
+        : rawDisplay;
+    const rawExplanation = result.explanation ?? result.message;
+    const explanation =
+      rawExplanation && rawExplanation.length > 5000
+        ? rawExplanation.slice(0, 4997) + "..."
+        : rawExplanation;
     const expected = result.details?.expected ?? result.expected;
     const found = result.details?.found ?? result.found;
 
