@@ -18,7 +18,7 @@ export class RssFeedContentAudit extends Audit {
     evidenceGrade: "C",
     tier: "informative",
     dossier: "docs/evidence/audits/machine-discovery/rss-feed-content.md",
-    requires: ["origin-reachable"],
+    requires: ["origin-reachable", "unblocked-fetches"],
     defaultPriority: "medium",
     guidance: {
       impact:

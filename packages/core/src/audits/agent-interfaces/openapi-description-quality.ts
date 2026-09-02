@@ -65,7 +65,7 @@ export class OpenApiDescriptionQualityAudit extends Audit {
     tier: "scored",
     dossier:
       "docs/evidence/audits/agent-interfaces/openapi-description-quality.md",
-    requires: ["origin-reachable"],
+    requires: ["origin-reachable", "unblocked-fetches"],
     defaultPriority: "high",
     guidance: {
       impact:

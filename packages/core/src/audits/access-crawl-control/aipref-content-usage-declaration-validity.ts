@@ -64,7 +64,12 @@ export class AiprefContentUsageDeclarationValidityAudit extends Audit {
     dossier:
       "docs/evidence/audits/access-crawl-control/aipref-content-usage-declaration-validity.md",
     // Gate exemption: being refused is what this category reports.
-    requires: ["origin-reachable", "rendered-body", "sample-adequate"],
+    requires: [
+      "origin-reachable",
+      "unblocked-fetches",
+      "rendered-body",
+      "sample-adequate",
+    ],
     guidance: {
       impact:
         "AIPREF is the one AI-usage vocabulary on the IETF standards track, so a declaration written in it is the one a future crawler is most likely to read. A crawler that cannot parse the line ignores it, and the site is then treated as having no preference at all — the same outcome as publishing nothing, after the work of publishing something. The costliest version is invisible: a preference attached to a path robots.txt disallows is discarded by the spec itself, so the line looks right and does nothing.",

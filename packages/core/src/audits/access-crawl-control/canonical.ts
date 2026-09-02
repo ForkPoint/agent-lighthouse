@@ -115,7 +115,12 @@ export class CanonicalLinksAudit extends Audit {
     tier: "scored",
     dossier: "docs/evidence/audits/access-crawl-control/canonical.md",
     // Gate exemption: being refused is what this category reports.
-    requires: ["origin-reachable", "rendered-body", "sample-adequate"],
+    requires: [
+      "origin-reachable",
+      "unblocked-fetches",
+      "rendered-body",
+      "sample-adequate",
+    ],
     defaultPriority: "medium",
     guidance: {
       impact:

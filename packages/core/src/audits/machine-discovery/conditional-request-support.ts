@@ -42,7 +42,7 @@ export class ConditionalRequestSupportAudit extends Audit {
     defaultPriority: "medium",
     dossier:
       "docs/evidence/audits/machine-discovery/conditional-request-support.md",
-    requires: ["origin-reachable"],
+    requires: ["origin-reachable", "unblocked-fetches"],
     guidance: {
       impact:
         'A crawler that wants to know what changed re-reads your sitemap and your feed on a schedule. If those responses carry no `ETag` and no `Last-Modified`, it cannot ask "has this changed?" — it can only download the file again, every time, forever. The cost is yours as much as theirs: bandwidth you serve for no new information, and a crawl budget spent re-reading a list instead of fetching the pages on it. A validator that changes on every build is the same cost wearing a correct-looking header.',

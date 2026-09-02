@@ -103,7 +103,7 @@ export class McpVersionDowngradeAudit extends Audit {
     evidenceGrade: "A",
     tier: "scored",
     dossier: "docs/evidence/audits/agent-interfaces/mcp-version-downgrade.md",
-    requires: ["origin-reachable"],
+    requires: ["origin-reachable", "unblocked-fetches"],
     defaultPriority: "medium",
     guidance: {
       impact:

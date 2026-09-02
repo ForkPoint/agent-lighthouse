@@ -69,7 +69,7 @@ export class AgentsJsonAudit extends Audit {
     evidenceGrade: "C",
     tier: "informative",
     dossier: "docs/evidence/audits/agent-interfaces/agents-json.md",
-    requires: ["origin-reachable"],
+    requires: ["origin-reachable", "unblocked-fetches"],
     defaultPriority: "low",
     guidance: {
       impact:

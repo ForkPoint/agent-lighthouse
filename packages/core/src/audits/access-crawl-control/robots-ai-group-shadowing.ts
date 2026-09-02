@@ -154,7 +154,7 @@ export class RobotsAiGroupShadowingAudit extends Audit {
     // Gate exemption: being refused is what this category reports.
     // Gate exemption: the verdict comes from robots.txt. The scanned pages only widen
     // the probe path set, so a shell narrows the probe and changes nothing judged.
-    requires: ["origin-reachable"],
+    requires: ["origin-reachable", "unblocked-fetches"],
     defaultPriority: "high",
     guidance: {
       impact:

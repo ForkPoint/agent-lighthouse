@@ -20,7 +20,7 @@ export const EVIDENCE_KEYS = [
 
 /** What an audit needs when it reads pages, and when it does not. */
 const PAGE_FED_REQUIRES = EVIDENCE_KEYS;
-const ORIGIN_ONLY_REQUIRES = ['origin-reachable'];
+const ORIGIN_ONLY_REQUIRES = ['origin-reachable', 'unblocked-fetches'];
 
 /**
  * Which gatherers are fed by the sampled pages.
@@ -86,10 +86,10 @@ export const GATE_EXEMPTIONS = {
       'can identify a bot-defense product without rendered text or an adequate sample.',
   },
   'access-crawl-control/no-redirect-chains': {
-    drop: ['origin-reachable', 'rendered-body', 'sample-adequate'],
+    drop: ['origin-reachable', 'unblocked-fetches', 'rendered-body', 'sample-adequate'],
     reason:
       'The runner rejects an unread scan first. On a readable response, request and final ' +
-      'URLs prove the redirect chain without rendered text or an adequate page sample.',
+      'URLs prove the redirect chain without rendered text, an adequate page sample, or unblocked status.',
   },
   // The seven below share one shape. `check-requires` derives `rendered-body`
   // from the source touching `ctx.pages`, but each of these reads the response
@@ -145,9 +145,6 @@ export const GATE_EXEMPTIONS = {
       'proves the transport without rendered text or an adequate page sample.',
   },
 };
-
-/** Every audit in `access-crawl-control` is about being refused. */
-const BLOCK_EXEMPT_CATEGORY = 'access-crawl-control';
 
 /** Read every registered audit source under `packages/core/src/audits`. */
 export function auditSourceFiles(repoRoot) {
@@ -225,13 +222,6 @@ export function expectedRequires(source, id) {
 
   const exemption = GATE_EXEMPTIONS[id ?? ''];
   const dropped = new Set(exemption?.drop ?? []);
-  if (
-    id?.startsWith(`${BLOCK_EXEMPT_CATEGORY}/`) &&
-    id !== 'access-crawl-control/sensitive-paths' &&
-    id !== 'access-crawl-control/rsl-licensing-terms-conformance'
-  ) {
-    dropped.add('unblocked-fetches');
-  }
   for (const key of dropped) keys.delete(key);
 
   const expected = EVIDENCE_KEYS.filter((key) => keys.has(key));

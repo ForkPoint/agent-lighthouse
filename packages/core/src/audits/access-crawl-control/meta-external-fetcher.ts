@@ -18,7 +18,7 @@ export class MetaExternalFetcherAudit extends CrawlerBotAudit {
     dossier:
       "docs/evidence/audits/access-crawl-control/meta-external-fetcher.md",
     // Gate exemption: being refused is what this category reports.
-    requires: ["origin-reachable"],
+    requires: ["origin-reachable", "unblocked-fetches"],
     defaultPriority: "medium",
     guidance: {
       impact:

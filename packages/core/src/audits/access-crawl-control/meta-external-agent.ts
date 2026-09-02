@@ -26,7 +26,7 @@ export class MetaExternalAgentAudit extends CrawlerBotAudit {
     tier: "scored",
     dossier: "docs/evidence/audits/access-crawl-control/meta-external-agent.md",
     // Gate exemption: being refused is what this category reports.
-    requires: ["origin-reachable"],
+    requires: ["origin-reachable", "unblocked-fetches"],
     defaultPriority: "medium",
     guidance: {
       impact:

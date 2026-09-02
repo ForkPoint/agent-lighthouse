@@ -129,7 +129,7 @@ export class McpToolContractValidityAudit extends Audit {
     tier: "scored",
     dossier:
       "docs/evidence/audits/agent-interfaces/mcp-tool-contract-validity.md",
-    requires: ["origin-reachable"],
+    requires: ["origin-reachable", "unblocked-fetches"],
     defaultPriority: "critical",
     guidance: {
       impact:

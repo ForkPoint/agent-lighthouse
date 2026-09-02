@@ -129,7 +129,7 @@ export class WebBotAuthRequestToleranceAudit extends Audit {
     dossier:
       "docs/evidence/audits/access-crawl-control/web-bot-auth-request-tolerance.md",
     // Gate exemption: being refused is what this category reports.
-    requires: ["origin-reachable"],
+    requires: ["origin-reachable", "unblocked-fetches"],
     guidance: {
       impact:
         "Web Bot Auth is how an agent says who it is in a way an origin can check, and the operators building it are the ones whose traffic you would most want to identify. An edge that answers a signed request with 400 or 403 turns that identification into a reason for refusal: the agents willing to declare themselves are the ones you turn away, and the ones that lie carry no signature headers at all and sail through. A 431 is the same outcome from a different cause — a header-size limit — and it is fixed differently.",

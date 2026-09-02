@@ -83,7 +83,7 @@ export class SecurityHeaderHygieneAudit extends Audit {
     tier: "informative",
     dossier:
       "docs/evidence/audits/operability-safety/security-header-hygiene.md",
-    requires: ["origin-reachable"],
+    requires: ["origin-reachable", "unblocked-fetches"],
     defaultPriority: "low",
     guidance: {
       impact:

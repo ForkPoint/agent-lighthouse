@@ -113,7 +113,7 @@ export class McpModernEraReachabilityAudit extends Audit {
     tier: "scored",
     dossier:
       "docs/evidence/audits/agent-interfaces/mcp-modern-era-reachability.md",
-    requires: ["origin-reachable"],
+    requires: ["origin-reachable", "unblocked-fetches"],
     defaultPriority: "high",
     guidance: {
       impact:

@@ -37,7 +37,7 @@ export class WebsubHubAdvertisementAudit extends Audit {
     defaultPriority: "low",
     dossier:
       "docs/evidence/audits/machine-discovery/websub-hub-advertisement.md",
-    requires: ["origin-reachable"],
+    requires: ["origin-reachable", "unblocked-fetches"],
     guidance: {
       impact:
         "A hub subscription is verified against the feed’s own `rel=self`. When that link is missing, relative, or points at a different URL than the one the feed is served from, verification cannot complete, and the push path degrades to whatever polling cadence subscribers happen to use. The publisher sees a hub that looks configured and no error anywhere. The benefit side is unproven: WebSub is a W3C Recommendation, but no AI answer engine is documented as a subscriber, which is why this audit reports and does not score.",

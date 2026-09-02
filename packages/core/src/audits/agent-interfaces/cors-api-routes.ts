@@ -193,7 +193,7 @@ export class CorsApiRoutesAudit extends Audit {
     evidenceGrade: "C",
     tier: "informative",
     dossier: "docs/evidence/audits/agent-interfaces/cors-api-routes.md",
-    requires: ["origin-reachable"],
+    requires: ["origin-reachable", "unblocked-fetches"],
     // The affected consumer class is small; nothing here should outrank an
     // item that changes what a crawler or an MCP client can do.
     defaultPriority: "low",

@@ -133,7 +133,12 @@ export class AiContentDeclarationAudit extends Audit {
     dossier:
       "docs/evidence/audits/access-crawl-control/ai-content-declaration.md",
     // Gate exemption: being refused is what this category reports.
-    requires: ["origin-reachable", "rendered-body", "sample-adequate"],
+    requires: [
+      "origin-reachable",
+      "unblocked-fetches",
+      "rendered-body",
+      "sample-adequate",
+    ],
     // Was `medium` on an invented directive; the whole class of signals is
     // pre-consumer, so nothing here should outrank an actionable item.
     defaultPriority: "low",
