@@ -1,10 +1,8 @@
 # Audit Architecture Migration — Roadmap
 
-> **For agentic workers:** this file is a decomposition, not an executable plan.
-> Each phase gets its own plan file under `docs/superpowers/plans/`, written
-> immediately before that phase is executed and never before — later phases are
-> measured against numbers that earlier phases change. Phase 1's plan is
-> `2026-08-31-phase-1-truthful-fixtures.md`.
+> **Historical Record:** This migration roadmap was fully executed and completed
+> across Phases 1 through 6 in `main`. The canonical current architecture is
+> documented in [`docs/architecture/audits.md`](../audits.md).
 
 **Plan authority:** `docs/architecture/audits.md` owns the decisions. This
 roadmap owns phase order, cross-phase interfaces and exit conditions. The one
