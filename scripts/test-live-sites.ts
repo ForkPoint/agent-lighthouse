@@ -52,6 +52,8 @@ interface CliOptions {
   help: boolean;
   ignoreRobots: boolean;
   stratified: boolean;
+  shuffle: boolean;
+  loop: number;
 }
 
 function parseCliArgs(argv: string[]): CliOptions {
@@ -65,6 +67,8 @@ function parseCliArgs(argv: string[]): CliOptions {
     help: false,
     ignoreRobots: false,
     stratified: false,
+    shuffle: false,
+    loop: 1,
   };
 
   for (const arg of argv) {
@@ -84,6 +88,10 @@ function parseCliArgs(argv: string[]): CliOptions {
       options.stratified = true;
       continue;
     }
+    if (arg === "--shuffle" || arg === "--random" || arg === "-r") {
+      options.shuffle = true;
+      continue;
+    }
     const match = /^--([a-z-]+)=(.*)$/.exec(arg);
     if (!match) continue;
     const [, name, val] = match;
@@ -99,6 +107,9 @@ function parseCliArgs(argv: string[]): CliOptions {
         break;
       case "delay":
         options.delayMs = Math.max(0, parseInt(val, 10) || 0);
+        break;
+      case "loop":
+        options.loop = Math.max(1, parseInt(val, 10) || 1);
         break;
       case "category":
         options.category = val.trim().toLowerCase();
@@ -194,73 +205,90 @@ async function main(): Promise<void> {
   console.log("─────────────────────────────────────────────────────────────");
 
   const allSites: SiteEntry[] = JSON.parse(fs.readFileSync(SITES_PATH, "utf8"));
+  const grandStartTime = Date.now();
+  const allOutcomes: TestSiteOutcome[] = [];
+  let totalViolations = 0;
 
-  let targetSites: SiteEntry[] = [];
-
-  if (options.domains && options.domains.length > 0) {
-    const specified = new Set(options.domains);
-    targetSites = allSites.filter((s) => specified.has(s.domain));
-    for (const d of options.domains) {
-      if (!targetSites.some((s) => s.domain === d)) {
-        targetSites.push({
-          domain: d,
-          source: "seed",
-          category: "custom",
-          rankBucket: 0,
-        });
-      }
+  for (let loopRound = 1; loopRound <= options.loop; loopRound++) {
+    if (options.loop > 1) {
+      console.log(`\n=============================================================`);
+      console.log(`🔄 Round ${loopRound} of ${options.loop}`);
+      console.log(`=============================================================`);
     }
-  } else if (options.category && options.category !== "all") {
-    targetSites = allSites.filter(
-      (s) => s.category.toLowerCase() === options.category,
-    );
-    console.log(
-      `Filtered by category: "${options.category}" (${targetSites.length} available)`,
-    );
-  } else {
-    targetSites = allSites;
-  }
 
-  let selected: SiteEntry[] = [];
-  if (options.stratified && (!options.domains || options.domains.length === 0)) {
-    const byCategory = new Map<string, SiteEntry[]>();
-    for (const site of targetSites) {
-      const list = byCategory.get(site.category) ?? [];
-      list.push(site);
-      byCategory.set(site.category, list);
-    }
-    const categories = Array.from(byCategory.keys()).sort();
-    let added = 0;
-    let round = 0;
-    while (added < options.limit && round < 1000) {
-      for (const cat of categories) {
-        const list = byCategory.get(cat);
-        if (list && list[round]) {
-          selected.push(list[round]);
-          added++;
-          if (added >= options.limit) break;
+    let targetSites: SiteEntry[] = [];
+
+    if (options.domains && options.domains.length > 0) {
+      const specified = new Set(options.domains);
+      targetSites = allSites.filter((s) => specified.has(s.domain));
+      for (const d of options.domains) {
+        if (!targetSites.some((s) => s.domain === d)) {
+          targetSites.push({
+            domain: d,
+            source: "seed",
+            category: "custom",
+            rankBucket: 0,
+          });
         }
       }
-      round++;
+    } else if (options.category && options.category !== "all") {
+      targetSites = allSites.filter(
+        (s) => s.category.toLowerCase() === options.category,
+      );
+      console.log(
+        `Filtered by category: "${options.category}" (${targetSites.length} available)`,
+      );
+    } else {
+      targetSites = allSites.slice();
     }
+
+    if (options.shuffle) {
+      for (let i = targetSites.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [targetSites[i], targetSites[j]] = [targetSites[j]!, targetSites[i]!];
+      }
+    }
+
+    let selected: SiteEntry[] = [];
+    if (options.stratified && (!options.domains || options.domains.length === 0)) {
+      const byCategory = new Map<string, SiteEntry[]>();
+      for (const site of targetSites) {
+        const list = byCategory.get(site.category) ?? [];
+        list.push(site);
+        byCategory.set(site.category, list);
+      }
+      const categories = Array.from(byCategory.keys()).sort();
+      let added = 0;
+      let r = 0;
+      while (added < options.limit && r < 1000) {
+        for (const cat of categories) {
+          const list = byCategory.get(cat);
+          if (list && list[r]) {
+            selected.push(list[r]);
+            added++;
+            if (added >= options.limit) break;
+          }
+        }
+        r++;
+      }
+      console.log(
+        `Stratified sampling: selected ${selected.length} sites across ${categories.length} categories`,
+      );
+    } else {
+      selected = targetSites.slice(
+        options.offset,
+        options.offset + options.limit,
+      );
+    }
+
+    if (selected.length === 0) {
+      console.log("⚠️ No sites matched the selection criteria.");
+      return;
+    }
+
     console.log(
-      `Stratified sampling: selected ${selected.length} sites across ${categories.length} categories`,
+      `Running scan across ${selected.length} sites (concurrency: ${options.concurrency}, delay: ${options.delayMs}ms)...\n`,
     );
-  } else {
-    selected = targetSites.slice(
-      options.offset,
-      options.offset + options.limit,
-    );
-  }
-
-  if (selected.length === 0) {
-    console.log("⚠️ No sites matched the selection criteria.");
-    return;
-  }
-
-  console.log(
-    `Running scan across ${selected.length} sites (concurrency: ${options.concurrency}, delay: ${options.delayMs}ms)...\n`,
-  );
 
   const dispatcher = boundedDispatcher(options.concurrency);
 
@@ -403,12 +431,23 @@ async function main(): Promise<void> {
 
   await Promise.all(workers);
 
-  const totalDurationMs = Date.now() - startedTime;
-  const scannedOutcomes = outcomes.filter((o) => !o.skipped);
-  const totalViolations = outcomes.reduce(
-    (acc, o) => acc + o.violations.length,
-    0,
-  );
+    const roundViolations = outcomes.reduce(
+      (acc, o) => acc + o.violations.length,
+      0,
+    );
+    totalViolations += roundViolations;
+    allOutcomes.push(...outcomes);
+
+    if (roundViolations > 0) {
+      console.error(
+        `\n❌ Round ${loopRound} encountered ${roundViolations} invariant violation(s). Halting loop.`,
+      );
+      break;
+    }
+  }
+
+  const totalDurationMs = Date.now() - grandStartTime;
+  const scannedOutcomes = allOutcomes.filter((o) => !o.skipped);
 
   const scores = scannedOutcomes
     .map((o) => o.score)
@@ -420,23 +459,23 @@ async function main(): Promise<void> {
       : null;
 
   const avgDurationMs =
-    outcomes.length > 0
+    allOutcomes.length > 0
       ? Math.round(
-          outcomes.reduce((a, o) => a + o.durationMs, 0) / outcomes.length,
+          allOutcomes.reduce((a, o) => a + o.durationMs, 0) / allOutcomes.length,
         )
       : 0;
 
   const summary: TestReportSummary = {
-    startedAt: new Date(startedTime).toISOString(),
+    startedAt: new Date(grandStartTime).toISOString(),
     completedAt: new Date().toISOString(),
     durationMs: totalDurationMs,
-    totalPlanned: selected.length,
+    totalPlanned: allOutcomes.length,
     scanned: scannedOutcomes.length,
-    skipped: outcomes.length - scannedOutcomes.length,
+    skipped: allOutcomes.length - scannedOutcomes.length,
     violationsCount: totalViolations,
     averageDurationMs: avgDurationMs,
     averageScore: avgScore,
-    outcomes: outcomes.sort((a, b) => a.domain.localeCompare(b.domain)),
+    outcomes: allOutcomes.sort((a, b) => a.domain.localeCompare(b.domain)),
   };
 
   // Ensure output directory exists and write summary
@@ -446,7 +485,7 @@ async function main(): Promise<void> {
   console.log("\n─────────────────────────────────────────────────────────────");
   console.log("📊 Live Sites Scan Summary");
   console.log("─────────────────────────────────────────────────────────────");
-  console.log(`Total Planned:       ${summary.totalPlanned}`);
+  console.log(`Total Planned:       ${summary.totalPlanned} across ${options.loop} round(s)`);
   console.log(`Successfully Scanned:${summary.scanned}`);
   console.log(`Skipped (robots):    ${summary.skipped}`);
   console.log(`Invariant Violations:${summary.violationsCount}`);
@@ -462,7 +501,7 @@ async function main(): Promise<void> {
     console.error(`\n❌ FAILED: ${summary.violationsCount} invariant violation(s) detected.`);
     process.exit(1);
   } else {
-    console.log("\n✅ PASSED: All scanned sites satisfied scan invariants.");
+    console.log(`\n✅ PASSED: All ${summary.scanned} scanned sites satisfied scan invariants.`);
     process.exit(0);
   }
 }
