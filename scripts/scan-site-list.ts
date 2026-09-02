@@ -10,6 +10,10 @@ import {
 import { SCANNER_USER_AGENT } from "../packages/core/src/constants";
 import { AI_CRAWLER_UAS } from "../packages/core/src/gatherers/ua-parity";
 import { invariantViolations } from "../packages/core/src/tests/scan-invariants";
+import {
+  excludedDomains,
+  type CorpusStatus,
+} from "../packages/core/src/tests/corpus-status";
 import type { SiteEntry } from "../packages/core/src/tests/site-list";
 import type { FetchResult } from "../packages/core/src/fetcher";
 import type { EvidenceKey } from "../packages/core/src/types";
@@ -132,16 +136,13 @@ const DEFAULTS = {
   /**
    * Sites per run.
    *
-   * Sized against `deadline-minutes`, not against the list. Measured at
-   * concurrency 2: about 60 s of scan per site per worker, plus the 3 s
-   * inter-site delay, so a window costs `limit / concurrency * 63 s`. At 400
-   * that is 210 minutes and the run finishes inside the 240-minute deadline
-   * with half an hour to spare; at 500 it is 262 minutes, which is past the
-   * deadline, and the job would have gone red on timing whenever a night's
-   * window held few robots-skipped sites. 1913 entries at 400 a night is full
-   * coverage in five nights.
+   * The list is about 365 curated domains, so the default window is the
+   * whole list: `windowOf` returns everything when `size >= all.length`.
+   * At concurrency 2 and 63 s per site per worker, 365 sites is about 190
+   * minutes, inside the 240-minute deadline. The date-seeded offset still
+   * applies when a smaller limit is passed.
    */
-  limit: 200,
+  limit: 400,
   concurrency: 2,
   delay: 3000,
   connections: 2,
@@ -160,6 +161,10 @@ const DEFAULTS = {
    * violations were detected.
    */
   "allow-partial": 0,
+  /** 1 to scan domains `status.json` calls dead. */
+  "include-dead": 0,
+  /** 1 to scan domains `status.json` calls blocked by robots. */
+  "include-blocked": 0,
 } as const;
 
 type FlagName = keyof typeof DEFAULTS;
@@ -371,7 +376,24 @@ async function scanOne(site: SiteEntry): Promise<SiteOutcome> {
 // ── The run ────────────────────────────────────────────────────
 
 async function main(): Promise<void> {
-  const all: SiteEntry[] = JSON.parse(fs.readFileSync(SITES_PATH, "utf8"));
+  const listed: SiteEntry[] = JSON.parse(fs.readFileSync(SITES_PATH, "utf8"));
+  const STATUS_PATH = path.resolve(
+    __dirname,
+    "../packages/core/test-data/sites/status.json",
+  );
+  const status: CorpusStatus | undefined = fs.existsSync(STATUS_PATH)
+    ? (JSON.parse(fs.readFileSync(STATUS_PATH, "utf8")) as CorpusStatus)
+    : undefined;
+  const excluded = excludedDomains(status, {
+    dead: FLAGS["include-dead"] > 0,
+    blocked: FLAGS["include-blocked"] > 0,
+  });
+  const all = listed.filter((s) => !excluded.has(s.domain));
+  if (excluded.size > 0) {
+    console.log(
+      `[scan-site-list] ${excluded.size} domain(s) left out by status.json`,
+    );
+  }
   const offset = Number.isFinite(FLAGS.offset)
     ? Math.floor(FLAGS.offset)
     : dayOfYear(new Date()) * LIMIT;
