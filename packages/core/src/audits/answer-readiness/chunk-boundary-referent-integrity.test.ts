@@ -100,7 +100,7 @@ describe("ChunkBoundaryReferentIntegrityAudit", () => {
     ]);
     const result = await audit.audit(ctx);
     expect(result.status).toBe("pass");
-    expect((result.details?.["entities"] as string[]).length).toBeGreaterThan(
+    expect((result.details!["entities"] as string[]).length).toBeGreaterThan(
       1,
     );
   });

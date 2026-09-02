@@ -65,7 +65,7 @@ describe("TableMarkdownRoundTripLossAudit", () => {
     );
     expect(result.status).toBe("fail");
     expect(result.details?.["headerlessNumericTables"]).toBe(1);
-    expect((result.details?.["findings"] as string[]).join(" ")).toContain(
+    expect((result.details!["findings"] as string[]).join(" ")).toContain(
       "no header cell",
     );
   });
@@ -81,7 +81,7 @@ describe("TableMarkdownRoundTripLossAudit", () => {
     );
     expect(result.status).toBe("fail");
     expect(result.details?.["strandedUnitTables"]).toBe(1);
-    expect((result.details?.["findings"] as string[]).join(" ")).toContain(
+    expect((result.details!["findings"] as string[]).join(" ")).toContain(
       "arrive unitless",
     );
   });
@@ -94,7 +94,7 @@ describe("TableMarkdownRoundTripLossAudit", () => {
       </table>`),
     );
     expect(result.details?.["blockContentCells"]).toBe(1);
-    expect((result.details?.["findings"] as string[]).join(" ")).toContain(
+    expect((result.details!["findings"] as string[]).join(" ")).toContain(
       "block content",
     );
   });
@@ -108,7 +108,7 @@ describe("TableMarkdownRoundTripLossAudit", () => {
       </table>`),
     );
     expect(result.details?.["raggedRows"]).toBe(1);
-    expect((result.details?.["findings"] as string[]).join(" ")).toContain(
+    expect((result.details!["findings"] as string[]).join(" ")).toContain(
       "declares 2 cell(s)",
     );
   });

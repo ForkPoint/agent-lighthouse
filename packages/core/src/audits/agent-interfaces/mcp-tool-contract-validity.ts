@@ -16,7 +16,7 @@ const MAX_PAGES = 4;
 /** Longest tool name the spec allows. */
 const MAX_NAME = 128;
 /** Tool names outside this need no escaping anywhere. */
-const NAME_PATTERN = /^[A-Za-z0-9_.\-]+$/;
+const NAME_PATTERN = /^[A-Za-z0-9_.-]+$/;
 /** RFC 9110 tchar: what a header value may be built from. */
 const TCHAR = /^[!#$%&'*+\-.^_`|~0-9A-Za-z]+$/;
 /** The only property types an `x-mcp-header` annotation may sit on. */

@@ -191,7 +191,7 @@ export function parseCategoryAssertions(
   fileConfig: FileConfig & { assertCategories?: Record<string, number> } = {},
 ): Record<string, number> {
   const out: Record<string, number> = {
-    ...(fileConfig.assertCategories ?? {}),
+    ...fileConfig.assertCategories,
   };
 
   const record = (pair: string | undefined) => {

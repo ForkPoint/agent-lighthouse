@@ -46,7 +46,7 @@ describe("sourceTypeCounts", () => {
       expect(entry.count, entry.type).toBeGreaterThan(0);
     // Sorted, so the pills come out in a stable order build after build.
     expect(counts.map((entry) => entry.type)).toEqual(
-      [...counts.map((entry) => entry.type)].sort(),
+      counts.map((entry) => entry.type).sort(),
     );
   });
 });

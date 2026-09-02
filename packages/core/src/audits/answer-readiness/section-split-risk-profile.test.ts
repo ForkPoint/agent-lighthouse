@@ -101,7 +101,7 @@ describe("SectionSplitRiskProfileAudit", () => {
     const result = await audit.audit(
       page(`<h2>Boiling</h2><p>${text}</p><h2>Care</h2><p>${prose(200)}</p>`),
     );
-    const reported = Number((result.details?.["sectionTokens"] as string[])[0]);
+    const reported = Number((result.details!["sectionTokens"] as string[])[0]);
     expect(reported).toBeCloseTo(countTokens(`Boiling ${text}`), -1);
   });
 
