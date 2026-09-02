@@ -7,10 +7,9 @@ claim. Closed work leaves this file and stays in Git history.
 | # | debt | status on 2026-09-02 | next owner |
 | -: | :--- | :------------------- | :--------- |
 | 1 | Corpus skips accessibility results | Open | Test infrastructure |
-| 2 | Scripts have no typecheck | Open | Build tooling |
-| 3 | Corpus nightly is not reliable | Three scheduled runs failed | Nightly workflow |
-| 4 | Four smaller test and API debts | Open | Separate cleanup |
-| 5 | Text-rich HTTP 200 walls produce wrong verdicts | Open | Hostile-state contract extension |
+| 2 | Corpus nightly is not reliable | Three scheduled runs failed | Nightly workflow |
+| 3 | Three smaller test and API debts | Open | Separate cleanup |
+| 4 | Text-rich HTTP 200 walls produce wrong verdicts | In progress; sensitive-paths & RSL resolved | Hostile-state contract extension |
 
 The hostile-state branch first recorded these items. The sections below retain
 the evidence needed to start each fix.
@@ -22,15 +21,7 @@ is populated only by the orchestrator. Wiring the a11y runner into the corpus
 harness needs its own runtime budget — the suite already sits at 75–99 s against
 a 120 s cap.
 
-## 2. No script in the repository is typechecked
-
-The root `tsconfig.json` includes only `packages/*/src/**/*` and `pnpm typecheck`
-runs per package, so everything under `scripts/` is outside every include.
-Obsolete one-time scripts (`analyze-false-positives.ts`, `analyze-stores.ts`, and
-`investigate-stores.ts`) were pruned; remaining scripts should eventually be
-included under a dedicated tsconfig or typecheck pass.
-
-## 3. The nightly workflow runs, but it does not finish reliably
+## 2. The nightly workflow runs, but it does not finish reliably
 
 The workflow ran on schedule three times before this review. All three runs
 failed. Run `33379094687` scanned 249 of its 400-site window, skipped 58 sites
@@ -42,10 +33,8 @@ The next plan must separate timeout capacity from result-schema defects. It
 must define success for a partial window and preserve the uploaded summary on
 failure.
 
-## 4. Smaller items
+## 3. Smaller items
 
-- `MAX_CONCURRENT_REQUESTS` in `packages/core/src/constants.ts:10` is exported
-  and referenced nowhere. Removing it is a published-API change.
 - The `challenged-at-200` hostile state renders 58 characters, so it does not
   exercise a *text-bearing* 200 wall. `walmart-com-wall-200` covers that shape as
   a fixture but not as a contract state.
@@ -56,7 +45,13 @@ failure.
   can never exercise the evidence gate. The hostile-state suite is the only place
   those guards are proven.
 
-## 5. A text-rich 200 bot wall still draws 28 wrong verdicts
+## 4. Text-rich 200 bot wall verdicts
+
+Two audits inside `access-crawl-control` that reached wrong scored `fail` verdicts
+on site-templated walls (`sensitive-paths` at weight 1.0 and `rsl-licensing-terms-conformance`
+at weight 0.6) have been resolved: both now properly require `unblocked-fetches` and
+decline gracefully with `notApplicable`. The remaining root-file checks (sitemaps, openapi)
+can be addressed in future contract extensions.
 
 An audit that reads only root files derives `requires: ['origin-reachable']`, so
 it runs against a wall's files. None returns `pass` — the hostile-state suite

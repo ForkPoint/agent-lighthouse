@@ -225,7 +225,13 @@ export function expectedRequires(source, id) {
 
   const exemption = GATE_EXEMPTIONS[id ?? ''];
   const dropped = new Set(exemption?.drop ?? []);
-  if (id?.startsWith(`${BLOCK_EXEMPT_CATEGORY}/`)) dropped.add('unblocked-fetches');
+  if (
+    id?.startsWith(`${BLOCK_EXEMPT_CATEGORY}/`) &&
+    id !== 'access-crawl-control/sensitive-paths' &&
+    id !== 'access-crawl-control/rsl-licensing-terms-conformance'
+  ) {
+    dropped.add('unblocked-fetches');
+  }
   for (const key of dropped) keys.delete(key);
 
   const expected = EVIDENCE_KEYS.filter((key) => keys.has(key));

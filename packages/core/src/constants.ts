@@ -9,6 +9,7 @@ export const DEFAULT_ORIGIN_CACHE_TTL_MS = 60 * 60 * 1000; // 1 hour
 export const REQUEST_TIMEOUT_MS = 10_000;
 export const SCAN_TIMEOUT_MS = 60_000;
 export const MAX_RESPONSE_BODY_BYTES = 5 * 1024 * 1024; // 5MB
+/** @deprecated Unused internally; retained for published API stability. Scheduled for removal in v4. */
 export const MAX_CONCURRENT_REQUESTS = 10;
 
 // ── Scanner Identity ───────────────────────────────────────────
