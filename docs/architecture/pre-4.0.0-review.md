@@ -8,9 +8,9 @@ names the script under `docs/architecture/proofs/` that demonstrates it; where a
 was not practical, the entry says so and cites the exact lines instead. No
 finding here is a reading of the code alone unless it says it is.
 
-Findings 1 and 2 are fixed on this branch; each says so under its heading and
-its proof scripts are deleted, per `proofs/README.md`. The rest is the record,
-not the fix.
+Findings 1, 2, 3, 4 and 7 are fixed on this branch; each says so under its
+heading and its proof scripts are deleted, per `proofs/README.md`. The rest is
+the record, not the fix.
 
 |   # | where                            | severity | ships broken in | proved by         |
 | --: | :------------------------------- | :------- | :-------------- | :---------------- |
@@ -201,7 +201,14 @@ the site's whole sitemap.
 The comment states the correct intent. The break needs to fire only once
 `declared` is exhausted.
 
-Proof: `docs/architecture/proofs/f3-sitemap-break.mts`.
+Proof: one script, deleted with the fix. It produced the transcript above.
+
+**Fixed.** `siteRoots` now returns the declared roots and the conventional
+paths apart, and `collectSitemapEntries` reads every declared root. The
+conventional paths travel as `opts.fallbackRoots`, probed only when no declared
+root parsed, first hit wins. Pinned by the "every declared root" cases and the
+"reads every sitemap robots.txt declares" case in
+`packages/core/src/gatherers/sitemap.test.ts`.
 
 ---
 
@@ -238,7 +245,16 @@ of naming the defect, and the site is never told its sitemap is unreadable.
 
 Each candidate needs a `status === 200` test, not a nullish check.
 
-Proof: `docs/architecture/proofs/f4-nullish.mts`.
+Proof: one script, deleted with the fix. It produced the transcript above.
+
+**Fixed.** The verdict now follows the walk instead of the first root file.
+`SitemapTree` records `readableFiles` and `malformedFiles`, and `readSitemap`
+reads `empty` when a file parsed, `malformed` when a file answered 200 and did
+not, and `absent` only when nothing did. That also covers the case the nullish
+chain could never reach: a broken sitemap declared only in robots.txt. The
+`result` attached to the verdict is the first conventional root file that
+answered 200, or nothing. Pinned by the two "returns malformed when only …"
+cases in `packages/core/src/gatherers/sitemap.test.ts`.
 
 ---
 
@@ -349,7 +365,11 @@ The subdomain arm alone matches the stated intent. At
 subdomain check; the parent-domain arm arrived with the four-way sitemap read
 in `9c0f4b8` (2026-09-01). It is a 4.0.0 regression, not pre-existing.
 
-Proof: `docs/architecture/proofs/f9-samehost.mts`.
+Proof: one script, deleted with the fix. It produced the transcript above.
+
+**Fixed.** The parent-domain arm is removed; `sameHost` accepts the same host
+or a subdomain of it, as its comment always said. Pinned by "skips a child
+sitemap on the parent domain" in `packages/core/src/gatherers/sitemap.test.ts`.
 
 ---
 
@@ -542,9 +562,10 @@ Findings 1 and 2 were regressions this release introduced, both in the
 release's headline features. Both are fixed on this branch and should land
 before `ci(release): version packages` (#27) merges.
 
-Findings 3, 4, 5 and 6 are wrong verdicts and wrong scores, not crashes. They
-can ship in 4.0.1 if 4.0.0 is time-boxed, but 4 and 6 both contradict claims the
-4.0.0 changesets make, so the changeset text needs a correction either way.
+Findings 3, 4, 5 and 6 are wrong verdicts and wrong scores, not crashes. 3 and
+4 are fixed on this branch, with 7. 5 and 6 can ship in 4.0.1 if 4.0.0 is
+time-boxed, but 6 contradicts a claim the 4.0.0 changesets make, so the
+changeset text needs a correction either way.
 
 Findings 7 through 13 are cleanup. 8 and 10 are unreachable from any shipped
 entry point today and can wait for whoever exposes `headers`. Finding 7 is a

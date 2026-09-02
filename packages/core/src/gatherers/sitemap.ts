@@ -19,6 +19,10 @@ export interface SitemapTree {
   malformedLastmod: number;
   /** True when a cap stopped the walk, so `entries` is not the whole tree. */
   truncated: boolean;
+  /** Sitemap files that answered 200 and parsed as a urlset or sitemapindex. */
+  readableFiles: string[];
+  /** Sitemap files that answered 200 but were neither. A soft-404 lands here. */
+  malformedFiles: string[];
 }
 
 /** How many child sitemaps a `<sitemapindex>` may expand to. */
@@ -50,7 +54,14 @@ export function isW3CDateTime(value: string): boolean {
   );
 }
 
-/** Same site host or subdomain — a sitemap index may not hand us another origin's URLs. */
+/**
+ * Same site host or subdomain — a sitemap index may not hand us another
+ * origin's URLs.
+ *
+ * A parent domain is not the same site. On a shared suffix such as
+ * `github.io` or `myshopify.com` the parent belongs to a different party, so
+ * `foo.github.io` may not pull in a sitemap from `github.io`.
+ */
 function sameHost(candidate: string, reference: string): boolean {
   try {
     const candHost = new URL(candidate).hostname
@@ -59,11 +70,7 @@ function sameHost(candidate: string, reference: string): boolean {
     const refHost = new URL(reference).hostname
       .toLowerCase()
       .replace(/^www\./, "");
-    return (
-      candHost === refHost ||
-      candHost.endsWith(`.${refHost}`) ||
-      refHost.endsWith(`.${candHost}`)
-    );
+    return candHost === refHost || candHost.endsWith(`.${refHost}`);
   } catch {
     return false;
   }
@@ -104,6 +111,11 @@ function parseSitemap(result: FetchResult | undefined): ParsedSitemap {
 /**
  * Walk a site's sitemap roots and collect their `<url>` rows.
  *
+ * Every root in `roots` is read: a robots.txt that declares three sitemaps
+ * has three, and stopping at the first would judge a third of the site as
+ * the whole. `fallbackRoots` are the conventional paths, probed in order only
+ * when no declared root parsed, and the first one that does ends the probe.
+ *
  * Recursion stops after one level of `<sitemapindex>`: the depth of a nested
  * index is chosen by the site being scanned, so following it arbitrarily is an
  * unbounded walk driven by untrusted input. Every child URL is `isSafeUrl`- and
@@ -116,6 +128,7 @@ export async function collectSitemapEntries(
     maxChildren?: number;
     maxEntries?: number;
     signal?: AbortSignal;
+    fallbackRoots?: string[];
   } = {},
 ): Promise<SitemapTree> {
   const maxChildren = opts.maxChildren ?? DEFAULT_MAX_CHILDREN;
@@ -123,6 +136,8 @@ export async function collectSitemapEntries(
 
   const entries: SitemapEntry[] = [];
   const childSitemaps: string[] = [];
+  const readableFiles: string[] = [];
+  const malformedFiles: string[] = [];
   const fetched = new Set<string>();
   let malformedLastmod = 0;
   let truncated = false;
@@ -142,12 +157,22 @@ export async function collectSitemapEntries(
     if (fetched.has(url)) return undefined;
     fetched.add(url);
     if (!(await isSafeUrl(url))) return undefined;
-    return parseSitemap(await fetch({ url, signal: opts.signal }));
+    const result = await fetch({ url, signal: opts.signal });
+    const parsed = parseSitemap(result);
+    // A file that answered 200 with a body and still did not parse is
+    // present and broken. That is a finding, not an absence, so it is kept
+    // apart from a 404 for `readSitemap` to name.
+    if (parsed.kind !== "none") readableFiles.push(url);
+    else if (result.status === 200 && result.body.trim()) {
+      malformedFiles.push(url);
+    }
+    return parsed;
   };
 
-  for (const root of roots) {
+  /** Read one root and its children. True when the root was a sitemap. */
+  const walkRoot = async (root: string): Promise<boolean> => {
     const parsed = await load(root);
-    if (!parsed || parsed.kind === "none") continue;
+    if (!parsed || parsed.kind === "none") return false;
 
     take(parsed.entries);
 
@@ -163,12 +188,31 @@ export async function collectSitemapEntries(
       // One level only: a `sitemapindex` found here is not expanded.
       take(childParsed.entries);
     }
+    return true;
+  };
 
-    // Stop probing fallback sitemap paths once a valid sitemap file is found.
-    break;
+  let found = false;
+  for (const root of roots) {
+    if (entries.length >= maxEntries) break;
+    if (await walkRoot(root)) found = true;
   }
 
-  return { entries, childSitemaps, malformedLastmod, truncated };
+  // The conventional paths are guesses, so the first one that answers is
+  // taken as the site's sitemap and the rest are left alone.
+  if (!found) {
+    for (const root of opts.fallbackRoots ?? []) {
+      if (await walkRoot(root)) break;
+    }
+  }
+
+  return {
+    entries,
+    childSitemaps,
+    malformedLastmod,
+    truncated,
+    readableFiles,
+    malformedFiles,
+  };
 }
 
 /**
@@ -190,8 +234,21 @@ export function sampleEntries(
   return out;
 }
 
-/** The sitemap roots a site advertises, plus the two conventional paths. */
-function siteRoots(ctx: SitemapContext): string[] {
+/** Where a sitemap file is looked for when robots.txt declares none. */
+const FALLBACK_SITEMAP_PATHS = [
+  "/sitemap.xml",
+  "/sitemap-index.xml",
+  "/sitemap_index.xml",
+];
+
+/**
+ * The sitemap roots a site advertises, and the conventional paths to probe
+ * when it advertises none that answer.
+ */
+function siteRoots(ctx: SitemapContext): {
+  declared: string[];
+  fallbacks: string[];
+} {
   const robots = ctx.rootFiles["/robots.txt"];
   const declared =
     robots && robots.status === 200
@@ -203,31 +260,33 @@ function siteRoots(ctx: SitemapContext): string[] {
       .toLowerCase()
       .replace(/^www\./, "");
   } catch {
-    return [];
+    return { declared: [], fallbacks: [] };
   }
 
-  const out: string[] = [];
-  for (const raw of [
-    ...declared,
-    `${ctx.baseUrl}/sitemap.xml`,
-    `${ctx.baseUrl}/sitemap-index.xml`,
-    `${ctx.baseUrl}/sitemap_index.xml`,
-  ]) {
-    let url: URL;
-    try {
-      url = new URL(raw, ctx.baseUrl);
-    } catch {
-      continue;
+  const onSite = (raws: string[]): string[] => {
+    const out: string[] = [];
+    for (const raw of raws) {
+      let url: URL;
+      try {
+        url = new URL(raw, ctx.baseUrl);
+      } catch {
+        continue;
+      }
+      if (url.protocol !== "http:" && url.protocol !== "https:") continue;
+      const host = url.hostname.toLowerCase().replace(/^www\./, "");
+      // An off-site sitemap is not this site's to walk, and following it
+      // would turn a site-scoped scan into a crawl of somebody else's host.
+      if (host !== baseHost && !host.endsWith(`.${baseHost}`)) continue;
+      const href = url.toString();
+      if (!out.includes(href)) out.push(href);
     }
-    if (url.protocol !== "http:" && url.protocol !== "https:") continue;
-    const host = url.hostname.toLowerCase().replace(/^www\./, "");
-    // An off-site sitemap is not this site's to walk, and following it would
-    // turn a site-scoped scan into a crawl of somebody else's host.
-    if (host !== baseHost && !host.endsWith(`.${baseHost}`)) continue;
-    const href = url.toString();
-    if (!out.includes(href)) out.push(href);
-  }
-  return out;
+    return out;
+  };
+
+  return {
+    declared: onSite(declared),
+    fallbacks: onSite(FALLBACK_SITEMAP_PATHS.map((p) => `${ctx.baseUrl}${p}`)),
+  };
 }
 
 /** The slice of CheckContext this gatherer needs, kept structural to avoid a cycle. */
@@ -249,7 +308,10 @@ const treeCache = new WeakMap<object, Promise<SitemapTree>>();
 export function siteSitemapTree(ctx: SitemapContext): Promise<SitemapTree> {
   const cached = treeCache.get(cacheOwner(ctx));
   if (cached) return cached;
-  const walk = collectSitemapEntries(ctx.fetch, siteRoots(ctx));
+  const { declared, fallbacks } = siteRoots(ctx);
+  const walk = collectSitemapEntries(ctx.fetch, declared, {
+    fallbackRoots: fallbacks,
+  });
   treeCache.set(cacheOwner(ctx), walk);
   return walk;
 }
@@ -269,12 +331,26 @@ export type SitemapReadResult =
 
 const readResultCache = new WeakMap<object, Promise<SitemapReadResult>>();
 
+/** The conventional sitemap file the orchestrator fetched, if it answered 200. */
+function servedSitemapFile(ctx: SitemapContext): FetchResult | undefined {
+  for (const path of FALLBACK_SITEMAP_PATHS) {
+    const file = ctx.rootFiles[path];
+    if (file && file.status === 200) return file;
+  }
+  return undefined;
+}
+
 /**
  * Perform a four-way read of the site's sitemap.
  *
  * Returns ABSENT when no sitemap file is served, EMPTY when a sitemap has no
  * entries, MALFORMED when a sitemap file exists but has invalid XML structure,
  * or READABLE with the parsed tree.
+ *
+ * Absent means absent. The verdict follows the walk, which read every file
+ * robots.txt declared and probed the conventional paths, not one root file:
+ * a site whose only sitemap is a broken `/sitemap-index.xml`, or a broken
+ * file named in robots.txt, is told it is broken, not that it has none.
  */
 export async function readSitemap(
   ctx: SitemapContext,
@@ -283,19 +359,14 @@ export async function readSitemap(
   if (cached) return cached;
 
   const promise = (async (): Promise<SitemapReadResult> => {
-    const sitemapFile =
-      ctx.rootFiles["/sitemap.xml"] ??
-      ctx.rootFiles["/sitemap-index.xml"] ??
-      ctx.rootFiles["/sitemap_index.xml"];
+    const sitemapFile = servedSitemapFile(ctx);
     const tree = await siteSitemapTree(ctx);
 
     if (tree.entries.length === 0 && tree.childSitemaps.length === 0) {
-      if (!sitemapFile || sitemapFile.status !== 200) {
-        return { kind: "absent", reason: NO_SITEMAP };
+      if (tree.readableFiles.length > 0) {
+        return { kind: "empty", reason: NO_SITEMAP, result: sitemapFile };
       }
-
-      const parsed = parseSitemap(sitemapFile);
-      if (parsed.kind === "none") {
+      if (tree.malformedFiles.length > 0) {
         return {
           kind: "malformed",
           reason:
@@ -303,8 +374,7 @@ export async function readSitemap(
           result: sitemapFile,
         };
       }
-
-      return { kind: "empty", reason: NO_SITEMAP, result: sitemapFile };
+      return { kind: "absent", reason: NO_SITEMAP };
     }
 
     const defects: string[] = [];

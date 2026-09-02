@@ -197,6 +197,116 @@ describe("collectSitemapEntries", () => {
   });
 });
 
+describe("collectSitemapEntries — every declared root", () => {
+  it("reads every root it is given, not only the first", async () => {
+    const f = fetcher({
+      "https://example.com/sitemap-posts.xml": urlset([
+        ["https://example.com/post-1"],
+      ]),
+      "https://example.com/sitemap-pages.xml": urlset([
+        ["https://example.com/page-1"],
+      ]),
+    });
+    const tree = await collectSitemapEntries(f.fetch, [
+      "https://example.com/sitemap-posts.xml",
+      "https://example.com/sitemap-pages.xml",
+    ]);
+    expect(f.seen).toEqual([
+      "https://example.com/sitemap-posts.xml",
+      "https://example.com/sitemap-pages.xml",
+    ]);
+    expect(tree.entries.map((e) => e.loc)).toEqual([
+      "https://example.com/post-1",
+      "https://example.com/page-1",
+    ]);
+    expect(tree.readableFiles).toHaveLength(2);
+  });
+
+  it("probes fallback roots only when no declared root parsed", async () => {
+    const f = fetcher({
+      "https://example.com/sitemap.xml": urlset([["https://example.com/a"]]),
+    });
+    const tree = await collectSitemapEntries(
+      f.fetch,
+      ["https://example.com/declared-but-missing.xml"],
+      { fallbackRoots: ["https://example.com/sitemap.xml"] },
+    );
+    expect(f.seen).toEqual([
+      "https://example.com/declared-but-missing.xml",
+      "https://example.com/sitemap.xml",
+    ]);
+    expect(tree.entries).toHaveLength(1);
+  });
+
+  it("leaves fallback roots alone once a declared root parsed", async () => {
+    const f = fetcher({
+      "https://example.com/declared.xml": urlset([["https://example.com/a"]]),
+      "https://example.com/sitemap.xml": urlset([["https://example.com/b"]]),
+    });
+    await collectSitemapEntries(f.fetch, ["https://example.com/declared.xml"], {
+      fallbackRoots: ["https://example.com/sitemap.xml"],
+    });
+    expect(f.seen).toEqual(["https://example.com/declared.xml"]);
+  });
+
+  it("stops at the first fallback root that parses", async () => {
+    const f = fetcher({
+      "https://example.com/sitemap.xml": urlset([["https://example.com/a"]]),
+      "https://example.com/sitemap-index.xml": urlset([
+        ["https://example.com/b"],
+      ]),
+    });
+    const tree = await collectSitemapEntries(f.fetch, [], {
+      fallbackRoots: [
+        "https://example.com/sitemap.xml",
+        "https://example.com/sitemap-index.xml",
+      ],
+    });
+    expect(f.seen).toEqual(["https://example.com/sitemap.xml"]);
+    expect(tree.entries).toHaveLength(1);
+  });
+
+  it("records a file that answered 200 but is not a sitemap", async () => {
+    const f = fetcher({
+      "https://example.com/sitemap.xml": mockFetchResult(
+        "<html>soft 404</html>",
+        200,
+        "text/html",
+      ),
+    });
+    const tree = await collectSitemapEntries(f.fetch, [
+      "https://example.com/sitemap.xml",
+    ]);
+    expect(tree.malformedFiles).toEqual(["https://example.com/sitemap.xml"]);
+    expect(tree.readableFiles).toEqual([]);
+  });
+
+  // github.io is not foo.github.io's site: a sitemap there belongs to
+  // another party, and its URLs must not be judged as this site's own.
+  it("skips a child sitemap on the parent domain", async () => {
+    const f = fetcher({
+      "https://foo.github.io/sitemap.xml": index([
+        "https://github.io/attacker-sitemap.xml",
+        "https://foo.github.io/child.xml",
+      ]),
+      "https://github.io/attacker-sitemap.xml": urlset([
+        ["https://github.io/not-your-page"],
+      ]),
+      "https://foo.github.io/child.xml": urlset([
+        ["https://foo.github.io/mine"],
+      ]),
+    });
+    const tree = await collectSitemapEntries(f.fetch, [
+      "https://foo.github.io/sitemap.xml",
+    ]);
+    expect(tree.childSitemaps).toEqual(["https://foo.github.io/child.xml"]);
+    expect(tree.entries.map((e) => e.loc)).toEqual([
+      "https://foo.github.io/mine",
+    ]);
+    expect(f.seen).not.toContain("https://github.io/attacker-sitemap.xml");
+  });
+});
+
 describe("sampleEntries", () => {
   it("returns every entry when n exceeds the population", () => {
     const entries = [{ loc: "https://a.test/0" }, { loc: "https://a.test/1" }];
@@ -276,6 +386,40 @@ describe("siteSitemapTree", () => {
     expect(scan.calls[0]).toBe("https://example.com/sitemap.xml");
   });
 
+  it("reads every sitemap robots.txt declares", async () => {
+    const calls: string[] = [];
+    const posts = `<?xml version="1.0"?><urlset><url><loc>https://example.com/post-1</loc></url></urlset>`;
+    const pages = `<?xml version="1.0"?><urlset><url><loc>https://example.com/page-1</loc></url></urlset>`;
+    const scan = {
+      baseUrl: "https://example.com",
+      rootFiles: {
+        "/robots.txt": mockFetchResult(
+          "Sitemap: https://example.com/sitemap-posts.xml\nSitemap: https://example.com/sitemap-pages.xml\n",
+          200,
+          "text/plain",
+        ),
+      },
+      fetch: async (o: FetchOptions): Promise<FetchResult> => {
+        calls.push(o.url);
+        const path = new URL(o.url).pathname;
+        if (path === "/sitemap-posts.xml")
+          return mockFetchResult(posts, 200, "application/xml");
+        if (path === "/sitemap-pages.xml")
+          return mockFetchResult(pages, 200, "application/xml");
+        return mockFetchResult("", 404);
+      },
+    };
+    const tree = await siteSitemapTree(scan);
+    expect(calls).toEqual([
+      "https://example.com/sitemap-posts.xml",
+      "https://example.com/sitemap-pages.xml",
+    ]);
+    expect(tree.entries.map((e) => e.loc)).toEqual([
+      "https://example.com/post-1",
+      "https://example.com/page-1",
+    ]);
+  });
+
   // An off-site Sitemap: value is not this site's to walk, and following it
   // would turn a site-scoped scan into a crawl of another host.
   it("drops an off-site Sitemap directive", async () => {
@@ -313,6 +457,52 @@ describe("readSitemap", () => {
     expect(res.kind).toBe("malformed");
     if (res.kind === "malformed") {
       expect(res.reason).toContain("valid <urlset> or <sitemapindex>");
+    }
+  });
+
+  // The orchestrator fetches /sitemap.xml on every scan, so a 404 for it is
+  // still a present result. The verdict must follow what the walk found, not
+  // whether the first root file exists.
+  it("returns malformed when only /sitemap-index.xml is served, and it is broken", async () => {
+    const broken = mockFetchResult("<html>not xml</html>", 200, "text/html");
+    const scan = {
+      baseUrl: "https://example.com",
+      rootFiles: {
+        "/sitemap.xml": mockFetchResult("", 404),
+        "/sitemap-index.xml": broken,
+      },
+      fetch: async (o: FetchOptions): Promise<FetchResult> =>
+        new URL(o.url).pathname === "/sitemap-index.xml"
+          ? broken
+          : mockFetchResult("", 404),
+    };
+    const res = await readSitemap(scan);
+    expect(res.kind).toBe("malformed");
+    if (res.kind === "malformed") {
+      expect(res.result).toBe(broken);
+    }
+  });
+
+  it("returns malformed when the only sitemap robots.txt declares is broken", async () => {
+    const scan = {
+      baseUrl: "https://example.com",
+      rootFiles: {
+        "/robots.txt": mockFetchResult(
+          "Sitemap: https://example.com/wp-sitemap.xml\n",
+          200,
+          "text/plain",
+        ),
+        "/sitemap.xml": mockFetchResult("", 404),
+      },
+      fetch: async (o: FetchOptions): Promise<FetchResult> =>
+        new URL(o.url).pathname === "/wp-sitemap.xml"
+          ? mockFetchResult("<html>not xml</html>", 200, "text/html")
+          : mockFetchResult("", 404),
+    };
+    const res = await readSitemap(scan);
+    expect(res.kind).toBe("malformed");
+    if (res.kind === "malformed") {
+      expect(res.result).toBeUndefined();
     }
   });
 

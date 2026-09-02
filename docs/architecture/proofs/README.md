@@ -2,15 +2,17 @@
 
 One script per open finding. Each one reproduces the defect against the real
 source in `packages/core/src` and prints what it measured, ending with a
-`CONFIRMED:` line. Findings 1 and 2 are fixed and their scripts are gone; the
-fixes are pinned by `packages/core/src/gatherers/cache-owner.test.ts`, the
-"gatherer cache identity" case in `packages/core/src/audit-runner.test.ts`, and
-the `--page-type` cases in `packages/cli/src/options.test.ts`.
+`CONFIRMED:` line. Findings 1, 2, 3, 4 and 7 are fixed and their scripts are
+gone; the fixes are pinned by `packages/core/src/gatherers/cache-owner.test.ts`,
+the "gatherer cache identity" case in `packages/core/src/audit-runner.test.ts`,
+the `--page-type` cases in `packages/cli/src/options.test.ts`, and the
+"every declared root", `siteSitemapTree` and `readSitemap` cases in
+`packages/core/src/gatherers/sitemap.test.ts`.
 
 Run one:
 
 ```bash
-node --import tsx docs/architecture/proofs/f4-nullish.mts
+node --import tsx docs/architecture/proofs/f5-assessedmass.mts
 ```
 
 Run all of them:
@@ -28,11 +30,8 @@ script when its finding is closed and the fix has its own test.
 
 | script                  | finding                                           |
 | :---------------------- | :------------------------------------------------ |
-| `f3-sitemap-break.mts`  | 3 — only the first declared sitemap is read       |
-| `f4-nullish.mts`        | 4 — broken sitemap reported as absent             |
 | `f3-originhomepage.mts` | 5 — origin homepage cached as `undefined`         |
 | `f5-assessedmass.mts`   | 6 — `assessedMass` never set on the scan path     |
-| `f9-samehost.mts`       | 7 — `sameHost` accepts a parent domain            |
 | `f7-cachekey.mts`       | 8 — origin cache key ignores headers              |
 | `f8-unbounded.mts`      | 9 — origin cache retains expired entries          |
 | `f10-headers.mts`       | 10 — header keys merge case-sensitively           |
