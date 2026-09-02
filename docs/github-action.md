@@ -27,10 +27,12 @@ jobs:
 
 ## Release Pinning
 
-For production repositories, pin a tag instead of `main` after the release is cut:
+For production repositories, pin a release tag or major version instead of `main`:
 
 ```yaml
-- uses: ForkPoint/agent-lighthouse@v2.0.0
+- uses: ForkPoint/agent-lighthouse@v4
+# or pin a patch release:
+# - uses: ForkPoint/agent-lighthouse@v4.0.0
 ```
 
 ## Marketplace Copy

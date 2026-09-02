@@ -1,7 +1,7 @@
 # v1 → v2 audit map
 
-Draft mapping of every registered v1 audit to its v2 home, under the taxonomy this
-release ships: eight categories, `category/slug` identity, and the merges, splits
+Historical mapping of every registered v1 audit to its v2 home, under the taxonomy this
+release established: eight categories, `category/slug` identity, and the merges, splits
 and consolidations recorded per audit in its dossier.
 
 - **Rows in this table: 189** (unchanged — the 8 sunset rows stay as rows, with `—` for their v2 category/slug)
