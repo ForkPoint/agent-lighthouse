@@ -23,6 +23,8 @@ export interface SiteEntry {
    * they are ranked worse than everything that made the cut.
    */
   rankBucket: number;
+  /** Present on the two domains per category the smoke run scans. */
+  tier?: "smoke";
 }
 
 /**
@@ -63,8 +65,98 @@ export function bucketOf(index: number): number {
   return Math.floor(index / BUCKET_WIDTH) * BUCKET_WIDTH;
 }
 
+/** The shape of `packages/core/test-data/sites/seeds.json`. */
+export interface SeedFile {
+  smoke: string[];
+  categories: Record<string, { why: string; domains: string[] }>;
+}
+
+/** The seed file, parsed and checked. */
+export interface Seeds {
+  categoryOf: Map<string, string>;
+  smoke: Set<string>;
+}
+
 /**
- * Merge the ranked sources and the seed map into the committed list.
+ * Parse the seed file, refusing what the generator must not carry forward.
+ *
+ * A malformed hostname would be scanned as `https:///robots.txt`; a smoke
+ * domain no category lists would be a tier with no category; one domain under
+ * two categories would be counted twice by a stratified sample. Each is a
+ * typo in a hand-maintained file, so all of them are named in one error.
+ */
+export function readSeeds(file: SeedFile): Seeds {
+  const categoryOf = new Map<string, string>();
+  const problems: string[] = [];
+  for (const [category, { domains }] of Object.entries(file.categories)) {
+    for (const raw of domains) {
+      const lowered = raw.trim().toLowerCase().replace(/^www\./, "");
+      if (!HOSTNAME.test(lowered)) {
+        problems.push(`${category}: ${JSON.stringify(raw)} is not a bare hostname`);
+        continue;
+      }
+      const host = normalize(raw);
+      const seen = categoryOf.get(host);
+      if (seen && seen !== category) {
+        problems.push(`${host} is seeded under both ${seen} and ${category}`);
+        continue;
+      }
+      categoryOf.set(host, category);
+    }
+  }
+  const smoke = new Set<string>();
+  for (const raw of file.smoke) {
+    const host = normalize(raw);
+    if (!categoryOf.has(host)) {
+      problems.push(`smoke: ${JSON.stringify(raw)} is not seeded under any category`);
+      continue;
+    }
+    smoke.add(host);
+  }
+  if (problems.length > 0) {
+    throw new Error(`seeds.json:\n  ${problems.join("\n  ")}`);
+  }
+  return { categoryOf, smoke };
+}
+
+/**
+ * Platforms whose tenants share a public suffix.
+ *
+ * A hostname under one of these is a `tenant` by definition, not by guess:
+ * the suffix is what the category means. The apex itself is the platform,
+ * not a tenant.
+ */
+export const TENANT_SUFFIXES: readonly string[] = [
+  "github.io",
+  "pages.dev",
+  "vercel.app",
+  "netlify.app",
+  "myshopify.com",
+  "wixsite.com",
+  "squarespace.com",
+  "webflow.io",
+  "notion.site",
+  "gitbook.io",
+  "readthedocs.io",
+  "substack.com",
+  "blogspot.com",
+  "wordpress.com",
+];
+
+/** The platform suffix a tenant hostname sits on, if any. */
+export function tenantSuffixOf(domain: string): string | undefined {
+  return TENANT_SUFFIXES.find((suffix) => domain.endsWith(`.${suffix}`));
+}
+
+/**
+ * Merge the ranked sources and the seeds into the committed list.
+ *
+ * `limit` is the size of the ranked `unknown` slice, not the total: seeds
+ * are always carried, and ranked tenant hostnames are filed under `tenant`
+ * outside the slice, up to `tenantLimit`. `exclude` names ranked domains a
+ * previous run found dead or blocked; they neither appear nor consume a slot.
+ * A seeded domain is emitted even when excluded — removing it is a decision
+ * made in `seeds.json`, and the generator reports it.
  *
  * Pure: callers pass the parsed rows, so a test can exercise the merge without
  * touching the filesystem.
@@ -74,54 +166,64 @@ export function buildSiteList(
     domains: readonly string[];
     source: "tranco" | "crux";
   }>,
-  categoryOf: ReadonlyMap<string, string>,
-  limit: number,
+  seeds: Seeds,
+  options: { limit: number; exclude?: ReadonlySet<string>; tenantLimit?: number },
 ): SiteEntry[] {
+  const { limit } = options;
+  const exclude = options.exclude ?? new Set<string>();
+  const tenantLimit = options.tenantLimit ?? 30;
   const byDomain = new Map<string, SiteEntry>();
+  let tenants = 0;
 
   for (const { domains, source } of ranked) {
-    domains.slice(0, limit).forEach((domain, index) => {
+    let taken = 0;
+    for (const domain of domains) {
+      if (taken >= limit && tenants >= tenantLimit) break;
       // First writer wins: the sources are added best-ranked first, so a domain
       // already present is already recorded at its better rank.
-      if (byDomain.has(domain)) return;
-      byDomain.set(domain, {
+      if (byDomain.has(domain) || exclude.has(domain)) continue;
+      const seeded = seeds.categoryOf.get(domain);
+      const tenant = seeded === undefined && tenantSuffixOf(domain) !== undefined;
+      if (tenant) {
+        if (tenants >= tenantLimit) continue;
+        tenants += 1;
+      } else if (seeded === undefined) {
+        if (taken >= limit) continue;
+      }
+      const entry: SiteEntry = {
         domain,
         source,
-        category: categoryOf.get(domain) ?? "unknown",
-        rankBucket: bucketOf(index),
-      });
-    });
+        category: seeded ?? (tenant ? "tenant" : "unknown"),
+        rankBucket: bucketOf(seeded === undefined && !tenant ? taken : 0),
+      };
+      if (seeds.smoke.has(domain)) entry.tier = "smoke";
+      byDomain.set(domain, entry);
+      if (seeded === undefined && !tenant) taken += 1;
+    }
   }
 
   // Seeded domains are the reason the list reaches past storefronts, so they
   // are kept even when they fall outside the rank cut. They are marked
   // `'seed'`, not `'tranco'`: claiming a source that never listed them would
   // let a consumer scan a hand-picked storefront believing it is top-ranked.
-  for (const [domain, category] of categoryOf) {
-    // `normalize` answers '' for anything that is not a bare hostname, and the
-    // seed map is keyed by its output, so one malformed entry in the
-    // hand-maintained `categories.json` would be carried into the committed
-    // list as `{ domain: '' }` — and the nightly would request
-    // `https:///robots.txt` for it. The generator refuses such an entry
-    // outright; this is the second door.
-    if (domain === "") continue;
-    if (!byDomain.has(domain)) {
-      byDomain.set(domain, {
-        domain,
-        source: "seed",
-        category,
-        // One bucket past the worst RANKED index, which is `limit - 1` — not
-        // `bucketOf(limit)`, which collides with the last ranked bucket at any
-        // limit that is not a multiple of the width. At limit 10 that put a
-        // hand-seeded domain in bucket 0 beside rank #1.
-        rankBucket: bucketOf(limit - 1) + BUCKET_WIDTH,
-      });
-    }
+  for (const [domain, category] of seeds.categoryOf) {
+    if (byDomain.has(domain)) continue;
+    const entry: SiteEntry = {
+      domain,
+      source: "seed",
+      category,
+      // One bucket past the worst RANKED index, which is `limit - 1` — not
+      // `bucketOf(limit)`, which collides with the last ranked bucket at any
+      // limit that is not a multiple of the width.
+      rankBucket: bucketOf(Math.max(limit, 1) - 1) + BUCKET_WIDTH,
+    };
+    if (seeds.smoke.has(domain)) entry.tier = "smoke";
+    byDomain.set(domain, entry);
   }
 
   // Sorted by domain, not by rank: Tranco reorders daily, so a rank-ordered
-  // file reshuffles a thousand unchanged lines on every regeneration and the
-  // diff stops showing which sites actually joined or left.
+  // file reshuffles unchanged lines on every regeneration and the diff stops
+  // showing which sites actually joined or left.
   return [...byDomain.values()].sort((a, b) =>
     a.domain.localeCompare(b.domain),
   );
