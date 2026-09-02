@@ -23,7 +23,10 @@
     "version-packages": "changeset version",
     "release": "pnpm build && changeset publish",
     "test:coverage": "vitest run --coverage",
-    "test:live": "node --import tsx scripts/test-live-sites.ts"
+    "test:live": "node --import tsx scripts/test-live-sites.ts",
+    "corpus:status": "node --import tsx scripts/corpus-status.ts",
+    "corpus:probe": "node --import tsx scripts/probe-corpus.ts",
+    "build:sites": "node --import tsx scripts/build-site-list.ts"
   },
   "devDependencies": {
     "@changesets/cli": "^2.27.12",
