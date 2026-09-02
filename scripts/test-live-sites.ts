@@ -299,8 +299,10 @@ async function main(): Promise<void> {
     }
 
     if (selected.length === 0) {
+      // An empty round is not the end of the run: later rounds may still
+      // select sites, and the summary must be written either way.
       console.log("⚠️ No sites matched the selection criteria.");
-      return;
+      continue;
     }
 
     console.log(

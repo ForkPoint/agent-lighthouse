@@ -233,7 +233,11 @@ export async function runScan(
   const originCache = options?.originCache ?? defaultOriginCache;
   const bypassCache =
     shouldBypassOriginCache(url, options) || !!options?.robotsTxt;
-  const originCacheKey = computeOriginCacheKey(url, ORIGIN_EVIDENCE_VERSION);
+  const originCacheKey = computeOriginCacheKey(
+    url,
+    ORIGIN_EVIDENCE_VERSION,
+    options?.headers,
+  );
 
   let cachedEvidence = !bypassCache
     ? originCache.get(originCacheKey)
@@ -242,6 +246,8 @@ export async function runScan(
   let originHomepageResult: FetchResult | undefined;
   let originCached = false;
   let originReadAt: string;
+  // True when this scan read the origin itself and owes the cache a write.
+  let originFresh = false;
 
   if (cachedEvidence) {
     rootFiles = cachedEvidence.rootFiles;
@@ -282,22 +288,15 @@ export async function runScan(
       rootFiles[path] = rootResults[i]!;
     });
 
+    // A homepage scan is about to fetch the origin homepage as its page, so
+    // it is not fetched twice here; the page result fills the slot below.
     const isHomepageScan = url === `${baseUrl}/` || url === baseUrl;
     originHomepageResult = isHomepageScan
       ? undefined
       : await fetchPageWithRetry(fetcher, `${baseUrl}/`, signal);
 
     originReadAt = new Date().toISOString();
-
-    if (!bypassCache) {
-      originCache.set(originCacheKey, {
-        origin: baseUrl,
-        version: ORIGIN_EVIDENCE_VERSION,
-        readAt: originReadAt,
-        rootFiles,
-        originHomepage: originHomepageResult,
-      });
-    }
+    originFresh = true;
 
     tracker.phaseDone();
     logger.debug("[orchestrator] Phase 1 complete: Root files fetched");
@@ -313,6 +312,20 @@ export async function runScan(
 
   if (!originHomepageResult && (url === `${baseUrl}/` || url === baseUrl)) {
     originHomepageResult = pageResult;
+  }
+
+  // The cache is written only now, after a homepage scan has filled the
+  // origin homepage slot from its own page fetch. Written earlier, a homepage
+  // scan stored `undefined` and every later scan of the origin inherited it,
+  // so the evidence depended on which URL happened to be scanned first.
+  if (originFresh && !bypassCache) {
+    originCache.set(originCacheKey, {
+      origin: baseUrl,
+      version: ORIGIN_EVIDENCE_VERSION,
+      readAt: originReadAt,
+      rootFiles,
+      originHomepage: originHomepageResult,
+    });
   }
 
   const extraResults = await Promise.all(
@@ -420,6 +433,13 @@ export async function runScan(
     fetch: (options) => fetcher.fetch({ ...options, signal }),
     wafProtection: wafProtection ?? undefined,
     evidence,
+    originEvidence: {
+      origin: baseUrl,
+      version: ORIGIN_EVIDENCE_VERSION,
+      readAt: originReadAt,
+      cached: originCached,
+      originHomepage: originHomepageResult,
+    },
   };
 
   const config = filterConfig(defaultConfig, {
@@ -579,7 +599,11 @@ export async function runScan(
   const declaredOverrideType =
     options?.pageType ?? overrideTypeByKey.get(targetKey);
 
-  const primaryPage = pages[0];
+  // `pages` holds only the pages that answered 200, so its first entry is
+  // not always the target: with the target down and an override up, it is
+  // the override. The conditions block names the target, so its page type
+  // must come from the target's own entry or from the explicit fallback.
+  const primaryPage = pages.find((p) => p.url === displayUrl);
   const pageTypeCondition = primaryPage
     ? {
         type: primaryPage.pageType,

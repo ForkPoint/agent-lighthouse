@@ -18,7 +18,11 @@ import type {
   CategoryConfig,
   AuditRegistration,
 } from "./audit-config";
-import { calculateCategoryScore, calculateOverallScore } from "./scorer";
+import {
+  assessedMassOf,
+  calculateCategoryScore,
+  calculateOverallScore,
+} from "./scorer";
 import { traceFromCheck, formatTrace, type AuditTrace } from "./audit-trace";
 import { scanReadTheSite, unreadSiteReason } from "./scan-evidence";
 import { cacheOwner } from "./gatherers/cache-owner";
@@ -379,6 +383,11 @@ function buildWeightedCategoryResult(
     id: cat.id,
     name: cat.name,
     weight: cat.weight,
+    // `calculateOverallScore` weights a category by what it assessed, and
+    // falls back to the registry mass only when this is absent. It must be
+    // set here, on the path every scan takes, or the fallback is the rule.
+    registryMass: cat.weight,
+    assessedMass: assessedMassOf(checks),
     // One scorer for the whole engine: each check carries its own weight
     // (stamped by `toCheckResult`/`stubCheck`), and a check without one is
     // unproven evidence that must not move the score.

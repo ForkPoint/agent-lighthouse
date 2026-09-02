@@ -7,6 +7,87 @@ import {
 } from "../origin-cache";
 
 describe("Phase 5: Origin Cache Architecture", () => {
+  describe("computeOriginCacheKey — request headers", () => {
+    it("gives a bot-UA scan a different slot from a default scan", () => {
+      const plain = computeOriginCacheKey("https://example.com", "v1");
+      const bot = computeOriginCacheKey("https://example.com", "v1", {
+        "User-Agent": "GPTBot/1.0",
+      });
+      expect(bot).not.toBe(plain);
+      expect(bot.startsWith("https://example.com|v1|h:")).toBe(true);
+    });
+
+    it("keys by header name and value, not by casing or order", () => {
+      const a = computeOriginCacheKey("https://example.com", "v1", {
+        "User-Agent": "GPTBot/1.0",
+        "X-Scan": "1",
+      });
+      const b = computeOriginCacheKey("https://example.com", "v1", {
+        "x-scan": "1",
+        "user-agent": "GPTBot/1.0",
+      });
+      expect(a).toBe(b);
+    });
+
+    it("never folds a credential into the key", () => {
+      const plain = computeOriginCacheKey("https://example.com", "v1");
+      const withAuth = computeOriginCacheKey("https://example.com", "v1", {
+        Authorization: "Bearer secret",
+        Cookie: "session=1",
+      });
+      expect(withAuth).toBe(plain);
+      expect(withAuth).not.toContain("secret");
+    });
+
+    it("leaves the plain key unchanged for an empty header set", () => {
+      expect(computeOriginCacheKey("https://example.com", "v1", {})).toBe(
+        "https://example.com|v1",
+      );
+    });
+  });
+
+  describe("OriginCache — bounds", () => {
+    const evidence = (origin: string): OriginEvidence => ({
+      origin,
+      version: "v1",
+      readAt: new Date().toISOString(),
+      rootFiles: {},
+    });
+
+    it("sweeps expired entries on write, not only on a read of that key", async () => {
+      const cache = new OriginCache(1);
+      for (let i = 0; i < 50; i++) {
+        cache.set(`https://s${i}.test|v1`, evidence(`https://s${i}.test`));
+      }
+      await new Promise((r) => setTimeout(r, 5));
+      cache.set(
+        "https://fresh.test|v1",
+        evidence("https://fresh.test"),
+        60_000,
+      );
+      expect(cache.size).toBe(1);
+    });
+
+    it("drops the oldest entry when full", () => {
+      const cache = new OriginCache(60_000, 3);
+      for (const n of ["a", "b", "c", "d"]) {
+        cache.set(`https://${n}.test|v1`, evidence(`https://${n}.test`));
+      }
+      expect(cache.size).toBe(3);
+      expect(cache.has("https://a.test|v1")).toBe(false);
+      expect(cache.has("https://d.test|v1")).toBe(true);
+    });
+
+    it("counts a rewrite of the same key once", () => {
+      const cache = new OriginCache(60_000, 2);
+      cache.set("https://a.test|v1", evidence("https://a.test"));
+      cache.set("https://a.test|v1", evidence("https://a.test"));
+      cache.set("https://b.test|v1", evidence("https://b.test"));
+      expect(cache.size).toBe(2);
+      expect(cache.has("https://a.test|v1")).toBe(true);
+    });
+  });
+
   describe("computeOriginCacheKey", () => {
     it("normalizes scheme and hostname to lowercase", () => {
       const key = computeOriginCacheKey("HTTPS://EXAMPLE.COM/Path", "v1");
@@ -153,7 +234,7 @@ describe("Phase 5: Origin Cache Architecture", () => {
       ).toBe(true);
       expect(
         shouldBypassOriginCache("https://example.com", {
-          headers: { "Authorization": "Token 123" },
+          headers: { Authorization: "Token 123" },
         }),
       ).toBe(true);
     });
@@ -171,7 +252,7 @@ describe("Phase 5: Origin Cache Architecture", () => {
       ).toBe(true);
       expect(
         shouldBypassOriginCache("https://example.com", {
-          headers: { "Cookie": "session=xyz" },
+          headers: { Cookie: "session=xyz" },
         }),
       ).toBe(true);
     });

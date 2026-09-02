@@ -5,7 +5,10 @@ import type { FetchResult } from "./fetcher";
 // ── Mocks ────────────────────────────────────────────────────────
 // Shared, test-controlled URL → FetchResult map. The fetcher mock looks each
 // requested URL up here, defaulting to a 404 so nothing escapes to the network.
-const h = vi.hoisted(() => ({ map: new Map<string, FetchResult>() }));
+const h = vi.hoisted(() => ({
+  map: new Map<string, FetchResult>(),
+  calls: [] as string[],
+}));
 
 function notFound(url: string): FetchResult {
   return {
@@ -28,8 +31,10 @@ vi.mock("./fetcher", async (importOriginal) => {
     // sanitize the scanned URL); only the network fetch is stubbed.
     ...actual,
     createFetcher: () => ({
-      fetch: async ({ url }: { url: string }) =>
-        h.map.get(url) ?? notFound(url),
+      fetch: async ({ url }: { url: string }) => {
+        h.calls.push(url);
+        return h.map.get(url) ?? notFound(url);
+      },
     }),
   };
 });
@@ -84,10 +89,11 @@ const CATEGORY_HTML = `<html><head>
 
 const CONTENT_HTML = `<html><body><main><h1>Hello</h1><p>Some content here.</p></main></body></html>`;
 
-import { defaultOriginCache } from "./origin-cache";
+import { defaultOriginCache, computeOriginCacheKey } from "./origin-cache";
 
 beforeEach(() => {
   h.map.clear();
+  h.calls.length = 0;
   defaultOriginCache.clear();
 });
 
@@ -440,6 +446,69 @@ describe("runScan — no root files", () => {
 // ---------------------------------------------------------------------------
 // Sitemap-index fallback + non-root scan URL
 // ---------------------------------------------------------------------------
+
+describe("runScan — origin homepage evidence", () => {
+  it("caches the homepage a homepage scan read, so a later scan of the origin reuses it", async () => {
+    set("https://example.com/", CONTENT_HTML);
+    set("https://example.com/shop", CONTENT_HTML);
+    const spy = vi.mocked(runAudits);
+
+    await runScan("https://example.com/");
+    const cached = defaultOriginCache.get(
+      computeOriginCacheKey("https://example.com/"),
+    );
+    expect(cached?.originHomepage?.status).toBe(200);
+
+    // The second scan reads the origin from the cache, homepage included.
+    spy.mockClear();
+    await runScan("https://example.com/shop");
+    const ctx = spy.mock.calls[0]?.[0];
+    expect(ctx?.originEvidence?.cached).toBe(true);
+    expect(ctx?.originEvidence?.originHomepage?.status).toBe(200);
+  });
+
+  it("hands the origin homepage to the audits", async () => {
+    set("https://example.com/", CONTENT_HTML);
+    set("https://example.com/shop", CONTENT_HTML);
+    const spy = vi.mocked(runAudits);
+    spy.mockClear();
+
+    await runScan("https://example.com/shop");
+
+    const ctx = spy.mock.calls[0]?.[0];
+    expect(ctx?.originEvidence?.originHomepage?.status).toBe(200);
+    expect(ctx?.originEvidence?.cached).toBe(false);
+  });
+
+  it("keys the origin cache by request headers", async () => {
+    set("https://example.com/", CONTENT_HTML);
+
+    await runScan("https://example.com/");
+    await runScan("https://example.com/", {
+      headers: { "User-Agent": "GPTBot/1.0" },
+    });
+
+    expect(
+      h.calls.filter((u) => u === "https://example.com/robots.txt"),
+    ).toHaveLength(2);
+  });
+});
+
+describe("runScan — conditions name the target", () => {
+  it("does not describe an override page as the target's page type", async () => {
+    const target = "https://example.com/this-path-does-not-exist";
+    set("https://example.com/", PRODUCT_HTML);
+
+    const report = await runScan(target, {
+      pages: [{ url: "https://example.com/", pageType: "product" }],
+    });
+
+    expect(report.conditions?.url).toBe(target);
+    expect(report.pagesScanned[0]?.url).toBe("https://example.com/");
+    expect(report.conditions?.pageType.type).not.toBe("product");
+    expect(report.conditions?.pageType.source).toBe("detected");
+  });
+});
 
 describe("runScan — non-root scan URL", () => {
   it("scans a non-root target URL as the page unit", async () => {

@@ -8,9 +8,10 @@ names the script under `docs/architecture/proofs/` that demonstrates it; where a
 was not practical, the entry says so and cites the exact lines instead. No
 finding here is a reading of the code alone unless it says it is.
 
-Findings 1, 2, 3, 4 and 7 are fixed on this branch; each says so under its
-heading and its proof scripts are deleted, per `proofs/README.md`. The rest is
-the record, not the fix.
+Every finding is fixed on this branch. Each entry says how under a **Fixed**
+line and names the test that pins it; the proof scripts are deleted, per
+`proofs/README.md`. The transcripts quoted below are what the proofs printed
+before the fix.
 
 |   # | where                            | severity | ships broken in | proved by         |
 | --: | :------------------------------- | :------- | :-------------- | :---------------- |
@@ -289,10 +290,17 @@ originHomepage cached      : undefined
 homepage. Scan `https://site/product` first: it fetches one. Same two scans,
 different evidence, decided by which ran first.
 
-Proof: `docs/architecture/proofs/f3-originhomepage.mts`. The "read by nobody" half is a code
-reading, not a runtime proof: `grep -rn "\.originEvidence"` across
-`packages/*/src` returns one hit, in `report/src/hydrate.ts:135`, which reads
+Proof: one script, deleted with the fix; it produced the transcript above. The
+"read by nobody" half was a code reading: `grep -rn "\.originEvidence"` across
+`packages/*/src` returned one hit, in `report/src/hydrate.ts:135`, which reads
 the report field and not the context field.
+
+**Fixed.** The cache write moves after the page fetch, so a homepage scan
+stores the page it read and every later scan of the origin inherits it,
+whatever the order. The `ctx` literal now sets `originEvidence` with origin,
+version, read time, cache status and the homepage, so the fetch has a
+consumer. No audit reads it yet; that is the next consumer's work. Pinned by
+"runScan — origin homepage evidence" in `packages/core/src/orchestrator.test.ts`.
 
 ---
 
@@ -327,7 +335,14 @@ calculations updated to use `assessedMass`", does not hold for any scan. The
 `conditions.coverage` block reports an assessed/registry split that the score
 itself does not apply.
 
-Proof: `docs/architecture/proofs/f5-assessedmass.mts`.
+Proof: one script, deleted with the fix; it produced the table above.
+
+**Fixed.** `scorer.ts` exports `assessedMassOf`, `buildCategoryResult` uses
+it, and `buildWeightedCategoryResult` sets `assessedMass` and `registryMass`
+on every category the runner builds. `calculateOverallScore` now takes its
+first operand on every scan, and the changeset claim holds. Overall scores
+move on most sites; the changeset says so. Pinned by "category mass on the
+scan path" in `packages/core/src/audit-runner.test.ts`.
 
 ---
 
@@ -398,7 +413,15 @@ every fetch, but neither the CLI nor the MCP server passes it — `grep -rn
 "headers" packages/cli/src packages/mcp/src` returns nothing. So no shipped
 entry point can trigger this today. It is an SDK-only hazard.
 
-Proof: `docs/architecture/proofs/f7-cachekey.mts`.
+Proof: one script, deleted with the fix; it produced the transcript above.
+
+**Fixed.** `computeOriginCacheKey` takes the request headers and appends a
+fingerprint of the non-credential ones, so a bot-UA scan and a default scan
+hold separate slots. Credential headers still bypass the cache and never enter
+a key. The orchestrator passes `options.headers`. Pinned by
+"computeOriginCacheKey — request headers" in
+`packages/core/src/tests/origin-cache.test.ts` and "keys the origin cache by
+request headers" in `packages/core/src/orchestrator.test.ts`.
 
 ---
 
@@ -423,7 +446,12 @@ Each entry holds 26 root-file `FetchResult`s, and `MAX_RESPONSE_BODY_BYTES` is
 
 Needs a bound, a periodic sweep, or both.
 
-Proof: `docs/architecture/proofs/f8-unbounded.mts`.
+Proof: one script, deleted with the fix; it produced the transcript above.
+
+**Fixed.** `OriginCache` takes a `maxEntries` bound, default
+`DEFAULT_ORIGIN_CACHE_MAX_ENTRIES` (256), sweeps expired entries on every
+write and drops the oldest entry when full. Pinned by "OriginCache — bounds"
+in `packages/core/src/tests/origin-cache.test.ts`.
 
 ---
 
@@ -461,7 +489,13 @@ alone, so a per-request header could already collide. The
 `...fetcherOptions.headers` operand, and with it the `ScanOptions.headers`
 collision, is new in 4.0.0.
 
-Proof: `docs/architecture/proofs/f10-headers.mts`.
+Proof: one script, deleted with the fix; it produced the transcript above.
+
+**Fixed.** `fetcher.ts` merges its header layers with `mergeHeaders`, which
+replaces by case-insensitive name and keeps the later layer's casing, and sets
+`Authorization` and `Content-Type` through `setHeader`, which does the same.
+Pinned by "replaces a caller header of the same name in another casing" in
+`packages/core/src/fetcher.test.ts`.
 
 ---
 
@@ -490,7 +524,13 @@ The conditions block states the scan's own terms. Here it names one URL and
 describes another. Key off the entry whose original index is 0, or fall back
 explicitly when the target did not survive the filter.
 
-Proof: `docs/architecture/proofs/f11-conditions.mts`.
+Proof: one script, deleted with the fix; it produced the transcript above.
+
+**Fixed.** `primaryPage` is the entry whose URL is the target, found rather
+than indexed. When the target did not survive the filter the existing
+fallback applies, and the block no longer describes an override under the
+target's URL. Pinned by "runScan — conditions name the target" in
+`packages/core/src/orchestrator.test.ts`.
 
 ---
 
@@ -525,6 +565,11 @@ Should be `continue`, with a deliberate decision about the exit code.
 
 Proof: the shell transcript above.
 
+**Fixed.** `return` is `continue`. An empty round is logged and the run goes
+on to the next round and to the summary write; the exit code is unchanged, so
+`pnpm test:live --limit=0` still exits 0 and now writes its summary file. No
+unit test: the script is a runner, and CI's smoke step is the check.
+
 ---
 
 ## 13. Informative checks report `score: 0` in JSON
@@ -554,19 +599,22 @@ to report a number without moving the score, that is the number gone.
 Proof: read of `scorer.ts:41` and a grep of `packages/report/src` for per-check
 score rendering; both are cited above.
 
+**Fixed.** `score: result.score`. The weight stays 0. Pinned by "keeps the
+measured score on an informative check, with weight 0" in
+`packages/core/src/audit.test.ts`.
+
 ---
 
-## Suggested order
+## Order as landed
 
-Findings 1 and 2 were regressions this release introduced, both in the
-release's headline features. Both are fixed on this branch and should land
-before `ci(release): version packages` (#27) merges.
+Three commits on `review/pre-4.0.0-findings`, all before
+`ci(release): version packages` (#27) merges:
 
-Findings 3, 4, 5 and 6 are wrong verdicts and wrong scores, not crashes. 3 and
-4 are fixed on this branch, with 7. 5 and 6 can ship in 4.0.1 if 4.0.0 is
-time-boxed, but 6 contradicts a claim the 4.0.0 changesets make, so the
-changeset text needs a correction either way.
+1. Findings 1 and 2, the two regressions in the release's headline features.
+2. Findings 3, 4 and 7, the sitemap gatherer, in one pass.
+3. Findings 5, 6, 8, 9, 10, 11, 12 and 13.
 
-Findings 7 through 13 are cleanup. 8 and 10 are unreachable from any shipped
-entry point today and can wait for whoever exposes `headers`. Finding 7 is a
-4.0.0 regression despite its low severity and belongs with 3 and 4.
+Each fix carries a changeset. 6 and 13 are `major`: a scan's overall score
+and the score on informative checks both change. 3 and 4 are `major` too,
+since three sitemap audits change verdict on a site with a broken sitemap.
+The rest are `patch`.

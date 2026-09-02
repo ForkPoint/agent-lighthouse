@@ -49,6 +49,17 @@ export function calculateCategoryScore(checks: CheckResult[]): number {
 }
 
 /**
+ * The evidence mass a category actually assessed: the summed weight of its
+ * checks that reached a verdict. Not-applicable and informative checks carry
+ * nothing here, the same rule `calculateCategoryScore` applies.
+ */
+export function assessedMassOf(checks: CheckResult[]): number {
+  return checks
+    .filter((c) => c.status !== "na" && !isInformative(c))
+    .reduce((sum, c) => sum + (c.weight ?? 0), 0);
+}
+
+/**
  * Assemble a category result.
  *
  * `mass` is the category's evidence mass — the summed weight of its registered
@@ -61,16 +72,12 @@ export function buildCategoryResult(
   checks: CheckResult[],
   mass = 0,
 ): CategoryResult {
-  const assessedMass = checks
-    .filter((c) => c.status !== "na" && !isInformative(c))
-    .reduce((sum, c) => sum + (c.weight ?? 0), 0);
-
   return {
     id,
     name: CATEGORY_NAMES[id] ?? id,
     weight: mass,
     registryMass: mass,
-    assessedMass,
+    assessedMass: assessedMassOf(checks),
     score: calculateCategoryScore(checks),
     checks,
     passCount: checks.filter((c) => c.status === "pass").length,

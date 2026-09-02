@@ -219,7 +219,10 @@ export abstract class Audit {
           : meta.failureTitle,
       description: meta.description,
       status: result.status,
-      score: isInformative ? 0 : result.score,
+      // The measured score stays, whatever the display mode: an informative
+      // check reports a number without moving the site's score, and `weight`
+      // below is what keeps it out of every sum.
+      score: result.score,
       // Single source of truth for a check's evidence weight: stamped here, at
       // the one place a CheckResult is built from its meta.
       weight: isInformative ? 0 : meta.weight,

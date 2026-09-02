@@ -168,8 +168,10 @@ describe("runAudits", () => {
     expect(cat2.checks).toHaveLength(0);
     expect(cat2.score).toBe(0);
 
-    // overall = round(90*0.5 + 0*0.5) = 45
-    expect(out.overallScore).toBe(45);
+    // cat2 assessed nothing, so it carries no mass and drops out of the
+    // overall mean: overall = 90*5 / 5 = 90. Under the registry-mass
+    // fallback it used to be round(90*0.5 + 0*0.5) = 45.
+    expect(out.overallScore).toBe(90);
 
     errorSpy.mockRestore();
   });
@@ -314,6 +316,69 @@ describe("runAudits", () => {
     const out = await runAudits(ctxWith(["homepage"]), config);
     expect(out.checks).toHaveLength(25);
     expect(out.categories[0].score).toBe(100);
+  });
+});
+
+describe("category mass on the scan path", () => {
+  it("sets assessedMass and registryMass on every category runAudits builds", async () => {
+    const ctx = ctxWith(["homepage"]);
+    const config: ScanConfig = {
+      categories: [{ id: "cat1", name: "Cat One", weight: 5 }],
+      audits: {
+        cat1: [
+          makeReg(meta({ id: "a", category: "cat1", weight: 2 }), () =>
+            result("pass", 1),
+          ),
+          makeReg(meta({ id: "b", category: "cat1", weight: 3 }), () =>
+            result("na", 0),
+          ),
+          makeReg(
+            meta({
+              id: "c",
+              category: "cat1",
+              weight: 0,
+              scoreDisplayMode: "informative",
+            }),
+            () => result("fail", 0),
+          ),
+        ],
+      },
+    };
+
+    const { categories } = await runAudits(ctx, config);
+    expect(categories[0]?.registryMass).toBe(5);
+    expect(categories[0]?.assessedMass).toBe(2);
+  });
+
+  it("weights the overall score by assessed mass, not registry mass", async () => {
+    const ctx = ctxWith(["homepage"]);
+    const config: ScanConfig = {
+      categories: [
+        { id: "big", name: "Big", weight: 10 },
+        { id: "small", name: "Small", weight: 1 },
+      ],
+      audits: {
+        // Registry mass 10, but only 1 of it assessed, at score 0.
+        big: [
+          makeReg(meta({ id: "b1", category: "big", weight: 1 }), () =>
+            result("fail", 0),
+          ),
+          makeReg(meta({ id: "b2", category: "big", weight: 9 }), () =>
+            result("na", 0),
+          ),
+        ],
+        // Registry mass 1, all assessed, at score 100.
+        small: [
+          makeReg(meta({ id: "s1", category: "small", weight: 1 }), () =>
+            result("pass", 1),
+          ),
+        ],
+      },
+    };
+
+    const { overallScore } = await runAudits(ctx, config);
+    // Assessed: (0 * 1 + 100 * 1) / 2 = 50. Registry would give 9.
+    expect(overallScore).toBe(50);
   });
 });
 
