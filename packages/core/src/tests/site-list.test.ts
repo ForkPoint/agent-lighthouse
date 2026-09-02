@@ -291,6 +291,18 @@ describe("buildSiteList", () => {
     expect(ranked).toEqual(["b.com", "c.com"]);
   });
 
+  it("keeps the ranked source of an excluded domain that is seeded", () => {
+    const built = buildSiteList(
+      [{ domains: ["a.com", "b.com"], source: "tranco" }],
+      seeds,
+      { limit: 1, exclude: new Set(["a.com"]) },
+    );
+    const a = built.find((s) => s.domain === "a.com");
+    expect(a?.source).toBe("tranco");
+    expect(a?.rankBucket).toBe(0);
+    expect(built.find((s) => s.domain === "b.com")?.source).toBe("tranco");
+  });
+
   it("still emits an excluded domain when it is seeded", () => {
     const built = buildSiteList([], seeds, {
       limit: 0,

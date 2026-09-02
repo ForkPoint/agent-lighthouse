@@ -77,9 +77,9 @@
   },
   {
     "domain": "alibaba.com",
-    "source": "seed",
+    "source": "tranco",
     "category": "marketplace",
-    "rankBucket": 100
+    "rankBucket": 0
   },
   {
     "domain": "aliexpress.com",
@@ -89,9 +89,9 @@
   },
   {
     "domain": "aljazeera.com",
-    "source": "seed",
+    "source": "tranco",
     "category": "news",
-    "rankBucket": 100
+    "rankBucket": 0
   },
   {
     "domain": "allbirds.com",
@@ -120,9 +120,9 @@
   },
   {
     "domain": "amazon.com",
-    "source": "seed",
+    "source": "tranco",
     "category": "marketplace",
-    "rankBucket": 100
+    "rankBucket": 0
   },
   {
     "domain": "amazonaws.com",
@@ -144,9 +144,9 @@
   },
   {
     "domain": "apnews.com",
-    "source": "seed",
+    "source": "tranco",
     "category": "news",
-    "rankBucket": 100
+    "rankBucket": 0
   },
   {
     "domain": "apple-dns.net",
@@ -169,9 +169,9 @@
   },
   {
     "domain": "asahi.com",
-    "source": "seed",
+    "source": "tranco",
     "category": "news",
-    "rankBucket": 100
+    "rankBucket": 0
   },
   {
     "domain": "asana.com",
@@ -246,9 +246,9 @@
   },
   {
     "domain": "bbc.co.uk",
-    "source": "seed",
+    "source": "tranco",
     "category": "news",
-    "rankBucket": 100
+    "rankBucket": 0
   },
   {
     "domain": "beardbrand.com",
@@ -282,9 +282,9 @@
   },
   {
     "domain": "bnpparibas.com",
-    "source": "seed",
+    "source": "tranco",
     "category": "bank",
-    "rankBucket": 100
+    "rankBucket": 0
   },
   {
     "domain": "bol.com",
@@ -294,9 +294,9 @@
   },
   {
     "domain": "bombas.com",
-    "source": "seed",
+    "source": "tranco",
     "category": "storefront",
-    "rankBucket": 100
+    "rankBucket": 0
   },
   {
     "domain": "bondvet.com",
@@ -455,9 +455,9 @@
   },
   {
     "domain": "cnn.com",
-    "source": "seed",
+    "source": "tranco",
     "category": "news",
-    "rankBucket": 100
+    "rankBucket": 0
   },
   {
     "domain": "cohere.com",
@@ -771,9 +771,9 @@
   },
   {
     "domain": "ebay.com",
-    "source": "seed",
+    "source": "tranco",
     "category": "marketplace",
-    "rankBucket": 100
+    "rankBucket": 0
   },
   {
     "domain": "ec.europa.eu",
@@ -783,9 +783,9 @@
   },
   {
     "domain": "economist.com",
-    "source": "seed",
+    "source": "tranco",
     "category": "news",
-    "rankBucket": 100
+    "rankBucket": 0
   },
   {
     "domain": "ehdbsduvsddhbhbsd.blogspot.com",
@@ -801,9 +801,9 @@
   },
   {
     "domain": "elpais.com",
-    "source": "seed",
+    "source": "tranco",
     "category": "news",
-    "rankBucket": 100
+    "rankBucket": 0
   },
   {
     "domain": "epa.gov",
@@ -819,9 +819,9 @@
   },
   {
     "domain": "europa.eu",
-    "source": "seed",
+    "source": "tranco",
     "category": "government",
-    "rankBucket": 100
+    "rankBucket": 0
   },
   {
     "domain": "eurostar.com",
@@ -855,9 +855,9 @@
   },
   {
     "domain": "figma.com",
-    "source": "seed",
+    "source": "tranco",
     "category": "saas",
-    "rankBucket": 100
+    "rankBucket": 0
   },
   {
     "domain": "finnair.com",
@@ -933,9 +933,9 @@
   },
   {
     "domain": "ft.com",
-    "source": "seed",
+    "source": "tranco",
     "category": "news",
-    "rankBucket": 100
+    "rankBucket": 0
   },
   {
     "domain": "gandi.net",
@@ -1187,9 +1187,9 @@
   },
   {
     "domain": "india.gov.in",
-    "source": "seed",
+    "source": "tranco",
     "category": "government",
-    "rankBucket": 100
+    "rankBucket": 0
   },
   {
     "domain": "ing.com",
@@ -1235,9 +1235,9 @@
   },
   {
     "domain": "japantimes.co.jp",
-    "source": "seed",
+    "source": "tranco",
     "category": "news",
-    "rankBucket": 100
+    "rankBucket": 0
   },
   {
     "domain": "jd.com",
@@ -1308,9 +1308,9 @@
   },
   {
     "domain": "lemonde.fr",
-    "source": "seed",
+    "source": "tranco",
     "category": "news",
-    "rankBucket": 100
+    "rankBucket": 0
   },
   {
     "domain": "levainbakery.com",
@@ -1368,9 +1368,9 @@
   },
   {
     "domain": "lobste.rs",
-    "source": "seed",
+    "source": "tranco",
     "category": "forum",
-    "rankBucket": 100
+    "rankBucket": 0
   },
   {
     "domain": "loom.com",
@@ -1434,9 +1434,9 @@
   },
   {
     "domain": "mercadolibre.com",
-    "source": "seed",
+    "source": "tranco",
     "category": "marketplace",
-    "rankBucket": 100
+    "rankBucket": 0
   },
   {
     "domain": "merck.com",
@@ -1572,9 +1572,9 @@
   },
   {
     "domain": "news.ycombinator.com",
-    "source": "seed",
+    "source": "crux",
     "category": "forum",
-    "rankBucket": 100
+    "rankBucket": 0
   },
   {
     "domain": "next-blog-starter.vercel.app",
@@ -1596,9 +1596,9 @@
   },
   {
     "domain": "nih.gov",
-    "source": "seed",
+    "source": "tranco",
     "category": "government",
-    "rankBucket": 100
+    "rankBucket": 0
   },
   {
     "domain": "nodejs.org",
@@ -1620,9 +1620,9 @@
   },
   {
     "domain": "npr.org",
-    "source": "seed",
+    "source": "tranco",
     "category": "news",
-    "rankBucket": 100
+    "rankBucket": 0
   },
   {
     "domain": "ntp.org",
@@ -1644,9 +1644,9 @@
   },
   {
     "domain": "nytimes.com",
-    "source": "seed",
+    "source": "tranco",
     "category": "news",
-    "rankBucket": 100
+    "rankBucket": 0
   },
   {
     "domain": "nyulangone.org",
@@ -1783,9 +1783,9 @@
   },
   {
     "domain": "quora.com",
-    "source": "seed",
+    "source": "tranco",
     "category": "forum",
-    "rankBucket": 100
+    "rankBucket": 0
   },
   {
     "domain": "rakuten.co.jp",
@@ -1813,9 +1813,9 @@
   },
   {
     "domain": "reddit.com",
-    "source": "seed",
+    "source": "tranco",
     "category": "forum",
-    "rankBucket": 100
+    "rankBucket": 0
   },
   {
     "domain": "redis.io",
@@ -1861,9 +1861,9 @@
   },
   {
     "domain": "reuters.com",
-    "source": "seed",
+    "source": "tranco",
     "category": "news",
-    "rankBucket": 100
+    "rankBucket": 0
   },
   {
     "domain": "roblox.com",
@@ -2005,9 +2005,9 @@
   },
   {
     "domain": "smh.com.au",
-    "source": "seed",
+    "source": "tranco",
     "category": "news",
-    "rankBucket": 100
+    "rankBucket": 0
   },
   {
     "domain": "snowflake.com",
@@ -2029,9 +2029,9 @@
   },
   {
     "domain": "spiegel.de",
-    "source": "seed",
+    "source": "tranco",
     "category": "news",
-    "rankBucket": 100
+    "rankBucket": 0
   },
   {
     "domain": "spotify.com",
@@ -2174,9 +2174,9 @@
   },
   {
     "domain": "theguardian.com",
-    "source": "seed",
+    "source": "tranco",
     "category": "news",
-    "rankBucket": 100
+    "rankBucket": 0
   },
   {
     "domain": "thehindu.com",
@@ -2288,9 +2288,9 @@
   },
   {
     "domain": "usa.gov",
-    "source": "seed",
+    "source": "tranco",
     "category": "government",
-    "rankBucket": 100
+    "rankBucket": 0
   },
   {
     "domain": "usbank.com",
@@ -2378,15 +2378,15 @@
   },
   {
     "domain": "warbyparker.com",
-    "source": "seed",
+    "source": "tranco",
     "category": "storefront",
-    "rankBucket": 100
+    "rankBucket": 0
   },
   {
     "domain": "washingtonpost.com",
-    "source": "seed",
+    "source": "tranco",
     "category": "news",
-    "rankBucket": 100
+    "rankBucket": 0
   },
   {
     "domain": "wayfair.com",
@@ -2408,9 +2408,9 @@
   },
   {
     "domain": "webmd.com",
-    "source": "seed",
+    "source": "tranco",
     "category": "health",
-    "rankBucket": 100
+    "rankBucket": 0
   },
   {
     "domain": "wellsfargo.com",

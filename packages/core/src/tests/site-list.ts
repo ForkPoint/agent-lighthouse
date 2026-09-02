@@ -198,8 +198,11 @@ export function buildSiteList(
       if (taken >= limit && tenants >= tenantLimit) break;
       // First writer wins: the sources are added best-ranked first, so a domain
       // already present is already recorded at its better rank.
-      if (byDomain.has(domain) || exclude.has(domain)) continue;
+      if (byDomain.has(domain)) continue;
       const seeded = seeds.categoryOf.get(domain);
+      // An excluded domain that is seeded stays: the seed file decides, and
+      // it keeps the rank the list measured rather than falling to `seed`.
+      if (exclude.has(domain) && seeded === undefined) continue;
       const tenant =
         seeded === undefined && tenantSuffixOf(domain) !== undefined;
       if (tenant) {
