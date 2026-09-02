@@ -432,7 +432,7 @@
     "airbnb.com": {
       "state": "ok",
       "seenAt": "2026-09-02",
-      "runs": 1
+      "runs": 2
     },
     "airbnb.github.io": {
       "state": "unscored",
@@ -449,7 +449,7 @@
     "airtable.com": {
       "state": "ok",
       "seenAt": "2026-09-02",
-      "runs": 1
+      "runs": 2
     },
     "ais.osym.gov.tr": {
       "state": "ok",
@@ -588,7 +588,7 @@
     "allbirds.com": {
       "state": "ok",
       "seenAt": "2026-09-02",
-      "runs": 1
+      "runs": 2
     },
     "allbirds.myshopify.com": {
       "state": "ok",
@@ -1042,12 +1042,12 @@
     "asana.com": {
       "state": "ok",
       "seenAt": "2026-09-02",
-      "runs": 1
+      "runs": 2
     },
     "askubuntu.com": {
       "state": "unscored",
       "seenAt": "2026-09-02",
-      "runs": 1,
+      "runs": 2,
       "reason": "The scan was throttled (Rate limit (HTTP 429)): The site answered HTTP 429 — too many requests. The scan asked for pages faster than this origin allows, so it saw no content. This says nothing about whether AI agents are welcome; re-run the scan after a pause.."
     },
     "aspendental.com": {
@@ -1132,7 +1132,7 @@
     "australia.gov.au": {
       "state": "ok",
       "seenAt": "2026-09-02",
-      "runs": 1
+      "runs": 2
     },
     "auth.platorelay.com": {
       "state": "unscored",
@@ -1320,12 +1320,12 @@
     "bankofamerica.com": {
       "state": "ok",
       "seenAt": "2026-09-02",
-      "runs": 1
+      "runs": 2
     },
     "barclays.co.uk": {
       "state": "ok",
       "seenAt": "2026-09-02",
-      "runs": 1
+      "runs": 2
     },
     "barrys.com": {
       "state": "ok",
@@ -1805,7 +1805,7 @@
     "bund.de": {
       "state": "unscored",
       "seenAt": "2026-09-02",
-      "runs": 1,
+      "runs": 2,
       "reason": "The scan could not feed 57% of the registry's evidence mass, so what remains is not a reading of this site."
     },
     "bunnyinfra.net": {
@@ -2136,7 +2136,7 @@
     "chipotle.com": {
       "state": "ok",
       "seenAt": "2026-09-02",
-      "runs": 1
+      "runs": 2
     },
     "choiceadvantage.com": {
       "state": "ok",
@@ -2749,12 +2749,12 @@
     "developer.apple.com": {
       "state": "ok",
       "seenAt": "2026-09-02",
-      "runs": 1
+      "runs": 2
     },
     "developer.chrome.com": {
       "state": "ok",
       "seenAt": "2026-09-02",
-      "runs": 1
+      "runs": 2
     },
     "developer.mozilla.org": {
       "state": "ok",
@@ -2849,10 +2849,9 @@
       "runs": 1
     },
     "discuss.pytorch.org": {
-      "state": "unscored",
+      "state": "ok",
       "seenAt": "2026-09-02",
-      "runs": 1,
-      "reason": "The scan was throttled (Rate limit (HTTP 429)): The site answered HTTP 429 — too many requests. The scan asked for pages faster than this origin allows, so it saw no content. This says nothing about whether AI agents are welcome; re-run the scan after a pause.."
+      "runs": 2
     },
     "dishoom.com": {
       "state": "ok",
@@ -3688,9 +3687,10 @@
       "reason": "robots-disallow"
     },
     "facebook.github.io": {
-      "state": "ok",
+      "state": "unscored",
       "seenAt": "2026-09-02",
-      "runs": 1
+      "runs": 2,
+      "reason": "The scan could not feed 57% of the registry's evidence mass, so what remains is not a reading of this site."
     },
     "facebook.net": {
       "state": "unscored",
@@ -4526,9 +4526,10 @@
       "reason": "The scan could not feed 57% of the registry's evidence mass, so what remains is not a reading of this site."
     },
     "google.github.io": {
-      "state": "ok",
+      "state": "unscored",
       "seenAt": "2026-09-02",
-      "runs": 1
+      "runs": 2,
+      "reason": "The scan could not feed 57% of the registry's evidence mass, so what remains is not a reading of this site."
     },
     "googleadservices.com": {
       "state": "unscored",
@@ -5712,7 +5713,7 @@
     "kayak.com": {
       "state": "ok",
       "seenAt": "2026-09-02",
-      "runs": 1
+      "runs": 2
     },
     "keenetic.io": {
       "state": "unscored",
@@ -8476,7 +8477,7 @@
     "posthog.com": {
       "state": "ok",
       "seenAt": "2026-09-02",
-      "runs": 1
+      "runs": 2
     },
     "powells.com": {
       "state": "unscored",
@@ -9069,9 +9070,10 @@
       "runs": 1
     },
     "ryanair.com": {
-      "state": "ok",
+      "state": "unscored",
       "seenAt": "2026-09-02",
-      "runs": 2
+      "runs": 3,
+      "reason": "The scan could not feed 57% of the registry's evidence mass, so what remains is not a reading of this site."
     },
     "s.dto.jp": {
       "state": "blocked",
@@ -9368,9 +9370,10 @@
       "reason": "The homepage could not be fetched: Connect Timeout Error (attempted address: sentinelone.net:443, timeout: 10000ms) (UND_ERR_CONNECT_TIMEOUT). Bot Wall / Aggressive Connection Drop refused the scan: Connection dropped or timed out repeatedly on crawler requests. The scan fetched no pages. The scan fetched no pages."
     },
     "sentry.io": {
-      "state": "ok",
+      "state": "unscored",
       "seenAt": "2026-09-02",
-      "runs": 2
+      "runs": 3,
+      "reason": "The scan was throttled (Rate limit (HTTP 429)): The site answered HTTP 429 — too many requests. The scan asked for pages faster than this origin allows, so it saw no content. This says nothing about whether AI agents are welcome; re-run the scan after a pause.."
     },
     "serverfault.com": {
       "state": "unscored",
@@ -10160,7 +10163,7 @@
     "sweetgreen.com": {
       "state": "ok",
       "seenAt": "2026-09-02",
-      "runs": 1
+      "runs": 2
     },
     "swr.vercel.app": {
       "state": "unscored",
@@ -11587,9 +11590,10 @@
       "reason": "The homepage could not be fetched: getaddrinfo ENOTFOUND webhostbox.net (ENOTFOUND). Bot Wall / Aggressive Connection Drop refused the scan: Connection dropped or timed out repeatedly on crawler requests. The scan fetched no pages. The scan fetched no pages."
     },
     "webmd.com": {
-      "state": "ok",
+      "state": "blocked",
       "seenAt": "2026-09-02",
-      "runs": 2
+      "runs": 3,
+      "reason": "robots-disallow"
     },
     "weebly.com": {
       "state": "ok",
@@ -11657,7 +11661,7 @@
     "who.int": {
       "state": "ok",
       "seenAt": "2026-09-02",
-      "runs": 2
+      "runs": 3
     },
     "wiadomosci.wp.pl": {
       "state": "blocked",
