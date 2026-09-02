@@ -1,23 +1,5 @@
 [
   {
-    "domain": "2026-seven-gamma.vercel.app",
-    "source": "crux",
-    "category": "tenant",
-    "rankBucket": 0
-  },
-  {
-    "domain": "5movierulz.limited",
-    "source": "crux",
-    "category": "unknown",
-    "rankBucket": 0
-  },
-  {
-    "domain": "5movierulz.vote",
-    "source": "crux",
-    "category": "unknown",
-    "rankBucket": 0
-  },
-  {
     "domain": "aaplimg.com",
     "source": "tranco",
     "category": "unknown",
@@ -33,18 +15,6 @@
     "domain": "accor.com",
     "source": "tranco",
     "category": "travel",
-    "rankBucket": 0
-  },
-  {
-    "domain": "account.squarespace.com",
-    "source": "crux",
-    "category": "tenant",
-    "rankBucket": 0
-  },
-  {
-    "domain": "accounts.google.com",
-    "source": "crux",
-    "category": "unknown",
     "rankBucket": 0
   },
   {
@@ -173,12 +143,6 @@
     "rankBucket": 0
   },
   {
-    "domain": "api.id.me",
-    "source": "crux",
-    "category": "unknown",
-    "rankBucket": 0
-  },
-  {
     "domain": "apnews.com",
     "source": "seed",
     "category": "news",
@@ -281,12 +245,6 @@
     "rankBucket": 0
   },
   {
-    "domain": "battlecatsinfo.github.io",
-    "source": "crux",
-    "category": "tenant",
-    "rankBucket": 0
-  },
-  {
     "domain": "bbc.co.uk",
     "source": "seed",
     "category": "news",
@@ -307,18 +265,6 @@
   {
     "domain": "bing.com",
     "source": "tranco",
-    "category": "unknown",
-    "rankBucket": 0
-  },
-  {
-    "domain": "bintv-nett.blogspot.com",
-    "source": "crux",
-    "category": "tenant",
-    "rankBucket": 0
-  },
-  {
-    "domain": "bit.ly",
-    "source": "crux",
     "category": "unknown",
     "rankBucket": 0
   },
@@ -415,18 +361,6 @@
     "rankBucket": 0
   },
   {
-    "domain": "canalnatelinhaonline.blogspot.com",
-    "source": "crux",
-    "category": "tenant",
-    "rankBucket": 0
-  },
-  {
-    "domain": "canva.com",
-    "source": "crux",
-    "category": "unknown",
-    "rankBucket": 0
-  },
-  {
     "domain": "capitalone.com",
     "source": "tranco",
     "category": "bank",
@@ -442,12 +376,6 @@
     "domain": "cdc.gov",
     "source": "tranco",
     "category": "government",
-    "rankBucket": 0
-  },
-  {
-    "domain": "cdn.33apk.com",
-    "source": "crux",
-    "category": "unknown",
     "rankBucket": 0
   },
   {
@@ -602,12 +530,6 @@
     "rankBucket": 0
   },
   {
-    "domain": "darkero.com",
-    "source": "crux",
-    "category": "unknown",
-    "rankBucket": 0
-  },
-  {
     "domain": "datadoghq.com",
     "source": "tranco",
     "category": "saas",
@@ -632,12 +554,6 @@
     "rankBucket": 0
   },
   {
-    "domain": "degykrtshar7.pages.dev",
-    "source": "crux",
-    "category": "tenant",
-    "rankBucket": 0
-  },
-  {
     "domain": "deno.com",
     "source": "tranco",
     "category": "exemplar",
@@ -645,15 +561,15 @@
   },
   {
     "domain": "developer.android.com",
-    "source": "crux",
+    "source": "seed",
     "category": "docs",
-    "rankBucket": 0
+    "rankBucket": 100
   },
   {
     "domain": "developer.apple.com",
-    "source": "crux",
+    "source": "seed",
     "category": "docs",
-    "rankBucket": 0,
+    "rankBucket": 100,
     "tier": "smoke"
   },
   {
@@ -665,9 +581,9 @@
   },
   {
     "domain": "developer.mozilla.org",
-    "source": "crux",
+    "source": "seed",
     "category": "docs",
-    "rankBucket": 0
+    "rankBucket": 100
   },
   {
     "domain": "developers.cloudflare.com",
@@ -744,9 +660,9 @@
   },
   {
     "domain": "docs.github.com",
-    "source": "crux",
+    "source": "seed",
     "category": "docs",
-    "rankBucket": 0
+    "rankBucket": 100
   },
   {
     "domain": "docs.gitlab.com",
@@ -858,9 +774,9 @@
   },
   {
     "domain": "ec.europa.eu",
-    "source": "crux",
+    "source": "seed",
     "category": "government",
-    "rankBucket": 0
+    "rankBucket": 100
   },
   {
     "domain": "economist.com",
@@ -893,12 +809,6 @@
     "rankBucket": 0
   },
   {
-    "domain": "erome.com",
-    "source": "crux",
-    "category": "unknown",
-    "rankBucket": 0
-  },
-  {
     "domain": "etsy.com",
     "source": "tranco",
     "category": "marketplace",
@@ -917,12 +827,6 @@
     "rankBucket": 0
   },
   {
-    "domain": "exposed-bd4315.blogspot.com",
-    "source": "crux",
-    "category": "tenant",
-    "rankBucket": 0
-  },
-  {
     "domain": "ezviz7.com",
     "source": "tranco",
     "category": "unknown",
@@ -934,12 +838,6 @@
     "category": "tenant",
     "rankBucket": 100,
     "tier": "smoke"
-  },
-  {
-    "domain": "faphouse.com",
-    "source": "crux",
-    "category": "unknown",
-    "rankBucket": 0
   },
   {
     "domain": "fashionnova.com",
@@ -960,21 +858,9 @@
     "rankBucket": 100
   },
   {
-    "domain": "finn.no",
-    "source": "crux",
-    "category": "unknown",
-    "rankBucket": 0
-  },
-  {
     "domain": "finnair.com",
     "source": "tranco",
     "category": "travel",
-    "rankBucket": 0
-  },
-  {
-    "domain": "flashscore.mobi",
-    "source": "crux",
-    "category": "unknown",
     "rankBucket": 0
   },
   {
@@ -987,18 +873,6 @@
     "domain": "fly.io",
     "source": "tranco",
     "category": "exemplar",
-    "rankBucket": 0
-  },
-  {
-    "domain": "food.wb.gov.in",
-    "source": "crux",
-    "category": "unknown",
-    "rankBucket": 0
-  },
-  {
-    "domain": "footemlive.blogspot.com",
-    "source": "crux",
-    "category": "tenant",
     "rankBucket": 0
   },
   {
@@ -1044,12 +918,6 @@
     "rankBucket": 100
   },
   {
-    "domain": "fr.wikipedia.org",
-    "source": "crux",
-    "category": "unknown",
-    "rankBucket": 0
-  },
-  {
     "domain": "france24.com",
     "source": "tranco",
     "category": "news",
@@ -1078,24 +946,6 @@
     "source": "seed",
     "category": "tenant",
     "rankBucket": 100
-  },
-  {
-    "domain": "gcr11play.pages.dev",
-    "source": "crux",
-    "category": "tenant",
-    "rankBucket": 0
-  },
-  {
-    "domain": "ge.xhamster.desi",
-    "source": "crux",
-    "category": "unknown",
-    "rankBucket": 0
-  },
-  {
-    "domain": "gismeteo.ru",
-    "source": "crux",
-    "category": "unknown",
-    "rankBucket": 0
   },
   {
     "domain": "github.com",
@@ -1255,12 +1105,6 @@
     "rankBucket": 100
   },
   {
-    "domain": "hdhub4u.med",
-    "source": "crux",
-    "category": "unknown",
-    "rankBucket": 0
-  },
-  {
     "domain": "healthline.com",
     "source": "tranco",
     "category": "health",
@@ -1345,12 +1189,6 @@
     "rankBucket": 100
   },
   {
-    "domain": "indiansexstories3.com",
-    "source": "crux",
-    "category": "unknown",
-    "rankBucket": 0
-  },
-  {
     "domain": "ing.com",
     "source": "tranco",
     "category": "bank",
@@ -1417,18 +1255,6 @@
     "rankBucket": 0
   },
   {
-    "domain": "jp.xhamster.com",
-    "source": "crux",
-    "category": "unknown",
-    "rankBucket": 0
-  },
-  {
-    "domain": "k.porno365.golf",
-    "source": "crux",
-    "category": "unknown",
-    "rankBucket": 0
-  },
-  {
     "domain": "kaiserpermanente.org",
     "source": "tranco",
     "category": "health",
@@ -1478,12 +1304,6 @@
     "rankBucket": 100
   },
   {
-    "domain": "leboncoin.fr",
-    "source": "crux",
-    "category": "unknown",
-    "rankBucket": 0
-  },
-  {
     "domain": "lemonde.fr",
     "source": "seed",
     "category": "news",
@@ -1493,12 +1313,6 @@
     "domain": "levainbakery.com",
     "source": "tranco",
     "category": "local",
-    "rankBucket": 0
-  },
-  {
-    "domain": "lichess.org",
-    "source": "crux",
-    "category": "unknown",
     "rankBucket": 0
   },
   {
@@ -1520,12 +1334,6 @@
     "rankBucket": 0
   },
   {
-    "domain": "liturgiadelashoras.github.io",
-    "source": "crux",
-    "category": "tenant",
-    "rankBucket": 0
-  },
-  {
     "domain": "live.com",
     "source": "tranco",
     "category": "unknown",
@@ -1538,19 +1346,7 @@
     "rankBucket": 0
   },
   {
-    "domain": "livezwc37.blogspot.com",
-    "source": "crux",
-    "category": "tenant",
-    "rankBucket": 0
-  },
-  {
     "domain": "livezwc44.blogspot.com",
-    "source": "crux",
-    "category": "tenant",
-    "rankBucket": 0
-  },
-  {
-    "domain": "livezwc94.blogspot.com",
     "source": "crux",
     "category": "tenant",
     "rankBucket": 0
@@ -1574,45 +1370,15 @@
     "rankBucket": 100
   },
   {
-    "domain": "login.caixa.gov.br",
-    "source": "crux",
-    "category": "unknown",
-    "rankBucket": 0
-  },
-  {
-    "domain": "login.yahoo.com",
-    "source": "crux",
-    "category": "unknown",
-    "rankBucket": 0
-  },
-  {
     "domain": "loom.com",
     "source": "tranco",
     "category": "saas",
     "rankBucket": 0
   },
   {
-    "domain": "los-and-lms-credit-sea.vercel.app",
-    "source": "crux",
-    "category": "tenant",
-    "rankBucket": 0
-  },
-  {
     "domain": "lowes.com",
     "source": "tranco",
     "category": "marketplace",
-    "rankBucket": 0
-  },
-  {
-    "domain": "m.vk.ru",
-    "source": "crux",
-    "category": "unknown",
-    "rankBucket": 0
-  },
-  {
-    "domain": "m.youm7.com",
-    "source": "crux",
-    "category": "unknown",
     "rankBucket": 0
   },
   {
@@ -1640,27 +1406,9 @@
     "rankBucket": 0
   },
   {
-    "domain": "mangabuff.ru",
-    "source": "crux",
-    "category": "unknown",
-    "rankBucket": 0
-  },
-  {
-    "domain": "mangaraw.ac",
-    "source": "crux",
-    "category": "unknown",
-    "rankBucket": 0
-  },
-  {
     "domain": "mathoverflow.net",
     "source": "tranco",
     "category": "forum",
-    "rankBucket": 0
-  },
-  {
-    "domain": "mediafire.com",
-    "source": "crux",
-    "category": "unknown",
     "rankBucket": 0
   },
   {
@@ -1736,12 +1484,6 @@
     "rankBucket": 0
   },
   {
-    "domain": "missav.live",
-    "source": "crux",
-    "category": "unknown",
-    "rankBucket": 0
-  },
-  {
     "domain": "mistral.ai",
     "source": "tranco",
     "category": "exemplar",
@@ -1751,12 +1493,6 @@
     "domain": "modelcontextprotocol.io",
     "source": "tranco",
     "category": "exemplar",
-    "rankBucket": 0
-  },
-  {
-    "domain": "moe-gov-eg.pages.dev",
-    "source": "crux",
-    "category": "tenant",
     "rankBucket": 0
   },
   {
@@ -1775,18 +1511,6 @@
     "domain": "mountsinai.org",
     "source": "tranco",
     "category": "health",
-    "rankBucket": 0
-  },
-  {
-    "domain": "movie-box.co",
-    "source": "crux",
-    "category": "unknown",
-    "rankBucket": 0
-  },
-  {
-    "domain": "mpdwc44.blogspot.com",
-    "source": "crux",
-    "category": "tenant",
     "rankBucket": 0
   },
   {
@@ -1874,12 +1598,6 @@
     "rankBucket": 100
   },
   {
-    "domain": "nikkei.com",
-    "source": "crux",
-    "category": "unknown",
-    "rankBucket": 0
-  },
-  {
     "domain": "nodejs.org",
     "source": "tranco",
     "category": "docs",
@@ -1964,45 +1682,15 @@
     "rankBucket": 0
   },
   {
-    "domain": "ok.ru",
-    "source": "crux",
-    "category": "unknown",
-    "rankBucket": 0
-  },
-  {
-    "domain": "okdiario.com",
-    "source": "crux",
-    "category": "unknown",
-    "rankBucket": 0
-  },
-  {
     "domain": "okta.com",
     "source": "tranco",
     "category": "saas",
     "rankBucket": 0
   },
   {
-    "domain": "olympus.pages.dev",
-    "source": "crux",
-    "category": "tenant",
-    "rankBucket": 0
-  },
-  {
-    "domain": "oricon.co.jp",
-    "source": "crux",
-    "category": "unknown",
-    "rankBucket": 0
-  },
-  {
     "domain": "otto.de",
     "source": "tranco",
     "category": "marketplace",
-    "rankBucket": 0
-  },
-  {
-    "domain": "passwords.google.com",
-    "source": "crux",
-    "category": "unknown",
     "rankBucket": 0
   },
   {
@@ -2040,12 +1728,6 @@
     "source": "seed",
     "category": "tenant",
     "rankBucket": 100
-  },
-  {
-    "domain": "playhop.com",
-    "source": "crux",
-    "category": "unknown",
-    "rankBucket": 0
   },
   {
     "domain": "popsockets.com",
@@ -2211,12 +1893,6 @@
     "rankBucket": 0
   },
   {
-    "domain": "ru.wikipedia.org",
-    "source": "crux",
-    "category": "unknown",
-    "rankBucket": 0
-  },
-  {
     "domain": "ruggable.com",
     "source": "tranco",
     "category": "storefront",
@@ -2297,21 +1973,9 @@
     "rankBucket": 0
   },
   {
-    "domain": "shop.app",
-    "source": "crux",
-    "category": "unknown",
-    "rankBucket": 0
-  },
-  {
     "domain": "shopify.com",
     "source": "tranco",
     "category": "saas",
-    "rankBucket": 0
-  },
-  {
-    "domain": "siiirwc37.blogspot.com",
-    "source": "crux",
-    "category": "tenant",
     "rankBucket": 0
   },
   {
@@ -2435,12 +2099,6 @@
     "rankBucket": 0
   },
   {
-    "domain": "support.microsoft.com",
-    "source": "crux",
-    "category": "unknown",
-    "rankBucket": 0
-  },
-  {
     "domain": "svelte.dev",
     "source": "tranco",
     "category": "docs",
@@ -2508,24 +2166,6 @@
     "rankBucket": 0
   },
   {
-    "domain": "terbang-kuning-20k.pages.dev",
-    "source": "crux",
-    "category": "tenant",
-    "rankBucket": 0
-  },
-  {
-    "domain": "textbooksall.blogspot.com",
-    "source": "crux",
-    "category": "tenant",
-    "rankBucket": 0
-  },
-  {
-    "domain": "tgju.org",
-    "source": "crux",
-    "category": "unknown",
-    "rankBucket": 0
-  },
-  {
     "domain": "theatlantic.com",
     "source": "tranco",
     "category": "news",
@@ -2565,18 +2205,6 @@
     "domain": "together.ai",
     "source": "tranco",
     "category": "exemplar",
-    "rankBucket": 0
-  },
-  {
-    "domain": "toto11real.pages.dev",
-    "source": "crux",
-    "category": "tenant",
-    "rankBucket": 0
-  },
-  {
-    "domain": "tradingview.com",
-    "source": "crux",
-    "category": "unknown",
     "rankBucket": 0
   },
   {
@@ -2652,18 +2280,6 @@
     "rankBucket": 100
   },
   {
-    "domain": "unifiedportal-mem.epfindia.gov.in",
-    "source": "crux",
-    "category": "unknown",
-    "rankBucket": 0
-  },
-  {
-    "domain": "uniformesparafts15ydls.blogspot.com",
-    "source": "crux",
-    "category": "tenant",
-    "rankBucket": 0
-  },
-  {
     "domain": "upstash.com",
     "source": "tranco",
     "category": "exemplar",
@@ -2694,12 +2310,6 @@
     "rankBucket": 0
   },
   {
-    "domain": "varzesh3.com",
-    "source": "crux",
-    "category": "unknown",
-    "rankBucket": 0
-  },
-  {
     "domain": "velasca.com",
     "source": "tranco",
     "category": "storefront",
@@ -2709,12 +2319,6 @@
     "domain": "vercel.com",
     "source": "tranco",
     "category": "saas",
-    "rankBucket": 0
-  },
-  {
-    "domain": "vi.xhwide.com",
-    "source": "crux",
-    "category": "unknown",
     "rankBucket": 0
   },
   {
@@ -2861,36 +2465,6 @@
     "domain": "wyndhamhotels.com",
     "source": "tranco",
     "category": "travel",
-    "rankBucket": 0
-  },
-  {
-    "domain": "xhaccess.com",
-    "source": "crux",
-    "category": "unknown",
-    "rankBucket": 0
-  },
-  {
-    "domain": "xhamster.com",
-    "source": "crux",
-    "category": "unknown",
-    "rankBucket": 0
-  },
-  {
-    "domain": "xorgasmo.com",
-    "source": "crux",
-    "category": "unknown",
-    "rankBucket": 0
-  },
-  {
-    "domain": "xvv1deos.com",
-    "source": "crux",
-    "category": "unknown",
-    "rankBucket": 0
-  },
-  {
-    "domain": "yandex.com",
-    "source": "crux",
-    "category": "unknown",
     "rankBucket": 0
   },
   {

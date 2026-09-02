@@ -90,9 +90,14 @@ export function readSeeds(file: SeedFile): Seeds {
   const problems: string[] = [];
   for (const [category, { domains }] of Object.entries(file.categories)) {
     for (const raw of domains) {
-      const lowered = raw.trim().toLowerCase().replace(/^www\./, "");
+      const lowered = raw
+        .trim()
+        .toLowerCase()
+        .replace(/^www\./, "");
       if (!HOSTNAME.test(lowered)) {
-        problems.push(`${category}: ${JSON.stringify(raw)} is not a bare hostname`);
+        problems.push(
+          `${category}: ${JSON.stringify(raw)} is not a bare hostname`,
+        );
         continue;
       }
       const host = normalize(raw);
@@ -108,7 +113,9 @@ export function readSeeds(file: SeedFile): Seeds {
   for (const raw of file.smoke) {
     const host = normalize(raw);
     if (!categoryOf.has(host)) {
-      problems.push(`smoke: ${JSON.stringify(raw)} is not seeded under any category`);
+      problems.push(
+        `smoke: ${JSON.stringify(raw)} is not seeded under any category`,
+      );
       continue;
     }
     smoke.add(host);
@@ -151,9 +158,10 @@ export function tenantSuffixOf(domain: string): string | undefined {
 /**
  * Merge the ranked sources and the seeds into the committed list.
  *
- * `limit` is the size of the ranked `unknown` slice, not the total: seeds
- * are always carried, and ranked tenant hostnames are filed under `tenant`
- * outside the slice, up to `tenantLimit`. `exclude` names ranked domains a
+ * `limit` is the size of the ranked `unknown` slice across both sources, not
+ * the total: seeds are always carried, and ranked tenant hostnames are filed
+ * under `tenant` outside the slice until the category holds `tenantLimit`
+ * domains, seeded ones included. `exclude` names ranked domains a
  * previous run found dead or blocked; they neither appear nor consume a slot.
  * A seeded domain is emitted even when excluded — removing it is a decision
  * made in `seeds.json`, and the generator reports it.
@@ -167,23 +175,33 @@ export function buildSiteList(
     source: "tranco" | "crux";
   }>,
   seeds: Seeds,
-  options: { limit: number; exclude?: ReadonlySet<string>; tenantLimit?: number },
+  options: {
+    limit: number;
+    exclude?: ReadonlySet<string>;
+    tenantLimit?: number;
+  },
 ): SiteEntry[] {
   const { limit } = options;
   const exclude = options.exclude ?? new Set<string>();
   const tenantLimit = options.tenantLimit ?? 30;
   const byDomain = new Map<string, SiteEntry>();
+  // Both counters span the sources: the slice is one budget, and the tenant
+  // cap is the category's size, so seeded tenants spend it first.
+  let taken = 0;
   let tenants = 0;
+  for (const category of seeds.categoryOf.values()) {
+    if (category === "tenant") tenants += 1;
+  }
 
   for (const { domains, source } of ranked) {
-    let taken = 0;
     for (const domain of domains) {
       if (taken >= limit && tenants >= tenantLimit) break;
       // First writer wins: the sources are added best-ranked first, so a domain
       // already present is already recorded at its better rank.
       if (byDomain.has(domain) || exclude.has(domain)) continue;
       const seeded = seeds.categoryOf.get(domain);
-      const tenant = seeded === undefined && tenantSuffixOf(domain) !== undefined;
+      const tenant =
+        seeded === undefined && tenantSuffixOf(domain) !== undefined;
       if (tenant) {
         if (tenants >= tenantLimit) continue;
         tenants += 1;

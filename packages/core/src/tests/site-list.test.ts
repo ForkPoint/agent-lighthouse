@@ -310,6 +310,39 @@ describe("buildSiteList", () => {
     expect(unknown).toEqual(["b.com", "c.com"]);
   });
 
+  it("spends one slice budget across both sources, not one per source", () => {
+    const built = buildSiteList(
+      [
+        { domains: ["b.com", "c.com"], source: "tranco" },
+        { domains: ["d.com", "e.com"], source: "crux" },
+      ],
+      seeds,
+      { limit: 3 },
+    );
+    const unknown = built
+      .filter((s) => s.category === "unknown")
+      .map((s) => s.domain);
+    expect(unknown).toEqual(["b.com", "c.com", "d.com"]);
+  });
+
+  it("counts seeded tenants against tenantLimit", () => {
+    const seededTenant = readSeeds({
+      smoke: [],
+      categories: {
+        tenant: { why: "t", domains: ["home.github.io"] },
+      },
+    });
+    const built = buildSiteList(
+      [{ domains: ["one.pages.dev", "two.vercel.app"], source: "tranco" }],
+      seededTenant,
+      { limit: 0, tenantLimit: 2 },
+    );
+    const tenants = built
+      .filter((s) => s.category === "tenant")
+      .map((s) => s.domain);
+    expect(tenants).toEqual(["home.github.io", "one.pages.dev"]);
+  });
+
   it.each([10, 99, 100, 150, 1000])(
     "keeps the seed bucket clear of every ranked bucket at limit %i",
     (limit) => {
