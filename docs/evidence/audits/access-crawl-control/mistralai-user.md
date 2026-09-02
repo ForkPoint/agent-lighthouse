@@ -35,12 +35,14 @@ Legitimate but small: MistralAI-User backs Le Chat's web access, a real though l
 **Required fix:** Reduce weight to a long-tail tier. Apply the shared helper fixes from 2.1 including prefix matching for `MistralAI*`.
 
 **False-positive risks:**
+
 - Edge UA blocking invisible to the `AgentLighthouse/1.0` scanner — PASS while Le Chat cannot fetch.
 - Exact-match miss on versioned tokens; also `User-agent: MistralAI` shorthand matches nothing.
 - Weight 1.0 equal to GPTBot despite far smaller reach.
 - Shared BOM / soft-404 / `Disallow: /*` misreads.
 
 **Test gaps:**
+
 - No shorthand/versioned token case.
 - No UA-probe coverage.
 - Template-only coverage; same missing real-world robots.txt variants as 2.1.
@@ -52,9 +54,10 @@ Legitimate but small: MistralAI-User backs Le Chat's web access, a real though l
 ### Signal: MistralAI-User allow/block state in robots.txt (and MistralAI-Index / MistralAI-Training) — grade A (robots-ai-crawlers)
 
 **Mechanism:** Mistral publishes three separate tokens with distinct consequences:
-  - a MistralAI-Training disallow blocks training-corpus collection;
-  - a MistralAI-Index disallow removes the site from Mistral search, and therefore from Vibe answers;
-  - MistralAI-User governs which sites user-initiated Vibe requests may access.
+
+- a MistralAI-Training disallow blocks training-corpus collection;
+- a MistralAI-Index disallow removes the site from Mistral search, and therefore from Vibe answers;
+- MistralAI-User governs which sites user-initiated Vibe requests may access.
 
 Unusually, Mistral asserts no user-initiated robots.txt exemption.
 

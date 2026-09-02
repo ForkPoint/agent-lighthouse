@@ -18,7 +18,6 @@ sources:
   - openai-searchbot-ips
 ---
 
-
 # Boilerplate tax across the crawl (unique tokens per fetch)
 
 > Shipped in v2. Evidence grade **B** · scored tier · partial overlap · implementation: `multi-page`

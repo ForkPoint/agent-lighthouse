@@ -29,11 +29,13 @@ Wraps `document-title`. Trivially true for essentially every real site, so it co
 **Required fix:** _none — audit is sound as implemented_
 
 **False-positive risks:**
+
 - Only presence/non-emptiness is checked — a site where every page ships the same generic title ('Home') passes, though that is precisely the disambiguation failure the description claims to prevent.
 - Framework shells that set the title via JS (`document.title = ...` in a CSR SPA) fail on the static HTML even though every real consumer, including headless agents that execute JS, sees a title. The rule matches `html:not(html *)` with `excludeHidden: true`, so it always has a candidate and always renders a verdict.
 - WAF interstitials have titles ('Just a moment...') → pass, contributing to an inflated score for a page that was never actually fetched.
 
 **Test gaps:**
+
 - No fixture with a JS-assigned title (SPA false fail).
 - No fixture with duplicate titles across pages (the uniqueness aspect the description implies but the rule does not check).
 - No fixture with a whitespace-only `<title>`.
@@ -56,6 +58,7 @@ _No dedicated evidence signal was researched for this audit in the 2026-08-20 pa
 **Grade: A** — documented consumer behavior (Google states it generates title links from `<title>` content) plus a ratified Level A success criterion (WCAG 2.4.2 Page Titled) with universal browser/AT implementation.
 
 **Evidence:**
+
 - Google: title links are generated from several sources, first among them "Content in `<title>` elements" — https://developers.google.com/search/docs/appearance/title-link (verified 2026-08-21)
 - MDN: the title "defines the document's title that is shown in a browser's title bar or a page's tab". It adds that "A common navigation technique for users of assistive technology is to read the page title and infer the content the page contains", and gives the guidance to "make titles unique to every page" — https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Elements/title (verified 2026-08-21)
 - WCAG 2.2 documents the page-title expectation as a Level A requirement (2.4.2 Page Titled) — referenced from the failure/technique set at https://www.w3.org/WAI/WCAG22/Techniques/failures/F41 (verified 2026-08-21)

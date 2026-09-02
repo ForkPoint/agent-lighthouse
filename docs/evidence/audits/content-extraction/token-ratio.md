@@ -53,6 +53,7 @@ Good idea, miscalibrated and internally inconsistent. The numerator is getMainCo
 **Required fix:** Compute the ratio against comparable scopes: strip script/style/template/svg/noscript and inline data blobs from the denominator before dividing, or use the whole body text as the numerator when <main> is present so both sides cover the same subtree. Recalibrate thresholds against a real corpus of SSR framework output rather than round numbers. Make CHARS_PER_TOKEN script-aware (~1.5 for CJK, ~3 for markup) or drop the token estimate from displayValue. Reject non-HTML content types and WAF interstitials (ctx.wafProtection is available and unused) instead of scoring them.
 
 **False-positive risks:**
+
 - 'const cleanText = getMainContentText(page.$)' (main-scoped) over 'rawHtml.length' (whole document) — a site is penalized for adopting <main>, directly contradicting audit 6.3.
 - Every SSR React/Vue/Svelte site with a hydration payload lands under 5% → fail. Near-universal failure means the check does not discriminate good sites from bad.
 - Pretty-printed HTML is penalized versus minified HTML for identical content — the audit measures build configuration, not agent experience.
@@ -62,8 +63,9 @@ Good idea, miscalibrated and internally inconsistent. The numerator is getMainCo
 - A CSR shell (tiny HTML, tiny text) can land anywhere on the scale for reasons unrelated to content packaging.
 
 **Test gaps:**
+
 - No fixture comparing the same content with and without <main> — the 6.3 contradiction is untested.
-- No realistic SSR framework fixture (Next.js __NEXT_DATA__ / Nuxt payload) to show where real sites land against the thresholds.
+- No realistic SSR framework fixture (Next.js **NEXT_DATA** / Nuxt payload) to show where real sites land against the thresholds.
 - No CJK fixture for the token estimate.
 - No WAF/soft-404 fixture (currently would pass).
 - No boundary tests at exactly 5% and 15%.
@@ -77,7 +79,7 @@ Good idea, miscalibrated and internally inconsistent. The numerator is getMainCo
 
 **Mechanism:** Chrome is everything that is not main content: nav, repeated headers and footers, wrapper divs, inline scripts. The larger its share of a page's serialized bytes and tokens, the smaller the fraction of the page that survives extraction into the model's context — and the more likely a fixed truncation cap severs real content. Conversely a page with too little actual content relative to its scaffolding gives an extractor nothing substantive to return.
 
-**Grade: B** — Quantified from three independent directions rather than asserted. Cloudflare measured one real blog post at 16,180 HTML tokens against 3,150 in markdown, an 80% reduction. It attributed the delta to "the `<div>` wrappers, nav bars, and script tags that pad every real web page and have zero semantic value". Strong empirical evidence of an effect, with no vendor stating a requirement, is grade B. The grade deliberately does not carry the stronger claim that less boilerplate is always better. The same study found high-capability models performed *better* on the fuller HTML: Claude Sonnet 4.6 by 14.6pp, GPT-5.1 by 17.5pp. They exploit layout for action grounding.
+**Grade: B** — Quantified from three independent directions rather than asserted. Cloudflare measured one real blog post at 16,180 HTML tokens against 3,150 in markdown, an 80% reduction. It attributed the delta to "the `<div>` wrappers, nav bars, and script tags that pad every real web page and have zero semantic value". Strong empirical evidence of an effect, with no vendor stating a requirement, is grade B. The grade deliberately does not carry the stronger claim that less boilerplate is always better. The same study found high-capability models performed _better_ on the fuller HTML: Claude Sonnet 4.6 by 14.6pp, GPT-5.1 by 17.5pp. They exploit layout for action grounding.
 
 **Evidence:** Quantified from three independent directions. Cloudflare measured a real blog post at 16,180 HTML tokens against 3,150 in markdown — an 80% reduction. It attributed the delta explicitly to 'the <div> wrappers, nav bars, and script tags that pad every real web page and have zero semantic value'. The response even ships x-original-tokens and x-markdown-tokens headers, so agents can compute the ratio [cloudflare-markdown-for-agents]. The 2026 observation study measured HTML at about 56,653 input tokens per agent step, against about 6,720 for the accessibility tree. That is a gap of roughly 8.4x [observation-reduction-paper]. trafilatura's stated purpose is to 'remove the noise consisting of recurring elements (headers and footers, ads, links/blogroll)' [trafilatura-corefunctions]. Readability does the same job, via link-density and text-density scoring [mozilla-readability-source]. Truncation is real and first-party: Anthropic's read_page caps output at 50,000 characters and truncates at a line boundary [anthropic-browser-use-tool].
 

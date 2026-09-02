@@ -42,6 +42,7 @@ The most defensible audit in the category — a wildcard `Disallow: /` genuinely
 **Required fix:** Strip the BOM in `parseRobotsTxt`; extend `isBlanketBlocked` to `/`, `/*`, `*`. Add a content-type + leading-`<` guard so an HTML soft-404 is reported as 'no robots.txt' rather than parsed. Change the missing-robots.txt branch from `warn` to `pass` (nothing is blocked) or `notApplicable`. Either rename the audit to 'No wildcard blanket block' or extend it to fail when every AI token in `ALL_CRAWLERS` is disallowed.
 
 **False-positive risks:**
+
 - BOM'd robots.txt parses to zero groups → `wildcardGroups` empty → `isBlanketBlocked([])` false → PASS on a site that blocks the entire web. Highest-impact single false result in the category.
 - `isBlanketBlocked` matches only `r.path === '/'`; `User-agent: *\nDisallow: /*` and `Disallow: *` are real-world blanket blocks reported as PASS.
 - SPA soft-404 serving HTML at /robots.txt with status 200 parses to zero groups → PASS, and the user is told crawler permissions were verified when no robots.txt exists.
@@ -49,6 +50,7 @@ The most defensible audit in the category — a wildcard `Disallow: /` genuinely
 - `warn` on missing robots.txt penalizes the most permissive possible configuration.
 
 **Test gaps:**
+
 - No BOM fixture (the case that silently inverts the result).
 - No `Disallow: /*` or `Disallow: *` case.
 - No HTML soft-404 body at /robots.txt.

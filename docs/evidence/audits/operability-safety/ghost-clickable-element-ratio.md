@@ -18,7 +18,6 @@ sources:
   - S8
 ---
 
-
 # Ghost-Clickable Element Ratio
 
 > Shipped in v2. Evidence grade **B** · scored tier · unique · implementation: `static-fetch`

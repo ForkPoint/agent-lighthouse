@@ -15,7 +15,6 @@ sources:
   - acp-openapi-checkout
 ---
 
-
 # Buyable Variant Resolution
 
 > Shipped in v2. Evidence grade **B** · scored tier · unique · implementation: `multi-page`

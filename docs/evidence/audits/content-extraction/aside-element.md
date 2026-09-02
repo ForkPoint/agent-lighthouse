@@ -47,12 +47,14 @@ Falsy audit with no discriminative power. It passes if a single <aside> exists o
 **Required fix:** _none — audit is sound as implemented_
 
 **False-positive risks:**
+
 - 'pagesWithAside > 0' — one <aside> anywhere in a 50-page crawl yields a full pass regardless of the other 49 pages.
 - Declares applicablePageTypes ['content'] but loops all pages, so the denominator in the pass message ('X/ctx.pages.length') mixes page types.
 - Warns on sites that correctly have no supplementary content (landing pages, docs, checkout flows) — unactionable noise, since the only 'fix' is to invent a sidebar.
 - Cannot distinguish 'no sidebar' from 'sidebar in a div', which is the entire stated point of the check.
 
 **Test gaps:**
+
 - Two tests only; no fixture with a div-based sidebar (the failure mode the audit claims to catch).
 - No multi-page crawl showing that one <aside> on page 1 passes the whole site.
 - No test of the applicablePageTypes/loop mismatch.
@@ -61,7 +63,7 @@ Falsy audit with no discriminative power. It passes if a single <aside> exists o
 
 ## The conditional-check rewrite (Plan 4, Task 11, 2026-08-22)
 
-The [redemption dossier](../../deletions/semantic-html/aside-element.md) is unusual in this batch: it found the audit's *stated mechanism* "essentially verbatim correct" and put the entire fault in the implementation. So the description and guidance keep their claim and gain its sources; the check underneath is replaced.
+The [redemption dossier](../../deletions/semantic-html/aside-element.md) is unusual in this batch: it found the audit's _stated mechanism_ "essentially verbatim correct" and put the entire fault in the implementation. So the description and guidance keep their claim and gain its sources; the check underneath is replaced.
 
 **Old pass condition:** `pagesWithAside > 0` — one `<aside>` anywhere in the crawl passed the whole site; anything else warned. The audit could not fail, could not tell "no sidebar" from "sidebar in a `<div>`" (its entire stated purpose), penalised pages that correctly have no supplementary content, and looped every page while declaring `applicablePageTypes: ['content']`.
 
@@ -78,12 +80,12 @@ Those tokens are not invented: Readability's own `unlikelyCandidates` regex matc
 
 The four outcomes replace the old two:
 
-| Outcome | Condition |
-| --- | --- |
-| `na` | no content page carries a supplementary block |
-| `pass` | every detected block is marked |
-| `warn` | some marked, some not |
-| `fail` | blocks exist and none are marked |
+| Outcome | Condition                                     |
+| ------- | --------------------------------------------- |
+| `na`    | no content page carries a supplementary block |
+| `pass`  | every detected block is marked                |
+| `warn`  | some marked, some not                         |
+| `fail`  | blocks exist and none are marked              |
 
 `scoreDisplayMode` moves `binary` → `ternary` for the new middle state. The `fail` branch is precisely the failure mode the audit always claimed to catch and never could: a `<div class="sidebar">` on a page with no `<aside>` anywhere.
 
@@ -93,7 +95,7 @@ The four outcomes replace the old two:
 
 ### Guidance states the extraction consequence
 
-The redeem note's last requirement was that the guidance say out loud what marking content as supplementary *costs*. It now does, with the source-level evidence behind it: Readability deletes every `<aside>` from extracted article content via `this._clean(articleContent, "aside")`, trafilatura lists `"aside"` first in `MANUALLY_CLEANED`, and Chromium exposes the element as a `complementary` landmark in the accessibility tree that Anthropic's `read_page` returns. The `fix` text therefore ends with the warning the dossier asked for: never put citable facts — author bios, specifications, key figures — inside an `<aside>`, because that subtree never reaches the model.
+The redeem note's last requirement was that the guidance say out loud what marking content as supplementary _costs_. It now does, with the source-level evidence behind it: Readability deletes every `<aside>` from extracted article content via `this._clean(articleContent, "aside")`, trafilatura lists `"aside"` first in `MANUALLY_CLEANED`, and Chromium exposes the element as a `complementary` landmark in the accessibility tree that Anthropic's `read_page` returns. The `fix` text therefore ends with the warning the dossier asked for: never put citable facts — author bios, specifications, key figures — inside an `<aside>`, because that subtree never reaches the model.
 
 ### Grade decision: stays **B**, tier `scored`, weight 0.6
 
@@ -105,7 +107,7 @@ Neither the redeem note nor the REWORK-TODO row asks for a grade or tier change;
 
 - **Detection is class/id-based, so Tailwind-only and CSS-Modules markup is invisible to it.** A hashed or utility-class sidebar produces no candidate and the page simply is not evaluated, which fails safe to `na`/`pass` rather than to a false accusation. Position- and geometry-based detection needs a rendered layout the scanner does not have.
 - **`widget` is kept in the token set despite being noisy on WordPress themes.** It is one of the most common real names for a sidebar block, and the cost of a false positive here is a `warn` telling an author to wrap a widget in `<aside>` — which is correct advice even when the container was not what we guessed.
-- **Misuse is not penalised.** The evidence dossier for landmark elements notes the signal is bidirectional (wrapping citable content in `<aside>` actively destroys it), but detecting *that* means judging whether the text inside an `<aside>` is citable. It is stated in the guidance instead of scored.
+- **Misuse is not penalised.** The evidence dossier for landmark elements notes the signal is bidirectional (wrapping citable content in `<aside>` actively destroys it), but detecting _that_ means judging whether the text inside an `<aside>` is citable. It is stated in the guidance instead of scored.
 
 ## Evidence
 

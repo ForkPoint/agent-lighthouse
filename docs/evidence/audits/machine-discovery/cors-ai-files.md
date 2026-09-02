@@ -33,11 +33,12 @@ Without CORS headers, AI agents running in browser contexts cannot fetch your ll
 
 ## Code review findings (2026-08-20, 11-agent pass)
 
-Right idea, wrong probe. It sends `method: 'OPTIONS'` to /llms.txt and /.well-known/ai-catalog.json and judges CORS by the ACAO header on that response. But a cross-origin `GET` of a text/JSON file is a *simple request* — it never triggers a preflight, so OPTIONS support is irrelevant; what governs access is the ACAO header on the GET response. Static hosts (nginx, S3, most CDNs) answer OPTIONS on a static file with 405/501 and no CORS headers while serving `Access-Control-Allow-Origin: *` on the GET. Those sites are failed. Worse, the correct GET headers are already sitting in `ctx.rootFiles[path].headers` and the audit ignores them entirely to make a second, wrong request. It also charges a 0.5 `warn` to sites that simply have no llms.txt.
+Right idea, wrong probe. It sends `method: 'OPTIONS'` to /llms.txt and /.well-known/ai-catalog.json and judges CORS by the ACAO header on that response. But a cross-origin `GET` of a text/JSON file is a _simple request_ — it never triggers a preflight, so OPTIONS support is irrelevant; what governs access is the ACAO header on the GET response. Static hosts (nginx, S3, most CDNs) answer OPTIONS on a static file with 405/501 and no CORS headers while serving `Access-Control-Allow-Origin: *` on the GET. Those sites are failed. Worse, the correct GET headers are already sitting in `ctx.rootFiles[path].headers` and the audit ignores them entirely to make a second, wrong request. It also charges a 0.5 `warn` to sites that simply have no llms.txt.
 
 **Required fix:** Read `ACAO` from the GET responses already in `ctx.rootFiles` first, and only fall back to an OPTIONS probe when the GET response lacks the header — never fail on OPTIONS alone. Accept `*` (and echo-of-Origin) as pass; downgrade a same-origin-only ACAO to warn with an explanation. Return `notApplicable()` instead of `warn()` when the files do not exist. Drop /.well-known/ai-catalog.json from the checked set (or gate it on the file actually existing and being valid), and scope the rationale to browser-context agents rather than claiming 'ChatGPT plugins and MCP clients' are blocked — MCP clients are server-side and unaffected by CORS.
 
 **False-positive risks:**
+
 - Wrong method: `await ctx.fetch({url, method: 'OPTIONS'})` then `result.headers['access-control-allow-origin']`. Static file servers that return 405 to OPTIONS but `ACAO: *` on GET → reported as 'No AI files have CORS headers' (fail, and the copy says agents 'cannot access these files' — flatly untrue).
 - Ignores available truth: `ctx.rootFiles['/llms.txt']` already holds the real GET response headers from Phase 1 of the scan; they are never consulted.
 - Absence penalized as a defect: `if (hasRootFiles && existingAiPaths.length === 0) return this.warn(…)` — a site with no llms.txt and no ai-catalog.json takes a 0.5 hit here, plus another in 8.10 and another in 8.11, for the same non-existent files. Should be `na`.
@@ -46,6 +47,7 @@ Right idea, wrong probe. It sends `method: 'OPTIONS'` to /llms.txt and /.well-kn
 - Fallback branch `existingAiPaths = aiPaths` when `rootFiles` is empty means a scan that failed to fetch anything still issues two live OPTIONS requests and can fail the site.
 
 **Test gaps:**
+
 - No test where OPTIONS returns 405/501 but the corresponding rootFiles GET carries `ACAO: *` — the dominant real-world configuration.
 - No test that reads CORS off the already-fetched GET response.
 - No test that a site with no AI files yields `na` rather than a 0.5 warn.

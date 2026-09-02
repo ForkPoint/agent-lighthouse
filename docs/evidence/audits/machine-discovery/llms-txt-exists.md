@@ -66,13 +66,13 @@ sources:
 
 `GET /llms.txt` returns 200 with a markdown body, plus — reported, not scored — whether a `<link>` in the page head points at that file.
 
-| State | Result |
-| :--- | :--- |
-| 200 with a body starting with `#` | `pass` |
-| 200 but no markdown heading | `warn`, priority `high` |
-| non-200 or no response | `fail`, priority `critical` |
+| State                             | Result                      |
+| :-------------------------------- | :-------------------------- |
+| 200 with a body starting with `#` | `pass`                      |
+| 200 but no markdown heading       | `warn`, priority `high`     |
+| non-200 or no response            | `fail`, priority `critical` |
 
-The discovery `<link>` is appended to `found` in every branch, as either `discovery <link> → <href>` or `no discovery <link> in <head>`. When the file is missing *and* a link points at it, the message says so. A link to a file that is not served is the one case where the absorbed signal changes what the user reads.
+The discovery `<link>` is appended to `found` in every branch, as either `discovery <link> → <href>` or `no discovery <link> in <head>`. When the file is missing _and_ a link points at it, the message says so. A link to a file that is not served is the one case where the absorbed signal changes what the user reads.
 
 ## Code review findings (2026-08-20, 11-agent pass)
 
@@ -81,12 +81,14 @@ Checks GET /llms.txt returns 200 and the body starts with '#'. The signal is def
 **Required fix:** Add a content-type/body sniff to a shared `_root-file.ts` helper: treat 200 + `text/html` or a body starting with `<` as not FOUND rather than malformed. Accept front-matter and setext headings before requiring '#'. Downgrade defaultPriority from critical to medium and rewrite the impact copy to 'a growing convention some agent tooling reads' instead of asserting agents depend on it.
 
 **False-positive risks:**
+
 - `isOk` is `result.status === 200` with no content-type check. Netlify/Vercel/Next.js SPA rewrites return 200 + `<!doctype html>` for /llms.txt; the audit then reports WARN 'llms.txt missing markdown heading' — telling the user to fix a file that does not exist.
 - `result.body.trimStart().startsWith('#')` accepts `#` with no space (`#Site`, or a `#comment` line) but rejects a valid file that opens with YAML front-matter (`---`), an HTML comment, or a setext H1 (`Site\n====`).
 - No handling of a 200 that is a CDN interstitial/challenge page, nor of servers that return 403/503 to the scanner UA — those become 'llms.txt not found', identical messaging to a genuine 404.
 - Case/path variants (`/LLMS.txt`, `/.well-known/llms.txt`) and llms.txt referenced from robots.txt or a `<link>` are never consulted.
 
 **Test gaps:**
+
 - 200 response serving an HTML SPA shell (the dominant real-world false result)
 - 403/503/challenge page from a WAF instead of 404
 - Body with YAML front-matter, BOM, CRLF line endings, or leading blank lines
@@ -131,7 +133,7 @@ Its dossier is kept verbatim at [merged/machine-discovery/llms-txt-link.md](../.
 
 #### The 2026-08-22 reasoning, kept as history
 
-4.11 graded **C**: the llms.txt v2 spec (2026-08-10) does define `rel="alternate" type="text/markdown"` and `rel="describedby"`, and Cloudflare deploys the former, but the `describedby → llms.txt` half has *no known consumer at all* — Lighthouse's own gatherer resolves `new URL('/llms.txt', finalDisplayedUrl)` and never looks at link tags. Weaker evidence than the target's and not proven for the merged signal, so nothing is raised: the audit keeps grade **A**, `tier: scored`, `weight 1.0`.
+4.11 graded **C**: the llms.txt v2 spec (2026-08-10) does define `rel="alternate" type="text/markdown"` and `rel="describedby"`, and Cloudflare deploys the former, but the `describedby → llms.txt` half has _no known consumer at all_ — Lighthouse's own gatherer resolves `new URL('/llms.txt', finalDisplayedUrl)` and never looks at link tags. Weaker evidence than the target's and not proven for the merged signal, so nothing is raised: the audit keeps grade **A**, `tier: scored`, `weight 1.0`.
 
 ### Why the link never fails a site
 
@@ -156,13 +158,13 @@ while its own embedded research signal read **grade C**, verdict **REFUTED on
 the retrieval mechanism**, `Consumers: none-known`, `Recommended tier:
 informative`. The "Grade decision: stays A" section above does not defend the A
 either — it only argues that the absorbed 4.11 link signal is too weak to
-*raise* the grade. The A was inherited from the pre-review v1 audit and survived
+_raise_ the grade. The A was inherited from the pre-review v1 audit and survived
 the merge unexamined. `policy.md` meanwhile used llms.txt existence as its
 worked example of grade **C**.
 
 ### The re-sweep, 2026-08-24
 
-The question asked was narrow: has any AI vendor documented a *consumer* of
+The question asked was narrow: has any AI vendor documented a _consumer_ of
 `/llms.txt`? Primary sources only.
 
 **No.** Checked and empty at: Anthropic's crawler article and web-fetch tool
@@ -180,15 +182,15 @@ Relations registries; the IETF Datatracker across four query formulations.
 Six of the eleven vendors publish an `llms.txt` for their own documentation.
 None documents reading one. That distinction is what the A collapsed.
 
-Google Search Central, updated 2026-07-10, still states it verbatim: *"You
+Google Search Central, updated 2026-07-10, still states it verbatim: _"You
 don't need to create new machine readable files, AI text files, markup, or
 Markdown to appear in Google Search … as Google Search itself doesn't use
-them."*
+them."_
 
 Two claims that circulate in secondary coverage are refuted, not merely
 unproven. **Cursor does not consume llms.txt** — a Cursor staff member replied
-to the feature request on 2025-06-25 with *"does seem like something we should
-support!"*, and nothing shipped since. **Cloudflare is a generator, not a
+to the feature request on 2025-06-25 with _"does seem like something we should
+support!"_, and nothing shipped since. **Cloudflare is a generator, not a
 consumer** — AI Index produces the file for customers, and Cloudflare's own
 crawler-behaviour tracking watches `robots.txt` only.
 
@@ -198,8 +200,8 @@ Chrome's Lighthouse gatherer resolves `new URL('/llms.txt', finalDisplayedUrl)`
 and issues one fetch. It reads no `<link>`, follows no link inside the file, and
 never fetches `llms-full.txt`. The audit applies three tests — an H1, one
 markdown link, and a length over 50 characters — and **treats HTTP 4xx as
-`notApplicable` with score 1**. Google's own prose calls llms.txt *"an emerging
-convention"*, says it is *"optional at the moment"*, and names no agent that
+`notApplicable` with score 1**. Google's own prose calls llms.txt _"an emerging
+convention"_, says it is _"optional at the moment"_, and names no agent that
 reads it.
 
 A site-quality linter fetching a file to grade it is the same act as this
@@ -234,7 +236,7 @@ informative, weight 0.**
 
 ### What is deliberately not lost
 
-The *conformance* rules (H1, one markdown link, over 50 characters) do have an
+The _conformance_ rules (H1, one markdown link, over 50 characters) do have an
 exact shipping checker whose source was re-read on 2026-08-24. If a scored
 llms.txt signal is ever wanted, that is the only defensible one, and it must be
 scored as "the file you published is mechanically parseable", conditional on the

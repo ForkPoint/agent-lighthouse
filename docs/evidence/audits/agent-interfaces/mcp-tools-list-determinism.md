@@ -13,7 +13,6 @@ sources:
   - S5
 ---
 
-
 # tools/list Determinism and Cache-Hint Compliance
 
 > Shipped in v2. Evidence grade **A** · scored tier · unique · implementation: `static-fetch`
@@ -21,9 +20,10 @@ sources:
 ## What it checks
 
 Repeatedly fetches tools/list, and asserts three things the spec ties directly to agent cost and latency:
-  - caching hints are present and well-formed — ttlMs >= 0, cacheScope in {public, private};
-  - tool ordering is stable across calls;
-  - the tool set does not vary per connection.
+
+- caching hints are present and well-formed — ttlMs >= 0, cacheScope in {public, private};
+- tool ordering is stable across calls;
+- the tool set does not vary per connection.
 
 ## Claimed mechanism (falsifiable)
 
@@ -43,6 +43,7 @@ Unique. This measures a cost/latency property of an API surface rather than a co
 ## Implementation sketch
 
 Issue tools/list three times: calls 1 and 2 on the same keep-alive connection ~2s apart, call 3 on a freshly established TCP/TLS connection ~5s later. For each response with `resultType: "complete"` assert:
+
 - `ttlMs` is present (MUST), is an integer, and is >= 0 (MUST). Grade the value: 0 or absent = no caching possible (fail); >0 = pass, and report the value so operators can see their refetch cadence.
 - `cacheScope` is present and is exactly "public" or "private". Flag `cacheScope: "public"` on an endpoint that also issues a 401/WWW-Authenticate challenge as a review item — the spec warns such results may be shared across access tokens.
 - Ordering: compare the array of tool `name` values across all three calls positionally. Any positional difference with identical set membership = non-deterministic ordering (SHOULD violation). Additionally hash the canonically-serialized tool array (JCS or stable-key JSON) and compare hashes — this catches key-order churn inside inputSchema objects, which breaks byte-level prompt caching even when tool order is stable.

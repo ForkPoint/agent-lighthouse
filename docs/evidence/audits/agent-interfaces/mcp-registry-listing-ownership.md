@@ -15,7 +15,6 @@ sources:
   - S15
 ---
 
-
 # Registry Listing and Namespace Ownership Proof
 
 > Shipped in v2. Evidence grade **B** · scored tier · partial overlap · implementation: `multi-page`

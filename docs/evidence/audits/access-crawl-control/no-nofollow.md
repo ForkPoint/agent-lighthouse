@@ -38,6 +38,7 @@ Title and guidance promise 'No nofollow on important links' and advise reserving
 **Required fix:** Either (a) implement what the title says — count `rel="nofollow"` on internal anchors and flag only internal links that are nofollowed — or (b) rename the audit to 'No page-level nofollow directive' and align the guidance text with the code. Add `content="none"` detection, tokenize the directive list instead of substring matching, and exempt known utility page types (login/cart/search) from the count.
 
 **False-positive risks:**
+
 - Implementation/description mismatch: `metaRobots.includes('nofollow')` on page meta only. `rel="nofollow"` / `rel="ugc"` / `rel="sponsored"` on anchors — what the title and fix text describe — is never examined.
 - `content="none"` (which implies nofollow) is not detected → false PASS.
 - Substring matching on the raw content string: a value like `max-snippet:-1, nofollowups` would match, and per-bot directives are not distinguished.
@@ -46,6 +47,7 @@ Title and guidance promise 'No nofollow on important links' and advise reserving
 - Reports 'All N pages have nofollow' as a hard FAIL when N could be 1 (a single-page scan), making a one-page site's normal configuration look site-wide catastrophic.
 
 **Test gaps:**
+
 - rel="nofollow" on internal anchors — the audit's stated subject, entirely untested
 - content="none"
 - Per-bot nofollow directives

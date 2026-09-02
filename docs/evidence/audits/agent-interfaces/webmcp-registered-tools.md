@@ -48,6 +48,7 @@ Self-admittedly not a standard — the description says the file is 'an emerging
 **Required fix:** Delete, along with the five dependent WebMCP audits. A static scanner cannot audit a JS-registration API; if the project wants WebMCP coverage it needs a headless-browser probe of `navigator.modelContext` after page load, which is a different capability entirely. Until then, publishing nothing here is the honest result.
 
 **False-positive risks:**
+
 - Universal false fail: no meaningful population of sites publishes /.well-known/webmcp, and a site that correctly implements real WebMCP (`navigator.modelContext.registerTool()`) still fails, because the real API leaves no static artifact for a non-JS scanner to find. The audit is unsatisfiable by correct implementations.
 - `defaultPriority: 'high'` on an admittedly non-standard convention means it surfaces in top failures and recommendations ahead of genuinely actionable items.
 - Even the pass path validates only `typeof t['name'] === 'string'` — no `description`, no `inputSchema`. A manifest of nameplates with no callable surface passes as 'WebMCP manifest found with N valid tool(s)'.
@@ -55,6 +56,7 @@ Self-admittedly not a standard — the description says the file is 'an emerging
 - Anchors five downstream audits (5.21-5.25) to the same fictional artifact, compounding the score damage.
 
 **Test gaps:**
+
 - No test acknowledging that a real WebMCP implementation (JS API, no file) exists and should not fail
 - No inputSchema/description validation test
 - No HTML-soft-404 fixture
@@ -82,13 +84,13 @@ The grade is **B**, not A, and the tier is `experimental`, because of how the co
 ### Detection rules
 
 - **`navigator.modelContext` must appear** in an inline script before anything is reported. `window.registerTool(...)` in an unrelated library is not WebMCP.
-- **Tool names** come from `registerTool("name", …)` (string-first form) and from a `name:` key inside the *argument slice* of a `registerTool` / `registerTools` / `provideContext` call, located by a paren-depth walk. Scoping to the call's own source prevents an unrelated `name:` elsewhere in the file from being reported as a tool. Names are deduplicated across pages.
+- **Tool names** come from `registerTool("name", …)` (string-first form) and from a `name:` key inside the _argument slice_ of a `registerTool` / `registerTools` / `provideContext` call, located by a paren-depth walk. Scoping to the call's own source prevents an unrelated `name:` elsewhere in the file from being reported as a tool. Names are deduplicated across pages.
 - **External scripts are not fetched.** Following every `<script src>` on every page would multiply a scan's request count for a weight-0 signal, and minified bundles would rarely match anyway.
 - **Declarative forms are deferred**, not double-counted: a site whose only WebMCP adoption is `<form toolname>` returns `na` naming `agent-interfaces/webmcp-declarative-forms`, which owns that path. Imperative registration still reports when both are present.
 
 ### Grade decision: **A → B**, tier `experimental`, weight 0
 
-Source: the [REWORK-TODO redemption note](../../../../packages/core/src/audits/rework-todo.md) — "the .well-known manifest file is invented (grade D) — but runtime-registered WebMCP tools are grade B … Replace manifest-file audit with registered-tools detection, experimental tier." The frontmatter `evidence_grade` moves `A` → `B` to match: the A on this dossier came from the `agent-surface-soft-404-validation` signal, which is a validation rule for how *any* well-known audit must be implemented, not a grade for this audit's mechanism — and with the well-known path gone, it no longer applies here at all. `weightForGrade('B', 'experimental') = 0`, so `scoreDisplayMode` stays `informative`, and `defaultPriority` drops `high` → `low`. The pre-rewrite meta carried an explicit comment that its `A` was a placeholder pending this rewrite; that comment is now resolved rather than deferred.
+Source: the [REWORK-TODO redemption note](../../../../packages/core/src/audits/rework-todo.md) — "the .well-known manifest file is invented (grade D) — but runtime-registered WebMCP tools are grade B … Replace manifest-file audit with registered-tools detection, experimental tier." The frontmatter `evidence_grade` moves `A` → `B` to match: the A on this dossier came from the `agent-surface-soft-404-validation` signal, which is a validation rule for how _any_ well-known audit must be implemented, not a grade for this audit's mechanism — and with the well-known path gone, it no longer applies here at all. `weightForGrade('B', 'experimental') = 0`, so `scoreDisplayMode` stays `informative`, and `defaultPriority` drops `high` → `low`. The pre-rewrite meta carried an explicit comment that its `A` was a placeholder pending this rewrite; that comment is now resolved rather than deferred.
 
 ### Re-check trigger
 
@@ -130,8 +132,8 @@ can no longer produce a pass, and another pins that the string
 
 **Signal 2, `agent-surface-soft-404-validation` — grade A, `Recommended tier:
 scored`.** Not applicable here, for the same reason it was not split out in
-Task 6. It is a meta-signal — its own evidence calls it *"a meta-signal about
-how the other audits must be implemented"* — requiring that any audit reading a
+Task 6. It is a meta-signal — its own evidence calls it _"a meta-signal about
+how the other audits must be implemented"_ — requiring that any audit reading a
 well-known path validate content-type and parseability rather than status code.
 This audit reads no well-known path. It matches `navigator.modelContext`
 registrations in inline `<script>` elements of the served document. There is no

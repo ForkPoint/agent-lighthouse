@@ -4,12 +4,12 @@ This benchmark is the promotion-friendly story for Agent Lighthouse: most stores
 
 ## Headline Findings
 
-| Finding | Result |
-| :-- | --: |
-| Stores with OpenAPI, WebMCP, or MCP action surfaces | 0% |
-| Stores with `llms.txt` or `llms-full.txt` | 4% |
-| Average agent-readiness score | 53.6 / 100 |
-| Fastest practical score lift | `llms.txt`, AI catalog, accessible icon buttons |
+| Finding                                             |                                          Result |
+| :-------------------------------------------------- | ----------------------------------------------: |
+| Stores with OpenAPI, WebMCP, or MCP action surfaces |                                              0% |
+| Stores with `llms.txt` or `llms-full.txt`           |                                              4% |
+| Average agent-readiness score                       |                                      53.6 / 100 |
+| Fastest practical score lift                        | `llms.txt`, AI catalog, accessible icon buttons |
 
 These figures come from the pre-v2 run. v2 changed the registry, the pass conditions, and the scoring formula, so the average score is not comparable to a v2 scan; re-run the script to refresh it.
 

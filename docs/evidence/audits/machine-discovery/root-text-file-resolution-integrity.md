@@ -14,7 +14,6 @@ sources:
   - bing-indexnow
 ---
 
-
 # Root text-file resolution integrity (IndexNow key-file precondition)
 
 > Shipped in v2. Evidence grade **B** · scored tier · unique · implementation: `static-fetch`
@@ -42,7 +41,7 @@ No evidence any tool probes for root .txt soft-404 as a discovery precondition. 
 
 ## Implementation sketch
 
-1) GET https://{host}/{32 lowercase hex}.txt with a cache-busting random name, no-cache headers, following <=3 redirects. Assert final status in {404,410}. 2) Repeat once with a second random name to exclude a coincidental real file. 3) If either returns 2xx, classify: body starts with '<' or contains '<html' in the first 512 bytes -> 'SPA/HTML catch-all'; Content-Type is text/html -> 'wrong content type'; body identical between the two random probes -> 'static catch-all'. 4) Positive control: GET /robots.txt and assert 200 with Content-Type starting 'text/plain' (some CDNs rewrite it to application/octet-stream or text/html, which breaks strict parsers). 5) Emit a derived flag 'discovery_probe_reliable' consumed by every other probe-based audit in the tool, so llms.txt/ai.txt/security.txt checks downgrade to INDETERMINATE instead of falsely passing. PASS = both random probes 404 AND robots.txt is text/plain.
+1. GET https://{host}/{32 lowercase hex}.txt with a cache-busting random name, no-cache headers, following <=3 redirects. Assert final status in {404,410}. 2) Repeat once with a second random name to exclude a coincidental real file. 3) If either returns 2xx, classify: body starts with '<' or contains '<html' in the first 512 bytes -> 'SPA/HTML catch-all'; Content-Type is text/html -> 'wrong content type'; body identical between the two random probes -> 'static catch-all'. 4) Positive control: GET /robots.txt and assert 200 with Content-Type starting 'text/plain' (some CDNs rewrite it to application/octet-stream or text/html, which breaks strict parsers). 5) Emit a derived flag 'discovery_probe_reliable' consumed by every other probe-based audit in the tool, so llms.txt/ai.txt/security.txt checks downgrade to INDETERMINATE instead of falsely passing. PASS = both random probes 404 AND robots.txt is text/plain.
 
 ## Example failure
 

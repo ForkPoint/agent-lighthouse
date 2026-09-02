@@ -14,7 +14,6 @@ sources:
   - schema-datafeed
 ---
 
-
 # WebSub hub advertisement and self-link correctness
 
 > Shipped in v2. Evidence grade **C** · informative tier · unique · implementation: `static-fetch`

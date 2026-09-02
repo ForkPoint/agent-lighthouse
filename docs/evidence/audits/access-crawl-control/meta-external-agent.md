@@ -39,12 +39,14 @@ Meta-ExternalAgent is a live token (Llama training and Meta AI corpora) so the s
 **Required fix:** Apply the shared helper fixes from 2.1 (BOM strip, prefix matching, `/*` blanket forms) and add prefix-match so a shorthand `Meta-External*` group is attributed to both Meta tokens.
 
 **False-positive risks:**
+
 - Exact-match miss on `User-agent: meta-externalagent` variants with version suffixes.
 - Prefix collision: `User-agent: Meta-External` (a shorthand some sites use to cover both Meta tokens) matches neither audited token, so a deliberate Meta block reads as 'allowed by default'.
 - Shared BOM / soft-404 / `Disallow: /*` misreads.
 - Cloudflare/edge UA blocking is invisible to the scanner's `AgentLighthouse/1.0` fetch.
 
 **Test gaps:**
+
 - No prefix/shorthand token case.
 - No test covering the Meta-ExternalAgent vs Meta-ExternalFetcher distinction.
 - Same missing real-world robots.txt variants as 2.1.

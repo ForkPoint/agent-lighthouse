@@ -50,6 +50,7 @@ Falsy and near-constantly PASSING. The claimed mechanism — 'AI engines scan ho
 **Required fix:** Not salvageable as a scored audit. If it must survive: demote to `scoreDisplayMode: 'informative'` so it is score-excluded, scope strictly to `pageType === 'homepage'`, delete the adjective and shipping/returns patterns, require structural evidence (a testimonial block with attribution, a logo grid inside a section whose heading matches a trust phrase, or Review/AggregateRating schema) instead of free-text regex, and gate on the page `lang` until other languages are supported. Otherwise delete.
 
 **False-positive risks:**
+
 - The 12 TRUST_PATTERNS match navigation and legal boilerplate, not trust content. A homepage with a 'Partners' nav link and a 'Free shipping over $50' banner scores 2 signals → PASS 'Found 2 trust signal(s) on homepage', with no testimonials, logos, awards or case studies. This is the modal outcome for e-commerce.
 - `/\baward/i` has no trailing boundary, so it matches 'awarded'/'awards' anywhere including legal text; `/\bcertif(ied|icate|ication)\b/i` matches 'SSL certificate' in a security blurb.
 - `/\b(sustainable|organic|fair\s+trade|b\s+corp|handcrafted|handmade)\b/i` treats marketing adjectives as trust signals — 'organic' matches an organic-food product name or the phrase 'organic traffic' in a marketing site's own copy.
@@ -60,6 +61,7 @@ Falsy and near-constantly PASSING. The claimed mechanism — 'AI engines scan ho
 - The `reviews|customer rating|verified buyer` pattern double-counts the same page fact that audit 10.8 scores independently.
 
 **Test gaps:**
+
 - No test with a realistic commercial homepage (nav + shipping banner) demonstrating the trivial 2-signal pass.
 - No test for a non-English homepage with abundant real trust content.
 - No test for Tailwind/CSS-Modules/styled-components markup where the logo-grid selector finds nothing.
@@ -71,21 +73,21 @@ Falsy and near-constantly PASSING. The claimed mechanism — 'AI engines scan ho
 
 ## The GEO-benchmark rebuild (Plan 4, Task 11, 2026-08-22)
 
-The [redemption dossier](../../deletions/generative-engine/trust-signals.md) found something the 2026-08-20 review had not: the *mechanism* is real and quantified — arXiv 2605.25517 ran 252,000 paired trials across six LLMs in a controlled RAG testbed and measured which content factors change citation. What it also found is that this audit checked none of them. So the audit is not repaired, it is re-specified against the measured factor list.
+The [redemption dossier](../../deletions/generative-engine/trust-signals.md) found something the 2026-08-20 review had not: the _mechanism_ is real and quantified — arXiv 2605.25517 ran 252,000 paired trials across six LLMs in a controlled RAG testbed and measured which content factors change citation. What it also found is that this audit checked none of them. So the audit is not repaired, it is re-specified against the measured factor list.
 
 **Old pass condition:** ≥2 matches from 12 free-text regexes anywhere in `ctx.pages[0]`'s body, or a `[class*="logo"]`-style container holding ≥3 `<img>`. 1 match warned, 0 failed. In practice a "Partners" nav link plus a "Free shipping over $50" banner passed — the modal outcome for e-commerce — while any non-English homepage failed no matter how much real trust content it carried.
 
 **New pass condition:** on the homepage, at least 2 of the 3 factors the benchmark measured are present.
 
-| Factor | Measured effect | Detected as |
-| --- | --- | --- |
-| Quantified social proof | "Weaker Social Proof" (defined as *fewer or lower ratings/reviews*), OR 2.14 to >10,000, significant in 4 of 6 models | a rating out of 5, a review/rating count, or a customer/client/user count — always with a magnitude |
-| Evidence-backed claims | "Claims With Evidence", OR 2.09 to >10,000, significant in 5 of 6 models; KDD'24 GEO measured Cite Sources at +28% and Statistics at +33% | ≥2 outbound citation hosts with readable anchor text, or non-empty `<cite>` / `blockquote[cite]` |
-| Comparison content | named in the paper's practical implications ("include comparisons") | a `<table>` with ≥3 `<th>`, or a heading framed `vs` / `versus` / `compare` / `difference between` / `alternatives to` |
+| Factor                  | Measured effect                                                                                                                           | Detected as                                                                                                            |
+| ----------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| Quantified social proof | "Weaker Social Proof" (defined as _fewer or lower ratings/reviews_), OR 2.14 to >10,000, significant in 4 of 6 models                     | a rating out of 5, a review/rating count, or a customer/client/user count — always with a magnitude                    |
+| Evidence-backed claims  | "Claims With Evidence", OR 2.09 to >10,000, significant in 5 of 6 models; KDD'24 GEO measured Cite Sources at +28% and Statistics at +33% | ≥2 outbound citation hosts with readable anchor text, or non-empty `<cite>` / `blockquote[cite]`                       |
+| Comparison content      | named in the paper's practical implications ("include comparisons")                                                                       | a `<table>` with ≥3 `<th>`, or a heading framed `vs` / `versus` / `compare` / `difference between` / `alternatives to` |
 
 `warn` at exactly 1 factor, `fail` at 0, `notApplicable` when the page cannot be assessed.
 
-*Superseded 2026-08-24: the comparison row was dropped from the scored tally, and the bar is now every remaining factor rather than a majority — `pass` at both measured factors, `warn` at exactly one, `fail` at neither. See the pass-rule correction below.*
+_Superseded 2026-08-24: the comparison row was dropped from the scored tally, and the bar is now every remaining factor rather than a majority — `pass` at both measured factors, `warn` at exactly one, `fail` at neither. See the pass-rule correction below._
 
 ### Promotional puffery deleted
 
@@ -97,9 +99,10 @@ The surviving social-proof detector requires a **number**, because the number is
 
 The redeem note's explicit constraint. Three separate mechanisms enforce it:
 
-- **`answer-readiness/review-signals` keeps ownership of machine-readable review data.** When `findReviewNodes()` — imported from that audit, not reimplemented — finds Review/AggregateRating JSON-LD on the homepage, the social-proof factor is *deferred*: it leaves both the numerator and the denominator here, and the reported evidence names `answer-readiness/review-signals` as the owner. That function is now exported for exactly this purpose, so the two audits cannot drift apart on what review data is.
+- **`answer-readiness/review-signals` keeps ownership of machine-readable review data.** When `findReviewNodes()` — imported from that audit, not reimplemented — finds Review/AggregateRating JSON-LD on the homepage, the social-proof factor is _deferred_: it leaves both the numerator and the denominator here, and the reported evidence names `answer-readiness/review-signals` as the owner. That function is now exported for exactly this purpose, so the two audits cannot drift apart on what review data is.
 
-  **The pass bar moves with the denominator.** `required` is 2 of 3 normally and 1 of 2 when the factor is deferred, and a deferred factor also lifts the floor off `fail` (0 satisfied reports `warn`, not "none found"). Without both, publishing valid `AggregateRating` markup could flip a passing homepage to `warn` and a warning one to `fail` — penalising exactly the signal the redeem note says to keep and strengthen. The rule the logic guarantees is monotonicity: adding correct review markup never lowers the outcome. It also never *raises* it to a pass on its own — markup plus nothing else is `warn` — so the deferral cannot become a second score for a fact `review-signals` already counted. Three tests pin this: the deferral fixture asserts `pass`, a paired with/without-markup fixture asserts the status and score never regress, and a boundary fixture asserts markup-only is `warn` while the same page bare is `fail`.
+  **The pass bar moves with the denominator.** `required` is 2 of 3 normally and 1 of 2 when the factor is deferred, and a deferred factor also lifts the floor off `fail` (0 satisfied reports `warn`, not "none found"). Without both, publishing valid `AggregateRating` markup could flip a passing homepage to `warn` and a warning one to `fail` — penalising exactly the signal the redeem note says to keep and strengthen. The rule the logic guarantees is monotonicity: adding correct review markup never lowers the outcome. It also never _raises_ it to a pass on its own — markup plus nothing else is `warn` — so the deferral cannot become a second score for a fact `review-signals` already counted. Three tests pin this: the deferral fixture asserts `pass`, a paired with/without-markup fixture asserts the status and score never regress, and a boundary fixture asserts markup-only is `warn` while the same page bare is `fail`.
+
 - **`answer-readiness/external-citations` is scoped to `content` pages**, so the evidence-backed-claims factor, which is homepage-only, never scores the same anchor twice.
 - **`answer-readiness/comparison-tables` is scoped to `category`/`product`/`content` pages**, so the comparison factor is uncontested on the homepage.
 
@@ -155,7 +158,7 @@ The contradiction sweep flagged this audit as a Class A case: one of its two gra
 
 **What the record supports.** Two of the three rebuilt factors carry a measurement. Quantified social proof is the "Weaker Social Proof" condition of arXiv 2605.25517: OR 2.14 to >10,000, significant in 4 of 6 models. Evidence-backed claims is "Claims With Evidence": OR 2.09 to >10,000, significant in 5 of 6 models, corroborated by the KDD'24 GEO paper's Cite Sources +28% and Statistics +33%. Both are exactly what POLICY's grade-B bar describes — "strong empirical evidence of effect", whose own worked example is "GEO paper citation-rate deltas".
 
-**What it does not support.** The third factor's row in that same table gives, under *Measured effect*, "named in the paper's practical implications ('include comparisons')". That is a sentence in a discussion section: no odds ratio, no significance test, no model count, sitting in a column where the other two rows carry both. The project has already researched that signal on its own terms. `docs/evidence/audits/answer-readiness/comparison-tables.md` records "**Consumers:** none-known — no vendor documents table markup as an answer-selection or citation signal · **Recommended tier:** informative", and that audit ships grade C, tier `informative`, weight 0. The same page fact was therefore being priced at two grades at once — nothing in one audit, and one third of a grade-B scored pass bar in this one.
+**What it does not support.** The third factor's row in that same table gives, under _Measured effect_, "named in the paper's practical implications ('include comparisons')". That is a sentence in a discussion section: no odds ratio, no significance test, no model count, sitting in a column where the other two rows carry both. The project has already researched that signal on its own terms. `docs/evidence/audits/answer-readiness/comparison-tables.md` records "**Consumers:** none-known — no vendor documents table markup as an answer-selection or citation signal · **Recommended tier:** informative", and that audit ships grade C, tier `informative`, weight 0. The same page fact was therefore being priced at two grades at once — nothing in one audit, and one third of a grade-B scored pass bar in this one.
 
 Under the "2 of 3" rule that mispricing was decisive rather than cosmetic. A homepage with a comparison table and any single measured factor passed. A homepage carrying nothing but a "Compare us to X" heading warned instead of failing. Neither outcome is supported by anything in this dossier.
 
@@ -173,8 +176,8 @@ Note for anyone reading the two audits together: `findReviewNodes` was tightened
 
 **Two alternatives considered and rejected.**
 
-1. *Split the comparison factor into a new informative audit.* Rejected — the split target already exists. `answer-readiness/comparison-tables` is the same signal at the grade and tier its own research assigned, and its `audit()` iterates `ctx.pages` rather than a single matched page, so homepage tables are reported there whenever it runs. A second audit would duplicate it for no evidential gain. One consequence is accepted and recorded here: that audit is gated to `category`/`product`/`content` pages, so on a homepage-only scan comparison content is now reported by nothing. For a signal with no documented consumer that is the right outcome, and widening that audit's page types is its own dossier's decision, not this one's.
-2. *Gate the social-proof factor to commerce pages,* following the rating-markup signal's counter-evidence that ratings should "Score only on product/offer/local pages". Rejected — that scope limit is about machine-readable rating markup and its named commerce consumers, which this audit defers away. What is scored here is the benchmark's retrieved-text factor, and 2605.25517 ran on generic RAG documents rather than commerce pages, so the homepage scope is the one its evidence covers.
+1. _Split the comparison factor into a new informative audit._ Rejected — the split target already exists. `answer-readiness/comparison-tables` is the same signal at the grade and tier its own research assigned, and its `audit()` iterates `ctx.pages` rather than a single matched page, so homepage tables are reported there whenever it runs. A second audit would duplicate it for no evidential gain. One consequence is accepted and recorded here: that audit is gated to `category`/`product`/`content` pages, so on a homepage-only scan comparison content is now reported by nothing. For a signal with no documented consumer that is the right outcome, and widening that audit's page types is its own dossier's decision, not this one's.
+2. _Gate the social-proof factor to commerce pages,_ following the rating-markup signal's counter-evidence that ratings should "Score only on product/offer/local pages". Rejected — that scope limit is about machine-readable rating markup and its named commerce consumers, which this audit defers away. What is scored here is the benchmark's retrieved-text factor, and 2605.25517 ran on generic RAG documents rather than commerce pages, so the homepage scope is the one its evidence covers.
 
 **What moves for real sites.** A homepage that passed on a comparison table plus one measured factor now warns. A homepage whose only signal was a comparison table or a "X vs Y" heading now fails instead of warning. Homepages that already carried a quantified rating or review count together with outbound citations or attributed sources are unaffected. This audit is a member of the content readiness vital set, so those sites' content readiness figure moves along with the category and overall score.
 

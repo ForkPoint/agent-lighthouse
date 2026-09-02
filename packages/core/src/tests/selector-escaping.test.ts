@@ -7,9 +7,9 @@ import { mockCheckContext, mockPageContext } from "../__tests__/test-utils";
 describe("Debt Item 4: CSS Selector Escaping for User/DOM Content", () => {
   describe("escapeAttrValue", () => {
     it("escapes double quotes and backslashes", () => {
-      expect(escapeAttrValue('plain-id')).toBe('plain-id');
+      expect(escapeAttrValue("plain-id")).toBe("plain-id");
       expect(escapeAttrValue('user"name')).toBe('user\\"name');
-      expect(escapeAttrValue('path\\to\\item')).toBe('path\\\\to\\\\item');
+      expect(escapeAttrValue("path\\to\\item")).toBe("path\\\\to\\\\item");
       expect(escapeAttrValue('quote"and\\slash')).toBe('quote\\"and\\\\slash');
     });
   });

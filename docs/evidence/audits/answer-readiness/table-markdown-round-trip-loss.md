@@ -15,7 +15,6 @@ sources:
   - firecrawl-docs
 ---
 
-
 # Table Markdown Round-Trip Loss
 
 > Shipped in v2. Evidence grade **B** · scored tier · partial overlap · implementation: `static-fetch`
@@ -86,7 +85,7 @@ compared as heading both. That is what makes the loss visible: the round trip
 returns the text in the first column and nothing in the second.
 
 A row is called ragged when the cells it declares do not add up to the header
-width *and* the grid row was not filled by a `rowspan` from above. Without the
+width _and_ the grid row was not filled by a `rowspan` from above. Without the
 second condition every table using `rowspan` reports every row it touches.
 
 Status bands are this implementation's. `headerlessNumeric` and stranded units

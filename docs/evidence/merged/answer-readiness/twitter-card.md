@@ -26,6 +26,7 @@ Falsy and factually wrong. The audit fails a site for omitting `twitter:title`/`
 **Required fix:** Delete. If the maintainer wants to retain any of it, the only defensible remnant is: when `og:*` is absent AND `twitter:*` is absent, that is already covered by core-open-graph (4.6); when `og:*` is present, `twitter:*` is redundant by specification and must not be failed. A correct implementation would be `if (hasCoreOg) return notApplicable()`, at which point the audit has no remaining behavior.
 
 **False-positive risks:**
+
 - Fails correct markup by design: the loop over `TWITTER_REQUIRED = ['twitter:card','twitter:title','twitter:description']` never consults `og:title`/`og:description`, yet X explicitly falls back to them. A site with `twitter:card` plus full OG — the recommended configuration — is reported as `warn` with 'Missing Twitter Card tags: twitter:title, twitter:description'.
 - A site with complete OG and no twitter tags at all gets a hard `fail` at 'medium' priority for a defect that does not exist in any consumer.
 - `twitter:image` is not required by the audit but `twitter:card="summary_large_image"` without an image is a genuinely broken card — the audit checks the three tags that don't matter and skips the interaction that does.
@@ -34,6 +35,7 @@ Falsy and factually wrong. The audit fails a site for omitting `twitter:title`/`
 - WAF interstitial → all three reported missing.
 
 **Test gaps:**
+
 - No test with full OG present and twitter tags absent — the single most common real-world configuration, which the audit gets wrong.
 - No `twitter:card` + missing `twitter:image` interaction test.
 - No `property=` vs `name=` attribute test.

@@ -46,6 +46,7 @@ Two defects make it close to vacuous, plus one that penalizes correct markup. Th
 **Required fix:** Replace the two-clause test with a real first-child check: the first element child of the section must be h1–h6, or the section must carry a non-blank aria-label / an aria-labelledby whose target id actually exists in the document. Trim aria-label before accepting it ('!!$(el).attr('aria-label')' currently accepts ' '). Change the zero-sections branch from warn to notApplicable() — absence of <section> is not a defect.
 
 **False-positive risks:**
+
 - '|| $(el).find('h1, h2, h3, h4, h5, h6').length > 0' matches a heading nested arbitrarily deep — e.g. <section><div class="cards"><article><h3>…</h3></article></div></section> counts as labeled although the section itself has no accessible name.
 - aria-labelledby pointing at a nonexistent or removed id is accepted ('!!$(el).attr('aria-labelledby')') — no id resolution.
 - aria-label=" " (whitespace) is truthy and accepted.
@@ -54,6 +55,7 @@ Two defects make it close to vacuous, plus one that penalizes correct markup. Th
 - Sections pooled across all pages with no per-page/per-URL attribution in `found`, so '7/20 labeled sections' is not actionable.
 
 **Test gaps:**
+
 - No fixture with a deeply nested heading inside an unnamed section (the dominant false pass).
 - No aria-labelledby-with-missing-target fixture.
 - No whitespace-only aria-label fixture.

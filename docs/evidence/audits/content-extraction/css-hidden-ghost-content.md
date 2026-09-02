@@ -16,7 +16,6 @@ sources:
   - readability-repo
 ---
 
-
 # Ghost content: CSS-hidden text ingested as visible
 
 > Shipped in v2. Evidence grade **A** · scored tier · unique · implementation: `static-fetch`
@@ -31,7 +30,7 @@ This is provable from source, not inferred. Readability's visibility test consul
 
 ## Evidence
 
-- **[Readability.js source — _isProbablyVisible](https://raw.githubusercontent.com/mozilla/readability/main/Readability.js)** — Mozilla (repo, URL verified 2026-08-20)
+- **[Readability.js source — \_isProbablyVisible](https://raw.githubusercontent.com/mozilla/readability/main/Readability.js)** — Mozilla (repo, URL verified 2026-08-20)
   - Visibility test is literally: node.style.display != "none" && node.style.visibility != "hidden" && !node.hasAttribute("hidden") && aria-hidden!="true". Only inline styles and attributes are consulted — "It does not evaluate class-based CSS rules from stylesheets." Proof that content hidden by an external stylesheet class is ingested as if visible by the most widely deployed extractor.
 - **[The rise of the AI crawler](https://vercel.com/blog/the-rise-of-the-ai-crawler)** — Vercel (study, URL verified 2026-08-20)
   - "none of the major AI crawlers currently render JavaScript" — explicitly GPTBot, ChatGPT-User, OAI-SearchBot, ClaudeBot — though they do fetch JS files as text (ChatGPT 11.50%, Claude 23.84% of requests). ChatGPT spends 34.82% and Claude 34.16% of fetches on 404s vs Googlebot's 8.22%. Establishes that (a) what an AI crawler ingests is the raw HTML byte stream with no CSS/JS applied, and (b) per-fetch yield is already terrible, so wasted tokens per fetch compound.
@@ -73,7 +72,7 @@ Tier per evidence policy: **scored** — grade A meets the A/B bar required for 
   the same estimator `content-extraction/token-ratio` uses. Counts are labelled
   `est. tokens` everywhere they surface.
 - **No cascade, no specificity, no media-query evaluation.** The scanner asks
-  only whether *any* rule that could apply to an element declares a hiding
+  only whether _any_ rule that could apply to an element declares a hiding
   property. Rules inside `@media print` are ignored, and at-rule bodies that
   hold declarations rather than selectors (`@font-face`, `@keyframes`, `@page`)
   are skipped wholesale. The matched selector text is reported verbatim in the

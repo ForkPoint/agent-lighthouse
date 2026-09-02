@@ -41,6 +41,7 @@ AI engines use dateModified in JSON-LD to determine content freshness. Content t
 **Required fix:** 1) Stop warning when `dateModified === datePublished`; that is valid markup. Pass when `dateModified` is present and parseable, and warn only when it is absent or older than a justifiable staleness threshold. 2) Compare with `Date.parse`, not string equality. 3) Filter to `p.pageType === 'content'` and either drop `WebPage` from the type list or rank Article/BlogPosting/NewsArticle ahead of it, so the homepage cannot answer for the blog. 4) Aggregate across content pages (n of m) instead of returning on the first hit. 5) Replace the local shallow walker with `flattenJsonLd`. 6) Since 10.9 already accepts `dateModified` as a date signal, make the two explicitly complementary: 10.9 = any date visible, 10.10 = machine-readable revision date specifically.
 
 **False-positive risks:**
+
 - `if (typeof datePublished === 'string' && dateModified.trim() !== datePublished.trim())` → pass, else `warn`. An article published once and never edited SHOULD have equal dates; warning on it pressures the user to fabricate freshness. This is the audit's central logic, not an edge case.
 - String inequality, not date comparison. `"2025-01-01"` vs `"2025-01-01T00:00:00Z"` vs `"2025-01-01T00:00:00+00:00"` denote the same instant but compare unequal → false PASS ('dateModified differs from datePublished') on markup carrying no update information at all.
 - No recency check despite the guidance claiming freshness ranking: `"dateModified": "2011-04-02"` passes as long as it differs from datePublished, so a decade-stale page scores like one updated yesterday. Future-dated build timestamps also pass without comment.
@@ -49,6 +50,7 @@ AI engines use dateModified in JSON-LD to determine content freshness. Content t
 - The shallow local `findJsonLdByType` misses `mainEntity`/`isPartOf`-nested Article nodes → false FAIL on Yoast/next-seo's most common graph shape. The file reads `p.structuredData ?? p.jsonLd`, so Microdata/RDFa flow in, but the shallow walker then discards most of it.
 
 **Test gaps:**
+
 - No test asserting that an unrevised article with equal dates is acceptable — the tests codify the harmful warn as correct.
 - No test for equivalent-but-differently-formatted timestamps.
 - No test for a very old `dateModified` (staleness).

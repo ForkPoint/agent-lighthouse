@@ -63,22 +63,22 @@ The one exception is `--assert-category`, which is read by a separate pass that 
 
 ## Flags
 
-| Flag                        | Value              | Default              | What it does                                                        |
-| :-------------------------- | :----------------- | :------------------- | :------------------------------------------------------------------ |
-| `-h`, `--help`              | —                  | —                    | Print usage and exit. Recognised only as the first argument.          |
-| `-p`, `--preset <name>`     | preset name        | `full`               | Names the audit profile shown in the report header.                  |
-| `-c`, `--config <path>`     | file path          | auto-discovered      | Load configuration from an explicit file.                            |
-| `--categories <list>`       | comma-separated ids | all eight           | Restrict the scan to these categories.                               |
-| `--experimental`            | —                  | off                  | Also run experimental-tier audits (reported, never scored).          |
-| `-o`, `--output <formats>`  | comma-separated    | `terminal,html,json` | Which report formats to produce.                                     |
-| `-d`, `--output-dir <path>` | directory path     | `./reports`          | Where report files are written.                                      |
-| `-v`, `--view`              | —                  | off                  | Open the generated HTML report in the default browser.               |
-| `--min-score <number>`      | 0–100              | `0` (no assertion)   | Fail the run if the overall score is below this.                     |
-| `--assert-category <id:min>` | `id:number`       | none                 | Fail the run if a category scores below its threshold. Repeatable.   |
-| `--debug-audit <id\|fails>` | audit id or `fails` | none                | Print a deep diagnostic breakdown for matching audits.               |
-| `--trace [path]`            | file path          | off                  | Write one NDJSON record per audit, including skipped and errored ones. |
-| `--silent`                  | —                  | off                  | Suppress banner, progress and terminal report.                       |
-| `--progress-json`           | —                  | off                  | Stream scan progress as NDJSON on stderr.                            |
+| Flag                         | Value               | Default              | What it does                                                           |
+| :--------------------------- | :------------------ | :------------------- | :--------------------------------------------------------------------- |
+| `-h`, `--help`               | —                   | —                    | Print usage and exit. Recognised only as the first argument.           |
+| `-p`, `--preset <name>`      | preset name         | `full`               | Names the audit profile shown in the report header.                    |
+| `-c`, `--config <path>`      | file path           | auto-discovered      | Load configuration from an explicit file.                              |
+| `--categories <list>`        | comma-separated ids | all eight            | Restrict the scan to these categories.                                 |
+| `--experimental`             | —                   | off                  | Also run experimental-tier audits (reported, never scored).            |
+| `-o`, `--output <formats>`   | comma-separated     | `terminal,html,json` | Which report formats to produce.                                       |
+| `-d`, `--output-dir <path>`  | directory path      | `./reports`          | Where report files are written.                                        |
+| `-v`, `--view`               | —                   | off                  | Open the generated HTML report in the default browser.                 |
+| `--min-score <number>`       | 0–100               | `0` (no assertion)   | Fail the run if the overall score is below this.                       |
+| `--assert-category <id:min>` | `id:number`         | none                 | Fail the run if a category scores below its threshold. Repeatable.     |
+| `--debug-audit <id\|fails>`  | audit id or `fails` | none                 | Print a deep diagnostic breakdown for matching audits.                 |
+| `--trace [path]`             | file path           | off                  | Write one NDJSON record per audit, including skipped and errored ones. |
+| `--silent`                   | —                   | off                  | Suppress banner, progress and terminal report.                         |
+| `--progress-json`            | —                   | off                  | Stream scan progress as NDJSON on stderr.                              |
 
 ### `-h`, `--help`
 
@@ -209,15 +209,15 @@ agent-lighthouse https://yourstore.com --trace ./run-1.ndjson
 
 Each record carries:
 
-| Field | What it tells you |
-| :--- | :--- |
-| `id`, `category` | which audit |
-| `outcome` | `ran`, `skipped` (no scanned page matched its page types) or `error` |
-| `status`, `score`, `weight` | the verdict and what it contributed |
-| `tier`, `evidenceGrade` | whether it counted toward the score at all |
-| `durationMs` | wall time inside the audit; `0` for one that never ran |
-| `displayValue`, `explanation`, `pageUrl` | the verdict in words, and where |
-| `details` | the structured evidence the verdict was drawn from |
+| Field                                    | What it tells you                                                    |
+| :--------------------------------------- | :------------------------------------------------------------------- |
+| `id`, `category`                         | which audit                                                          |
+| `outcome`                                | `ran`, `skipped` (no scanned page matched its page types) or `error` |
+| `status`, `score`, `weight`              | the verdict and what it contributed                                  |
+| `tier`, `evidenceGrade`                  | whether it counted toward the score at all                           |
+| `durationMs`                             | wall time inside the audit; `0` for one that never ran               |
+| `displayValue`, `explanation`, `pageUrl` | the verdict in words, and where                                      |
+| `details`                                | the structured evidence the verdict was drawn from                   |
 
 The file is truncated at the start of a scan and appended to as the scan runs,
 so a crash still leaves everything up to the point it stopped.
@@ -275,11 +275,11 @@ Stderr is used so the stream can never interleave with the terminal report on st
 
 Files are written into `--output-dir` (default `./reports`) with fixed names:
 
-| Format | File                             |
-| :----- | :------------------------------- |
-| `json` | `agent-lighthouse-report.json`   |
-| `html` | `agent-lighthouse-report.html`   |
-| `md`   | `agent-lighthouse-report.md`     |
+| Format | File                           |
+| :----- | :----------------------------- |
+| `json` | `agent-lighthouse-report.json` |
+| `html` | `agent-lighthouse-report.html` |
+| `md`   | `agent-lighthouse-report.md`   |
 
 Repeat runs overwrite them. Use `--output-dir` to keep runs apart.
 
@@ -287,9 +287,9 @@ A scan covers the homepage plus up to five internal pages discovered from the si
 
 ## Exit codes
 
-| Code | Meaning                                                                                              |
-| :--- | :---------------------------------------------------------------------------------------------------- |
-| `0`  | The scan completed and every assertion passed.                                                         |
+| Code | Meaning                                                                                                                                                                             |
+| :--- | :---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `0`  | The scan completed and every assertion passed.                                                                                                                                      |
 | `1`  | Usage printed (`--help`, or no URL given); invalid URL; unknown category id; `--min-score` or `--assert-category` not met; or an unhandled error such as a missing `--config` file. |
 
 Because a failed budget and a crashed scan share exit code 1, CI jobs that need to tell them apart should check for the report file: assertions run after the reports are written, so `reports/agent-lighthouse-report.json` exists on a budget failure and not on a crash.

@@ -27,6 +27,7 @@ Checks for <meta name="viewport">. This is a mobile-SEO artifact with no bearing
 **Required fix:** _none — audit is sound as implemented_
 
 **False-positive risks:**
+
 - `page.meta['viewport']` presence only — value is never inspected, so `content="width=1024, user-scalable=no"` (genuinely non-mobile-friendly) PASSES. The audit does not measure the thing its title claims.
 - Conversely, a fully responsive site using CSS-only techniques or serving viewport via a JS-injected tag scores FAIL.
 - `extractMetaTags()` overwrites duplicates by name, so a page with two viewport tags is judged on the last one.
@@ -34,6 +35,7 @@ Checks for <meta name="viewport">. This is a mobile-SEO artifact with no bearing
 - The name 'mobile-friendly' promises a rendering assessment the code cannot make from a single static meta tag — the displayed conclusion overstates the evidence by a wide margin.
 
 **Test gaps:**
+
 - Viewport with a fixed width / user-scalable=no (currently a false PASS)
 - Two viewport tags on one page
 - JS-injected viewport

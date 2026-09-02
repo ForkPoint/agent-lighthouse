@@ -33,6 +33,7 @@ Looks for <dfn>, a <dl> with a ≥6-word <dd>, or a <strong>/<b> label ending in
 **Required fix:** Delete. If the maintainer wants to keep a definition signal, the only defensible version is DefinedTerm/DefinedTermSet JSON-LD (a real, consumed vocabulary) and it belongs in the structured-data category, not here as an HTML-markup fashion check.
 
 **False-positive risks:**
+
 - Trivial universal pass via the bold-colon branch: `if (!label.endsWith(':')) return;` then `wordCount(after) >= 6`. Any '<strong>Note:</strong> this applies to all plans as of March', '<strong>Tip:</strong> ...', '<strong>Warning:</strong> ...', '<strong>Ingredients:</strong> ...' passes and is reported as 'bold-colon definitions'. This is not a definition and the user is told their definition markup is in good shape.
 - Parent-text slicing is fragile: `parentText.slice(parentText.indexOf(label) + label.length)` uses the FIRST occurrence of the label string in the parent. When the same label text appears twice in the parent, or when the <strong> is deep inside a list item whose parent text concatenates several siblings, `after` is the wrong text — it can pick up an adjacent item's words and cross the ≥6 threshold spuriously.
 - Sibling text is counted as the definition: for `<li><strong>Colors:</strong></li><li>red green blue black white grey</li>` inside a shared parent, the concatenated parent text pushes `after` over 6 words even though nothing follows the colon.
@@ -42,6 +43,7 @@ Looks for <dfn>, a <dl> with a ≥6-word <dd>, or a <strong>/<b> label ending in
 - SPA/CSR: definition lists rendered client-side are invisible → false fail.
 
 **Test gaps:**
+
 - No test with '<strong>Note:</strong> ...' or '<strong>Tip:</strong> ...' — the dominant real-world false pass.
 - No test where the same label string occurs twice in the parent, or where <strong> and its 'definition' are in different sibling elements.
 - No CJK full-width colon or CJK <dd>.
@@ -64,7 +66,7 @@ Graded **D** on its own in the section below — "no spec, no role mapping and n
 
 `isArticleContentPage` let a `/contact` or `/privacy` page be the sole "article" and produce a site-level verdict about definitions. The gate is now the question the audit is actually about — does this page define something:
 
-- **Structural**, and therefore language-neutral: the page carries a `<dfn>` or a `<dl>`/`<dt>`. That markup *is* the page declaring that it defines a term, in any language.
+- **Structural**, and therefore language-neutral: the page carries a `<dfn>` or a `<dl>`/`<dt>`. That markup _is_ the page declaring that it defines a term, in any language.
 - **Lexical**, per detected language: the title or a heading asks "what is X?", or indexes a glossary or terminology. Read from the primary subtag of `<html lang>`, with English as the fallback.
 
 A crawl where no page passes either test is `na`, which is the "notApplicable when page has no definitional intent" the required rework asks for.
@@ -78,7 +80,7 @@ The required rework asks for "language-neutral structural signals … and first-
 
 ### The direction inversion is corrected
 
-The code review's sharpest finding was that a genuinely well-written prose glossary — "An X is a Y that does Z" — **failed**, while a spec sheet with a bold label passed. Prose definitions are now detected in the opening paragraphs via the language's copula pattern and reported as *prose coverage*, and the strongest verdict the audit can reach is `warn`. That ceiling is deliberate and follows the counter-evidence: no vendor or harness documents acting on `role="term"`/`role="definition"`; CommonMark has no definition-list syntax, so a `<dl>` flattens in any markdown-for-agents pipeline; Google states "You don't need to write in a specific way just for generative AI search"; and C-SEO Bench found most C-SEO interventions ineffective or harmful. Failing a page whose definitions are perfectly readable prose would repeat the error the rewrite exists to remove.
+The code review's sharpest finding was that a genuinely well-written prose glossary — "An X is a Y that does Z" — **failed**, while a spec sheet with a bold label passed. Prose definitions are now detected in the opening paragraphs via the language's copula pattern and reported as _prose coverage_, and the strongest verdict the audit can reach is `warn`. That ceiling is deliberate and follows the counter-evidence: no vendor or harness documents acting on `role="term"`/`role="definition"`; CommonMark has no definition-list syntax, so a `<dl>` flattens in any markdown-for-agents pipeline; Google states "You don't need to write in a specific way just for generative AI search"; and C-SEO Bench found most C-SEO interventions ineffective or harmful. Failing a page whose definitions are perfectly readable prose would repeat the error the rewrite exists to remove.
 
 ### Grade and tier decision: **C**, tier `informative`, weight 0 — target tier `scored` not reachable
 
@@ -103,6 +105,7 @@ _No dedicated evidence signal was researched for this audit in the 2026-08-20 pa
 **Grade: C** — the markup is ratified, and carries a spec-defined term-to-definition role mapping. But no vendor doc, agent harness or study shows any consumer acting on that mapping. The audit's third detector branch, bold-colon, is a typographic convention with no spec basis at all.
 
 **Evidence:**
+
 - WHATWG HTML defines the element precisely. `dfn` "represents the defining instance of a term". The spec adds: "The paragraph, description list group, or section that is the nearest ancestor of the `dfn` element must also contain the definition(s) for the term given by the `dfn` element". The pairing is therefore a conformance requirement, not a convention — https://html.spec.whatwg.org/multipage/text-level-semantics.html#the-dfn-element (verified 2026-08-21)
 - HTML-AAM maps the markup to first-class roles in the tree agents read: `dfn` → `term`, `dt` → `term`, `dd` → `definition`, `dl` → `list` — https://www.w3.org/TR/html-aam-1.0/ (verified 2026-08-21)
 - Extraction pipelines preserve structural markup rather than flattening it: trafilatura's `include_formatting` keeps "structural elements related to formatting (kept in XML, rendered as markdown for text formats)" — https://trafilatura.readthedocs.io/en/latest/corefunctions.html (verified 2026-08-21)

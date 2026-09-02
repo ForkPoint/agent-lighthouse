@@ -40,6 +40,7 @@ Real user-facing signal — 'contact this company for a quote' is a genuine agen
 **Required fix:** Score on form SHAPE rather than keyword substrings: a form is contact-like when it contains an email-ish field plus a free-text field (textarea or a long text input) and posts via POST. Keep keywords only as a confidence booster, extend them with major non-English equivalents, and match them against structured fields (action path, input names, label text) rather than a stringified blob. Detect iframe/third-party form embeds (hsforms.net, typeform.com, jotform) as a partial pass rather than a fail. Use the shared OpenAPI loader.
 
 **False-positive risks:**
+
 - `const formStr = JSON.stringify(form).toLowerCase(); CONTACT_INDICATORS.find(ind => formStr.includes(ind))` matches anywhere in the serialized form — action, method, every input name, type, and label. A newsletter form with `<textarea name="message">`, a chat-widget form, or a search form on a page posting to `/newsletter?src=support` all yield a PASS for 'contact form found'. `'message'`, `'support'`, `'feedback'`, and `'lead'` are especially promiscuous ('lead' is a substring of nothing useful but matches inputs named `leadtime`, `download`).
 - English-only indicators. German `kontakt` / `kontaktformular` contains no 'contact' substring; Japanese お問い合わせ, Chinese 联系我们, Russian Контакты, Polish `kontakt`, Swedish `kontakta` (matches) vs Dutch `contactformulier` (matches) — coverage is accidental and locale-dependent. A German or Japanese site with a perfect contact form FAILS.
 - JS-rendered forms are invisible. React/Vue/HubSpot/Typeform embed forms as `<div id="hbspt-form">` or an iframe; `extractForms($)` finds nothing → 'No contact form detected' on sites that plainly have one.
@@ -48,6 +49,7 @@ Real user-facing signal — 'contact this company for a quote' is a genuine agen
 - Reuses the JSON-only `getOpenApiSpec()` copy, so YAML-spec sites lose the OpenAPI fallback.
 
 **Test gaps:**
+
 - No non-English fixture (kontakt / お問い合わせ / contacto / контакты)
 - No false-positive fixture — e.g. a newsletter form containing name="message", or a search form on a /support page
 - No JS-rendered / iframe-embedded form fixture (HubSpot, Typeform)

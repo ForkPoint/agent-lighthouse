@@ -26,12 +26,14 @@ Counts lines matching /^##\s/ in llms.txt. Purely cosmetic: 'has at least one H2
 **Required fix:** Merge into the combined llms.txt structure audit (with 1.2). Skip fenced code blocks when counting headings, treat 'no H2' as a warn/low at most (or notApplicable for short files), and return notApplicable() when llms.txt is absent.
 
 **False-positive risks:**
+
 - `/^##\s/.test(l.trimStart())` counts H2 lines inside fenced code blocks and inside blockquote-quoted examples, so a file demonstrating llms.txt syntax scores its own examples as real sections.
 - A perfectly usable single-topic llms.txt with a flat, well-described link list and no H2 is graded FAIL at medium priority — the spec does not require sections.
 - `trimStart()` means an indented `  ## x` inside a list item counts.
 - Absent llms.txt returns fail with priority 'critical' rather than notApplicable, adding a third critical entry for one missing optional file.
 
 **Test gaps:**
+
 - '##' inside a ``` fenced block
 - '###' / '####' only (no true H2)
 - Setext-style H2 ('Section\n---')
@@ -55,6 +57,7 @@ _No dedicated evidence signal was researched for this audit in the 2026-08-20 pa
 **Grade: C** — H2 sections are spec-defined and carry one documented agent behaviour (a section named "Optional" marks links an agent may skip), and the reference parser exposes them as a `sections` map — but the spec makes sections explicitly optional and no consumer is documented to behave differently when a file has none.
 
 **Evidence:**
+
 - The llms.txt spec defines "Zero or more markdown sections delimited by H2 headers, containing 'file lists'", and attaches behaviour to one specific heading: the "'Optional' section is used, by convention, for secondary information: links an agent can skip when a shorter context is needed" — the only agent-visible semantics the format assigns to a section heading — https://llmstxt.org/ (verified 2026-08-21)
 - The reference implementation returns `sections` as a dict mapping section names to their parsed link lists, so an H2 heading is a real addressable key for tooling built on the format — https://raw.githubusercontent.com/AnswerDotAI/llms-txt/main/llms_txt/core.py (verified 2026-08-21)
 - The `llms_txt2ctx` CLI that consumes those sections is published and installable — https://pypi.org/project/llms-txt/ (verified 2026-08-21)

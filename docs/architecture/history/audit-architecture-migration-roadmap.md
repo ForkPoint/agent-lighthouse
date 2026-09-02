@@ -10,11 +10,11 @@ current phase plan owns executable steps. If a step conflicts with the
 architecture guide, the guide governs and the step must be corrected before
 execution.
 
-| plan level | current file | purpose |
-| :--------- | :----------- | :------ |
-| canonical design | `docs/architecture/audits.md` | settled rules and rejected designs |
-| roadmap | this file | six phases and their dependency order |
-| executable plan | `2026-08-31-phase-1-truthful-fixtures.md` | Phase 1 code, tests and commits |
+| plan level       | current file                              | purpose                               |
+| :--------------- | :---------------------------------------- | :------------------------------------ |
+| canonical design | `docs/architecture/audits.md`             | settled rules and rejected designs    |
+| roadmap          | this file                                 | six phases and their dependency order |
+| executable plan  | `2026-08-31-phase-1-truthful-fixtures.md` | Phase 1 code, tests and commits       |
 
 **Goal:** bring `main` into agreement with the model published at
 `docs/architecture/audits.md`, in six phases, each of which ships a working
@@ -375,11 +375,11 @@ audit files cannot read `allPages` directly.
 that predicate in `gatherers/pages.ts`: the page must be first in the scan and
 its URL pathname must be `/`. A deep target such as `/docs` is not a homepage.
 
-| file                                               | read at | today                                         | replacement                                 |
-| :------------------------------------------------- | ------: | :-------------------------------------------- | :------------------------------------------ |
-| `access-crawl-control/robots-directives.ts`        |  `:200` | `isHomepage: page.pageType === 'homepage'`    | call the shared homepage predicate          |
-| `content-extraction/markdown-alternate.ts`         |  `:236` | `find((c) => c.pageType !== 'homepage')`      | use the first non-homepage page             |
-| `answer-readiness/content-without-clickthrough.ts` |   `:94` | `if (p.pageType === 'homepage') return false` | skip only the objective homepage            |
+| file                                               | read at | today                                         | replacement                        |
+| :------------------------------------------------- | ------: | :-------------------------------------------- | :--------------------------------- |
+| `access-crawl-control/robots-directives.ts`        |  `:200` | `isHomepage: page.pageType === 'homepage'`    | call the shared homepage predicate |
+| `content-extraction/markdown-alternate.ts`         |  `:236` | `find((c) => c.pageType !== 'homepage')`      | use the first non-homepage page    |
+| `answer-readiness/content-without-clickthrough.ts` |   `:94` | `if (p.pageType === 'homepage') return false` | skip only the objective homepage   |
 
 **One implementation constraint, recorded because it is easy to miss.** Handing
 each audit an immutable per-audit view of `CheckContext` collides with the

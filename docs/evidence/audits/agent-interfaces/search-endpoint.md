@@ -20,12 +20,12 @@ sources:
 
 One site-search audit over both halves of the declaration: the Schema.org `SearchAction` URL template, and a `GET` search operation in the OpenAPI spec.
 
-| State | Result |
-| :--- | :--- |
-| a `SearchAction` URL template whose probe returns HTTP 200 **with results**, or a `GET` operation on a path with a `search` segment in `/openapi.json` | `pass` |
-| a `SearchAction` template that 200s with an empty payload, is gated (401/403/407/451), returns another non-200, or is unreachable | `warn`, priority `low` |
-| a `SearchAction` whose target has no `urlTemplate` or no `{placeholder}`, or a `WebSite` node that declares no `SearchAction` at all | `warn`, priority `low` |
-| neither half present | `fail`, priority `low` |
+| State                                                                                                                                                  | Result                 |
+| :----------------------------------------------------------------------------------------------------------------------------------------------------- | :--------------------- |
+| a `SearchAction` URL template whose probe returns HTTP 200 **with results**, or a `GET` operation on a path with a `search` segment in `/openapi.json` | `pass`                 |
+| a `SearchAction` template that 200s with an empty payload, is gated (401/403/407/451), returns another non-200, or is unreachable                      | `warn`, priority `low` |
+| a `SearchAction` whose target has no `urlTemplate` or no `{placeholder}`, or a `WebSite` node that declares no `SearchAction` at all                   | `warn`, priority `low` |
+| neither half present                                                                                                                                   | `fail`, priority `low` |
 
 ## Code review findings (2026-08-20, 11-agent pass)
 
@@ -34,6 +34,7 @@ Good signal, but the JSON-LD matcher misses the single most common real-world sh
 **Required fix:** Normalize before matching: run the blocks through `flattenJsonLd()` (parser.ts) and prefer `page.structuredData` over `page.jsonLd`; coerce `@type` and `potentialAction` to arrays before comparing. Use a global regex (`/\{[^}]*\}/g`) so every placeholder is substituted. Verify functionality rather than assuming it — require the response to be non-trivial (contains result markup or a non-empty JSON array), and treat 403/redirect-to-login distinctly from a broken endpoint. Tighten the OpenAPI path match to a path segment (`/\bsearch\b/`) instead of a substring.
 
 **False-positive risks:**
+
 - `isObject(obj['potentialAction'])` (line 58) rejects arrays. Publishing `"potentialAction": [{"@type":"SearchAction",...}, {"@type":"ReadAction",...}]` is standard, extremely common (WordPress/Yoast, many CMS templates), and fully valid — every such site gets a false FAIL.
 - `obj['@type'] === 'SearchAction'` and `=== 'WebSite'` are strict string comparisons; `@type` is legally an array (`"@type": ["WebSite", "Organization"]`), which never matches.
 - Recursion only descends into `@graph`. A SearchAction nested under `mainEntity`, `about`, or inside a top-level JSON-LD array is missed. parser.ts already ships `flattenJsonLd()` (parser.ts:44) built precisely to solve this, and `PageContext.structuredData` exists — this audit uses neither, reading only `page.jsonLd`.
@@ -43,6 +44,7 @@ Good signal, but the JSON-LD matcher misses the single most common real-world sh
 - Reuses the JSON-only `getOpenApiSpec()` copy.
 
 **Test gaps:**
+
 - No array-valued `potentialAction` fixture — the highest-impact miss
 - No array-valued `@type` fixture
 - No multi-placeholder urlTemplate fixture
@@ -56,9 +58,9 @@ Good signal, but the JSON-LD matcher misses the single most common real-world sh
 
 3.4 and 5.16 were the same audit written twice. 3.4 read `WebSite` → `potentialAction` → `SearchAction` and graded the markup; 5.16 read the same markup and probed the URL — and both got the JSON-LD wrong in the same way, rejecting the array-valued `potentialAction` that Yoast, Rank Math, Squarespace and Shopify all emit. A site with correct, extremely common markup was told twice that it has no search endpoint.
 
-**What the merged audit does.** The Schema.org half is now normalized before matching: blocks go through the shared deep flattener (`flattenJsonLd`) reading `page.structuredData` in preference to `page.jsonLd`, `@type` and `target` are both array-coerced, and a `SearchAction` nested under `mainEntity` or inside a top-level array is found the same way one under `@graph` is. Every `WebSite` node is scanned rather than `[0]`. Both target shapes are accepted — the bare string and the schema.org-canonical `EntryPoint` with `urlTemplate` — which removes 3.4's inverted quality gradient, where the *more* correct markup failed.
+**What the merged audit does.** The Schema.org half is now normalized before matching: blocks go through the shared deep flattener (`flattenJsonLd`) reading `page.structuredData` in preference to `page.jsonLd`, `@type` and `target` are both array-coerced, and a `SearchAction` nested under `mainEntity` or inside a top-level array is found the same way one under `@graph` is. Every `WebSite` node is scanned rather than `[0]`. Both target shapes are accepted — the bare string and the schema.org-canonical `EntryPoint` with `urlTemplate` — which removes 3.4's inverted quality gradient, where the _more_ correct markup failed.
 
-**Probing is now verification, not assumption.** `status === 200` proved nothing: every SPA search route answers 200 with an empty shell. A 200 now has to carry a payload — a non-empty array or positive result count for JSON, some visible text once scripts, styles and tags are stripped for markup — and a gated response (401/403/407/451) is reported as *gated*, not as broken. Every `{placeholder}` in the template is substituted (the old single-replace left a literal `{lang}` in `/search?q={q}&lang={lang}` and manufactured a 404).
+**Probing is now verification, not assumption.** `status === 200` proved nothing: every SPA search route answers 200 with an empty shell. A 200 now has to carry a payload — a non-empty array or positive result count for JSON, some visible text once scripts, styles and tags are stripped for markup — and a gated response (401/403/407/451) is reported as _gated_, not as broken. Every `{placeholder}` in the template is substituted (the old single-replace left a literal `{lang}` in `/search?q={q}&lang={lang}` and manufactured a 404).
 
 **The OpenAPI half is tightened to a path segment.** `path.includes('search')` accepted `GET /research/papers` and `GET /searchindex/status` as search APIs; the match is now `\bsearch\b`, which still accepts `/api/product-search`.
 
@@ -66,7 +68,7 @@ Good signal, but the JSON-LD matcher misses the single most common real-world sh
 
 ### Absorbed evidence — website-search-action (3.4)
 
-3.4's dossier is kept verbatim at [merged/agent-interfaces/website-search-action.md](../../merged/agent-interfaces/website-search-action.md) (grade **D**, recommended tier *delete*). It is the sharper of the two evidence records and it argues *against* the signal: `SearchAction` is on 6.6M domains — the fourth most common JSON-LD class in the October 2024 Common Crawl — and its only mainstream consumer, Google's sitelinks search box, was withdrawn globally on 21 November 2024. The two consumers that do exist are honestly narrow: Applebot's archived pre-Apple-Intelligence documentation lists `SearchAction` among supported schemas, and Gmail genuinely executes `potentialAction`, but only `ConfirmAction`/`SaveAction`, in email, not on web pages. Google's own agent-friendly guidance describes agents working from screenshots, DOM and the accessibility tree and never mentions schema.org.
+3.4's dossier is kept verbatim at [merged/agent-interfaces/website-search-action.md](../../merged/agent-interfaces/website-search-action.md) (grade **D**, recommended tier _delete_). It is the sharper of the two evidence records and it argues _against_ the signal: `SearchAction` is on 6.6M domains — the fourth most common JSON-LD class in the October 2024 Common Crawl — and its only mainstream consumer, Google's sitelinks search box, was withdrawn globally on 21 November 2024. The two consumers that do exist are honestly narrow: Applebot's archived pre-Apple-Intelligence documentation lists `SearchAction` among supported schemas, and Gmail genuinely executes `potentialAction`, but only `ConfirmAction`/`SaveAction`, in email, not on web pages. Google's own agent-friendly guidance describes agents working from screenshots, DOM and the accessibility tree and never mentions schema.org.
 
 That is textbook zombie adoption, and it is why this audit is `informative` and why its guidance now says so in the `impact` string instead of asserting ChatGPT behaviour that has never been demonstrated.
 
@@ -102,6 +104,7 @@ _No dedicated evidence signal was researched for this audit in the 2026-08-20 pa
 **Grade: C** — `SearchAction` is a ratified schema.org term with very large adoption. But its one documented consumer was retired by Google in 2024, and no vendor documents a named AI agent that reads it. The OpenAPI fallback inherits the unproven discovery leg graded in `5.1`.
 
 **Evidence:**
+
 - `SearchAction` is a stable schema.org type ("The act of searching for an object"), used as a `potentialAction` on `WebSite` with an `EntryPoint` `urlTemplate` carrying the query placeholder; schema.org's Google-index aggregation reports adoption on 10M+ domains — https://schema.org/SearchAction (verified 2026-08-21)
 - Google retired the only documented consumer of that markup, the sitelinks search box, in October 2024 ("Farewell, Sitelinks Search Box"); the feature no longer appears in Search results and its documentation was archived — https://developers.google.com/search/blog/2024/10/sitelinks-search-box (verified 2026-08-21)
 - The OpenAPI half of the signal depends on an agent obtaining the spec at all, which is documented only for developer-registered documents (GPT Actions, Copilot API plugins) — https://developers.openai.com/api/docs/actions/getting-started (verified 2026-08-21)

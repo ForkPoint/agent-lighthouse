@@ -27,11 +27,13 @@ Wraps `marquee` + `blink`. `<blink>` was removed from every shipping browser by 
 **Required fix:** Delete the audit (and the `marquee`/`blink` rules from A11Y_RULES) — it cannot change a verdict on any modern site and its stated rationale is wrong.
 
 **False-positive risks:**
+
 - Practically always `na` — it cannot report a wrong result because it never reports anything, which is precisely the 'no real value' case.
 - If it did fire, the `is-on-screen` none-check means a hidden `<marquee>` passes, so even the intended detection is conditional on a visibility model that CSS-stripping has already broken.
 - The description's claim ('unstable text content for parsers') is unfounded — `<marquee>`'s text is perfectly stable in the DOM; only its rendered position moves.
 
 **Test gaps:**
+
 - No HTML-level test for this audit; the rules are never exercised with `<marquee>`/`<blink>` markup anywhere in the suite.
 
 **Overlaps with:** _none_
@@ -52,6 +54,7 @@ _No dedicated evidence signal was researched for this audit in the 2026-08-20 pa
 **Grade: D** — the claim is false as stated: a `<marquee>`'s text is ordinary, stable DOM text (only its rendered position animates) and `<blink>` has not rendered in any shipping browser for over a decade; the rule's real basis is WCAG 2.2.2 Pause, Stop, Hide, a human-perception criterion this module explicitly excludes, and no consumer — agent or otherwise — is documented to read this signal.
 
 **Evidence:**
+
 - axe's own rule rationale is human-perception, not parsing: `<marquee>` elements "increase difficulty for users with limited dexterity, and are distracting for users with cognitive or attention deficits", mapped to WCAG 2.2.2 Pause, Stop, Hide (Level A) — https://dequeuniversity.com/rules/axe/4.10/marquee (verified 2026-08-21)
 - MDN documents `<marquee>` as deprecated with the advice to use CSS animations plus `prefers-reduced-motion` — an authoring/animation concern, with nothing about parsing or text stability — https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Elements/marquee (verified 2026-08-21)
 - The accessibility-tree representation agents actually consume carries role, accessible name, ARIA state and text content, none of which is affected by CSS-driven or marquee motion — https://playwright.dev/docs/aria-snapshots (verified 2026-08-21)

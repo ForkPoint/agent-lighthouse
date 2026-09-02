@@ -21,11 +21,11 @@ sources:
 
 Social proof an agent can actually read.
 
-| State | Result |
-| :--- | :--- |
-| JSON-LD `Review`/`AggregateRating` carrying a rating value or a non-zero `reviewCount`/`ratingCount`, on a homepage or product page; or a `<blockquote>` with attribution on any scanned page | `pass` |
-| review UI with nothing machine-readable behind it — client-injected widget markup, or visible "N reviews" text — on a homepage or product page | `warn`, priority `medium` |
-| none of the above | `fail`, priority `medium` |
+| State                                                                                                                                                                                         | Result                    |
+| :-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :------------------------ |
+| JSON-LD `Review`/`AggregateRating` carrying a rating value or a non-zero `reviewCount`/`ratingCount`, on a homepage or product page; or a `<blockquote>` with attribution on any scanned page | `pass`                    |
+| review UI with nothing machine-readable behind it — client-injected widget markup, or visible "N reviews" text — on a homepage or product page                                                | `warn`, priority `medium` |
+| none of the above                                                                                                                                                                             | `fail`, priority `medium` |
 
 Attribution means a `cite` attribute naming a document, or a non-empty `<cite>`, `<footer>`, or `<figcaption>` in a wrapping `<figure>`.
 
@@ -40,6 +40,7 @@ Genuinely valuable signal: Review/AggregateRating in structured data is consumed
 **Required fix:** 1) Require attribution: only attributed blockquotes enter `signals`; unattributed ones are no signal, or at most a `warn`. 2) Make structured Review/AggregateRating the pass condition and treat DOM/widget/text fallbacks as `warn` ('review UI detected but not machine-readable') — that distinction is the whole point for an agent consumer. 3) Reject `reviewCount`/`ratingCount` values that parse to 0. 4) Strip `script,style,noscript,template` before the `\d+ reviews` text test, matching what 10.6/10.7 already do. 5) Evaluate the widget/text fallback per page instead of gating on the global `signals.length === 0`. 6) Scope to `pageType` in ('homepage','product') and report the real source page. 7) Add non-English review-count patterns keyed off `lang`.
 
 **False-positive risks:**
+
 - `signals.push(`${blockquotes.length} blockquote(s) (no attribution)`)` in the else branch makes an unattributed blockquote a review signal. Any editorial pull-quote, or a legal page quoting a statute, PASSES. The test 'passes via blockquote without attribution' asserts this as intended.
 - `/\b\d[\d,]*\s+reviews?\b/i.test($('body').text())` matches text anywhere including a footer link, and — critically — inside `<script>`/`<style>`, because this call uses raw `$('body').text()` without the clone-and-strip that sibling audits 10.6 and 10.7 both perform. An inline JSON payload containing `"1234 reviews"` passes.
 - That regex is English-only: 'Bewertungen', 'avis', 'reseñas', 'レビュー' never match, so a non-English store with thousands of visible reviews falls through to FAIL.
@@ -50,6 +51,7 @@ Genuinely valuable signal: Review/AggregateRating in structured data is consumed
 - `signals` accumulates across all pages before the single `signals.length > 0` test, while the widget/N-reviews fallback is guarded by `if (signals.length === 0)` — already non-zero from page one. The fallback therefore silently stops running after the first productive page, making per-page detection order-dependent.
 
 **Test gaps:**
+
 - No test asserting that an unattributed decorative blockquote should not count — the current test asserts the opposite.
 - No test for `reviewCount: "0"` / zero-review products.
 - No test for a non-English review count string.
@@ -72,6 +74,7 @@ _No dedicated evidence signal was researched for this audit in the 2026-08-20 pa
 **Grade: B** — consumption of the review vocabulary is documented on both a search surface and an AI surface. But the ChatGPT path runs through a submitted product feed, not the on-page markup this audit inspects. And no study measures a citation delta for review markup.
 
 **Evidence:**
+
 - Google documents parsing the markup and the feature it drives: "When Google finds valid reviews or ratings markup, we may show a rich snippet that includes stars and other summary info from reviews or ratings". The feature is supported on Book, Course, Event, Local business, Movie, Product, Recipe, Software App and further schema.org types — https://developers.google.com/search/docs/appearance/structured-data/review-snippet (verified 2026-08-21)
 - OpenAI's commerce specification carries first-class review fields for ChatGPT product results — `review_count` ("Number of product reviews"), `star_rating` ("Average review score"), `store_review_count`, `store_star_rating`, `reviews` — introduced as: "Supply aggregated review statistics and frequently asked questions. User-generated insights strengthen credibility and help shoppers make informed decisions." — https://developers.openai.com/commerce/specs/feed/ (verified 2026-08-21)
 - `AggregateRating` is core, ratified schema.org vocabulary: "The average rating based on multiple ratings or reviews". It carries `ratingValue`, `reviewCount` and `ratingCount`, deployed on 1M–10M domains per the Google July 2026 web index sample shown on the type page — https://schema.org/AggregateRating (verified 2026-08-21)
@@ -80,22 +83,22 @@ _No dedicated evidence signal was researched for this audit in the 2026-08-20 pa
 
 ## The merge (Plan 4, Task 6, 2026-08-22)
 
-10.14's required fix is a single instruction: *"Merge into 10.8 (review-signals), which already inspects blockquotes and already understands `cite`/`<footer>` attribution — and which should stop counting unattributed ones."* Both clauses are executed here, and the second one is also 10.8's own first required fix.
+10.14's required fix is a single instruction: _"Merge into 10.8 (review-signals), which already inspects blockquotes and already understands `cite`/`<footer>` attribution — and which should stop counting unattributed ones."_ Both clauses are executed here, and the second one is also 10.8's own first required fix.
 
 **What v1 did.** 10.14 passed on `p.$('blockquote').length > 0` — any element, anywhere, including an empty one, with no attribution, length or context requirement. 10.8 passed on `signals.length > 0` while pushing unattributed blockquotes into `signals`, so a decorative pull-quote passed an audit whose own expected-value string said "blockquote elements with attribution", and its test suite asserted that contradiction as correct. Between them, one editorial pull-quote satisfied two scored audits about social proof.
 
-**What the merged audit does.** Attribution is the line. An attributed quotation (`cite` attribute, `<cite>`, `<footer>`, or a `<figcaption>` on a wrapping `<figure>`) is a testimonial and passes; an unattributed one is decoration and lands in the warn bucket; an empty one is a spacer and is ignored. That is exactly what 10.14's own graded evidence prescribes — *"Score for the presence of properly attributed quotations (semantic blockquote/cite markup); do not reward quote volume"* — and the audit does not reward volume: the counts are reported, never scored.
+**What the merged audit does.** Attribution is the line. An attributed quotation (`cite` attribute, `<cite>`, `<footer>`, or a `<figcaption>` on a wrapping `<figure>`) is a testimonial and passes; an unattributed one is decoration and lands in the warn bucket; an empty one is a spacer and is ignored. That is exactly what 10.14's own graded evidence prescribes — _"Score for the presence of properly attributed quotations (semantic blockquote/cite markup); do not reward quote volume"_ — and the audit does not reward volume: the counts are reported, never scored.
 
 Two further required fixes from 10.8 come with the change, because the fold is what makes them coherent:
 
-- **Structured data is the pass condition; DOM detection is a warn** (10.8 fix #2). The widget-class and "N reviews" fallbacks stay — they exist because Shopify review apps inject their schema client-side — but they now report *"Review signals found but not machine-readable"*, which is the distinction that matters for an agent consumer. The unattributed-blockquote state joins them.
+- **Structured data is the pass condition; DOM detection is a warn** (10.8 fix #2). The widget-class and "N reviews" fallbacks stay — they exist because Shopify review apps inject their schema client-side — but they now report _"Review signals found but not machine-readable"_, which is the distinction that matters for an agent consumer. The unattributed-blockquote state joins them.
 - **A stated zero count is not social proof** (10.8 fix #3). `"reviewCount": "0"` is a truthy string, so v1 pushed `reviewCount` and passed a product with no reviews at all — and whether it did depended on whether the CMS serialized the count as a string or the falsy number `0`.
 
 ### Absorbed evidence — blockquote-usage (10.14)
 
-10.14's dossier is kept verbatim at [merged/answer-readiness/blockquote-usage.md](../../merged/answer-readiness/blockquote-usage.md) (grade **B**). Its signal — direct quotes from credible, attributed sources — is the strongest *measured* lever in the GEO literature: on GEO-BENCH, Quotation Addition scored 27.2 PAWC vs 19.3 baseline (+40.9%) and led again on live Perplexity.ai (+20.7% PAWC), which is the real source of the widely repeated "up to 40%" headline. That is a measured citation effect, which this audit's own Google/OpenAI evidence does not have.
+10.14's dossier is kept verbatim at [merged/answer-readiness/blockquote-usage.md](../../merged/answer-readiness/blockquote-usage.md) (grade **B**). Its signal — direct quotes from credible, attributed sources — is the strongest _measured_ lever in the GEO literature: on GEO-BENCH, Quotation Addition scored 27.2 PAWC vs 19.3 baseline (+40.9%) and led again on live Perplexity.ai (+20.7% PAWC), which is the real source of the widely repeated "up to 40%" headline. That is a measured citation effect, which this audit's own Google/OpenAI evidence does not have.
 
-It is also the evidence that justifies keeping a quotation branch at all after 10.14's implementation is discarded — but its counter-evidence is why the branch is narrow: the study's gains concentrated at ranks 4–5 while rank-1 sources *lost* 22.9%, the quotations used were model-generated rather than real sourced quotes (the winning methods were permitted "completely made-up quotes"), and Subjective Impression was scored by an LLM judge. So the merged audit scores the presence of attributed quotation markup and says nothing about volume, and the guidance no longer repeats 10.14's claim that "AI engines extract `<blockquote>` content as notable citations", which no crawler documentation supports.
+It is also the evidence that justifies keeping a quotation branch at all after 10.14's implementation is discarded — but its counter-evidence is why the branch is narrow: the study's gains concentrated at ranks 4–5 while rank-1 sources _lost_ 22.9%, the quotations used were model-generated rather than real sourced quotes (the winning methods were permitted "completely made-up quotes"), and Subjective Impression was scored by an LLM judge. So the merged audit scores the presence of attributed quotation markup and says nothing about volume, and the guidance no longer repeats 10.14's claim that "AI engines extract `<blockquote>` content as notable citations", which no crawler documentation supports.
 
 ### Grade decision: stays **B**, tier `scored`, weight 0.6
 
@@ -138,7 +141,7 @@ The quotation branch is deliberately **not** scoped that way. Its evidence is
 10.14's GEO-BENCH measurement of generative-answer citation, which is not about
 commerce pages, so confining it to homepage and product would narrow it past its
 own evidence — the same defect as scoring past it, in the other direction. The
-audit's *firing* scope stays commerce-only because `applicablePageTypes` is
+audit's _firing_ scope stays commerce-only because `applicablePageTypes` is
 unchanged, which means a content-only scan still gets no quotation scoring at
 all. That is a limit of the 10.14 half inherited from the merge, and it is
 recorded here rather than fixed: widening where an audit fires is an expansion,

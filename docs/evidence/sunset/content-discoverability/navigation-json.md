@@ -27,7 +27,7 @@ Four angles via direct fetch and GitHub API (WebSearch budget exhausted). (1) St
 
 ## Best evidence found for the audit
 
-Essentially nothing. The strongest evidence found is that files literally named navigation.json do exist at scale in the wild — but every substantial hit is a documentation-site *build-time configuration* file, not a root-served agent manifest: ClickHouse/ClickHouse ships docs/products/cloud/navigation.json across ten locale directories, and similar patterns appear in Nuxt/undocs/Mintlify-style docs toolchains. These are consumed by static-site generators at build time and are not served at the site root, are not fetched by any crawler, and have no shared schema resembling the {name, items[{label,url,children}]} shape the audit prescribes. No vendor doc, spec, or study names /navigation.json as an agent signal, and no crawler documentation lists it as a fetched path.
+Essentially nothing. The strongest evidence found is that files literally named navigation.json do exist at scale in the wild — but every substantial hit is a documentation-site _build-time configuration_ file, not a root-served agent manifest: ClickHouse/ClickHouse ships docs/products/cloud/navigation.json across ten locale directories, and similar patterns appear in Nuxt/undocs/Mintlify-style docs toolchains. These are consumed by static-site generators at build time and are not served at the site root, are not fetched by any crawler, and have no shared schema resembling the {name, items[{label,url,children}]} shape the audit prescribes. No vendor doc, spec, or study names /navigation.json as an agent signal, and no crawler documentation lists it as a fetched path.
 
 ## Counter-evidence
 
@@ -65,6 +65,7 @@ Requires a /navigation.json file at the site root. No such standard exists — i
 **Required fix:** _none — audit is sound as implemented_
 
 **False-positive risks:**
+
 - Fails 100% of real sites, since no site ships /navigation.json — the 'fail' carries no information about the site at all.
 - Passing is equally meaningless: `JSON.parse(result.body)` accepts `"x"`, `0`, `null`, `[]` — any valid JSON scalar passes as 'navigation.json exists with valid JSON'. The prescribed items/children structure is never validated.
 - No content-type check, so an SPA catch-all returning HTML gives 'invalid JSON' (implying the user has a broken file) rather than 'not found'.
@@ -72,6 +73,7 @@ Requires a /navigation.json file at the site root. No such standard exists — i
 - Even a perfectly formed file per the sample cannot improve agent outcomes, because nothing fetches it — so a user who does the work sees zero change and loses trust in the whole report.
 
 **Test gaps:**
+
 - Valid-JSON-but-not-navigation bodies ('null', '[]', a scalar) that currently PASS
 - HTML soft-404 reported as 'invalid JSON'
 - Any evidence that a consumer of this file exists

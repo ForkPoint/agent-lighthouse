@@ -29,11 +29,13 @@ Wraps axe `aria-hidden-body`. When true it is genuinely catastrophic (the whole 
 **Required fix:** Either fold this into 7.11/7.12 as a critical sub-rule so it stops occupying a whole slot in the binary average, or exclude always-passing structural guards from the scored average (report them as informational). At minimum add a real HTML fixture so the rule is proven to fire.
 
 **False-positive risks:**
+
 - The realistic occurrence — a modal library setting `aria-hidden="true"` on the root while a dialog is open — happens only after JS runs, which this static-HTML pipeline never observes, so the audit passes exactly the sites that have the bug (false negative).
 - `excludeHidden: false` with `selector: 'body'` means it always has a candidate → the result is always pass/fail, never `na`, so it always contributes a full point to the category average.
 - On a WAF interstitial or an error page it still passes, reinforcing an inflated accessibility score for a page that was never fetched.
 
 **Test gaps:**
+
 - Only the synthetic aggregation path is tested (_a11y.test.ts uses fabricated `aria-hidden-body` statuses); no HTML fixture with `<body aria-hidden="true">` ever reaches the engine in a test.
 
 **Overlaps with:** _none_
@@ -51,9 +53,10 @@ _No dedicated evidence signal was researched for this audit in the 2026-08-20 pa
 
 **Mechanism claim:** `aria-hidden="true"` on `<body>` excludes the element and all its descendants from the accessibility tree, per WAI-ARIA 1.2 §7.1. An agent whose page representation is built from that tree — Playwright MCP `browser_snapshot`, chrome-devtools-mcp `take_snapshot` — receives an empty snapshot. It can then neither read nor act on any page content.
 
-**Grade: A** — WAI-ARIA 1.2 is a ratified W3C Recommendation whose accessibility-tree exclusion is implemented by every browser, and the two documented agent snapshot tools state their representation *is* that tree, so the empty-page outcome is deterministic rather than inferred.
+**Grade: A** — WAI-ARIA 1.2 is a ratified W3C Recommendation whose accessibility-tree exclusion is implemented by every browser, and the two documented agent snapshot tools state their representation _is_ that tree, so the empty-page outcome is deterministic rather than inferred.
 
 **Evidence:**
+
 - WAI-ARIA 1.2 is a W3C Recommendation (06 June 2023); §7.1 "Excluding Elements from the Accessibility Tree" specifies that `aria-hidden="true"` removes the element and its descendants from the tree — https://www.w3.org/TR/wai-aria-1.2/#aria-hidden (verified 2026-08-21)
 - Playwright ARIA snapshots are "a YAML representation of the accessibility tree of a page" — https://playwright.dev/docs/aria-snapshots (verified 2026-08-21)
 - Playwright MCP "Uses Playwright's accessibility tree, not pixel-based input… operates purely on structured data" — https://github.com/microsoft/playwright-mcp (verified 2026-08-21)

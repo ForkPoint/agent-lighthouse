@@ -26,6 +26,7 @@ Duplicate signal and falsy on its own. It passes when '$('dfn').length > 0 || $(
 **Required fix:** Fold the <dl>/<dfn> detection into the semantic-lists audit (6.8) as one 'semantic grouping elements' dimension, and drop the standalone warn-if-absent verdict. If a definitions signal is genuinely wanted, make it conditional: only evaluate on pages that actually contain term/definition patterns (a glossary heading, DefinedTerm/DefinedTermSet JSON-LD, or repeated 'X is …' constructs), and check that <dt> and <dd> are paired.
 
 **False-positive risks:**
+
 - '$('dfn').length > 0 || $('dl').length > 0' with pagesWithDefinitions > 0 — one <dl> anywhere in the crawl passes.
 - <dl> used for product specs, metadata rows, or footer link groups (common in Shopify/WooCommerce themes) passes a check about definitions.
 - A <dl> with no <dt>/<dd> children passes.
@@ -34,6 +35,7 @@ Duplicate signal and falsy on its own. It passes when '$('dfn').length > 0 || $(
 - Same markup satisfies 6.8 and 6.13, double-counting one incidental element toward the category score.
 
 **Test gaps:**
+
 - No product-spec <dl> fixture (passes for the wrong reason).
 - No malformed <dl> (no dt/dd) fixture.
 - No test of the 6.8 double-credit interaction.

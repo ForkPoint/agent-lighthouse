@@ -49,6 +49,7 @@ Requires >=80% of <url> entries to carry a <lastmod>. Same sitemap-index blindne
 **Required fix:** Resolve sitemap indexes via the shared resolver before counting. Parse each <lastmod> as a date and additionally flag (a) unparseable values, (b) future dates, and (c) the case where >90% of entries share one identical timestamp — that last case should warn, not pass. Scope the lookup to direct children (`$(el).children('lastmod')`). Return notApplicable when there are no <url> entries at all.
 
 **False-positive risks:**
+
 - `const urls = $('url')` → 0 on a `<sitemapindex>` → WARN 'Sitemap has no <url> entries' at high priority on a valid sitemap index. Sub-sitemap `<sitemap><lastmod>` values are ignored entirely.
 - `if ($(el).find('lastmod').length > 0) withLastmod++` — presence only. A generator emitting `<lastmod>{build_time}</lastmod>` identically on all 5,000 URLs scores 100% and PASSES, which is precisely the signal-destroying pattern the guidance text warns about.
 - No date format validation: `<lastmod>yesterday</lastmod>`, a malformed date, or a future date all count as present.
@@ -57,6 +58,7 @@ Requires >=80% of <url> entries to carry a <lastmod>. Same sitemap-index blindne
 - 5MB truncation of a large sitemap changes the denominator unpredictably.
 
 **Test gaps:**
+
 - <sitemapindex> input (wrong verdict, untested)
 - All lastmod values identical / equal to today — currently a false PASS
 - Invalid or future date strings

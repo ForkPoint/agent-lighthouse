@@ -33,12 +33,14 @@ Genuinely valuable signal — Claude-User is the live fetcher behind Claude's we
 **Required fix:** Implement prefix matching in `isAllowed` so `User-agent: Claude` is attributed to all Claude-family tokens. Raise weight above the training tier. Add the `Claude-User` UA probe. Apply the shared helper fixes from 2.1.
 
 **False-positive risks:**
+
 - Edge UA blocking of `Claude-User` is invisible to the `AgentLighthouse/1.0` scanner — clean PASS on a site Claude cannot actually read.
 - Prefix collision: a site writing `User-agent: Claude` (intending the whole family) matches neither `Claude-User`, `Claude-SearchBot` nor `ClaudeBot`; the deliberate block reads as 'allowed by default' across all three audits at once.
 - Exact-match miss on versioned tokens.
 - Shared BOM / soft-404 / `Disallow: /*` misreads.
 
 **Test gaps:**
+
 - No `User-agent: Claude` prefix-family case — a single robots.txt line that should block three audited tokens and currently blocks none of them.
 - No versioned-token case.
 - No UA-probe coverage.

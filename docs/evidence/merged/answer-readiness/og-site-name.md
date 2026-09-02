@@ -26,6 +26,7 @@ A 26-line presence check for one more Open Graph tag, structurally identical to 
 **Required fix:** Fold og:site_name into CoreOpenGraphAudit (4.6) as a recommended-but-not-core tag: extend the OG_CORE loop with a second RECOMMENDED list that downgrades a miss to a warn rather than a standalone fail. If kept standalone, at minimum stop asserting brand-entity effects that no consumer exhibits, iterate all `ctx.pages` instead of `ctx.pages[0]`, and reject placeholder values ('Site Name', the raw domain, template tokens) which currently pass via `if (siteName)`.
 
 **False-positive risks:**
+
 - Placeholder values pass: `const siteName = (page?.meta?.['og:site_name'] ?? '').trim(); if (siteName)` accepts `content="Your Site Name"` (verbatim from the audit's own code sample), `content="{{ site.title }}"`, or `content="WordPress Site"`.
 - Only `ctx.pages[0]` is examined despite `guidance.fix` saying 'Add og:site_name to every page'; the audit cannot observe the inconsistency it warns about.
 - Sites that express brand identity through JSON-LD Organization/WebSite (the form agents parse) but omit this legacy OG tag get a 'medium' priority failure and are told their brand identity is fragmenting — wrong guidance.
@@ -33,6 +34,7 @@ A 26-line presence check for one more Open Graph tag, structurally identical to 
 - Double-counting with 4.6: a site with no OG tags at all is failed by core-open-graph AND by this audit AND (via the no-og:image path) by og-image-alt, so one root cause costs three separate scores.
 
 **Test gaps:**
+
 - No placeholder-value test.
 - No multi-page test.
 - No test asserting non-overlap with core-open-graph.

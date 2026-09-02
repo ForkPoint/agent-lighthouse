@@ -38,6 +38,7 @@ Correct premise (agents need a base URL) wrecked by liveness probing that misrea
 **Required fix:** Stop treating a bare GET as a liveness test. Validate structure instead: servers array non-empty, each `url` parseable (resolving relative URLs against `ctx.baseUrl` and substituting `variables` defaults), and https for production. If a liveness probe is kept, probe a concrete path from `paths` rather than the base, accept 401/403/405 as 'reachable', skip localhost/example.com entries, and downgrade unreachable to informational.
 
 **False-positive risks:**
+
 - `await ctx.fetch({ url: serverUrl })` then `result.status >= 200 && < 400` — most REST base URLs return 404 (no route at /v1), 401 (auth required), or 405 (method not allowed) for a bare GET. `https://api.stripe.com/v1` style bases warn as 'returned HTTP 401/404' despite being perfectly reachable and correct.
 - Relative server URLs are legal in OpenAPI 3 (`"servers": [{"url": "/api"}]`). `ctx.fetch({url: '/api'})` has no base to resolve against → undici throws or 0-status → 'could not be reached' warn on a fully valid spec.
 - Server URL templating is legal and common (`"url": "https://{region}.api.example.com/{version}"` with a `variables` object). The literal braces are never substituted, so the fetch targets a nonexistent host → false warn.
@@ -46,6 +47,7 @@ Correct premise (agents need a base URL) wrecked by liveness probing that misrea
 - Same JSON-only loader bug as 5.2-5.6.
 
 **Test gaps:**
+
 - No relative-URL server fixture (`{"url": "/api"}`)
 - No server-variables/templated-URL fixture
 - No 401/405 fixture (the two most common healthy responses to a bare base GET)
@@ -71,6 +73,7 @@ _No dedicated evidence signal was researched for this audit in the 2026-08-20 pa
 **Grade: B** — that agents resolve requests against the declared server URL is documented at named consumers. But the specification supplies a legal default, `/`, when the array is absent. The liveness probe this audit performs has no documented consumer at all.
 
 **Evidence:**
+
 - OpenAI GPT Actions schemas declare the API location in the servers array (`servers: - url: https://api.weather.gov`), which is where the built action sends its calls — https://developers.openai.com/api/docs/actions/getting-started (verified 2026-08-21)
 - Microsoft 365 Copilot treats the servers section as the domains an API plugin declares. "The Copilot runtime … doesn't evaluate it against any domains the plugin declares (such as the `servers` section of an API plugin's OpenAPI description)" — https://learn.microsoft.com/en-us/microsoft-365-copilot/extensibility/overview-api-plugins (verified 2026-08-21)
 - OpenAPI 3.1 Server Object defines `url` as the base URL for the API, supports relative URLs and `{variable}` templating with `variables` defaults — https://spec.openapis.org/oas/v3.1.0.html (verified 2026-08-21)
@@ -82,7 +85,7 @@ _No dedicated evidence signal was researched for this audit in the 2026-08-20 pa
 **2026-08-29 — absence is `notApplicable`, not `fail`.** The audit returned
 `fail` at `priority: 'high'` when the site published no OpenAPI document at
 all. That verdict was never documented here. This dossier's counter-evidence
-argues the opposite for the weaker case — a document that *exists* with no
+argues the opposite for the weaker case — a document that _exists_ with no
 `servers` key, which OpenAPI 3.1 makes legal and resolvable against the
 document's own location. No source says a site without an API is worse off for
 having no `servers` array, so the audit now returns `notApplicable` when no

@@ -36,17 +36,19 @@ Active and worth keeping — Claude-SearchBot builds Anthropic's search index, s
 Half of the finding above is now resolved. `access-crawl-control/anthropic-ai`
 scores the live `ClaudeBot` token only: a legacy `User-agent: anthropic-ai` or
 `Claude-Web` group is reported in `found` and `details.legacyTokens`, and never
-decides the verdict. Only the audit *id* still carries the legacy spelling; the
+decides the verdict. Only the audit _id_ still carries the legacy spelling; the
 rule behind it does not. The consolidation of 2.3 / 2.15 / 2.21 into one
 vendor-level audit was not done and remains open.
 
 **False-positive risks:**
+
 - `User-agent: Claude` prefix block is missed by all three Claude audits simultaneously — three separate false 'allowed by default' warns on a fully blocked site.
 - Exact-match miss on `User-agent: Claude-SearchBot/1.0`.
 - Edge UA blocking invisible to the scanner.
 - Shared BOM / soft-404 / `Disallow: /*` misreads.
 
 **Test gaps:**
+
 - No `User-agent: Claude` family-prefix case.
 - No versioned-token case.
 - No cross-audit consistency test over the three Claude tokens on one fixture.

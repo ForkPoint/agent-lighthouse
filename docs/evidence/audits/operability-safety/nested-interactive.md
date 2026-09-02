@@ -52,12 +52,14 @@ Wraps `nested-interactive`. Narrow, faithful port (matches only roles with `chil
 **Required fix:** _none — audit is sound as implemented_
 
 **False-positive risks:**
+
 - CSS blindness: nested controls inside hidden template/carousel clones are evaluated.
 - `getFocusableDescendants` treats any element with a `tabindex` attribute as focusable, so `tabindex="-1"` wrappers used purely for programmatic focus inside a card link are flagged (`isFocusable` returns true for any parseable tabindex, including -1) — a common legitimate pattern in card/tile components.
 - CSR SPA → `na`.
 - Failing target is typically `a`/`div.card`, unusable for locating the nested pair; no count.
 
 **Test gaps:**
+
 - No HTML-level test for this audit.
 - No fixture with `tabindex="-1"` inside a link/button (the likeliest false positive).
 - No fixture with `<a><button>` nesting proving the rule fires.

@@ -15,7 +15,6 @@ sources:
   - openai-getstarted
 ---
 
-
 # Checkout-Eligible Offer Field Mapping
 
 > Shipped in v2. Evidence grade **A** · scored tier · partial overlap · implementation: `multi-page`
@@ -73,7 +72,7 @@ across the sample there while the scanned PDP passes here.
 ## Implementation deviations
 
 - **The plan sheet's GTIN example was wrong.** It names `gtin13: '1234567890128'`
-  as a *wrong* check digit; 8 is in fact the correct check digit for that body.
+  as a _wrong_ check digit; 8 is in fact the correct check digit for that body.
   The test pins both directions instead: `1234567890128` is accepted and
   `1234567890123` is rejected with the digit it should have ended in. The check
   digit is computed the same way for GTIN-8/12/13/14 — alternating 3/1 weights

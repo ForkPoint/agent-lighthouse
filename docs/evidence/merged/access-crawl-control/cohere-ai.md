@@ -26,11 +26,13 @@ Falsy. `cohere-ai` is a low-adoption token for a vendor that is enterprise-RAG-f
 **Required fix:** Remove from the scored roster, or demote to weight 0 / informative alongside YouBot, Diffbot and AI2Bot in a single 'long-tail AI crawlers' informational check.
 
 **False-positive risks:**
+
 - High-priority FAIL text claims blocking it 'prevents your content from appearing in AI-powered search results' — there is no consumer Cohere search surface for the content to appear in.
 - Equal weighting with GPTBot means a site can lose the same score for blocking a bot nobody queries as for blocking the largest AI platform.
 - Shared exact-match / BOM / soft-404 / `Disallow: /*` misreads.
 
 **Test gaps:**
+
 - Template-only coverage; nothing validates that the bot is still active or that the claimed impact exists.
 - Same missing real-world robots.txt variants as 2.1.
 

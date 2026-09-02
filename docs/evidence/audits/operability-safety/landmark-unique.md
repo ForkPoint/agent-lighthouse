@@ -64,6 +64,7 @@ Wraps axe's `landmark-unique` — duplicate landmarks of the same role must have
 **Required fix:** Preserve a minimal CSS visibility model instead of discarding all stylesheets: keep `display`/`visibility` declarations by pre-computing them (e.g. run a lightweight CSS parse for `display:none`/`visibility:hidden` selectors and stamp matching elements with an inline style before jsdom construction, or keep only the first N KB of CSS). Alternatively downgrade this audit to `warn` when duplicate landmarks differ only between a desktop/mobile pair. Also emit the violation count and a stable path-based selector.
 
 **False-positive risks:**
+
 - CSS blindness (see categoryNotes #1): `landmarkUniqueMatch = isLandmark(vNode) && isVisibleToScreenReaders(vNode)` — a hidden mobile `<nav>` duplicating the desktop `<nav>` is 'visible' after `stripStyles()`, so a site that is unambiguous in a real browser fails here.
 - Same for hidden off-canvas `<aside>`/`<footer>` copies and for pre-rendered `<header>` variants in hidden template blocks.
 - CSR SPA → `inapplicable` → `na` silently, so the audit reports 'no applicable elements' rather than 'could not evaluate'.
@@ -71,6 +72,7 @@ Wraps axe's `landmark-unique` — duplicate landmarks of the same role must have
 - Evidence quality: failing target is `nav` or `nav.flex.items-center` — not actionable on a themed site.
 
 **Test gaps:**
+
 - No HTML-level test of this audit at all (_a11y.test.ts only tests aggregation with synthetic results for 7.10/7.17/7.18).
 - No fixture with a CSS-hidden duplicate nav (the dominant real-world case).
 - No fixture with two navs distinguished by `aria-labelledby` pointing at headings.
@@ -109,19 +111,19 @@ Wraps axe's `landmark-unique` — duplicate landmarks of the same role must have
 
 ## The merge (Plan 4, Task 8, 2026-08-22)
 
-7.3 demanded an `aria-label` or `aria-labelledby` on **every** `<nav>`. That is stricter than the mechanism it cited: a label exists to *disambiguate* landmarks that share a role, so a page with one `<nav>` is unambiguous to any agent and 7.3 still failed it at 0/1 labelled. Its required fix names this audit as the destination — *"Merge into 7.4 (LandmarkUniqueAudit), which measures the same thing with axe's role+accessible-name uniqueness logic and covers all landmark types, not just `<nav>`"* — and the two conditional clauses that follow (*"only require labels when 2+ nav landmarks exist, resolve `aria-labelledby` ids, and delete the 'no `<nav>` found' branch"*) apply only *"if a nav-specific signal is retained"*. None is, so the fold is a deletion, not a port.
+7.3 demanded an `aria-label` or `aria-labelledby` on **every** `<nav>`. That is stricter than the mechanism it cited: a label exists to _disambiguate_ landmarks that share a role, so a page with one `<nav>` is unambiguous to any agent and 7.3 still failed it at 0/1 labelled. Its required fix names this audit as the destination — _"Merge into 7.4 (LandmarkUniqueAudit), which measures the same thing with axe's role+accessible-name uniqueness logic and covers all landmark types, not just `<nav>`"_ — and the two conditional clauses that follow (_"only require labels when 2+ nav landmarks exist, resolve `aria-labelledby` ids, and delete the 'no `<nav>` found' branch"_) apply only _"if a nav-specific signal is retained"_. None is, so the fold is a deletion, not a port.
 
 ### No code changed in the survivor's logic — and that is the point
 
 The `landmark-unique` rule already measures 7.3's signal correctly. Verified against the real rule engine, and now locked by tests in `landmark-unique.test.ts`:
 
-| Markup | Rule result | 7.3's verdict |
-| :--- | :--- | :--- |
-| two unlabelled `<nav>`s | `fail` | fail — agreed |
-| two `<nav>`s with distinct `aria-label`s | `pass` | pass — agreed |
-| one unlabelled `<nav>` | `pass` | **fail (0/1 laballed)** — 7.3 was wrong |
-| `<nav aria-labelledby="h">` resolving to a heading | `pass` | pass, but only because the attribute is non-empty; 7.3 never resolved the id |
-| two unlabelled `<aside>`s | `fail` | not checked at all |
+| Markup                                             | Rule result | 7.3's verdict                                                                |
+| :------------------------------------------------- | :---------- | :--------------------------------------------------------------------------- |
+| two unlabelled `<nav>`s                            | `fail`      | fail — agreed                                                                |
+| two `<nav>`s with distinct `aria-label`s           | `pass`      | pass — agreed                                                                |
+| one unlabelled `<nav>`                             | `pass`      | **fail (0/1 laballed)** — 7.3 was wrong                                      |
+| `<nav aria-labelledby="h">` resolving to a heading | `pass`      | pass, but only because the attribute is non-empty; 7.3 never resolved the id |
+| two unlabelled `<aside>`s                          | `fail`      | not checked at all                                                           |
 
 The two 7.3 branches with no counterpart here are exactly the two its own fix says to drop: the "no `<nav>` elements on page" warning duplicates 7.2 (`aria-landmarks`), and the `labeled / navs.length >= 0.5` cliff (1 of 2 = warn, 1 of 3 = fail, identical ambiguity) has no mechanism behind it. 7.3 also read only `ctx.pages[0]` while phrasing its message site-wide; the rule engine runs on every scanned page.
 
@@ -131,7 +133,7 @@ The two 7.3 branches with no counterpart here are exactly the two its own fix sa
 
 ### Absorbed evidence — nav-aria-label (7.3)
 
-7.3's dossier is kept verbatim at [merged/operability-safety/nav-aria-label.md](../../merged/operability-safety/nav-aria-label.md) (grade **A**). It carries the same two graded signals this audit rests on — *Landmark elements as extraction boundaries* and *Accessibility tree consumption by computer-use and agentic-browser agents*, both A — so the merge loses no evidence: the two audits were graded on one shared record, and 7.3 simply applied it to a narrower element with a stricter rule than the record supports.
+7.3's dossier is kept verbatim at [merged/operability-safety/nav-aria-label.md](../../merged/operability-safety/nav-aria-label.md) (grade **A**). It carries the same two graded signals this audit rests on — _Landmark elements as extraction boundaries_ and _Accessibility tree consumption by computer-use and agentic-browser agents_, both A — so the merge loses no evidence: the two audits were graded on one shared record, and 7.3 simply applied it to a narrower element with a stricter rule than the record supports.
 
 ### Grade decision: stays **A**, tier `scored`, weight 1.0
 

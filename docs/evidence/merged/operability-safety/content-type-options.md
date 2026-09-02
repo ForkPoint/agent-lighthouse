@@ -26,12 +26,14 @@ The stated mechanism is backwards and will actively mislead. The copy says 'With
 **Required fix:** Merge into 8.10 (correct-content-types) as a secondary sub-signal checked on the actual AI/data files rather than on the homepage, and rewrite the rationale truthfully: 'nosniff hardens clients against MIME confusion; it does not fix an incorrect Content-Type — see the Content-Type audit for that.' Tighten the match to an exact token compare (`value.trim().toLowerCase() === 'nosniff'`). If the merge is rejected, at minimum delete the inverted causal claim from `description`, `guidance.impact` and the fail-branch `description`, and drop priority to low.
 
 **False-positive risks:**
+
 - Wrong target: the header is read from `ctx.pages[0].fetchResult.headers` (the homepage HTML). The files the rationale names — JSON-LD, llms.txt, API responses — are in `ctx.rootFiles` and are never inspected. A site with nosniff on HTML and no nosniff on /llms.txt passes.
 - Inverted causality means the fix is not the fix: a user whose JSON-LD is genuinely misparsed will add nosniff (per this audit) and make the problem WORSE, because sniffing was the thing masking their bad Content-Type.
 - Presence-only with a loose match: `value.toLowerCase().includes('nosniff')` passes on `X-Content-Type-Options: no-nosniff-here` or any string merely containing the substring.
 - Homepage-only and no-page guard: empty `ctx.pages` reports a definite 'header is missing' fail.
 
 **Test gaps:**
+
 - No test on rootFiles headers, i.e. the files the audit claims to protect.
 - No test for a value that merely contains the substring 'nosniff' as part of another token.
 - No test pairing 8.4 with 8.10 to demonstrate the two do not contradict each other.

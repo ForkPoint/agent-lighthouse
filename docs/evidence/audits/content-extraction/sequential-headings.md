@@ -46,6 +46,7 @@ Uses flat document order over every heading in the DOM — 'const prev = heading
 **Required fix:** Restrict extraction to the main content root (main, else article, else body minus nav/footer/aside/dialog/[role=navigation]/[role=contentinfo]) and evaluate skips per sectioning root rather than in flat document order. Replace the Math.floor(totalPages/2) rule with a page-count-independent ratio (e.g. warn under 50% of pages affected, fail at/above), and make the single-page case behave identically to the multi-page case.
 
 **False-positive risks:**
+
 - Footer/nav/sidebar headings are included — extractHeadings($) selects 'h1, h2, h3, h4, h5, h6' document-wide. Footers using h4/h5 column titles after main-content h2s produce a spurious skip on nearly every WordPress/Shopify theme.
 - Flat document order ignores tree nesting: an <aside> containing an h3 placed after an <h1> is flagged h1->h3 even though the aside is a separate sectioning root.
 - Crawl-size-dependent severity: identical site quality yields fail at 1 page and warn at 2 pages ('pagesWithSkips <= Math.floor(totalPages / 2)').
@@ -54,6 +55,7 @@ Uses flat document order over every heading in the DOM — 'const prev = heading
 - Widgets injected server-side (Trustpilot, chat, cookie consent) frequently carry their own heading levels.
 
 **Test gaps:**
+
 - No footer-h4-after-h2 fixture — the dominant real-world false positive is entirely untested.
 - No test that the same skip yields different verdicts at 1 page vs 2 pages (the Math.floor asymmetry is untested).
 - No nested-sectioning fixture (aside/article with independent heading trees).

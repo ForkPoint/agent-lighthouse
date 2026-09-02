@@ -39,6 +39,7 @@ Flags <loc> values not starting with http:// or https://. The rule itself is cor
 **Required fix:** Use the shared sitemap resolver from the 1.8 fix so an index is expanded to its sub-sitemaps' <url> entries before checking. Return notApplicable() (not fail) when there are genuinely no <url> entries — that is 1.7's finding, not this audit's. Make the scheme test case-insensitive (`/^https?:\/\//i`) and report protocol-relative URLs as their own distinct sub-case.
 
 **False-positive risks:**
+
 - `$('url > loc')` only. On a `<sitemapindex>` this returns 0 → `locs.length === 0` → FAIL at high priority: 'Sitemap has no <loc> entries to check.' Shopify, Yoast and Next.js multi-sitemap setups all hit this.
 - Same failure on a `<urlset>` served gzipped (undici does not decompress) or truncated below the first `<url>` element.
 - `!loc.startsWith('http://') && !loc.startsWith('https://')` is case-sensitive. `HTTPS://example.com/page` — legal per RFC 3986 scheme case-insensitivity — is reported as a relative URL.
@@ -46,6 +47,7 @@ Flags <loc> values not starting with http:// or https://. The rule itself is cor
 - An HTML soft-404 at /sitemap.xml yields FAIL 'no <loc> entries' rather than 'no sitemap'.
 
 **Test gaps:**
+
 - <sitemapindex> input — currently produces a wrong FAIL and is completely untested
 - Uppercase HTTPS:// scheme
 - Protocol-relative //host/path

@@ -27,14 +27,14 @@ sources:
 
 ## What it checks
 
-One MCP endpoint audit, over one connection: find the endpoint the site *declares*, speak a spec-compliant `initialize` handshake to it, read the capabilities the server negotiates on the wire, and read the annotations off the tools it actually lists.
+One MCP endpoint audit, over one connection: find the endpoint the site _declares_, speak a spec-compliant `initialize` handshake to it, read the capabilities the server negotiates on the wire, and read the annotations off the tools it actually lists.
 
-| State | Result |
-| :--- | :--- |
-| valid JSON-RPC `initialize` result, at least one negotiated capability, and — when `tools` is negotiated — every listed tool carrying a boolean `readOnlyHint` | `pass` |
-| HTTP 401 with a `WWW-Authenticate` challenge — a correctly protected server, not a broken one | `pass` (with note) |
-| valid handshake but no negotiated capability, or some listed tools missing a boolean `readOnlyHint`, or HTTP 200 whose body is not JSON-RPC | `warn`, priority `high` |
-| no endpoint declared anywhere, malformed `servers.json`, an endpoint that is not safe to probe, another non-200, or unreachable | `fail`, priority `high` |
+| State                                                                                                                                                          | Result                  |
+| :------------------------------------------------------------------------------------------------------------------------------------------------------------- | :---------------------- |
+| valid JSON-RPC `initialize` result, at least one negotiated capability, and — when `tools` is negotiated — every listed tool carrying a boolean `readOnlyHint` | `pass`                  |
+| HTTP 401 with a `WWW-Authenticate` challenge — a correctly protected server, not a broken one                                                                  | `pass` (with note)      |
+| valid handshake but no negotiated capability, or some listed tools missing a boolean `readOnlyHint`, or HTTP 200 whose body is not JSON-RPC                    | `warn`, priority `high` |
+| no endpoint declared anywhere, malformed `servers.json`, an endpoint that is not safe to probe, another non-200, or unreachable                                | `fail`, priority `high` |
 
 `tools/list` is only called when the server negotiates the `tools` capability, and a `tools/list` that does not answer is reported, never punished.
 
@@ -45,6 +45,7 @@ The most valuable audit in the category in principle — it actually speaks the 
 **Required fix:** Send a spec-compliant handshake: `acceptHeader: 'application/json, text/event-stream'`, a current `protocolVersion`, and handle `Mcp-Session-Id`. Parse SSE-framed responses by extracting the `data:` payload before JSON.parse. Treat 401 with `WWW-Authenticate` as PASS-with-note ('server present, authorization required') rather than fail. Discover the endpoint independently of servers.json (probe /mcp, /api/mcp, /sse). Gate the POST behind `isSafeUrl()` from fetcher.ts.
 
 **False-positive risks:**
+
 - The request omits the required Accept header. MCP Streamable HTTP requires the client to send `Accept: application/json, text/event-stream`; the official TypeScript SDK's StreamableHTTPServerTransport rejects requests lacking both with 406 Not Acceptable. `ctx.fetch({url, method:'POST', body, contentType:'application/json'})` never sets `acceptHeader`, so fetcher.ts defaults to `*/*` → 406 → `this.fail('MCP endpoint ... returned HTTP 406')` against a perfectly healthy server.
 - Even on success, a Streamable HTTP server may reply with `Content-Type: text/event-stream` and a framed body (`event: message\ndata: {...}`). `tryParseJson(response.body)` fails on the SSE framing → `warn('returned HTTP 200 but response is not valid JSON-RPC')` for a valid response. The SSE frame is never unwrapped.
 - OAuth-protected MCP servers (the norm for anything non-public in 2026) answer an unauthenticated initialize with 401 + `WWW-Authenticate`. That is correct, secure behavior, reported here as a hard FAIL at high priority.
@@ -54,6 +55,7 @@ The most valuable audit in the category in principle — it actually speaks the 
 - POSTing a JSON-RPC body to a URL harvested from a site-controlled file is an SSRF-adjacent operation; `isSafeUrl()` exists in fetcher.ts:84 and is not called here.
 
 **Test gaps:**
+
 - No test asserting the request carries `Accept: application/json, text/event-stream` — the defect that makes this audit fail real servers
 - No SSE-framed (`text/event-stream`) response fixture
 - No 401 + WWW-Authenticate (OAuth-protected server) fixture
@@ -75,25 +77,25 @@ The most valuable audit in the category in principle — it actually speaks the 
 
 ## The merge (Plan 4, Task 7, 2026-08-22)
 
-5.14 and 5.24 both asked good questions about the wrong artifact, and both required fixes named the same destination: *"Merge into 5.13 (mcp-endpoint): have the initialize handshake return its `result.capabilities` and report tools/resources/prompts from the wire response"* (5.14), and *"Merge into the MCP endpoint work (5.13): after a successful initialize, call `tools/list` and evaluate the real `annotations` block on each returned tool, requiring boolean values and requiring at least `readOnlyHint` on every tool"* (5.24). Both are executed here, on the connection 5.13 already opens.
+5.14 and 5.24 both asked good questions about the wrong artifact, and both required fixes named the same destination: _"Merge into 5.13 (mcp-endpoint): have the initialize handshake return its `result.capabilities` and report tools/resources/prompts from the wire response"_ (5.14), and _"Merge into the MCP endpoint work (5.13): after a successful initialize, call `tools/list` and evaluate the real `annotations` block on each returned tool, requiring boolean values and requiring at least `readOnlyHint` on every tool"_ (5.24). Both are executed here, on the connection 5.13 already opens.
 
 **The handshake is now spec-compliant**, which is the fix that matters most: 5.13 was the framework's clearest false negative against a site doing everything right.
 
 - **`Accept: application/json, text/event-stream`** is sent. Streamable HTTP requires both, and the official TypeScript SDK's `StreamableHTTPServerTransport` answers 406 without them — so a healthy server was reported as `HTTP 406`.
-- **SSE frames are unwrapped.** A Streamable HTTP server may answer with `text/event-stream` and an `event: message\ndata: {…}` body; `JSON.parse` on the raw frame produced *"HTTP 200 but response is not valid JSON-RPC"* for a valid response.
+- **SSE frames are unwrapped.** A Streamable HTTP server may answer with `text/event-stream` and an `event: message\ndata: {…}` body; `JSON.parse` on the raw frame produced _"HTTP 200 but response is not valid JSON-RPC"_ for a valid response.
 - **`protocolVersion` is current** (`2026-07-28`, the current specification revision) instead of the hardcoded, stale `2024-11-05` that version-strict servers answer with a JSON-RPC error.
 - **401 + `WWW-Authenticate` is a pass with a note.** OAuth-protected servers — the norm for anything non-public in 2026 — answer an unauthenticated `initialize` exactly that way. That is correct, secure behaviour, previously reported as a hard `fail` at `high` priority. A bare 401 with no challenge still fails.
 - **The POST is gated behind `isSafeUrl()`.** The target URL comes out of a site-controlled file and we send it a request body; that is SSRF-adjacent, and `fetcher.ts` already ships the guard.
 
 ### Absorbed evidence — mcp-capabilities (5.14)
 
-5.14's dossier is kept verbatim at [merged/agent-interfaces/mcp-capabilities.md](../../merged/agent-interfaces/mcp-capabilities.md) (grade **D**). Its grading is unusually blunt about why the merge is the only sane outcome: *"The question this audit asks is legitimate and answerable at grade A, but only from the `server/discover` (or legacy `initialize`) response that 5.13 already fetches and discards."* No MCP specification version, registry document or vendor page defines `/.well-known/mcp/servers.json` or any per-origin capability manifest — the current spec puts capabilities in `server/discover`, legacy revisions in the `initialize` response, and third-party discovery runs through the MCP Registry.
+5.14's dossier is kept verbatim at [merged/agent-interfaces/mcp-capabilities.md](../../merged/agent-interfaces/mcp-capabilities.md) (grade **D**). Its grading is unusually blunt about why the merge is the only sane outcome: _"The question this audit asks is legitimate and answerable at grade A, but only from the `server/discover` (or legacy `initialize`) response that 5.13 already fetches and discards."_ No MCP specification version, registry document or vendor page defines `/.well-known/mcp/servers.json` or any per-origin capability manifest — the current spec puts capabilities in `server/discover`, legacy revisions in the `initialize` response, and third-party discovery runs through the MCP Registry.
 
-So capabilities are now read from `result.capabilities` of the live handshake. Two of 5.14's implementation defects die with the static file: a value of `null`, `0` or `""` no longer counts as a declared capability (`server[key] !== undefined && server[key] !== false` let all three through), and the UCP fallback that passed on *any* non-empty key set under `capabilities` is gone. The `expected` string also stops lying — it promised "servers.json **or MCP response**" while no MCP response was ever consulted.
+So capabilities are now read from `result.capabilities` of the live handshake. Two of 5.14's implementation defects die with the static file: a value of `null`, `0` or `""` no longer counts as a declared capability (`server[key] !== undefined && server[key] !== false` let all three through), and the UCP fallback that passed on _any_ non-empty key set under `capabilities` is gone. The `expected` string also stops lying — it promised "servers.json **or MCP response**" while no MCP response was ever consulted.
 
 ### Absorbed evidence — webmcp-tool-annotations (5.24)
 
-5.24's dossier is kept verbatim at [merged/agent-interfaces/webmcp-tool-annotations.md](../../merged/agent-interfaces/webmcp-tool-annotations.md) (grade **D**). The annotation *concept* is real and normative — `readOnlyHint` is in WebMCP's `ToolAnnotations` IDL and in MCP's `tools/list` — but neither place 5.24 read it from exists in any specification: there is no `/.well-known/webmcp` manifest anywhere in the WebMCP repository, and the declarative explainer proposes `toolname`/`tooldescription`/`toolautosubmit`/`toolparamdescription` and no annotation attributes at all. The audit synthesised `data-read-only-hint`-style attributes, and its own `guidance.code` documented `data-readonly`, which the implementation did not even look for.
+5.24's dossier is kept verbatim at [merged/agent-interfaces/webmcp-tool-annotations.md](../../merged/agent-interfaces/webmcp-tool-annotations.md) (grade **D**). The annotation _concept_ is real and normative — `readOnlyHint` is in WebMCP's `ToolAnnotations` IDL and in MCP's `tools/list` — but neither place 5.24 read it from exists in any specification: there is no `/.well-known/webmcp` manifest anywhere in the WebMCP repository, and the declarative explainer proposes `toolname`/`tooldescription`/`toolautosubmit`/`toolparamdescription` and no annotation attributes at all. The audit synthesised `data-read-only-hint`-style attributes, and its own `guidance.code` documented `data-readonly`, which the implementation did not even look for.
 
 The signal now comes off a live `tools/list` response, and the check is the one 5.24's fix specifies: **a boolean `readOnlyHint` on every tool**. Presence-only matching counted `{"readOnlyHint": null}` as annotated, and any one of four annotations marked a tool fully annotated — so `destructiveHint: false` alone passed an audit that exists to flag destructive actions.
 
@@ -105,7 +107,7 @@ The signal now comes off a live `tools/list` response, and the check is the one 
 
 ### Deviations
 
-- **`/mcp`, `/api/mcp` and `/sse` are still not probed**, contrary to 5.13's required fix, because 5.13's own graded evidence contradicts that fix: *"Probing /mcp is actively unreliable — github.com, linear.app, vercel.com and zapier.com all return HTTP 200 text/html at /mcp (marketing pages, not endpoints) … detect only via an explicitly declared endpoint (e.g. an ai-catalog entry), never by path guessing."* Discovery follows that instruction instead: `servers.json`, the UCP service list, and — new here — an `application/mcp-server-card+json` entry in `/.well-known/ai-catalog.json`, which is the explicit declaration the evidence names. The "no endpoint" failure message now says what it means (no endpoint is *declared*) rather than dressing up a missing file as a broken endpoint.
+- **`/mcp`, `/api/mcp` and `/sse` are still not probed**, contrary to 5.13's required fix, because 5.13's own graded evidence contradicts that fix: _"Probing /mcp is actively unreliable — github.com, linear.app, vercel.com and zapier.com all return HTTP 200 text/html at /mcp (marketing pages, not endpoints) … detect only via an explicitly declared endpoint (e.g. an ai-catalog entry), never by path guessing."_ Discovery follows that instruction instead: `servers.json`, the UCP service list, and — new here — an `application/mcp-server-card+json` entry in `/.well-known/ai-catalog.json`, which is the explicit declaration the evidence names. The "no endpoint" failure message now says what it means (no endpoint is _declared_) rather than dressing up a missing file as a broken endpoint.
 - **`Mcp-Session-Id` is not handled.** `FetchOptions` exposes no arbitrary request headers and reads none back beyond `FetchResult.headers`, so session-initialisation semantics would need a fetcher change. Servers that require a session may still answer 400.
 - **`server/discover` is not used.** The current spec makes it mandatory for servers, but `initialize` remains the interoperable path across the deployed base, and it is the call this audit already made.
 - **`untrustedContentHint` is not required.** It is the other half of WebMCP's `ToolAnnotations`, but 5.24's fix names `readOnlyHint` as the requirement, and MCP itself warns that annotations from untrusted servers must not be relied on — so this reports declaration hygiene, not a safety guarantee.

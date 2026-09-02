@@ -46,6 +46,7 @@ Wraps `autocomplete-valid`, which only validates the SYNTAX of autocomplete toke
 **Required fix:** Either (a) rewrite title/description/impact to say plainly 'validates autocomplete tokens where present; does not require them', or (b) add a presence dimension: when a scanned page has recognisable personal-data inputs (`type=email|tel`, `name~=(email|phone|address|zip|cc)`) and none carry autocomplete, return `warn` instead of `na`. Do not leave the current mismatch between what the text promises and what the rule measures.
 
 **False-positive risks:**
+
 - Misleading `na`: no autocomplete anywhere → 'no applicable elements on scanned pages', which a user reads as 'nothing to fix' when it is exactly the failure the description warns about.
 - Vendor/framework tokens that are valid HTML but non-standard (`autocomplete="one-time-code"` is valid; `autocomplete="off"`/`"new-password"` handled; but framework-emitted values like `autocomplete="nope"`/`"chrome-off"` used deliberately to suppress autofill) are flagged as errors even though they are an intentional pattern.
 - CSS blindness: hidden duplicate checkout forms in drawers are evaluated.
@@ -53,6 +54,7 @@ Wraps `autocomplete-valid`, which only validates the SYNTAX of autocomplete toke
 - Binary verdict at 'high' priority for what is, when it fires, usually a single typo'd token.
 
 **Test gaps:**
+
 - No HTML-level test for this audit.
 - No fixture with zero autocomplete attributes asserting the `na` (the misleading path).
 - No fixture with the deliberate anti-autofill tokens.

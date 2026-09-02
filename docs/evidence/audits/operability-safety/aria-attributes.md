@@ -30,6 +30,7 @@ Bundles `aria-valid-attr`, `aria-valid-attr-value`, `aria-allowed-attr`, `aria-p
 **Required fix:** _none — audit is sound as implemented_
 
 **False-positive risks:**
+
 - `aria-valid-attr-value` resolves idrefs against the static document: `aria-labelledby`/`aria-controls`/`aria-describedby` pointing at elements rendered on hydration or in a JS-mounted portal are 'invalid' here but valid in a browser — a systematic false fail on Next.js/Nuxt/Remix pages that stream or defer parts of the tree.
 - CSS blindness: attributes on hidden template clones (carousel/mega-menu duplicates that reuse the same `aria-controls` ids) are evaluated.
 - Four rules collapsed to one binary verdict with no rule attribution in `found`, so a prohibited `aria-label` on a `<div>` (cosmetic) is indistinguishable from `aria-expanded="yes"` (functional).
@@ -37,6 +38,7 @@ Bundles `aria-valid-attr`, `aria-valid-attr-value`, `aria-allowed-attr`, `aria-p
 - CSR SPA → `na`.
 
 **Test gaps:**
+
 - No HTML-level test for this audit.
 - No fixture with an idref target that is absent from static HTML (the hydration false-positive).
 - No fixture exercising the cross-rule incomplete-swallowed-by-pass path (only the same-rule variant is tested).
@@ -59,6 +61,7 @@ _No dedicated evidence signal was researched for this audit in the 2026-08-20 pa
 **Grade: A** — WAI-ARIA 1.2 is a ratified W3C Recommendation, and Playwright documents that its accessibility-tree snapshot carries exactly these ARIA-derived properties, so a corrupted value provably changes what the agent sees.
 
 **Evidence:**
+
 - WAI-ARIA 1.2, W3C Recommendation 06 June 2023, defines each state/property's allowed value type and that user agents expose the default when a state is undefined for the role — https://www.w3.org/TR/wai-aria-1.2/#state_prop_def (verified 2026-08-21)
 - Playwright ARIA snapshots include "specific ARIA attributes, such as `checked`, `disabled`, `expanded`, `invalid`, `level`, `pressed`, or `selected`" alongside role and accessible name — https://playwright.dev/docs/aria-snapshots (verified 2026-08-21)
 - Playwright MCP builds the model's whole view of the page from that tree ("Uses Playwright's accessibility tree, not pixel-based input") — https://github.com/microsoft/playwright-mcp (verified 2026-08-21)

@@ -14,7 +14,6 @@ sources:
   - S12
 ---
 
-
 # C2PA manifest survives the delivery pipeline
 
 > Shipped in v2. Evidence grade **B** · scored tier · unique · implementation: `static-fetch`
@@ -42,7 +41,7 @@ Lighthouse 13.3's Agentic Browsing category covers llms.txt, WebMCP tools, agent
 
 ## Implementation sketch
 
-1) Collect candidate image URLs from <img src>, every <img>/<source> srcset candidate, og:image/twitter:image, and JSON-LD image/logo/primaryImageOfPage. 2) For each, GET the bytes (Range-limited first pass is unsafe — JPEG APP11 can sit mid-file per C2PA spec, so fetch fully but cap at ~5MB). 3) Detect the manifest store per container: JPEG scan APP11 (0xFFEB) segments for the 'JP' identifier wrapping a JUMBF box; PNG scan for the C2PA chunk carrying the JUMBF store; WebP scan RIFF for the C2PA chunk; AVIF/HEIF scan BMFF for the C2PA uuid box. Prefer shelling out to c2patool / binding c2pa-rs via its C API rather than reimplementing JUMBF+COSE. 4) Derive origin-vs-variant pairs: for /_next/image?url=X and /cdn-cgi/image/<opts>/X, decode X as the origin; for WordPress -WxH.jpg suffixes, strip to the base upload. 5) Emit manifestCoverage = signed images / total images, and strippedInTransit = pairs where origin has a manifest and variant does not. 6) Report a HIGH finding for strippedInTransit > 0, INFO when the whole site has zero manifests (nothing to strip). Sample 2-3 images per page template rather than every asset.
+1. Collect candidate image URLs from <img src>, every <img>/<source> srcset candidate, og:image/twitter:image, and JSON-LD image/logo/primaryImageOfPage. 2) For each, GET the bytes (Range-limited first pass is unsafe — JPEG APP11 can sit mid-file per C2PA spec, so fetch fully but cap at ~5MB). 3) Detect the manifest store per container: JPEG scan APP11 (0xFFEB) segments for the 'JP' identifier wrapping a JUMBF box; PNG scan for the C2PA chunk carrying the JUMBF store; WebP scan RIFF for the C2PA chunk; AVIF/HEIF scan BMFF for the C2PA uuid box. Prefer shelling out to c2patool / binding c2pa-rs via its C API rather than reimplementing JUMBF+COSE. 4) Derive origin-vs-variant pairs: for /_next/image?url=X and /cdn-cgi/image/<opts>/X, decode X as the origin; for WordPress -WxH.jpg suffixes, strip to the base upload. 5) Emit manifestCoverage = signed images / total images, and strippedInTransit = pairs where origin has a manifest and variant does not. 6) Report a HIGH finding for strippedInTransit > 0, INFO when the whole site has zero manifests (nothing to strip). Sample 2-3 images per page template rather than every asset.
 
 ## Example failure
 

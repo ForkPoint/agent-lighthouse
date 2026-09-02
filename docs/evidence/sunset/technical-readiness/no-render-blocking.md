@@ -27,6 +27,7 @@ Counts external `<head>` scripts lacking async/defer/module/nomodule. Two indepe
 **Required fix:** Filter by element rather than by src string — walk `$('head script[src]')` directly and evaluate async/defer/type on each matched element instead of intersecting with a Set of srcs. Add `<link rel=stylesheet>` in `<head>` (via the existing `extractStylesheetUrls`) as blocking resources, and count sizeable inline head scripts. Delete the `bodyText.length < 100` branch and defer that judgement to 8.13. Rewrite the impact copy: non-executing crawlers do not fetch scripts at all; the cost is borne by agentic/headless browsers and by Core Web Vitals.
 
 **False-positive risks:**
+
 - Matching by src string, not by element: `blockingScripts = allScripts.filter(s => … headScriptSrcs.has(s.src) && !s.async && !s.defer …)`. `headScriptSrcs` is a Set of head srcs, but the filter runs over ALL scripts on the page. A page with `<head><script src="a.js" defer>` plus `<body><script src="a.js">` flags the body copy as a head render-blocker — a false positive from ordinary duplicate-bundle markup.
 - Stylesheets ignored: the single biggest render-blocking category is unmeasured, so a page with ten blocking stylesheets and zero blocking scripts reports 'No render-blocking synchronous scripts found' and scores 1.0.
 - Inline `<head>` scripts (analytics snippets, dataLayer bootstraps, framework preamble) are counted into `totalHeadScripts` for display but never treated as blocking, although a large synchronous inline script blocks the parser just as hard as an external one.
@@ -35,6 +36,7 @@ Counts external `<head>` scripts lacking async/defer/module/nomodule. Two indepe
 - `page.fetchResult.body ?? ''` measures the raw HTML string length, not text, so 'body is only N characters' is describing the whole document, not the body content — the message misstates what was measured.
 
 **Test gaps:**
+
 - No test with the same src appearing deferred in head and undeferred in body (the src-matching false positive).
 - No test with blocking `<link rel=stylesheet>` — the missing half.
 - No test with a large inline head script.

@@ -15,7 +15,6 @@ sources:
   - S4
 ---
 
-
 # Text-Fragment Citation Addressability
 
 > Shipped in v2. Evidence grade **A** · scored tier · unique · implementation: `static-fetch`

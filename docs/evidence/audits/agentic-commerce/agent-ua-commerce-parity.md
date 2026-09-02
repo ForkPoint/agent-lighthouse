@@ -14,7 +14,6 @@ sources:
   - acp-security
 ---
 
-
 # Agent User-Agent Fetch Parity on Commerce Paths
 
 > Shipped in v2. Evidence grade **A** · scored tier · unique · implementation: `static-fetch`

@@ -26,6 +26,7 @@ Two concrete implementation bugs make this audit warn on correct markup: it cast
 **Required fix:** Normalize `potentialAction` through `Array.isArray(a) ? a : [a]` and scan all WebSite nodes, not `[0]`. Accept `target` as either a string or an EntryPoint object (`target.urlTemplate`), and verify the placeholder name matches the `query-input` declaration rather than testing for a bare `{`. Drop `defaultPriority` to `low`, rewrite the description to stop asserting ChatGPT behaviour that has never been demonstrated, and consider `scoreDisplayMode: 'informative'`.
 
 **False-positive risks:**
+
 - `const action = ws['potentialAction'] as Record<string, unknown> | undefined;` with no array handling. When `potentialAction` is an array (WebSite commonly declares both a SearchAction and a ReadAction/ViewAction — Yoast, Rank Math and Squarespace all emit arrays), `matchesType(action, 'SearchAction')` reads `@type` off an Array, gets undefined, and the audit warns 'missing proper SearchAction' on correct markup. Both sibling audits (potential-action.ts:59, action-schema.ts:83) handle this with `Array.isArray(action) ? action : [action]`; this one does not.
 - `typeof action['target'] === 'string' && action['target'].includes('{')` rejects the schema.org-preferred `"target": {"@type":"EntryPoint","urlTemplate":"https://…?q={search_term_string}"}`. The MORE correct markup fails while the looser string form passes — the audit inverts the quality gradient.
 - `webSites[0]` only — a page emitting two WebSite nodes (theme + SEO plugin) is judged on whichever the flattener emits first.
@@ -33,6 +34,7 @@ Two concrete implementation bugs make this audit warn on correct markup: it cast
 - Because `allSchemas(ctx)` spans all pages, a WebSite node on an inner page satisfies a check declared `applicablePageTypes: ['homepage']`.
 
 **Test gaps:**
+
 - No test with `potentialAction` as an array — the highest-frequency false warn, and the sibling audits both have this test
 - No test with `target` as an EntryPoint object with `urlTemplate`
 - No test with two WebSite nodes on one page

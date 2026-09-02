@@ -31,12 +31,14 @@ Quality check on the invented file from 5.7, grading it against an equally inven
 **Required fix:** Delete along with 5.7 and 5.9.
 
 **False-positive risks:**
+
 - Hard `fail` when the file is absent (line 50) — a second zero charged for the identical absence already charged by 5.7, tripled once 5.9 also fails. One missing nonexistent file produces three failures.
 - The seven 'required' fields (version, name, description, capabilities, owner, contact, lastUpdated) are asserted by no specification. Reporting them as 'required' is fabricated authority.
 - `parsed[f] !== undefined && !== null && !== ''` counts `"capabilities": []` and `"owner": " "` as present — presence, not quality.
 - `present.length >= requiredFields.length / 2` gives warn at exactly 4/7, an arbitrary cliff with no grounding.
 
 **Test gaps:**
+
 - No test that whitespace-only or empty-array field values are rejected
 - No test of the triple-penalty interaction with 5.7/5.9
 
@@ -44,7 +46,7 @@ Quality check on the invented file from 5.7, grading it against an equally inven
 
 ## The rewrite (Plan 4, Task 10, 2026-08-22)
 
-The required rework from the [redemption dossier](../../deletions/agent-tools/ai-catalog-metadata.md) is executed: *"require specVersion + host{displayName,identifier} + entries[], and score entry quality on description, tags, capabilities and representativeQueries (the exact keys hf-discover indexes), with updatedAt/trustManifest as optional bonuses. Drop owner/contact/lastUpdated/services entirely."*
+The required rework from the [redemption dossier](../../deletions/agent-tools/ai-catalog-metadata.md) is executed: _"require specVersion + host{displayName,identifier} + entries[], and score entry quality on description, tags, capabilities and representativeQueries (the exact keys hf-discover indexes), with updatedAt/trustManifest as optional bonuses. Drop owner/contact/lastUpdated/services entirely."_
 
 **Old pass condition:** all seven of `version`, `name`, `description`, `capabilities`, `owner`, `contact`, `lastUpdated` present at the top level, with `warn` at ≥ 3.5/7. None of `owner`, `contact` or `lastUpdated` appears in any revision of the ARD spec, in the Linux Foundation ai-catalog spec, or in any of the four real manifests checked; `version`/`name`/`description` are the wrong shape (the spec uses `specVersion` and nests display metadata under `host`). A spec-perfect manifest scored 0/7.
 
@@ -55,7 +57,7 @@ Those four keys are not a taste judgement: `_entry_haystack()` in hf-discover's 
 Result states:
 
 - `pass` — host named, every entry indexable.
-- `warn` — some entries carry indexable metadata but not all, *or* `host.displayName` is missing. Under-described entries are named in the message (bounded to five plus a count).
+- `warn` — some entries carry indexable metadata but not all, _or_ `host.displayName` is missing. Under-described entries are named in the message (bounded to five plus a count).
 - `fail` — no entry carries any of the four keys: the manifest exists but is invisible to a consumer's search.
 - `na` — no ARD manifest is served, or it lists no entries.
 
@@ -75,7 +77,7 @@ Source: the [redemption dossier's verdict](../../deletions/agent-tools/ai-catalo
 ### Deviations
 
 - **`host.identifier` is reported, not required.** The rework note names `host{displayName,identifier}`, but the ARD spec makes only `displayName` mandatory in §4.3 and `identifier` optional. Requiring a `did:web` identifier would fail conformant publishers, so a missing one is surfaced in the `found` line and does not move the status.
-- **An entry needs description *and* one structured facet to count as indexable.** A description alone leaves the entry with prose but no facets to match on; it is treated as under-described (`warn`), not as fully indexable. This is a judgement about hf-discover's haystack, not a spec requirement, and is stated as such in the audit's `expected` string.
+- **An entry needs description _and_ one structured facet to count as indexable.** A description alone leaves the entry with prose but no facets to match on; it is treated as under-described (`warn`), not as fully indexable. This is a judgement about hf-discover's haystack, not a spec requirement, and is stated as such in the audit's `expected` string.
 
 ## Evidence
 
@@ -86,6 +88,7 @@ Source: the [redemption dossier's verdict](../../deletions/agent-tools/ai-catalo
 **Grade: B** — the consuming code is first-party, public and readable, and the fields it matches on are exactly the ones this audit scores. It is not grade A because ARD is a draft (v0.9) rather than a ratified standard, and because the behaviour is documented in a client's source rather than in a vendor statement about a hosted crawler.
 
 **Evidence:**
+
 - Hugging Face ships `hf-discover`, an ARD-compliant client whose navigate mode performs "automatic `.well-known/ai-catalog.json` discovery from a website" and follows federated registries — https://github.com/huggingface/hf-discover (verified 2026-08-24)
 - Its navigation code builds the text it matches a query against from five entry fields: `displayName`, `description`, `tags`, `capabilities` and `representativeQueries`. `displayName` is already mandatory under ARD §4.2, so the four this audit scores are exactly the optional keys that decide whether a query surfaces an entry at all.
 - ARD §4.1 makes `specVersion`, `host` and `entries` the required top-level fields, and defines `version`, `updatedAt`, `tags`, `metadata` and `trustManifest` as optional enrichment; identity is expressed through `host.identifier` (a DID) and the optional `trustManifest` — https://github.com/ards-project/ard-spec (verified 2026-08-24)

@@ -15,7 +15,6 @@ sources:
   - acp-sellers
 ---
 
-
 # ACP Link-Surface Completeness (the 8 required policy link types)
 
 > Shipped in v2. Evidence grade **A** · scored tier · unique · implementation: `multi-page`
@@ -49,7 +48,7 @@ Lighthouse's Agentic Browsing category covers llms.txt, WebMCP tools, agent acce
 
 ## Implementation sketch
 
-1) Fetch homepage + 2 sampled PDPs; extract every <a href> from the RAW HTML (no JS) plus any <link rel> policy hints. 2) Classify each href into the 8 enum types using path and anchor-text regexes: terms_of_use=/terms|/tos|terms-of-(service|use|sale); privacy_policy=/privacy|privacy-(policy|notice); return_policy=/returns?|/refunds?|return-policy|/exchanges; shipping_policy=/shipping|/delivery|shipping-policy; contact_us=/contact; about_us=/about; faq=/faqs?|frequently-asked; support=/support|/help|/customer-(service|care). 3) For each resolved URL: require scheme https, final status 200 after <=3 same-registrable-domain redirects, Content-Type text/html, and a soft-404 guard (raw body must contain >=500 chars of extracted text and must not match /page not found|404|doesn.t exist/i in <title> or <h1>). 4) No-JS guard: policy text must be present in the initial HTML, since ACP link targets are opened by agents that may not execute JS. 5) Score = fraction of 8 types resolved; terms_of_use and privacy_policy are hard gates that force the whole check to fail. Emit the resolved URL per type so the merchant can paste them straight into their `links` array and feed rows.
+1. Fetch homepage + 2 sampled PDPs; extract every <a href> from the RAW HTML (no JS) plus any <link rel> policy hints. 2) Classify each href into the 8 enum types using path and anchor-text regexes: terms_of_use=/terms|/tos|terms-of-(service|use|sale); privacy_policy=/privacy|privacy-(policy|notice); return_policy=/returns?|/refunds?|return-policy|/exchanges; shipping_policy=/shipping|/delivery|shipping-policy; contact_us=/contact; about_us=/about; faq=/faqs?|frequently-asked; support=/support|/help|/customer-(service|care). 3) For each resolved URL: require scheme https, final status 200 after <=3 same-registrable-domain redirects, Content-Type text/html, and a soft-404 guard (raw body must contain >=500 chars of extracted text and must not match /page not found|404|doesn.t exist/i in <title> or <h1>). 4) No-JS guard: policy text must be present in the initial HTML, since ACP link targets are opened by agents that may not execute JS. 5) Score = fraction of 8 types resolved; terms_of_use and privacy_policy are hard gates that force the whole check to fail. Emit the resolved URL per type so the merchant can paste them straight into their `links` array and feed rows.
 
 ## Example failure
 

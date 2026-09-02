@@ -27,6 +27,7 @@ Looks for /privacy-policy/, /privacy/, /privacy-policy, /privacy at 200, then fa
 **Required fix:** Validate the body, not just the status: require 200 AND a non-HTML-shell body AND some policy-ish content signal (or simply that the response differs from the homepage body) before declaring the path a hit — a shared `looksLikeRealPage()` helper would serve 8.19, 8.20 and 8.10 at once. Add an i18n label/slug table (datenschutz, datenschutzerklärung, confidentialité, privacidad, privacybeleid, informativa, プライバシー, 隐私, конфиденциальность, …) to both the text and href patterns. Fall back to `aria-label`/`title` when `.text()` is empty. Factor the near-identical scanner shared with 8.20 into one `_legal-links.ts` helper.
 
 **False-positive risks:**
+
 - Soft-404 false PASS: `ctx.rootFiles[p].status === 200` with no body check. Netlify/Vercel/React-Router catch-alls, and WordPress installs that 200 a search page for unknown slugs, return 200 for /privacy → 'Privacy policy found at /privacy.' when none exists.
 - English-only false FAIL: `PRIVACY_TEXT = /\bprivacy\s*(policy|notice|statement|center|…)\b/` and `PRIVACY_HREF = /privacy[-_]?(policy|notice|…)|\/privacy(\.[a-z0-9]+)?($|[/?#])/`. A German site linking 'Datenschutzerklärung' at /datenschutz, a French site's 'Politique de confidentialité' at /confidentialite, or a Japanese site's プライバシーポリシー matches neither the text nor the href pattern → fail on a compliant site.
 - Text-node extraction misses icon/aria-only links: `page.$(el).text()` returns empty for anchors whose label lives in `aria-label` or a nested `<span class=sr-only>`/SVG title, so accessible footer links are skipped.
@@ -35,6 +36,7 @@ Looks for /privacy-policy/, /privacy/, /privacy-policy, /privacy at 200, then fa
 - Only `ctx.pages` anchors are scanned; a policy reachable only from a page not in the crawl set is missed.
 
 **Test gaps:**
+
 - No test for a 200 soft-404 / SPA rewrite (the false-pass case).
 - No non-English test of any kind — no Datenschutz, confidentialité, privacidad, or CJK label.
 - No test for an anchor whose label is in `aria-label` or an sr-only span.

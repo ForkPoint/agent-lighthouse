@@ -15,7 +15,6 @@ sources:
   - indexnow-doc
 ---
 
-
 # Conditional-request support on discovery surfaces
 
 > Shipped in v2. Evidence grade **B** · scored tier · unique · implementation: `static-fetch`

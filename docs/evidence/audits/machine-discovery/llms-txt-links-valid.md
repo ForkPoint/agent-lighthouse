@@ -57,6 +57,7 @@ Fetches every llms.txt link and fails if any is not 200. Genuinely valuable sign
 **Required fix:** Resolve relative links against ctx.baseUrl rather than dropping them; use the same set for the denominator and the fetch list. Cap concurrency (e.g. 5) and prefer HEAD with GET fallback. Classify results: only 4xx/5xx excluding 401/403/429 count as broken; 401/403/429/0 report as 'unverifiable' and, when `ctx.wafProtection?.isBlocked`, return notApplicable instead of fail. Report the count of skipped/unsafe links explicitly.
 
 **False-positive risks:**
+
 - Relative links are dropped upstream by `extractMarkdownLinks()`, so a file of relative links produces WARN 'No links found in llms.txt to validate' — the audit reports it validated nothing while claiming coverage. Worse, `links.length` (pre-filter) is used as the denominator in the fail message while `resolved` (post-filter) is what actually got fetched, so 'N/M link(s) are broken' can print inconsistent counts.
 - `await Promise.all(resolved.map((url) => ctx.fetch({ url })))` — unbounded parallel GETs against one origin. A 100-link llms.txt fires 100 simultaneous requests; the resulting 429s are reported as broken links.
 - `broken = results.filter((r) => !isOk(r))` treats 401/403/429/503 and the fetcher's own `status: 0` timeout result as broken. On any Cloudflare/Akamai-protected site the audit lists the site's own pages as dead. `ctx.wafProtection` is available and ignored.
@@ -64,6 +65,7 @@ Fetches every llms.txt link and fails if any is not 200. Genuinely valuable sign
 - Links to legitimately non-200 resources (a PDF behind 302 to a CDN that 403s the scanner UA, an intentionally 410'd page) are indistinguishable from mistakes.
 
 **Test gaps:**
+
 - Relative links in llms.txt (never fetched, silently 'no links')
 - 403/429/503 responses vs genuine 404
 - Timeout/status:0 results from the fetcher
@@ -104,7 +106,7 @@ a real shipping consumer**; (d) blockquote summary, (e) per-link descriptions
 and **(f) link validity are spec-optional with no known enforcing consumer**.
 
 This audit implements (f). Its own counter-evidence already said so —
-*"Lighthouse checks **no** link validity."* The Lighthouse audit source was
+_"Lighthouse checks **no** link validity."_ The Lighthouse audit source was
 re-read on 2026-08-24 and that is still exactly true: three regex and length
 tests, no link is ever fetched.
 

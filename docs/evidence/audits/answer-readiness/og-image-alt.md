@@ -43,6 +43,7 @@ Modest accessibility value at best, and the not-applicable path is mis-modeled: 
 **Required fix:** 1) Change the no-og:image branch from `this.warn('No og:image found, so og:image:alt is not applicable.', …)` to `this.notApplicable(...)`. The message literally says 'not applicable' while returning a 0.5 penalty that compounds with core-open-graph's failure for the same root cause. 2) Reject non-descriptive alt text — `if (ogImageAlt)` currently passes `content="image"`, `content="og image"`, or the filename. 3) Iterate all `ctx.pages`. 4) Downgrade `defaultPriority` from 'medium' to 'low' and drop the 'AI agents cannot process images directly' claim, which is factually stale.
 
 **False-positive risks:**
+
 - Double penalty on one root cause: `if (!ogImage) return this.warn(...)` scores 0.5 for a condition core-open-graph already scored 0 for. Sites with no OG at all are penalized twice for the same fact, and the base class's `notApplicable()` (which exists precisely to avoid this) is unused.
 - Junk alt text passes: `if (ogImageAlt) return this.pass(...)` accepts `content="image"`, `content="og-image"`, `content="card.png"`, or a template token.
 - Only `ctx.pages[0]` is examined.
@@ -51,6 +52,7 @@ Modest accessibility value at best, and the not-applicable path is mis-modeled: 
 - WAF interstitial → warn (0.5) rather than a clean not-applicable, quietly depressing the category score.
 
 **Test gaps:**
+
 - No test asserting the no-og:image case should be `na` rather than `warn` (the current test actively locks in the wrong behavior: `expect(result.status).toBe('warn')`).
 - No junk/placeholder alt-text test.
 - No `og:image:secure_url` test.

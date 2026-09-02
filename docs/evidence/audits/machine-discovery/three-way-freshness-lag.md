@@ -15,7 +15,6 @@ sources:
   - rfc4287
 ---
 
-
 # Three-way freshness lag and orphaned fresh content
 
 > Shipped in v2. Evidence grade **B** · scored tier · partial overlap · implementation: `multi-page`
@@ -45,7 +44,7 @@ Screaming Frog and Sitebulb compute orphan URLs against a sitemap, and both list
 
 ## Implementation sketch
 
-1) Build three sets: SITEMAP (all URLs from the sitemap tree, capped), FEED (all item links across discovered feeds), and SITE (URLs harvested from the homepage plus up to 5 section/index/blog-listing pages, restricted to same-host, non-paginated, HTML content-type after HEAD). 2) Compute ORPHANS = SITE \ (SITEMAP ∪ FEED); FAIL when |ORPHANS| > 0 and any orphan's on-page datePublished is within the last 30 days — report those URLs explicitly. 3) Compute newest_on_page = max(datePublished/dateModified across sampled SITE pages), newest_sitemap = max(lastmod), newest_feed = max(item date). FAIL when newest_on_page - newest_sitemap > 7 days, or newest_on_page - newest_feed > 7 days. 4) Assert feed-level <lastBuildDate>/<updated> >= max(item date); FAIL otherwise (generator bug). 5) Assert item ordering is newest-first, since many consumers read only the head of the feed; WARN on unordered feeds. 6) Report the inverse set too: SITEMAP \ SITE URLs that return 404/410/noindex — advertised-but-dead entries that waste every crawler's budget. All date parsing normalizes to UTC and ignores timezone-less values rather than guessing.
+1. Build three sets: SITEMAP (all URLs from the sitemap tree, capped), FEED (all item links across discovered feeds), and SITE (URLs harvested from the homepage plus up to 5 section/index/blog-listing pages, restricted to same-host, non-paginated, HTML content-type after HEAD). 2) Compute ORPHANS = SITE \ (SITEMAP ∪ FEED); FAIL when |ORPHANS| > 0 and any orphan's on-page datePublished is within the last 30 days — report those URLs explicitly. 3) Compute newest_on_page = max(datePublished/dateModified across sampled SITE pages), newest_sitemap = max(lastmod), newest_feed = max(item date). FAIL when newest_on_page - newest_sitemap > 7 days, or newest_on_page - newest_feed > 7 days. 4) Assert feed-level <lastBuildDate>/<updated> >= max(item date); FAIL otherwise (generator bug). 5) Assert item ordering is newest-first, since many consumers read only the head of the feed; WARN on unordered feeds. 6) Report the inverse set too: SITEMAP \ SITE URLs that return 404/410/noindex — advertised-but-dead entries that waste every crawler's budget. All date parsing normalizes to UTC and ignores timezone-less values rather than guessing.
 
 ## Example failure
 

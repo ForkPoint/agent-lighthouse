@@ -336,15 +336,15 @@ const TEXT_BEARING_WALL_HTML =
   '<header><nav><a href="/">Home</a><a href="/products">Products</a><a href="/about">About Us</a>' +
   '<a href="/contact">Contact Support</a><a href="/terms">Terms of Service</a><a href="/privacy">Privacy Policy</a></nav></header>' +
   '<main><div class="challenge-container">' +
-  '<h1>Please verify you are a human visitor to continue to example.test</h1>' +
+  "<h1>Please verify you are a human visitor to continue to example.test</h1>" +
   '<p id="challenge-error-text">Our systems have detected automated traffic from your network address. ' +
-  'Please complete the security check below to verify your identity and access the requested page. ' +
-  'If you believe this is in error, please contact our web administration team with the Cloudflare Ray ID displayed below.</p>' +
+  "Please complete the security check below to verify your identity and access the requested page. " +
+  "If you believe this is in error, please contact our web administration team with the Cloudflare Ray ID displayed below.</p>" +
   '<div id="turnstile-wrapper" class="cf-turnstile"></div>' +
-  '</div></main>' +
-  '<footer><p>&copy; 2026 example.test Inc. All rights reserved. Registered trademark. For support inquiries email support@example.test or call customer service.</p></footer>' +
+  "</div></main>" +
+  "<footer><p>&copy; 2026 example.test Inc. All rights reserved. Registered trademark. For support inquiries email support@example.test or call customer service.</p></footer>" +
   '<script src="/cdn-cgi/challenge-platform/h/b/orchestrate/chl_page/v1"></script>' +
-  '</body></html>';
+  "</body></html>";
 
 const textBearingWall = state({
   name: "text-bearing-wall",

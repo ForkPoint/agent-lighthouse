@@ -16,7 +16,6 @@ sources:
   - mcp-spec-2025-06-18-transports
 ---
 
-
 # Modern-Era Reachability Probe (server/discover)
 
 > Shipped in v2. Evidence grade **A** · scored tier · unique · implementation: `static-fetch`
@@ -59,13 +58,14 @@ Mcp-Method: server/discover
 {"jsonrpc":"2.0","id":"al-1","method":"server/discover","params":{"_meta":{"io.modelcontextprotocol/protocolVersion":"2026-07-28","io.modelcontextprotocol/clientInfo":{"name":"AgentLighthouse","version":"1.0.0"},"io.modelcontextprotocol/clientCapabilities":{}}}}
 
 Handle both Content-Type: application/json and text/event-stream (parse the final SSE data: frame). Classify:
+
 - 200 + result.supportedVersions includes "2026-07-28" -> PASS (modern). Record capabilities keys, capabilities.extensions ids, presence of `instructions`, and serverInfo.
 - 400 + error.code === -32022 -> modern era but older revision; read error.data.supported[] and report the newest supported.
 - 401 + WWW-Authenticate -> auth-gated; hand off to the OAuth Discovery Chain check and re-probe after noting the challenge.
 - 404 + error.code === -32601 -> MUST violation: modern server that does not implement server/discover.
 - 400/404/405 with an empty or non-JSON-RPC body, or a body demanding `initialize` -> LEGACY-ONLY. Confirm by POSTing a legacy `initialize` and checking for an Mcp-Session-Id response header.
 - GET <endpoint> returning text/event-stream whose first event is `endpoint` -> deprecated 2024-11-05 HTTP+SSE only (FAIL, deprecated since 2025-03-26 and eligible for removal).
-Also flag legacy residue on a modern server: a GET or DELETE that does not return 405, or a minted/echoed Mcp-Session-Id.
+  Also flag legacy residue on a modern server: a GET or DELETE that does not return 405, or a minted/echoed Mcp-Session-Id.
 
 ## Example failure
 
@@ -83,7 +83,7 @@ Tier per evidence policy: **scored** — grade A meets the A/B bar required for 
 
 Recorded at graduation (2026-08-22, Plan 5 Task 26).
 
-- **"Modern era, older revision" is a `warn`, not a low-scoring pass.** The sketch called a `-32022` rejection "PASS at a lower score". This audit is ternary, where the lower score *is* `warn`; there is no third passing grade to hand out. The classification, the supported list and the newest revision are all reported in the message either way.
+- **"Modern era, older revision" is a `warn`, not a low-scoring pass.** The sketch called a `-32022` rejection "PASS at a lower score". This audit is ternary, where the lower score _is_ `warn`; there is no third passing grade to hand out. The classification, the supported list and the newest revision are all reported in the message either way.
 - **Endpoint discovery is the shared one.** The sketch allowed resolving the endpoint from "a registry match, an llms.txt reference, a documented /mcp path, or user config". This implementation uses only `discoverMcpEndpoint` from `_mcp-client.ts`, which reads the three explicit declarations (`/.well-known/mcp/servers.json`, `/.well-known/ucp`, `/.well-known/ai-catalog.json`). Probing `/mcp` speculatively would POST to a path the site never declared; see the `agent-interfaces/mcp-endpoint` dossier for why that is out of bounds.
 - **Probes are shared per scan.** `server/discover`, the GET and the DELETE go through the `sharedProbe` cache keyed on the `CheckContext` object, so the five MCP audits in this wave issue each of those requests once per scan rather than once per audit.
 - **The deprecated-transport verdict outranks the POST classification.** A GET answering with an SSE stream whose first event is `endpoint` is reported as the 2024-11-05 HTTP+SSE transport regardless of what the POST returned, because that finding is decisive: a current client cannot speak that transport at all.

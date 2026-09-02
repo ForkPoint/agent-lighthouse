@@ -13,7 +13,6 @@ sources:
   - S4
 ---
 
-
 # Tool Self-Description Coverage
 
 > Shipped in v2. Evidence grade **B** · scored tier · partial overlap · implementation: `static-fetch`
@@ -40,6 +39,7 @@ Partial-overlap: MCP Inspector and several open-source MCP linters surface missi
 ## Implementation sketch
 
 From the same tools/list fetch used by the contract-validity check, plus the DiscoverResult, compute:
+
 - toolDescriptionCoverage = tools with a non-empty trimmed `description` / total tools. Threshold: 100% to pass; additionally flag descriptions under 40 characters as stubs and report the count separately.
 - paramDescriptionCoverage = across all tools, walk inputSchema recursively through `properties` (and into `items.properties` for arrays of objects); count leaf parameters with a non-empty `description` over total leaf parameters. Threshold: >= 90%.
 - requiredParamDescriptionCoverage: same metric restricted to parameters named in `required`. Threshold: 100% — an undocumented required parameter is an unavoidable guess on every call.
@@ -47,7 +47,7 @@ From the same tools/list fetch used by the contract-validity check, plus the Dis
 - outputSchemaCoverage = tools with an `outputSchema` / total tools. Report; threshold advisory.
 - titleCoverage = tools with a `title` distinct from `name` / total tools (drives human-facing consent UI).
 - serverInstructions: assert DiscoverResult.instructions is present and non-empty; report its length.
-Emit each ratio alongside the specific offending tool/parameter paths (e.g. `create_invoice.line_items[].tax_code`) so the finding is directly actionable.
+  Emit each ratio alongside the specific offending tool/parameter paths (e.g. `create_invoice.line_items[].tax_code`) so the finding is directly actionable.
 
 ## Example failure
 

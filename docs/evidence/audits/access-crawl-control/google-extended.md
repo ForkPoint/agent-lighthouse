@@ -34,11 +34,13 @@ Inherits every base-class defect, and its guidance text is factually wrong in a 
 **Required fix:** Rewrite `impact` to state accurately that Google-Extended governs Gemini training and grounding only and does not affect Search, AI Overviews or AI Mode inclusion. Add a separate `Googlebot allowed` audit — that is the token that actually gates AI Overviews. Apply the shared helper fixes from 2.1.
 
 **False-positive risks:**
+
 - Same exact-match/BOM/soft-404/`Disallow: /*` misreads as 2.1, from the shared `CrawlerBotAudit` + `isAllowed` path.
 - Sites that deliberately and correctly block Google-Extended (a mainstream publisher stance) while remaining fully open to Googlebot get a high-priority FAIL claiming lost AI Overview visibility they have not lost.
 - Wildcard fallback: a site with only `User-agent: *\nAllow: /` gets a 0.5 warn even though Google-Extended is fully permitted — the maximally-permissive state is penalized.
 
 **Test gaps:**
+
 - No assertion on guidance/impact correctness (the factual error is untested and unnoticed).
 - No case distinguishing Google-Extended from Googlebot policy.
 - Same missing real-world robots.txt variants as 2.1 (BOM, versioned token, soft-404, `Disallow: /*`).

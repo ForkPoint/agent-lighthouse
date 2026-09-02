@@ -115,10 +115,14 @@ describe("NoBrokenLinksAudit", () => {
   it("truncates long broken link lists and conforms to AuditResultSchema", async () => {
     const links = Array.from(
       { length: 20 },
-      (_, i) => `<a href="/very-long-path-segment-with-query-parameters-that-keeps-going-${i}?param1=value1&param2=value2&param3=value3">Link ${i}</a>`,
+      (_, i) =>
+        `<a href="/very-long-path-segment-with-query-parameters-that-keeps-going-${i}?param1=value1&param2=value2&param3=value3">Link ${i}</a>`,
     ).join("");
     const ctx = mockCheckContext([
-      mockPageContext("https://example.com/", `<html><body>${links}</body></html>`),
+      mockPageContext(
+        "https://example.com/",
+        `<html><body>${links}</body></html>`,
+      ),
     ]);
     ctx.fetch = fetchStub(
       Object.fromEntries(
@@ -134,4 +138,3 @@ describe("NoBrokenLinksAudit", () => {
     expect(result.displayValue!.length).toBeLessThanOrEqual(1000);
   });
 });
-

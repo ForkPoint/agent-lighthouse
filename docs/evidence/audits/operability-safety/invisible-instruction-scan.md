@@ -16,7 +16,6 @@ sources:
   - wasp
 ---
 
-
 # Invisible Instruction Payload Scan
 
 > Shipped in v2. Evidence grade **A** · scored tier · unique · implementation: `static-fetch`
@@ -84,6 +83,7 @@ CIE XYZ (D65) to L\*a\*b\*, then Euclidean distance, with the floor at 5 exactly
 as the sketch specifies. Only literal `color:` and `background-color:`
 declarations participate — an inherited or image background is not resolvable
 without a rendering engine.
+
 - 2026-08-28 — the audit declines when the scan holds no response it can
   attribute to this site. It read the hidden text on the scanned pages, and
   `ctx.pages`/`ctx.rootFiles` carry whatever answered 200 — on a parked domain

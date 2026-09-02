@@ -26,6 +26,7 @@ The most important audit in the category and the one whose false PASSES are most
 **Required fix:** 1) Handle `none`: `if (robots.includes('noindex'))` misses `<meta name="robots" content="none">`, which is defined as noindex+nofollow. Parse the value into comma-separated tokens and test membership against `['noindex','none']` rather than substring-matching. 2) Read `X-Robots-Tag` from `page.fetchResult.headers` — header-based noindex is extremely common (CDN rules, staging protection, WAF) and is completely invisible today, producing a green pass on a deindexed site. 3) Check bot-specific names too: `googlebot`, `google-extended`, `gptbot`, `claudebot`, `perplexitybot`, `bingbot` meta tags can carry noindex independently of `robots`; an AI-readiness tool that ignores `<meta name="gptbot" content="noindex">` is missing its own subject matter. 4) Token-match rather than substring-match to avoid flagging `noindexifembedded` (a real, much narrower Google directive) as a full block. 5) Replace the empty-pages `pass` ('No meta robots tag found (not blocking by default)') with `notApplicable()` — reporting a critical-priority PASS when nothing was fetched is the worst possible failure mode. 6) Iterate all `ctx.pages`; a single noindexed interior page is invisible today. 7) Note that `parser.ts extractMetaTags` is last-wins, so duplicate robots tags silently resolve to the last one — surface a warning when more than one `<meta name="robots">` exists.
 
 **False-positive risks:**
+
 - `content="none"` false PASS: `robots.includes('noindex')` is false for `<meta name="robots" content="none">`, which means noindex+nofollow. The audit reports 'meta robots is "none" (no blocking directives)' — a green, critical-priority pass on a page that is fully blocked. This is actively wrong guidance on the highest-stakes check in the tool.
 - `X-Robots-Tag: noindex` response header is never read (`page.fetchResult.headers` is available and unused). Sites deindexed at the CDN/server layer pass cleanly.
 - Bot-specific meta tags ignored: `<meta name="googlebot" content="noindex">`, `<meta name="google-extended" content="noindex">`, `<meta name="GPTBot" content="noindex">` all pass. For a tool whose stated subject is GPTBot/ClaudeBot access, missing the AI-bot-specific form is a direct miss.
@@ -37,6 +38,7 @@ The most important audit in the category and the one whose false PASSES are most
 - SPA/JS-injected robots directives are invisible in the fetched HTML.
 
 **Test gaps:**
+
 - No `content="none"` test — the highest-severity false pass is entirely unexercised.
 - No `X-Robots-Tag` header test.
 - No bot-specific meta tag test (`googlebot`, `google-extended`, `gptbot`).

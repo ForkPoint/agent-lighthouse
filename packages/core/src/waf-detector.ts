@@ -120,7 +120,9 @@ export function detectWafProtection(
       body.includes("press & hold") ||
       body.includes("perimeterx captcha") ||
       body.includes("px-captcha") ||
-      body.includes("access to this page has been denied because we believe you are using automation tools") ||
+      body.includes(
+        "access to this page has been denied because we believe you are using automation tools",
+      ) ||
       ((status === 403 || status === 429) && body.includes("_pxappid"))
     ) {
       return {
@@ -176,7 +178,8 @@ export function detectWafProtection(
         body.includes("this page is currently unavailable") ||
         body.includes("you don't have permission to access") ||
         (headers["akamai-grn"] !== undefined &&
-          (body.includes("reference number") || body.includes("access denied")));
+          (body.includes("reference number") ||
+            body.includes("access denied")));
 
       if (status === 403 || scannedPagesCount === 0 || isSoftBlock) {
         return {

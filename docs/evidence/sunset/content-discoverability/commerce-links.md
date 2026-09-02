@@ -27,6 +27,7 @@ Scans the homepage's anchors for return/shipping/seller keywords. English-only s
 **Required fix:** Gate the audit on commerce detection (Product/Offer structured data or a product/category pageType present) and return notApplicable() otherwise. Replace single-keyword substring tests with a multilingual term table (return/refund/retour/rücksendung/devolución, shipping/versand/livraison/envío, impressum/about/contact/seller) plus platform-specific path patterns (/policies/refund-policy, /policies/shipping-policy). Scan the footers of all scanned pages, not just pages[0]. Read link text from aria-label/title when the text node is empty. Ignore query-string matches like ?returnUrl=.
 
 **False-positive risks:**
+
 - `link.href.includes('return') || link.text.includes('return policy')` — Shopify's default is `/policies/refund-policy` with the anchor text 'Refund policy'. Neither contains 'return'. The single most common commerce platform's out-of-the-box configuration is graded as missing its return policy.
 - English-only throughout ('return', 'shipping', 'delivery', 'about us', 'contact', 'seller'). A German (`/versand`, `/ruecksendungen`, `/impressum`), French (`/livraison`, `/retours`), or Spanish (`/envios`, `/devoluciones`) store fails all three checks and receives 'Missing all critical commerce links'.
 - No page-type or site-type gating: `ctx.pages[0]` only, and every non-commerce site — a blog, a docs portal, a personal site — is failed at medium priority for not having a return policy. The audit does not check whether any Product schema or commerce page type was detected.
@@ -36,6 +37,7 @@ Scans the homepage's anchors for return/shipping/seller keywords. English-only s
 - 'Instant Checkout readiness' is asserted in the description, but nothing here verifies any checkout-protocol requirement — the conclusion drawn from three keyword matches vastly overstates what was measured.
 
 **Test gaps:**
+
 - Default Shopify footer ('Refund policy' at /policies/refund-policy) — currently a false FAIL on the most common storefront
 - Non-English stores (German/French/Spanish policy paths and labels)
 - A blog or docs site (should be N/A, currently a FAIL)

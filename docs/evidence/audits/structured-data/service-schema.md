@@ -51,6 +51,7 @@ Checks that a Product or Service node exists with name/description/provider, whi
 **Required fix:** Merge the Product half into 3.22 (Advanced product details), which already checks brand/category/availability on Product nodes and shares the same type list as 3.21/3.24. If the Service half is kept as a standalone audit, scope it to Service/ProfessionalService only, evaluate the best-covered node rather than `[0]`, and drop `description` from the required set.
 
 **False-positive risks:**
+
 - `const first = serviceProducts[0]` over `allSchemas(ctx)` — the first flattened Product across the whole scan. On any scan including a category page, that is a listing tile stub with `name` only, producing 'missing: description, brand/offers' while the real PDP is complete. Same defect as 3.21/3.22.
 - `matchesAnyType(s, ['Service', 'Product'])` accepts a narrower set than its siblings, which use `['Product','IndividualProduct','ProductModel']`. A Shopify store marking up `ProductGroup` (the correct type for a variant parent) or a SaaS marking `SoftwareApplication` fails 3.8 with 'No Service or Product schema found' while simultaneously passing 3.22 and 3.24 on the same page — internally contradictory report.
 - `description` is required for a pass, but schema.org does not require it and Google's Product guidance does not either. Well-formed Product blocks that omit description are permanently warned for a non-issue.
@@ -58,6 +59,7 @@ Checks that a Product or Service node exists with name/description/provider, whi
 - For Service, `provider` is mandatory — but Service schema on an agency site commonly nests inside an Organization (`"makesOffer"`), where the provider is implicit; that valid pattern is warned.
 
 **Test gaps:**
+
 - No test with a category page containing multiple Product stubs (the `[0]` selection defect)
 - No test for `ProductGroup`, `IndividualProduct`, or `SoftwareApplication`
 - No test asserting that a Product without `description` is acceptable
@@ -89,17 +91,17 @@ Checks that a Product or Service node exists with name/description/provider, whi
 
 3.8 measured two unrelated shapes through one node list: `matchesAnyType(s, ['Service', 'Product'])`, then branched on `isProduct` for the rest of the check. Its required fix splits them:
 
-> *"Merge the Product half into 3.22 (Advanced product details), which already checks brand/category/availability on Product nodes and shares the same type list as 3.21/3.24. If the Service half is kept as a standalone audit, scope it to Service/ProfessionalService only, evaluate the best-covered node rather than `[0]`, and drop `description` from the required set."*
+> _"Merge the Product half into 3.22 (Advanced product details), which already checks brand/category/availability on Product nodes and shares the same type list as 3.21/3.24. If the Service half is kept as a standalone audit, scope it to Service/ProfessionalService only, evaluate the best-covered node rather than `[0]`, and drop `description` from the required set."_
 
 Both halves of that instruction landed. The file was `git mv`d to `service-schema.ts`, the id is `structured-data/service-schema`, and all three Service-side clauses are implemented and locked by tests:
 
-| Clause | Before | Now |
-| :--- | :--- | :--- |
-| type list | `['Service', 'Product']` | `['Service', 'ProfessionalService']` — a `Product` node no longer counts as a subject, nor as evidence that "a service exists" |
-| node selection | `serviceProducts[0]` across the whole scan | the best-covered node: a listing stub hoisted ahead of the real Service node can no longer decide the verdict |
-| required set | `name`, `description`, `provider` | `name`, `provider` — `description` dropped |
+| Clause         | Before                                     | Now                                                                                                                            |
+| :------------- | :----------------------------------------- | :----------------------------------------------------------------------------------------------------------------------------- |
+| type list      | `['Service', 'Product']`                   | `['Service', 'ProfessionalService']` — a `Product` node no longer counts as a subject, nor as evidence that "a service exists" |
+| node selection | `serviceProducts[0]` across the whole scan | the best-covered node: a listing stub hoisted ahead of the real Service node can no longer decide the verdict                  |
+| required set   | `name`, `description`, `provider`          | `name`, `provider` — `description` dropped                                                                                     |
 
-`description` was 3.8's own recorded invented requirement: *"schema.org does not require it and Google's Product guidance does not either. Well-formed Product blocks that omit description are permanently warned for a non-issue."* It is gone from the required set on both sides of the split; the guidance sample still shows it, because writing one is good practice, it is simply not pass-blocking.
+`description` was 3.8's own recorded invented requirement: _"schema.org does not require it and Google's Product guidance does not either. Well-formed Product blocks that omit description are permanently warned for a non-issue."_ It is gone from the required set on both sides of the split; the guidance sample still shows it, because writing one is good practice, it is simply not pass-blocking.
 
 ### Where the Product half went
 
@@ -109,11 +111,11 @@ The migration-map row for 3.8 keeps `status: "renamed"` and points at `structure
 
 ### Grade decision: stays **A**, tier `scored`, weight 1.0
 
-The A-grade record this audit rests on is the Product/Offer commerce-markup signal, and its consumer path (Google Merchant Center website crawl → Shopping Graph → AI Mode shopping) is a *Product* path, not a Service path — that is an honest weakness of the original grading, and the split does not change it, because the same record is what 3.22 is graded on and 3.22 is where the Product shape now lives. Nothing in this task raises or lowers the evidence, so per the weight law the grade stays **A** at `tier: scored`, `weightForGrade('A', 'scored')` = **1.0**, on both audits. The Service half's own evidence remains the weakest link in this dossier and is called out as a standing item below.
+The A-grade record this audit rests on is the Product/Offer commerce-markup signal, and its consumer path (Google Merchant Center website crawl → Shopping Graph → AI Mode shopping) is a _Product_ path, not a Service path — that is an honest weakness of the original grading, and the split does not change it, because the same record is what 3.22 is graded on and 3.22 is where the Product shape now lives. Nothing in this task raises or lowers the evidence, so per the weight law the grade stays **A** at `tier: scored`, `weightForGrade('A', 'scored')` = **1.0**, on both audits. The Service half's own evidence remains the weakest link in this dossier and is called out as a standing item below.
 
 ### Scoping: which sites this runs on (fixed 2026-08-22, review round 1)
 
-The split originally left `applicablePageTypes: ['product']` in place, inherited from the pre-split audit where it was correct for the Product half. For a Service-only check it is exactly backwards, and the effect is not cosmetic: `planAudits()` never *executes* an audit whose declared page types are absent from the scan, stubbing it as `na`. So the audit
+The split originally left `applicablePageTypes: ['product']` in place, inherited from the pre-split audit where it was correct for the Product half. For a Service-only check it is exactly backwards, and the effect is not cosmetic: `planAudits()` never _executes_ an audit whose declared page types are absent from the scan, stubbing it as `na`. So the audit
 
 - **never ran on the sites it is for.** An agency, consultancy or trades site publishes no `product` page, so the check was skipped outright — invisible, and excluded from the commerce vital.
 - **ran only on the sites it does not fit,** ecommerce stores, where it was a guaranteed `fail`: stores emit Product markup, not `Service`. v1 3.8 passed those stores on their Product markup; after the narrowing, the same store failed a check about services it does not sell.

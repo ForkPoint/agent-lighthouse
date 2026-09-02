@@ -29,6 +29,7 @@ Two audits in one file with opposite quality. The WAF branch (`ctx.wafProtection
 **Required fix:** Replace the page-scan branch with an active UA probe: refetch the homepage (and one interior page) as `GPTBot`, `ChatGPT-User`, `ClaudeBot` and `PerplexityBot`, and FAIL on status divergence or a large body-length delta versus the baseline `AgentLighthouse` fetch. That measures the real behavior. Demote script-presence detection to informational, and require the pattern to appear in a `<script src>` attribute rather than anywhere in the body — and only warn when the widget gates the main content (e.g. body text below a plausibility threshold), not when a form uses it. Align the pattern list with `waf-detector.ts`. Add tests for the `wafProtection` branch.
 
 **False-positive risks:**
+
 - `html.includes('recaptcha')` matches the literal word anywhere in the document: a GDPR cookie-consent vendor table listing 'Google reCAPTCHA', a privacy policy paragraph naming it, a CSP header echoed into the page, or an analytics blocklist. Prose about reCAPTCHA triggers a high-priority warning. Extremely common on EU sites.
 - A reCAPTCHA or Turnstile widget scoped to a single form is treated as site-wide agent blocking; the page it sits on is fully readable and was in fact read.
 - `'datadome.co'` is a bare substring and also matches `datadome.com` and any URL containing that sequence.
@@ -38,6 +39,7 @@ Two audits in one file with opposite quality. The WAF branch (`ctx.wafProtection
 - `page.fetchResult.body` is lowercased per page with no length guard, so the check runs over the full 5MB-capped body including inline scripts and JSON blobs.
 
 **Test gaps:**
+
 - No test with reCAPTCHA mentioned in prose (privacy policy / cookie banner vendor list) — the highest-frequency false positive.
 - No test with a captcha scoped to a single form on an otherwise fully-readable page.
 - No test of the `ctx.wafProtection.isBlocked` branch at all — the audit's most valuable path is entirely uncovered by the suite.
@@ -58,6 +60,7 @@ _No dedicated evidence signal was researched for this audit in the 2026-08-20 pa
 **Grade: A** — the blocking behavior is a documented product feature of the largest CDN, and multiple AI vendors document per-agent IP endpoints plus explicit WAF allowlisting instructions, which only make sense because bot defense demonstrably intercepts their agents.
 
 **Evidence:**
+
 - Cloudflare, Block AI bots. The feature blocks AI bots by behavior category: **Search** for content indexing, **Agent** for real-time automated activity, and **Training** (model development) — covering "Verified bots classified with that behavior, plus additional unverified bots that fall under these classifications". From **15 September 2026** the platform default becomes: bots classified as Training or as Agent are blocked on pages that display ads, Search remains allowed — https://developers.cloudflare.com/bots/additional-configurations/block-ai-bots/ (verified 2026-08-21)
 - Cloudflare, "Content Independence Day" (1 July 2025): "Cloudflare, along with a majority of the world's leading publishers and AI companies, is changing the default to block AI crawlers unless they pay creators for their content." Establishes that default-deny at the edge, not site-authored robots.txt, is now the dominant blocking mechanism — https://blog.cloudflare.com/content-independence-day-no-ai-crawl-without-compensation/ (verified 2026-08-21)
 - Perplexity crawler docs give operators explicit Cloudflare and AWS WAF allowlisting guidance and recommend combining "both User-Agent and IP address conditions", with published endpoints `https://www.perplexity.com/perplexitybot.json` and `https://www.perplexity.com/perplexity-user.json` — https://docs.perplexity.ai/guides/bots (verified 2026-08-21)
@@ -89,8 +92,7 @@ a pause is the only way to get a verdict from a rate-limited origin.
   a bot-defense firewall is this audit's subject, so a walled scan still fails
   and names the firewall. `requires` is now empty and the gate exemption drops
   `origin-reachable` too — a 403 denies that key, so the gate had been
-  skipping this audit before it could report the very wall that produced the
-  403.
+  skipping this audit before it could report the very wall that produced the 403.
   Verdicts that moved on the five nothing-obtained contract states: redirected
   away pass → na, non-HTML homepage pass → na, HTTP 200 bot challenge
   unchanged. Found by
@@ -100,7 +102,7 @@ a pause is the only way to get a verdict from a rate-limited origin.
   a JS shell serves a mount point and a bundle: the Turnstile or DataDome
   loader a user's agent meets is inside that bundle, where the search cannot
   reach it. Before this the audit returned `pass "No aggressive bot-detection
-  scripts found on scanned pages."` at weight 1.0 about every client-rendered
+scripts found on scanned pages."` at weight 1.0 about every client-rendered
   site. `requires` is empty so the wall branch stays reachable behind a 403,
   which means the evidence gate does not decline this case — the audit has to.
   The wall and detection branches above still run first, so a shell that does

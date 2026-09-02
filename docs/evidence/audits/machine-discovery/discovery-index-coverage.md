@@ -30,15 +30,15 @@ sources:
 
 ## What it checks
 
-Every scanned page must appear in at least one *discovery index*: the sitemap (including the sub-sitemaps a `<sitemapindex>` points at) or the llms.txt link list. A page in neither is reachable only through the link graph, which the non-JS-executing AI crawlers may not traverse.
+Every scanned page must appear in at least one _discovery index_: the sitemap (including the sub-sitemaps a `<sitemapindex>` points at) or the llms.txt link list. A page in neither is reachable only through the link graph, which the non-JS-executing AI crawlers may not traverse.
 
-| State | Result |
-| :--- | :--- |
-| every page found in an index | `pass` |
-| >50% of pages found in no index | `fail`, priority `medium` |
-| ≤50% of pages found in no index | `warn`, priority `low` |
+| State                                        | Result                    |
+| :------------------------------------------- | :------------------------ |
+| every page found in an index                 | `pass`                    |
+| >50% of pages found in no index              | `fail`, priority `medium` |
+| ≤50% of pages found in no index              | `warn`, priority `low`    |
 | no sitemap URLs and no llms.txt links at all | `warn`, priority `medium` |
-| no pages scanned | `na` |
+| no pages scanned                             | `na`                      |
 
 Both sides of the comparison go through one key — host without `www.`, lower-cased decoded path, no trailing slash, no scheme, query or fragment — and a page also matches on its declared `<link rel="canonical">`.
 
@@ -49,14 +49,16 @@ Compares scanned page URLs against sitemap <loc> values. Two disqualifying flaws
 **Required fix:** Fetch (cap ~10) sub-sitemaps when a <sitemapindex> is detected and merge their <loc> sets before comparing — never pass on the index alone. Replace raw string matching with a normalizer (lowercase host, strip default port, unify protocol, strip trailing slash and tracking query params, decodeURI the path) applied to both sides. Note the discovery circularity in the message, or restrict the comparison to nav-discovered pages so the result is not self-fulfilling.
 
 **False-positive risks:**
+
 - `if (isSitemapIndex) { … return this.pass('Sitemap index file found linking to N sub-sitemap(s)') }` — sub-sitemaps are never fetched. Every Shopify/WordPress/Next.js site with an index gets a free PASS on an audit that checked nothing. A site whose sub-sitemaps are empty or 404 also passes.
 - `const variants = [pageUrl, pageUrl.replace(/\/$/, ''), pageUrl + '/']; variants.some((v) => sitemapUrls.has(v))` — exact string membership only. `http://` vs `https://`, `www.` vs bare host, `%20` vs `+`, uppercase path segments, and `?utm_source` query strings all yield false 'missing from sitemap'.
 - Sitemap `<loc>` values are frequently XML-escaped (`&amp;` in query strings); cheerio's `.text()` unescapes, but the scanned page URL retains the browser-normalized form — another mismatch class.
-- Denominator `ctx.pages.length` includes pages the orchestrator discovered *from* nav links only; conversely, pages discovered from the sitemap are guaranteed present. The ratio measures the discovery mix more than the sitemap's quality.
+- Denominator `ctx.pages.length` includes pages the orchestrator discovered _from_ nav links only; conversely, pages discovered from the sitemap are guaranteed present. The ratio measures the discovery mix more than the sitemap's quality.
 - 0.5 ratio boundary is arbitrary: 6/10 missing = FAIL, 5/10 missing = WARN, with no documented rationale.
 - Sitemap body truncated at 5MB silently drops trailing `<loc>` entries → false 'missing' on large sites.
 
 **Test gaps:**
+
 - Sitemap index whose sub-sitemaps are empty or 404 (currently a false PASS)
 - http vs https, www vs bare host, uppercase path, percent-encoding differences
 - XML-escaped &amp; in <loc> query strings
@@ -85,16 +87,16 @@ Its dossier is kept verbatim at [merged/machine-discovery/no-orphan-pages.md](..
 
 ### Grade decision: stays **B**, the absorbed A does not transfer
 
-1.22 was graded **A** on the signal *"internal linking depth and absence of orphan pages — every indexable page reachable via a crawlable `<a href>`"*. That is a claim about the **link graph**: Google's "Google can only crawl your link if it's an `<a>` HTML element with an href attribute", plus the Vercel/MERJ measurement that no major AI crawler executes JavaScript. The audit named after it never measured link reachability — it measured presence in the sitemap or llms.txt, which is this audit's own signal, graded **B** (sitemaps are proven for the Google/Bing indexes that ground AI answer surfaces, undocumented for the direct AI crawlers).
+1.22 was graded **A** on the signal _"internal linking depth and absence of orphan pages — every indexable page reachable via a crawlable `<a href>`"_. That is a claim about the **link graph**: Google's "Google can only crawl your link if it's an `<a>` HTML element with an href attribute", plus the Vercel/MERJ measurement that no major AI crawler executes JavaScript. The audit named after it never measured link reachability — it measured presence in the sitemap or llms.txt, which is this audit's own signal, graded **B** (sitemaps are proven for the Google/Bing indexes that ground AI answer surfaces, undocumented for the direct AI crawlers).
 
-The meta law raises a target's grade only when the absorbed evidence is stronger *and proven for the merged signal*. The A evidence is proven for the link-graph signal, which now lives in `machine-discovery/in-content-links` (1.15 + 10.11) and `machine-discovery/no-broken-links` — not here. So the merged audit stays **B**, `tier: scored`, `weight 0.6`, and the A-graded orphan evidence is recorded above as context rather than priced in.
+The meta law raises a target's grade only when the absorbed evidence is stronger _and proven for the merged signal_. The A evidence is proven for the link-graph signal, which now lives in `machine-discovery/in-content-links` (1.15 + 10.11) and `machine-discovery/no-broken-links` — not here. So the merged audit stays **B**, `tier: scored`, `weight 0.6`, and the A-graded orphan evidence is recorded above as context rather than priced in.
 
 ## Required fixes — landed 2026-08-22
 
 Both source reviews' required fixes shipped with the fold:
 
 - **No vacuous pass on a `<sitemapindex>`.** v1 returned `pass` on seeing an index without reading a single URL — a free pass for every Shopify/WordPress/Next.js site. Sub-sitemaps are now fetched (capped at 10) and their `<loc>` sets merged before comparing.
-- **The Shopify filename heuristic is gone.** 1.22 guessed coverage from `path.startsWith('/products') && body.includes('sitemap_products')`, so Yoast (`post-sitemap.xml`), Next.js (`sitemap/0.xml`) and any localized path (`/produkte`, `/produits`) had *every* page reported as an orphan. Fetching the sub-sitemaps replaces the guess.
+- **The Shopify filename heuristic is gone.** 1.22 guessed coverage from `path.startsWith('/products') && body.includes('sitemap_products')`, so Yoast (`post-sitemap.xml`), Next.js (`sitemap/0.xml`) and any localized path (`/produkte`, `/produits`) had _every_ page reported as an orphan. Fetching the sub-sitemaps replaces the guess.
 - **One normalizer on both sides.** `http`/`https`, `www.`/bare host, case, percent-encoding and tracking query params no longer produce phantom missing pages.
 - **Canonical actually read.** v1's `page.meta['canonical']` was dead code (`extractMetaTags` reads `<meta>`, canonical is a `<link>`); the canonical is now read from `link[rel=canonical]`.
 - **llms.txt relative links counted.** `extractMarkdownLinks` keeps absolute URLs only, so `- [About](/about)` made the llms.txt half of the comparison empty; links are now resolved against the base URL.

@@ -35,12 +35,12 @@ sources:
 
 One TTFB audit: the **median** across every page the crawl actually measured, graded in **bands**.
 
-| State | Result |
-| :--- | :--- |
-| the scan was blocked by a WAF, or no page fetch completed (including an empty crawl) | `na` |
-| median TTFB ≤ 800ms | `pass` |
-| median TTFB 801–2500ms | `warn`, priority `medium` |
-| median TTFB > 2500ms | `fail`, priority `high` |
+| State                                                                                | Result                    |
+| :----------------------------------------------------------------------------------- | :------------------------ |
+| the scan was blocked by a WAF, or no page fetch completed (including an empty crawl) | `na`                      |
+| median TTFB ≤ 800ms                                                                  | `pass`                    |
+| median TTFB 801–2500ms                                                               | `warn`, priority `medium` |
+| median TTFB > 2500ms                                                                 | `fail`, priority `high`   |
 
 Pages whose fetch errored are excluded from the sample rather than charged the timeout value, and the `found` string states that the figure includes DNS, TCP and TLS setup measured from the scanner's location.
 
@@ -51,6 +51,7 @@ Fails when any page's TTFB exceeds 1800ms, warns above an 800ms average. The und
 **Required fix:** Sample each page's TTFB at least twice (discard the first, cold-cache request) and grade on the median rather than the max. Serialize or throttle the timing requests so the scanner's own concurrency is not measured. Exclude pages whose fetch errored (status 0) from the TTFB set instead of charging them the timeout value. State the scanner's region in the message, and require more than one slow page before failing.
 
 **False-positive risks:**
+
 - One sample per page, no median/retry. Serverless cold starts, a first-hit CDN miss, or one transient GC pause flips the verdict from PASS to FAIL with no site change.
 - The orchestrator fetches pages concurrently, so the scanner's own parallel load inflates every TTFB. Origins with per-IP connection limits or rate limiting are systematically over-reported as slow.
 - `ttfbMs = performance.now() - start` is measured around undici's `request()` and therefore includes DNS resolution and the TLS handshake — a slow resolver or a distant scanner region is charged to the site.
@@ -60,6 +61,7 @@ Fails when any page's TTFB exceeds 1800ms, warns above an 800ms average. The und
 - On fetch error the fetcher returns ttfbMs = totalMs (the full timeout, ~10000ms), so a page that failed to load is reported as an extreme-TTFB slow page rather than an error.
 
 **Test gaps:**
+
 - Errored fetch (status 0) inflating ttfbMs to the full timeout — currently reported as a slow page
 - One slow page among many while the average is fast (inconsistent messaging)
 - Cold-start vs warm-cache repeat measurement
@@ -115,7 +117,7 @@ Fails when any page's TTFB exceeds 1800ms, warns above an 800ms average. The und
 
 ## The merge + rewrite (Plan 4, Task 8, 2026-08-22)
 
-Two audits measured the same number off the same fetches and disagreed with each other and with themselves. 1.19 failed if *any one* page exceeded 1800ms while quoting a comfortable average in the same sentence; 8.12 failed the homepage's single cold sample at a hard 800ms cliff while its own description said crawlers "abandon requests over 2-3 seconds" — a threefold disagreement between threshold and rationale, with no warn band despite `scoreDisplayMode: 'ternary'` advertising one. The `TODO(rewrite)` header names the resolution: *median TTFB across the crawled pages, banded rather than pass/fail on a single sample.* That is what this audit now is.
+Two audits measured the same number off the same fetches and disagreed with each other and with themselves. 1.19 failed if _any one_ page exceeded 1800ms while quoting a comfortable average in the same sentence; 8.12 failed the homepage's single cold sample at a hard 800ms cliff while its own description said crawlers "abandon requests over 2-3 seconds" — a threefold disagreement between threshold and rationale, with no warn band despite `scoreDisplayMode: 'ternary'` advertising one. The `TODO(rewrite)` header names the resolution: _median TTFB across the crawled pages, banded rather than pass/fail on a single sample._ That is what this audit now is.
 
 **Median, not max and not mean.** 1.19's `slowPages.length > 0` rule turned one slow page out of twenty into a category-wide failure; its `avgTtfb` is dragged by exactly the outliers a crawl always contains (one cold serverless start, one CDN miss). 8.12 used one sample from one page. The verdict is now the median over every measurable page, which is stable against a single unlucky fetch in either direction.
 
@@ -127,7 +129,7 @@ Two audits measured the same number off the same fetches and disagreed with each
 
 ### Absorbed evidence — fast-response-time (8.12)
 
-8.12's dossier is kept verbatim at [merged/content-extraction/fast-response-time.md](../../merged/content-extraction/fast-response-time.md) (grade **B**). Both audits were graded on the *same* signal record — *TTFB / server response time effect on AI crawl rate and agent abandonment* — so there was never a second signal to lose: Google's crawl-capacity documentation ("if the site slows down … the limit goes down and Google crawls less"), Anthropic's `Crawl-delay` support, and the second-party 499/citation observations, against counter-evidence that no AI vendor publishes a timeout number at all.
+8.12's dossier is kept verbatim at [merged/content-extraction/fast-response-time.md](../../merged/content-extraction/fast-response-time.md) (grade **B**). Both audits were graded on the _same_ signal record — _TTFB / server response time effect on AI crawl rate and agent abandonment_ — so there was never a second signal to lose: Google's crawl-capacity documentation ("if the site slows down … the limit goes down and Google crawls less"), Anthropic's `Crawl-delay` support, and the second-party 499/citation observations, against counter-evidence that no AI vendor publishes a timeout number at all.
 
 That counter-evidence is why the bands are stated as bands. The dossiers are explicit that the widely repeated "1–5 second budget" is unsourced folklore, so 800ms is a target and 2500ms is the edge of the abandonment window both audits' copy already claimed — neither is presented as a vendor threshold.
 

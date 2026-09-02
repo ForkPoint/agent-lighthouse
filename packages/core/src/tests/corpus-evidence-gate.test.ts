@@ -159,10 +159,9 @@ describe("corpus evidence gating", () => {
       if (WALL_FIXTURES.has(name)) {
         // Wall fixtures must be declared unjudgeable and run zero page-fed audits
         expect(evidence.judgeable, `${name} must not be judgeable`).toBe(false);
-        expect(
-          plan.runnable.length,
-          `${name} must run 0 page-fed audits`,
-        ).toBe(0);
+        expect(plan.runnable.length, `${name} must run 0 page-fed audits`).toBe(
+          0,
+        );
 
         // Every skipped audit must provide an explanatory explanation
         for (const skipped of plan.skipped) {

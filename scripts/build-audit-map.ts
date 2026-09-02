@@ -19,7 +19,10 @@ import * as path from "node:path";
 import { defaultConfig } from "../packages/core/src/audit-config";
 
 const REPO_ROOT = path.resolve(__dirname, "..");
-const AUDIT_MAP_JSON_PATH = path.resolve(REPO_ROOT, "docs/evidence/audit-map.json");
+const AUDIT_MAP_JSON_PATH = path.resolve(
+  REPO_ROOT,
+  "docs/evidence/audit-map.json",
+);
 const AUDIT_MAP_MD_PATH = path.resolve(REPO_ROOT, "docs/evidence/audit-map.md");
 const LEGACY_MIGRATION_MAP_PATH = path.resolve(
   REPO_ROOT,
@@ -84,7 +87,9 @@ function walkMarkdownFiles(dir: string): string[] {
     if (entry.isDirectory()) {
       results = results.concat(walkMarkdownFiles(full));
     } else if (entry.name.endsWith(".md") && entry.name !== "README.md") {
-      results.push(path.relative(path.resolve(REPO_ROOT, "docs/evidence"), full));
+      results.push(
+        path.relative(path.resolve(REPO_ROOT, "docs/evidence"), full),
+      );
     }
   }
   return results.sort();
@@ -106,7 +111,10 @@ function generateAuditMap(): AuditMapDataset {
     }
   }
 
-  if (Object.keys(rawLegacy).length === 0 && fs.existsSync(LEGACY_MIGRATION_MAP_PATH)) {
+  if (
+    Object.keys(rawLegacy).length === 0 &&
+    fs.existsSync(LEGACY_MIGRATION_MAP_PATH)
+  ) {
     rawLegacy = JSON.parse(fs.readFileSync(LEGACY_MIGRATION_MAP_PATH, "utf8"));
   }
 
@@ -160,18 +168,28 @@ function generateAuditMap(): AuditMapDataset {
   activeAudits.sort((a, b) => a.id.localeCompare(b.id));
 
   // Walk sunset and merged dossiers
-  const sunsetPaths = walkMarkdownFiles(path.resolve(REPO_ROOT, "docs/evidence/sunset"));
-  const mergedPaths = walkMarkdownFiles(path.resolve(REPO_ROOT, "docs/evidence/merged"));
+  const sunsetPaths = walkMarkdownFiles(
+    path.resolve(REPO_ROOT, "docs/evidence/sunset"),
+  );
+  const mergedPaths = walkMarkdownFiles(
+    path.resolve(REPO_ROOT, "docs/evidence/merged"),
+  );
 
   const sunsetDossiers: DossierRecord[] = sunsetPaths.map((p) => {
-    const parts = p.replace(/^sunset\//, "").replace(/\.md$/, "").split("/");
+    const parts = p
+      .replace(/^sunset\//, "")
+      .replace(/\.md$/, "")
+      .split("/");
     const category = parts.length > 1 ? parts[0]! : "general";
     const slug = parts[parts.length - 1]!;
     return { category, slug, path: `docs/evidence/${p}` };
   });
 
   const mergedDossiers: DossierRecord[] = mergedPaths.map((p) => {
-    const parts = p.replace(/^merged\//, "").replace(/\.md$/, "").split("/");
+    const parts = p
+      .replace(/^merged\//, "")
+      .replace(/\.md$/, "")
+      .split("/");
     const category = parts.length > 1 ? parts[0]! : "general";
     const slug = parts[parts.length - 1]!;
     return { category, slug, path: `docs/evidence/${p}` };
@@ -254,7 +272,9 @@ async function main(): Promise<void> {
     let hasError = false;
 
     if (!fs.existsSync(AUDIT_MAP_JSON_PATH)) {
-      console.error(`❌ check:audit-map: ${AUDIT_MAP_JSON_PATH} does not exist.`);
+      console.error(
+        `❌ check:audit-map: ${AUDIT_MAP_JSON_PATH} does not exist.`,
+      );
       hasError = true;
     } else {
       const existingJson = fs.readFileSync(AUDIT_MAP_JSON_PATH, "utf8");
@@ -285,7 +305,9 @@ async function main(): Promise<void> {
     for (const audit of dataset.audits) {
       const fullDossierPath = path.resolve(REPO_ROOT, audit.dossier);
       if (!fs.existsSync(fullDossierPath)) {
-        console.error(`❌ check:audit-map: Dossier missing for ${audit.id} at ${audit.dossier}`);
+        console.error(
+          `❌ check:audit-map: Dossier missing for ${audit.id} at ${audit.dossier}`,
+        );
         hasError = true;
       }
     }
@@ -303,7 +325,17 @@ async function main(): Promise<void> {
     fs.writeFileSync(AUDIT_MAP_MD_PATH, formattedMd, "utf8");
 
     // Also update packages/core/migration-map.json with the enriched legacy mappings
-    const cleanLegacy: Record<string, { slug: string; status: string; to?: string; link: string; reason?: string; note?: string }> = {};
+    const cleanLegacy: Record<
+      string,
+      {
+        slug: string;
+        status: string;
+        to?: string;
+        link: string;
+        reason?: string;
+        note?: string;
+      }
+    > = {};
     for (const [id, entry] of Object.entries(dataset.legacy)) {
       cleanLegacy[id] = {
         slug: entry.slug,
@@ -314,7 +346,11 @@ async function main(): Promise<void> {
         ...(entry.notes ? { note: entry.notes } : {}),
       };
     }
-    fs.writeFileSync(LEGACY_MIGRATION_MAP_PATH, JSON.stringify(cleanLegacy, null, 2) + "\n", "utf8");
+    fs.writeFileSync(
+      LEGACY_MIGRATION_MAP_PATH,
+      JSON.stringify(cleanLegacy, null, 2) + "\n",
+      "utf8",
+    );
 
     console.log(`✅ Successfully generated ${AUDIT_MAP_JSON_PATH}`);
     console.log(`✅ Successfully generated ${AUDIT_MAP_MD_PATH}`);

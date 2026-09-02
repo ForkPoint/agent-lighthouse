@@ -40,12 +40,14 @@ Invented standard. `/.well-known/ai-catalog.json` is not registered with IANA, i
 **Required fix:** Delete this audit and its two dependents (5.8, 5.9). If discovery coverage is wanted, spend the weight on real signals: a linked OpenAPI spec, an MCP endpoint, or a well-formed llms.txt.
 
 **False-positive risks:**
+
 - 100% false-fail rate on real sites: no site outside this framework's own scaffolding publishes this file, so the audit is a constant zero that carries no information about the site.
 - Even when present, `Array.isArray(parsed['services'])` is the only validation — `{"services": []}` passes as 'AI catalog found with 0 service(s)', a vacuous pass.
 - A SPA catch-all returning 200 text/html means JSON.parse fails and the user is told 'ai-catalog.json is not valid JSON' when in fact there is no such file — a confusing, wrong diagnosis.
 - WAF 403 on /.well-known/* reads as 'not found'; `ctx.wafProtection` unused.
 
 **Test gaps:**
+
 - No test that an empty services array is a vacuous pass
 - No HTML-soft-404 fixture
 - No content-type assertion
@@ -58,11 +60,11 @@ Invented standard. `/.well-known/ai-catalog.json` is not registered with IANA, i
 
 **What was folded.** 4.19 checked for a `<link rel="alternate" type="application/json">` whose optional, English, human-authored `title` attribute contained the exact two-word phrase "ai catalog" — on `ctx.pages[0]` only, with exact case-sensitive `rel` and `type` comparisons that also rejected `application/json; charset=utf-8`. No site on the public web emits that shape, so the audit returned a scored `fail` on every real scan and measured nothing. Its own required rework names the real token: **match `rel="ai-catalog"` (any type), accept the equivalent HTTP `Link` header, and downgrade it to a nice-to-have relative to the well-known file.** All three land:
 
-- `ai-catalog` is matched as a `rel` *token* — case-insensitive, at any position in a multi-token `rel`, with no constraint on `type` and no reference to `title`.
+- `ai-catalog` is matched as a `rel` _token_ — case-insensitive, at any position in a multi-token `rel`, with no constraint on `type` and no reference to `title`.
 - An RFC 8288 `Link: </ai-catalog.json>; rel="ai-catalog"` response header counts the same way.
 - Every crawled page is searched, not just the homepage.
 
-**It is deliberately not a pass path.** The one documented consumer, Hugging Face's `hf-discover`, resolves `https://{domain}/.well-known/ai-catalog.json` and nothing else, so an advertisement without the well-known file is not a working catalog. It therefore converts the three `fail` states into a `warn`: *a catalog is advertised at X, but the documented consumer only resolves the well-known path*. When the well-known file is valid, the advertisement is reported in the pass detail as the nice-to-have it is.
+**It is deliberately not a pass path.** The one documented consumer, Hugging Face's `hf-discover`, resolves `https://{domain}/.well-known/ai-catalog.json` and nothing else, so an advertisement without the well-known file is not a working catalog. It therefore converts the three `fail` states into a `warn`: _a catalog is advertised at X, but the documented consumer only resolves the well-known path_. When the well-known file is valid, the advertisement is reported in the pass detail as the nice-to-have it is.
 
 ### Absorbed evidence — ai-catalog-link (4.19)
 
@@ -94,7 +96,7 @@ Four of the false-positive risks listed above are closed by the same change:
 - **The vacuous pass is gone.** A conformant manifest with `entries: []` is spec-legal but advertises nothing to an agent, so it is a `warn` — the middle state the `ternary` display mode already carries — not a pass.
 - **The HTML soft-404 is diagnosed correctly.** A 200 `text/html` body (or a body starting with `<!doctype`/`<html>`) now reports "returns HTML, not a manifest — the request is being answered by a catch-all route" instead of "ai-catalog.json is not valid JSON".
 - **A malformed manifest names its missing fields.** The failure message lists exactly which of `specVersion`/`host`/`entries` is absent, so a site publishing the old invented schema is told what to change.
-- **The advertisement no longer misdiagnoses a served-but-broken manifest.** The `rel="ai-catalog"` warn ("advertised at X, but the documented consumer resolves only the well-known path") now fires only for *absence* — a 404 or an HTML soft-404. When a manifest is served and merely malformed, the result is a plain `fail` naming the shape problem, with the advertisement reported as context.
+- **The advertisement no longer misdiagnoses a served-but-broken manifest.** The `rel="ai-catalog"` warn ("advertised at X, but the documented consumer resolves only the well-known path") now fires only for _absence_ — a 404 or an HTML soft-404. When a manifest is served and merely malformed, the result is a plain `fail` naming the shape problem, with the advertisement reported as context.
 
 **Guidance and code sample** are the spec's own schema: `specVersion`, `host{displayName, identifier, documentationUrl}` and `entries[]` with `identifier` (a domain-anchored URN), `displayName`, `type` (an IANA media type), `url`, `description`, `capabilities` and `representativeQueries`. `docsUrl` points at the ARD spec. The `rel="ai-catalog"` line stays appended as the nice-to-have it is.
 
@@ -117,7 +119,7 @@ Task 7 recorded that the A/`scored`/1.0 meta was only defensible once this rewri
 
 **Evidence:** This is the path the MCP project itself is converging on. SEP-2127 (opened 2026-01-21, label 'in-review', still OPEN and unmerged as of 2026-08-11) delegates domain-level discovery to an 'AI Catalog' and its extension repo's docs/discovery.md states: 'An AI Catalog MAY be served from any URL. For automated domain-level discovery, hosts MAY publish one at: /.well-known/ai-catalog.json. Clients performing domain-level discovery SHOULD attempt to retrieve this well-known URL.' Media type SHOULD be application/ai-catalog+json; MCP entries use type application/mcp-server-card+json and urn:air: identifiers. Real conformant deployments exist and verified live on 2026-08-20: vercel.com serves it with the exact application/ai-catalog+json media type and specVersion 1.0; zapier.com serves specVersion 1.0 with a trustManifest and an entry pointing at its MCP server card. The underlying AI Catalog repo (Agent-Card/ai-catalog, 210 stars) was pushed the same day it was checked, so the work is live. Audit guidance: check /.well-known/ai-catalog.json, validate specVersion + entries[].type + entries[].url, require a JSON content-type (reject HTML 200 soft-404s), and prefer application/ai-catalog+json.
 
-**Counter-evidence:** The SEP is not merged — nothing about this is in the ratified spec (current revision 2026-07-28). `ai-catalog.json` is not in the IANA Well-Known URIs registry (152 entries checked; mcp, mcp.json, ai-catalog.json, webmcp, openapi are all absent). The MCP extension repo carrying the discovery text has 5 stars. No MCP client vendor documents consuming it. Anthropic's own docs say 'You can manually add any third-party connector to Claude as long as you have the URL of that remote MCP server'. OpenAI's Apps SDK routes through a developer-mode URL paste, plus 'public plugin submission' with 'domain verification'. A probe of 19 major domains found only 2 publishers: Vercel and Zapier. SEP-2127 itself lists 'No Domain-Level Discovery' as an *unsolved* pain point, which is an admission that the mechanism does not yet work.
+**Counter-evidence:** The SEP is not merged — nothing about this is in the ratified spec (current revision 2026-07-28). `ai-catalog.json` is not in the IANA Well-Known URIs registry (152 entries checked; mcp, mcp.json, ai-catalog.json, webmcp, openapi are all absent). The MCP extension repo carrying the discovery text has 5 stars. No MCP client vendor documents consuming it. Anthropic's own docs say 'You can manually add any third-party connector to Claude as long as you have the URL of that remote MCP server'. OpenAI's Apps SDK routes through a developer-mode URL paste, plus 'public plugin submission' with 'domain verification'. A probe of 19 major domains found only 2 publishers: Vercel and Zapier. SEP-2127 itself lists 'No Domain-Level Discovery' as an _unsolved_ pain point, which is an admission that the mechanism does not yet work.
 
 ## Adversarial redemption research (2026-08-21)
 

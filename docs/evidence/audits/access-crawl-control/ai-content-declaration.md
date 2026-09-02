@@ -41,6 +41,7 @@ Invented signal with an actively false justification. The description asserts th
 **Required fix:** Delete the audit. If the maintainer wants to keep an AI-policy-discovery check, put it where the real mechanism lives: robots.txt user-agent directives (crawler-permissions) and, where applicable, the TDM Reservation Protocol / `tdm-reservation` signals — not an invented meta tag. At absolute minimum, if retained, the description must stop claiming GPTBot/ClaudeBot consume it and the priority must drop to 'low'/informational.
 
 **False-positive risks:**
+
 - Every correctly configured site fails: no site emits this tag because it does not exist as a standard, so this is a guaranteed 'medium' priority failure on 100% of real-world scans — pure score noise.
 - Dangerous misinformation: the fail text says AI systems 'cannot respect your content preferences automatically' without it. A site owner who adds the tag may believe they have declared an AI usage policy when no crawler will ever read it, while the mechanism that does work (robots.txt) goes unaddressed.
 - The URL validation is also crude: `value.startsWith('http://') || value.startsWith('https://')` rejects a protocol-relative `//example.com/llms.txt` and a root-relative `/llms.txt` — both perfectly resolvable — downgrading them to a warn for a tag that has no spec defining what a valid value even is.
@@ -48,6 +49,7 @@ Invented signal with an actively false justification. The description asserts th
 - Name collision risk: if a site DID adopt the real aicontentdeclaration.org convention (whose value is a disclosure string, not a URL), this audit would emit a 'not a valid URL' warn against markup that is correct for the actual proposal.
 
 **Test gaps:**
+
 - No test against the real aicontentdeclaration.org value format (the name collision).
 - No protocol-relative or root-relative URL test.
 - No evidence-based test that any consumer reads this tag — which is the gap that matters: the tests validate the invented contract rather than questioning it.
@@ -63,7 +65,7 @@ Invented signal with an actively false justification. The description asserts th
 
 ### The misinformation is deleted
 
-The shipped copy read: *"It signals to crawlers like GPTBot and ClaudeBot where to find machine-readable instructions about how to handle your content"*, and the failure text said AI systems *"cannot respect your content preferences automatically"* without it. Neither is true. [OpenAI's crawler documentation](https://developers.openai.com/api/docs/bots) and [Anthropic's](https://support.claude.com/en/articles/8896518-does-anthropic-crawl-data-from-the-web-and-how-can-site-owners-block-the-crawler) describe robots.txt and nothing else; no vendor documents a meta-tag policy channel. The concrete harm the code review identified was that a site owner could add the tag, believe they had expressed an opt-out, and leave the mechanism that does work untouched. Both vendor names are gone from the audit's meta and a regression test asserts the strings `GPTBot` and `ClaudeBot` appear nowhere in it.
+The shipped copy read: _"It signals to crawlers like GPTBot and ClaudeBot where to find machine-readable instructions about how to handle your content"_, and the failure text said AI systems _"cannot respect your content preferences automatically"_ without it. Neither is true. [OpenAI's crawler documentation](https://developers.openai.com/api/docs/bots) and [Anthropic's](https://support.claude.com/en/articles/8896518-does-anthropic-crawl-data-from-the-web-and-how-can-site-owners-block-the-crawler) describe robots.txt and nothing else; no vendor documents a meta-tag policy channel. The concrete harm the code review identified was that a site owner could add the tag, believe they had expressed an opt-out, and leave the mechanism that does work untouched. Both vendor names are gone from the audit's meta and a regression test asserts the strings `GPTBot` and `ClaudeBot` appear nowhere in it.
 
 ### What it looks for now, in evidence order
 

@@ -10,18 +10,18 @@ An audit's influence on a score is not a hand-tuned number. It is a pure functio
 
 ```ts
 export function weightForGrade(grade: EvidenceGrade, tier: AuditTier): number {
-  if (tier !== 'scored') return 0;
-  return grade === 'A' ? 1.0 : grade === 'B' ? 0.6 : 0;
+  if (tier !== "scored") return 0;
+  return grade === "A" ? 1.0 : grade === "B" ? 0.6 : 0;
 }
 ```
 
 That is the whole law. Read as a table:
 
-| Tier            | Grade A | Grade B | Grade C | Grade D |
-| :-------------- | :------ | :------ | :------ | :------ |
-| `scored`        | **1.0** | **0.6** | 0       | 0       |
-| `informative`   | 0       | 0       | 0       | 0       |
-| `experimental`  | 0       | 0       | 0       | 0       |
+| Tier           | Grade A | Grade B | Grade C | Grade D |
+| :------------- | :------ | :------ | :------ | :------ |
+| `scored`       | **1.0** | **0.6** | 0       | 0       |
+| `informative`  | 0       | 0       | 0       | 0       |
+| `experimental` | 0       | 0       | 0       | 0       |
 
 Two consequences worth stating plainly:
 
@@ -34,12 +34,12 @@ The weight is stamped onto every check result at the single place a result is bu
 
 Grades are assigned in each audit's dossier under [`docs/evidence/`](./evidence/) and are governed by the [evidence policy](./evidence/policy.md). In short:
 
-| Grade | Bar                                                                                                       |
-| :---- | :-------------------------------------------------------------------------------------------------------- |
+| Grade | Bar                                                                                                                                    |
+| :---- | :------------------------------------------------------------------------------------------------------------------------------------- |
 | **A** | Documented consumer behaviour — a vendor doc states that a named agent reads the signal — or a ratified standard with known consumers. |
-| **B** | A draft standard with meaningful adoption, or strong empirical evidence of an effect.                       |
-| **C** | A community convention with partial adoption; plausible, but no proven consumer.                            |
-| **D** | Speculative or invented; no known consumer and no adoption evidence.                                        |
+| **B** | A draft standard with meaningful adoption, or strong empirical evidence of an effect.                                                  |
+| **C** | A community convention with partial adoption; plausible, but no proven consumer.                                                       |
+| **D** | Speculative or invented; no known consumer and no adoption evidence.                                                                   |
 
 The policy also fixes what each grade is allowed to do: A and B are scored, C is informative, D ships only if it has an active draft-spec trajectory and then only as experimental, and D without one is not shipped at all.
 
@@ -57,8 +57,8 @@ Every registered audit carries exactly one tier.
 
 Each audit returns one of four statuses, and each status has a fixed score between 0 and 1:
 
-| Status | Score | Meaning                                                                       |
-| :----- | :---- | :---------------------------------------------------------------------------- |
+| Status | Score | Meaning                                                                        |
+| :----- | :---- | :----------------------------------------------------------------------------- |
 | `pass` | 1.0   | The signal is present and correct.                                             |
 | `warn` | 0.5   | The signal is present but incomplete or partially wrong.                       |
 | `fail` | 0.0   | The signal is absent or broken.                                                |
@@ -80,7 +80,7 @@ An `na` result leaves the denominator entirely. It is neither a pass nor a fail:
 
 This matters more than it sounds. A vacuous `pass()` would reward a site for not having a feature; a `fail()` would punish a site for the same absence. Both are wrong, so audits that find their precondition missing return `notApplicable()` instead.
 
-The same rule is applied one level up. A category in which *every* check came back `na` — Agentic Commerce on a site with no checkout, for example — drops out of the overall score's numerator and denominator together. Without that rule, a blog paid the full agentic-commerce evidence mass at score 0 and was scored down for not being a shop.
+The same rule is applied one level up. A category in which _every_ check came back `na` — Agentic Commerce on a site with no checkout, for example — drops out of the overall score's numerator and denominator together. Without that rule, a blog paid the full agentic-commerce evidence mass at score 0 and was scored down for not being a shop.
 
 ## Category scores to the overall score
 
@@ -102,16 +102,16 @@ If no category has any mass, the overall score is 0.
 
 The mass distribution is derived from the registry, not written down anywhere, so it shifts whenever audits are added, re-graded or moved. As of the current registry — 215 audits, of which 164 are scored, 48 informative and 3 experimental — the total mass is 134.0 and it is distributed like this:
 
-| Category                  | Audits | Scored | Mass | Share of the overall score |
-| :------------------------ | -----: | -----: | ---: | -------------------------: |
-| Agent Operability & Safety |    46 |     39 | 32.2 |                     24.0 % |
-| Access & Crawl Control     |    37 |     32 | 29.2 |                     21.8 % |
-| Content Extraction         |    27 |     23 | 17.0 |                     12.7 % |
-| Answer Readiness           |    33 |     19 | 13.0 |                      9.7 % |
-| Machine Discovery          |    24 |     15 | 12.2 |                      9.1 % |
-| Agent Interfaces           |    24 |     16 | 12.0 |                      9.0 % |
-| Structured Data            |    14 |     10 |  9.6 |                      7.2 % |
-| Agentic Commerce           |    10 |     10 |  8.8 |                      6.6 % |
+| Category                   | Audits | Scored | Mass | Share of the overall score |
+| :------------------------- | -----: | -----: | ---: | -------------------------: |
+| Agent Operability & Safety |     46 |     39 | 32.2 |                     24.0 % |
+| Access & Crawl Control     |     37 |     32 | 29.2 |                     21.8 % |
+| Content Extraction         |     27 |     23 | 17.0 |                     12.7 % |
+| Answer Readiness           |     33 |     19 | 13.0 |                      9.7 % |
+| Machine Discovery          |     24 |     15 | 12.2 |                      9.1 % |
+| Agent Interfaces           |     24 |     16 | 12.0 |                      9.0 % |
+| Structured Data            |     14 |     10 |  9.6 |                      7.2 % |
+| Agentic Commerce           |     10 |     10 |  8.8 |                      6.6 % |
 
 Every scan reports the live figure rather than this snapshot: each category in the JSON report carries its own `weight`, which is its evidence mass for that run.
 
@@ -122,6 +122,7 @@ A scan judges a site from what the fetch phase returned. If the fetch phase neve
 When missing scan evidence causes audits to be gated out, dropping those audits from the denominator would artificially inflate the score of a site nobody could read (for example, a bot wall or empty shell scoring 70+ while real stores score 50–60).
 
 To prevent this distortion, the scorer monitors **gated mass share** (`gatedMassShare` in `packages/core/src/scorer.ts`):
+
 - `GATED_MASS_UNSCORED_THRESHOLD = 0.35` (35% of total registry evidence mass).
 - If the share of evidence mass gated out by missing evidence exceeds 35%, the scan is declared **unscorable**: `overallScore` is set to `null` (with tier label `unscorable`) rather than an artificial numerical score.
 - Legitimate domain absence (such as page-type skips on a site with no blog or storefront) does not count toward the threshold; only mass withheld by the evidence gate is counted.
@@ -130,12 +131,12 @@ To prevent this distortion, the scorer monitors **gated mass share** (`gatedMass
 
 The headline score is also labelled, using fixed bands:
 
-| Score    | Tier               | Label            |
-| :------- | :----------------- | :--------------- |
-| 90 – 100 | `agent-ready`      | Agent Ready      |
-| 70 – 89  | `partially-ready`  | Partially Ready  |
-| 50 – 69  | `needs-work`       | Needs Work       |
-| 0 – 49   | `not-ready`        | Not Ready        |
+| Score    | Tier              | Label           |
+| :------- | :---------------- | :-------------- |
+| 90 – 100 | `agent-ready`     | Agent Ready     |
+| 70 – 89  | `partially-ready` | Partially Ready |
+| 50 – 69  | `needs-work`      | Needs Work      |
+| 0 – 49   | `not-ready`       | Not Ready       |
 
 These bands are also what the [score badge](./badge.md) colours itself by.
 
@@ -143,12 +144,12 @@ These bands are also what the [score badge](./badge.md) colours itself by.
 
 Alongside the overall score, a report carries four **readiness vitals** and a `readinessScore` derived from them. They answer a different question — "how ready is this site in each of four practical areas?" — and they are computed separately from the weighted score above.
 
-| Vital              | Weight in `readinessScore` | Averaged over                                                     |
-| :----------------- | -------------------------: | :---------------------------------------------------------------- |
+| Vital              | Weight in `readinessScore` | Averaged over                                                                                                                                   |
+| :----------------- | -------------------------: | :---------------------------------------------------------------------------------------------------------------------------------------------- |
 | `commerce`         |                       0.40 | Six named audits covering offer schema, product identifiers, advanced product details, review schema, service schema and transaction certainty. |
-| `content`          |                       0.25 | A named list of `llms.txt`, sitemap and answer-readiness audits.    |
-| `botAccessibility` |                       0.20 | Every applicable check in the Access & Crawl Control category.      |
-| `technical`        |                       0.15 | Every applicable check in the Content Extraction category.          |
+| `content`          |                       0.25 | A named list of `llms.txt`, sitemap and answer-readiness audits.                                                                                |
+| `botAccessibility` |                       0.20 | Every applicable check in the Access & Crawl Control category.                                                                                  |
+| `technical`        |                       0.15 | Every applicable check in the Content Extraction category.                                                                                      |
 
 ```
 readinessScore = round( commerce·0.40 + content·0.25 + botAccessibility·0.20 + technical·0.15 )
@@ -165,13 +166,13 @@ The audit id lists behind `commerce` and `content` live in `READINESS_VITAL_IDS`
 
 Take five real audits from Access & Crawl Control — four scored, one advisory:
 
-| Audit                                       | Grade | Tier          | Weight | Status | Score |
-| :------------------------------------------ | :---- | :------------ | -----: | :----- | ----: |
-| `access-crawl-control/gptbot`                | A     | `scored`      |    1.0 | pass   |   1.0 |
-| `access-crawl-control/robots-directives`     | A     | `scored`      |    1.0 | warn   |   0.5 |
-| `access-crawl-control/ai-bot-directives`     | B     | `scored`      |    0.6 | fail   |   0.0 |
-| `access-crawl-control/no-blanket-block`      | B     | `scored`      |    0.6 | pass   |   1.0 |
-| `access-crawl-control/crawl-delay`           | C     | `informative` |    0.0 | fail   |   0.0 |
+| Audit                                    | Grade | Tier          | Weight | Status | Score |
+| :--------------------------------------- | :---- | :------------ | -----: | :----- | ----: |
+| `access-crawl-control/gptbot`            | A     | `scored`      |    1.0 | pass   |   1.0 |
+| `access-crawl-control/robots-directives` | A     | `scored`      |    1.0 | warn   |   0.5 |
+| `access-crawl-control/ai-bot-directives` | B     | `scored`      |    0.6 | fail   |   0.0 |
+| `access-crawl-control/no-blanket-block`  | B     | `scored`      |    0.6 | pass   |   1.0 |
+| `access-crawl-control/crawl-delay`       | C     | `informative` |    0.0 | fail   |   0.0 |
 
 The informative check is dropped before anything is summed. The rest give:
 
@@ -185,13 +186,13 @@ If this category carried mass 30.2 out of a total of 139.4, and every other cate
 
 ## Where to look in the code
 
-| Question                                   | File                                                                                       |
-| :----------------------------------------- | :----------------------------------------------------------------------------------------- |
-| The weight law and both score aggregations | [`packages/core/src/scorer.ts`](../packages/core/src/scorer.ts)                              |
-| Status → score, and where weight is stamped | [`packages/core/src/audit.ts`](../packages/core/src/audit.ts)                               |
-| Evidence mass per category                 | [`packages/core/src/audit-config.ts`](../packages/core/src/audit-config.ts)                 |
-| Score-tier bands and vital weights         | [`packages/core/src/constants.ts`](../packages/core/src/constants.ts)                       |
-| Readiness vitals                           | [`packages/core/src/orchestrator.ts`](../packages/core/src/orchestrator.ts)                 |
-| What a grade is allowed to do              | [`docs/evidence/policy.md`](./evidence/policy.md)                                           |
+| Question                                    | File                                                                        |
+| :------------------------------------------ | :-------------------------------------------------------------------------- |
+| The weight law and both score aggregations  | [`packages/core/src/scorer.ts`](../packages/core/src/scorer.ts)             |
+| Status → score, and where weight is stamped | [`packages/core/src/audit.ts`](../packages/core/src/audit.ts)               |
+| Evidence mass per category                  | [`packages/core/src/audit-config.ts`](../packages/core/src/audit-config.ts) |
+| Score-tier bands and vital weights          | [`packages/core/src/constants.ts`](../packages/core/src/constants.ts)       |
+| Readiness vitals                            | [`packages/core/src/orchestrator.ts`](../packages/core/src/orchestrator.ts) |
+| What a grade is allowed to do               | [`docs/evidence/policy.md`](./evidence/policy.md)                           |
 
 See also: [cli.md](./cli.md) for running a scan and asserting on its score in CI, and [config.md](./config.md) for narrowing a scan to specific categories.

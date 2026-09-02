@@ -13,7 +13,6 @@ sources:
   - S4
 ---
 
-
 # Tool Contract Validity and Silent-Drop Risk
 
 > Shipped in v2. Evidence grade **A** · scored tier · unique · implementation: `static-fetch`
@@ -40,12 +39,13 @@ Nothing in the SEO/AEO space parses MCP tool schemas. MCP Inspector displays too
 ## Implementation sketch
 
 POST tools/list (paginating on nextCursor). For each tool assert:
+
 - `inputSchema` exists, is a plain object, is not null, and has `type === "object"` (MUST).
 - Every string in `inputSchema.required` is a key of `inputSchema.properties` (dangling required entries make every call fail validation client-side).
 - `name`: length 1-128, matches /^[A-Za-z0-9_.\-]+$/, and is unique within the server (all three SHOULD). Additionally flag names outside plain printable ASCII 0x21-0x7E, which force the client into the `=?base64?…?=` sentinel encoding of the Mcp-Name header.
 - x-mcp-header sweep: walk the entire inputSchema and collect every occurrence of the `x-mcp-header` key. For each, assert (a) value is a non-empty string; (b) matches RFC 9110 tchar: /^[!#$%&'*+\-.^_`|~0-9A-Za-z]+$/; (c) contains no \r or \n; (d) is case-insensitively unique among all x-mcp-header values in that same inputSchema; (e) the annotated property's `type` is exactly one of string/integer/boolean — `number` is a violation; (f) the path from the schema root to the annotated property consists ONLY of `properties` keys — any hop through `items`, `oneOf`, `anyOf`, `allOf`, `not`, `if`, `then`, `else` or `$ref` is a violation. Report each violating tool as CRITICAL with the explicit consequence 'conforming Streamable HTTP clients MUST drop this tool from tools/list'.
 - If `outputSchema` is present, assert it parses as a JSON Schema object (servers MUST then conform to it at call time).
-Score = (tools passing all MUSTs / total tools), with any x-mcp-header violation forcing a failing grade regardless of ratio.
+  Score = (tools passing all MUSTs / total tools), with any x-mcp-header violation forcing a failing grade regardless of ratio.
 
 ## Example failure
 

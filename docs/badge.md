@@ -10,12 +10,12 @@ Use a badge when you want to show a current Agent Lighthouse score in a README, 
 
 ## Score Colors
 
-| Score | Color | Meaning |
-| --: | :-- | :-- |
+|  Score | Color    | Meaning     |
+| -----: | :------- | :---------- |
 | 90-100 | `22c55e` | Agent-ready |
-| 70-89 | `4f46e5` | Good |
-| 50-69 | `f59e0b` | Needs work |
-| 0-49 | `ef4444` | Blocked |
+|  70-89 | `4f46e5` | Good        |
+|  50-69 | `f59e0b` | Needs work  |
+|   0-49 | `ef4444` | Blocked     |
 
 ## CLI Workflow
 

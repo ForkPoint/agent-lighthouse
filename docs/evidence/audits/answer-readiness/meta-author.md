@@ -28,6 +28,7 @@ Borderline falsy, and wired to the wrong page. `applicablePageTypes: ['content']
 **Required fix:** 1) Evaluate the pages the gate selected: `ctx.pages.filter(p => p.pageType === 'content')` instead of `ctx.pages[0]` — the current `applicablePageTypes: ['content']` + `const page = ctx.pages[0]` combination is an outright wrong-page bug (see audit-runner.ts planAudits, which only checks that SOME scanned page matches). 2) Drop the E-E-A-T claim from `description`/`guidance.impact` or cite a source; as written it asserts behavior no AI system exhibits. 3) Downgrade `defaultPriority` from 'medium' to 'low'. 4) Accept the modern equivalents before failing: `article:author`, `<meta name="twitter:creator">`, and a rel=author link. 5) Reject placeholder values ('admin', 'WordPress', 'user', the site domain) which currently pass.
 
 **False-positive risks:**
+
 - Wrong-page bug: `applicablePageTypes: ['content']` gates on content pages existing, but `const page = ctx.pages[0]` reads the homepage (orchestrator sets `isFirstPage = p.index === 0`, and detectPageType returns 'homepage' for it). A blog whose every article correctly carries `<meta name="author">` fails this audit because the homepage does not.
 - Placeholder values pass: `if (author.trim().length > 0)` accepts `content="admin"`, `content="WordPress"`, `content="Your Name Here"`, or `content="{{ author }}"` — all real CMS defaults — and reports them as a satisfied trust signal.
 - Sites that publish authorship correctly via JSON-LD `"author": {"@type":"Person"}` (the form agents actually parse) but omit the legacy meta tag are told their content 'appears authorless'. That is wrong guidance.
@@ -35,6 +36,7 @@ Borderline falsy, and wired to the wrong page. `applicablePageTypes: ['content']
 - WAF interstitial or filtered-out homepage shifts `ctx.pages[0]`, producing an author verdict for an arbitrary page.
 
 **Test gaps:**
+
 - No test where pages[0] is a homepage and a later page is the content page — precisely the production configuration the `applicablePageTypes` gate creates.
 - No placeholder-value test ('admin', empty-ish, template token).
 - No JSON-LD-author-only page (the false-negative case).
@@ -59,6 +61,7 @@ _No dedicated evidence signal was researched for this audit in the 2026-08-20 pa
 **Grade: C** — `author` is a WHATWG-standard metadata name with long-standing partial adoption, but no vendor documents any system reading it, and the specific E-E-A-T mechanism this audit asserts is contradicted by the one vendor that documents authorship handling.
 
 **Evidence:**
+
 - WHATWG HTML defines `author` as a standard metadata name: "The value must be a free-form string giving the name of one of the page's authors." The spec assigns no consumer behavior to it — https://html.spec.whatwg.org/multipage/semantics.html#standard-metadata-names (verified 2026-08-21)
 - Convention is real but consumer-less: the tag predates and is superseded by schema.org `author`, which is the form Google documents for authorship — https://developers.google.com/search/docs/appearance/structured-data/article (verified 2026-08-21)
 

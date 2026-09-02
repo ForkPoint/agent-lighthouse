@@ -31,7 +31,7 @@ Weak and non-matching. The only real link-tag-based discovery of an llms file I 
 
 ## Counter-evidence
 
-1) Direct wire test: of the five biggest publishers checked, four emit NO llms link tag whatsoever in <head> despite serving llms-full.txt — platform.claude.com/en/docs/overview (27 <link> tags, zero mentioning llms), mintlify.com/docs (20, zero), docs.stripe.com (18, zero), vercel.com/docs (31, zero). The fifth, docs.github.com, uses rel="index" type="text/markdown" pointing at llms.txt. So the audit's detection pattern matches zero of the sites it would be grading, including Anthropic's own docs. 2) The spec defines no such relation: llmstxt.org and llmstxt.org/index.md contain no occurrence of 'llms-full.txt' and their only link-relation example is rel="alternate" type="text/markdown" for a per-page .md file. 3) Actual discovery in practice is either the well-known root path or a plain-text pointer inside llms.txt — Anthropic's llms.txt ends 'For more comprehensive documentation, see llms-full.txt' (https://platform.claude.com/llms.txt) — never a <head> link. 4) Mintlify, which auto-generates llms-full.txt for its entire customer base, documents hosting the file at the root and says nothing about a head link (https://mintlify.com/docs/ai/llmstxt). 5) No vendor (OpenAI, Anthropic, Google, Perplexity, Apple, Meta, Microsoft) documents any crawler parsing <head> for such a relation.
+1. Direct wire test: of the five biggest publishers checked, four emit NO llms link tag whatsoever in <head> despite serving llms-full.txt — platform.claude.com/en/docs/overview (27 <link> tags, zero mentioning llms), mintlify.com/docs (20, zero), docs.stripe.com (18, zero), vercel.com/docs (31, zero). The fifth, docs.github.com, uses rel="index" type="text/markdown" pointing at llms.txt. So the audit's detection pattern matches zero of the sites it would be grading, including Anthropic's own docs. 2) The spec defines no such relation: llmstxt.org and llmstxt.org/index.md contain no occurrence of 'llms-full.txt' and their only link-relation example is rel="alternate" type="text/markdown" for a per-page .md file. 3) Actual discovery in practice is either the well-known root path or a plain-text pointer inside llms.txt — Anthropic's llms.txt ends 'For more comprehensive documentation, see llms-full.txt' (https://platform.claude.com/llms.txt) — never a <head> link. 4) Mintlify, which auto-generates llms-full.txt for its entire customer base, documents hosting the file at the root and says nothing about a head link (https://mintlify.com/docs/ai/llmstxt). 5) No vendor (OpenAI, Anthropic, Google, Perplexity, Apple, Meta, Microsoft) documents any crawler parsing <head> for such a relation.
 
 ## Verdict
 
@@ -65,6 +65,7 @@ A byte-for-byte copy of llms-txt-link (4.11) with one substring changed ('llms' 
 **Required fix:** Merge into LlmsTxtLinkAudit (4.11) as a single 'llms.txt discovery' audit that reports which llms-family resources are linked (index, full, or neither), passing on the index alone and noting the full variant as a bonus. If kept separate, it must at minimum stop depending on `title.includes('llms-full')` — match `href` against `/llms-full\.txt$/i` — accept `text/markdown` and parameterized MIME types, drop the exact `l.rel === 'alternate'` comparison in favor of a normalized one, and be downgraded from 'medium' to 'low' given zero documented consumption.
 
 **False-positive risks:**
+
 - Identical title-dependence to 4.11: `(l.title ?? '').toLowerCase().includes('llms-full')` fails on `<link rel="alternate" type="text/plain" href="/llms-full.txt">` with no title — correct, minimal markup rejected.
 - Identical MIME rigidity: `l.type === 'text/plain'` rejects `text/markdown` and any `; charset=` parameter.
 - Title-vs-href mismatch: a site could title the link 'Full documentation for LLMs' (no 'llms-full' substring) and fail while serving exactly the right file.
@@ -74,6 +75,7 @@ A byte-for-byte copy of llms-txt-link (4.11) with one substring changed ('llms' 
 - Recommending llms-full.txt at 'medium' priority pushes site owners toward maintaining a second, larger generated artifact for which no consumer is identified — real cost, unverified benefit.
 
 **Test gaps:**
+
 - No link-without-title test.
 - No `type="text/markdown"` / charset-parameter test.
 - No uppercase/multi-token `rel` test.

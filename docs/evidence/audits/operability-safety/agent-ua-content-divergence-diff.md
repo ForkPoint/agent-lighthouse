@@ -16,7 +16,6 @@ sources:
   - anthropic-claude-for-chrome
 ---
 
-
 # Agent-UA Content Divergence Diff
 
 > Shipped in v2. Evidence grade **B** · scored tier · partial overlap · implementation: `multi-page`

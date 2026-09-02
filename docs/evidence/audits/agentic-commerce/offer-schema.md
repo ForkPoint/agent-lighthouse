@@ -33,6 +33,7 @@ Price and currency in structured data is one of the few schema signals with clea
 **Required fix:** Remove the short-circuit: evaluate whether ANY Offer reachable from the page's primary Product satisfies price+currency, rather than testing only the first hoisted Offer node. Accept `AggregateOffer` with `lowPrice`/`highPrice` as satisfying the price requirement. Add an explicit `/pricing|/plans|/preise|/tarifs` URL fallback so SaaS pricing pages are actually assessed, matching the audit's title.
 
 **False-positive risks:**
+
 - `if (hasOfferSchema) { const first = schemas.find(isOffer); return first['price'] !== undefined && !!first['priceCurrency']; }` short-circuits and never evaluates `hasOfferProp`. Because `flattenJsonLd` hoists nested Offers, `schemas.find(isOffer)` returns whichever Offer appears first in DFS order — commonly a related-products carousel Offer, a `seller`-only Offer stub, or a ProductGroup variant Offer. If that stray offer lacks price/priceCurrency the page is failed even though the primary Product's `offers` block is complete. Concrete, high-frequency false fail on Shopify ProductGroup/hasVariant markup.
 - `offerObj['price'] !== undefined && offerObj['priceCurrency']` rejects `AggregateOffer` with `lowPrice`/`highPrice`/`offerCount` and no `price` — the schema.org-canonical form for a variant price range. Multi-variant products marked up correctly are failed.
 - The applicability gate `p.pageType === 'product'` inherits `detectPageType`'s loose heuristics: any page with an `[class*="add-to-cart"]` element and a `.price` element is typed 'product' (parser.ts:541-551), so category pages and homepages with product carousels are mis-typed and then failed for lacking Offer schema.
@@ -40,6 +41,7 @@ Price and currency in structured data is one of the few schema signals with clea
 - `price: 0` is accepted (`!== undefined`), so a free-tier Offer passes, while `price: "0.00"` on a broken template also passes — no sanity check on the value.
 
 **Test gaps:**
+
 - No test where a stray/nested Offer precedes the product's real offers (the short-circuit bug)
 - No test for `AggregateOffer` with `lowPrice`/`highPrice`
 - No test for `ProductGroup` + `hasVariant[].offers`
@@ -56,9 +58,10 @@ _No dedicated evidence signal was researched for this audit in the 2026-08-20 pa
 
 **Mechanism claim:** Google's product data extractors parse `price` and `priceCurrency` out of the schema.org `Offer` in a product page's markup. They use those exact values for merchant listing eligibility, and for Merchant Center automatic item updates. A page without them cannot supply a machine-read price to that pipeline.
 
-**Grade: A** — `offers.price` and `offers.priceCurrency` are the only *required* Offer properties in Google's merchant listing structured-data spec, and Google separately documents crawling that markup off the page HTML to correct price data.
+**Grade: A** — `offers.price` and `offers.priceCurrency` are the only _required_ Offer properties in Google's merchant listing structured-data spec, and Google separately documents crawling that markup off the page HTML to correct price data.
 
 **Evidence:**
+
 - Google merchant listing structured data — required properties are Product `name`, `image`, `offers`, and on the Offer `price` (or `priceSpecification.price`) plus `priceCurrency` (or `priceSpecification.priceCurrency`); `availability`, `priceValidUntil`, `hasMerchantReturnPolicy` are recommended — https://developers.google.com/search/docs/appearance/structured-data/merchant-listing (verified 2026-08-21)
 - Automatic item updates: "We automatically read the structured data markup on your website using our advanced data extractors and directly pull product data from your HTML into Merchant Center". It names `price` and `priceCurrency` directly on the Offer, or via `priceSpecification` — https://support.google.com/merchants/answer/3246284 (verified 2026-08-21)
 - "Structured data lets Google and other web platforms automatically read your site and directly pull product data from your HTML"; markup also powers the website-crawl feed input method — https://support.google.com/merchants/answer/6069143 (verified 2026-08-21)

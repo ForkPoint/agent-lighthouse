@@ -46,6 +46,7 @@ Title and description promise 'Single h1 per page' but the code only ever inspec
 **Required fix:** Loop all ctx.pages like the sibling audits do and report an X/Y ratio with offending URLs. Split the verdict: 0 h1 = fail (high), 2+ h1 = warn (medium) rather than fail. Exclude h1s inside <template>, and inside subtrees hidden via hidden/[aria-hidden=true]/style="display:none" so responsive duplicates are not double-counted.
 
 **False-positive risks:**
+
 - Only the homepage is audited despite the 'per page' title — 'const homepage = ctx.pages[0]; const h1Count = $('h1').length'. Deep-page h1 problems are invisible; users get false reassurance.
 - Responsive themes that render a desktop h1 and a mobile h1 (one CSS-hidden) count as 2 → fail, though exactly one is visible and exactly one is in the accessibility tree.
 - Cookie banners, off-canvas menus, and modal dialogs injected server-side often carry their own h1 → fail on an otherwise correct page.
@@ -54,6 +55,7 @@ Title and description promise 'Single h1 per page' but the code only ever inspec
 - h1 inside <svg><title> is not an issue, but h1 inside <template> IS counted by cheerio and is not rendered.
 
 **Test gaps:**
+
 - No test asserting the homepage-only limitation (a multi-page ctx where page 2 has three h1s still passes) — the bug is invisible to the suite.
 - No hidden/responsive duplicate-h1 fixture.
 - No h1-inside-<template> or h1-inside-modal fixture.

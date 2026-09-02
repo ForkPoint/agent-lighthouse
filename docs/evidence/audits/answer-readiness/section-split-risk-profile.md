@@ -13,7 +13,6 @@ sources:
   - S1
 ---
 
-
 # Section Split-Risk Profile
 
 > Shipped in v2. Evidence grade **B** · scored tier · unique · implementation: `static-fetch`
@@ -77,7 +76,7 @@ needs a fuller one for a different question; this one only needs a length.
 `headingDistance` is reported as the proposal's single actionable number: the
 largest number of characters between a heading and the end of its section.
 
-Score is the share of *section* tokens living in sections at or under the
+Score is the share of _section_ tokens living in sections at or under the
 window. A `BLOB` page scores 0 by definition — there are no sections, so none of
 its text is inside a headed chunk.
 

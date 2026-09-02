@@ -15,7 +15,6 @@ sources:
   - eia-iclr25
 ---
 
-
 # Reflected-Parameter Injection Canary
 
 > Shipped in v2. Evidence grade **B** · scored tier · unique · implementation: `static-fetch`

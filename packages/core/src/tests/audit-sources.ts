@@ -35,7 +35,9 @@ export function auditSourceFiles(repoRoot = process.cwd()): string[] {
 export function declaredIds(source: string): string[] {
   return [...source.matchAll(/^\s*id:\s*['"]([^'"]+)['"]/gm)]
     .map((m) => m[1])
-    .filter((id): id is string => Boolean(id && /^[a-z][a-z-]*\/[a-z0-9-]+$/.test(id)));
+    .filter((id): id is string =>
+      Boolean(id && /^[a-z][a-z-]*\/[a-z0-9-]+$/.test(id)),
+    );
 }
 
 /**

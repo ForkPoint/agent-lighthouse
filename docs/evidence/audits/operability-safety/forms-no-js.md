@@ -27,6 +27,7 @@ Sound premise for non-JS agents, but the pass condition depends on an attribute 
 **Required fix:** Treat a missing/empty `action` as valid self-posting (it is) and instead flag the real failure mode: a form whose submit path is JS-only — no action AND no method AND a `type="button"`/`onclick` submit control, or a `<form onsubmit="...return false">`. Check `formaction` on submit buttons. Remove the dead `formsWithMethod` gate or make it meaningful. Detect known third-party form embeds and report them explicitly instead of scoring `na`. Drop the `v8 ignore` block so the logic is actually exercised.
 
 **False-positive risks:**
+
 - `if (form.action && form.action !== '')` — `<form method="post">` with no action submits to the current URL, which is valid HTML and works perfectly without JavaScript. It is counted as action-less and, if it is the only form, produces 'None of the N form(s) have an action attribute — they require JavaScript to submit', which is factually false.
 - Pass requires `formsWithAction === totalForms && formsWithMethod === totalForms`, but parser.ts:400 defaults `method` to 'GET' when absent, so `formsWithMethod` is always equal to totalForms — the method half of the condition is dead code that can never fail. The audit advertises checking two attributes and effectively checks one.
 - `formaction` on the submit button (a legal way to target an endpoint) is never inspected.
@@ -35,6 +36,7 @@ Sound premise for non-JS agents, but the pass condition depends on an attribute 
 - `/* v8 ignore start */` at line 45 suppresses coverage on the method-counting and firstPageUrl branches, hiding the dead-condition bug from the test suite.
 
 **Test gaps:**
+
 - No `<form method="post">` (empty action) fixture — the main false positive
 - No `formaction`-on-button fixture
 - No SPA fixture where forms exist only after hydration
@@ -59,6 +61,7 @@ _No dedicated evidence signal was researched for this audit in the 2026-08-20 pa
 **Grade: C** — the "AI crawlers do not run JavaScript" half is well measured. But no documented agent submits HTML forms over raw HTTP, and the specific attribute this audit scores, `action`, does not distinguish a JS-only form from a standards-compliant self-posting one. The causal link from signal to consumer is therefore unproven.
 
 **Evidence:**
+
 - Vercel's crawler study finds "none of the major AI crawlers currently render JavaScript", naming OAI-SearchBot, ChatGPT-User, GPTBot, ClaudeBot, Meta-ExternalAgent, Bytespider and PerplexityBot; ChatGPT (11.50%) and Claude (23.84%) fetch JS files but do not execute them — https://vercel.com/blog/the-rise-of-the-ai-crawler (verified 2026-08-21)
 - Those same non-rendering clients are retrieval crawlers, not form submitters. The agents that actually fill and submit forms drive a real, JS-executing browser. Anthropic's browser use tool works "through its structure (the accessibility tree, elements, forms, and tabs) and through pixels" — https://platform.claude.com/docs/en/agents-and-tools/tool-use/browser-use-tool (verified 2026-08-21)
 - Playwright MCP likewise drives a real browser and exposes structured accessibility snapshots to the model — https://github.com/microsoft/playwright-mcp (verified 2026-08-21)

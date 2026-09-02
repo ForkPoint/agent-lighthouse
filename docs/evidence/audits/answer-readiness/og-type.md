@@ -31,6 +31,7 @@ Presence half is fine; the 'appropriate' half is an English-only URL substring h
 **Required fix:** 1) Lowercase before comparing: `if (isBlogPage && ogType !== 'article')` compares a non-normalized value, so a blog page with `content="Article"` (valid, case-insensitive per OGP consumers) is warned. Use `ogType.toLowerCase()`. 2) Replace the substring heuristic `url.includes('/blog') || url.includes('/post') || url.includes('/article')` with the already-computed `page.pageType`, or at minimum with path-segment matching (`/\/(blog|posts?|articles?|news)(\/|$)/`) — the current form matches `/blogging-tools`, `/postal-codes`, `/posters`, and (because `//blog` contains `/blog`) every URL on a `blog.` subdomain. 3) It is English-only: `/noticias`, `/artikel`, `/actualites`, `/nyheter`, `/记事` are never recognized, so non-English blogs are never checked at all — a silent false pass. 4) Iterate real content pages instead of `ctx.pages[0]`; on the homepage `isBlogPage` is false essentially always, making the warn branch dead code in production. 5) Validate the value against the OGP type vocabulary — today any string passes, including `content="blog"` (not an OGP type) and typos.
 
 **False-positive risks:**
+
 - Case sensitivity: `ogType !== 'article'` on a non-lowercased value warns a blog page that correctly declares `content="Article"`.
 - Substring path matching: `url.includes('/blog')` fires on `https://example.com/blogging-platform-comparison`; `url.includes('/post')` fires on `/postal-rates` and `/posters`; and `https://blog.example.com/x` contains the substring `/blog` inside `//blog`, so every page on a blog subdomain is treated as a blog post regardless of path.
 - English-only: non-English blog paths (`/noticias`, `/artikel`, `/blogg`, `/actualites`) never trigger the check, so genuinely mistyped og:type on those sites gets a clean pass.
@@ -40,6 +41,7 @@ Presence half is fine; the 'appropriate' half is an English-only URL substring h
 - Product pages with `og:type="product"` and article pages under `/news/` are never cross-checked against `page.pageType`, which the parser already computed — the audit reimplements classification badly instead of reusing it.
 
 **Test gaps:**
+
 - No uppercase `og:type` value test.
 - No `/blogging-*` or `/postal-*` false-match test.
 - No blog-subdomain test.
@@ -65,6 +67,7 @@ _No dedicated evidence signal was researched for this audit in the 2026-08-20 pa
 **Grade: B** — `og:type` is one of the four required properties in the de-facto Open Graph protocol, and adoption is enormous. Meta names it as a tag that changes distribution handling. But the type-selects-behavior effect is documented only in spec terms, and no vendor documents the value-appropriateness effect this audit actually scores.
 
 **Evidence:**
+
 - The Open Graph protocol lists `og:type` among the four required basic properties and ties it to further requirements: "The type of your object, e.g., 'video.movie'. Depending on the type you specify, other properties may also be required." — https://ogp.me/ (verified 2026-08-21)
 - The protocol defines the type vocabulary the audit should validate against (`article`, `book`, `profile`, `website`, `music.*`, `video.*`) — https://ogp.me/#types (verified 2026-08-21)
 - Meta's webmaster guide lists `og:type` among the tags to add to "improve distribution of your content", alongside the core four read by `facebookexternalhit/1.1` — https://developers.facebook.com/docs/sharing/webmasters/ (verified 2026-08-21)

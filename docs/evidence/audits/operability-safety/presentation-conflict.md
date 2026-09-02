@@ -52,6 +52,7 @@ Wraps `presentation-role-conflict` — an element marked role=presentation/none 
 **Required fix:** Keep the rule but demote it from a scored binary audit to an informational/warn-only signal (or fold it into 7.11 'Valid ARIA roles', which is the same underlying concern: role declarations that do not match the element), so it stops consuming a full slot of the category average for a best-practice nit.
 
 **False-positive risks:**
+
 - Selector includes `img[alt='']`, so decorative images that also carry a `tabindex` (common in legacy carousels/lightboxes) are flagged — a true axe positive but with essentially zero agent consequence, presented alongside the category's real failures.
 - CSS blindness: presentational wrappers in hidden template blocks are evaluated.
 - The most common benign pattern `<img alt="" aria-hidden="true">` is correctly excluded only because `excludeHidden: true` filters aria-hidden nodes — a fragile coincidence that would invert if the rule's excludeHidden flag were ever changed.
@@ -59,6 +60,7 @@ Wraps `presentation-role-conflict` — an element marked role=presentation/none 
 - CSR SPA → `na`.
 
 **Test gaps:**
+
 - No HTML-level test for this audit.
 - No `<img alt="" aria-hidden="true">` fixture pinning the benign-exclusion behaviour.
 - No focusable `role="presentation"` fixture proving the rule fires.

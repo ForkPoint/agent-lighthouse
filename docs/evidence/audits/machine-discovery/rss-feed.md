@@ -42,6 +42,7 @@ Looks for a feed via <link rel=alternate> then /rss.xml, /feed.xml, /atom.xml. F
 **Required fix:** Extract `findFeedResult()` into a shared `_feed.ts` used by 1.11 and 1.12 (one discovery pass per scan). Tokenize and lowercase rel, match type by prefix, and resolve hrefs with `new URL(href, page.url)`. Add `/feed/`, `/index.xml`, `/rss`, `/feed.atom` to the candidate list. Require the body to parse as XML with an `<rss>`/`<feed>`/`<rdf:RDF>` root before passing. Return notApplicable when no article/blog-type pages were scanned.
 
 **False-positive risks:**
+
 - `link.rel === 'alternate'` — `extractHeadLinks()` does not lowercase or tokenize rel, so `rel="Alternate"`, `rel="alternate home"` (WordPress emits multi-token rels) miss entirely.
 - `link.type === 'application/rss+xml'` exact — `application/rss+xml; charset=utf-8`, `application/atom+xml;charset=UTF-8`, `text/xml` and `application/xml` all miss.
 - `if (feedUrl.startsWith('/')) feedUrl = baseUrl + feedUrl` — hrefs like `feed.xml`, `./rss`, or `../feed` are passed unresolved to ctx.fetch and fail. Should be `new URL(link.href, page.url)`.
@@ -51,6 +52,7 @@ Looks for a feed via <link rel=alternate> then /rss.xml, /feed.xml, /atom.xml. F
 - Fires an extra live /atom.xml request even after rootFiles already answered, and audit 1.12 repeats the whole discovery independently — duplicate load on the scanned origin.
 
 **Test gaps:**
+
 - rel="alternate home" / rel="Alternate" (multi-token, mixed case)
 - type with a charset parameter
 - Relative href without a leading slash ('feed.xml', './rss')
@@ -80,7 +82,7 @@ Its dossier is kept verbatim at [merged/machine-discovery/rss-feed-link.md](../.
 
 ### Grade decision: stays **B**
 
-4.16 graded **C**: autodiscovery is a stable convention with browser and aggregator consumers, but the only documented *Google* consumption path for a feed is submitting it as a sitemap, and no AI vendor documents crawling the head-level link — "none-known for any AI answer engine". The target's own signal (a published, reachable feed as an ingestion surface) grades **B**. Weaker evidence, and not proven for the merged signal, so the audit keeps **B**, `tier: scored`, `weight 0.6`.
+4.16 graded **C**: autodiscovery is a stable convention with browser and aggregator consumers, but the only documented _Google_ consumption path for a feed is submitting it as a sitemap, and no AI vendor documents crawling the head-level link — "none-known for any AI answer engine". The target's own signal (a published, reachable feed as an ingestion surface) grades **B**. Weaker evidence, and not proven for the merged signal, so the audit keeps **B**, `tier: scored`, `weight 0.6`.
 
 Consequently the link never decides the result on its own: a site with a reachable feed and no `<link>` passes, and a site with a `<link>` but no reachable feed fails.
 

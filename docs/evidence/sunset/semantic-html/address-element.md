@@ -69,6 +69,7 @@ Falsy audit. It passes if a single <address> exists anywhere ('const hasAddress 
 **Required fix:** _none — audit is sound as implemented_
 
 **False-positive risks:**
+
 - 'pagesWithAddress > 0' — one <address> anywhere passes; an empty <address></address> passes.
 - Declares applicablePageTypes ['homepage'] but loops every page, so the reported ratio counts non-homepage pages.
 - Warns any site whose contact info lives in a footer <p> (the overwhelming majority) with a fix that changes nothing an agent sees.
@@ -76,6 +77,7 @@ Falsy audit. It passes if a single <address> exists anywhere ('const hasAddress 
 - Contact-info-free sites (personal blogs, docs) get a permanent unfixable warning.
 
 **Test gaps:**
+
 - Two tests only; no empty-<address> fixture.
 - No fixture with contact info in a <p> (the case the audit claims to distinguish).
 - No multi-page crawl testing the applicablePageTypes/loop mismatch.

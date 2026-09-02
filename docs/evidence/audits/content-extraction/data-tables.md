@@ -48,6 +48,7 @@ Correct core logic (parse5 auto-inserts <tbody>, so the '<table><tr><th>' patter
 **Required fix:** Swap the zero-table pass() for notApplicable(). Scope the header lookups to the immediate table using ':scope' semantics or by filtering out th/thead whose closest('table') is not this element. Skip probable layout tables (role=presentation/none, or no th anywhere and single row/column) instead of counting them as failures. Include page URLs in `found`.
 
 **False-positive risks:**
+
 - 'if (totalTables === 0) return this.pass(...)' — sites with no tables at all receive a free scored 1.0, inflating the category score.
 - '$(el).find('th')' / 'find('thead')' cross nested-table boundaries: an outer layout table containing a proper inner table is credited as properly structured.
 - Layout tables and pricing-grid tables are counted in the denominator; there is no role=presentation exclusion.
@@ -56,6 +57,7 @@ Correct core logic (parse5 auto-inserts <tbody>, so the '<table><tr><th>' patter
 - Tables pooled across pages with no URL attribution.
 
 **Test gaps:**
+
 - No test asserting notApplicable vs pass for the zero-table case (the current test locks in the inflating behavior: expect(result.status).toBe('pass')).
 - No nested-table fixture.
 - No layout-table / role=presentation fixture.

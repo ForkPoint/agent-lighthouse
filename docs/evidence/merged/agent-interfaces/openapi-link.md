@@ -26,6 +26,7 @@ Invented discovery mechanism wrapped around a real artifact, and it fires on eve
 **Required fix:** Delete from meta-tags. A meaningful OpenAPI check probes for the spec itself (/.well-known/, /openapi.json, /swagger.json, documented URLs) and validates its contents — which is agent-tools territory, not head-meta territory. If any head-link hint is retained here, it must (a) return `notApplicable()` when the site exposes no API surface rather than failing every brochure site, (b) match on href (`/openapi\.(json|ya?ml)$/i`) rather than on `title.includes('openapi')`, and (c) accept `application/yaml`/`text/yaml`, since a large share of specs are YAML and the current `type === 'application/json'` requirement excludes them outright.
 
 **False-positive risks:**
+
 - Title-dependence: `(l.title ?? '').toLowerCase().includes('openapi')` makes an optional, English, human-authored attribute the sole discriminator. `<link rel="alternate" type="application/json" href="/openapi.json">` with no title, or `title="API-Spezifikation"`, fails.
 - YAML specs excluded by construction: `l.type === 'application/json'` cannot match `application/yaml`, `text/yaml`, or `application/vnd.oai.openapi`, so a site publishing openapi.yaml fails no matter how it links it.
 - `type="application/json; charset=utf-8"` fails the exact comparison.
@@ -35,6 +36,7 @@ Invented discovery mechanism wrapped around a real artifact, and it fires on eve
 - The spec's real locations (/.well-known/, /openapi.json, documented URLs) are never probed even though `ctx.fetch` and `ctx.rootFiles` are available.
 
 **Test gaps:**
+
 - No YAML spec test.
 - No title-less link test.
 - No non-English title test.

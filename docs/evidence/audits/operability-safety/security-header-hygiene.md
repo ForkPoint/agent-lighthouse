@@ -45,20 +45,20 @@ Narrowed on 2026-08-24 to the security.txt signal alone. The three security-head
 
 ## Claimed mechanism (falsifiable)
 
-**Falsifiable claim:** *none is made about AI agents.* `/.well-known/security.txt` is a vulnerability-disclosure file whose stated consumers are human security researchers and vulnerability-notification tooling. The evidence review found no AI crawler, retrieval pipeline or answer engine documented to read it, so the audit makes no claim that publishing one changes AI-agent behaviour. It reports the file's RFC 9116 conformance at weight 0, and never fails the site.
+**Falsifiable claim:** _none is made about AI agents._ `/.well-known/security.txt` is a vulnerability-disclosure file whose stated consumers are human security researchers and vulnerability-notification tooling. The evidence review found no AI crawler, retrieval pipeline or answer engine documented to read it, so the audit makes no claim that publishing one changes AI-agent behaviour. It reports the file's RFC 9116 conformance at weight 0, and never fails the site.
 
-What the audit does claim, and what is testable, is narrower. RFC 9116 defines what a security.txt must contain. A *published* file with no `Contact`, no `Expires`, an unparseable `Expires`, or an `Expires` in the past does not conform — and it advertises a disclosure route that no longer works. That claim is about the file, not about agents, which is why the tier is informative.
+What the audit does claim, and what is testable, is narrower. RFC 9116 defines what a security.txt must contain. A _published_ file with no `Contact`, no `Expires`, an unparseable `Expires`, or an `Expires` in the past does not conform — and it advertises a disclosure route that no longer works. That claim is about the file, not about agents, which is why the tier is informative.
 
 ## What it checks
 
 One root file, one signal.
 
-| State | Result |
-| :--- | :--- |
-| a 200 response whose body is not HTML, carrying a `Contact` field and an `Expires` date in the future | `pass` |
+| State                                                                                                                                                  | Result                 |
+| :----------------------------------------------------------------------------------------------------------------------------------------------------- | :--------------------- |
+| a 200 response whose body is not HTML, carrying a `Contact` field and an `Expires` date in the future                                                  | `pass`                 |
 | a published file that returns HTML at 200 (SPA soft-404), or has no `Contact`, no `Expires`, an unparseable `Expires`, or an `Expires` that has passed | `warn`, priority `low` |
-| no security.txt published (non-200 at both locations) | `na` |
-| the location was never fetched, so nothing was measured | `na` |
+| no security.txt published (non-200 at both locations)                                                                                                  | `na`                   |
+| the location was never fetched, so nothing was measured                                                                                                | `na`                   |
 
 `/.well-known/security.txt` is the location checked; the legacy top-level `/security.txt` is accepted as a fallback and named as such in the result. Detection is parse-not-probe by design — this dossier's own evidence records that only a minority of deployed files pass RFC validation, so presence alone proves nothing.
 
@@ -66,26 +66,26 @@ One root file, one signal.
 
 ## Why the four were consolidated
 
-*Historical record, 2026-08-22. Three of the four signals described below were removed on 2026-08-24 — see [Narrowed to security.txt](#narrowed-to-securitytxt-contradiction-sweep-2026-08-24).*
+_Historical record, 2026-08-22. Three of the four signals described below were removed on 2026-08-24 — see [Narrowed to security.txt](#narrowed-to-securitytxt-contradiction-sweep-2026-08-24)._
 
 The approved v2 map row for 8.2 rules the consolidated signal "weight 0, never fails a site" (`docs/evidence/audit-map.md`, §5 consolidation, audits 8.2–8.7). The four v1 audits levied four independent penalties for one unproven mechanism:
 
 - **8.2 hsts-header** — presence-only, priority `high`, motivated by a fabricated claim that AI crawlers waste a redirect hop and that enterprise RAG pipelines reject non-HSTS sites. HSTS is browser-enforced state; GPTBot and ClaudeBot maintain none.
 - **8.3 csp-header** — presence-only, priority `high`, motivated by "AI trust-scoring systems check for CSP headers". No such system is documented. Its own detection failed static hosts that ship CSP as a meta tag and passed `default-src *`.
-- **8.4 content-type-options** — stated its mechanism backwards: `nosniff` makes clients *stricter* about the declared `Content-Type`, so its absence rescues a misdeclared file rather than breaking it. What actually determines whether an agent parses `llms.txt` or JSON-LD is the `Content-Type` itself, which `machine-discovery/ai-file-delivery` (v1 8.10) measures.
+- **8.4 content-type-options** — stated its mechanism backwards: `nosniff` makes clients _stricter_ about the declared `Content-Type`, so its absence rescues a misdeclared file rather than breaking it. What actually determines whether an agent parses `llms.txt` or JSON-LD is the `Content-Type` itself, which `machine-discovery/ai-file-delivery` (v1 8.10) measures.
 - **8.7 security-txt** — status-only, motivated by an AI trust score that does not exist. RFC 9116 is Informational and its documented consumers are security researchers and vulnerability-notification tooling.
 
 Consolidating also let each source audit's code-review fixes land in one place rather than four: `max-age` parsing, meta/report-only CSP delivery, an exact `nosniff` token compare, a parsed security.txt (Contact + unexpired Expires, legacy `/security.txt` fallback, SPA soft-404 guard), and an `na` result when no page response was captured instead of v1's confident "header is missing" failure.
 
 ## Scoring
 
-*Superseded on 2026-08-24: the audit's grade is now **C**, taken from the security.txt signal it still measures. The argument below is the 2026-08-22 record of why it was B, and is kept as history — see [Narrowed to security.txt](#narrowed-to-securitytxt-contradiction-sweep-2026-08-24) for why that grade did not survive.*
+_Superseded on 2026-08-24: the audit's grade is now **C**, taken from the security.txt signal it still measures. The argument below is the 2026-08-22 record of why it was B, and is kept as history — see [Narrowed to security.txt](#narrowed-to-securitytxt-contradiction-sweep-2026-08-24) for why that grade did not survive._
 
 **B — the strongest proven consumer path among the four sources, not the average.**
 
 The security-headers signal shared by 8.2, 8.3 and 8.4 grades **D**. No AI vendor documents any agent reading those headers, so nothing supports shipping the check at all. security.txt (8.7) grades **C**: a real RFC, with real but small adoption of about 1.25% of the top 1M in 2025, and zero AI consumers. The HTTPS/transport-security signal behind HSTS grades **B**: MCP, RFC 9116 and Chromium-based agent surfaces all mandate TLS, which is a documented, testable requirement even though no crawler vendor documents HSTS itself.
 
-Grade B therefore prices the evidence, and `tier: informative` prices the *claim*: `weightForGrade('B', 'informative') === 0`. The grade records what the evidence supports; the tier records that nothing here may move a score. A future task that finds a documented AI consumer for any of these headers can promote the tier without re-grading the evidence.
+Grade B therefore prices the evidence, and `tier: informative` prices the _claim_: `weightForGrade('B', 'informative') === 0`. The grade records what the evidence supports; the tier records that nothing here may move a score. A future task that finds a documented AI consumer for any of these headers can promote the tier without re-grading the evidence.
 
 ## Evidence
 
@@ -160,7 +160,7 @@ They follow the two headers from the same researched signal that were already re
 
 One line of the D-signal counter-evidence, recorded in full in the source dossiers ([hsts-header](../../merged/operability-safety/hsts-header.md), [csp-header](../../merged/operability-safety/csp-header.md), [content-type-options](../../merged/operability-safety/content-type-options.md)), reads the other way — "They remain legitimate general web-security hygiene and can be reported as unscored context, but presenting them as AI-agent signals is not defensible" — and that sentence is what produced the four-row table in the first place. It is overridden here for the same reason it was overridden for 8.5 and 8.6: `policy.md` gives grade D exactly two destinations, experimental behind a flag with an active draft-spec trajectory, or rejected. These have no trajectory.
 
-The counter-evidence line about CSP `frame-ancestors` preventing a page from being embedded in an agent surface is *not* part of this justification, although it was in the first draft of the proposal. It is scoped to embedding policy, and the CSP row never parsed `frame-ancestors`. The D grade and `Recommended tier: delete` carry the removal on their own.
+The counter-evidence line about CSP `frame-ancestors` preventing a page from being embedded in an agent surface is _not_ part of this justification, although it was in the first draft of the proposal. It is scoped to embedding policy, and the CSP row never parsed `frame-ancestors`. The D grade and `Recommended tier: delete` carry the removal on their own.
 
 ### What is deliberately not lost
 

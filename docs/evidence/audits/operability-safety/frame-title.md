@@ -30,6 +30,7 @@ Bundles `frame-title` + `frame-title-unique`. Agent value is thin — an agent g
 **Required fix:** Apply the same aggregation fix as 7.14 (incomplete must beat pass, and reviewOnFail rules must carry their offending nodes). Additionally exclude cross-origin third-party iframes (src host ≠ scanned host) from the fail path, or report them as a separate informational note, since the owner cannot remediate them.
 
 **False-positive risks:**
+
 - Third-party embeds: ad/analytics/chat-widget iframes in the static HTML that ship without a title fail the audit against a site owner who cannot change the vendor markup.
 - Guaranteed same-audit swallowing: `frame-title` pass + `frame-title-unique` incomplete → `sawIncomplete && !sawPass` is false → reported as PASS. Duplicate frame titles are never surfaced.
 - GTM/Facebook noscript iframes are excluded only because they carry inline `style="display:none;visibility:hidden"`; a site that hides them via a CSS class instead is failed (CSS blindness).
@@ -37,6 +38,7 @@ Bundles `frame-title` + `frame-title-unique`. Agent value is thin — an agent g
 - Priority is 'low', which is right, but the failure text is identical to the high-priority audits.
 
 **Test gaps:**
+
 - No HTML-level test for this audit.
 - No duplicate-frame-title fixture (the swallowed-incomplete defect is untested).
 - No third-party-embed fixture.
@@ -60,6 +62,7 @@ _No dedicated evidence signal was researched for this audit in the 2026-08-20 pa
 **Grade: C** — the name computation and the screen-reader consumer are ratified and documented, but the agent-side dependence is unproven. The documented agent snapshot tools address elements by per-element reference or uid, and neither documents frame titles as part of what the model reads. An agent can also read a frame's contents directly rather than choosing frames by name.
 
 **Evidence:**
+
 - MDN states: "People navigating with assistive technology such as a screen reader can use the `title` attribute on an `<iframe>` to label its content… Without this title, they have to navigate into the `<iframe>` to determine what its embedded content is" — https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Elements/iframe (verified 2026-08-21)
 - axe rule maps this to WCAG 4.1.2 Name, Role, Value (Level A) with impact "serious"; the stated consumer is screen reader users, who "can access a list of all frame titles on a page" — https://dequeuniversity.com/rules/axe/4.10/frame-title (verified 2026-08-21)
 - HTML Accessibility API Mappings, which specifies the `title`-to-accessible-name mapping for frame elements, is still a W3C Working Draft (05 August 2026) — https://www.w3.org/TR/html-aam-1.0/ (verified 2026-08-21)

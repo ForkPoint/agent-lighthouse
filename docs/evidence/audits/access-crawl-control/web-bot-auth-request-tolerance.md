@@ -16,7 +16,6 @@ sources:
   - s2
 ---
 
-
 # Signed-agent (Web Bot Auth) request tolerance
 
 > Shipped in v2. Evidence grade **B** · scored tier · unique · implementation: `static-fetch`
@@ -27,7 +26,7 @@ Probes whether the site's edge and origin tolerate requests carrying RFC 9421 HT
 
 ## Claimed mechanism (falsifiable)
 
-Web Bot Auth signs outbound requests with three headers: `Signature-Input` (with tag="web-bot-auth", keyid, created, expires, nonce, alg), `Signature`, and `Signature-Agent` pointing at a JWKS directory at /.well-known/http-message-signatures-directory (s1, s3). Cloudflare's verified-bot policy lists 'a cryptographic Web Bot Auth signature' as a first-class self-identification method (s4). Falsifiable claim: adding well-formed signature headers to an otherwise identical request must not change the response adversely. An adverse change is a 400 — the draft's own malformed-header code — or a 403, a 421, or a 431 Request Header Fields Too Large. Where one occurs, the origin path cannot receive signed traffic, and no signed agent can ever be admitted, whoever signed it. The test is *tolerance*, not acceptance: the site is not expected to validate the auditor's key.
+Web Bot Auth signs outbound requests with three headers: `Signature-Input` (with tag="web-bot-auth", keyid, created, expires, nonce, alg), `Signature`, and `Signature-Agent` pointing at a JWKS directory at /.well-known/http-message-signatures-directory (s1, s3). Cloudflare's verified-bot policy lists 'a cryptographic Web Bot Auth signature' as a first-class self-identification method (s4). Falsifiable claim: adding well-formed signature headers to an otherwise identical request must not change the response adversely. An adverse change is a 400 — the draft's own malformed-header code — or a 403, a 421, or a 431 Request Header Fields Too Large. Where one occurs, the origin path cannot receive signed traffic, and no signed agent can ever be admitted, whoever signed it. The test is _tolerance_, not acceptance: the site is not expected to validate the auditor's key.
 
 ## Evidence
 
@@ -78,7 +77,7 @@ directory that does not exist would be a claim the tool cannot back.
 
 The probe therefore signs with an Ed25519 key generated for the scan and thrown
 away, and `Signature-Agent` names the repository. The question the audit asks is
-unaffected: it is whether an origin refuses a request *because* it carries
+unaffected: it is whether an origin refuses a request _because_ it carries
 RFC 9421 signature headers, and an edge that rejects on the presence of those
 headers rejects an unverifiable key exactly as it rejects a verifiable one. What
 the probe cannot tell you — and the guidance says so — is whether an origin that

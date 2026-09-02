@@ -44,12 +44,14 @@ The only bot audit with custom alias logic, and that logic can invert the result
 > **Status, 2026-08-24 (contradiction sweep):** partly discharged, partly superseded. ClaudeBot is now the only token the audit scores and the `code`/`fix` guidance leads with it; versioned tokens and BOM-prefixed files are handled by the shared RFC 9309 gatherer. The instruction to keep `anthropic-ai` as a scoring alias and change the OR to an AND was **not** carried out and is withdrawn: the audit's own grade-C research records `anthropic-ai` with `Consumers: none-known` and instructs that no points be awarded or deducted for it, so an AND would still let a token with no documented consumer fail a site. There is no combination rule left to report on. See [Pass-rule correction (contradiction sweep, 2026-08-24)](#pass-rule-correction-contradiction-sweep-2026-08-24).
 
 **False-positive risks:**
+
 - `allowed: result1.allowed || result2.allowed` — PASS reported while ClaudeBot is blocked. Concrete inverted result, not merely imprecise.
 - Legacy-only block: a site with `User-agent: anthropic-ai\nDisallow: /` (a stale 2023-era line) and no ClaudeBot group gets a high-priority FAIL, though ClaudeBot is unaffected and crawls freely.
 - `explicitlyNamed`-style alias handling is absent from `isAllowed` itself, so `User-agent: ClaudeBot/1.0` (versioned) is missed entirely.
 - Shared BOM / soft-404 / `Disallow: /*` misreads.
 
 **Test gaps:**
+
 - The existing test `passes if either alias is allowed when both are explicit` codifies the bug as intended behavior — it asserts `allowed: true` for anthropic-ai blocked + ClaudeBot allowed, but never tests the dangerous inverse (anthropic-ai allowed + ClaudeBot blocked).
 - No test for legacy-only `anthropic-ai` block with no ClaudeBot group.
 - No versioned-token or BOM case.
@@ -182,7 +184,7 @@ token the score depended on and what counted as passing, not the grade.
   weight zero, without spending a registry id, a dossier and a new block in the
   robots differential baseline.
 - **Test bookkeeping.** The old `passes when ClaudeBot is explicitly allowed
-  (alias)` case was rewritten rather than duplicated, and
+(alias)` case was rewritten rather than duplicated, and
   `fails when both aliases are explicitly blocked` — whose name and inline
   comment described a combination rule that no longer exists — was dropped in
   favour of an explicit `User-agent: ClaudeBot` / `Disallow: /` case and a case

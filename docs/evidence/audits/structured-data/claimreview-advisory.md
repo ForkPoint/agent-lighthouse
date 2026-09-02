@@ -12,7 +12,6 @@ sources:
   - S5
 ---
 
-
 # ClaimReview investment advisory
 
 > Shipped in v2. Evidence grade **A** · informative tier · partial overlap · implementation: `multi-page`
@@ -36,7 +35,7 @@ SEO suites do validate ClaimReview syntax, so the shape validation overlaps. Wha
 
 ## Implementation sketch
 
-1) Parse JSON-LD (and microdata) for ClaimReview nodes across crawled pages. 2) If none, emit nothing — absence is not a defect. 3) If present, validate required properties: claimReviewed (non-empty), url, and reviewRating carrying a human-readable alternateName such as 'True'/'Mostly false'; flag reviewRating using only numeric ratingValue with no alternateName. 4) Flag pages carrying more than one ClaimReview node, since only one qualifies. 5) Attach the phase-out advisory with the Google doc citation and note that the Fact Check Explorer remains a consumer, so existing markup is not worthless — just not a Search surface. 6) scoreable=false, weight zero: this is a 'know the status before you invest further' signal. Deliberately included as the honest negative answer to whether fact-check schema is an AI-readiness lever — it is not.
+1. Parse JSON-LD (and microdata) for ClaimReview nodes across crawled pages. 2) If none, emit nothing — absence is not a defect. 3) If present, validate required properties: claimReviewed (non-empty), url, and reviewRating carrying a human-readable alternateName such as 'True'/'Mostly false'; flag reviewRating using only numeric ratingValue with no alternateName. 4) Flag pages carrying more than one ClaimReview node, since only one qualifies. 5) Attach the phase-out advisory with the Google doc citation and note that the Fact Check Explorer remains a consumer, so existing markup is not worthless — just not a Search surface. 6) scoreable=false, weight zero: this is a 'know the status before you invest further' signal. Deliberately included as the honest negative answer to whether fact-check schema is an AI-readiness lever — it is not.
 
 ## Example failure
 

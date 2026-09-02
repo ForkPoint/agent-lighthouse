@@ -16,7 +16,6 @@ sources:
   - anthropic-claude-for-chrome
 ---
 
-
 # Unsafe Agent-Triggerable Affordances
 
 > Shipped in v2. Evidence grade **B** · scored tier · unique · implementation: `static-fetch`
@@ -79,6 +78,7 @@ decision or a non-safe method between an agent and the state change.
 A path named in a robots.txt `Disallow` rule is still reported, and the message
 states the mitigation is partial. A `Disallow: /` rule is ignored for this
 purpose, because a site-wide block says nothing about the individual path.
+
 - 2026-08-28 — the audit declines when the scan holds no response it can
   attribute to this site. It read the links and GET forms on the scanned
   pages, and `ctx.pages`/`ctx.rootFiles` carry whatever answered 200 — on a

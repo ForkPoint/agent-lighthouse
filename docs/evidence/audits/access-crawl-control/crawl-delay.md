@@ -38,6 +38,7 @@ Produces frequent, confident, high-priority FAILs on correctly configured sites.
 **Required fix:** Scope the check to groups matching `ALL_CRAWLERS` tokens plus `*`, and ignore Crawl-delay on unrelated bots entirely. Downgrade the verdict from high-priority FAIL to `warn`, and rewrite the copy to state which crawlers actually honor Crawl-delay (Bing, Yandex) and which do not (Google, OpenAI, Anthropic). Fix `scoreDisplayMode` to `'ternary'`. Return `notApplicable` rather than `warn` when robots.txt is absent.
 
 **False-positive risks:**
+
 - `groups.filter((g) => g.crawlDelay !== undefined)` is unscoped: a Crawl-delay on SemrushBot/AhrefsBot/Bingbot fails the audit with AI-visibility language. This is the single most likely false FAIL in the category on real sites.
 - The `impact` claim that excessive Crawl-delay 'dramatically slows AI indexing' is false for Google-Extended, GPTBot and ClaudeBot, none of which document Crawl-delay support.
 - Hard threshold `d.crawlDelay > 10` with no tolerance: `Crawl-delay: 10.5` fails, `10` passes — arbitrary cliff presented as a definitive verdict.
@@ -46,6 +47,7 @@ Produces frequent, confident, high-priority FAILs on correctly configured sites.
 - BOM'd or soft-404 robots.txt parses to zero groups → 'No Crawl-delay directives found' → PASS regardless of the real file.
 
 **Test gaps:**
+
 - No test with Crawl-delay on a non-AI bot (SemrushBot/AhrefsBot) — the dominant real-world case, and the one that produces the false FAIL.
 - No test with per-bot Crawl-delay scoped to an AI crawler.
 - No fractional threshold case (10.0 / 10.5).

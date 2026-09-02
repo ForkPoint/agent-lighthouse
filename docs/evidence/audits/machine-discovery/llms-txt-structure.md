@@ -32,19 +32,19 @@ The claim is real but unproven at the consumer end: the format's reference parse
 
 One root file, two structural elements, fenced code blocks excluded from both:
 
-| Element | Detected as |
-| :--- | :--- |
+| Element            | Detected as                                                             |
+| :----------------- | :---------------------------------------------------------------------- |
 | Blockquote summary | a line starting with `>` among the first 3 non-blank lines after the H1 |
-| H2 sections | lines matching `##` + non-hash + content, outside fenced blocks |
+| H2 sections        | lines matching `##` + non-hash + content, outside fenced blocks         |
 
 Result semantics:
 
-| State | Result |
-| :--- | :--- |
-| both elements present | `pass` |
-| exactly one missing | `warn`, priority `low` |
-| both missing | `fail`, priority `low` |
-| `/llms.txt` absent or non-200 | `na` — that is `llms-txt-exists`' signal |
+| State                                            | Result                                     |
+| :----------------------------------------------- | :----------------------------------------- |
+| both elements present                            | `pass`                                     |
+| exactly one missing                              | `warn`, priority `low`                     |
+| both missing                                     | `fail`, priority `low`                     |
+| `/llms.txt` absent or non-200                    | `na` — that is `llms-txt-exists`' signal   |
 | 200 with no `#` heading at all (soft-404 / HTML) | `na` — the body is not a markdown llms.txt |
 
 `scoreDisplayMode: 'informative'` with `weight: 0` keeps every outcome out of the category score, the readiness vitals and the top-fails list.
@@ -55,7 +55,7 @@ The approved v2 map rows for 1.2 and 1.3 both target one combined structure audi
 
 The merge is also where each source review's required fixes land:
 
-- **Blockquote window.** v1 scanned the *entire* remainder of the file, so a footnote at the bottom of a 400-line llms.txt counted as the summary. Now only the first 3 non-blank lines after the H1 qualify.
+- **Blockquote window.** v1 scanned the _entire_ remainder of the file, so a footnote at the bottom of a 400-line llms.txt counted as the summary. Now only the first 3 non-blank lines after the H1 qualify.
 - **`>` without a space.** v1 required a literal `'> '`; the common (and valid CommonMark) `>Summary` was reported missing.
 - **One H1 definition.** v1 required `'# '` while `llms-txt-exists` accepts a bare `#`, so one file could pass 1.1 and fail 1.2 with "No H1 heading found". Both now accept `#Site`.
 - **Fenced blocks.** A file that documents llms.txt syntax scored its own `##` examples as real sections and its quoted `>` example as a summary. Fences are stripped before either search.
@@ -66,7 +66,7 @@ The merge is also where each source review's required fixes land:
 
 **C — the strongest proven path for the merged signal, unchanged from both sources.**
 
-1.2 and 1.3 were graded C independently on 2026-08-21 and the merged signal inherits that grade: it is the same file, the same optional elements and the same single real consumer (the reference parser and its `llms_txt2ctx` CLI). Nothing in either dossier is stronger evidence for the *merged* claim than for its own half, so the merge raises nothing. `weightForGrade('C', 'informative') === 0`, and grade C would carry weight 0 even at tier `scored` — the tier records that this audit also may not appear as a scored failure.
+1.2 and 1.3 were graded C independently on 2026-08-21 and the merged signal inherits that grade: it is the same file, the same optional elements and the same single real consumer (the reference parser and its `llms_txt2ctx` CLI). Nothing in either dossier is stronger evidence for the _merged_ claim than for its own half, so the merge raises nothing. `weightForGrade('C', 'informative') === 0`, and grade C would carry weight 0 even at tier `scored` — the tier records that this audit also may not appear as a scored failure.
 
 The grade is additionally capped by that of `llms-txt-exists` (1.1): a formatting sub-clause of a file cannot outrank the file's own evidence.
 
@@ -75,6 +75,7 @@ The grade is additionally capped by that of `llms-txt-exists` (1.1): a formattin
 ### Blockquote summary (from 1.2, grade C)
 
 **Evidence:**
+
 - The llms.txt specification lists the blockquote as an element of the format — "A blockquote with a short summary of the project, containing key information" — while stating the H1 "is the only required section" — https://llmstxt.org/ (verified 2026-08-21)
 - The reference implementation parses the blockquote into a named `summary` field: `summ_pat` = `(?:^>\s*(?P<summary>.+?$)$)?`, returned alongside `title`, `info` and `sections` — a real, inspectable consumer — https://raw.githubusercontent.com/AnswerDotAI/llms-txt/main/llms_txt/core.py (verified 2026-08-21)
 - That parser ships as a published package with the `llms_txt2ctx` CLI that turns the file into LLM context — https://pypi.org/project/llms-txt/ (verified 2026-08-21)
@@ -84,6 +85,7 @@ The grade is additionally capped by that of `llms-txt-exists` (1.1): a formattin
 ### H2 sections (from 1.3, grade C)
 
 **Evidence:**
+
 - The spec defines "Zero or more markdown sections delimited by H2 headers, containing 'file lists'". It attaches behaviour to exactly one heading: the "'Optional' section is used, by convention, for secondary information: links an agent can skip when a shorter context is needed". That is the only agent-visible semantics the format assigns to a heading — https://llmstxt.org/ (verified 2026-08-21)
 - The reference implementation returns `sections` as a dict mapping section names to their parsed link lists, so an H2 heading is a real addressable key — https://raw.githubusercontent.com/AnswerDotAI/llms-txt/main/llms_txt/core.py (verified 2026-08-21)
 - Chrome ships an agentic-browsing Lighthouse audit for llms.txt, giving the format vendor-tool recognition — https://developer.chrome.com/docs/lighthouse/agentic-browsing/llms-txt (verified 2026-08-21)

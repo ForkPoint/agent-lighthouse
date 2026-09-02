@@ -16,7 +16,6 @@ sources:
   - acp-architecture
 ---
 
-
 # Cart Handoff Reachability
 
 > Shipped in v2. Evidence grade **B** · scored tier · unique · implementation: `multi-page`
@@ -72,7 +71,7 @@ Tier per evidence policy: **scored** — grade B meets the A/B bar required for 
 - **`/cart.js` is not probed.** The sketch lists it for Shopify. It is a JSON endpoint rather than the document a buyer is handed to, and the failures this audit looks for — a login redirect, a challenge widget — live on the document.
 - **BigCommerce and Magento get one candidate path each** (`/cart.php`, `/checkout/cart`). Their `/checkout` paths are gated behind a cart that has something in it, so an empty-cart probe there measures nothing.
 - **Without a platform fingerprint the audit is not applicable, not failing.** It still probes `/cart` and `/checkout`, but when neither answers it reports `notApplicable`: the paths were a guess. With a fingerprint, an unanswered cart path is a failure, because the platform's own convention says where it should be.
-- **The JS-only arm needs both halves.** A document warns only when its visible text is under 200 characters *and* it carries no `<noscript>` content. A short page with a real fallback passes.
+- **The JS-only arm needs both halves.** A document warns only when its visible text is under 200 characters _and_ it carries no `<noscript>` content. A short page with a real fallback passes.
 
 ## Deferred
 

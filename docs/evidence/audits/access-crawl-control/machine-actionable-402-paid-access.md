@@ -15,7 +15,6 @@ sources:
   - s12
 ---
 
-
 # Machine-actionable 402 paid-access response
 
 > Shipped in v2. Evidence grade **B** · scored tier · unique · implementation: `static-fetch`
@@ -45,7 +44,7 @@ None found in the 2026-08 competitor survey.
 
 ## Implementation sketch
 
-Static-fetch, piggybacking on responses already captured by the edge-parity probe. 1) Collect every response with status 402 across the crawler-UA probe matrix and the baseline browser fetch. 2) A 402 is machine-actionable if ANY holds: (a) a `crawler-price` header matching /^[A-Z]{3}\s+\d+(\.\d+)?$/ with an ISO 4217 currency; (b) a `PAYMENT-REQUIRED` header whose base64 decodes to JSON containing `x402Version` and a non-empty `accepts` array, each item having scheme, network, amount, asset and payTo; (c) a `Link: rel=license; type=application/rsl+xml` (or a robots.txt `License:`) resolving to an RSL doc with `<payment type="crawl">` and a valid `<amount currency>` whose `<content url>` covers the 402'd path. 3) Fail when a 402 is returned with `content-type: text/html` and none of the three are present. 4) Secondary assertions worth their own sub-findings: the currency token is real ISO 4217; the amount parses as a decimal; a `Cache-Control` that would let a CDN cache the 402 across clients is flagged (a cached 402 poisons paying crawlers); and a 402 returned to the *browser* baseline as well as to crawler UAs indicates a misapplied rule hitting humans. 5) Emit a distinct informational result — not a failure — when no 402 is observed anywhere, so free sites are not penalised.
+Static-fetch, piggybacking on responses already captured by the edge-parity probe. 1) Collect every response with status 402 across the crawler-UA probe matrix and the baseline browser fetch. 2) A 402 is machine-actionable if ANY holds: (a) a `crawler-price` header matching /^[A-Z]{3}\s+\d+(\.\d+)?$/ with an ISO 4217 currency; (b) a `PAYMENT-REQUIRED` header whose base64 decodes to JSON containing `x402Version` and a non-empty `accepts` array, each item having scheme, network, amount, asset and payTo; (c) a `Link: rel=license; type=application/rsl+xml` (or a robots.txt `License:`) resolving to an RSL doc with `<payment type="crawl">` and a valid `<amount currency>` whose `<content url>` covers the 402'd path. 3) Fail when a 402 is returned with `content-type: text/html` and none of the three are present. 4) Secondary assertions worth their own sub-findings: the currency token is real ISO 4217; the amount parses as a decimal; a `Cache-Control` that would let a CDN cache the 402 across clients is flagged (a cached 402 poisons paying crawlers); and a 402 returned to the _browser_ baseline as well as to crawler UAs indicates a misapplied rule hitting humans. 5) Emit a distinct informational result — not a failure — when no 402 is observed anywhere, so free sites are not penalised.
 
 ## Example failure
 

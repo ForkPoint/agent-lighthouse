@@ -17,7 +17,6 @@ sources:
   - almanac-markup-2024
 ---
 
-
 # Extraction determinism (multi-extractor agreement)
 
 > Shipped in v2. Evidence grade **B** · scored tier · unique · implementation: `static-fetch`
@@ -36,7 +35,7 @@ There is no single 'the content of this page'; there is whatever the fetching ag
   - Benchmark over 990 documents (run dated 2026-08-04): trafilatura 2.2.0 F=0.924 (P 0.906 / R 0.943), magic-html F=0.889, news-please F=0.836, readability-lxml F=0.826, goose3 F=0.810 with precision 0.936 but recall 0.714, inscriptis recall 0.991 with precision 0.534. Extractors disagree massively on what the main content of a page is — quantified spread that justifies an extractor-agreement metric.
 - **[mozilla/readability](https://github.com/mozilla/readability)** — Mozilla (repo, URL verified 2026-08-20)
   - parse() returns title, content, textContent, length, excerpt, byline, dir, siteName, lang, publishedTime; charThreshold default 500 chars below which no article is returned; isProbablyReaderable uses minContentLength 140 and minScore 20. Gives concrete pass/fail hooks (null result, length, title) for an extractability check.
-- **[Readability.js source — _isProbablyVisible](https://raw.githubusercontent.com/mozilla/readability/main/Readability.js)** — Mozilla (repo, URL verified 2026-08-20)
+- **[Readability.js source — \_isProbablyVisible](https://raw.githubusercontent.com/mozilla/readability/main/Readability.js)** — Mozilla (repo, URL verified 2026-08-20)
   - Visibility test is literally: node.style.display != "none" && node.style.visibility != "hidden" && !node.hasAttribute("hidden") && aria-hidden!="true". Only inline styles and attributes are consulted — "It does not evaluate class-based CSS rules from stylesheets." Proof that content hidden by an external stylesheet class is ingested as if visible by the most widely deployed extractor.
 - **[Jina Reader (r.jina.ai)](https://jina.ai/reader/)** — Jina AI (vendor-doc, URL verified 2026-08-20)
   - Converts URLs to "clean, LLM-ready" markdown because "raw HTML is cluttered with extraneous elements". Documents X-Target-Selector ("Only extract content matching these CSS selectors"), X-Remove-Selector ("Remove these elements before extraction"), X-Retain-Images ("Strip all images from the output" to reduce token usage), X-Return-Format, X-With-Images-Summary. Token cost of images/boilerplate is an explicit product knob.
@@ -102,6 +101,7 @@ the question with the tool under test.
 Only the entry page is compared. Three extractions cost one jsdom parse and two
 cheerio passes; running that per page would multiply the scan's cost to report
 the same template property.
+
 - 2026-08-28 — the audit declines when the scan holds no response it can
   attribute to this site. It read the first scanned page through three
   extractors, and `ctx.pages`/`ctx.rootFiles` carry whatever answered 200 — on

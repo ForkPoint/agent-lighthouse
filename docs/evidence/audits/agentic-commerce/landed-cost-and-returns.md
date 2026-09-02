@@ -17,7 +17,6 @@ sources:
   - google-merchant-listing
 ---
 
-
 # Landed-Cost and Returns Machine Readability
 
 > Shipped in v2. Evidence grade **A** · scored tier · partial overlap · implementation: `static-fetch`

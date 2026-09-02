@@ -33,11 +33,13 @@ CCBot is still active and Common Crawl still feeds many downstream training sets
 **Required fix:** Ship the version-token normalization in `_robots-txt-helpers.ts` (strip `/<version>` before comparison) and add `CCBot/2.0` as an explicit regression test. Soften `impact` to reflect the multi-month lag between a Common Crawl snapshot and any model that consumes it.
 
 **False-positive risks:**
+
 - `g.userAgent.toLowerCase() === 'ccbot'` fails against the extremely common `User-agent: CCBot/2.0`, inverting block detection.
 - Passing this audit gives no near-term AI benefit: Common Crawl snapshots enter model corpora on a multi-month-to-multi-year lag, so the `impact` framing of reach across AI systems is not actionable for current visibility.
 - Shared BOM / soft-404 / `Disallow: /*` misreads.
 
 **Test gaps:**
+
 - No `User-agent: CCBot/2.0` test — the single most likely real-world form for this specific bot.
 - Same missing real-world robots.txt variants as 2.1.
 

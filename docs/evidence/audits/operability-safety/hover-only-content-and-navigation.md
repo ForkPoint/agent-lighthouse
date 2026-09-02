@@ -16,7 +16,6 @@ sources:
   - S1
 ---
 
-
 # Hover-Only Content and Navigation
 
 > Shipped in v2. Evidence grade **B** · scored tier · unique · implementation: `static-fetch`

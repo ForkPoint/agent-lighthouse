@@ -26,11 +26,13 @@ Falsy. You.com pivoted away from consumer answer search to enterprise agent APIs
 **Required fix:** Remove from the scored roster, or fold into a single zero-weight 'long-tail AI crawlers' informational check with cohere-ai, Diffbot and AI2Bot.
 
 **False-positive risks:**
+
 - `impact` promises visibility in an answer engine with essentially no consumer traffic — the guidance is unactionable regardless of whether the audit's parsing is correct.
 - Weight 1.0 equal to GPTBot distorts the category score.
 - Shared exact-match / BOM / soft-404 misreads.
 
 **Test gaps:**
+
 - Template-only; no liveness or impact validation.
 - Same missing real-world robots.txt variants as 2.1.
 

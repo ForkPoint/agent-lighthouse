@@ -30,6 +30,7 @@ BreadcrumbList is a real, still-consumed signal, but the applicability gate is a
 **Required fix:** Return `this.notApplicable(...)` when no deep pages exist. Drive applicability off `pageType` (product/category/content) rather than segment count, resolve depth from `fetchResult.finalUrl`, and strip a leading locale segment (`/xx/` or `/xx-yy/`) before counting. Additionally require `itemListElement` to be a non-empty array with sequential `position` values before passing.
 
 **False-positive risks:**
+
 - `urlDepth(p.url) > 1` is pure URL shape. A locale-prefixed site (`/en-us/about`, `/de/kontakt`) has depth 2 on every page and is required to carry breadcrumbs even though it is logically flat — a false fail driven entirely by an i18n path segment.
 - Conversely a genuinely deep site using flat slugs (`/blue-running-shoe`) is exempted from breadcrumbs entirely, so the audit passes sites that most need the fix.
 - Uses `p.url` rather than `p.fetchResult.finalUrl`. After a `/category/sub-page` → `/sub-page` redirect the page is still counted as deep and required to have breadcrumbs describing a hierarchy that no longer exists.
@@ -38,6 +39,7 @@ BreadcrumbList is a real, still-consumed signal, but the applicability gate is a
 - Which pages count as 'deep' depends entirely on which URLs the crawler happened to sample, so the same site can score pass/warn/fail across runs with different page discovery.
 
 **Test gaps:**
+
 - No test for a locale-prefixed URL (`/en-us/about`) being wrongly classed as deep
 - No test where `url` and `fetchResult.finalUrl` differ (redirect)
 - No test for a BreadcrumbList with an empty or malformed `itemListElement`
@@ -62,6 +64,7 @@ _No dedicated evidence signal was researched for this audit in the 2026-08-20 pa
 **Grade: A** — a vendor doc names the consumer (Google Search), states the behavior verbatim, and specifies the required shape of the signal; adoption is at web scale.
 
 **Evidence:**
+
 - Google: "Google Search uses breadcrumb markup in the body of a web page to categorize the information from the page in search results." Required shape: an `itemListElement` array; each `ListItem` requires `position` ("Position 1 signifies the beginning of the trail"), `name` and `item` (`item` "is not required" for the last element) — https://developers.google.com/search/docs/appearance/structured-data/breadcrumb (verified 2026-08-21)
 - Breadcrumb remains a live feature in Google's structured data gallery: "Navigation that indicates the page's position in the site hierarchy." — https://developers.google.com/search/docs/appearance/structured-data/search-gallery (verified 2026-08-21)
 - Adoption: BreadcrumbList found on 6.2M domains in the October 2024 Common Crawl, and on 5.66% of mobile pages — https://webdatacommons.org/structureddata/2024-12/stats/stats.html and https://almanac.httparchive.org/en/2024/structured-data (both verified 2026-08-21)

@@ -42,6 +42,7 @@ Bundles `td-has-header`, `th-has-data-cells`, `td-headers-attr`, `scope-attr-val
 **Required fix:** _none — audit is sound as implemented_
 
 **False-positive risks:**
+
 - `isDataTable` is a heuristic: legacy layout tables (email templates, older CMS output, `<table>`-based pricing grids with borders and a caption) can be classified as data tables and fail `td-has-header`, giving a site owner remediation work on a table that carries no data semantics.
 - Conversely a genuine data table rendered as `<div role="table">` without `role="columnheader"` is only partly covered (`td-headers-attr` matches grid/table roles but the td/th rules need real table elements) → false negative on modern virtualized tables.
 - CSS blindness: hidden responsive table variants (sites ship a desktop `<table>` plus a hidden mobile card list, or vice versa) are both evaluated.
@@ -49,6 +50,7 @@ Bundles `td-has-header`, `th-has-data-cells`, `td-headers-attr`, `scope-attr-val
 - Four rules collapsed into one binary verdict at 'medium' with no attribution and a `table`/`table.foo` selector.
 
 **Test gaps:**
+
 - No HTML-level test for this audit (only synthetic `inapplicable` statuses in _a11y.test.ts).
 - No layout-table fixture testing the `isDataTable` boundary.
 - No fixture with `headers`/`id` association (as opposed to `scope`).

@@ -26,6 +26,7 @@ Permanently inert: its precondition is `form[toolname]`, an attribute no real si
 **Required fix:** Merge into 5.27 form-actionability, which already evaluates native elements, label association, and autocomplete on ALL forms rather than only WebMCP-tagged ones. Carry over nothing but the concept; drop the placeholder-as-label rule, which 5.27 correctly rejects. Delete this file.
 
 **False-positive risks:**
+
 - `page.$('form[toolname]')` never matches on a real site → `notApplicable` 100% of the time. The audit consumes runtime and report space while measuring nothing.
 - `(placeholder && placeholder.length > 0)` counts as a valid label (line 75). Placeholders are not accessible names, vanish on input, and are exactly what 5.27's description says agents cannot use. Two audits in the same category give contradictory guidance on the same attribute.
 - `label[for=...]` is searched page-wide (`page.$(...)`) here but form-scoped in 5.27 — inconsistent association semantics between two audits checking the same thing.
@@ -33,6 +34,7 @@ Permanently inert: its precondition is `form[toolname]`, an attribute no real si
 - The `type` attribute is named in the title and description ('inputs have name, type, and label') but is never actually scored — only skipped-type filtering uses it.
 
 **Test gaps:**
+
 - No test acknowledging the audit is unreachable on real input
 - No id-with-colon fixture exposing the over-escaping bug
 - No test of the placeholder-vs-label contradiction with 5.27
@@ -56,6 +58,7 @@ _No dedicated evidence signal was researched for this audit in the 2026-08-20 pa
 **Grade: B** — this is exactly what the WebMCP declarative API explainer specifies, and the proposal is in browser origin trials (Chrome 149, Edge 150), so it is a draft standard with real implementation adoption; site-side adoption is still nil and the audit's label/placeholder rule is not part of the spec.
 
 **Evidence:**
+
 - The declarative explainer states: "The `name` attribute on form control elements supplies the name of each 'property' in the input schema generated for a declarative tool", and shows a `<form toolname=… tooldescription=…>` compiling to a `document.modelContext.registerTool()` inputSchema — https://raw.githubusercontent.com/webmachinelearning/webmcp/main/declarative-api-explainer.md (verified 2026-08-21)
 - `toolname` / `tooldescription` / `toolautosubmit` / `toolparamdescription` are the real proposed attribute names, so the audit's `form[toolname]` selector matches the actual proposal rather than an invention — same source (verified 2026-08-21)
 - Implementation status: Chrome "An Origin Trial is live in Chrome 149", Edge "live in Edge 150", Brave "Experimental support is added to Leo AI chat" — https://raw.githubusercontent.com/webmachinelearning/webmcp/main/implementation-status.md (verified 2026-08-21)

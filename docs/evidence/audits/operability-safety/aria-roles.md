@@ -52,6 +52,7 @@ Bundles `aria-roles` (invalid/abstract/unsupported), `aria-deprecated-role`, and
 **Required fix:** Split into two audits (or two severities): `aria-roles` + `aria-deprecated-role` at 'high' (hard errors), `aria-allowed-role` at 'low'/warn (best practice). Include the triggering rule id in the `found` string so the report says which rule fired.
 
 **False-positive risks:**
+
 - `aria-allowed-role` (axe best-practice) fires on common legitimate markup — e.g. `role="button"`/`role="tab"` on `<a href>`, `role="presentation"` on structural wrappers, framework-emitted roles on `<li>` — producing a 'high' priority fail for markup that works fine for agents.
 - `unsupportedrole` flags roles that are valid ARIA but not implemented in a given browser engine; sites deliberately shipping forward-looking roles (e.g. `role="suggestion"`, dpub roles) get failed.
 - CSS blindness: roles on hidden template/carousel clones are evaluated.
@@ -59,6 +60,7 @@ Bundles `aria-roles` (invalid/abstract/unsupported), `aria-deprecated-role`, and
 - CSR SPA → `na`, since roles are applied at runtime.
 
 **Test gaps:**
+
 - No HTML-level test for this audit.
 - No fixture separating an invalid role from an allowed-role best-practice violation.
 - No fixture with dpub roles or deprecated roles.

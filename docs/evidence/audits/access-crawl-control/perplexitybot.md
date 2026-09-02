@@ -33,12 +33,14 @@ Perplexity is a genuinely high-value citation surface, so the signal is worth ke
 **Required fix:** Move PerplexityBot to `REALTIME_CRAWLERS` (or add a third `search-index` category) and add a `Perplexity-User` audit to `REALTIME_CRAWLERS`. Apply the shared helper fixes from 2.1.
 
 **False-positive risks:**
+
 - Miscategorization as `training` feeds `TRAINING_CRAWLERS` into 2.28's `categoryBlocked`, so a site allowing PerplexityBot for search while blocking real training crawlers reads as inconsistent training policy.
 - Shared exact-match miss on `User-agent: PerplexityBot/1.0`.
 - Perplexity has been repeatedly documented crawling from undeclared UAs and rotating IPs; a robots.txt-only verdict overstates what the directive actually controls.
 - Shared BOM / soft-404 / `Disallow: /*` misreads.
 
 **Test gaps:**
+
 - No test asserting the bot's category classification.
 - No coverage of `Perplexity-User` (the token absent from the roster).
 - Same missing real-world robots.txt variants as 2.1.

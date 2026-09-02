@@ -62,6 +62,7 @@ Requires all four of banner/header, main, navigation, contentinfo/footer on the 
 **Required fix:** Scope the header/footer checks to top-level elements (`body > header`, `header:not(article header, section header, aside header, nav header, main header)` and the same for footer). Evaluate every scanned page and report per-page, or state explicitly that the result is homepage-only. Return `na` (not `fail`) when the fetched body has no meaningful content (SPA shell: e.g. <500 chars of text and a single root div) or when `ctx.wafProtection?.isBlocked`. Weight `main` far above `footer` instead of a raw count cliff. Remove the duplicate `<nav>` requirement here since 7.3 already reports it.
 
 **False-positive risks:**
+
 - Landmark scoping ignored: `$('header').length > 0` counts a `<header>` nested inside `<article>`/`<section>`, which is not a banner landmark. A blog index whose only `<header>` elements are per-post card headers passes 'banner' falsely; the same bug applies to `<footer>` inside `<article>` (not contentinfo).
 - Inverse: a site that puts its masthead in `<div class="header">` with no role fails 'banner' even though agents locate it fine from `<nav>`+`<h1>`; missing `<footer>` alone is common on landing pages and single-purpose pages and is reported at 'high' priority.
 - Only `ctx.pages[0]` is inspected (`const $ = ctx.pages[0].$;`), yet the verdict is presented as a site-wide fact. A homepage built from a hero-only template fails the whole site.
@@ -71,6 +72,7 @@ Requires all four of banner/header, main, navigation, contentinfo/footer on the 
 - The `missing.length <= 1 ? warn : fail` cliff is arbitrary — missing `main` alone (the most consequential landmark) is only a warn, while missing `header`+`footer` (cosmetic) is a hard fail.
 
 **Test gaps:**
+
 - No fixture with `<header>`/`<footer>` nested inside `<article>`/`<section>` (the scoping bug).
 - No SPA-shell fixture.
 - No multi-page fixture demonstrating that only page[0] is inspected.

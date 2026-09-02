@@ -13,7 +13,6 @@ sources:
   - S11
 ---
 
-
 # Extractor Survival Recall
 
 > Shipped in v2. Evidence grade **B** · scored tier · unique · implementation: `static-fetch`
@@ -66,7 +65,7 @@ removes `script`, `style`, `noscript`, `template`, `nav`, `aside`, `header`,
 `/comment|sidebar|promo|related|advert|ad-|banner|cookie|newsletter|share/i`.
 Both are reported separately, because their disagreement is itself the signal.
 
-Recall is the *minimum* of the two, not the average. An agent uses one pipeline
+Recall is the _minimum_ of the two, not the average. An agent uses one pipeline
 or the other, and a fact that survives only one of them is a fact half the
 agents will not see.
 
@@ -87,6 +86,7 @@ of the extractor as much as of the page.
 
 Thresholds: below 90% recall fails, per the proposal. The 90–97% warn band is
 this implementation's.
+
 - 2026-08-28 — the audit declines when the scan holds no response it can
   attribute to this site. It read the first scanned page's key spans, and
   `ctx.pages`/`ctx.rootFiles` carry whatever answered 200 — on a parked domain
