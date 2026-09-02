@@ -71,7 +71,7 @@ export function mergeStatus(
   date: string,
 ): CorpusStatus {
   const domains: Record<string, CorpusObservation> = {
-    ...(previous?.domains ?? {}),
+    ...previous?.domains,
   };
   for (const outcome of outcomes) {
     const prior = domains[outcome.domain];
