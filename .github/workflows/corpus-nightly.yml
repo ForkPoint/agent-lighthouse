@@ -19,8 +19,8 @@ permissions:
 jobs:
   scan:
     runs-on: ubuntu-latest
-    # The list is about 365 curated domains and a night scans all of it:
-    # at concurrency 2 and about 63 s per site per worker that is about 190
+    # The list is about 400 curated domains and a night scans all of it:
+    # at concurrency 2 and about 63 s per site per worker that is about 210
     # minutes, inside the script's 240-minute deadline. status.json keeps
     # dead and robots-blocked domains out, which is most of what made the
     # old 1913-entry list slow. This cap is the backstop behind the deadline.

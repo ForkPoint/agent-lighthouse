@@ -136,9 +136,9 @@ const DEFAULTS = {
   /**
    * Sites per run.
    *
-   * The list is about 365 curated domains, so the default window is the
+   * The list is about 400 curated domains, so the default window is the
    * whole list: `windowOf` returns everything when `size >= all.length`.
-   * At concurrency 2 and 63 s per site per worker, 365 sites is about 190
+   * At concurrency 2 and 63 s per site per worker, 400 sites is about 210
    * minutes, inside the 240-minute deadline. The date-seeded offset still
    * applies when a smaller limit is passed.
    */
@@ -262,10 +262,12 @@ function dayOfYear(now: Date): number {
 /**
  * `size` entries starting at `offset`, wrapping past the end of the list.
  *
- * The list is sorted by domain, so a fixed `slice(0, 400)` scans the same
- * numeric-prefixed head every night and never visits the other 1513 entries.
- * A date-seeded offset covers the whole list in five nights at identical
- * politeness, and `--offset=` makes a dispatch run reproducible.
+ * The list is sorted by domain, so a fixed `slice(0, size)` on a list larger
+ * than `size` scans the same numeric-prefixed head every night and never
+ * visits the rest. A date-seeded offset covers the whole list over several
+ * nights at identical politeness, and `--offset=` makes a dispatch run
+ * reproducible. The default window now holds the whole list; the offset
+ * still matters when a smaller `--limit` is passed.
  */
 function windowOf<T>(all: T[], size: number, offset: number): T[] {
   if (all.length === 0 || size === 0) return [];
@@ -389,9 +391,12 @@ async function main(): Promise<void> {
     blocked: FLAGS["include-blocked"] > 0,
   });
   const all = listed.filter((s) => !excluded.has(s.domain));
-  if (excluded.size > 0) {
+  // Count list entries removed, not the exclusion set: status.json remembers
+  // domains the list no longer carries, and that number says nothing here.
+  const leftOut = listed.length - all.length;
+  if (leftOut > 0) {
     console.log(
-      `[scan-site-list] ${excluded.size} domain(s) left out by status.json`,
+      `[scan-site-list] ${leftOut} of ${listed.length} listed domain(s) left out by status.json`,
     );
   }
   const offset = Number.isFinite(FLAGS.offset)

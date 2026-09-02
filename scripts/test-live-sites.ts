@@ -260,9 +260,14 @@ async function main(): Promise<void> {
     if (options.tier && s.tier !== options.tier) return false;
     return !excluded.has(s.domain);
   });
-  if (excluded.size > 0) {
+  // Count list entries removed, not the exclusion set: status.json remembers
+  // domains the list no longer carries.
+  const leftOut = allSites.filter(
+    (s) => (!options.tier || s.tier === options.tier) && excluded.has(s.domain),
+  ).length;
+  if (leftOut > 0) {
     console.log(
-      `Status file: ${excluded.size} dead or blocked domain(s) left out (--include-dead, --include-blocked to add them)`,
+      `Status file: ${leftOut} dead or blocked domain(s) left out (--include-dead, --include-blocked to add them)`,
     );
   }
   if (options.tier) console.log(`Tier: ${options.tier} (${pool.length} sites)`);
