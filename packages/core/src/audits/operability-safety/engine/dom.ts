@@ -19,7 +19,11 @@ import {
   parseTabindex,
   type AnyNode,
 } from "./core";
-import { getAriaValue, getExplicitRole } from "./aria";
+import {
+  getAriaValue,
+  getExplicitRole,
+  labelVirtual as labelVirtualAria,
+} from "./aria";
 
 export function getRootNode(node: AnyNode): Document | DocumentFragment {
   return utilGetRootNode(node);
@@ -438,6 +442,3 @@ export function isHTML5(doc: Document): boolean {
   if (node === null) return false;
   return node.name === "html" && !node.publicId && !node.systemId;
 }
-
-// Lazy import to break aria↔dom cycle (labelVirtual lives in aria).
-import { labelVirtual as labelVirtualAria } from "./aria";

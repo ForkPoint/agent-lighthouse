@@ -108,7 +108,7 @@ export function resolveUrl(
 /** Whether a string parses as an absolute URL. */
 export function isValidUrl(url: string): boolean {
   try {
-    new URL(url);
+    void new URL(url);
     return true;
   } catch {
     return false;

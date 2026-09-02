@@ -1,4 +1,14 @@
 {
   "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "ignorePatterns": ["**/*.astro"]
+  "ignorePatterns": ["**/*.astro"],
+  "plugins": ["eslint", "typescript", "unicorn", "oxc", "import", "promise"],
+  "categories": {
+    "correctness": "error",
+    "suspicious": "error"
+  },
+  "rules": {
+    "no-return-await": "error",
+    "unicorn/no-unnecessary-await": "error",
+    "unicorn/prefer-regexp-test": "error"
+  }
 }

@@ -1104,7 +1104,7 @@ const metaRefresh: EvaluateFn = function (_node, options, virtualNode) {
   };
   const content = (virtualNode.attr("content") || "").trim();
   const [redirectStr] = content.split(separatorRegex);
-  if (!redirectStr.match(validRedirectNumRegex)) return true;
+  if (!validRedirectNumRegex.test(redirectStr)) return true;
   const redirectDelay = parseFloat(redirectStr);
   this.data({ redirectDelay });
   if (typeof minDelay === "number" && redirectDelay <= minDelay) return true;

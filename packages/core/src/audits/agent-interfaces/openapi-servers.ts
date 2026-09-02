@@ -2,13 +2,15 @@ import type { AuditMeta, AuditResult } from "../../types";
 import { Audit } from "../../audit";
 import { weightForGrade } from "../../scorer";
 import type { CheckContext } from "../../check-context";
-import { NO_OPENAPI_SPEC, readOpenApiSpec } from "../../gatherers/openapi";
+import {
+  NO_OPENAPI_SPEC,
+  probeOpenApiServer,
+  readOpenApiSpec,
+} from "../../gatherers/openapi";
 
 function isObject(val: unknown): val is Record<string, unknown> {
   return typeof val === "object" && val !== null && !Array.isArray(val);
 }
-
-import { probeOpenApiServer } from "../../gatherers/openapi";
 
 export class OpenApiServersAudit extends Audit {
   static override meta: AuditMeta = {

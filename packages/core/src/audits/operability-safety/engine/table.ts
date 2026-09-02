@@ -16,7 +16,7 @@ import {
   type AnyNode,
 } from "./core";
 import { getExplicitRole, getRoleType } from "./aria";
-import { isFocusable } from "./dom";
+import { idrefs, isFocusable } from "./dom";
 
 type Cell = AnyNode & {
   nodeName: string;
@@ -378,6 +378,3 @@ export function isDataTable(node: Table): boolean {
   if (el.querySelector("object, embed, iframe, applet")) return false;
   return true;
 }
-
-// Lazy import to break aria/table cycle for idrefs.
-import { idrefs } from "./dom";

@@ -6,6 +6,14 @@ declare const __PACKAGE_VERSION__: string;
 const REPORT_VERSION =
   typeof __PACKAGE_VERSION__ === "string" ? __PACKAGE_VERSION__ : "unknown";
 
+/** Gauge stroke colour for a 0-100 score. */
+function getGaugeColor(score: number): string {
+  if (score >= 90) return "#10b981"; // emerald-500
+  if (score >= 70) return "#3b82f6"; // blue-500
+  if (score >= 50) return "#f59e0b"; // amber-500
+  return "#ef4444"; // red-500
+}
+
 /**
  * Generates a standalone, zero-dependency, self-contained HTML report
  * with interactive tabs, category accordions, copyable code snippets,
@@ -13,13 +21,6 @@ const REPORT_VERSION =
  */
 export function generateHtmlReport(report: ScanReport): string {
   const view = buildReportView(report);
-
-  function getGaugeColor(score: number): string {
-    if (score >= 90) return "#10b981"; // emerald-500
-    if (score >= 70) return "#3b82f6"; // blue-500
-    if (score >= 50) return "#f59e0b"; // amber-500
-    return "#ef4444"; // red-500
-  }
 
   function renderGaugeSvg(score: number, size = 120, strokeWidth = 10): string {
     const radius = (size - strokeWidth) / 2;

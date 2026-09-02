@@ -309,9 +309,7 @@ async function main(): Promise<void> {
 
     const dispatcher = boundedDispatcher(options.concurrency);
 
-    async function checkRobots(
-      domain: string,
-    ): Promise<{
+    async function checkRobots(domain: string): Promise<{
       scan: boolean;
       reason?: SkipReason;
       robotsTxt?: FetchResult;
