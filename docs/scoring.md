@@ -115,6 +115,17 @@ The mass distribution is derived from the registry, not written down anywhere, s
 
 Every scan reports the live figure rather than this snapshot: each category in the JSON report carries its own `weight`, which is its evidence mass for that run.
 
+### The evidence gate and unscorable scans (`overallScore: null`)
+
+A scan judges a site from what the fetch phase returned. If the fetch phase never reached the site (e.g., connection refusal, network error, or a bot defense wall) or received a degenerate response, the scanner must not invent a score from an unread run.
+
+When missing scan evidence causes audits to be gated out, dropping those audits from the denominator would artificially inflate the score of a site nobody could read (for example, a bot wall or empty shell scoring 70+ while real stores score 50–60).
+
+To prevent this distortion, the scorer monitors **gated mass share** (`gatedMassShare` in `packages/core/src/scorer.ts`):
+- `GATED_MASS_UNSCORED_THRESHOLD = 0.35` (35% of total registry evidence mass).
+- If the share of evidence mass gated out by missing evidence exceeds 35%, the scan is declared **unscorable**: `overallScore` is set to `null` (with tier label `unscorable`) rather than an artificial numerical score.
+- Legitimate domain absence (such as page-type skips on a site with no blog or storefront) does not count toward the threshold; only mass withheld by the evidence gate is counted.
+
 ## Score tiers
 
 The headline score is also labelled, using fixed bands:
