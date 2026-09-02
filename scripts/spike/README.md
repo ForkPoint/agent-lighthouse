@@ -1,7 +1,7 @@
 # Evidence-gate spike
 
-Measurement run behind `docs/architecture/history/scan-evidence-gate-design.md`.
-Kept so every number in that document can be reproduced or refuted.
+Measurement run behind the scan evidence gate architecture in `docs/architecture/audits.md` §6.1.
+Kept so every number behind the evidence gate calibration can be reproduced or refuted.
 
 ```bash
 npx tsx scripts/spike/probe-shells.ts   results-shells.json   # find real client-rendered sites
