@@ -365,7 +365,6 @@ export function createFetcher(fetcherOptions: FetcherOptions = {}) {
         if (gateArmed && !(await isSafeUrl(next))) {
           await response.body.dump();
           logger.warn(
-            { url: targetUrl, refused: next },
             `[fetcher] Refusing redirect out of public address space: ${targetUrl} -> ${next}`,
           );
           const refusedMs = performance.now() - start;
@@ -484,9 +483,13 @@ export function createFetcher(fetcherOptions: FetcherOptions = {}) {
       const code = errorCode(err);
       const detail = code ? `${message} (${code})` : message;
 
-      logger.error(
+      // A failed fetch is a result, not a fault: the caller reads `error` and
+      // decides. One line at warn names it; the object and its stack are
+      // debug material, or every walled site prints a screen of frames.
+      logger.warn(`[fetcher] Fetch error: ${targetUrl} - ${detail}`);
+      logger.debug(
         { url: targetUrl, err, code, totalMs: Math.round(totalMs) },
-        `[fetcher] Fetch error: ${targetUrl} - ${detail}`,
+        `[fetcher] Fetch error detail: ${targetUrl}`,
       );
 
       return {
