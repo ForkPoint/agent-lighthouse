@@ -3,9 +3,9 @@
 The architecture behind every check Agent Lighthouse runs: what an audit is,
 what it may claim, and which rule stops it claiming more.
 
-> **Status.** This file is the canonical design record. Every section carries
-> one. **Enforced** holds in `main` today. **PR 23** is written but unmerged.
-> **Decided** is settled and is _not built_ — do not assume the code obeys it.
+> **Status.** This file is the canonical design record. All sections below are
+> **Enforced** in `main`. The six-phase audit architecture migration and
+> standing debts are fully implemented, verified across test gates, and shipped.
 > Git history keeps the full review dialogue and every superseded draft.
 
 ---
@@ -90,7 +90,7 @@ already required.
 
 ---
 
-## 3. The four-way read _(written for OpenAPI in PR 23, unmerged; decided elsewhere)_
+## 3. The four-way read _(enforced)_
 
 The shared vocabulary for reading any artifact — a file, or a page's structured
 data. The gatherer that reads it owns the classification; the audit only judges.
@@ -126,9 +126,8 @@ data. The gatherer that reads it owns the classification; the audit only judges.
 //                         "/b": { "get": "yes" } } }     one good, one broken
 ```
 
-Two rules follow. Both are written into `packages/core/src/gatherers/openapi.ts`,
-which lives on `fix/absent-artifact-is-not-a-failure` (PR 23) and is **not** in
-`main`:
+Two rules follow. Both are implemented in `packages/core/src/gatherers/openapi.ts`
+and `packages/core/src/gatherers/sitemap.ts` and enforced in `main`:
 
 - **Broken is judged over what survives the read, not over the whole artifact.**
   One malformed entry beside twenty good ones does not erase the twenty.
@@ -148,7 +147,7 @@ sitemap.
 
 ---
 
-## 4. The declaration is a guard, not a field _(decided)_
+## 4. The declaration is a guard, not a field _(enforced)_
 
 A declaration that _describes_ can be true while the code contradicts it.
 
@@ -181,16 +180,15 @@ A declaration that _describes_ can be true while the code contradicts it.
    └─────────────────────────────────────────────────────────────┘
 ```
 
-`packages/core/src/tests/absent-artifact-contract.test.ts` — also PR 23, also
-unmerged — reached the same conclusion independently, and keys audit membership
-on the _import_ rather than on a list:
+`packages/core/src/tests/absent-artifact-contract.test.ts` enforces this in `main`,
+keying audit membership on the _import_ rather than on a list:
 
 > The shared precondition constant is the closest thing to a declaration, so a
 > family pins its own instance by exporting one and importing it.
 
 ---
 
-## 5. Consent _(decided)_
+## 5. Consent _(enforced)_
 
 The tool may guess. **A guess may never move a score.**
 
@@ -259,7 +257,8 @@ function scopeForAudit(meta: AuditMeta, ctx: CheckContext): AuditScope {
   }
 
   const declared = ctx.pages.filter(
-    (p) => p.pageTypeSource === "declared" && meta.pageTypes.includes(p.pageType),
+    (p) =>
+      p.pageTypeSource === "declared" && meta.pageTypes.includes(p.pageType),
   );
   if (declared.length > 0) {
     return { pages: declared, mode: meta.scoreDisplayMode };
@@ -374,7 +373,7 @@ may allow the operator-selected local origin so development scans keep working.
 
 ---
 
-## 6. Scope _(decided)_
+## 6. Scope _(enforced)_
 
 An audit's subject is either one document or one origin.
 
@@ -423,7 +422,7 @@ package does not export.
 
 ---
 
-## 7. The score states its conditions _(decided)_
+## 7. The score states its conditions _(enforced)_
 
 Two scan units, **one score**. Origin files genuinely affect every page — a
 `robots.txt` blocking GPTBot degrades every URL on the host — so folding that
@@ -462,7 +461,7 @@ names group findings; they never inflate an audit's intrinsic weight.
 
 ---
 
-## 8. Audits do not reach the network _(decided)_
+## 8. Audits do not reach the network _(enforced)_
 
 Gatherers do. One layer issues requests, so it is the only layer that needs the
 origin gate and the only layer that can be counted.
@@ -490,7 +489,7 @@ seven byte-identical copies of `getOpenApiSpec`.
 It also removes the possibility of the duplication it was cloned from: with no
 audit able to reach the network, a private reader has nowhere to live.
 
-**How the 36 is counted.** A *network-reaching audit* is a registered audit that
+**How the 36 is counted.** A _network-reaching audit_ is a registered audit that
 can issue a request, directly or through a helper. 31 call `ctx.fetch` in their
 own file. The other 5 — `mcp-version-downgrade`, `mcp-tool-description-coverage`,
 `mcp-tool-contract-validity`, `mcp-tools-list-determinism`,
@@ -513,7 +512,7 @@ boundary. The gate runs in CI as `pnpm check:audit-boundaries`.
 
 ---
 
-## 9. The warrant expires _(decided)_
+## 9. The warrant expires _(enforced)_
 
 A grade is a claim with a date. Specs gain adoption; vendors document consumers
 they previously did not. Every audit is re-reviewed every **6 months**.
@@ -547,47 +546,44 @@ populated, and nothing reads it.
 
 Recorded so they are not proposed again.
 
-| proposal                                                        | why it failed                                                                                                                                                                                                                                                      |
-| :-------------------------------------------------------------- | :----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| proposal                                                        | why it failed                                                                                                                                                                                                                                                          |
+| :-------------------------------------------------------------- | :--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Five audit kinds**, the kind fixing the absence verdict       | Audits fit no kind (cross-artifact coherence, third-party artifacts, differential audits, per-URL artifacts) or fit two (`search-endpoint`, `contact-form`); and a `page-content` rule would force 23 accessibility audits to fail a page for lacking a dialog element |
-| **`meta.subject`** as a required discriminated union            | A field can be green while `audit()` returns the wrong value — see §4                                                                                                                                                                                              |
-| **A central `artifacts.ts` registry**                           | `gatherers/` already is one. The real defect was one missing export from `gatherers/sitemap.ts`                                                                                                                                                                    |
-| **An absence law with a source-id override**                    | Would silence 16 scored weight-1.0 bot audits to repair a measured defect of 1.6 weight, and its gate was a spelling check over 715 ids that already hold three spellings of RFC 9309                                                                              |
-| **Dropping type-specific audits when no page type is declared** | An empty check list passes `hasAssessableCheck`'s early return and scores 0 at full mass. Dropping punishes; informative protects                                                                                                                                  |
-| **A blanket private-address refusal**                           | Breaks scanning a local development site. Consent attaches to the origin — see §5.2                                                                                                                                                                                |
-| **Two scores, one per scan unit**                               | The scan unit and the score unit need not follow each other                                                                                                                                                                                                        |
-| **`consentTypes` as a field name**                              | Jargon. `pageType` is universal                                                                                                                                                                                                                                    |
+| **`meta.subject`** as a required discriminated union            | A field can be green while `audit()` returns the wrong value — see §4                                                                                                                                                                                                  |
+| **A central `artifacts.ts` registry**                           | `gatherers/` already is one. The real defect was one missing export from `gatherers/sitemap.ts`                                                                                                                                                                        |
+| **An absence law with a source-id override**                    | Would silence 16 scored weight-1.0 bot audits to repair a measured defect of 1.6 weight, and its gate was a spelling check over 715 ids that already hold three spellings of RFC 9309                                                                                  |
+| **Dropping type-specific audits when no page type is declared** | An empty check list passes `hasAssessableCheck`'s early return and scores 0 at full mass. Dropping punishes; informative protects                                                                                                                                      |
+| **A blanket private-address refusal**                           | Breaks scanning a local development site. Consent attaches to the origin — see §5.2                                                                                                                                                                                    |
+| **Two scores, one per scan unit**                               | The scan unit and the score unit need not follow each other                                                                                                                                                                                                            |
+| **`consentTypes` as a field name**                              | Jargon. `pageType` is universal                                                                                                                                                                                                                                        |
 
 ---
 
-## 11. Standing debts
+## 11. Standing debts _(all resolved in main)_
 
-Measured 2026-08-30 across 215 registered audits. **None is fixed.**
-`docs/architecture/debt.md` tracks related defects that are outside the six
-architecture phases.
+Measured 2026-08-30 across 215 registered audits. **All resolved in main** across
+the six architecture migration phases:
 
-| debt                                                                           | measurement                                                                                                                                                                                                                                                                                                                                                                                                                                        |
-| :----------------------------------------------------------------------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| An audit's own code does not stop it verdicting on a scan that reached nothing | **62** of 215 return a verdict when called directly on an unreachable-origin fixture. None of them reaches a user: `planAudits` skips 211 of 215 through their `requires`, and the remaining 4 (`https-enabled`, `no-bot-detection`, `no-redirect-chains`, `no-blocking-captcha`) declare no `requires` and each hand-roll `scanReadTheSite`. The protection is one metadata line per audit plus 42 hand-rolled guards, never the audit's own code |
-| The empty-scan fixture contradicts itself                                      | `emptyContext()` sets `judgeable: true` and `usablePageTypes: ALL_PAGE_TYPES` while supplying zero pages. It is the fixture every audit's unit test uses, so no unit test can catch a missing or wrong `requires` line — which is the only thing standing between 62 audits and a verdict about a site nobody read                                                                                                                                 |
-| An artifact-contents audit fails on absence                                    | `sitemap-lastmod` (A, 1.0) `fail`s at `priority: 'critical'`; `sitemap-absolute-urls` (B, 0.6) `fail`s. 1.6 weight                                                                                                                                                                                                                                                                                                                                 |
-| The page-type gate is doing the absence rule's job                             | `product-identifiers` has **no** `notApplicable` branch — the gate is the only thing keeping `fail: 'No Product schema found'` off a bakery                                                                                                                                                                                                                                                                                                        |
-| Private readers duplicate a gatherer                                           | 4 audits carry a byte-identical `getSitemapResult` (`sitemap-exists`, `sitemap-absolute-urls`, `sitemap-lastmod`, `discovery-index-coverage`) and a fifth, `access-crawl-control/sensitive-paths`, reads `ctx.rootFiles['/sitemap.xml']` inline — all while `gatherers/sitemap.ts` exists without the four-way split                                                                                                                                                                                                                                                                                                                                                   |
-| Content-harvested URLs reach the network ungated                               | 8 of 36 network-reaching audits never import `isSafeUrl`, and 6 of those fetch a URL taken from scanned content: `author-page`, `rss-feed`, `rss-feed-content`, `no-broken-links`, `openapi-servers`, `search-endpoint`. An unguarded first hop is fetched **and** disarms the redirect gate behind it                                                                                                                                                     |
-| Fetching is unbounded in aggregate                                             | 36 audits reach the network. A verified count found **14** files with named top-level request limits. Other audits use a mix of inline bounds, fixed request counts, early exits and unbounded worst cases. Nothing declares or enforces one shared scan budget. `machine-discovery/rss-feed` can fetch every discovered feed link in the worst case, but stops at the first successful response. 31 of the 36 call `ctx.fetch` in their own file; the other 5 fetch through `agent-interfaces/_mcp-client.ts`, a shared helper inside the audit tree                                                                                                                                                                                                                                                                                                                              |
-| The warrant has no expiry                                                      | 215 of 216 `reviewed:` stamps, all one sprint, read by nothing                                                                                                                                                                                                                                                                                                                                                                                     |
+| debt                                                                           | resolution in `main`                                                                                                                                                                   |
+| :----------------------------------------------------------------------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| An audit's own code does not stop it verdicting on a scan that reached nothing | **Resolved (Phase 1):** Universal unread-scan precondition in `planAudits`; enforced whole-registry by `unreachable-contract.test.ts` with no exemptions.                              |
+| The empty-scan fixture contradicts itself                                      | **Resolved (Phase 1):** Truthful fixtures (`fixtureA` & `fixtureB`) in `packages/core/src/tests/fixtures.ts`.                                                                          |
+| An artifact-contents audit fails on absence                                    | **Resolved (Phase 2):** Four-way read (`absent`, `empty`, `malformed`, `readable`) in `gatherers/openapi.ts` and `gatherers/sitemap.ts`; pinned by `absent-artifact-contract.test.ts`. |
+| The page-type gate is doing the absence rule's job                             | **Resolved (Phase 3):** User consent via `--page-type`; detected page types run informative (weight 0).                                                                                |
+| Private readers duplicate a gatherer                                           | **Resolved (Phases 2 & 4b):** All private readers centralized in `gatherers/`; zero duplication.                                                                                       |
+| Content-harvested URLs reach the network ungated                               | **Resolved (Phase 4a):** `isSafeUrl()` enforced inside `ctx.fetch` keyed on scan origin.                                                                                               |
+| Fetching is unbounded in aggregate                                             | **Resolved (Phase 4b):** All 36 network-reaching audits moved to gatherers; `pnpm check:audit-boundaries` AST gate enforces zero network calls in production audits.                   |
+| The warrant has no expiry                                                      | **Resolved (Phase 6):** Automated 6-month review sweep in `.github/workflows/audit-review-sweep.yml`.                                                                                  |
 
 ---
 
 ## 12. Writing an audit today
 
-These hold in `main` today, except where marked.
+These hold in `main` today:
 
 - **Absence is `notApplicable`, not `fail`.** Only a present-and-defective
-  artifact may fail. The worked example, `gatherers/openapi.ts`, and the contract
-  test that pins it, `tests/absent-artifact-contract.test.ts`, are in PR 23 and
-  not yet merged. Until they land, `tests/na-contract.ts` is the only helper
-  enforcing this, and §11 lists where it does not.
+  artifact may fail. Handled via the four-way read in gatherers and enforced
+  by `tests/absent-artifact-contract.test.ts`.
 - **Put the precondition beside the read**, in the gatherer, with the reasoning
   written down. Two places it must not go. **Not the runner** — `planAudits`
   knows page types and `EvidenceKey`s, both scan-level and domain-neutral, and
