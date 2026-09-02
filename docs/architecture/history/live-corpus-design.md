@@ -1,3 +1,6 @@
+> Archived 2026-09-02. Implemented in PR #54; the living description is
+> `docs/evidence/corpus.md`. The plan that executed it was deleted with it.
+
 # Live corpus: curated list, learned status, smoke tier
 
 Date: 2026-09-02. Status: approved, awaiting implementation plan.
@@ -38,12 +41,12 @@ asserted; invariants and verdict stability are.
 
 ## Files
 
-| File | Role |
-| :-- | :-- |
-| `packages/core/test-data/sites/seeds.json` | Hand-curated source of truth. Replaces `categories.json`. |
-| `packages/core/test-data/sites/sites.json` | Generated and committed. Same entry shape as today plus optional `tier`. |
-| `packages/core/test-data/sites/status.json` | Generated and committed. What each domain did the last time it was scanned. |
-| `packages/core/test-data/sites/benchmark-stores.json` | Untouched. |
+| File                                                  | Role                                                                        |
+| :---------------------------------------------------- | :-------------------------------------------------------------------------- |
+| `packages/core/test-data/sites/seeds.json`            | Hand-curated source of truth. Replaces `categories.json`.                   |
+| `packages/core/test-data/sites/sites.json`            | Generated and committed. Same entry shape as today plus optional `tier`.    |
+| `packages/core/test-data/sites/status.json`           | Generated and committed. What each domain did the last time it was scanned. |
+| `packages/core/test-data/sites/benchmark-stores.json` | Untouched.                                                                  |
 
 ### `seeds.json`
 
@@ -89,12 +92,12 @@ regeneration diffs to real changes only.
 }
 ```
 
-| `state` | Meaning |
-| :-- | :-- |
-| `ok` | The scan produced a score. |
+| `state`    | Meaning                                                                          |
+| :--------- | :------------------------------------------------------------------------------- |
+| `ok`       | The scan produced a score.                                                       |
 | `unscored` | The scan ran and reported no score. `reason` is the scan's own `unscoredReason`. |
-| `blocked` | `robots.txt` told the runner to stay away. |
-| `dead` | No DNS, no connection, or no homepage, on two imports dated on different days. |
+| `blocked`  | `robots.txt` told the runner to stay away.                                       |
+| `dead`     | No DNS, no connection, or no homepage, on two imports dated on different days.   |
 
 `runs` counts imports that reported this domain. `seenAt` is the date of the
 latest one. A domain that is `dead` in one import and `ok` in the next goes
@@ -103,22 +106,22 @@ observations to be entered.
 
 ## Categories and sizes
 
-| Category | Target | What it exercises |
-| :-- | --: | :-- |
-| news | 25 | Paywalls, AMP leftovers, NewsArticle schema, huge sitemaps. |
-| docs | 25 | Deep static sites, code blocks, llms.txt adopters. |
-| saas | 25 | Marketing shells over apps, pricing pages, OpenAPI. |
-| government | 25 | Old CMSes, PDFs, accessibility law, no commerce. |
-| marketplace | 25 | Heaviest WAFs, product schema at scale. |
-| forum | 25 | User content, robots policies, Discourse and Stack shapes. |
-| bank | 25 | Walled, no crawl consent, security headers. |
-| storefront | 25 | Shopify and Woo stores, product and offer schema. |
-| local | 30 | Restaurants, clinics, agencies, hotels, law firms on page builders. |
-| tenant | 30 | github.io, pages.dev, vercel.app, netlify.app, myshopify.com, wixsite.com, squarespace. The shared-suffix rules. |
-| travel | 15 | Airlines, hotel chains, rail, booking flows. |
-| health | 15 | Hospital systems, pharma, health information. |
-| exemplar | 25 | Sites that serve `llms.txt`, `agents.json`, or an MCP or ACP manifest. Near-perfect results expected. |
-| unknown | 50 | Top-ranked reachable sites not seeded anywhere. Breadth. |
+| Category    | Target | What it exercises                                                                                                |
+| :---------- | -----: | :--------------------------------------------------------------------------------------------------------------- |
+| news        |     25 | Paywalls, AMP leftovers, NewsArticle schema, huge sitemaps.                                                      |
+| docs        |     25 | Deep static sites, code blocks, llms.txt adopters.                                                               |
+| saas        |     25 | Marketing shells over apps, pricing pages, OpenAPI.                                                              |
+| government  |     25 | Old CMSes, PDFs, accessibility law, no commerce.                                                                 |
+| marketplace |     25 | Heaviest WAFs, product schema at scale.                                                                          |
+| forum       |     25 | User content, robots policies, Discourse and Stack shapes.                                                       |
+| bank        |     25 | Walled, no crawl consent, security headers.                                                                      |
+| storefront  |     25 | Shopify and Woo stores, product and offer schema.                                                                |
+| local       |     30 | Restaurants, clinics, agencies, hotels, law firms on page builders.                                              |
+| tenant      |     30 | github.io, pages.dev, vercel.app, netlify.app, myshopify.com, wixsite.com, squarespace. The shared-suffix rules. |
+| travel      |     15 | Airlines, hotel chains, rail, booking flows.                                                                     |
+| health      |     15 | Hospital systems, pharma, health information.                                                                    |
+| exemplar    |     25 | Sites that serve `llms.txt`, `agents.json`, or an MCP or ACP manifest. Near-perfect results expected.            |
+| unknown     |     50 | Top-ranked reachable sites not seeded anywhere. Breadth.                                                         |
 
 About 365 domains by these targets; the first curation landed at 414. At 40 s
 per site and concurrency 4, one pass is about one hour (74 minutes measured).
@@ -183,8 +186,7 @@ Before the list is regenerated:
 2. `scripts/probe-corpus.ts` fetches each candidate's homepage once, with the
    scanner user agent, and records status and final URL. For `exemplar`
    candidates it also fetches `/llms.txt`, `/.well-known/agents.json` and
-   `/.well-known/mcp.json`, and keeps the domain only if at least one answers
-   200.
+   `/.well-known/mcp.json`, and keeps the domain only if at least one answers 200.
 3. Domains that do not answer 200 are dropped from the draft. The probe result
    is imported into `status.json` as the first observation.
 4. `seeds.json` is written from what survived. Categories that end below
