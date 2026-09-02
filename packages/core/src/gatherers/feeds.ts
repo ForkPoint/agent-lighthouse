@@ -1,3 +1,4 @@
+import { cacheOwner } from "./cache-owner";
 import * as cheerio from "cheerio";
 import type { FetchOptions, FetchResult } from "../fetcher";
 import { isSafeUrl } from "../fetcher";
@@ -421,10 +422,10 @@ const feedCache = new WeakMap<
 >();
 
 function cacheFor(ctx: object): Map<string, Promise<FeedDocument | undefined>> {
-  let cache = feedCache.get(ctx);
+  let cache = feedCache.get(cacheOwner(ctx));
   if (!cache) {
     cache = new Map();
-    feedCache.set(ctx, cache);
+    feedCache.set(cacheOwner(ctx), cache);
   }
   return cache;
 }
@@ -464,10 +465,10 @@ export function sharedCanonicalCheck(
   ctx: FeedContext,
   url: string,
 ): Promise<FetchResult | undefined> {
-  let cache = canonicalCheckCache.get(ctx);
+  let cache = canonicalCheckCache.get(cacheOwner(ctx));
   if (!cache) {
     cache = new Map();
-    canonicalCheckCache.set(ctx, cache);
+    canonicalCheckCache.set(cacheOwner(ctx), cache);
   }
   let hit = cache.get(url);
   if (!hit) {
@@ -493,10 +494,10 @@ export function probeHubHead(
   ctx: FeedContext,
   url: string,
 ): Promise<FetchResult | undefined> {
-  let cache = hubHeadCache.get(ctx);
+  let cache = hubHeadCache.get(cacheOwner(ctx));
   if (!cache) {
     cache = new Map();
-    hubHeadCache.set(ctx, cache);
+    hubHeadCache.set(cacheOwner(ctx), cache);
   }
   let hit = cache.get(url);
   if (!hit) {

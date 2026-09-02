@@ -1,3 +1,4 @@
+import { cacheOwner } from "./cache-owner";
 import type { FetchOptions, FetchResult } from "../fetcher";
 import { isSafeUrl } from "../fetcher";
 import { allJsonLdNodes } from "../parser";
@@ -333,10 +334,10 @@ export function fetchImage(
   ctx: MediaContext,
   url: string,
 ): Promise<Uint8Array | undefined> {
-  let cache = imageCache.get(ctx);
+  let cache = imageCache.get(cacheOwner(ctx));
   if (!cache) {
     cache = new Map();
-    imageCache.set(ctx, cache);
+    imageCache.set(cacheOwner(ctx), cache);
   }
   const cached = cache.get(url);
   if (cached) return cached;
@@ -364,10 +365,10 @@ export function fetchImageHead(
   ctx: MediaContext,
   url: string,
 ): Promise<FetchResult | undefined> {
-  let cache = imageHeadCache.get(ctx);
+  let cache = imageHeadCache.get(cacheOwner(ctx));
   if (!cache) {
     cache = new Map();
-    imageHeadCache.set(ctx, cache);
+    imageHeadCache.set(cacheOwner(ctx), cache);
   }
   let hit = cache.get(url);
   if (!hit) {

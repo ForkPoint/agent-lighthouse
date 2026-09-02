@@ -16,6 +16,7 @@ import {
   failedAssertion,
   selectDebugChecks,
   openCommand,
+  PAGE_TYPE_IDS,
 } from "./options";
 import { tierMarker } from "./tier-marker";
 import {
@@ -69,6 +70,9 @@ Options:
                                that were skipped or errored. Defaults to
                                ./agent-lighthouse-trace.ndjson
   --categories <list>          Comma-separated list of categories to audit
+  --page-type <type>           Declare what the target URL is: homepage, category,
+                               product or content. Page-typed audits score only a
+                               declared type; a detected one runs them as informative
                                (access-crawl-control, content-extraction, machine-discovery,
                                structured-data, answer-readiness, agent-interfaces,
                                agentic-commerce, operability-safety)
@@ -130,11 +134,23 @@ async function audit(targetUrl?: string) {
   const presetName = opts.presetName;
   const preset = getPreset(presetName);
 
-  const { categories, unknownCategories, includeExperimental, outputFormats } =
-    opts;
+  const {
+    categories,
+    unknownCategories,
+    includeExperimental,
+    outputFormats,
+    pageType,
+    invalidPageType,
+  } = opts;
   if (unknownCategories.length > 0) {
     console.error(
       `\x1b[31mUnknown category: ${unknownCategories.join(", ")}\x1b[0m\nValid categories: ${CATEGORY_IDS.join(", ")}`,
+    );
+    process.exit(1);
+  }
+  if (invalidPageType !== undefined) {
+    console.error(
+      `\x1b[31mUnknown page type: ${invalidPageType}\x1b[0m\nValid page types: ${PAGE_TYPE_IDS.join(", ")}`,
     );
     process.exit(1);
   }
@@ -171,6 +187,7 @@ async function audit(targetUrl?: string) {
   const report = await runScan(url, {
     onEvent,
     ...(categories ? { categories } : {}),
+    ...(pageType ? { pageType } : {}),
     includeExperimental,
     ...(onAuditTrace ? { onAuditTrace } : {}),
   });

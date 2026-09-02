@@ -1,3 +1,4 @@
+import { cacheOwner } from "./cache-owner";
 import type { FetchOptions, FetchResult } from "../fetcher";
 import { isSafeUrl } from "../fetcher";
 import { parseHtml, getMainContentText } from "../parser";
@@ -250,7 +251,7 @@ interface ProbeCache {
 const probeCache = new WeakMap<object, ProbeCache>();
 
 function cacheFor(ctx: object): ProbeCache {
-  let cache = probeCache.get(ctx);
+  let cache = probeCache.get(cacheOwner(ctx));
   if (!cache) {
     cache = {
       baselines: new Map(),
@@ -258,7 +259,7 @@ function cacheFor(ctx: object): ProbeCache {
       controls: new Map(),
       raw: new Map(),
     };
-    probeCache.set(ctx, cache);
+    probeCache.set(cacheOwner(ctx), cache);
   }
   return cache;
 }

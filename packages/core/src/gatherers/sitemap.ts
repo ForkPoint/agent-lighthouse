@@ -1,3 +1,4 @@
+import { cacheOwner } from "./cache-owner";
 import * as cheerio from "cheerio";
 import type { FetchOptions, FetchResult } from "../fetcher";
 import { isSafeUrl } from "../fetcher";
@@ -246,10 +247,10 @@ const treeCache = new WeakMap<object, Promise<SitemapTree>>();
  * one walk and two scans never share anything.
  */
 export function siteSitemapTree(ctx: SitemapContext): Promise<SitemapTree> {
-  const cached = treeCache.get(ctx);
+  const cached = treeCache.get(cacheOwner(ctx));
   if (cached) return cached;
   const walk = collectSitemapEntries(ctx.fetch, siteRoots(ctx));
-  treeCache.set(ctx, walk);
+  treeCache.set(cacheOwner(ctx), walk);
   return walk;
 }
 
@@ -278,7 +279,7 @@ const readResultCache = new WeakMap<object, Promise<SitemapReadResult>>();
 export async function readSitemap(
   ctx: SitemapContext,
 ): Promise<SitemapReadResult> {
-  const cached = readResultCache.get(ctx);
+  const cached = readResultCache.get(cacheOwner(ctx));
   if (cached) return cached;
 
   const promise = (async (): Promise<SitemapReadResult> => {
@@ -316,6 +317,6 @@ export async function readSitemap(
     return { kind: "readable", tree, result: sitemapFile, defects };
   })();
 
-  readResultCache.set(ctx, promise);
+  readResultCache.set(cacheOwner(ctx), promise);
   return promise;
 }

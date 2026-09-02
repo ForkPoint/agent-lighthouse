@@ -21,6 +21,7 @@ import type {
 import { calculateCategoryScore, calculateOverallScore } from "./scorer";
 import { traceFromCheck, formatTrace, type AuditTrace } from "./audit-trace";
 import { scanReadTheSite, unreadSiteReason } from "./scan-evidence";
+import { cacheOwner } from "./gatherers/cache-owner";
 
 /** How much of a failure message a report is willing to carry. */
 const MAX_ERROR_CHARS = 400;
@@ -327,7 +328,12 @@ export async function runAudits(
           tracing ? Math.round(performance.now() - startedAt) : 0;
         try {
           const instance = reg.create();
-          const scopedCtx = scopedPages ? { ...ctx, pages: scopedPages } : ctx;
+          // A scoped copy must keep the scan's cache identity, or every
+          // gatherer WeakMap misses once per audit and repeats its fetch.
+          const scopedCtx =
+            scopedPages && scopedPages !== ctx.pages
+              ? { ...ctx, pages: scopedPages, cacheOwner: cacheOwner(ctx) }
+              : ctx;
           const result = await instance.audit(scopedCtx);
           const check = instance.toCheckResult(result, scoreDisplayMode);
           if (typeof onEvent === "function")

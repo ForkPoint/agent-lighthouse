@@ -1,3 +1,4 @@
+import { cacheOwner } from "./cache-owner";
 import { createHash } from "node:crypto";
 import type { FetchOptions, FetchResult } from "../fetcher";
 import { isSafeUrl } from "../fetcher";
@@ -46,10 +47,10 @@ const cache = new WeakMap<
 function cacheFor(
   ctx: object,
 ): Map<string, Promise<RevalidationResult | undefined>> {
-  let map = cache.get(ctx);
+  let map = cache.get(cacheOwner(ctx));
   if (!map) {
     map = new Map();
-    cache.set(ctx, map);
+    cache.set(cacheOwner(ctx), map);
   }
   return map;
 }

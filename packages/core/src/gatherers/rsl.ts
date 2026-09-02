@@ -1,3 +1,4 @@
+import { cacheOwner } from "./cache-owner";
 import type { CheckContext } from "../check-context";
 import type { FetchResult } from "../fetcher";
 import { isSafeUrl } from "../fetcher";
@@ -12,10 +13,10 @@ export function probeRsl(
   url: string,
   options: { method?: "GET" | "HEAD"; followRedirects?: boolean } = {},
 ): Promise<FetchResult | undefined> {
-  let cache = rslProbeCache.get(ctx);
+  let cache = rslProbeCache.get(cacheOwner(ctx));
   if (!cache) {
     cache = new Map();
-    rslProbeCache.set(ctx, cache);
+    rslProbeCache.set(cacheOwner(ctx), cache);
   }
   const key = `${options.method ?? "GET"}|${options.followRedirects ?? false}|${url}`;
   let hit = cache.get(key);

@@ -8,7 +8,9 @@ names the script under `docs/architecture/proofs/` that demonstrates it; where a
 was not practical, the entry says so and cites the exact lines instead. No
 finding here is a reading of the code alone unless it says it is.
 
-Nothing in this file is fixed yet. This is the record, not the fix.
+Findings 1 and 2 are fixed on this branch; each says so under its heading and
+its proof scripts are deleted, per `proofs/README.md`. The rest is the record,
+not the fix.
 
 |   # | where                            | severity | ships broken in | proved by         |
 | --: | :------------------------------- | :------- | :-------------- | :---------------- |
@@ -18,10 +20,10 @@ Nothing in this file is fixed yet. This is the record, not the fix.
 |   4 | `gatherers/sitemap.ts:285`       | medium   | 4.0.0           | runtime           |
 |   5 | `orchestrator.ts:286`            | medium   | 4.0.0           | runtime           |
 |   6 | `scorer.ts:109`                  | medium   | 4.0.0           | runtime           |
-|   7 | `gatherers/sitemap.ts:53`        | low      | pre-existing    | runtime           |
+|   7 | `gatherers/sitemap.ts:53`        | low      | 4.0.0           | runtime           |
 |   8 | `origin-cache.ts:23`             | low      | 4.0.0           | runtime, SDK-only |
 |   9 | `origin-cache.ts:108`            | low      | 4.0.0           | runtime           |
-|  10 | `fetcher.ts:265`                 | low      | pre-existing    | runtime, SDK-only |
+|  10 | `fetcher.ts:265`                 | low      | partly 4.0.0    | runtime, SDK-only |
 |  11 | `orchestrator.ts:582`            | low      | 4.0.0           | runtime           |
 |  12 | `scripts/test-live-sites.ts:301` | low      | 4.0.0           | runtime           |
 |  13 | `audit.ts:222`                   | low      | 4.0.0           | runtime           |
@@ -36,7 +38,7 @@ Nothing in this file is fixed yet. This is the record, not the fix.
 const scopedCtx = scopedPages ? { ...ctx, pages: scopedPages } : ctx;
 ```
 
-Sixteen gatherers cache their work in a `WeakMap<object, …>` keyed on the
+Twelve gatherer files hold sixteen `WeakMap<object, …>` caches keyed on the
 `CheckContext` identity: `author`, `conditional`, `discovery`, `feeds` (three
 maps), `mcp`, `media` (two), `openapi`, `rsl`, `sampled-pages`, `security`,
 `sitemap` (two), `ua-parity`. `siteSitemapTree`'s own doc comment states the
@@ -89,14 +91,19 @@ Consumers per cached gatherer, counted in `packages/core/src/audits/`:
 | `rsl`                |           2 |
 | `conditional`        |           1 |
 
-Proof: `docs/architecture/proofs/f1-cache.mts` (same context object: 1 fetch; spread context:
-2 fetches), `docs/architecture/proofs/f1b-scope.mts` (registry sweep),
-`docs/architecture/proofs/f1c-dupes.mts` (duplicate-URL measurement).
+Proof: three scripts, deleted with the fix. They showed the same context object
+making 1 fetch against 2 for a spread copy, every one of 186 runnable audits
+taking the spread branch, and the duplicate-URL table above.
 
-Direction for the fix: the scoped page list must travel to the audit without
-replacing the object the caches are keyed on. Either hand `pages` in separately,
-or put a stable cache-owner token on `CheckContext` and key the WeakMaps on
-that.
+**Fixed.** `CheckContext` carries an optional `cacheOwner`, the runner stamps
+it on every scoped copy, and `gatherers/cache-owner.ts` resolves it for all
+sixteen caches. The runner also hands the original context through unchanged
+when the scope is the whole page list. Rerunning the duplicate measurement on
+the same fixture: redundant calls fell from 27 to 4, and the 4 that remain are
+the bot-versus-baseline probes in `ua-parity`, which request the same URL under
+a different user agent on purpose. Pinned by
+`packages/core/src/gatherers/cache-owner.test.ts` and the "gatherer cache
+identity" case in `packages/core/src/audit-runner.test.ts`.
 
 ---
 
@@ -144,11 +151,19 @@ Scanning a product page from the CLI silently drops 9.8 weight — audits such a
 `structured-data/product-schema` and the commerce field checks — out of the
 score. The Phase 3 feature is unreachable from the shipped CLI.
 
-Second defect on the same line: `as PageType` is an unchecked cast.
-`--page-type=produtc` reaches `conditions.pageType.type` and fails
-`ScanConditionsSchema`'s enum at report time, not at argument parsing.
+Second defect on the same line: `as PageType` is an unchecked cast. It is
+latent today, because the value is dropped before `runScan`. Once the hand-off
+is wired, `--page-type=produtc` reaches `conditions.pageType.type` and fails
+`ScanConditionsSchema`'s enum at report time, not at argument parsing. The two
+fixes have to land together.
 
-Proof: `docs/architecture/proofs/f2-pagetype.mts`, `docs/architecture/proofs/f2b-realistic.mts`.
+Proof: two scripts, deleted with the fix. They produced the two tables above.
+
+**Fixed.** `parseCliOptions` checks the value against `PAGE_TYPE_LABELS` and
+splits it into `pageType` or `invalidPageType`; `main` refuses an invalid one
+with the valid list, the way it refuses an unknown category, and passes a valid
+one to `runScan`. `--page-type` is in `--help`. Pinned by the `--page-type`
+cases in `packages/cli/src/options.test.ts`.
 
 Related, not a defect: the changeset for Phase 3 records a rename of
 `applicablePageTypes` to `pageTypes`. The type carries both, `scopeAudit` reads
@@ -329,8 +344,10 @@ A sitemap index on `foo.github.io` pulled in a sitemap and a URL belonging to a
 different party. Those URLs then feed link and freshness audits as if the
 scanned site owned them.
 
-The subdomain arm alone matches the stated intent. This predates 3.1.0; it is
-listed because the sitemap gatherer is being changed anyway.
+The subdomain arm alone matches the stated intent. At
+`@forkpoint/agent-lighthouse@3.1.0` (`af0518b`) the gatherer had only the
+subdomain check; the parent-domain arm arrived with the four-way sitemap read
+in `9c0f4b8` (2026-09-01). It is a 4.0.0 regression, not pre-existing.
 
 Proof: `docs/architecture/proofs/f9-samehost.mts`.
 
@@ -418,6 +435,11 @@ same collision applies to a lowercase `authorization` against the
 
 **Reachability.** Same as finding 8: SDK-only, since nothing in the CLI or MCP
 passes headers.
+
+**Age.** Only partly pre-existing. At 3.1.0 the spread had `...extraHeaders`
+alone, so a per-request header could already collide. The
+`...fetcherOptions.headers` operand, and with it the `ScanOptions.headers`
+collision, is new in 4.0.0.
 
 Proof: `docs/architecture/proofs/f10-headers.mts`.
 
@@ -516,13 +538,14 @@ score rendering; both are cited above.
 
 ## Suggested order
 
-Findings 1 and 2 are regressions this release introduced, both sit in the
-release's headline features, and both are small changes. They should land before
-`ci(release): version packages` (#27) merges.
+Findings 1 and 2 were regressions this release introduced, both in the
+release's headline features. Both are fixed on this branch and should land
+before `ci(release): version packages` (#27) merges.
 
 Findings 3, 4, 5 and 6 are wrong verdicts and wrong scores, not crashes. They
 can ship in 4.0.1 if 4.0.0 is time-boxed, but 4 and 6 both contradict claims the
 4.0.0 changesets make, so the changeset text needs a correction either way.
 
 Findings 7 through 13 are cleanup. 8 and 10 are unreachable from any shipped
-entry point today and can wait for whoever exposes `headers`.
+entry point today and can wait for whoever exposes `headers`. Finding 7 is a
+4.0.0 regression despite its low severity and belongs with 3 and 4.

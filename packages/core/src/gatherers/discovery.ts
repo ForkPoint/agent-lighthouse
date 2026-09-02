@@ -1,3 +1,4 @@
+import { cacheOwner } from "./cache-owner";
 import type { CheckContext } from "../check-context";
 import type { FetchResult } from "../fetcher";
 import { isSafeUrl } from "../fetcher";
@@ -23,10 +24,10 @@ export function sharedProbeUrl(
     headers?: Record<string, string>;
   } = {},
 ): Promise<FetchResult | undefined> {
-  let cache = probeUrlCache.get(ctx);
+  let cache = probeUrlCache.get(cacheOwner(ctx));
   if (!cache) {
     cache = new Map();
-    probeUrlCache.set(ctx, cache);
+    probeUrlCache.set(cacheOwner(ctx), cache);
   }
   const cacheKey = `${options.method ?? "GET"}|${options.followRedirects ?? false}|${url}`;
   let hit = cache.get(cacheKey);

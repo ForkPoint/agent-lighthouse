@@ -41,6 +41,15 @@ export interface CheckContext {
   fetch: (options: FetchOptions) => Promise<FetchResult>;
   wafProtection?: import("./waf-detector").WafProtection;
   /**
+   * The object per-scan gatherer caches key on.
+   *
+   * The runner hands each audit a scoped copy of this context, and a copy has
+   * a new identity. Without this stamp every gatherer `WeakMap` would miss
+   * once per audit and repeat its fetch. The runner sets it on each copy;
+   * an unstamped context is its own owner. See `gatherers/cache-owner.ts`.
+   */
+  cacheOwner?: object;
+  /**
    * What the scan actually obtained, decided once before any audit ran.
    *
    * Required, not optional. An optional field fails open, and a caller that

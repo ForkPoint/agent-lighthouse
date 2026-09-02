@@ -1,3 +1,4 @@
+import { cacheOwner } from "./cache-owner";
 import type { FetchOptions, FetchResult } from "../fetcher";
 import { isSafeUrl } from "../fetcher";
 
@@ -23,10 +24,10 @@ export function fetchSampledPage(
   ctx: FetchingContext,
   url: string,
 ): Promise<FetchResult | undefined> {
-  let perScan = pageCache.get(ctx);
+  let perScan = pageCache.get(cacheOwner(ctx));
   if (!perScan) {
     perScan = new Map();
-    pageCache.set(ctx, perScan);
+    pageCache.set(cacheOwner(ctx), perScan);
   }
   const cached = perScan.get(url);
   if (cached) return cached;
