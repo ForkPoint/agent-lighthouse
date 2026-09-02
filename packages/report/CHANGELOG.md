@@ -1,5 +1,83 @@
 # @forkpoint/agent-lighthouse-report
 
+## 4.0.0
+
+### Major Changes
+
+- cebbba0: The Score States Its Conditions & The Warrant Expires (Phase 6 of audit architecture migration):
+
+  - Added `conditions` to `ScanReport` and `ScanConditionsSchema`: transparently reports the target URL, page type (`declared` vs `detected`), origin evidence status (`cached` vs `fresh`, version, and `readAt`), evidence coverage breakdown (`registryMass`, `assessedMass`, `pageMass`, `originMass`, `gatedMass`), and unscored audit breakdown.
+  - Updated all report renderers (`terminal`, `markdown`, `html`) to display the Scan Conditions block beside and beneath the headline score.
+  - Implemented `scripts/sweep-audit-reviews.mjs` and scheduled GitHub workflow `.github/workflows/audit-review-sweep.yml` to track evidence dossiers older than 6 months (180 days).
+
+### Patch Changes
+
+- 2cbdd13: Widen the oxlint surface from `correctness` alone to `correctness` plus
+  `suspicious`, and add the `import` and `promise` plugins.
+
+  `.oxlintrc.json` previously declared nothing but an ignore pattern, so oxlint
+  ran its default set: the `correctness` category over the default plugins. The
+  config now names the plugin list explicitly — `eslint`, `typescript`,
+  `unicorn`, `oxc`, `import`, `promise` — enables `suspicious` as an error
+  category, and turns on three rules that the categories leave off:
+  `no-return-await`, `unicorn/no-unnecessary-await` and
+  `unicorn/prefer-regexp-test`. Rule count rises from 96 to 113.
+
+  The five findings the wider set surfaced are fixed, none of them behavioural:
+
+  - `agent-interfaces/openapi-servers`, `operability-safety/engine/dom` and
+    `operability-safety/engine/table` each imported one module twice. The second
+    import in the two engine files carried a comment calling itself lazy; an ESM
+    import is hoisted either way, so the comment described something the module
+    graph never did. Merged into the single import at the top.
+  - `getGaugeColor` in the HTML renderer was declared inside
+    `generateHtmlReport` and captured nothing from it. Moved to module scope.
+  - `isValidUrl` in the CLI constructed a `URL` purely for its throw. The
+    construction is now `void`-marked so the intent reads as a parse probe.
+  - `metaRefresh` in the a11y engine called `String#match` on a non-global regex
+    and used only its truthiness. Now `RegExp#test`.
+
+  `pnpm lint` stays at 0 errors and 0 warnings.
+
+  `promise/prefer-await-to-then` was evaluated and left off: its 16 hits are
+  almost all top-level `main().catch()` entry points, where `then`/`catch` is the
+  correct shape. `import/no-cycle` was also left off; the a11y engine has 7
+  deliberate cycles that need untangling before the rule can be an error.
+
+- Updated dependencies [2dbff0b]
+- Updated dependencies [67876d7]
+- Updated dependencies [9caf97b]
+- Updated dependencies [adf2bce]
+- Updated dependencies [5e9b931]
+- Updated dependencies [a719d16]
+- Updated dependencies [4cce959]
+- Updated dependencies [9c0f4b8]
+- Updated dependencies [8b5e768]
+- Updated dependencies [7dea552]
+- Updated dependencies [1a20739]
+- Updated dependencies [85e77e1]
+- Updated dependencies [88cb080]
+- Updated dependencies [dcef5af]
+- Updated dependencies [56ab5ea]
+- Updated dependencies [e86bf9a]
+- Updated dependencies [18c3416]
+- Updated dependencies [a719d16]
+- Updated dependencies [a719d16]
+- Updated dependencies [a719d16]
+- Updated dependencies [64c23e7]
+- Updated dependencies [a719d16]
+- Updated dependencies [a719d16]
+- Updated dependencies [a719d16]
+- Updated dependencies [2cbdd13]
+- Updated dependencies [111cdbf]
+- Updated dependencies [a719d16]
+- Updated dependencies [a719d16]
+- Updated dependencies [cebbba0]
+- Updated dependencies [a719d16]
+- Updated dependencies [5f612b6]
+- Updated dependencies [4cce959]
+  - @forkpoint/agent-lighthouse-core@4.0.0
+
 ## 3.1.0
 
 ### Patch Changes
