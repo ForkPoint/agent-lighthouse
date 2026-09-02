@@ -115,12 +115,22 @@ function parseCliArgs(argv: string[]): CliOptions {
         options.category = val.trim().toLowerCase();
         break;
       case "domain":
-        options.domains = [val.trim().toLowerCase().replace(/^https?:\/\//, "")];
+        options.domains = [
+          val
+            .trim()
+            .toLowerCase()
+            .replace(/^https?:\/\//, ""),
+        ];
         break;
       case "domains":
         options.domains = val
           .split(",")
-          .map((d) => d.trim().toLowerCase().replace(/^https?:\/\//, ""))
+          .map((d) =>
+            d
+              .trim()
+              .toLowerCase()
+              .replace(/^https?:\/\//, ""),
+          )
           .filter(Boolean);
         break;
       case "out":
@@ -211,9 +221,13 @@ async function main(): Promise<void> {
 
   for (let loopRound = 1; loopRound <= options.loop; loopRound++) {
     if (options.loop > 1) {
-      console.log(`\n=============================================================`);
+      console.log(
+        `\n=============================================================`,
+      );
       console.log(`🔄 Round ${loopRound} of ${options.loop}`);
-      console.log(`=============================================================`);
+      console.log(
+        `=============================================================`,
+      );
     }
 
     let targetSites: SiteEntry[] = [];
@@ -250,7 +264,10 @@ async function main(): Promise<void> {
     }
 
     let selected: SiteEntry[] = [];
-    if (options.stratified && (!options.domains || options.domains.length === 0)) {
+    if (
+      options.stratified &&
+      (!options.domains || options.domains.length === 0)
+    ) {
       const byCategory = new Map<string, SiteEntry[]>();
       for (const site of targetSites) {
         const list = byCategory.get(site.category) ?? [];
@@ -290,146 +307,151 @@ async function main(): Promise<void> {
       `Running scan across ${selected.length} sites (concurrency: ${options.concurrency}, delay: ${options.delayMs}ms)...\n`,
     );
 
-  const dispatcher = boundedDispatcher(options.concurrency);
+    const dispatcher = boundedDispatcher(options.concurrency);
 
-  async function checkRobots(
-    domain: string,
-  ): Promise<{ scan: boolean; reason?: SkipReason; robotsTxt?: FetchResult }> {
-    try {
-      const result = await createFetcher({
-        dispatcher,
-        maxConcurrent: options.concurrency,
-      }).fetch({
-        url: `https://${domain}/robots.txt`,
-      });
+    async function checkRobots(
+      domain: string,
+    ): Promise<{
+      scan: boolean;
+      reason?: SkipReason;
+      robotsTxt?: FetchResult;
+    }> {
+      try {
+        const result = await createFetcher({
+          dispatcher,
+          maxConcurrent: options.concurrency,
+        }).fetch({
+          url: `https://${domain}/robots.txt`,
+        });
 
-      if (result.status === 401 || result.status === 403 || result.status === 429) {
-        return { scan: false, reason: "robots-refused" };
-      }
+        if (
+          result.status === 401 ||
+          result.status === 403 ||
+          result.status === 429
+        ) {
+          return { scan: false, reason: "robots-refused" };
+        }
 
-      if (result.error || result.status !== 200 || !result.body) {
+        if (result.error || result.status !== 200 || !result.body) {
+          return { scan: true, robotsTxt: result };
+        }
+
+        const parsed = parseRobots(result.body);
+        for (const token of PROBED_TOKENS) {
+          const groups = groupsForBot(parsed, token);
+          if (isBlanketBlocked(groups, token)) {
+            return { scan: false, reason: "robots-disallow" };
+          }
+          if (groups.some((g) => (g.crawlDelay ?? 0) > 0)) {
+            return { scan: false, reason: "crawl-delay" };
+          }
+        }
+
         return { scan: true, robotsTxt: result };
+      } catch {
+        return { scan: true };
       }
-
-      const parsed = parseRobots(result.body);
-      for (const token of PROBED_TOKENS) {
-        const groups = groupsForBot(parsed, token);
-        if (isBlanketBlocked(groups, token)) {
-          return { scan: false, reason: "robots-disallow" };
-        }
-        if (groups.some((g) => (g.crawlDelay ?? 0) > 0)) {
-          return { scan: false, reason: "crawl-delay" };
-        }
-      }
-
-      return { scan: true, robotsTxt: result };
-    } catch {
-      return { scan: true };
-    }
-  }
-
-  async function scanSingleSite(
-    site: SiteEntry,
-    index: number,
-  ): Promise<TestSiteOutcome> {
-    const started = Date.now();
-    const outcome: TestSiteOutcome = {
-      domain: site.domain,
-      category: site.category,
-      statusCounts: {},
-      violations: [],
-      durationMs: 0,
-    };
-
-    const prefix = `[${index + 1}/${selected.length}] ${site.domain} (${site.category})`;
-
-    try {
-      let robotsTxtResult: FetchResult | undefined;
-      if (!options.ignoreRobots) {
-        const robots = await checkRobots(site.domain);
-        if (!robots.scan) {
-          outcome.skipped = robots.reason;
-          outcome.durationMs = Date.now() - started;
-          console.log(`⚪ ${prefix}: SKIPPED (robots.txt: ${robots.reason})`);
-          return outcome;
-        }
-        robotsTxtResult = robots.robotsTxt;
-      }
-
-      const report = await runScan(`https://${site.domain}`, {
-        dispatcher,
-        maxConcurrent: options.concurrency,
-        robotsTxt: robotsTxtResult,
-      });
-
-      outcome.score = report.overallScore;
-      outcome.scoreTier = report.scoreTier;
-      outcome.evidence = report.scanValidity?.evidence;
-      outcome.unscoredReason = report.scanValidity?.unscoredReason;
-
-      const checks = report.categories.flatMap((c) => c.checks);
-      for (const check of checks) {
-        outcome.statusCounts[check.status] =
-          (outcome.statusCounts[check.status] ?? 0) + 1;
-      }
-
-      outcome.violations = invariantViolations(report, checks);
-      outcome.durationMs = Date.now() - started;
-
-      const durationSec = (outcome.durationMs / 1000).toFixed(1);
-      const scoreDisplay =
-        outcome.score !== null && outcome.score !== undefined
-          ? `${outcome.score}/100 (${outcome.scoreTier})`
-          : `unscored (${outcome.unscoredReason ?? "gated"})`;
-
-      const countsDisplay = `${outcome.statusCounts.pass ?? 0} pass, ${outcome.statusCounts.warn ?? 0} warn, ${outcome.statusCounts.fail ?? 0} fail, ${outcome.statusCounts.na ?? 0} na`;
-
-      if (outcome.violations.length === 0) {
-        console.log(
-          `✅ ${prefix}: ${scoreDisplay} | ${countsDisplay} | ${durationSec}s | OK`,
-        );
-      } else {
-        console.log(
-          `❌ ${prefix}: ${scoreDisplay} | ${outcome.violations.length} VIOLATION(S):`,
-        );
-        for (const v of outcome.violations) {
-          console.log(`   ⚠️  ${v}`);
-        }
-      }
-
-      if (options.verbose) {
-        console.log(
-          `   Evidence: ${JSON.stringify(outcome.evidence)}`,
-        );
-      }
-    } catch (err) {
-      outcome.durationMs = Date.now() - started;
-      outcome.violations.push(`Threw: ${String(err).slice(0, 250)}`);
-      console.log(`❌ ${prefix}: CRASHED - ${String(err).slice(0, 200)}`);
     }
 
-    if (options.delayMs > 0) {
-      await pause(options.delayMs);
+    async function scanSingleSite(
+      site: SiteEntry,
+      index: number,
+    ): Promise<TestSiteOutcome> {
+      const started = Date.now();
+      const outcome: TestSiteOutcome = {
+        domain: site.domain,
+        category: site.category,
+        statusCounts: {},
+        violations: [],
+        durationMs: 0,
+      };
+
+      const prefix = `[${index + 1}/${selected.length}] ${site.domain} (${site.category})`;
+
+      try {
+        let robotsTxtResult: FetchResult | undefined;
+        if (!options.ignoreRobots) {
+          const robots = await checkRobots(site.domain);
+          if (!robots.scan) {
+            outcome.skipped = robots.reason;
+            outcome.durationMs = Date.now() - started;
+            console.log(`⚪ ${prefix}: SKIPPED (robots.txt: ${robots.reason})`);
+            return outcome;
+          }
+          robotsTxtResult = robots.robotsTxt;
+        }
+
+        const report = await runScan(`https://${site.domain}`, {
+          dispatcher,
+          maxConcurrent: options.concurrency,
+          robotsTxt: robotsTxtResult,
+        });
+
+        outcome.score = report.overallScore;
+        outcome.scoreTier = report.scoreTier;
+        outcome.evidence = report.scanValidity?.evidence;
+        outcome.unscoredReason = report.scanValidity?.unscoredReason;
+
+        const checks = report.categories.flatMap((c) => c.checks);
+        for (const check of checks) {
+          outcome.statusCounts[check.status] =
+            (outcome.statusCounts[check.status] ?? 0) + 1;
+        }
+
+        outcome.violations = invariantViolations(report, checks);
+        outcome.durationMs = Date.now() - started;
+
+        const durationSec = (outcome.durationMs / 1000).toFixed(1);
+        const scoreDisplay =
+          outcome.score !== null && outcome.score !== undefined
+            ? `${outcome.score}/100 (${outcome.scoreTier})`
+            : `unscored (${outcome.unscoredReason ?? "gated"})`;
+
+        const countsDisplay = `${outcome.statusCounts.pass ?? 0} pass, ${outcome.statusCounts.warn ?? 0} warn, ${outcome.statusCounts.fail ?? 0} fail, ${outcome.statusCounts.na ?? 0} na`;
+
+        if (outcome.violations.length === 0) {
+          console.log(
+            `✅ ${prefix}: ${scoreDisplay} | ${countsDisplay} | ${durationSec}s | OK`,
+          );
+        } else {
+          console.log(
+            `❌ ${prefix}: ${scoreDisplay} | ${outcome.violations.length} VIOLATION(S):`,
+          );
+          for (const v of outcome.violations) {
+            console.log(`   ⚠️  ${v}`);
+          }
+        }
+
+        if (options.verbose) {
+          console.log(`   Evidence: ${JSON.stringify(outcome.evidence)}`);
+        }
+      } catch (err) {
+        outcome.durationMs = Date.now() - started;
+        outcome.violations.push(`Threw: ${String(err).slice(0, 250)}`);
+        console.log(`❌ ${prefix}: CRASHED - ${String(err).slice(0, 200)}`);
+      }
+
+      if (options.delayMs > 0) {
+        await pause(options.delayMs);
+      }
+
+      return outcome;
     }
 
-    return outcome;
-  }
+    // Bounded worker queue execution
+    const queue = selected.map((site, i) => ({ site, index: i }));
+    const outcomes: TestSiteOutcome[] = [];
 
-  // Bounded worker queue execution
-  const queue = selected.map((site, i) => ({ site, index: i }));
-  const outcomes: TestSiteOutcome[] = [];
-  const startedTime = Date.now();
+    const workers = Array.from({ length: options.concurrency }, async () => {
+      while (queue.length > 0) {
+        const item = queue.shift();
+        if (!item) break;
+        const outcome = await scanSingleSite(item.site, item.index);
+        outcomes.push(outcome);
+      }
+    });
 
-  const workers = Array.from({ length: options.concurrency }, async () => {
-    while (queue.length > 0) {
-      const item = queue.shift();
-      if (!item) break;
-      const outcome = await scanSingleSite(item.site, item.index);
-      outcomes.push(outcome);
-    }
-  });
-
-  await Promise.all(workers);
+    await Promise.all(workers);
 
     const roundViolations = outcomes.reduce(
       (acc, o) => acc + o.violations.length,
@@ -461,7 +483,8 @@ async function main(): Promise<void> {
   const avgDurationMs =
     allOutcomes.length > 0
       ? Math.round(
-          allOutcomes.reduce((a, o) => a + o.durationMs, 0) / allOutcomes.length,
+          allOutcomes.reduce((a, o) => a + o.durationMs, 0) /
+            allOutcomes.length,
         )
       : 0;
 
@@ -482,26 +505,38 @@ async function main(): Promise<void> {
   fs.mkdirSync(path.dirname(options.outPath), { recursive: true });
   fs.writeFileSync(options.outPath, JSON.stringify(summary, null, 2), "utf8");
 
-  console.log("\n─────────────────────────────────────────────────────────────");
+  console.log(
+    "\n─────────────────────────────────────────────────────────────",
+  );
   console.log("📊 Live Sites Scan Summary");
   console.log("─────────────────────────────────────────────────────────────");
-  console.log(`Total Planned:       ${summary.totalPlanned} across ${options.loop} round(s)`);
+  console.log(
+    `Total Planned:       ${summary.totalPlanned} across ${options.loop} round(s)`,
+  );
   console.log(`Successfully Scanned:${summary.scanned}`);
   console.log(`Skipped (robots):    ${summary.skipped}`);
   console.log(`Invariant Violations:${summary.violationsCount}`);
   if (summary.averageScore !== null) {
     console.log(`Average Score:       ${summary.averageScore}/100`);
   }
-  console.log(`Average Scan Time:   ${(summary.averageDurationMs / 1000).toFixed(1)}s`);
-  console.log(`Total Elapsed Time:  ${(summary.durationMs / 1000).toFixed(1)}s`);
+  console.log(
+    `Average Scan Time:   ${(summary.averageDurationMs / 1000).toFixed(1)}s`,
+  );
+  console.log(
+    `Total Elapsed Time:  ${(summary.durationMs / 1000).toFixed(1)}s`,
+  );
   console.log(`Results File:        ${options.outPath}`);
   console.log("─────────────────────────────────────────────────────────────");
 
   if (summary.violationsCount > 0) {
-    console.error(`\n❌ FAILED: ${summary.violationsCount} invariant violation(s) detected.`);
+    console.error(
+      `\n❌ FAILED: ${summary.violationsCount} invariant violation(s) detected.`,
+    );
     process.exit(1);
   } else {
-    console.log(`\n✅ PASSED: All ${summary.scanned} scanned sites satisfied scan invariants.`);
+    console.log(
+      `\n✅ PASSED: All ${summary.scanned} scanned sites satisfied scan invariants.`,
+    );
     process.exit(0);
   }
 }
