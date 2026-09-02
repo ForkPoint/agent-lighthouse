@@ -61,8 +61,8 @@ function findDossiers(dir) {
   return results;
 }
 
-export function sweepAudits(now = new Date()) {
-  const files = findDossiers(DOSSIERS_DIR);
+export function sweepAudits(now = new Date(), dir = DOSSIERS_DIR) {
+  const files = findDossiers(dir);
   const dossiers = [];
 
   for (const file of files) {
@@ -74,9 +74,12 @@ export function sweepAudits(now = new Date()) {
       fm.audit ?? (fm.category && fm.slug ? `${fm.category}/${fm.slug}` : fm.slug);
     const reviewedStr = fm.reviewed;
     const reviewedDate = reviewedStr ? new Date(reviewedStr) : null;
-    const ageMs = reviewedDate ? now.getTime() - reviewedDate.getTime() : Infinity;
+    const isValidDate = reviewedDate && !isNaN(reviewedDate.getTime());
+    const ageMs = isValidDate
+      ? now.getTime() - reviewedDate.getTime()
+      : Infinity;
     const isOverdue = ageMs > SIX_MONTHS_MS;
-    const daysOld = reviewedDate
+    const daysOld = isValidDate
       ? Math.floor(ageMs / (24 * 60 * 60 * 1000))
       : null;
 

@@ -348,8 +348,8 @@ export async function runScan(
       const meta = extractMetaTags($);
       const isFirstPage = p.index === 0;
       const forcedType =
-        overrideTypeByKey.get(p.url.replace(/\/$/, "")) ??
-        (isFirstPage ? options?.pageType : undefined);
+        (isFirstPage && options?.pageType ? options.pageType : undefined) ??
+        overrideTypeByKey.get(p.url.replace(/\/$/, ""));
       const pageTypeSource: "declared" | "detected" = forcedType
         ? "declared"
         : "detected";
@@ -577,7 +577,7 @@ export async function runScan(
     allChecks.filter((c) => c.status === "na" && !isInformative(c)).length;
 
   const declaredOverrideType =
-    overrideTypeByKey.get(targetKey) ?? options?.pageType;
+    options?.pageType ?? overrideTypeByKey.get(targetKey);
 
   const primaryPage = pages[0];
   const pageTypeCondition = primaryPage

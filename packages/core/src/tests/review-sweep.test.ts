@@ -1,4 +1,7 @@
 import { describe, it, expect } from "vitest";
+import fs from "node:fs";
+import path from "node:path";
+import os from "node:os";
 // @ts-expect-error - testing the .mjs script exports
 import { sweepAudits, formatMarkdownReport } from "../../../../scripts/sweep-audit-reviews.mjs";
 
@@ -38,6 +41,117 @@ describe("Phase 6: Audit Review Sweep (Law 10: Warrant Expires)", () => {
       const prev = result.overdue[i - 1]!;
       const curr = result.overdue[i]!;
       expect((prev.daysOld ?? 0) >= (curr.daysOld ?? 0)).toBe(true);
+    }
+  });
+
+  it("handles edge cases in a hermetic mock directory: invalid dates, missing fields, quoted dates, and 180-day boundary", () => {
+    const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "al-sweep-test-"));
+    const now = new Date("2026-09-02T12:00:00Z");
+
+    try {
+      // 1. Fresh dossier (10 days old -> not overdue)
+      fs.writeFileSync(
+        path.join(tempDir, "fresh.md"),
+        `---
+audit: test/fresh
+category: test
+evidence_grade: A
+reviewed: 2026-08-23
+---
+Content
+`,
+      );
+
+      // 2. Exact 179-day boundary (not overdue)
+      const day179Ago = new Date(now.getTime() - 179 * 24 * 60 * 60 * 1000)
+        .toISOString()
+        .split("T")[0];
+      fs.writeFileSync(
+        path.join(tempDir, "boundary-fresh.md"),
+        `---
+audit: test/boundary-fresh
+category: test
+evidence_grade: B
+reviewed: "${day179Ago}"
+---
+Content
+`,
+      );
+
+      // 3. Exact 181-day boundary (overdue)
+      const day181Ago = new Date(now.getTime() - 181 * 24 * 60 * 60 * 1000)
+        .toISOString()
+        .split("T")[0];
+      fs.writeFileSync(
+        path.join(tempDir, "boundary-overdue.md"),
+        `---
+audit: test/boundary-overdue
+category: test
+evidence_grade: A
+reviewed: '${day181Ago}'
+---
+Content
+`,
+      );
+
+      // 4. Missing reviewed field (overdue / never)
+      fs.writeFileSync(
+        path.join(tempDir, "no-date.md"),
+        `---
+audit: test/no-date
+category: test
+evidence_grade: C
+---
+Content
+`,
+      );
+
+      // 5. Invalid date string (overdue)
+      fs.writeFileSync(
+        path.join(tempDir, "bad-date.md"),
+        `---
+audit: test/bad-date
+category: test
+evidence_grade: D
+reviewed: not-a-valid-date
+---
+Content
+`,
+      );
+
+      const result = sweepAudits(now, tempDir);
+
+      expect(result.totalAudits).toBe(5);
+      expect(result.overdueCount).toBe(3); // boundary-overdue, no-date, bad-date
+
+      const fresh = result.dossiers.find((d: any) => d.auditId === "test/fresh");
+      expect(fresh.isOverdue).toBe(false);
+      expect(fresh.daysOld).toBe(10);
+
+      const boundaryFresh = result.dossiers.find(
+        (d: any) => d.auditId === "test/boundary-fresh",
+      );
+      expect(boundaryFresh.isOverdue).toBe(false);
+
+      const boundaryOverdue = result.dossiers.find(
+        (d: any) => d.auditId === "test/boundary-overdue",
+      );
+      expect(boundaryOverdue.isOverdue).toBe(true);
+      expect(boundaryOverdue.daysOld).toBe(181);
+
+      const noDate = result.dossiers.find((d: any) => d.auditId === "test/no-date");
+      expect(noDate.isOverdue).toBe(true);
+      expect(noDate.reviewed).toBe("never");
+
+      const badDate = result.dossiers.find((d: any) => d.auditId === "test/bad-date");
+      expect(badDate.isOverdue).toBe(true);
+
+      // Verify sorting: never/invalid first, then largest daysOld
+      expect(result.dossiers[0].daysOld).toBeNull();
+      expect(result.dossiers[1].daysOld).toBeNull();
+      expect(result.dossiers[2].auditId).toBe("test/boundary-overdue");
+    } finally {
+      fs.rmSync(tempDir, { recursive: true, force: true });
     }
   });
 

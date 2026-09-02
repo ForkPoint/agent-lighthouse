@@ -130,4 +130,49 @@ describe("Phase 6: The score states its conditions", () => {
       ).toBeGreaterThan(0);
     }
   });
+
+  it("prioritizes explicit options.pageType over options.pages when both are provided", async () => {
+    const report = await runScan("https://example.com", {
+      pageType: "product",
+      pages: [
+        {
+          url: "https://example.com",
+          pageType: "category",
+        },
+      ],
+    });
+
+    expect(report.conditions).toBeDefined();
+    expect(report.conditions?.pageType.type).toBe("product");
+    expect(report.conditions?.pageType.source).toBe("declared");
+  });
+
+  it("matches declared page overrides regardless of trailing slash differences", async () => {
+    // Target has no trailing slash, override has trailing slash
+    const report = await runScan("https://example.com", {
+      pages: [
+        {
+          url: "https://example.com/",
+          pageType: "content",
+        },
+      ],
+    });
+
+    expect(report.conditions).toBeDefined();
+    expect(report.conditions?.pageType.type).toBe("content");
+    expect(report.conditions?.pageType.source).toBe("declared");
+  });
+
+  it("proves that unscored.totalCount exactly equals the sum of reasons values", async () => {
+    const report = await runScan("https://example.com");
+
+    expect(report.conditions).toBeDefined();
+    const { unscored } = report.conditions!;
+
+    const reasonsSum = Object.values(unscored.reasons).reduce(
+      (sum, count) => sum + count,
+      0,
+    );
+    expect(unscored.totalCount).toBe(reasonsSum);
+  });
 });

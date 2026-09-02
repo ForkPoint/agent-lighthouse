@@ -162,4 +162,37 @@ describe("generateMarkdownSummary — scan conditions", () => {
     expect(md).toContain("`94.2 / 102.6` mass (92%)");
     expect(md).toContain("`15` (8 advisory, 0 gated)");
   });
+
+  it("handles zero registryMass cleanly in markdown without NaN%", () => {
+    const md = generateMarkdownSummary({
+      ...report([]),
+      conditions: {
+        url: "https://x.test/",
+        pageType: { type: "homepage", source: "detected" },
+        origin: {
+          origin: "https://x.test",
+          version: "v1",
+          readAt: "2026-09-02T08:00:00.000Z",
+          cached: false,
+        },
+        coverage: {
+          registryMass: 0,
+          assessedMass: 0,
+          pageMass: 0,
+          originMass: 0,
+          gatedMass: 0,
+        },
+        unscored: {
+          totalCount: 0,
+          informativeCount: 0,
+          gatedCount: 0,
+          reasons: {},
+        },
+      },
+    });
+
+    expect(md).not.toContain("NaN%");
+    expect(md).toContain("`0 / 0` mass (0%)");
+    expect(md).toContain("`fresh`");
+  });
 });

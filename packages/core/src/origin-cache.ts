@@ -76,7 +76,7 @@ export class OriginCache {
   get(key: string): OriginEvidence | undefined {
     const entry = this.cache.get(key);
     if (!entry) return undefined;
-    if (Date.now() > entry.expiresAt) {
+    if (Date.now() >= entry.expiresAt) {
       this.cache.delete(key);
       return undefined;
     }
