@@ -26,6 +26,7 @@ Checks scanned pages against sitemap <loc> values plus llms.txt links — the sa
 **Required fix:** Merge into 1.8 as a single 'scanned pages are covered by a discovery index' audit sharing one normalizer and one sitemap resolver. Replace the Shopify string heuristic with actually fetching (capped) sub-sitemaps from the index. Delete the dead `page.meta['canonical']` lookup and read the canonical from `page.$('link[rel=canonical]')` instead. Normalize both sides (host, scheme, case, encoding, trailing slash). Exclude sitemap-seeded pages from the orphan denominator so the result is not self-fulfilling.
 
 **False-positive risks:**
+
 - The sitemap-index workaround is `(path.startsWith('/products') && body.includes('sitemap_products')) || … '/collections' … '/blogs' …` — literal Shopify path and filename conventions. Yoast (`post-sitemap.xml`, `page-sitemap.xml`), Next.js (`sitemap/0.xml`), and any localized path (`/produkte`, `/produits`, `/productos`) miss entirely → mass false 'orphan' verdicts on valid sites. Sub-sitemaps are never fetched.
 - `page.meta['canonical']` is dead code — canonical is a `<link>` element, and `extractMetaTags()` only reads `<meta>`, so this key is never populated. The intended canonical-based fallback matching silently never runs.
 - URL matching is raw `Set.has()` over trailing-slash variants only; http/https, www/bare host, case, and percent-encoding differences produce phantom orphans (same class of bug as 1.8).
@@ -35,6 +36,7 @@ Checks scanned pages against sitemap <loc> values plus llms.txt links — the sa
 - When both sources are empty it warns 'No sitemap or llms.txt links to compare against', duplicating 1.7's finding as a second penalty.
 
 **Test gaps:**
+
 - Sitemap index with non-Shopify sub-sitemap names (Yoast/Next.js) — the dominant false-positive path, untested
 - Non-English URL paths under a sitemap index
 - Any test proving page.meta['canonical'] is populated (it never is)

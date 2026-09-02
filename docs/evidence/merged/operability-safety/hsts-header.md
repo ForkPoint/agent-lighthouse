@@ -26,12 +26,14 @@ Presence-only check for `strict-transport-security` on the homepage response. Th
 **Required fix:** Merge into a single low-weight 'security header hygiene' audit alongside 8.3/8.4/8.5/8.6 that reports presence as informative sub-items and never fails the site. If kept standalone: parse the directive (require `max-age >= 31536000`, reject `max-age=0`), drop priority to `low`, return `na` when there is no page or the scan was WAF-blocked, and rewrite impact copy to 'general transport-security hygiene — no direct effect on AI crawler access', removing the GPTBot/ClaudeBot/RAG claims.
 
 **False-positive risks:**
+
 - Presence-only, value ignored: `if (hsts)` passes on `max-age=0` — the value that explicitly DISABLES HSTS. A site actively rolling HSTS back scores a full 1.0.
 - Homepage-only and apex-only: many CDN configs attach HSTS at the edge for the canonical host but not for the www/apex variant the user scanned; scanning the other hostname flips the result with no change to the site.
 - No `page` guard: with `ctx.pages` empty (total fetch failure, WAF drop) `headers ?? {}` yields no header and the audit reports a definite 'header is missing' fail rather than 'could not measure' — its own test asserts this wrong behavior ('fails when there are no pages').
 - Response-code sensitivity: some servers emit HSTS only on 2xx and omit it on the 301 that the scanner's redirect follow lands on first; because `finalUrl` is unreliable it is not visible which response was actually measured.
 
 **Test gaps:**
+
 - No test for `max-age=0` (should not pass).
 - No test for a malformed/short max-age (e.g. `max-age=300`, far below the one-year value the guidance demands).
 - No test for a WAF/challenge response.

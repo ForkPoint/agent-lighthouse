@@ -42,6 +42,7 @@ The core check (do existing <figure>s have a <figcaption>) is sound. The problem
 **Required fix:** Change the no-figures-but-images branch from warn() to notApplicable() — or fire it only when images sit inside <article>/<main> prose AND exceed some size, never for logos/icons/thumbnails. Change the no-images branch from pass() to notApplicable(). Require the figcaption to contain non-whitespace text of meaningful length rather than merely existing. Scope find('figcaption') to direct children so a nested figure's caption is not credited to its parent.
 
 **False-positive risks:**
+
 - 'if (totalImages > 0) return this.warn(... could benefit from <figure>/<figcaption>)' fires on virtually every real site, including ones whose only images are logos and icons — permanent unactionable warning.
 - 'if (totalFigures === 0 && totalImages === 0) return this.pass(...)' — free scored 1.0 for image-free sites.
 - An empty <figcaption></figcaption> or one containing only 'Fig. 1' passes a check about conveying context.
@@ -50,6 +51,7 @@ The core check (do existing <figure>s have a <figcaption>) is sound. The problem
 - Figures pooled across pages with no URL attribution.
 
 **Test gaps:**
+
 - No fixture where the only images are logos/icons (the dominant false warn).
 - No empty-<figcaption> fixture.
 - No nested-<figure> fixture.

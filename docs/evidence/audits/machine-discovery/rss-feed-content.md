@@ -31,6 +31,7 @@ Grades feed items on a >500-character content threshold. Duplicates 1.11's entir
 **Required fix:** Consume the shared `_feed.ts` discovery (per the 1.11 fix) instead of duplicating it. Strip HTML before measuring length so the threshold reflects text, not markup. Skip items whose content is an enclosure (podcast/video). Downgrade the verdict for excerpt feeds from fail to warn/informational — full-text feeds are a choice, not a defect — and return notApplicable when the feed is a non-article type.
 
 **False-positive risks:**
+
 - `findFeedResult()` is copy-pasted from rss-feed.ts, so every discovery flaw listed for 1.11 (exact rel/type match, unresolved relative hrefs, HTML soft-404 accepted, missing /feed/ and /index.xml) recurs identically here — and the two audits can even resolve different feeds if the origin is flaky.
 - A 200 HTML soft-404 reaches `cheerio.load(body, {xmlMode:true})`, finds no `<item>`, and returns WARN 'Feed has no items to check' — describing an imaginary empty feed.
 - `Math.max(contentEncoded.length, description.length, content.length) > 500` counts raw markup length, so a short post wrapped in verbose HTML/CDATA passes while a dense 400-character plain-text post fails. It is measuring bytes of markup, not content.
@@ -40,6 +41,7 @@ Grades feed items on a >500-character content threshold. Duplicates 1.11's entir
 - Only the first discovered feed is examined; a site whose main feed is full-text but whose comment feed is discovered first is graded on the wrong document.
 
 **Test gaps:**
+
 - HTML soft-404 body reaching the parser (reported as 'feed has no items')
 - <content:encoded> with CDATA — the exact form the guidance recommends is never tested
 - Atom <content src="…"/> external content
@@ -65,6 +67,7 @@ _No dedicated evidence signal was researched for this audit in the 2026-08-20 pa
 **Grade: C** — full-text feed content is a published, widely implemented convention with real consumers in feed readers. But the only vendor that documents machine consumption of feeds is Google, and it documents reading them for URLs rather than for article bodies. No AI vendor documents ingesting article text from a feed.
 
 **Evidence:**
+
 - The RSS 1.0 content module defines `content:encoded` as "An element whose contents are the entity-encoded or CDATA-escaped version of the content of the item" — i.e. the item's full body carried inside the feed — https://web.resource.org/rss/1.0/modules/content/ (verified 2026-08-21)
 - RFC 4287 (Atom Syndication Format, standards track, December 2005) defines `atom:content` as the entry's content element and constrains its cardinality — a ratified standard for the same signal — https://www.rfc-editor.org/rfc/rfc4287.html (verified 2026-08-21)
 - Google documents machine consumption of feeds: "Google accepts RSS 2.0 and Atom 1.0 feeds" as sitemaps, so a named crawler demonstrably parses these documents — https://developers.google.com/search/docs/crawling-indexing/sitemaps/build-sitemap (verified 2026-08-21)

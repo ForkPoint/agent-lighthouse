@@ -25,9 +25,9 @@ describe("Phase 6: The score states its conditions", () => {
     expect(conditions.coverage.originMass).toBeGreaterThan(0);
     expect(
       Number(
-        (
-          conditions.coverage.pageMass + conditions.coverage.originMass
-        ).toFixed(1),
+        (conditions.coverage.pageMass + conditions.coverage.originMass).toFixed(
+          1,
+        ),
       ),
     ).toBe(conditions.coverage.registryMass);
 
@@ -82,7 +82,9 @@ describe("Phase 6: The score states its conditions", () => {
     // Sum of scored weights for only the filtered categories
     const expectedMass = Number(
       targetCategories
-        .flatMap((cat) => (defaultConfig.audits as Record<string, any[]>)[cat] ?? [])
+        .flatMap(
+          (cat) => (defaultConfig.audits as Record<string, any[]>)[cat] ?? [],
+        )
         .filter((a) => a.meta.tier === "scored")
         .reduce((sum, a) => sum + a.meta.weight, 0)
         .toFixed(1),

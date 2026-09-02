@@ -26,6 +26,7 @@ Counts `p.$('ol').length` across every scanned page and passes if > 0 — the sa
 **Required fix:** Require the <ol> to be plausibly procedural: ≥3 <li>, not inside `nav`/`[role=navigation]`/`.breadcrumb`/`.pagination`, and not carrying BreadcrumbList/ItemList microdata; ideally within a section whose heading matches a how-to/steps pattern (language-gated). Filter `ctx.pages` by the audit's own applicablePageTypes. Return `notApplicable()` when no scanned page shows procedural intent, so brands and news sites are not told to invent steps. Also detect manually numbered step sequences to remove the false negative. Consider folding 9.5 and 9.6 into one 'structured content formats' audit, since they are the same check over different tags.
 
 **False-positive risks:**
+
 - Breadcrumbs are the canonical <ol> (schema.org/BreadcrumbList markup guidance and every major theme render breadcrumbs as `<ol class="breadcrumb">`). Any Shopify/WooCommerce/Next-commerce page therefore passes with 'Found 1 ordered list(s)' and zero step-by-step content.
 - Pagination (`<ol class="pagination">`), carousels, tab lists, and table-of-contents widgets are also ordered lists — additional sources of the same false pass.
 - No content inspection at all: no minimum <li> count, no check that the list items read as steps, no proximity to a 'How to' heading. A 1-item <ol> passes.
@@ -36,6 +37,7 @@ Counts `p.$('ol').length` across every scanned page and passes if > 0 — the sa
 - Numbered steps written as `<h3>Step 1</h3><p>…</p>` or as a manually numbered <p> sequence (extremely common in CMS content) are not detected, so genuinely procedural pages fail.
 
 **Test gaps:**
+
 - No breadcrumb `<ol class="breadcrumb">` test — the single most common real-world false pass, and it would fail today.
 - No pagination/nav <ol>.
 - No single-item <ol>.
@@ -61,6 +63,7 @@ _No dedicated evidence signal was researched for this audit in the 2026-08-20 pa
 **Grade: B** — the preservation mechanism is documented at spec and source level across the extraction stack (the same basis on which this repo already graded `semantic-html/semantic-lists` B), but no study isolates ordered lists' effect on citation rate and the audit's own "how-to answer snippet" framing is refuted for the only vendor that ever shipped that surface.
 
 **Evidence:**
+
 - Lists are first-class in the tree agents read: HTML-AAM maps `ol`/`ul`/`li` to `list`/`listitem` roles alongside its `dl`/`dt`/`dd` and table mappings — https://www.w3.org/TR/html-aam-1.0/ (verified 2026-08-21)
 - trafilatura's `include_formatting` keeps "structural elements related to formatting (kept in XML, rendered as markdown for text formats)", and markdown's ordered-list syntax carries the numbering — https://trafilatura.readthedocs.io/en/latest/corefunctions.html (verified 2026-08-21)
 - The same conversion is now infrastructure: Cloudflare's Markdown for Agents "automatically converts any HTML page requested from our network to markdown", reporting "a 80% reduction in token usage" on its own post (16,180 HTML tokens → 3,150 markdown) — https://blog.cloudflare.com/markdown-for-agents/ (verified 2026-08-21)

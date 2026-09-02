@@ -32,6 +32,7 @@ Detects step content with an English-only regex that requires the number to be t
 **Required fix:** Delete. If procedural-content structure is still wanted as a signal, assess it in semantic-html (does the page use `<ol>`/`<li>` for its steps) rather than demanding a deprecated schema type. At minimum, if kept: return `notApplicable` for the no-steps branch, accept single-object `step` and `HowToSection`, and replace the leading-digit regex with an `<ol>`-based detector.
 
 **False-positive risks:**
+
 - `h.match(/^(?:step\s+)?(\d+)[.):\s]/i)` is English-only ('Schritt', 'Étape', 'Paso', '手順', 'Шаг' are not handled) AND requires the digit to be at the start of the heading TEXT. The normal way tutorials render step numbers — a separate `<span class="step-num">1</span>` or a CSS `counter()` — produces heading text with no leading digit, so real how-to content never triggers and the audit silently exempts exactly the pages it targets.
 - It over-triggers on numeric headings that are not steps: `[.):\s]` after `\d+` means headings like '2023 in review' then '2024 in review', or '1 000 customers' / '2 000 customers', satisfy the sequence and force a HowTo requirement on a changelog, an annual-report page, or a pricing table. The audit then hard-fails them.
 - The no-stepped-pages branch returns `this.warn(...)` (score 0.5) instead of `notApplicable`, so a site with no procedural content is docked on every scan.
@@ -39,6 +40,7 @@ Detects step content with an English-only regex that requires the number to be t
 - `hasSequentialNumberedHeadings` counts across all heading levels mixed together, so an h2 '1. Overview' followed by an unrelated h4 '2 year warranty' registers as a sequence.
 
 **Test gaps:**
+
 - No test for step numbers rendered outside the heading text (span/CSS counter) — the normal real-world pattern the regex misses
 - No non-English step-heading test
 - No test for numeric non-step headings ('2023 results') falsely triggering the requirement
@@ -56,6 +58,7 @@ Detects step content with an English-only regex that requires the number to be t
 **Grade: C** — the type is genuinely widely deployed, and still first-class in the schema.org vocabulary. Structured data as a class is associated with citation. But no vendor documents any consumer reading `HowTo` today, and Google explicitly deprecated the only consumer that ever existed.
 
 **Evidence:**
+
 - The type is alive and broadly deployed: schema.org/HowTo carries no deprecated, attic or pending marker and reports 100K–1M domains (Google web index, July 2026) — https://schema.org/HowTo (verified 2026-08-21)
 - Pillar-level empirical support, not type-level. The GEO-16 study audited 1,702 citations across Brave Summary, Google AI Overviews and Perplexity. It found that "pillars related to Metadata and Freshness, Semantic HTML, and Structured Data showed the strongest associations with citation" — https://arxiv.org/abs/2509.10762 (verified 2026-08-21)
 

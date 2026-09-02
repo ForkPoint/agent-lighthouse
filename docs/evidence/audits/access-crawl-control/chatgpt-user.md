@@ -35,12 +35,14 @@ One of the four checks in this category that genuinely matter — ChatGPT-User i
 **Required fix:** Raise `weight` above the training-crawler tier (realtime fetchers drive measurable referral traffic; training crawlers do not). Add a live UA probe refetching `/` as `ChatGPT-User` and fail on a status/body divergence from baseline — that is the check that catches the real-world blocking mechanism. Apply the shared helper fixes from 2.1.
 
 **False-positive risks:**
+
 - Cloudflare/Akamai bot rules that 403 `ChatGPT-User` at the edge produce a clean PASS here, because the scanner fetches as `AgentLighthouse/1.0` and only reads robots.txt intent.
 - Exact-match miss on `User-agent: ChatGPT-User/1.0`.
 - Prefix collision: a site writing `User-agent: ChatGPT` to cover the family matches neither `ChatGPT-User` nor `GPTBot`, so a deliberate block reads as 'allowed by default'.
 - Shared BOM / soft-404 / `Disallow: /*` misreads.
 
 **Test gaps:**
+
 - No `User-agent: ChatGPT` prefix-family case.
 - No versioned-token case.
 - No coverage of the edge-block false negative (no UA probe exists to test).

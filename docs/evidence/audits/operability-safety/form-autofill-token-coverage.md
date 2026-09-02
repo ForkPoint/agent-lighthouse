@@ -16,7 +16,6 @@ sources:
   - S19
 ---
 
-
 # Form Autofill Token Coverage
 
 > Shipped in v2. Evidence grade **A** · scored tier · partial overlap · implementation: `static-fetch`
@@ -24,11 +23,12 @@ sources:
 ## What it checks
 
 Per-form score for whether every field an agent must populate carries the machine-readable identity an agent needs:
-  - a stable name or id;
-  - a correct input type;
-  - a WHATWG autocomplete token, when the field maps to a standard autofill concept;
-  - programmatic constraints;
-  - error wiring via aria-invalid and aria-describedby. Scored as covered-fields / autofillable-fields per form.
+
+- a stable name or id;
+- a correct input type;
+- a WHATWG autocomplete token, when the field maps to a standard autofill concept;
+- programmatic constraints;
+- error wiring via aria-invalid and aria-describedby. Scored as covered-fields / autofillable-fields per form.
 
 ## Claimed mechanism (falsifiable)
 
@@ -89,7 +89,7 @@ Two sketch details were tightened during implementation:
 
 - **Constraint programmability.** The sketch also asks for "validation
   constraints expressed only in JS with no pattern/min/max/minlength". Deciding
-  that a constraint exists *only* in JS requires executing the page's scripts,
+  that a constraint exists _only_ in JS requires executing the page's scripts,
   which is the headless-browser tier. The static half — that a field carries no
   `pattern`/`min`/`max`/`minlength` at all — is not reported, because on its own
   it cannot distinguish an unconstrained field from a field with no constraint

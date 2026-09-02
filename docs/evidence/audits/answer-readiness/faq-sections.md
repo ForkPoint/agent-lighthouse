@@ -32,6 +32,7 @@ Detects FAQ structure via FAQPage JSON-LD, FAQ-ish heading/summary text, or any 
 **Required fix:** Scope detection to the main content area (exclude header/nav/footer/aside ancestors) and require corroboration before passing on a class/id match: the matched container must hold at least two question-shaped strings (ends with ? / ？ / ؟) or at least two <summary>/<dt> children. Add non-English FAQ labels keyed off the page's `lang` attribute, and return `na` when the language has no pattern set. Deduplicate the `details summary, summary` selector. Report coverage (pages with FAQ structure / applicable pages) rather than short-circuiting the whole site on the first hit.
 
 **False-positive risks:**
+
 - Global nav/footer link makes the whole site pass: `$('[class], [id]').filter(...)` with `/faq/.test(cls) || /faq/.test(id)` matches `<a class="footer-link faq" href="/faq">FAQ</a>` or `<li id="nav-faq">`. Every page of a themed site then reports 'Found an FAQ-style accordion' with zero on-page Q&A. Neither branch excludes header/footer/nav ancestors.
 - Same failure via FAQ_TEXT on headings: a footer heading `<h3>FAQs</h3>` above a link list, or a breadcrumb `<h2>Help & FAQ</h2>`, is counted as an FAQ section. `extractHeadings($)` reads the entire document, not the main content area.
 - English-only: FAQ_TEXT covers 'frequently asked questions|FAQ|common questions|questions & answers|Q&A'. A German 'Häufig gestellte Fragen', Spanish 'Preguntas frecuentes', French 'Questions fréquentes', or Japanese 'よくある質問' section fails outright unless the site happens to use the borrowed 'FAQ' token.
@@ -41,6 +42,7 @@ Detects FAQ structure via FAQPage JSON-LD, FAQ-ish heading/summary text, or any 
 - The `$('details summary, summary')` selector double-counts: `details summary` is a subset of `summary`, so a single <summary> can be pushed twice into faqSummaries, inflating the reported 'Found N FAQ label(s)' count.
 
 **Test gaps:**
+
 - No test with a global header/footer FAQ link — the single most likely real-world false pass.
 - No non-English FAQ heading ('Häufig gestellte Fragen', 'Preguntas frecuentes').
 - No test where a `faq` class appears on an unrelated utility/wrapper element.
@@ -66,6 +68,7 @@ _No dedicated evidence signal was researched for this audit in the 2026-08-20 pa
 **Grade: C** — `FAQPage` is a ratified schema.org type with very wide adoption. But its one documented consumer withdrew the feature for almost every site, and no AI answer-engine vendor documents reading it. The "Q&A blocks are the top extraction target" claim is nowhere measured.
 
 **Evidence:**
+
 - schema.org defines the type — "A FAQPage is a WebPage presenting one or more 'Frequently asked questions' (see also QAPage)" — and reports adoption of 1M–10M domains in the July 2026 aggregation of Google's web index — https://schema.org/FAQPage (verified 2026-08-21)
 - Question-shaped demand on AI answer surfaces is real: Semrush's 200,000-keyword study found "how", "what" and "is" the most common starters, with 35% of desktop and 32% of mobile AI Overview keywords being questions and 80%/76% informational — https://www.semrush.com/blog/ai-overviews-study/ (verified 2026-08-21)
 - Structured formats generally extract better than prose: GEO-SFE reports "structured formats (lists, tables) demonstrate 43% higher extraction accuracy than equivalent prose", within an overall 17.3% citation-rate improvement (p<0.001, Cohen's d = 0.64) — https://arxiv.org/html/2603.29979v1 (verified 2026-08-21)

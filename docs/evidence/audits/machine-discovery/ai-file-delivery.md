@@ -34,23 +34,23 @@ sources:
 
 ## What it checks
 
-How the AI files the scan already fetched are *delivered* — two headers per file, one audit:
+How the AI files the scan already fetched are _delivered_ — two headers per file, one audit:
 
-| File | Expected Content-Type |
-| :--- | :--- |
-| `/llms.txt` | `text/plain` or `text/markdown` |
-| `/.well-known/ai-catalog.json` | `application/json` |
-| `/openapi.json` | `application/json` (YAML types tolerated) |
-| `/sitemap.xml` | `application/xml` or `text/xml` |
+| File                           | Expected Content-Type                     |
+| :----------------------------- | :---------------------------------------- |
+| `/llms.txt`                    | `text/plain` or `text/markdown`           |
+| `/.well-known/ai-catalog.json` | `application/json`                        |
+| `/openapi.json`                | `application/json` (YAML types tolerated) |
+| `/sitemap.xml`                 | `application/xml` or `text/xml`           |
 
 A file counts as cacheable when it carries a `Cache-Control` with a non-zero `max-age` and no `no-store`/`no-cache`, **or** an `ETag` / `Last-Modified` validator.
 
-| State | Result |
-| :--- | :--- |
-| every served file correctly typed and cacheable | `pass` |
-| any file mis-typed | `fail`, priority `medium` |
-| types correct, some file with no caching headers | `warn`, priority `low` |
-| no AI file was served (or the response is the site's HTML shell) | `na` |
+| State                                                            | Result                    |
+| :--------------------------------------------------------------- | :------------------------ |
+| every served file correctly typed and cacheable                  | `pass`                    |
+| any file mis-typed                                               | `fail`, priority `medium` |
+| types correct, some file with no caching headers                 | `warn`, priority `low`    |
+| no AI file was served (or the response is the site's HTML shell) | `na`                      |
 
 At `tier: informative` / `weight 0` none of these outcomes moves a score.
 
@@ -61,6 +61,7 @@ The most defensible audit in the category — an llms.txt served as `application
 **Required fix:** Add a body-shape guard before judging: if the declared type is wrong AND the body parses as the expected shape (JSON.parse succeeds / starts with `<?xml`/`<urlset`), report a genuine mis-typing; if the body is the site's HTML shell (starts with `<!doctype html` or equals the homepage body), treat the file as absent and skip it instead of failing. Extend `expectations` to the other AI files the orchestrator already fetched (llms-full.txt, agents.md, sitemap-index.xml, rss/feed, .well-known/mcp/servers.json). Split the openapi entry so .json expects JSON and .yaml expects YAML. Return `notApplicable()` when `checked === 0`.
 
 **False-positive risks:**
+
 - Soft-404 blindness: `if (!file || file.status !== 200) continue;` treats an SPA catch-all 200 as a real file. Netlify/Vercel/React-Router rewrites → every unpublished AI file is reported as having the wrong Content-Type, with a fix instruction the user cannot act on. This is the single most likely false failure on modern hosting.
 - Content is never sampled: a body starting `<!doctype html>` would immediately disprove the 'JSON file with wrong header' reading, but `file.body` is not inspected.
 - Coverage gaps: `/llms-full.txt`, `/agents.md`, `/rss.xml`, `/feed.xml`, `/sitemap-index.xml`, `/robots.txt`, `/.well-known/mcp/servers.json` are all fetched by the orchestrator and all skipped here, so a site can mis-serve most of its AI surface and still pass on the four checked paths.
@@ -69,6 +70,7 @@ The most defensible audit in the category — an llms.txt served as `application
 - Absence penalized: `checked === 0` ⇒ `warn` (0.5) rather than `na`, so sites with no AI files lose points for having nothing to check.
 
 **Test gaps:**
+
 - No test for the SPA 200-HTML fallback — the dominant false-positive case.
 - No test for `application/octet-stream` on llms.txt, which is the exact failure the guidance copy describes.
 - No test for the un-checked paths (llms-full.txt, agents.md, sitemap-index.xml, feeds).
@@ -99,11 +101,11 @@ Its dossier is kept verbatim at [merged/machine-discovery/cache-headers.md](../.
 
 **Evidence:** Documented first-party by Google, whose crawling infrastructure feeds both Search and Gemini/AI-Overviews grounding: it supports both mechanisms "exactly as defined in the HTTP Caching standard", prefers ETag, and states that a 304 "tells Google to reuse the cached version, saving your server bandwidth and resources". MCP's authorization spec independently instructs clients to "cache metadata respecting HTTP cache headers".
 
-**Counter-evidence:** Google hedges — "individual Google crawlers and fetchers may or may not make use of caching" — and *no* AI-specific crawler vendor documents conditional-request support: OpenAI's, Anthropic's and Perplexity's crawler docs are silent on caching. Vercel observed ChatGPT and Claude often not fetching at all when asked for fresh docs, implying reliance on cached or training data rather than well-behaved revalidation. The benefit is therefore best stated as efficiency/hygiene evidenced through Google, not as an AI-agent outcome.
+**Counter-evidence:** Google hedges — "individual Google crawlers and fetchers may or may not make use of caching" — and _no_ AI-specific crawler vendor documents conditional-request support: OpenAI's, Anthropic's and Perplexity's crawler docs are silent on caching. Vercel observed ChatGPT and Claude often not fetching at all when asked for fresh docs, implying reliance on cached or training data rather than well-behaved revalidation. The benefit is therefore best stated as efficiency/hygiene evidenced through Google, not as an AI-agent outcome.
 
 ### Grade decision: raised **C → B**, tier stays informative (weight 0)
 
-The meta law grades a merged audit on the strongest **proven** path for the merged signal. That signal is now *delivery headers on AI files*, and the caching half is the better-evidenced of the two: the Content-Type claim grades **C** (plausible mechanism, no vendor requirement, "none-known among server-side crawlers"), while the conditional-request claim grades **B** on Google's own first-party documentation of the mechanism it implements — the same transitive Google-index path that earns `discovery-index-coverage` its B.
+The meta law grades a merged audit on the strongest **proven** path for the merged signal. That signal is now _delivery headers on AI files_, and the caching half is the better-evidenced of the two: the Content-Type claim grades **C** (plausible mechanism, no vendor requirement, "none-known among server-side crawlers"), while the conditional-request claim grades **B** on Google's own first-party documentation of the mechanism it implements — the same transitive Google-index path that earns `discovery-index-coverage` its B.
 
 The tier does **not** follow the grade: the grade prices the evidence and the tier prices the claim. 8.11's review is explicit that the benefit is "to the site owner's bandwidth, not to any AI agent outcome", and that standalone the audit "should at minimum … drop to informational weight". `weightForGrade('B', 'informative') === 0`, so absorbing a `scored`/0.6 audit into an informative one removes 0.6 of machine-discovery's evidence mass — deliberately. A later task that finds an AI consumer documenting conditional requests can promote the tier without re-grading.
 

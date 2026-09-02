@@ -55,11 +55,11 @@ sources:
 
 Whether the site publishes an MCP discovery document at `/.well-known/mcp/servers.json` or `/.well-known/ucp`, and whether what it publishes can be read.
 
-| State | Result |
-| :--- | :--- |
+| State                                                              | Result |
+| :----------------------------------------------------------------- | :----- |
 | a document that parses and lists at least one server or capability | `pass` |
-| a document that does not parse, or that lists nothing | `fail` |
-| no document published | `na` |
+| a document that does not parse, or that lists nothing              | `fail` |
+| no document published                                              | `na`   |
 
 Reported, not scored. Neither path is registered or specified, and no shipping MCP client is documented as fetching either, so a site with a working MCP server discovered by another route is not less agent-ready for publishing no such file. What an MCP server's actual reachability is checked by is `agent-interfaces/mcp-modern-era-reachability` and `mcp-oauth-discovery-chain`.
 
@@ -70,6 +70,7 @@ MCP is the one protocol in this category that genuinely matters in 2026, but the
 **Required fix:** Detect MCP the way clients actually do: probe a small set of conventional endpoints (/mcp, /api/mcp, /sse) with a real initialize handshake, honor `/.well-known/oauth-protected-resource` (the one well-known path MCP genuinely defines for authorization discovery), and accept a `<link rel="mcp-server">`-style hint if the project wants one. Keep servers.json only as a secondary hint. Require the UCP branch to validate a `services` or `capabilities` object with at least one entry before passing, and reject empty `servers` arrays. Return `notApplicable` rather than `fail` for sites with no API surface at all.
 
 **False-positive risks:**
+
 - `/.well-known/mcp/servers.json` is not a registered or spec'd MCP discovery path. Sites that genuinely expose an MCP server — at /mcp, /api/mcp, /sse, advertised via the MCP registry, via `/.well-known/oauth-protected-resource`, or via a `mcp.json` config — all report 'MCP server discovery file not found' at medium priority. This is a false FAIL on precisely the sites that are most agent-ready.
 - The UCP fallback (lines 93-107) passes on ANY parseable JSON object at /.well-known/ucp: `if (isObject(ucpParsed))` → immediate `this.pass(...)`. No `services`, no `capabilities`, no version required — `{}` at that path yields 'UCP/MCP discovery profile found with 0 services and 0 capabilities' as a PASS. Vacuous pass with a confident message.
 - `ucpParsed['services'] || ucpObj['services']` uses `||` so a legitimately empty object/array falls through to the other source; combined with the no-validation pass this makes the reported counts arbitrary.
@@ -77,6 +78,7 @@ MCP is the one protocol in this category that genuinely matters in 2026, but the
 - WAF 403 on /.well-known/* → 'not found'.
 
 **Test gaps:**
+
 - No test that `{}` at /.well-known/ucp produces a vacuous pass (it does)
 - No test for `{"servers": []}` being a vacuous pass
 - No fixture for a site whose MCP server is discoverable by any other means (registry entry, /mcp probe, oauth-protected-resource)
@@ -92,7 +94,7 @@ MCP is the one protocol in this category that genuinely matters in 2026, but the
 
 **Evidence:** This is the path the MCP project itself is converging on. SEP-2127 (opened 2026-01-21, label 'in-review', still OPEN and unmerged as of 2026-08-11) delegates domain-level discovery to an 'AI Catalog' and its extension repo's docs/discovery.md states: 'An AI Catalog MAY be served from any URL. For automated domain-level discovery, hosts MAY publish one at: /.well-known/ai-catalog.json. Clients performing domain-level discovery SHOULD attempt to retrieve this well-known URL.' Media type SHOULD be application/ai-catalog+json; MCP entries use type application/mcp-server-card+json and urn:air: identifiers. Real conformant deployments exist and verified live on 2026-08-20: vercel.com serves it with the exact application/ai-catalog+json media type and specVersion 1.0; zapier.com serves specVersion 1.0 with a trustManifest and an entry pointing at its MCP server card. The underlying AI Catalog repo (Agent-Card/ai-catalog, 210 stars) was pushed the same day it was checked, so the work is live. Audit guidance: check /.well-known/ai-catalog.json, validate specVersion + entries[].type + entries[].url, require a JSON content-type (reject HTML 200 soft-404s), and prefer application/ai-catalog+json.
 
-**Counter-evidence:** The SEP is not merged — nothing about this is in the ratified spec (current revision 2026-07-28). `ai-catalog.json` is not in the IANA Well-Known URIs registry (152 entries checked; mcp, mcp.json, ai-catalog.json, webmcp, openapi are all absent). The MCP extension repo carrying the discovery text has 5 stars. No MCP client vendor documents consuming it. Anthropic's own docs say 'You can manually add any third-party connector to Claude as long as you have the URL of that remote MCP server'. OpenAI's Apps SDK routes through a developer-mode URL paste, plus 'public plugin submission' with 'domain verification'. A probe of 19 major domains found only 2 publishers: Vercel and Zapier. SEP-2127 itself lists 'No Domain-Level Discovery' as an *unsolved* pain point, which is an admission that the mechanism does not yet work.
+**Counter-evidence:** The SEP is not merged — nothing about this is in the ratified spec (current revision 2026-07-28). `ai-catalog.json` is not in the IANA Well-Known URIs registry (152 entries checked; mcp, mcp.json, ai-catalog.json, webmcp, openapi are all absent). The MCP extension repo carrying the discovery text has 5 stars. No MCP client vendor documents consuming it. Anthropic's own docs say 'You can manually add any third-party connector to Claude as long as you have the URL of that remote MCP server'. OpenAI's Apps SDK routes through a developer-mode URL paste, plus 'public plugin submission' with 'domain verification'. A probe of 19 major domains found only 2 publishers: Vercel and Zapier. SEP-2127 itself lists 'No Domain-Level Discovery' as an _unsolved_ pain point, which is an admission that the mechanism does not yet work.
 
 ### Signal: mcp-server-card-document — grade C (agent-action-surfaces)
 
@@ -139,8 +141,8 @@ point.
 the sweep plan proposed splitting it into a new scored audit. That split was not
 made, because the signal is already discharged.
 
-Its own text says what it is: *"This is a meta-signal about how the other audits
-must be implemented"* — a validation-correctness rule, not an adoption claim. Its
+Its own text says what it is: _"This is a meta-signal about how the other audits
+must be implemented"_ — a validation-correctness rule, not an adoption claim. Its
 requirement is that an audit must not read an HTTP 200 carrying HTML as evidence
 of a document. `agent-interfaces/openapi-exists` implements exactly that at the
 ratified path: `servedAsData()` rejects a `text/html` body at
@@ -151,15 +153,15 @@ from the same API Evangelist survey this signal cites.
 Building a second audit for it would have done three wrong things. It would have
 duplicated a check that already runs. It would have contradicted the tier
 `openapi-exists` deliberately carries: that audit's own evidence names its tier —
-*"Ratified standard + no known agent consumers = B, and informative rather than
-scored until a consumer is documented"* — and the 2026-08-22 merge corrected an
+_"Ratified standard + no known agent consumers = B, and informative rather than
+scored until a consumer is documented"_ — and the 2026-08-22 merge corrected an
 earlier `scored` shipping decision to match it. And a general soft-404 audit
-would have had to pass on *something*: serving `{}` at a well-known path would
+would have had to pass on _something_: serving `{}` at a well-known path would
 have bought a weight-1.0 win, which is a score **gain** for publishing nothing.
 
 The population argument settles it independently. The harm this signal describes
-requires a client: *"an agent following the standard would get a 200, try to
-parse a LinkSet out of the body, fail, and have no useful recourse"*. At
+requires a client: _"an agent following the standard would get a 200, try to
+parse a LinkSet out of the body, fail, and have no useful recourse"_. At
 `/.well-known/mcp/servers.json`, `/.well-known/ucp` and `/.well-known/agents.json`
 — all recorded `Consumers: none-known` — there is no such client, so an
 unparseable response there lies to nobody. Scoring it would be the same

@@ -26,6 +26,7 @@ Redundant third read of the same non-standard servers.json, and it checks the wr
 **Required fix:** Merge into 5.13 (mcp-endpoint): have the initialize handshake return its `result.capabilities` and report tools/resources/prompts from the wire response, with servers.json as an optional secondary hint. Delete this file. If kept standalone, it must consume the handshake result and stop claiming to check an 'MCP response' it never requests.
 
 **False-positive risks:**
+
 - Never contacts the server. Real MCP capabilities live in `result.capabilities` of the initialize response that 5.13 already retrieves; a server advertising tools/resources/prompts correctly over the wire fails here for not duplicating them in a static file that is not part of any spec.
 - `expected: 'servers.json or MCP response declares tools, resources, or prompts'` is false advertising — the code path for 'MCP response' does not exist.
 - `server[key] !== undefined && server[key] !== false` treats any truthy-or-non-false value as a declared capability, so `"tools": 0`, `"tools": ""`, or `"tools": null` count as present (null !== undefined and !== false).
@@ -33,6 +34,7 @@ Redundant third read of the same non-standard servers.json, and it checks the wr
 - Third consecutive zero for one missing non-standard file (with 5.12 and 5.13), tripling the score impact of a single absence.
 
 **Test gaps:**
+
 - No test asserting capabilities are read from a live initialize response
 - No test that `"tools": null` / `"tools": 0` are wrongly counted as declared
 - No test of the triple-penalty interaction with 5.12/5.13
@@ -56,6 +58,7 @@ _No dedicated evidence signal was researched for this audit in the 2026-08-20 pa
 **Grade: D** — no MCP specification version, registry document, or vendor doc defines that file or any per-origin capability manifest; capabilities are protocol state obtained from the server over the wire, so the artifact this audit measures has no consumer.
 
 **Evidence:**
+
 - Current MCP spec (2026-07-28): capabilities come from the `server/discover` RPC — "`server/discover` lets a client query a server's supported protocol versions, capabilities, and identity before sending any other requests. Servers **MUST** implement it", returning `capabilities: { tools: {}, resources: {} }` — https://modelcontextprotocol.io/specification/2026-07-28/server/discover (verified 2026-08-21)
 - Legacy MCP revisions (2025-06-18 and earlier): "The server **MUST** respond with its own capabilities and information" in the `initialize` response, where `prompts`, `resources`, and `tools` are declared — https://modelcontextprotocol.io/specification/2025-06-18/basic/lifecycle (verified 2026-08-21)
 - Third-party discovery of MCP servers runs through the MCP Registry — a central REST API over `server.json` metadata with namespace ownership proved by DNS/GitHub/HTTP verification — not a per-origin well-known file: "A REST API for MCP clients and aggregators to discover available servers" — https://modelcontextprotocol.io/registry/about (verified 2026-08-21)

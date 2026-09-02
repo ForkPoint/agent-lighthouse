@@ -30,11 +30,12 @@ AI engines crawl your about page to build an organizational authority profile. W
 
 ## Code review findings (2026-08-20, 11-agent pass)
 
-Falsy. No AI system keyword-matches "team"/"certified"/"specializ" on /about to compute an authority score; that mechanism is asserted in the guidance but does not exist. Worse, the match is `bodyLower.includes(kw)` against the *raw HTML source* — not extracted text — so `class="team-grid"`, an inline analytics blob containing "professional", or a nav link labelled "Our Team" all count. On real sites this is close to a constant PASS, and where it fails it fails for the wrong reason (the about page lives at /company/ or /ueber-uns/). A near-constant pass on a fabricated mechanism has negative information value; the E-E-A-T intent is already better served by 10.1/10.2/10.3.
+Falsy. No AI system keyword-matches "team"/"certified"/"specializ" on /about to compute an authority score; that mechanism is asserted in the guidance but does not exist. Worse, the match is `bodyLower.includes(kw)` against the _raw HTML source_ — not extracted text — so `class="team-grid"`, an inline analytics blob containing "professional", or a nav link labelled "Our Team" all count. On real sites this is close to a constant PASS, and where it fails it fails for the wrong reason (the about page lives at /company/ or /ueber-uns/). A near-constant pass on a fabricated mechanism has negative information value; the E-E-A-T intent is already better served by 10.1/10.2/10.3.
 
 **Required fix:** If retained instead of deleted: parse the fetched body with cheerio and run `getMainContentText` before matching; require word-boundary regex matches; add a soft-404/SPA-shell guard (minimum body-text length plus a 'not found' sniff); consult `finalUrl` and `contentType`; and turn the 'no about page found' branch into `notApplicable()` — absence of a page at a guessed URL is not evidence of a defect. But even a fixed version measures nothing an AI agent consumes; deletion is the honest call.
 
 **False-positive risks:**
+
 - `const bodyLower = aboutResult.body.toLowerCase(); CREDENTIAL_KEYWORDS.filter((kw) => bodyLower.includes(kw))` runs over raw HTML including `<script>`, `<style>`, class names, data attributes and inline JSON. `class="team-section"` plus a GTM payload containing "professional" is enough to PASS with zero credential content on the page.
 - Substring matching with no word boundaries: 'team' matches "steam"/"teamwork"; 'background' matches the CSS property `background:` and `background-image` in any inline style block, so any about page with an inline style already has a free keyword; 'specializ' matches nothing in en-GB ("specialise").
 - English-only keyword list AND English-only path list. A German (`/ueber-uns/`), French (`/qui-sommes-nous/`), Spanish (`/nosotros/`) or Japanese about page fails both, producing a hard FAIL on a site with an exemplary about page.
@@ -45,6 +46,7 @@ Falsy. No AI system keyword-matches "team"/"certified"/"specializ" on /about to 
 - Issues up to 7 extra network requests in a `ctx.fetch` loop duplicating work the orchestrator already did (all 7 about paths are in `rootFilePaths`), triggered whenever the site redirects `/about` → `/about/` and the un-slashed form was recorded non-200.
 
 **Test gaps:**
+
 - No test with a realistic full HTML page — every test uses a bare sentence, hiding the raw-HTML/class-name matching defect entirely.
 - No test proving keywords are not matched inside `<script>`/`<style>`/class attributes.
 - No test for a non-English about page or a non-English about path.
@@ -61,9 +63,10 @@ Falsy. No AI system keyword-matches "team"/"certified"/"specializ" on /about to 
 
 **Mechanism:** Answer engines and the ranking systems feeding them assess who is responsible for a site. The About page is the conventional artifact where that is declared. A site with no page identifying its operator is therefore harder to assess than one that has it.
 
-**Grade: C** — the convention is genuinely near-universal and Google documents raters being sent to it, but no vendor documents a *system* reading it, and the narrower claim this audit originally scored is refuted rather than merely unproven.
+**Grade: C** — the convention is genuinely near-universal and Google documents raters being sent to it, but no vendor documents a _system_ reading it, and the narrower claim this audit originally scored is refuted rather than merely unproven.
 
 **Evidence:**
+
 - Google's Search Quality Rater Guidelines of 11 September 2025 state, in §2.5.2 "Finding Who is Responsible for the Website…": "Most websites have 'contact us' or 'about us' or 'about' pages that provide information about who owns the site." §3.3 then makes reputation research mandatory — "reputation research is required for all PQ rating tasks" — https://static.googleusercontent.com/media/guidelines.raterhub.com/en//searchqualityevaluatorguidelines.pdf (verified 2026-08-21)
 - Google's Organization structured-data reference recommends placing the markup "on your home page, or a single page that describes your organization, for example the about us page" — https://developers.google.com/search/docs/appearance/structured-data/organization (verified 2026-08-21)
 

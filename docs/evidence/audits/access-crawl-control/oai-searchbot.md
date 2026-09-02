@@ -33,12 +33,14 @@ High-value and correctly scoped — OAI-SearchBot builds the ChatGPT Search inde
 **Required fix:** Raise weight above the training tier, add an OAI-SearchBot UA probe, and apply the shared helper fixes from 2.1.
 
 **False-positive risks:**
+
 - Edge UA blocking invisible to the scanner — PASS while OAI-SearchBot is 403'd.
 - Exact-match miss on `User-agent: OAI-SearchBot/1.0`.
 - A site writing `User-agent: OAI-SearchBot` alongside `User-agent: GPTBot` with divergent policies is fine, but one writing the shorthand `User-agent: OAI-` matches nothing.
 - Shared BOM / soft-404 / `Disallow: /*` misreads.
 
 **Test gaps:**
+
 - No versioned or shorthand token case.
 - No UA-probe coverage.
 - Same missing real-world robots.txt variants as 2.1.

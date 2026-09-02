@@ -61,7 +61,9 @@ async function main() {
 
   for (const file of auditSourceFiles(repoRoot)) {
     const source = readFileSync(file, "utf8");
-    const id = declaredIds(source).find((candidate) => registered.has(candidate));
+    const id = declaredIds(source).find((candidate) =>
+      registered.has(candidate),
+    );
     if (!id) continue;
     seen.add(id);
 

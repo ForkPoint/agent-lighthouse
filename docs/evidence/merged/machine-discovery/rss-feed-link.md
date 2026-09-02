@@ -26,6 +26,7 @@ Sound signal, but the type match is so narrow that it produces a high-volume fal
 **Required fix:** 1) Widen the type set: `l.type === 'application/rss+xml'` must also accept `application/atom+xml`, `application/feed+json`, `application/json` when the href looks like a feed, and `application/rss+xml; charset=utf-8` (strip MIME parameters at `;`). Today an Atom-only site — a very large population — gets a 'medium' priority hard fail while being perfectly discoverable. 2) Normalize `rel`: exact `l.rel === 'alternate'` rejects `rel="Alternate"` and multi-token rel values. 3) Return `notApplicable()` for sites with no periodic content (no blog/news/article pages among `ctx.pages`) instead of failing them for lacking a feed they have no use for. 4) Prefer feeds discovered in `ctx.rootFiles` (/feed, /rss.xml, /atom.xml) before failing on the head-link alone. 5) Iterate `ctx.pages` — feeds are often declared on the blog index, not the homepage.
 
 **False-positive risks:**
+
 - Atom feeds are invisible: `l.type === 'application/rss+xml'` is the only accepted value, so `<link rel="alternate" type="application/atom+xml" href="/atom.xml">` — the default output of Blogger, Hugo, Jekyll and many others — is reported as 'No RSS feed link found in <head>' at medium priority. This is probably the highest-frequency false failure in the whole category.
 - JSON Feed (`application/feed+json`) likewise unrecognized.
 - Charset parameter breaks the match: `type="application/rss+xml; charset=UTF-8"` fails the exact comparison.
@@ -36,6 +37,7 @@ Sound signal, but the type match is so narrow that it produces a high-volume fal
 - No verification the feed URL resolves — a dangling `/feed.xml` passes.
 
 **Test gaps:**
+
 - No Atom feed test — the single most impactful gap, and the reason the narrow type match survived review.
 - No JSON Feed test.
 - No charset-parameter MIME test.

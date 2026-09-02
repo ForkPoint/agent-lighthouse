@@ -17,7 +17,6 @@ sources:
   - w3c-tdmrep-final-report
 ---
 
-
 # AI usage signal coherence across channels
 
 > Shipped in v2. Evidence grade **B** · scored tier · unique · implementation: `static-fetch`
@@ -28,11 +27,12 @@ Normalises every AI-usage signal the site emits — robots.txt Allow/Disallow, A
 
 ## Claimed mechanism (falsifiable)
 
-There is no defined precedence *between* these standards; each specifies only its own parsing. The channels differ:
-  - TDMRep is carried in a well-known JSON array, an HTTP header and a meta tag (s17).
-  - AIPREF is carried in robots.txt and an HTTP header (s11).
-  - RSL is carried in robots.txt, a Link header, an HTML link and an inline script (s12).
-  - Content-Signal is carried in robots.txt (s8).
+There is no defined precedence _between_ these standards; each specifies only its own parsing. The channels differ:
+
+- TDMRep is carried in a well-known JSON array, an HTTP header and a meta tag (s17).
+- AIPREF is carried in robots.txt and an HTTP header (s11).
+- RSL is carried in robots.txt, a Link header, an HTML link and an inline script (s12).
+- Content-Signal is carried in robots.txt (s8).
 
 Falsifiable. Normalise each channel to (path-scope, usage-category, allow|deny) triples, then compare. Two channels asserting opposite values for the same category and overlapping path scope is a mechanically detectable contradiction. It provably yields divergent outcomes, because a TDMRep-aware crawler and an AIPREF-aware crawler read disjoint inputs. The highest-value instance is documented directly. Cloudflare's managed robots.txt prepends `Content-signal: search=yes, ai-train=no, use=reference` above the operator's own file, so the operator's stated policy can be contradicted at the edge without their knowledge (s7).
 

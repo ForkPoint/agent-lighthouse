@@ -13,7 +13,6 @@ sources:
   - S3
 ---
 
-
 # Version Downgrade Recoverability
 
 > Shipped in v2. Evidence grade **A** · scored tier · unique · implementation: `static-fetch`
@@ -67,5 +66,5 @@ Recorded at graduation (2026-08-22, Plan 5 Task 30).
 
 ## Deferred
 
-- Retrying with a revision from `data.supported` to prove the downgrade actually completes. The audit verifies the client is *told* how to recover, which is the MUST; exercising the retry would double the probe count for a claim the error already settles.
+- Retrying with a revision from `data.supported` to prove the downgrade actually completes. The audit verifies the client is _told_ how to recover, which is the MUST; exercising the retry would double the probe count for a claim the error already settles.
 - Probing revisions between the impossible one and the current one to find the exact floor. `data.supported` is the server's own answer to that question, and it is already read and cross-checked.

@@ -31,6 +31,7 @@ The trigger is `heading.endsWith('?')`, which both over-fires (any CTA headline 
 **Required fix:** Match `/[?？؟;]\s*$/` for the trigger, require at least 3 question headings each followed by ≥1 block of answer text, and exclude headings inside `nav`, `header`, `footer`, and `[role="dialog"]`. Return `notApplicable` when the precondition is absent. Verify the detected FAQPage actually has a non-empty `mainEntity` of Question/acceptedAnswer pairs. Rewrite the description to drop the 'Google SGE' claim and state the answer-engine benefit as expected rather than established.
 
 **False-positive risks:**
+
 - `extractHeadings(page).some((h) => h.endsWith('?'))` — a single rhetorical marketing heading ('Ready to get started?', 'Why choose us?', 'Questions?') triggers the requirement, and the audit then returns a hard `fail` at medium priority telling the site to add FAQPage schema to a page that has no Q&A content at all. Question-phrased section headings are ubiquitous on landing pages.
 - English/Latin-punctuation only. Japanese and Chinese pages use the full-width '？', Arabic/Persian use '؟', and Greek uses ';'. None end with ASCII '?', so non-Latin sites never trigger and fall into the 'no question headings' branch permanently — an entire class of sites silently exempted while their English competitors are failed.
 - The precondition-absent branch returns `this.warn(...)` (score 0.5) rather than `notApplicable`, so a site with no FAQ content is docked half a point for content it never claimed to have.
@@ -38,6 +39,7 @@ The trigger is `heading.endsWith('?')`, which both over-fires (any CTA headline 
 - Uses raw `page.$('h1..h6')` with no exclusion of nav/footer/cookie-banner regions, so template chrome ('Need help?') triggers the requirement on every page of the site simultaneously, turning a single template string into a site-wide fail.
 
 **Test gaps:**
+
 - No test for a marketing page with one rhetorical question heading and no Q&A content (should not hard-fail)
 - No test with '？' / '؟' / non-English question headings
 - No test where the question heading is in nav/footer template chrome
@@ -63,6 +65,7 @@ _No dedicated evidence signal was researched for this audit in the 2026-08-20 pa
 **Grade: C** — the only documented consumer path for this signal has been withdrawn: Google first restricted the FAQ rich result to authoritative government and health sites, then retired the feature and dropped it from the structured data gallery. No other vendor documents a named consumer, so what remains is a widely-published community convention with a plausible but unproven mechanism.
 
 **Evidence:**
+
 - Google's own FAQPage documentation records the restriction: the FAQ rich result "is only shown for well-known, authoritative government and health websites". It then records the removal of the feature and its documentation. The changelog states that "The FAQ rich result feature is no longer shown in Google Search results", under a deprecation notice effective 7 May 2026 — https://developers.google.com/search/docs/appearance/structured-data/faqpage (verified 2026-08-21)
 - FAQ is absent from Google's current structured data gallery. Of the features listed there, Breadcrumb, Article, Local business, Review snippet and Organization all remain; FAQ does not — https://developers.google.com/search/docs/appearance/structured-data/search-gallery (verified 2026-08-21)
 - The convention nevertheless persists and is still growing: FAQPage rose from 0.2% of desktop pages in 2022 to 0.6% in 2024 — https://almanac.httparchive.org/en/2024/structured-data (verified 2026-08-21)

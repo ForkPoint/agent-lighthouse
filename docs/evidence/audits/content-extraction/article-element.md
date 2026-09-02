@@ -47,6 +47,7 @@ Declares applicablePageTypes ['content'] but then loops every page in the crawl 
 **Required fix:** Filter the loop to pages whose pageType is in meta.applicablePageTypes before computing the ratio. Guard ctx.pages.length === 0 with notApplicable(). Rewrite the impact copy to the defensible claim (Readability-class extractors score <article> when selecting the content root) instead of the RAG-chunking assertion. Consider requiring the <article> to contain a heading, since a bare <article> wrapper carries no boundary information.
 
 **False-positive risks:**
+
 - applicablePageTypes is only a run-gate (audit-runner.ts:64); the loop still counts non-content pages → systematic false fails on mixed-content sites.
 - detectPageType falls back to 'content' for anything not matched as product/category, so About/Contact/Pricing/Legal pages are all classed 'content' and expected to carry <article>.
 - Documentation sites, SaaS marketing pages, and single-page apps legitimately have no self-contained article units → fail with no correct remediation.
@@ -54,6 +55,7 @@ Declares applicablePageTypes ['content'] but then loops every page in the crawl 
 - Empty ctx.pages → 'allPass = pagesWithArticle === ctx.pages.length' → 0 === 0 → pass.
 
 **Test gaps:**
+
 - No mixed-page-type crawl proving the applicablePageTypes filter does not apply inside the loop.
 - No fixture where <article> wraps non-article content (false pass).
 - No empty-ctx.pages test.

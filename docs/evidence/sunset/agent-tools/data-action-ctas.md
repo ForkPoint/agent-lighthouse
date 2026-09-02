@@ -67,12 +67,14 @@ Invented convention that also collides with a widely deployed unrelated one. No 
 **Required fix:** Delete. The real version of this signal — can an agent identify and name the interactive controls — is accessible-name coverage on buttons/links, which belongs in the accessibility category, not a bespoke attribute check here.
 
 **False-positive risks:**
+
 - FALSE PASS: `page.$('[data-action]')` matches Stimulus bindings (`data-action="click->modal#open"`), Turbo, Alpine-adjacent patterns, and countless bespoke analytics hooks. A Rails/Hotwire site scores a clean pass while exposing nothing whatsoever to an agent. The audit cannot tell an agent affordance from a JS event binding because no such distinction exists in the attribute.
 - FALSE FAIL: every site not using this made-up convention fails, with impact text asserting that 'ChatGPT Browse and Google Mariner' need these attributes to identify CTAs. Neither product documents or consumes `data-action`; agentic browsers use the accessibility tree, ARIA roles, and visible text. This is fabricated attribution presented as product guidance.
 - Counts elements globally (`totalDataAction`) with no restriction to buttons/links, so `data-action` on a wrapper div inflates the count.
 - Pass requires `data-action` AND `data-action-type` anywhere on any page — not on the same element. One div with `data-action` on page A and an unrelated element with `data-action-type` on page B yields a full PASS.
 
 **Test gaps:**
+
 - No Stimulus/Hotwire fixture (`data-action="click->controller#method"`) — the false-pass case is entirely untested
 - No test that data-action and data-action-type must co-occur on the same element
 - No test that non-interactive elements are excluded

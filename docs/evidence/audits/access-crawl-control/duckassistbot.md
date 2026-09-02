@@ -33,12 +33,14 @@ Real, active token behind DuckDuckGo's DuckAssist answers — a legitimate keep,
 **Required fix:** Reduce weight relative to the top-tier realtime fetchers and soften the `impact` causality claim. Apply the shared helper fixes from 2.1.
 
 **False-positive risks:**
+
 - `impact` implies DuckAssistBot access is the gate on DuckAssist visibility, when DuckDuckGo's underlying index (Bing-derived) is the larger determinant — a site can be blocked here and still appear.
 - Exact-match miss on versioned tokens.
 - Weight 1.0 equal to GPTBot.
 - Shared BOM / soft-404 / `Disallow: /*` misreads.
 
 **Test gaps:**
+
 - No versioned-token case.
 - Template-only coverage; same missing real-world robots.txt variants as 2.1.
 

@@ -16,7 +16,6 @@ sources:
   - s7
 ---
 
-
 # AIPREF Content-Usage declaration validity
 
 > Shipped in v2. Evidence grade **B** · scored tier · unique · implementation: `static-fetch`
@@ -27,7 +26,7 @@ Checks whether the site expresses AI usage preferences in the IETF AIPREF form t
 
 ## Claimed mechanism (falsifiable)
 
-draft-ietf-aipref-attach-05 defines the only two attachment points a conformant crawler reads. They are the `Content-Usage` HTTP response header, and the `Content-Usage:` robots.txt directive with an optional path prefix (s11). draft-ietf-aipref-vocab-07 fixes the value grammar: an RFC 8941 structured-field dictionary over the categories `train-ai` and `search`, with token values `y` and `n`. Anything absent is *unknown*, and crawlers resolve unknown using their own default rather than yours (s10). Three falsifiable consequences follow. First, a site publishing only Cloudflare's legacy `Content-Signal: search=yes, ai-train=no` emits zero AIPREF preference: an AIPREF parser sees `unknown` for every category. Second, `yes` and `no` are not valid AIPREF tokens, so `Content-Usage: train-ai=no` fails structured-field parsing. Third, attach-05 states that 'Disallowed paths have no associated usage preferences', so a `Content-Usage` scoped to a path the same agent group Disallows is inert by specification.
+draft-ietf-aipref-attach-05 defines the only two attachment points a conformant crawler reads. They are the `Content-Usage` HTTP response header, and the `Content-Usage:` robots.txt directive with an optional path prefix (s11). draft-ietf-aipref-vocab-07 fixes the value grammar: an RFC 8941 structured-field dictionary over the categories `train-ai` and `search`, with token values `y` and `n`. Anything absent is _unknown_, and crawlers resolve unknown using their own default rather than yours (s10). Three falsifiable consequences follow. First, a site publishing only Cloudflare's legacy `Content-Signal: search=yes, ai-train=no` emits zero AIPREF preference: an AIPREF parser sees `unknown` for every category. Second, `yes` and `no` are not valid AIPREF tokens, so `Content-Usage: train-ai=no` fails structured-field parsing. Third, attach-05 states that 'Disallowed paths have no associated usage preferences', so a `Content-Usage` scoped to a path the same agent group Disallows is inert by specification.
 
 ## Evidence
 
@@ -52,7 +51,7 @@ Static-fetch only. 1) GET /robots.txt; tokenise line-wise, collecting `Content-U
 
 ## Example failure
 
-A publisher wants an opt-out of AI training. Their robots.txt (or Cloudflare's prepended managed block) reads `Content-Signal: search=yes, ai-train=no` and nothing else. An AIPREF-conformant crawler looks for `Content-Usage`, finds none, resolves `train-ai` to *unknown*, and applies its own permissive default. The opt-out the operator believes they published is unenforceable under the very standard the industry is converging on. A second variant: `Content-Usage: train-ai=no` — `no` is not a valid token, the dictionary fails to parse, and the whole directive is dropped.
+A publisher wants an opt-out of AI training. Their robots.txt (or Cloudflare's prepended managed block) reads `Content-Signal: search=yes, ai-train=no` and nothing else. An AIPREF-conformant crawler looks for `Content-Usage`, finds none, resolves `train-ai` to _unknown_, and applies its own permissive default. The opt-out the operator believes they published is unenforceable under the very standard the industry is converging on. A second variant: `Content-Usage: train-ai=no` — `no` is not a valid token, the dictionary fails to parse, and the whole directive is dropped.
 
 ## Scoring
 

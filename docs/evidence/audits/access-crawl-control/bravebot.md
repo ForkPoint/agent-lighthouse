@@ -33,12 +33,14 @@ Token is real (Brave Search's crawler) but the value is thin: Brave Search build
 **Required fix:** Verify the token against Brave's current crawler documentation and add a `docsUrl` so it is auditable. Reduce `weight` to reflect the small citation surface. Apply the shared helper fixes from 2.1.
 
 **False-positive risks:**
+
 - If the documented token differs from `Bravebot`, the audit passes sites that added a no-op line and fails sites that used the correct token — a self-confirming loop where the tool grades its own string rather than reality. Nothing in the code or tests validates the token against Brave's docs (note the audit ships without a `docsUrl`, unlike GPTBot/PerplexityBot/Amazonbot).
 - Exact-match miss on versioned tokens.
 - Weight 1.0 equal to GPTBot despite a far smaller citation surface.
 - Shared BOM / soft-404 / `Disallow: /*` misreads.
 
 **Test gaps:**
+
 - No verification that the token matches Brave's published crawler UA.
 - Template-only coverage; same missing real-world robots.txt variants as 2.1.
 

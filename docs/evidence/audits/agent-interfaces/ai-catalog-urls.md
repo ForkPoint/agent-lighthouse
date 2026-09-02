@@ -30,6 +30,7 @@ Third zero for the same nonexistent file, and the liveness probing it adds would
 **Required fix:** Delete along with 5.7 and 5.8. (If URL-liveness checking is preserved anywhere — e.g. in 5.5 — accept 2xx/3xx/401/403/405 as 'reachable', resolve relative URLs against ctx.baseUrl, and cap concurrency.)
 
 **False-positive risks:**
+
 - `r.status === 200` is the only accepted outcome. A correctly deployed POST-only contact endpoint returns 405 to the audit's GET; an authenticated endpoint returns 401. Both are reported as 'unreachable', producing warn/fail for a healthy catalog.
 - Fires N unthrottled parallel `ctx.fetch` calls via `Promise.all(urls.map(...))` against the target's own API with no cap — a large catalog turns the audit into a small burst load, which can itself trigger 429/WAF blocking and then be reported as the site's fault.
 - Relative service URLs (`"url": "/api/search"`) are unfetchable and score as status 0 → 'None reachable'.
@@ -37,6 +38,7 @@ Third zero for the same nonexistent file, and the liveness probing it adds would
 - Failure message interpolates every failed URL into `message` unbounded; a large catalog produces a message truncated by `validate()` at 5000 chars mid-URL.
 
 **Test gaps:**
+
 - No 401/405 fixture (the realistic responses for API endpoints)
 - No relative-URL fixture
 - No concurrency/rate-limit fixture
@@ -46,13 +48,13 @@ Third zero for the same nonexistent file, and the liveness probing it adds would
 
 ## The rewrite (Plan 4, Task 10, 2026-08-22)
 
-The required rework from the [redemption dossier](../../deletions/agent-tools/ai-catalog-urls.md) is executed: *"re-point it at `entries[].url` (skipping entries that use embedded `data`), and treat non-200-but-reachable auth-gated MCP endpoints carefully to avoid false failures."*
+The required rework from the [redemption dossier](../../deletions/agent-tools/ai-catalog-urls.md) is executed: _"re-point it at `entries[].url` (skipping entries that use embedded `data`), and treat non-200-but-reachable auth-gated MCP endpoints carefully to avoid false failures."_
 
 **Old pass condition:** every `services[].url` in the manifest answers HTTP **200** to an unauthenticated GET. On a conformant manifest the audit never got that far — it aborted with "ai-catalog.json has no services array" — and where it did run, `200` as the only accepted status reported healthy endpoints as broken.
 
-**New pass condition:** the manifest parses as ARD (shared `_ard.ts` reader), and every entry that carries a `url` resolves to a live endpoint. Entries that embed their artifact in `data` are skipped — ARD §4.2 requires *exactly one* of `url` or `data`, so an inline entry has no endpoint and is fully conformant.
+**New pass condition:** the manifest parses as ARD (shared `_ard.ts` reader), and every entry that carries a `url` resolves to a live endpoint. Entries that embed their artifact in `data` are skipped — ARD §4.2 requires _exactly one_ of `url` or `data`, so an inline entry has no endpoint and is fully conformant.
 
-*Reachable* now means 2xx, 3xx, or one of 401 / 403 / 405 / 429. Catalog entries point at MCP servers, agent cards and API descriptions: an OAuth-protected endpoint answers 401 (which `mcp-endpoint` already treats as a healthy server), a POST-only endpoint answers 405 to our GET, and a rate-limited one answers 429. All three are correctly deployed. 404, 410, 5xx and transport failures remain broken.
+_Reachable_ now means 2xx, 3xx, or one of 401 / 403 / 405 / 429. Catalog entries point at MCP servers, agent cards and API descriptions: an OAuth-protected endpoint answers 401 (which `mcp-endpoint` already treats as a healthy server), a POST-only endpoint answers 405 to our GET, and a rate-limited one answers 429. All three are correctly deployed. 404, 410, 5xx and transport failures remain broken.
 
 Closing the false-positive risks listed above:
 
@@ -83,6 +85,7 @@ Source: the [redemption dossier's verdict](../../deletions/agent-tools/ai-catalo
 **Grade: B** — the dereferencing is done by real, readable code in more than one implementation, which is stronger than a convention. It is not A for two reasons: no vendor documents a penalty for a dead url, and the traversing client is user-driven rather than a hosted crawler.
 
 **Evidence:**
+
 - `hf-discover`'s `navigate()` uses an entry's `url` to traverse into nested catalogs and federated registries, fetching entries whose `type` is a catalog or registry media type — https://github.com/huggingface/hf-discover (verified 2026-08-24)
 - Independent implementations check liveness explicitly: `HelgeSverre/ardvark` ships `internal/crawler` and `internal/probe`, and `iFurySt/OpenARD` ships `internal/cli/verify.go`.
 - Live manifests point at operational endpoints an agent would call immediately: Neon's ten entries are MCP servers and skills, Weaviate's nine are docs, agent skills, an OpenAPI description and a sitemap, and Shopware's is a Store-API MCP server url.

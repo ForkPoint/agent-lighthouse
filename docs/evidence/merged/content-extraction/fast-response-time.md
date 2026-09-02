@@ -26,6 +26,7 @@ Real signal, but a hard 800 ms cliff applied to a single cold measurement makes 
 **Required fix:** Take the median (or minimum) TTFB across all fetched pages in `ctx.pages` rather than the homepage's single cold sample, and introduce the ternary band the meta already claims: pass < 800 ms, warn 800-2500 ms, fail > 2500 ms — aligning the thresholds with the audit's own '2-3 second crawler timeout' rationale. Have the fetcher record connect/TLS time separately (undici diagnostics channel) and subtract it, or state plainly in `found` that the figure includes connection setup measured from the scanner's location. Return `na` when `ctx.wafProtection?.isBlocked`.
 
 **False-positive risks:**
+
 - Cold-connection inflation: TTFB is measured from before connect, so DNS+TCP+TLS are counted as server slowness. A site with a genuine 250 ms origin TTFB measured trans-Pacific fails the 800 ms gate on setup cost alone; re-running from a nearer network flips the verdict with no change to the site.
 - Single sample, no retry or median: one packet-loss event or one cold serverless start (Lambda/Cloud Run/Vercel first-hit) produces a permanent 'fail' in the report. `ctx.pages` holds every crawled page and none of their timings are used.
 - Measurement position: the homepage is fetched in Phase 2 right after Phase 1 fires ~34 parallel root-file requests through the same undici agent, so connection-pool and origin contention created by the scanner itself is charged to the site.
@@ -34,6 +35,7 @@ Real signal, but a hard 800 ms cliff applied to a single cold measurement makes 
 - WAF interaction: a challenge/JS-interstitial response is slow by design and gets reported as a site performance defect rather than as bot protection.
 
 **Test gaps:**
+
 - No test at the boundary (799/800/801) documenting the cliff.
 - No test separating connection setup from server think-time.
 - No test using timings from multiple pages (median vs single sample).

@@ -49,6 +49,7 @@ Checks /sitemap.xml then /sitemap-index.xml for a <urlset>/<sitemapindex> root. 
 **Required fix:** Parse `Sitemap:` lines out of the already-fetched robots.txt and probe those URLs first; add '/sitemap_index.xml' and '/sitemap.xml.gz' to `rootFilePaths` in orchestrator.ts. Send `Accept-Encoding: gzip` and decompress, or detect the gzip magic bytes and inflate. Match the root element namespace-insensitively (local-name), and distinguish HTML soft-404 from a malformed sitemap.
 
 **False-positive risks:**
+
 - `orchestrator.rootFilePaths` fetches only '/sitemap.xml' and '/sitemap-index.xml'. Yoast's `/sitemap_index.xml` (underscore), Hugo's `/sitemap.xml` variants, `/sitemap.xml.gz`, and custom paths declared in robots.txt are never tried → false CRITICAL for a very common CMS configuration.
 - robots.txt IS fetched by the orchestrator but its `Sitemap:` directive — the standards-defined discovery mechanism — is never parsed by this audit.
 - Gzipped sitemaps: undici does not transparently decompress, so a server that always gzips yields a binary body; `cheerio.load(body, {xmlMode:true})` finds no `<urlset>` → FAIL 'does not contain valid <urlset>' on a valid sitemap.
@@ -57,6 +58,7 @@ Checks /sitemap.xml then /sitemap-index.xml for a <urlset>/<sitemapindex> root. 
 - Any 200 HTML soft-404 at /sitemap.xml is reported as 'file found but malformed' rather than 'not found', misdirecting the fix.
 
 **Test gaps:**
+
 - /sitemap_index.xml (Yoast) — the highest-frequency real-world miss
 - Sitemap declared only via robots.txt `Sitemap:`
 - Gzip-encoded sitemap body

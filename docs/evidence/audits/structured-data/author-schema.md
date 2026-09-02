@@ -29,6 +29,7 @@ The pass criteria (name AND jobTitle AND sameAs AND affiliation) are invented �
 **Required fix:** Pass on `name` plus any one identity anchor (`url`, `@id`, or a non-empty `sameAs`); demote `jobTitle` and `affiliation` to advisory extras in the message rather than pass-blocking requirements. Handle string authors (credit them, optionally warn that a structured Person is richer) and Organization authors (treat as valid, skip Person-specific props). Restrict the Person search to `author`/`creator` positions on pages the article audit identified as articles, instead of scanning every Person on the site.
 
 **False-positive risks:**
+
 - `const requiredProps = ['name', 'jobTitle', 'sameAs', 'affiliation']` — a site following Google's own author-markup guidance (`author: {"@type":"Person","name":"…","url":"…"}`) is permanently warned 'missing: jobTitle, sameAs, affiliation'. That is advice invented by this audit, presented as a trust-scoring requirement ('boosting your content in RAG trust scoring') with no cited basis.
 - `typeof author === 'object'` silently drops the extremely common and fully valid string form `"author": "Jane Smith"`. If that is a site's only author markup, the audit reports 'No Person (author) schema found' at medium priority even though authorship IS marked up. False fail.
 - `author` on a NewsArticle is often an `Organization` (wire services, newsroom bylines). It is pushed into `authorFromArticles` and scored against `jobTitle`/`affiliation`, guaranteeing a permanent warn on correct news markup.
@@ -37,6 +38,7 @@ The pass criteria (name AND jobTitle AND sameAs AND affiliation) are invented �
 - `sameAs` is checked for truthiness only — `"sameAs": []` (empty array) is truthy and passes as verifiable cross-platform identity.
 
 **Test gaps:**
+
 - No test for `"author": "Jane Smith"` (string form) — currently reported as no author schema at all
 - No test for an Organization author on a NewsArticle
 - No test where the best Person is on a different page than the articles (masking false pass)
@@ -53,9 +55,10 @@ _No dedicated evidence signal was researched for this audit in the 2026-08-20 pa
 
 **Mechanism claim:** A `Person` author node can carry `jobTitle`, `sameAs` and `affiliation`. The claim is that a named AI system reads it, cross-references the author across platforms, and raises the retrieval and citation weight of the page relative to the same page marked up with `name` alone.
 
-**Grade: C** — the only documented consumer is Google Search. It reads `author.name` plus `url` or `sameAs` to *disambiguate* an author, calls the whole property recommended rather than required, and never states an effect on ranking or trust scoring. No vendor documents `jobTitle` or `affiliation` being read at all, and the "RAG trust scoring" mechanism the audit asserts has no source.
+**Grade: C** — the only documented consumer is Google Search. It reads `author.name` plus `url` or `sameAs` to _disambiguate_ an author, calls the whole property recommended rather than required, and never states an effect on ranking or trust scoring. No vendor documents `jobTitle` or `affiliation` being read at all, and the "RAG trust scoring" mechanism the audit asserts has no source.
 
 **Evidence:**
+
 - Google's Article structured data doc lists `author` as **recommended**, not required: "The author of the article. To help Google best understand authors across various features, we recommend following the author markup best practices." — https://developers.google.com/search/docs/appearance/structured-data/article (verified 2026-08-21)
 - Author markup best practices ask for the `Person` type for people and `Organization` for organizations ("Don't use the `Thing` type"). "Google can understand both `sameAs` and `url` when disambiguating authors", and `jobTitle` is offered only as "the appropriate property if you want to specify that information". The stated purpose is to "best understand and represent the author of the content", with no ranking or trust claim — https://developers.google.com/search/docs/appearance/structured-data/article#author-best-practices (verified 2026-08-21)
 - schema.org defines `name`, `jobTitle`, `affiliation` and `sameAs` on `Person` but marks none of them required; `affiliation` is "An organization that this person is affiliated with" — https://schema.org/Person (verified 2026-08-21)

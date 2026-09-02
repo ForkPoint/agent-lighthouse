@@ -51,6 +51,7 @@ The presence check for JSON-LD is the right foundation audit, but it is the only
 **Required fix:** Change to `ctx.pages.flatMap((p) => p.structuredData ?? p.jsonLd)` to match every sibling audit. Separately count raw `$('script[type="application/ld+json"]').length` per page so 'present but malformed' returns a distinct failure with parse-error guidance instead of 'add JSON-LD'. Return `notApplicable` (or a dedicated inconclusive status) when `ctx.wafProtection` indicates the fetch was challenged, and report block counts as (scripts, entities) rather than parsed roots.
 
 **False-positive risks:**
+
 - `const allBlocks = ctx.pages.flatMap((p) => p.jsonLd)` ignores `p.structuredData`, which the orchestrator populates with `[...jsonLd, ...extractMicrodata($), ...extractRdfa($)]`. A Salesforce Commerce Cloud / older Magento store expressing Product data entirely as Microdata gets a CRITICAL fail 'No JSON-LD structured data found on any page' while ProductIdentifiers/ProductDetails/Offer all pass on the exact same markup — self-contradictory report.
 - `extractJsonLd` silently swallows JSON.parse failures (parser.ts:26), so a page whose only JSON-LD block has a trailing comma or an unescaped quote produces `jsonLd.length === 0`. The audit then tells the user to 'Add at least one JSON-LD script block' when the actual defect is a syntax error in the block they already have — actively wrong remediation.
 - SPA / client-injected JSON-LD (react-helmet, next/script strategy=afterInteractive, Google Tag Manager schema injection) is invisible to the static fetch. The audit reports a critical failure for a site whose schema is present in the rendered DOM that agents with a headless browser (and Googlebot) do see.
@@ -58,6 +59,7 @@ The presence check for JSON-LD is the right foundation audit, but it is the only
 - Counts parsed blocks, not scripts: a single `<script>` containing a top-level array of 12 entities counts as 1 (the test file asserts this), so 'Found 1 JSON-LD block(s)' understates coverage and the displayed number is not comparable between sites.
 
 **Test gaps:**
+
 - No test for a Microdata-only or RDFa-only page (mockPageContext never sets `structuredData`, so the primary false-fail path is unreachable in tests)
 - No test for a page whose JSON-LD is syntactically malformed (should be distinguishable from absent)
 - No test for a WAF/challenge body or a non-200 fetch result

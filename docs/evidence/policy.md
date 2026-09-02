@@ -12,21 +12,21 @@ A grade licenses the mechanism it was proven for, and nothing wider. If the mech
 
 ## Evidence grades
 
-| Grade | Bar | Examples |
-| :---- | :-- | :------- |
-| **A** | Documented consumer behavior (a vendor doc states that a named agent reads the signal) or a ratified standard with known consumers | RFC 9309 robots.txt parsing; Anthropic documenting that `Claude-User` sends an `Accept` header preferring Markdown |
-| **B** | Draft standard with meaningful adoption, or strong empirical evidence of effect | GEO paper citation-rate deltas; MCP authorization via RFC 9728 discovery |
-| **C** | Community convention with partial adoption; plausible but unproven mechanism | `llms.txt` existence (published widely; no documented *agent* consumer — Chrome Lighthouse fetches it as an auditor and scores a missing file `notApplicable`; [Google states Search ignores it](https://developers.google.com/search/docs/fundamentals/ai-optimization-guide)) |
-| **D** | Speculative or invented; no known consumer, no adoption evidence | security headers as "AI trust signals"; `agents.txt`; vendor-invented "AI trust score" meta tags |
+| Grade | Bar                                                                                                                                | Examples                                                                                                                                                                                                                                                                        |
+| :---- | :--------------------------------------------------------------------------------------------------------------------------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **A** | Documented consumer behavior (a vendor doc states that a named agent reads the signal) or a ratified standard with known consumers | RFC 9309 robots.txt parsing; Anthropic documenting that `Claude-User` sends an `Accept` header preferring Markdown                                                                                                                                                              |
+| **B** | Draft standard with meaningful adoption, or strong empirical evidence of effect                                                    | GEO paper citation-rate deltas; MCP authorization via RFC 9728 discovery                                                                                                                                                                                                        |
+| **C** | Community convention with partial adoption; plausible but unproven mechanism                                                       | `llms.txt` existence (published widely; no documented _agent_ consumer — Chrome Lighthouse fetches it as an auditor and scores a missing file `notApplicable`; [Google states Search ignores it](https://developers.google.com/search/docs/fundamentals/ai-optimization-guide)) |
+| **D** | Speculative or invented; no known consumer, no adoption evidence                                                                   | security headers as "AI trust signals"; `agents.txt`; vendor-invented "AI trust score" meta tags                                                                                                                                                                                |
 
 ## What grades are allowed to do
 
-| Grade | Scoring tier |
-| :---- | :----------- |
-| A, B | **Scored** — contributes to the category and overall score |
-| C | **Informative** — shown in the report with weight 0 |
-| D with an active draft-spec trajectory | **Experimental** — behind a flag, unscored |
-| D otherwise | **Rejected** — not shipped; if previously shipped, deprecated with a dated public notice |
+| Grade                                  | Scoring tier                                                                             |
+| :------------------------------------- | :--------------------------------------------------------------------------------------- |
+| A, B                                   | **Scored** — contributes to the category and overall score                               |
+| C                                      | **Informative** — shown in the report with weight 0                                      |
+| D with an active draft-spec trajectory | **Experimental** — behind a flag, unscored                                               |
+| D otherwise                            | **Rejected** — not shipped; if previously shipped, deprecated with a dated public notice |
 
 ## Source requirements
 

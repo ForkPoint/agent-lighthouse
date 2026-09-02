@@ -37,6 +37,7 @@ Counts `p.$('table').length` across every scanned page and passes if the total i
 **Required fix:** Only count a table that is plausibly comparative: ≥1 <th> (or a first row of <th>-like cells), ≥2 data columns, and ≥2 body rows; exclude tables inside header/nav/footer and tables with `role="presentation"`. Filter `ctx.pages` by the audit's own applicablePageTypes. Return `notApplicable()` when no scanned page shows comparative intent (no comparison/vs/pricing heading and no multi-item listing) instead of failing sites that have nothing to compare. Either rename the audit to 'tabular data present' or make the detection match the name.
 
 **False-positive risks:**
+
 - Any <table> passes: size charts, nutrition panels, shipping-cost grids, an embedded email-template table, a legacy layout table, a WYSIWYG-pasted table, or a calendar widget all produce 'Found N table(s)' and the audit reports comparison tables are present.
 - Ignores the guidance it prints: the fix text demands '<thead> and <th> headers ... each column has a descriptive header', but `$('table').length` never checks for a single <th>. A headerless layout table passes while the user is told their headers are fine.
 - Modern responsive comparison UIs false-fail: comparison matrices built as CSS grid/flex divs, or with `role="table"`/`role="row"`/`role="columnheader"` ARIA (a common mobile-first pattern), are invisible to the selector and reported as 'No comparison tables found on any scanned page.'
@@ -47,6 +48,7 @@ Counts `p.$('table').length` across every scanned page and passes if the total i
 - Nearly identical code to numbered-steps.ts (same loop, same >0 pass) — the same defect exists twice.
 
 **Test gaps:**
+
 - No layout table / size chart / nutrition table showing the false pass.
 - No headerless table (no <thead>/<th>) — the guidance's central requirement is untested.
 - No div-grid or role="table" comparison layout showing the false fail.

@@ -46,6 +46,7 @@ Best idea in the category, wrecked by the detection regex. FAKE_HEADING_CLASS = 
 **Required fix:** Stop inferring from class names. Require corroborating structure before flagging: the element must be a direct child of a content container, be followed by sibling prose or a list, and sit in a section that contains no real heading — i.e. flag only where a heading is structurally missing, not merely where bold text exists. Anchor any class matching to whole tokens (/(^|\s|:)(text-(xl|\dxl)|font-(bold|semibold|extrabold))(\s|$)/) and add 'title' to the vocabulary. Extend EXCLUDED_ANCESTORS well beyond 'nav, footer, button, a' to include header, aside, label, form, table, figcaption, summary, dialog, [role=navigation], [role=banner], [aria-hidden=true]. Make the fail threshold per-page and density-relative rather than an absolute 5 across the crawl.
 
 **False-positive risks:**
+
 - Verified: 'text-xl text-gray-600' on a short lead paragraph matches FAKE_HEADING_CLASS → flagged, though it is body copy.
 - Verified: 'price font-bold' on a <span> containing '$49' matches → a price is reported as a fake heading.
 - Verified: 'md:text-2xl' matches — responsive variants are treated as heading evidence.
@@ -58,6 +59,7 @@ Best idea in the category, wrecked by the detection regex. FAKE_HEADING_CLASS = 
 - CSS-file-driven styling (the normal case outside utility frameworks) is invisible, so the audit effectively only fires on Tailwind-class sites — a framework-specific penalty.
 
 **Test gaps:**
+
 - No Tailwind lead-paragraph fixture ('<p class="text-xl text-gray-600">short intro</p>') — the dominant false positive is untested.
 - No price / stat / badge fixture with font-bold.
 - No <header> logo, <label>, <table>, or <figcaption> fixture (all missing from EXCLUDED_ANCESTORS).

@@ -19,7 +19,6 @@ sources:
   - oss-github
 ---
 
-
 # robots-ai-group-shadowing
 
 > Shipped in v2. Evidence grade **A** · scored tier · unique · implementation: `static-fetch`

@@ -37,12 +37,14 @@ Live token backing Meta AI's link fetching; a reasonable check to keep, though i
 **Required fix:** Apply the shared helper fixes from 2.1 with prefix matching for the Meta family. Consider merging with 2.7 into a single vendor-level 'Meta AI crawlers' audit reporting both tokens in `details`, since they are near-always configured together.
 
 **False-positive risks:**
+
 - Prefix shorthand `User-agent: Meta-External` matches neither this token nor Meta-ExternalAgent, so a deliberate Meta-wide block reads as 'allowed by default' in both audits.
 - Exact-match miss on versioned tokens.
 - Edge UA blocking invisible to the scanner.
 - Shared BOM / soft-404 / `Disallow: /*` misreads.
 
 **Test gaps:**
+
 - No Meta-family prefix/shorthand case.
 - No test distinguishing this token's verdict from 2.7's on the same fixture.
 - Same missing real-world robots.txt variants as 2.1.

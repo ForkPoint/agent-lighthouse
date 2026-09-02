@@ -17,7 +17,6 @@ sources:
   - readability-repo
 ---
 
-
 # Preamble Tax (tokens before the first content token)
 
 > Shipped in v2. Evidence grade **B** · scored tier · unique · implementation: `static-fetch`
@@ -98,6 +97,7 @@ document, because 3,000 tokens ahead of a 4,000-token page and 3,000 ahead of a
 The largest opaque block ahead of the content — `<script>`, `<style>`,
 `<template>`, `<svg>`, `<noscript>` or a comment — is named with its token cost
 and its line number, so the finding points at one edit.
+
 - 2026-08-28 — the audit declines when the scan holds no response it can
   attribute to this site. It read the first scanned page's leading tokens, and
   `ctx.pages`/`ctx.rootFiles` carry whatever answered 200 — on a parked domain

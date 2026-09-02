@@ -40,12 +40,12 @@ Distinct internal destinations linked **from the page's own content** — anchor
 
 A destination is counted once per page, keyed on host-without-`www` plus lower-cased path with no trailing slash, query or fragment. Same-page fragments, self-links, the site root and `/…/page/N` pagination do not count, and non-HTTP schemes (`mailto:`, `tel:`, `javascript:`) are ignored.
 
-| State | Result |
-| :--- | :--- |
-| every page has ≥ 2 distinct in-content destinations | `pass` |
-| some pages below the bar | `warn`, priority `low` |
-| *no* page has a single in-content internal link | `fail`, priority `medium` |
-| no pages scanned | `na` |
+| State                                               | Result                    |
+| :-------------------------------------------------- | :------------------------ |
+| every page has ≥ 2 distinct in-content destinations | `pass`                    |
+| some pages below the bar                            | `warn`, priority `low`    |
+| _no_ page has a single in-content internal link     | `fail`, priority `medium` |
+| no pages scanned                                    | `na`                      |
 
 ## Code review findings (2026-08-20, 11-agent pass)
 
@@ -54,6 +54,7 @@ Counts internal anchors per page and fails only when a page has literally zero. 
 **Required fix:** Exclude same-page fragments (`resolved.href` equal to the page URL after stripping the hash) and exclude links inside <nav>/<footer> from the primary count so the metric reflects contextual linking. Enforce the threshold the guidance already states (warn below ~3 distinct internal destinations per page) instead of only failing at zero. Normalize www/bare-host before the internal test.
 
 **False-positive risks:**
+
 - `new URL(href, page.url)` resolves `#main`, `#content` and `javascript:`-adjacent fragments to the page's own URL, whose hostname matches the domain → counted as internal links. A page whose only anchor is an accessibility skip-link is graded as well-interlinked.
 - Nav/footer links are counted identically to contextual body links, so the metric measures 'has a template' rather than 'has internal linking'. Combined with the zero-threshold rule, PASS is the near-universal outcome.
 - `resolved.hostname === domain || resolved.hostname.endsWith('.'+domain)` with `domain = new URL(url).hostname`: scanning `https://www.example.com` while the markup links to bare `example.com` classifies every link as external → false FAIL 'No scanned pages have internal links'.
@@ -62,6 +63,7 @@ Counts internal anchors per page and fails only when a page has literally zero. 
 - Reported `avgLinks` is computed but never used in any threshold, so the 'avg N per page' figure influences nothing.
 
 **Test gaps:**
+
 - Page whose only anchor is '#main' (currently a false PASS)
 - Nav/footer-only linking with no contextual body links
 - www vs bare-host absolute internal links
@@ -94,12 +96,12 @@ Counts internal anchors per page and fails only when a page has literally zero. 
 
 Both source audits measured the presence of a template, not internal linking, and both passed essentially every real site:
 
-- **1.15 internal-linking** failed a page only when it had *literally zero* internal anchors. Since `new URL('#main', page.url)` resolves to the page's own host, a lone "skip to content" accessibility link satisfied it. The guidance prescribed "3-5 internal links per page" — a threshold the code never enforced.
+- **1.15 internal-linking** failed a page only when it had _literally zero_ internal anchors. Since `new URL('#main', page.url)` resolves to the page's own host, a lone "skip to content" accessibility link satisfied it. The guidance prescribed "3-5 internal links per page" — a threshold the code never enforced.
 - **10.11 internal-cross-linking** required ≥ 2 internal links per page but counted the whole document, so any site with a header nav cleared the bar on every page. Its review calls it "a near-unconditional PASS running at `defaultPriority: 'high'`, consuming a high-weight report slot while distinguishing nothing".
 
-The rewritten audit measures what both descriptions always claimed: contextual links in the body. Every required fix from the two reviews is in the list above — chrome exclusion, fragment and self-link exclusion, site-root and pagination exclusion, normalize-then-deduplicate (so `/about`, `/about/` and `/about?utm_source=nav` are one destination), www/bare-host normalization on both sides, the ≥ 2 bar applied to *contextual* links, and `defaultPriority` at `medium` rather than `high`.
+The rewritten audit measures what both descriptions always claimed: contextual links in the body. Every required fix from the two reviews is in the list above — chrome exclusion, fragment and self-link exclusion, site-root and pagination exclusion, normalize-then-deduplicate (so `/about`, `/about/` and `/about?utm_source=nav` are one destination), www/bare-host normalization on both sides, the ≥ 2 bar applied to _contextual_ links, and `defaultPriority` at `medium` rather than `high`.
 
-**One review finding deliberately not adopted:** both reviews list "SPA whose server HTML contains no anchors" as a false-positive risk. This dossier's own grade-A evidence says the opposite — Vercel and MERJ measured that no major AI crawler executes JavaScript, so a client-rendered nav genuinely is "a link-less void to GPTBot and ClaudeBot". A page with no server-rendered in-content links is a true finding for this audit, and the guidance copy names the cause. The site-wide `fail` still requires *every* scanned page to be linkless, so a single JS-heavy page only warns.
+**One review finding deliberately not adopted:** both reviews list "SPA whose server HTML contains no anchors" as a false-positive risk. This dossier's own grade-A evidence says the opposite — Vercel and MERJ measured that no major AI crawler executes JavaScript, so a client-rendered nav genuinely is "a link-less void to GPTBot and ClaudeBot". A page with no server-rendered in-content links is a true finding for this audit, and the guidance copy names the cause. The site-wide `fail` still requires _every_ scanned page to be linkless, so a single JS-heavy page only warns.
 
 Also out of scope: this audit does not read `rel="nofollow"` or `<meta name="robots" content="nofollow">`. The second evidence signal below grades that mechanism A for Applebot, but the same source warns that page-level meta-robots and per-link `rel` are different things and that Google treats `rel=nofollow` as a hint; it belongs in a dedicated check, not in a link-count.
 
@@ -111,7 +113,7 @@ Also out of scope: this audit does not read `rel="nofollow"` or `<meta name="rob
 
 10.11 graded **B**; this audit's own link-graph evidence grades **A** on two vendor-documented consumer paths (Google: "Google can only crawl your link if it's an `<a>` HTML element with an href attribute"; Apple: links are an explicit Apple Search ranking factor) plus the Vercel/MERJ measurement that the major AI crawlers do not execute JavaScript. The absorbed evidence is weaker, so nothing is raised: **A**, `tier: scored`, `weight 1.0`.
 
-Note that the rewrite makes the audit *harder* to pass at unchanged weight — deliberately. The A grade prices a real mechanism; it was previously spent on a check that could not fail a templated site.
+Note that the rewrite makes the audit _harder_ to pass at unchanged weight — deliberately. The A grade prices a real mechanism; it was previously spent on a check that could not fail a templated site.
 
 ## Review history
 

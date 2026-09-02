@@ -15,7 +15,6 @@ sources:
   - S2
 ---
 
-
 # First-Contact Consent Gate Operability
 
 > Shipped in v2. Evidence grade **C** · informative tier · unique · implementation: `static-fetch`

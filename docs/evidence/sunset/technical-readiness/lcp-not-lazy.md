@@ -27,6 +27,7 @@ The comment `// The first image is a reasonable proxy for the LCP element` is th
 **Required fix:** Stop asserting LCP from DOM position. Pick a candidate set instead: images that are not inside `<header>`/`<nav>`, whose declared dimensions (or CSS) exceed a size floor (e.g. ≥ 200px in either axis), or that carry `fetchpriority="high"`/a matching `<link rel=preload as=image>`; fail only when a candidate meeting those criteria is `loading="lazy"`. If no confident candidate exists, return `notApplicable()` rather than guessing. Soften the copy from 'likely LCP element' to name the specific element inspected, and reduce priority to `medium` given the inference is heuristic.
 
 **False-positive risks:**
+
 - First-in-DOM ≠ LCP: a header logo, a nav icon, a cart badge, or a tracking pixel is `images[0]` on the overwhelming majority of sites. If any of those carries `loading="lazy"` (common for pixels and secondary icons) the audit fails the site with a hero-image explanation that does not apply.
 - False negatives are equally likely: the actual hero, appearing after the header markup, can be `loading="lazy"` and the audit will report a clean pass because element 0 was fine.
 - LCP is frequently not an `<img>` at all — a CSS `background-image`, a `<video>` poster, or a large text block. None are considered, so 'LCP element not lazy-loaded' is asserted about pages whose LCP the audit never saw.
@@ -35,6 +36,7 @@ The comment `// The first image is a reasonable proxy for the LCP element` is th
 - Vacuous pass: `images.length === 0` ⇒ `this.pass(…)` — a free 1.0 rather than `na`.
 
 **Test gaps:**
+
 - No test where the first img is a logo/tracking pixel and the hero is later in the DOM — both the false-fail and the false-pass direction are untested.
 - No test with a CSS background-image hero or a `<picture>` hero.
 - No test with `fetchpriority="high"` on a later image.

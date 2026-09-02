@@ -14,7 +14,6 @@ sources:
   - anthropic-cu-tool
 ---
 
-
 # Unicode Covert-Channel Scan
 
 > Shipped in v2. Evidence grade **B** · scored tier · unique · implementation: `static-fetch`
@@ -79,6 +78,7 @@ Bidi controls are a finding when the pushes and pops do not balance, and also
 when a balanced pair wraps text containing no right-to-left script at all — a
 direction scope around Latin text does nothing except reorder what an extractor
 reads.
+
 - 2026-08-28 — the audit declines when the scan holds no response it can
   attribute to this site. It read the codepoints of the scanned pages and root
   files, and `ctx.pages`/`ctx.rootFiles` carry whatever answered 200 — on a

@@ -250,7 +250,7 @@ Each entry links its full research dossier (steelmanned claim, search trail, all
 
 **Claimed:** Steelmanned: some AI crawler, answer engine, or agent platform inspects a site's HTTP response headers and derives a security/privacy posture score from them, and the presence of `Referrer-Policy` raises that score, making the site more likely to be crawled, trusted, or cited.
 
-**Why it is not a factor:** Three positive disproofs, not merely absence of results. (1) Mechanical impossibility: `Referrer-Policy` governs the Referer header that the *client sends on requests originating from your pages*. It has no effect whatsoever on what a crawler or agent fetching your page can read, and it cannot affect AI-referral attribution either — whether a visit from ChatGPT shows up as chatgpt.com is decided by ChatGPT's own referrer policy, not yours. So even the audit's own steelman is directionally wrong.
+**Why it is not a factor:** Three positive disproofs, not merely absence of results. (1) Mechanical impossibility: `Referrer-Policy` governs the Referer header that the _client sends on requests originating from your pages_. It has no effect whatsoever on what a crawler or agent fetching your page can read, and it cannot affect AI-referral attribution either — whether a visit from ChatGPT shows up as chatgpt.com is decided by ChatGPT's own referrer policy, not yours. So even the audit's own steelman is directionally wrong.
 
 **Verdict:** Grade D. No documented consumer exists on the AI side, and the stated mechanism is mechanically backwards — the header controls outbound referrers from the site's own pages and cannot influence how any crawler or agent reads the site.
 

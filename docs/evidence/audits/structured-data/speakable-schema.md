@@ -33,12 +33,14 @@ Checks a schema.org property whose only ever production consumer — Google Assi
 **Required fix:** Delete the audit and remove it from the structured-data index. If any voice-related signal is wanted, replace it with something with a live consumer (e.g. a clean `<main>`/heading outline check in semantic-html), not schema.org speakable.
 
 **False-positive risks:**
+
 - `return sp && Array.isArray(sp['cssSelector'])` requires an ARRAY. schema.org permits `cssSelector` as a single value, and it permits `xpath` as the alternative selector property entirely. A site with correct `"speakable":{"@type":"SpeakableSpecification","cssSelector":".article-body"}` or with `"xpath"` fails. The test file explicitly asserts the string form is a fail, codifying the bug as intended behaviour.
 - No `notApplicable` branch and `scoreDisplayMode: 'binary'` with weight 1.0 means ~100% of real sites take score 0 on this check, deflating the whole structured-data category by roughly 5 points for a signal with no consumer.
 - Does not check that `speakable` is attached to an Article/WebPage (the only types where it is defined), so a speakable on an arbitrary node passes.
 - The guidance text tells users that 'Google Assistant, Alexa, Siri use the speakable property' — Alexa and Siri have never had any schema.org speakable support. This is fabricated impact copy shipped to customers.
 
 **Test gaps:**
+
 - Tests assert the WRONG contract: 'fails when speakable cssSelector is not an array' encodes a false negative as expected behaviour
 - No test for the `xpath` alternative
 - No test that speakable is attached to a valid host type
@@ -65,7 +67,7 @@ Google's scope statement — the feature "works for users in the U.S. that have 
 
 ### (b) The Alexa/Siri claim deleted
 
-The shipped description and impact text used to read: *"Voice-based AI agents (Google Assistant, Alexa, Siri) use the speakable property…"*. Two-thirds of that list was fabricated. Apple's [About Applebot](https://support.apple.com/en-us/119829) documents exactly one schema.org property — `isAccessibleForFree` — and no speakable; Amazon publishes no speakable documentation at all. Both names are gone from `description`, `guidance.impact`, `guidance.fix`, the `code` sample and the failure-branch copy; only Google Assistant, the one documented consumer, is named. A regression test asserts the strings `alexa` and `siri` appear nowhere in the audit's meta and that `Google Assistant` does. `docsUrl` moves from `schema.org/speakable` to the Google Search Central doc that carries the consumer statement and the beta/scope caveats, and the misleading `accessibility` tag (speakable is not an assistive-technology signal) is replaced with `news`.
+The shipped description and impact text used to read: _"Voice-based AI agents (Google Assistant, Alexa, Siri) use the speakable property…"_. Two-thirds of that list was fabricated. Apple's [About Applebot](https://support.apple.com/en-us/119829) documents exactly one schema.org property — `isAccessibleForFree` — and no speakable; Amazon publishes no speakable documentation at all. Both names are gone from `description`, `guidance.impact`, `guidance.fix`, the `code` sample and the failure-branch copy; only Google Assistant, the one documented consumer, is named. A regression test asserts the strings `alexa` and `siri` appear nowhere in the audit's meta and that `Google Assistant` does. `docsUrl` moves from `schema.org/speakable` to the Google Search Central doc that carries the consumer statement and the beta/scope caveats, and the misleading `accessibility` tag (speakable is not an assistive-technology signal) is replaced with `news`.
 
 ### Detection fixes from the code review
 
@@ -92,6 +94,7 @@ Google announced on 2025-08-20 that "Over time, Gemini for Home will replace Goo
 **Grade: B** — Google names the consuming agent on a live page, which is documented consumer behaviour, but the same page calls the feature beta and limits it to one country, one language and one content type. A vendor feature its own vendor labels provisional is a grade-B mechanism, not a grade-A one.
 
 **Evidence:**
+
 - Google Search Central's speakable page, last updated 2025-12-10, names the consumer and the behaviour. "When users ask for news about a specific topic, the Google Assistant returns up to three articles from around the web and supports audio playback using TTS for sections in the article with speakable structured data" — https://developers.google.com/search/docs/appearance/structured-data/speakable (verified 2026-08-24)
 - The property is defined by schema.org on `Article` and `WebPage`, with `cssSelector` and `xpath` as the two addressing forms, both valid as a single string or an array — https://schema.org/speakable (verified 2026-08-21)
 
@@ -114,8 +117,8 @@ What the re-fetch also confirmed is that the same page says, verbatim:
 
 > This feature is in beta and subject to change.
 
-and scopes it to *"users in the U.S. that have Google Home devices set to
-English, and publishers that publish content in English"*, news content only.
+and scopes it to _"users in the U.S. that have Google Home devices set to
+English, and publishers that publish content in English"_, news content only.
 
 `policy.md` reserves grade **A** for documented consumer behaviour or a ratified
 standard with known consumers, and gives grade **B** to a draft standard with

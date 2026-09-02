@@ -30,6 +30,7 @@ Wraps axe `aria-dialog-name`. The premise (agents need to know what a modal is b
 **Required fix:** Two concrete changes: (a) restore a display:none model (see 7.4 fix) so hidden pre-rendered dialogs are excluded as they are in a real browser; (b) extend the selector to `dialog, [role="dialog"], [role="alertdialog"]` so the recommended native element is actually audited, otherwise the guidance and the check contradict each other.
 
 **False-positive risks:**
+
 - CSS blindness on hidden pre-rendered modals — the dominant false-positive scenario for this rule (`excludeHidden: true` is defeated because only inline styles survive `stripStyles()`).
 - Dialogs mounted by JS at open time (React portals, `<dialog>` created on demand) are absent from static HTML → `inapplicable` → `na`, i.e. the sites with the most agent-hostile modals get no signal.
 - `noNamingMethodMatch` excludes combobox-popup dialogs and elements with naming methods, which is faithful to axe but means the audit result varies with unrelated markup details, making the na/pass boundary hard to explain in the report.
@@ -37,6 +38,7 @@ Wraps axe `aria-dialog-name`. The premise (agents need to know what a modal is b
 - Binary + no count; failing target is typically `div.modal`.
 
 **Test gaps:**
+
 - No HTML-level test for this audit.
 - No hidden-modal fixture (the exact false-positive case).
 - No native `<dialog>` fixture proving the coverage hole created by the audit's own recommendation.
@@ -60,6 +62,7 @@ _No dedicated evidence signal was researched for this audit in the 2026-08-20 pa
 **Grade: A** — the accessible-name computation is a W3C Recommendation. Two shipping agent tool-chains document that their entire page representation is the accessibility tree, with role and accessible name. An unnamed dialog is therefore provably an unnamed node in what the agent reads.
 
 **Evidence:**
+
 - Playwright ARIA snapshots are "a YAML representation of the accessibility tree of a page" capturing "roles, attributes, values, and text content", i.e. role plus accessible name per node — https://playwright.dev/docs/aria-snapshots (verified 2026-08-21)
 - Playwright MCP (the reference browser MCP server) "Uses Playwright's accessibility tree, not pixel-based input… No vision models needed, operates purely on structured data"; its click/type tools take an "Exact target element reference from the page snapshot" — https://github.com/microsoft/playwright-mcp (verified 2026-08-21)
 - Chrome DevTools MCP `take_snapshot` returns "a text snapshot of the currently selected page based on the a11y tree… lists page elements along with a unique identifier (uid)", and `click`/`fill` take that uid — https://github.com/ChromeDevTools/chrome-devtools-mcp/blob/main/docs/tool-reference.md (verified 2026-08-21)

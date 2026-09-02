@@ -16,7 +16,6 @@ sources:
   - cf-tomarkdown-rest
 ---
 
-
 # JSON-LD duplication mass
 
 > Shipped in v2. Evidence grade **C** · informative tier · unique · implementation: `static-fetch`

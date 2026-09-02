@@ -28,6 +28,7 @@ The strongest audit in the category and the one whose passing genuinely improves
 **Required fix:** 1) Escape only `"` and `\` in the attribute-selector value (drop `:` and `]` from the regex) so framework ids resolve. 2) Search for `label[for=...]` document-wide (`$(...)`) rather than form-scoped, matching HTML semantics. 3) Include fields associated via the `form` attribute by also selecting `[form="<formId>"]`. 4) Anchor the identity-field patterns to token boundaries (split name/id on `-_. ` and match whole tokens) so `opacity`/`capacity`/`countryside` stop matching, and map `company`/`organization` tokens to `organization`. 5) Verify the `aria-labelledby` target id exists before accepting it. 6) Consider reporting `na` with a note when zero forms are found on a page that ships a heavy JS bundle, so SPA form-less scans are not silently neutral.
 
 **False-positive risks:**
+
 - Selector over-escaping breaks label lookup for framework-generated ids: `id.replace(/(["\\\]:])/g, '\\$1')` (lines 121, 198) escapes `:` and `]`, which require no escaping inside a quoted attribute value. `label[for="form\:email"]` matches nothing, so JSF/PrimeFaces (`form:email`) and ASP.NET WebForms-style ids are reported as 'no explicit label' even when the label is correct and present. Only `"` and `\` need escaping.
 - Label lookup is scoped inside the form: `$(formEl).find('label[for="..."]')` (line 199). HTML permits a `<label for>` anywhere in the document, and layout-driven markup (labels in a sibling grid cell, or in a `<fieldset>` rendered outside the form) is common. Correctly labelled fields are flagged as unlabelled.
 - Fields associated to a form via the `form="formId"` attribute — outside the `<form>` element — are never counted, so their labels and autocomplete are never evaluated and the form's true actionability is misreported.
@@ -38,6 +39,7 @@ The strongest audit in the category and the one whose passing genuinely improves
 - The 0.9 pass threshold means one unlabeled search box on a 10-field page is enough to drop a good site to `warn` at high priority.
 
 **Test gaps:**
+
 - No fixture with an id containing `:` or `]` (JSF/ASP.NET) — the escaping bug is invisible
 - No fixture with `<label for>` located outside the `<form>` element
 - No fixture using the `form="id"` attribute to associate a field outside its form
@@ -66,6 +68,7 @@ _No dedicated evidence signal was researched for this audit in the 2026-08-20 pa
 **Grade: A** — two named agent stacks document that they perceive and act on pages via the accessibility tree, and the accessible name they consume is computed from exactly the label mechanisms this audit checks.
 
 **Evidence:**
+
 - Anthropic's browser use tool "works with the page both through its structure (the accessibility tree, elements, forms, and tabs) and through pixels (screenshots and viewport coordinates)", acting on controls via element references taken from the accessibility tree — https://platform.claude.com/docs/en/agents-and-tools/tool-use/browser-use-tool (verified 2026-08-21)
 - Playwright MCP "enables LLMs to interact with web pages through structured accessibility snapshots, bypassing the need for screenshots or visually-tuned models", and "Uses Playwright's accessibility tree, not pixel-based input" — https://github.com/microsoft/playwright-mcp (verified 2026-08-21)
 - The accessible name computation draws on host-language labelling (HTML `<label>`), `aria-label` and `aria-labelledby` — https://www.w3.org/TR/accname-1.2/ (verified 2026-08-21)
@@ -75,7 +78,7 @@ _No dedicated evidence signal was researched for this audit in the 2026-08-20 pa
 
 ## The merge (Plan 4, Task 8, 2026-08-22)
 
-5.22 checked the same three things this audit checks — native controls, names, labels — but only inside `form[toolname]`, an attribute no deployed site carries, so it returned `na` on every real scan while consuming runtime and report space. Its required fix is unusually short: *"Merge into 5.27 form-actionability, which already evaluates native elements, label association, and autocomplete on all forms rather than only WebMCP-tagged ones. Carry over nothing but the concept; drop the placeholder-as-label rule, which 5.27 correctly rejects."*
+5.22 checked the same three things this audit checks — native controls, names, labels — but only inside `form[toolname]`, an attribute no deployed site carries, so it returned `na` on every real scan while consuming runtime and report space. Its required fix is unusually short: _"Merge into 5.27 form-actionability, which already evaluates native elements, label association, and autocomplete on all forms rather than only WebMCP-tagged ones. Carry over nothing but the concept; drop the placeholder-as-label rule, which 5.27 correctly rejects."_
 
 **The concept that carries over is the `name` attribute.** Every fillable field is now required to have one, for two independent reasons: a control with no `name` is not submitted by a plain form at all, and — 5.22's own graded mechanism — WebMCP's declarative API takes each control's `name` as the property name in the tool input schema it generates, so a nameless control is not a callable parameter. When the field sits in a `<form toolname=…>`, the reported reason says so.
 
@@ -89,9 +92,9 @@ _No dedicated evidence signal was researched for this audit in the 2026-08-20 pa
 
 ### Absorbed evidence — webmcp-input-quality (5.22)
 
-5.22's dossier is kept verbatim at [merged/operability-safety/webmcp-input-quality.md](../../merged/operability-safety/webmcp-input-quality.md) (grade **B**). Its mechanism is real and specified — *"The `name` attribute on form control elements supplies the name of each 'property' in the input schema generated for a declarative tool"* — with Chrome 149 and Edge 150 origin trials behind it, capped at B because site-side adoption is effectively zero and the input-schema synthesis algorithm is still marked TBD.
+5.22's dossier is kept verbatim at [merged/operability-safety/webmcp-input-quality.md](../../merged/operability-safety/webmcp-input-quality.md) (grade **B**). Its mechanism is real and specified — _"The `name` attribute on form control elements supplies the name of each 'property' in the input schema generated for a declarative tool"_ — with Chrome 149 and Edge 150 origin trials behind it, capped at B because site-side adoption is effectively zero and the input-schema synthesis algorithm is still marked TBD.
 
-Its counter-evidence is what removes the placeholder rule: the spec *"does not derive parameter descriptions from `<label>` and never from `placeholder`"* — it adds `toolparamdescription` precisely because no description attribute exists to reuse — and the accessible name computation excludes `placeholder` too. So the label/placeholder half of 5.22's score had no consumer at all. Its `docsUrl`, `https://webmcp.link/`, answers HTTP 451.
+Its counter-evidence is what removes the placeholder rule: the spec _"does not derive parameter descriptions from `<label>` and never from `placeholder`"_ — it adds `toolparamdescription` precisely because no description attribute exists to reuse — and the accessible name computation excludes `placeholder` too. So the label/placeholder half of 5.22's score had no consumer at all. Its `docsUrl`, `https://webmcp.link/`, answers HTTP 451.
 
 ### Grade decision: stays **A**, tier `scored`, weight 1.0
 

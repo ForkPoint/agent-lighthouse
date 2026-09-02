@@ -26,6 +26,7 @@ Inert in practice (both sources — the fictional manifest and `form[toolname]` 
 **Required fix:** Merge the naming principle into 5.3 openapi-operation-ids (which governs names that a real tool-calling stack actually consumes) and into a future MCP tools/list check; drop the English-verb allowlist in favor of a structural rule (legal function-name charset, ≤64 chars, contains a verb-like leading token OR a namespaced separator). Delete this file.
 
 **False-positive risks:**
+
 - Always `notApplicable` on real input; contributes nothing but runtime.
 - `VERB_PATTERN` is a hardcoded ~100-word English verb allowlist anchored with `^...([A-Z]|$)`. It rejects snake_case (`search_products`), kebab-case (`search-products`), and dotted namespacing (`products.search`) — all common and valid MCP tool-naming styles — and any non-English or domain-specific verb (`quote`, `provision`, `annotate`, `ingest`, `diff`). Every one of those would be reported as a 'non-verb name'.
 - `MIN_DESCRIPTION_LENGTH = 20` on raw `.length` is arbitrary and rewards padding: 'Search products now!!' (21 chars) passes while 'Search the catalog' (18) fails.
@@ -33,6 +34,7 @@ Inert in practice (both sources — the fictional manifest and `form[toolname]` 
 - An empty tool name (`name: ''`) is counted as a tool and reported as a 'non-verb name' rather than as a structurally invalid tool — the tests at lines 153 and 166 lock this in.
 
 **Test gaps:**
+
 - No snake_case / kebab-case / dotted-namespace name fixtures
 - No non-English or domain-verb fixture
 - No test acknowledging the audit is unreachable on real sites
@@ -53,9 +55,10 @@ _No dedicated evidence signal was researched for this audit in the 2026-08-20 pa
 
 **Mechanism claim:** An agent chooses which WebMCP tool to invoke from the tool's name and description, so verb-based camelCase names and descriptions longer than 20 characters raise the rate of correct tool selection.
 
-**Grade: C** — that agents select tools by name and description is documented, but no spec or vendor doc constrains the naming *style* or sets any description length; the verb-camelCase allowlist and the 20-character floor are this project's own convention.
+**Grade: C** — that agents select tools by name and description is documented, but no spec or vendor doc constrains the naming _style_ or sets any description length; the verb-camelCase allowlist and the 20-character floor are this project's own convention.
 
 **Evidence:**
+
 - WebMCP's premise is name/description-driven selection: "Agents can see the list of tools a site offers paired with natural language descriptions of what the tools do, and invoke them with structured data" — https://raw.githubusercontent.com/webmachinelearning/webmcp/main/declarative-api-explainer.md (verified 2026-08-21)
 - Anthropic documents the consuming behavior directly: "Claude determines when to call a tool based on the user's request and the tool's description" — https://platform.claude.com/docs/en/agents-and-tools/tool-use/overview (verified 2026-08-21)
 - WebMCP's IDL requires `name` and `description` on every `ModelContextTool`, with `name` defined as "A unique identifier for the tool. This is used by agents to reference the tool when making tool calls" — https://raw.githubusercontent.com/webmachinelearning/webmcp/main/index.bs (verified 2026-08-21)

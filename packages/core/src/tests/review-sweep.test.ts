@@ -2,8 +2,13 @@ import { describe, it, expect } from "vitest";
 import fs from "node:fs";
 import path from "node:path";
 import os from "node:os";
-// @ts-expect-error - testing the .mjs script exports
-import { sweepAudits, formatMarkdownReport } from "../../../../scripts/sweep-audit-reviews.mjs";
+import {
+  sweepAudits,
+  formatMarkdownReport,
+  // The directive must sit on the line before the module specifier, which is
+  // where TypeScript reports the missing declaration for the .mjs script.
+  // @ts-expect-error - testing the .mjs script exports
+} from "../../../../scripts/sweep-audit-reviews.mjs";
 
 describe("Phase 6: Audit Review Sweep (Law 10: Warrant Expires)", () => {
   it("sweeps the live audit dossiers directory and returns structured metrics", () => {

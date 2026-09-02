@@ -26,6 +26,7 @@ The clearest falsy audit in the category. It fails 100% of real websites for omi
 **Required fix:** Delete. Real 'discover this site's machine-readable resources in one request' signals that do exist and are worth auditing instead: sitemap.xml, llms.txt's link index, /.well-known/ resources, and published OpenAPI/MCP endpoints. If the maintainer genuinely wants to promote an AI Catalog convention, it must be labeled clearly as a proposal (informational, weight 0, never a scored failure) with an honest note that no consumer implements it — not presented as something 'agents' use.
 
 **False-positive risks:**
+
 - Universal false failure: no site on the public web emits `<link rel="alternate" type="application/json" title="AI Catalog">`, so the audit returns a scored fail on every real scan and measures nothing about the site.
 - Fabricated impact claim: the failure states the catalog 'lets them find everything in a single request, dramatically improving discovery efficiency' — an unverifiable claim about a format with no consumer. Users are given a concrete effort estimate ('moderate') for zero return.
 - Title-substring matching: `(l.title ?? '').toLowerCase().includes('ai catalog')` requires the exact English two-word phrase with a space; a site following the audit's own advice but titling the link 'AI-Catalog' or 'AICatalog' fails its own standard.
@@ -35,6 +36,7 @@ The clearest falsy audit in the category. It fails 100% of real websites for omi
 - Combined with 4.13, 4.14, 4.17 and 4.18, five invented-standard audits impose a fixed, unavoidable score penalty on every well-built site, which systematically understates the meta-tags score.
 
 **Test gaps:**
+
 - No test of title variants ('AI-Catalog', 'AICatalog', non-English) against the audit's own required phrase.
 - No charset-parameter or uppercase-`rel` test.
 - The matching logic is explicitly `v8 ignore`d, so coverage tooling cannot flag how untested it is.

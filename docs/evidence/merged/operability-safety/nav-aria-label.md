@@ -26,6 +26,7 @@ Requires an aria-label/aria-labelledby on EVERY `<nav>`. That is stricter than t
 **Required fix:** Merge into 7.4 (LandmarkUniqueAudit), which measures the same thing with axe's role+accessible-name uniqueness logic and covers all landmark types, not just `<nav>`. If a nav-specific signal is retained, only require labels when 2+ nav landmarks exist, resolve `aria-labelledby` ids, and delete the 'no <nav> found' branch (duplicate of 7.2).
 
 **False-positive risks:**
+
 - Fails correct markup: a page with one unlabeled `<nav>` plus two more unlabeled navs (breadcrumb + footer) gets 'fail (0 of 3 labeled)' even though 7.4 would only flag the genuinely ambiguous duplicates; a single-nav page is scored 'fail' at 0/1 labeled.
 - Ignores heading-derived names: a `<nav>` whose accessible name comes from a nested `<h2>` referenced through the surrounding structure, or a `<nav role="navigation">` labeled by an adjacent visible heading without `aria-labelledby`, counts as unlabeled.
 - Only `ctx.pages[0]` is inspected but the message reads as site-wide.
@@ -34,6 +35,7 @@ Requires an aria-label/aria-labelledby on EVERY `<nav>`. That is stricter than t
 - The `labeled / navs.length >= 0.5` cliff is arbitrary: 1 of 2 labeled = warn, 1 of 3 = fail, though the ambiguity is identical.
 
 **Test gaps:**
+
 - No fixture with a single unlabeled nav (the most common legitimate case).
 - No fixture with a CSS-hidden mobile-menu duplicate.
 - No fixture with `aria-labelledby` pointing at a non-existent id (a stale reference is currently counted as 'labeled' — the code only checks the attribute is non-empty, never that the id resolves).

@@ -50,6 +50,7 @@ The decorative-exclusion logic is careful and correct (it properly distinguishes
 **Required fix:** Treat aria-label / aria-labelledby (with id resolution) / title as satisfying the accessible name, and exclude aria-hidden="true" images from the denominator the same way role=presentation is excluded. Swap the totalImages===0 pass() for notApplicable(). Record per-page counts and emit the worst offending URLs in `found`. Consider flagging non-informative alt values ('image', 'photo', the file name) since alt="IMG_2024.jpg" currently scores as full coverage.
 
 **False-positive risks:**
+
 - aria-label / aria-labelledby / title on an <img> are not accepted — false fail on correctly-named images.
 - aria-hidden="true" images are counted in the denominator, unlike in audit 6.16 which does honor ariaHidden — the two audits disagree about the same image.
 - 'if (totalImages === 0) return this.pass(...)' — free scored 1.0 for image-free sites.
@@ -59,6 +60,7 @@ The decorative-exclusion logic is careful and correct (it properly distinguishes
 - CSR SPAs have no server-rendered <img> → 'No non-decorative images' pass.
 
 **Test gaps:**
+
 - No aria-label / aria-labelledby / title fixture.
 - No aria-hidden="true" fixture (and no test of the disagreement with 6.16).
 - No test asserting na vs pass for the zero-image case.
@@ -90,7 +92,7 @@ This dossier's evidence grades the mechanism A on a standard: accname "lists
 HTML alt among the native host-language text-alternative sources ranked below
 aria-labelledby/aria-label", and HTML-AAM maps `img[alt='']` to
 none/presentation. The audit tested for a non-empty `alt` attribute and nothing
-else, so it failed two configurations the cited standard ranks *above* `alt`,
+else, so it failed two configurations the cited standard ranks _above_ `alt`,
 plus the `title` fallback it maps below. An image named `aria-label="Sales by
 quarter"` has an accessible name by the very document the grade rests on, and
 the audit called it a failure at weight 1.0.
@@ -133,7 +135,7 @@ say so." It now says so, and it names the accessibility-tree consumers the
 research actually found.
 
 Two things were considered and left out. The junk-alt heuristic the 2026-08-20
-review suggested — failing `alt="IMG_2024.jpg"` — would *widen* the pass rule
+review suggested — failing `alt="IMG_2024.jpg"` — would _widen_ the pass rule
 with a test no cited source defines, which is the opposite of what this sweep is
 for; it needs its own research. And the pooled-coverage aggregation was left
 alone for the same reason: no source sets a threshold or an aggregation unit, so

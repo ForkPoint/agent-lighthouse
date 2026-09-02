@@ -37,12 +37,12 @@ Positive proof of non-standing: (1) x-ai-instructions is NOT registered in the O
 
 **confirmed dead — delete** (grade D)
 
-Grade D: an unregistered, vendor-less extension key with no documented consumer and adoption that is essentially self-referential (a single blogger's archive plus this framework's own site). The control comparison is what makes this conclusive — a real vendor-documented AI extension shows 6,464 hits while this shows 54, so the low count reflects invention rather than early-stage adoption. Worth recording for the rewrite backlog: the *underlying need* is real and is served by fields that genuinely are consumed — OpenAPI's native `description`/`summary`, which OpenAI's GPT Actions and MCP tool definitions really do feed to models, and MCP's own `instructions` field in DiscoverResult ('Optional natural-language guidance for LLMs on how to use this server effectively'). An audit checking description quality on real fields would be defensible; this one, keyed to an invented extension and hard-failing sites with no OpenAPI spec, is not.
+Grade D: an unregistered, vendor-less extension key with no documented consumer and adoption that is essentially self-referential (a single blogger's archive plus this framework's own site). The control comparison is what makes this conclusive — a real vendor-documented AI extension shows 6,464 hits while this shows 54, so the low count reflects invention rather than early-stage adoption. Worth recording for the rewrite backlog: the _underlying need_ is real and is served by fields that genuinely are consumed — OpenAPI's native `description`/`summary`, which OpenAI's GPT Actions and MCP tool definitions really do feed to models, and MCP's own `instructions` field in DiscoverResult ('Optional natural-language guidance for LLMs on how to use this server effectively'). An audit checking description quality on real fields would be defensible; this one, keyed to an invented extension and hard-failing sites with no OpenAPI spec, is not.
 
 ## Sources
 
 - **[OpenAPI Initiative — Specification Extensions Registry](https://spec.openapis.org/registry/extension/)** — OpenAPI Initiative (spec, URL verified 2026-08-21)
-  - Authoritative registry of OpenAPI specification extensions. x-ai-instructions is NOT registered. Of the 36 registered extensions (x-agent-trust, x-codeSamples, x-data-classification, x-jsonld-context/type, x-jsonschema-*, x-oai-*, x-sensitive-data, x-twitter), none use an x-ai-* prefix and none target AI/LLM guidance.
+  - Authoritative registry of OpenAPI specification extensions. x-ai-instructions is NOT registered. Of the 36 registered extensions (x-agent-trust, x-codeSamples, x-data-classification, x-jsonld-context/type, x-jsonschema-_, x-oai-_, x-sensitive-data, x-twitter), none use an x-ai-* prefix and none target AI/LLM guidance.
 - **[GitHub code search: x-ai-instructions vs x-openai-isConsequential](https://github.com/search?q=%22x-ai-instructions%22&type=code)** — GitHub (code search API) (study, URL verified 2026-08-21)
   - Measured via GitHub REST search/code API. 'x-ai-instructions': total_count=54. Control field 'x-openai-isConsequential' (genuinely documented by OpenAI): total_count=6,464 — a ~120x gap. Grouping the top 40 x-ai-instructions matches by repo: 31 in api-evangelist/done (a blogger's notes archive), 2 in api-evangelist/providers, and 1 in magnifito/website (this framework's own site); the rest are single-file mentions in personal roadmaps and handbooks. No vendor, spec, or toolchain repo appears.
 - **[GPT Actions — Introduction (checked for AI OpenAPI extensions)](https://developers.openai.com/api/docs/actions/introduction)** — OpenAI (vendor-doc, URL verified 2026-08-21)
@@ -65,12 +65,14 @@ Pure cargo cult. `x-ai-instructions` is an invented vendor extension with zero c
 **Required fix:** Delete. If the intent (agent-readable API guidance) is worth keeping, fold it into 5.26 openapi-description-quality as a check on `info.description` length/quality, which is a real field real converters pass to the model.
 
 **False-positive risks:**
+
 - Every legitimate, high-quality OpenAPI spec on the internet fails this audit — the false-positive rate is effectively 100% of specs.
 - Same JSON-only loader bug: YAML specs report 'No spec' while 5.1 passes.
 - Advice is actively harmful: a site that moves its agent guidance from `info.description` (read by every OpenAPI→tool converter) into `info.x-ai-instructions` (read by nothing) makes itself measurably worse for agents while raising its Lighthouse score.
 - `typeof info['x-ai-instructions'] === 'string' && info['x-ai-instructions']` accepts a single character, so `"x"` passes — the check cannot distinguish real guidance from a token added to game the audit.
 
 **Test gaps:**
+
 - No test that a spec with rich `info.description` but no x-ai-instructions is treated as adequate (it currently fails)
 - No minimum-length or content-quality test — a one-character value passes
 - No YAML fixture

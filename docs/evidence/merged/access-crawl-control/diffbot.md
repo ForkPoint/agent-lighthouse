@@ -26,11 +26,13 @@ Falsy for this tool's stated purpose. Diffbot is a commercial B2B knowledge-grap
 **Required fix:** Remove from the scored roster, or fold into a zero-weight informational 'commercial extraction crawlers' note that presents blocking as a legitimate choice rather than a failure.
 
 **False-positive risks:**
+
 - A site that deliberately blocks a commercial scraper receives a high-priority FAIL implying lost AI search visibility that it has not lost.
 - Weight 1.0 equal to GPTBot.
 - Shared exact-match / BOM / soft-404 misreads.
 
 **Test gaps:**
+
 - Template-only; no validation that allowing Diffbot changes any agent-visible outcome.
 - Same missing real-world robots.txt variants as 2.1.
 

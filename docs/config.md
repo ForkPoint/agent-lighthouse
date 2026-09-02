@@ -36,16 +36,16 @@ A bare `agent-lighthouse` with no arguments at all does **not**: it prints the u
 
 ### Keys
 
-| Key                | Type                                              | Default              | Effect                                                                 |
-| :----------------- | :------------------------------------------------ | :------------------- | :--------------------------------------------------------------------- |
-| `url`              | `string`                                          | none                 | Target URL, used when the invocation gives none — see [cli.md](./cli.md#invocation) for which forms read it. |
-| `preset`           | `"ecommerce" \| "saas" \| "content" \| "quick" \| "full"` | `"full"`      | Preset name shown in the run header.                                    |
-| `minScore`         | `number` (0–100)                                  | `0`                  | Overall-score budget; the run exits 1 below it.                         |
-| `assertCategories` | `Record<string, number>`                          | `{}`                 | Per-category budgets, keyed by category id.                             |
-| `output`           | `Array<"terminal" \| "html" \| "json" \| "md">`   | `["terminal", "html", "json"]` | Report formats to produce.                                  |
-| `outputDir`        | `string`                                          | `"./reports"`        | Where report files are written.                                         |
-| `categories`       | `string[]`                                        | —                    | **Not read by the CLI.** Use the `--categories` flag instead.            |
-| `maxPages`         | `number`                                          | —                    | **Not read by anything.** The page budget is fixed; see [Fixed limits](#fixed-limits). |
+| Key                | Type                                                      | Default                        | Effect                                                                                                       |
+| :----------------- | :-------------------------------------------------------- | :----------------------------- | :----------------------------------------------------------------------------------------------------------- |
+| `url`              | `string`                                                  | none                           | Target URL, used when the invocation gives none — see [cli.md](./cli.md#invocation) for which forms read it. |
+| `preset`           | `"ecommerce" \| "saas" \| "content" \| "quick" \| "full"` | `"full"`                       | Preset name shown in the run header.                                                                         |
+| `minScore`         | `number` (0–100)                                          | `0`                            | Overall-score budget; the run exits 1 below it.                                                              |
+| `assertCategories` | `Record<string, number>`                                  | `{}`                           | Per-category budgets, keyed by category id.                                                                  |
+| `output`           | `Array<"terminal" \| "html" \| "json" \| "md">`           | `["terminal", "html", "json"]` | Report formats to produce.                                                                                   |
+| `outputDir`        | `string`                                                  | `"./reports"`                  | Where report files are written.                                                                              |
+| `categories`       | `string[]`                                                | —                              | **Not read by the CLI.** Use the `--categories` flag instead.                                                |
+| `maxPages`         | `number`                                                  | —                              | **Not read by anything.** The page budget is fixed; see [Fixed limits](#fixed-limits).                       |
 
 The last two keys are part of the `AgentLighthouseConfig` type but no code path consumes them today. They are listed here so that a config file containing them is not mistaken for a scan that honours them.
 
@@ -62,10 +62,10 @@ For every setting that both surfaces expose, the order is:
 `@forkpoint/agent-lighthouse-core` exports a `defineConfig` identity helper for authoring a config object in TypeScript with full type checking:
 
 ```ts
-import { defineConfig } from '@forkpoint/agent-lighthouse-core';
+import { defineConfig } from "@forkpoint/agent-lighthouse-core";
 
 export default defineConfig({
-  url: 'https://staging.yourstore.com',
+  url: "https://staging.yourstore.com",
   minScore: 80,
 });
 ```
@@ -76,16 +76,16 @@ Note that the CLI's loader reads JSON only — it does not import a `.ts` or `.j
 
 Every audit belongs to exactly one category. These ids are what `--categories` and `assertCategories` accept, and what the JSON report keys its category results by.
 
-| Id                     | Name                       | What it covers                                                                                       |
-| :--------------------- | :------------------------- | :---------------------------------------------------------------------------------------------------- |
+| Id                     | Name                       | What it covers                                                                                                                                                                                                 |
+| :--------------------- | :------------------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `access-crawl-control` | Access & Crawl Control     | Whether named AI crawlers and agents are allowed in at all: `robots.txt` groups for GPTBot, ClaudeBot, PerplexityBot and their peers, blanket blocks, bot walls, edge parity, HTTPS, and declared usage terms. |
-| `content-extraction`   | Content Extraction         | Whether a fetched page yields clean text: server-rendered HTML, a findable main content region, semantic structure, and the cost of getting to it. |
-| `machine-discovery`    | Machine Discovery          | The machine-readable index of the site: `llms.txt` and `llms-full.txt`, sitemaps and their freshness, feeds, and `.well-known` surfaces. |
-| `structured-data`      | Structured Data            | Schema.org correctness: valid JSON-LD, Product, Offer, Organization, identifiers such as SKU and GTIN, and review and service markup. |
-| `answer-readiness`     | Answer Readiness           | Whether the content can be quoted as an answer: direct definitions, question headings, first-paragraph answers, comparison tables, dated and specific claims, trust signals. |
-| `agent-interfaces`     | Agent Interfaces           | The programmatic surface an agent can call: WebMCP tools, MCP server declarations, OpenAPI specs and their discovery, `agents.json`, and search actions. |
-| `agentic-commerce`     | Agentic Commerce           | Whether a transaction can be completed by an agent: offer truth, availability, product identifiers, checkout eligibility and payment surfaces. |
-| `operability-safety`   | Agent Operability & Safety | Whether an agent can operate the site without breaking it: reachable endpoints, stability, accessible controls, `security.txt`, `tdmrep`, and safety signals. |
+| `content-extraction`   | Content Extraction         | Whether a fetched page yields clean text: server-rendered HTML, a findable main content region, semantic structure, and the cost of getting to it.                                                             |
+| `machine-discovery`    | Machine Discovery          | The machine-readable index of the site: `llms.txt` and `llms-full.txt`, sitemaps and their freshness, feeds, and `.well-known` surfaces.                                                                       |
+| `structured-data`      | Structured Data            | Schema.org correctness: valid JSON-LD, Product, Offer, Organization, identifiers such as SKU and GTIN, and review and service markup.                                                                          |
+| `answer-readiness`     | Answer Readiness           | Whether the content can be quoted as an answer: direct definitions, question headings, first-paragraph answers, comparison tables, dated and specific claims, trust signals.                                   |
+| `agent-interfaces`     | Agent Interfaces           | The programmatic surface an agent can call: WebMCP tools, MCP server declarations, OpenAPI specs and their discovery, `agents.json`, and search actions.                                                       |
+| `agentic-commerce`     | Agentic Commerce           | Whether a transaction can be completed by an agent: offer truth, availability, product identifiers, checkout eligibility and payment surfaces.                                                                 |
+| `operability-safety`   | Agent Operability & Safety | Whether an agent can operate the site without breaking it: reachable endpoints, stability, accessible controls, `security.txt`, `tdmrep`, and safety signals.                                                  |
 
 Narrow a scan with the flag:
 
@@ -108,23 +108,23 @@ An experimental audit carries weight 0 whether or not it runs, so this flag can 
 
 `runScan(url, options)` from `@forkpoint/agent-lighthouse-core` takes the same decisions as `ScanOptions`:
 
-| Option                | Type                            | Default     | Effect                                                                 |
-| :-------------------- | :------------------------------ | :---------- | :--------------------------------------------------------------------- |
-| `categories`          | `string[]`                      | all eight   | Restrict the scan to these category ids. Unknown ids match nothing — validate them at your entry point so a typo is heard. |
-| `includeExperimental` | `boolean`                       | `false`     | Include experimental-tier audits, reported but never scored.            |
-| `onEvent`             | `(event: ScanEvent) => void`    | none        | Progress callback; the CLI's progress display and its NDJSON stream are both built on it. |
-| `pages`               | `PageOverride[] \| null`        | none        | Scan these exact URLs with a declared page type instead of relying on discovery. |
-| `signal`              | `AbortSignal`                   | none        | Cancel an in-flight scan.                                               |
+| Option                | Type                         | Default   | Effect                                                                                                                     |
+| :-------------------- | :--------------------------- | :-------- | :------------------------------------------------------------------------------------------------------------------------- |
+| `categories`          | `string[]`                   | all eight | Restrict the scan to these category ids. Unknown ids match nothing — validate them at your entry point so a typo is heard. |
+| `includeExperimental` | `boolean`                    | `false`   | Include experimental-tier audits, reported but never scored.                                                               |
+| `onEvent`             | `(event: ScanEvent) => void` | none      | Progress callback; the CLI's progress display and its NDJSON stream are both built on it.                                  |
+| `pages`               | `PageOverride[] \| null`     | none      | Scan these exact URLs with a declared page type instead of relying on discovery.                                           |
+| `signal`              | `AbortSignal`                | none      | Cancel an in-flight scan.                                                                                                  |
 
 ```ts
-import { runScan } from '@forkpoint/agent-lighthouse-core';
+import { runScan } from "@forkpoint/agent-lighthouse-core";
 
-const report = await runScan('https://yourstore.com', {
-  categories: ['structured-data', 'agentic-commerce'],
+const report = await runScan("https://yourstore.com", {
+  categories: ["structured-data", "agentic-commerce"],
   includeExperimental: false,
   pages: [
-    { url: 'https://yourstore.com/products/blue-widget', pageType: 'product' },
-    { url: 'https://yourstore.com/collections/widgets', pageType: 'category' },
+    { url: "https://yourstore.com/products/blue-widget", pageType: "product" },
+    { url: "https://yourstore.com/collections/widgets", pageType: "category" },
   ],
   onEvent: (event) => console.error(JSON.stringify(event)),
 });
@@ -138,21 +138,21 @@ Field-level product verification (`report.productFields`) is only produced when 
 
 ## Environment variables
 
-| Variable                  | Default  | Effect                                                                                     |
-| :------------------------ | :------- | :------------------------------------------------------------------------------------------ |
-| `LOG_LEVEL`               | `info`   | Engine log verbosity: `silent`, `error`, `warn`, `info` or `debug`. `--progress-json` forces `silent`. |
-| `SCANNER_A11Y_MAX_PAGES`  | `3`      | How many pages get the jsdom-based accessibility pass. Accessibility problems are template-wide, so the first few pages are representative; `0` disables the pass entirely and its audits degrade to not-applicable. |
-| `A11Y_CONCURRENCY`        | `3`      | How many of those accessibility passes run at once.                                          |
+| Variable                 | Default | Effect                                                                                                                                                                                                               |
+| :----------------------- | :------ | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `LOG_LEVEL`              | `info`  | Engine log verbosity: `silent`, `error`, `warn`, `info` or `debug`. `--progress-json` forces `silent`.                                                                                                               |
+| `SCANNER_A11Y_MAX_PAGES` | `3`     | How many pages get the jsdom-based accessibility pass. Accessibility problems are template-wide, so the first few pages are representative; `0` disables the pass entirely and its audits degrade to not-applicable. |
+| `A11Y_CONCURRENCY`       | `3`     | How many of those accessibility passes run at once.                                                                                                                                                                  |
 
 ## Fixed limits
 
 These are compile-time constants in [`packages/core/src/constants.ts`](../packages/core/src/constants.ts) and [`packages/core/src/fetcher.ts`](../packages/core/src/fetcher.ts). There is no flag, config key or environment variable for them.
 
-| Limit                | Value                                                            |
-| :------------------- | :---------------------------------------------------------------- |
-| Pages per scan       | 6 — the homepage plus five more, whether discovered or overridden |
-| Request timeout      | 10 seconds per request                                            |
-| Response body read   | 5 MB, after which the body is truncated                           |
-| Scanner user agent   | `AgentLighthouse/1.0 (+https://github.com/ForkPoint/agent-lighthouse)` |
+| Limit              | Value                                                                  |
+| :----------------- | :--------------------------------------------------------------------- |
+| Pages per scan     | 6 — the homepage plus five more, whether discovered or overridden      |
+| Request timeout    | 10 seconds per request                                                 |
+| Response body read | 5 MB, after which the body is truncated                                |
+| Scanner user agent | `AgentLighthouse/1.0 (+https://github.com/ForkPoint/agent-lighthouse)` |
 
 The user agent is deliberately identifiable so that site owners can recognise, rate-limit or allow a scan in their logs. Individual audits that probe crawler parity send other user agents on purpose, to compare how the site answers a named AI crawler versus an ordinary browser.

@@ -12,7 +12,6 @@ sources:
   - S4
 ---
 
-
 # Snippet-Gate Coverage Analysis
 
 > Shipped in v2. Evidence grade **A** · scored tier · partial overlap · implementation: `static-fetch`

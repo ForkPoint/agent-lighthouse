@@ -426,18 +426,19 @@ An audit cannot tell "this page has no `<main>` element" from "the scanner never
 
 Before audits run, `buildScanEvidence()` in `packages/core/src/scan-evidence.ts` constructs a pure evidence record evaluating four orthogonal requirements:
 
-| Requirement | What it proves | Failure condition |
-| :--- | :--- | :--- |
-| `origin-reachable` | The response belongs to the site requested (matching host, registrable domain, sibling ccTLD storefront, or permanent redirect). | Temporary redirect away to an unrelated broker/parking page, non-HTML response, or connection failure. |
-| `unblocked-fetches` | The site did not refuse or throttle the scan. | Cloudflare/Akamai managed challenge interstitial (even at HTTP 200), captcha wall, 403 bot refusal, or 429 rate limit. |
-| `rendered-body` | At least one fetched page served text a non-JS consumer can read (>50 words or >200 characters). | Empty client-side rendered JavaScript SPA shell (empty root container). |
-| `sample-adequate` | At least one page of an applicable page type served readable text. | Pages fetched, but none usable for the required page types. |
+| Requirement         | What it proves                                                                                                                   | Failure condition                                                                                                      |
+| :------------------ | :------------------------------------------------------------------------------------------------------------------------------- | :--------------------------------------------------------------------------------------------------------------------- |
+| `origin-reachable`  | The response belongs to the site requested (matching host, registrable domain, sibling ccTLD storefront, or permanent redirect). | Temporary redirect away to an unrelated broker/parking page, non-HTML response, or connection failure.                 |
+| `unblocked-fetches` | The site did not refuse or throttle the scan.                                                                                    | Cloudflare/Akamai managed challenge interstitial (even at HTTP 200), captcha wall, 403 bot refusal, or 429 rate limit. |
+| `rendered-body`     | At least one fetched page served text a non-JS consumer can read (>50 words or >200 characters).                                 | Empty client-side rendered JavaScript SPA shell (empty root container).                                                |
+| `sample-adequate`   | At least one page of an applicable page type served readable text.                                                               | Pages fetched, but none usable for the required page types.                                                            |
 
 **Attribution (`judgeable`).** A scan is judgeable only when both `origin-reachable` and `unblocked-fetches` hold. If either fails, the scan obtained nothing attributable to the site; `planAudits()` marks all page-fed audits `notApplicable` with a human-readable `Not assessed: <reason>` explanation.
 
 **Handling JavaScript shells.** An empty JS shell is not an empty scan: the response arrived and the headers and root files exist. What is missing is the rendered body document. An audit whose population lives in the body (`token-ratio`, `content-depth`, `figure-figcaption`, etc.) declares `rendered-body` and is cleanly skipped.
 
-**Deliberate exemptions (`GATE_EXEMPTIONS`).** Audits whose subject *is* the missing evidence declare exemptions in `scripts/lib/requires-analysis.ts`:
+**Deliberate exemptions (`GATE_EXEMPTIONS`).** Audits whose subject _is_ the missing evidence declare exemptions in `scripts/lib/requires-analysis.ts`:
+
 - `content-extraction/server-rendered` drops `rendered-body` because reporting an unrendered shell is its explicit purpose.
 - `operability-safety/no-blocking-captcha` and `access-crawl-control/no-bot-detection` drop `rendered-body` and `unblocked-fetches` so they can report the presence of defense interstitials.
 - `content-extraction/server-responsiveness` measures TTFB from the response envelope and does not need rendered text.

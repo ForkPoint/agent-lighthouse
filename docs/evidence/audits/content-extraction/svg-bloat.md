@@ -41,6 +41,7 @@ The best-engineered audit in the directory — correct notApplicable, byte accou
 **Required fix:** Measure and report total inline-SVG bytes regardless of aria-hidden, and split the verdict into two dimensions: raw byte weight (what a raw-HTML reader pays, no exemption) and unhidden count (what an accessibility-tree reader sees). Do not award a pass for adding aria-hidden to a 30KB SVG. Also de-duplicate nested <svg> (the '$('svg')' selector matches inner SVGs and double-counts their bytes into the parent's total) and de-duplicate identical sprite markup repeated across pages so a shared sprite is not counted N times in the crawl total.
 
 **False-positive risks:**
+
 - aria-hidden exemption is not grounded in any consumer's behavior — it lets a site zero out real token cost with one attribute, and conversely fails a site whose SVGs are correctly exposed via role="img" + aria-label (the accessible pattern) purely for being visible.
 - '$('svg')' matches nested <svg> inside <svg>; the inner element's bytes are counted once inside the parent's serialization and again on its own.
 - A single shared icon sprite included on every page is counted once per page toward TOTAL_FAIL_BYTES (20KB), so the fail is triggered by crawl breadth rather than page weight — a 5-page crawl fails where a 2-page crawl of the same site passes.
@@ -49,6 +50,7 @@ The best-engineered audit in the directory — correct notApplicable, byte accou
 - SVGs injected client-side are invisible to the HTTP-only fetcher, so heavy-SVG SPAs pass.
 
 **Test gaps:**
+
 - The 'passes when large SVGs are aria-hidden' test codifies the questionable exemption rather than probing it.
 - No nested-<svg> fixture (double counting untested).
 - No shared-sprite-across-N-pages fixture showing crawl size drives the verdict.

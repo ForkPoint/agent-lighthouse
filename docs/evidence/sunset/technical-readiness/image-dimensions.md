@@ -27,6 +27,7 @@ Requires `width` and `height` attributes on every `<img>` and fails/warns on the
 **Required fix:** Accept CSS-based reservation: treat an img as sized if it has width+height attributes OR an inline/`style` `aspect-ratio` OR both dimensions in an inline style. Reject `width="0"`/`height="0"` as unset. Exclude tracking pixels and placeholders (declared ≤ 2px, empty src with a `data-src`/`data-lazy` sibling attribute) from the denominator. Return `notApplicable()` when there are no images. Rewrite the impact away from 'breaks coordinate-based click targeting' toward the honest CLS/Core-Web-Vitals framing, and evaluate all pages rather than only the homepage.
 
 **False-positive risks:**
+
 - CSS-based space reservation not recognized: only `$(el).attr('width')`/`attr('height')` are read. `<img style="aspect-ratio:16/9">`, a padding-hack wrapper, or a CSS class fixing the box all yield zero CLS and are still counted in `withoutDimensions`.
 - `<picture>`/`<source>` and `srcset` responsive setups where intrinsic size is carried by the sources are judged solely on the fallback `<img>`.
 - `width="0"` passes: `!img.width` on the string `"0"` is false, so an explicit zero-size attribute counts as 'has dimensions'.
@@ -35,6 +36,7 @@ Requires `width` and `height` attributes on every `<img>` and fails/warns on the
 - Vacuous pass: `images.length === 0` ⇒ `this.pass('No images found on the homepage.')` — a free 1.0 for having nothing to check, where `notApplicable()` is the correct result.
 
 **Test gaps:**
+
 - No test with `style="aspect-ratio: …"` or a CSS-sized image (the main false positive).
 - No test with `<picture>`/`<source>`/`srcset`.
 - No test with `width="0"`.

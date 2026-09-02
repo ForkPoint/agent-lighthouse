@@ -24,7 +24,7 @@ non_consumers:
   - Gemini
   - Claude.ai
 signals:
-  - name: "HTML <link> tags pointing to llms.txt / markdown alternates (rel=\"describedby\", rel=\"alternate\" type=\"text/markdown\")"
+  - name: 'HTML <link> tags pointing to llms.txt / markdown alternates (rel="describedby", rel="alternate" type="text/markdown")'
     grade: C
     domain: llms-txt
   - name: "Markdown alternate representations of pages (.md URLs and Accept: text/markdown content negotiation)"
@@ -66,6 +66,7 @@ Best of the AI-specific link audits — the underlying practice is real and does
 **Required fix:** 1) `l.type === 'text/markdown'` is an exact match: accept `text/markdown; charset=utf-8` (strip at `;`), `text/x-markdown`, and `text/plain` when the href ends in `.md`. 2) Accept href-based discovery with no type attribute: `rel="alternate"` + href matching `/\.mdx?$/i`. 3) Normalize `rel` (lowercase/trim/split) — exact `l.rel === 'alternate'` fails on `rel="Alternate"`. 4) Optionally verify the target resolves via `ctx.fetch` before passing; a dangling .md link is worse than none. 5) Iterate `ctx.pages` — a Markdown alternate is inherently per-page, and checking only `ctx.pages[0]` (usually a homepage, which rarely has one) makes this fail even on docs sites that provide .md for every article. 6) Return `notApplicable` for page types where a Markdown twin is meaningless (checkout, search) rather than a flat fail.
 
 **False-positive risks:**
+
 - MIME parameter breaks the match: `l.type === 'text/markdown'` fails on `type="text/markdown; charset=utf-8"`, which any server appending a charset will emit.
 - `text/x-markdown` (still widely used) is not accepted.
 - Type-less discovery ignored: `<link rel="alternate" href="/guide.md">` — a common minimal form — fails because the audit requires the type attribute.
@@ -76,6 +77,7 @@ Best of the AI-specific link audits — the underlying practice is real and does
 - No verification that the linked .md exists; a stale link passes.
 
 **Test gaps:**
+
 - No charset-parameter MIME test.
 - No `text/x-markdown` test.
 - No type-less `.md` href test.
@@ -116,7 +118,7 @@ grade-A signal above is explicit: "Grade A applies to interactive coding agents,
 not to search crawlers or consumer chat — audits should say so." The audit said
 no such thing. It failed every site that served no markdown alternate, at weight
 1.0, including a retail store with no coding-agent audience. What the sources
-document is *consumption when the representation is served* — Anthropic's
+document is _consumption when the representation is served_ — Anthropic's
 WebFetch preferring markdown, seven agents advertising `text/markdown`, Evil
 Martians' ~40,000 markdown fetches. No cited source measures a cost to a site
 that serves none, and three point the other way: ChatGPT-User takes markdown on
@@ -137,7 +139,7 @@ heuristic would be an invented mechanism with no consumer behind it — the exac
 defect the grading policy exists to prevent. A site that serves an alternate has
 self-selected into the documented population by observable behaviour.
 
-This reverses one sentence written on 2026-08-23 in *Absorbed proposal*: "The
+This reverses one sentence written on 2026-08-23 in _Absorbed proposal_: "The
 proposal would have made that case `notApplicable`; this audit's grade-A
 evidence is precisely about the absence of the link, so the shipped meaning
 stands." That reading does not survive its own counter-evidence. The absorbed
@@ -148,7 +150,7 @@ the record of what was decided then.
 here and they are not interchangeable. The link relations — `rel="alternate"
 type="text/markdown"` and `rel="describedby"` — carry `Recommended tier:
 experimental`, with one single-sourced, uncorroborated consumer for the first
-and none-known for the second. The markdown *representation*, reached by a `.md`
+and none-known for the second. The markdown _representation_, reached by a `.md`
 URL or by `Accept: text/markdown`, carries `Recommended tier: scored` and many
 named consumers. The audit let the first decide the second: a declared link
 whose document could not be read returned a full `pass` at weight 1.0, and a
@@ -174,7 +176,7 @@ Page selection also moved, closing the homepage bias this dossier recorded as
 required fix #5: the audit now prefers a page that declares an alternate, then
 any non-homepage, before falling back to the first page.
 
-*What it checks* was rewritten to match. It described a check that no longer
+_What it checks_ was rewritten to match. It described a check that no longer
 exists — it promised that a markdown alternate "improves the accuracy of
 AI-generated summaries", a claim no source here carries, and it framed the
 `<link>` as the thing being checked.
@@ -197,7 +199,7 @@ the audit no longer makes.
 ## Component-detection correction (2026-08-24)
 
 `MDX_COMPONENT` scanned the raw markdown document, so any capitalised tag the
-document *quoted* counted as a component the renderer had failed to resolve. A
+document _quoted_ counted as a component the renderer had failed to resolve. A
 markdown alternate of a documentation page is the likeliest place in the corpus
 to quote JSX — in a fenced example, or in an inline span such as `` `<Button />` ``
 — so the check reported the faithful case as the broken one, at rank 2 (`warn`,

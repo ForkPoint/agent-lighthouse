@@ -23,14 +23,14 @@ sources:
 
 One social-meta diagnostic for the head of `ctx.pages[0]`, with a scored half and an informational half.
 
-**Scored — Open Graph.** The four core properties `og:title`, `og:description`, `og:image`, `og:url` must be present and non-empty; `og:site_name` (absorbed from 4.8) is *recommended* and can only produce a warn.
+**Scored — Open Graph.** The four core properties `og:title`, `og:description`, `og:image`, `og:url` must be present and non-empty; `og:site_name` (absorbed from 4.8) is _recommended_ and can only produce a warn.
 
-| State | Result |
-| :--- | :--- |
-| all four core tags present, `og:site_name` usable | `pass` |
-| all four core tags present, `og:site_name` missing or a placeholder | `warn`, priority `low` |
-| one to three core tags missing | `warn`, priority `high` |
-| all four core tags missing | `fail`, priority `high` |
+| State                                                               | Result                  |
+| :------------------------------------------------------------------ | :---------------------- |
+| all four core tags present, `og:site_name` usable                   | `pass`                  |
+| all four core tags present, `og:site_name` missing or a placeholder | `warn`, priority `low`  |
+| one to three core tags missing                                      | `warn`, priority `high` |
+| all four core tags missing                                          | `fail`, priority `high` |
 
 A placeholder `og:site_name` is treated as missing. A placeholder is an unrendered template token — `{{ … }}`, `{% … %}`, `${…}`, `<% … %>` — or one of the audit's own sample strings: "Your Site Name", "Site Name", "SiteName", "Your Website". This is the false positive 4.8's review names first.
 
@@ -43,6 +43,7 @@ Reasonable presence check, but it validates nothing beyond non-emptiness — not
 **Required fix:** 1) Enforce what the guidance already promises: `guidance.fix` says 'og:image (with an absolute URL)' but the loop is only `if (val.trim()) present.push(tag)`. Add an absolute-URL check for og:image and og:url and warn on relative values. 2) Accept `og:image:url` / `og:image:secure_url` as satisfying og:image (valid per ogp.me, emitted by several CMSes) before reporting og:image missing. 3) Verify og:url resolves to the same origin as `page.url`; a stale og:url pointing at a dev domain is a common real bug that currently passes. 4) Iterate all `ctx.pages`. 5) Return `notApplicable` when `ctx.wafProtection?.isBlocked` rather than a 4-tag hard fail. 6) Reference `meta.guidance` instead of re-embedding a second copy of the description/code strings in the warn and fail branches.
 
 **False-positive risks:**
+
 - Relative og:image passes: the loop is `const val = page?.meta?.[tag] ?? ''; if (val.trim()) present.push(tag)`. `<meta property="og:image" content="/img/card.png">` is unresolvable by every OG consumer, yet scores a full pass while the audit's own fix text demands an absolute URL.
 - `og:image:url` / `og:image:secure_url` only (valid OGP, emitted by some CMSes) → reported as og:image missing.
 - Stale/wrong og:url (pointing at a staging domain or the homepage) passes — no comparison to `page.url`.
@@ -52,6 +53,7 @@ Reasonable presence check, but it validates nothing beyond non-emptiness — not
 - Non-HTML entry URL (PDF, JSON API root) still parses through cheerio and reports four missing OG tags rather than declaring itself inapplicable.
 
 **Test gaps:**
+
 - No relative-og:image test — the exact case the guidance calls out.
 - No `og:image:secure_url`-only test.
 - No multi-page test.
@@ -72,11 +74,12 @@ _No dedicated evidence signal was researched for this audit in the 2026-08-20 pa
 **Grade: A** — two vendors document, by crawler name, that they read exactly these properties, and the fallback behavior when they are missing is stated in the vendor doc itself.
 
 **Evidence:**
+
 - Meta's webmaster guide instructs sites to add `og:url` ("The canonical URL for your page"), `og:title`, `og:description`, `og:image` and names the crawler user-agent `facebookexternalhit/1.1`; without markup the crawler "uses internal heuristics to make a best guess" — https://developers.facebook.com/docs/sharing/webmasters/ (verified 2026-08-21)
 - Slack documents the same consumption for message unfurls: "Slack crawls the URL, looks for common OpenGraph and X (formerly known as Twitter) Card metadata, and renders some micro-approximation of the content." — https://docs.slack.dev/messaging/unfurling-links-in-messages/ (verified 2026-08-21)
 - The Open Graph protocol itself defines `og:title`, `og:type`, `og:image`, `og:url` as the required basic metadata and names Facebook as the originating consumer — https://ogp.me/ (verified 2026-08-21)
 
-**Counter-evidence:** The proven consumer path is social/messaging link previews, not AI answer generation — the audit's framing ("agents cannot display proper titles… in AI-generated responses") has no source. OpenAI's crawler documentation covers only robots.txt and user agents, and mentions no Open Graph tags — https://developers.openai.com/api/docs/bots (verified 2026-08-21). Google's AI-features page likewise never mentions Open Graph — https://developers.google.com/search/docs/appearance/ai-features (verified 2026-08-21). And Google's supported-meta-tags list includes no `og:*` property at all, with the note that "Google will ignore `meta` tags that it doesn't support" — https://developers.google.com/search/docs/crawling-indexing/special-tags (verified 2026-08-21). Note also that the grade attaches to *resolvable* values: the vendor doc's `og:image` contract is a URL the crawler can fetch, which the current non-emptiness check does not enforce.
+**Counter-evidence:** The proven consumer path is social/messaging link previews, not AI answer generation — the audit's framing ("agents cannot display proper titles… in AI-generated responses") has no source. OpenAI's crawler documentation covers only robots.txt and user agents, and mentions no Open Graph tags — https://developers.openai.com/api/docs/bots (verified 2026-08-21). Google's AI-features page likewise never mentions Open Graph — https://developers.google.com/search/docs/appearance/ai-features (verified 2026-08-21). And Google's supported-meta-tags list includes no `og:*` property at all, with the note that "Google will ignore `meta` tags that it doesn't support" — https://developers.google.com/search/docs/crawling-indexing/special-tags (verified 2026-08-21). Note also that the grade attaches to _resolvable_ values: the vendor doc's `og:image` contract is a URL the crawler can fetch, which the current non-emptiness check does not enforce.
 
 ## The merge (Plan 4, Task 6, 2026-08-22)
 
@@ -86,13 +89,13 @@ Three v1 audits asked one question — "does this page emit its social-preview m
 
 4.8's dossier is kept verbatim at [merged/answer-readiness/og-site-name.md](../../merged/answer-readiness/og-site-name.md) (grade **A**). Its signal is the one Open Graph claim with direct Google documentation: the title-link page lists "Content in `og:title` meta tags" among the sources for a title link, and the site-names page states the system "will also consider content in `og:site_name`, `<title>`, heading elements, and other text on a home page". That adds Googlebot — and with it the AI Overviews / AI Mode source card, which reuses those labels — to this audit's consumer list alongside `facebookexternalhit` and Slack's unfurler.
 
-Its counter-evidence is what fixes the *weight* of the absorbed half: Google ranks `og:site_name` below `WebSite` structured data ("most important" for the site name) and `og:title` below `<title>` and the visible title, so both are tiebreakers rather than levers. 4.8's own required fix therefore lands as written — "extend the `OG_CORE` loop with a second RECOMMENDED list that downgrades a miss to a warn rather than a standalone fail" — at priority `low`, and the audit no longer repeats 4.8's unsupported claim that a missing `og:site_name` "fragments your brand identity across AI-generated responses". No AI answer engine is documented to build entity association from the tag.
+Its counter-evidence is what fixes the _weight_ of the absorbed half: Google ranks `og:site_name` below `WebSite` structured data ("most important" for the site name) and `og:title` below `<title>` and the visible title, so both are tiebreakers rather than levers. 4.8's own required fix therefore lands as written — "extend the `OG_CORE` loop with a second RECOMMENDED list that downgrades a miss to a warn rather than a standalone fail" — at priority `low`, and the audit no longer repeats 4.8's unsupported claim that a missing `og:site_name` "fragments your brand identity across AI-generated responses". No AI answer engine is documented to build entity association from the tag.
 
 ### The twitter-card redemption (4.10)
 
 4.10's `TODO(redeem)` header asked for exactly two things: **fix the `twitter:*`/`og:*` fallback errors** and **fold the check into the social-meta diagnostic alongside core-open-graph, unscored**. Both are done here.
 
-The factual error was structural: `TWITTER_REQUIRED = ['twitter:card','twitter:title','twitter:description']` never consulted the `og:*` head, so the configuration X itself documents as correct — `og:*` complete, `twitter:*` absent — was reported as `warn` "Missing Twitter Card tags", and a site with complete OG and no twitter tags took a hard `fail` at `medium` priority. The archived Cards Markup Tag Reference (Dec 2023, the last public version) documents a fallback for every content-bearing tag: `twitter:title`→`og:title`, `twitter:description`→`og:description`, `twitter:image`→`og:image`, `twitter:card`→`og:type`. The merged audit encodes that table directly: an absent `twitter:*` tag whose `og:*` counterpart is present is reported as *"falls back to og:…"*, not as missing. Only when neither exists does the row say so, and even then it is a statement, not a finding.
+The factual error was structural: `TWITTER_REQUIRED = ['twitter:card','twitter:title','twitter:description']` never consulted the `og:*` head, so the configuration X itself documents as correct — `og:*` complete, `twitter:*` absent — was reported as `warn` "Missing Twitter Card tags", and a site with complete OG and no twitter tags took a hard `fail` at `medium` priority. The archived Cards Markup Tag Reference (Dec 2023, the last public version) documents a fallback for every content-bearing tag: `twitter:title`→`og:title`, `twitter:description`→`og:description`, `twitter:image`→`og:image`, `twitter:card`→`og:type`. The merged audit encodes that table directly: an absent `twitter:*` tag whose `og:*` counterpart is present is reported as _"falls back to og:…"_, not as missing. Only when neither exists does the row say so, and even then it is a statement, not a finding.
 
 The one interaction 4.10's review says actually matters — `twitter:card="summary_large_image"` with no image in either namespace — is the single extra line the twitter block can emit. It is also informational.
 

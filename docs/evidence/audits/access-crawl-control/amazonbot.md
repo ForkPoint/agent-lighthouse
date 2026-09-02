@@ -34,12 +34,14 @@ Amazonbot is live (Alexa+ and Rufus grounding) and for commerce sites it is a ge
 **Required fix:** Reclassify Amazonbot as realtime/grounding rather than training. Apply the shared helper fixes from 2.1.
 
 **False-positive risks:**
+
 - Miscategorized as `training`, corrupting 2.28's `categoryBlocked` computation for sites with deliberate, correct policies.
 - Exact-match miss on versioned tokens.
 - Shared BOM / soft-404 / `Disallow: /*` misreads.
 - For non-commerce sites the fail carries a high-priority weight identical to GPTBot's, overstating impact.
 
 **Test gaps:**
+
 - No category-classification assertion.
 - Same missing real-world robots.txt variants as 2.1.
 
@@ -51,7 +53,7 @@ Amazonbot is live (Alexa+ and Rufus grounding) and for commerce sites it is a ge
 
 **Mechanism:** Disallowing Amazonbot stops Amazon crawling the site for product/service improvement and possible Amazon AI model training; Amazon states the bot honors user-agent and allow/disallow directives but ignores crawl-delay.
 
-**Grade: A** — Amazon publishes a crawler page naming the exact product token. It states the purpose: "Amazonbot is used to improve our products and services", and content "may be used to train Amazon AI models". It asserts robots.txt compliance for that user agent. That is documented consumer behaviour for the directive this audit reads, which is the grade-A bar. What Amazon does *not* publish is any statement of what blocking costs, so the audit reports the directive's state and does not argue a visibility case.
+**Grade: A** — Amazon publishes a crawler page naming the exact product token. It states the purpose: "Amazonbot is used to improve our products and services", and content "may be used to train Amazon AI models". It asserts robots.txt compliance for that user agent. That is documented consumer behaviour for the directive this audit reads, which is the grade-A bar. What Amazon does _not_ publish is any statement of what blocking costs, so the audit reports the directive's state and does not argue a visibility case.
 
 **Evidence:** Amazon documents the UA as 'Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko; compatible; Amazonbot/0.1) Chrome/W.X.Y.Z Safari/537.36'. It states the purpose — 'Amazonbot is used to improve our products and services' — and that the data 'may be used to train Amazon AI models'. It states compliance too: 'Automated crawling from these listed user agents respects the Robots Exclusion Protocol, honoring the user-agent and the allow/disallow directives.' The bot is active at scale: Cloudflare Radar ranked Amazonbot second only to GPTBot in the Computer & Electronics vertical (Aug 2025). Amazon also now documents a separate Amzn-SearchBot which 'does not crawl content for generative AI model training', so audits should treat the two tokens distinctly.
 

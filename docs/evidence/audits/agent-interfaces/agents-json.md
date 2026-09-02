@@ -7,7 +7,7 @@ evidence_grade: C
 disposition: "informative, weight 0 (approved 2026-08-21)"
 reviewed: 2026-08-24
 recommended_tier: scored
-tier_rationale: "Recommended scored on the strength of the published spec; ships informative because the 2026-08-21 redemption pass returned \"confirmed dead\" for the site-facing signal and no consumer was found (contradiction sweep, 2026-08-24)."
+tier_rationale: 'Recommended scored on the strength of the published spec; ships informative because the 2026-08-21 redemption pass returned "confirmed dead" for the site-facing signal and no consumer was found (contradiction sweep, 2026-08-24).'
 consumers:
   - all clients following RFC 8615 well-known conventions
 signals:
@@ -40,7 +40,7 @@ published there is a real agents.json document.
 
 The check never asks a site to publish the file. A site that serves nothing at that path is
 reported as **not applicable**: the convention has no documented consumer, so its absence is not a
-finding and is excluded from scoring entirely. When a document *is* published, the check validates
+finding and is excluded from scoring entirely. When a document _is_ published, the check validates
 the shape the agents.json v0.1.0 specification actually defines — an `info` object alongside a
 `sources` array (each entry pointing at an OpenAPI document) or a `flows` array — and reports a
 warning, at weight 0, when what is served is something else:
@@ -61,12 +61,14 @@ Checks a real-but-stillborn convention, and checks it wrong: it validates nothin
 **Required fix:** Delete. If retained despite near-zero adoption, it must at minimum (a) validate the real schema — `info` object plus a `sources` or `flows` array — instead of accepting any JSON, (b) correct `guidance.code` to the actual spec shape, and (c) become `informative`/`na` rather than a scored failure.
 
 **False-positive risks:**
+
 - Validation is `isObject(parsed) || Array.isArray(parsed)` — literally any parseable JSON passes. `[]`, `{}`, `null`-free garbage, or an unrelated config file at that path all yield 'agents.json found with valid JSON content'. This is a vacuous pass with no signal.
 - The prescribed shape in `guidance.code` (`protocols`, `authentication`, `rate_limits`, `endpoints`) is invented. The actual agents.json spec is built around `$schema`, `info`, `sources` (pointing at OpenAPI documents) and `flows`. A user who follows this remediation writes a file no agents.json consumer can parse — actively harmful advice.
 - Hard `fail` at medium priority for every site, since adoption is negligible.
 - SPA catch-all HTML → 'agents.json is not valid JSON' rather than 'not present'.
 
 **Test gaps:**
+
 - No test that `[]` or `{}` passes (it does — the vacuous-pass hole is untested and unnoticed)
 - No test validating against the real agents.json schema (`info`/`sources`/`flows`)
 - No HTML-soft-404 fixture
@@ -143,14 +145,14 @@ adopted the convention.
   it penalises an HTML 200 (which is a lie)".
 - **The content-type check cannot make a false accusation.** The HTML branch is a body sniff and
   nothing else. A genuine agents.json document served with a misconfigured `Content-Type:
-  text/html` gets its own, separate warning naming the media-type mismatch — it is never told its
+text/html` gets its own, separate warning naming the media-type mismatch — it is never told its
   body begins with HTML, because it does not. A test pins that distinction in both directions.
 - **Titles read true on every status the audit can return.** `title` renders on `pass` and on `na`,
   `failureTitle` on the warnings, so the title became the neutral `agents.json at
-  /.well-known/agents.json` and the failure title became "agents.json is published but not served
+/.well-known/agents.json` and the failure title became "agents.json is published but not served
   as a usable document" — true of every warning branch and of nothing else.
 - **The guidance stops prescribing.** `guidance.fix` and `guidance.code` are non-imperative: they
-  describe the shape a file the site has *already chosen to publish* should have, and open by
+  describe the shape a file the site has _already chosen to publish_ should have, and open by
   saying there is nothing to do if the site does not publish one. This matters because
   `toCheckResult` copies `guidance.fix`, `guidance.code` and `guidance.effort` onto every result
   including `na`; without the rewrite, a non-adopting site would still be handed a to-do and a
@@ -167,7 +169,7 @@ The mechanical reason comes first, because it is decisive on its own. `scripts/c
 pins `meta.evidenceGrade` to this dossier's frontmatter `evidence_grade: C`. `weightForGrade('C',
 'scored')` returns 0, and `packages/core/src/audits/sunset.test.ts` asserts that tier and weight
 move in lockstep — "keeps tier !== scored and weight === 0 in lockstep". A grade-C audit therefore
-cannot be scored at all. Scoring the grade-A signal would require a *new* grade-A audit with its
+cannot be scored at all. Scoring the grade-A signal would require a _new_ grade-A audit with its
 own dossier, which is a different piece of work and not something this audit can absorb.
 
 That work has already been done elsewhere, which is the second reason. The decision recorded in

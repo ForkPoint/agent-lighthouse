@@ -15,7 +15,6 @@ sources:
   - S13
 ---
 
-
 # Organization identifier resolves in the authoritative registry
 
 > Shipped in v2. Evidence grade **B** · scored tier · unique · implementation: `static-fetch`
@@ -45,7 +44,7 @@ Structured-data validators check that leiCode is a string; not one performs a li
 
 ## Implementation sketch
 
-1) Locate the Organization node (Google recommends home page or a single about-us page — check both). 2) Read leiCode and iso6523Code. Encoding check: iso6523Code must match /^\d{4}:/; if leiCode is present without an iso6523Code '0199:<LEI>' twin, emit an ADVISORY citing Google's documented preference; same for duns vs '0060:'. 3) Syntactic pre-filter on the LEI: /^[A-Z0-9]{18}[0-9]{2}$/ plus the ISO/IEC 7064 MOD 97-10 check digit — treat this only as a cheap local filter, since GLEIF publishes no algorithm detail on its intro page. 4) Authoritative lookup, no API key required: GET https://api.gleif.org/api/v1/lei-records?filter[lei]=<LEI>. 5) Assert exactly one record; attributes.entity.status === 'ACTIVE'; attributes.registration.status === 'ISSUED' (WARN on LAPSED/RETIRED/ANNULLED — a lapsed LEI signals an organization that stopped maintaining its registration). 6) Name agreement: normalize case, punctuation and legal suffixes (Inc/Ltd/GmbH/L.P.), then compare attributes.entity.legalName.name against schema legalName, falling back to name; below a similarity threshold emit FAIL. 7) Optionally surface registration.corroborationLevel and nextRenewalDate as trust context. Cache per LEI for 30 days.
+1. Locate the Organization node (Google recommends home page or a single about-us page — check both). 2) Read leiCode and iso6523Code. Encoding check: iso6523Code must match /^\d{4}:/; if leiCode is present without an iso6523Code '0199:<LEI>' twin, emit an ADVISORY citing Google's documented preference; same for duns vs '0060:'. 3) Syntactic pre-filter on the LEI: /^[A-Z0-9]{18}[0-9]{2}$/ plus the ISO/IEC 7064 MOD 97-10 check digit — treat this only as a cheap local filter, since GLEIF publishes no algorithm detail on its intro page. 4) Authoritative lookup, no API key required: GET https://api.gleif.org/api/v1/lei-records?filter[lei]=<LEI>. 5) Assert exactly one record; attributes.entity.status === 'ACTIVE'; attributes.registration.status === 'ISSUED' (WARN on LAPSED/RETIRED/ANNULLED — a lapsed LEI signals an organization that stopped maintaining its registration). 6) Name agreement: normalize case, punctuation and legal suffixes (Inc/Ltd/GmbH/L.P.), then compare attributes.entity.legalName.name against schema legalName, falling back to name; below a similarity threshold emit FAIL. 7) Optionally surface registration.corroborationLevel and nextRenewalDate as trust context. Cache per LEI for 30 days.
 
 ## Example failure
 

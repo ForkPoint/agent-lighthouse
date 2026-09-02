@@ -13,7 +13,6 @@ sources:
   - S8
 ---
 
-
 # Origin Validation and CORS Coherence
 
 > Shipped in v2. Evidence grade **B** · scored tier · unique · implementation: `static-fetch`
@@ -40,6 +39,7 @@ Generic web security scanners test CORS, but none start from an MCP endpoint, no
 ## Implementation sketch
 
 Generate a throwaway origin such as https://al-probe-<random>.example (never a real third-party domain).
+
 - Probe A: POST server/discover with `Origin: https://al-probe-<random>.example`. Record the status. Compare against the identical request with no Origin header. If both return 200 identically, the server applies no Origin policy — report as a MUST-violation finding, scored only when the endpoint is credential-accepting (see gating below).
 - Probe B: OPTIONS preflight to the endpoint with `Origin: <throwaway>`, `Access-Control-Request-Method: POST`, `Access-Control-Request-Headers: content-type, mcp-protocol-version, authorization`. Record Access-Control-Allow-Origin, -Allow-Credentials, -Allow-Headers, -Max-Age.
 - Findings, in descending severity: (1) ACAO reflects the throwaway origin verbatim AND Allow-Credentials: true -> CRITICAL, unambiguous defect regardless of auth posture; (2) ACAO: * AND the endpoint returns 401/WWW-Authenticate or accepts an Authorization header (Allow-Headers includes authorization) -> HIGH; (3) no Origin differentiation on a credential-accepting endpoint -> MEDIUM; (4) permissive CORS on an endpoint that is anonymous and read-only by construction -> INFORMATIONAL, explicitly not scored.

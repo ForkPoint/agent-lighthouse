@@ -35,6 +35,7 @@ GPTBot is the single most valuable token in the category and detecting a real Di
 **Required fix:** 1) In `_robots-txt-helpers.ts`, strip a leading BOM and prefix/version-normalize UA tokens before comparison. 2) Extend `isBlanketBlocked` to accept `/`, `/*` and `*`. 3) Reframe scoring: PASS when the bot is not blocked (explicit group or not), FAIL when blocked, and drop the 'not explicit' warn entirely — or demote it to `notApplicable`. 4) Remove the `Allow: /` recommendation, or gate it behind a check that the wildcard group carries no Disallow rules the bot group would shadow. 5) Add a live UA probe: refetch `/` as GPTBot and compare status to the baseline fetch; report that as the primary evidence.
 
 **False-positive risks:**
+
 - Exact-match UA lookup `g.userAgent.toLowerCase() === botName.toLowerCase()` misses `User-agent: GPTBot/1.1`; that group's `Disallow: /` is invisible and the audit reports 'allowed by default' on a blocked site.
 - BOM'd robots.txt: `parseRobotsTxt` produces zero groups, so `isAllowed` hits its `No robots.txt rules at all` branch and reports allowed-by-default even when the file blocks everything.
 - Cloudflare 'Block AI Scrapers' enabled: scanner fetches with `User-Agent: AgentLighthouse/1.0`, sees a normal robots.txt, PASSes — while GPTBot gets a 403 at the edge. Complete false negative on the most common real-world block mechanism.
@@ -42,6 +43,7 @@ GPTBot is the single most valuable token in the category and detecting a real Di
 - `isBlanketBlocked` only matches path `/`, so `User-agent: GPTBot\nDisallow: /*` is reported as allowed.
 
 **Test gaps:**
+
 - No test with a versioned token (`User-agent: GPTBot/1.1`).
 - No BOM or CRLF robots.txt fixture.
 - No `Disallow: /*` or `Disallow: *` case.

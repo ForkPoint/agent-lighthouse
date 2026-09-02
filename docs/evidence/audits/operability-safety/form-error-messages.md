@@ -48,6 +48,7 @@ Claims to verify that form validation errors are programmatically linked, but it
 **Required fix:** Delete. If a form-readiness signal is wanted here it must be reframed as what is actually observable — e.g. 'required fields declare `required`/`aria-required` and a resolvable `aria-describedby`/`aria-errormessage`' — reported as a ratio with `na` when no validation attributes exist at all, and it must stop being titled/described as measuring error messages.
 
 **False-positive risks:**
+
 - Vacuous pass: `if (withDescribedby > 0) return this.pass(...)` — one help-text `aria-describedby` (e.g. a password-strength hint) passes a site whose 200-field checkout has zero error wiring.
 - False warn: a site that does error handling correctly via `aria-invalid` + `role="alert"` + `aria-errormessage` (the modern, ARIA 1.2 way) but no `aria-describedby` gets warned and told to add `aria-describedby`, i.e. actively wrong guidance.
 - Server-rendered error states are only present on a POST-back page; a normal GET of a form page can never contain them, so the audit systematically measures hints and reports them as error linkage.
@@ -57,6 +58,7 @@ Claims to verify that form validation errors are programmatically linked, but it
 - Counts across all pages but reports a single global ratio with no page attribution (no `pageUrl` passed on pass/warn).
 
 **Test gaps:**
+
 - No fixture with `aria-invalid` + `role="alert"` + `aria-errormessage` (correct modern error wiring that this audit warns about).
 - No fixture with `aria-describedby` used for hint text (the dominant real-world use, which currently produces a pass).
 - No fixture with inputs outside a `<form>`.
@@ -76,7 +78,7 @@ The required fix from the code review is executed as written: the audit is refra
 ### Two populations, in priority order
 
 - **Invalid-state fields** (`aria-invalid="true"`) are the direct measurement the redemption note asks for — a field the server rendered in an error state must point at the message explaining it. When any exist, only they are assessed.
-- **Required fields** (`required` or `aria-required="true"`) are the fallback proxy, and the one that applies on almost every GET: error markup is injected after a failed submit, so the observable question is whether the fields that *can* fail are pre-wired. `aria-invalid="false"` is the valid state and enters neither population.
+- **Required fields** (`required` or `aria-required="true"`) are the fallback proxy, and the one that applies on almost every GET: error markup is injected after a failed submit, so the observable question is whether the fields that _can_ fail are pre-wired. `aria-invalid="false"` is the valid state and enters neither population.
 - **Neither present ⇒ `na`.** A page whose fields declare no constraint has nothing to link, and charging it a zero measured the page's genre.
 
 The two are never averaged. Mixing "1 invalid field, wired" with "40 required fields, unwired" into one ratio would produce a number that means neither thing, so the invalid population wins outright whenever it exists.
@@ -92,7 +94,7 @@ The two are never averaged. Mixing "1 invalid field, wired" with "40 required fi
 
 ### Non-double-counting
 
-`operability-safety/aria-attributes` already runs the `aria-valid-attr-value` rule, which validates that an `aria-errormessage` that *is* present resolves; `operability-safety/label` covers accessible naming. Neither asks the coverage question — whether constrained fields carry a reference at all — which is what this audit measures. The scope split is stated in the source header.
+`operability-safety/aria-attributes` already runs the `aria-valid-attr-value` rule, which validates that an `aria-errormessage` that _is_ present resolves; `operability-safety/label` covers accessible naming. Neither asks the coverage question — whether constrained fields carry a reference at all — which is what this audit measures. The scope split is stated in the source header.
 
 ### Grade decision: stays **A**, tier `scored`, weight 1.0
 

@@ -47,12 +47,14 @@ Measures whether the spec found by 5.1 has at least one operation — a thin der
 **Required fix:** Move to the shared `_openapi.ts` loader so YAML and non-root specs resolve identically to 5.1; return `notApplicable()` (not `fail`) when no spec exists so the absence is charged exactly once, by 5.1; resolve `$ref` path items and count OpenAPI 3.1 `webhooks`. Consider folding the operation count into 5.1's result as a detail rather than keeping a separate scored audit.
 
 **False-positive risks:**
+
 - Local `getOpenApiSpec()` (lines 22-31) reads only `/openapi.json`. A site with a valid `/openapi.yaml` passes 5.1 and fails here with 'No parseable OpenAPI JSON spec found' — two audits, one input, opposite verdicts.
 - `getOperations()` does not resolve `$ref` path items (`"/pets": {"$ref": "#/components/pathItems/Pets"}`, legal in OpenAPI 3.1) or webhooks; such specs report '0 operations'.
 - Hard `fail` at `high` priority when no spec exists at all — duplicating 5.1's zero and double-penalizing the same absence.
 - Passing is trivially easy and near-meaningless: any spec that exists at all almost always has ≥1 operation, so the audit adds no discriminating information beyond 5.1.
 
 **Test gaps:**
+
 - No YAML-spec fixture demonstrating the divergence from 5.1
 - No `$ref` path-item fixture
 - No OpenAPI 3.1 `webhooks` fixture
@@ -77,6 +79,7 @@ _No dedicated evidence signal was researched for this audit in the 2026-08-20 pa
 **Grade: B** — the operation-to-function conversion is documented consumer behavior at two named agents, but the path is only proven once a developer registers the document, and the audit's own discovery leg is the C-grade claim recorded in `5.1`.
 
 **Evidence:**
+
 - Microsoft 365 Copilot builds one function per operation, then selects among them by path description. "Operation IDs are unique identifiers for an operation in the API and are used by Copilot to create functions that are executed when responding to a user's prompt." The document continues: "it searches through the descriptions of the paths to determine the endpoint to use to satisfy the user's request" — https://learn.microsoft.com/en-us/microsoft-365-copilot/extensibility/openapi-document-guidance (verified 2026-08-21)
 - OpenAI GPT Actions expose the schema's operations as the actions ChatGPT may invoke: "ChatGPT uses those names and descriptions to understand (a) which API action should be called and (b) which parameter should be used" — https://developers.openai.com/api/docs/actions/getting-started (verified 2026-08-21)
 - The Path Item / Operation Object is the unit of the described API surface in OpenAPI 3.1 — https://spec.openapis.org/oas/v3.1.0.html (verified 2026-08-21)
@@ -86,8 +89,8 @@ _No dedicated evidence signal was researched for this audit in the 2026-08-20 pa
 ## Implementation deviations
 
 **2026-08-29 — absence is `notApplicable`, not `fail`.** This dossier's own
-required fix asked for it in 2026-08-20: *"return `notApplicable()` (not
-`fail`) when no spec exists so the absence is charged exactly once, by 5.1"*.
+required fix asked for it in 2026-08-20: _"return `notApplicable()` (not
+`fail`) when no spec exists so the absence is charged exactly once, by 5.1"_.
 It is now done. A site that publishes no OpenAPI document gets no verdict from
 this audit and the audit carries no weight there.
 

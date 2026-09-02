@@ -46,6 +46,7 @@ Bundles `aria-required-attr`, `aria-required-children`, `aria-required-parent`. 
 **Required fix:** Downgrade violations that come from EMPTY required-children containers to `warn` (they are indistinguishable from a runtime-populated widget on static HTML), keep hard fails only for containers that have children of the wrong role. Report which of the three rules fired.
 
 **False-positive risks:**
+
 - Runtime-populated widgets: `<ul role="listbox"></ul>` / `role="menu"` / `role="tablist"` whose `option`/`menuitem`/`tab` children are rendered on open (the standard pattern for every dropdown library) fail `aria-required-children` on the fetched HTML while being correct in a browser.
 - `aria-required-parent`: elements relocated into their container by JS (portals, `aria-owns` set at runtime) fail even though the browser tree is well-formed.
 - CSS blindness: hidden mega-menu / accordion widgets that a browser skips are evaluated.
@@ -54,6 +55,7 @@ Bundles `aria-required-attr`, `aria-required-children`, `aria-required-parent`. 
 - CSR SPA → `na`.
 
 **Test gaps:**
+
 - No HTML-level test for this audit.
 - No fixture with an empty `role="listbox"`/`role="menu"` container (the dominant real-world false positive).
 - No `aria-owns`-satisfied fixture at the audit level (only the engine-level perf test covers it).

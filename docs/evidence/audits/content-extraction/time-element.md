@@ -39,6 +39,7 @@ Presence-only and site-wide: 'if (page.$('time[datetime]').length > 0) pagesWith
 **Required fix:** Validate the attribute against the HTML datetime grammar (at minimum /^\d{4}-\d{2}(-\d{2})?/ plus the duration/time forms) and count only valid ones. Report a per-page ratio over applicablePageTypes pages instead of an any-page boolean. Downgrade the no-dates case to notApplicable() unless the page carries date-bearing signals (Article/BlogPosting JSON-LD, a published/updated meta tag, or a date-shaped string in the main content).
 
 **False-positive risks:**
+
 - 'pagesWithTime > 0' — a single footer <time datetime="2026"> passes the whole crawl while every article is undated.
 - No validation of the datetime value: datetime="last Tuesday", datetime="01/02/2025", or datetime="" all pass, defeating the audit's stated purpose of avoiding ambiguous formats.
 - Hard fail for legitimately date-free sites; detectPageType's 'content' fallback means the applicablePageTypes gate almost never spares them.
@@ -47,6 +48,7 @@ Presence-only and site-wide: 'if (page.$('time[datetime]').length > 0) pagesWith
 - Does not distinguish publication date from an event date or an opening-hours <time>, though the impact copy is entirely about freshness scoring.
 
 **Test gaps:**
+
 - No invalid-datetime fixture (datetime="last Tuesday", datetime="") — the core validation gap is untested.
 - No multi-page fixture showing one footer <time> passes a crawl of undated articles.
 - No date-free-site fixture asserting the fail is appropriate.

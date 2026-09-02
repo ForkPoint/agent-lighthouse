@@ -46,6 +46,7 @@ Wraps axe `button-name` + `link-name`. Directly agent-relevant — an unnamed co
 **Required fix:** _none — audit is sound as implemented_
 
 **False-positive risks:**
+
 - CSS blindness: template/carousel clones, hidden mega-menu panels, and `display:none` social icon rows fail `link-name` though no browser renders them.
 - Icon links whose name comes from a CSS `::before` glyph or a background-image sprite legitimately fail — correct per axe, but combined with binary scoring one such footer icon zeroes the audit.
 - Deferred content: `<a href>` whose text is injected on hydration (framework `<a>` shells, lazy i18n string substitution) fails on the static HTML.
@@ -54,6 +55,7 @@ Wraps axe `button-name` + `link-name`. Directly agent-relevant — an unnamed co
 - CSR SPA → `na`, silently zero coverage on exactly the sites where agents struggle most.
 
 **Test gaps:**
+
 - No HTML-level test for this audit.
 - No `<a><svg><title>` fixture (the svg-title naming path is only implicitly covered).
 - No fixture with a hidden-by-class duplicate nav of icon links.

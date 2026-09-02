@@ -23,14 +23,14 @@ sources:
 
 ## What it checks
 
-One review-markup audit: decide *structurally* whether the site shows reviews at all, then require the rating data a consumer can actually use — and, on product pages, require it on the Product.
+One review-markup audit: decide _structurally_ whether the site shows reviews at all, then require the rating data a consumer can actually use — and, on product pages, require it on the Product.
 
-| State | Result |
-| :--- | :--- |
-| no repeated review component, no star-rating widget and no review markup anywhere | `na` |
-| a usable rating (`ratingValue` + a non-zero `reviewCount`/`ratingCount`) or a non-empty `review` array — and, where product pages exist, at least one of them carries it on its Product | `pass` |
-| usable ratings exist, but no product page attaches one to its Product | `warn`, priority `medium` |
-| review content is shown and no usable rating exists (`"review": []`, `"aggregateRating": {}`, `reviewCount: 0`) | `fail`, priority `medium` |
+| State                                                                                                                                                                                   | Result                    |
+| :-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :------------------------ |
+| no repeated review component, no star-rating widget and no review markup anywhere                                                                                                       | `na`                      |
+| a usable rating (`ratingValue` + a non-zero `reviewCount`/`ratingCount`) or a non-empty `review` array — and, where product pages exist, at least one of them carries it on its Product | `pass`                    |
+| usable ratings exist, but no product page attaches one to its Product                                                                                                                   | `warn`, priority `medium` |
+| review content is shown and no usable rating exists (`"review": []`, `"aggregateRating": {}`, `reviewCount: 0`)                                                                         | `fail`, priority `medium` |
 
 Applicability is ≥3 repeated review/testimonial components, a rendered star-rating widget, microdata review items, or review markup of any quality — never the word "review" in body text.
 
@@ -41,6 +41,7 @@ The applicability trigger tests for the substring 'review' or the word 'stars' a
 **Required fix:** Replace the substring gate with a structural one: require a repeated review-item pattern (≥3 elements matching a review/testimonial component, or a visible star-rating widget) rather than the word 'review' appearing in body text. Require `aggregateRating.ratingValue` AND `reviewCount > 0`, or a non-empty `review` array, before passing. Return `notApplicable` when no review content is detected. Absorb 3.23 (product-reviews) into this audit, scoping the product case by `pageType === 'product'`.
 
 **False-positive risks:**
+
 - `const textPatterns = [/\btestimonial/i, /\breview/i, /\brating/i, /\bstars?\b/i, ...]` tested against `page.$('body').text()`. The bare word 'review' appears on nearly every commerce page — a 'Write a review' link, a 'Reviews' footer nav item, a cookie banner's 'review your preferences', a 'Product reviews' tab label that renders even with zero reviews. The gate is therefore effectively always-true in English, and the audit degenerates into a hard `fail` for any site that has no review programme at all, which is legitimate for B2B, SaaS, and regulated industries.
 - Symmetrically, a German ('Bewertungen'), French ('avis'), Spanish ('reseñas'), or Japanese site never matches any pattern, so it lands permanently in the `warn` (0.5) branch — a half-point deduction driven purely by page language.
 - `schemasWithReviewProp` accepts `obj['aggregateRating'] || obj['review']` with no emptiness check. `"review": []` is truthy in JS, and Shopify / Judge.me / Yotpo emit exactly that on products with zero reviews — so a store with no reviews at all passes as if it had social proof. False pass on the audit's actual subject.
@@ -49,6 +50,7 @@ The applicability trigger tests for the substring 'review' or the word 'stars' a
 - The precondition-absent branch returns `warn` (0.5) instead of `notApplicable`.
 
 **Test gaps:**
+
 - No test where 'review' appears only as incidental chrome (a 'Write a review' link, a cookie banner) — the always-true gate
 - No non-English page test
 - No test for `"review": []` or `"aggregateRating": {}` (both currently pass)
@@ -75,6 +77,7 @@ _No dedicated evidence signal was researched for this audit in the 2026-08-20 pa
 **Grade: A** — two vendor docs name a consumer and state what it does with the signal, and Google specifies the exact required properties.
 
 **Evidence:**
+
 - Google documents the consumer and the required fields. Review snippets are supported on Book, Course, Event, Local Business, Movie, Product, Recipe and Software App, plus further schema.org types: CreativeWorkSeason, CreativeWorkSeries, Episode, Game, MediaObject, MusicPlaylist, MusicRecording and Organization. `AggregateRating` requires `ratingValue`, and "at least one of `ratingCount` or `reviewCount`" — https://developers.google.com/search/docs/appearance/structured-data/review-snippet (verified 2026-08-21)
 - Review snippet remains a live feature in Google's structured data gallery, covering ratings for products, recipes, movies and other content types — https://developers.google.com/search/docs/appearance/structured-data/search-gallery (verified 2026-08-21)
 - Apple's web-markup guide lists AggregateRating among the schema.org types Applebot supports for Siri and Spotlight Suggestions — https://developer.apple.com/library/archive/documentation/General/Conceptual/AppSearch/WebContent.html (verified 2026-08-21)
@@ -84,7 +87,7 @@ _No dedicated evidence signal was researched for this audit in the 2026-08-20 pa
 
 ## The merge (Plan 4, Task 8, 2026-08-22)
 
-3.13 and 3.23 measured the same property with two different gates, so the same markup could pass one and fail the other — 3.23's dossier calls that out as "a visibly contradictory report". 3.23's required fix names the destination precisely: *"Merge into 3.13 … Keep a single audit that: gates on a structural review-content signal, scopes the product case to `pageType === 'product'` and to Product-attached ratings, requires `ratingValue` plus `reviewCount > 0` (or a non-empty `review` array), and returns `notApplicable` for sites with no reviewable entities."* All four clauses land here.
+3.13 and 3.23 measured the same property with two different gates, so the same markup could pass one and fail the other — 3.23's dossier calls that out as "a visibly contradictory report". 3.23's required fix names the destination precisely: _"Merge into 3.13 … Keep a single audit that: gates on a structural review-content signal, scopes the product case to `pageType === 'product'` and to Product-attached ratings, requires `ratingValue` plus `reviewCount > 0` (or a non-empty `review` array), and returns `notApplicable` for sites with no reviewable entities."_ All four clauses land here.
 
 **The applicability gate is structural.** The old trigger tested `page.$('body').text()` for `/\breview/i`, `/\brating/i` or `/\bstars?\b/i` — true on essentially every English commerce page (a "Write a review" link, a cookie banner's "review your preferences", a "Reviews" footer item) and false on every German, French, Spanish or Japanese one. It is replaced by ≥3 repeated review/testimonial components, a rendered star-rating widget, microdata review items, or the presence of review markup of any quality. Where nothing at all is found the audit now returns `na` instead of the vacuous `warn` (0.5) that punished sites with no review programme.
 
@@ -96,11 +99,11 @@ _No dedicated evidence signal was researched for this audit in the 2026-08-20 pa
 
 3.23's dossier is kept verbatim at [merged/structured-data/product-reviews.md](../../merged/structured-data/product-reviews.md) (grade **A**). Its evidence is the product half of the same Google review-snippet mechanism 3.13 grades on — `ratingValue` required, "at least one of `ratingCount` or `reviewCount` is required", `Product` among the supported host types — reinforced by [Product snippet](https://developers.google.com/search/docs/appearance/structured-data/product-snippet) and [merchant listing](https://developers.google.com/search/docs/appearance/structured-data/merchant-listing) markup and by OpenAI's product feed carrying `star_rating` and `review_count` per item.
 
-Its grading closes with the sentence that shapes the merged implementation: *"The grade applies to a Product-attached rating with a non-empty count, not to the presence of any `aggregateRating` object anywhere on the site."* So the product case is scoped: when the scan contains `pageType === 'product'` pages and none of them carries a rating on its own Product node, the result is a `warn` that says so, instead of the false `pass` a single homepage "4.8 on Trustpilot" badge used to buy for a 500-SKU catalogue. That also answers the shared counter-evidence — Google excludes self-controlled `Organization`/`LocalBusiness` reviews from the star treatment, and a site-wide badge is exactly that.
+Its grading closes with the sentence that shapes the merged implementation: _"The grade applies to a Product-attached rating with a non-empty count, not to the presence of any `aggregateRating` object anywhere on the site."_ So the product case is scoped: when the scan contains `pageType === 'product'` pages and none of them carries a rating on its own Product node, the result is a `warn` that says so, instead of the false `pass` a single homepage "4.8 on Trustpilot" badge used to buy for a 500-SKU catalogue. That also answers the shared counter-evidence — Google excludes self-controlled `Organization`/`LocalBusiness` reviews from the star treatment, and a site-wide badge is exactly that.
 
 ### Grade decision: stays **A**, tier `scored`, weight 1.0
 
-Both audits grade **A** on the same proven consumer path (Google parses `ratingValue` + `ratingCount`/`reviewCount` and renders a review snippet; Applebot extracts `AggregateRating` for Siri and Spotlight). The absorbed evidence is not *stronger*, it is the same mechanism seen from the Product side, so the grade does not move: **A**, `tier: scored`, `weightForGrade('A', 'scored')` = **1.0**. What the merge changes is accuracy, not price — the A-grade mechanism is now actually the thing being measured (rating value plus non-zero count, on the host entity Google supports), where before a truthy empty array satisfied it.
+Both audits grade **A** on the same proven consumer path (Google parses `ratingValue` + `ratingCount`/`reviewCount` and renders a review snippet; Applebot extracts `AggregateRating` for Siri and Spotlight). The absorbed evidence is not _stronger_, it is the same mechanism seen from the Product side, so the grade does not move: **A**, `tier: scored`, `weightForGrade('A', 'scored')` = **1.0**. What the merge changes is accuracy, not price — the A-grade mechanism is now actually the thing being measured (rating value plus non-zero count, on the host entity Google supports), where before a truthy empty array satisfied it.
 
 ### Deviations
 

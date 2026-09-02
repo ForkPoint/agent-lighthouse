@@ -26,9 +26,10 @@ Requires an 'updated/modified/revised' keyword adjacent to a parseable date on a
 **Required fix:** Merge into 9.8 as a single graded freshness audit scored once: pass when a dateModified / 'last updated' + date is present; partial-pass (0.5) when only a publication date exists; fail when neither. That removes the double penalty, removes the false fail on unrevised evergreen articles, and collapses the duplicated DATE_PATTERN into one definition (which should also be shared with generative-engine/publication-date). If the merge is rejected, at minimum: constrain the <time> keyword scope to the element's immediate text/preceding sibling instead of `.parent().text()`, drop the incidental-prose warn path, and gate the keyword and date patterns on the page `lang`.
 
 **False-positive risks:**
+
 - Double penalty for one defect: an undated article fails both 9.8 and 9.10 with the same fix ('add a <time> element'), costing double weight in the category score for a single omission.
 - Full fail on a legitimately correct page: a freshly published, properly dated article that has never been revised has no reason to carry 'Last updated' — yet it fails at medium priority with 'No "last updated" indicator found', which is bad guidance (and encourages fake update stamps).
-- Parent-scope keyword matching is loose: `const context = \`${time.parent().text()} ${time.text()} ${time.attr('datetime') ?? ''}\`` — on an article-card grid or a list where a shared parent contains 'Updated' text for a different item, an unrelated <time> passes. Cheerio's `.parent().text()` concatenates all sibling text in that parent.
+- Parent-scope keyword matching is loose: `const context = \`${time.parent().text()} ${time.text()} ${time.attr('datetime') ?? ''}\``— on an article-card grid or a list where a shared parent contains 'Updated' text for a different item, an unrelated <time> passes. Cheerio's`.parent().text()` concatenates all sibling text in that parent.
 - 'updated' matches unrelated prose: 'We updated our packaging in March 2025', 'This policy was revised January 2024', a changelog entry, or a cookie-consent line all satisfy keyword+date within the ±window and pass as a page freshness indicator.
 - English-only: UPDATED_PATTERN knows only updated/modified/revised, and DATE_PATTERN only English months — 'Zuletzt aktualisiert: 15. Januar 2025' fails on both halves.
 - The DATE_PATTERN duplication is a live correctness hazard: the comment says a third copy exists in generative-engine/publication-date.ts, so any fix must be applied in three files or the three freshness audits will disagree about the same page.
@@ -37,6 +38,7 @@ Requires an 'updated/modified/revised' keyword adjacent to a parseable date on a
 - SPA/CSR: client-rendered date lines → false fail.
 
 **Test gaps:**
+
 - No article-card grid where a shared parent puts 'Updated' next to an unrelated <time>.
 - No incidental-prose case ('We updated our packaging in March 2025') showing a non-freshness sentence passing.
 - No non-English update phrasing ('Zuletzt aktualisiert').
@@ -58,12 +60,13 @@ _No dedicated evidence signal was researched for this audit in the 2026-08-20 pa
 
 ## Graded evidence (2026-08-21)
 
-**Mechanism claim:** A visible "Last updated / Modified / Revised" label placed next to a machine-readable date lets a date extractor resolve the page's *modification* date as distinct from its original publication date, which freshness-sensitive answer surfaces use to judge how current the page is.
+**Mechanism claim:** A visible "Last updated / Modified / Revised" label placed next to a machine-readable date lets a date extractor resolve the page's _modification_ date as distinct from its original publication date, which freshness-sensitive answer surfaces use to judge how current the page is.
 
-**Grade: B** — the extraction half is vendor-documented and matches this audit's detector (Google names "Last updated" as a recommended label and reads `dateModified`; htmldate resolves updated dates), but the claim that distinguishes this audit from `dates-on-content` — that an explicit update *label* outranks a bare publication date in AI answers — has no documented consumer and no measured effect.
+**Grade: B** — the extraction half is vendor-documented and matches this audit's detector (Google names "Last updated" as a recommended label and reads `dateModified`; htmldate resolves updated dates), but the claim that distinguishes this audit from `dates-on-content` — that an explicit update _label_ outranks a bare publication date in AI answers — has no documented consumer and no measured effect.
 
 **Evidence:**
-- Google's byline-date guidance covers precisely this pattern: it asks publishers to show a prominently displayed date with clear labeling such as "Posted", "Published" or "Last updated", *and* to specify "the `datePublished` and/or `dateModified` fields" on a `CreativeWork` subtype, with visible and structured values matching. Google states it "estimates that the web page was updated or published" from these signals and "can expose this information in Search results" — https://developers.google.com/search/docs/appearance/publication-dates (verified 2026-08-21)
+
+- Google's byline-date guidance covers precisely this pattern: it asks publishers to show a prominently displayed date with clear labeling such as "Posted", "Published" or "Last updated", _and_ to specify "the `datePublished` and/or `dateModified` fields" on a `CreativeWork` subtype, with visible and structured values matching. Google states it "estimates that the web page was updated or published" from these signals and "can expose this information in Search results" — https://developers.google.com/search/docs/appearance/publication-dates (verified 2026-08-21)
 - The extraction stack resolves updates as a first-class output: htmldate identifies "original **and updated** publication dates" from `link`/`meta` elements (including Open Graph attributes), `abbr` and `time` elements and page text, and is "used in production on millions of documents" — https://htmldate.readthedocs.io/en/latest/ (verified 2026-08-21); it feeds trafilatura, whose extraction preserves structure and metadata — https://trafilatura.readthedocs.io/en/latest/corefunctions.html (verified 2026-08-21)
 - A vendor ties freshness to AI answers explicitly: Bing states freshness signals "directly influence how quickly updates are reflected in search results and AI generated answers", with `lastmod` "a key signal, helping Bing prioritize URLs for recrawling and reindexing" — https://blogs.bing.com/webmaster/July-2025/Keeping-Content-Discoverable-with-Sitemaps-in-AI-Powered-Search (verified 2026-08-21)
 - The Search path reaches the AI surface: "To be eligible to be shown as a supporting link in AI Overviews or AI Mode, a page must be indexed and eligible to be shown in Google Search with a snippet" — https://developers.google.com/search/docs/appearance/ai-features (verified 2026-08-21)

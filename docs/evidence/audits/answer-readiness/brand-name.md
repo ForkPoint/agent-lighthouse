@@ -34,11 +34,12 @@ AI engines build entity graphs by matching Organization schema names to in-conte
 
 ## Code review findings (2026-08-20, 11-agent pass)
 
-The signal — the Organization schema name actually appears in rendered copy so entity resolution can anchor — is legitimate, and this file shows the most care in the category (legal-suffix stripping, full-body text, shared `flattenJsonLd`). But candidate collection widens so far that it defeats the audit: `addCandidate(article['name'])` pulls in the *page title* of every Article/BlogPosting/WebPage/WebSite node, and any candidate matching anywhere in body text passes. Since an article's `name` is almost always its `<h1>`, a page whose brand is entirely absent from the copy PASSES on its own headline — and the failure message then names `candidates[0]`, which may be a different string than the one actually tested.
+The signal — the Organization schema name actually appears in rendered copy so entity resolution can anchor — is legitimate, and this file shows the most care in the category (legal-suffix stripping, full-body text, shared `flattenJsonLd`). But candidate collection widens so far that it defeats the audit: `addCandidate(article['name'])` pulls in the _page title_ of every Article/BlogPosting/WebPage/WebSite node, and any candidate matching anywhere in body text passes. Since an article's `name` is almost always its `<h1>`, a page whose brand is entirely absent from the copy PASSES on its own headline — and the failure message then names `candidates[0]`, which may be a different string than the one actually tested.
 
 **Required fix:** 1) Stop treating `Article`/`BlogPosting`/`WebPage` `name` as a brand candidate — keep only Organization/LocalBusiness/Corporation `name`, `WebSite.name`, `publisher.name`, and `og:site_name`. 2) Build the match regex with the `u` flag and replace `\b` with Unicode-letter lookarounds (`(?<!\p{L})…(?!\p{L})`), falling back to plain substring for scripts without word separators. 3) Normalize both sides (NFKD, strip diacritics, fold curly quotes, collapse NBSP) before matching. 4) Extend `stripLegalSuffix` with common non-English forms, and require the stripped remainder to be ≥3 characters before using it. 5) Report the candidate that actually matched or failed, not `candidates[0]`. 6) Skip pages whose extracted body text is below a minimum length (SPA shell) and return `notApplicable` instead of failing.
 
 **False-positive risks:**
+
 - `const articles = findJsonLdByType(p.jsonLd, ['Article','BlogPosting','WebPage','WebSite']); for (const article of articles) { addCandidate(article['name']); ... }` — `Article.name` is the headline, not a brand. It enters `matchNames`, and the `<h1>` guarantees it appears in body text. Result: near-unconditional PASS on any page with Article or WebPage schema, reported as 'Brand name "How to Bake Sourdough" appears in body text.' The user is told their brand entity is anchored when nothing of the sort was verified.
 - `new RegExp('\\b'+escaped+'\\b','i')` — JS `\b` is an ASCII word boundary. For a brand in Cyrillic ("Яндекс"), Greek, Hebrew, Arabic, Japanese or Chinese, `\b` does not match at the script boundary, so a brand plainly present in the copy is reported absent — a hard FAIL driven purely by script. Same failure for brands ending in a non-word character ("Yahoo!", "Guess?").
 - No Unicode normalization or typographic folding: schema `"Nestlé"` vs body `"Nestle"`, or a straight apostrophe in schema vs `’` in copy, or an NBSP inside a multi-word brand, all produce false FAILs.
@@ -48,6 +49,7 @@ The signal — the Organization schema name actually appears in rendered copy so
 - `getBodyText` reads server HTML. On a client-rendered SPA whose shell is `<div id="root"></div>`, body text is empty and every brand FAILS even though the schema in the shell supplies the name.
 
 **Test gaps:**
+
 - No test asserting that an Article/WebPage `name` must not satisfy the brand check — the dominant false-pass path. The existing test 'handles Article JSON-LD without publisher gracefully' actively asserts the false-pass behavior as correct.
 - No test for a non-Latin-script brand (the `\b` failure).
 - No test for diacritics or curly-vs-straight apostrophe mismatch between schema and copy.

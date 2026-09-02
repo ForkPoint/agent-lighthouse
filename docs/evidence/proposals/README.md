@@ -15,9 +15,9 @@ their row leaves the table below and the count above drops by one.
 
 Grades: **A** = documented consumer behavior or ratified standard · **B** = draft standard with adoption, or strong empirical data · **C** = plausible convention, unproven · **D** = speculative.
 
-| Grade | Check | Domain | Uniqueness | Implementation | Scoring tier |
-| :---- | :---- | :----- | :--------- | :------------- | :----------- |
-| A | [Overlay Interception Hazard](./agent-operability/overlay-interception-hazard.md) | agent-operability | unique | `headless-browser` | scored |
-| A | [ACP Endpoint Conformance Probe](./agentic-commerce/acp-endpoint-conformance-probe.md) | agentic-commerce | unique | `static-fetch` | informative (weight 0) |
-| C | [Question-Heading Answer Span Alignment](./answer-selection-forensics/question-heading-answer-span-alignment.md) | answer-selection-forensics | unique | `llm-assisted` | informative (weight 0) |
-| C | [Behavior Annotation Coverage and Claim Consistency](./mcp-server-quality/behavior-annotation-coverage-and-claim-consistency.md) | mcp-server-quality | unique | `llm-assisted` | informative (weight 0) |
+| Grade | Check                                                                                                                            | Domain                     | Uniqueness | Implementation     | Scoring tier           |
+| :---- | :------------------------------------------------------------------------------------------------------------------------------- | :------------------------- | :--------- | :----------------- | :--------------------- |
+| A     | [Overlay Interception Hazard](./agent-operability/overlay-interception-hazard.md)                                                | agent-operability          | unique     | `headless-browser` | scored                 |
+| A     | [ACP Endpoint Conformance Probe](./agentic-commerce/acp-endpoint-conformance-probe.md)                                           | agentic-commerce           | unique     | `static-fetch`     | informative (weight 0) |
+| C     | [Question-Heading Answer Span Alignment](./answer-selection-forensics/question-heading-answer-span-alignment.md)                 | answer-selection-forensics | unique     | `llm-assisted`     | informative (weight 0) |
+| C     | [Behavior Annotation Coverage and Claim Consistency](./mcp-server-quality/behavior-annotation-coverage-and-claim-consistency.md) | mcp-server-quality         | unique     | `llm-assisted`     | informative (weight 0) |

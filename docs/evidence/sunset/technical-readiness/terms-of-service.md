@@ -27,6 +27,7 @@ A line-for-line twin of 8.19 with the nouns swapped — same path probe, same `f
 **Required fix:** Merge the shared scanner with 8.19 into one `_legal-links.ts` helper (path list + i18n label/slug table + `looksLikeRealPage()` body validation + aria-label fallback), then keep 8.19 and 8.20 as thin callers. Add `/policies/terms-of-service` and `/legal/terms` to the probed paths since the orchestrator already fetches the former. Rewrite the impact copy to drop 'AI agents check for terms of service to determine whether automated access is permitted' in favor of the honest commerce/compliance framing, and point users at robots.txt/TDM signals for the automated-access question.
 
 **False-positive risks:**
+
 - Soft-404 false PASS: `ctx.rootFiles['/terms/'].status === 200` with no content validation; SPA catch-alls and 200-search-page CMSes make every such site 'pass'.
 - English-only false FAIL: `TERMS_TEXT = /\bterms\s*(of\s*(service|use|sale)|&\s*conditions|and\s*conditions)\b|\bconditions\s*of\s*use\b/` and `TERMS_HREF` covering `/terms…`, `/tos`. German AGB (/agb), French CGU (/cgu, /conditions-generales), Japanese 利用規約, Russian Условия — none match either pattern.
 - Narrower path list than its twin: only `['/terms/', '/terms']`, while the orchestrator also fetches `/policies/terms-of-service` (the Shopify default) — that entry exists in `rootFilePaths` but the audit never checks it, so a standard Shopify store falls through to the anchor scan unnecessarily.
@@ -34,6 +35,7 @@ A line-for-line twin of 8.19 with the nouns swapped — same path probe, same `f
 - The exact-match shortcuts (`text === 'terms'`, `text === 'terms & conditions'`) are redundant with the regex and encode the assumption of lowercase-normalized English labels.
 
 **Test gaps:**
+
 - No test for a 200 soft-404 (false pass).
 - No non-English test (AGB, CGU, 利用規約, Términos).
 - No test for `/policies/terms-of-service`, the Shopify default the orchestrator already fetches.

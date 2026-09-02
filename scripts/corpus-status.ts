@@ -51,7 +51,9 @@ function main(argv: string[]): number {
   if (command === "import") {
     const file = rest.find((a) => !a.startsWith("--"));
     if (!file) {
-      console.error("usage: corpus-status import <summary.json> [--date=YYYY-MM-DD]");
+      console.error(
+        "usage: corpus-status import <summary.json> [--date=YYYY-MM-DD]",
+      );
       return 2;
     }
     const date = flag(rest, "date") ?? new Date().toISOString().slice(0, 10);
@@ -75,7 +77,9 @@ function main(argv: string[]): number {
     }
     console.log(
       `${summary.outcomes.length} outcome(s) imported for ${date} -> ${STATUS_PATH} ` +
-        `(${Object.entries(counts).map(([k, v]) => `${k} ${v}`).join(", ")})`,
+        `(${Object.entries(counts)
+          .map(([k, v]) => `${k} ${v}`)
+          .join(", ")})`,
     );
     return 0;
   }

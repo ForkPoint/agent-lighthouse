@@ -37,12 +37,14 @@ Fails any site lacking /llms-full.txt, at HIGH priority, on the strength of a 20
 **Required fix:** Require 200 AND a non-HTML content-type AND a markdown-shaped body over a minimum size (say 2KB) to pass. Return notApplicable() rather than fail() when the file is absent — it is an optional enhancement, not a defect — or gate it to documentation-type sites. Drop defaultPriority from high to low.
 
 **False-positive risks:**
+
 - `isOk` status-only: an SPA catch-all serving `<!doctype html>` at /llms-full.txt yields PASS 'llms-full.txt exists and returns HTTP 200'. So does a 200 error page, a redirect to the homepage, or a 0-byte file.
 - No size or format floor — a one-line placeholder file scores identically to a genuine full-content dump, so the audit rewards the gesture rather than the content.
 - A 30k-page ecommerce catalogue cannot meaningfully produce llms-full.txt; the audit still marks it a HIGH-priority failure with 'moderate' effort guidance that is not actionable.
 - Body is truncated at MAX_RESPONSE_BODY_BYTES (5MB) by the fetcher, so any real llms-full.txt of consequence is partially read — currently harmless because nothing is inspected, but it blocks any future content check.
 
 **Test gaps:**
+
 - 200 + HTML soft-404 (currently a false PASS)
 - Empty or 1-line placeholder file (currently a false PASS)
 - Redirect to homepage returning 200

@@ -69,12 +69,14 @@ Dead standard presented as live. ai-plugin.json was the ChatGPT plugin manifest;
 **Required fix:** Delete. The residual value (pointing agents at an OpenAPI spec) is already covered by 5.1. If any trace is kept it must be `scoreDisplayMode: 'informative'` with copy stating the format is deprecated.
 
 **False-positive risks:**
+
 - Every site fails, and the accompanying explanation is untrue: there is no plugin installation flow to miss out on.
 - `guidance.docsUrl` points at platform.openai.com/docs/plugins/..., a deprecated/removed documentation page — the user is sent to a dead end.
 - Only checks that `schema_version`, `name_for_human`, `name_for_model` are non-empty strings; a site could satisfy it with three junk strings and no `api` block, i.e. a manifest that would have been useless even when plugins existed.
 - SPA catch-all HTML → 'not valid JSON' misdiagnosis.
 
 **Test gaps:**
+
 - No test asserting the `api.url` field (the only part that ever mattered) is validated
 - No test covering the deprecation — the suite treats the standard as live
 

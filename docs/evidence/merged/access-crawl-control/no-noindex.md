@@ -26,6 +26,7 @@ The highest-value audit in the category — a noindex on the homepage genuinely 
 **Required fix:** Check every scanned page, not just pages[0], and report per-page (homepage noindex = critical, inner pages = warn). Recognize `content="none"` and bot-specific meta names (googlebot, gptbot, google-extended, bingbot, applebot-extended). Have `extractMetaTags()` preserve duplicate robots tags rather than overwriting. Fix `fetcher.ts` to join repeated headers instead of dropping non-string values, then parse X-Robots-Tag per-bot properly.
 
 **False-positive risks:**
+
 - Only `page.meta['robots']` is read. Bot-targeted directives — `<meta name="googlebot" content="noindex">`, `name="GPTBot"`, `name="robots" content="none"` (none == noindex+nofollow) — are all missed. 'none' in particular is a silent false PASS.
 - `extractMetaTags()` stores `meta[name.toLowerCase()] = content` and later tags overwrite earlier ones, so a page with two robots meta tags is judged on the last one only; a `noindex` in the first tag is invisible.
 - Homepage only (`ctx.pages[0]`). A site that noindexes its entire /docs or /blog tree passes with 'Homepage has no noindex directive' — arguably a more damaging real-world scenario than a homepage noindex.
@@ -34,6 +35,7 @@ The highest-value audit in the category — a noindex on the homepage genuinely 
 - `ctx.pages[0]` is assumed to be the homepage; if the homepage fetch failed, pages[0] is some other page and the message still says 'Homepage'.
 
 **Test gaps:**
+
 - `content="none"` (false PASS today)
 - `<meta name="googlebot" content="noindex">`
 - Two robots meta tags on one page
@@ -59,6 +61,7 @@ _No dedicated evidence signal was researched for this audit in the 2026-08-20 pa
 **Grade: A** — Google's documentation states both halves of the chain by name: Googlebot honours `noindex`, and a page must be indexed to be eligible for its AI features.
 
 **Evidence:**
+
 - Google documents the directive and the named crawler that obeys it: `noindex` "is used to prevent indexing content by search engines that support the `noindex` rule, such as Google", implementable as `<meta name="robots" content="noindex">`, `<meta name="googlebot" content="noindex">`, or an `X-Robots-Tag` response header "with a value of either `noindex` or `none`" — https://developers.google.com/search/docs/crawling-indexing/block-indexing (verified 2026-08-21)
 - Google ties indexing directly to AI surface eligibility: "To be eligible to be shown as a supporting link in AI Overviews or AI Mode, a page must be indexed and eligible to be shown in Google Search with a snippet, fulfilling the Search technical requirements", and lists `nosnippet`, `data-nosnippet`, `max-snippet` and `noindex` as the applicable controls — https://developers.google.com/search/docs/appearance/ai-features (verified 2026-08-21)
 - Google's AI-optimization guidance confirms the same control surface governs generative features, with no separate opt-in: "AI is built into Search and integral to how Search functions" and no new files or markup are required — https://developers.google.com/search/docs/fundamentals/ai-optimization-guide (verified 2026-08-21)

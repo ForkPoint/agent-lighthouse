@@ -15,7 +15,6 @@ sources:
   - S2
 ---
 
-
 # URL-Addressable State and Pagination Fallback
 
 > Shipped in v2. Evidence grade **B** · scored tier · unique · implementation: `multi-page`

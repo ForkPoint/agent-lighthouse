@@ -16,14 +16,13 @@ sources:
   - almanac-page-weight-2024
 ---
 
-
 # Inlined hydration-state payload share
 
 > Shipped in v2. Evidence grade **A** · scored tier · unique · implementation: `static-fetch`
 
 ## What it checks
 
-Detect and size serialized framework state inlined in the HTML document: <script id="__NEXT_DATA__">, self.__next_f.push( flight chunks, window.__NUXT__, __remixContext, window.__APOLLO_STATE__, window.__INITIAL_STATE__, <script type="application/json"> islands, and Astro/Svelte island props. Three independent failure conditions: (1) any single state payload > 128 kB, (2) total state payload > 30% of document tokens, (3) state payload duplicates > 50% of the main-content text (content shipped twice in one response).
+Detect and size serialized framework state inlined in the HTML document: <script id="__NEXT_DATA__">, self.__next_f.push( flight chunks, window.**NUXT**, __remixContext, window.**APOLLO_STATE**, window.**INITIAL_STATE**, <script type="application/json"> islands, and Astro/Svelte island props. Three independent failure conditions: (1) any single state payload > 128 kB, (2) total state payload > 30% of document tokens, (3) state payload duplicates > 50% of the main-content text (content shipped twice in one response).
 
 ## Claimed mechanism (falsifiable)
 
@@ -32,7 +31,7 @@ These blobs are inlined into every HTML response by design, and the framework ve
 ## Evidence
 
 - **[Large Page Data (Next.js error reference)](https://nextjs.org/docs/messages/large-page-data)** — Vercel / Next.js (vendor-doc, URL verified 2026-08-20)
-  - Warns when a page ships > 128 kB of serialized __NEXT_DATA__ JSON; states "The serialized data is inlined in every HTML response, increasing the document size"; threshold configurable via experimental.largePageDataBytes. Gives a vendor-sanctioned hard numeric threshold for inlined hydration state in the HTML document.
+  - Warns when a page ships > 128 kB of serialized **NEXT_DATA** JSON; states "The serialized data is inlined in every HTML response, increasing the document size"; threshold configurable via experimental.largePageDataBytes. Gives a vendor-sanctioned hard numeric threshold for inlined hydration state in the HTML document.
 - **[The rise of the AI crawler](https://vercel.com/blog/the-rise-of-the-ai-crawler)** — Vercel (study, URL verified 2026-08-20)
   - "none of the major AI crawlers currently render JavaScript" — explicitly GPTBot, ChatGPT-User, OAI-SearchBot, ClaudeBot — though they do fetch JS files as text (ChatGPT 11.50%, Claude 23.84% of requests). ChatGPT spends 34.82% and Claude 34.16% of fetches on 404s vs Googlebot's 8.22%. Establishes that (a) what an AI crawler ingests is the raw HTML byte stream with no CSS/JS applied, and (b) per-fetch yield is already terrible, so wasted tokens per fetch compound.
 - **[openai/tiktoken](https://github.com/openai/tiktoken)** — OpenAI (repo, URL verified 2026-08-20)
@@ -44,15 +43,15 @@ These blobs are inlined into every HTML response by design, and the framework ve
 
 ## Competitor coverage
 
-Lighthouse performance flags 'unused JavaScript' and total byte weight but has no notion of inlined serialized state, and its Agentic Browsing category does not touch payload composition. SEO crawlers ignore script content entirely except for JSON-LD. No AI-readiness tool inspects __NEXT_DATA__/flight payloads.
+Lighthouse performance flags 'unused JavaScript' and total byte weight but has no notion of inlined serialized state, and its Agentic Browsing category does not touch payload composition. SEO crawlers ignore script content entirely except for JSON-LD. No AI-readiness tool inspects **NEXT_DATA**/flight payloads.
 
 ## Implementation sketch
 
-Static fetch, parse with cheerio. Select script nodes by id/type and by regex on the source for the known globals; for RSC flight, concatenate all self.__next_f.push( argument strings. Byte-size each payload (compare against 128,000 to reuse the vendor threshold verbatim) and tokenize each at o200k_base. For the duplication condition, unescape the JSON string values, normalize whitespace, shingle at 5-grams, and compute the fraction of main-content shingles that also appear inside the state payload. Report per-payload so the fix is targeted ('__NEXT_DATA__ carries the full 6,200-token article body already present in <article>').
+Static fetch, parse with cheerio. Select script nodes by id/type and by regex on the source for the known globals; for RSC flight, concatenate all self.__next_f.push( argument strings. Byte-size each payload (compare against 128,000 to reuse the vendor threshold verbatim) and tokenize each at o200k_base. For the duplication condition, unescape the JSON string values, normalize whitespace, shingle at 5-grams, and compute the fraction of main-content shingles that also appear inside the state payload. Report per-payload so the fix is targeted ('**NEXT_DATA** carries the full 6,200-token article body already present in <article>').
 
 ## Example failure
 
-A Pages-Router e-commerce category page ships a 410 kB __NEXT_DATA__ containing every product's full description, all image CDN variants and the whole nav tree. Tokenized: ~118k tokens of JSON against ~1.4k tokens of visible content, and the top 3 product descriptions appear twice in the agent's context — cost 80x, information gain zero.
+A Pages-Router e-commerce category page ships a 410 kB **NEXT_DATA** containing every product's full description, all image CDN variants and the whole nav tree. Tokenized: ~118k tokens of JSON against ~1.4k tokens of visible content, and the top 3 product descriptions appear twice in the agent's context — cost 80x, information gain zero.
 
 ## Scoring
 

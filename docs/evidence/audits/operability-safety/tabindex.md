@@ -28,12 +28,14 @@ Wraps `tabindex` (no positive tabindex). Faithful port and harmless, but the jus
 **Required fix:** Keep the rule but rewrite `description`/`guidance.impact` to state the actual, defensible reason (positive tabindex is a symptom of hand-managed focus and breaks keyboard/AT users) instead of inventing an agent focus-order traversal. Leave priority at 'low'.
 
 **False-positive risks:**
+
 - Third-party widgets (older date pickers, embedded forms, some CMS plugins) still emit positive tabindex; the site owner cannot fix vendor markup but takes the score hit.
 - CSS blindness: positive tabindex on hidden template clones is evaluated.
 - Binary with no count and weak selectors — one legacy widget zeroes the audit identically to a systematically scrambled page.
 - CSR SPA → `na`.
 
 **Test gaps:**
+
 - No HTML-level test for this audit.
 - No fixture with `tabindex="0"`/`"-1"` asserting they pass.
 - No third-party-widget fixture.
@@ -56,6 +58,7 @@ _No dedicated evidence signal was researched for this audit in the 2026-08-20 pa
 **Grade: C** — the focus-order effect is ratified in the HTML Standard and implemented by all browsers. But the audit's stated agent mechanism, "agents that traverse the page by focus order", has no documented consumer. Every agent tool-chain with published docs addresses elements by accessibility-tree reference, not by tab sequence.
 
 **Evidence:**
+
 - WHATWG HTML Standard: a positive `tabindex` places the element "in the tabindex-ordered focus navigation scope", ordered by its numeric value. The advisory follows: "Developers should use caution when using values other than 0 or −1 for their `tabindex` attributes as this is complicated to do correctly" — https://html.spec.whatwg.org/multipage/interaction.html#the-tabindex-attribute (verified 2026-08-21)
 - The proven agent action path is reference-based, not tab-based. Playwright MCP click and type take an "Exact target element reference from the page snapshot" — https://github.com/microsoft/playwright-mcp (verified 2026-08-21). chrome-devtools-mcp `click` and `fill` take "The uid of an element on the page from the page content snapshot". That uid is produced by `take_snapshot` "based on the a11y tree" — https://github.com/ChromeDevTools/chrome-devtools-mcp/blob/main/docs/tool-reference.md (verified 2026-08-21)
 - Playwright's accessibility-tree serialisation exposes role, name and ARIA state, but no focus-order information at all — https://playwright.dev/docs/aria-snapshots (verified 2026-08-21)

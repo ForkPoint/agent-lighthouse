@@ -27,7 +27,7 @@ I attacked this from four angles. (1) Spec surface: I downloaded README.md, decl
 
 ## Best evidence found for the audit
 
-Weak. The strongest thing found for it is that half of its input — declarative `form[toolname]` — is a genuine Chrome-implemented signal (see the webmcp-declarative-forms audit), and Google's Chrome WebMCP best-practices guide does give tool-design guidance: "Tools should be atomic, composable, and distinct", "Register/unregister tools dynamically depending on the current page context", "Use annotations: { readOnlyHint: true } for tools that do not modify state". That is the closest published thing to 'expose your key actions as tools'. But it is guidance about tool *quality and lifecycle*, not about a commerce-category coverage quota, and it explicitly pushes toward context-scoped registration (fewer tools per page), which the coverage metric penalizes. No document anywhere ties a coverage ratio to agent behavior, and no named agent reads a coverage signal.
+Weak. The strongest thing found for it is that half of its input — declarative `form[toolname]` — is a genuine Chrome-implemented signal (see the webmcp-declarative-forms audit), and Google's Chrome WebMCP best-practices guide does give tool-design guidance: "Tools should be atomic, composable, and distinct", "Register/unregister tools dynamically depending on the current page context", "Use annotations: { readOnlyHint: true } for tools that do not modify state". That is the closest published thing to 'expose your key actions as tools'. But it is guidance about tool _quality and lifecycle_, not about a commerce-category coverage quota, and it explicitly pushes toward context-scoped registration (fewer tools per page), which the coverage metric penalizes. No document anywhere ties a coverage ratio to agent behavior, and no named agent reads a coverage signal.
 
 ## Counter-evidence
 
@@ -67,13 +67,15 @@ Inert on real input, and even on its own fixtures the keyword matcher cannot mat
 **Required fix:** Delete with the WebMCP cluster. If commerce-action coverage is revived against a real surface (OpenAPI operations or a live MCP tools/list), split camelCase into word tokens before matching, gate the audit on commerce page types via `applicablePageTypes`, and make the pass threshold and the `expected` string agree.
 
 **False-positive risks:**
+
 - `notApplicable` on every real scan (no manifest, no `form[toolname]`).
-- Broken matcher: signatures are built with `.toLowerCase()` (line 137), then matched with `new RegExp(\`\\b${kw}\\b\`)`. `searchProducts` becomes `searchproducts`, and `\bsearch\b` does NOT match inside it. A manifest of well-named camelCase tools with no descriptions scores 0/6 coverage → FAIL. The suite's own test 'handles manifest tool with name but no description' confirms the behavior without recognizing it as a defect. Coverage effectively depends on prose descriptions, not tool names.
+- Broken matcher: signatures are built with `.toLowerCase()` (line 137), then matched with `new RegExp(\`\\b${kw}\\b\`)`. `searchProducts`becomes`searchproducts`, and `\bsearch\b` does NOT match inside it. A manifest of well-named camelCase tools with no descriptions scores 0/6 coverage → FAIL. The suite's own test 'handles manifest tool with name but no description' confirms the behavior without recognizing it as a defect. Coverage effectively depends on prose descriptions, not tool names.
 - No page-type or vertical gating: `COMMERCE_ACTIONS` (search, product detail, cart, checkout, auth, contact) is applied to every site. A SaaS product exposing `createTicket`/`runReport` tools is told it is missing Add to Cart and Checkout — irrelevant guidance presented as a deficiency. `AuditMeta.applicablePageTypes` exists in types.ts:73 and is not used.
 - Inconsistent thresholds vs. reported expectations: pass needs `coverage >= 4` while `expected` says 'At least 2 commerce actions covered' (MIN_COVERAGE), and the warn branch's `expected` says 4. A user reading `expected` cannot tell what is required.
 - Keyword collisions: `query`, `filter`, `browse`, `find`, `lookup` under 'Product Search' will match any tool description mentioning a database query or filter; `contact`/`support` under Contact/Support match any support-adjacent prose. Coverage is easily overstated for sites that do have descriptions.
 
 **Test gaps:**
+
 - No test exposing that `\bsearch\b` fails against lowercased `searchproducts` — the core matcher bug is invisible because every fixture supplies a prose description
 - No non-commerce site fixture (SaaS/docs/media) demonstrating the irrelevant-failure case
 - No test reconciling the `coverage >= 4` pass gate with the `MIN_COVERAGE = 2` text in `expected`

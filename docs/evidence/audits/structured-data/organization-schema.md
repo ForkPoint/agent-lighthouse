@@ -31,6 +31,7 @@ Organization identity is a genuinely valuable signal for AI attribution, but the
 **Required fix:** Score the BEST Organization (reduce on missing-prop count, as author-schema already does) instead of `orgSchemas[0]`; prefer nodes found on a `pageType === 'homepage'` page and prefer top-level nodes over hoisted nested stubs. Replace the endsWith heuristic with a real schema.org subtype table so `Restaurant`/`Dentist`/`Hotel` resolve to Organization. Accept `image` as a logo fallback.
 
 **False-positive risks:**
+
 - `const org = orgSchemas[0]` after `allSchemas(ctx)` flattens every nested node. An Article's `"publisher": {"@type":"Organization","name":"Acme"}`, an Offer's `"seller"`, a Service's `"provider"`, or a Person's `"affiliation"` are all hoisted to top level and frequently precede the real Organization node in `@graph` order. Result: 'Organization schema found but missing: url, logo' on a site whose standalone Organization block has all three. High-frequency false warn on WordPress, Shopify and any hand-rolled @graph.
 - Declared `applicablePageTypes: ['homepage']` but `allSchemas(ctx)` reads every scanned page, so an Organization stub on a blog post can outrank the homepage's complete block.
 - `hasProps` is a plain falsy check, so `"logo": {"@id": "#/schema/logo"}` passes but a site that supplies its logo via `"image"` (accepted by Google as a logo fallback for Organization) is warned for a missing logo.
@@ -38,6 +39,7 @@ Organization identity is a genuinely valuable signal for AI attribution, but the
 - Only one Organization is ever evaluated, so a site with two (e.g. a parent brand and a sub-brand) is scored on whichever the flattener emits first.
 
 **Test gaps:**
+
 - No test where a nested publisher/seller Organization precedes the real one — the primary false-warn path
 - No test for a LocalBusiness subtype (`Restaurant`, `Dentist`) which the type matcher silently misses
 - No test with more than one Organization node on a page
@@ -62,6 +64,7 @@ _No dedicated evidence signal was researched for this audit in the 2026-08-20 pa
 **Grade: A** — two vendor docs name a consumer and state what it does with the signal, and adoption is at web scale.
 
 **Evidence:**
+
 - Google states that "Adding organization structured data to your home page can help Google better understand your organization's administrative details and disambiguate your organization in search results". The properties determine "which `logo` is shown in Search results", and "can influence visual elements in Search results... your knowledge panel" — along with merchant knowledge panel and brand profile details — https://developers.google.com/search/docs/appearance/structured-data/organization (verified 2026-08-21)
 - Organization is still a live feature in Google's structured data gallery: "Information about your organization, such as your logo, legal name of the organization, address." — https://developers.google.com/search/docs/appearance/structured-data/search-gallery (verified 2026-08-21)
 - Apple's web-markup guide lists Organization among the schema.org types Applebot supports for Siri and Spotlight Suggestions (alongside AggregateRating, Offers, PriceRange, InteractionCount, Recipe, SearchAction, ImageObject) — https://developer.apple.com/library/archive/documentation/General/Conceptual/AppSearch/WebContent.html (verified 2026-08-21)

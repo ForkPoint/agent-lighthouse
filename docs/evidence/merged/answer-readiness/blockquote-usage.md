@@ -26,6 +26,7 @@ Falsy as a standalone audit: a bare presence check, `p.$('blockquote').length > 
 **Required fix:** Merge into 10.8 (review-signals), which already inspects blockquotes and already understands `cite`/`<footer>` attribution — and which should stop counting unattributed ones. If a content-structure signal is genuinely wanted it belongs in the semantic-html category as an attributed-quotation check (`<blockquote>` with `cite`, `<cite>` or `<figcaption>`) that also recognizes `<aside>` and common callout patterns — not as a bare presence count scored under generative-engine.
 
 **False-positive risks:**
+
 - `const count = p.$('blockquote').length; if (count > 0) …` — any `<blockquote>` anywhere passes. Themes use it for decorative pull-quotes, cookie/consent excerpts and legal quotations; Tailwind Typography's `prose` styles encourage it purely visually. One decorative quote scores identically to a well-cited article.
 - Inverse and more damaging: sites rendering callouts as `<div class="callout">`, `<aside>`, MDX `<Note>` components, or GitHub-style `> [!NOTE]` admonitions (emitted as `<div class="admonition">`) get a hard FAIL — even though the audit's own title is 'Blockquote/callout usage' and callouts are never detected.
 - Counts across all pages and passes if ANY page has one, so a single quote on the homepage passes a site-wide content-structure audit.
@@ -34,6 +35,7 @@ Falsy as a standalone audit: a bare presence check, `p.$('blockquote').length > 
 - On an SPA shell with no server-rendered content, FAILs a site whose articles are full of quotes.
 
 **Test gaps:**
+
 - No test for `<aside>`/`<div class="callout">`/admonition markup that the title promises to cover.
 - No test for an empty `<blockquote>`.
 - No test distinguishing a decorative pull-quote from an attributed citation (no distinction exists).

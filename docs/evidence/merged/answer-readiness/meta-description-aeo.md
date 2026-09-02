@@ -26,6 +26,7 @@ Claims to check whether the meta description follows an 'AEO formula', but the c
 **Required fix:** Delete. Meta-description presence and length are already covered by meta-tags/meta-description (4.1) and unique-meta (4.5). If a quality signal is still wanted, replace it with something falsifiable and per-page — e.g. description length in the 110–160 range, non-duplication across scanned pages, and term overlap with the page's H1/title — and drop the 'AEO formula' framing entirely rather than scoring copy against an unadopted convention.
 
 **False-positive risks:**
+
 - The proper-noun test passes almost anything: `/\S+\s+.*\b[A-Z][a-zA-Z]{2,}/` needs only one capitalized 3+ letter word after the first token. 'Welcome to Acme' passes as 'concrete and specific'. Any second sentence begins with a capital, so any two-sentence description passes automatically.
 - German (and any language capitalizing nouns) passes 100% of the time on that same regex — every German meta description is graded 'concrete and specific (named products, materials, or value props)' regardless of content.
 - The action/result regex is meaningless: `\b(learn|…|use|try|start)\b.*\b(how|what|…|benefits|features)\b` matches 'Use our features' and reports 'Meta description follows an action/result pattern.'
@@ -37,6 +38,7 @@ Claims to check whether the meta description follows an 'AEO formula', but the c
 - `page.meta?.['description']` is exact-key; a page emitting only `og:description` (or `Description` normalized differently upstream) is reported as having no meta description at all.
 
 **Test gaps:**
+
 - No German (or any noun-capitalizing) description showing the automatic proper-noun pass.
 - No two-sentence description showing that the second sentence's capital letter auto-passes.
 - No 'Discover our solutions. Trusted by teams.' case showing the warn path is bypassed by a period.

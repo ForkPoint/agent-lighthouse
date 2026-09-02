@@ -46,6 +46,7 @@ Wraps axe `label` + `select-name`. Highest-value audit in the category for agent
 **Required fix:** _none — audit is sound as implemented_
 
 **False-positive risks:**
+
 - CSS blindness: inputs inside `.modal{display:none}`, off-canvas search drawers, and hidden newsletter overlays are evaluated as visible and fail `label`, while a real browser + real axe skip them. Very common on storefronts (hidden search + hidden mobile filter forms).
 - `non-empty-placeholder` is in the any-list, so `<input placeholder="Email">` with no label PASSES — the audit's fix text ('Associate every input with a <label>') is stricter than what it enforces, so a passing site may still be hard for agents that read the accessibility tree (placeholder is not a robust name).
 - Custom widgets are invisible to it: `<div role="textbox">`, `<div role="combobox">` and contenteditable fields are not in the `input, textarea` selector → false negative on exactly the JS-heavy forms most likely to break agents.
@@ -53,6 +54,7 @@ Wraps axe `label` + `select-name`. Highest-value audit in the category for agent
 - Binary aggregation: 1 unlabeled hidden honeypot input (a standard anti-spam pattern, often only `style` -less and class-hidden) fails the entire audit exactly like 50 unlabeled checkout fields.
 
 **Test gaps:**
+
 - No HTML-level test for this audit.
 - No honeypot-input fixture (class-hidden anti-spam field).
 - No placeholder-only fixture asserting the pass, which is the behaviour most likely to surprise a maintainer.

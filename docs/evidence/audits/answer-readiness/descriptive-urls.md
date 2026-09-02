@@ -37,6 +37,7 @@ Real signal — readable URLs appear in AI citations and do carry pre-fetch topi
 **Required fix:** 1) Decode before testing: run `decodeURIComponent` on the pathname and judge the decoded form — a decoded slug of readable words in ANY script is descriptive. Delete the `%XX.*%XX` pattern entirely. 2) Replace `/\/[a-z]*\/\d+\/?$/` with a rule requiring the numeric segment to be the only meaningful segment (no word-bearing slug anywhere in the path), and explicitly exempt `/page/N` pagination. 3) Use `p.fetchResult.finalUrl ?? p.url` so post-redirect canonical URLs are judged. 4) Anchor the UUID and query-id patterns to the path, not the whole URL. 5) Return `notApplicable()` when the scan discovered only the homepage. 6) Drop `defaultPriority` to 'medium' — URL restructuring is high-cost and high-risk, and the evidence for its AI impact does not justify high-priority framing.
 
 **False-positive risks:**
+
 - `/%[0-9A-Fa-f]{2}.*%[0-9A-Fa-f]{2}/` matches any URL containing two percent-escapes. A descriptive Japanese slug `https://example.jp/%E8%A8%98%E4%BA%8B/%E3%82%BF%E3%82%A4%E3%83%88%E3%83%AB` — which renders as readable Japanese in every browser and in AI citations — is reported as non-descriptive and needing restructuring. Same for Russian, Greek, Hebrew, Thai, Arabic, and Latin slugs with accents (`/café-guide/`). This is the highest-severity defect in the category: confident, high-priority, wrong advice to every non-English site.
 - `/\/[a-z]*\/\d+\/?$/i` — `[a-z]*` allows zero characters, so the rule is 'any path ending in /word/digits'. It flags `/blog/page/2` (standard pagination), `/products/12345` (legitimate stable SKU URLs), `/news/2024` (a year archive), `/docs/v2`. None is a defect.
 - `/\/\d{5,}\/?$/i` flags stable numeric identifiers that are correct by design — legal document numbers, ISBN/EAN paths, ticket or order references, government record IDs.
@@ -46,6 +47,7 @@ Real signal — readable URLs appear in AI citations and do carry pre-fetch topi
 - The UUID pattern is unanchored, so a UUID anywhere — including an analytics/session query param `?sid=<uuid>` — condemns an otherwise clean path. Likewise `[?&](?:id|p|page_id)=\d+` flags a URL whose path is fully descriptive.
 
 **Test gaps:**
+
 - No test for a percent-encoded non-Latin URL — the highest-impact false positive.
 - No test for `/blog/page/2` or `/products/12345`.
 - No test for a homepage-only scan producing the vacuous pass.

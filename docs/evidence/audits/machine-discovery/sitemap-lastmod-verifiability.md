@@ -13,7 +13,6 @@ sources:
   - sitemaps-protocol
 ---
 
-
 # Sitemap lastmod verifiability (page-level cross-validation)
 
 > Shipped in v2. Evidence grade **A** · scored tier · partial overlap · implementation: `multi-page`
@@ -39,7 +38,7 @@ Screaming Frog, Sitebulb, Semrush and Ahrefs surface lastmod presence and can fl
 
 ## Implementation sketch
 
-1) Fetch robots.txt Sitemap: directives plus /sitemap.xml, /sitemap_index.xml; recurse <sitemapindex> one level. 2) Validate each lastmod parses as W3C Datetime (YYYY-MM-DD or full RFC3339); count malformed. 3) Reservoir-sample 30-50 URLs across all child sitemaps. 4) For each: GET, capture the Last-Modified response header; parse all JSON-LD blocks for dateModified/datePublished; parse <meta property="article:modified_time"> and <meta name="last-modified">. 5) Per URL compute min absolute delta between sitemap lastmod and any available page signal. 6) Report: %future-dated (FAIL if >0), %malformed, distribution entropy of lastmod values (FAIL if the modal value covers >90% of sampled URLs AND that value is within 3 days of the crawl date), and %URLs whose delta exceeds 7 days against every available signal (FAIL if >20%). 7) Report separately the %URLs with no page-level signal at all — that is an actionable sub-finding (add dateModified to JSON-LD) rather than a lastmod failure.
+1. Fetch robots.txt Sitemap: directives plus /sitemap.xml, /sitemap_index.xml; recurse <sitemapindex> one level. 2) Validate each lastmod parses as W3C Datetime (YYYY-MM-DD or full RFC3339); count malformed. 3) Reservoir-sample 30-50 URLs across all child sitemaps. 4) For each: GET, capture the Last-Modified response header; parse all JSON-LD blocks for dateModified/datePublished; parse <meta property="article:modified_time"> and <meta name="last-modified">. 5) Per URL compute min absolute delta between sitemap lastmod and any available page signal. 6) Report: %future-dated (FAIL if >0), %malformed, distribution entropy of lastmod values (FAIL if the modal value covers >90% of sampled URLs AND that value is within 3 days of the crawl date), and %URLs whose delta exceeds 7 days against every available signal (FAIL if >20%). 7) Report separately the %URLs with no page-level signal at all — that is an actionable sub-finding (add dateModified to JSON-LD) rather than a lastmod failure.
 
 ## Example failure
 
@@ -57,10 +56,10 @@ Tier per evidence policy: **scored** — grade A meets the A/B bar required for 
 
 The two audits ask different questions and must not be collapsed into one:
 
-| Audit | Question | Fails when |
-| --- | --- | --- |
-| `machine-discovery/sitemap-lastmod` | Is `lastmod` **present**? | The sitemap omits it, or omits it on most URLs. |
-| `machine-discovery/sitemap-lastmod-verifiability` | Is `lastmod` **true**? | The values that exist contradict the pages, are future-dated, or are one deploy stamp repeated. |
+| Audit                                             | Question                  | Fails when                                                                                      |
+| ------------------------------------------------- | ------------------------- | ----------------------------------------------------------------------------------------------- |
+| `machine-discovery/sitemap-lastmod`               | Is `lastmod` **present**? | The sitemap omits it, or omits it on most URLs.                                                 |
+| `machine-discovery/sitemap-lastmod-verifiability` | Is `lastmod` **true**?    | The values that exist contradict the pages, are future-dated, or are one deploy stamp repeated. |
 
 A sitemap can pass the first and fail this one, which is the common case: the
 CMS emits `lastmod` on every URL and rewrites all of them on every build.

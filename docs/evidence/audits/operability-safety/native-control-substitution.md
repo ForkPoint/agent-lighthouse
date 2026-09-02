@@ -16,7 +16,6 @@ sources:
   - S1
 ---
 
-
 # Native Control Substitution Index
 
 > Shipped in v2. Evidence grade **A** · scored tier · unique · implementation: `static-fetch`

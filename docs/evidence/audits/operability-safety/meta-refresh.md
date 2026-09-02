@@ -29,12 +29,14 @@ Wraps `meta-refresh`. Rare but a real hazard: a timed `<meta http-equiv="refresh
 **Required fix:** _none — audit is sound as implemented_
 
 **False-positive risks:**
+
 - `excludeHidden: false` with selector `meta[http-equiv="refresh"][content]` — a meta refresh present inside a `<noscript>` block (a legacy no-JS fallback that a JS-capable agent never follows) is still flagged.
 - Only the first 3 scanned pages are evaluated; a legacy sub-page with a refresh on a large site is missed while the report reads site-wide.
 - Selector is an exact attribute-value match, so `http-equiv="Refresh"` (capital R, valid HTML and case-insensitive in browsers) is not matched → false negative on a real occurrence.
 - CSR SPA → the rule is inapplicable, `na`.
 
 **Test gaps:**
+
 - No HTML-level test for this audit.
 - No fixture with `http-equiv="Refresh"` capitalised (the case-sensitivity miss).
 - No fixture with `content="0;url=..."` asserting the allowed instant-redirect pass.
@@ -58,6 +60,7 @@ _No dedicated evidence signal was researched for this audit in the 2026-08-20 pa
 **Grade: A** — declarative refresh is specified in the WHATWG HTML Standard and implemented by every browser an agent drives, making the "the page navigates itself after N seconds" claim a ratified, universally consumed behavior rather than an inference.
 
 **Evidence:**
+
 - WHATWG HTML Standard defines the `refresh` pragma and the shared declarative refresh steps that navigate/reload the document — https://html.spec.whatwg.org/multipage/semantics.html#attr-meta-http-equiv-refresh and https://html.spec.whatwg.org/multipage/document-lifecycle.html#shared-declarative-refresh-steps (both verified 2026-08-21)
 - MDN: with a non-negative integer the page "reloads after that many seconds"; followed by `;url=` it "redirects to that URL after the specified delay"; the timer starts after `load`/`pageshow` — https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Elements/meta/http-equiv (verified 2026-08-21)
 - W3C failure technique F41 records the consequence for time-bounded consumers: "If the time interval is too short… people who are blind will not have enough time to make their screen readers read the page before the page refreshes unexpectedly." It fails SC 2.2.1, 2.2.4 and 3.2.5 — https://www.w3.org/WAI/WCAG22/Techniques/failures/F41 (verified 2026-08-21)

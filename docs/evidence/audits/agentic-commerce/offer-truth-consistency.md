@@ -15,7 +15,6 @@ sources:
   - google-merchant-listing
 ---
 
-
 # Offer Truth Consistency
 
 > Shipped in v2. Evidence grade **B** · scored tier · unique · implementation: `multi-page`
@@ -67,7 +66,7 @@ Tier per evidence policy: **scored** — grade B meets the A/B bar required for 
 
 `competitor-gap-verify/offer-dom-price-parity` was folded into this audit rather than shipped beside it. Both proposals reconcile the same two artifacts — the Offer in the markup and the price and stock the raw HTML renders — and shipping both would have reported one cached-catalogue bug twice, under two names, with two remediations. The absorbed dossier is kept verbatim at [`../../merged/agentic-commerce/offer-dom-price-parity.md`](../../merged/agentic-commerce/offer-dom-price-parity.md); it carries the Google structured-data policy quotation ("Your structured data must be a true representation of the page content") and the Vercel/Merj crawler study showing that no major AI crawler executes JavaScript, which is why the JS-only arm is reported at all.
 
-What the fold added to the rules below: the UNMACHINE-READABLE class (a price rendered with no `offers.price`), the JS-ONLY-PRICE class as a warning rather than a failure, the struck-through candidate as an acceptable non-match, and the rule that a match against *any* candidate is enough rather than against the first.
+What the fold added to the rules below: the UNMACHINE-READABLE class (a price rendered with no `offers.price`), the JS-ONLY-PRICE class as a warning rather than a failure, the struck-through candidate as an acceptable non-match, and the rule that a match against _any_ candidate is enough rather than against the first.
 
 ## Implementation deviations
 

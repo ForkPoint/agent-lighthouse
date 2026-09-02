@@ -28,17 +28,19 @@ Without an explicit robots.txt rule, Applebot-Extended may still crawl your site
 
 ## Code review findings (2026-08-20, 11-agent pass)
 
-Live signal, correct-in-kind guidance, but the same base-class defects and one scope error: like Google-Extended, Applebot-Extended governs Apple Intelligence *training* only. Blocking it does not remove a site from Siri answers or Safari — those come from base `Applebot`, which the category never audits. The `impact` text ('prevents your content from being used in Apple Intelligence features, Siri AI answers, and Safari Highlights') overstates the consequence and will push publishers to give up a training opt-out for visibility they never lose.
+Live signal, correct-in-kind guidance, but the same base-class defects and one scope error: like Google-Extended, Applebot-Extended governs Apple Intelligence _training_ only. Blocking it does not remove a site from Siri answers or Safari — those come from base `Applebot`, which the category never audits. The `impact` text ('prevents your content from being used in Apple Intelligence features, Siri AI answers, and Safari Highlights') overstates the consequence and will push publishers to give up a training opt-out for visibility they never lose.
 
 **Required fix:** Correct `impact` to state that Applebot-Extended controls Apple Intelligence training only and does not affect Siri/Spotlight/Safari indexing (that is base Applebot). Apply the shared helper fixes; add explicit handling so an `Applebot` group is not confused with `Applebot-Extended`.
 
 **False-positive risks:**
+
 - `impact` conflates Applebot-Extended (training opt-out) with Applebot (indexing) — a site correctly blocking only the former gets a high-priority FAIL about lost Siri visibility.
 - Exact-match UA lookup misses `User-agent: Applebot-Extended/1.0`.
 - The hyphenated token is a prefix relationship with `Applebot`: a site with only `User-agent: Applebot\nDisallow: /` is read as having no Applebot-Extended rules and falls through to wildcard, reporting 'allowed by default'.
 - Shared BOM / soft-404 / `Disallow: /*` misreads.
 
 **Test gaps:**
+
 - No Applebot-vs-Applebot-Extended prefix-collision case.
 - Same missing real-world robots.txt variants as 2.1.
 

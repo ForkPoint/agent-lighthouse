@@ -15,7 +15,6 @@ sources:
   - anthropic-claude-for-chrome
 ---
 
-
 # Third-Party DOM-Write Blast Radius
 
 > Shipped in v2. Evidence grade **B** · scored tier · partial overlap · implementation: `static-fetch`
@@ -89,6 +88,7 @@ an agent reads.
 
 The `found` line always ends with "runtime-injected tags not counted", so the
 number is not read as the whole list.
+
 - 2026-08-28 — the audit declines when the scan holds no response it can
   attribute to this site. It read the script origins on the scanned pages, and
   `ctx.pages`/`ctx.rootFiles` carry whatever answered 200 — on a parked domain
@@ -121,7 +121,7 @@ number is not read as the whole list.
   served HTML, and that is usually where most of the origin list lives.
   Enumerating them needs a live browser.
 - **Whether a script actually writes to the DOM.** Every third-party script
-  *can*; proving which ones *do* means executing them. The count is a capability
+  _can_; proving which ones _do_ means executing them. The count is a capability
   measure, which is what the finding claims.
 - **Report-only policies.** A `Content-Security-Policy-Report-Only` header
   enforces nothing, so it is not read as a constraint and not reported as one.

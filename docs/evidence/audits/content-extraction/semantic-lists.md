@@ -37,12 +37,12 @@ sources:
 
 One audit over every list-shaped block of content: is it marked up as a list, or is it a div stack, a broken `<dl>`, or a run of paragraphs that start with "1.", "2.", "3."?
 
-| State | Result |
-| :--- | :--- |
-| no list-shaped content anywhere (and no pages scanned counts as this) | `na` |
-| every content list uses `<ul>`/`<ol>`/`<dl>` markup | `pass` |
-| at least half of the content lists are semantic | `warn`, priority `medium` |
-| most content lists are div stacks or numbered prose | `fail`, priority `medium` |
+| State                                                                 | Result                    |
+| :-------------------------------------------------------------------- | :------------------------ |
+| no list-shaped content anywhere (and no pages scanned counts as this) | `na`                      |
+| every content list uses `<ul>`/`<ol>`/`<dl>` markup                   | `pass`                    |
+| at least half of the content lists are semantic                       | `warn`, priority `medium` |
+| most content lists are div stacks or numbered prose                   | `fail`, priority `medium` |
 
 Navigation, breadcrumb, pagination, tab, carousel and table-of-contents lists are excluded from both sides of the ratio — by region (`nav`/`header`/`footer`/`aside`, the matching ARIA roles), by class name, and by `BreadcrumbList`/`SiteNavigationElement` microdata. `<dl>` counts as a semantic list only with a paired `<dt>`/`<dd>`; `<ol>` with ≥3 items is additionally reported as a step list; `<dfn>` is reported as a definition element.
 
@@ -53,6 +53,7 @@ The description promises to catch 'content formatted as styled divs instead of s
 **Required fix:** Actually detect pseudo-lists: find parents with 3+ sibling children that share a class and each contain short text or a leading bullet/number character ('•', '-', '1.'), and are not inside nav/header/footer; report the ratio of semantic lists to (semantic + pseudo) lists. Exclude nav/header/footer <ul> from the 'has semantic lists' numerator so navigation menus cannot satisfy the check. If that detector is not built, delete the audit rather than ship a check that cannot fail.
 
 **False-positive risks:**
+
 - Any navigation menu's <ul> satisfies the check — near-universal vacuous pass, including on sites made entirely of div-lists.
 - The stated failure mode (styled divs used as lists) is never tested for; the audit and its description do not describe the same check.
 - Empty ctx.pages → 'allPass = pagesWithSemanticLists === ctx.pages.length' → 0 === 0 → pass.
@@ -60,6 +61,7 @@ The description promises to catch 'content formatted as styled divs instead of s
 - CSR SPAs with no server-rendered list markup fail even though the rendered page is list-rich.
 
 **Test gaps:**
+
 - No fixture with div-based pseudo-lists — the audit's own stated subject is untested.
 - No fixture where the only <ul> is in <nav> (the near-universal vacuous pass).
 - No empty-ctx.pages test.
@@ -88,17 +90,17 @@ The description promises to catch 'content formatted as styled divs instead of s
 
 ## The merge (Plan 4, Task 8, 2026-08-22)
 
-Three audits read the same tags for the same reason and graded on one shared evidence signal (*Semantic lists and tables versus div soup*, grade B). 9.6's grading states the consequence outright: *"this signal is not independent: it rests on the same evidence as `semantic-html/semantic-lists` (already grade B) … Scoring both audits double-counts one mechanism."* 6.13's required fix says the same about `<dl>`: *"Fold the `<dl>`/`<dfn>` detection into the semantic-lists audit (6.8) as one 'semantic grouping elements' dimension, and drop the standalone warn-if-absent verdict."* Both land here, and with them 6.8's own required fix.
+Three audits read the same tags for the same reason and graded on one shared evidence signal (_Semantic lists and tables versus div soup_, grade B). 9.6's grading states the consequence outright: _"this signal is not independent: it rests on the same evidence as `semantic-html/semantic-lists` (already grade B) … Scoring both audits double-counts one mechanism."_ 6.13's required fix says the same about `<dl>`: _"Fold the `<dl>`/`<dfn>` detection into the semantic-lists audit (6.8) as one 'semantic grouping elements' dimension, and drop the standalone warn-if-absent verdict."_ Both land here, and with them 6.8's own required fix.
 
-**The audit finally looks at divs.** Its description always promised to catch "content formatted as styled divs instead of semantic lists", while the code was `$('ul').length > 0 || $('ol').length > 0 || $('dl').length > 0` — satisfied by the `<ul>` in every site's navigation, so it passed essentially 100% of real sites *including* the div-soup sites it exists to catch. The check is now a ratio of semantic content lists to (semantic + pseudo) lists, where a pseudo-list is ≥3 sibling elements that share a class and each hold one item's worth of text (≤200 characters), or ≥3 same-tag siblings whose text opens with a bullet or a step number. Only the **outermost** match in a subtree counts — a card grid whose cards are themselves stacks of same-class children is one pseudo-list, not one per card — and the table and select families (`table`/`thead`/`tbody`/`tr`/`td`/`th`, `select`/`optgroup`/`datalist`) are never read as containers of a pseudo-list, because their repeated children are already structured markup.
+**The audit finally looks at divs.** Its description always promised to catch "content formatted as styled divs instead of semantic lists", while the code was `$('ul').length > 0 || $('ol').length > 0 || $('dl').length > 0` — satisfied by the `<ul>` in every site's navigation, so it passed essentially 100% of real sites _including_ the div-soup sites it exists to catch. The check is now a ratio of semantic content lists to (semantic + pseudo) lists, where a pseudo-list is ≥3 sibling elements that share a class and each hold one item's worth of text (≤200 characters), or ≥3 same-tag siblings whose text opens with a bullet or a step number. Only the **outermost** match in a subtree counts — a card grid whose cards are themselves stacks of same-class children is one pseudo-list, not one per card — and the table and select families (`table`/`thead`/`tbody`/`tr`/`td`/`th`, `select`/`optgroup`/`datalist`) are never read as containers of a pseudo-list, because their repeated children are already structured markup.
 
-**Chrome is excluded from both sides.** Navigation, breadcrumb and pagination lists no longer earn credit, which is what made the old check unfailable — and, from 9.6's side, what made it fire on nothing: *"Breadcrumbs are the canonical `<ol>` … Any Shopify/WooCommerce/Next-commerce page therefore passes with 'Found 1 ordered list(s)' and zero step-by-step content."* Exclusion is by region (`nav`, `header`, `footer`, `aside` and the matching ARIA roles), by class name, and by `BreadcrumbList`/`SiteNavigationElement` microdata.
+**Chrome is excluded from both sides.** Navigation, breadcrumb and pagination lists no longer earn credit, which is what made the old check unfailable — and, from 9.6's side, what made it fire on nothing: _"Breadcrumbs are the canonical `<ol>` … Any Shopify/WooCommerce/Next-commerce page therefore passes with 'Found 1 ordered list(s)' and zero step-by-step content."_ Exclusion is by region (`nav`, `header`, `footer`, `aside` and the matching ARIA roles), by class name, and by `BreadcrumbList`/`SiteNavigationElement` microdata.
 
-**A site with no lists is `na`, not a pass and not a failure.** The old code computed `allPass = pagesWithSemanticLists === ctx.pages.length`, so an empty crawl passed 0 === 0; 9.6 meanwhile *failed* a site with no ordered lists and told it to "convert any step-by-step or procedural content from paragraphs to `<ol>`" — advice to invent content, as its dossier notes. Neither outcome survives.
+**A site with no lists is `na`, not a pass and not a failure.** The old code computed `allPass = pagesWithSemanticLists === ctx.pages.length`, so an empty crawl passed 0 === 0; 9.6 meanwhile _failed_ a site with no ordered lists and told it to "convert any step-by-step or procedural content from paragraphs to `<ol>`" — advice to invent content, as its dossier notes. Neither outcome survives.
 
 ### Absorbed evidence — definition-elements (6.13)
 
-6.13's dossier is kept verbatim at [merged/content-extraction/definition-elements.md](../../merged/content-extraction/definition-elements.md) (grade **B**, the same shared signal, whose counter-evidence explicitly says "Definition lists (dl/dt/dd) in particular have no documented agent consumer beyond generic role mapping"). Its central defect was double credit: `$('dfn').length > 0 || $('dl').length > 0` passed on one `<dl>` anywhere in the crawl, *and* 6.8 counted the same `<dl>` in its own OR chain, so a single Shopify product-spec block satisfied two scored audits at once.
+6.13's dossier is kept verbatim at [merged/content-extraction/definition-elements.md](../../merged/content-extraction/definition-elements.md) (grade **B**, the same shared signal, whose counter-evidence explicitly says "Definition lists (dl/dt/dd) in particular have no documented agent consumer beyond generic role mapping"). Its central defect was double credit: `$('dfn').length > 0 || $('dl').length > 0` passed on one `<dl>` anywhere in the crawl, _and_ 6.8 counted the same `<dl>` in its own OR chain, so a single Shopify product-spec block satisfied two scored audits at once.
 
 Here `<dl>` is one dimension of the list ratio rather than an audit: it counts as a semantic list only when it actually pairs `<dt>` with `<dd>` (a `<dl>` full of bare divs is grouping markup that groups nothing, and counts as a pseudo-list), `<dfn>` is reported in the found string, and the standalone "no glossary" warning — unactionable for any site that legitimately has none — is gone.
 
@@ -108,7 +110,7 @@ Here `<dl>` is one dimension of the list ratio rather than an audit: it counts a
 
 Its evidence is the shared list-preservation mechanism plus GEO-SFE's measured "structured formats (lists, tables) demonstrate 43% higher extraction accuracy than equivalent prose" — a figure that covers lists and tables together and cannot separate `<ol>` from `<ul>`. Its stated mechanism, meanwhile, is refuted: Google's HowTo rich result is "no longer shown in search results, on both desktop and mobile devices" (removed 14 September 2023), so the "how-to answer snippet" the audit was named for no longer exists.
 
-What survives is the procedural half of the required fix. An `<ol>` outside chrome with ≥3 items is reported as a step list, and the false negative 9.6 named — steps written as `<p>1. …</p><p>2. …</p>` — is now detected as a pseudo-list, which is the only place in the merged audit where prose can *lower* the score. What does not survive is the standalone verdict: the absence of step content is no longer a failure, because "this site has no how-to content" is not a defect.
+What survives is the procedural half of the required fix. An `<ol>` outside chrome with ≥3 items is reported as a step list, and the false negative 9.6 named — steps written as `<p>1. …</p><p>2. …</p>` — is now detected as a pseudo-list, which is the only place in the merged audit where prose can _lower_ the score. What does not survive is the standalone verdict: the absence of step content is no longer a failure, because "this site has no how-to content" is not a defect.
 
 ### Grade decision: stays **B**, tier `scored`, weight 0.6
 
@@ -119,4 +121,4 @@ All three audits carry grade **B** off the same signal, so nothing here is a str
 - **`applicablePageTypes` stays unset** (6.13 and 9.6 both declared `['content']`). Both dossiers record that the declaration was cosmetic — the loops ran over `ctx.pages` anyway — and the merged audit deliberately reads every crawled page, since a div-soup product page is as much of a defect as a div-soup article.
 - **The pseudo-list detector is heuristic and deliberately conservative, but it is not proof against a false failure.** It requires ≥3 siblings and either a shared class with short text or a leading bullet/number, so a 2-item div list and a grid of long-form cards are invisible to it, and it errs toward under-reporting. Two rules bound the over-count: only the outermost match in a subtree is counted, so a nested card grid cannot multiply into one defect per card; and the table and select families are skipped, so a data table is never reported as a list that should have been a `<ul>`. What remains is a genuine residual risk in the other direction: a repeated short-text card or tile layout that is a legitimate component and not a list at all still counts once against the ratio, and on a page with no semantic list of its own that is enough to fail. The bound is one count per layout, not zero.
 - **ARIA-substituted structure is not credited.** The shared counter-evidence notes that a div carrying `role="list"`/`role="listitem"` maps to the same accessibility-tree nodes; the merged audit does not treat those roles as semantic markup, because the markdown/extraction consumers in the same evidence (trafilatura, Readability, Cloudflare's converter) read tags, not roles.
-- **Definition *quality* is not judged.** 6.13's optional fix suggested gating on glossary intent (a glossary heading, `DefinedTerm` JSON-LD, repeated "X is …" constructs). That is not implemented: `<dl>` pairing is checked, its subject matter is not.
+- **Definition _quality_ is not judged.** 6.13's optional fix suggested gating on glossary intent (a glossary heading, `DefinedTerm` JSON-LD, repeated "X is …" constructs). That is not implemented: `<dl>` pairing is checked, its subject matter is not.

@@ -27,6 +27,7 @@ Recognizes exactly one convention — 'classList.includes('language-')' on the <
 **Required fix:** Accept the union of real conventions: class matching /(^|\s)(language|lang)-[a-z0-9+#-]+/ on the <code> OR its parent <pre>, plus [data-language]/[data-lang] on either. Anchor the match so 'no-language-detected' does not count. Change the zero-code-block branch from warn() to notApplicable(). Filter the loop to applicablePageTypes pages.
 
 **False-positive risks:**
+
 - Shiki output (<pre class="shiki" data-language="ts"><code>) scores 0/N → hard fail on Astro/VitePress/Nextra/Docusaurus-v3 docs sites.
 - GitHub-style 'lang-js' and Prism's <pre class="language-js"><code> are not matched → false fail.
 - 'classList.includes('language-')' is an unanchored substring test: class="no-language-detected" or "multi-language-tabs" counts as annotated → false pass.
@@ -35,6 +36,7 @@ Recognizes exactly one convention — 'classList.includes('language-')' on the <
 - applicablePageTypes ['content'] gates the run but the loop covers all pages.
 
 **Test gaps:**
+
 - No Shiki fixture (data-language on <pre>) — the most-deployed modern highlighter is untested.
 - No 'lang-js' fixture, no class-on-<pre> fixture.
 - No 'no-language-detected' fixture proving the substring false pass.
@@ -54,6 +56,7 @@ _No dedicated evidence signal was researched for this audit in the 2026-08-20 pa
 **Grade: C** — the convention is explicitly described in the HTML Standard, and mechanically consumed by the Markdown converter behind common LLM-facing readers. But no vendor documents an AI agent reading it, and no study measures an effect on answer quality. The mechanism is plausible and unproven.
 
 **Evidence:**
+
 - WHATWG HTML Standard §4.5.15 (`code` element): "There is no formal way to indicate the language of computer code being marked up. Authors who wish to mark `code` elements with the language used, e.g. so that syntax highlighting scripts can use the right rules, can use the `class` attribute, e.g. by adding a class prefixed with "`language-`" to the element." The spec's own example is `<pre><code class="language-pascal">…</code></pre>` — the exact `pre > code` idiom the audit queries. Note the named consumer is "syntax highlighting scripts", not AI agents — https://html.spec.whatwg.org/multipage/text-level-semantics.html#the-code-element (verified 2026-08-21)
 - Turndown, the widely used HTML→Markdown library, derives the fence language from precisely this class in its `fencedCodeBlock` rule: `const className = node.firstChild.getAttribute('class') || ''` then `const language = (className.match(/language-(\S+)/) || [null, ''])[1]` — https://raw.githubusercontent.com/mixmark-io/turndown/master/src/commonmark-rules.js (verified 2026-08-21)
 - Jina Reader, an HTML-to-Markdown service built for LLM consumption, uses Turndown as its conversion engine; it exposes `x-md-*` headers to "fine-tune markdown output" via `src/dto/turndown-tweakable-options.ts`. It returns markdown, frontmatter and chunked output for language models. The `language-*` class is therefore a real, traceable input to at least one production agent-facing pipeline — https://github.com/jina-ai/reader (verified 2026-08-21)

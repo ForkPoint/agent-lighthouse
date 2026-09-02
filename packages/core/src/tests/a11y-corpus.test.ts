@@ -55,7 +55,8 @@ function buildFixturePage(
 
 describe("accessibility audits on real-page corpus", () => {
   const a11yBackedAudits = OPERABILITY_SAFETY_AUDITS.filter(
-    (AuditClass) => Object.getPrototypeOf(AuditClass).name === "A11yBackedAudit",
+    (AuditClass) =>
+      Object.getPrototypeOf(AuditClass).name === "A11yBackedAudit",
   );
 
   it("identifies exactly 17 a11y-backed audits in operability-safety", () => {
@@ -76,7 +77,11 @@ describe("accessibility audits on real-page corpus", () => {
 
     for (const fixtureName of fixtures) {
       const { html, provenance } = readFixture(fixtureName);
-      const a11yResults = await runA11yForHtml(html, provenance.url, A11Y_RULES);
+      const a11yResults = await runA11yForHtml(
+        html,
+        provenance.url,
+        A11Y_RULES,
+      );
       const page = buildFixturePage(html, provenance.url, a11yResults);
       const ctx = mockCheckContext([page]);
 

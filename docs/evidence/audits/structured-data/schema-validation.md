@@ -29,6 +29,7 @@ Validating that schema blocks carry @context and @type is legitimate, but the au
 **Required fix:** Validate only top-level entities: the parsed `<script>` roots plus direct `@graph` children, not `flattenJsonLd`'s full descendant list. For nested nodes, check @type only when the node is used in a position schema.org types (and even then warn, never fail). Stop relying on flattenJsonLd's @context mutation — resolve inherited context locally in a non-mutating pass. Soften the guidance so it no longer claims nested typeless values are ignored by consumers.
 
 **False-positive risks:**
+
 - `for (const b of flattenJsonLd(...))` walks every nested node, so ordinary property-value objects become 'schema blocks'. `"author": {"name": "Jane"}`, `"brand": {"name": "Acme"}`, `"aggregateRating": {"ratingValue": 4.8}` and `"address": {"streetAddress": ...}` are all valid JSON-LD (schema.org does not require @type on nested values) and each is reported as an invalid block. A single Product with three typeless sub-objects produces '3 of 8 schema block(s) missing @context or @type' at critical/high priority on completely functional markup.
 - Microdata guarantees this failure: `parseMicrodataItem` only sets `@type`/`@context` when `itemtype` is present (parser.ts:186-190), and `<div itemscope itemprop="offers">` without itemtype is idiomatic Microdata. Every Microdata site therefore fails this audit by construction of the extractor, not because of anything on the site.
 - The verdict is entangled with `flattenJsonLd`'s mutation (`if (!obj['@context'] && ctx) obj['@context'] = ctx`). Whether a nested node has @context at audit time depends on whether another audit already flattened the same array. Results are order-dependent across the audit-runner's 20-wide batches.
@@ -37,6 +38,7 @@ Validating that schema blocks carry @context and @type is legitimate, but the au
 - The failure message and guidance assert that these blocks are 'silently ignored by every schema consumer, including Google, ChatGPT plugins, and RAG pipelines'. For nested typeless values that is false — Google's parser and every JSON-LD 1.1 processor read them as property values of the typed parent.
 
 **Test gaps:**
+
 - No test with a nested typeless property value (`author: {name}`, `brand: {name}`, `offers: {price}`) — the dominant real-world false-fail case is entirely unexercised
 - No Microdata/RDFa test, though `extractMicrodata` emits typeless objects by design
 - No test proving idempotency across two consecutive audit runs on the same page objects (flattenJsonLd mutation)
@@ -61,6 +63,7 @@ _No dedicated evidence signal was researched for this audit in the 2026-08-20 pa
 **Grade: A** — the mechanism is a ratified W3C Recommendation (JSON-LD 1.1 expansion resolves keys against the active context) and Google is a named consumer that documents parsing JSON-LD into entities.
 
 **Evidence:**
+
 - JSON-LD 1.1 is a W3C Recommendation dated 16 July 2020. The spec states "A context is used to map terms to IRIs". A term with no active context is therefore not an IRI, and carries no schema.org meaning — https://www.w3.org/TR/json-ld11/ (verified 2026-08-21)
 - The companion Recommendation (JSON-LD 1.1 Processing Algorithms and API, 16 July 2020) defines the Expansion Algorithm that resolves every entry key against the active context; this is the normative step the audit's signal depends on — https://www.w3.org/TR/json-ld11-api/ (verified 2026-08-21)
 - Google names itself as a consumer of the format and reads it as entities: "Google can read JSON-LD data when it is dynamically injected into the page's contents". It treats the three encodings alike: JSON-LD, Microdata and RDFa are "all 3 formats are equally fine for Google". It also requires completeness — "You must include all the required properties for an object to be eligible for appearance in Google Search with enhanced display" — https://developers.google.com/search/docs/appearance/structured-data/intro-structured-data (verified 2026-08-21)

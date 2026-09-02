@@ -26,11 +26,13 @@ Falsy. AI2Bot serves the Allen Institute's open research corpora (Dolma/OLMo) â€
 **Required fix:** Remove from the scored roster, or fold into a zero-weight 'long-tail AI crawlers' informational check with cohere-ai, YouBot and Diffbot.
 
 **False-positive risks:**
+
 - High-priority FAIL for blocking a research crawler with no user-facing citation surface.
 - Weight 1.0 equal to GPTBot inflates the category with an irrelevant token.
 - Shared exact-match / BOM / soft-404 misreads.
 
 **Test gaps:**
+
 - Template-only; no impact validation.
 - Same missing real-world robots.txt variants as 2.1.
 

@@ -40,6 +40,7 @@ Counts H2/H3 headings whose text ends with '?' across all pages; ≥2 passes, 1 
 **Required fix:** Normalize the question test to `/[?？؟;]\s*$/u` after stripping trailing non-letter decoration, and gate on the page `lang`. Restrict extraction to the main content area (exclude header/nav/footer). Evaluate and report per page, not summed across the site. Require a following answer element (next sibling <p>/<div> with ≥20 words) before counting a heading, matching what the guidance tells users to do. Consider merging with 9.1 into a single 'question-and-answer structure' audit, since a site with an FAQ section passes both and a site without fails both.
 
 **False-positive risks:**
+
 - ASCII-only question mark: `h.text.trimEnd().endsWith('?')` misses the Arabic question mark '؟' (U+061F), the Greek erotimatiko ';' (U+037E), and the fullwidth '？' (U+FF1F) used in Chinese/Japanese headings. Arabic, Persian, Urdu, Greek and CJK sites score 0 no matter how question-formatted their headings are.
 - Trailing decoration breaks the match: a heading rendered as `What is X? →` or `What is X?<span class="icon"></span>` — `extractHeadings` uses `$(el).text().trim()`, so any appended arrow, chevron glyph, or screen-reader text after the '?' causes the endsWith test to fail on a heading that is literally a question.
 - Site-wide aggregation with no per-page attribution: `for (const p of ctx.pages) { ... }` sums counts across every page, then reports the total against `page.url` (= ctx.pages[0]). A site whose only question headings live on /faq passes, and the report points the user at the homepage as evidence.
@@ -49,6 +50,7 @@ Counts H2/H3 headings whose text ends with '?' across all pages; ≥2 passes, 1 
 - No verification that a question heading is followed by an answer — the guidance explicitly demands 'followed immediately by a direct answer paragraph', but nothing checks it, so a bare question-heading index page passes.
 
 **Test gaps:**
+
 - No non-ASCII question mark (؟ / ； / ？).
 - No heading with trailing icon markup or an arrow after the '?'.
 - No multi-page context showing the site-wide aggregation behavior.

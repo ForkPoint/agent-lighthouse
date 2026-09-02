@@ -49,6 +49,7 @@ The most valuable premise in the category — whether meaningful content exists 
 **Required fix:** Score the content region, not the whole body: when there is no `<main>`, subtract `header`/`nav`/`footer`/`[role=banner]`/`[role=contentinfo]`/cookie-banner nodes before measuring, and raise the bar to something discriminating (e.g. ≥ 150 words of non-boilerplate text, or ≥ 60% of the visible text living outside chrome). Replace the OR with an AND, or make the char branch a CJK-only fallback using a segmenter (`Intl.Segmenter`) so word counts are meaningful in non-space-delimited scripts. Evaluate every page in `ctx.pages` and report the worst/most-common outcome by page type rather than the homepage alone. Return `na` when WAF-blocked.
 
 **False-positive risks:**
+
 - Passes true CSR apps: no `<main>` ⇒ text is harvested from the entire `<body>`, so a nav + cookie notice + footer in the shell (well over 200 chars on any modern template) satisfies the gate while the actual product/article content is JS-only.
 - OR-ed thresholds make the weaker one decisive: `wordCount > 50 || mainText.length > 200` — 200 characters is roughly 30 words of boilerplate, so the word test almost never binds.
 - CJK/Thai word counting is broken: `getWordCount` does `text.split(/\s+/)` — an unsegmented Chinese or Japanese homepage counts as ~1 word and only survives via the character branch; a 150-character Japanese page with ample content fails as `critical`.
@@ -57,6 +58,7 @@ The most valuable premise in the category — whether meaningful content exists 
 - WAF challenge pages are short ⇒ reported as 'no server-rendered content, critical'.
 
 **Test gaps:**
+
 - No test with a realistic SPA shell (nav + footer + empty root div) — the case the audit is supposed to catch and currently passes.
 - No test with a `<main>` element present but empty while `<body>` is full.
 - No CJK/no-space-language test.

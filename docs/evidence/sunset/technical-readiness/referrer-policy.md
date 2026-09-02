@@ -31,7 +31,7 @@ Nothing above trivial. The strongest thing found is generic security-hygiene end
 
 ## Counter-evidence
 
-Three positive disproofs, not merely absence of results. (1) Mechanical impossibility: `Referrer-Policy` governs the Referer header that the *client sends on requests originating from your pages*. It has no effect whatsoever on what a crawler or agent fetching your page can read, and it cannot affect AI-referral attribution either — whether a visit from ChatGPT shows up as chatgpt.com is decided by ChatGPT's own referrer policy, not yours. So even the audit's own steelman is directionally wrong. (2) Redundancy: Chrome has shipped `strict-origin-when-cross-origin` as the *default* since version 85 — https://developer.chrome.com/blog/referrer-policy-new-chrome-default states "Chrome plans to switch its default policy from no-referrer-when-downgrade to strict-origin-when-cross-origin, starting in version 85". Firefox and Safari made equivalent moves. The exact value the audit recommends is what every modern browser already does with no header, so the audit fails sites for a header that changes nothing in the common case. (3) The "AI trust-scoring systems" that the audit's `description`, `impact`, and failure `description` all assert as fact are unnamed and unfindable — no vendor names one, no study measures one. The claim as written in the audit copy is fabricated.
+Three positive disproofs, not merely absence of results. (1) Mechanical impossibility: `Referrer-Policy` governs the Referer header that the _client sends on requests originating from your pages_. It has no effect whatsoever on what a crawler or agent fetching your page can read, and it cannot affect AI-referral attribution either — whether a visit from ChatGPT shows up as chatgpt.com is decided by ChatGPT's own referrer policy, not yours. So even the audit's own steelman is directionally wrong. (2) Redundancy: Chrome has shipped `strict-origin-when-cross-origin` as the _default_ since version 85 — https://developer.chrome.com/blog/referrer-policy-new-chrome-default states "Chrome plans to switch its default policy from no-referrer-when-downgrade to strict-origin-when-cross-origin, starting in version 85". Firefox and Safari made equivalent moves. The exact value the audit recommends is what every modern browser already does with no header, so the audit fails sites for a header that changes nothing in the common case. (3) The "AI trust-scoring systems" that the audit's `description`, `impact`, and failure `description` all assert as fact are unnamed and unfindable — no vendor names one, no study measures one. The claim as written in the audit copy is fabricated.
 
 ## Verdict
 
@@ -69,12 +69,14 @@ Presence-only check for a `referrer-policy` header, failing sites that lack it o
 **Required fix:** Delete. If the maintainer wants to retain any security-header reporting, fold presence/value of Referrer-Policy into the single merged hygiene audit proposed for 8.2/8.3/8.4/8.6 as an informative line item with no score impact — and, if kept, at least reject `unsafe-url` and read `<meta name="referrer">`.
 
 **False-positive risks:**
+
 - Failing the browser-default behavior: absent header ⇒ browsers apply `strict-origin-when-cross-origin` ⇒ the audit's stated harm ('leaks full URL paths including query parameters') does not occur, yet the site scores 0.0.
 - Presence-only: `if (value)` passes on `Referrer-Policy: unsafe-url`, the single most leaky value possible and the exact opposite of what the guidance asks for. Passing is not evidence of anything.
 - `<meta name="referrer">` (the HTML delivery form, still common on CMS templates) is not read at all.
 - Homepage-only; no-page guard produces a confident 'missing' fail on a scan that fetched nothing (its own test asserts this).
 
 **Test gaps:**
+
 - No test for `unsafe-url` (should not pass).
 - No test for `<meta name="referrer" content="…">`.
 - No test asserting the audit's premise against modern browser defaults.

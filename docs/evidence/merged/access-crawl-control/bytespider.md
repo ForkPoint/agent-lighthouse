@@ -26,11 +26,13 @@ Net-misleading. Bytespider is extensively documented — by Cloudflare, Fastly a
 **Required fix:** Remove from the scored roster. If retained at all, invert it into an informational-only note ('Bytespider does not honor robots.txt; block at the edge if crawl volume is a concern') with `scoreDisplayMode: 'informative'` and zero weight, never a high-priority FAIL recommending an unblock.
 
 **False-positive risks:**
+
 - The audit's core premise fails: reporting 'Bytespider is blocked by robots.txt' is not a fact about crawler behavior, because Bytespider does not honor the file. The result is unfalsifiable and wrong in both directions.
 - Sites that intentionally block Bytespider at the edge for load reasons — a mainstream, well-justified ops decision — receive a high-priority FAIL telling them to undo it.
 - Shared exact-match / BOM / soft-404 misreads apply on top.
 
 **Test gaps:**
+
 - No test — and none possible — validating that the directive has any effect on Bytespider behavior.
 - Same missing real-world robots.txt variants as 2.1.
 

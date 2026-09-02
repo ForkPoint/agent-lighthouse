@@ -15,7 +15,6 @@ sources:
   - google-auto-item-updates
 ---
 
-
 # Agent-commerce feed-field parity from product-page structured data
 
 > Shipped in v2. Evidence grade **A** · scored tier · unique · implementation: `multi-page`
@@ -72,10 +71,10 @@ Tier per evidence policy: **scored** — grade A meets the A/B bar required for 
 The overlap is deliberate. The two audits look at the same spec from opposite
 ends and must not be merged:
 
-| Audit | Scope | Question |
-| --- | --- | --- |
-| `agentic-commerce/checkout-offer-field-mapping` | One scanned product page | Does this offer graph map onto a feed row that passes validation? |
-| `machine-discovery/agent-commerce-feed-parity` | Product pages sampled from the sitemap | Does the *catalogue* carry the fields, and how many pages fall short? |
+| Audit                                           | Scope                                  | Question                                                              |
+| ----------------------------------------------- | -------------------------------------- | --------------------------------------------------------------------- |
+| `agentic-commerce/checkout-offer-field-mapping` | One scanned product page               | Does this offer graph map onto a feed row that passes validation?     |
+| `machine-discovery/agent-commerce-feed-parity`  | Product pages sampled from the sitemap | Does the _catalogue_ carry the fields, and how many pages fall short? |
 
 Only this audit reports the per-field pass rate across a sample and the
 separate **agent-commerce gap** — the fields OpenAI's feed requires that

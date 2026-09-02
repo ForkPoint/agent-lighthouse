@@ -26,12 +26,14 @@ Checks `ctx.rootFiles['/.well-known/security.txt']` for a 200 and fails otherwis
 **Required fix:** Delete from technical-readiness. If the maintainer wants to keep it for general site-maturity reporting, move it out of the scored set (return `na`-style informational), require an actual parse — `Contact:` present and `Expires:` in the future — and try the legacy /security.txt location before failing.
 
 **False-positive risks:**
+
 - Status-only, content-blind: `file.status === 200` with no parsing. An SPA/Netlify/Vercel rewrite that serves index.html for unknown paths returns 200 for /.well-known/security.txt, so the site passes with an HTML page that contains no Contact field. Conversely a real, valid but EXPIRED security.txt (RFC 9116 requires `Expires`; an expired file must be treated as invalid) also passes.
 - No `Contact` requirement: the guidance says 'at minimum a Contact field' but the code never looks for it, so the pass condition and the stated requirement disagree.
 - WAF interference: bot protection commonly 403s /.well-known/* paths for non-browser user agents (`SCANNER_USER_AGENT`), producing a fail on sites that publish a perfectly good security.txt.
 - Only the /.well-known/ location is fetched; the RFC's legacy top-level /security.txt fallback is never tried.
 
 **Test gaps:**
+
 - No test for a 200 that is actually the SPA HTML fallback (soft-404).
 - No test for an expired `Expires:` value or a file missing `Contact:` — both currently pass.
 - No test for a 403 from bot protection.

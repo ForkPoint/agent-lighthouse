@@ -48,6 +48,7 @@ Valuable signal — agents need request/response shapes to build valid calls —
 **Required fix:** Resolve local `$ref` pointers (a shallow `#/components/...` walk covers nearly all real specs) before deciding a response or requestBody lacks a schema. Exclude from the denominator: operations whose only declared responses are 204/205/304, plus HEAD/OPTIONS/DELETE. Treat a POST/PUT/PATCH with no `requestBody` key at all as intentionally bodyless rather than as a missing schema, and only flag a `requestBody` that exists but has no schema.
 
 **False-positive risks:**
+
 - No `$ref` resolution anywhere. `"responses": {"200": {"$ref": "#/components/responses/PetList"}}` — the canonical, DRY way to write a spec — is `isObject`, has no `content` key, and is silently counted as having no schema. Large real specs (Stripe, GitHub, Twilio style) would report 'Low schema coverage' at 0%.
 - `withResponseSchema` is compared against `totalCheckable = ops.length`, so an operation that legitimately returns no body — `DELETE` returning 204, `HEAD`, `OPTIONS` — can never be satisfied. Any spec with DELETE endpoints is mathematically prevented from passing.
 - `writeMethods` counts every POST/PUT/PATCH as needing a requestBody, but bodyless POSTs are normal (`POST /sessions/{id}/logout`, `POST /jobs/{id}/retry`). Each one is an unfixable deduction.
@@ -55,6 +56,7 @@ Valuable signal — agents need request/response shapes to build valid calls —
 - Same JSON-only loader bug: YAML specs report 'No spec'.
 
 **Test gaps:**
+
 - No `$ref` fixture anywhere in the 268-line test file — the single most impactful gap
 - No 204/No-Content response fixture
 - No bodyless-POST fixture
@@ -80,6 +82,7 @@ _No dedicated evidence signal was researched for this audit in the 2026-08-20 pa
 **Grade: B** — every documented tool-calling runtime defines its parameters as JSON Schema, and one named agent, Microsoft 365 Copilot, is documented to read the spec's parameters and responses for exactly this purpose. The response-side half is documented as an aid to interpretation, rather than a requirement for the call to succeed.
 
 **Evidence:**
+
 - Anthropic tool definitions take `input_schema`, "A JSON Schema object defining the expected parameters for the tool" — the request-body schema is what becomes that object when a spec is converted — https://platform.claude.com/docs/en/agents-and-tools/tool-use/define-tools (verified 2026-08-21)
 - OpenAI function calling: a function's `parameters` are "defined by a JSON schema", supporting "property types, enums, descriptions, nested objects" — https://developers.openai.com/api/docs/guides/function-calling (verified 2026-08-21)
 - Microsoft 365 Copilot states: "Parameters are used by Copilot to get all the required information from a user's prompt for making a request to the API." It also asks authors to "Clearly define all possible responses for each operation … Including examples of responses helps Copilot to understand what to expect from the API" — https://learn.microsoft.com/en-us/microsoft-365-copilot/extensibility/openapi-document-guidance (verified 2026-08-21)

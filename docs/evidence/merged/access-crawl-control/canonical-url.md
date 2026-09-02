@@ -26,6 +26,7 @@ Right signal, dangerously shallow check. It verifies only that some `<link rel="
 **Required fix:** 1) Compare the canonical against the page: resolve `href` against `page.url` and warn when the canonical points to a different origin, or when many scanned pages share one canonical target (the classic 'all pages canonical to /' misconfiguration). Today `if (href.startsWith('http')) return this.pass(...)` accepts anything. 2) `href.startsWith('http')` also accepts `href="httpfoo"` — use `new URL(href)` and check the protocol is http/https. 3) `l.rel === 'canonical'` is exact and case-sensitive: accept `rel="Canonical"`, `rel=" canonical "`, and multi-token rel by lowercasing and splitting on whitespace. 4) Read the `Link: <...>; rel="canonical"` HTTP response header from `page.fetchResult.headers` before failing — Shopify, many CDNs and all non-HTML resources canonicalize via header only. 5) Iterate all `ctx.pages`, not just `ctx.pages[0]`. 6) Flag multiple conflicting `rel=canonical` links on one page (currently `.find` silently takes the first).
 
 **False-positive risks:**
+
 - Green pass on a broken canonical: `if (href.startsWith('http')) return this.pass(...)` — a site where every page emits `<link rel="canonical" href="https://example.com/">` (a very common CMS/plugin misconfiguration that deindexes the whole site) is reported as correctly canonicalized.
 - Green pass on a cross-domain or staging canonical (`https://staging.example.com/page`) — never compared against `page.url`.
 - `href.startsWith('http')` is a string prefix test, not a URL parse: `href="httpsss://x"` or `href="http"` passes.
@@ -37,6 +38,7 @@ Right signal, dangerously shallow check. It verifies only that some `<link rel="
 - SPA shells that inject the canonical client-side have no canonical in the fetched HTML → fail, even though the rendering crawlers that matter here would see one.
 
 **Test gaps:**
+
 - No test where the canonical points to a different page or a different domain — the highest-impact real-world failure mode is entirely untested.
 - No uppercase/whitespace/multi-token `rel` test.
 - No `Link:` HTTP header canonical test.

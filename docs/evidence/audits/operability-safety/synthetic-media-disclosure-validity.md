@@ -15,7 +15,6 @@ sources:
   - S12
 ---
 
-
 # Synthetic-media disclosure is valid and self-consistent
 
 > Shipped in v2. Evidence grade **B** · scored tier · unique · implementation: `static-fetch`
@@ -45,7 +44,7 @@ No SEO or AI-readiness tool parses XMP packets. Lighthouse's agentic category do
 
 ## Implementation sketch
 
-1) For each raster image, extract the XMP packet: JPEG APP1 with the http://ns.adobe.com/xap/1.0/ identifier; PNG iTXt keyed XML:com.adobe.xmp; or scan for <?xpacket begin ... ?> ... <?xpacket end?>. 2) Read Iptc4xmpExt:DigitalSourceType in namespace http://iptc.org/std/Iptc4xmpExt/2008-02-29/. 3) Fetch and cache the concept list from https://cv.iptc.org/newscodes/digitalsourcetype/ ; assert the value is an exact member. Emit a targeted FAIL for the near-miss classes: bare conceptId with no URI prefix, https:// where the vocabulary uses http://, trailing slash, or a free-text string. 4) Cross-check with C2PA: if the asset carries a manifest whose actions assert digitalSourceType trainedAlgorithmicMedia while XMP declares digitalCapture (or vice versa), emit a HIGH contradiction finding — the two provenance channels on one asset disagree about whether a human took the photo. 5) Report declaredCoverage across images as INFO. 6) SCOPE HONESTLY: detecting *undisclosed* synthetic imagery requires a classifier and belongs on the roadmap as llm-assisted; this check only grades declarations that exist and their internal consistency.
+1. For each raster image, extract the XMP packet: JPEG APP1 with the http://ns.adobe.com/xap/1.0/ identifier; PNG iTXt keyed XML:com.adobe.xmp; or scan for <?xpacket begin ... ?> ... <?xpacket end?>. 2) Read Iptc4xmpExt:DigitalSourceType in namespace http://iptc.org/std/Iptc4xmpExt/2008-02-29/. 3) Fetch and cache the concept list from https://cv.iptc.org/newscodes/digitalsourcetype/ ; assert the value is an exact member. Emit a targeted FAIL for the near-miss classes: bare conceptId with no URI prefix, https:// where the vocabulary uses http://, trailing slash, or a free-text string. 4) Cross-check with C2PA: if the asset carries a manifest whose actions assert digitalSourceType trainedAlgorithmicMedia while XMP declares digitalCapture (or vice versa), emit a HIGH contradiction finding — the two provenance channels on one asset disagree about whether a human took the photo. 5) Report declaredCoverage across images as INFO. 6) SCOPE HONESTLY: detecting _undisclosed_ synthetic imagery requires a classifier and belongs on the roadmap as llm-assisted; this check only grades declarations that exist and their internal consistency.
 
 ## Example failure
 

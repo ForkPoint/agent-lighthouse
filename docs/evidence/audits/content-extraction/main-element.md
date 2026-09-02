@@ -47,6 +47,7 @@ Checks only the literal tag — 'page.$('main').length > 0' — so <div role="ma
 **Required fix:** Match 'main, [role="main"]' instead of 'main'. Guard ctx.pages.length === 0 with notApplicable(). Add a warn when a page has more than one main/role=main, matching the stated 'exactly one <main> per page' guidance. Include the offending page URLs in `found` — currently the report says '3/10 pages' with no way to know which 7.
 
 **False-positive risks:**
+
 - role="main" on a div is not accepted — a false fail for a semantically correct page.
 - Empty ctx.pages → '0 === 0' → pass with '0/0 pages with <main>'. A WAF-blocked crawl reports success.
 - CSR SPA shells (<div id="root"></div>) fail although the hydrated DOM has <main>; the fetcher does no JS rendering.
@@ -54,6 +55,7 @@ Checks only the literal tag — 'page.$('main').length > 0' — so <div role="ma
 - found/message report only counts, never URLs, so the result is not actionable on a multi-page crawl.
 
 **Test gaps:**
+
 - No <div role="main"> fixture.
 - No empty-ctx.pages test (the false pass is unguarded and unnoticed).
 - No multiple-<main> fixture.

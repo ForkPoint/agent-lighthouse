@@ -14,7 +14,6 @@ sources:
   - eia-iclr25
 ---
 
-
 # Accessibility-Layer Injection Scan
 
 > Shipped in v2. Evidence grade **A** · scored tier · partial overlap · implementation: `static-fetch`
@@ -75,6 +74,7 @@ below the floor.
 finite verb)" is implemented as a closed verb list rather than a parser. A
 security heuristic should miss a sentence sooner than flag a nonce, and no
 part-of-speech tagger is available without a new dependency.
+
 - 2026-08-28 — the audit declines when the scan holds no response it can
   attribute to this site. It read the non-visual values on the scanned pages,
   and `ctx.pages`/`ctx.rootFiles` carry whatever answered 200 — on a parked
@@ -98,7 +98,7 @@ part-of-speech tagger is available without a new dependency.
 ## Deferred
 
 - `aria-labelledby`/`aria-describedby` targets are read for lexicon hits, but a
-  divergence check between a *referenced* label and the element's visible text
+  divergence check between a _referenced_ label and the element's visible text
   is not performed — only the inline `aria-label` case is, where the two strings
   belong to one element unambiguously.
 - The long-value warning applies to `alt` and `aria-label`, the two channels the

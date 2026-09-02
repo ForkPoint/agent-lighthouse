@@ -51,15 +51,17 @@ Genuinely valuable signal — a llms.txt full of 404s does degrade agent trust �
 **Required fix:** Restrict validation to same-origin URLs by default (report off-origin links separately as informational, never as a site failure). Drop the bare-URL sweep in favor of the already-integrated `extractMarkdownLinks`, or gate the sweep on the body actually looking like text/markdown rather than HTML. Treat 401/403 as `warn: auth-gated, not broken` rather than broken. Apply `slice(0, 20)` AFTER the safety filter and state the truncation in the result message. Handle protocol-relative and non-http schemes in the navigation.json walker before concatenating onto baseUrl. Serialize or throttle the probes instead of firing all 20 through `Promise.all`.
 
 **False-positive risks:**
+
 - Third-party URLs judged as the site's own defects: no same-origin filter. `urlsToCheck` accepts any absolute URL from llms.txt. External links that 403 bot UAs (Cloudflare-fronted docs, LinkedIn, Twitter/X, many vendor sites) or that rate-limit are reported as the site's broken AI endpoints.
 - Soft-404 amplification: when an SPA host serves index.html with 200 for /llms.txt, the bare-URL sweep `llmsTxt.body.match(/https?:\/\/[^\s)\]>`"']+/g)` harvests every absolute href in that HTML — analytics, CDN, social, font origins — and probes up to 20 of them, near-guaranteeing a broken-endpoint verdict about a file that does not exist.
 - Auth-gated endpoints counted as broken: a real MCP or API endpoint answering 401/403 to an unauthenticated probe is `>= 400` ⇒ broken. The JSON-RPC POST rescue only fires for URLs containing '/mcp' or '/api/', so an MCP server at /agent or /rpc is mis-flagged.
-- HEAD-hostile origins: `HEAD` first, `GET` on `>= 400` — good — but hosts that return 405 to HEAD *and* rate-limit the immediate GET retry still land as broken; there is no backoff and all URLs are probed concurrently via `Promise.all`, which can trip the target's own rate limiter and manufacture failures.
+- HEAD-hostile origins: `HEAD` first, `GET` on `>= 400` — good — but hosts that return 405 to HEAD _and_ rate-limit the immediate GET retry still land as broken; there is no backoff and all URLs are probed concurrently via `Promise.all`, which can trip the target's own rate limiter and manufacture failures.
 - Silent truncation: `Array.from(urlsToCheck).slice(0, 20)` is applied BEFORE the `isSafeUrl` filter, so a manifest with 100 links has 80 silently unchecked and the pass message ('All N AI endpoint URL(s) are reachable') overstates coverage.
 - navigation.json recursion grabs any `url`/`href` key at any depth including non-endpoint metadata, and `value.startsWith('http')` treats a protocol-relative `//cdn…` or a mailto:/tel: value as relative and concatenates it onto baseUrl, producing a nonsense URL that then reports as broken.
 - navigation.json itself has essentially no adoption (see obsolete note), so a third of the input surface is speculative.
 
 **Test gaps:**
+
 - No test with an external/third-party URL in llms.txt (the top false-positive source).
 - No test where llms.txt is actually the SPA HTML fallback.
 - No test for a 401/403 auth-gated endpoint that is healthy.

@@ -26,6 +26,7 @@ Fails any site lacking a `content-security-policy` response header, at priority 
 **Required fix:** Read `<meta http-equiv="Content-Security-Policy">` from `page.$` in addition to the header, and accept `content-security-policy-report-only` as a partial (warn, not fail). Grade the policy rather than its presence — at minimum flag `unsafe-inline`/`unsafe-eval`/`default-src *` as not-a-pass. Then downgrade the whole audit to `low` priority / informational and delete the 'AI trust-scoring systems flag sites without CSP' and 'poisoning AI knowledge bases' copy from both `description` and the inline `description` in the fail branch; state honestly that CSP is site-security hygiene with no bearing on AI crawler access.
 
 **False-positive risks:**
+
 - Meta-tag CSP ignored: only `headers['content-security-policy']` is read. Static hosts (GitHub Pages, plain S3, many Jamstack setups) that cannot set arbitrary response headers ship CSP as `<meta http-equiv="Content-Security-Policy" content="…">` — a fully valid delivery method — and are failed.
 - Report-Only ignored: a site mid-rollout serving `content-security-policy-report-only` is failed as having no CSP at all.
 - Presence-only: `if (csp)` passes on `default-src *` or on a single meaningless directive, so passing this audit is not evidence of any security posture.
@@ -33,6 +34,7 @@ Fails any site lacking a `content-security-policy` response header, at priority 
 - No page guard: empty `ctx.pages` yields a confident 'header is missing' fail (its own test locks this in).
 
 **Test gaps:**
+
 - No test for `<meta http-equiv="Content-Security-Policy">`.
 - No test for `content-security-policy-report-only`.
 - No test asserting a permissive policy (`default-src *`) is not treated as equivalent to a strict one.

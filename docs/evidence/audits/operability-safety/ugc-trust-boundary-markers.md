@@ -15,7 +15,6 @@ sources:
   - wasp
 ---
 
-
 # UGC Trust-Boundary Markers
 
 > Shipped in v2. Evidence grade **B** · scored tier · unique · implementation: `multi-page`

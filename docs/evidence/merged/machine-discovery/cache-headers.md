@@ -26,6 +26,7 @@ Checks whether /llms.txt and /openapi.json carry any `cache-control` header. Two
 **Required fix:** Merge into 8.10 as one 'AI file delivery' audit reporting Content-Type + caching + CORS per file. If merged, parse the directive properly — treat `no-store`/`no-cache`/`max-age=0` as NOT caching, accept `ETag`/`Last-Modified` as an equivalent validator path — and make missing files `notApplicable()`. Standalone, it should at minimum stop passing `no-store` and drop to informational weight.
 
 **False-positive risks:**
+
 - Value ignored: `no-store` / `max-age=0` pass. The audit reports 'All AI files have Cache-Control headers' for a configuration that guarantees the exact re-fetch behavior it warns about — a directly inverted result.
 - CDN freebie: any site behind a major CDN gets a cache-control header on every response regardless of intent, so the audit mostly measures 'is there a CDN', not 'is caching configured'.
 - Absence penalized: `checked === 0` ⇒ `warn` (0.5). Combined with 8.8 and 8.10 doing the same, a site with no llms.txt is docked three times over for one absence.
@@ -33,6 +34,7 @@ Checks whether /llms.txt and /openapi.json carry any `cache-control` header. Two
 - Only two paths; /llms-full.txt, /.well-known/*, and sitemaps are ignored despite being fetched.
 
 **Test gaps:**
+
 - No test for `no-store` / `max-age=0` (currently pass — the inverted result).
 - No test for ETag/Last-Modified-only caching.
 - No test that `checked === 0` should be `na`.

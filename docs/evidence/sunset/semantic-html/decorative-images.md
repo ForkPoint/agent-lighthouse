@@ -67,6 +67,7 @@ This audit gives actively harmful guidance and is built on a confirmed classific
 **Required fix:** _none — audit is sound as implemented_
 
 **False-positive risks:**
+
 - 'if (img.alt === '')' misclassifies missing-alt images as decorative because extractImages does 'alt: alt ?? ""' — verified. The remediation offered ('add role=presentation') would actively harm accessibility and agent comprehension of those images.
 - Directly contradicts audit 6.15, which correctly uses img.hasAlt for the same images: the same <img src=x> is a 6.15 failure ('add alt text') and a 6.16 failure ('add role=presentation'). Users receive two mutually exclusive fixes for one element.
 - Demands markup that HTML/ARIA/WCAG explicitly call redundant, so a perfectly correct <img alt=""> site fails.
@@ -74,6 +75,7 @@ This audit gives actively harmful guidance and is built on a confirmed classific
 - The zero-decorative-image branch returns pass() rather than notApplicable(), inflating the score for sites with no empty-alt images.
 
 **Test gaps:**
+
 - No fixture with a missing alt attribute — the central misclassification bug is entirely untested (every test uses an explicit alt="").
 - No cross-check against 6.15 showing the contradictory verdicts on one element.
 - No aria-hidden-only fixture despite ariaHidden being accepted in the code.

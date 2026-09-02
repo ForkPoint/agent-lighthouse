@@ -12,7 +12,6 @@ sources:
   - S1
 ---
 
-
 # trust.txt reciprocity and AI-policy coherence
 
 > Shipped in v2. Evidence grade **C** · informative tier · unique · implementation: `multi-page`
@@ -36,7 +35,7 @@ trust.txt is essentially unaudited by commercial tooling. Lighthouse does not to
 
 ## Implementation sketch
 
-1) GET /trust.txt and /.well-known/trust.txt (the .well-known location was added to the spec in Sept 2020); absence is INFO, never a penalty. 2) Parse name=value lines, one per line, '#' comments; validate names against the spec set (member, belongto, control, controlledby, vendor, customer, disclosure, contact, social, datatrainingallowed) and flag unknown attributes. 3) Reciprocity: for each belongto=<url>, fetch that domain's trust.txt and assert a member= entry pointing back at the audited domain; report each unreciprocated association. Do the same in reverse for control=/controlledby=. 4) AI-policy coherence: parse robots.txt user-agent groups for the major AI crawlers and compare against datatrainingallowed=yes/no; emit a WARN on contradiction in either direction. 5) social= verification uses a trust://<domain>! string that must appear on the linked social profile — that requires fetching third-party profiles and is explicitly deferred to a headless-browser roadmap item. 6) scoreable=false: surface as an informational trust-signals panel with the adoption caveat stated in the UI, so users are not pushed to implement a standard with no proven consumer.
+1. GET /trust.txt and /.well-known/trust.txt (the .well-known location was added to the spec in Sept 2020); absence is INFO, never a penalty. 2) Parse name=value lines, one per line, '#' comments; validate names against the spec set (member, belongto, control, controlledby, vendor, customer, disclosure, contact, social, datatrainingallowed) and flag unknown attributes. 3) Reciprocity: for each belongto=<url>, fetch that domain's trust.txt and assert a member= entry pointing back at the audited domain; report each unreciprocated association. Do the same in reverse for control=/controlledby=. 4) AI-policy coherence: parse robots.txt user-agent groups for the major AI crawlers and compare against datatrainingallowed=yes/no; emit a WARN on contradiction in either direction. 5) social= verification uses a trust://<domain>! string that must appear on the linked social profile — that requires fetching third-party profiles and is explicitly deferred to a headless-browser roadmap item. 6) scoreable=false: surface as an informational trust-signals panel with the adoption caveat stated in the UI, so users are not pushed to implement a standard with no proven consumer.
 
 ## Example failure
 

@@ -69,6 +69,7 @@ Gated on the crawler having fetched a thank-you/confirmation page — post-check
 **Required fix:** Delete. The audit is unreachable in practice, its default branch is an unearned deduction, its URL regex misfires on marketing pages, and the standard it checks has no consumer. If post-purchase agent verification is worth auditing at all, it belongs in agent-tools as a check for a machine-readable order/receipt API, not as JSON-LD on a page a crawler cannot reach.
 
 **False-positive risks:**
+
 - `isConfirmationUrl` requires a scanned page URL matching `/thank-you|/confirmation|/success|/order-complete/`. Those pages sit behind checkout, are `noindex`, are not in sitemaps, and are not linked from any crawlable page — so the crawler will essentially never sample one. The audit therefore returns the same `warn` (0.5) on nearly every site, for nearly every scan, regardless of the site's actual quality. An audit whose output is constant carries no information but still costs the customer score.
 - `/\/(thank-?you|confirmation|success|order-complete)\b/i` matches `/success-stories/`, `/customer-success/`, `/our-success`, `/client-success-stories` — extremely common B2B marketing URLs. When the crawler samples one, the audit hard-`fails` it for lacking ConfirmAction schema on a case-study page. Concrete false fail.
 - Non-English confirmation paths (`/danke`, `/merci`, `/gracias`, `/bedankt`, `/spasibo`) never match, so even the rare site whose confirmation page IS reachable is skipped if it is not English.
@@ -76,6 +77,7 @@ Gated on the crawler having fetched a thank-you/confirmation page — post-check
 - Overlaps 3.10: both check `potentialAction` with adjacent-but-disjoint type lists, so identical markup can pass one and fail the other.
 
 **Test gaps:**
+
 - No test for `/success-stories/` or `/customer-success/` being wrongly treated as a confirmation page
 - No test for non-English confirmation paths
 - No test acknowledging that confirmation pages are unreachable by a crawler (the always-warn reality)

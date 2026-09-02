@@ -13,7 +13,6 @@ sources:
   - s13
 ---
 
-
 # RSL licensing terms discoverable and conformant
 
 > Shipped in v2. Evidence grade **B** · scored tier · unique · implementation: `static-fetch`

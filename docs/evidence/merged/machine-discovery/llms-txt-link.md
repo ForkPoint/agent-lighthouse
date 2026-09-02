@@ -26,6 +26,7 @@ The underlying file matters; this specific head-link check is both non-standard 
 **Required fix:** 1) Match on href, not title: replace `(l.title ?? '').toLowerCase().includes('llms')` with an href test (`/\/llms\.txt$/i` on the resolved path). The `title` attribute is optional and language-dependent, so `<link rel="alternate" type="text/plain" href="/llms.txt">` — valid, minimal, correct — fails today. 2) Stop requiring `l.type === 'text/plain'`: llms.txt is Markdown, and real sites emit `type="text/markdown"`, `type="text/plain; charset=utf-8"`, or no type at all. Accept a type set and strip MIME parameters. 3) Fix the cross-match: `includes('llms')` is true for `title="LLMs-full.txt"`, so a site that publishes only llms-full.txt passes the llms.txt audit — a straight false positive. Anchor on the exact filename. 4) Consult `ctx.rootFiles` for an actual /llms.txt before failing; if the file exists at the well-known path, the missing head link is at most a warn, not a 'high' fail. 5) Normalize `rel` (lowercase, trim, split on whitespace) — `rel === 'alternate'` is exact today.
 
 **False-positive risks:**
+
 - Missing/foreign title → false fail: `(l.title ?? '').toLowerCase().includes('llms')` fails on `<link rel="alternate" type="text/plain" href="/llms.txt">` (no title) and on any non-English title. Title is an optional attribute; this makes it mandatory.
 - Wrong MIME requirement → false fail: `l.type === 'text/plain'` rejects `type="text/markdown"` (arguably the correct type for a Markdown file), `type="text/plain; charset=utf-8"` (any server that appends charset), and an omitted type.
 - Cross-file false pass: `includes('llms')` matches `title="LLMs-full.txt"`, so a site with ONLY llms-full.txt passes 'llms.txt link in head' — the audit reports a file that isn't linked.
@@ -36,6 +37,7 @@ The underlying file matters; this specific head-link check is both non-standard 
 - The claim that the head link 'ensures every AI crawler that visits your page can immediately find your structured content' has no known consumer implementing it — the impact statement is speculative.
 
 **Test gaps:**
+
 - No link-without-title test (the most common minimal correct markup).
 - No `type="text/markdown"` or `type="text/plain; charset=utf-8"` test.
 - No test that an llms-full.txt-only page must NOT satisfy this audit (the inverse of the test that exists in llms-full-txt-link.test.ts) — this is exactly why the `includes('llms')` cross-match survived.

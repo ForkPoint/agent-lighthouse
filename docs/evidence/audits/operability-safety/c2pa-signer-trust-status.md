@@ -14,7 +14,6 @@ sources:
   - S12
 ---
 
-
 # C2PA signer chains to the live C2PA Trust List
 
 > Shipped in v2. Evidence grade **B** · scored tier · unique · implementation: `static-fetch`
@@ -42,7 +41,7 @@ Nothing in the Lighthouse agentic category touches certificates. SEO suites do n
 
 ## Implementation sketch
 
-1) Reuse the manifest stores extracted by the pipeline-survival check. 2) Run validation via c2patool or c2pa-rs bindings and read the validation status codes; treat any signingCredential untrusted/expired/revoked status as FAIL. 3) Pin the trust list at build time: the C2PA Conformance Explorer publishes the C2PA Trust List, TSA Trust List and Conforming Products List as JSON on GitHub — resolve the exact path once from c2pa.org/conformance/ and vendor the JSON with a refresh job rather than hardcoding a guessed URL. 4) Classify each manifest: TRUSTED (chains to C2PA TL), LEGACY_ITL (chains only to the frozen interim list — WARN, will not be renewed), UNTRUSTED (self-signed / unknown root — FAIL). 5) Also assert the timestamp authority is on the TSA trust list, so credentials stay valid past certificate expiry. 6) Bonus signal: report presence of a CAWG identity assertion, which binds a named creator identity rather than only a signing tool.
+1. Reuse the manifest stores extracted by the pipeline-survival check. 2) Run validation via c2patool or c2pa-rs bindings and read the validation status codes; treat any signingCredential untrusted/expired/revoked status as FAIL. 3) Pin the trust list at build time: the C2PA Conformance Explorer publishes the C2PA Trust List, TSA Trust List and Conforming Products List as JSON on GitHub — resolve the exact path once from c2pa.org/conformance/ and vendor the JSON with a refresh job rather than hardcoding a guessed URL. 4) Classify each manifest: TRUSTED (chains to C2PA TL), LEGACY_ITL (chains only to the frozen interim list — WARN, will not be renewed), UNTRUSTED (self-signed / unknown root — FAIL). 5) Also assert the timestamp authority is on the TSA trust list, so credentials stay valid past certificate expiry. 6) Bonus signal: report presence of a CAWG identity assertion, which binds a named creator identity rather than only a signing tool.
 
 ## Example failure
 

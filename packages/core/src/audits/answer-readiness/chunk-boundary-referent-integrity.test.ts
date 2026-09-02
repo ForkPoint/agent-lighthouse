@@ -100,9 +100,7 @@ describe("ChunkBoundaryReferentIntegrityAudit", () => {
     ]);
     const result = await audit.audit(ctx);
     expect(result.status).toBe("pass");
-    expect((result.details!["entities"] as string[]).length).toBeGreaterThan(
-      1,
-    );
+    expect((result.details!["entities"] as string[]).length).toBeGreaterThan(1);
   });
 
   it("fails below 0.8 passing chunks and passes above it", async () => {

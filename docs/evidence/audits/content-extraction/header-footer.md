@@ -47,6 +47,7 @@ Counts any <header> or <footer> anywhere in the document — 'page.$('header').l
 **Required fix:** Restrict to landmark scope: 'body > header, body > footer' plus 'header:not(article header, section header, aside header, main header)' and equivalently for footer, or accept [role=banner]/[role=contentinfo]. Guard ctx.pages.length === 0 with notApplicable(). Report which pages are missing which landmark rather than only aggregate counts.
 
 **False-positive risks:**
+
 - Article-scoped <header>/<footer> are counted as landmarks — false pass on card/list layouts and on any theme using <article><header>.
 - [role="banner"] / [role="contentinfo"] on a div are not accepted — false fail on older themes.
 - Empty ctx.pages → '0 === 0' → pass.
@@ -54,6 +55,7 @@ Counts any <header> or <footer> anywhere in the document — 'page.$('header').l
 - The warn branch's message and found disagree in granularity: message reports header/footer separately while found reports the 'both' count, so a user reading found sees a lower number than the message implies.
 
 **Test gaps:**
+
 - No <article><header> fixture — the inverted-premise false pass is untested.
 - No role=banner/role=contentinfo fixture.
 - No empty-ctx.pages test.

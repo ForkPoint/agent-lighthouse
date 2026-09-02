@@ -30,12 +30,14 @@ Checks for `toolname`/`tooldescription` HTML attributes that do not exist in any
 **Required fix:** Delete with the rest of the WebMCP cluster. The legitimate underlying question — 'can an agent understand and submit this form' — is already covered properly by 5.27 form-actionability using real HTML semantics (labels, autocomplete, native controls).
 
 **False-positive risks:**
+
 - Universal false fail: `toolname`/`tooldescription` are not part of the WebMCP proposal, HTML, or any registered microsyntax. Every real site with forms gets 'Found N form(s) but none have WebMCP toolname/tooldescription attributes' at high priority — a top-level recommendation to add invalid, inert markup.
 - Logic hole: a form with `tooldescription` but no `toolname` increments `webmcpForms` (lines 58-62). With one such form, `webmcpForms === totalForms` → PASS, message 'All 1 form(s) have WebMCP attributes' with an empty tools list. The test at line 82 codifies this as expected behavior. A nameless tool is not callable by anything.
 - `warn` (not `na`) when a page has no forms at all — a documentation site or blog is penalized for not having forms to annotate, muddying the score with a non-signal.
 - Would-be positives are unattainable: a site implementing real WebMCP via JS registers tools at runtime and has no such attributes, so correct implementations also fail.
 
 **Test gaps:**
+
 - No test recognizing that these attributes are non-standard
 - The description-only-pass hole is tested as correct behavior rather than flagged
 - No test asserting `na` (not `warn`) is right for form-less pages
@@ -52,8 +54,8 @@ The dossier's three recommended fixes all land:
 
 **2. `toolname` is required to count a form.**
 
-- *Old pass condition:* a form counted as WebMCP if it had `toolname` **or** `tooldescription`. A single description-only form therefore satisfied `webmcpForms === totalForms` and produced "All 1 form(s) have WebMCP attributes" with an empty tool list — and the old test suite codified that hole as expected behaviour.
-- *New pass condition:* only a non-empty `toolname` registers a tool, which is what the spec algorithm and the WPT assertion say. Forms carrying `tooldescription` or `toolparamdescription` without a `toolname` are counted separately and called out in the message as markup that registers nothing.
+- _Old pass condition:_ a form counted as WebMCP if it had `toolname` **or** `tooldescription`. A single description-only form therefore satisfied `webmcpForms === totalForms` and produced "All 1 form(s) have WebMCP attributes" with an empty tool list — and the old test suite codified that hole as expected behaviour.
+- _New pass condition:_ only a non-empty `toolname` registers a tool, which is what the spec algorithm and the WPT assertion say. Forms carrying `tooldescription` or `toolparamdescription` without a `toolname` are counted separately and called out in the message as markup that registers nothing.
 
 A named form with no `tooldescription` is now a `warn`: it is registered but an agent has nothing to select it on. `toolparamdescription` coverage across named forms is reported in the `found` line as the schema-quality signal it is, without gating the status.
 
@@ -82,6 +84,7 @@ Source: the [redemption dossier's verdict](../../deletions/agent-tools/webmcp-de
 **Grade: B** — Chrome documents its own browser reading the attributes, which is documented consumer behaviour. But the API is an origin trial rather than a shipped one, and Chrome says it is "under active discussion and subject to change". That is a draft standard with adoption, not a ratified one.
 
 **Evidence:**
+
 - Chrome's declarative-API page (published 2026-05-18) documents `toolname` and `tooldescription` on `<form>`, `toolparamdescription` on individual form elements, and `toolautosubmit` — https://developer.chrome.com/docs/ai/webmcp/declarative-api (verified 2026-08-24)
 - The same page states the consuming behaviour directly: "The browser interprets this form as a tool", and "When an agent calls `toolname`, the browser brings the form into focus and populates its field."
 - The attribute set is the W3C Web Machine Learning Community Group's, so the browser is implementing a group specification rather than a private vendor extension — https://webmachinelearning.github.io/webmcp/ (verified 2026-08-21)
