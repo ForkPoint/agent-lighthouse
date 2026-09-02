@@ -1,4 +1,4 @@
-import categoriesJson from "../../test-data/sites/categories.json";
+import seedsJson from "../../test-data/sites/seeds.json";
 import benchmarkStoresJson from "../../test-data/sites/benchmark-stores.json";
 
 export type TestSiteRole = "live-smoke" | "benchmark-store" | "fixture";
@@ -67,9 +67,14 @@ export function getBenchmarkStorefronts(): readonly string[] {
   return benchmarkStoresJson as readonly string[];
 }
 
-/** Return the curated category map from categories.json. */
+/** Return the curated category map from seeds.json. */
 export function getCategories(): Record<string, string[]> {
-  return categoriesJson as Record<string, string[]>;
+  const { categories } = seedsJson as {
+    categories: Record<string, { domains: string[] }>;
+  };
+  return Object.fromEntries(
+    Object.entries(categories).map(([name, { domains }]) => [name, domains]),
+  );
 }
 
 /** Return all site domains belonging to a specific category. */

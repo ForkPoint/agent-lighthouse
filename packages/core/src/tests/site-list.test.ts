@@ -11,14 +11,54 @@ import {
   tenantSuffixOf,
   type SiteEntry,
 } from "./site-list";
+import { excludedDomains, type CorpusStatus } from "./corpus-status";
 
 const sites: SiteEntry[] = JSON.parse(
   readFileSync(resolve(__dirname, "../../test-data/sites/sites.json"), "utf8"),
 );
 
 describe("the site list", () => {
-  it("holds enough sites to be worth scanning", () => {
-    expect(sites.length).toBeGreaterThan(500);
+  it("holds enough sites to be worth scanning, and few enough to finish in an hour", () => {
+    expect(sites.length).toBeGreaterThanOrEqual(250);
+    expect(sites.length).toBeLessThanOrEqual(500);
+  });
+
+  it("gives every category at least 10 domains", () => {
+    const counts = new Map<string, number>();
+    for (const s of sites)
+      counts.set(s.category, (counts.get(s.category) ?? 0) + 1);
+    for (const [category, n] of counts) {
+      if (category === "unknown") continue;
+      expect(n, category).toBeGreaterThanOrEqual(10);
+    }
+  });
+
+  it("marks exactly two smoke domains per seeded category, all of them seeds", () => {
+    const smoke = sites.filter((s) => s.tier === "smoke");
+    const perCategory = new Map<string, number>();
+    for (const s of smoke) {
+      perCategory.set(s.category, (perCategory.get(s.category) ?? 0) + 1);
+    }
+    const seededCategories = new Set(
+      sites
+        .filter((s) => s.source === "seed" || s.category !== "unknown")
+        .map((s) => s.category),
+    );
+    seededCategories.delete("tenant");
+    seededCategories.delete("unknown");
+    for (const category of seededCategories) {
+      expect(perCategory.get(category), category).toBe(2);
+    }
+  });
+
+  it("carries no ranked domain the status file calls dead or blocked", () => {
+    const statusPath = resolve(__dirname, "../../test-data/sites/status.json");
+    const status: CorpusStatus = JSON.parse(readFileSync(statusPath, "utf8"));
+    const excluded = excludedDomains(status, {});
+    for (const s of sites) {
+      if (s.source === "seed") continue;
+      expect(excluded.has(s.domain), s.domain).toBe(false);
+    }
   });
 
   it("carries a bare hostname per entry, never a URL", () => {
@@ -229,7 +269,9 @@ describe("buildSiteList", () => {
       seeds,
       { limit: 2, exclude: new Set(["dead.com"]) },
     );
-    const ranked = built.filter((s) => s.source !== "seed").map((s) => s.domain);
+    const ranked = built
+      .filter((s) => s.source !== "seed")
+      .map((s) => s.domain);
     expect(ranked).toEqual(["b.com", "c.com"]);
   });
 
@@ -245,16 +287,26 @@ describe("buildSiteList", () => {
     const built = buildSiteList(
       [
         {
-          domains: ["one.github.io", "b.com", "two.pages.dev", "three.vercel.app", "c.com"],
+          domains: [
+            "one.github.io",
+            "b.com",
+            "two.pages.dev",
+            "three.vercel.app",
+            "c.com",
+          ],
           source: "crux",
         },
       ],
       seeds,
       { limit: 2, tenantLimit: 2 },
     );
-    const tenants = built.filter((s) => s.category === "tenant").map((s) => s.domain);
+    const tenants = built
+      .filter((s) => s.category === "tenant")
+      .map((s) => s.domain);
     expect(tenants).toEqual(["one.github.io", "two.pages.dev"]);
-    const unknown = built.filter((s) => s.category === "unknown").map((s) => s.domain);
+    const unknown = built
+      .filter((s) => s.category === "unknown")
+      .map((s) => s.domain);
     expect(unknown).toEqual(["b.com", "c.com"]);
   });
 
@@ -276,7 +328,10 @@ describe("buildSiteList", () => {
       );
       expect(seeded.length).toBeGreaterThan(0);
       for (const site of seeded) {
-        expect(site.rankBucket, `limit ${limit}, ${site.domain}`).toBeGreaterThan(worstRanked);
+        expect(
+          site.rankBucket,
+          `limit ${limit}, ${site.domain}`,
+        ).toBeGreaterThan(worstRanked);
       }
     },
   );
@@ -291,7 +346,9 @@ describe("buildSiteList", () => {
       readSeeds({ smoke: [], categories: {} }),
       { limit: 250 },
     );
-    const buckets = [...new Set(built.map((s) => s.rankBucket))].sort((a, b) => a - b);
+    const buckets = [...new Set(built.map((s) => s.rankBucket))].sort(
+      (a, b) => a - b,
+    );
     expect(buckets).toEqual([0, 100, 200]);
   });
 
