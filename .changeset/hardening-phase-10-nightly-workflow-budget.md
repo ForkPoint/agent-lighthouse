@@ -1,5 +1,5 @@
 ---
-"agent-lighthouse-monorepo": patch
+"@forkpoint/agent-lighthouse-core": patch
 ---
 
 Hardened corpus nightly scan workflow and site-list runner:

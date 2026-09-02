@@ -1,6 +1,5 @@
 ---
 "@forkpoint/agent-lighthouse-core": minor
-"agent-lighthouse-monorepo": patch
 ---
 
 Scoped all root-file audits to require `unblocked-fetches`:

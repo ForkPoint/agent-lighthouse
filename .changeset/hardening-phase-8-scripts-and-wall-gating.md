@@ -1,6 +1,5 @@
 ---
 "@forkpoint/agent-lighthouse-core": minor
-"agent-lighthouse-monorepo": patch
 ---
 
 Hardened script typechecking, bot wall evidence gating, and API deprecation:
