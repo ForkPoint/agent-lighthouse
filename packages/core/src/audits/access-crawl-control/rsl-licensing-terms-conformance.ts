@@ -58,8 +58,12 @@ export class RslLicensingTermsConformanceAudit extends Audit {
     defaultPriority: "medium",
     dossier:
       "docs/evidence/audits/access-crawl-control/rsl-licensing-terms-conformance.md",
-    // Gate exemption: being refused is what this category reports.
-    requires: ["origin-reachable", "rendered-body", "sample-adequate"],
+    requires: [
+      "origin-reachable",
+      "unblocked-fetches",
+      "rendered-body",
+      "sample-adequate",
+    ],
     guidance: {
       impact:
         'RSL is the machine-readable form of "here are my terms". A crawler that cannot find the document applies its own defaults instead, and a document it finds but cannot parse is worth no more than one it never found. The specification mandates no default location, so a licence reachable only at a guessed path is one no crawler is obliged to look for. The quiet failure is a `<content url>` prefix that does not cover the pages the licence was written for: the terms load, parse, and apply to nothing.',

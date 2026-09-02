@@ -1,0 +1,12 @@
+{
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "@forkpoint/agent-lighthouse-core": ["packages/core/src/index.ts"],
+      "@forkpoint/agent-lighthouse-report": ["packages/report/src/index.ts"],
+      "@forkpoint/agent-lighthouse-mcp": ["packages/mcp/src/index.ts"]
+    }
+  },
+  "include": ["scripts/**/*"]
+}
