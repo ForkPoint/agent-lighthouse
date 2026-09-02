@@ -52,3 +52,6 @@ jobs:
       - name: Smoke-test the corpus nightly script
         run: node --import tsx scripts/scan-site-list.ts --limit=0
 
+      - name: Smoke-test the live test runner
+        run: pnpm test:live --limit=0
+

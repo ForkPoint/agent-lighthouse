@@ -88,25 +88,31 @@ export class NoBrokenLinksAudit extends Audit {
     // Sample up to 20 internal links to avoid excessive fetching
     const urlsToCheck = Array.from(internalUrls).slice(0, 20);
     const results = await Promise.all(
-      urlsToCheck.map((url) => sharedProbeUrl(ctx, url)),
+      urlsToCheck.map((url) =>
+        sharedProbeUrl(ctx, url, { followRedirects: true }),
+      ),
     );
     const broken = results
-      .filter((r) => !r || r.status !== 200)
-      .map((r, i) => ({ url: urlsToCheck[i]!, status: r?.status ?? 0 }));
+      .map((r, i) => ({ url: urlsToCheck[i]!, status: r?.status ?? 0 }))
+      .filter((r) => r.status >= 400 || r.status === 0);
 
     if (broken.length > 0) {
-      const brokenUrls = broken.map((r) => `${r.url} (${r.status})`).join(", ");
+      const displayValue = `${broken.length}/${urlsToCheck.length} broken`;
+      const fullList = broken.map((r) => `${r.url} (${r.status})`).join(", ");
+      const found =
+        fullList.length > 900 ? `${fullList.slice(0, 897)}...` : fullList;
 
       if (broken.length > urlsToCheck.length / 2) {
         return this.fail(
           `${broken.length}/${urlsToCheck.length} sampled internal link(s) are broken.`,
           "All internal links return HTTP 200",
-          `Broken: ${brokenUrls}`,
+          `Broken: ${found}`,
           {
             priority: "high",
             description:
               "Many internal links are broken, creating dead ends for AI crawlers. Fix or remove these links to ensure crawlers can navigate your site effectively.",
             code: `<!-- Fix broken links -->\n<a href="/correct-path">Page title</a>`,
+            displayValue,
           },
         );
       }
@@ -114,12 +120,13 @@ export class NoBrokenLinksAudit extends Audit {
       return this.warn(
         `${broken.length}/${urlsToCheck.length} sampled internal link(s) are broken.`,
         "All internal links return HTTP 200",
-        `Broken: ${brokenUrls}`,
+        `Broken: ${found}`,
         {
           priority: "medium",
           description:
             "Some internal links are broken. Fix them to prevent AI crawlers from encountering dead ends.",
           code: `<!-- Fix broken links -->\n<a href="/correct-path">Page title</a>`,
+          displayValue,
         },
       );
     }

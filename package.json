@@ -20,7 +20,8 @@
     "changeset": "changeset",
     "version-packages": "changeset version",
     "release": "pnpm build && changeset publish",
-    "test:coverage": "vitest run --coverage"
+    "test:coverage": "vitest run --coverage",
+    "test:live": "node --import tsx scripts/test-live-sites.ts"
   },
   "devDependencies": {
     "@changesets/cli": "^2.27.12",
