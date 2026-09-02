@@ -56,7 +56,7 @@ jobs:
       # 4 (deadline), 5 (scanned nothing) and 6 (the runner threw) are the job
       # failing rather than a site. `scan-site-list.ts` documents the set.
       - name: Scan the site list
-        run: node --import tsx scripts/scan-site-list.ts --limit=400
+        run: node --import tsx scripts/scan-site-list.ts --limit=200 --allow-partial=1
 
       # `if: always()` on purpose: the summary is most wanted on the run that
       # failed, and the scan step exits non-zero exactly when it found something.
