@@ -47,39 +47,20 @@ failure.
 
 ## 4. Text-rich 200 bot wall verdicts
 
-Two audits inside `access-crawl-control` that reached wrong scored `fail` verdicts
-on site-templated walls (`sensitive-paths` at weight 1.0 and `rsl-licensing-terms-conformance`
-at weight 0.6) have been resolved: both now properly require `unblocked-fetches` and
-decline gracefully with `notApplicable`. The remaining root-file checks (sitemaps, openapi)
-can be addressed in future contract extensions.
-
 An audit that reads only root files derives `requires: ['origin-reachable']`, so
 it runs against a wall's files. None returns `pass` — the hostile-state suite
 proves that — but on a bot wall served at HTTP 200 with the site's own template
-around it, 28 audits emit a wrong non-`notApplicable` verdict. `sitemap-exists`
-fails at weight 1.0, `sitemap-lastmod` warns at 1.0, the four `openapi-*` audits
-fail at 0.6 each, and 13 crawler-token audits warn "allowed by default" off a
-robots.txt that answered HTML.
+around it, remaining root-file audits can emit non-`notApplicable` verdicts:
+`sitemap-exists` fails at weight 1.0, `sitemap-lastmod` warns at 1.0, the four
+`openapi-*` audits fail at 0.6 each, and 13 crawler-token audits warn "allowed by default"
+off a robots.txt that answered HTML.
 
-All 28 are pre-existing. Measured across the hostile-state branch: the
-merge-base has 43 wrong non-`na` verdicts in that state, the branch has 30, and
-the branch's set is a strict subset. It removed 13 and added none.
-
-Two of the 28 sit inside `access-crawl-control` and were left unguarded on the
-branch, on a justification that turned out to be false. Both reach a wrong
-scored `fail` on a site-templated wall:
-
-- `sensitive-paths`, weight 1.0 — harvests `<a href>` from the wall's own DOM
-  (`sensitive-paths.ts:164-170`), and because robots.txt answered HTML the
-  `hasRobots` guard at `:226` is false, so everything reads as crawlable. The
-  wall supplies both the observed URLs and the reason robots.txt looks absent.
-- `rsl-licensing-terms-conformance`, weight 0.6 — reports "1 problem(s) in this
-  site's RSL licensing" off a `<link rel="license" type="application/rsl+xml">`
-  in the same head fragment the branch guarded `canonical` for.
+The two scored `fail` audits inside `access-crawl-control` (`sensitive-paths` at weight 1.0
+and `rsl-licensing-terms-conformance` at weight 0.6) have been resolved by requiring
+`unblocked-fetches`.
 
 `machine-actionable-402-paid-access` is genuinely safe: a 200 wall never yields a
 402 probe.
 
-Fixing the class needs a second invariant that knows which audits must report the
-wall rather than decline it. The nothing-obtained tier forbids only `pass`,
-deliberately, because `fail` is correct when the wall is the finding.
+Addressing the remaining root-file checks can be handled in a dedicated root-file
+contract extension that scopes root files to `unblocked-fetches`.
