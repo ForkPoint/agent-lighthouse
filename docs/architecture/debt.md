@@ -4,82 +4,25 @@ This file holds unresolved work that has evidence but no implementation phase.
 It is not a plan. A phase plan may take one row only after it re-measures the
 claim. Closed work leaves this file and stays in Git history.
 
-| # | debt | status on 2026-08-31 | next owner |
+| # | debt | status on 2026-09-02 | next owner |
 | -: | :--- | :------------------- | :--------- |
-| 1 | Four OpenAPI audits fail on absence | Fix open in PR 23; not merged | PR 23 |
-| 2 | Three WAF classifier defects | Open; current corpus pins the wrong kinds | Separate fix |
-| 3 | Corpus skips accessibility results | Open | Test infrastructure |
-| 4 | Page content enters CSS selectors without escaping | Open | Parser and a11y fixes |
-| 5 | Scripts have no typecheck | Open | Build tooling |
-| 6 | Corpus nightly is not reliable | Three scheduled runs failed | Nightly workflow |
-| 7 | Four smaller test and API debts | Open | Separate cleanup |
-| 8 | Text-rich HTTP 200 walls produce wrong verdicts | Open | Hostile-state contract extension |
-| 9 | Offline tests still depend on live DNS | Open; reproduced 2026-08-31 | Test infrastructure |
+| 1 | Corpus skips accessibility results | Open | Test infrastructure |
+| 2 | Scripts have no typecheck | Open | Build tooling |
+| 3 | Corpus nightly is not reliable | Three scheduled runs failed | Nightly workflow |
+| 4 | Four smaller test and API debts | Open | Separate cleanup |
+| 5 | Text-rich HTTP 200 walls produce wrong verdicts | Open | Hostile-state contract extension |
 
 The hostile-state branch first recorded these items. The sections below retain
 the evidence needed to start each fix.
 
-## 1. Four OpenAPI audits fail a site for an absence
-
-`agent-interfaces/openapi-servers`, `openapi-endpoints`, `openapi-schemas` and
-`openapi-operation-ids` are grade B, tier `scored`, weight 0.6 each — 2.4
-combined. Each returns `fail` at `priority: 'high'` on every site with no
-OpenAPI spec, on all 41 corpus fixtures. `openapi-exists`, for the identical
-absence, returns `notApplicable` and is informative at weight 0.
-
-This contradicts the repository's own rule: absence is `notApplicable`, not
-`fail`. Worse, the `openapi-servers` dossier's own counter-evidence argues the
-reachability leg has no documented consumer and that an absent servers array is
-legal under OpenAPI 3.1. It never documents failing on a wholly absent spec.
-Where dossier and code disagree, the dossier governs.
-
-Not the same defect, and out of scope for the fix: the always-fail
-`machine-discovery` siblings (`sitemap-exists`, `sitemap-lastmod`,
-`sitemap-absolute-urls`, `rss-feed`) fail on the corpus only because the fixture
-harness supplies no root files. A real scan fetches `/sitemap.xml`.
-
-Needs: a policy decision, then a `major` changeset.
-
-## 2. Three WAF-detector defects found by the corpus
-
-In `packages/core/src/waf-detector.ts`:
-
-- The Kasada branch matches the substring `k-challenge`, so `vercel.com/pricing`
-  — which serves `text/markdown` to the scanner user agent, that is, does the
-  right thing — is reported as a bot wall because its copy links
-  `/changelog/...attack-challenge-mode`.
-- The PerimeterX branch matches `_pxAppId` in the body, which every PerimeterX
-  customer's ordinary pages carry, not only challenges (`walmart.com/help`).
-- A genuine Akamai soft block served at HTTP 200 reads as a readable page: the
-  Akamai branch is gated on `status === 403 || scannedPagesCount === 0`
-  (`tirerack.com`).
-
-`docs/evidence/corpus.md` records which fixtures' recorded `kind` must be
-re-recorded when these are fixed.
-
-## 3. The corpus never exercises the accessibility audits
+## 1. The corpus never exercises the accessibility audits
 
 About 17 audits are `notApplicable` on all 41 fixtures because `page.a11yResults`
 is populated only by the orchestrator. Wiring the a11y runner into the corpus
 harness needs its own runtime budget — the suite already sits at 75–99 s against
 a 120 s cap.
 
-## 4. Three latent content-into-selector sites
-
-Page content is interpolated into a CSS selector without escaping at
-`packages/core/src/parser.ts:471`, and
-`packages/core/src/audits/operability-safety/hover-only-content-and-navigation.ts:154`
-and `:188`. An `id` containing a double quote makes cheerio throw
-`Attribute selector didn't terminate`. `parser.ts:471` is inside `extractForms`,
-so one quoted id turns both `forms-no-js` and `contact-form` into `scan-error`
-stubs. `escapeAttrValue` (`form-actionability.ts:128`) and `cssEscape`
-(`form-autofill-token-coverage.ts:110`) already exist in the same category.
-
-The same class already shipped once: `extractor-survival-recall` interpolated a
-JSON-LD title into `:contains()` and threw on a gov.uk page. Fixed on this
-branch.
-
-## 5. No script in the repository is typechecked
+## 2. No script in the repository is typechecked
 
 The root `tsconfig.json` includes only `packages/*/src/**/*` and `pnpm typecheck`
 runs per package, so everything under `scripts/` is outside every include.
@@ -87,7 +30,7 @@ Obsolete one-time scripts (`analyze-false-positives.ts`, `analyze-stores.ts`, an
 `investigate-stores.ts`) were pruned; remaining scripts should eventually be
 included under a dedicated tsconfig or typecheck pass.
 
-## 6. The nightly workflow runs, but it does not finish reliably
+## 3. The nightly workflow runs, but it does not finish reliably
 
 The workflow ran on schedule three times before this review. All three runs
 failed. Run `33379094687` scanned 249 of its 400-site window, skipped 58 sites
@@ -99,7 +42,7 @@ The next plan must separate timeout capacity from result-schema defects. It
 must define success for a partial window and preserve the uploaded summary on
 failure.
 
-## 7. Smaller items
+## 4. Smaller items
 
 - `MAX_CONCURRENT_REQUESTS` in `packages/core/src/constants.ts:10` is exported
   and referenced nowhere. Removing it is a published-API change.
@@ -113,7 +56,7 @@ failure.
   can never exercise the evidence gate. The hostile-state suite is the only place
   those guards are proven.
 
-## 8. A text-rich 200 bot wall still draws 28 wrong verdicts
+## 5. A text-rich 200 bot wall still draws 28 wrong verdicts
 
 An audit that reads only root files derives `requires: ['origin-reachable']`, so
 it runs against a wall's files. None returns `pass` — the hostile-state suite
@@ -145,19 +88,3 @@ scored `fail` on a site-templated wall:
 Fixing the class needs a second invariant that knows which audits must report the
 wall rather than decline it. The nothing-obtained tier forbids only `pass`,
 deliberately, because `fail` is correct when the wall is the finding.
-
-## 9. `pnpm test` is not offline-safe, and `AL_SKIP_NETWORK=1` no longer means what CLAUDE.md says
-
-`isSafeUrl()` calls `dns.lookup`, and the corpus suite reaches it through
-`root-text-file-resolution-integrity` and `reflected-parameter-injection-canary`.
-`pnpm test` now makes about 2065 `dns.lookup` calls against real public
-hostnames — `www.barclays.co.uk`, `lobste.rs`, `www.chase.com`, `www.irs.gov` —
-where before the corpus landed it made about 390 against reserved names.
-
-With name resolution failing, 54 tests in 3 files go red, including all 41 corpus
-snapshots, because those two audits flip to `notApplicable` when `isSafeUrl`
-fails closed. CI with DNS is green.
-
-Nothing reaches the published package and no HTTP request is made. But
-`CLAUDE.md` advertises `AL_SKIP_NETWORK=1` as the offline path, and that is now
-inaccurate. The golden snapshot is also hostage to live global DNS.

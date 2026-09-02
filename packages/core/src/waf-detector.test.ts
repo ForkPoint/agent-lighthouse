@@ -228,4 +228,38 @@ describe("detectWafProtection", () => {
     expect(waf?.name).toBeTruthy();
     expect(waf?.reason).toBeTruthy();
   });
+
+  describe("corpus edge cases & false positive prevention", () => {
+    it("does not classify vercel.com prose containing attack-challenge-mode as Kasada", () => {
+      const waf = onHomepage({
+        status: 200,
+        body: "# Vercel Pricing\n\nLink to [Attack Challenge Mode](/changelog/prevent-malicious-traffic-with-attack-challenge-mode-for-vercel-firewall)",
+      });
+      expect(waf).toBeNull();
+    });
+
+    it("does not classify a 200 page with a PerimeterX telemetry script snippet as blocked", () => {
+      const waf = onHomepage({
+        status: 200,
+        body: "<html><body><h1>Help Center</h1><script>window._pxAppId='PXu6b0qd2S'</script></body></html>",
+      });
+      expect(waf).toBeNull();
+    });
+
+    it("classifies an Akamai 200 soft block with reference number as blocked", () => {
+      const waf = onHomepage({
+        status: 200,
+        headers: {
+          server: "AkamaiNetStorage",
+          "akamai-grn": "0.95d72c17.1787919342.4387e81",
+        },
+        body: "<html><body><p>We're sorry. This page is currently unavailable.</p><p>Reference Number: 18.95d72c17.1787919342.4387e81</p></body></html>",
+      });
+      expect(waf).toMatchObject({
+        isBlocked: true,
+        provider: "akamai",
+        statusCode: 200,
+      });
+    });
+  });
 });

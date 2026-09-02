@@ -11,6 +11,7 @@ import { Audit } from "../../audit";
 import { weightForGrade } from "../../scorer";
 import type { CheckContext } from "../../check-context";
 import { collectPageCss, type CssRule } from "../../gatherers/css-rules";
+import { escapeAttrValue } from "../../parser";
 
 /** Declarations that bring a hidden element back into view. */
 const REVEALING = [
@@ -162,7 +163,8 @@ async function survey(ctx: CheckContext): Promise<Survey> {
           return false;
         });
         const controlled =
-          id !== "" && $(`[aria-controls~="${id}"]`).length > 0;
+          id !== "" &&
+          $(`[aria-controls~="${escapeAttrValue(id)}"]`).length > 0;
         if (declared || controlled) continue;
 
         const destinations = $el
@@ -202,7 +204,9 @@ async function survey(ctx: CheckContext): Promise<Survey> {
       const id = $n.attr("id") ?? "";
       if (
         id &&
-        $(`[aria-describedby~="${id}"], [aria-labelledby~="${id}"]`).length > 0
+        $(
+          `[aria-describedby~="${escapeAttrValue(id)}"], [aria-labelledby~="${escapeAttrValue(id)}"]`,
+        ).length > 0
       )
         return;
       result.hoverCards += 1;

@@ -3,7 +3,7 @@
   "capturedAt": "2026-08-28T12:20:26.235Z",
   "sha256": "a01f71575a7e4daadea17e6c0a84e7551ed9d2e74e077c26495e9da4ee137da5",
   "status": 200,
-  "kind": "wall",
+  "kind": "page",
   "headers": {
     "accept-ch": "Sec-CH-Prefers-Color-Scheme",
     "age": "1083",

@@ -1,4 +1,12 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi } from "vitest";
+
+// Ensure corpus tests run hermetically offline without invoking live DNS
+vi.mock("node:dns/promises", () => ({
+  default: {
+    lookup: vi.fn().mockResolvedValue({ address: "93.184.216.34", family: 4 }),
+  },
+}));
+
 import { defaultConfig } from "../audit-config";
 import { mockCheckContext } from "../__tests__/test-utils";
 import type { CheckContext, PageContext } from "../check-context";

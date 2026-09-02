@@ -459,6 +459,14 @@ export function extractImages($: CheerioAPI): Array<{
   return images;
 }
 
+/**
+ * Escapes characters that have special meaning inside a CSS attribute selector value.
+ * Prevents attribute values with quotes or backslashes from breaking selector parsing.
+ */
+export function escapeAttrValue(val: string): string {
+  return val.replace(/(["\\])/g, "\\$1");
+}
+
 export function extractForms($: CheerioAPI): Array<{
   action: string;
   method: string;
@@ -492,7 +500,7 @@ export function extractForms($: CheerioAPI): Array<{
         const id = $(inputEl).attr("id");
         let label: string | undefined;
         if (id) {
-          const labelEl = $(`label[for="${id}"]`);
+          const labelEl = $(`label[for="${escapeAttrValue(id)}"]`);
           if (labelEl.length) {
             label = labelEl.text().trim();
           }
