@@ -29,15 +29,15 @@ jobs:
     # behind the deadline, not the plan.
     timeout-minutes: 300
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Install pnpm
-        uses: pnpm/action-setup@v3
+        uses: pnpm/action-setup@v6
         with:
           version: 9
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
           node-version: 22
           cache: 'pnpm'
@@ -62,7 +62,7 @@ jobs:
       # failed, and the scan step exits non-zero exactly when it found something.
       - name: Upload the summary
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: corpus-nightly
           path: reports/corpus-nightly.json
