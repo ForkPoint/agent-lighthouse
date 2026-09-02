@@ -1,6 +1,5 @@
 ---
 "@forkpoint/agent-lighthouse-core": patch
-"agent-lighthouse-monorepo": patch
 ---
 
 Moved corpus analysis script from test suite to `scripts/analyze-corpus.ts`:
