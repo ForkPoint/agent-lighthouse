@@ -17,7 +17,7 @@ export class DuckassistbotAudit extends CrawlerBotAudit {
     tier: "scored",
     dossier: "docs/evidence/audits/access-crawl-control/duckassistbot.md",
     // Gate exemption: being refused is what this category reports.
-    requires: ["origin-reachable"],
+    requires: ["origin-reachable", "unblocked-fetches"],
     defaultPriority: "medium",
     guidance: {
       impact:

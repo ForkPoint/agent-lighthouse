@@ -105,7 +105,7 @@ export class McpRegistryListingOwnershipAudit extends Audit {
     defaultPriority: "medium",
     dossier:
       "docs/evidence/audits/agent-interfaces/mcp-registry-listing-ownership.md",
-    requires: ["origin-reachable"],
+    requires: ["origin-reachable", "unblocked-fetches"],
     guidance: {
       impact:
         'The registry is the index a client resolves "the MCP server for this domain" against. A domain with no first-party entry is absent from it, so the only path to the server is a URL somebody pastes by hand. A listing under an aggregator’s namespace is worse than absent in one way: the brand cannot update or revoke it, and agents routed through it reach a proxy rather than the origin. The reverse-DNS namespace that fixes this is granted on proof of domain control, and that proof has to keep being served.',

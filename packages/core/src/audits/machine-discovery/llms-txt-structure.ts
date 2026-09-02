@@ -44,7 +44,7 @@ export class LlmsTxtStructureAudit extends Audit {
     evidenceGrade: "C",
     tier: "informative",
     dossier: "docs/evidence/audits/machine-discovery/llms-txt-structure.md",
-    requires: ["origin-reachable"],
+    requires: ["origin-reachable", "unblocked-fetches"],
     defaultPriority: "low",
     guidance: {
       impact:

@@ -163,7 +163,7 @@ export class McpToolsListDeterminismAudit extends Audit {
     tier: "scored",
     dossier:
       "docs/evidence/audits/agent-interfaces/mcp-tools-list-determinism.md",
-    requires: ["origin-reachable"],
+    requires: ["origin-reachable", "unblocked-fetches"],
     defaultPriority: "medium",
     guidance: {
       impact:

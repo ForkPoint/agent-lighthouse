@@ -295,8 +295,10 @@ describe("evidence link", () => {
       ...report([]),
       conditions: {
         url: "https://x.test/",
-        // @ts-expect-error - testing malicious injection
-        pageType: { type: '<script>alert("xss")</script>', source: '"><img src=x onerror=alert(1)>' },
+        pageType: {
+          type: '<script>alert("xss")</script>',
+          source: '"><img src=x onerror=alert(1)>',
+        } as any,
         origin: {
           origin: "https://x.test",
           version: "v1",
@@ -319,9 +321,11 @@ describe("evidence link", () => {
       },
     });
 
-    expect(html).not.toContain("<script>alert(\"xss\")</script>");
+    expect(html).not.toContain('<script>alert("xss")</script>');
     expect(html).not.toContain("<img src=x");
-    expect(html).toContain("&lt;script&gt;alert(&quot;xss&quot;)&lt;/script&gt;");
+    expect(html).toContain(
+      "&lt;script&gt;alert(&quot;xss&quot;)&lt;/script&gt;",
+    );
     expect(html).toContain("text-emerald-400"); // Fresh origin color
     expect(html).toContain("fresh");
   });

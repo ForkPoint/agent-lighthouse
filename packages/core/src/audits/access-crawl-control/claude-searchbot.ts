@@ -17,7 +17,7 @@ export class ClaudeSearchbotAudit extends CrawlerBotAudit {
     tier: "scored",
     dossier: "docs/evidence/audits/access-crawl-control/claude-searchbot.md",
     // Gate exemption: being refused is what this category reports.
-    requires: ["origin-reachable"],
+    requires: ["origin-reachable", "unblocked-fetches"],
     defaultPriority: "medium",
     guidance: {
       impact:

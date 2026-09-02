@@ -23,7 +23,7 @@ export class LlmsTxtLinkDescriptionsAudit extends Audit {
     tier: "informative",
     dossier:
       "docs/evidence/audits/machine-discovery/llms-txt-link-descriptions.md",
-    requires: ["origin-reachable"],
+    requires: ["origin-reachable", "unblocked-fetches"],
     defaultPriority: "medium",
     guidance: {
       impact:

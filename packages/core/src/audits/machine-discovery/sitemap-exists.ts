@@ -17,7 +17,7 @@ export class SitemapExistsAudit extends Audit {
     evidenceGrade: "A",
     tier: "scored",
     dossier: "docs/evidence/audits/machine-discovery/sitemap-exists.md",
-    requires: ["origin-reachable"],
+    requires: ["origin-reachable", "unblocked-fetches"],
     defaultPriority: "critical",
     guidance: {
       impact:

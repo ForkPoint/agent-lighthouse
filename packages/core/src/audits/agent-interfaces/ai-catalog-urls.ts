@@ -108,7 +108,7 @@ export class AiCatalogUrlsAudit extends Audit {
     evidenceGrade: "B",
     tier: "scored",
     dossier: "docs/evidence/audits/agent-interfaces/ai-catalog-urls.md",
-    requires: ["origin-reachable"],
+    requires: ["origin-reachable", "unblocked-fetches"],
     defaultPriority: "medium",
     guidance: {
       impact:

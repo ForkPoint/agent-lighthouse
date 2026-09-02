@@ -124,7 +124,9 @@ Content
       expect(result.totalAudits).toBe(5);
       expect(result.overdueCount).toBe(3); // boundary-overdue, no-date, bad-date
 
-      const fresh = result.dossiers.find((d: any) => d.auditId === "test/fresh");
+      const fresh = result.dossiers.find(
+        (d: any) => d.auditId === "test/fresh",
+      );
       expect(fresh.isOverdue).toBe(false);
       expect(fresh.daysOld).toBe(10);
 
@@ -139,11 +141,15 @@ Content
       expect(boundaryOverdue.isOverdue).toBe(true);
       expect(boundaryOverdue.daysOld).toBe(181);
 
-      const noDate = result.dossiers.find((d: any) => d.auditId === "test/no-date");
+      const noDate = result.dossiers.find(
+        (d: any) => d.auditId === "test/no-date",
+      );
       expect(noDate.isOverdue).toBe(true);
       expect(noDate.reviewed).toBe("never");
 
-      const badDate = result.dossiers.find((d: any) => d.auditId === "test/bad-date");
+      const badDate = result.dossiers.find(
+        (d: any) => d.auditId === "test/bad-date",
+      );
       expect(badDate.isOverdue).toBe(true);
 
       // Verify sorting: never/invalid first, then largest daysOld
@@ -186,7 +192,9 @@ Content
     expect(md).toContain("# 📜 Scheduled Audit Evidence Review Sweep");
     expect(md).toContain("Total Registered Audits:** 2");
     expect(md).toContain("Audits Overdue for Re-review (>180 days):** 2");
-    expect(md).toContain("| `access-crawl-control/robots-txt-exists` | **A** |");
+    expect(md).toContain(
+      "| `access-crawl-control/robots-txt-exists` | **A** |",
+    );
     expect(md).toContain("| `machine-discovery/llms-txt-exists` | **A** |");
   });
 

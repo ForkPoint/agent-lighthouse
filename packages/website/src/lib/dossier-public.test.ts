@@ -123,7 +123,9 @@ describe("publicDossier", () => {
         read("access-crawl-control/agent-governance"),
       );
       expect(result.published).toContain("Limits");
-      expect(result.markdown).toContain("The A grade covers the *capability*");
+      expect(result.markdown).toMatch(
+        /The A grade covers the [*_]capability[*_]/,
+      );
       expect(result.markdown).not.toContain("**Counter-evidence:**");
     });
 

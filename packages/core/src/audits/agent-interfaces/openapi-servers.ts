@@ -23,7 +23,7 @@ export class OpenApiServersAudit extends Audit {
     evidenceGrade: "B",
     tier: "scored",
     dossier: "docs/evidence/audits/agent-interfaces/openapi-servers.md",
-    requires: ["origin-reachable"],
+    requires: ["origin-reachable", "unblocked-fetches"],
     defaultPriority: "high",
     guidance: {
       impact:

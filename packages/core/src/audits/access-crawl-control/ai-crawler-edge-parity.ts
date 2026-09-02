@@ -122,7 +122,12 @@ export class AiCrawlerEdgeParityAudit extends Audit {
     dossier:
       "docs/evidence/audits/access-crawl-control/ai-crawler-edge-parity.md",
     // Gate exemption: being refused is what this category reports.
-    requires: ["origin-reachable", "rendered-body", "sample-adequate"],
+    requires: [
+      "origin-reachable",
+      "unblocked-fetches",
+      "rendered-body",
+      "sample-adequate",
+    ],
     defaultPriority: "critical",
     guidance: {
       impact:

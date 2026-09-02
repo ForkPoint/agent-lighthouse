@@ -18,7 +18,7 @@ export class CrawlDelayAudit extends Audit {
     tier: "informative",
     dossier: "docs/evidence/audits/access-crawl-control/crawl-delay.md",
     // Gate exemption: being refused is what this category reports.
-    requires: ["origin-reachable"],
+    requires: ["origin-reachable", "unblocked-fetches"],
     defaultPriority: "high",
     guidance: {
       impact:

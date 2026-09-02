@@ -17,7 +17,7 @@ export class SitemapLastmodAudit extends Audit {
     evidenceGrade: "A",
     tier: "scored",
     dossier: "docs/evidence/audits/machine-discovery/sitemap-lastmod.md",
-    requires: ["origin-reachable"],
+    requires: ["origin-reachable", "unblocked-fetches"],
     defaultPriority: "medium",
     guidance: {
       impact:

@@ -17,7 +17,7 @@ export class ChatgptUserAudit extends CrawlerBotAudit {
     tier: "informative",
     dossier: "docs/evidence/audits/access-crawl-control/chatgpt-user.md",
     // Gate exemption: being refused is what this category reports.
-    requires: ["origin-reachable"],
+    requires: ["origin-reachable", "unblocked-fetches"],
     defaultPriority: "medium",
     guidance: {
       impact:

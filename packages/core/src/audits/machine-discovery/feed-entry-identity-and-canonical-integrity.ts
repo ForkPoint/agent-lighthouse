@@ -62,7 +62,7 @@ export class FeedEntryIdentityAndCanonicalIntegrityAudit extends Audit {
     defaultPriority: "medium",
     dossier:
       "docs/evidence/audits/machine-discovery/feed-entry-identity-and-canonical-integrity.md",
-    requires: ["origin-reachable"],
+    requires: ["origin-reachable", "unblocked-fetches"],
     guidance: {
       impact:
         'A feed is how a consumer tracks what changed without re-crawling the site, and identity is what makes that possible: the id says "this is the same item you saw last time". An entry with no id, or with an id that repeats, forces the consumer to guess — usually by URL, which is exactly the thing that changes. A link that carries `utm_` parameters or redirects somewhere else creates a second address for one page, so the item the consumer stores is not the page the site considers canonical.',

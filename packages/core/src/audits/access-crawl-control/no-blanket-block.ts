@@ -18,7 +18,7 @@ export class NoBlanketBlockAudit extends Audit {
     tier: "scored",
     dossier: "docs/evidence/audits/access-crawl-control/no-blanket-block.md",
     // Gate exemption: being refused is what this category reports.
-    requires: ["origin-reachable"],
+    requires: ["origin-reachable", "unblocked-fetches"],
     defaultPriority: "critical",
     guidance: {
       impact:

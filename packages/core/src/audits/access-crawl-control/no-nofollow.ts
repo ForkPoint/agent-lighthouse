@@ -18,7 +18,7 @@ export class NoNofollowAudit extends Audit {
     dossier: "docs/evidence/audits/access-crawl-control/no-nofollow.md",
     // Gate exemption: being refused is what this category reports, and the meta tag and
     // header this audit reads are served by a page whose body renders nothing.
-    requires: ["origin-reachable"],
+    requires: ["origin-reachable", "unblocked-fetches"],
     defaultPriority: "high",
     guidance: {
       impact:
