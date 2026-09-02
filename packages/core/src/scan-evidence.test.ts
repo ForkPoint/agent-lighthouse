@@ -4,6 +4,7 @@ import {
   allEvidenceMet,
   scanReadTheSite,
   unreadSiteReason,
+  unjudgeableReason,
 } from "./scan-evidence";
 import { mockPageContext, mockFetchResult } from "./__tests__/test-utils";
 import type { FetchResult } from "./fetcher";
@@ -459,5 +460,26 @@ describe("scanReadTheSite", () => {
     });
     expect(scanReadTheSite(evidence)).toBe(false);
     expect(unreadSiteReason(evidence)).toContain("different site");
+  });
+});
+
+describe("scan-evidence: unjudgeableReason", () => {
+  it("says each reason once, in key order", () => {
+    const reason = unjudgeableReason({
+      reasons: {
+        "sample-adequate": "The scan fetched no pages.",
+        "rendered-body": "The scan fetched no pages.",
+        "origin-reachable": "The homepage answered HTTP 403.",
+      },
+    });
+    expect(reason).toBe(
+      "The homepage answered HTTP 403. The scan fetched no pages.",
+    );
+  });
+
+  it("falls back to one sentence when no key carries a reason", () => {
+    expect(unjudgeableReason({ reasons: {} })).toBe(
+      "The scan obtained too little evidence to judge this site.",
+    );
   });
 });

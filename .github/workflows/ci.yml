@@ -20,13 +20,16 @@ jobs:
         uses: actions/setup-node@v7
         with:
           node-version: 22
-          cache: 'pnpm'
+          cache: "pnpm"
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
       - name: Lint
         run: pnpm lint
+
+      - name: Format
+        run: pnpm format:check
 
       - name: Build
         run: pnpm build
@@ -57,4 +60,3 @@ jobs:
 
       - name: Smoke-test the live test runner
         run: pnpm test:live --limit=0
-

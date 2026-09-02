@@ -386,30 +386,33 @@ describe.skipIf(process.env["AL_SKIP_NETWORK"] === "1")(
       });
 
       // --- Dump all results for manual review ---
-      it("prints full results summary for manual review", () => {
-        // This test always passes — it is for visibility
-        console.log("\n=== example.com FULL RESULTS ===");
-        console.log(`Total checks: ${allResults.size}`);
-        console.log(
-          `Pass: ${[...allResults.values()].filter((r) => r.status === "pass").length}`,
-        );
-        console.log(
-          `Warn: ${[...allResults.values()].filter((r) => r.status === "warn").length}`,
-        );
-        console.log(
-          `Fail: ${[...allResults.values()].filter((r) => r.status === "fail").length}`,
-        );
+      it.skipIf(!process.env["AL_VERIFY_VERBOSE"])(
+        "prints full results summary for manual review",
+        () => {
+          // This test always passes — it is for visibility
+          console.log("\n=== example.com FULL RESULTS ===");
+          console.log(`Total checks: ${allResults.size}`);
+          console.log(
+            `Pass: ${[...allResults.values()].filter((r) => r.status === "pass").length}`,
+          );
+          console.log(
+            `Warn: ${[...allResults.values()].filter((r) => r.status === "warn").length}`,
+          );
+          console.log(
+            `Fail: ${[...allResults.values()].filter((r) => r.status === "fail").length}`,
+          );
 
-        // Print suspicious results — passes that might be false positives
-        console.log("\n--- PASSES (verify these are correct) ---");
-        allResults.forEach((val, key) => {
-          if (val.status === "pass") {
-            console.log(`  ${key}: ${val.found}`);
-          }
-        });
+          // Print suspicious results — passes that might be false positives
+          console.log("\n--- PASSES (verify these are correct) ---");
+          allResults.forEach((val, key) => {
+            if (val.status === "pass") {
+              console.log(`  ${key}: ${val.found}`);
+            }
+          });
 
-        expect(true).toBe(true);
-      });
+          expect(true).toBe(true);
+        },
+      );
     });
 
     // ────────────────────────────────────────────────────────────────
@@ -490,28 +493,31 @@ describe.skipIf(process.env["AL_SKIP_NETWORK"] === "1")(
         }
       });
 
-      it("prints full results summary for manual review", () => {
-        console.log("\n=== docs.anthropic.com FULL RESULTS ===");
-        console.log(`Total checks: ${allResults.size}`);
-        console.log(
-          `Pass: ${[...allResults.values()].filter((r) => r.status === "pass").length}`,
-        );
-        console.log(
-          `Warn: ${[...allResults.values()].filter((r) => r.status === "warn").length}`,
-        );
-        console.log(
-          `Fail: ${[...allResults.values()].filter((r) => r.status === "fail").length}`,
-        );
+      it.skipIf(!process.env["AL_VERIFY_VERBOSE"])(
+        "prints full results summary for manual review",
+        () => {
+          console.log("\n=== docs.anthropic.com FULL RESULTS ===");
+          console.log(`Total checks: ${allResults.size}`);
+          console.log(
+            `Pass: ${[...allResults.values()].filter((r) => r.status === "pass").length}`,
+          );
+          console.log(
+            `Warn: ${[...allResults.values()].filter((r) => r.status === "warn").length}`,
+          );
+          console.log(
+            `Fail: ${[...allResults.values()].filter((r) => r.status === "fail").length}`,
+          );
 
-        console.log("\n--- PASSES (verify these are correct) ---");
-        allResults.forEach((val, key) => {
-          if (val.status === "pass") {
-            console.log(`  ${key}: ${val.found}`);
-          }
-        });
+          console.log("\n--- PASSES (verify these are correct) ---");
+          allResults.forEach((val, key) => {
+            if (val.status === "pass") {
+              console.log(`  ${key}: ${val.found}`);
+            }
+          });
 
-        expect(true).toBe(true);
-      });
+          expect(true).toBe(true);
+        },
+      );
     });
 
     // ────────────────────────────────────────────────────────────────
@@ -574,20 +580,23 @@ describe.skipIf(process.env["AL_SKIP_NETWORK"] === "1")(
         }
       });
 
-      it("prints full results summary for manual review", () => {
-        console.log("\n=== allbirds.com FULL RESULTS ===");
-        console.log(`Total checks: ${allResults.size}`);
-        console.log(
-          `Pass: ${[...allResults.values()].filter((r) => r.status === "pass").length}`,
-        );
-        console.log(
-          `Warn: ${[...allResults.values()].filter((r) => r.status === "warn").length}`,
-        );
-        console.log(
-          `Fail: ${[...allResults.values()].filter((r) => r.status === "fail").length}`,
-        );
-        expect(true).toBe(true);
-      });
+      it.skipIf(!process.env["AL_VERIFY_VERBOSE"])(
+        "prints full results summary for manual review",
+        () => {
+          console.log("\n=== allbirds.com FULL RESULTS ===");
+          console.log(`Total checks: ${allResults.size}`);
+          console.log(
+            `Pass: ${[...allResults.values()].filter((r) => r.status === "pass").length}`,
+          );
+          console.log(
+            `Warn: ${[...allResults.values()].filter((r) => r.status === "warn").length}`,
+          );
+          console.log(
+            `Fail: ${[...allResults.values()].filter((r) => r.status === "fail").length}`,
+          );
+          expect(true).toBe(true);
+        },
+      );
     });
 
     // ────────────────────────────────────────────────────────────────
@@ -659,20 +668,23 @@ describe.skipIf(process.env["AL_SKIP_NETWORK"] === "1")(
         expect(["pass", "warn"]).toContain(result!.status);
       });
 
-      it("prints full results summary for manual review", () => {
-        console.log("\n=== theguardian.com FULL RESULTS ===");
-        console.log(`Total checks: ${allResults.size}`);
-        console.log(
-          `Pass: ${[...allResults.values()].filter((r) => r.status === "pass").length}`,
-        );
-        console.log(
-          `Warn: ${[...allResults.values()].filter((r) => r.status === "warn").length}`,
-        );
-        console.log(
-          `Fail: ${[...allResults.values()].filter((r) => r.status === "fail").length}`,
-        );
-        expect(true).toBe(true);
-      });
+      it.skipIf(!process.env["AL_VERIFY_VERBOSE"])(
+        "prints full results summary for manual review",
+        () => {
+          console.log("\n=== theguardian.com FULL RESULTS ===");
+          console.log(`Total checks: ${allResults.size}`);
+          console.log(
+            `Pass: ${[...allResults.values()].filter((r) => r.status === "pass").length}`,
+          );
+          console.log(
+            `Warn: ${[...allResults.values()].filter((r) => r.status === "warn").length}`,
+          );
+          console.log(
+            `Fail: ${[...allResults.values()].filter((r) => r.status === "fail").length}`,
+          );
+          expect(true).toBe(true);
+        },
+      );
     });
   },
   240_000,

@@ -277,6 +277,28 @@ export function scanReadTheSite(evidence: ScanEvidence): boolean {
   return evidence.judgeable;
 }
 
+/**
+ * Every unmet key's reason, once each, in key order.
+ *
+ * Two keys can carry the same sentence — `rendered-body` and
+ * `sample-adequate` both say "The scan fetched no pages." when nothing was
+ * fetched — and a report joined them into "The scan fetched no pages. The
+ * scan fetched no pages." on every walled site.
+ */
+export function unjudgeableReason(
+  evidence: Pick<ScanEvidence, "reasons">,
+): string {
+  const seen = new Set<string>();
+  for (const key of EVIDENCE_KEYS) {
+    const reason = evidence.reasons[key];
+    if (reason) seen.add(reason);
+  }
+  return (
+    [...seen].join(" ") ||
+    "The scan obtained too little evidence to judge this site."
+  );
+}
+
 /** Why the scan holds nothing it can attribute to the site. */
 export function unreadSiteReason(evidence: ScanEvidence): string {
   return (

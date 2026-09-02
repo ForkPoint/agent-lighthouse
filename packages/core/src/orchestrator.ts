@@ -46,7 +46,7 @@ import {
   GATED_MASS_UNSCORED_THRESHOLD,
 } from "./scorer";
 import { detectWafProtection } from "./waf-detector";
-import { buildScanEvidence } from "./scan-evidence";
+import { buildScanEvidence, unjudgeableReason } from "./scan-evidence";
 
 import type { FetchOptions, FetchResult } from "./fetcher";
 
@@ -525,8 +525,7 @@ export async function runScan(
   const gatedShare = gatedMassShare(allChecks);
   const escalated = gatedShare > GATED_MASS_UNSCORED_THRESHOLD;
   const unscoredReason = !evidence.judgeable
-    ? Object.values(evidence.reasons).filter(Boolean).join(" ") ||
-      "The scan obtained too little evidence to judge this site."
+    ? unjudgeableReason(evidence)
     : escalated
       ? `The scan could not feed ${Math.round(gatedShare * 100)}% of the registry's evidence mass, ` +
         "so what remains is not a reading of this site."

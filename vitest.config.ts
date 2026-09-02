@@ -11,6 +11,10 @@ export default defineConfig({
     // suites, and orchestrator/corpus tests that finish in under a second
     // locally were timing out at the 5s default.
     testTimeout: 30_000,
+    // Tests exercise failure paths on purpose; the fetcher's warn lines about
+    // them are noise in a green run. `LOG_LEVEL=debug pnpm test` brings
+    // everything back.
+    env: { LOG_LEVEL: process.env["LOG_LEVEL"] ?? "error" },
     coverage: {
       provider: "v8",
       reporter: ["text-summary", "json-summary", "html"],
