@@ -136,13 +136,14 @@ const DEFAULTS = {
   /**
    * Sites per run.
    *
-   * The list is about 400 curated domains, so the default window is the
-   * whole list: `windowOf` returns everything when `size >= all.length`.
-   * At concurrency 2 and 63 s per site per worker, 400 sites is about 210
-   * minutes, inside the 240-minute deadline. The date-seeded offset still
-   * applies when a smaller limit is passed.
+   * The list is about 400 curated domains and `site-list.test.ts` holds it
+   * under 500, so the default window is the whole list: `windowOf` returns
+   * everything when `size >= all.length`. At concurrency 2 and 63 s per site
+   * per worker, 414 sites is about 220 minutes, inside the 240-minute
+   * deadline. The date-seeded offset still applies when a smaller limit is
+   * passed.
    */
-  limit: 400,
+  limit: 500,
   concurrency: 2,
   delay: 3000,
   connections: 2,
