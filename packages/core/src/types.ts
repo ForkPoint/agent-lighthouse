@@ -297,6 +297,14 @@ export interface ScanConditions {
     gatedCount: number;
     reasons: Record<string, number>;
   };
+  /** The wall-clock budget the scan ran under, and whether it ran out. */
+  budget?: {
+    limitMs: number;
+    elapsedMs: number;
+    exhausted: boolean;
+    /** Audits reported `na` because the budget ran out before they started. */
+    skippedCount: number;
+  };
 }
 
 export interface ReadinessVitals {

@@ -35,6 +35,8 @@ export interface FileConfig {
   minScore?: number;
   outputDir?: string;
   output?: string[];
+  /** Scan budget in seconds; the flag `--timeout` overrides it. */
+  timeout?: number;
 }
 
 export interface CliOptions {
@@ -58,6 +60,10 @@ export interface CliOptions {
   invalidPageType: string | undefined;
   /** Where to write the per-audit NDJSON trace, if `--trace` was given. */
   tracePath: string | undefined;
+  /** Scan budget in seconds from `--timeout` or the config file; unset means the default. */
+  timeoutSeconds: number | undefined;
+  /** A `--timeout` value that is not a non-negative number; `main` refuses it. */
+  invalidTimeout: string | undefined;
 }
 
 /**
@@ -140,6 +146,22 @@ export function parseCliOptions(
   const categories = splitList(getArgValue(args, "", "--categories"));
   const minScoreArg = getArgValue(args, "", "--min-score");
   const pageTypeArg = getArgValue(args, "", "--page-type");
+  const timeoutArg = getArgValue(args, "", "--timeout");
+  // Number("") is 0, and 0 means "no budget", so a bare --timeout must not
+  // read as "run without a budget"; it is refused like any other bad value.
+  const timeoutValid =
+    timeoutArg !== undefined &&
+    timeoutArg.trim() !== "" &&
+    Number.isFinite(Number(timeoutArg)) &&
+    Number(timeoutArg) >= 0;
+  // The config file is JSON, so its value can be anything; a negative or
+  // non-numeric one must not reach the scan as "no budget".
+  const fileTimeout: unknown = fileConfig.timeout;
+  const fileTimeoutValid =
+    fileTimeout === undefined ||
+    (typeof fileTimeout === "number" &&
+      Number.isFinite(fileTimeout) &&
+      fileTimeout >= 0);
 
   return {
     url: resolveUrl(positionalUrl, fileConfig),
@@ -171,6 +193,19 @@ export function parseCliOptions(
     tracePath: args.includes("--trace")
       ? (getArgValue(args, "", "--trace") ?? DEFAULT_TRACE_FILE)
       : getArgValue(args, "", "--trace"),
+    timeoutSeconds: timeoutValid
+      ? Number(timeoutArg)
+      : fileTimeoutValid
+        ? (fileTimeout as number | undefined)
+        : undefined,
+    invalidTimeout:
+      timeoutArg !== undefined && !timeoutValid
+        ? timeoutArg
+        : args.includes("--timeout") && timeoutArg === undefined
+          ? ""
+          : !timeoutValid && !fileTimeoutValid
+            ? `${String(fileTimeout)} (config file)`
+            : undefined,
   };
 }
 

@@ -1,5 +1,6 @@
 import {
   runScan,
+  formatBudget,
   loadConfigFile,
   getPreset,
   logger,
@@ -81,6 +82,8 @@ Options:
   -o, --output <formats>       Output formats (comma-separated: terminal, html, json, md) [default: terminal,html,json]
   -d, --output-dir <path>      Output directory for generated reports [default: ./reports]
   -v, --view                   Automatically open the generated HTML report in your browser
+  --timeout <seconds>          Wall-clock budget for the scan [default: 180]. When it runs out the
+                               scan finishes with what it has; 0 disables it
   --min-score <number>         Minimum score (0-100) required to pass CI assertions
   --assert-category <id:min>   Per-category assertions (e.g. --assert-category structured-data:90)
   --silent                     Suppress progress output
@@ -141,6 +144,8 @@ async function audit(targetUrl?: string) {
     outputFormats,
     pageType,
     invalidPageType,
+    timeoutSeconds,
+    invalidTimeout,
   } = opts;
   if (unknownCategories.length > 0) {
     console.error(
@@ -151,6 +156,18 @@ async function audit(targetUrl?: string) {
   if (invalidPageType !== undefined) {
     console.error(
       `\x1b[31mUnknown page type: ${invalidPageType}\x1b[0m\nValid page types: ${PAGE_TYPE_IDS.join(", ")}`,
+    );
+    process.exit(1);
+  }
+  if (invalidTimeout !== undefined) {
+    // A bare flag, or one followed by a token that starts with "-": the
+    // parser reads that token as the next flag, so the value never arrives.
+    const what =
+      invalidTimeout === ""
+        ? "no value given (write --timeout=<seconds> for a value that starts with -)"
+        : invalidTimeout;
+    console.error(
+      `\x1b[31mInvalid --timeout: ${what}\x1b[0m\nGive a number of seconds; 0 disables the budget.`,
     );
     process.exit(1);
   }
@@ -190,6 +207,9 @@ async function audit(targetUrl?: string) {
     ...(pageType ? { pageType } : {}),
     includeExperimental,
     ...(onAuditTrace ? { onAuditTrace } : {}),
+    ...(timeoutSeconds !== undefined
+      ? { timeoutMs: timeoutSeconds * 1000 }
+      : {}),
   });
 
   const view = buildReportView(report);
@@ -224,6 +244,12 @@ async function audit(targetUrl?: string) {
           `Coverage: \x1b[1m${cond.coverage.assessedMass}/${cond.coverage.registryMass}\x1b[0m mass (${pct}%) | ` +
           `Unscored: \x1b[1m${cond.unscored.totalCount}\x1b[0m (${cond.unscored.informativeCount} advisory, ${cond.unscored.gatedCount} gated)`,
       );
+      if (cond.budget?.exhausted) {
+        console.log(
+          `\x1b[33mScan budget of ${formatBudget(cond.budget.limitMs)} ran out:\x1b[0m ` +
+            `${cond.budget.skippedCount} audit(s) not assessed. Raise it with --timeout <seconds>.`,
+        );
+      }
     }
     if (view.coverage.skippedNoEvidence > 0) {
       // The count alone reads as a broken scanner; the reason makes it a fact

@@ -8,7 +8,7 @@ import {
   type ScanConfig,
   type AuditRegistration,
 } from "./audit-config";
-import { TAG_SKIPPED_NO_EVIDENCE } from "./constants";
+import { TAG_SKIPPED_NO_EVIDENCE, TAG_SKIPPED_SCAN_BUDGET } from "./constants";
 import { planAudits, runAudits } from "./audit-runner";
 import { AuditResultSchema } from "./schemas";
 import type { AuditTrace } from "./audit-trace";
@@ -316,6 +316,117 @@ describe("runAudits", () => {
     const out = await runAudits(ctxWith(["homepage"]), config);
     expect(out.checks).toHaveLength(25);
     expect(out.categories[0].score).toBe(100);
+  });
+});
+
+/** A budget that has already run out, with the sentence the orchestrator uses. */
+function budgetOut(): AbortController {
+  const controller = new AbortController();
+  controller.abort(new Error("The scan budget of 1 s ran out."));
+  return controller;
+}
+
+describe("runAudits — scan budget", () => {
+  it("never constructs an audit once the budget is gone, and says so", async () => {
+    const ran = vi.fn(() => result("pass", 1));
+    const config: ScanConfig = {
+      categories: [{ id: "c", name: "C", weight: 1 }],
+      audits: {
+        c: [
+          makeReg(meta({ id: "a1", category: "c" }), ran),
+          makeReg(meta({ id: "a2", category: "c" }), ran),
+        ],
+      },
+    };
+    const events: AuditProgressEvent[] = [];
+    const out = await runAudits(
+      ctxWith(["homepage"]),
+      config,
+      (e) => events.push(e),
+      undefined,
+      undefined,
+      budgetOut().signal,
+    );
+
+    expect(ran).not.toHaveBeenCalled();
+    expect(out.checks).toHaveLength(2);
+    for (const check of out.checks) {
+      expect(check.status).toBe("na");
+      expect(check.tags).toContain(TAG_SKIPPED_SCAN_BUDGET);
+      expect(check.explanation).toBe(
+        "Not assessed: The scan budget of 1 s ran out. This audit had not started.",
+      );
+    }
+    // The progress phase was sized on every runnable audit, so a stub still
+    // counts as a unit done or the bar never reaches the end.
+    expect(events.filter((e) => e.type === "unit:done")).toHaveLength(2);
+    expect(out.categories[0].score).toBe(0);
+  });
+
+  it("withholds the audit that was still running, and stubs every later one", async () => {
+    const controller = new AbortController();
+    const regs: AuditRegistration[] = [
+      makeReg(meta({ id: "first", category: "c" }), () => {
+        controller.abort(new Error("The scan budget of 1 s ran out."));
+        return result("pass", 1);
+      }),
+    ];
+    for (let i = 0; i < 24; i++) {
+      regs.push(
+        makeReg(meta({ id: `later${i}`, category: "c" }), () =>
+          result("pass", 1),
+        ),
+      );
+    }
+    const config: ScanConfig = {
+      categories: [{ id: "c", name: "C", weight: 1 }],
+      audits: { c: regs },
+    };
+
+    const out = await runAudits(
+      ctxWith(["homepage"]),
+      config,
+      undefined,
+      undefined,
+      undefined,
+      controller.signal,
+    );
+
+    expect(out.checks).toHaveLength(25);
+    // It returned "pass", but a verdict reached after the budget went may
+    // rest on a request that was never sent, so it is not believed.
+    const first = out.checks.find((c) => c.id === "first")!;
+    expect(first.status).toBe("na");
+    expect(first.explanation).toContain("This audit was still running.");
+    const stubs = out.checks.filter((c) =>
+      c.tags?.includes(TAG_SKIPPED_SCAN_BUDGET),
+    );
+    expect(stubs).toHaveLength(25);
+    expect(
+      stubs.filter((c) => c.explanation?.includes("had not started")),
+    ).toHaveLength(24);
+  });
+
+  it("falls back to a generic sentence when the signal carries no message", async () => {
+    const controller = new AbortController();
+    controller.abort();
+    const config: ScanConfig = {
+      categories: [{ id: "c", name: "C", weight: 1 }],
+      audits: {
+        c: [
+          makeReg(meta({ id: "a1", category: "c" }), () => result("pass", 1)),
+        ],
+      },
+    };
+    const out = await runAudits(
+      ctxWith(["homepage"]),
+      config,
+      undefined,
+      undefined,
+      undefined,
+      controller.signal,
+    );
+    expect(out.checks[0].explanation).toContain("The scan budget ran out.");
   });
 });
 

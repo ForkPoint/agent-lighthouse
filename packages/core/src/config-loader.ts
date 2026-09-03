@@ -19,6 +19,8 @@ export interface AgentLighthouseConfig {
   outputDir?: string;
   /** Maximum number of pages to discover & scan */
   maxPages?: number;
+  /** Scan budget in seconds; 0 disables it. The flag `--timeout` overrides it. */
+  timeout?: number;
 }
 
 /** Helper function for type-safe configuration files */

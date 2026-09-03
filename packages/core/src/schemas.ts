@@ -208,4 +208,13 @@ export const ScanConditionsSchema = z.object({
     gatedCount: z.number().int().nonnegative(),
     reasons: z.record(z.string(), z.number().int().nonnegative()),
   }),
+  // Optional: reports written before the budget existed carry no block.
+  budget: z
+    .object({
+      limitMs: z.number().nonnegative(),
+      elapsedMs: z.number().nonnegative(),
+      exhausted: z.boolean(),
+      skippedCount: z.number().int().nonnegative(),
+    })
+    .optional(),
 });

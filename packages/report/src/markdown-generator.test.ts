@@ -196,3 +196,84 @@ describe("generateMarkdownSummary — scan conditions", () => {
     expect(md).toContain("`fresh`");
   });
 });
+
+describe("scan conditions — the budget line", () => {
+  const conditions = {
+    url: "https://x.test/",
+    pageType: { type: "homepage" as const, source: "detected" as const },
+    origin: {
+      origin: "https://x.test",
+      version: "v1",
+      readAt: "2026-09-02T08:00:00.000Z",
+      cached: false,
+    },
+    coverage: {
+      registryMass: 100,
+      assessedMass: 50,
+      pageMass: 70,
+      originMass: 30,
+      gatedMass: 0,
+    },
+    unscored: {
+      totalCount: 10,
+      informativeCount: 8,
+      gatedCount: 0,
+      reasons: { informative: 8, "skipped-scan-budget": 2 },
+    },
+  };
+
+  it("names the budget the scan stayed inside", () => {
+    const md = generateMarkdownSummary({
+      ...report([]),
+      conditions: {
+        ...conditions,
+        budget: {
+          limitMs: 180_000,
+          elapsedMs: 42_400,
+          exhausted: false,
+          skippedCount: 0,
+        },
+      },
+    });
+    expect(md).toContain("- **Budget:** `42 s` of 180 s");
+  });
+
+  it("says the budget ran out and how many audits it cut", () => {
+    const md = generateMarkdownSummary({
+      ...report([]),
+      conditions: {
+        ...conditions,
+        budget: {
+          limitMs: 180_000,
+          elapsedMs: 180_210,
+          exhausted: true,
+          skippedCount: 37,
+        },
+      },
+    });
+    expect(md).toContain(
+      "- **Budget:** `ran out` at 180 s — 37 audits not assessed",
+    );
+  });
+
+  it("says there was no budget when it was disabled", () => {
+    const md = generateMarkdownSummary({
+      ...report([]),
+      conditions: {
+        ...conditions,
+        budget: {
+          limitMs: 0,
+          elapsedMs: 9_000,
+          exhausted: false,
+          skippedCount: 0,
+        },
+      },
+    });
+    expect(md).toContain("- **Budget:** `none` (9 s elapsed)");
+  });
+
+  it("prints no budget line for a report written before the budget existed", () => {
+    const md = generateMarkdownSummary({ ...report([]), conditions });
+    expect(md).not.toContain("**Budget:**");
+  });
+});

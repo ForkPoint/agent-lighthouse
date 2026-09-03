@@ -13,7 +13,14 @@ export const DEFAULT_ORIGIN_CACHE_TTL_MS = 60 * 60 * 1000; // 1 hour
  */
 export const DEFAULT_ORIGIN_CACHE_MAX_ENTRIES = 256;
 export const REQUEST_TIMEOUT_MS = 10_000;
-export const SCAN_TIMEOUT_MS = 60_000;
+/**
+ * Wall-clock budget for one scan. When it runs out, requests in flight are
+ * aborted, no further request is sent, and every audit not yet started is
+ * reported `na` tagged `skipped:scan-budget`. 180 s clears the 95th
+ * percentile of the curated corpus (109 s on 2026-09-02) with margin; the
+ * scans it cuts ran 5 to 17 minutes.
+ */
+export const SCAN_TIMEOUT_MS = 180_000;
 export const MAX_RESPONSE_BODY_BYTES = 5 * 1024 * 1024; // 5MB
 /** @deprecated Unused internally; retained for published API stability. Scheduled for removal in v4. */
 export const MAX_CONCURRENT_REQUESTS = 10;
@@ -29,6 +36,8 @@ export const TAG_SKIPPED_PAGE_TYPE = "skipped:page-type";
 export const TAG_SCAN_ERROR = "scan-error";
 /** An audit the scan could not feed: it needs evidence this scan never got. */
 export const TAG_SKIPPED_NO_EVIDENCE = "skipped:no-evidence";
+/** An audit the scan never started: its wall-clock budget ran out first. */
+export const TAG_SKIPPED_SCAN_BUDGET = "skipped:scan-budget";
 
 // ── Scoring ────────────────────────────────────────────────────
 

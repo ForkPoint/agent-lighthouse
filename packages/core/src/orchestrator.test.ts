@@ -8,7 +8,16 @@ import type { FetchResult } from "./fetcher";
 const h = vi.hoisted(() => ({
   map: new Map<string, FetchResult>(),
   calls: [] as string[],
+  /** How long a mocked fetch takes to answer; the budget tests raise it. */
+  delayMs: 0,
+  /** Only calls after this many are slow: 0 slows every call. */
+  delayFromCall: 0,
 }));
+
+/** What the real fetcher returns for a request its signal cut short. */
+function abortedResult(url: string): FetchResult {
+  return { ...notFound(url), status: 0, error: "This operation was aborted" };
+}
 
 function notFound(url: string): FetchResult {
   return {
@@ -31,8 +40,11 @@ vi.mock("./fetcher", async (importOriginal) => {
     // sanitize the scanned URL); only the network fetch is stubbed.
     ...actual,
     createFetcher: () => ({
-      fetch: async ({ url }: { url: string }) => {
+      fetch: async ({ url, signal }: { url: string; signal?: AbortSignal }) => {
         h.calls.push(url);
+        if (h.delayMs > 0 && h.calls.length > h.delayFromCall)
+          await new Promise((resolve) => setTimeout(resolve, h.delayMs));
+        if (signal?.aborted) return abortedResult(url);
         return h.map.get(url) ?? notFound(url);
       },
     }),
@@ -56,6 +68,7 @@ vi.mock("./audit-runner", async (importOriginal) => {
 import { runScan, READINESS_VITAL_IDS } from "./orchestrator";
 import type { ScanEvent } from "./progress";
 import { defaultConfig } from "./audit-config";
+import { SCAN_TIMEOUT_MS } from "./constants";
 import { runAudits } from "./audit-runner";
 import type { AuditRunResult } from "./audit-runner";
 
@@ -94,6 +107,8 @@ import { defaultOriginCache, computeOriginCacheKey } from "./origin-cache";
 beforeEach(() => {
   h.map.clear();
   h.calls.length = 0;
+  h.delayMs = 0;
+  h.delayFromCall = 0;
   defaultOriginCache.clear();
 });
 
@@ -491,6 +506,118 @@ describe("runScan — origin homepage evidence", () => {
     expect(
       h.calls.filter((u) => u === "https://example.com/robots.txt"),
     ).toHaveLength(2);
+  });
+});
+
+describe("runScan — the scan budget", () => {
+  const url = "https://example.com/";
+  const FULL_HTML = `<html><body><main><h1>Kettles</h1><p>${"copper kettle ".repeat(60)}</p></main></body></html>`;
+
+  it("records the default budget on a scan that stayed inside it", async () => {
+    set(url, FULL_HTML);
+
+    const report = await runScan(url);
+
+    expect(report.conditions?.budget).toMatchObject({
+      limitMs: SCAN_TIMEOUT_MS,
+      exhausted: false,
+      skippedCount: 0,
+    });
+    expect(report.conditions?.budget?.elapsedMs).toBeGreaterThanOrEqual(0);
+    expect(report.conditions?.budget?.elapsedMs).toBeLessThan(SCAN_TIMEOUT_MS);
+    expect(report.conditions?.unscored.reasons["skipped-scan-budget"]).toBe(
+      undefined,
+    );
+  });
+
+  /**
+   * Root files and the page answer at once, so the site is read; only the
+   * requests the audits make themselves are slow. The budget then runs out
+   * inside the audits phase, which is where a slow origin spends a scan.
+   */
+  function slowAudits(delayMs: number): void {
+    set(url, FULL_HTML);
+    h.delayFromCall = 30;
+    h.delayMs = delayMs;
+  }
+
+  it("finishes with what it has when the budget runs out, and reports no score", async () => {
+    // The budget must outlive phases 1 and 2, which are microtask-only plus
+    // one small parse; 200 ms is two orders above what they take, so the
+    // asserted shape — page read, audits cut — holds on a loaded runner.
+    slowAudits(400);
+
+    const report = await runScan(url, { timeoutMs: 200 });
+    const checks = report.categories.flatMap((c) => c.checks);
+    const cut = checks.filter((c) => c.tags?.includes("skipped:scan-budget"));
+
+    expect(cut.length).toBeGreaterThan(0);
+    expect(cut.every((c) => c.status === "na")).toBe(true);
+    expect(cut[0].explanation).toContain("The scan budget of 200 ms ran out.");
+    expect(report.conditions?.budget).toMatchObject({
+      limitMs: 200,
+      exhausted: true,
+      skippedCount: cut.length,
+    });
+    expect(report.conditions?.budget?.elapsedMs).toBeGreaterThanOrEqual(200);
+    // The reasons map files advisory stubs under `informative`, so its
+    // budget count is the scored subset of what the budget cut.
+    const scoredCut =
+      report.conditions?.unscored.reasons["skipped-scan-budget"];
+    expect(scoredCut).toBeGreaterThan(0);
+    expect(scoredCut).toBeLessThanOrEqual(cut.length);
+    // The page was read, so the scan is judgeable; the budget is what cut it.
+    expect(report.scanValidity?.judgeable).toBe(true);
+    expect(report.overallScore).toBeNull();
+    expect(report.scanValidity?.unscoredReason).toContain(
+      "The scan budget of 200 ms ran out.",
+    );
+    expect(report.scanValidity?.unscoredReason).toContain("was never assessed");
+  });
+
+  it("sends no further request once the budget is gone", async () => {
+    slowAudits(30);
+    // Both runs bypass the origin cache, or the second one skips every root
+    // file the first one stored and the comparison measures the cache.
+    await runScan(url, { timeoutMs: 0, bypassOriginCache: true });
+    const unbudgeted = h.calls.length;
+
+    h.calls.length = 0;
+    await runScan(url, { timeoutMs: 60, bypassOriginCache: true });
+    const budgeted = h.calls.length;
+
+    // The same scan, cut short: every request after the cut was never sent.
+    expect(budgeted).toBeGreaterThan(0);
+    expect(budgeted).toBeLessThan(unbudgeted);
+  });
+
+  it("refuses a budget that is not a non-negative number", async () => {
+    set(url, FULL_HTML);
+    await expect(runScan(url, { timeoutMs: -1 })).rejects.toThrow(RangeError);
+    await expect(runScan(url, { timeoutMs: Number.NaN })).rejects.toThrow(
+      RangeError,
+    );
+  });
+
+  it("still throws for the caller's own cancellation", async () => {
+    set(url, FULL_HTML);
+    const cancel = new AbortController();
+    cancel.abort();
+    await expect(runScan(url, { signal: cancel.signal })).rejects.toThrow();
+  });
+
+  it("runs without a budget when asked", async () => {
+    set(url, FULL_HTML);
+    h.delayMs = 5;
+
+    const report = await runScan(url, { timeoutMs: 0 });
+
+    expect(report.conditions?.budget).toMatchObject({
+      limitMs: 0,
+      exhausted: false,
+      skippedCount: 0,
+    });
+    expect(report.overallScore).not.toBeNull();
   });
 });
 

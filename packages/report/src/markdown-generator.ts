@@ -1,4 +1,7 @@
-import type { ScanReport } from "@forkpoint/agent-lighthouse-core";
+import type {
+  ScanConditions,
+  ScanReport,
+} from "@forkpoint/agent-lighthouse-core";
 import { buildReportView } from "./view-model";
 
 /**
@@ -29,7 +32,19 @@ function conditionsBlock(view: ReturnType<typeof buildReportView>): string {
 - **Page Type:** \`${c.pageType.type}\` (${c.pageType.source})
 - **Origin Evidence:** \`${c.origin.cached ? "cached" : "fresh"}\` (version: \`${c.origin.version}\`, read at: \`${c.origin.readAt}\`)
 - **Evidence Coverage:** \`${c.coverage.assessedMass} / ${c.coverage.registryMass}\` mass (${pct}%) — page: \`${c.coverage.pageMass}\`, origin: \`${c.coverage.originMass}\`, gated: \`${c.coverage.gatedMass}\`
-- **Unscored Checks:** \`${c.unscored.totalCount}\` (${c.unscored.informativeCount} advisory, ${c.unscored.gatedCount} gated)\n`;
+- **Unscored Checks:** \`${c.unscored.totalCount}\` (${c.unscored.informativeCount} advisory, ${c.unscored.gatedCount} gated)${budgetLine(c.budget)}\n`;
+}
+
+/** The budget line of the conditions block, or nothing for an older report. */
+function budgetLine(budget: ScanConditions["budget"]): string {
+  if (!budget) return "";
+  const limit = Math.round(budget.limitMs / 1000);
+  const elapsed = Math.round(budget.elapsedMs / 1000);
+  if (budget.limitMs === 0)
+    return `\n- **Budget:** \`none\` (${elapsed} s elapsed)`;
+  return budget.exhausted
+    ? `\n- **Budget:** \`ran out\` at ${limit} s — ${budget.skippedCount} audits not assessed`
+    : `\n- **Budget:** \`${elapsed} s\` of ${limit} s`;
 }
 
 export function generateMarkdownSummary(report: ScanReport): string {

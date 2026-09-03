@@ -23,8 +23,9 @@ jobs:
     # a night scans all of it: at concurrency 2 and about 63 s per site per
     # worker that is about 220 minutes, inside the script's 240-minute
     # deadline. status.json keeps dead and robots-blocked domains out, which
-    # is most of what made the old 1913-entry list slow. This cap is the
-    # backstop behind the deadline.
+    # is most of what made the old 1913-entry list slow, and the scanner's
+    # own 180 s budget per scan keeps one slow origin from eating the margin.
+    # This cap is the backstop behind the deadline.
     timeout-minutes: 300
     steps:
       - uses: actions/checkout@v7

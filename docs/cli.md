@@ -73,6 +73,7 @@ The one exception is `--assert-category`, which is read by a separate pass that 
 | `-o`, `--output <formats>`   | comma-separated     | `terminal,html,json` | Which report formats to produce.                                       |
 | `-d`, `--output-dir <path>`  | directory path      | `./reports`          | Where report files are written.                                        |
 | `-v`, `--view`               | —                   | off                  | Open the generated HTML report in the default browser.                 |
+| `--timeout <seconds>`        | seconds             | `180`                | Wall-clock budget for the scan; `0` disables it.                       |
 | `--min-score <number>`       | 0–100               | `0` (no assertion)   | Fail the run if the overall score is below this.                       |
 | `--assert-category <id:min>` | `id:number`         | none                 | Fail the run if a category scores below its threshold. Repeatable.     |
 | `--debug-audit <id\|fails>`  | audit id or `fails` | none                 | Print a deep diagnostic breakdown for matching audits.                 |
@@ -153,6 +154,14 @@ agent-lighthouse https://yourstore.com --output-dir ./artifacts/lighthouse
 ### `-v`, `--view`
 
 Opens the generated HTML report in the default browser once the scan finishes (`open` on macOS, `start` on Windows, `xdg-open` elsewhere). Has no effect if the HTML format was not generated.
+
+### `--timeout <seconds>`
+
+```bash
+agent-lighthouse https://slow.example.com --timeout 600
+```
+
+A wall-clock budget for the whole scan. The default is 180 seconds, which clears the 95th percentile of the curated corpus with margin. When the budget runs out the scan finishes with what it has: requests in flight are aborted, no further request is sent, and every audit that had not started, or was still running when the budget went, is reported `na` with the tag `skipped:scan-budget`. A running audit is withheld rather than believed: a request the budget refused reads to an audit as a broken link or a missing artifact, which would be a claim about the clock, not the site. The report records it under `conditions.budget`, and the terminal prints one line naming the count. If the budget's cut, together with what the evidence gate removed, leaves more than 35% of the registry's evidence mass unassessed, the scan reports no score rather than a partial one. `0` disables the budget. The config file key is `timeout`.
 
 ### `--min-score <number>`
 

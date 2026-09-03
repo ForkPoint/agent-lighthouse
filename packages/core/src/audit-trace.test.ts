@@ -1,6 +1,10 @@
 import { describe, it, expect } from "vitest";
 import { traceFromCheck, outcomeOf, formatTrace } from "./audit-trace";
-import { TAG_SCAN_ERROR, TAG_SKIPPED_PAGE_TYPE } from "./constants";
+import {
+  TAG_SCAN_ERROR,
+  TAG_SKIPPED_PAGE_TYPE,
+  TAG_SKIPPED_SCAN_BUDGET,
+} from "./constants";
 import type { CheckResult } from "./types";
 
 /**
@@ -43,6 +47,12 @@ describe("outcomeOf", () => {
     expect(
       outcomeOf(check({ status: "na", tags: [TAG_SKIPPED_PAGE_TYPE] })),
     ).toBe("skipped");
+  });
+
+  it("reads a scan-budget stub as budget", () => {
+    expect(
+      outcomeOf(check({ status: "na", tags: [TAG_SKIPPED_SCAN_BUDGET] })),
+    ).toBe("budget");
   });
 
   // An audit that ran and concluded "nothing to assess" is not the same as one

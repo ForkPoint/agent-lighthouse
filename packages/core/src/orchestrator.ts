@@ -10,8 +10,10 @@ import {
   getScoreTier,
   READINESS_WEIGHTS,
   ORIGIN_EVIDENCE_VERSION,
+  SCAN_TIMEOUT_MS,
   TAG_SKIPPED_NO_EVIDENCE,
   TAG_SKIPPED_PAGE_TYPE,
+  TAG_SKIPPED_SCAN_BUDGET,
 } from "./constants";
 import { logger } from "./logger";
 import { createFetcher, splitCredentials } from "./fetcher";
@@ -32,7 +34,12 @@ import {
 } from "./parser";
 import type { CheckContext, PageContext } from "./check-context";
 import { defaultConfig, filterConfig } from "./audit-config";
-import { planAudits, runAudits } from "./audit-runner";
+import {
+  planAudits,
+  runAudits,
+  budgetReason,
+  formatBudget,
+} from "./audit-runner";
 import type { AuditTraceHandler } from "./audit-runner";
 import { ProgressTracker } from "./progress";
 import type { ScanEvent } from "./progress";
@@ -43,6 +50,7 @@ import { generateScanSummary } from "./summary";
 import {
   isInformative,
   gatedMassShare,
+  skippedMassShare,
   GATED_MASS_UNSCORED_THRESHOLD,
 } from "./scorer";
 import { detectWafProtection } from "./waf-detector";
@@ -55,7 +63,20 @@ export interface ScanOptions {
   pages?: PageOverride[] | null;
   /** Explicitly declared page type for the target URL. */
   pageType?: PageType;
+  /**
+   * The caller's cancellation. Aborting it makes `runScan` throw; the scan
+   * budget below never does.
+   */
   signal?: AbortSignal;
+  /**
+   * Wall-clock budget for the whole scan, in milliseconds. Defaults to
+   * {@link SCAN_TIMEOUT_MS}. When it runs out the scan finishes with what it
+   * has: requests in flight abort, no further request is sent, and every
+   * audit not yet started, or still running when it went, reports `na`
+   * tagged `skipped:scan-budget`. `conditions.budget` on the report records
+   * it. `0` disables the budget.
+   */
+  timeoutMs?: number;
   /**
    * Restrict the scan to these category ids. Unknown ids simply match nothing —
    * validate them at the entry point so the operator hears about a typo.
@@ -124,15 +145,32 @@ const RATE_LIMIT_BACKOFF_MS = 5_000;
 /** A `Retry-After` longer than this is the site telling us to come back later. */
 const MAX_RETRY_AFTER_MS = 30_000;
 
+/** The result a request gets once the budget is gone: nothing was sent. */
+function unsentResult(url: string, error: string): FetchResult {
+  return {
+    url,
+    finalUrl: url,
+    status: 0,
+    headers: {},
+    body: "",
+    ttfbMs: 0,
+    totalMs: 0,
+    contentType: "",
+    contentLength: 0,
+    error,
+  };
+}
+
 /**
  * Fetch a page, retrying once on HTTP 429.
  */
 async function fetchPageWithRetry(
   fetcher: { fetch: (options: FetchOptions) => Promise<FetchResult> },
   url: string,
-  signal?: AbortSignal,
+  fetchSignal?: AbortSignal,
+  cancel?: AbortSignal,
 ): Promise<FetchResult> {
-  const first = await fetcher.fetch({ url, signal });
+  const first = await fetcher.fetch({ url, signal: fetchSignal });
   if (first.status !== 429) return first;
 
   const header = Number(first.headers["retry-after"]);
@@ -145,10 +183,26 @@ async function fetchPageWithRetry(
     { url, waitMs },
     `[orchestrator] Page answered 429; retrying once in ${waitMs}ms`,
   );
-  await new Promise((resolve) => setTimeout(resolve, waitMs));
-  signal?.throwIfAborted();
+  // The wait ends early when either signal fires, and is skipped when one
+  // already has: an aborted signal never dispatches `abort` again, and the
+  // budget usually goes during the first fetch of a throttled origin.
+  if (!fetchSignal?.aborted)
+    await new Promise<void>((resolve) => {
+      const timer = setTimeout(done, waitMs);
+      function done(): void {
+        clearTimeout(timer);
+        fetchSignal?.removeEventListener("abort", done);
+        resolve();
+      }
+      fetchSignal?.addEventListener("abort", done, { once: true });
+    });
+  // Only the caller's cancellation ends the scan. When the budget is gone
+  // the 429 stands as observed: the site throttled the scan, and a made-up
+  // status 0 would report it as unreachable instead.
+  cancel?.throwIfAborted();
+  if (fetchSignal?.aborted) return first;
 
-  return fetcher.fetch({ url, signal });
+  return fetcher.fetch({ url, signal: fetchSignal });
 }
 
 // ── Main Scan ──────────────────────────────────────────────────
@@ -157,9 +211,45 @@ export async function runScan(
   url: string,
   options?: ScanOptions,
 ): Promise<ScanReport> {
+  const limitMs = options?.timeoutMs ?? SCAN_TIMEOUT_MS;
+  // A negative or NaN budget would silently mean "no budget" and then fail
+  // the report schema, which wants `limitMs` non-negative. Refuse it here.
+  if (!Number.isFinite(limitMs) || limitMs < 0)
+    throw new RangeError(
+      `timeoutMs must be a non-negative number of milliseconds, got ${String(options?.timeoutMs)}`,
+    );
+  const budget = new AbortController();
+  const timer =
+    limitMs > 0
+      ? setTimeout(() => {
+          const message = `The scan budget of ${formatBudget(limitMs)} ran out.`;
+          logger.warn(`[orchestrator] ${message} ${splitCredentials(url).url}`);
+          budget.abort(new Error(message));
+        }, limitMs)
+      : undefined;
+  try {
+    return await scanWithinBudget(url, options, {
+      signal: budget.signal,
+      limitMs,
+    });
+  } finally {
+    if (timer !== undefined) clearTimeout(timer);
+  }
+}
+
+async function scanWithinBudget(
+  url: string,
+  options: ScanOptions | undefined,
+  budget: { signal: AbortSignal; limitMs: number },
+): Promise<ScanReport> {
   const onEvent = options?.onEvent;
   const pageOverrides = options?.pages;
   const signal = options?.signal;
+  // Every request answers to the caller's signal and to the budget. Only the
+  // caller's signal ends the scan; the budget ends the fetching.
+  const fetchSignal = signal
+    ? AbortSignal.any([signal, budget.signal])
+    : budget.signal;
 
   const tracker = new ProgressTracker((event) => onEvent?.(event));
   const start = performance.now();
@@ -275,7 +365,7 @@ export async function runScan(
           return Promise.resolve(prefetchedRobots);
         }
         return fetcher
-          .fetch({ url: `${baseUrl}${path}`, signal })
+          .fetch({ url: `${baseUrl}${path}`, signal: fetchSignal })
           .then((result) => {
             tracker.unitDone(path);
             return result;
@@ -293,7 +383,7 @@ export async function runScan(
     const isHomepageScan = url === `${baseUrl}/` || url === baseUrl;
     originHomepageResult = isHomepageScan
       ? undefined
-      : await fetchPageWithRetry(fetcher, `${baseUrl}/`, signal);
+      : await fetchPageWithRetry(fetcher, `${baseUrl}/`, fetchSignal, signal);
 
     originReadAt = new Date().toISOString();
     originFresh = true;
@@ -307,7 +397,12 @@ export async function runScan(
   logger.debug("[orchestrator] Phase 2: Fetching page");
 
   tracker.phaseStart("fetch-pages", 1 + overrideUrls.length);
-  const pageResult = await fetchPageWithRetry(fetcher, url, signal);
+  const pageResult = await fetchPageWithRetry(
+    fetcher,
+    url,
+    fetchSignal,
+    signal,
+  );
   tracker.unitDone(displayUrl);
 
   if (!originHomepageResult && (url === `${baseUrl}/` || url === baseUrl)) {
@@ -330,7 +425,7 @@ export async function runScan(
 
   const extraResults = await Promise.all(
     overrideUrls.map((pageUrl) =>
-      fetcher.fetch({ url: pageUrl, signal }).then((result) => {
+      fetcher.fetch({ url: pageUrl, signal: fetchSignal }).then((result) => {
         tracker.unitDone(pageUrl);
         return result;
       }),
@@ -430,7 +525,14 @@ export async function runScan(
     pages,
     domain,
     baseUrl,
-    fetch: (options) => fetcher.fetch({ ...options, signal }),
+    // Once the budget is gone no request leaves: the audit reads an error
+    // result at once, the same shape a refused connection gives it.
+    fetch: (options) =>
+      budget.signal.aborted
+        ? Promise.resolve(
+            unsentResult(options.url, budgetReason(budget.signal)),
+          )
+        : fetcher.fetch({ ...options, signal: fetchSignal }),
     wafProtection: wafProtection ?? undefined,
     evidence,
     originEvidence: {
@@ -465,8 +567,15 @@ export async function runScan(
     },
     auditPlan,
     options?.onAuditTrace,
+    budget.signal,
   );
   tracker.phaseDone();
+  // A caller cancelled during the audits phase gets the throw it asked for,
+  // not a report whose running audits read cancelled requests as failures.
+  signal?.throwIfAborted();
+  // Read now, not at the end: a budget that runs out while the report is
+  // being assembled cut nothing, and must not say it did.
+  const budgetExhausted = budget.signal.aborted;
 
   logger.debug("[orchestrator] Phase 3 complete: Audits finished");
 
@@ -522,14 +631,30 @@ export async function runScan(
   // that never reached the site (§7.1), and a scan the gate stripped so far
   // that the remaining mass is not the registry any more (§7.2). Both report
   // no score rather than a low one.
+  // The budget is a third: a scan cut before it assessed most of the
+  // registry is a reading of the clock, not of the site.
   const gatedShare = gatedMassShare(allChecks);
   const escalated = gatedShare > GATED_MASS_UNSCORED_THRESHOLD;
+  // The budget's cut counts with the gate's: 30% gated and 30% cut is 60%
+  // of the registry unread, whichever reason each part carries.
+  const budgetShare = skippedMassShare(allChecks, TAG_SKIPPED_SCAN_BUDGET);
+  const unassessedShare = gatedShare + budgetShare;
+  const cut =
+    !escalated &&
+    budgetShare > 0 &&
+    unassessedShare > GATED_MASS_UNSCORED_THRESHOLD;
+  const budgetSentence = budgetExhausted ? budgetReason(budget.signal) : "";
   const unscoredReason = !evidence.judgeable
-    ? unjudgeableReason(evidence)
+    ? budgetExhausted
+      ? `${budgetSentence} ${unjudgeableReason(evidence)}`
+      : unjudgeableReason(evidence)
     : escalated
       ? `The scan could not feed ${Math.round(gatedShare * 100)}% of the registry's evidence mass, ` +
         "so what remains is not a reading of this site."
-      : undefined;
+      : cut
+        ? `${budgetSentence} ${Math.round(unassessedShare * 100)}% of the registry's evidence mass was never assessed, ` +
+          "so what remains is not a reading of this site."
+        : undefined;
   const scored = unscoredReason === undefined;
 
   // ── Conditions Calculation (Phase 6: Law 8) ──────────────────
@@ -584,6 +709,9 @@ export async function runScan(
       } else if (check.tags?.includes(TAG_SKIPPED_PAGE_TYPE)) {
         unscoredReasons["skipped-page-type"] =
           (unscoredReasons["skipped-page-type"] ?? 0) + 1;
+      } else if (check.tags?.includes(TAG_SKIPPED_SCAN_BUDGET)) {
+        unscoredReasons["skipped-scan-budget"] =
+          (unscoredReasons["skipped-scan-budget"] ?? 0) + 1;
       } else {
         unscoredReasons["not-applicable"] =
           (unscoredReasons["not-applicable"] ?? 0) + 1;
@@ -638,6 +766,17 @@ export async function runScan(
       informativeCount,
       gatedCount,
       reasons: unscoredReasons,
+    },
+    // Counted over every check, advisory ones included: the reasons map
+    // files an informative stub under `informative`, but the budget cut it
+    // all the same.
+    budget: {
+      limitMs: budget.limitMs,
+      elapsedMs: durationMs,
+      exhausted: budgetExhausted,
+      skippedCount: allChecks.filter((c) =>
+        c.tags?.includes(TAG_SKIPPED_SCAN_BUDGET),
+      ).length,
     },
   };
 

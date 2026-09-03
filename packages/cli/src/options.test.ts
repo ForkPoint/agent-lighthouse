@@ -491,3 +491,75 @@ describe("--page-type", () => {
     ]);
   });
 });
+
+describe("--timeout", () => {
+  it("is unset by default, so the scan uses the core default", () => {
+    const o = parseCliOptions([], "https://a.test");
+    expect(o.timeoutSeconds).toBeUndefined();
+    expect(o.invalidTimeout).toBeUndefined();
+  });
+
+  it("reads seconds from the flag in both forms", () => {
+    expect(
+      parseCliOptions(["--timeout", "600"], "https://a.test").timeoutSeconds,
+    ).toBe(600);
+    expect(
+      parseCliOptions(["--timeout=45"], "https://a.test").timeoutSeconds,
+    ).toBe(45);
+  });
+
+  it("accepts 0 as 'no budget'", () => {
+    const o = parseCliOptions(["--timeout", "0"], "https://a.test");
+    expect(o.timeoutSeconds).toBe(0);
+    expect(o.invalidTimeout).toBeUndefined();
+  });
+
+  it("takes the config file value when the flag is absent, and lets the flag win", () => {
+    expect(
+      parseCliOptions([], "https://a.test", { timeout: 300 }).timeoutSeconds,
+    ).toBe(300);
+    expect(
+      parseCliOptions(["--timeout", "20"], "https://a.test", { timeout: 300 })
+        .timeoutSeconds,
+    ).toBe(20);
+  });
+
+  // Number("") is 0 and 0 disables the budget, so a bare --timeout must be
+  // refused rather than read as "run forever".
+  it("refuses a bare --timeout and a non-numeric or negative value", () => {
+    expect(
+      parseCliOptions(["--timeout"], "https://a.test").invalidTimeout,
+    ).toBe("");
+    expect(
+      parseCliOptions(["--timeout", "soon"], "https://a.test").invalidTimeout,
+    ).toBe("soon");
+    expect(
+      parseCliOptions(["--timeout=-5"], "https://a.test").invalidTimeout,
+    ).toBe("-5");
+    expect(
+      parseCliOptions(["--timeout", "soon"], "https://a.test").timeoutSeconds,
+    ).toBeUndefined();
+  });
+});
+
+describe("--timeout from the config file", () => {
+  it("refuses a negative or non-numeric config value rather than dropping the budget", () => {
+    const negative = parseCliOptions([], "https://a.test", { timeout: -5 });
+    expect(negative.timeoutSeconds).toBeUndefined();
+    expect(negative.invalidTimeout).toBe("-5 (config file)");
+
+    const text = parseCliOptions([], "https://a.test", {
+      timeout: "soon" as unknown as number,
+    });
+    expect(text.timeoutSeconds).toBeUndefined();
+    expect(text.invalidTimeout).toBe("soon (config file)");
+  });
+
+  it("lets a valid flag stand in for a bad config value", () => {
+    const o = parseCliOptions(["--timeout", "30"], "https://a.test", {
+      timeout: -5,
+    });
+    expect(o.timeoutSeconds).toBe(30);
+    expect(o.invalidTimeout).toBeUndefined();
+  });
+});

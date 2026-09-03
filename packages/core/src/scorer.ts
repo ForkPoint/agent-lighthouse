@@ -147,16 +147,25 @@ export const GATED_MASS_UNSCORED_THRESHOLD = 0.35;
  * and counting that mass would mark small, well-built sites unscored.
  */
 export function gatedMassShare(checks: CheckResult[]): number {
-  let gated = 0;
+  return skippedMassShare(checks, TAG_SKIPPED_NO_EVIDENCE);
+}
+
+/**
+ * How much of the registry's evidence mass the checks carrying `tag` hold.
+ * The gate and the scan budget both stub audits as `na` under their own
+ * tag, and each is judged against {@link GATED_MASS_UNSCORED_THRESHOLD}.
+ */
+export function skippedMassShare(checks: CheckResult[], tag: string): number {
+  let skipped = 0;
   let total = 0;
   for (const check of checks) {
     if (isInformative(check)) continue;
     const mass = check.weight ?? 0;
     if (mass <= 0) continue;
     total += mass;
-    if (check.tags?.includes(TAG_SKIPPED_NO_EVIDENCE)) gated += mass;
+    if (check.tags?.includes(tag)) skipped += mass;
   }
-  return total === 0 ? 0 : gated / total;
+  return total === 0 ? 0 : skipped / total;
 }
 
 export { getScoreTier };

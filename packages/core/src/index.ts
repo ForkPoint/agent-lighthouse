@@ -95,6 +95,8 @@ export { extractProductFieldVerification } from "./product-fields";
 // Types & Schemas
 export * from "./types";
 export * from "./constants";
+export { skippedMassShare } from "./scorer";
+export { budgetReason, formatBudget } from "./audit-runner";
 export * from "./schemas";
 export * from "./url-utils";
 export * from "./presets";
