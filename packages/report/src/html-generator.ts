@@ -271,6 +271,19 @@ export function generateHtmlReport(report: ScanReport): string {
               <span class="px-2.5 py-1 rounded-md bg-slate-950/70 border border-slate-800 text-slate-300 font-mono">
                 Unscored: <strong class="text-slate-300">${view.conditions.unscored.totalCount}</strong> (${view.conditions.unscored.informativeCount} advisory, ${view.conditions.unscored.gatedCount} gated)
               </span>
+              ${
+                view.conditions.budget
+                  ? `<span class="px-2.5 py-1 rounded-md bg-slate-950/70 border border-slate-800 text-slate-300 font-mono">
+                Budget: ${
+                  view.conditions.budget.limitMs === 0
+                    ? `<strong class="text-slate-100">none</strong> (${Math.round(view.conditions.budget.elapsedMs / 1000)} s elapsed)`
+                    : view.conditions.budget.exhausted
+                      ? `<strong class="text-amber-400">ran out</strong> at ${Math.round(view.conditions.budget.limitMs / 1000)} s (${view.conditions.budget.skippedCount} audits not assessed)`
+                      : `<strong class="text-slate-100">${Math.round(view.conditions.budget.elapsedMs / 1000)} s</strong> of ${Math.round(view.conditions.budget.limitMs / 1000)} s`
+                }
+              </span>`
+                  : ""
+              }
             </div>`
                 : ""
             }

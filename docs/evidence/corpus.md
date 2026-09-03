@@ -306,7 +306,9 @@ the file; import the nightly artifact by hand when wanted.
 workers is about 220 minutes, inside the 240-minute deadline. The nightly's
 `--limit` is 500, the ceiling `site-list.test.ts` holds the list under, and
 `windowOf` returns the whole list whenever the limit is at least the list
-size.
+size. No single site can eat the margin: a scan runs under the 180 s budget
+of `SCAN_TIMEOUT_MS`, and one that hits it finishes with what it has and
+files `conditions.budget.exhausted`.
 
 **The summary.** `reports/corpus-nightly.json`, uploaded as the
 `corpus-nightly` artifact on every run, failed or not. It is rewritten every 10

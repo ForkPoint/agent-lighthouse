@@ -11,6 +11,7 @@ import {
   TAG_SKIPPED_PAGE_TYPE,
   TAG_SCAN_ERROR,
   TAG_SKIPPED_NO_EVIDENCE,
+  TAG_SKIPPED_SCAN_BUDGET,
 } from "./constants";
 import type { CheckContext, PageContext } from "./check-context";
 import type {
@@ -296,10 +297,35 @@ export function planAudits(
   return { runnable, skipped };
 }
 
+/** A budget as a sentence names it: whole seconds, or milliseconds under one. */
+export function formatBudget(ms: number): string {
+  return ms >= 1000 ? `${Math.round(ms / 1000)} s` : `${ms} ms`;
+}
+
+/** What an aborted budget signal says, for the stub that names it. */
+export function budgetReason(signal: AbortSignal): string {
+  const reason: unknown = signal.reason;
+  // A bare abort() carries a DOMException whose text names no budget.
+  if (
+    reason instanceof Error &&
+    !(reason instanceof DOMException) &&
+    reason.message
+  )
+    return reason.message;
+  return "The scan budget ran out.";
+}
+
 /**
  * Execute all audits registered in the config against the scan context.
  * Returns check results grouped into categories with weighted scores.
  * Pass a precomputed `plan` (from {@link planAudits}) to avoid recomputing it.
+ *
+ * `budget` is the scan's wall-clock budget. Once it is aborted, no further
+ * audit is constructed, and none that was still running is believed: both
+ * report `na` tagged {@link TAG_SKIPPED_SCAN_BUDGET}. The running one is
+ * withheld because a request the budget refused answers with an error, and
+ * an audit reads that error as a broken link or a missing artifact. That
+ * would be a claim about the clock, not about the site.
  */
 export async function runAudits(
   ctx: CheckContext,
@@ -307,9 +333,21 @@ export async function runAudits(
   onEvent?: (event: AuditProgressEvent) => void,
   plan?: AuditPlan,
   onTrace?: AuditTraceHandler,
+  budget?: AbortSignal,
 ): Promise<AuditRunResult> {
   const { runnable, skipped } = plan ?? planAudits(ctx, config);
   const allChecks: CheckResult[] = [...skipped];
+
+  const budgetStub = (reg: AuditRegistration): CheckResult => {
+    const label = `${reg.meta.id} ${reg.meta.title}`;
+    const stub = stubCheck(
+      reg.meta,
+      TAG_SKIPPED_SCAN_BUDGET,
+      `Not assessed: ${budgetReason(budget!)} This audit had not started.`,
+    );
+    if (typeof onEvent === "function") onEvent({ type: "unit:done", label });
+    return stub;
+  };
 
   const tracing = Boolean(onTrace) || logger.level === "debug";
   const trace = (check: CheckResult, durationMs: number): void => {
@@ -323,9 +361,22 @@ export async function runAudits(
 
   const batchSize = 20;
   for (let i = 0; i < runnable.length; i += batchSize) {
+    if (budget?.aborted) {
+      for (const { reg } of runnable.slice(i)) {
+        const stub = budgetStub(reg);
+        trace(stub, 0);
+        allChecks.push(stub);
+      }
+      break;
+    }
     const batch = runnable.slice(i, i + batchSize);
     const batchResults = await Promise.all(
       batch.map(async ({ reg, scopedPages, scoreDisplayMode }) => {
+        if (budget?.aborted) {
+          const stub = budgetStub(reg);
+          trace(stub, 0);
+          return stub;
+        }
         const label = `${reg.meta.id} ${reg.meta.title}`;
         const startedAt = tracing ? performance.now() : 0;
         const elapsed = () =>
@@ -339,6 +390,17 @@ export async function runAudits(
               ? { ...ctx, pages: scopedPages, cacheOwner: cacheOwner(ctx) }
               : ctx;
           const result = await instance.audit(scopedCtx);
+          if (budget?.aborted) {
+            const stub = stubCheck(
+              reg.meta,
+              TAG_SKIPPED_SCAN_BUDGET,
+              `Not assessed: ${budgetReason(budget)} This audit was still running.`,
+            );
+            if (typeof onEvent === "function")
+              onEvent({ type: "unit:done", label });
+            trace(stub, elapsed());
+            return stub;
+          }
           const check = instance.toCheckResult(result, scoreDisplayMode);
           if (typeof onEvent === "function")
             onEvent({ type: "unit:done", label });

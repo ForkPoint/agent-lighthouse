@@ -44,6 +44,7 @@ A bare `agent-lighthouse` with no arguments at all does **not**: it prints the u
 | `assertCategories` | `Record<string, number>`                                  | `{}`                           | Per-category budgets, keyed by category id.                                                                  |
 | `output`           | `Array<"terminal" \| "html" \| "json" \| "md">`           | `["terminal", "html", "json"]` | Report formats to produce.                                                                                   |
 | `outputDir`        | `string`                                                  | `"./reports"`                  | Where report files are written.                                                                              |
+| `timeout`          | `number` (seconds)                                        | `180`                          | Wall-clock budget for the scan; `0` disables it. `--timeout` overrides it.                                   |
 | `categories`       | `string[]`                                                | —                              | **Not read by the CLI.** Use the `--categories` flag instead.                                                |
 | `maxPages`         | `number`                                                  | —                              | **Not read by anything.** The page budget is fixed; see [Fixed limits](#fixed-limits).                       |
 
@@ -108,13 +109,14 @@ An experimental audit carries weight 0 whether or not it runs, so this flag can 
 
 `runScan(url, options)` from `@forkpoint/agent-lighthouse-core` takes the same decisions as `ScanOptions`:
 
-| Option                | Type                         | Default   | Effect                                                                                                                     |
-| :-------------------- | :--------------------------- | :-------- | :------------------------------------------------------------------------------------------------------------------------- |
-| `categories`          | `string[]`                   | all eight | Restrict the scan to these category ids. Unknown ids match nothing — validate them at your entry point so a typo is heard. |
-| `includeExperimental` | `boolean`                    | `false`   | Include experimental-tier audits, reported but never scored.                                                               |
-| `onEvent`             | `(event: ScanEvent) => void` | none      | Progress callback; the CLI's progress display and its NDJSON stream are both built on it.                                  |
-| `pages`               | `PageOverride[] \| null`     | none      | Scan these exact URLs with a declared page type instead of relying on discovery.                                           |
-| `signal`              | `AbortSignal`                | none      | Cancel an in-flight scan.                                                                                                  |
+| Option                | Type                         | Default   | Effect                                                                                                                            |
+| :-------------------- | :--------------------------- | :-------- | :-------------------------------------------------------------------------------------------------------------------------------- |
+| `categories`          | `string[]`                   | all eight | Restrict the scan to these category ids. Unknown ids match nothing — validate them at your entry point so a typo is heard.        |
+| `includeExperimental` | `boolean`                    | `false`   | Include experimental-tier audits, reported but never scored.                                                                      |
+| `onEvent`             | `(event: ScanEvent) => void` | none      | Progress callback; the CLI's progress display and its NDJSON stream are both built on it.                                         |
+| `pages`               | `PageOverride[] \| null`     | none      | Scan these exact URLs with a declared page type instead of relying on discovery.                                                  |
+| `signal`              | `AbortSignal`                | none      | Cancel an in-flight scan.                                                                                                         |
+| `timeoutMs`           | `number`                     | `180000`  | Wall-clock budget. When it runs out the scan finishes with what it has and records it under `conditions.budget`; `0` disables it. |
 
 ```ts
 import { runScan } from "@forkpoint/agent-lighthouse-core";
@@ -146,12 +148,13 @@ Field-level product verification (`report.productFields`) is only produced when 
 
 ## Fixed limits
 
-These are compile-time constants in [`packages/core/src/constants.ts`](../packages/core/src/constants.ts) and [`packages/core/src/fetcher.ts`](../packages/core/src/fetcher.ts). There is no flag, config key or environment variable for them.
+These are compile-time constants in [`packages/core/src/constants.ts`](../packages/core/src/constants.ts) and [`packages/core/src/fetcher.ts`](../packages/core/src/fetcher.ts). There is no flag, config key or environment variable for them. The scan budget is the one exception: its default is a constant, and `--timeout`, the `timeout` key and `timeoutMs` change it.
 
 | Limit              | Value                                                                  |
 | :----------------- | :--------------------------------------------------------------------- |
 | Pages per scan     | 6 — the homepage plus five more, whether discovered or overridden      |
 | Request timeout    | 10 seconds per request                                                 |
+| Scan budget        | 180 seconds per scan by default; see `--timeout` in [cli.md](./cli.md) |
 | Response body read | 5 MB, after which the body is truncated                                |
 | Scanner user agent | `AgentLighthouse/1.0 (+https://github.com/ForkPoint/agent-lighthouse)` |
 
