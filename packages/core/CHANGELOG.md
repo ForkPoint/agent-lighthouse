@@ -1,5 +1,11 @@
 # @forkpoint/agent-lighthouse-core
 
+## 4.2.0
+
+### Minor Changes
+
+- 93afb49: Reject private IPv4-mapped IPv6 addresses before requests and redirect hops.
+
 ## 4.1.0
 
 ### Minor Changes

@@ -1,5 +1,12 @@
 # @forkpoint/agent-lighthouse-report
 
+## 4.2.0
+
+### Patch Changes
+
+- Updated dependencies [93afb49]
+  - @forkpoint/agent-lighthouse-core@4.2.0
+
 ## 4.1.0
 
 ### Minor Changes
