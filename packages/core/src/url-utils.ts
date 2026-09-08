@@ -46,16 +46,28 @@ const PRIVATE_IPv4_PATTERNS = [
   /^0\.0\.0\.0$/,
 ];
 
+function mappedIpv4(ip: string): string | undefined {
+  const prefix = /^(?:::ffff:|(?:0{1,4}:){5}ffff:)/i;
+  const suffix = ip.replace(prefix, "");
+  if (suffix === ip) return undefined;
+
+  if (/^\d{1,3}(?:\.\d{1,3}){3}$/.test(suffix)) return suffix;
+
+  const hexMatch = suffix.match(/^([0-9a-f]{1,4}):([0-9a-f]{1,4})$/i);
+  if (!hexMatch) return undefined;
+
+  const high = Number.parseInt(hexMatch[1], 16);
+  const low = Number.parseInt(hexMatch[2], 16);
+  return `${high >> 8}.${high & 0xff}.${low >> 8}.${low & 0xff}`;
+}
+
 export function isPrivateIp(ip: string): boolean {
   const trimmed = ip.trim();
-  if (trimmed === "::1") return true;
+  if (trimmed === "::" || trimmed === "::1") return true;
   if (/^f[cd][0-9a-f]{2}:/i.test(trimmed)) return true;
   if (/^fe[89ab][0-9a-f]:/i.test(trimmed)) return true;
 
-  const v4MappedMatch = trimmed.match(
-    /^::ffff:(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})$/i,
-  );
-  const candidate = v4MappedMatch ? v4MappedMatch[1] : trimmed;
+  const candidate = mappedIpv4(trimmed) ?? trimmed;
 
   return PRIVATE_IPv4_PATTERNS.some((re) => re.test(candidate));
 }

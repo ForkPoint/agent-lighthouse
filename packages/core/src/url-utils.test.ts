@@ -92,6 +92,7 @@ describe("isPrivateIp", () => {
   });
 
   it.each([
+    ["::", "IPv6 unspecified"],
     ["::1", "IPv6 loopback"],
     ["fd00::1", "IPv6 unique local"],
     ["fc00::1", "IPv6 unique local"],
@@ -105,6 +106,9 @@ describe("isPrivateIp", () => {
   it("blocks an IPv4-mapped IPv6 address", () => {
     expect(isPrivateIp("::ffff:169.254.169.254")).toBe(true);
     expect(isPrivateIp("::FFFF:127.0.0.1")).toBe(true);
+    expect(isPrivateIp("::ffff:a9fe:a9fe")).toBe(true);
+    expect(isPrivateIp("::ffff:7f00:1")).toBe(true);
+    expect(isPrivateIp("::ffff:a00:7")).toBe(true);
   });
 
   it("blocks an address padded with whitespace", () => {
@@ -116,6 +120,7 @@ describe("isPrivateIp", () => {
     ["172.15.0.1", "just below the RFC1918 /12"],
     ["172.32.0.1", "just above the RFC1918 /12"],
     ["11.0.0.1", "adjacent to the /8"],
+    ["::ffff:808:808", "mapped public resolver"],
     ["2606:4700::1111", "public IPv6"],
   ])("allows %s (%s)", (ip) => {
     expect(isPrivateIp(ip)).toBe(false);
