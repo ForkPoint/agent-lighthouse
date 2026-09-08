@@ -721,6 +721,19 @@ describe("isSafeUrl", () => {
     expect(mockLookup).not.toHaveBeenCalled();
   });
 
+  it.each([
+    "http://[::ffff:127.0.0.1]/",
+    "http://[::ffff:10.0.0.7]/",
+    "http://[::ffff:169.254.169.254]/",
+    "http://[::]/",
+  ])(
+    "rejects the private IPv6 literal %s without a DNS lookup",
+    async (url) => {
+      expect(await isSafeUrl(url)).toBe(false);
+      expect(mockLookup).not.toHaveBeenCalled();
+    },
+  );
+
   it("rejects hostnames that resolve to a private address", async () => {
     mockLookup.mockResolvedValue({ address: "10.1.2.3", family: 4 } as any);
     expect(await isSafeUrl("https://internal.example.com/")).toBe(false);
@@ -761,6 +774,29 @@ describe("createFetcher redirect handling", () => {
       )
       .mockResolvedValueOnce(mockResponse(200, "internal secrets") as never);
     // The starting host resolves publicly, so the gate is armed.
+    mockLookup.mockResolvedValue({
+      address: "93.184.216.34",
+      family: 4,
+    } as never);
+
+    const result = await createFetcher().fetch({
+      url: "https://example.com/start",
+    });
+
+    expect(result.error).toBe("redirect-refused");
+    expect(result.body).toBe("");
+    expect(result.finalUrl).toBe("https://example.com/start");
+    expect(mockRequest).toHaveBeenCalledTimes(1);
+  });
+
+  it("refuses an IPv4-mapped IPv6 redirect without requesting the private hop", async () => {
+    mockRequest
+      .mockResolvedValueOnce(
+        mockResponse(302, "", {
+          location: "http://[::ffff:169.254.169.254]/latest/meta-data/",
+        }) as never,
+      )
+      .mockResolvedValueOnce(mockResponse(200, "internal secrets") as never);
     mockLookup.mockResolvedValue({
       address: "93.184.216.34",
       family: 4,
