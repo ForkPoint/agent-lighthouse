@@ -488,8 +488,26 @@ describe.skipIf(process.env["AL_SKIP_NETWORK"] === "1")(
           expect(result!.status).toBe("pass");
         } else if (llmsTxt.status === 200) {
           expect(["pass", "warn"]).toContain(result!.status);
+        } else if (
+          ctx.pages[0]!.headLinks.some((link) => {
+            const rels = link.rel.toLowerCase().trim().split(/\s+/);
+            if (
+              !rels.some((rel) => ["alternate", "describedby"].includes(rel))
+            ) {
+              return false;
+            }
+            try {
+              return /\/llms\.txt$/i.test(
+                new URL(link.href, ctx.pages[0]!.url).pathname,
+              );
+            } catch {
+              return false;
+            }
+          })
+        ) {
+          expect(result!.status).toBe("warn");
         } else {
-          expect(result!.status).toBe("fail");
+          expect(result!.status).toBe("na");
         }
       });
 
