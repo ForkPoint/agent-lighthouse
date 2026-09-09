@@ -1,5 +1,11 @@
 # @forkpoint/agent-lighthouse-core
 
+## 4.2.1
+
+### Patch Changes
+
+- 287796a: Remove deprecated transitive dependencies from the core package installation tree.
+
 ## 4.2.0
 
 ### Minor Changes
