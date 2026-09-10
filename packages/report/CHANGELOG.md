@@ -1,5 +1,12 @@
 # @forkpoint/agent-lighthouse-report
 
+## 4.2.2
+
+### Patch Changes
+
+- ab64149: Apply the approved AI lighthouse branding to HTML and Markdown reports. Embed the HTML logo and favicon, use local font stacks, and update report headings and project links without changing scan data or scores.
+  - @forkpoint/agent-lighthouse-core@4.2.2
+
 ## 4.2.1
 
 ### Patch Changes

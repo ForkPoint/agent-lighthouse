@@ -1,6 +1,6 @@
 {
   "name": "@forkpoint/agent-lighthouse-core",
-  "version": "4.2.1",
+  "version": "4.2.2",
   "description": "Core TypeScript engine for auditing websites for AI-agent readiness, LLM crawler access, MCP discovery, structured data, and agentic web signals",
   "author": "ForkPoint",
   "license": "Apache-2.0",

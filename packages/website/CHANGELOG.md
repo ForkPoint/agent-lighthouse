@@ -1,5 +1,14 @@
 # @forkpoint/agent-lighthouse-website
 
+## 0.0.8
+
+### Patch Changes
+
+- 7234860: Redesign the public site with light and dark themes, plain-language product copy, and an online scan entry point for Agentic Storefront. Preserve the technical reference, local report viewer, and score-sharing tools.
+
+  Apply the approved Agent Lighthouse branding to the README and site header, browser icons, and social image. Add a public brand kit page with logo downloads and usage guidance.
+  - @forkpoint/agent-lighthouse-core@4.2.2
+
 ## 0.0.7
 
 ### Patch Changes
