@@ -3,8 +3,8 @@ import { getCollection } from 'astro:content';
 import Doc from '../../layouts/Doc.astro';
 import { createDocRenderer } from '../../lib/doc-markdown';
 import { documentationNav } from '../../lib/doc-nav';
-import { DOC_SECTIONS, docSourceDir, readDocSource, type DocSection } from '../../lib/markdown-slice';
-import { docPath } from '../../lib/routes';
+import { DOC_SECTIONS, docSourceDir, readDocSource } from '../../lib/markdown-slice';
+import { docPath, withBase } from '../../lib/routes';
 
 export async function getStaticPaths() {
   // Which dossiers have pages, so a documentation link into `docs/evidence/`
@@ -13,16 +13,17 @@ export async function getStaticPaths() {
   // One processor for all twelve pages: building it loads Shiki.
   const render = await createDocRenderer(published);
 
-  // The sidebar lists every section, in the order the table declares them, so a
-  // reader can move between them from any page — and the two evidence pages
-  // after them, which render the same layout from the same rail.
+  // Share the sidebar's reader-first sequence with previous/next navigation.
   const nav = documentationNav();
-  const link = (section: DocSection | undefined) =>
-    section ? { label: section.title, href: docPath(section.slug) } : undefined;
 
   return await Promise.all(
-    DOC_SECTIONS.map(async (section, index) => {
-      const { html, headings } = await render(readDocSource(section), docSourceDir(section));
+    DOC_SECTIONS.map(async (section) => {
+      const index = nav.findIndex(entry => entry.href === docPath(section.slug));
+      const source = readDocSource(section);
+      const publicSource = section.summary
+        ? source.replace(/^(# [^\n]+\n)/, heading => `${heading}\n${section.summary}\n`)
+        : source;
+      const { html, headings } = await render(publicSource, docSourceDir(section));
       return {
         params: { slug: section.slug },
         props: {
@@ -30,9 +31,9 @@ export async function getStaticPaths() {
           html,
           headings,
           nav,
-          // Prev/next walk the table, which is the order the sidebar shows.
-          prev: link(DOC_SECTIONS[index - 1]),
-          next: link(DOC_SECTIONS[index + 1]),
+          // Keep adjacent links aligned with the sidebar, including proof pages.
+          prev: nav[index - 1],
+          next: nav[index + 1],
         },
       };
     }),
@@ -45,10 +46,24 @@ const { section, html, headings, nav, prev, next } = Astro.props;
 // section sliced out of the README opens at `## ` and has none, so the page
 // renders one. `Doc.astro` renders no heading in either case.
 const ownHeading = headings.find((heading) => heading.depth === 1);
+const descriptions: Record<string, string> = {
+  quickstart: 'Run your first scan with the open-source Agent Lighthouse tool. Read the report and choose your next fixes.',
+  scoring: 'Understand your AI readiness score, advisory findings, and coverage limits. Learn how to compare scans fairly.',
+  'audit-architecture': 'See how a website scan becomes findings and next steps. Learn what the scanner can and cannot assess.',
+  share: 'Share an Agent Lighthouse report with your team. Choose a format and include the context behind the score.',
+  badge: 'Create a static score badge from a real scan. Learn how to update it and share the supporting report.',
+  benchmark: 'Compare website scans with consistent options and coverage. Understand the limits of the historical store benchmark.',
+  architecture: 'Choose the Agent Lighthouse package for terminal scans, application code, report views, or an MCP client.',
+  sdk: 'Run Agent Lighthouse from Node.js or TypeScript. Save an HTML report and handle an unscored result.',
+  mcp: 'Connect Agent Lighthouse to a compatible MCP client. Run website scans from your AI tools.',
+  ci: 'Check a reachable staging website on pull requests. Set a score threshold and review scan findings in GitHub Actions.',
+  cli: 'Choose command-line scan options, report formats, time limits, and score thresholds.',
+  config: 'Save repeatable scan settings. Understand config keys, command-line overrides, and scan limits.',
+};
 ---
 <Doc
   title={ownHeading?.text ?? section.title}
-  description={`${section.title} — Agent Lighthouse documentation.`}
+  description={descriptions[section.slug] ?? `${section.title} — Agent Lighthouse guides and technical reference.`}
   headings={headings}
   nav={nav}
   prev={prev}
@@ -56,4 +71,7 @@ const ownHeading = headings.find((heading) => heading.depth === 1);
 >
   {!ownHeading && <h1>{section.title}</h1>}
   <Fragment set:html={html} />
+  {section.slug === 'badge' && <p><a class="primary-action" href={`${withBase('')}#badge-heading`}>Create your score badge</a></p>}
+  {section.slug === 'share' && <p><a href={`${withBase('')}#viewer-heading`}>View your scan summary</a></p>}
+  {section.slug === 'quickstart' && <p><a href={`${withBase('')}#viewer-heading`}>View your local scan summary</a> or <a href={`${withBase('')}#badge-heading`}>share your result</a>.</p>}
 </Doc>

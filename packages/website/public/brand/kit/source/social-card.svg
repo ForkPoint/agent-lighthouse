@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630" role="img" aria-labelledby="title"><title id="title">Agent Lighthouse</title><rect width="1200" height="630" fill="#080e1c"/><g transform="translate(80 120) scale(1.125)">  <rect width="256" height="256" rx="56" fill="#4f46e5"/>
+  <g transform="translate(-5.5 5)">
+  <!-- The open A and tapered I share a baseline. -->
+  <path d="M48 185 87 91h17l39 94h-24l-8-21H80l-8 21Zm39-41h17l-8.5-24Z" fill="#fff" fill-rule="evenodd"/>
+  <path d="M158 112h20l11 73h-42Z" fill="#fff"/>
+  <path d="M148 104h40" stroke="#fff" stroke-width="8" stroke-linecap="round"/>
+  <!-- The dot of the I is the beacon, not an extra AI sparkle. -->
+  <circle cx="168" cy="78" r="12" fill="#fff"/>
+  <path d="m144 73-33-12v26l33-4Zm48 0 27-12v26l-27-4Z" fill="#c7d2fe"/>
+  </g>
+</g><g font-family="Avenir Next, Segoe UI, sans-serif" fill="#f5f7ff"><text x="424" y="230" font-size="48" font-weight="500">Agent</text><text x="420" y="316" font-size="84" font-weight="750" letter-spacing="-3">Lighthouse</text><text x="84" y="492" font-size="32" font-weight="500">Open-source website checks for AI readiness.</text></g></svg>

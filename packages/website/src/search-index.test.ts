@@ -31,8 +31,9 @@ function builtPages(
 ): Array<{ route: string; html: string }> {
   return readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
     if (entry.isDirectory()) {
-      // `pagefind/` is Pagefind's own output, not a page of this site.
-      return entry.name === "pagefind"
+      // Search output and the downloadable kit's offline previews are not site pages.
+      return entry.name === "pagefind" ||
+        resolve(dir, entry.name) === resolve(DIST, "brand/kit")
         ? []
         : builtPages(resolve(dir, entry.name), `${route}${entry.name}/`);
     }
@@ -76,7 +77,7 @@ describe.skipIf(!built)("the built search index", () => {
 
   it("gives every built page exactly one indexed region", () => {
     const pages = builtPages();
-    expect(pages).toHaveLength(auditList().length + 24);
+    expect(pages).toHaveLength(auditList().length + 25);
     for (const page of pages) {
       const declared = page.html.match(/data-pagefind-body/g) ?? [];
       expect(
@@ -135,7 +136,7 @@ describe.skipIf(!built)("the built search index", () => {
 
     // `/audits/` prints all 215 cards. Indexing them would put this page in the
     // results for every query the site can answer; it is indexed for what it is.
-    expect(audits.meta.title).toBe("Audits");
+    expect(audits.meta.title).toBe("Website checks");
     expect(audits.content).not.toContain("Offer Truth Consistency");
     expect(audits.word_count).toBeLessThan(60);
     expect(byUrl.get("/categories/agentic-commerce/")!.content).not.toContain(

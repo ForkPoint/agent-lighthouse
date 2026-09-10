@@ -179,14 +179,14 @@ export function summarize(report: unknown): ReportSummary {
  */
 const TONE: Record<string, string> = {
   "22c55e": "text-emerald-400",
-  "4f46e5": "text-indigo-300",
+  "4f46e5": "text-accent",
   f59e0b: "text-amber-300",
   ef4444: "text-red-400",
 };
 
 /** The Tailwind text colour for a score, following the published bands. */
 export function scoreClass(score: number): string {
-  return TONE[badgeColor(score)] ?? "text-slate-300";
+  return TONE[badgeColor(score)] ?? "text-body";
 }
 
 /** Seconds, to one decimal, from a duration in milliseconds. */
@@ -218,13 +218,13 @@ function categoryCard(category: CategorySummary): HTMLElement {
 
   const label = document.createElement("div");
   const name = document.createElement("h4");
-  name.className = "text-sm font-semibold text-white";
+  name.className = "text-sm font-semibold text-ink";
   name.textContent = category.name;
   const checks = div(
-    "mt-0.5 text-xs text-slate-400",
+    "mt-0.5 text-xs text-muted",
     category.checks === 1
-      ? "1 audit evaluated"
-      : `${category.checks} audits evaluated`,
+      ? "1 check evaluated"
+      : `${category.checks} checks evaluated`,
   );
   label.append(name, checks);
 
@@ -244,18 +244,18 @@ function header(summary: ReportSummary): HTMLElement {
 
   const left = document.createElement("div");
   const eyebrow = div(
-    "text-xs font-bold uppercase tracking-wider text-slate-400",
-    "Scanned target",
+    "text-xs font-bold uppercase tracking-wider text-muted",
+    "Website scanned",
   );
   const target = document.createElement("h3");
   // `break-all`: the target is arbitrary text from the file and may have no
   // spaces to wrap at.
-  target.className = "mt-1 break-all text-xl font-extrabold text-white";
+  target.className = "mt-1 break-all text-xl font-extrabold text-ink";
   target.textContent = summary.url;
   left.append(
     eyebrow,
     target,
-    div("mt-1 text-xs text-slate-400", scanLine(summary)),
+    div("mt-1 text-xs text-muted", scanLine(summary)),
   );
 
   const right = div("text-left sm:text-right");
@@ -272,7 +272,7 @@ function header(summary: ReportSummary): HTMLElement {
   if (summary.score === null) {
     right.append(
       div(
-        "mt-1 max-w-xs text-xs text-slate-400",
+        "mt-1 max-w-xs text-xs text-muted",
         "This scan obtained too little evidence to judge the site.",
       ),
     );
@@ -280,7 +280,7 @@ function header(summary: ReportSummary): HTMLElement {
   if (summary.tier) {
     right.append(
       div(
-        "mt-1 text-xs font-semibold uppercase tracking-wider text-slate-400",
+        "mt-1 text-xs font-semibold uppercase tracking-wider text-muted",
         summary.tier,
       ),
     );
@@ -298,7 +298,7 @@ export function renderSummary(summary: ReportSummary): DocumentFragment {
   if (summary.categories.length === 0) {
     fragment.append(
       div(
-        "text-sm text-slate-400",
+        "text-sm text-muted",
         "The report carries no category scores, so there is nothing to break down.",
       ),
     );
@@ -314,7 +314,7 @@ export function renderSummary(summary: ReportSummary): DocumentFragment {
   if (hidden > 0) {
     fragment.append(
       div(
-        "text-xs text-slate-400",
+        "text-xs text-muted",
         `…and ${hidden} more categories this view does not render.`,
       ),
     );

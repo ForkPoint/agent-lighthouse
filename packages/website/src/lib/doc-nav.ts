@@ -5,28 +5,37 @@ import { docPath, withBase } from "./routes";
 export interface DocNavEntry {
   label: string;
   href: string;
+  group?: string;
 }
 
 /**
- * The documentation sidebar, shared by every page that renders repository
- * markdown: the twelve docs sections, then the two evidence pages.
- *
- * It lives here rather than in the docs route because the policy page renders
- * the same layout and needs the same rail — a sidebar that listed the docs from
- * `/policy/` but never mentioned the policy from `/docs/` would leave the two
- * halves of the documentation unable to reach each other.
- *
- * The sequential order the docs pages walk stays inside `DOC_SECTIONS`: the
- * evidence pair is a destination, not the twelfth and thirteenth steps of the
- * quickstart-to-configuration path.
+ * Shared reading order: first scan, results and proof, sharing, then developer
+ * reference. Documentation pages also use this order for previous/next links.
  */
 export function documentationNav(): DocNavEntry[] {
+  const doc = (slug: string, group: string): DocNavEntry => {
+    const section = DOC_SECTIONS.find((section) => section.slug === slug);
+    if (!section) throw new Error(`Unknown documentation page: ${slug}`);
+    return { label: section.title, href: docPath(slug), group };
+  };
   return [
-    ...DOC_SECTIONS.map((section) => ({
-      label: section.title,
-      href: docPath(section.slug),
-    })),
-    { label: "Evidence policy", href: withBase("policy/") },
-    { label: "Source registry", href: withBase("sources/") },
+    doc("quickstart", "Get started"),
+    doc("audit-architecture", "Get started"),
+    doc("scoring", "Understand your results"),
+    {
+      label: "Proof behind the checks",
+      href: withBase("policy/"),
+      group: "Understand your results",
+    },
+    {
+      label: "Trusted sources",
+      href: withBase("sources/"),
+      group: "Understand your results",
+    },
+    doc("share", "Share your result"),
+    doc("badge", "Share your result"),
+    ...["cli", "config", "sdk", "mcp", "ci", "benchmark", "architecture"].map(
+      (slug) => doc(slug, "Developer reference"),
+    ),
   ];
 }

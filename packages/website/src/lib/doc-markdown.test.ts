@@ -6,6 +6,20 @@ import { createDocRenderer, resolveDocLink } from "./doc-markdown";
 const published = new Set(["structured-data/service-schema"]);
 
 describe("resolveDocLink", () => {
+  it("keeps reference links and public guide links on the same route", () => {
+    for (const slug of ["scoring", "badge", "benchmark"]) {
+      expect(resolveDocLink(`docs/${slug}.md`, "", published)).toBe(
+        `/agent-lighthouse/docs/${slug}/`,
+      );
+      expect(
+        resolveDocLink(
+          `./${slug}.md`,
+          "packages/website/src/content",
+          published,
+        ),
+      ).toBe(`/agent-lighthouse/docs/${slug}/`);
+    }
+  });
   it("sends a README link to a page this site publishes", () => {
     expect(resolveDocLink("docs/badge.md", "", published)).toBe(
       "/agent-lighthouse/docs/badge/",

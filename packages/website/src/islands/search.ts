@@ -193,7 +193,7 @@ function resultItem(fragment: PagefindFragment): HTMLLIElement {
     "block rounded-lg border border-transparent px-3 py-2.5 hover:border-brand/50 hover:bg-surface-raised focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand";
 
   const title = document.createElement("span");
-  title.className = "block text-sm font-semibold text-white";
+  title.className = "block text-sm font-semibold text-ink";
   // `meta.title` is the first heading inside the page's indexed region; a page
   // that somehow reached the index without one falls back to its address.
   title.textContent = fragment.meta?.["title"] ?? fragment.url;
@@ -205,20 +205,20 @@ function resultItem(fragment: PagefindFragment): HTMLLIElement {
   const category = fragment.filters?.["category"]?.[0];
   if (category) {
     const tag = document.createElement("span");
-    tag.className = "mt-0.5 block text-xs text-slate-400";
+    tag.className = "mt-0.5 block text-xs text-muted";
     tag.textContent = category;
     link.append(tag);
   }
 
   const excerpt = document.createElement("p");
-  excerpt.className = "mt-1 text-xs leading-relaxed text-slate-300";
+  excerpt.className = "mt-1 text-xs leading-relaxed text-body";
   for (const segment of excerptSegments(fragment.excerpt)) {
     if (!segment.mark) {
       excerpt.append(document.createTextNode(segment.text));
       continue;
     }
     const mark = document.createElement("mark");
-    mark.className = "bg-brand/30 text-white";
+    mark.className = "bg-brand/30 text-ink";
     mark.textContent = segment.text;
     excerpt.append(mark);
   }
@@ -258,10 +258,10 @@ export function mountSearch(load: PagefindLoader = loadPagefind): void {
   const fail = () => {
     list.replaceChildren();
     status.textContent =
-      "Search is unavailable — its index did not load. Every audit is still listed on the audits page:";
+      "Search could not load. Browse all website checks here:";
     const link = document.createElement("a");
     link.href = withBase("audits/");
-    link.className = "ml-1 underline hover:text-white";
+    link.className = "ml-1 underline hover:text-ink";
     link.textContent = withBase("audits/");
     status.append(link);
   };

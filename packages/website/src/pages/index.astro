@@ -1,7 +1,7 @@
 ---
 import Base from '../layouts/Base.astro';
-import { auditList, categoryList } from '../lib/registry';
-import { readSourceRegistry } from '../lib/evidence';
+import { categoryList } from '../lib/registry';
+import { benefits } from '../lib/product-copy';
 import { categoryPath, docPath, withBase } from '../lib/routes';
 import {
   BADGE_BANDS,
@@ -10,30 +10,8 @@ import {
   badgeMarkdown,
 } from '../islands/badge-generator';
 
-/**
- * The site root.
- *
- * Every number on this page is counted from the registry at build time. The
- * page it replaces printed "215 audits" and "8 categories" as literals and had
- * already drifted from both by the time it was retired; a count that is read
- * cannot drift.
- *
- * The two tools are the only interactive things here, and each is a plain
- * module under `src/islands/`. Both are imported in the frontmatter as well —
- * for their constants, not their behaviour — which is how the badge panel can
- * ship a correct snippet before any script runs.
- */
-const audits = auditList();
+/** The product homepage keeps scan entry points ahead of technical reference. */
 const categories = categoryList();
-const sources = readSourceRegistry().sources.length;
-const scored = audits.filter((audit) => audit.tier === 'scored').length;
-
-const metrics = [
-  { value: String(audits.length), label: 'Audits in the registry', href: withBase('audits/') },
-  { value: String(categories.length), label: 'Scoring categories', href: withBase('audits/') },
-  { value: String(scored), label: 'Audits that carry weight', href: docPath('scoring') },
-  { value: String(sources), label: 'Sources cited by dossiers', href: withBase('sources/') },
-];
 
 // The install line, rendered as text so it needs nothing to be readable.
 const installCommand = 'npx @forkpoint/agent-lighthouse https://yourstore.com';
@@ -44,101 +22,74 @@ const defaultBadge = badgeMarkdown(DEFAULT_SCORE, DEFAULT_URL);
 const card = 'rounded-xl border border-border-subtle bg-surface-raised p-5';
 const panel = 'rounded-2xl border border-border-subtle bg-surface-raised p-5 sm:p-6';
 const field =
-  'mt-2 w-full rounded-lg border border-slate-700 bg-surface px-3 py-2 text-sm text-white placeholder:text-slate-400 focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand';
-const label = 'block text-xs font-semibold uppercase tracking-wider text-slate-400';
+  'mt-2 w-full rounded-lg border border-control bg-surface px-3 py-2 text-sm text-ink placeholder:text-muted focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand';
+const label = 'block text-xs font-semibold uppercase tracking-wider text-muted';
 const sectionHead = 'border-b border-border-subtle pb-4';
-const h2 = 'text-2xl font-bold tracking-tight text-white';
+const h2 = 'text-2xl font-bold tracking-tight text-ink';
 ---
 <Base
-  title="Agent Lighthouse"
-  description={`Lighthouse-style audits for the agentic web: ${audits.length} checks across ${categories.length} categories, each backed by an evidence dossier.`}
+  title="Agent Lighthouse — Check your website’s AI readiness"
+  description="Agent Lighthouse is an open-source tool for website AI readiness. Run your own scan to find gaps in discovery, content and actions. Get clear findings and next steps."
 >
-  {/* The hero is what this page says for itself, and the only part of it
-      Pagefind indexes: the sections below are the badge generator and the report
-      viewer, whose text is interface, not content. */}
-  <!-- Hero -->
-  <section data-pagefind-body class="relative overflow-hidden border-b border-border-subtle">
-    <div
-      class="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(99,102,241,0.15),rgba(255,255,255,0))]"
-      aria-hidden="true"
-    ></div>
-    <div class="relative mx-auto max-w-5xl px-4 py-16 text-center sm:px-6 sm:py-20 lg:px-8">
-      <p class="inline-flex items-center rounded-full border border-brand/40 bg-brand/10 px-3.5 py-1 text-xs font-semibold text-indigo-300">
-        Open source, Apache-2.0, evidence-backed
-      </p>
 
-      <h1 class="mt-6 text-4xl font-black leading-tight tracking-tight text-white sm:text-6xl">
-        The open-source <span class="bg-gradient-to-r from-indigo-300 via-sky-300 to-emerald-300 bg-clip-text text-transparent">Lighthouse</span> for the agentic web
-      </h1>
-
-      <p class="mx-auto mt-5 max-w-3xl text-lg leading-relaxed text-slate-300">
-        Audit and score a site for the agents that read it: AI crawlers, LLM answer engines,
-        MCP clients and machine-readable commerce. Every check links to the dossier that
-        justifies it.
-      </p>
-
-      <div class="mx-auto mt-8 max-w-xl">
-        <pre class="overflow-x-auto rounded-xl border border-border-subtle bg-surface-raised p-3 text-left font-mono text-sm text-slate-200"><code>{`$ ${installCommand}`}</code></pre>
+  <section data-pagefind-body class="hero-section border-b border-border-subtle">
+    <div class="mx-auto grid max-w-7xl items-center gap-12 px-4 py-16 sm:px-6 sm:py-24 lg:grid-cols-[1.3fr_1fr] lg:px-8">
+      <div>
+        <p class="eyebrow">Open source. Built for AI readiness.</p>
+        <h1 class="hero-title mt-5">Find what stands between <em>AI and your website.</em></h1>
+        <p class="mt-6 max-w-xl text-lg leading-relaxed text-body">Agent Lighthouse is an open-source tool that checks how easily AI systems can find, understand, trust and use your site. Run your own scan. Get clear findings and practical next steps.</p>
+        <div class="mt-8 flex flex-wrap gap-3">
+          <a href={docPath('quickstart')} class="primary-action">Run your first scan <span aria-hidden="true">→</span></a>
+          <a href="https://github.com/ForkPoint/agent-lighthouse" class="secondary-action">View on GitHub <span aria-hidden="true">↗</span></a>
+        </div>
+        <p class="mt-4 text-sm text-muted">Free to use. Apache-2.0 licensed. Run it from your terminal or add it to your workflow.</p>
       </div>
-
-      <div class="mt-6 flex flex-wrap items-center justify-center gap-3">
-        <a
-          href={withBase('audits/')}
-          class="rounded-lg bg-brand px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-brand-soft"
-        >Browse the {audits.length} audits</a>
-        <a
-          href={docPath('quickstart')}
-          class="rounded-lg border border-slate-700 bg-slate-800 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-slate-700"
-        >Read the quickstart</a>
-      </div>
-
-      <ul class="mx-auto mt-12 grid max-w-4xl grid-cols-2 gap-4 text-left sm:grid-cols-4">
-        {metrics.map((metric) => (
-          <li class={card}>
-            <a href={metric.href} class="block">
-              <span class="block text-2xl font-extrabold text-white">{metric.value}</span>
-              <span class="mt-0.5 block text-xs text-slate-400">{metric.label}</span>
-            </a>
-          </li>
-        ))}
-      </ul>
+      <aside class="readiness-preview" aria-label="What a scan covers">
+        <div class="flex items-center justify-between gap-3 border-b border-border-subtle pb-5"><span class="eyebrow">A clearer view of your site</span><span class="preview-mark" aria-hidden="true">↗</span></div>
+        <h2 class="mt-6 text-2xl font-bold text-ink">Can AI work with your website?</h2>
+        <ol class="mt-5">
+          {['Find your pages', 'Read and cite your content', 'Understand products and actions', 'Show you what needs attention'].map((item, i) => <li class="flex items-center gap-4 border-b border-border-subtle py-4"><span class="step-number">0{i + 1}</span><span class="text-sm font-medium text-ink">{item}</span></li>)}
+        </ol>
+        <p class="mt-5 text-xs leading-relaxed text-muted">Checks website signals. Does not guarantee AI mentions, citations or completed actions.</p>
+      </aside>
     </div>
   </section>
-
-  <div class="mx-auto max-w-7xl space-y-16 px-4 py-16 sm:px-6 lg:px-8">
-    <!-- Categories -->
-    <section aria-labelledby="categories-heading" class="space-y-6">
-      <div class={sectionHead}>
-        <h2 id="categories-heading" class={h2}>The {categories.length} categories</h2>
-        <p class="mt-1 text-sm text-slate-400">
-          Every audit belongs to one of these, and every category index lists its dossiers.
-        </p>
-      </div>
-
-      <ul class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {categories.map((category) => (
-          <li>
-            <a
-              href={categoryPath(category.id)}
-              class={`${card} block h-full transition-colors hover:border-brand`}
-            >
-              <span class="block text-sm font-semibold text-white">{category.name}</span>
-              <span class="mt-1 block text-xs text-slate-400">
-                {category.count === 1 ? '1 audit' : `${category.count} audits`}
-              </span>
-            </a>
-          </li>
-        ))}
+  <div class="mx-auto max-w-7xl space-y-20 px-4 py-14 sm:px-6 lg:px-8">
+    <section aria-labelledby="audience-heading" class="audience-strip">
+      <h2 id="audience-heading" class="text-sm font-semibold text-ink">For teams that depend on their website</h2>
+      <p class="text-sm text-muted">Website owners · Marketing teams · SaaS products · Online shops · Documentation teams</p>
+    </section>
+    <section id="what-you-get" aria-labelledby="benefits-heading">
+      <p class="eyebrow">From questions to next steps</p>
+      <h2 id="benefits-heading" class="section-title mt-3">See where your website <em>needs work.</em></h2>
+      <p class="mt-3 max-w-2xl text-body">One scan brings the key signals together. Review the findings that fit your site and your goals.</p>
+      <ul class="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        {benefits.map((benefit, index) => <li class="benefit-card"><div class="benefit-kicker"><p class="eyebrow">{benefit.label}</p><span class="benefit-number" aria-hidden="true">0{index + 1}</span></div><h3 class="mt-4 text-xl font-bold text-ink">{benefit.title}</h3><p class="mt-3 text-sm leading-relaxed text-body">{benefit.text}</p><a class="mt-6 inline-block text-sm font-semibold text-accent underline underline-offset-4" href={categoryPath(benefit.category)}>Explore the checks <span aria-hidden="true">↗</span></a></li>)}
       </ul>
     </section>
-
+    <section aria-labelledby="trust-heading" class="trust-panel">
+      <div><p class="eyebrow">Proof behind every check</p><h2 id="trust-heading" class="mt-3 text-3xl font-bold text-ink">Know what the result means.</h2><p class="mt-4 text-sm leading-relaxed text-body">Each check explains its rule, sources and limits. Only eligible checks with documented support affect the score. Advisory and experimental findings do not.</p><p class="mt-3 text-sm leading-relaxed text-body">A scan measures signals on your site. It does not test every AI system or promise better search rankings.</p></div>
+      <div class="space-y-4"><a class="reference-link" href={docPath('scoring')}>Understand your score <span aria-hidden="true">↗</span></a><a class="reference-link" href={withBase('policy/')}>How we assess the proof <span aria-hidden="true">↗</span></a><a class="reference-link" href={withBase('sources/')}>Explore trusted sources <span aria-hidden="true">↗</span></a><p class="text-xs text-muted">Open source under Apache-2.0. Anyone can review the code.</p></div>
+    </section>
+    <section aria-labelledby="scan-heading">
+      <p class="eyebrow">Get started with Agent Lighthouse</p><h2 id="scan-heading" class="mt-3 text-3xl font-bold text-ink">Your next step starts with a scan.</h2>
+      <div class="mt-8 grid gap-6 lg:grid-cols-2">
+        <div class="self-run-panel"><p class="eyebrow">Open-source project</p><h3 class="mt-4 text-2xl font-bold text-ink">Run Agent Lighthouse yourself.</h3><p class="mt-4 text-sm leading-relaxed text-body">Use your terminal to scan a site. Get an HTML report and a JSON file for your own workflow.</p><pre class="mt-4 overflow-x-auto rounded-lg bg-surface p-4 text-sm text-body"><code>{installCommand}</code></pre><a class="primary-action mt-6" href={docPath('quickstart')}>Run your first scan →</a><p class="mt-4 text-xs text-muted">Free and open source under Apache-2.0.</p></div>
+        <div class={panel}><p class="eyebrow">Another way to scan</p><h3 class="mt-4 text-2xl font-bold text-ink">Prefer to scan online?</h3><p class="mt-4 text-sm leading-relaxed text-body">Check your website with Agentic Storefront. Run an AI readiness scan in your browser without terminal setup.</p><a class="secondary-action mt-6" href="https://audit.agenticstorefront.com">Try Agentic Storefront <span aria-hidden="true">↗</span></a><p class="mt-4 text-xs text-muted">An optional online alternative to running Agent Lighthouse yourself.</p></div>
+      </div>
+    </section>
+    <section aria-labelledby="categories-heading" class="space-y-5">
+      <h2 id="categories-heading" class={h2}>Explore what the scan checks</h2>
+      <p class="text-sm text-muted">Go deeper into a topic. Each check explains what it measures and when it applies.</p>
+      <ul class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">{categories.map((category) => <li><a href={categoryPath(category.id)} class={`${card} block h-full text-sm font-semibold text-ink hover:border-brand`}>{category.name}</a></li>)}</ul>
+      <a href={withBase('audits/')} class="inline-block text-sm text-accent underline">Browse all website checks →</a>
+    </section>
     <!-- Report inspector -->
     <section aria-labelledby="viewer-heading" class="space-y-6">
       <div class={sectionHead}>
-        <h2 id="viewer-heading" class={h2}>Report inspector</h2>
-        <p class="mt-1 text-sm text-slate-400">
-          Open a JSON report a scan wrote and read its scores. The file is read in your
-          browser and never uploaded.
+        <h2 id="viewer-heading" class={h2}>View a scan report</h2>
+        <p class="mt-1 text-sm text-muted">
+          Already ran a command-line scan? Open its JSON file to see a score summary. Your file stays in your browser. Use the HTML report for full findings and fix guidance.
         </p>
       </div>
 
@@ -152,14 +103,14 @@ const h2 = 'text-2xl font-bold tracking-tight text-white';
         id="report-dropzone"
         class="rounded-2xl border-2 border-dashed border-border-subtle bg-surface-raised p-5 text-center transition-colors sm:p-6"
       >
-        <label for="report-file" class="block text-sm font-semibold text-white">
-          Choose or drop an <code class="font-mono text-indigo-300">agent-lighthouse-report.json</code>
+        <label for="report-file" class="block text-sm font-semibold text-ink">
+          Choose or drop an <code class="font-mono text-accent">agent-lighthouse-report.json</code>
         </label>
         <input
           id="report-file"
           type="file"
           accept="application/json,.json"
-          class="mx-auto mt-4 block max-w-md text-sm text-slate-300 file:mr-3 file:rounded-lg file:border-0 file:bg-brand file:px-4 file:py-2 file:text-sm file:font-semibold file:text-white hover:file:bg-brand-soft"
+          class="mx-auto mt-4 block w-full max-w-md text-sm text-body file:mr-3 file:rounded-lg file:border-0 file:bg-brand file:px-4 file:py-2 file:text-sm file:font-semibold file:text-white hover:file:bg-brand-soft"
         />
       </div>
 
@@ -169,17 +120,17 @@ const h2 = 'text-2xl font-bold tracking-tight text-white';
           synchronous block is the pattern that loses the announcement — assistive
           tech has to be observing the region before its content changes. The badge
           status below does the same thing for the same reason. */}
-      <p id="report-status" aria-live="polite" class="min-h-5 text-sm text-slate-300"></p>
+      <p id="report-status" aria-live="polite" class="min-h-5 text-sm text-body"></p>
 
       <div id="report-output" hidden class={`${panel} space-y-6`}></div>
 
       <noscript>
-        <p class="rounded-xl border border-border-subtle bg-surface-raised/60 p-6 text-sm leading-relaxed text-slate-300">
-          <strong class="text-white">This inspector runs in your browser.</strong> With
+        <p class="rounded-xl border border-border-subtle bg-surface-raised/60 p-6 text-sm leading-relaxed text-body">
+          <strong class="text-ink">This viewer needs JavaScript.</strong> With
           scripting off there is nothing to read the file with. Run the scan
-          with <code class="font-mono text-indigo-300">--output html</code> instead and open
+          with <code class="font-mono text-accent">--output html</code> instead and open
           the report the CLI writes — it is a complete page on its own.
-          The <a class="underline hover:text-white" href={docPath('cli')}>CLI reference</a> lists
+          The <a class="underline hover:text-ink" href={docPath('cli')}>CLI reference</a> lists
           the output flags.
         </p>
       </noscript>
@@ -188,10 +139,9 @@ const h2 = 'text-2xl font-bold tracking-tight text-white';
     <!-- Badge generator -->
     <section aria-labelledby="badge-heading" class="space-y-6">
       <div class={sectionHead}>
-        <h2 id="badge-heading" class={h2}>Badge generator</h2>
-        <p class="mt-1 text-sm text-slate-400">
-          A README badge for a score, in the
-          form <a class="underline hover:text-white" href={docPath('badge')}>the badge doc</a> publishes.
+        <h2 id="badge-heading" class={h2}>Share your result</h2>
+        <p class="mt-1 text-sm text-muted">
+          Create a score badge for your README. Enter your scan result, then copy the snippet. This badge shows the score you enter; it does not verify a scan. <a class="underline hover:text-ink" href={docPath('badge')}>Read the sharing guide</a>.
         </p>
       </div>
 
@@ -209,42 +159,42 @@ const h2 = 'text-2xl font-bold tracking-tight text-white';
 
         <div class="space-y-3 rounded-xl border border-border-subtle bg-surface p-4">
           <div class="flex items-center justify-between gap-4">
-            <div id="badge-preview" class="min-h-5 text-sm text-slate-400"></div>
+            <div id="badge-preview" class="min-h-5 text-sm text-muted"></div>
             {/* Ships hidden and the island reveals it: a Copy button that
                 cannot reach a clipboard is worse than no button. */}
             <button
               type="button"
               id="badge-copy"
               hidden
-              class="shrink-0 rounded-lg border border-slate-700 bg-slate-800 px-3 py-1.5 text-xs font-medium text-slate-200 transition-colors hover:bg-slate-700"
+              class="shrink-0 rounded-lg border border-control bg-surface-raised px-3 py-1.5 text-xs font-medium text-body transition-colors hover:bg-hover"
             >Copy</button>
           </div>
           {/* Rendered by the build, so the snippet is right before any script
               runs. Astro escapes the expression, which is what keeps the
               `<!-- Scanned: … -->` line visible instead of being parsed away. */}
-          <pre id="badge-markdown" class="overflow-x-auto whitespace-pre-wrap font-mono text-xs text-indigo-300">{defaultBadge}</pre>
+          <pre id="badge-markdown" class="overflow-x-auto whitespace-pre-wrap font-mono text-xs text-accent">{defaultBadge}</pre>
           {/* Announced and shown: a confirmation only a screen reader hears
               leaves everyone else guessing whether the button did anything. */}
-          <p id="badge-copy-status" aria-live="polite" class="text-xs text-slate-400"></p>
+          <p id="badge-copy-status" aria-live="polite" class="text-xs text-muted"></p>
         </div>
 
         <table class="w-full border-collapse text-left text-sm">
-          <caption class="pb-2 text-left text-xs text-slate-400">
-            The colour a score gets, as published in the badge doc.
+          <caption class="pb-2 text-left text-xs text-muted">
+            Score ranges and badge colours.
           </caption>
           <thead>
             <tr>
-              <th scope="col" class="border-b border-border-subtle py-2 pr-4 text-xs font-bold uppercase tracking-wider text-slate-400">Score</th>
-              <th scope="col" class="border-b border-border-subtle py-2 pr-4 text-xs font-bold uppercase tracking-wider text-slate-400">Colour</th>
-              <th scope="col" class="border-b border-border-subtle py-2 text-xs font-bold uppercase tracking-wider text-slate-400">Meaning</th>
+              <th scope="col" class="border-b border-border-subtle py-2 pr-4 text-xs font-bold uppercase tracking-wider text-muted">Score</th>
+              <th scope="col" class="border-b border-border-subtle py-2 pr-4 text-xs font-bold uppercase tracking-wider text-muted">Colour</th>
+              <th scope="col" class="border-b border-border-subtle py-2 text-xs font-bold uppercase tracking-wider text-muted">Meaning</th>
             </tr>
           </thead>
           <tbody>
             {BADGE_BANDS.map((band) => (
               <tr class="border-b border-border-subtle/60">
-                <td class="py-2 pr-4 text-slate-200">{band.min}&ndash;{band.max}</td>
+                <td class="py-2 pr-4 text-body">{band.min}&ndash;{band.max}</td>
                 <td class="py-2 pr-4">
-                  <span class="inline-flex items-center gap-2 font-mono text-xs text-slate-300">
+                  <span class="inline-flex items-center gap-2 font-mono text-xs text-body">
                     <span
                       class="inline-block size-3 rounded-full"
                       style={`background:#${band.color}`}
@@ -253,7 +203,7 @@ const h2 = 'text-2xl font-bold tracking-tight text-white';
                     {band.color}
                   </span>
                 </td>
-                <td class="py-2 text-slate-300">{band.meaning}</td>
+                <td class="py-2 text-body">{band.meaning}</td>
               </tr>
             ))}
           </tbody>
@@ -261,70 +211,17 @@ const h2 = 'text-2xl font-bold tracking-tight text-white';
       </div>
 
       <noscript>
-        <p class="rounded-xl border border-border-subtle bg-surface-raised/60 p-6 text-sm leading-relaxed text-slate-300">
-          <strong class="text-white">The fields above update in your browser.</strong> With
+        <p class="rounded-xl border border-border-subtle bg-surface-raised/60 p-6 text-sm leading-relaxed text-body">
+          <strong class="text-ink">The fields above update in your browser.</strong> With
           scripting off the snippet stays at its default. Copy it,
-          replace <code class="font-mono text-indigo-300">{DEFAULT_SCORE}</code> with your score
+          replace <code class="font-mono text-accent">{DEFAULT_SCORE}</code> with your score
           and the colour with the one its band gets in the table.
         </p>
       </noscript>
     </section>
 
-    <!-- Showcase -->
-    <section aria-labelledby="showcase-heading" class="space-y-6">
-      <div class={sectionHead}>
-        <h2 id="showcase-heading" class={h2}>What scores look like</h2>
-        <p class="mt-1 text-sm text-slate-400">
-          Illustrative shapes, not measurements, and not a leaderboard. Run the scan for a
-          real number.
-        </p>
-      </div>
-
-      <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
-        <div class={`${card} space-y-2`}>
-          <p class="font-mono text-xs text-slate-400">docs platform</p>
-          <p class="text-4xl font-black text-emerald-400">90+</p>
-          <p class="text-sm font-semibold text-white">Strong discovery files</p>
-          <p class="text-xs text-slate-400">
-            A good <code class="font-mono">llms.txt</code>, semantic structure and open crawler
-            access make docs easy for coding agents to cite.
-          </p>
-        </div>
-        <div class={`${card} space-y-2`}>
-          <p class="font-mono text-xs text-slate-400">storefront</p>
-          <p class="text-4xl font-black text-amber-300">50&ndash;70</p>
-          <p class="text-sm font-semibold text-white">Classic SEO, weak agent actions</p>
-          <p class="text-xs text-slate-400">
-            Product schema is common; OpenAPI, WebMCP and machine-readable checkout paths
-            usually are not.
-          </p>
-        </div>
-        <div class={`${card} space-y-2`}>
-          <p class="font-mono text-xs text-slate-400">what moves it</p>
-          <p class="text-4xl font-black text-indigo-300">A&nbsp;+&nbsp;B</p>
-          <p class="text-sm font-semibold text-white">Only proven signals carry weight</p>
-          <p class="text-xs text-slate-400">
-            A fix moves the score only where the audit's dossier grades its evidence A or B
-            and its tier is scored. Advisory and experimental checks are reported and weigh
-            nothing &mdash; see <a class="underline hover:text-white" href={docPath('scoring')}>scoring</a>.
-          </p>
-        </div>
-      </div>
-
-      <div class={`${card} flex flex-col justify-between gap-4 sm:flex-row sm:items-center`}>
-        <div>
-          <p class="text-sm font-bold text-white">Have a public result?</p>
-          <p class="mt-1 text-xs text-slate-400">
-            Share the score and what you changed, so other teams have a real example to read.
-          </p>
-        </div>
-        <a
-          href="https://github.com/ForkPoint/agent-lighthouse/issues/new?template=site-score.yml"
-          rel="noopener"
-          class="inline-flex shrink-0 justify-center rounded-lg bg-brand px-4 py-2 text-xs font-semibold text-white transition-colors hover:bg-brand-soft"
-        >Share a site score</a>
-      </div>
-    </section>
+    <p class="text-sm text-muted">Have a public result? <a class="underline text-accent" href="https://github.com/ForkPoint/agent-lighthouse/issues/new?template=site-score.yml">Share your score and what you changed</a>.</p>
+    <section class="closing-cta"><h2 class="text-3xl font-bold text-ink">Make your next website fix count.</h2><p class="mt-3 text-body">Run Agent Lighthouse. See what needs attention.</p><a class="primary-action mt-6" href={docPath('quickstart')}>Run your first scan <span aria-hidden="true">→</span></a><p class="mt-3 text-xs text-muted">Free and open source. Ready for your workflow.</p></section>
   </div>
 
   <script>

@@ -18,7 +18,7 @@ const shown = headings.filter((heading) => heading.depth === 2 || heading.depth 
 ---
 {shown.length > 0 && (
   <nav aria-labelledby={headingId} class="text-sm">
-    <h2 id={headingId} class="mb-3 text-xs font-bold uppercase tracking-wider text-slate-400">
+    <h2 id={headingId} class="mb-3 text-xs font-bold uppercase tracking-wider text-muted">
       On this page
     </h2>
     <ul class="space-y-2 border-l border-border-subtle pl-3">
@@ -26,7 +26,7 @@ const shown = headings.filter((heading) => heading.depth === 2 || heading.depth 
         <li class:list={[heading.depth === 3 && 'pl-3']}>
           <a
             href={`#${heading.slug}`}
-            class="block py-0.5 text-slate-400 transition-colors hover:text-white"
+            class="block py-0.5 text-muted transition-colors hover:text-ink"
           >{heading.text}</a>
         </li>
       ))}

@@ -34,15 +34,15 @@ const { audit, showCategory = true } = Astro.props;
   class="rounded-xl border border-border-subtle bg-surface-raised/50 p-4 transition-colors hover:border-brand/50 hover:bg-surface-raised sm:p-5"
 >
   <div class="flex flex-wrap items-center gap-2">
-    <code class="rounded border border-brand/20 bg-brand/10 px-2 py-0.5 font-mono text-xs font-bold text-indigo-400">{audit.id}</code>
+    <code class="rounded border border-brand/20 bg-brand/10 px-2 py-0.5 font-mono text-xs font-bold text-accent">{audit.id}</code>
     <GradeBadge grade={audit.evidenceGrade} />
     <TierBadge tier={audit.tier} />
   </div>
-  <h2 class="mt-2.5 text-sm font-bold text-white sm:text-base">
+  <h2 class="mt-2.5 text-sm font-bold text-ink sm:text-base">
     <a class="transition-colors hover:text-brand-soft" href={auditPath(audit.id)}>{audit.title}</a>
   </h2>
-  <p class="mt-1.5 text-xs leading-relaxed text-slate-300">{audit.description}</p>
+  <p class="mt-1.5 text-xs leading-relaxed text-body">{audit.description}</p>
   {showCategory && (
-    <p class="mt-2.5 text-xs text-slate-400">{audit.categoryTitle}</p>
+    <p class="mt-2.5 text-xs text-muted">{audit.categoryTitle}</p>
   )}
 </li>

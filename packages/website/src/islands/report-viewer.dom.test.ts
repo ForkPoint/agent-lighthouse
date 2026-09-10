@@ -75,7 +75,7 @@ describe("mountReportViewer", () => {
     expect(output().textContent).toContain("74/100");
     expect(output().textContent).toContain("AI Discovery");
     expect(output().textContent).toContain("91/100");
-    expect(output().textContent).toContain("1 audit evaluated");
+    expect(output().textContent).toContain("1 check evaluated");
     expect(output().textContent).toContain("1 page scanned in 4.2s");
     expect(status()).toContain("scored 74 out of 100");
   });

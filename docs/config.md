@@ -1,8 +1,8 @@
 # Configuration
 
-Everything a scan can be told to do differently: the config file, the eight categories a scan can be narrowed to, the options the programmatic API accepts, the environment variables the engine reads, and the limits that are fixed and cannot be changed.
+Use this reference to choose scan categories, report formats, and time limits. It separates settings for the command-line tool from options for your own application.
 
-For the flags themselves see [cli.md](./cli.md); for what the resulting numbers mean see [scoring.md](./scoring.md).
+See the [command-line options](./cli.md) for individual commands and [understand your score](./scoring.md) for the results.
 
 ## The config file
 
@@ -48,7 +48,7 @@ A bare `agent-lighthouse` with no arguments at all does **not**: it prints the u
 | `categories`       | `string[]`                                                | —                              | **Not read by the CLI.** Use the `--categories` flag instead.                                                |
 | `maxPages`         | `number`                                                  | —                              | **Not read by anything.** The page budget is fixed; see [Fixed limits](#fixed-limits).                       |
 
-The last two keys are part of the `AgentLighthouseConfig` type but no code path consumes them today. They are listed here so that a config file containing them is not mistaken for a scan that honours them.
+The config file accepts the last two keys, but they do not change the scan. Use the `--categories` command-line option to limit categories. You cannot change the page limit with `maxPages`.
 
 ### Precedence
 

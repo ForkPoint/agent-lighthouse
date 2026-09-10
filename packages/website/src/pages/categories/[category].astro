@@ -1,4 +1,5 @@
 ---
+import { categoryBenefits } from '../../lib/product-copy';
 import Base from '../../layouts/Base.astro';
 import AuditCard from '../../components/AuditCard.astro';
 import { auditList, categoryList } from '../../lib/registry';
@@ -27,11 +28,11 @@ const { category, categories, audits } = Astro.props;
 ---
 <Base
   title={category.name}
-  description={`The ${audits.length} Agent Lighthouse audits in ${category.name}.`}
+  description={categoryBenefits[category.id]}
 >
   <div class="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
-    <nav aria-label="Breadcrumb" class="text-xs text-slate-400">
-      <a class="transition-colors hover:text-white" href={withBase('audits/')}>Audits</a>
+    <nav aria-label="Breadcrumb" class="text-xs text-muted">
+      <a class="transition-colors hover:text-ink" href={withBase('audits/')}>Website checks</a>
       <span aria-hidden="true"> / </span>
       <span>{category.name}</span>
     </nav>
@@ -43,9 +44,9 @@ const { category, categories, audits } = Astro.props;
         well would make this page a weak match for every audit in the category
         at once, on every query. */}
     <div data-pagefind-body>
-      <h1 id="category-heading" class="mt-3 text-3xl font-extrabold tracking-tight text-white">{category.name}</h1>
-      <p class="mt-3 text-sm text-slate-300">
-        {audits.length} audits, each linking to the dossier that proves its rule.
+      <h1 id="category-heading" class="mt-3 text-3xl font-extrabold tracking-tight text-ink">{category.name}</h1>
+      <p class="mt-3 text-sm text-body">
+        {categoryBenefits[category.id]} Each check includes its proof, limits and effect on the score.
       </p>
     </div>
 
@@ -59,8 +60,8 @@ const { category, categories, audits } = Astro.props;
               class:list={[
                 'inline-block rounded-lg border px-3 py-1.5 text-xs font-medium transition-colors',
                 other.id === category.id
-                  ? 'border-brand bg-brand text-white'
-                  : 'border-slate-700 bg-slate-800 text-slate-200 hover:bg-slate-700 hover:text-white',
+                  ? 'border-brand bg-brand text-ink'
+                  : 'border-control bg-surface-raised text-body hover:bg-hover hover:text-ink',
               ]}
             >{other.name} ({other.count})</a>
           </li>

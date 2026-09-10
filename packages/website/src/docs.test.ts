@@ -153,25 +153,21 @@ describe.skipIf(!built)("rendered docs pages", () => {
   });
 
   it("walks the sections in order, and stops at both ends", () => {
-    const first = body(page(DOC_SECTIONS[0]!.slug));
-    const last = body(page(DOC_SECTIONS.at(-1)!.slug));
+    const first = body(page("quickstart"));
+    const last = body(page("architecture"));
 
     expect(first).not.toMatch(/rel="prev"/);
     const onward = /<a\b[^>]*rel="next"[^>]*>/.exec(first)?.[0];
     expect(onward, "the first section offers no next").toBeDefined();
-    expect(onward).toContain(`href="${docPath(DOC_SECTIONS[1]!.slug)}"`);
+    expect(onward).toContain(`href="${docPath("audit-architecture")}"`);
     expect(last).not.toMatch(/rel="next"/);
     expect(last).toMatch(/rel="prev"/);
 
-    const middle = body(page(DOC_SECTIONS[1]!.slug));
+    const middle = body(page("audit-architecture"));
     const adjacent = [...middle.matchAll(/<a\b[^>]*rel="(prev|next)"[^>]*>/g)];
     expect(adjacent).toHaveLength(2);
-    expect(adjacent[0]![0]).toContain(
-      `href="${docPath(DOC_SECTIONS[0]!.slug)}"`,
-    );
-    expect(adjacent[1]![0]).toContain(
-      `href="${docPath(DOC_SECTIONS[2]!.slug)}"`,
-    );
+    expect(adjacent[0]![0]).toContain(`href="${docPath("quickstart")}"`);
+    expect(adjacent[1]![0]).toContain(`href="${docPath("scoring")}"`);
   });
 
   it("leaves no unresolved relative link in the prose", () => {

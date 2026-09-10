@@ -285,7 +285,7 @@ describe("mountSourcesTable", () => {
     // "Loading the source registry…" forever.
     await mount({ $comment: "a file, but not this one" });
 
-    expect(status()).toContain("could not be loaded");
+    expect(status()).toContain("Sources could not load");
     expect(document.querySelector<HTMLElement>("#sources-status")!.hidden).toBe(
       false,
     );
@@ -314,7 +314,7 @@ describe("mountSourcesTable", () => {
   it("says so, and offers the raw file, when the registry cannot be fetched", async () => {
     await mount({}, false);
 
-    expect(status()).toContain("could not be loaded");
+    expect(status()).toContain("Sources could not load");
     expect(
       document.querySelector("#sources-status a")!.getAttribute("href"),
     ).toBe(REGISTRY_URL);

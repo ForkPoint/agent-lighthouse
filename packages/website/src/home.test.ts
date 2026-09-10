@@ -20,10 +20,10 @@ describe("the landing page source", () => {
     expect(withBase("")).toBe("/agent-lighthouse/");
   });
 
-  it("counts the registry rather than repeating a number that goes stale", () => {
+  it("uses category links without leading with internal counts", () => {
     const page = source();
 
-    expect(page).toContain("auditList()");
+    expect(page).not.toContain("Audits in the registry");
     expect(page).toContain("categoryList()");
     // The page it replaces hardcoded both, and both had drifted by the time it
     // was retired. A literal count in the template is the bug, not the style.
@@ -61,13 +61,13 @@ describe.skipIf(!built)("the rendered landing page", () => {
     expect(home().match(/<h1[\s>]/g) ?? []).toHaveLength(1);
   });
 
-  it("shows the counts the registry actually holds", () => {
+  it("links to every category without showing invented scores", () => {
     const page = home();
-    const audits = auditList().length;
     const categories = categoryList();
 
-    expect(page).toContain(String(audits));
-    expect(page).toContain(String(categories.length));
+    expect(page).toContain('href="https://audit.agenticstorefront.com"');
+    expect(page).toContain("Check your website");
+    expect(page).not.toContain("90+");
     for (const category of categories) {
       expect(page, `${category.id} is missing from the landing page`).toContain(
         `href="${categoryPath(category.id)}"`,

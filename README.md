@@ -1,5 +1,10 @@
 <div align="center">
-  <h1>🗼 Agent Lighthouse</h1>
+  <h1>
+    <picture>
+      <source media="(prefers-color-scheme: dark)" srcset="packages/website/public/brand/kit/svg/rectangle-dark-transparent.svg">
+      <img src="packages/website/public/brand/kit/svg/rectangle-light-transparent.svg" alt="Agent Lighthouse" width="560">
+    </picture>
+  </h1>
   <p><strong>Lighthouse, but for AI agents.</strong></p>
   <p>Audit whether ChatGPT, Claude, Perplexity, MCP clients, AI crawlers, and agentic browsers can discover, parse, cite, and act on your website.</p>
   <p>
@@ -15,8 +20,13 @@
     <a href="https://www.npmjs.com/package/@forkpoint/agent-lighthouse">npm</a>
     ·
     <a href="https://github.com/ForkPoint/agent-lighthouse/issues/new?template=site-score.yml">Share a site score</a>
+    ·
+    <a href="https://forkpoint.github.io/agent-lighthouse/branding/">Brand kit</a>
   </p>
 </div>
+
+Logo files, icons, and usage rules: [brand guide](packages/website/public/brand/BRAND.md).
+Download the [complete brand kit](https://github.com/ForkPoint/agent-lighthouse/raw/refs/heads/main/packages/website/public/brand/agent-lighthouse-brand-kit.zip).
 
 ![Agent Lighthouse generated report preview](docs/assets/report-preview.svg)
 

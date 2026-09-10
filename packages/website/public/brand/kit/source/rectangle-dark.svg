@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="240" viewBox="0 0 800 240" role="img" aria-labelledby="title desc">
+  <title id="title">Agent Lighthouse</title>
+  <desc id="desc">Agent Lighthouse wordmark beside an AI monogram, on a dark background. The I is a lighthouse with a bright dot and light beams.</desc>
+  <rect x="1" y="1" width="798" height="238" rx="32" fill="#080e1c" stroke="#29364b" stroke-width="2"/>
+  <g transform="translate(28 28) scale(.71875)">
+    <rect width="256" height="256" rx="56" fill="#4f46e5"/>
+    <g transform="translate(-5.5 5)">
+    <path d="M48 185 87 91h17l39 94h-24l-8-21H80l-8 21Zm39-41h17l-8.5-24Z" fill="#fff" fill-rule="evenodd"/>
+    <path d="M158 112h20l11 73h-42Z" fill="#fff"/>
+    <path d="M148 104h40" stroke="#fff" stroke-width="8" stroke-linecap="round"/>
+    <circle cx="168" cy="78" r="12" fill="#fff"/>
+    <path d="m144 73-33-12v26l33-4Zm48 0 27-12v26l-27-4Z" fill="#c7d2fe"/>
+    </g>
+  </g>
+  <g font-family="Avenir Next, Segoe UI, sans-serif" fill="#f5f7ff">
+    <text x="250" y="100" font-size="42" font-weight="500" letter-spacing="-1">Agent</text>
+    <text x="247" y="165" font-size="66" font-weight="750" letter-spacing="-2.5">Lighthouse</text>
+  </g>
+</svg>

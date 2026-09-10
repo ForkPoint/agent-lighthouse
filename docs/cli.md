@@ -1,8 +1,8 @@
 # CLI reference
 
-`@forkpoint/agent-lighthouse` audits a live URL for agent readiness and writes a terminal, HTML, JSON and/or Markdown report. This page is the complete reference for the command and its flags.
+`@forkpoint/agent-lighthouse` checks a website's AI readiness. It can print a summary and save HTML, JSON, or Markdown reports. This reference explains the command and its options.
 
-For what the resulting numbers mean, see [scoring.md](./scoring.md). For the config file, environment variables and the programmatic API, see [config.md](./config.md).
+Read [what your score means](./scoring.md) before comparing results. Use the [configuration guide](./config.md) for saved settings and application options.
 
 ## Install
 
@@ -123,7 +123,7 @@ The valid ids are `access-crawl-control`, `content-extraction`, `machine-discove
 agent-lighthouse https://yourstore.com/product/widget --page-type product
 ```
 
-Explicitly declares the page type of the target URL (`homepage`, `product`, `category`, `content`, `author`). Under Phase 3 scoring rules, page type detection provides evidence for `informative` (unscored) results, whereas explicitly declared page types authorize full `scored` audits.
+Declare the target page's type: `homepage`, `product`, `category`, `content`, or `author`. Automatically detected types support advisory results for checks that depend on page type. An explicit type allows those checks to contribute to the score when their other requirements are met.
 
 ### `--experimental`
 
@@ -173,7 +173,7 @@ If the overall score is below the threshold, the CLI prints the failure and exit
 
 ### `--assert-category <id:min>`
 
-A per-category budget, in `id:number` form. Repeat the flag for more than one category:
+Set a minimum score for one category, in `id:number` form. Repeat the flag for more than one category:
 
 ```bash
 agent-lighthouse https://yourstore.com \

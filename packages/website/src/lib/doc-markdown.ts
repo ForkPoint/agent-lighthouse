@@ -5,10 +5,12 @@ import { auditPath, docPath, withBase } from "./routes";
 
 /** The repository files this site publishes whole, mapped to their docs slug. */
 const PUBLISHED_FILES = new Map(
-  DOC_SECTIONS.filter((section) => !section.heading).map((section) => [
-    section.file,
-    section.slug,
-  ]),
+  DOC_SECTIONS.filter((section) => !section.heading).flatMap((section) =>
+    [
+      section.file,
+      ...(section.referenceFile ? [section.referenceFile] : []),
+    ].map((file) => [file, section.slug] as const),
+  ),
 );
 
 /**
