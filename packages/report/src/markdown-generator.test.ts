@@ -54,6 +54,19 @@ function report(categories: CategoryResult[]): ScanReport {
 }
 
 describe("generateMarkdownSummary", () => {
+  it("adds the project mark and keeps a readable plain-text identity", () => {
+    const input = report([]);
+    const before = structuredClone(input);
+    const md = generateMarkdownSummary(input);
+    expect(md).toContain(
+      '[![Agent Lighthouse](https://forkpoint.github.io/agent-lighthouse/brand/kit/icons/icon-64.png "Agent Lighthouse logo")](https://forkpoint.github.io/agent-lighthouse/)',
+    );
+    expect(md).toContain("### Agent Lighthouse — AI readiness report");
+    expect(md).toContain("Apache-2.0");
+    expect(md).not.toContain("🗼");
+    expect(input).toEqual(before);
+  });
+
   it("states how many checks were advisory", () => {
     const md = generateMarkdownSummary(
       report([

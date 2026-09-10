@@ -1,5 +1,6 @@
 import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
+import { JSDOM } from "jsdom";
 import { describe, expect, it } from "vitest";
 
 const dist = resolve("packages/website/dist");
@@ -31,10 +32,14 @@ describe.skipIf(!built)("published branding", () => {
   });
 });
 
-it("connects the README to the approved logos and brand kit", () => {
+it("uses the white-background README logo regardless of the browser theme", () => {
   const readme = readFileSync("README.md", "utf8");
-  expect(readme).toContain("rectangle-light-transparent.svg");
-  expect(readme).toContain("rectangle-dark-transparent.svg");
-  expect(readme).toContain("agent-lighthouse-brand-kit.zip");
-  expect(readme).not.toContain("🗼 Agent Lighthouse");
+  const document = new JSDOM(readme).window.document;
+  const logo = document.querySelector("h1 img");
+
+  expect(logo?.getAttribute("src")).toBe(
+    "packages/website/public/brand/kit/svg/rectangle-light.svg",
+  );
+  expect(logo?.getAttribute("alt")).toBe("Agent Lighthouse");
+  expect(document.querySelector("picture, source")).toBeNull();
 });
