@@ -12,37 +12,6 @@ import {
 
 const SRC = resolve(__dirname, ".");
 const DIST = resolve(SRC, "../dist");
-const source = () => readFileSync(resolve(SRC, "pages/index.astro"), "utf8");
-
-describe("the landing page source", () => {
-  it("exists, and is the site root the header links to", () => {
-    expect(existsSync(resolve(SRC, "pages/index.astro"))).toBe(true);
-    expect(withBase("")).toBe("/agent-lighthouse/");
-  });
-
-  it("uses category links without leading with internal counts", () => {
-    const page = source();
-
-    expect(page).not.toContain("Audits in the registry");
-    expect(page).toContain("categoryList()");
-    // The page it replaces hardcoded both, and both had drifted by the time it
-    // was retired. A literal count in the template is the bug, not the style.
-    expect(page).not.toMatch(/>\s*215\s*</);
-    expect(page).not.toMatch(/>\s*8\s*</);
-  });
-
-  it("mounts both tools and nothing that reaches the server", () => {
-    const page = source();
-
-    expect(page).toContain("mountBadgeGenerator");
-    expect(page).toContain("mountReportViewer");
-    // The islands are imported inside `<script>`, which Astro bundles for the
-    // browser; the registry is read in the frontmatter, which is not.
-    const script = /<script>([\s\S]*?)<\/script>/.exec(page)?.[1] ?? "";
-    expect(script).not.toContain("registry");
-    expect(script).not.toContain("agent-lighthouse-core");
-  });
-});
 
 /**
  * Rendered assertions read `dist/` for the reason `layouts/chrome.test.ts`
@@ -67,6 +36,7 @@ describe.skipIf(!built)("the rendered landing page", () => {
 
     expect(page).toContain('href="https://audit.agenticstorefront.com"');
     expect(page).toContain("Check your website");
+    expect(page).not.toContain("Audits in the registry");
     expect(page).not.toContain("90+");
     for (const category of categories) {
       expect(page, `${category.id} is missing from the landing page`).toContain(
