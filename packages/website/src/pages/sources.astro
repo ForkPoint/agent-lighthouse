@@ -1,7 +1,10 @@
 ---
 import Base from '../layouts/Base.astro';
+import PrevNext from '../components/PrevNext.astro';
+import SidebarNav from '../components/SidebarNav.astro';
+import { documentationNav } from '../lib/doc-nav';
 import { readSourceRegistry, sourceTypeCounts } from '../lib/evidence';
-import { withBase } from '../lib/routes';
+import { docPath, withBase } from '../lib/routes';
 
 /**
  * The source registry browser.
@@ -21,6 +24,7 @@ import { withBase } from '../lib/routes';
 const registry = readSourceRegistry();
 const types = sourceTypeCounts(registry.sources);
 const registryUrl = withBase('sources.json');
+const nav = documentationNav();
 
 const pill =
   'rounded-lg border border-control bg-surface-raised px-3 py-1.5 text-xs font-medium text-body transition-colors hover:bg-hover aria-pressed:border-brand aria-pressed:bg-brand aria-pressed:text-ink';
@@ -30,7 +34,23 @@ const th = 'border-b border-border-subtle px-3 py-2 text-left text-xs font-bold 
   title="Trusted sources"
   description="Explore the standards, vendor documentation and research behind Agent Lighthouse website checks."
 >
-  <div class="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
+  <div class="mx-auto grid max-w-7xl gap-x-10 gap-y-8 px-4 py-10 sm:px-6 lg:grid-cols-[15rem_minmax(0,1fr)] lg:px-8">
+    <details class="mb-2 rounded-xl border border-border-subtle bg-surface-raised/60 lg:hidden">
+      <summary class="cursor-pointer px-4 py-3 text-sm font-semibold text-body marker:text-muted">
+        Browse guide pages
+      </summary>
+      <div class="border-t border-border-subtle px-4 py-4">
+        <SidebarNav nav={nav} />
+      </div>
+    </details>
+
+    <aside class="hidden lg:block">
+      <div class="sticky top-24 max-h-[calc(100vh-7rem)] overflow-y-auto pb-6">
+        <SidebarNav nav={nav} />
+      </div>
+    </aside>
+
+    <div class="min-w-0" data-pagefind-body>
     {/* The indexed region, and the honest limit of site search: the 647 records
         are fetched in the browser, so the built HTML Pagefind reads holds this
         prose and nothing else. A reader searching for a source finds this page —
@@ -38,7 +58,7 @@ const th = 'border-b border-border-subtle px-3 py-2 text-left text-xs font-bold 
         searches the registry with the box below, which has all 647. Rendering
         them server-side to feed the index would undo the reason this page is
         3.7 KB gzipped instead of 162 KB. The search dialog says so too. */}
-    <div data-pagefind-body>
+    <div>
       <h1 class="text-3xl font-extrabold tracking-tight text-ink">Trusted sources</h1>
       <p class="mt-3 max-w-3xl text-sm leading-relaxed text-body">
         Explore {registry.sources.length} sources behind the checks, including standards, vendor documentation and research. Last accessed
@@ -141,6 +161,11 @@ const th = 'border-b border-border-subtle px-3 py-2 text-left text-xs font-bold 
       hidden
       class="mt-4 rounded-xl border border-border-subtle bg-surface-raised/50 p-8 text-center text-sm text-muted"
     >No sources match. Try another term or select all source types.</p>
+    <PrevNext
+      prev={{ label: 'Proof behind the checks', href: withBase('policy/') }}
+      next={{ label: 'Share a scan report', href: docPath('share') }}
+    />
+    </div>
   </div>
 
   <script>
