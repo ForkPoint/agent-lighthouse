@@ -161,6 +161,9 @@ importers:
       '@tailwindcss/vite':
         specifier: ^4.3.3
         version: 4.3.3(vite@8.2.2(@types/node@22.20.1)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.12)(yaml@2.9.0))
+      '@types/jsdom':
+        specifier: ^28.0.3
+        version: 28.0.3
       jsdom:
         specifier: ^29.1.1
         version: 29.1.1
