@@ -13,27 +13,64 @@
 @theme {
   --color-brand: #4f46e5;
   --color-brand-soft: #6366f1;
-  --color-surface: #020617;
-  --color-surface-raised: #0f172a;
-  --color-border-subtle: #1e293b;
+  --color-surface: #ffffff;
+  --color-surface-raised: #f6f7fb;
+  --color-border-subtle: #dde2ec;
+  --color-ink: #101828;
+  --color-body: #344054;
+  --color-muted: #526078;
+  --color-accent: #4338ca;
+  --color-control: #bdc6d6;
+  --color-hover: #e9edf5;
 
   /* The old page pulled Inter and JetBrains Mono from Google Fonts. A site that
      audits other sites for third-party weight ships neither: system stacks
      render immediately and cost no request. */
   --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
   --font-mono: ui-monospace, "JetBrains Mono", Menlo, monospace;
+  --font-display: "Avenir Next", "Segoe UI", sans-serif;
+  --font-editorial:
+    "Iowan Old Style", "Palatino Linotype", "Book Antiqua", Georgia, serif;
 }
 
-/* The reference site is dark-only (`<html class="dark">` with no toggle) and so
-   is this one. Declaring the scheme lets the UA paint form controls, scrollbars
-   and the canvas to match instead of flashing white before the CSS lands. */
-:root { color-scheme: dark; }
+:root {
+  color-scheme: light;
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --color-surface: #080e1c;
+  --color-surface-raised: #111b2e;
+  --color-border-subtle: #29364b;
+  --color-ink: #f5f7ff;
+  --color-body: #cbd5e1;
+  --color-muted: #a3b0c5;
+  --color-accent: #b2baff;
+  --color-control: #475569;
+  --color-hover: #26344c;
+}
+:root[data-theme="light"] {
+  --color-emerald-300: #047857;
+  --color-emerald-400: #047857;
+  --color-amber-300: #92400e;
+  --color-amber-400: #92400e;
+  --color-red-300: #b91c1c;
+  --color-red-400: #b91c1c;
+  --color-sky-300: #0369a1;
+}
 
-html { scroll-behavior: smooth; }
-body { background: var(--color-surface); color: #e2e8f0; }
+html {
+  scroll-behavior: smooth;
+}
+body {
+  background: var(--color-surface);
+  color: var(--color-body);
+  font-kerning: normal;
+}
 
 @media (prefers-reduced-motion: reduce) {
-  html { scroll-behavior: auto; }
+  html {
+    scroll-behavior: auto;
+  }
 }
 
 @layer components {
@@ -41,42 +78,69 @@ body { background: var(--color-surface); color: #e2e8f0; }
      the markdown here is one narrow, known shape (dossiers), so a ~40-line layer
      beats a dependency. Kept in the components layer so utilities still win. */
   .prose {
-    color: #cbd5e1;
+    color: var(--color-body);
     line-height: 1.7;
   }
-  .prose > * + * { margin-top: 1rem; }
-  .prose h1, .prose h2, .prose h3, .prose h4 {
-    color: #f8fafc;
+  .prose > * + * {
+    margin-top: 1rem;
+  }
+  .prose h1,
+  .prose h2,
+  .prose h3,
+  .prose h4 {
+    color: var(--color-ink);
     font-weight: 700;
     letter-spacing: -0.02em;
     scroll-margin-top: 5rem;
   }
-  .prose h1 { font-size: 1.875rem; }
+  .prose h1 {
+    font-size: 1.875rem;
+  }
   .prose h2 {
     font-size: 1.375rem;
     margin-top: 2.5rem;
     padding-bottom: 0.5rem;
     border-bottom: 1px solid var(--color-border-subtle);
   }
-  .prose h3 { font-size: 1.125rem; margin-top: 2rem; }
-  .prose h4 { font-size: 1rem; margin-top: 1.5rem; }
+  .prose h3 {
+    font-size: 1.125rem;
+    margin-top: 2rem;
+  }
+  .prose h4 {
+    font-size: 1rem;
+    margin-top: 1.5rem;
+  }
   /* brand-soft clears 4.5:1 against the surface. The two places it sat on a 10%
      brand wash did not, and use indigo-400 there instead. */
   .prose a {
-    color: var(--color-brand-soft);
+    color: var(--color-accent);
     text-decoration: underline;
     text-underline-offset: 2px;
   }
-  .prose a:hover { color: #a5b4fc; }
-  .prose strong { color: #f1f5f9; font-weight: 600; }
-  .prose ul, .prose ol { padding-left: 1.5rem; }
-  .prose ul { list-style: disc; }
-  .prose ol { list-style: decimal; }
-  .prose li + li { margin-top: 0.375rem; }
+  .prose a:hover {
+    color: var(--color-accent);
+  }
+  .prose strong {
+    color: var(--color-ink);
+    font-weight: 600;
+  }
+  .prose ul,
+  .prose ol {
+    padding-left: 1.5rem;
+  }
+  .prose ul {
+    list-style: disc;
+  }
+  .prose ol {
+    list-style: decimal;
+  }
+  .prose li + li {
+    margin-top: 0.375rem;
+  }
   .prose code {
     font-family: var(--font-mono);
     font-size: 0.85em;
-    color: #a5b4fc;
+    color: var(--color-accent);
     background: var(--color-surface-raised);
     border: 1px solid var(--color-border-subtle);
     border-radius: 0.25rem;
@@ -92,13 +156,21 @@ body { background: var(--color-surface); color: #e2e8f0; }
     overflow-x: auto;
   }
   /* A code span inside a block is already framed by the block. */
-  .prose pre code { background: none; border: 0; padding: 0; color: inherit; }
+  .prose pre code {
+    background: none;
+    border: 0;
+    padding: 0;
+    color: inherit;
+  }
   .prose blockquote {
     border-left: 3px solid var(--color-brand);
     padding-left: 1rem;
-    color: #94a3b8;
+    color: var(--color-muted);
   }
-  .prose hr { border-color: var(--color-border-subtle); margin: 2rem 0; }
+  .prose hr {
+    border-color: var(--color-border-subtle);
+    margin: 2rem 0;
+  }
   /* Wide dossier tables scroll inside the article rather than the page. */
   .prose table {
     display: block;
@@ -106,12 +178,401 @@ body { background: var(--color-surface); color: #e2e8f0; }
     width: 100%;
     border-collapse: collapse;
     font-size: 0.875rem;
+    /* Do not inherit the article's emergency word breaking into columns. */
+    overflow-wrap: normal;
+    word-break: normal;
   }
-  .prose th, .prose td {
+  .prose td:first-child code,
+  .prose th {
+    /* Keep row keys intact; let wide tables scroll inside the article. */
+    white-space: nowrap;
+  }
+  .prose table code {
+    /* Give code fragments complete borders when a value wraps at a space. */
+    -webkit-box-decoration-break: clone;
+    box-decoration-break: clone;
+  }
+  .prose td:last-child {
+    min-width: 16rem;
+  }
+  .prose th,
+  .prose td {
     border: 1px solid var(--color-border-subtle);
     padding: 0.5rem 0.75rem;
     text-align: left;
     vertical-align: top;
   }
-  .prose th { background: var(--color-surface-raised); color: #e2e8f0; font-weight: 600; }
+  .prose th {
+    background: var(--color-surface-raised);
+    color: var(--color-body);
+    font-weight: 600;
+  }
+}
+
+/* Product surfaces share tokens with the technical reference. */
+.prose .policy-history {
+  margin-top: 3rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--color-border-subtle);
+  font-size: 0.75rem;
+  line-height: 1.65;
+  color: var(--color-muted);
+}
+.prose .policy-history h2 {
+  margin-top: 0;
+  border: 0;
+  font-size: 0.875rem;
+}
+.prose .policy-history strong {
+  font-weight: 500;
+  color: inherit;
+}
+:focus-visible {
+  outline: 3px solid var(--color-accent);
+  outline-offset: 4px;
+}
+[id] {
+  scroll-margin-top: 7rem;
+}
+main,
+main > *,
+.prose,
+.prose > *,
+.grid > *,
+.flex > * {
+  min-width: 0;
+}
+.prose,
+.benefit-card {
+  overflow-wrap: anywhere;
+}
+button {
+  cursor: pointer;
+}
+.bg-brand,
+[aria-pressed="true"] {
+  --color-ink: #fff;
+}
+.primary-action,
+.secondary-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.8rem;
+  border-radius: 0.65rem;
+  padding: 0.85rem 1.15rem;
+  font-size: 0.9rem;
+  font-weight: 650;
+}
+.primary-action {
+  background: #4f46e5;
+  color: #fff;
+  text-decoration: none;
+}
+.primary-action:hover {
+  background: #4338ca;
+  color: #fff;
+}
+.secondary-action {
+  border: 1px solid var(--color-control);
+  color: var(--color-ink);
+  background: var(--color-surface);
+}
+.secondary-action:hover {
+  background: var(--color-hover);
+}
+.eyebrow {
+  color: var(--color-accent);
+  font-size: 0.7rem;
+  font-weight: 750;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+.hero-section {
+  background: radial-gradient(
+    ellipse at 95% 0%,
+    color-mix(in srgb, var(--color-brand) 9%, transparent),
+    transparent 65%
+  );
+}
+.readiness-preview {
+  padding: 2rem;
+  border: 1px solid var(--color-border-subtle);
+  border-radius: 1.25rem;
+  background: var(--color-surface);
+  box-shadow: 0 24px 70px -30px #4f46e540;
+}
+.preview-mark {
+  display: inline-grid;
+  place-items: center;
+  color: #fff;
+  background: #4f46e5;
+  border-radius: 0.65rem;
+}
+.preview-mark {
+  width: 2.5rem;
+  height: 2.5rem;
+  font-size: 1.6rem;
+}
+.brand-logo-dark {
+  display: none;
+}
+@media (max-width: 639px) {
+  .brand-logo-light,
+  .brand-logo-dark {
+    width: 11rem;
+    height: auto;
+  }
+}
+:root[data-theme="dark"] .brand-logo-light {
+  display: none;
+}
+:root[data-theme="dark"] .brand-logo-dark {
+  display: block;
+}
+.step-number {
+  color: var(--color-accent);
+  font: 0.75rem var(--font-mono);
+}
+.audience-strip {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding-bottom: 2rem;
+  border-bottom: 1px solid var(--color-border-subtle);
+}
+.benefit-card {
+  height: 100%;
+  padding: 1.7rem;
+  border: 1px solid var(--color-border-subtle);
+  border-radius: 1rem;
+  background: var(--color-surface-raised);
+}
+.trust-panel {
+  display: grid;
+  grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr);
+  align-items: center;
+  gap: 3rem;
+  border-top: 1px solid var(--color-border-subtle);
+  border-bottom: 1px solid var(--color-border-subtle);
+  padding: 3rem 0;
+}
+.reference-link {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1rem 0;
+  border-bottom: 1px solid var(--color-border-subtle);
+  color: var(--color-ink);
+  font-weight: 600;
+}
+.self-run-panel {
+  padding: 1.5rem;
+  border: 1px solid var(--color-accent);
+  border-radius: 1rem;
+  background: color-mix(in srgb, var(--color-brand) 5%, var(--color-surface));
+}
+
+/* Exported Mermaid diagrams work without JavaScript or a third-party host. */
+.scan-diagram {
+  margin-block: 2rem;
+  padding: 1.25rem;
+  border: 1px solid var(--color-border-subtle);
+  border-radius: 1rem;
+  background: var(--color-surface);
+}
+.scan-diagram img {
+  width: 100%;
+  height: auto;
+  margin-inline: auto;
+}
+.scan-diagram--flow img {
+  max-width: 360px;
+}
+.scan-diagram figcaption {
+  margin-top: 1rem;
+  text-align: center;
+  color: var(--color-muted);
+  font-size: 0.8125rem;
+  line-height: 1.5;
+}
+.diagram-dark {
+  display: none;
+}
+:root[data-theme="dark"] .diagram-light {
+  display: none;
+}
+:root[data-theme="dark"] .diagram-dark {
+  display: block;
+}
+.closing-cta {
+  text-align: center;
+  padding: 3rem 1.5rem;
+  border-radius: 1rem;
+  background: var(--color-surface-raised);
+}
+.theme-toggle {
+  border: 1px solid var(--color-control);
+  border-radius: 0.5rem;
+  padding: 0.5rem 0.65rem;
+  font-size: 0.75rem;
+  color: var(--color-ink);
+  white-space: nowrap;
+}
+.theme-toggle:hover {
+  background: var(--color-hover);
+}
+.header-cta {
+  padding: 0.6rem 0.8rem;
+  font-size: 0.8rem;
+}
+
+/* A fluid display scale adds contrast without loading external font files. */
+h1,
+h2,
+h3 {
+  text-wrap: balance;
+}
+p {
+  text-wrap: pretty;
+}
+.hero-title {
+  max-width: 13ch;
+  font-family: var(--font-display);
+  font-size: clamp(2.75rem, 5.5vw, 5rem);
+  line-height: 1.04;
+  font-weight: 700;
+  letter-spacing: -0.05em;
+  color: var(--color-ink);
+}
+.hero-title em,
+.section-title em {
+  font-family: var(--font-editorial);
+  font-weight: 400;
+  letter-spacing: -0.045em;
+  color: var(--color-accent);
+}
+.hero-title em {
+  display: block;
+  margin-top: 0.12em;
+}
+.hero-section h1 + p {
+  max-width: 46ch;
+  font-size: clamp(1.0625rem, 1.4vw, 1.25rem);
+  line-height: 1.65;
+  letter-spacing: -0.015em;
+}
+.section-title,
+#trust-heading,
+#scan-heading,
+.closing-cta h2 {
+  max-width: 20ch;
+  font-family: var(--font-display);
+  font-size: clamp(2rem, 3.6vw, 3.5rem);
+  line-height: 1.12;
+  font-weight: 650;
+  letter-spacing: -0.05em;
+  color: var(--color-ink);
+}
+.closing-cta h2 {
+  margin-inline: auto;
+}
+.section-title + p {
+  font-size: 1.0625rem;
+  line-height: 1.65;
+}
+.eyebrow {
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  line-height: 1.6;
+  font-weight: 500;
+  letter-spacing: 0.085em;
+}
+.benefit-kicker {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+.benefit-number {
+  color: var(--color-muted);
+  font-family: var(--font-editorial);
+  font-size: 1.75rem;
+  font-style: italic;
+  line-height: 1;
+}
+.benefit-card h3 {
+  max-width: 22ch;
+  font-family: var(--font-display);
+  font-size: clamp(1.375rem, 2vw, 1.625rem);
+  line-height: 1.22;
+  font-weight: 650;
+  letter-spacing: -0.035em;
+}
+.benefit-card > p {
+  font-size: 0.9375rem;
+  line-height: 1.75;
+}
+.readiness-preview h2,
+#categories-heading,
+#viewer-heading,
+#badge-heading {
+  font-family: var(--font-display);
+  font-size: clamp(1.5rem, 2.5vw, 2rem);
+  line-height: 1.2;
+  font-weight: 650;
+  letter-spacing: -0.04em;
+}
+.readiness-preview .step-number {
+  font-family: var(--font-editorial);
+  font-size: 1.4rem;
+  font-style: italic;
+}
+.prose h1 {
+  font-family: var(--font-display);
+  font-size: clamp(2rem, 3.5vw, 3rem);
+  line-height: 1.15;
+  letter-spacing: -0.045em;
+}
+.prose h2 {
+  font-size: clamp(1.375rem, 2vw, 1.75rem);
+  line-height: 1.25;
+  letter-spacing: -0.03em;
+}
+@media (max-width: 800px) {
+  .site-nav {
+    order: 3;
+    width: 100%;
+    justify-content: center;
+    padding-top: 0.5rem;
+  }
+  .header-cta {
+    display: none;
+  }
+  .trust-panel {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 1.5rem;
+  }
+}
+@media (max-width: 420px) {
+  .site-header-inner {
+    gap: 0.65rem;
+  }
+  .site-header-inner > a {
+    gap: 0.4rem;
+  }
+  .site-header-inner > a > span:last-child {
+    font-size: 0.9rem;
+  }
+  #search-trigger {
+    padding: 0.4rem;
+  }
+  #search-trigger > span[aria-hidden] {
+    display: none;
+  }
+  .readiness-preview {
+    padding: 1.25rem;
+  }
 }

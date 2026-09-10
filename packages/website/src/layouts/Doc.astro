@@ -43,8 +43,8 @@ const { title, heading, description, headings, nav, prev, next } = Astro.props;
         pair is inactive is `display: none`, so only one of each is ever in the
         accessibility tree. `<details>` needs no script to open. */}
     <details class="mb-2 rounded-xl border border-border-subtle bg-surface-raised/60 lg:hidden">
-      <summary class="cursor-pointer px-4 py-3 text-sm font-semibold text-slate-200 marker:text-slate-400">
-        Browse audits and page contents
+      <summary class="cursor-pointer px-4 py-3 text-sm font-semibold text-body marker:text-muted">
+        Browse checks and page contents
       </summary>
       <div class="space-y-8 border-t border-border-subtle px-4 py-4">
         <SidebarNav nav={nav} />

@@ -4,7 +4,6 @@ import Doc from '../layouts/Doc.astro';
 import { createDocRenderer } from '../lib/doc-markdown';
 import { documentationNav } from '../lib/doc-nav';
 import { EVIDENCE_DIR, readPolicySource } from '../lib/evidence';
-import { DOC_SECTIONS } from '../lib/markdown-slice';
 import { docPath, withBase } from '../lib/routes';
 
 /**
@@ -23,20 +22,25 @@ import { docPath, withBase } from '../lib/routes';
  */
 const published = new Set((await getCollection('audits')).map((entry) => entry.id));
 const render = await createDocRenderer(published);
-const { html, headings } = await render(readPolicySource(), EVIDENCE_DIR);
+const source = readPolicySource();
+const historyStart = source.indexOf('\n## History\n');
+const { html, headings } = await render(historyStart < 0 ? source : source.slice(0, historyStart), EVIDENCE_DIR);
+const history = historyStart < 0 ? undefined : await render(source.slice(historyStart), EVIDENCE_DIR);
 
 // The policy opens with its own `# Evidence Policy`, which is the page's only
 // h1 and its title; the fallback is there so a retitled file cannot empty it.
 const heading = headings.find((entry) => entry.depth === 1)?.text ?? 'Evidence policy';
-const last = DOC_SECTIONS.at(-1)!;
 ---
 <Doc
   title={heading}
   description="What counts as proof in Agent Lighthouse: evidence grades, what each grade may do to a score, and how audits are re-reviewed and retired."
   headings={headings}
   nav={documentationNav()}
-  prev={{ label: last.title, href: docPath(last.slug) }}
-  next={{ label: 'Source registry', href: withBase('sources/') }}
+  prev={{ label: 'Understand your score', href: docPath('scoring') }}
+  next={{ label: 'Trusted sources', href: withBase('sources/') }}
 >
+  <p>We assess the proof before a check can affect your score. Documented support matters. A popular idea alone is not enough.</p>
+  <p>Advisory and experimental checks do not change the score. The policy below explains the grades, limits and review rules.</p>
   <Fragment set:html={html} />
+  {history && <section class="policy-history" aria-labelledby="history"><Fragment set:html={history.html} /></section>}
 </Doc>

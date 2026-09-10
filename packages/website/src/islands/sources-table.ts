@@ -111,7 +111,7 @@ function setProseWithCode(target: HTMLElement, text: string): void {
     target.append(document.createTextNode(text.slice(last)));
 }
 
-const CELL = "align-top px-3 py-2.5 text-sm text-slate-300";
+const CELL = "align-top px-3 py-2.5 text-sm text-body";
 
 /** The key-findings cell: short findings read straight, long ones expand. */
 function findingsCell(source: SourceRecord): HTMLTableCellElement {
@@ -132,10 +132,10 @@ function findingsCell(source: SourceRecord): HTMLTableCellElement {
   // or two lines tall on a phone.
   const details = document.createElement("details");
   const summary = document.createElement("summary");
-  summary.className = "cursor-pointer text-slate-300 marker:text-slate-500";
+  summary.className = "cursor-pointer text-body marker:text-slate-500";
   setProseWithCode(summary, previewOf(findings));
   const full = document.createElement("p");
-  full.className = "mt-2 text-slate-400";
+  full.className = "mt-2 text-muted";
   setProseWithCode(full, findings);
   details.append(summary, full);
   cell.append(details);
@@ -150,12 +150,12 @@ function sourceRow(source: SourceRecord): HTMLTableRowElement {
 
   const head = document.createElement("th");
   head.scope = "row";
-  head.className = `${CELL} text-left font-medium text-white`;
+  head.className = `${CELL} text-left font-medium text-ink`;
   const link = document.createElement("a");
   link.href = source.url;
   link.rel = "noopener";
   link.className =
-    "text-brand-soft underline decoration-slate-600 hover:text-white";
+    "text-brand-soft underline decoration-slate-600 hover:text-ink";
   link.textContent = source.title;
   const id = document.createElement("code");
   id.className = "mt-1 block text-xs font-normal text-slate-500";
@@ -201,7 +201,7 @@ export async function mountSourcesTable(): Promise<void> {
   // The region's visibility is never touched here. It renders empty and visible
   // from first paint, so assistive tech is already observing it when this line
   // and every line after it is written.
-  status.textContent = "Loading the source registry…";
+  status.textContent = "Loading sources…";
 
   let sources: SourceRecord[];
   let rows: Array<readonly [SourceRecord, HTMLTableRowElement]>;
@@ -218,7 +218,7 @@ export async function mountSourcesTable(): Promise<void> {
     rows = sources.map((source) => [source, sourceRow(source)] as const);
   } catch {
     status.textContent =
-      "The source registry could not be loaded. Open sources.json directly:";
+      "Sources could not load. Open the source list directly:";
     const link = document.createElement("a");
     link.href = REGISTRY_URL;
     link.className = "ml-1 underline";

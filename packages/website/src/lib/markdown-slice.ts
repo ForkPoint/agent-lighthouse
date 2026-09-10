@@ -71,63 +71,86 @@ export interface DocSection {
   file: string;
   /** The `## ` heading to slice out, when the page is one section of a file. */
   heading?: string;
+  /** Keep links from the repository reference pointing to its public guide. */
+  referenceFile?: string;
+  /** Explain when to use a technical reference before presenting its options. */
+  summary?: string;
 }
 
 /**
  * Where each docs page gets its prose.
  *
- * Reuse first: nothing here is copied into this package. Six pages are sections
- * of the README, rendered in place; six are whole files under `docs/`. A
- * renamed heading empties a page silently, so `markdown-slice.test.ts` pins
- * every one of them against the file on disk.
+ * Public guides live in website content. Detailed command and config references
+ * still render from repository docs. Reference aliases preserve incoming links.
  */
 export const DOC_SECTIONS: readonly DocSection[] = [
   {
     slug: "quickstart",
     title: "Quickstart",
-    file: "README.md",
-    heading: "## ⚡ Quickstart",
+    file: "packages/website/src/content/quickstart.md",
   },
   {
     slug: "architecture",
     title: "Packages & architecture",
-    file: "README.md",
-    heading: "## 📦 Packages & Architecture",
+    file: "packages/website/src/content/packages.md",
   },
   {
     slug: "sdk",
     title: "Node.js / TypeScript SDK",
-    file: "README.md",
-    heading: "## 💻 Programmatic Node.js / TypeScript SDK",
+    file: "packages/website/src/content/sdk.md",
   },
   {
     slug: "mcp",
     title: "MCP server",
-    file: "README.md",
-    heading: "## 🤖 Model Context Protocol (MCP) Server",
+    file: "packages/website/src/content/mcp.md",
   },
   {
     slug: "ci",
     title: "GitHub Actions CI",
-    file: "README.md",
-    heading: "## 🛡️ GitHub Actions CI",
+    file: "packages/website/src/content/ci.md",
   },
   {
     slug: "share",
-    title: "Share your score",
-    file: "README.md",
-    heading: "## 📣 Share Your Score",
+    title: "Share a scan report",
+    file: "packages/website/src/content/share.md",
   },
-  { slug: "badge", title: "Badge", file: "docs/badge.md" },
-  { slug: "benchmark", title: "Benchmark", file: "docs/benchmark.md" },
-  { slug: "scoring", title: "Scoring", file: "docs/scoring.md" },
+  {
+    slug: "badge",
+    title: "Add a score badge",
+    file: "packages/website/src/content/badge.md",
+    referenceFile: "docs/badge.md",
+  },
+  {
+    slug: "benchmark",
+    title: "Compare scans",
+    file: "packages/website/src/content/benchmark.md",
+    referenceFile: "docs/benchmark.md",
+  },
+  {
+    slug: "scoring",
+    title: "Understand your score",
+    file: "packages/website/src/content/scoring.md",
+    referenceFile: "docs/scoring.md",
+  },
   {
     slug: "audit-architecture",
-    title: "Audit architecture",
-    file: "docs/architecture/audits.md",
+    title: "How a scan works",
+    file: "packages/website/src/content/how-scans-work.md",
   },
-  { slug: "cli", title: "CLI reference", file: "docs/cli.md" },
-  { slug: "config", title: "Configuration", file: "docs/config.md" },
+  {
+    slug: "cli",
+    title: "CLI reference",
+    file: "docs/cli.md",
+    summary:
+      "Use command-line options to choose what to scan, where to save reports, and when a run should fail a score threshold. Start with the basic command below. Look up an option only when you need it.",
+  },
+  {
+    slug: "config",
+    title: "Configuration",
+    file: "docs/config.md",
+    summary:
+      "Save repeatable scan settings in a JSON file. Command-line options usually override the file. Some settings work only as command-line flags; the tables below call out those limits.",
+  },
 ];
 
 /**

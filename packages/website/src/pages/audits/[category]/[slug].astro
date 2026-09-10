@@ -105,10 +105,10 @@ const sourceUrl = `https://github.com/ForkPoint/agent-lighthouse/blob/main/${ent
       printed nowhere in the prose, so a reader who types
       `agentic-commerce/offer-truth-consistency` would otherwise find nothing. */}
   <div slot="meta" class="mb-6 space-y-3">
-    <nav aria-label="Breadcrumb" class="text-xs text-slate-400">
-      <a class="transition-colors hover:text-white" href={withBase('audits/')}>Audits</a>
+    <nav aria-label="Breadcrumb" class="text-xs text-muted">
+      <a class="transition-colors hover:text-ink" href={withBase('audits/')}>Website checks</a>
       <span aria-hidden="true"> / </span>
-      <a class="transition-colors hover:text-white" href={categoryPath(audit.category)}>{audit.categoryTitle}</a>
+      <a class="transition-colors hover:text-ink" href={categoryPath(audit.category)}>{audit.categoryTitle}</a>
     </nav>
     {/* The two facets Pagefind records for a dossier, declared with explicit
         values — `category:Agentic Commerce`, not whatever the element happens to
@@ -123,7 +123,7 @@ const sourceUrl = `https://github.com/ForkPoint/agent-lighthouse/blob/main/${ent
       data-pagefind-filter={`category:${audit.categoryTitle}`}
     >
       <code
-        class="rounded border border-brand/20 bg-brand/10 px-2 py-0.5 font-mono text-xs font-bold text-indigo-400"
+        class="rounded border border-brand/20 bg-brand/10 px-2 py-0.5 font-mono text-xs font-bold text-accent"
         data-pagefind-filter={`grade:${audit.evidenceGrade}`}
       >{audit.id}</code>
     </div>

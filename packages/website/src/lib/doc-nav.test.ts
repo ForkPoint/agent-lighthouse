@@ -10,19 +10,39 @@ import { documentationNav } from "./doc-nav";
  */
 
 describe("documentationNav", () => {
-  it("lists every docs section, in order", () => {
+  it("keeps every docs section reachable", () => {
     const nav = documentationNav();
-    expect(nav.slice(0, DOC_SECTIONS.length).map((e) => e.label)).toEqual(
-      DOC_SECTIONS.map((s) => s.title),
-    );
+    expect(
+      nav
+        .filter((e) => e.href.includes("/docs/"))
+        .map((e) => e.label)
+        .sort(),
+    ).toEqual(DOC_SECTIONS.map((s) => s.title).sort());
   });
 
-  // The evidence pair is a destination, not the next step of the quickstart path.
-  it("appends the two evidence pages after the docs sections", () => {
+  it("puts first scans and results before sharing and developer references", () => {
     const nav = documentationNav();
-    expect(nav.slice(DOC_SECTIONS.length)).toEqual([
-      { label: "Evidence policy", href: "/agent-lighthouse/policy/" },
-      { label: "Source registry", href: "/agent-lighthouse/sources/" },
+    expect(nav.map((e) => e.href.replace("/agent-lighthouse/", ""))).toEqual([
+      "docs/quickstart/",
+      "docs/audit-architecture/",
+      "docs/scoring/",
+      "policy/",
+      "sources/",
+      "docs/share/",
+      "docs/badge/",
+      "docs/cli/",
+      "docs/config/",
+      "docs/sdk/",
+      "docs/mcp/",
+      "docs/ci/",
+      "docs/benchmark/",
+      "docs/architecture/",
+    ]);
+    expect([...new Set(nav.map((e) => e.group))]).toEqual([
+      "Get started",
+      "Understand your results",
+      "Share your result",
+      "Developer reference",
     ]);
   });
 

@@ -92,7 +92,7 @@ describe("chrome", () => {
 
   it("declares the colour scheme it is legible in", () => {
     expect(read("styles/global.css")).toMatch(
-      /:root\s*\{[^}]*color-scheme:\s*dark/,
+      /:root\s*\{[^}]*color-scheme:\s*light/,
     );
   });
 
@@ -274,10 +274,11 @@ describe.skipIf(!built)("head metadata", () => {
   function htmlPages(dir = DIST): Array<{ file: string; url: string }> {
     return readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
       const full = resolve(dir, entry.name);
-      // Pagefind writes its own fragments and a playground page under `dist`;
-      // none of them is a page this site renders.
+      // Pagefind output and the kit's standalone previews do not use the site shell.
       if (entry.isDirectory())
-        return entry.name === "pagefind" ? [] : htmlPages(full);
+        return entry.name === "pagefind" || full === resolve(DIST, "brand/kit")
+          ? []
+          : htmlPages(full);
       if (!entry.name.endsWith(".html")) return [];
       const relative = full.slice(DIST.length + 1);
       // `a/b/index.html` is published at `/a/b/`; `404.html` at `/404/`.
@@ -321,9 +322,9 @@ describe.skipIf(!built)("head metadata", () => {
   });
 
   it("carries the full Open Graph and Twitter card on every page", () => {
-    const image = `${SITE}${withBase("og-image.svg")}`;
+    const image = `${SITE}${withBase("brand/kit/png/social-card.png")}`;
     expect(
-      existsSync(resolve(DIST, "og-image.svg")),
+      existsSync(resolve(DIST, "brand/kit/png/social-card.png")),
       "the card image is not published",
     ).toBe(true);
 

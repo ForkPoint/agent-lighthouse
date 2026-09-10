@@ -9,18 +9,18 @@ const categories = categoryList();
 
 // The three tiers `TierBadge` knows, in the order the docs introduce them.
 const tiers = [
-  { value: 'all', label: 'All tiers' },
+  { value: 'all', label: 'All check types' },
   { value: 'scored', label: 'Scored' },
   { value: 'informative', label: 'Advisory' },
   { value: 'experimental', label: 'Experimental' },
 ];
 
 const pill =
-  'rounded-lg border border-slate-700 bg-slate-800 px-3 py-1.5 text-xs font-medium text-slate-200 transition-colors hover:bg-slate-700 aria-pressed:border-brand aria-pressed:bg-brand aria-pressed:text-white';
+  'rounded-lg border border-control bg-surface-raised px-3 py-1.5 text-xs font-medium text-body transition-colors hover:bg-hover aria-pressed:border-brand aria-pressed:bg-brand aria-pressed:text-ink';
 ---
 <Base
-  title="Audits"
-  description="Every audit Agent Lighthouse runs, with the evidence grade and tier it carries."
+  title="Website checks"
+  description="Explore website checks for AI discovery, answers, actions and commerce. See the proof, limits and score impact of each check."
 >
   <div class="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
     {/* This page's one indexed region. Pagefind reads built HTML, and what is
@@ -30,10 +30,9 @@ const pill =
         well would make this page a weak match for all 215 audits at once, on every
         query. */}
     <div data-pagefind-body>
-      <h1 id="audits-heading" class="text-3xl font-extrabold tracking-tight text-white">Audits</h1>
-      <p class="mt-3 max-w-3xl text-sm leading-relaxed text-slate-300">
-        Every check the engine runs, in registry order. Each one links to the dossier that
-        states its rule, the evidence behind it, and how the check is implemented.
+      <h1 id="audits-heading" class="text-3xl font-extrabold tracking-tight text-ink">Website checks</h1>
+      <p class="mt-3 max-w-3xl text-sm leading-relaxed text-body">
+        Find out what a scan looks for. Each check explains its rule, supporting proof and limits. Scored checks can affect your result. Advisory and experimental checks provide context without changing the score.
       </p>
     </div>
 
@@ -43,17 +42,17 @@ const pill =
         so: this one narrows the list on this page and never leaves it, while
         the dialog searches the full text of all 238 pages. The wording is the
         only thing keeping them apart, so it is explicit on both sides. */}
-    <section id="audit-controls" hidden aria-label="Filter audits" class="mt-8 space-y-4">
+    <section id="audit-controls" hidden aria-label="Filter website checks" class="mt-8 space-y-4">
       <div>
-        <label for="audit-search" class="block text-xs font-semibold uppercase tracking-wider text-slate-400">
+        <label for="audit-search" class="block text-xs font-semibold uppercase tracking-wider text-muted">
           Filter this list
         </label>
         <input
           id="audit-search"
           type="search"
           autocomplete="off"
-          placeholder="Narrow the list by id, title, description or tag"
-          class="mt-2 w-full max-w-xl rounded-lg border border-slate-700 bg-surface-raised px-3 py-2 text-sm text-white placeholder:text-slate-400 focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand"
+          placeholder="Search by topic, check name or technical term"
+          class="mt-2 w-full max-w-xl rounded-lg border border-control bg-surface-raised px-3 py-2 text-sm text-ink placeholder:text-muted focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand"
         />
       </div>
 
@@ -81,8 +80,8 @@ const pill =
       </div>
     </section>
 
-    <p class="mt-6 text-sm text-slate-400" aria-live="polite">
-      Showing <span id="audit-count" class="font-semibold text-slate-200">{audits.length}</span> of {audits.length} audits
+    <p class="mt-6 text-sm text-muted" aria-live="polite">
+      Showing <span id="audit-count" class="font-semibold text-body">{audits.length}</span> of {audits.length} checks
     </p>
 
     <ul aria-labelledby="audits-heading" class="mt-4 grid gap-3 lg:grid-cols-2">
@@ -92,17 +91,17 @@ const pill =
     <p
       id="audit-empty"
       hidden
-      class="mt-4 rounded-xl border border-border-subtle bg-surface-raised/50 p-8 text-center text-sm text-slate-400"
-    >No audits match your search.</p>
+      class="mt-4 rounded-xl border border-border-subtle bg-surface-raised/50 p-8 text-center text-sm text-muted"
+    >No checks match. Try a broader term or select all categories and check types.</p>
 
     <nav aria-label="Categories" class="mt-12 border-t border-border-subtle pt-6">
-      <h2 class="text-xs font-bold uppercase tracking-wider text-slate-400">Browse by category</h2>
+      <h2 class="text-xs font-bold uppercase tracking-wider text-muted">Browse by category</h2>
       <ul class="mt-3 flex flex-wrap gap-2">
         {categories.map((category) => (
           <li>
             <a
               href={categoryPath(category.id)}
-              class="inline-block rounded-lg border border-slate-700 bg-slate-800 px-3 py-1.5 text-xs font-medium text-slate-200 transition-colors hover:bg-slate-700 hover:text-white"
+              class="inline-block rounded-lg border border-control bg-surface-raised px-3 py-1.5 text-xs font-medium text-body transition-colors hover:bg-hover hover:text-ink"
             >{category.name} ({category.count})</a>
           </li>
         ))}

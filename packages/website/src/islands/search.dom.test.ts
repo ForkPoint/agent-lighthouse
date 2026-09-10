@@ -290,7 +290,7 @@ describe("mountSearch", () => {
     trigger().click();
 
     await vi.waitFor(() =>
-      expect(status().textContent).toContain("Search is unavailable"),
+      expect(status().textContent).toContain("Search could not load"),
     );
     expect(status().querySelector("a")!.getAttribute("href")).toBe(
       "/agent-lighthouse/audits/",
@@ -298,7 +298,7 @@ describe("mountSearch", () => {
 
     // And it keeps saying so, instead of going quiet once something is typed.
     await type("llms");
-    expect(status().textContent).toContain("Search is unavailable");
+    expect(status().textContent).toContain("Search could not load");
     expect(results()).toHaveLength(0);
   });
 });

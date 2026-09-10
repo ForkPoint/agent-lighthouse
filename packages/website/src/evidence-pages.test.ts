@@ -197,7 +197,8 @@ describe.skipIf(!built)("rendered /sources/", () => {
     // The island's own source names the field, so the tell is the data, not the
     // word: no id, no title and no finding from the registry is on the page.
     for (const source of registry.sources.slice(0, 25)) {
-      expect(rendered, source.id).not.toContain(source.id);
+      // Asset hashes can contain short IDs such as S9. Check visible text.
+      expect(text(rendered), source.id).not.toContain(source.id);
       expect(rendered, source.id).not.toContain(source.title);
       expect(rendered, source.id).not.toContain(
         source.keyFindings.slice(0, 40),
@@ -285,14 +286,15 @@ describe.skipIf(!built)("the published site", () => {
   it("publishes one page per route and nothing else", () => {
     const pages = (dir: string): string[] =>
       readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
+        // The downloadable kit includes an offline gallery, not a site route.
+        if (resolve(dir, entry.name) === resolve(DIST, "brand/kit")) return [];
         if (entry.isDirectory()) return pages(resolve(dir, entry.name));
         return entry.name === "index.html" ? [resolve(dir, entry.name)] : [];
       });
 
-    // The home page, 215 dossiers, `/audits/`, 8 category indexes, 11 docs
-    // pages, the policy and the sources browser.
+    // Registry and docs routes, plus home, audit index, policy, sources and branding.
     const expected =
-      auditList().length + 1 + categoryList().length + DOC_SECTIONS.length + 3;
+      auditList().length + 1 + categoryList().length + DOC_SECTIONS.length + 4;
     expect(pages(DIST)).toHaveLength(expected);
   });
 });

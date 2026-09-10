@@ -25,8 +25,8 @@ const { prev, next } = Astro.props;
         rel="prev"
         class="flex-1 rounded-xl border border-border-subtle bg-surface-raised/60 p-4 transition-colors hover:border-brand/50"
       >
-        <span class="block text-xs uppercase tracking-wider text-slate-400">&larr; Previous</span>
-        <span class="mt-1 block text-sm font-semibold text-slate-200">{prev.label}</span>
+        <span class="block text-xs uppercase tracking-wider text-muted">&larr; Previous</span>
+        <span class="mt-1 block text-sm font-semibold text-body">{prev.label}</span>
       </a>
     )}
     {next && (
@@ -35,8 +35,8 @@ const { prev, next } = Astro.props;
         rel="next"
         class="flex-1 rounded-xl border border-border-subtle bg-surface-raised/60 p-4 text-right transition-colors hover:border-brand/50 sm:ml-auto"
       >
-        <span class="block text-xs uppercase tracking-wider text-slate-400">Next &rarr;</span>
-        <span class="mt-1 block text-sm font-semibold text-slate-200">{next.label}</span>
+        <span class="block text-xs uppercase tracking-wider text-muted">Next &rarr;</span>
+        <span class="mt-1 block text-sm font-semibold text-body">{next.label}</span>
       </a>
     )}
   </nav>

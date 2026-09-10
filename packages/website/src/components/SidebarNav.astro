@@ -7,6 +7,7 @@
 export interface NavEntry {
   label: string;
   href: string;
+  group?: string;
   items?: Array<{ label: string; href: string }>;
 }
 
@@ -21,15 +22,16 @@ const { nav } = Astro.props;
 const here = Astro.url.pathname;
 ---
 <nav aria-label="Documentation" class="text-sm">
-  <ul class="space-y-6">
-    {nav.map((entry) => (
+  <ul class="space-y-3">
+    {nav.map((entry, index) => (
       <li>
+        {entry.group && entry.group !== nav[index - 1]?.group && <p class:list={['mb-3 text-xs font-bold uppercase tracking-wider text-muted', index > 0 && 'mt-7']}>{entry.group}</p>}
         <a
           href={entry.href}
           aria-current={here === entry.href ? 'page' : undefined}
           class:list={[
-            'block text-xs font-bold uppercase tracking-wider transition-colors hover:text-white',
-            here === entry.href ? 'text-brand-soft' : 'text-slate-400',
+            entry.group ? 'block text-sm transition-colors hover:text-ink' : 'block text-xs font-bold uppercase tracking-wider transition-colors hover:text-ink',
+            here === entry.href ? 'text-brand-soft' : 'text-muted',
           ]}
         >{entry.label}</a>
         {entry.items && entry.items.length > 0 && (
@@ -40,8 +42,8 @@ const here = Astro.url.pathname;
                   href={item.href}
                   aria-current={here === item.href ? 'page' : undefined}
                   class:list={[
-                    'block py-0.5 transition-colors hover:text-white',
-                    here === item.href ? 'font-semibold text-brand-soft' : 'text-slate-400',
+                    'block py-0.5 transition-colors hover:text-ink',
+                    here === item.href ? 'font-semibold text-brand-soft' : 'text-muted',
                   ]}
                 >{item.label}</a>
               </li>
