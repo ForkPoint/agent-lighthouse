@@ -65,6 +65,28 @@ const NOT_A_FACTOR_LINK =
 // ── Tests ───────────────────────────────────────────────────────
 
 describe("generateHtmlReport", () => {
+  it("embeds the approved brand in the generated report without changing scan data", () => {
+    const input = report([]);
+    const before = structuredClone(input);
+    const html = generateHtmlReport(input);
+    const favicon = html.match(
+      /rel="icon" type="image\/svg\+xml" href="([^"]+)"/,
+    )?.[1];
+    expect(favicon).toBeDefined();
+    const svg = decodeURIComponent(favicon!.split(",")[1]);
+    expect(svg).toContain('viewBox="0 0 256 256"');
+    expect(svg).toContain('transform="translate(-5.5 5)"');
+    expect(svg).toContain('fill="#4f46e5"');
+    expect(html).toContain(
+      svg.replace("<svg ", '<svg aria-hidden="true" focusable="false" '),
+    );
+    expect(html).toContain("Your AI readiness report</h1>");
+    expect(html).toContain("Open-source website checks for AI readiness.");
+    expect(html).not.toContain("fonts.googleapis.com");
+    expect(html).not.toContain("🗼");
+    expect(input).toEqual(before);
+  });
+
   it("renders the deprecation notice and badge for a sunset audit", () => {
     const html = generateHtmlReport(
       report([

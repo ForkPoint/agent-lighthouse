@@ -1,5 +1,6 @@
 import type { ScanReport } from "@forkpoint/agent-lighthouse-core";
 import { buildReportView } from "./view-model";
+import { PROJECT_URL, REPORT_ICON, REPORT_ICON_URL } from "./brand";
 
 declare const __PACKAGE_VERSION__: string;
 
@@ -196,7 +197,7 @@ export function generateHtmlReport(report: ScanReport): string {
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Agent Lighthouse Report — ${escapeHtml(report.domain)}</title>
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🗼</text></svg>">
+  <link rel="icon" type="image/svg+xml" href="${REPORT_ICON_URL}">
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     tailwind.config = {
@@ -210,19 +211,36 @@ export function generateHtmlReport(report: ScanReport): string {
             }
           },
           fontFamily: {
-            sans: ['Inter', 'system-ui', 'sans-serif'],
+            sans: ['Avenir Next', 'Segoe UI', 'system-ui', 'sans-serif'],
             mono: ['JetBrains Mono', 'Menlo', 'monospace'],
           }
         }
       }
     }
   </script>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
   <style>
-    body { font-family: 'Inter', system-ui, sans-serif; }
-    .gauge-svg text { font-family: 'Inter', sans-serif; font-weight: 800; }
+    body { font-family: 'Avenir Next', 'Segoe UI', system-ui, sans-serif; background: #080e1c; }
+    .gauge-svg text { font-family: inherit; font-weight: 800; }
+    .report-brand { display: flex; align-items: center; gap: 18px; color: #f5f7ff; text-decoration: none; }
+    .report-brand svg { width: 76px; height: 76px; flex-shrink: 0; }
+    .report-wordmark { display: block; line-height: 1.05; letter-spacing: -.04em; }
+    .report-wordmark span { display: block; font-size: 22px; font-weight: 500; }
+    .report-wordmark strong { display: block; font-size: 38px; font-weight: 900; }
+    .report-heading { font-family: 'Iowan Old Style', 'Palatino Linotype', Georgia, serif; font-size: 26px; font-weight: 400; font-style: italic; color: #c7d2fe; margin-top: 24px; }
+    header { background: #111b2e !important; }
+    header > div > div { min-width: 0; }
+    .report-target { overflow-wrap: anywhere; }
+    .report-meta { flex-wrap: wrap; }
+    .cat-card { min-width: 0; overflow-wrap: anywhere; }
+    .cat-card .flex > div { min-width: 0; }
+    .check-item summary .font-semibold { flex-wrap: wrap; }
+    .cat-card h4 + div { flex-wrap: wrap; }
+    header .font-mono { overflow-wrap: anywhere; }
+    @media (max-width: 480px) {
+      .report-brand svg { width: 60px; height: 60px; }
+      .report-wordmark strong { font-size: 30px; }
+      .report-wordmark span { font-size: 18px; }
+    }
   </style>
 </head>
 <body class="bg-slate-950 text-slate-100 min-h-screen py-10 px-4 sm:px-6 lg:px-8 antialiased selection:bg-indigo-500 selection:text-white">
@@ -230,17 +248,20 @@ export function generateHtmlReport(report: ScanReport): string {
     <!-- Header -->
     <header class="bg-slate-900 border border-slate-800 rounded-3xl p-6 sm:p-8 shadow-xl mb-10">
       <div class="flex flex-col sm:flex-row items-center justify-between gap-6">
-        <div class="flex items-center gap-5">
-          <div class="text-5xl">🗼</div>
+        <div class="min-w-0">
           <div>
-            <div class="flex items-center gap-2">
-              <h1 class="text-2xl sm:text-3xl font-black tracking-tight text-white">Agent Lighthouse</h1>
+            <div class="flex flex-wrap items-center gap-4">
+              <a class="report-brand" href="${PROJECT_URL}" target="_blank" rel="noopener noreferrer" aria-label="Agent Lighthouse — project website (opens in a new tab)">
+                ${REPORT_ICON.replace("<svg ", '<svg aria-hidden="true" focusable="false" ')}
+                <span class="report-wordmark"><span>Agent</span><strong>Lighthouse</strong></span>
+              </a>
               <span class="text-[10px] font-bold bg-indigo-500/10 text-indigo-400 border border-indigo-500/30 px-2.5 py-0.5 rounded-full">v${escapeHtml(REPORT_VERSION)}</span>
             </div>
-            <p class="text-sm text-slate-400 mt-1.5">
-              Audit for <a href="${escapeHtml(report.url)}" target="_blank" rel="noopener" class="text-indigo-400 hover:underline font-mono font-medium">${escapeHtml(report.url)}</a>
+            <h1 class="report-heading">Your AI readiness report</h1>
+            <p class="report-target text-sm text-slate-400 mt-1.5">
+              Website <a href="${escapeHtml(report.url)}" target="_blank" rel="noopener noreferrer" class="text-indigo-400 hover:underline font-mono font-medium">${escapeHtml(report.url)}</a>
             </p>
-            <div class="flex items-center gap-3 text-xs text-slate-500 mt-2">
+            <div class="report-meta flex items-center gap-3 text-xs text-slate-500 mt-2">
               <span>Duration: ${(view.durationMs / 1000).toFixed(1)}s</span>
               <span>•</span>
               <span>Pages: ${view.pagesScanned.length} scanned</span>
@@ -351,7 +372,7 @@ export function generateHtmlReport(report: ScanReport): string {
     <!-- Filter Tabs -->
     <div class="flex items-center gap-2 mb-8 overflow-x-auto pb-2">
       <button onclick="filterStatus('all')" class="filter-btn active bg-slate-800 text-white hover:bg-slate-700 px-4 py-1.5 rounded-lg text-xs font-semibold transition-colors">
-        All Audits
+        All checks
       </button>
       <button onclick="filterStatus('fail')" class="filter-btn bg-slate-900 text-slate-400 hover:text-white hover:bg-slate-800 px-4 py-1.5 rounded-lg text-xs font-semibold border border-slate-800 transition-colors">
         Opportunities & Failures
@@ -360,7 +381,7 @@ export function generateHtmlReport(report: ScanReport): string {
         Warnings
       </button>
       <button onclick="filterStatus('pass')" class="filter-btn bg-slate-900 text-slate-400 hover:text-white hover:bg-slate-800 px-4 py-1.5 rounded-lg text-xs font-semibold border border-slate-800 transition-colors">
-        Passed Audits
+        Passed checks
       </button>
     </div>
 
@@ -371,7 +392,8 @@ export function generateHtmlReport(report: ScanReport): string {
 
     <!-- Footer -->
     <footer class="mt-16 text-center text-xs text-slate-500 border-t border-slate-800/80 pt-6">
-      <p>Generated by <a href="https://github.com/ForkPoint/agent-lighthouse" target="_blank" rel="noopener" class="font-semibold text-slate-400 hover:underline">Agent Lighthouse</a> — The Open-Source Lighthouse for the Agentic Web</p>
+      <p>Generated by <a href="${PROJECT_URL}" target="_blank" rel="noopener noreferrer" class="font-semibold text-slate-400 hover:underline">Agent Lighthouse</a> — Open-source website checks for AI readiness.</p>
+      <p class="mt-2"><a href="https://github.com/ForkPoint/agent-lighthouse" target="_blank" rel="noopener noreferrer" class="hover:underline">View the source</a> · Apache-2.0</p>
     </footer>
   </div>
 

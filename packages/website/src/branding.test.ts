@@ -31,10 +31,10 @@ describe.skipIf(!built)("published branding", () => {
   });
 });
 
-it("connects the README to the approved logos and brand kit", () => {
+it("uses the white-background README logo regardless of the browser theme", () => {
   const readme = readFileSync("README.md", "utf8");
-  expect(readme).toContain("rectangle-light-transparent.svg");
-  expect(readme).toContain("rectangle-dark-transparent.svg");
+  expect(readme).toContain("rectangle-light.svg");
+  expect(readme).not.toContain("prefers-color-scheme");
   expect(readme).toContain("agent-lighthouse-brand-kit.zip");
   expect(readme).not.toContain("🗼 Agent Lighthouse");
 });
