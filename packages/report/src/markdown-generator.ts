@@ -77,7 +77,7 @@ export function generateMarkdownSummary(report: ScanReport): string {
       ? `\n> ${advisory} advisory check${advisory === 1 ? "" : "s"} ran. They are reported but never scored.\n`
       : "";
 
-  return `[![Agent Lighthouse](${PROJECT_URL}brand/kit/icons/icon-64.png)](${PROJECT_URL})
+  return `[![Agent Lighthouse](${PROJECT_URL}brand/kit/icons/icon-64.png "Agent Lighthouse logo")](${PROJECT_URL})
 
 ### Agent Lighthouse — AI readiness report
 
