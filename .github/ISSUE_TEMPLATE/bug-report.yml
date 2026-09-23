@@ -1,0 +1,77 @@
+name: Bug report
+description: Report a bug, crash, or unexpected behavior in Agent Lighthouse.
+title: "[bug]: "
+labels:
+  - bug
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to report an issue!
+        If you are reporting an audit scoring dispute or false positive/negative, please use the [Noisy Audit template](https://github.com/ForkPoint/agent-lighthouse/issues/new?template=noisy-audit.yml) instead.
+  - type: dropdown
+    id: package
+    attributes:
+      label: Affected Package / Component
+      options:
+        - "@forkpoint/agent-lighthouse (CLI)"
+        - "@forkpoint/agent-lighthouse-core"
+        - "@forkpoint/agent-lighthouse-report"
+        - "@forkpoint/agent-lighthouse-mcp"
+        - GitHub Action
+        - Documentation / Website
+        - Other
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Version
+      description: What version of Agent Lighthouse are you running? (Run `npx @forkpoint/agent-lighthouse --version`)
+      placeholder: "0.2.1"
+    validations:
+      required: true
+  - type: input
+    id: environment
+    attributes:
+      label: Environment
+      description: Node.js version and Operating System
+      placeholder: "Node.js v22.12.0 on macOS Sonoma 14.5"
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Steps to Reproduce
+      description: Provide clear steps or the command line executed.
+      placeholder: |
+        1. Run `npx @forkpoint/agent-lighthouse https://example.com --view`
+        2. Wait for crawl to complete
+        3. See error
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected Behavior
+      description: What did you expect to happen?
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual Behavior
+      description: What actually happened? Include error messages or stack traces if available.
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Terminal Output or Logs
+      description: Paste any relevant terminal output, logs, or error traces here.
+      render: shell
+  - type: textarea
+    id: additional-context
+    attributes:
+      label: Additional Context
+      description: Add any other context, screenshots, or details about the issue.
