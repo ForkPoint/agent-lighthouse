@@ -27,6 +27,13 @@ export interface CategorySummary {
   score: number;
   /** How many checks the category carried. */
   checks: number;
+  /**
+   * False when the report says no scored check reached a verdict
+   * (`assessedMass: 0`). The score is then 0 for "no data", and the row says
+   * "Not assessed" instead. A report without the field predates it and is
+   * read as assessed.
+   */
+  assessed: boolean;
 }
 
 /** What the viewer renders — the report reduced to the facts it shows. */
@@ -147,6 +154,7 @@ export function summarize(report: unknown): ReportSummary {
         "Unnamed category",
       score: asScore(category["score"]),
       checks: count(category["checks"]),
+      assessed: (asNumber(category["assessedMass"]) ?? 1) > 0,
     });
   }
 
@@ -229,8 +237,13 @@ function categoryCard(category: CategorySummary): HTMLElement {
   label.append(name, checks);
 
   const score = document.createElement("span");
-  score.className = `shrink-0 text-sm font-bold ${scoreClass(category.score)}`;
-  score.textContent = `${category.score}/100`;
+  if (category.assessed) {
+    score.className = `shrink-0 text-sm font-bold ${scoreClass(category.score)}`;
+    score.textContent = `${category.score}/100`;
+  } else {
+    score.className = "shrink-0 text-sm font-semibold text-muted";
+    score.textContent = "Not assessed";
+  }
 
   card.append(label, score);
   return card;

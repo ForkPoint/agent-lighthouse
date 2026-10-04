@@ -159,6 +159,22 @@ describe("mountReportViewer", () => {
     expect(output().textContent).toBe("");
   });
 
+  it("prints an unassessed category as not assessed, not 0/100", async () => {
+    await choose(
+      jsonFile(
+        JSON.stringify({
+          overallScore: 60,
+          categories: [
+            { name: "Agentic Commerce", score: 0, checks: [], assessedMass: 0 },
+          ],
+        }),
+      ),
+    );
+
+    expect(output().textContent).toContain("Not assessed");
+    expect(output().textContent).not.toMatch(/(^|[^0-9])0\/100/);
+  });
+
   it("says so when a report carries no categories", async () => {
     await choose(jsonFile('{"overallScore":100}'));
 
