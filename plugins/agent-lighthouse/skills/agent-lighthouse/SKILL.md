@@ -1,6 +1,6 @@
 ---
 name: agent-lighthouse
-description: Assess and improve website agentic readiness — how well AI agents can discover, read, cite and act on a site — on any stack, using an Agent Lighthouse report plus source-code review. Use when a user asks to audit a site, explain or fix Agent Lighthouse findings, or make a website easier for AI agents to discover and use. Accept a URL, report, or local project.
+description: Assess and improve website agentic readiness — how well AI agents can discover, read, cite and act on a site — on any stack, using an Agent Lighthouse report plus source-code review. Use when a user asks to audit a site for AI agents or AI search, explain or fix Agent Lighthouse findings, make a site agent-ready, or check llms.txt, robots.txt rules for AI crawlers (GPTBot, ClaudeBot, PerplexityBot), structured data / JSON-LD, Markdown or text extraction, OpenAPI or MCP discovery, WebMCP actions, or agentic commerce. Accept a URL, report, or local project.
 ---
 
 # Agent Lighthouse agentic readiness
@@ -29,11 +29,11 @@ Read [references/code-review.md](references/code-review.md). Identify the routes
 
 Review the site beyond the scan's sample: route types, crawl policy, content output, discovery links, structured data, accessibility, forms, and real agent interfaces. Inspect relevant source and generated output; use browser or HTTP evidence where behavior requires it. Record the areas and pages you checked and what remains unreviewed. Never claim to have reviewed all code after sampling a few files.
 
-For each relevant report finding, trace the live evidence to its source owner. Confirm the issue, identify a deployment mismatch, mark it inapplicable with a reason, or leave it unresolved when evidence is missing. Keep code-only findings separate from engine findings. A report is evidence about the scanned deployment; it does not prove the local checkout has the same defect.
+For each relevant report finding, read the check's `fix`, `found`, and `evidenceUrl` first, then trace the live evidence to its source owner. Confirm the issue, identify a deployment mismatch, mark it inapplicable with a reason, or leave it unresolved when evidence is missing. Keep code-only findings separate from engine findings. A report is evidence about the scanned deployment; it does not prove the local checkout has the same defect.
 
 ## 3. Decide what needs work
 
-Maintain a concise finding table:
+Maintain a concise finding table. When a run directory exists, save it there as `findings.md`, beside the report, so a before/after pair and a pull request can reuse it:
 
 | Audit ID or code finding | Page and report evidence | Source file:line / setting | Assessment | Proposed fix | Proof needed |
 | ------------------------ | ------------------------ | -------------------------- | ---------- | ------------ | ------------ |
@@ -56,4 +56,6 @@ Run checks appropriate to the changed behavior using the project's tools. Inspec
 
 After changes reach an authorized deployment, repeat the scan with the same version, target, page-type declaration, and options in a new directory. Compare findings and coverage, not only scores. Without deployment access, report **fixed locally; deployed rescan pending**. Do not rescan unchanged production and claim it validates local changes.
 
-Return the report paths, key findings with code evidence, completed changes, checks run, coverage limits, and next required actions. Clearly distinguish engine-confirmed results, code observations, local fixes, deployed verification, and unresolved work. A high score does not guarantee citations, rankings, or completed actions.
+When a valid deployed rescan exists, offer a CI gate based on it; [references/scan.md](references/scan.md) has the flags.
+
+Return the report paths, the findings table, key findings with code evidence, completed changes, checks run, coverage limits, and next required actions. Clearly distinguish engine-confirmed results, code observations, local fixes, deployed verification, and unresolved work. A high score does not guarantee citations, rankings, or completed actions.
