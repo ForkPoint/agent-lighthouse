@@ -4,21 +4,27 @@ The agentic readiness skill helps a coding agent use an Agent Lighthouse report 
 
 It connects each finding to the code or hosting setting that produces the behavior. It also checks related routes and source code outside the scan sample. You choose whether the agent should assess the site or make fixes.
 
-## Install from the Codex marketplace
+## Install the plugin
 
-Add the repository marketplace, then install the plugin:
+The repository is a plugin marketplace for Claude Code and Codex. Add it, then install the plugin.
+
+In Claude Code:
+
+```sh
+claude plugin marketplace add ForkPoint/agent-lighthouse
+claude plugin install agent-lighthouse@agent-lighthouse
+```
+
+Inside a Claude Code chat, the same steps are `/plugin marketplace add ForkPoint/agent-lighthouse` and `/plugin install agent-lighthouse@agent-lighthouse`.
+
+In Codex:
 
 ```sh
 codex plugin marketplace add ForkPoint/agent-lighthouse
 codex plugin add agent-lighthouse@agent-lighthouse
 ```
 
-To install from a local checkout, point the first command at it instead:
-
-```sh
-codex plugin marketplace add /absolute/path/to/agent-lighthouse
-codex plugin add agent-lighthouse@agent-lighthouse
-```
+To install from a local checkout, pass `/absolute/path/to/agent-lighthouse` to `marketplace add` instead, then run the same install command.
 
 Start a new chat after installation. The plugin bundles the `agent-lighthouse` skill and its reference guides. Its scan workflow uses the project's Agent Lighthouse installation or an explicit pinned CLI command.
 

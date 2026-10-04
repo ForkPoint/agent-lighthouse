@@ -1,7 +1,7 @@
 // Keeps the agent-lighthouse plugin in step with the CLI release.
 //
-// The skill's scan guide pins an exact CLI version as its fallback, and both
-// plugin manifests carry a version. All three follow packages/cli/package.json.
+// The skill's scan guide pins an exact CLI version as its fallback, and each
+// plugin manifest carries a version. All of them follow packages/cli/package.json.
 // `pnpm version-packages` runs this after `changeset version`, so the release
 // PR carries the bump. `--check` exits non-zero on drift instead of writing.
 import * as fs from "node:fs";
@@ -28,6 +28,10 @@ const targets = [
   },
   {
     file: path.join(pluginDir, ".codex-plugin/plugin.json"),
+    pattern: /("version":\s*")\d+\.\d+\.\d+/,
+  },
+  {
+    file: path.join(pluginDir, ".claude-plugin/plugin.json"),
     pattern: /("version":\s*")\d+\.\d+\.\d+/,
   },
 ];

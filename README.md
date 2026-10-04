@@ -56,14 +56,21 @@ Use the [`agent-lighthouse` skill](plugins/agent-lighthouse/skills/agent-lightho
 
 The skill reads the report, traces findings through source files and hosting settings, checks related routes, and verifies requested changes. It keeps local fixes separate from deployed scan results.
 
-Install the plugin through the repository's Codex marketplace:
+Install the plugin from this repository's marketplace. In Claude Code:
+
+```sh
+claude plugin marketplace add ForkPoint/agent-lighthouse
+claude plugin install agent-lighthouse@agent-lighthouse
+```
+
+In Codex:
 
 ```sh
 codex plugin marketplace add ForkPoint/agent-lighthouse
 codex plugin add agent-lighthouse@agent-lighthouse
 ```
 
-To install from a local checkout, use `codex plugin marketplace add /absolute/path/to/agent-lighthouse`, then the same plugin install command. Start a new chat after installation.
+To install from a local checkout, pass `/absolute/path/to/agent-lighthouse` to `marketplace add` instead, then run the same install command. Start a new chat after installation.
 
 Example: “Use the `agent-lighthouse` skill to assess this site's Agent Lighthouse report and source code. Fix confirmed issues and verify the changes.”
 
