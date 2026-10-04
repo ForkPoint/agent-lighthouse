@@ -135,6 +135,6 @@ describe("readDocSource", () => {
     expect(new Set(DOC_SECTIONS.map((s) => s.slug)).size).toBe(
       DOC_SECTIONS.length,
     );
-    expect(DOC_SECTIONS).toHaveLength(12);
+    expect(DOC_SECTIONS).toHaveLength(13);
   });
 });

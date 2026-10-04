@@ -1,0 +1,25 @@
+{
+  "fixtureNote": "Synthetic report excerpt for skill evaluation; not a live scan or a complete ScanReport.",
+  "url": "https://north.example/",
+  "categories": [
+    {
+      "id": "access-crawl-control",
+      "checks": [
+        {
+          "id": "access-crawl-control/canonical",
+          "status": "fail",
+          "tier": "scored",
+          "evidenceGrade": "A",
+          "pageUrl": "https://north.example/",
+          "explanation": "The scanned HTML has no canonical link."
+        }
+      ]
+    }
+  ],
+  "pagesScanned": [
+    {
+      "url": "https://north.example/",
+      "pageType": "homepage"
+    }
+  ]
+}

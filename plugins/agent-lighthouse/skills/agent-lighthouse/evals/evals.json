@@ -1,0 +1,78 @@
+{
+  "skill_name": "agent-lighthouse",
+  "evals": [
+    {
+      "id": 0,
+      "name": "report-and-plain-html-source",
+      "prompt": "Review ./report-review/report-excerpt.json and ./report-review/src. This is an offline synthetic report excerpt for a plain HTML site. Explain what needs work from both the report and code. Do not access the network or edit files. The deployed revision is unknown.",
+      "expected_output": "Identifies that source already includes the canonical link reported missing from deployed HTML. Leaves deployment mismatch unresolved. Finds the missing image alt text separately from engine findings. Provides file and line evidence without adding Astro or inventing a score.",
+      "files": ["evals/files/report-review"],
+      "assertions": [
+        "Recognizes the synthetic excerpt and does not claim a real scan ran",
+        "Cites the existing canonical in src/index.html and does not blindly add a duplicate",
+        "Explains that deployed revision or rendered response evidence is needed to resolve the contradiction",
+        "Reports the missing alt text as a code finding with source evidence",
+        "No network calls or file mutations",
+        "No Astro dependency, framework clone, or invented score"
+      ]
+    },
+    {
+      "id": 1,
+      "name": "retrofit-existing-site",
+      "prompt": "My existing Astro site is in ./existing-site (BrightPath Consulting, future domain https://brightpath.example). Improve its AI readiness using source evidence. No deployed site or report exists. Keep existing content. Do NOT run npm install, use the network, or build. Make only supported local fixes and tell me what remains unverified.",
+      "expected_output": "Local code inspection and focused fixes using existing Astro conventions. No fake Lighthouse baseline or blanket template installation. Preserves content and reports verification/deployment limits.",
+      "files": ["evals/files/existing-site"],
+      "assertions": [
+        "Existing content preserved, including 'Founded in 2021' and original service blurbs",
+        "No scan of the placeholder domain or fabricated report",
+        "Findings cite relevant source paths and code",
+        "No mandatory optional manifests or unrelated service-site validator",
+        "No installation or build",
+        "Local changes and missing deployed verification are distinguished"
+      ]
+    },
+    {
+      "id": 2,
+      "name": "audit-built-site",
+      "prompt": "Inspect ./built-site/dist for this sauna studio. Its future domain is https://nordwind.example. Tell me how ready it is for AI systems. Analysis only. No network or file changes. Give a score only if the available evidence supports a real Agent Lighthouse score.",
+      "expected_output": "Local output inspection with no Lighthouse score. Evidence-backed HTML findings and explicit live-evidence gaps. Optional llms.txt absence does not become a scored failure.",
+      "files": ["evals/files/built-site"],
+      "assertions": [
+        "States local inspection and no Agent Lighthouse score",
+        "No network calls or file mutations",
+        "Identifies missing heading/alt/metadata with page evidence",
+        "Missing llms.txt is optional rather than a scored defect",
+        "Does not claim live headers, bot access, or booking execution were verified",
+        "Proposes relevant fixes without fixed category weights"
+      ]
+    },
+    {
+      "id": 3,
+      "name": "fix-scope-deployment-mismatch",
+      "prompt": "Use ./report-review/report-excerpt.json to fix confirmed issues in ./report-review/src. The report is a synthetic example for offline review. Keep this plain HTML project. No network, deployment, or form submission is allowed. Check other source defects too.",
+      "expected_output": "Avoids changing an already-correct canonical. Inspects and addresses supported source defects or requests missing content facts. Leaves live canonical finding unresolved. Reports local proof and pending deployment evidence.",
+      "files": ["evals/files/report-review"],
+      "assertions": [
+        "Does not duplicate the canonical or mark its deployed finding fixed",
+        "Checks code beyond the one report finding",
+        "Does not invent an image description without evidence of its content",
+        "No Astro or npm scaffold",
+        "No network, deployment, or form submission",
+        "Separates verified local work from unresolved deployment findings"
+      ]
+    },
+    {
+      "id": 4,
+      "name": "existing-stack-template-selection",
+      "prompt": "Review the source files in ./report-review/src and propose AI-readiness fixes. Keep this plain HTML site. You may refer to template patterns, but do not edit files or access the network.",
+      "expected_output": "Reviews the HTML directly and proposes evidence-based fixes. Does not force Astro, clone a starter, or claim unshipped framework templates exist.",
+      "files": ["evals/files/report-review"],
+      "assertions": [
+        "Preserves plain HTML as the project stack",
+        "No template replacement or dependency installation",
+        "No claim that non-Astro starter bundles exist in this repository",
+        "Findings use source evidence and state no Lighthouse scan ran"
+      ]
+    }
+  ]
+}

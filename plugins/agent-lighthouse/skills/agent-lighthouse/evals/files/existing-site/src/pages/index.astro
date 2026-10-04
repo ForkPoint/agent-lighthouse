@@ -1,0 +1,32 @@
+---
+const services = [
+  { title: "Fractional CFO", blurb: "Part-time financial leadership for growing companies." },
+  { title: "Cash-flow forecasting", blurb: "13-week rolling forecasts your board can trust." },
+];
+---
+
+<html>
+  <head>
+    <title>BrightPath Consulting</title>
+  </head>
+  <body>
+    <div class="header">
+      <span class="logo">BrightPath</span>
+      <a href="/about">About</a>
+    </div>
+    <div class="hero">
+      <h2>Financial clarity for founders</h2>
+      <p>We help startups understand their numbers.</p>
+      <a href="mailto:team@brightpath.example">Get in touch</a>
+    </div>
+    <div class="services">
+      {services.map((s) => (
+        <div class="card">
+          <h4>{s.title}</h4>
+          <p>{s.blurb}</p>
+        </div>
+      ))}
+    </div>
+    <div class="footer">© BrightPath Consulting</div>
+  </body>
+</html>
