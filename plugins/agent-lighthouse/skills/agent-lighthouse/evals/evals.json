@@ -72,6 +72,22 @@
         "No framework migration, starter, or dependency installation",
         "Findings use source evidence and state no Lighthouse scan ran"
       ]
+    },
+    {
+      "id": 5,
+      "name": "real-report-page-type-and-hosting",
+      "prompt": "Here is a real Agent Lighthouse 4.2.2 report for our docs site: ./real-report/report/agent-lighthouse-report.json (Markdown copy beside it). The built site is in ./real-report/site/dist, the list of everything the build outputs is ./real-report/site/build-output.txt, and it deploys with ./real-report/site/.github/workflows/deploy-pages.yml. The score is null and there are a lot of failures. Tell me what to fix first. Analysis only: no network, no rescans, no file changes.",
+      "expected_output": "Keeps the null score and quotes the unscored reason instead of computing a number. Notices the homepage was auto-detected as a content page, so Article, speakable, date and <article> failures do not apply to it; recommends a rescan with --page-type homepage rather than adding article markup. Traces the missing robots.txt to GitHub Pages project hosting: the site lives under /agent-lighthouse/, so a robots.txt in this build would not sit at the origin root crawlers read; names the owner action (the organisation's root Pages site or a custom domain). Treats the missing sitemap as a real build gap, since build-output.txt lists no sitemap, while noting the same root-path limit for discovery. Uses each check's fix, found and evidenceUrl fields as evidence.",
+      "files": ["evals/files/real-report"],
+      "assertions": [
+        "Reports the score as unscored/null with the report's unscoredReason; no invented score",
+        "Identifies the content page-type detection on the homepage and recommends rescanning with --page-type homepage",
+        "Does not recommend adding Article schema, speakable, publication dates or <article> to the homepage as a fix",
+        "Explains that a robots.txt under /agent-lighthouse/ is not the origin-root robots.txt and names the hosting owner action",
+        "Cites build-output.txt to show the build emits no sitemap or robots.txt",
+        "Cites check IDs with their found or evidenceUrl values from the report",
+        "No network calls, rescans, or file mutations"
+      ]
     }
   ]
 }
