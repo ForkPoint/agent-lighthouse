@@ -1,14 +1,12 @@
 {
   "name": "brightpath-consulting",
-  "type": "module",
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "astro dev",
-    "build": "astro build",
-    "preview": "astro preview"
+    "dev": "eleventy --serve",
+    "build": "eleventy"
   },
-  "dependencies": {
-    "astro": "^6.1.7"
+  "devDependencies": {
+    "@11ty/eleventy": "^3.1.2"
   }
 }

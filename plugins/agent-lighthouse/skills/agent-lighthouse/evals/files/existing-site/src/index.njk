@@ -1,0 +1,19 @@
+---
+layout: base.njk
+title: BrightPath Consulting
+nav: <a href="/about/">About</a>
+---
+
+<div class="hero">
+  <h2>Financial clarity for founders</h2>
+  <p>We help startups understand their numbers.</p>
+  <a href="mailto:team@brightpath.example">Get in touch</a>
+</div>
+<div class="services">
+  {% for s in services %}
+  <div class="card">
+    <h4>{{ s.title }}</h4>
+    <p>{{ s.blurb }}</p>
+  </div>
+  {% endfor %}
+</div>
