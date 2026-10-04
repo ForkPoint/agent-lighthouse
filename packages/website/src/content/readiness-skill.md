@@ -56,8 +56,8 @@ Expect report paths, findings with source evidence, completed changes, verificat
 
 The skill preserves unscored results and skipped-check reasons. It does not claim whole-site coverage from one page or treat advisory checks as scored failures. Read [how scoring works](./scoring.md) for those limits.
 
-## Use templates only when needed
+## Keep your stack
 
-Existing projects keep their own stack and conventions. New sites can use a matching starter or the framework's native tools. The separate [Astro agent-ready framework repository](https://github.com/magnifito/astro-agent-ready-framework) provides optional Astro templates. Agent Lighthouse itself ships the workflow skill, not website starters.
+The skill fixes the site in the stack it already uses. It does not add a framework, a starter, or a dependency the project does not use. A new site uses its framework's native tools and gets the same review.
 
 For a scan without code review, use the [quickstart](./quickstart.md). To expose scanning as a tool in your AI application, use the [MCP server](./mcp.md).

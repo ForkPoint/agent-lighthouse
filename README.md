@@ -54,7 +54,7 @@ Agent Lighthouse checks 215 audits covering `llms.txt`, robots.txt crawler polic
 
 Use the [`agent-lighthouse` skill](plugins/agent-lighthouse/skills/agent-lighthouse/SKILL.md) with a coding agent to turn an Agent Lighthouse report into code review and verified fixes. It supports any website stack.
 
-The skill reads the report, traces findings through source files and hosting settings, checks related routes, and verifies requested changes. It keeps local fixes separate from deployed scan results. Templates are optional; Astro is not required.
+The skill reads the report, traces findings through source files and hosting settings, checks related routes, and verifies requested changes. It keeps local fixes separate from deployed scan results.
 
 Install the plugin through the repository's Codex marketplace:
 

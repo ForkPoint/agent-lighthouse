@@ -1,6 +1,6 @@
 ---
 name: agent-lighthouse
-description: Assess and improve website agentic readiness — how well AI agents can discover, read, cite and act on a site — on any stack, using an Agent Lighthouse report plus source-code review. Use when a user asks to audit a site, explain or fix Agent Lighthouse findings, or make a website easier for AI agents to discover and use. Accept a URL, report, or local project; do not require Astro.
+description: Assess and improve website agentic readiness — how well AI agents can discover, read, cite and act on a site — on any stack, using an Agent Lighthouse report plus source-code review. Use when a user asks to audit a site, explain or fix Agent Lighthouse findings, or make a website easier for AI agents to discover and use. Accept a URL, report, or local project.
 ---
 
 # Agent Lighthouse agentic readiness
@@ -11,7 +11,7 @@ Start with [Agent Lighthouse](https://forkpoint.github.io/agent-lighthouse/). Us
 
 - **Assess or explain:** scan/read the report, inspect available code, and report findings. Keep site files unchanged.
 - **Fix or improve:** establish findings, trace causes, apply supported fixes, and verify within the user's authorized scope.
-- **New site:** use the requested stack and an optional matching template. Read [references/templates.md](references/templates.md) for selection rules. Review the code as it develops; run a deployed baseline when a reachable URL exists.
+- **New site:** use the requested stack and its native tools. Apply the same review as the code develops; run a deployed baseline when a reachable URL exists.
 
 Infer the project, stack, package manager, and target URL from available files and conversation. Confirm that a discovered URL belongs to this project before scanning it. Ask only for missing input that prevents useful work. Continue independent code inspection while waiting. Do not assume permission to deploy or submit real forms.
 
@@ -46,7 +46,7 @@ Preserve the engine's status, tier, evidence grade, and skipped/not-applicable r
 
 Use the project's existing stack, commands, patterns, and deployment model. Patch the layer that owns the problem. Preserve unrelated work, existing content, and working behavior. Add regression proof for behavior changes where it meaningfully protects the fix.
 
-No framework clone, Astro dependency, template copy, or fixed service-site validator is required. Optional templates may target Astro or other frameworks; select one only when it matches the task and stack. Agent Lighthouse ships this workflow skill; website starter files live separately. Read [references/templates.md](references/templates.md) when scaffolding or borrowing a template feature. Do not fetch the whole repository merely to audit another stack.
+Do not add a framework, starter, or dependency the project does not already use. Do not migrate the site to another stack to fix a finding.
 
 For CMS or hosting changes outside available access, state the exact setting and required owner action. Do not mark the finding fixed.
 

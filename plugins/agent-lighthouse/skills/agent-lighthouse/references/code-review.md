@@ -2,7 +2,7 @@
 
 ## Establish the code and deployment context
 
-Read repository instructions and worktree status. Identify the package manager, build/test commands, routing model, content source, server behavior, and hosting configuration. Use the files present; do not assume Node.js, Astro, or a static build.
+Read repository instructions and worktree status. Identify the package manager, build/test commands, routing model, content source, server behavior, and hosting configuration. Use the files present; do not assume Node.js, a particular framework, or a static build.
 
 Check the report domain against site configuration. Identify the deployed revision when evidence is available. If the revision is unknown, state that source and deployment may differ. A present source file can still be absent from deployed output because of routing, build, cache, or hosting behavior.
 

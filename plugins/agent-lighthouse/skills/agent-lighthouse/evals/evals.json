@@ -5,7 +5,7 @@
       "id": 0,
       "name": "report-and-plain-html-source",
       "prompt": "Review ./report-review/report-excerpt.json and ./report-review/src. This is an offline synthetic report excerpt for a plain HTML site. Explain what needs work from both the report and code. Do not access the network or edit files. The deployed revision is unknown.",
-      "expected_output": "Identifies that source already includes the canonical link reported missing from deployed HTML. Leaves deployment mismatch unresolved. Finds the missing image alt text separately from engine findings. Provides file and line evidence without adding Astro or inventing a score.",
+      "expected_output": "Identifies that source already includes the canonical link reported missing from deployed HTML. Leaves deployment mismatch unresolved. Finds the missing image alt text separately from engine findings. Provides file and line evidence without adding a framework or inventing a score.",
       "files": ["evals/files/report-review"],
       "assertions": [
         "Recognizes the synthetic excerpt and does not claim a real scan ran",
@@ -13,14 +13,14 @@
         "Explains that deployed revision or rendered response evidence is needed to resolve the contradiction",
         "Reports the missing alt text as a code finding with source evidence",
         "No network calls or file mutations",
-        "No Astro dependency, framework clone, or invented score"
+        "No new framework, dependency, or invented score"
       ]
     },
     {
       "id": 1,
       "name": "retrofit-existing-site",
-      "prompt": "My existing Astro site is in ./existing-site (BrightPath Consulting, future domain https://brightpath.example). Improve its AI readiness using source evidence. No deployed site or report exists. Keep existing content. Do NOT run npm install, use the network, or build. Make only supported local fixes and tell me what remains unverified.",
-      "expected_output": "Local code inspection and focused fixes using existing Astro conventions. No fake Lighthouse baseline or blanket template installation. Preserves content and reports verification/deployment limits.",
+      "prompt": "My existing site is in ./existing-site (BrightPath Consulting, future domain https://brightpath.example). Improve its AI readiness using source evidence. No deployed site or report exists. Keep existing content. Do NOT run npm install, use the network, or build. Make only supported local fixes and tell me what remains unverified.",
+      "expected_output": "Local code inspection and focused fixes using the project's existing conventions. No fake Lighthouse baseline or blanket boilerplate. Preserves content and reports verification/deployment limits.",
       "files": ["evals/files/existing-site"],
       "assertions": [
         "Existing content preserved, including 'Founded in 2021' and original service blurbs",
@@ -56,21 +56,20 @@
         "Does not duplicate the canonical or mark its deployed finding fixed",
         "Checks code beyond the one report finding",
         "Does not invent an image description without evidence of its content",
-        "No Astro or npm scaffold",
+        "No framework scaffold or new dependency",
         "No network, deployment, or form submission",
         "Separates verified local work from unresolved deployment findings"
       ]
     },
     {
       "id": 4,
-      "name": "existing-stack-template-selection",
-      "prompt": "Review the source files in ./report-review/src and propose AI-readiness fixes. Keep this plain HTML site. You may refer to template patterns, but do not edit files or access the network.",
-      "expected_output": "Reviews the HTML directly and proposes evidence-based fixes. Does not force Astro, clone a starter, or claim unshipped framework templates exist.",
+      "name": "existing-stack-preserved",
+      "prompt": "Review the source files in ./report-review/src and propose AI-readiness fixes. Keep this plain HTML site. Do not edit files or access the network.",
+      "expected_output": "Reviews the HTML directly and proposes evidence-based fixes. Does not add a framework, a starter, or a dependency.",
       "files": ["evals/files/report-review"],
       "assertions": [
         "Preserves plain HTML as the project stack",
-        "No template replacement or dependency installation",
-        "No claim that non-Astro starter bundles exist in this repository",
+        "No framework migration, starter, or dependency installation",
         "Findings use source evidence and state no Lighthouse scan ran"
       ]
     }
