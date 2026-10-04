@@ -61,7 +61,13 @@ export function generateMarkdownSummary(report: ScanReport): string {
   const rows = view.groups
     .flatMap((group) => {
       return group.categories.map((cat) => {
-        return `| **${cat.name}** | **${cat.score} / 100** | ${getTierEmoji(cat.score)} ${cat.counts.pass}✓ ${cat.counts.warn}! ${cat.counts.fail}✗ |`;
+        const score = cat.assessed
+          ? `**${cat.score} / 100**`
+          : "_Not assessed_";
+        const emoji = cat.assessed ? getTierEmoji(cat.score) : "⚪";
+        const advisory =
+          cat.counts.advisory > 0 ? ` (${cat.counts.advisory} not scored)` : "";
+        return `| **${cat.name}** | ${score} | ${emoji} ${cat.counts.pass}✓ ${cat.counts.warn}! ${cat.counts.fail}✗${advisory} |`;
       });
     })
     .join("\n");

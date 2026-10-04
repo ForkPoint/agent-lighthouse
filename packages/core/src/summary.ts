@@ -1,5 +1,6 @@
 import type { ScanReport } from "./types";
 import { SCORE_TIER_LABELS } from "./constants";
+import { isCategoryAssessed } from "./scorer";
 
 /**
  * Generates a pragmatic, rule-based summary for a scan report.
@@ -8,7 +9,7 @@ import { SCORE_TIER_LABELS } from "./constants";
 export function generateScanSummary(report: Partial<ScanReport>): string {
   const {
     domain,
-    overallScore = 0,
+    overallScore,
     scoreTier,
     categories = [],
     recommendations = [],
@@ -33,7 +34,10 @@ export function generateScanSummary(report: Partial<ScanReport>): string {
   );
 
   // Find strongest and weakest categories
-  const sortedCategories = [...categories].sort((a, b) => b.score - a.score);
+  // An unassessed category's 0 is "no data", not the weakest result.
+  const sortedCategories = categories
+    .filter(isCategoryAssessed)
+    .sort((a, b) => b.score - a.score);
   const strongest =
     sortedCategories.length > 0 ? sortedCategories[0] : undefined;
   const weakest =
@@ -43,7 +47,9 @@ export function generateScanSummary(report: Partial<ScanReport>): string {
 
   const v = readinessVitals;
   const summary = [
-    `Scan Report for ${domain}: Overall Readiness ${overallScore}% (${tierLabel}).`,
+    overallScore === null || overallScore === undefined
+      ? `Scan Report for ${domain}: not scored — this scan obtained too little evidence to judge the site.`
+      : `Scan Report for ${domain}: Overall Readiness ${overallScore}% (${tierLabel}).`,
     `Readiness Vitals: Commerce ${v.commerce}%, Content ${v.content}%, AI Bot Accessibility ${v.botAccessibility}%, Technical Readiness ${v.technical}%.`,
     `Audit Statistics: ${passCount} of ${totalChecks} checks passed.`,
     `Key Issues: ${criticalCount} critical, ${highCount} high priority findings.`,

@@ -14,6 +14,7 @@ function makeCheck(status: CheckResult["status"] = "pass"): CheckResult {
     priority: "medium",
     impact: "i",
     fix: "f",
+    weight: 1,
   };
 }
 
@@ -32,6 +33,42 @@ function makeCategory(overrides: Partial<CategoryResult> = {}): CategoryResult {
 }
 
 describe("generateScanSummary", () => {
+  it("says the scan was not scored when the overall score is null", () => {
+    const summary = generateScanSummary({
+      domain: "example.com",
+      overallScore: null,
+      scoreTier: null,
+      categories: [makeCategory()],
+    });
+    expect(summary).toContain(
+      "Scan Report for example.com: not scored — this scan obtained too little evidence to judge the site.",
+    );
+    expect(summary).not.toContain("null%");
+  });
+
+  it("never names an unassessed category as the weakest", () => {
+    const summary = generateScanSummary({
+      domain: "example.com",
+      overallScore: 70,
+      scoreTier: "partially-ready",
+      categories: [
+        makeCategory({ id: "a", name: "Strong", score: 90 }),
+        makeCategory({ id: "b", name: "Middling", score: 60 }),
+        // Ran no checks at all: its 0 is "no data".
+        makeCategory({
+          id: "c",
+          name: "Commerce",
+          score: 0,
+          checks: [],
+          assessedMass: 0,
+          passCount: 0,
+        }),
+      ],
+    });
+    expect(summary).toContain("Primary Improvement Area: Middling (60%).");
+    expect(summary).not.toContain("Commerce (0%)");
+  });
+
   it("builds a full summary with tier, vitals, strongest and weakest", () => {
     const report: Partial<ScanReport> = {
       domain: "example.com",
@@ -82,10 +119,15 @@ describe("generateScanSummary", () => {
     expect(summary).toContain("Primary Improvement Area: Weak (20%).");
   });
 
-  it("uses N/A for missing tier and applies defaults for an empty report", () => {
+  it("uses N/A when a scored report has no tier", () => {
+    const summary = generateScanSummary({ domain: "x.com", overallScore: 50 });
+    expect(summary).toContain("Overall Readiness 50% (N/A).");
+  });
+
+  it("reads a report with no score as not scored and applies defaults", () => {
     const summary = generateScanSummary({ domain: "empty.com" });
 
-    expect(summary).toContain("Overall Readiness 0% (N/A).");
+    expect(summary).toContain("Scan Report for empty.com: not scored");
     expect(summary).toContain(
       "Commerce 0%, Content 0%, AI Bot Accessibility 0%, Technical Readiness 0%.",
     );

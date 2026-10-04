@@ -281,10 +281,17 @@ async function audit(targetUrl?: string) {
     console.log(`\x1b[1m📊 CATEGORIES:\x1b[0m`);
     for (const group of view.groups) {
       console.log(
-        `\n  \x1b[1m${group.label}\x1b[0m \x1b[90m—\x1b[0m ${group.score}/100`,
+        `\n  \x1b[1m${group.label}\x1b[0m \x1b[90m—\x1b[0m ${group.assessed ? `${group.score}/100` : "not assessed"}`,
       );
       for (const cat of group.categories) {
         const c = cat.counts;
+        const counts = `\x1b[90m(${c.pass}✓ ${c.warn}! ${c.fail}✗${c.advisory > 0 ? ` ${c.advisory} advisory` : ""})\x1b[0m`;
+        if (!cat.assessed) {
+          console.log(
+            `    \x1b[90m•\x1b[0m ${cat.name.padEnd(36)} : \x1b[90mnot assessed\x1b[0m  ${counts}`,
+          );
+          continue;
+        }
         const scoreColor =
           cat.score >= 90
             ? "\x1b[32m"
@@ -296,9 +303,7 @@ async function audit(targetUrl?: string) {
         console.log(
           `    ${scoreColor}•\x1b[0m ${cat.name.padEnd(36)} : ${scoreColor}${cat.score
             .toString()
-            .padStart(
-              3,
-            )}/100\x1b[0m  \x1b[90m(${c.pass}✓ ${c.warn}! ${c.fail}✗${c.advisory > 0 ? ` ${c.advisory} advisory` : ""})\x1b[0m`,
+            .padStart(3)}/100\x1b[0m  ${counts}`,
         );
       }
     }

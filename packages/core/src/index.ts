@@ -87,6 +87,8 @@ export {
   calculateCategoryScore,
   buildCategoryResult,
   calculateOverallScore,
+  categoryAssessedMass,
+  isCategoryAssessed,
   isInformative,
   weightForGrade,
 } from "./scorer";

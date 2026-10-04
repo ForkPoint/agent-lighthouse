@@ -7,7 +7,11 @@ import type {
   ScanConditions,
   ScoreTier,
 } from "@forkpoint/agent-lighthouse-core";
-import { isInformative } from "@forkpoint/agent-lighthouse-core";
+import {
+  categoryAssessedMass,
+  isCategoryAssessed,
+  isInformative,
+} from "@forkpoint/agent-lighthouse-core";
 import {
   CATEGORY_ORDER,
   SECTION_GROUPS,
@@ -34,9 +38,17 @@ export interface CheckCounts {
 export interface CategoryView {
   id: string;
   name: string;
-  /** 0–100 */
+  /** 0–100. Meaningless when `assessed` is false: core reports 0 for "no data". */
   score: number;
+  /**
+   * False when no scored check reached a verdict, so the category has no score
+   * to show. Renderers print "Not assessed" instead of a 0 that would read as
+   * a failing grade.
+   */
+  assessed: boolean;
   weight: number;
+  /** Summed weight of the scored checks that reached a verdict. */
+  assessedMass: number;
   counts: CheckCounts;
   /** Assessed checks (pass/warn/fail), in report order. */
   checks: CheckResult[];
@@ -48,8 +60,13 @@ export interface GroupView {
   key: string;
   /** English fallback label; surfaces with i18n resolve `key` themselves. */
   label: string;
-  /** Weighted roll-up score of the group's categories (0–100). */
+  /**
+   * Roll-up of the group's assessed categories (0–100), weighted by assessed
+   * mass the way the overall score is. Meaningless when `assessed` is false.
+   */
   score: number;
+  /** True when at least one of the group's categories was assessed. */
+  assessed: boolean;
   categories: CategoryView[];
 }
 
@@ -119,21 +136,32 @@ function countChecks(checks: CheckResult[]): CheckCounts {
   const na = checks.filter((c) => c.status === "na").length;
   // Tier is not a status: an advisory check passes or fails like any other, it
   // just never moves a score. Counting it separately is what stops a deliberate
-  // advisory from reading as a defect.
+  // advisory from reading as a defect. A scored-tier check the scan ran as
+  // informative — a page-typed audit on a detected, undeclared page type —
+  // moves no score either, so it counts here too.
   const advisory = checks.filter(
-    (c) => c.status !== "na" && c.tier !== undefined && c.tier !== "scored",
+    (c) =>
+      c.status !== "na" &&
+      ((c.tier !== undefined && c.tier !== "scored") || isInformative(c)),
   ).length;
   return { pass, warn, fail, na, advisory, total: pass + warn + fail };
 }
 
-function toCategoryView(cat: CategoryResult): CategoryView {
+function toCategoryView(
+  cat: CategoryResult,
+  original: CategoryResult = cat,
+): CategoryView {
   const assessed = cat.checks.filter((c) => c.status !== "na");
   const notApplicable = cat.checks.filter((c) => c.status === "na");
   return {
     id: cat.id,
     name: cat.name,
     score: cat.score,
+    // Judged on the unfiltered category: a priority filter narrows the checks
+    // shown, not whether the category's score exists.
+    assessed: isCategoryAssessed(original),
     weight: cat.weight,
+    assessedMass: categoryAssessedMass(original),
     counts: countChecks(cat.checks),
     checks: assessed,
     notApplicable,
@@ -169,11 +197,14 @@ export function buildReportView(
   }
 
   const byId = new Map(categories.map((c) => [c.id, c] as const));
+  const originalById = new Map(
+    report.categories.map((c) => [c.id, c] as const),
+  );
 
   // Categories in canonical order; include only those present in the report.
   const categoryViews: CategoryView[] = CATEGORY_ORDER.map((id) => byId.get(id))
     .filter((c): c is CategoryResult => c !== undefined)
-    .map(toCategoryView);
+    .map((c) => toCategoryView(c, originalById.get(c.id)));
 
   const viewById = new Map(categoryViews.map((c) => [c.id, c] as const));
 
@@ -181,16 +212,20 @@ export function buildReportView(
     const cats = def.categoryIds
       .map((id) => viewById.get(id))
       .filter((c): c is CategoryView => c !== undefined);
+    // Same rule as core's overall score: weight by assessed mass and leave an
+    // unassessed category out, so its "no data" 0 cannot drag the group down.
     let weighted = 0;
     let weightSum = 0;
     for (const c of cats) {
-      weighted += c.score * c.weight;
-      weightSum += c.weight;
+      if (!c.assessed) continue;
+      weighted += c.score * c.assessedMass;
+      weightSum += c.assessedMass;
     }
     return {
       key: def.key,
       label: SECTION_GROUP_LABELS[def.key] ?? def.key,
       score: weightSum > 0 ? Math.round(weighted / weightSum) : 0,
+      assessed: weightSum > 0,
       categories: cats,
     };
   }).filter((g) => g.categories.length > 0);

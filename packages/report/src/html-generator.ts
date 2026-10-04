@@ -47,9 +47,13 @@ export function generateHtmlReport(report: ScanReport): string {
           <div class="flex items-center gap-3">
             <h3 class="text-xl font-bold text-slate-900 dark:text-slate-100">${escapeHtml(group.label)}</h3>
           </div>
-          <span class="text-sm font-bold px-3 py-1 rounded-full" style="background-color: ${getGaugeColor(group.score)}15; color: ${getGaugeColor(group.score)}">
+          ${
+            group.assessed
+              ? `<span class="text-sm font-bold px-3 py-1 rounded-full" style="background-color: ${getGaugeColor(group.score)}15; color: ${getGaugeColor(group.score)}">
             ${group.score} / 100
-          </span>
+          </span>`
+              : `<span class="text-sm font-bold px-3 py-1 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400">Not assessed</span>`
+          }
         </div>
 
         <div class="grid grid-cols-1 gap-6">
@@ -71,7 +75,11 @@ export function generateHtmlReport(report: ScanReport): string {
                   </div>
                 </div>
                 <div class="flex items-center gap-3">
-                  ${renderGaugeSvg(cat.score, 68, 7)}
+                  ${
+                    cat.assessed
+                      ? renderGaugeSvg(cat.score, 68, 7)
+                      : `<span class="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400" title="No scored check reached a verdict, so this category has no score.">Not assessed</span>`
+                  }
                 </div>
               </div>
 

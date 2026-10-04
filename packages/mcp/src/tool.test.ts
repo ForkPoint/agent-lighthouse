@@ -163,6 +163,13 @@ describe("buildAuditSummary", () => {
     expect(entry).toMatchObject({ passCount: 1, warnCount: 1, failCount: 1 });
   });
 
+  it("tells the model whether each category was assessed", () => {
+    const s = summarise(report());
+    expect(s.categories.every((c) => typeof c.assessed === "boolean")).toBe(
+      true,
+    );
+  });
+
   it("passes the readiness vitals through", () => {
     expect(summarise(report()).vitals).toBeDefined();
   });

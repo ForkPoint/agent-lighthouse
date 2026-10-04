@@ -1,5 +1,8 @@
 import type { ScanReport } from "@forkpoint/agent-lighthouse-core";
-import { SCORE_TIER_LABELS } from "@forkpoint/agent-lighthouse-core";
+import {
+  SCORE_TIER_LABELS,
+  isCategoryAssessed,
+} from "@forkpoint/agent-lighthouse-core";
 
 /**
  * Generates a pragmatic, rule-based summary for a scan report.
@@ -38,7 +41,10 @@ export function generateScanSummary(report: Partial<ScanReport>): string {
   );
 
   // Find strongest and weakest categories
-  const sortedCategories = [...categories].sort((a, b) => b.score - a.score);
+  // An unassessed category's 0 is "no data", not the weakest result.
+  const sortedCategories = categories
+    .filter(isCategoryAssessed)
+    .sort((a, b) => b.score - a.score);
   const strongest =
     sortedCategories.length > 0 ? sortedCategories[0] : undefined;
   const weakest =
