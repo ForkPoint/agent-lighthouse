@@ -47,7 +47,7 @@ updates:
     labels:
       - "dependencies"
       - "javascript"
-    # Separate all minor/patch updates from major upgrades into two dedicated PRs
+    # Keep major upgrades in groups with separate migration and validation needs.
     groups:
       minor-and-patch:
         patterns:
@@ -55,12 +55,35 @@ updates:
         update-types:
           - "minor"
           - "patch"
-      major:
+      release-tooling-major:
         patterns:
-          - "*"
+          - "@changesets/*"
+        update-types:
+          - "major"
+      test-and-compiler-major:
+        patterns:
+          - "typescript"
+          - "@typescript/*"
+          - "vitest"
+          - "@vitest/*"
+          - "oxlint"
+        update-types:
+          - "major"
+      runtime-major:
+        patterns:
+          - "domhandler"
+          - "@types/domhandler"
+          - "jsdom"
+          - "@types/jsdom"
+          - "undici"
+          - "zod"
         update-types:
           - "major"
     ignore:
+      # Match the Node 22 CI runtime; revisit this with a runtime upgrade.
+      - dependency-name: "@types/node"
+        update-types:
+          - "version-update:semver-major"
       # Pinned via package.json / pnpm overrides
       - dependency-name: "encoding-sniffer"
       - dependency-name: "glob"

@@ -52,7 +52,7 @@
   "dependencies": {
     "@forkpoint/agent-lighthouse-core": "workspace:*",
     "@forkpoint/agent-lighthouse-report": "workspace:*",
-    "@modelcontextprotocol/sdk": "^1.5.0"
+    "@modelcontextprotocol/sdk": "^1.31.0"
   },
   "devDependencies": {
     "@types/node": "^22.10.5",
