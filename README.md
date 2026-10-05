@@ -33,6 +33,8 @@ Example report from a scan of zapier.com on 2 September 2026. Scores describe th
 
 ## ⚡ Quickstart
 
+Requires Node.js 22.22.2+ (22.x), 24.15.0+ (24.x), or 26+.
+
 Run a zero-install scan directly in your terminal. The `--view` flag opens the standalone HTML report for screenshots, stakeholder review, and pull-request artifacts.
 
 ```bash
