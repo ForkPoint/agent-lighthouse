@@ -622,6 +622,9 @@ export function detectPageType(
   if (isFirstPage && (pathname === "/" || pathname === "")) {
     return "homepage";
   }
+  if (isFirstPage && isSubpathHome(url, $)) {
+    return "homepage";
+  }
 
   // ── 2. Product Details Page (check before category) ─────────
   if (isProductPage(pathname, $, jsonLd, meta)) {
@@ -635,6 +638,68 @@ export function detectPageType(
 
   // ── 4. Fallback: Content Page ───────────────────────────────
   return "content";
+}
+
+/** A same-origin path with a trailing `index.html` folded into its directory. */
+function directoryPath(pathname: string): string {
+  return pathname.replace(/\/index\.html?$/i, "/");
+}
+
+/**
+ * Whether the scanned page is the root of a site mounted under a subpath.
+ *
+ * A path of exactly `/` is not the only homepage. A GitHub project site lives
+ * at `/<project>/`, a store at `/shop/`, a docs portal at `/docs/`, a locale
+ * at `/en-us/`. Reading such a root as a content page runs article checks on a
+ * homepage. The path alone cannot tell a mounted site's root from a section of
+ * a larger site (`/blog/`), so the page's own links decide:
+ *
+ * - its header's first same-origin link — the logo or "home" link — points
+ *   back at this path, or
+ * - every same-origin link on the page stays under this path (at least three,
+ *   so a near-empty page proves nothing).
+ *
+ * A section page fails both: its logo links to `/` and its menu leaves the
+ * section. Only a directory path qualifies; `/shop` without a slash is a page,
+ * not a mount point.
+ */
+function isSubpathHome(url: string, $: CheerioAPI): boolean {
+  let page: URL;
+  try {
+    page = new URL(url);
+  } catch {
+    return false;
+  }
+  const base = directoryPath(page.pathname);
+  if (base === "/" || !base.endsWith("/")) return false;
+
+  const internalPath = (href: string | undefined): string | undefined => {
+    if (!href || href.startsWith("#")) return undefined;
+    let target: URL;
+    try {
+      target = new URL(href, page);
+    } catch {
+      return undefined;
+    }
+    if (target.origin !== page.origin) return undefined;
+    const path = directoryPath(target.pathname);
+    // `/project` and `/project/` name the same mount point.
+    return `${path}/` === base ? base : path;
+  };
+
+  let homeLink: string | undefined;
+  $("header a[href], [role='banner'] a[href]").each((_, el) => {
+    homeLink = internalPath($(el).attr("href"));
+    return homeLink === undefined; // stop at the first same-origin link
+  });
+  if (homeLink === base) return true;
+
+  const internal: string[] = [];
+  $("a[href]").each((_, el) => {
+    const path = internalPath($(el).attr("href"));
+    if (path !== undefined) internal.push(path);
+  });
+  return internal.length >= 3 && internal.every((p) => p.startsWith(base));
 }
 
 function isProductPage(
