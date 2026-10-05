@@ -10,6 +10,8 @@ permissions:
   contents: write
   pull-requests: write
   id-token: write
+  # Dispatches CI on the release pull request (see the last step).
+  actions: write
 
 jobs:
   release:
@@ -47,3 +49,14 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      # GitHub starts no workflow run for a pull request opened or updated with
+      # GITHUB_TOKEN, so CI never checked the release PR before it published.
+      # workflow_dispatch is one of the two events that token may still
+      # trigger; the run checks the release branch's head commit, and its
+      # checks show on the pull request.
+      - name: Run CI on the release pull request
+        if: steps.changesets.outputs.pullRequestNumber != ''
+        run: gh workflow run ci.yml --ref "changeset-release/${GITHUB_REF_NAME}"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
