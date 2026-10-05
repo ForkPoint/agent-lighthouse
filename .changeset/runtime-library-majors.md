@@ -1,5 +1,5 @@
 ---
-"@forkpoint/agent-lighthouse-core": major
+"@forkpoint/agent-lighthouse-core": minor
 ---
 
 Upgrade the parser DOM types, jsdom, HTTP client, and schema library to their next major versions. These dependencies define scan parsing, fetching, and public schema behavior.
