@@ -29,15 +29,15 @@
     "build:sites": "node --import tsx scripts/build-site-list.ts"
   },
   "devDependencies": {
-    "@changesets/cli": "^2.27.12",
-    "@types/node": "^22.10.5",
-    "@vitest/coverage-v8": "2.1.9",
-    "oxlint": "^0.15.10",
+    "@changesets/cli": "^3.0.3",
+    "@types/node": "^26.6.4",
+    "@vitest/coverage-v8": "5.0.3",
+    "oxlint": "^1.86.0",
     "prettier": "^3.4.2",
     "tsup": "^8.3.5",
     "tsx": "^4.23.12",
-    "typescript": "^5.7.3",
-    "vitest": "^2.1.8"
+    "typescript": "^7.0.2",
+    "vitest": "^5.0.3"
   },
   "packageManager": "pnpm@9.15.4",
   "overrides": {
