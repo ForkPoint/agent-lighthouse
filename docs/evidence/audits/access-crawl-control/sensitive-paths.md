@@ -129,3 +129,11 @@ This audit was a delete candidate and went through dedicated adversarial researc
 - 2026-08-20 — code review (11-agent workflow) + evidence research (12-domain workflow, 400 sources).
 - 2026-08-21 — adversarial redemption research; user accepted verdict (grade A, rewrite required).
 - 2026-08-22 — required rework executed (Plan 4, Task 11): security framing dropped, `/api/` removed, candidate paths discovered from the crawl, `notApplicable` when none exist, `defaultPriority` `high` → `low`. Grade A / tier `scored` / weight 1.0 unchanged; `TODO(redeem)` marker removed from the source file.
+
+## Implementation deviations
+
+### Subpath sitemap scope (2026-10-05)
+
+The shared sitemap gatherer uses the scanned homepage directory as the site root when it is a detected or declared subpath homepage. It reads declarations from the origin's robots.txt, then tries the conventional sitemap names under that directory before the origin fallbacks. Shared sitemap files contribute only absolute URLs on the same origin and under that directory. Filtering precedes the entry cap and sampling. Relative or malformed loc values associated with this site remain available to content audits. A sibling-only sitemap does not prove that this site has a sitemap. The child-fetch cap remains in force even when all children cover siblings.
+
+Content-page scans do not infer a mount. Origin files, origin probes, feed discovery, explicit page overrides, and redirect handling keep their existing scope. This change limits sitemap-derived evidence; it does not make every scan request subpath-only.

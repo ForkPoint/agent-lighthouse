@@ -38,6 +38,8 @@ export interface CheckContext {
   pages: PageContext[];
   domain: string;
   baseUrl: string;
+  /** Mounted homepage root for sitemap discovery and samples; origin files stay at baseUrl. */
+  siteRootUrl?: string;
   fetch: (options: FetchOptions) => Promise<FetchResult>;
   wafProtection?: import("./waf-detector").WafProtection;
   /**

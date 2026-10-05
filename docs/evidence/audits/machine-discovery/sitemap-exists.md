@@ -40,7 +40,9 @@ sources:
 
 ## What it checks
 
-AI crawlers use your sitemap to discover all pages without following links. Without it, pages may never be indexed by AI search engines.
+Reads sitemap declarations from the origin's robots.txt. If none covers the scanned site, probes `sitemap.xml`, `sitemap-index.xml`, and `sitemap_index.xml`. For a detected or declared subpath homepage, probes its directory before the origin root. Reports whether a readable XML sitemap covers that site.
+
+The [Sitemaps protocol](https://www.sitemaps.org/protocol.html#location) permits a sitemap under a directory to describe URLs beneath it (verified 2026-10-05). This changes discovery scope, not the evidence grade. The documented Google and Bing consumer paths below still govern grade A.
 
 ## Code review findings (2026-08-20, 11-agent pass)
 
@@ -94,3 +96,19 @@ Checks /sitemap.xml then /sitemap-index.xml for a <urlset>/<sitemapindex> root. 
 
 - 2026-08-20 — code review (11-agent workflow) + evidence research (12-domain workflow, 400 sources).
 - 2026-08-21 — dossier generated; disposition pending final taxonomy design.
+
+## Implementation deviations
+
+### Subpath sitemap scope (2026-10-05)
+
+The shared sitemap gatherer uses the scanned homepage directory as the site root when it is a detected or declared subpath homepage. It reads declarations from the origin's robots.txt, then tries the conventional sitemap names under that directory before the origin fallbacks. Shared sitemap files contribute only absolute URLs on the same origin and under that directory. Filtering precedes the entry cap and sampling. Relative or malformed loc values associated with this site remain available to content audits. A sibling-only sitemap does not prove that this site has a sitemap. The child-fetch cap remains in force even when all children cover siblings.
+
+Content-page scans do not infer a mount. Origin files, origin probes, feed discovery, explicit page overrides, and redirect handling keep their existing scope. This change limits sitemap-derived evidence; it does not make every scan request subpath-only.
+
+## Limits
+
+A content-page scan does not infer a subpath site root. Declare the mount's homepage when automatic detection cannot identify it. The walk reads at most ten child sitemaps and collects at most 500 retained entries. If the child limit or unreadable children in a shared index prevent a verdict on sitemap presence, this audit returns not applicable rather than failing absence. Origin robots.txt remains authoritative for crawler rules.
+
+## Deferred
+
+Gzip sitemap decoding and deeper index traversal remain outside this change. A shared index whose children cannot be read supplies no proof of this mount's coverage. The existence audit returns not applicable in that case instead of claiming that the mount has no sitemap.

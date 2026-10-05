@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import { SitemapExistsAudit } from "./sitemap-exists";
 import { mockCheckContext, mockFetchResult } from "../../__tests__/test-utils";
 
@@ -63,4 +63,51 @@ describe("SitemapExistsAudit", () => {
     expect(result.status).toBe("pass");
     expect(result.found).toContain("sitemapindex");
   });
+});
+
+vi.mock("../../fetcher", async (original) => ({
+  ...(await original<typeof import("../../fetcher")>()),
+  isSafeUrl: async () => true,
+}));
+
+it("does not fail absence when the sitemap walk stopped before proving it", async () => {
+  const ctx = mockCheckContext([]);
+  ctx.siteRootUrl = "https://example.com/project/";
+  const children = Array.from(
+    { length: 11 },
+    (_, i) => `https://example.com/other/${i}.xml`,
+  );
+  ctx.fetch = async ({ url }) => {
+    if (url === "https://example.com/sitemap.xml")
+      return mockFetchResult(
+        `<sitemapindex>${children.map((loc) => `<sitemap><loc>${loc}</loc></sitemap>`).join("")}</sitemapindex>`,
+        200,
+        "application/xml",
+      );
+    if (children.includes(url))
+      return mockFetchResult(
+        `<urlset><url><loc>https://example.com/other/page</loc></url></urlset>`,
+        200,
+        "application/xml",
+      );
+    return mockFetchResult("", 404);
+  };
+  expect((await new SitemapExistsAudit().audit(ctx)).status).toBe("na");
+});
+
+it("does not report missing sitemap coverage when a shared index has unreadable children", async () => {
+  const ctx = mockCheckContext([]);
+  ctx.siteRootUrl = "https://example.com/project/";
+  ctx.fetch = async ({ url }) => {
+    if (url === "https://example.com/sitemap.xml")
+      return mockFetchResult(
+        "<sitemapindex><sitemap><loc>https://example.com/sitemaps/project.xml.gz</loc></sitemap></sitemapindex>",
+        200,
+        "application/xml",
+      );
+    if (url.endsWith(".gz"))
+      return mockFetchResult("compressed bytes", 200, "application/gzip");
+    return mockFetchResult("", 404);
+  };
+  expect((await new SitemapExistsAudit().audit(ctx)).status).toBe("na");
 });
