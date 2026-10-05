@@ -34,6 +34,7 @@ describe("documentationNav", () => {
       "docs/config/",
       "docs/sdk/",
       "docs/mcp/",
+      "docs/readiness-skill/",
       "docs/ci/",
       "docs/benchmark/",
       "docs/architecture/",

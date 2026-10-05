@@ -50,6 +50,34 @@ Agent Lighthouse checks 215 audits covering `llms.txt`, robots.txt crawler polic
 
 ---
 
+## Agentic readiness skill
+
+Use the [`agent-lighthouse` skill](plugins/agent-lighthouse/skills/agent-lighthouse/SKILL.md) with a coding agent to turn an Agent Lighthouse report into code review and verified fixes. It supports any website stack.
+
+The skill reads the report, traces findings through source files and hosting settings, checks related routes, and verifies requested changes. It keeps local fixes separate from deployed scan results.
+
+Install the plugin from this repository's marketplace. In Claude Code:
+
+```sh
+claude plugin marketplace add ForkPoint/agent-lighthouse
+claude plugin install agent-lighthouse@agent-lighthouse
+```
+
+In Codex:
+
+```sh
+codex plugin marketplace add ForkPoint/agent-lighthouse
+codex plugin add agent-lighthouse@agent-lighthouse
+```
+
+To install from a local checkout, pass `/absolute/path/to/agent-lighthouse` to `marketplace add` instead, then run the same install command. Start a new chat after installation.
+
+Example: “Use the `agent-lighthouse` skill to assess this site's Agent Lighthouse report and source code. Fix confirmed issues and verify the changes.”
+
+Read the [installation and workflow guide](packages/website/src/content/readiness-skill.md). The marketplace packages the skill and its references. The CLI and MCP npm packages remain separate.
+
+---
+
 ## 🎯 What Agent Lighthouse Checks
 
 Agent Lighthouse evaluates websites across **8 agent-journey categories** grouped into **3 readiness pillars**:

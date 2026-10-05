@@ -1,0 +1,26 @@
+{
+  "name": "agent-lighthouse",
+  "version": "4.2.2",
+  "description": "Use Agent Lighthouse reports and source-code review to assess and improve website agentic readiness.",
+  "author": {
+    "name": "ForkPoint",
+    "url": "https://github.com/ForkPoint"
+  },
+  "homepage": "https://forkpoint.github.io/agent-lighthouse/",
+  "repository": "https://github.com/ForkPoint/agent-lighthouse",
+  "license": "Apache-2.0",
+  "keywords": ["agentic-readiness", "website", "audit", "agent-lighthouse"],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "Agent Lighthouse",
+    "shortDescription": "Turn website audit reports into verified code fixes.",
+    "longDescription": "Assess Agent Lighthouse reports, trace findings through source code and hosting settings, and verify requested fixes on any website stack.",
+    "developerName": "ForkPoint",
+    "category": "Productivity",
+    "capabilities": [],
+    "defaultPrompt": [
+      "Assess this website report and its source code.",
+      "Fix confirmed issues from this Agent Lighthouse report."
+    ]
+  }
+}

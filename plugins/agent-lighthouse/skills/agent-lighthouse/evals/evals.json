@@ -1,0 +1,93 @@
+{
+  "skill_name": "agent-lighthouse",
+  "evals": [
+    {
+      "id": 0,
+      "name": "report-and-plain-html-source",
+      "prompt": "Review ./report-review/report-excerpt.json and ./report-review/src. This is an offline synthetic report excerpt for a plain HTML site. Explain what needs work from both the report and code. Do not access the network or edit files. The deployed revision is unknown.",
+      "expected_output": "Identifies that source already includes the canonical link reported missing from deployed HTML. Leaves deployment mismatch unresolved. Finds the missing image alt text separately from engine findings. Provides file and line evidence without adding a framework or inventing a score.",
+      "files": ["evals/files/report-review"],
+      "assertions": [
+        "Recognizes the synthetic excerpt and does not claim a real scan ran",
+        "Cites the existing canonical in src/index.html and does not blindly add a duplicate",
+        "Explains that deployed revision or rendered response evidence is needed to resolve the contradiction",
+        "Reports the missing alt text as a code finding with source evidence",
+        "No network calls or file mutations",
+        "No new framework, dependency, or invented score"
+      ]
+    },
+    {
+      "id": 1,
+      "name": "retrofit-existing-site",
+      "prompt": "My existing site is in ./existing-site (BrightPath Consulting, future domain https://brightpath.example). Improve its AI readiness using source evidence. No deployed site or report exists. Keep existing content. Do NOT run npm install, use the network, or build. Make only supported local fixes and tell me what remains unverified.",
+      "expected_output": "Local code inspection and focused fixes using the project's existing conventions. No fake Lighthouse baseline or blanket boilerplate. Preserves content and reports verification/deployment limits.",
+      "files": ["evals/files/existing-site"],
+      "assertions": [
+        "Existing content preserved, including 'Founded in 2021' and original service blurbs",
+        "No scan of the placeholder domain or fabricated report",
+        "Findings cite relevant source paths and code",
+        "No mandatory optional manifests or unrelated service-site validator",
+        "No installation or build",
+        "Local changes and missing deployed verification are distinguished"
+      ]
+    },
+    {
+      "id": 2,
+      "name": "audit-built-site",
+      "prompt": "Inspect ./built-site/dist for this sauna studio. Its future domain is https://nordwind.example. Tell me how ready it is for AI systems. Analysis only. No network or file changes. Give a score only if the available evidence supports a real Agent Lighthouse score.",
+      "expected_output": "Local output inspection with no Lighthouse score. Evidence-backed HTML findings and explicit live-evidence gaps. Optional llms.txt absence does not become a scored failure.",
+      "files": ["evals/files/built-site"],
+      "assertions": [
+        "States local inspection and no Agent Lighthouse score",
+        "No network calls or file mutations",
+        "Identifies missing heading/alt/metadata with page evidence",
+        "Missing llms.txt is optional rather than a scored defect",
+        "Does not claim live headers, bot access, or booking execution were verified",
+        "Proposes relevant fixes without fixed category weights"
+      ]
+    },
+    {
+      "id": 3,
+      "name": "fix-scope-deployment-mismatch",
+      "prompt": "Use ./report-review/report-excerpt.json to fix confirmed issues in ./report-review/src. The report is a synthetic example for offline review. Keep this plain HTML project. No network, deployment, or form submission is allowed. Check other source defects too.",
+      "expected_output": "Avoids changing an already-correct canonical. Inspects and addresses supported source defects or requests missing content facts. Leaves live canonical finding unresolved. Reports local proof and pending deployment evidence.",
+      "files": ["evals/files/report-review"],
+      "assertions": [
+        "Does not duplicate the canonical or mark its deployed finding fixed",
+        "Checks code beyond the one report finding",
+        "Does not invent an image description without evidence of its content",
+        "No framework scaffold or new dependency",
+        "No network, deployment, or form submission",
+        "Separates verified local work from unresolved deployment findings"
+      ]
+    },
+    {
+      "id": 4,
+      "name": "existing-stack-preserved",
+      "prompt": "Review the source files in ./report-review/src and propose AI-readiness fixes. Keep this plain HTML site. Do not edit files or access the network.",
+      "expected_output": "Reviews the HTML directly and proposes evidence-based fixes. Does not add a framework, a starter, or a dependency.",
+      "files": ["evals/files/report-review"],
+      "assertions": [
+        "Preserves plain HTML as the project stack",
+        "No framework migration, starter, or dependency installation",
+        "Findings use source evidence and state no Lighthouse scan ran"
+      ]
+    },
+    {
+      "id": 5,
+      "name": "real-report-page-type-and-hosting",
+      "prompt": "Here is a real Agent Lighthouse 4.2.2 report for our docs site: ./real-report/report/agent-lighthouse-report.json (Markdown copy beside it). The built site is in ./real-report/site/dist, the list of everything the build outputs is ./real-report/site/build-output.txt, and it deploys with ./real-report/site/.github/workflows/deploy-pages.yml. The score is null and there are a lot of failures. Tell me what to fix first. Analysis only: no network, no rescans, no file changes.",
+      "expected_output": "Keeps the null score and quotes the unscored reason instead of computing a number. Notices the homepage was auto-detected as a content page, so Article, speakable, date and <article> failures do not apply to it; recommends a rescan with --page-type homepage rather than adding article markup. Traces the missing robots.txt to GitHub Pages project hosting: the site lives under /agent-lighthouse/, so a robots.txt in this build would not sit at the origin root crawlers read; names the owner action (the organisation's root Pages site or a custom domain). Treats the missing sitemap as a real build gap, since build-output.txt lists no sitemap, while noting the same root-path limit for discovery. Uses each check's fix, found and evidenceUrl fields as evidence.",
+      "files": ["evals/files/real-report"],
+      "assertions": [
+        "Reports the score as unscored/null with the report's unscoredReason; no invented score",
+        "Identifies the content page-type detection on the homepage and recommends rescanning with --page-type homepage",
+        "Does not recommend adding Article schema, speakable, publication dates or <article> to the homepage as a fix",
+        "Explains that a robots.txt under /agent-lighthouse/ is not the origin-root robots.txt and names the hosting owner action",
+        "Cites build-output.txt to show the build emits no sitemap or robots.txt",
+        "Cites check IDs with their found or evidenceUrl values from the report",
+        "No network calls, rescans, or file mutations"
+      ]
+    }
+  ]
+}

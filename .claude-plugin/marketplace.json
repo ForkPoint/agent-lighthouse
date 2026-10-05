@@ -1,0 +1,18 @@
+{
+  "name": "agent-lighthouse",
+  "owner": {
+    "name": "ForkPoint",
+    "url": "https://github.com/ForkPoint"
+  },
+  "metadata": {
+    "description": "Agent Lighthouse plugins for checking and improving website agentic readiness."
+  },
+  "plugins": [
+    {
+      "name": "agent-lighthouse",
+      "source": "./plugins/agent-lighthouse",
+      "description": "Use Agent Lighthouse reports and source-code review to assess and improve website agentic readiness.",
+      "category": "productivity"
+    }
+  ]
+}

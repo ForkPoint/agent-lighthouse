@@ -1,0 +1,14 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
+  "name": "agent-lighthouse",
+  "version": "4.2.2",
+  "description": "Use Agent Lighthouse reports and source-code review to assess and improve website agentic readiness.",
+  "author": {
+    "name": "ForkPoint",
+    "url": "https://github.com/ForkPoint"
+  },
+  "homepage": "https://forkpoint.github.io/agent-lighthouse/",
+  "repository": "https://github.com/ForkPoint/agent-lighthouse",
+  "license": "Apache-2.0",
+  "keywords": ["agentic-readiness", "website", "audit", "agent-lighthouse"]
+}

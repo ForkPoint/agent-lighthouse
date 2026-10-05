@@ -1742,7 +1742,7 @@
       "url": "https://github.com/search?q=%22data-action-type%22+%22data-action-label%22&type=code",
       "publisher": "GitHub",
       "type": "repo",
-      "keyFindings": "(GitHub code-search query link — interactive only, result counts recorded at research time.) 40 total results; the large majority are files within a single repository (magnifito/website — the AIO framework's own site: HomePage.astro, ContactPage.astro, ServicesPage.astro, LeadMagnet.astro, ConversionBoosters.astro and others). No framework, vendor, or standards body among the results. Adoption is self-referential, not a community convention.",
+      "keyFindings": "(GitHub code-search query link — interactive only, result counts recorded at research time.) 40 total results; the large majority are files within a single repository (one website's own page components). No framework, vendor, or standards body among the results. Adoption is concentrated in one repository, not a community convention.",
       "verified": "2026-08-20",
       "accessed": "2026-08-21"
     },
@@ -2083,7 +2083,7 @@
       "url": "https://github.com/search?q=%22x-ai-instructions%22&type=code",
       "publisher": "GitHub (code search API)",
       "type": "study",
-      "keyFindings": "Measured via GitHub REST search/code API. 'x-ai-instructions': total_count=54. Control field 'x-openai-isConsequential' (genuinely documented by OpenAI): total_count=6,464 — a ~120x gap. Grouping the top 40 x-ai-instructions matches by repo: 31 in api-evangelist/done (a blogger's notes archive), 2 in api-evangelist/providers, and 1 in magnifito/website (this framework's own site); the rest are single-file mentions in personal roadmaps and handbooks. No vendor, spec, or toolchain repo appears.",
+      "keyFindings": "Measured via GitHub REST search/code API. 'x-ai-instructions': total_count=54. Control field 'x-openai-isConsequential' (genuinely documented by OpenAI): total_count=6,464 — a ~120x gap. Grouping the top 40 x-ai-instructions matches by repo: 31 in api-evangelist/done (a blogger's notes archive), 2 in api-evangelist/providers, and 1 in a single website repository; the rest are single-file mentions in personal roadmaps and handbooks. No vendor, spec, or toolchain repo appears.",
       "verified": "2026-08-20",
       "accessed": "2026-08-21"
     },

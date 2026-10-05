@@ -34,8 +34,15 @@ export function documentationNav(): DocNavEntry[] {
     },
     doc("share", "Share your result"),
     doc("badge", "Share your result"),
-    ...["cli", "config", "sdk", "mcp", "ci", "benchmark", "architecture"].map(
-      (slug) => doc(slug, "Developer reference"),
-    ),
+    ...[
+      "cli",
+      "config",
+      "sdk",
+      "mcp",
+      "readiness-skill",
+      "ci",
+      "benchmark",
+      "architecture",
+    ].map((slug) => doc(slug, "Developer reference")),
   ];
 }

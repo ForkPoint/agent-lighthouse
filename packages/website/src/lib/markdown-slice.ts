@@ -105,6 +105,11 @@ export const DOC_SECTIONS: readonly DocSection[] = [
     file: "packages/website/src/content/mcp.md",
   },
   {
+    slug: "readiness-skill",
+    title: "Agentic readiness skill",
+    file: "packages/website/src/content/readiness-skill.md",
+  },
+  {
     slug: "ci",
     title: "GitHub Actions CI",
     file: "packages/website/src/content/ci.md",

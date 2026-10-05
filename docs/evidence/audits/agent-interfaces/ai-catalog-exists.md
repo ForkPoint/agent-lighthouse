@@ -41,7 +41,7 @@ Invented standard. `/.well-known/ai-catalog.json` is not registered with IANA, i
 
 **False-positive risks:**
 
-- 100% false-fail rate on real sites: no site outside this framework's own scaffolding publishes this file, so the audit is a constant zero that carries no information about the site.
+- 100% false-fail rate on real sites: no site in the sample publishes this file, so the audit is a constant zero that carries no information about the site.
 - Even when present, `Array.isArray(parsed['services'])` is the only validation — `{"services": []}` passes as 'AI catalog found with 0 service(s)', a vacuous pass.
 - A SPA catch-all returning 200 text/html means JSON.parse fails and the user is told 'ai-catalog.json is not valid JSON' when in fact there is no such file — a confusing, wrong diagnosis.
 - WAF 403 on /.well-known/* reads as 'not found'; `ctx.wafProtection` unused.

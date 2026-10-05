@@ -1,0 +1,74 @@
+[
+  {
+    "query": "ran npx @forkpoint/agent-lighthouse on our marketing site and got a 48, report is in ./reports. can you go through it and fix what's actually broken in the next.js code?",
+    "should_trigger": true
+  },
+  {
+    "query": "Is my shop ready for AI shopping agents? Store is https://example-store.com and the theme code is in this repo. Don't change anything yet, just tell me what's wrong.",
+    "should_trigger": true
+  },
+  {
+    "query": "chatgpt and perplexity never cite our docs even though we rank fine on google. the docs site is a hugo project in ./site — what's stopping AI crawlers from using it?",
+    "should_trigger": true
+  },
+  {
+    "query": "our agent-lighthouse score is null and it says 'could not feed 57% of the registry's evidence mass'. what does that mean and what should I do about it?",
+    "should_trigger": true
+  },
+  {
+    "query": "Can you check whether GPTBot and ClaudeBot are allowed on our site and whether our robots.txt / CDN rules are blocking them? Django app, deployed on Cloudflare.",
+    "should_trigger": true
+  },
+  {
+    "query": "make this wordpress theme agent-ready — structured data, llms.txt if it makes sense, whatever AI agents need to read and act on the pages. verify what you change.",
+    "should_trigger": true
+  },
+  {
+    "query": "The Agent Lighthouse report says structured-data/product-schema fails on our product pages but I can see JSON-LD in the template. Figure out who's right.",
+    "should_trigger": true
+  },
+  {
+    "query": "we exposed a WebMCP form and an openapi.json, does an AI agent actually discover them? scan https://app.example.io and review the routes in src/",
+    "should_trigger": true
+  },
+  {
+    "query": "after last week's fixes, rescan the site with the same agent lighthouse settings and tell me if anything actually improved",
+    "should_trigger": true
+  },
+  {
+    "query": "Run a Google Lighthouse performance audit on our homepage and fix the LCP and CLS issues.",
+    "should_trigger": false
+  },
+  {
+    "query": "Add a new audit to agent-lighthouse that checks for a security.txt file, with its dossier and tests.",
+    "should_trigger": false
+  },
+  {
+    "query": "Build me an MCP server in TypeScript that exposes our inventory API to Claude.",
+    "should_trigger": false
+  },
+  {
+    "query": "Write better meta titles and descriptions for these 20 blog posts so they rank higher on Google.",
+    "should_trigger": false
+  },
+  {
+    "query": "Set up the agent-lighthouse GitHub Action in this repo so PRs fail below a score of 80.",
+    "should_trigger": false
+  },
+  {
+    "query": "Our robots.txt blocks /admin but Googlebot still indexes it. How do I deindex those pages in Search Console?",
+    "should_trigger": false
+  },
+  {
+    "query": "Rewrite this landing page copy so it doesn't sound AI-generated.",
+    "should_trigger": false
+  },
+  {
+    "query": "Fix the accessibility violations axe found on our checkout form: missing labels and low contrast.",
+    "should_trigger": false
+  },
+  {
+    "query": "explain the difference between the A and B evidence grades in agent-lighthouse's policy.md and how weightForGrade uses them",
+    "should_trigger": false
+  }
+]

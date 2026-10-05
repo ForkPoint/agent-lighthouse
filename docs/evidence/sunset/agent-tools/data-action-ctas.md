@@ -27,7 +27,7 @@ Four angles, all via direct fetch and GitHub API since WebSearch was exhausted. 
 
 ## Best evidence found for the audit
 
-None worth a grade above D. The only positive framing available is the generic and uncontroversial claim that machine-readable affordance hints help agents — which is true, but the mechanism the web platform actually chose for it is WebMCP's toolname/tooldescription attributes and the accessible name/role from the a11y tree, not data-action. No vendor doc, spec, or study names data-action, data-action-type or data-action-label. Searching for the compound convention returned 40 total GitHub code results, and the overwhelming majority are files inside a single repository (magnifito/website — the author's own AIO-framework site: HomePage.astro, ContactPage.astro, LeadMagnet.astro, ConversionBoosters.astro and ~15 more), i.e. the 'convention' is essentially self-citation rather than community adoption.
+None worth a grade above D. The only positive framing available is the generic and uncontroversial claim that machine-readable affordance hints help agents — which is true, but the mechanism the web platform actually chose for it is WebMCP's toolname/tooldescription attributes and the accessible name/role from the a11y tree, not data-action. No vendor doc, spec, or study names data-action, data-action-type or data-action-label. Searching for the compound convention returned 40 total GitHub code results, and the overwhelming majority are files inside a single repository (one website's own page components, about 20 files), i.e. the 'convention' is essentially one site's private naming rather than community adoption.
 
 ## Counter-evidence
 
@@ -50,7 +50,7 @@ Grade D: speculative attribute with no documented consumer at any vendor, plus a
 - **[GoogleChrome/modern-web-guidance-src — guides index](https://github.com/GoogleChrome/modern-web-guidance-src/tree/main/guides)** — Google Chrome (repo, URL verified 2026-08-21)
   - Google's published guidance corpus (accessibility, forms, html, js, ui-behaviors, ui-components, webmcp, ...) routes all agent-affordance guidance through guides/webmcp (agentic-forms, agentic-javascript-tools, webmcp). Repo-scoped code search for `data-action` returns 1 incidental hit and no guide — Google does not advise or consume data-action for agent readability.
 - **[GitHub code search: "data-action-type" "data-action-label"](https://github.com/search?q=%22data-action-type%22+%22data-action-label%22&type=code)** — GitHub (repo, NOT verified)
-  - (GitHub code-search query link — interactive only, result counts recorded at research time.) 40 total results; the large majority are files within a single repository (magnifito/website — the AIO framework's own site: HomePage.astro, ContactPage.astro, ServicesPage.astro, LeadMagnet.astro, ConversionBoosters.astro and others). No framework, vendor, or standards body among the results. Adoption is self-referential, not a community convention.
+  - (GitHub code-search query link — interactive only, result counts recorded at research time.) 40 total results; the large majority are files within a single repository (one website's own page components). No framework, vendor, or standards body among the results. Adoption is concentrated in one repository, not a community convention.
 
 ## v1 dossier — what it checked and the 2026-08-20 code review
 

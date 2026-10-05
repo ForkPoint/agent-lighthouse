@@ -1,0 +1,13 @@
+<html>
+  <head>
+    <title>{{ title }}</title>
+  </head>
+  <body>
+    <div class="header">
+      <span class="logo">BrightPath</span>
+      {{ nav | safe }}
+    </div>
+    {{ content | safe }}
+    <div class="footer">© BrightPath Consulting</div>
+  </body>
+</html>
