@@ -22,7 +22,7 @@ For detailed contributor rules, audit architecture, and dossier requirements, re
 
 ### Prerequisites
 
-- **Node.js**: v22.0.0 or higher
+- **Node.js**: v22.22.2+ (22.x), v24.15.0+ (24.x), or 26+
 - **pnpm**: v9.15.0 or higher
 
 ### Setup
