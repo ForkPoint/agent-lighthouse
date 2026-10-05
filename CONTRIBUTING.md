@@ -129,6 +129,9 @@ The root workspace and the four public packages use TypeScript 7. `tsup` builds
 JavaScript only; `tsc -p tsconfig.build.json` emits declaration files afterward.
 The website alone aliases `typescript` to Microsoft's `@typescript/typescript6`
 package for Astro's JavaScript compiler API. It uses `astro check` for type checks.
+TypeScript 7 is pinned to a patch range (`~7.0.2`) because
+`scripts/check-audit-boundaries.mjs` uses its `unstable` API, which a minor
+release may change.
 
 Oxlint keeps correctness and suspicious checks as errors. The migration removes
 `no-return-await`, which upstream retired. It leaves the new array-copy,
