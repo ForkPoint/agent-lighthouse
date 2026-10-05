@@ -63,6 +63,7 @@ updates:
       test-and-compiler-major:
         patterns:
           - "typescript"
+          - "@typescript/*"
           - "vitest"
           - "@vitest/*"
           - "oxlint"

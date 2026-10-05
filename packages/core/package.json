@@ -72,9 +72,10 @@
     "@types/domhandler": "^3.1.0",
     "@types/jsdom": "^30.0.0",
     "@types/node": "^22.10.5",
+    "@typescript/native": "npm:typescript@^7.0.2",
     "tsup": "^8.3.5",
-    "typescript": "^5.7.3",
-    "vitest": "^2.1.8"
+    "typescript": "npm:@typescript/typescript6@^6.0.2",
+    "vitest": "^5.0.3"
   },
   "engines": {
     "node": "^22.22.2 || ^24.15.0 || >=26.0.0"

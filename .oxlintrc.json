@@ -7,8 +7,12 @@
     "suspicious": "error"
   },
   "rules": {
-    "no-return-await": "error",
     "unicorn/no-unnecessary-await": "error",
-    "unicorn/prefer-regexp-test": "error"
+    "unicorn/prefer-regexp-test": "error",
+    "unicorn/no-array-sort": "off",
+    "unicorn/no-array-reverse": "off",
+    "unicorn/consistent-function-scoping": "off",
+    "no-shadow": "off",
+    "no-underscore-dangle": "off"
   }
 }
