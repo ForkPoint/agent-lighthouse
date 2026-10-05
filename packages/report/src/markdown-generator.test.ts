@@ -67,6 +67,21 @@ describe("generateMarkdownSummary", () => {
     expect(input).toEqual(before);
   });
 
+  it("prints an unassessed category as not assessed, not 0 / 100", () => {
+    const md = generateMarkdownSummary(
+      report([
+        cat({
+          id: "agentic-commerce",
+          name: "Agentic Commerce",
+          score: 0,
+          assessedMass: 0,
+        }),
+      ]),
+    );
+    expect(md).toContain("| **Agentic Commerce** | _Not assessed_ | ⚪");
+    expect(md).not.toContain("**0 / 100**");
+  });
+
   it("states how many checks were advisory", () => {
     const md = generateMarkdownSummary(
       report([

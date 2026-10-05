@@ -87,6 +87,8 @@ export {
   calculateCategoryScore,
   buildCategoryResult,
   calculateOverallScore,
+  categoryAssessedMass,
+  isCategoryAssessed,
   isInformative,
   weightForGrade,
 } from "./scorer";
@@ -96,6 +98,7 @@ export { extractProductFieldVerification } from "./product-fields";
 export * from "./types";
 export * from "./constants";
 export { skippedMassShare } from "./scorer";
+export { generateScanSummary } from "./summary";
 export { budgetReason, formatBudget } from "./audit-runner";
 export * from "./schemas";
 export * from "./url-utils";

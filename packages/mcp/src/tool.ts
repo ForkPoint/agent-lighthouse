@@ -42,6 +42,8 @@ export interface AuditSummary {
   categories: Array<{
     name: string;
     score: number;
+    /** False when the category has no score: `score` is then 0 for "no data". */
+    assessed: boolean;
     passCount: number;
     warnCount: number;
     failCount: number;
@@ -80,6 +82,9 @@ export function buildAuditSummary(
       g.categories.map((c) => ({
         name: c.name,
         score: c.score,
+        // False when no scored check reached a verdict: the 0 above is then
+        // "no data", not a failing grade.
+        assessed: c.assessed,
         passCount: c.counts.pass,
         warnCount: c.counts.warn,
         failCount: c.counts.fail,

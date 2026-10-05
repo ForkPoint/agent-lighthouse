@@ -49,8 +49,8 @@ describe("summarize", () => {
     expect(summary.pages).toBe(2);
     expect(summary.durationMs).toBe(4200);
     expect(summary.categories).toEqual([
-      { name: "AI Discovery", score: 91, checks: 2 },
-      { name: "Agentic Commerce", score: 42, checks: 0 },
+      { name: "AI Discovery", score: 91, checks: 2, assessed: true },
+      { name: "Agentic Commerce", score: 42, checks: 0, assessed: true },
     ]);
   });
 
@@ -106,9 +106,20 @@ describe("summarize", () => {
     });
 
     expect(summary.categories).toEqual([
-      { name: "Unnamed category", score: 10, checks: 0 },
-      { name: "Real", score: 60, checks: 0 },
+      { name: "Unnamed category", score: 10, checks: 0, assessed: true },
+      { name: "Real", score: 60, checks: 0, assessed: true },
     ]);
+  });
+
+  it("reads assessedMass 0 as a category with no score", () => {
+    const summary = summarize({
+      overallScore: 50,
+      categories: [
+        { name: "Agentic Commerce", score: 0, checks: [], assessedMass: 0 },
+        { name: "AI Discovery", score: 80, checks: [], assessedMass: 4.2 },
+      ],
+    });
+    expect(summary.categories.map((c) => c.assessed)).toEqual([false, true]);
   });
 
   it("pulls scores and durations back into a range the page can render", () => {

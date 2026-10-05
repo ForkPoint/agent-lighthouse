@@ -397,6 +397,43 @@ describe("failedAssertion", () => {
   it("returns nothing when there are no assertions", () => {
     expect(failedAssertion(categories, {})).toBeUndefined();
   });
+
+  it("fails an unassessed category as not assessed, not as scored 0", () => {
+    const unassessed = [
+      {
+        id: "agentic-commerce",
+        name: "Agentic Commerce",
+        score: 0,
+        assessed: false,
+      },
+    ];
+    expect(failedAssertion(unassessed, { "agentic-commerce": 80 })).toEqual({
+      name: "Agentic Commerce",
+      score: 0,
+      threshold: 80,
+      notAssessed: true,
+    });
+    // A threshold of 0 asks for nothing, as `--min-score 0` does.
+    expect(
+      failedAssertion(unassessed, { "agentic-commerce": 0 }),
+    ).toBeUndefined();
+  });
+
+  it("passes an assessed category that clears its threshold", () => {
+    expect(
+      failedAssertion(
+        [
+          {
+            id: "structured-data",
+            name: "Structured Data",
+            score: 90,
+            assessed: true,
+          },
+        ],
+        { "structured-data": 80 },
+      ),
+    ).toBeUndefined();
+  });
 });
 
 describe("selectDebugChecks", () => {

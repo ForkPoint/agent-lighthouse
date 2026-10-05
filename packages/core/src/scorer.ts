@@ -60,6 +60,32 @@ export function assessedMassOf(checks: CheckResult[]): number {
 }
 
 /**
+ * Whether a category has a score to show.
+ *
+ * `calculateCategoryScore` returns 0 when no scored check reached a verdict,
+ * and `calculateOverallScore` already leaves such a category out. Every
+ * surface that prints, ranks or rolls up a category score asks this first, so
+ * that 0 is never shown or ranked as the worst possible result.
+ *
+ * Reports written before `assessedMass` existed recompute it from the checks.
+ * A category with no check list was built from a mass and a score directly;
+ * like `hasAssessableCheck`, its mass counts as assessed.
+ */
+export function categoryAssessedMass(
+  cat: Pick<CategoryResult, "assessedMass" | "weight" | "checks">,
+): number {
+  if (cat.assessedMass !== undefined) return cat.assessedMass;
+  if (cat.checks.length === 0) return cat.weight;
+  return assessedMassOf(cat.checks);
+}
+
+export function isCategoryAssessed(
+  cat: Pick<CategoryResult, "assessedMass" | "weight" | "checks">,
+): boolean {
+  return categoryAssessedMass(cat) > 0;
+}
+
+/**
  * Assemble a category result.
  *
  * `mass` is the category's evidence mass — the summed weight of its registered

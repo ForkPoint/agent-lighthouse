@@ -59,8 +59,6 @@ agent-lighthouse https://example.com --min-score=85
 
 Short and long spellings are interchangeable (`-o json` and `--output json` are the same flag). In the space-separated form the value must not begin with `-`, or it is treated as the next flag rather than as a value.
 
-The one exception is `--assert-category`, which is read by a separate pass that only understands the space-separated form. Use `--assert-category structured-data:90`, not `--assert-category=structured-data:90`.
-
 ## Flags
 
 | Flag                         | Value               | Default              | What it does                                                           |
@@ -181,7 +179,7 @@ agent-lighthouse https://yourstore.com \
   --assert-category access-crawl-control:75
 ```
 
-The id is matched against category ids first, then against category display names case-insensitively, so `--assert-category "structured:90"` also resolves. A threshold naming no category is ignored rather than reported, so check your spelling against the id list. The first category below its threshold exits the process with code 1. Thresholds may also be declared in the config file under `assertCategories`.
+The id is matched against category ids first, then against category display names case-insensitively, so `--assert-category "structured:90"` also resolves. A threshold naming no category is ignored rather than reported, so check your spelling against the id list. The first category below its threshold exits the process with code 1. A category that ran but was not assessed — no scored check in it reached a verdict, so the report shows "Not assessed" — fails its threshold too, with a message that says so rather than "scored 0": the assertion asks for proof, and the scan has none. A threshold of `0` asks for nothing and never fails, as with `--min-score`. Thresholds may also be declared in the config file under `assertCategories`.
 
 ### `--debug-audit <id|fails>`
 

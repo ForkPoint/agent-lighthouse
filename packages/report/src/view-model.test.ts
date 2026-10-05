@@ -84,6 +84,7 @@ function mixedReport(): ScanReport {
     cat({
       id: "agent-interfaces",
       weight: mass("agent-interfaces"),
+      assessedMass: mass("agent-interfaces"),
       score: 80,
       checks: [
         check({ id: "p1", status: "pass" }),
@@ -97,6 +98,7 @@ function mixedReport(): ScanReport {
     cat({
       id: "machine-discovery",
       weight: mass("machine-discovery"),
+      assessedMass: mass("machine-discovery"),
       score: 60,
       checks: [
         check({ id: "cd1", category: "machine-discovery", status: "pass" }),
@@ -105,6 +107,7 @@ function mixedReport(): ScanReport {
     cat({
       id: "answer-readiness",
       weight: mass("answer-readiness"),
+      assessedMass: mass("answer-readiness"),
       score: 100,
       checks: [
         check({ id: "ar1", category: "answer-readiness", status: "pass" }),
@@ -133,6 +136,67 @@ describe("buildReportView", () => {
     expect(v.groups[0]!.label).toBe("Agentic Readiness");
     // aiSearchOptimization has one category, so its roll-up is that score.
     expect(v.groups[1]!.score).toBe(100);
+  });
+
+  it("marks a category with no scored verdict as not assessed", () => {
+    const v = buildReportView(
+      report([
+        cat({
+          id: "agentic-commerce",
+          weight: mass("agentic-commerce"),
+          assessedMass: 0,
+          score: 0,
+          checks: [check({ id: "na1", status: "na" })],
+        }),
+        cat({
+          id: "content-extraction",
+          weight: mass("content-extraction"),
+          score: 100,
+          checks: [
+            check({ id: "s1", status: "pass", weight: 1 }),
+            // A scored-tier audit the scan ran as informative: no weight.
+            check({
+              id: "i1",
+              status: "fail",
+              weight: 0,
+              scoreDisplayMode: "informative",
+            }),
+          ],
+        }),
+      ]),
+    );
+    const byId = new Map(v.categories.map((c) => [c.id, c]));
+    expect(byId.get("agentic-commerce")!.assessed).toBe(false);
+    expect(byId.get("content-extraction")!.assessed).toBe(true);
+    expect(byId.get("content-extraction")!.counts.advisory).toBe(1);
+  });
+
+  it("leaves an unassessed category out of its group's roll-up", () => {
+    const v = buildReportView(
+      report([
+        cat({
+          id: "agent-interfaces",
+          weight: mass("agent-interfaces"),
+          assessedMass: 2,
+          score: 80,
+        }),
+        cat({
+          id: "machine-discovery",
+          weight: mass("machine-discovery"),
+          assessedMass: 0,
+          score: 0,
+        }),
+      ]),
+    );
+    expect(v.groups[0]!.score).toBe(80);
+    expect(v.groups[0]!.assessed).toBe(true);
+  });
+
+  it("marks a group with no assessed category as not assessed", () => {
+    const v = buildReportView(
+      report([cat({ id: "agent-interfaces", assessedMass: 0, score: 0 })]),
+    );
+    expect(v.groups[0]!.assessed).toBe(false);
   });
 
   it("returns categories flat in canonical order regardless of input order", () => {
