@@ -64,6 +64,8 @@ export function getElementSpec(
     const matchProperties = Array.isArray(variantMatches)
       ? variantMatches
       : [variantMatches];
+    // The option is constant; the index bounds this loop.
+    // oxlint-disable-next-line no-unmodified-loop-condition
     for (let i = 0; i < matchProperties.length && noMatchAccessibleName; i++) {
       if (
         Object.prototype.hasOwnProperty.call(

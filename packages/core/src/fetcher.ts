@@ -343,6 +343,8 @@ export function createFetcher(fetcherOptions: FetcherOptions = {}) {
         [];
 
       while (
+        // This option is constant; response and hops bound the redirect loop.
+        // oxlint-disable-next-line no-unmodified-loop-condition
         followRedirects &&
         REDIRECT_STATUS.has(response.statusCode) &&
         response.headers["location"] !== undefined &&

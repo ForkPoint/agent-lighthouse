@@ -39,7 +39,7 @@ const BIDI_POP = /[‬⁩]/g;
 const RTL_SCRIPT = /[֐-׿؀-ۿ܀-ݏހ-޿ࢠ-ࣿיִ-﷿ﹰ-﻿]/;
 
 /** Zero-width and invisible joiners. */
-const ZERO_WIDTH = /[​‌‍⁠﻿]/g;
+const ZERO_WIDTH = /(?:\u200B|\u200C|\u200D|\u2060|\uFEFF)/g;
 
 /** Soft hyphen and the Hangul filler characters used the same way. */
 const FILLER = /[­ᅟᅠㅤﾠ]/g;

@@ -145,6 +145,7 @@ export function mountBadgeGenerator(): void {
         .then(() => {
           if (status)
             status.textContent = "Badge markdown copied to the clipboard.";
+          return undefined;
         })
         .catch(() => {
           if (status)

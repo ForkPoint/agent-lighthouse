@@ -122,3 +122,18 @@ All checks must pass.
 ## Code of Conduct
 
 All contributors are expected to uphold the [Contributor Covenant Code of Conduct](./CODE_OF_CONDUCT.md).
+
+### Compiler and lint compatibility
+
+TypeScript 7 provides `tsc` through the `@typescript/native` npm alias. The
+`typescript` dependency aliases Microsoft's `@typescript/typescript6` package,
+which retains the JavaScript compiler API required by tsup and Astro tooling.
+Do not replace that alias with TypeScript 7 until those tools support the new API.
+The declaration build suppresses only TypeScript 6's `baseUrl` deprecation because
+tsup itself injects that option. Project path mappings no longer use `baseUrl`.
+
+Oxlint keeps correctness and suspicious checks as errors. The migration removes
+`no-return-await`, which upstream retired. It leaves the new array-copy,
+function-placement, shadowing, and underscore-naming rules off to preserve the
+previous style policy. Revisit those rules as a separate source-code change;
+do not mix a repository-wide style rewrite into a tool version upgrade.
