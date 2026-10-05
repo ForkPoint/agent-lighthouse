@@ -34,10 +34,16 @@ export class SitemapExistsAudit extends Audit {
     const sitemap = await readSitemap(ctx);
 
     if (sitemap.kind === "absent") {
+      if (sitemap.incomplete)
+        return this.notApplicable(
+          sitemap.reason,
+          "A readable XML sitemap covering this site",
+          "Sitemap coverage could not be established",
+        );
       return this.fail(
-        "No XML sitemap found at /sitemap.xml or /sitemap-index.xml.",
+        "No XML sitemap found for this site in robots.txt or at the conventional sitemap paths.",
         "HTTP 200 with valid XML containing <urlset> or <sitemapindex>",
-        "Not found at either path",
+        "No sitemap found for this site",
         {
           priority: "critical",
           description:
