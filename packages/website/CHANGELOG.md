@@ -1,5 +1,16 @@
 # @forkpoint/agent-lighthouse-website
 
+## 0.0.9
+
+### Patch Changes
+
+- ba28c19: Add the agentic readiness skill and its public installation guide. The skill uses Agent Lighthouse reports plus source-code review to guide stack-neutral fixes that help AI agents discover, read, cite and act on a website, with separate local and deployed verification. Package the skill as the Agent Lighthouse plugin with a repository marketplace for Claude Code and Codex, plus installation instructions. The plugin version follows the CLI version. The CLI and MCP npm packages remain separate.
+- 004455e: Stop showing "no data" as a failing grade. A category where no scored check reached a verdict now reads "Not assessed" in the terminal, HTML and Markdown reports and in the website's report viewer instead of "0 / 100", and it no longer drags its section group's score down: group scores are weighted by assessed evidence mass, the same rule the overall score uses. The scan summary no longer names such a category as the primary improvement area, and an unscored scan's summary says "not scored" instead of "Overall Readiness null%". Category check counts include scored-tier checks the scan ran as informative (page-typed audits on a detected page type) in the not-scored count. Core exports `isCategoryAssessed`, `categoryAssessedMass` and `generateScanSummary`, and the report package re-exports core's summary instead of keeping its own copy; the MCP `audit_website` summary adds `assessed` to each category. `--assert-category` fails an unassessed category as "not assessed" instead of "scored 0".
+- Updated dependencies [2b77990]
+- Updated dependencies [e1fa8a6]
+- Updated dependencies [004455e]
+  - @forkpoint/agent-lighthouse-core@5.0.0
+
 ## 0.0.8
 
 ### Patch Changes

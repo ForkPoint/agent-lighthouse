@@ -123,6 +123,10 @@ agent-lighthouse https://yourstore.com/product/widget --page-type product
 
 Declare the target page's type: `homepage`, `product`, `category`, `content`, or `author`. Automatically detected types support advisory results for checks that depend on page type. An explicit type allows those checks to contribute to the score when their other requirements are met.
 
+The scanned URL is detected as `homepage` when its path is `/`, or when it is the root of a site mounted under a subpath — a GitHub project site at `/<project>/`, a store at `/shop/`, a locale at `/en-us/`. A subpath counts as a site root only when the page's own links say so: its site header's first same-origin link points back at that path, or every same-origin link on the page stays under it with at least three distinct paths. Section headers do not count as site headers. Detection resolves links against the document's `<base href>` when present and excludes same-page fragment links. A section of a larger site, such as `/blog/` whose logo links to `/`, stays a content or category page. Declare `--page-type` when detection gets it wrong.
+
+For a detected or declared subpath homepage, sitemap discovery tries conventional sitemap names under that directory before origin fallbacks. Sitemap-derived page samples stay within that origin and subpath. Sitemap declarations still come from the origin's `/robots.txt`. Ordinary content-page scans do not infer a mount. Origin files, feeds, explicit page overrides, and redirects retain their existing scope.
+
 ### `--experimental`
 
 ```bash
