@@ -17,8 +17,8 @@ export default defineConfig({
   define: {
     __PACKAGE_VERSION__: JSON.stringify(packageVersion),
   },
-  // tsup injects baseUrl; retain its TS6 API until its declaration bundler migrates.
-  dts: { compilerOptions: { ignoreDeprecations: "6.0" } },
+  // TypeScript 7 emits declarations after the JavaScript bundle.
+  dts: false,
   clean: true,
   sourcemap: true,
   splitting: false,

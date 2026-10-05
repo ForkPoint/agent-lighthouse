@@ -125,12 +125,13 @@ All contributors are expected to uphold the [Contributor Covenant Code of Conduc
 
 ### Compiler and lint compatibility
 
-TypeScript 7 provides `tsc` through the `@typescript/native` npm alias. The
-`typescript` dependency aliases Microsoft's `@typescript/typescript6` package,
-which retains the JavaScript compiler API required by tsup and Astro tooling.
-Do not replace that alias with TypeScript 7 until those tools support the new API.
-The declaration build suppresses only TypeScript 6's `baseUrl` deprecation because
-tsup itself injects that option. Project path mappings no longer use `baseUrl`.
+The root workspace and the four public packages use TypeScript 7. `tsup` builds
+JavaScript only; `tsc -p tsconfig.build.json` emits declaration files afterward.
+The website alone aliases `typescript` to Microsoft's `@typescript/typescript6`
+package for Astro's JavaScript compiler API. It uses `astro check` for type checks.
+TypeScript 7 is pinned to a patch range (`~7.0.2`) because
+`scripts/check-audit-boundaries.mjs` uses its `unstable` API, which a minor
+release may change.
 
 Oxlint keeps correctness and suspicious checks as errors. The migration removes
 `no-return-await`, which upstream retired. It leaves the new array-copy,
