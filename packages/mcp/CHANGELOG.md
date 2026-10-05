@@ -1,5 +1,14 @@
 # @forkpoint/agent-lighthouse-mcp
 
+## 5.1.1
+
+### Patch Changes
+
+- c43c7ec: Generate package declarations with the TypeScript 7 compiler. Keep TypeScript 6 scoped to the Astro website. Public entry points and JavaScript bundle formats remain unchanged.
+- Updated dependencies [c43c7ec]
+  - @forkpoint/agent-lighthouse-core@5.1.1
+  - @forkpoint/agent-lighthouse-report@5.1.1
+
 ## 5.1.0
 
 ### Patch Changes
