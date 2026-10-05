@@ -41,10 +41,10 @@ jobs:
         id: changesets
         uses: changesets/action@v2
         with:
-          version: pnpm version-packages
-          publish: pnpm release
-          title: 'ci(release): version packages'
-          commit: 'ci(release): version packages'
+          version-script: pnpm version-packages
+          publish-script: pnpm release
+          pr-title: 'ci(release): version packages'
+          commit-message: 'ci(release): version packages'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
@@ -56,7 +56,7 @@ jobs:
       # trigger; the run checks the release branch's head commit, and its
       # checks show on the pull request.
       - name: Run CI on the release pull request
-        if: steps.changesets.outputs.pullRequestNumber != ''
+        if: steps.changesets.outputs['pr-number'] != ''
         run: gh workflow run ci.yml --ref "changeset-release/${GITHUB_REF_NAME}"
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
