@@ -263,12 +263,16 @@ export interface AssertableCategory {
   id: string;
   name: string;
   score: number;
+  /** False when no scored check reached a verdict; `score` is then "no data". */
+  assessed?: boolean;
 }
 
 export interface FailedAssertion {
   name: string;
   score: number;
   threshold: number;
+  /** Set when the category had no score to compare, rather than a low one. */
+  notAssessed?: true;
 }
 
 /**
@@ -277,6 +281,11 @@ export interface FailedAssertion {
  * A threshold naming a category that did not run is not a failure: `--preset`
  * and `--categories` both narrow the scan, and failing CI over a category the
  * operator deliberately excluded would make the two flags unusable together.
+ *
+ * A category that ran but was not assessed does fail, the way `--min-score`
+ * fails an unscored scan: the assertion asks for proof the bar is cleared, and
+ * a category with no scored verdict proves nothing. It fails as "not
+ * assessed", never as "scored 0".
  */
 export function failedAssertion(
   categories: AssertableCategory[],
@@ -287,7 +296,17 @@ export function failedAssertion(
       (c) =>
         c.id === catId || c.name.toLowerCase().includes(catId.toLowerCase()),
     );
-    if (matched && matched.score < threshold) {
+    if (!matched) continue;
+    // A threshold of 0 asks for nothing, as `--min-score 0` does.
+    if (matched.assessed === false && threshold > 0) {
+      return {
+        name: matched.name,
+        score: matched.score,
+        threshold,
+        notAssessed: true,
+      };
+    }
+    if (matched.score < threshold) {
       return { name: matched.name, score: matched.score, threshold };
     }
   }

@@ -437,7 +437,9 @@ async function audit(targetUrl?: string) {
   );
   if (failed) {
     console.error(
-      `\n\x1b[31m✖ Category Assertion Failed:\x1b[0m Category '${failed.name}' scored ${failed.score} (threshold: ${failed.threshold})`,
+      failed.notAssessed
+        ? `\n\x1b[31m✖ Category Assertion Failed:\x1b[0m Category '${failed.name}' was not assessed, so it cannot clear threshold ${failed.threshold}. No scored check in it reached a verdict on this scan.`
+        : `\n\x1b[31m✖ Category Assertion Failed:\x1b[0m Category '${failed.name}' scored ${failed.score} (threshold: ${failed.threshold})`,
     );
     process.exit(1);
   }
