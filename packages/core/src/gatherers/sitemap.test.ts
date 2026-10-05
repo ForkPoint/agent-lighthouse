@@ -6,6 +6,7 @@ import {
   siteSitemapTree,
   readSitemap,
   NO_SITEMAP,
+  sitemapSiteRoot,
 } from "./sitemap";
 
 import { mockFetchResult } from "../__tests__/test-utils";
@@ -533,4 +534,194 @@ describe("readSitemap", () => {
       expect(res.tree.entries).toHaveLength(1);
     }
   });
+});
+
+describe("sitemaps for a subpath site", () => {
+  function scoped(files: Record<string, FetchResult>, robots = "") {
+    const f = fetcher(files);
+    return {
+      ...f,
+      baseUrl: "https://a.test",
+      siteRootUrl: "https://a.test/project/",
+      rootFiles: { "/robots.txt": mockFetchResult(robots, 200, "text/plain") },
+    };
+  }
+
+  it("finds a sitemap under the mounted site's root", async () => {
+    const ctx = scoped({
+      "https://a.test/project/sitemap.xml": urlset([
+        ["https://a.test/project/a"],
+      ]),
+    });
+    const tree = await siteSitemapTree(ctx);
+    expect(tree.entries.map((e) => e.loc)).toEqual([
+      "https://a.test/project/a",
+    ]);
+    expect(ctx.seen).toEqual(["https://a.test/project/sitemap.xml"]);
+    expect((await readSitemap(ctx)).kind).toBe("readable");
+  });
+
+  it("filters shared sitemap entries before the 500-entry cap", async () => {
+    const other: Array<[string, string?]> = Array.from(
+      { length: 510 },
+      (_, i) => [`https://a.test/other/${i}`, "bad-date"],
+    );
+    const ctx = scoped(
+      {
+        "https://a.test/shared.xml": urlset([
+          ...other,
+          ["https://a.test/project/a", "2026-01-01"],
+          ["https://a.test/project-two/a"],
+          ["https://else.test/project/a"],
+        ]),
+      },
+      "Sitemap: https://a.test/shared.xml",
+    );
+    const tree = await siteSitemapTree(ctx);
+    expect(tree.entries).toEqual([
+      { loc: "https://a.test/project/a", lastmod: "2026-01-01" },
+    ]);
+    expect(tree.malformedLastmod).toBe(0);
+    expect(tree.truncated).toBe(false);
+  });
+
+  it("continues to local fallbacks when a declared sitemap only covers siblings", async () => {
+    const ctx = scoped(
+      {
+        "https://a.test/shared.xml": urlset([["https://a.test/other/a"]]),
+        "https://a.test/project/sitemap_index.xml": index([
+          "https://a.test/project/pages.xml",
+        ]),
+        "https://a.test/project/pages.xml": urlset([
+          ["https://a.test/project/a"],
+        ]),
+      },
+      "Sitemap: https://a.test/shared.xml",
+    );
+    const tree = await siteSitemapTree(ctx);
+    expect(tree.entries.map((e) => e.loc)).toEqual([
+      "https://a.test/project/a",
+    ]);
+    expect(tree.readableFiles).not.toContain("https://a.test/shared.xml");
+  });
+
+  it("falls back to an origin sitemap that lists the mounted site", async () => {
+    const ctx = scoped({
+      "https://a.test/sitemap.xml": urlset([
+        ["https://a.test/project/a"],
+        ["https://a.test/other/a"],
+      ]),
+    });
+    expect((await siteSitemapTree(ctx)).entries.map((e) => e.loc)).toEqual([
+      "https://a.test/project/a",
+    ]);
+  });
+
+  it("does not count a sibling-only index as this site's sitemap", async () => {
+    const ctx = scoped({
+      "https://a.test/sitemap.xml": index(["https://a.test/other/pages.xml"]),
+      "https://a.test/other/pages.xml": urlset([["https://a.test/other/a"]]),
+    });
+    expect((await readSitemap(ctx)).kind).toBe("absent");
+  });
+
+  it("retains malformed relative URLs in a local sitemap for content audits", async () => {
+    const ctx = scoped({
+      "https://a.test/project/sitemap.xml": urlset([
+        ["relative-page"],
+        ["/outside"],
+      ]),
+    });
+    const tree = await siteSitemapTree(ctx);
+    expect(tree.entries.map((e) => e.loc)).toEqual([
+      "relative-page",
+      "/outside",
+    ]);
+  });
+
+  it("reports a broken local sitemap as malformed despite an unrelated origin sitemap", async () => {
+    const ctx = scoped({
+      "https://a.test/project/sitemap.xml": mockFetchResult(
+        "<html>broken</html>",
+        200,
+      ),
+      "https://a.test/sitemap.xml": urlset([["https://a.test/other/a"]]),
+    });
+    expect((await readSitemap(ctx)).kind).toBe("malformed");
+  });
+
+  it("keeps a valid empty local sitemap distinct from absence", async () => {
+    const ctx = scoped({ "https://a.test/project/sitemap.xml": urlset([]) });
+    expect((await readSitemap(ctx)).kind).toBe("empty");
+  });
+
+  it("does not fetch unsafe declared sitemaps", async () => {
+    const ctx = scoped({}, "Sitemap: http://127.0.0.1/project/sitemap.xml");
+    await siteSitemapTree(ctx);
+    expect(ctx.seen.some((url) => url.includes("127.0.0.1"))).toBe(false);
+  });
+});
+
+describe("sitemapSiteRoot", () => {
+  it("scopes only homepage directories and removes query and fragment", () => {
+    expect(
+      sitemapSiteRoot({
+        url: "https://a.test/project/index.html?q=1#top",
+        pageType: "homepage",
+      }),
+    ).toBe("https://a.test/project/");
+    expect(
+      sitemapSiteRoot({ url: "https://a.test/project/", pageType: "content" }),
+    ).toBeUndefined();
+    expect(
+      sitemapSiteRoot({ url: "https://a.test/", pageType: "homepage" }),
+    ).toBeUndefined();
+    expect(
+      sitemapSiteRoot({ url: "https://a.test/project", pageType: "homepage" }),
+    ).toBeUndefined();
+    expect(sitemapSiteRoot(undefined)).toBeUndefined();
+  });
+});
+
+it("keeps the child-fetch cap when all children cover siblings", async () => {
+  const children = Array.from(
+    { length: 12 },
+    (_, i) => `https://a.test/other/${i}.xml`,
+  );
+  const files = Object.fromEntries(
+    children.map((url) => [url, urlset([[url.replace(".xml", "/page")]])]),
+  );
+  const f = fetcher({
+    ...files,
+    "https://a.test/sitemap.xml": index(children),
+  });
+  const ctx = {
+    ...f,
+    baseUrl: "https://a.test",
+    siteRootUrl: "https://a.test/project/",
+    rootFiles: {},
+  };
+  const result = await readSitemap(ctx);
+  expect(result).toMatchObject({ kind: "absent", incomplete: true });
+  expect(f.seen.filter((url) => children.includes(url))).toHaveLength(10);
+});
+
+it("does not prove absence from unreadable children of a shared index", async () => {
+  const f = fetcher({
+    "https://a.test/sitemap.xml": index([
+      "https://a.test/sitemaps/project.xml.gz",
+    ]),
+    "https://a.test/sitemaps/project.xml.gz": mockFetchResult(
+      "compressed bytes",
+      200,
+      "application/gzip",
+    ),
+  });
+  const result = await readSitemap({
+    ...f,
+    baseUrl: "https://a.test",
+    siteRootUrl: "https://a.test/project/",
+    rootFiles: {},
+  });
+  expect(result).toMatchObject({ kind: "absent", incomplete: true });
 });

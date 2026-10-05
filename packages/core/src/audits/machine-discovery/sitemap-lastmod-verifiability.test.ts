@@ -201,3 +201,31 @@ describe("SitemapLastmodVerifiabilityAudit", () => {
     expect(result.found).toContain("5 sampled URL");
   });
 });
+
+it("does not sample a sibling project's pages for a subpath site", async () => {
+  const base = mockCheckContext([
+    mockPageContext(
+      "https://example.com/project/",
+      "<header><a href='/project/'>Home</a></header>",
+    ),
+  ]);
+  const seen: string[] = [];
+  const ctx = { ...base, siteRootUrl: "https://example.com/project/" };
+  ctx.fetch = async ({ url }) => {
+    seen.push(url);
+    if (url === "https://example.com/sitemap.xml")
+      return mockFetchResult(
+        `<urlset><url><loc>https://example.com/other-project/post/</loc><lastmod>2025-01-01</lastmod></url></urlset>`,
+        200,
+        "application/xml",
+      );
+    if (url === "https://example.com/other-project/post/")
+      return mockFetchResult(
+        `<meta property="article:modified_time" content="2020-01-01">`,
+      );
+    return mockFetchResult("", 404);
+  };
+  const result = await new SitemapLastmodVerifiabilityAudit().audit(ctx);
+  expect(seen).not.toContain("https://example.com/other-project/post/");
+  expect(result.status).toBe("na");
+});

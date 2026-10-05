@@ -39,6 +39,7 @@ vi.mock("./fetcher", async (importOriginal) => {
     // Keep the real splitCredentials (pure helper the orchestrator uses to
     // sanitize the scanned URL); only the network fetch is stubbed.
     ...actual,
+    isSafeUrl: async () => true,
     createFetcher: () => ({
       fetch: async ({ url, signal }: { url: string; signal?: AbortSignal }) => {
         h.calls.push(url);
@@ -1305,4 +1306,93 @@ describe("runScan — prefetched robots.txt", () => {
       .find((c) => c.id === "access-crawl-control/crawl-delay")!;
     expect(crawlDelay.explanation).toContain("Crawl-delay");
   });
+});
+
+describe("runScan — mounted site sitemap scope", () => {
+  it.each([undefined, "homepage"] as const)(
+    "scopes discovery and samples with pageType %s",
+    async (pageType) => {
+      const url = "https://example.com/project/";
+      set(
+        url,
+        '<header><a href="/project/">Home</a></header><main>Project home.</main>',
+      );
+      set(
+        "https://example.com/sitemap.xml",
+        "<urlset><url><loc>https://example.com/other-project/post/</loc><lastmod>2025-01-01</lastmod></url></urlset>",
+        "application/xml",
+      );
+      set(
+        "https://example.com/project/sitemap.xml",
+        "<urlset><url><loc>https://example.com/project/page/</loc><lastmod>2025-01-01</lastmod></url></urlset>",
+        "application/xml",
+      );
+      set(
+        "https://example.com/project/page/",
+        '<meta property="article:modified_time" content="2025-01-01"><p>Page</p>',
+      );
+      set(
+        "https://example.com/other-project/post/",
+        '<meta property="article:modified_time" content="2020-01-01"><p>Sibling</p>',
+      );
+      const report = await runScan(url, {
+        pageType,
+        categories: ["machine-discovery"],
+        enforceEvidenceGate: false,
+      });
+      const checks = report.categories.flatMap((category) => category.checks);
+      expect(
+        checks.find((check) => check.id === "machine-discovery/sitemap-exists")
+          ?.status,
+      ).toBe("pass");
+      expect(
+        checks.find(
+          (check) =>
+            check.id === "machine-discovery/sitemap-lastmod-verifiability",
+        )?.status,
+      ).toBe("pass");
+      expect(h.calls).toContain("https://example.com/project/page/");
+      expect(h.calls).not.toContain("https://example.com/other-project/post/");
+      expect(h.calls).toContain("https://example.com/robots.txt");
+      expect(h.calls).not.toContain("https://example.com/project/robots.txt");
+      expect(vi.mocked(runAudits).mock.calls.at(-1)?.[0].siteRootUrl).toBe(url);
+    },
+  );
+
+  it("does not treat an ordinary content-page directory as a site root", async () => {
+    const url = "https://example.com/project/article/";
+    set(
+      url,
+      '<header><a href="/project/">Home</a></header><article>A post</article>',
+    );
+    await runScan(url, {
+      categories: ["machine-discovery"],
+      enforceEvidenceGate: false,
+    });
+    expect(
+      vi.mocked(runAudits).mock.calls.at(-1)?.[0].siteRootUrl,
+    ).toBeUndefined();
+    expect(h.calls).not.toContain(`${url}sitemap.xml`);
+  });
+});
+
+it("does not reuse one mount's sitemap scope for a sibling with cached origin evidence", async () => {
+  for (const name of ["one", "two"]) {
+    const url = `https://example.com/${name}/`;
+    set(url, `<header><a href="/${name}/">Home</a></header>`);
+    set(
+      `${url}sitemap.xml`,
+      `<urlset><url><loc>${url}page</loc></url></urlset>`,
+      "application/xml",
+    );
+    await runScan(url, {
+      categories: ["machine-discovery"],
+      enforceEvidenceGate: false,
+    });
+    expect(vi.mocked(runAudits).mock.calls.at(-1)?.[0].siteRootUrl).toBe(url);
+    expect(h.calls).toContain(`${url}sitemap.xml`);
+    expect(
+      vi.mocked(runAudits).mock.calls.at(-1)?.[0].originEvidence?.cached,
+    ).toBe(name === "two");
+  }
 });

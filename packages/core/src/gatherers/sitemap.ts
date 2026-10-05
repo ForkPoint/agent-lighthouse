@@ -4,6 +4,19 @@ import type { FetchOptions, FetchResult } from "../fetcher";
 import { isSafeUrl } from "../fetcher";
 import { parseRobotsFile } from "./robots";
 
+/** A homepage directory provides a sitemap scope; a content page does not. */
+export function sitemapSiteRoot(
+  page: { url: string; pageType: string } | undefined,
+): string | undefined {
+  if (page?.pageType !== "homepage") return undefined;
+  const url = new URL(page.url);
+  url.pathname = url.pathname.replace(/\/index\.html?$/i, "/");
+  if (url.pathname === "/" || !url.pathname.endsWith("/")) return undefined;
+  url.search = "";
+  url.hash = "";
+  return url.href;
+}
+
 /** One `<url>` row of a sitemap. */
 export interface SitemapEntry {
   loc: string;
@@ -23,6 +36,8 @@ export interface SitemapTree {
   readableFiles: string[];
   /** Sitemap files that answered 200 but were neither. A soft-404 lands here. */
   malformedFiles: string[];
+  /** A shared index had children whose coverage of this mount could not be read. */
+  scopeIncomplete?: true;
 }
 
 /** How many child sitemaps a `<sitemapindex>` may expand to. */
@@ -114,7 +129,7 @@ function parseSitemap(result: FetchResult | undefined): ParsedSitemap {
  * Every root in `roots` is read: a robots.txt that declares three sitemaps
  * has three, and stopping at the first would judge a third of the site as
  * the whole. `fallbackRoots` are the conventional paths, probed in order only
- * when no declared root parsed, and the first one that does ends the probe.
+ * when no declared root covers the site, and the first one that does ends the probe.
  *
  * Recursion stops after one level of `<sitemapindex>`: the depth of a nested
  * index is chosen by the site being scanned, so following it arbitrarily is an
@@ -129,6 +144,8 @@ export async function collectSitemapEntries(
     maxEntries?: number;
     signal?: AbortSignal;
     fallbackRoots?: string[];
+    /** Limit sitemap evidence to a mounted site, before applying sample caps. */
+    siteRootUrl?: string;
   } = {},
 ): Promise<SitemapTree> {
   const maxChildren = opts.maxChildren ?? DEFAULT_MAX_CHILDREN;
@@ -141,6 +158,40 @@ export async function collectSitemapEntries(
   const fetched = new Set<string>();
   let malformedLastmod = 0;
   let truncated = false;
+  let childrenRead = 0;
+  let scopeIncomplete = false;
+  const scope = opts.siteRootUrl ? new URL(opts.siteRootUrl) : undefined;
+  const inScope = (url: string): boolean => {
+    if (!scope) return true;
+    try {
+      const target = new URL(url);
+      return (
+        target.origin === scope.origin &&
+        (target.pathname.startsWith(scope.pathname) ||
+          `${target.pathname}/` === scope.pathname)
+      );
+    } catch {
+      return false;
+    }
+  };
+  const keepEntry = (entry: SitemapEntry, fileUrl: string): boolean => {
+    if (!scope) return true;
+    // Preserve invalid/relative locs in the site's own files so the content
+    // audits can report them. They must not silently turn into a clean sitemap.
+    try {
+      const absolute = new URL(entry.loc);
+      if (absolute.protocol === "http:" || absolute.protocol === "https:")
+        return inScope(absolute.href);
+    } catch {
+      // Relative locs are defects, but their path can still identify the site.
+    }
+    if (inScope(fileUrl)) return true;
+    try {
+      return inScope(new URL(entry.loc, fileUrl).href);
+    } catch {
+      return false;
+    }
+  };
 
   const take = (found: SitemapEntry[]) => {
     for (const entry of found) {
@@ -153,42 +204,59 @@ export async function collectSitemapEntries(
     }
   };
 
-  const load = async (url: string): Promise<ParsedSitemap | undefined> => {
+  const load = async (
+    url: string,
+  ): Promise<(ParsedSitemap & { relevant: boolean }) | undefined> => {
     if (fetched.has(url)) return undefined;
     fetched.add(url);
     if (!(await isSafeUrl(url))) return undefined;
     const result = await fetch({ url, signal: opts.signal });
     const parsed = parseSitemap(result);
+    parsed.entries = parsed.entries.filter((entry) => keepEntry(entry, url));
+    const relevant = inScope(url) || parsed.entries.length > 0;
     // A file that answered 200 with a body and still did not parse is
     // present and broken. That is a finding, not an absence, so it is kept
     // apart from a 404 for `readSitemap` to name.
-    if (parsed.kind !== "none") readableFiles.push(url);
-    else if (result.status === 200 && result.body.trim()) {
+    if (relevant && parsed.kind !== "none") readableFiles.push(url);
+    else if (relevant && result.status === 200 && result.body.trim()) {
       malformedFiles.push(url);
     }
-    return parsed;
+    return { ...parsed, relevant };
   };
 
-  /** Read one root and its children. True when the root was a sitemap. */
+  /** Read one root and its children. True when they cover the site. */
   const walkRoot = async (root: string): Promise<boolean> => {
     const parsed = await load(root);
     if (!parsed || parsed.kind === "none") return false;
 
     take(parsed.entries);
+    let relevant = parsed.relevant;
 
     for (const child of parsed.children) {
-      if (childSitemaps.length >= maxChildren) {
+      if (childrenRead >= maxChildren) {
         truncated = true;
         break;
       }
       if (!sameHost(child, root)) continue;
       const childParsed = await load(child);
+      if (
+        scope &&
+        !inScope(root) &&
+        (!childParsed || childParsed.kind !== "urlset")
+      )
+        scopeIncomplete = true;
       if (!childParsed) continue;
-      childSitemaps.push(child);
+      childrenRead += 1;
+      if (childParsed.relevant) {
+        childSitemaps.push(child);
+        relevant = true;
+      }
       // One level only: a `sitemapindex` found here is not expanded.
       take(childParsed.entries);
     }
-    return true;
+    // A shared index belongs to this scan only when it covers the mount.
+    if (relevant && !readableFiles.includes(root)) readableFiles.push(root);
+    return relevant;
   };
 
   let found = false;
@@ -212,6 +280,7 @@ export async function collectSitemapEntries(
     truncated,
     readableFiles,
     malformedFiles,
+    ...(scopeIncomplete ? { scopeIncomplete: true as const } : {}),
   };
 }
 
@@ -285,7 +354,14 @@ function siteRoots(ctx: SitemapContext): {
 
   return {
     declared: onSite(declared),
-    fallbacks: onSite(FALLBACK_SITEMAP_PATHS.map((p) => `${ctx.baseUrl}${p}`)),
+    fallbacks: onSite([
+      ...(ctx.siteRootUrl
+        ? FALLBACK_SITEMAP_PATHS.map(
+            (p) => new URL(p.slice(1), ctx.siteRootUrl).href,
+          )
+        : []),
+      ...FALLBACK_SITEMAP_PATHS.map((p) => `${ctx.baseUrl}${p}`),
+    ]),
   };
 }
 
@@ -293,6 +369,7 @@ function siteRoots(ctx: SitemapContext): {
 interface SitemapContext {
   rootFiles: Record<string, FetchResult>;
   baseUrl: string;
+  siteRootUrl?: string;
   fetch: (options: FetchOptions) => Promise<FetchResult>;
 }
 
@@ -311,6 +388,7 @@ export function siteSitemapTree(ctx: SitemapContext): Promise<SitemapTree> {
   const { declared, fallbacks } = siteRoots(ctx);
   const walk = collectSitemapEntries(ctx.fetch, declared, {
     fallbackRoots: fallbacks,
+    siteRootUrl: ctx.siteRootUrl,
   });
   treeCache.set(cacheOwner(ctx), walk);
   return walk;
@@ -319,7 +397,7 @@ export function siteSitemapTree(ctx: SitemapContext): Promise<SitemapTree> {
 export const NO_SITEMAP = "No readable sitemap found.";
 
 export type SitemapReadResult =
-  | { kind: "absent"; reason: string }
+  | { kind: "absent"; reason: string; incomplete?: true }
   | { kind: "empty"; reason: string; result?: FetchResult }
   | { kind: "malformed"; reason: string; result?: FetchResult }
   | {
@@ -374,7 +452,15 @@ export async function readSitemap(
           result: sitemapFile,
         };
       }
-      return { kind: "absent", reason: NO_SITEMAP };
+      return tree.truncated || tree.scopeIncomplete
+        ? {
+            kind: "absent",
+            reason: tree.truncated
+              ? "The sitemap walk reached its limit before establishing coverage of this site."
+              : "A shared sitemap index has unreadable children, so coverage of this site could not be established.",
+            incomplete: true,
+          }
+        : { kind: "absent", reason: NO_SITEMAP };
     }
 
     const defects: string[] = [];

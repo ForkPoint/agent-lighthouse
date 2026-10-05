@@ -1,5 +1,21 @@
 # @forkpoint/agent-lighthouse
 
+## 5.0.0
+
+### Major Changes
+
+- 2b77990: Detect the homepage of a site mounted under a subpath. Page-type detection used to call the scanned URL a homepage only when its path was exactly `/`, so a GitHub project site (`/<project>/`), a store at `/shop/`, a docs portal or a locale root (`/en-us/`) was read as a content page, and article checks ran against its homepage. The scanned URL is now a homepage when its path is a directory and the page's own links say it is a site root: its header's first same-origin link points back at that path, or every same-origin link on the page stays under it. A header inside sectioning content (an article's own header, for example) does not count as the site header, links resolve against the document's `<base href>`, same-page fragment links are ignored, and the fallback rule needs three distinct paths. A section of a larger site, such as `/blog/` whose logo links to `/`, is unaffected. Scans of subpath sites change page type, which audits apply, and their scores — on this project's own docs site, from an unscored content page to a scored homepage.
+- e1fa8a6: Discover sitemaps for sites mounted under a subpath. A detected or declared homepage directory supplies the sitemap scope. Robots declarations still come from the origin root; conventional sitemap paths are tried under the mount before origin fallbacks. Shared sitemap entries are filtered to the mount before caps and sampling, so sibling sites cannot supply page verdicts through the sitemap. Relative and malformed entries associated with the site remain visible to sitemap content audits. The sitemap-exists audit no longer fails absence when the child-walk limit or unreadable shared-index children prevented a verdict. Ordinary content-page scans and origin-level files retain their current scope.
+
+### Patch Changes
+
+- 004455e: Stop showing "no data" as a failing grade. A category where no scored check reached a verdict now reads "Not assessed" in the terminal, HTML and Markdown reports and in the website's report viewer instead of "0 / 100", and it no longer drags its section group's score down: group scores are weighted by assessed evidence mass, the same rule the overall score uses. The scan summary no longer names such a category as the primary improvement area, and an unscored scan's summary says "not scored" instead of "Overall Readiness null%". Category check counts include scored-tier checks the scan ran as informative (page-typed audits on a detected page type) in the not-scored count. Core exports `isCategoryAssessed`, `categoryAssessedMass` and `generateScanSummary`, and the report package re-exports core's summary instead of keeping its own copy; the MCP `audit_website` summary adds `assessed` to each category. `--assert-category` fails an unassessed category as "not assessed" instead of "scored 0".
+- Updated dependencies [2b77990]
+- Updated dependencies [e1fa8a6]
+- Updated dependencies [004455e]
+  - @forkpoint/agent-lighthouse-core@5.0.0
+  - @forkpoint/agent-lighthouse-report@5.0.0
+
 ## 4.2.2
 
 ### Patch Changes

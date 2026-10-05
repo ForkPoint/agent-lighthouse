@@ -47,6 +47,7 @@ import { runA11yForHtml } from "./audits/operability-safety/runner";
 import { A11Y_RULES } from "./audits/operability-safety";
 import { extractProductFieldVerification } from "./product-fields";
 import { generateScanSummary } from "./summary";
+import { sitemapSiteRoot } from "./gatherers/sitemap";
 import {
   isInformative,
   gatedMassShare,
@@ -525,6 +526,7 @@ async function scanWithinBudget(
     pages,
     domain,
     baseUrl,
+    siteRootUrl: sitemapSiteRoot(pages.find((page) => page.url === displayUrl)),
     // Once the budget is gone no request leaves: the audit reads an error
     // result at once, the same shape a refused connection gives it.
     fetch: (options) =>
