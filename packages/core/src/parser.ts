@@ -656,8 +656,8 @@ function directoryPath(pathname: string): string {
  *
  * - its header's first same-origin link — the logo or "home" link — points
  *   back at this path, or
- * - every same-origin link on the page stays under this path (at least three,
- *   so a near-empty page proves nothing).
+ * - every same-origin link on the page stays under this path, with at least
+ *   three distinct paths so a near-empty page proves nothing.
  *
  * A section page fails both: its logo links to `/` and its menu leaves the
  * section. Only a directory path qualifies; `/shop` without a slash is a page,
@@ -673,33 +673,56 @@ function isSubpathHome(url: string, $: CheerioAPI): boolean {
   const base = directoryPath(page.pathname);
   if (base === "/" || !base.endsWith("/")) return false;
 
+  let documentBase = page;
+  const baseHref = $("base[href]").first().attr("href");
+  if (baseHref !== undefined) {
+    try {
+      documentBase = new URL(baseHref, page);
+    } catch {
+      // Invalid base URLs fall back to the document URL.
+    }
+  }
+
   const internalPath = (href: string | undefined): string | undefined => {
-    if (!href || href.startsWith("#")) return undefined;
+    if (!href) return undefined;
     let target: URL;
     try {
-      target = new URL(href, page);
+      target = new URL(href, documentBase);
     } catch {
       return undefined;
     }
     if (target.origin !== page.origin) return undefined;
+    if (
+      target.href.includes("#") &&
+      target.pathname === page.pathname &&
+      target.search === page.search
+    )
+      return undefined;
     const path = directoryPath(target.pathname);
     // `/project` and `/project/` name the same mount point.
     return `${path}/` === base ? base : path;
   };
 
   let homeLink: string | undefined;
-  $("header a[href], [role='banner'] a[href]").each((_, el) => {
-    homeLink = internalPath($(el).attr("href"));
-    return homeLink === undefined; // stop at the first same-origin link
-  });
+  $("header, [role='banner']")
+    // A header inside sectioning content names that section, not the site.
+    .filter(
+      (_, el) =>
+        $(el).parents("article, aside, main, nav, section").length === 0,
+    )
+    .find("a[href]")
+    .each((_, el) => {
+      homeLink = internalPath($(el).attr("href"));
+      return homeLink === undefined; // stop at the first same-origin link
+    });
   if (homeLink === base) return true;
 
-  const internal: string[] = [];
+  const internal = new Set<string>();
   $("a[href]").each((_, el) => {
     const path = internalPath($(el).attr("href"));
-    if (path !== undefined) internal.push(path);
+    if (path !== undefined) internal.add(path);
   });
-  return internal.length >= 3 && internal.every((p) => p.startsWith(base));
+  return internal.size >= 3 && [...internal].every((p) => p.startsWith(base));
 }
 
 function isProductPage(

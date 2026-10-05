@@ -1305,6 +1305,71 @@ describe("detectPageType", () => {
       );
     });
 
+    it("does not use an article header permalink as the site home link", () => {
+      const $ = page(`<nav><a href="/">Site home</a></nav>
+        <main><article><header><a href="/blog/post/" rel="bookmark">Post</a></header></article></main>`);
+      expect(
+        detectPageType(
+          "https://x.com/blog/post/",
+          $,
+          [{ "@type": "Article" }],
+          {},
+          true,
+        ),
+      ).toBe("content");
+    });
+
+    it("resolves home links against the document base", () => {
+      const $ = parseHtml(`<html><head><base href="/"></head><body>
+        <header><a href="./">Home</a></header><a href="/pricing">Pricing</a></body></html>`);
+      expect(detectPageType("https://x.com/blog/", $, [], {}, true)).toBe(
+        "content",
+      );
+    });
+
+    it("does not count same-page fragment links as distinct pages", () => {
+      const $ = page(
+        `<a href="/blog/post/#a">A</a><a href="/blog/post/#b">B</a><a href="/blog/post/#c">C</a>`,
+      );
+      expect(detectPageType("https://x.com/blog/post/", $, [], {}, true)).toBe(
+        "content",
+      );
+    });
+
+    it("ignores empty fragments before a real site home link", () => {
+      const $ = page(
+        `<header><a href="#">Menu</a><a href="/">Home</a></header>`,
+      );
+      expect(detectPageType("https://x.com/blog/", $, [], {}, true)).toBe(
+        "content",
+      );
+    });
+
+    it("does not count duplicate destinations as distinct pages", () => {
+      const $ = page(
+        `<a href="/docs/a">A</a><a href="/docs/a">A again</a><a href="/docs/b">B</a>`,
+      );
+      expect(detectPageType("https://x.com/docs/", $, [], {}, true)).toBe(
+        "content",
+      );
+    });
+
+    it("accepts a wrapped site header and a relative document base", () => {
+      const $ = parseHtml(`<html><head><base href="/docs/"></head><body>
+        <div><header><nav><a href="./">Home</a></nav></header></div></body></html>`);
+      expect(detectPageType("https://x.com/docs/", $, [], {}, true)).toBe(
+        "homepage",
+      );
+    });
+
+    it("ignores an invalid document base", () => {
+      const $ = parseHtml(`<html><head><base href="http://["></head><body>
+        <header><a href="./">Home</a></header></body></html>`);
+      expect(detectPageType("https://x.com/docs/", $, [], {}, true)).toBe(
+        "homepage",
+      );
+    });
+
     it("is not the homepage when it is not the first page", () => {
       const $ = page(`<header><a href="/docs/">Home</a></header>`);
       expect(detectPageType("https://x.com/docs/", $, [], {}, false)).toBe(
