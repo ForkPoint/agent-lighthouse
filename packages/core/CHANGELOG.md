@@ -1,5 +1,59 @@
 # @forkpoint/agent-lighthouse-core
 
+## 6.0.0
+
+### Major Changes
+
+- c677b51: A false-positive sweep across 44 audits, prompted by two real-site scans. No audit id, grade, tier, weight or result schema changes, but verdicts move on a large share of sites, so scores, saved baselines and dashboards built on 5.x output will shift. Notable moves:
+
+  - The 14 crawler audits pass when robots.txt lets a bot inherit the `*` allow, and are not applicable when robots.txt is missing.
+  - Optional artifacts that are absent (RSS feed, RSL licence, WebMCP attributes, a full sitemap index read) return not applicable instead of failing.
+  - `operability-safety/contact-form` is not applicable when the sampled pages link to a contact page the scan did not fetch.
+  - Hidden subtrees (`hidden`, `aria-hidden`, inline `display:none`, closed dialogs) no longer count in fake-headings, semantic-lists, text-fragment and extractor-survival checks.
+  - `answer-readiness/text-fragment-addressability` now matches over nearest-block-ancestor runs, as the spec does; a FAQ answer that is present only in unrendered text now fails with that reason.
+
+  Each audit's own changeset below lists its change.
+
+### Patch Changes
+
+- c677b51: `agentic-commerce/acp-policy-link-surface` no longer fails a policy link that lives on another domain or redirects to a PDF. The ACP link schema asks only for a URL, so a terms or privacy page hosted on a sister domain or served as a PDF now counts toward checkout eligibility.
+- c677b51: `answer-readiness/extractor-survival-recall` now matches its stripper blocklist against whole class tokens and ids, as Firecrawl's selectors do, and never drops an element holding most of the page's text. Script contents no longer count as prose, so JSON-LD URLs are not reported as lost facts.
+- c677b51: `access-crawl-control/ai-bot-directives` now passes when YouBot and AI2Bot are allowed through `User-agent: *` or by no applicable rule, instead of warning; a block still fails. A missing or unreadable robots.txt is not applicable, and the check is retitled "Documented AI bots allowed by robots.txt".
+- c677b51: `access-crawl-control/ai-usage-signal-coherence-across-channels` no longer warns a site that declares no AI-usage preference in any channel. With nothing declared there is nothing to contradict, so the check is not applicable.
+- c677b51: `operability-safety/aria-layer-injection-scan` compares an `aria-label` with its visible text only on controls and widget roles, so a landmark or container label such as `nav aria-label="Main"` is no longer reported as divergent. Every label is still checked for instruction text.
+- c677b51: Stop `operability-safety/form-autofill-token-coverage` failing site search and store-locator forms. Their fields take a query, not profile data, so they are skipped, and a location field offering a choice such as "City or postcode" no longer counts as a postal-code field.
+- c677b51: `operability-safety/third-party-dom-write-blast-radius` now calls each counted origin a separate host rather than a company. A brand's own asset CDN on another domain is still counted; the message no longer claims it belongs to someone else.
+- c677b51: `operability-safety/contact-form` returns not applicable, naming the link, when the sampled pages carry no contact form but link to a contact or support page the scan did not fetch. A form there was not observed, so its absence is not established.
+- c677b51: The per-bot robots.txt checks, such as `access-crawl-control/gptbot` and `google-extended`, now pass a bot allowed through `User-agent: *` instead of warning, and say which group applied. A missing or unreadable robots.txt is not applicable, and the fix text now warns that a named `Allow: /` group drops the catch-all rules.
+- c677b51: `content-extraction/css-hidden-ghost-content` no longer counts text a stylesheet shows again. Within a rule the last `display` declaration wins, and a later rule for the same selector, or an `!important` one, overrides an earlier `display:none`.
+- c677b51: `content-extraction/fake-headings` no longer reports bold statistics, prices or ratings, text in hidden subtrees, labels in headers, asides, labels, captions or dialogs, or bold text inside a section that already has a real heading.
+- c677b51: Stop `machine-discovery/agent-commerce-feed-parity` reporting "no image" and "price undefined" on product pages that list images as an array or price a ProductGroup through an AggregateOffer or its variants. A seller given as an `@id` reference is now resolved on the page, and a reference to an undefined node is still reported.
+- c677b51: `operability-safety/ghost-clickable-element-ratio` no longer counts a click-named or cursor-styled wrapper that holds a native control, or an icon or label inside a link or button, as a ghost. An element with its own inline click handler still counts.
+- c677b51: `content-extraction/json-ld-duplication-mass` no longer counts a reference-only `{"@id"}` object as a duplicated node, and its warning names the duplicated nodes when no body text repeats.
+- c677b51: `machine-discovery/sitemap-lastmod-verifiability` no longer fails a `lastmod` whose only disagreement is with the HTTP `Last-Modified` header. A static host sets that header on every deploy, so it can corroborate a content date but not contradict one; such URLs now count as unverifiable.
+- c677b51: Fix two false readings in `machine-discovery/sitemap-lastmod-verifiability`. Dates on nested reviews, comments, questions and answers no longer count as the page's modification time, so a product page with customer reviews and no page date is unverifiable, not divergent. Lastmod values written seconds apart in one generator run now count as one build stamp.
+- c677b51: Stop failing `machine-discovery/discovery-index-coverage` when the sitemap is larger than the scan reads. A page missing from a partial sitemap read now returns not applicable instead of "Not indexed".
+- aa678a5: Preserve document order between linked stylesheets and inline style blocks when resolving CSS-hidden content.
+- aa678a5: Keep missing-role findings for decorative descendants and for inline handlers that stop propagation inside controls. An observing handler, such as an analytics call, stays part of its control. Roles resolve case-insensitively to the first recognized token, and gridcell and scrollbar wrappers count as holding a control.
+- aa678a5: Resolve inline display and visibility declaration order and !important before hiding answer spans or content. Invalid values are dropped as a browser drops them, a visibility:visible descendant of a visibility:hidden block counts as rendered for text fragments, and CSS-hidden ghost content uses the same resolver for inline markers and stylesheet display rules.
+- aa678a5: Do not fail corroborated recent content edits as build stamps. Require page-date disagreement before reporting that pattern. A deploy-time Last-Modified header no longer vouches for a recent run of stamps; those URLs are unverifiable and warn.
+- aa678a5: Decline discovery coverage findings when an index has unread child sitemaps, including an empty partial read and a child that already failed as a root.
+- c677b51: Stop failing `machine-discovery/root-text-file-resolution-integrity` when random `.txt` paths redirect to the homepage. A probe that is redirected to a different path now counts as a missing file, the same as a 404.
+- c677b51: Stop failing `access-crawl-control/rsl-licensing-terms-conformance` when `/license.xml` or `/rsl.xml` redirects to the homepage. A guessed path whose body is not an RSL document now counts as no licence, and the audit returns not applicable.
+- c677b51: `machine-discovery/rss-feed` is now not applicable when a site neither publishes nor advertises a feed, instead of failing. A feed advertised by an autodiscovery link that does not answer still fails.
+- c677b51: `content-extraction/section-headings` no longer counts empty `<section>` layout slots as unlabeled sections, and a page with no `<section>` with content is now not applicable instead of a warning.
+- c677b51: `answer-readiness/section-split-risk-profile` still reports THIN sections but no longer warns on them alone. A section that fits the retrieval window is never cut, so only SPLIT, ATOMIC-SPLIT, BLOB or a low in-window score now warn.
+- c677b51: The semantic extractor behind `content-extraction/extraction-determinism` now reads the `<article>` with the most text, not the first one. When no article holds at least a fifth of the page's text, it falls back to the body. A promo strip marked up as the page's first `<article>` no longer reads as the page.
+- c677b51: `content-extraction/semantic-lists` skips lists inside hidden subtrees and no longer counts the `kbd` keys of one shortcut as a pseudo-list.
+- c677b51: `answer-readiness/extractor-survival-recall` counts an h1 that Readability keeps as the article title as surviving, and no longer takes key spans from hidden panels.
+- c677b51: `answer-readiness/text-fragment-addressability` now groups text by its nearest block ancestor, as the spec does, so an answer beside a heading inside one list item is no longer reported as crossing a block boundary. Text the page does not render is not searched, a card title is no longer joined onto its description, and a FAQ answer that is only in hidden text is reported with that reason.
+- c677b51: `answer-readiness/text-fragment-addressability` no longer treats a tile grid, a following heading or a short repeated button after an h2/h3 as an answer span. A sentence split across sibling blocks is still reported.
+- c677b51: Stop treating a Cloudflare Turnstile loader on a readable page as a bot wall. `agentic-commerce/cart-handoff-reachability` fails only a cart that is a challenge page or only a widget, `access-crawl-control/no-bot-detection` passes a loader on a page the scan could read, and `operability-safety/no-blocking-captcha` matches widget scripts and markup instead of any mention of the vendor name.
+- c677b51: `operability-safety/ugc-trust-boundary-markers` no longer treats an FAQPage's questions and answers as visitor-written content. Question and Answer nodes elsewhere, such as under a QAPage, still count.
+- c677b51: `answer-readiness/unique-data` now runs on content pages only, so a storefront homepage is no longer failed for carrying no statistics. Euro and pound amounts and comma-decimal formats such as "49,99 €" now count as figures.
+- c677b51: `agent-interfaces/webmcp-declarative-forms` is now not applicable when no form carries any declarative WebMCP attribute, instead of failing every site with a form. Present but broken markup still fails or warns.
+- c677b51: `machine-discovery/websub-hub-advertisement` now reads `<atom:link rel="self">` and `rel="hub"` inside an RSS channel, under any prefix bound to the Atom namespace, and no longer counts an entry's own self link as a feed self link.
+
 ## 5.2.0
 
 ### Minor Changes

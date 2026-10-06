@@ -1,5 +1,49 @@
 # @forkpoint/agent-lighthouse-report
 
+## 6.0.0
+
+### Patch Changes
+
+- Updated dependencies [c677b51]
+- Updated dependencies [c677b51]
+- Updated dependencies [c677b51]
+- Updated dependencies [c677b51]
+- Updated dependencies [c677b51]
+- Updated dependencies [c677b51]
+- Updated dependencies [c677b51]
+- Updated dependencies [c677b51]
+- Updated dependencies [c677b51]
+- Updated dependencies [c677b51]
+- Updated dependencies [c677b51]
+- Updated dependencies [c677b51]
+- Updated dependencies [c677b51]
+- Updated dependencies [c677b51]
+- Updated dependencies [c677b51]
+- Updated dependencies [c677b51]
+- Updated dependencies [c677b51]
+- Updated dependencies [c677b51]
+- Updated dependencies [aa678a5]
+- Updated dependencies [aa678a5]
+- Updated dependencies [aa678a5]
+- Updated dependencies [aa678a5]
+- Updated dependencies [aa678a5]
+- Updated dependencies [c677b51]
+- Updated dependencies [c677b51]
+- Updated dependencies [c677b51]
+- Updated dependencies [c677b51]
+- Updated dependencies [c677b51]
+- Updated dependencies [c677b51]
+- Updated dependencies [c677b51]
+- Updated dependencies [c677b51]
+- Updated dependencies [c677b51]
+- Updated dependencies [c677b51]
+- Updated dependencies [c677b51]
+- Updated dependencies [c677b51]
+- Updated dependencies [c677b51]
+- Updated dependencies [c677b51]
+- Updated dependencies [c677b51]
+  - @forkpoint/agent-lighthouse-core@6.0.0
+
 ## 5.2.0
 
 ### Patch Changes

@@ -18,7 +18,7 @@ When the `audit_website` tool from the Agent Lighthouse MCP server is available,
 For a new scan, prefer the project's pinned Agent Lighthouse installation. Inspect any npm script before using it. Record the exact resolved version. If none exists, use this skill's fallback pin without changing the target project's dependencies:
 
 ```sh
-npx --yes @forkpoint/agent-lighthouse@5.2.0 https://target.example --output terminal,html,json,md --output-dir <new-run-directory>
+npx --yes @forkpoint/agent-lighthouse@6.0.0 https://target.example --output terminal,html,json,md --output-dir <new-run-directory>
 ```
 
 Replace the target and output directory. Never scan the placeholder. Use a distinct directory for each target and before/after run; the CLI overwrites files with fixed names. Respect restrictions on installs, network access, and writes. Keep report artifacts outside the site when an analysis-only task forbids repository writes.
