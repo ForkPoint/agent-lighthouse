@@ -49,7 +49,7 @@
       "id": "access-crawl-control/ai-bot-directives",
       "category": "access-crawl-control",
       "slug": "ai-bot-directives",
-      "title": "AI bot directives are explicit",
+      "title": "Documented AI bots allowed by robots.txt",
       "tier": "scored",
       "evidenceGrade": "B",
       "weight": 0.6,
