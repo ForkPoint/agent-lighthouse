@@ -67,6 +67,8 @@ A publisher adds `<meta name="tdm-reservation" content="1">` site-wide to claim 
 
 Tier per evidence policy: **scored** — grade B meets the A/B bar required for scored audits.
 
+A site that publishes no AI-usage signal in any channel is not applicable: with nothing declared there is nothing to contradict. The AIPREF vocabulary reads an absent preference as unknown and Content Signals reads omission as no preference, so neither documents a cost for silence.
+
 ## Review history
 
 - 2026-08-20 — proposed by the novel-checks research pass (10-agent evidence workflow); sources URL-verified at research time.
@@ -114,7 +116,7 @@ cross-channel disagreement is reported here.
 prefixes. Two declarations are compared when either prefix contains the other,
 which is the same test in all three vocabularies.
 
-**Silence warns, it does not fail.** A site that declares nothing is not
+**Silence warns, it does not fail.** _Superseded 2026-10-06; see "Silence is not applicable" below._ A site that declares nothing is not
 misconfigured — it has left every crawler to its own default, which is a real
 cost but not a contradiction. A scan that read neither a page nor a robots.txt
 is `notApplicable`: nothing could have carried a signal.
@@ -128,6 +130,25 @@ is `notApplicable`: nothing could have carried a signal.
   returns `notApplicable` carrying the gate's own reason. Measured merge-base
   to here on a text-rich HTTP 200 wall: pass → na, at weight 0.6. Found by
   `packages/core/src/tests/hostile-state-contract.test.ts`.
+
+### Silence is not applicable (2026-10-06)
+
+The audit reports whether channels agree. With no signal in any channel there
+is nothing to compare, so the audit returns `notApplicable` instead of a warn.
+
+The earlier paragraph called silence "a real cost". No source here documents
+one. The AIPREF vocabulary draft (s10) reads an absent preference as unknown.
+Cloudflare's Content Signals policy (s8) reads omission as no preference. A
+crawler that finds no signal applies its own default either way, and nothing
+says the site loses anything by it.
+
+Step 5 of the implementation sketch, a distinct "no signal in any channel"
+warning, is withdrawn for the same reason. Notes gathered on the way still
+ride in `details.notes`, such as a `/.well-known/tdmrep.json` that is not an
+array. `access-crawl-control/tdm-rep` owns that file's validity.
+
+A site with one signal, or several that agree, still passes. A contradiction
+still fails. Grade, tier and weight are unchanged.
 
 ## Deferred
 

@@ -72,6 +72,7 @@ na   0   operability-safety/tabindex
 na   0   operability-safety/trust-txt-reciprocity-coherence
 na   0   structured-data/claimreview-advisory
 na   0.6 access-crawl-control/ai-bot-directives
+na   0.6 access-crawl-control/ai-usage-signal-coherence-across-channels
 na   0.6 access-crawl-control/aipref-content-usage-declaration-validity
 na   0.6 access-crawl-control/machine-actionable-402-paid-access
 na   0.6 access-crawl-control/rsl-licensing-terms-conformance
@@ -206,7 +207,6 @@ warn 0   answer-readiness/og-image-alt
 warn 0   content-extraction/code-language
 warn 0   structured-data/faqpage-schema
 warn 0   structured-data/howto-schema
-warn 0.6 access-crawl-control/ai-usage-signal-coherence-across-channels
 warn 0.6 access-crawl-control/no-blanket-block
 warn 0.6 agentic-commerce/offer-truth-consistency
 warn 0.6 content-extraction/section-headings
