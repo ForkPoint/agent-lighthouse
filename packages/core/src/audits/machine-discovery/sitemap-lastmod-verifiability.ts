@@ -110,32 +110,45 @@ function pageDateNodes(jsonLd: object[]): Record<string, unknown>[] {
   return out;
 }
 
-/** Every modification time the page itself publishes, in no particular order. */
+/**
+ * The modification times a page publishes, split by what they can prove.
+ *
+ * `content` dates are written about the content: JSON-LD dates and the
+ * article meta tags. `header` is the HTTP `Last-Modified`, which a static
+ * server sets to the file's write time, so every deploy moves it while the
+ * content, and a correct lastmod, stay put. It may corroborate a lastmod, but
+ * it cannot contradict one.
+ */
+interface PageSignals {
+  content: number[];
+  header: number[];
+}
+
 function pageSignals(
   headers: Record<string, string>,
   jsonLd: object[],
   meta: Record<string, string>,
-): number[] {
-  const out: number[] = [];
-  const add = (value: unknown) => {
+): PageSignals {
+  const out: PageSignals = { content: [], header: [] };
+  const add = (into: number[], value: unknown) => {
     const time = parseTime(value);
-    if (time !== undefined) out.push(time);
+    if (time !== undefined) into.push(time);
   };
 
-  add(headers["last-modified"]);
+  add(out.header, headers["last-modified"]);
   for (const node of pageDateNodes(jsonLd)) {
-    add(node["dateModified"]);
-    add(node["datePublished"]);
+    add(out.content, node["dateModified"]);
+    add(out.content, node["datePublished"]);
   }
-  for (const key of META_KEYS) add(meta[key]);
+  for (const key of META_KEYS) add(out.content, meta[key]);
   return out;
 }
 
-function signalsFromPage(page: PageContext): number[] {
+function signalsFromPage(page: PageContext): PageSignals {
   return pageSignals(page.fetchResult.headers, page.jsonLd, page.meta);
 }
 
-function signalsFromFetch(result: FetchResult): number[] {
+function signalsFromFetch(result: FetchResult): PageSignals {
   const $ = parseHtml(result.body);
   return pageSignals(result.headers, extractJsonLd($), extractMetaTags($));
 }
@@ -247,7 +260,7 @@ export class SitemapLastmodVerifiabilityAudit extends Audit {
       const key = urlKey(entry.loc);
       const scanned = key ? byKey.get(key) : undefined;
 
-      let signals: number[] = [];
+      let signals: PageSignals = { content: [], header: [] };
       if (scanned) {
         signals = signalsFromPage(scanned);
       } else {
@@ -255,15 +268,21 @@ export class SitemapLastmodVerifiabilityAudit extends Audit {
         if (result) signals = signalsFromFetch(result);
       }
 
-      if (signals.length === 0) {
+      const all = [...signals.content, ...signals.header];
+      if (all.length === 0) {
         noSignal += 1;
         continue;
       }
 
       const deltaDays =
-        Math.min(...signals.map((time) => Math.abs(stamp - time))) / DAY_MS;
+        Math.min(...all.map((time) => Math.abs(stamp - time))) / DAY_MS;
       if (deltaDays <= DIVERGENCE_DAYS) {
         corroborated += 1;
+        continue;
+      }
+      // A deploy-time header alone cannot show the lastmod is wrong.
+      if (signals.content.length === 0) {
+        noSignal += 1;
         continue;
       }
       divergent += 1;

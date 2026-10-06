@@ -270,6 +270,29 @@ describe("SitemapLastmodVerifiabilityAudit", () => {
     expect(result.message).toContain("7 days");
   });
 
+  // A static server's Last-Modified is the file's deploy time. A rebuild moves
+  // it while the content date, correctly, stays put: it cannot contradict one.
+  it("does not fail an editorial lastmod against a newer deploy-time header", async () => {
+    const urls = Array.from({ length: 5 }, (_v, i) => ({
+      loc: `https://example.com/legal-${i}`,
+      lastmod: iso(200 + i * 3),
+      lastModified: new Date(Date.now() - DAY).toUTCString(),
+    }));
+    const result = await run(urls);
+    expect(result.status).not.toBe("fail");
+    expect(result.message).toContain("cannot be verified");
+  });
+
+  it("still fails a lastmod that contradicts the page's own dateModified", async () => {
+    const urls = Array.from({ length: 5 }, (_v, i) => ({
+      loc: `https://example.com/y-${i}`,
+      lastmod: iso(1 + i * 3),
+      dateModified: iso(200 + i * 3),
+      lastModified: new Date(Date.now() - (200 + i * 3) * DAY).toUTCString(),
+    }));
+    expect((await run(urls)).status).toBe("fail");
+  });
+
   // Nothing to compare against is a missing-signal problem on the page, not a
   // false lastmod, so it must not be scored as one.
   it("reports URLs with no page-level signal as a separate sub-finding", async () => {
