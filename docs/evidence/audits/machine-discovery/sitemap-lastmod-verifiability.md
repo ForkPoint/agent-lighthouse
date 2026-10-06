@@ -137,6 +137,20 @@ contradictory content dates still fail. This corrects the implementation
 sketch against the existing source requirement: the timestamp must describe
 the significant content update, not follow any required publication cadence.
 
+### A deploy-time header cannot vouch for a stamp run (2026-10-06)
+
+The cluster rule above left one gap. A static host can write every
+`lastmod` at build time and send the deploy time as `Last-Modified`. The two
+agree to within minutes, so every URL counted as corroborated and the audit
+passed. That agreement shows when the build ran, not when the content
+changed.
+
+When the sample has the stamp shape — over 90% in one recent one-hour run —
+the header is no longer compared. Content dates still corroborate or
+contradict as before. A URL with only the header becomes unverifiable, so
+the site gets the existing warning, not a pass and not a fail. Outside that
+shape the header corroborates exactly as before.
+
 ## Deferred
 
 - **Only the first level of a `<sitemapindex>` is walked**, per the shared

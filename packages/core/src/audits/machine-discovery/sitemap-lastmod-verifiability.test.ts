@@ -277,6 +277,40 @@ describe("SitemapLastmodVerifiabilityAudit", () => {
     expect(result.message).not.toContain("build stamp");
   });
 
+  // A static host stamps lastmod at build time and Last-Modified at deploy
+  // time. Their agreement says when the build ran, not when content changed.
+  it("does not let a deploy-time header vouch for a recent stamp run", async () => {
+    const base = Date.now() - DAY;
+    const result = await run(
+      Array.from({ length: 6 }, (_, i) => ({
+        loc: `https://example.com/static-${i}`,
+        lastmod: new Date(base + i * 2_000).toISOString(),
+        lastModified: new Date(base + 5 * 60_000).toUTCString(),
+      })),
+    );
+    expect(result.status).toBe("warn");
+    expect(result.found).toContain(
+      "0 corroborated, 0 divergent, 6 unverifiable",
+    );
+    expect(result.message).not.toContain("build stamp");
+  });
+
+  it("still lets content dates corroborate a recent stamp run", async () => {
+    const base = Date.now() - DAY;
+    const result = await run(
+      Array.from({ length: 6 }, (_, i) => {
+        const stamp = new Date(base + i * 2_000).toISOString();
+        return {
+          loc: `https://example.com/batch-${i}`,
+          lastmod: stamp,
+          dateModified: stamp,
+          lastModified: new Date(base).toUTCString(),
+        };
+      }),
+    );
+    expect(result.status).toBe("pass");
+  });
+
   it("does not call lastmods hours apart a build stamp", async () => {
     const urls = Array.from({ length: 10 }, (_v, i) => ({
       loc: `https://example.com/h-${i}`,

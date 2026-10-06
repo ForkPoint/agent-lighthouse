@@ -119,7 +119,7 @@ Content-page scans do not infer a mount. Origin files, origin probes, feed disco
 
 ### Partial sitemap reads decline the verdict (2026-10-06)
 
-The shared sitemap walk keeps at most 500 entries and reads at most 10 child sitemaps. When it stops early, a page missing from the entries it kept may still be listed in the part it skipped. The audit now returns `na` for that case instead of `fail` or `warn`. Unread children of ordinary origin-level indexes also make coverage incomplete. This includes a failed fetch, malformed child, or nested index beyond the walk limit. The guard applies even when the readable portion contains no URLs. A page found in the partial read still passes, and a page missing from a complete read still fails.
+The shared sitemap walk keeps at most 500 entries and reads at most 10 child sitemaps. When it stops early, a page missing from the entries it kept may still be listed in the part it skipped. The audit now returns `na` for that case instead of `fail` or `warn`. Unread children of ordinary origin-level indexes also make coverage incomplete. This includes a failed fetch, malformed child, or nested index beyond the walk limit. The guard applies even when the readable portion contains no URLs. A child that already failed as a root, or under another index, still counts as unread when it is listed again. A page found in the partial read still passes, and a page missing from a complete read still fails.
 
 The trigger was a large retail site. Its index lists a 2455-URL product sitemap before a one-URL sitemap that holds the homepage. The product file filled the cap, and the audit failed the homepage as unindexed.
 

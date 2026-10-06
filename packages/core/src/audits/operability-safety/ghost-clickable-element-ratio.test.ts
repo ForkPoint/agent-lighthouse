@@ -46,6 +46,46 @@ it("keeps an inner element's independent inline action", async () => {
   expect(result.details?.["ghostCount"]).toBe(1);
 });
 
+it.each([
+  '<a href="/p/1"><img onclick="ga(\'send\',\'event\')" src="x.png" alt="Mug"></a>',
+  '<button><span onmousedown="track()">Buy</span></button>',
+])("keeps an observing inline handler inside its control: %s", async (html) => {
+  const result = await new GhostClickableElementRatioAudit().audit(page(html));
+  expect(result.details?.["ghostCount"]).toBe(0);
+});
+
+it.each([
+  'role="Button"',
+  'role="link button"',
+  'role="gridcell"',
+  'role="scrollbar"',
+])("exempts a wrapper around %s", async (role) => {
+  const result = await new GhostClickableElementRatioAudit().audit(
+    page(
+      `<div class="btn-cta"><span ${role} tabindex="0">Buy now</span></div>`,
+    ),
+  );
+  expect(result.details?.["ghostCount"]).toBe(0);
+});
+
+it("resolves the first recognized role, not any fallback token", async () => {
+  const result = await new GhostClickableElementRatioAudit().audit(
+    page(
+      '<button>Help</button><div class="btn-primary"><span role="img button" aria-label="Buy icon">Buy now</span></div>',
+    ),
+  );
+  expect(result.details?.["ghostCount"]).toBe(1);
+});
+
+it("skips an unknown first role token for the next one", async () => {
+  const result = await new GhostClickableElementRatioAudit().audit(
+    page(
+      '<div class="btn-primary"><span role="fancy-button button" tabindex="0">Buy now</span></div>',
+    ),
+  );
+  expect(result.details?.["ghostCount"]).toBe(0);
+});
+
 it("still exempts a wrapper around an ARIA button", async () => {
   const result = await new GhostClickableElementRatioAudit().audit(
     page(

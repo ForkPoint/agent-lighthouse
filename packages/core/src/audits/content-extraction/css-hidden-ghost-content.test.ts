@@ -246,6 +246,39 @@ describe("CssHiddenGhostContentAudit", () => {
     expect(result.status).toBe("pass");
   });
 
+  // Readability reads the resolved inline style, so an overridden or invalid
+  // declaration decides nothing.
+  it.each([
+    ["display:none;display:block", "fail"],
+    ["display:block;display:none", "pass"],
+    ["display:none;display:nonee", "pass"],
+  ])("resolves the inline marker %s", async (style, status) => {
+    const result = await run(
+      `<main><p>${VISIBLE}</p></main><div class="ghost" style="${style}">${BULK}</div>`,
+      SHEET_LINK,
+      sheet(".ghost { display: none }"),
+    );
+    expect(result.status).toBe(status);
+  });
+
+  it("lets a var() display value override an earlier display:none", async () => {
+    const result = await run(
+      `<main><p>${VISIBLE}</p></main><div class="ghost">${BULK}</div>`,
+      SHEET_LINK,
+      sheet(".ghost { display: none; display: var(--layout, block) }"),
+    );
+    expect(result.status).toBe("pass");
+  });
+
+  it("drops an invalid stylesheet display value", async () => {
+    const result = await run(
+      `<main><p>${VISIBLE}</p></main><div class="ghost">${BULK}</div>`,
+      SHEET_LINK,
+      sheet(".ghost { display: none; display: nonee }"),
+    );
+    expect(result.status).toBe("fail");
+  });
+
   it("reports near-duplicate hidden text as duplication, not novel content", async () => {
     const result = await run(
       `<main><p>${BULK}</p></main><div class="ghost">${BULK}</div>`,

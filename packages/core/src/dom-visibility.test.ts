@@ -18,6 +18,15 @@ it.each([
   ["visibility:hidden;visibility:visible", false],
   ["visibility:hidden!important;visibility:visible", true],
   ["visibility:visible!important;visibility:hidden", false],
+  // A browser drops an invalid declaration; the earlier valid one applies.
+  ["display:none;display:nonee", true],
+  ["display:none;display:block\\9", true],
+  ["display:none;display:", true],
+  ["visibility:hidden;visibility:hiddn", true],
+  ["display:none;display:inline flex", false],
+  // var() is valid at parse time, so it overrides; its value is unknown here.
+  ["display:none;display:var(--layout, block)", false],
+  ["visibility:hidden;visibility:var(--v)", false],
 ])("resolves inline declaration precedence: %s", (style, hidden) => {
   const $ = cheerio.load(`<p id="t" style="${style}">Answer text.</p>`);
   const el = $("#t").get(0)!;
@@ -80,7 +89,35 @@ describe("notRendered", () => {
     // until-found stays searchable by find-in-page and text fragments.
     ['<div hidden="until-found"><p id="t">x</p></div>', false],
     ['<main><p id="t">x</p></main>', false],
+    ['<div style="visibility:collapse"><p id="t">x</p></div>', true],
+    // visibility inherits, and a descendant may set it back.
+    [
+      '<div style="visibility:hidden"><p id="t" style="visibility:visible">x</p></div>',
+      false,
+    ],
+    [
+      '<div style="visibility:hidden"><section style="visibility:visible"><p id="t">x</p></section></div>',
+      false,
+    ],
+    [
+      '<div style="visibility:hidden"><p id="t" style="visibility:inherit">x</p></div>',
+      true,
+    ],
+    // display:none takes the subtree out whatever it declares.
+    [
+      '<div style="display:none"><p id="t" style="visibility:visible">x</p></div>',
+      true,
+    ],
   ])("%s -> %s", (html, expected) => {
     expect(rendered(html)).toBe(expected);
+  });
+
+  it("leaves readers' view of a hidden subtree unchanged", () => {
+    // Readability removes the hidden node with everything under it.
+    expect(
+      check(
+        '<div style="visibility:hidden"><p id="t" style="visibility:visible">x</p></div>',
+      ),
+    ).toBe(true);
   });
 });

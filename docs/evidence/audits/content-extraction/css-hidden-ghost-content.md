@@ -117,6 +117,18 @@ same-origin sheets keep their relative positions. A later inline block can
 override an earlier linked sheet, and the reverse order works the same way.
 The five-sheet cap and the URL safety checks remain in force.
 
+### Inline markers use the shared resolver (2026-10-06)
+
+The inline check that skips text Readability already drops matched
+`display:none` anywhere in the `style` attribute. Readability reads the
+resolved style, so `display:none;display:block` is kept and its text is
+ingested. The audit now resolves inline declarations with the same helper as
+`dom-visibility.ts`: the last valid declaration at the winning `!important`
+priority wins, and an invalid value is dropped. Stylesheet `display` rules
+use the same helper, so an invalid later value no longer cancels an earlier
+`display:none`. A `var()` value is valid when parsed, so it does cancel one:
+`display:none; display:var(--layout, block)` is not counted as hidden.
+
 ## Deferred
 
 - Exact style resolution through `getComputedStyle` in a headless browser stays

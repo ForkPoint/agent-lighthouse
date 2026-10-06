@@ -87,6 +87,23 @@ describe("collectSitemapEntries", () => {
     },
   );
 
+  it("marks a child that already failed as a root incomplete", async () => {
+    const f = fetcher({
+      "https://a.test/sitemap-posts.xml": mockFetchResult("", 503),
+      "https://a.test/sitemap_index.xml": index([
+        "https://a.test/good.xml",
+        "https://a.test/sitemap-posts.xml",
+      ]),
+      "https://a.test/good.xml": urlset([["https://a.test/product"]]),
+    });
+    const tree = await collectSitemapEntries(f.fetch, [
+      "https://a.test/sitemap-posts.xml",
+      "https://a.test/sitemap_index.xml",
+    ]);
+    expect(tree.scopeIncomplete).toBe(true);
+    expect(tree.entries).toEqual([{ loc: "https://a.test/product" }]);
+  });
+
   it("does not mark a repeated readable child as incomplete", async () => {
     const f = fetcher({
       "https://a.test/sitemap.xml": index([

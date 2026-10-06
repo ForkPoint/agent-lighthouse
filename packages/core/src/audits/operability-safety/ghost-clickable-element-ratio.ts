@@ -20,7 +20,9 @@ import {
   hasClickSignal,
   hasInlineHandler,
   isElement,
+  stopsPropagation,
 } from "./_agent-affordances";
+import { ariaRoles } from "./engine/standards";
 
 /** Below this share of addressable click targets the page fails. */
 const RATIO_FLOOR = 0.9;
@@ -82,9 +84,70 @@ interface Survey {
   crossOrigin: number;
 }
 
-/** Native controls and interactive roles an agent can address as actions. */
-const CONTROL_DESCENDANT =
-  'a[href], button, input:not([type=hidden]), select, textarea, summary, [role="button"], [role="link"], [role="menuitem"], [role="menuitemcheckbox"], [role="menuitemradio"], [role="tab"], [role="option"], [role="checkbox"], [role="radio"], [role="switch"], [role="treeitem"], [role="textbox"], [role="searchbox"], [role="combobox"], [role="slider"], [role="spinbutton"]';
+/**
+ * Widget roles that are themselves an action an agent can address, matched
+ * against `effectiveRole`. `progressbar` is a widget role in the ARIA table
+ * but takes no input, so it is left out.
+ */
+const ACTION_ROLES = [
+  "button",
+  "link",
+  "menuitem",
+  "menuitemcheckbox",
+  "menuitemradio",
+  "tab",
+  "option",
+  "checkbox",
+  "radio",
+  "switch",
+  "treeitem",
+];
+
+/**
+ * Widget roles a wrapper can hold as its control, but which do not absorb a
+ * click on their contents: a field takes input, and a grid cell often holds
+ * a control of its own.
+ */
+const HELD_ROLES = [
+  "gridcell",
+  "textbox",
+  "searchbox",
+  "combobox",
+  "slider",
+  "spinbutton",
+  "scrollbar",
+];
+
+/**
+ * The role a user agent applies: the first token of the attribute that names
+ * a concrete ARIA role. `role="img button"` is an `img`; the later token is a
+ * fallback for agents that do not know the first. Matching is
+ * case-insensitive, as `declaredRole` reads it.
+ */
+function effectiveRole(el: Element): string | undefined {
+  for (const token of (el.attribs?.["role"] ?? "").toLowerCase().split(/\s+/)) {
+    const entry = ariaRoles[token];
+    if (token && entry && entry.type !== "abstract") return token;
+  }
+  return undefined;
+}
+
+/** Native controls an agent can address as actions. */
+const NATIVE_CONTROL =
+  "a[href], button, input:not([type=hidden]), select, textarea, summary";
+const HELD_CONTROL_ROLES = new Set([...ACTION_ROLES, ...HELD_ROLES]);
+
+/** Whether `el` is a native control or carries one of `roles`. */
+function isControl(
+  el: Element,
+  $: CheerioAPI,
+  native: string,
+  roles: Set<string>,
+): boolean {
+  if ($(el).is(native)) return true;
+  const role = effectiveRole(el);
+  return role !== undefined && roles.has(role);
+}
 
 /**
  * A wrapper whose only click signal is a name or a cursor, and which holds a
@@ -95,21 +158,27 @@ const CONTROL_DESCENDANT =
  */
 function wrapsControl(el: Element, $: CheerioAPI): boolean {
   if (hasInlineHandler(el)) return false;
-  return $(el).find(CONTROL_DESCENDANT).length > 0;
+  return ($(el).find(`${NATIVE_CONTROL}, [role]`).toArray() as Element[]).some(
+    (child) => isControl(child, $, NATIVE_CONTROL, HELD_CONTROL_ROLES),
+  );
 }
 
 /** Controls whose clicks an inner element's clicks reach and are announced as. */
-const CONTROL_ANCESTOR =
-  'a[href], button, summary, [role="button"], [role="link"], [role="menuitem"], [role="menuitemcheckbox"], [role="menuitemradio"], [role="tab"], [role="option"], [role="checkbox"], [role="radio"], [role="switch"], [role="treeitem"]';
+const NATIVE_ANCESTOR = "a[href], button, summary";
+const ANCESTOR_ROLES = new Set(ACTION_ROLES);
 
 /**
  * An icon or label inside a link or button is part of that control: a click
  * on it is the control's click, and the snapshot names the control. Its own
- * click-signal class is a styling hook, not a second control.
+ * click-signal class is a styling hook, not a second control. An inline
+ * handler that only observes the click, such as an analytics call, leaves it
+ * the control's click. One that stops propagation is a second action.
  */
 function insideControl(el: Element, $: CheerioAPI): boolean {
-  if (hasInlineHandler(el)) return false;
-  return $(el).parents(CONTROL_ANCESTOR).length > 0;
+  if (stopsPropagation(el)) return false;
+  return (
+    $(el).parents(`${NATIVE_ANCESTOR}, [role]`).toArray() as Element[]
+  ).some((parent) => isControl(parent, $, NATIVE_ANCESTOR, ANCESTOR_ROLES));
 }
 
 /** The role attribute, once `presentation`/`none` are treated as no role. */

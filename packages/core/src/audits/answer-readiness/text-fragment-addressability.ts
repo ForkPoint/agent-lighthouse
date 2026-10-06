@@ -82,7 +82,9 @@ function blockRuns(page: PageContext): BlockRun[] {
     }
     const tag = (node as { tagName?: string }).tagName?.toLowerCase();
     if (!tag || UNRENDERED.has(tag)) return;
-    const own = rendered && !notRendered($, node);
+    // notRendered walks the ancestors itself. A visibility:visible child of
+    // a visibility:hidden block renders, so the parent's state cannot decide.
+    const own = !notRendered($, node);
     const block = $(node).is(BLOCK_SELECTOR);
     if (block) flush();
     for (const child of (node as Element).children ?? []) walk(child, own);
@@ -121,13 +123,15 @@ function answerAfter(page: PageContext, heading: Element): string | undefined {
   const $ = page.$;
   const next = $(heading).next();
   if (next.length === 0 || next.is("h1,h2,h3,h4,h5,h6")) return undefined;
-  if (notRendered($, next.get(0)!)) return undefined;
 
   const leaves = (next.find(BLOCK_SELECTOR).toArray() as Element[])
     .filter((el) => $(el).find(BLOCK_SELECTOR).length === 0)
     .filter((el) => !notRendered($, el))
     .map((el) => normalize($(el).text()))
     .filter(Boolean);
+  // A hidden wrapper can still hold a visibility:visible leaf, so only a
+  // wrapper with no rendered leaf is skipped whole.
+  if (leaves.length === 0 && notRendered($, next.get(0)!)) return undefined;
 
   let span = "";
   if (leaves.length === 0) {

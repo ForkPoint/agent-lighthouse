@@ -29,7 +29,10 @@ const DAY_MS = 86_400_000;
 const SAMPLE_SIZE = 6;
 /** Clock skew allowed before a lastmod counts as future-dated. */
 const FUTURE_SKEW_MS = 60 * 60 * 1000;
-/** One value on this share of the sample is a stamp, not a set of content dates. */
+/**
+ * One run on this share of the sample has the shape of a build stamp. The
+ * shape alone is not a defect; it stops a deploy-time header vouching for it.
+ */
 const MODAL_SHARE = 0.9;
 /**
  * Values this close together are one stamp. A generator that writes the
@@ -190,7 +193,7 @@ export class SitemapLastmodVerifiabilityAudit extends Audit {
     title: "Sitemap lastmod values are verifiable against the pages",
     failureTitle: "Sitemap lastmod values contradict the pages they describe",
     description:
-      "Cross-validates sampled sitemap <lastmod> values against three independent page-level modification signals — the Last-Modified response header, JSON-LD dateModified/datePublished, and article:modified_time — and scores agreement rather than presence. Detects the two dominant failure modes: the build stamp (every URL updated on every deploy) and the frozen value (the CMS never updates it).",
+      "Cross-validates sampled sitemap <lastmod> values against three independent page-level modification signals — the Last-Modified response header, JSON-LD dateModified/datePublished, and article:modified_time — and scores agreement rather than presence. Catches the two dominant failure modes when the page dates disagree: the build stamp (every URL updated on every deploy) and the frozen value (the CMS never updates it). A deploy-time Last-Modified header never vouches for a recent run of identical stamps.",
     scoreDisplayMode: "ternary",
     weight: weightForGrade("A", "scored"),
     evidenceGrade: "A",
@@ -250,6 +253,35 @@ export class SitemapLastmodVerifiabilityAudit extends Audit {
       if (key && !byKey.has(key)) byKey.set(key, page);
     }
 
+    // The modal test counts the whole sample, compared or not. It takes the
+    // largest group of values inside one STAMP_WINDOW_MS window. The shape
+    // alone proves nothing: a batch of real edits produces it too. What it
+    // changes is how much a deploy-time header can be trusted.
+    const ordered = sample
+      .map((entry) => ({
+        lastmod: entry.lastmod,
+        time: Date.parse(entry.lastmod),
+      }))
+      .sort((a, b) => a.time - b.time);
+    let modalCount = 0;
+    let modalFirst = "";
+    let modalLast = "";
+    for (let start = 0, end = 0; end < ordered.length; end++) {
+      while (ordered[end]!.time - ordered[start]!.time > STAMP_WINDOW_MS)
+        start += 1;
+      if (end - start + 1 > modalCount) {
+        modalCount = end - start + 1;
+        modalFirst = ordered[start]!.lastmod;
+        modalLast = ordered[end]!.lastmod;
+      }
+    }
+    const modalRecent =
+      (now - Date.parse(modalLast)) / DAY_MS <= MODAL_RECENCY_DAYS;
+    const stampShape =
+      sample.length > 1 &&
+      modalCount / sample.length > MODAL_SHARE &&
+      modalRecent;
+
     let corroborated = 0;
     let divergent = 0;
     let noSignal = 0;
@@ -268,7 +300,12 @@ export class SitemapLastmodVerifiabilityAudit extends Audit {
         if (result) signals = signalsFromFetch(result);
       }
 
-      const all = [...signals.content, ...signals.header];
+      // A recent run of lastmod values and a Last-Modified header can both be
+      // the deploy time. Their agreement then shows when the build ran, not
+      // when the content changed, so only the content dates are compared.
+      const all = stampShape
+        ? signals.content
+        : [...signals.content, ...signals.header];
       if (all.length === 0) {
         noSignal += 1;
         continue;
@@ -293,39 +330,12 @@ export class SitemapLastmodVerifiabilityAudit extends Audit {
       }
     }
 
-    // The modal test counts the whole sample, compared or not: a stamp is a
-    // property of the sitemap, and needs no page signal to be seen. It takes
-    // the largest group of values inside one STAMP_WINDOW_MS window.
-    const ordered = sample
-      .map((entry) => ({
-        lastmod: entry.lastmod,
-        time: Date.parse(entry.lastmod),
-      }))
-      .sort((a, b) => a.time - b.time);
-    let modalCount = 0;
-    let modalFirst = "";
-    let modalLast = "";
-    for (let start = 0, end = 0; end < ordered.length; end++) {
-      while (ordered[end]!.time - ordered[start]!.time > STAMP_WINDOW_MS)
-        start += 1;
-      if (end - start + 1 > modalCount) {
-        modalCount = end - start + 1;
-        modalFirst = ordered[start]!.lastmod;
-        modalLast = ordered[end]!.lastmod;
-      }
-    }
-    const modalRecent =
-      (now - Date.parse(modalLast)) / DAY_MS <= MODAL_RECENCY_DAYS;
     const compared = sample.length - noSignal;
     const contentDiverges =
       compared > 0 && divergent / compared > DIVERGENT_SHARE;
     // Nearby edits can be real, including a batch publication. The shape
-    // alone is not evidence of a bad lastmod: require page-date disagreement.
-    const buildStamp =
-      sample.length > 1 &&
-      modalCount / sample.length > MODAL_SHARE &&
-      modalRecent &&
-      contentDiverges;
+    // only names the cause when the content dates disagree.
+    const buildStamp = stampShape && contentDiverges;
 
     const problems: string[] = [];
 

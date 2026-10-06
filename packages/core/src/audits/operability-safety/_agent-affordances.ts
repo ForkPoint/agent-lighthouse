@@ -47,6 +47,22 @@ export function hasInlineHandler(el: Element): boolean {
   return INLINE_HANDLERS.some((handler) => Boolean(attribs[handler]));
 }
 
+/** Calls that keep a click from reaching the enclosing element. */
+const STOPS_PROPAGATION =
+  /\b(stopPropagation|stopImmediatePropagation|cancelBubble)\b/;
+
+/**
+ * Whether one of the element's inline handlers stops the event there. Only
+ * then is its action independent of an enclosing control: any other handler,
+ * such as an analytics call, runs and lets the click reach the control.
+ */
+export function stopsPropagation(el: Element): boolean {
+  const attribs = el.attribs ?? {};
+  return INLINE_HANDLERS.some((handler) =>
+    STOPS_PROPAGATION.test(attribs[handler] ?? ""),
+  );
+}
+
 /** A declaration block that sets the hand cursor, whatever else it carries. */
 const CURSOR_POINTER = /(^|;)\s*cursor\s*:\s*pointer\b/;
 

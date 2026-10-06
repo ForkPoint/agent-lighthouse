@@ -38,6 +38,17 @@ it("addresses a FAQ answer restored by the last inline declaration", () => {
   expect(result.status).toBe("pass");
 });
 
+it.each([
+  `<div style="visibility:hidden"><section style="visibility:visible"><h2>Resoling</h2><p>${ANSWER}</p></section></div>`,
+  `<h2>Resoling</h2><div style="visibility:hidden"><p style="visibility:visible">${ANSWER}</p></div>`,
+])(
+  "addresses a visible answer inside a visibility:hidden block: %s",
+  (body) => {
+    const result = run(body, faqJsonLd(ANSWER));
+    expect(result.status).toBe("pass");
+  },
+);
+
 describe("TextFragmentAddressabilityAudit", () => {
   const audit = new TextFragmentAddressabilityAudit();
 

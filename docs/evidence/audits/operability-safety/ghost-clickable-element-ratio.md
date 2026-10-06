@@ -125,7 +125,16 @@ Two rules now hold for an element whose only signal is a name or a cursor:
   control's click.
 
 An inline handler (`onclick` and the rest) is the element's own action. It
-still flags the element whatever it contains or sits in.
+still flags the element whatever it contains. Inside a control it counts
+only when it stops the event: `stopPropagation`, `stopImmediatePropagation`
+or `cancelBubble`. Any other handler, such as an analytics call, runs and
+lets the click reach the control, so the element stays part of it.
+
+Role names match as the ARIA role attribute is read: case-insensitive, and
+the first token that names a concrete role wins. `role="link button"` is a
+link, and `role="img button"` is an image, not a control. A wrapper around
+a `gridcell` or a `scrollbar` holds a control too. `progressbar` is a widget
+role but takes no input, so it is not one.
 
 Verdicts that moved in the real-page corpus, all from wrappers and inner
 labels: `barclays-co-uk-current-accounts`, `capitalone-com-savings`,
