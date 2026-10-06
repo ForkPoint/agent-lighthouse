@@ -26,6 +26,14 @@ import type { CheckContext } from "../../check-context";
 const TOOL_NAME_ATTR = "toolname";
 const TOOL_DESCRIPTION_ATTR = "tooldescription";
 const TOOL_PARAM_DESCRIPTION_ATTR = "toolparamdescription";
+const TOOL_AUTOSUBMIT_ATTR = "toolautosubmit";
+
+/** Form-level attributes whose presence means the site adopted the declarative API. */
+const FORM_ATTRS = [
+  TOOL_NAME_ATTR,
+  TOOL_DESCRIPTION_ATTR,
+  TOOL_AUTOSUBMIT_ATTR,
+];
 
 interface FormSurvey {
   total: number;
@@ -37,6 +45,8 @@ interface FormSurvey {
   undescribed: string[];
   /** Named forms with at least one toolparamdescription on a control. */
   withParamDescriptions: number;
+  /** Forms carrying any declarative WebMCP attribute, valid or not. */
+  annotated: number;
   firstPageUrl: string;
 }
 
@@ -47,6 +57,7 @@ function survey(ctx: CheckContext): FormSurvey {
     nameless: 0,
     undescribed: [],
     withParamDescriptions: 0,
+    annotated: 0,
     firstPageUrl: "",
   };
 
@@ -56,6 +67,13 @@ function survey(ctx: CheckContext): FormSurvey {
       const $form = page.$(el);
       const toolname = ($form.attr(TOOL_NAME_ATTR) ?? "").trim();
       const tooldescription = ($form.attr(TOOL_DESCRIPTION_ATTR) ?? "").trim();
+      // Presence, not value: an empty toolname is adopted-but-broken markup.
+      if (
+        FORM_ATTRS.some((attr) => $form.attr(attr) !== undefined) ||
+        $form.find(`[${TOOL_PARAM_DESCRIPTION_ATTR}]`).length > 0
+      ) {
+        result.annotated++;
+      }
 
       if (!toolname) {
         // A description without a name registers nothing. The pre-rewrite
@@ -151,6 +169,18 @@ export class WebmcpDeclarativeFormsAudit extends Audit {
         "No forms on the scanned pages, so there is nothing to expose as a declarative WebMCP tool.",
         EXPECTED,
         "0 forms on scanned pages",
+      );
+    }
+
+    // Absent artifact, absent verdict. WebMCP is an origin trial, and a site
+    // that registers its tools imperatively through navigator.modelContext is
+    // agent-callable without any of these attributes (dossier
+    // counter-evidence). Only markup that is present can be judged.
+    if (forms.annotated === 0) {
+      return this.notApplicable(
+        `None of the ${forms.total} form(s) carries a declarative WebMCP attribute (${TOOL_NAME_ATTR}, ${TOOL_DESCRIPTION_ATTR}, ${TOOL_PARAM_DESCRIPTION_ATTR}, ${TOOL_AUTOSUBMIT_ATTR}), so there is no declarative markup to judge.`,
+        EXPECTED,
+        `0/${forms.total} forms registered as tools; no WebMCP attributes`,
       );
     }
 

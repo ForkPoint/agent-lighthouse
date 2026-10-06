@@ -75,6 +75,22 @@ Source: the [redemption dossier's verdict](../../deletions/agent-tools/webmcp-de
 - **"Every form should be a tool" is kept as the pass bar.** The partial-coverage `warn` is inherited unchanged from the pre-rewrite audit. It is arguably too strong — a login or newsletter form is not obviously something a site wants agents driving — but narrowing which forms are in scope is a design question beyond this pass-condition rewrite, and the `warn` (not `fail`) keeps it advisory.
 - **Adoption is ~0.0000027 of Chrome page loads**, so this audit still reports a finding on essentially every site scanned. That is a property of the signal's age, not of the check; the grade-A evidence is what the rubric prices, and the softened priority is what keeps it from dominating the recommendation list.
 
+## Implementation deviations
+
+### No WebMCP attribute is not applicable (2026-10-06)
+
+A site whose forms carry none of `toolname`, `tooldescription`,
+`toolparamdescription` or `toolautosubmit` is not judged. The counter-evidence
+below says a site using the imperative API carries none of them and is still
+agent-callable, and the API is an origin trial. Failing every form-bearing
+site measured adoption of a draft, not a defect.
+
+Markup that is present is still judged. A description or parameter
+description without a `toolname` fails, an empty `toolname` fails, and a site
+that names some forms and not others warns. This supersedes the rewrite's
+note that the audit "still reports a finding on essentially every site
+scanned".
+
 ## Evidence
 
 ### Signal: declarative WebMCP attributes read by the browser — grade B (agent-tools)
