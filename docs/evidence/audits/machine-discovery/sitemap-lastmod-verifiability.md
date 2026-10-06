@@ -23,7 +23,7 @@ Cross-validates every sampled sitemap <lastmod> against three independent page-l
 
 ## Claimed mechanism (falsifiable)
 
-Google states it uses <lastmod> 'if it's consistently and verifiably (for example by comparing to the last modification of the page) accurate'. lastmod is therefore a conditional signal, which engines silently discard on divergence. It is also the only freshness hint a pull-based AI crawler gets from a sitemap. Falsifiable claim: if sampled lastmod values disagree with all available page-level evidence (HTTP Last-Modified, JSON-LD dateModified, article:modified_time) for a material fraction of URLs, the sitemap's freshness channel is inert and re-crawl scheduling degrades to organic rediscovery. Two pathologies are specifically detectable. First, more than 90% of URLs share one identical lastmod equal to the last deploy date. That is a build stamp rather than a content date, and per Google's 'copyright date is not significant' rule it is exactly the disqualifying pattern. Second, a lastmod in the future relative to crawl time, which is always invalid.
+Google states it uses <lastmod> 'if it's consistently and verifiably (for example by comparing to the last modification of the page) accurate'. lastmod is therefore a conditional signal, which engines silently discard on divergence. It is also the only freshness hint a pull-based AI crawler gets from a sitemap. Falsifiable claim: if sampled lastmod values disagree with all available page-level evidence (HTTP Last-Modified, JSON-LD dateModified, article:modified_time) for a material fraction of URLs, the sitemap's freshness channel is inert and re-crawl scheduling degrades to organic rediscovery. A recent cluster of lastmod values is consistent with a build stamp only when page dates also disagree. A batch of genuine edits can produce the same cluster. The distribution alone proves no defect. A lastmod in the future relative to crawl time is invalid.
 
 ## Evidence
 
@@ -38,7 +38,7 @@ Screaming Frog, Sitebulb, Semrush and Ahrefs surface lastmod presence and can fl
 
 ## Implementation sketch
 
-1. Fetch robots.txt Sitemap: directives plus /sitemap.xml, /sitemap_index.xml; recurse <sitemapindex> one level. 2) Validate each lastmod parses as W3C Datetime (YYYY-MM-DD or full RFC3339); count malformed. 3) Reservoir-sample 30-50 URLs across all child sitemaps. 4) For each: GET, capture the Last-Modified response header; parse all JSON-LD blocks for dateModified/datePublished; parse <meta property="article:modified_time"> and <meta name="last-modified">. 5) Per URL compute min absolute delta between sitemap lastmod and any available page signal. 6) Report: %future-dated (FAIL if >0), %malformed, distribution entropy of lastmod values (FAIL if the modal value covers >90% of sampled URLs AND that value is within 3 days of the crawl date), and %URLs whose delta exceeds 7 days against every available signal (FAIL if >20%). 7) Report separately the %URLs with no page-level signal at all — that is an actionable sub-finding (add dateModified to JSON-LD) rather than a lastmod failure.
+1. Fetch robots.txt Sitemap: directives plus /sitemap.xml, /sitemap_index.xml; recurse <sitemapindex> one level. 2) Validate each lastmod parses as W3C Datetime (YYYY-MM-DD or full RFC3339); count malformed. 3) Reservoir-sample 30-50 URLs across all child sitemaps. 4) For each: GET, capture the Last-Modified response header; parse all JSON-LD blocks for dateModified/datePublished; parse <meta property="article:modified_time"> and <meta name="last-modified">. 5) Per URL compute min absolute delta between sitemap lastmod and any available page signal. 6) Report: %future-dated (FAIL if >0), %malformed, the largest cluster within a one-hour window (build-stamp context only when it covers >90% of sampled URLs, falls within 3 days of the crawl date, and the page-date divergence threshold is exceeded), and %URLs whose delta exceeds 7 days against every available signal (FAIL if >20%). 7) Report separately the %URLs with no page-level signal at all — that is an actionable sub-finding (add dateModified to JSON-LD) rather than a lastmod failure.
 
 ## Example failure
 
@@ -56,10 +56,10 @@ Tier per evidence policy: **scored** — grade A meets the A/B bar required for 
 
 The two audits ask different questions and must not be collapsed into one:
 
-| Audit                                             | Question                  | Fails when                                                                                      |
-| ------------------------------------------------- | ------------------------- | ----------------------------------------------------------------------------------------------- |
-| `machine-discovery/sitemap-lastmod`               | Is `lastmod` **present**? | The sitemap omits it, or omits it on most URLs.                                                 |
-| `machine-discovery/sitemap-lastmod-verifiability` | Is `lastmod` **true**?    | The values that exist contradict the pages, are future-dated, or are one deploy stamp repeated. |
+| Audit                                             | Question                  | Fails when                                                                                                          |
+| ------------------------------------------------- | ------------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| `machine-discovery/sitemap-lastmod`               | Is `lastmod` **present**? | The sitemap omits it, or omits it on most URLs.                                                                     |
+| `machine-discovery/sitemap-lastmod-verifiability` | Is `lastmod` **true**?    | The values that exist contradict the pages, are future-dated, or repeat a deploy stamp that contradicts page dates. |
 
 A sitemap can pass the first and fail this one, which is the common case: the
 CMS emits `lastmod` on every URL and rewrites all of them on every build.
@@ -105,7 +105,7 @@ The trigger was a large retail site. Its product pages publish no modification t
 
 ### A build stamp is one run, not one string (2026-10-06)
 
-The claim is "one identical lastmod equal to the last deploy date". The audit compared lastmod strings exactly. A generator that writes the clock per URL spreads one run over seconds, and exact matching saw every value as different. One large retail site stamped 2451 product URLs between 09:57:16 and 09:57:33 on one day. The audit now counts the largest group of sampled values inside a one-hour window. The 90% share and the 3-day recency rules are unchanged. Values hours apart still count as separate dates.
+The claim is "one identical lastmod equal to the last deploy date". The audit compared lastmod strings exactly. A generator that writes the clock per URL spreads one run over seconds, and exact matching saw every value as different. One large retail site stamped 2451 product URLs between 09:57:16 and 09:57:33 on one day. The audit now counts the largest group of sampled values inside a one-hour window. The 90% share and the 3-day recency rules are unchanged. Values hours apart still count as separate dates. The correction below limits how this pattern affects the verdict.
 
 ### `Last-Modified` corroborates but cannot contradict (2026-10-06)
 
@@ -124,6 +124,32 @@ now counts as unverifiable rather than divergent. A URL with a JSON-LD date or
 an article meta date is judged as before, against every signal it has.
 
 No corpus or bare-site verdict moved: the corpus fixtures carry no sitemap.
+
+### A date cluster needs contradictory evidence (2026-10-06)
+
+Six real edits within 25 minutes can each agree exactly with the page's
+`dateModified`. The one-hour rule previously failed that fully corroborated
+sample as a build stamp. A cluster now adds build-stamp context only when
+more than 20% of comparable page dates also diverge by over seven days.
+A corroborated batch passes. Missing page dates keep the existing
+unverifiable warning and never prove a build stamp. Future dates and
+contradictory content dates still fail. This corrects the implementation
+sketch against the existing source requirement: the timestamp must describe
+the significant content update, not follow any required publication cadence.
+
+### A deploy-time header cannot vouch for a stamp run (2026-10-06)
+
+The cluster rule above left one gap. A static host can write every
+`lastmod` at build time and send the deploy time as `Last-Modified`. The two
+agree to within minutes, so every URL counted as corroborated and the audit
+passed. That agreement shows when the build ran, not when the content
+changed.
+
+When the sample has the stamp shape — over 90% in one recent one-hour run —
+the header is no longer compared. Content dates still corroborate or
+contradict as before. A URL with only the header becomes unverifiable, so
+the site gets the existing warning, not a pass and not a fail. Outside that
+shape the header corroborates exactly as before.
 
 ## Deferred
 

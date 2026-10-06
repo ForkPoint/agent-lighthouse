@@ -1,6 +1,5 @@
 import type { CheckContext, PageContext } from "../check-context";
 import { isSafeUrl } from "../fetcher";
-import { extractStylesheetUrls } from "../parser";
 
 /** One `selector { declarations }` rule, with the at-rule it sits inside. */
 export interface CssRule {
@@ -127,12 +126,18 @@ export async function collectPageCss(
   const skippedCrossOrigin: string[] = [];
   const fetched: string[] = [];
 
-  $("style").each((_, el) => {
-    rules.push(...parseCssRules($(el).text(), "inline <style>"));
-  });
-
   const pageOrigin = safeOrigin(page.url);
-  for (const href of extractStylesheetUrls($).slice(0, MAX_SHEETS)) {
+  let sheetsSeen = 0;
+  // Cascade order is document order, not inline-first or fetch completion
+  // order. Retain each linked sheet's position among the style blocks.
+  for (const el of $('style, link[rel="stylesheet"]').toArray()) {
+    if ($(el).is("style")) {
+      rules.push(...parseCssRules($(el).text(), "inline <style>"));
+      continue;
+    }
+    const href = $(el).attr("href");
+    if (!href || sheetsSeen >= MAX_SHEETS) continue;
+    sheetsSeen += 1;
     const absolute = resolveUrl(href, page.url);
     if (!absolute) continue;
     if (safeOrigin(absolute) !== pageOrigin) {

@@ -36,7 +36,7 @@ export interface SitemapTree {
   readableFiles: string[];
   /** Sitemap files that answered 200 but were neither. A soft-404 lands here. */
   malformedFiles: string[];
-  /** A shared index had children whose coverage of this mount could not be read. */
+  /** An index had children whose coverage of the site could not be read. */
   scopeIncomplete?: true;
 }
 
@@ -156,6 +156,8 @@ export async function collectSitemapEntries(
   const readableFiles: string[] = [];
   const malformedFiles: string[] = [];
   const fetched = new Set<string>();
+  /** Fetched files that yielded no sitemap: failed, unsafe or unparseable. */
+  const unread = new Set<string>();
   let malformedLastmod = 0;
   let truncated = false;
   let childrenRead = 0;
@@ -209,9 +211,13 @@ export async function collectSitemapEntries(
   ): Promise<(ParsedSitemap & { relevant: boolean }) | undefined> => {
     if (fetched.has(url)) return undefined;
     fetched.add(url);
-    if (!(await isSafeUrl(url))) return undefined;
+    if (!(await isSafeUrl(url))) {
+      unread.add(url);
+      return undefined;
+    }
     const result = await fetch({ url, signal: opts.signal });
     const parsed = parseSitemap(result);
+    if (parsed.kind === "none") unread.add(url);
     parsed.entries = parsed.entries.filter((entry) => keepEntry(entry, url));
     const relevant = inScope(url) || parsed.entries.length > 0;
     // A file that answered 200 with a body and still did not parse is
@@ -238,13 +244,17 @@ export async function collectSitemapEntries(
         break;
       }
       if (!sameHost(child, root)) continue;
+      // A repeated pointer to a file already read adds no unknown coverage.
+      // One that failed earlier, as a root or a child, still leaves it unread.
+      if (fetched.has(child)) {
+        if (unread.has(child)) scopeIncomplete = true;
+        continue;
+      }
       const childParsed = await load(child);
-      if (
-        scope &&
-        !inScope(root) &&
-        (!childParsed || childParsed.kind !== "urlset")
-      )
-        scopeIncomplete = true;
+      // This applies to ordinary origin indexes as well as shared mounts.
+      // A failed, unsafe, malformed or unexpanded child cannot prove that a
+      // scanned URL is absent from the index. Keep the readable entries.
+      if (!childParsed || childParsed.kind !== "urlset") scopeIncomplete = true;
       if (!childParsed) continue;
       childrenRead += 1;
       if (childParsed.relevant) {

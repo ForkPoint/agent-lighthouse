@@ -11,6 +11,11 @@ import { Audit } from "../../audit";
 import { weightForGrade } from "../../scorer";
 import type { CheckContext, PageContext } from "../../check-context";
 import { collectPageCss, type CssRule } from "../../gatherers/css-rules";
+import {
+  declaredValue,
+  styleHidesFromReaders,
+  type Declaration,
+} from "../../dom-visibility";
 
 /** The repo-wide rough token estimator; no tokenizer dependency is carried. */
 const CHARS_PER_TOKEN = 4;
@@ -43,30 +48,6 @@ const HIDING_DECLARATIONS: ReadonlyArray<{ pattern: RegExp; label: string }> = [
   },
 ];
 
-interface DisplayDeclaration {
-  value: string;
-  important: boolean;
-}
-
-/**
- * The `display` declaration a block applies: the last one wins, unless an
- * earlier one is `!important` and the later one is not. The gatherer has
- * already lowercased and whitespace-collapsed the block.
- */
-function blockDisplay(declarations: string): DisplayDeclaration | undefined {
-  let winner: DisplayDeclaration | undefined;
-  for (const part of declarations.split(";")) {
-    const colon = part.indexOf(":");
-    if (colon === -1 || part.slice(0, colon).trim() !== "display") continue;
-    const raw = part.slice(colon + 1).trim();
-    const important = /!\s*important$/.test(raw);
-    const value = raw.replace(/!\s*important$/, "").trim();
-    if (!winner || important || !winner.important)
-      winner = { value, important };
-  }
-  return winner;
-}
-
 /** A selector list split on its top-level commas, so `:is(.a, .b)` stays whole. */
 function splitSelectorList(list: string): string[] {
   const out: string[] = [];
@@ -84,9 +65,6 @@ function splitSelectorList(list: string): string[] {
   out.push(list.slice(start).trim());
   return out.filter(Boolean);
 }
-
-/** Inline markers Readability already honours, so their text is not ingested. */
-const INLINE_HIDDEN = /display\s*:\s*none|visibility\s*:\s*hidden/i;
 
 /** Claims that contradict visible copy when a stale hidden variant survives. */
 const CONTRADICTION =
@@ -144,7 +122,8 @@ function inlineHidden(page: PageContext, el: unknown): boolean {
     const $n = $el(page.$, node);
     if ($n.attr("hidden") !== undefined) found = true;
     if (($n.attr("aria-hidden") ?? "").toLowerCase() === "true") found = true;
-    if (INLINE_HIDDEN.test($n.attr("style") ?? "")) found = true;
+    // Readability's own style test, so it is not ingested either.
+    if (styleHidesFromReaders($n.attr("style") ?? "")) found = true;
   });
   return found;
 }
@@ -174,10 +153,10 @@ function hidingRules(rules: CssRule[]): HidingSelector[] {
 
   const display = new Map<
     string,
-    { selector: string; reported: string; decl: DisplayDeclaration }
+    { selector: string; reported: string; decl: Declaration }
   >();
   for (const rule of live) {
-    const decl = blockDisplay(rule.declarations);
+    const decl = declaredValue(rule.declarations, "display");
     if (!decl) continue;
     for (const selector of splitSelectorList(rule.selector)) {
       const key = `${rule.atRule ?? ""}\u0000${selector}`;

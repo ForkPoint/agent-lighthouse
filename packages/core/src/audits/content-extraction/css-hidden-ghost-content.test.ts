@@ -57,6 +57,21 @@ function run(body: string, head = "", sheets: Record<string, string> = {}) {
 const SHEET_LINK = '<link rel="stylesheet" href="/s.css">';
 const sheet = (css: string) => ({ "https://example.test/s.css": css });
 
+it.each([
+  ["none", "block", "fail"],
+  ["block", "none", "pass"],
+])(
+  "resolves a later inline display:%s over a linked display:%s",
+  async (inline, linked, status) => {
+    const result = await run(
+      `<main>${VISIBLE}</main><div class="ghost">${BULK}</div>`,
+      `${SHEET_LINK}<style>.ghost { display: ${inline} }</style>`,
+      sheet(`.ghost { display: ${linked} }`),
+    );
+    expect(result.status).toBe(status);
+  },
+);
+
 describe("CssHiddenGhostContentAudit", () => {
   const audit = new CssHiddenGhostContentAudit();
 
@@ -229,6 +244,39 @@ describe("CssHiddenGhostContentAudit", () => {
       sheet(".ghost { display: none }"),
     );
     expect(result.status).toBe("pass");
+  });
+
+  // Readability reads the resolved inline style, so an overridden or invalid
+  // declaration decides nothing.
+  it.each([
+    ["display:none;display:block", "fail"],
+    ["display:block;display:none", "pass"],
+    ["display:none;display:nonee", "pass"],
+  ])("resolves the inline marker %s", async (style, status) => {
+    const result = await run(
+      `<main><p>${VISIBLE}</p></main><div class="ghost" style="${style}">${BULK}</div>`,
+      SHEET_LINK,
+      sheet(".ghost { display: none }"),
+    );
+    expect(result.status).toBe(status);
+  });
+
+  it("lets a var() display value override an earlier display:none", async () => {
+    const result = await run(
+      `<main><p>${VISIBLE}</p></main><div class="ghost">${BULK}</div>`,
+      SHEET_LINK,
+      sheet(".ghost { display: none; display: var(--layout, block) }"),
+    );
+    expect(result.status).toBe("pass");
+  });
+
+  it("drops an invalid stylesheet display value", async () => {
+    const result = await run(
+      `<main><p>${VISIBLE}</p></main><div class="ghost">${BULK}</div>`,
+      SHEET_LINK,
+      sheet(".ghost { display: none; display: nonee }"),
+    );
+    expect(result.status).toBe("fail");
   });
 
   it("reports near-duplicate hidden text as duplication, not novel content", async () => {

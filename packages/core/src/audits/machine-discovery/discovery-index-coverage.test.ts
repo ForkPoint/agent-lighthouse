@@ -44,6 +44,53 @@ const sitemapIndex = (locs: string[]) =>
 const page = (url: string, index = 0) =>
   mockPageContext(url, "<html><body>Page</body></html>", index);
 
+it.each([true, false])(
+  "declines an unread child sitemap (other entries: %s)",
+  async (hasEntries) => {
+    const ctx = mockCheckContext([page("https://example.com/")], {
+      "/sitemap.xml": mockFetchResult(
+        sitemapIndex([
+          "https://example.com/products.xml",
+          "https://example.com/pages.xml",
+        ]),
+        200,
+        "application/xml",
+      ),
+      "/products.xml": mockFetchResult(
+        sitemap(hasEntries ? ["https://example.com/product"] : []),
+        200,
+        "application/xml",
+      ),
+      "/pages.xml": mockFetchResult("", 503),
+    });
+    expect((await new DiscoveryIndexCoverageAudit().audit(ctx)).status).toBe(
+      "na",
+    );
+  },
+);
+
+it("passes a listed page even when another child cannot be read", async () => {
+  const ctx = mockCheckContext([page("https://example.com/")], {
+    "/sitemap.xml": mockFetchResult(
+      sitemapIndex([
+        "https://example.com/products.xml",
+        "https://example.com/pages.xml",
+      ]),
+      200,
+      "application/xml",
+    ),
+    "/products.xml": mockFetchResult(
+      sitemap(["https://example.com/"]),
+      200,
+      "application/xml",
+    ),
+    "/pages.xml": mockFetchResult("", 503),
+  });
+  expect((await new DiscoveryIndexCoverageAudit().audit(ctx)).status).toBe(
+    "pass",
+  );
+});
+
 describe("DiscoveryIndexCoverageAudit", () => {
   const audit = new DiscoveryIndexCoverageAudit();
 

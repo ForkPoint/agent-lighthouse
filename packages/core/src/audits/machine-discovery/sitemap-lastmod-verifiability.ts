@@ -29,7 +29,10 @@ const DAY_MS = 86_400_000;
 const SAMPLE_SIZE = 6;
 /** Clock skew allowed before a lastmod counts as future-dated. */
 const FUTURE_SKEW_MS = 60 * 60 * 1000;
-/** One value on this share of the sample is a stamp, not a set of content dates. */
+/**
+ * One run on this share of the sample has the shape of a build stamp. The
+ * shape alone is not a defect; it stops a deploy-time header vouching for it.
+ */
 const MODAL_SHARE = 0.9;
 /**
  * Values this close together are one stamp. A generator that writes the
@@ -190,7 +193,7 @@ export class SitemapLastmodVerifiabilityAudit extends Audit {
     title: "Sitemap lastmod values are verifiable against the pages",
     failureTitle: "Sitemap lastmod values contradict the pages they describe",
     description:
-      "Cross-validates sampled sitemap <lastmod> values against three independent page-level modification signals — the Last-Modified response header, JSON-LD dateModified/datePublished, and article:modified_time — and scores agreement rather than presence. Detects the two dominant failure modes: the build stamp (every URL updated on every deploy) and the frozen value (the CMS never updates it).",
+      "Cross-validates sampled sitemap <lastmod> values against three independent page-level modification signals — the Last-Modified response header, JSON-LD dateModified/datePublished, and article:modified_time — and scores agreement rather than presence. Catches the two dominant failure modes when the page dates disagree: the build stamp (every URL updated on every deploy) and the frozen value (the CMS never updates it). A deploy-time Last-Modified header never vouches for a recent run of identical stamps.",
     scoreDisplayMode: "ternary",
     weight: weightForGrade("A", "scored"),
     evidenceGrade: "A",
@@ -206,7 +209,7 @@ export class SitemapLastmodVerifiabilityAudit extends Audit {
     defaultPriority: "medium",
     guidance: {
       impact:
-        'Google states it uses <lastmod> "if it\'s consistently and verifiably (for example by comparing to the last modification of the page) accurate". lastmod is therefore a conditional signal an engine silently discards on divergence — and it is the only freshness hint a pull-based AI crawler gets from a sitemap. If sampled values disagree with every available page-level signal for a material share of URLs, the freshness channel is inert and re-crawl scheduling degrades to organic rediscovery. Two specific pathologies are detectable without guessing: over 90% of URLs sharing one lastmod equal to the last deploy date — a build stamp, exactly the pattern Google\'s "copyright date is not significant" rule disqualifies — and a lastmod in the future relative to the scan, which is never valid.',
+        'Google states it uses <lastmod> "if it\'s consistently and verifiably (for example by comparing to the last modification of the page) accurate". lastmod is therefore a conditional signal an engine silently discards on divergence — and it is the only freshness hint a pull-based AI crawler gets from a sitemap. If sampled values disagree with every available page-level signal for a material share of URLs, the freshness channel is inert and re-crawl scheduling degrades to organic rediscovery. A recent cluster of lastmod values is consistent with a build stamp only when page dates also disagree. Clustered edits alone do not show a defect. A lastmod in the future relative to the scan is invalid.',
       fix: "Stamp lastmod from the content record, not from the build. Emit the timestamp of the last substantive edit to that document, and leave it alone when a deploy only rebuilds the page. Publish the same instant on the page — JSON-LD dateModified is the most widely read of the three signals — so the value is checkable; a lastmod nothing on the page supports is a lastmod the crawler drops. Never emit a future date, and use W3C Datetime (YYYY-MM-DD or a full RFC 3339 timestamp) for every value.",
       code: SAMPLE,
       effort: "moderate",
@@ -250,6 +253,35 @@ export class SitemapLastmodVerifiabilityAudit extends Audit {
       if (key && !byKey.has(key)) byKey.set(key, page);
     }
 
+    // The modal test counts the whole sample, compared or not. It takes the
+    // largest group of values inside one STAMP_WINDOW_MS window. The shape
+    // alone proves nothing: a batch of real edits produces it too. What it
+    // changes is how much a deploy-time header can be trusted.
+    const ordered = sample
+      .map((entry) => ({
+        lastmod: entry.lastmod,
+        time: Date.parse(entry.lastmod),
+      }))
+      .sort((a, b) => a.time - b.time);
+    let modalCount = 0;
+    let modalFirst = "";
+    let modalLast = "";
+    for (let start = 0, end = 0; end < ordered.length; end++) {
+      while (ordered[end]!.time - ordered[start]!.time > STAMP_WINDOW_MS)
+        start += 1;
+      if (end - start + 1 > modalCount) {
+        modalCount = end - start + 1;
+        modalFirst = ordered[start]!.lastmod;
+        modalLast = ordered[end]!.lastmod;
+      }
+    }
+    const modalRecent =
+      (now - Date.parse(modalLast)) / DAY_MS <= MODAL_RECENCY_DAYS;
+    const stampShape =
+      sample.length > 1 &&
+      modalCount / sample.length > MODAL_SHARE &&
+      modalRecent;
+
     let corroborated = 0;
     let divergent = 0;
     let noSignal = 0;
@@ -268,7 +300,12 @@ export class SitemapLastmodVerifiabilityAudit extends Audit {
         if (result) signals = signalsFromFetch(result);
       }
 
-      const all = [...signals.content, ...signals.header];
+      // A recent run of lastmod values and a Last-Modified header can both be
+      // the deploy time. Their agreement then shows when the build ran, not
+      // when the content changed, so only the content dates are compared.
+      const all = stampShape
+        ? signals.content
+        : [...signals.content, ...signals.header];
       if (all.length === 0) {
         noSignal += 1;
         continue;
@@ -293,35 +330,13 @@ export class SitemapLastmodVerifiabilityAudit extends Audit {
       }
     }
 
-    // The modal test counts the whole sample, compared or not: a stamp is a
-    // property of the sitemap, and needs no page signal to be seen. It takes
-    // the largest group of values inside one STAMP_WINDOW_MS window.
-    const ordered = sample
-      .map((entry) => ({
-        lastmod: entry.lastmod,
-        time: Date.parse(entry.lastmod),
-      }))
-      .sort((a, b) => a.time - b.time);
-    let modalCount = 0;
-    let modalFirst = "";
-    let modalLast = "";
-    for (let start = 0, end = 0; end < ordered.length; end++) {
-      while (ordered[end]!.time - ordered[start]!.time > STAMP_WINDOW_MS)
-        start += 1;
-      if (end - start + 1 > modalCount) {
-        modalCount = end - start + 1;
-        modalFirst = ordered[start]!.lastmod;
-        modalLast = ordered[end]!.lastmod;
-      }
-    }
-    const modalRecent =
-      (now - Date.parse(modalLast)) / DAY_MS <= MODAL_RECENCY_DAYS;
-    const buildStamp =
-      sample.length > 1 &&
-      modalCount / sample.length > MODAL_SHARE &&
-      modalRecent;
-
     const compared = sample.length - noSignal;
+    const contentDiverges =
+      compared > 0 && divergent / compared > DIVERGENT_SHARE;
+    // Nearby edits can be real, including a batch publication. The shape
+    // only names the cause when the content dates disagree.
+    const buildStamp = stampShape && contentDiverges;
+
     const problems: string[] = [];
 
     if (future.length > 0) {
@@ -331,10 +346,10 @@ export class SitemapLastmodVerifiabilityAudit extends Audit {
     }
     if (buildStamp) {
       problems.push(
-        `${modalCount} of ${sample.length} sampled URLs (${pct(modalCount, sample.length)}%) share ${modalFirst === modalLast ? `the single lastmod ${modalFirst}` : `one lastmod run, ${modalFirst} to ${modalLast}`}, within ${MODAL_RECENCY_DAYS} days of this scan — the signature of a build stamp rather than a content date`,
+        `${modalCount} of ${sample.length} sampled URLs (${pct(modalCount, sample.length)}%) share ${modalFirst === modalLast ? `the single lastmod ${modalFirst}` : `one lastmod run, ${modalFirst} to ${modalLast}`}, within ${MODAL_RECENCY_DAYS} days of this scan; disagreement with the page dates makes this consistent with a build stamp`,
       );
     }
-    if (compared > 0 && divergent / compared > DIVERGENT_SHARE) {
+    if (contentDiverges) {
       problems.push(
         `${divergent} of ${compared} comparable URLs (${pct(divergent, compared)}%) carry a lastmod more than ${DIVERGENCE_DAYS} days from every signal the page publishes: ${worst.join("; ")}`,
       );

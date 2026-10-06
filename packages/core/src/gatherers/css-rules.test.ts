@@ -98,6 +98,24 @@ describe("collectPageCss", () => {
     return { ctx, seen };
   }
 
+  it("keeps linked sheets and inline blocks in document order", async () => {
+    const { ctx } = ctxWith({
+      "https://a.test/base.css": ".base { display: block }",
+      "https://a.test/theme.css": ".theme { display: block }",
+    });
+    const page = mockPageContext(
+      "https://a.test/",
+      '<head><link rel="stylesheet" href="/base.css"><style>.middle { display: none }</style><link rel="stylesheet" href="/theme.css"><style>.last { display: none }</style></head>',
+    );
+    const css = await collectPageCss(ctx, page);
+    expect(css.rules.map((rule) => rule.selector)).toEqual([
+      ".base",
+      ".middle",
+      ".theme",
+      ".last",
+    ]);
+  });
+
   it("reads inline <style> blocks", async () => {
     const { ctx } = ctxWith({});
     const page = mockPageContext(
