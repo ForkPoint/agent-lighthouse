@@ -21,7 +21,7 @@ sources:
 
 ## What it checks
 
-Verifies the merchant can populate the `links` array that every ACP CheckoutSession response is required to carry, by resolving each of the 8 enum link types to a stable, HTTPS, no-JS-required, non-soft-404 URL on the merchant's own site.
+Verifies the merchant can populate the `links` array that every ACP CheckoutSession response is required to carry, by resolving each of the 8 enum link types to a stable, HTTPS, no-JS-required, non-soft-404 URL. The URL may sit on any domain and may be an HTML page or a PDF.
 
 ## Claimed mechanism (falsifiable)
 
@@ -68,10 +68,6 @@ Tier per evidence policy: **scored** — grade A meets the A/B bar required for 
   honoured (`packages/core/src/fetcher.ts`): `false` selects a dispatcher with
   no redirect interceptor, so this audit can walk the chain one hop at a time
   and count it. Pinned in `packages/core/src/fetcher.test.ts`.
-- **Registrable domain uses a short public-suffix list**, not a bundled PSL
-  snapshot, because the global constraint forbids new runtime dependencies. It
-  covers the common multi-label suffixes (`co.uk`, `com.au`, …); a merchant on
-  an exotic suffix may see a same-site link reported as off-domain.
 - **The no-JS guard is a text-versus-body-size comparison.** Under 500
   characters of extracted text with a response body over 2,000 characters is
   reported as a client-rendered shell; under 500 characters with a small body is
@@ -83,6 +79,27 @@ Tier per evidence policy: **scored** — grade A meets the A/B bar required for 
 - `resolvePolicyLinks(ctx)` is exported from the package root so other
   checkout-eligibility audits reuse the resolved `terms_of_use` and
   `privacy_policy` targets rather than re-deriving them.
+
+### Policy links on another domain, and PDF policies (2026-10-06)
+
+The implementation sketch required every link and every redirect hop to stay
+on the merchant's registrable domain, and required `text/html`. No cited
+source asks for either. The ACP `Link` schema in `openapi.agentic_checkout.yaml`
+(2026-04-17) asks only for `url: string, format: uri`. The OpenAI feed spec
+asks for `seller_tos` and `seller_privacy_policy` as a public URL. A large
+retail site linked both policies to a sister brand domain, which redirected
+to a PDF on the brand's asset CDN. Both hard gates failed on that, and the
+audit declared the catalogue ineligible for checkout without a source.
+
+Both rules are dropped. A link may point at any domain and redirect across
+domains. Every hop still passes `isSafeUrl()`, still counts toward the
+3-redirect cap, and the target must still be HTTPS and answer 200.
+
+A target served as `application/pdf` is accepted when its body starts with
+the `%PDF-` signature. The soft-404 and 500-character text checks read HTML,
+so they apply to HTML targets only. A PDF's text is not extracted: the core
+package carries no PDF parser, and no source makes a PDF policy unusable.
+Any other content type still fails.
 
 ## Deferred
 
