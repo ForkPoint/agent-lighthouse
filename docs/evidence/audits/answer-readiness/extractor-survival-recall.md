@@ -107,6 +107,18 @@ this implementation's.
   Verdicts that moved: `gov-uk-vehicle-tax` scan-error → fail. Found by
   `packages/core/src/tests/real-page-corpus.test.ts`.
 
+### Class tokens, not substrings (2026-10-06)
+
+The stripper matched its blocklist as a substring of the joined class and id string. `/banner/` matched `page-content--banner-enabled`, the wrapper that holds a whole page on a large retail site, so the aggressive extractor deleted everything and every key span was reported lost. Firecrawl's `excludeNonMainTags` lists class and id selectors such as `.ad`, `.sidebar`, `.cookie` and `#share`, and a class selector names a whole token ([removeUnwantedElements.ts](https://github.com/firecrawl/firecrawl/blob/main/apps/api/src/scraper/scrapeURL/lib/removeUnwantedElements.ts), verified 2026-10-06). Each class token and the id are now tested against `/^(?:comments?|sidebar|promo|related|advert|ads?|banner|cookie|newsletter|share)$/i`. The old `ad-` prefix becomes the `ad` and `ads` tokens, as in Firecrawl's list.
+
+An element that matches is still kept when it holds more than half the page's text after the tag pass. A rule that would delete most of the page has matched the page, not a widget. Firecrawl guards the same way: it keeps an excluded element that contains a main-content marker.
+
+### Script text is not prose (2026-10-06)
+
+JSON-LD strings are key spans only when the prose carries them. The audit tested that against `$("body").text()`, which includes `<script>` contents, so a JSON-LD block in the body vouched for its own URLs. They became key spans that no extractor keeps. The prose test and the `textRatio` denominator now drop `script`, `style`, `noscript` and `template` first.
+
+On the retail page, recall moved from 0 to 0.818, and the page still fails: readability drops the tile headings. Verdicts that moved in the real-page corpus: `atlassian-com-pricing-shell` fail → na, because its only key spans were JSON-LD strings in scripts.
+
 ## Deferred
 
 - **The third extractor.** `content-extraction/extraction-determinism` runs

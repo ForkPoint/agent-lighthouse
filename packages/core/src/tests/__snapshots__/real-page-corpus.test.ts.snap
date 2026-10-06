@@ -525,7 +525,7 @@ exports[`real-page corpus > atlassian-com-pricing-shell: verdicts hold 1`] = `
   "answer-readiness/descriptive-urls": "pass",
   "answer-readiness/direct-definitions": "na",
   "answer-readiness/external-citations": "fail",
-  "answer-readiness/extractor-survival-recall": "fail",
+  "answer-readiness/extractor-survival-recall": "na",
   "answer-readiness/faq-sections": "fail",
   "answer-readiness/first-paragraph-answers": "fail",
   "answer-readiness/last-modified-schema": "fail",

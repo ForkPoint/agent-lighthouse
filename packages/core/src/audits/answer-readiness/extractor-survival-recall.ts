@@ -6,7 +6,7 @@ import type { CheckContext, PageContext } from "../../check-context";
 import { weightForGrade } from "../../scorer";
 import {
   readabilityArticle,
-  AGGRESSIVE_DROP_RE,
+  isAggressiveDropTarget,
 } from "../../gatherers/extraction";
 import { normalizeText, sentences } from "../../gatherers/text-metrics";
 import { parseHtml, allJsonLdNodes } from "../../parser";
@@ -29,6 +29,22 @@ const SPAN_WORDS = 8;
 /** Chrome the aggressive extractors drop before anything else. */
 const AGGRESSIVE_TAGS =
   "script, style, noscript, template, nav, aside, header, footer, form, iframe";
+
+/**
+ * Share of the page's text above which a matched element is the page itself.
+ *
+ * A drop rule that would delete most of the page has matched the page's own
+ * wrapper, not a widget. Firecrawl guards the same way: an excluded element
+ * that contains its main-content markers is kept.
+ */
+const MOST_OF_PAGE = 0.5;
+
+/** The body's text without script, style, noscript or template contents. */
+function visibleText($: CheerioAPI): string {
+  const body = $("body").clone();
+  body.find("script, style, noscript, template").remove();
+  return body.text();
+}
 
 interface KeySpan {
   kind: string;
@@ -127,7 +143,9 @@ function keySpans(page: PageContext): KeySpan[] {
       push(selector, el, $(el).text());
   }
 
-  const bodyText = normalizeText($("body").text());
+  // Script contents are not prose: a JSON-LD URL is in `.text()` only because
+  // the block itself sits in the body.
+  const bodyText = normalizeText(visibleText($));
   for (const node of allJsonLdNodes(page.jsonLd)) {
     const walk = (value: unknown): void => {
       if (typeof value === "string") {
@@ -154,10 +172,13 @@ function keySpans(page: PageContext): KeySpan[] {
 function aggressiveText(html: string): string {
   const $ = parseHtml(html);
   $(AGGRESSIVE_TAGS).remove();
+  const total = $("body").text().replace(/\s+/g, "").length;
   $("[class], [id]").each((_i, el) => {
     const element = el as Element;
-    const names = `${element.attribs?.["class"] ?? ""} ${element.attribs?.["id"] ?? ""}`;
-    if (AGGRESSIVE_DROP_RE.test(names)) $(element).remove();
+    if (!isAggressiveDropTarget(element)) return;
+    const own = $(element).text().replace(/\s+/g, "").length;
+    if (own > total * MOST_OF_PAGE) return;
+    $(element).remove();
   });
   return $("body").text();
 }
@@ -218,7 +239,7 @@ export class ExtractorSurvivalRecallAudit extends Audit {
     const readability = readabilityArticle(html, page.url);
     const readabilityText = normalizeText(readability?.text ?? "");
     const aggressive = normalizeText(aggressiveText(html));
-    const visible = normalizeText(page.$("body").text());
+    const visible = normalizeText(visibleText(page.$));
 
     const survives = (text: string, span: KeySpan): boolean =>
       text.includes(span.needle);
