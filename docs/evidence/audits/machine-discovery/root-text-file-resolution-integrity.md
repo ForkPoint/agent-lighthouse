@@ -84,6 +84,19 @@ the key-file mechanism. The AI-consumer link in the FAQ is a vendor claim, as
 the dossier itself records; this audit rests on the byte-comparison behaviour,
 which is documented, not on that claim.
 
+### A probe redirected to another path reads as absent (2026-10-06)
+
+The sketch follows redirects and asserts the final status. A large retail site
+redirected every unknown root `.txt` path to its homepage, so both probes ended
+on a 200 HTML page and the audit reported an SPA catch-all. The 200 belonged to
+the homepage, not to the `.txt` path. The mechanism this audit rests on is a
+catch-all that answers 200 at the requested path, so that a real key file and
+a missing one look the same. A redirect to another path does not do that: a
+real IndexNow key file answers 200 at its own path, and a missing one answers
+a redirect. A probe whose final URL has a different path from the one
+requested now counts as absent, like a 404. A redirect that keeps the path, such as
+a scheme or host change, is still followed and judged on its final answer.
+
 ## Deferred
 
 - **Consuming `details.discoveryProbeReliable` from other audits.** The flag is
@@ -97,3 +110,11 @@ which is documented, not on that claim.
 - **WAF challenge-page detection.** A challenge page answering 200 is caught by
   the HTML classification arm; telling a challenge apart from an app shell
   needs signals this audit does not collect.
+- **Scoring only sites that publish a root `.txt` artifact.** The sources
+  document the cost of a catch-all for IndexNow key verification. They do not
+  document a cost for a site that uses no IndexNow key and no other root `.txt`
+  file. Narrowing the verdict to those sites would need a way to observe that a
+  site relies on a key file. The key is not public and the audit never guesses
+  one (see above), and `llms.txt` and `security.txt` reliance has its own
+  audits. Until such a signal exists the audit judges the origin's behaviour on
+  every site, as the "What it checks" section states.

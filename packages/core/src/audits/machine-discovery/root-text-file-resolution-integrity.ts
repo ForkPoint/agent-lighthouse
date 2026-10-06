@@ -2,6 +2,7 @@ import { randomBytes } from "node:crypto";
 import type { AuditMeta, AuditResult } from "../../types";
 import { Audit } from "../../audit";
 import type { CheckContext } from "../../check-context";
+import type { FetchResult } from "../../fetcher";
 import { weightForGrade } from "../../scorer";
 import { isSafeUrl } from "../../url-utils";
 import { sharedProbeUrl } from "../../gatherers/discovery";
@@ -15,6 +16,24 @@ const SNIFF_BYTES = 512;
 /** A name no site can be serving on purpose. */
 function randomProbeName(): string {
   return `${randomBytes(16).toString("hex")}.txt`;
+}
+
+/**
+ * True when the fetcher followed the probe to a different path.
+ *
+ * A redirect away answers "not here" at the requested path, which a client
+ * can tell apart from a file served there. Counting the destination's 200
+ * reported a homepage redirect as a catch-all. A redirect that keeps the
+ * path (scheme or host change) is not "away" and is judged on its final
+ * answer. An empty `finalUrl` means the fetcher reported none.
+ */
+function redirectedAway(url: string, result: FetchResult): boolean {
+  if (!result.finalUrl) return false;
+  try {
+    return new URL(result.finalUrl).pathname !== new URL(url).pathname;
+  } catch {
+    return false;
+  }
 }
 
 export class RootTextFileResolutionIntegrityAudit extends Audit {
@@ -104,10 +123,18 @@ export class RootTextFileResolutionIntegrityAudit extends Audit {
       );
 
     const failures: string[] = [];
-    const answering = probes.filter(
-      (probe) => probe.result.status >= 200 && probe.result.status < 300,
+    const redirected = probes.filter((probe) =>
+      redirectedAway(probe.url, probe.result),
     );
-    const absent = probes.filter((probe) => ABSENT.has(probe.result.status));
+    const answering = probes.filter(
+      (probe) =>
+        !redirected.includes(probe) &&
+        probe.result.status >= 200 &&
+        probe.result.status < 300,
+    );
+    const absent = probes.filter(
+      (probe) => redirected.includes(probe) || ABSENT.has(probe.result.status),
+    );
 
     if (answering.length > 0) {
       // Classify what the catch-all is, because the three kinds have three
@@ -139,7 +166,7 @@ export class RootTextFileResolutionIntegrityAudit extends Audit {
         `${answering.length} of 2 random .txt probes answered ${answering.map((probe) => probe.result.status).join("/")} instead of 404 — ${kind}`,
       );
     } else if (absent.length < probes.length) {
-      const other = probes.filter((probe) => !ABSENT.has(probe.result.status));
+      const other = probes.filter((probe) => !absent.includes(probe));
       failures.push(
         `A random .txt probe answered ${other.map((probe) => probe.result.status).join("/")}, which is neither 404/410 nor a catch-all — the origin's answer for a missing file cannot be read`,
       );
@@ -176,7 +203,11 @@ export class RootTextFileResolutionIntegrityAudit extends Audit {
     };
     const expected =
       "Two random root .txt paths answer 404 or 410, and /robots.txt answers 200 as text/plain";
-    const found = `Probes answered ${probes.map((probe) => probe.result.status).join(" and ")}; /robots.txt answered ${robots.status} as "${robotsType || "no content type"}".`;
+    const redirectNote =
+      redirected.length > 0
+        ? ` (${redirected.length} redirected away from the requested path, read as absent)`
+        : "";
+    const found = `Probes answered ${probes.map((probe) => probe.result.status).join(" and ")}${redirectNote}; /robots.txt answered ${robots.status} as "${robotsType || "no content type"}".`;
     const displayValue = discoveryProbeReliable
       ? "Probes reliable"
       : "Probes unreliable";
@@ -209,7 +240,7 @@ export class RootTextFileResolutionIntegrityAudit extends Audit {
 
     return {
       ...this.pass(
-        "Both random .txt probes 404ed and /robots.txt is text/plain, so a root .txt file that answers 200 is really there.",
+        "Both random .txt probes resolved as absent and /robots.txt is text/plain, so a root .txt file that answers 200 is really there.",
         expected,
         found,
       ),
