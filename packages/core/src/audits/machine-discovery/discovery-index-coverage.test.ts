@@ -271,6 +271,55 @@ describe("DiscoveryIndexCoverageAudit", () => {
     expect(fetch).toHaveBeenCalledTimes(11);
   });
 
+  // A large product sitemap fills the walk's entry cap before the one-URL
+  // sitemap that lists the homepage. The page is missing only from the part
+  // the scan read, which proves nothing about the sitemap as a whole.
+  it("declines the verdict when the sitemap walk stopped at its limit", async () => {
+    const products = Array.from(
+      { length: 600 },
+      (_, i) => `https://example.com/product-${i}.html`,
+    );
+    const rootSpec = mockFetchResult(
+      sitemapIndex([
+        "https://example.com/sitemap_0-product.xml",
+        "https://example.com/sitemap_4.xml",
+      ]),
+      200,
+      "application/xml",
+    );
+    const fetch = vi.fn(async ({ url }) => {
+      if (url === "https://example.com/sitemap.xml") return rootSpec;
+      if (url === "https://example.com/sitemap_0-product.xml")
+        return mockFetchResult(sitemap(products), 200, "application/xml");
+      return mockFetchResult(
+        sitemap(["https://example.com/"]),
+        200,
+        "application/xml",
+      );
+    });
+    const ctx: CheckContext = {
+      ...mockCheckContext([page("https://example.com/")], {
+        "/sitemap.xml": rootSpec,
+      }),
+      fetch,
+    };
+    const result = await audit.audit(ctx);
+    expect(result.status).toBe("na");
+    expect(result.message).toContain("read only part of the sitemap");
+  });
+
+  it("still fails an unlisted page when the walk read the whole sitemap", async () => {
+    const ctx = mockCheckContext([page("https://example.com/")], {
+      "/sitemap.xml": mockFetchResult(
+        sitemap(["https://example.com/product-1.html"]),
+        200,
+        "application/xml",
+      ),
+    });
+    const result = await audit.audit(ctx);
+    expect(result.status).toBe("fail");
+  });
+
   // Review finding (1.8 + 1.22): raw string equality over trailing-slash
   // variants only, so protocol/host/case/encoding differences produced phantom
   // "missing" pages.
