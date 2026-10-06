@@ -457,13 +457,16 @@ export class AiUsageSignalCoherenceAcrossChannelsAudit extends Audit {
       };
     }
 
+    // Coherence needs at least one declaration. A site that publishes none has
+    // nothing to contradict, and no source documents a cost for silence:
+    // AIPREF reads an absent preference as unknown, and Content Signals reads
+    // omission as no preference. Notes gathered on the way still ride along.
     if (signals.length === 0) {
       return {
-        ...this.warn(
-          "This site declares no AI-usage preference in any channel, so every crawler applies its own default.",
+        ...this.notApplicable(
+          "This site declares no AI-usage preference in any channel, so there is nothing to compare across channels.",
           expected,
           found,
-          "Publish one preference — an AIPREF `Content-Usage` line in robots.txt is the smallest complete declaration — rather than leaving every operator to guess.",
         ),
         displayValue,
         details,

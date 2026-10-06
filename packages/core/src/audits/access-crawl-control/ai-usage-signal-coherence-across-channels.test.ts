@@ -133,13 +133,42 @@ describe("AiUsageSignalCoherenceAcrossChannelsAudit", () => {
     );
   });
 
-  it("warns on total silence, with a different remedy from a contradiction", async () => {
+  // Coherence needs at least one declaration. Silence has nothing to
+  // contradict, and no source documents a cost for it.
+  it("is not applicable on total silence, and keeps the notes it gathered", async () => {
     const result = await audit.audit(
-      site({ robots: "User-agent: *\nAllow: /\n" }),
+      site({
+        robots: "User-agent: *\nAllow: /\n",
+        tdmrep: '{"tdm-reservation": 1}',
+      }),
     );
-    expect(result.status).toBe("warn");
+    expect(result.status).toBe("na");
+    expect(result.score).toBe(0);
     expect(result.details?.["signals"]).toBe(0);
-    expect(result.remediation).toContain("Content-Usage");
+    expect((result.details!["notes"] as string[])[0]).toContain(
+      "array of rules",
+    );
+    expect(result.remediation).toBeUndefined();
+  });
+
+  it("still fails a robots.txt block contradicted by a response header", async () => {
+    const result = await audit.audit(
+      site({
+        robots: "User-agent: GPTBot\nDisallow: /\n",
+        headers: { "content-usage": "train-ai=y" },
+      }),
+    );
+    expect(result.status).toBe("fail");
+    const contradictions = result.details?.["contradictions"] as string[];
+    expect(contradictions[0]).toContain("robots.txt Disallow");
+    expect(contradictions[0]).toContain("Content-Usage response header");
+  });
+
+  it("still passes a single declaration with nothing to contradict it", async () => {
+    const result = await audit.audit(
+      site({ robots: "User-agent: *\nContent-Usage: train-ai=n\n" }),
+    );
+    expect(result.status).toBe("pass");
   });
 
   it("reads an inline RSL document without fetching anything", async () => {
