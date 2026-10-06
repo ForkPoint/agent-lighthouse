@@ -109,4 +109,43 @@ describe("TextFragmentAddressabilityAudit", () => {
   it("reports the page the spans are on", () => {
     expect(run(SIMPLE).pageUrl).toBe("https://example.test/faq");
   });
+
+  // A heading over a tile grid introduces labels, not an answer. The grid's
+  // text crosses block boundaries by construction, not by an author's split.
+  it("does not treat a tile grid after a heading as an answer span", () => {
+    const tiles = ["Shirts", "Hoodies", "Trousers", "Shorts"]
+      .map(
+        (t) =>
+          `<div class="tile"><h3>${t}</h3><div class="cta">Shop now</div></div>`,
+      )
+      .join("");
+    const result = run(
+      `<main><h2>Shop the range</h2><div class="grid">${tiles}</div></main>`,
+    );
+    expect(result.status).toBe("na");
+  });
+
+  it("does not treat a heading that follows a heading as an answer span", () => {
+    const result = run("<main><h2>Men</h2><h2>Women</h2><h2>Kids</h2></main>");
+    expect(result.status).toBe("na");
+  });
+
+  // A repeated call to action is a button, not an ambiguous answer.
+  it("does not treat a short repeated call to action as an answer span", () => {
+    const result = run(
+      `<main><h2>What is resoling?</h2><p>${ANSWER}</p><h3>Boots</h3><div class="cta">Shop now</div><h3>Shoes</h3><div class="cta">Shop now</div></main>`,
+    );
+    expect(result.status).toBe("pass");
+    expect(result.found).toContain("1/1");
+  });
+
+  // True positive: a sentence split across sibling blocks inside a wrapper is
+  // still an answer, and still unaddressable.
+  it("still fails a sentence split across three sibling blocks in a wrapper", () => {
+    const result = run(
+      `<main><h2>What is resoling?</h2><div class="answer"><p>Resoling replaces the outsole</p><p>and midsole</p><p>of a welted boot.</p></div></main>`,
+    );
+    expect(result.status).toBe("fail");
+    expect(result.message).toContain("block boundary");
+  });
 });

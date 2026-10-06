@@ -4,6 +4,7 @@
 // Simulates the text-fragment matching algorithm over the parsed DOM: can a
 // citing surface build a `#:~:text=` link that lands on this page's answer
 // sentence, or does the link silently degrade to page-top?
+import type { Element } from "domhandler";
 import type { AuditMeta, AuditResult } from "../../types";
 import { Audit } from "../../audit";
 import { weightForGrade } from "../../scorer";
@@ -57,6 +58,57 @@ function leafBlocks(page: PageContext): LeafBlock[] {
   return out;
 }
 
+/** Fewest words a heading-derived span needs to be an answer rather than a label. */
+const MIN_ANSWER_WORDS = 3;
+/** Most leaf blocks followed to finish a sentence that markup split. */
+const MAX_SENTENCE_BLOCKS = 3;
+/** Terminal punctuation that ends a sentence: followed by a space or the end. */
+const SENTENCE_END = /[.!?](?=\s|$)/;
+
+/**
+ * The answer span a heading introduces, or `undefined` when it introduces none.
+ *
+ * The dossier's span is "the first sentence after each h2/h3". Three things
+ * that follow a heading are not one:
+ * - another heading — a carousel of category titles is a list of labels;
+ * - a call to action or a label under three words — "Shop now" repeated under
+ *   every tile is a button, and its repeats are not an ambiguity to report;
+ * - a wrapper of leaf blocks that never finishes a sentence — a tile grid's
+ *   text is the concatenation of its tiles, and it crosses block boundaries by
+ *   construction, not by an author splitting an answer.
+ * A wrapper whose leaf blocks finish a sentence within `MAX_SENTENCE_BLOCKS`
+ * stays a candidate, because a sentence split across sibling blocks is the
+ * failure the spec's block rule describes.
+ */
+function answerAfter(page: PageContext, heading: Element): string | undefined {
+  const $ = page.$;
+  const next = $(heading).next();
+  if (next.length === 0 || next.is("h1,h2,h3,h4,h5,h6")) return undefined;
+
+  const leaves = (next.find(BLOCK_SELECTOR).toArray() as Element[])
+    .filter((el) => $(el).find(BLOCK_SELECTOR).length === 0)
+    .map((el) => normalize($(el).text()))
+    .filter(Boolean);
+
+  let span = "";
+  if (leaves.length === 0) {
+    span = firstSentence(next.text());
+  } else {
+    let joined = "";
+    for (const text of leaves.slice(0, MAX_SENTENCE_BLOCKS)) {
+      joined = joined ? `${joined} ${text}` : text;
+      const end = SENTENCE_END.exec(joined);
+      if (end) {
+        span = joined.slice(0, end.index + 1);
+        break;
+      }
+    }
+  }
+  return span.split(" ").filter(Boolean).length >= MIN_ANSWER_WORDS
+    ? span
+    : undefined;
+}
+
 interface Candidate {
   /** Where the span came from, for the finding. */
   origin: string;
@@ -75,11 +127,11 @@ function candidates(page: PageContext): Candidate[] {
   };
 
   $("h2, h3").each((_i, heading) => {
-    const next = $(heading).next();
-    if (next.length === 0) return;
+    const span = answerAfter(page, heading as Element);
+    if (span === undefined) return;
     add(
       `first sentence after "${normalize($(heading).text()).slice(0, 60)}"`,
-      firstSentence(next.text()),
+      span,
     );
   });
   $("dd").each((_i, el) => {
