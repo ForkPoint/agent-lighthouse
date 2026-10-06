@@ -63,4 +63,26 @@ describe("extraction", () => {
     ]);
     expect(sources.size).toBe(3);
   });
+
+  // A page may carry many <article> elements; the first is as likely a promo
+  // strip as the story.
+  it("reads the article with the most text, not the first one", () => {
+    const html = `<html><body><article><p>Sale now on.</p></article><article><h1>Mugs</h1><p>${prose(20)}</p></article></body></html>`;
+    const extracted = semanticText(html);
+    expect(extracted.text).toContain("explains the mug");
+    expect(extracted.text).not.toContain("Sale now on");
+  });
+
+  // The largest of many cards is still a card.
+  it("falls back to the body when the largest article holds a small share of the text", () => {
+    const html = `<html><body><article><p>Sale now on.</p></article><div><p>${prose(20)}</p></div></body></html>`;
+    const extracted = semanticText(html);
+    expect(extracted.text).toContain("Sale now on");
+    expect(extracted.text).toContain("explains the mug");
+  });
+
+  it("still prefers main over a larger article", () => {
+    const html = `<html><body><main><p>Main copy.</p></main><article><p>${prose(20)}</p></article></body></html>`;
+    expect(semanticText(html).text).toBe("Main copy.");
+  });
 });

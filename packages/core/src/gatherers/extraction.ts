@@ -1,6 +1,6 @@
 import { JSDOM } from "jsdom";
 import { Readability } from "@mozilla/readability";
-import type { CheerioAPI } from "cheerio";
+import type { Cheerio, CheerioAPI } from "cheerio";
 import type { Element } from "domhandler";
 import { parseHtml } from "../parser";
 import { stripStyles } from "../audits/operability-safety/runner";
@@ -81,25 +81,73 @@ export function readabilityArticle(
   }
 }
 
-/** The first non-empty semantic container, with chrome removed. */
+/**
+ * Below this share of the body's text, an `<article>` is a card, not the page.
+ *
+ * A listing renders each teaser, promo strip or product tile as its own
+ * `<article>`; the largest of them is still one tile among many. A real article
+ * page keeps its article well above a fifth of the text even under a heavy
+ * header and footer, so the floor separates the two without a model.
+ */
+const ARTICLE_MIN_SHARE = 0.2;
+
+/** An element's copy with chrome removed, and its flattened text. */
+function withoutChrome(
+  $: CheerioAPI,
+  el: Element,
+): { clone: Cheerio<Element>; text: string } {
+  const clone = $(el).clone();
+  clone.find(CHROME_SELECTORS).remove();
+  return { clone, text: flatten(clone.text()) };
+}
+
+/**
+ * The page's semantic main container, with chrome removed.
+ *
+ * `main`, then `[role=main]`: the first non-empty one wins, because a page
+ * declares one main region. `article` is different — a page may carry many,
+ * and the first is as likely a promo strip as the story — so the one with the
+ * most text is taken, and only when it holds at least `ARTICLE_MIN_SHARE` of the
+ * body's text. Otherwise the body stands in for it.
+ */
 export function semanticText(html: string): Extracted {
   if (!html.trim()) return empty("semantic");
   const $ = parseHtml(html);
-  for (const selector of ["main", '[role="main"]', "article", "body"]) {
-    const node = $(selector).first();
-    if (node.length === 0) continue;
-    const clone = node.clone();
-    clone.find(CHROME_SELECTORS).remove();
-    const text = flatten(clone.text());
-    if (text === "") continue;
-    return {
-      text,
-      html: clone.html() ?? "",
-      title: flatten($("h1").first().text()),
-      source: "semantic",
-    };
+  const title = flatten($("h1").first().text());
+  const extracted = (picked: {
+    clone: Cheerio<Element>;
+    text: string;
+  }): Extracted => ({
+    text: picked.text,
+    html: picked.clone.html() ?? "",
+    title,
+    source: "semantic",
+  });
+
+  for (const selector of ["main", '[role="main"]']) {
+    const node = $(selector).first()[0] as Element | undefined;
+    if (!node) continue;
+    const picked = withoutChrome($, node);
+    if (picked.text !== "") return extracted(picked);
   }
-  return empty("semantic");
+
+  const bodyNode = $("body")[0] as Element | undefined;
+  const body = bodyNode ? withoutChrome($, bodyNode) : undefined;
+
+  let largest: { clone: Cheerio<Element>; text: string } | undefined;
+  for (const el of $("article").toArray() as Element[]) {
+    const candidate = withoutChrome($, el);
+    if (!largest || candidate.text.length > largest.text.length)
+      largest = candidate;
+  }
+  if (
+    largest &&
+    largest.text !== "" &&
+    largest.text.length >= (body?.text.length ?? 0) * ARTICLE_MIN_SHARE
+  )
+    return extracted(largest);
+
+  return body && body.text !== "" ? extracted(body) : empty("semantic");
 }
 
 /** Text characters, and the share of them that sit inside links. */

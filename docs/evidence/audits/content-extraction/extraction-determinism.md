@@ -112,6 +112,14 @@ the same template property.
   away pass → na, HTTP 200 bot challenge unchanged. Found by
   `packages/core/src/tests/hostile-state-contract.test.ts`.
 
+### The semantic extractor reads the largest article (2026-10-06)
+
+The sketch names the semantic step "first non-empty of main, [role=main], article". The code took the first `<article>` element. A page may carry many, and the first is often a promo strip. A large retail site with no `<main>` opened its body with a 145-character ticker in an `<article>`. The semantic extraction was that ticker, and the audit reported 0.00 agreement.
+
+`main` and `[role=main]` still take the first non-empty match, because a page declares one main region. For `article`, the extractor now takes the element with the most chrome-stripped text. It keeps that element only when it holds at least 20% of the body's chrome-stripped text. Below that it is one card among many, and the extractor falls back to the body, as the example failure describes. On the retail page the largest article held 3.5% of the text. The worst pair moved from 0.00 to 0.56, and the page still fails: readability keeps about half the page.
+
+The fallback also reaches `token-ratio`, `preamble-tax`, `boilerplate-tax` and `site-wide-passage-uniqueness-ratio`, but only when Readability declines the document. No verdict in the real-page corpus moved.
+
 ## Deferred
 
 - **A fourth extractor.** Two heuristics plus readability already separate "one
