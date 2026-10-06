@@ -78,6 +78,14 @@ Tier per evidence policy: **scored** — grade A meets the A/B bar required for 
   and the finding says so, because Document Policy is header-only: the meta form
   neither sets the policy nor proves it is set.
 
+### Heading spans must be sentences (2026-10-06)
+
+The sketch's span is "the first sentence after each h2/h3". The audit took the text of whatever followed the heading and, finding no sentence terminator, used all of it. On a large retail site that turned a grid of 28 product tiles into one "answer" crossing every tile's block. It also turned a one-word button repeated under every tile into an ambiguous answer. Neither is a sentence, and both were reported as unaddressable.
+
+A heading-derived span now follows four rules. A heading that follows a heading introduces no span. A following element with no block-level descendant contributes its first sentence. A wrapper with block-level descendants contributes the sentence its leaf blocks finish within three blocks. A sentence split across sibling paragraphs stays a candidate and still fails, which is the failure the block rule describes. A wrapper that finishes no sentence there is a grid, carousel or menu and is skipped. Spans under three words are labels and are skipped. `dd` and FAQPage answers are unchanged.
+
+Verdicts that moved in the real-page corpus: `aljazeera-com-article` fail → na; `barclays-co-uk-current-accounts`, `gov-uk-vehicle-tax` and `react-dev-usestate` fail → warn; `cdc-gov-flu-about`, `discourse-meta-topic`, `kubernetes-docs-pods`, `stripe-com-pricing` and `walmart-com-wall-200` fail → pass. Every dropped candidate was a menu list, a tile or topic grid, a heading or a short label.
+
 ## Deferred
 
 - The headless variant — re-running the matcher against the post-JS DOM to catch
@@ -86,3 +94,5 @@ Tier per evidence policy: **scored** — grade A meets the A/B bar required for 
 - Entity-encoded smart quotes are flagged as a hazard by codepoint; comparing
   the encoded source against the rendered glyph needs the raw byte offsets the
   parser does not retain.
+- Text that sits directly in a wrapper beside block-level children, such as an alert `div` holding an `h4` label and bare text, is not followed. Only the wrapper's leaf blocks are. Following direct text needs the per-text-node block-ancestor walk the sketch describes.
+- A list after a heading is not split into one candidate per item. A list that finishes no sentence within three items is skipped.
