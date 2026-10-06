@@ -57,9 +57,8 @@ export class MetaExternalAgentAudit extends CrawlerBotAudit {
    * falls back to `*` only when no such group exists, so an open catch-all
    * grants exactly the access a named group would.
    *
-   * The override is confined to this class. Twenty sibling bot audits inherit
-   * the base rule and two of them are pinned in the robots differential
-   * baseline; only this audit has a recorded pass-rule finding.
+   * The base class adopted the same pass rule on 2026-10-06. This override
+   * stays for the Meta-specific failure text and its `details`.
    */
   override audit(ctx: CheckContext): AuditResult {
     const robotsFile = ctx.rootFiles["/robots.txt"];

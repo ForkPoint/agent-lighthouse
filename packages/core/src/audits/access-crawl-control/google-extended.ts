@@ -10,7 +10,7 @@ export class GoogleExtendedAudit extends CrawlerBotAudit {
     title: "Google-Extended allowed",
     failureTitle: "Google-Extended allowed",
     description:
-      "Without an explicit robots.txt rule, Google-Extended may still crawl your site but has no signal that it is welcome. Adding an explicit allow rule improves your visibility in AI-powered search and ensures consistent crawler behavior.",
+      "Google-Extended is a robots.txt usage-control token, not a crawler: no request carries it. This check reads the rules that apply to it — its own group if it has one, otherwise the catch-all — and reports whether they disallow the site root. A named group is not required: under RFC 9309 §2.2.1 an open catch-all grants the same permission.",
     scoreDisplayMode: "ternary",
     weight: weightForGrade("A", "scored"),
     evidenceGrade: "A",
@@ -21,8 +21,8 @@ export class GoogleExtendedAudit extends CrawlerBotAudit {
     defaultPriority: "medium",
     guidance: {
       impact:
-        "Blocking Google-Extended prevents your content from being used in Google's AI features like Gemini and AI Overviews. Allowing it ensures your site appears in Google's AI-powered search experiences alongside traditional results.",
-      fix: "Add an explicit User-agent: Google-Extended with Allow: / rule in your robots.txt file.",
+        "Disallowing Google-Extended stops content Google already crawls from being used to train Gemini models and to ground answers in Gemini Apps and Vertex AI. It does not affect inclusion in Google Search, AI Overviews or AI Mode: Googlebot's own rules govern those.",
+      fix: "If the block was not intended, remove the Disallow rule that applies to Google-Extended. A named `User-agent: Google-Extended` group with `Allow: /` also lifts it, but under RFC 9309 §2.2.1 a named group replaces the catch-all for that bot, so copy into it every catch-all Disallow line Google-Extended should still obey.",
       code: "User-agent: Google-Extended\nAllow: /",
       effort: "trivial",
       docsUrl:
@@ -35,5 +35,6 @@ export class GoogleExtendedAudit extends CrawlerBotAudit {
     botName: "Google-Extended",
     displayName: "Google-Extended",
     category: "training",
+    controlToken: true,
   };
 }

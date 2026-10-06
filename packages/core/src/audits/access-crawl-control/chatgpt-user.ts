@@ -10,7 +10,7 @@ export class ChatgptUserAudit extends CrawlerBotAudit {
     title: "ChatGPT-User allowed",
     failureTitle: "ChatGPT-User allowed",
     description:
-      "Without an explicit robots.txt rule, ChatGPT-User may still crawl your site but has no signal that it is welcome. Adding an explicit allow rule improves your visibility in AI-powered search and ensures consistent crawler behavior.",
+      "Reads the robots.txt rules that apply to ChatGPT-User — its own group if it has one, otherwise the catch-all — and reports whether they let it fetch the site root. A named group is not required: under RFC 9309 §2.2.1 an open catch-all grants the same access.",
     scoreDisplayMode: "informative",
     weight: weightForGrade("C", "informative"),
     evidenceGrade: "C",
@@ -22,7 +22,7 @@ export class ChatgptUserAudit extends CrawlerBotAudit {
     guidance: {
       impact:
         "Blocking ChatGPT-User prevents ChatGPT from browsing your site in real-time when users ask it to visit your pages. This blocks your content from being cited in ChatGPT Browse conversations, losing a significant source of AI-driven traffic.",
-      fix: "Add an explicit User-agent: ChatGPT-User with Allow: / rule in your robots.txt file.",
+      fix: "If the block was not intended, remove the Disallow rule that applies to ChatGPT-User. A named `User-agent: ChatGPT-User` group with `Allow: /` also lifts it, but under RFC 9309 §2.2.1 a named group replaces the catch-all for that bot, so copy into it every catch-all Disallow line ChatGPT-User should still obey.",
       code: "User-agent: ChatGPT-User\nAllow: /",
       effort: "trivial",
       docsUrl: "https://platform.openai.com/docs/bots/overview",

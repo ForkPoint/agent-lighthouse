@@ -112,6 +112,11 @@ export interface CrawlerBot {
   category: "training" | "realtime";
   /** Optional alias bot names to also check (e.g. ClaudeBot for anthropic-ai) */
   aliases?: string[];
+  /**
+   * True for a usage-control token such as Google-Extended: robots.txt rules
+   * name it, but no request carries it, so report copy must not say it crawls.
+   */
+  controlToken?: boolean;
 }
 
 export const TRAINING_CRAWLERS: CrawlerBot[] = [
