@@ -1,7 +1,8 @@
 import type { AuditMeta, AuditResult } from "../../types";
 import { Audit } from "../../audit";
 import type { CheckContext } from "../../check-context";
-import { parseRobotsTxt, isAllowed } from "./_robots-txt-helpers";
+import { parseRobotsFile, type RobotsGroup } from "../../gatherers/robots";
+import { isAllowed } from "./_robots-txt-helpers";
 import { weightForGrade } from "../../scorer";
 
 /**
@@ -83,13 +84,10 @@ const DIRECTIVE_BOTS: DirectiveBot[] = [
 const SCORED_BOTS = DIRECTIVE_BOTS.filter((b) => b.documentedActive);
 
 const EXPECTED =
-  "An explicit User-agent group for each documented AI bot (YouBot, AI2Bot) stating the access policy you intend";
+  "No robots.txt rule that disallows / for a documented AI bot (YouBot, AI2Bot)";
 
 /** Resolve one bot's stance against the parsed robots.txt groups. */
-function stanceFor(
-  groups: ReturnType<typeof parseRobotsTxt>,
-  bot: DirectiveBot,
-): Stance {
+function stanceFor(groups: RobotsGroup[], bot: DirectiveBot): Stance {
   const { explicitly, allowed } = isAllowed(groups, bot.botName);
   if (!allowed) return "blocked";
   return explicitly ? "explicitly allowed" : "allowed by default";
@@ -106,10 +104,9 @@ export class AiBotDirectivesAudit extends Audit {
   static override meta: AuditMeta = {
     id: "access-crawl-control/ai-bot-directives",
     category: "access-crawl-control",
-    title: "AI bot directives are explicit",
-    // Both non-pass paths render under this headline, and one of them is a warn
-    // about an unstated policy, not a block. It has to be true of both.
-    failureTitle: "AI bot directives need attention",
+    title: "Documented AI bots allowed by robots.txt",
+    // A block is the only failing state, so the failure headline names it.
+    failureTitle: "A documented AI bot is blocked in robots.txt",
     description:
       "Reports your robots.txt stance on five long-tail AI bot tokens in one place. Only the bots whose operator publishes crawler documentation — YouBot (You.com) and AI2Bot (Allen Institute) — affect the score, because only those directives have a documented reader. Bytespider, cohere-ai and Diffbot are listed for information: blocking them is a legitimate operational choice that costs no AI-answer visibility.",
     scoreDisplayMode: "ternary",
@@ -122,8 +119,8 @@ export class AiBotDirectivesAudit extends Audit {
     defaultPriority: "medium",
     guidance: {
       impact:
-        "Blocking YouBot removes the site from You.com's live search index; blocking AI2Bot removes it from the Allen Institute's open training corpora while leaving closed commercial crawlers untouched. Leaving either to the wildcard rule means the policy silently flips the day a blanket block is added. The other three tokens carry no comparable consumer, so this audit never penalises blocking them.",
-      fix: "Give YouBot and AI2Bot their own User-agent groups with Allow: / — that is the state this audit passes, because it keeps the documented consumer path open and pins it against a later blanket block. Leaving them to User-agent: * is a warning: the policy is unstated and flips the day a blanket block is added. An explicit Disallow: / for either bot is reported as a failure — it is a legitimate publisher decision, but it does close a documented consumer path, and this audit records that cost rather than hiding it; if that is what you intend, enforce it at the edge too, since robots.txt alone is not a reliable block. Bytespider, cohere-ai and Diffbot never affect the score, whatever you do with them.",
+        "Blocking YouBot removes the site from You.com's live search index; blocking AI2Bot removes it from the Allen Institute's open training corpora while leaving closed commercial crawlers untouched. The other three tokens carry no comparable consumer, so this audit never penalises blocking them.",
+      fix: "Nothing to do while YouBot and AI2Bot are allowed, whether through their own groups or through User-agent: *, which under RFC 9309 §2.2.1 grants the same access. A Disallow: / that reaches either bot is reported as a failure: a legitimate publisher decision, but one that closes a documented consumer path. If the block is unintended, remove it. A named group with Allow: / also lifts it, but a named group replaces the catch-all for that bot, so copy into it every catch-all Disallow line it should still obey. If the block is intended, enforce it at the edge too, since robots.txt alone is not a reliable block. Bytespider, cohere-ai and Diffbot never affect the score, whatever you do with them.",
       code: "User-agent: YouBot\nAllow: /\n\nUser-agent: AI2Bot\nAllow: /",
       effort: "trivial",
       tags: ["robots-txt", "crawler-permissions", "ai-bots"],
@@ -133,20 +130,30 @@ export class AiBotDirectivesAudit extends Audit {
   audit(ctx: CheckContext): AuditResult {
     const robotsFile = ctx.rootFiles["/robots.txt"];
 
-    // No robots.txt at all: every bot is allowed by default, so nothing is
-    // blocked — but no directive is explicit either, which is exactly the
-    // "one blanket block away from silently flipping" state.
+    // Absent artifact, absent verdict. With no robots.txt every bot may fetch
+    // everything (RFC 9309 §2.3.1.3), the same access an open catch-all
+    // grants, so there is no rule to grade and no cost to report.
     if (!robotsFile || robotsFile.status !== 200 || !robotsFile.body) {
-      return this.warn(
-        "No robots.txt found — the documented AI bots are allowed by default, but no directive names them.",
+      return this.notApplicable(
+        "No robots.txt to read, so there are no directives to evaluate for YouBot or AI2Bot.",
         EXPECTED,
         "No robots.txt found",
-        { priority: "medium" },
       );
     }
 
     // Parsed once for all five bots; the v1 audits re-parsed per bot.
-    const groups = parseRobotsTxt(robotsFile.body);
+    const { groups, sitemaps } = parseRobotsFile(robotsFile.body);
+
+    // A 200 that carries no groups, no sitemaps and no directives is a soft 404
+    // — an HTML error page served at /robots.txt — not a permissive rules file.
+    if (groups.length === 0 && sitemaps.length === 0) {
+      return this.notApplicable(
+        "The response at /robots.txt carries no crawl rules, so there is nothing to evaluate for YouBot or AI2Bot.",
+        EXPECTED,
+        "robots.txt contains no user-agent groups and no directives",
+      );
+    }
+
     const rows = DIRECTIVE_BOTS.map((bot) => ({
       bot,
       stance: stanceFor(groups, bot),
@@ -155,9 +162,6 @@ export class AiBotDirectivesAudit extends Audit {
 
     const scoredRows = rows.filter((r) => r.bot.documentedActive);
     const blocked = scoredRows.filter((r) => r.stance === "blocked");
-    const implicit = scoredRows.filter(
-      (r) => r.stance === "allowed by default",
-    );
 
     if (blocked.length > 0) {
       const names = blocked.map((r) => r.bot.displayName).join(", ");
@@ -169,26 +173,29 @@ export class AiBotDirectivesAudit extends Audit {
       );
     }
 
-    if (implicit.length > 0) {
-      const names = implicit.map((r) => r.bot.displayName).join(", ");
-      const verb = implicit.length === 1 ? "is" : "are";
-      // "Allowed only through the wildcard rule" is false when there is no
-      // wildcard group: those bots are allowed because nothing in robots.txt
-      // mentions them at all. Both states warn, for the same reason — the
-      // policy is unstated — but they are not the same state.
-      const hasWildcard = groups.some((g) => g.userAgent === "*");
-      return this.warn(
-        hasWildcard
-          ? `${names} ${verb} allowed only through the wildcard rule — no explicit directive.`
-          : `${names} ${verb} allowed by default: robots.txt has no directive for them and no wildcard rule either.`,
+    const allNames = SCORED_BOTS.map((b) => b.displayName).join(" and ");
+    const inherited = scoredRows.filter(
+      (r) => r.stance === "allowed by default",
+    );
+    if (inherited.length === 0) {
+      return this.pass(
+        `${allNames} are allowed by their own robots.txt groups.`,
         EXPECTED,
         table,
-        { priority: "medium" },
       );
     }
 
+    // Under RFC 9309 §2.2.1 a bot with no group of its own obeys the
+    // catch-all, so inherited access is the same access a named group grants.
+    // The message still says which rule applied, and does not claim a
+    // catch-all where the file has none.
+    const names = inherited.map((r) => r.bot.displayName).join(", ");
+    const verb = inherited.length === 1 ? "is" : "are";
+    const hasCatchAll = groups.some((g) => g.userAgent.trim() === "*");
     return this.pass(
-      `${SCORED_BOTS.map((b) => b.displayName).join(" and ")} are explicitly allowed in robots.txt.`,
+      hasCatchAll
+        ? `${allNames} are allowed. ${names} ${verb} named by no group, so under RFC 9309 §2.2.1 the catch-all group applies, and it permits /.`
+        : `${allNames} are allowed. ${names} ${verb} named by no group and robots.txt has no catch-all group, so nothing restricts ${inherited.length === 1 ? "it" : "them"}.`,
       EXPECTED,
       table,
     );

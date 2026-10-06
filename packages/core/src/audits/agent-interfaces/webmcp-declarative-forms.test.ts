@@ -82,7 +82,9 @@ describe("WebmcpDeclarativeFormsAudit", () => {
     expect(result.found).toContain("1/2");
   });
 
-  it("fails when a site has forms but exposes none of them", () => {
+  // Absent artifact, absent verdict: WebMCP is an origin trial, and a site
+  // that registers tools imperatively carries no declarative attribute.
+  it("is not applicable when forms exist but none carries WebMCP markup", () => {
     const ctx = mockCheckContext([
       page(`
         <form action="/search"><input name="q" /></form>
@@ -90,8 +92,27 @@ describe("WebmcpDeclarativeFormsAudit", () => {
       `),
     ]);
     const result = audit.audit(ctx);
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe("na");
     expect(result.found).toContain("0/2");
+  });
+
+  // True positive: a parameter description with no toolname registers nothing.
+  it("still fails a form whose only WebMCP markup is toolparamdescription", () => {
+    const ctx = mockCheckContext([
+      page(
+        '<form action="/search"><input name="q" toolparamdescription="Keywords" /></form>',
+      ),
+    ]);
+    const result = audit.audit(ctx);
+    expect(result.status).toBe("fail");
+    expect(result.message).toContain("toolname");
+  });
+
+  it("still fails a form whose only WebMCP markup is toolautosubmit", () => {
+    const ctx = mockCheckContext([
+      page('<form action="/search" toolautosubmit><input name="q" /></form>'),
+    ]);
+    expect(audit.audit(ctx).status).toBe("fail");
   });
 
   // ── a page with no forms has nothing to annotate ──

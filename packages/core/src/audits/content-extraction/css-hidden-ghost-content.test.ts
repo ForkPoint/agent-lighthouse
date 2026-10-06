@@ -139,6 +139,87 @@ describe("CssHiddenGhostContentAudit", () => {
     expect(result.status).toBe("pass");
   });
 
+  // Within one block the last display declaration wins.
+  it("does not count a block whose later declaration shows it again", async () => {
+    const result = await run(
+      `<main><p>${VISIBLE}</p></main><div class="ghost">${BULK}</div>`,
+      SHEET_LINK,
+      sheet(".ghost { display: none; position: relative; display: block }"),
+    );
+    expect(result.status).toBe("pass");
+  });
+
+  // Across rules, a later block for the identical selector overrides.
+  it("does not count a selector a later rule shows again", async () => {
+    const result = await run(
+      `<main><p>${VISIBLE}</p></main><div class="ghost">${BULK}</div>`,
+      SHEET_LINK,
+      sheet(".ghost { display: none } .ghost { display: block !important }"),
+    );
+    expect(result.status).toBe("pass");
+  });
+
+  it("splits a selector list, so a later rule shows only its own member", async () => {
+    const result = await run(
+      `<main><p>${VISIBLE}</p></main><div class="ghost">${BULK}</div><div class="aside">${BULK}</div>`,
+      SHEET_LINK,
+      sheet(".aside, .ghost { display: none } .ghost { display: block }"),
+    );
+    expect(result.status).toBe("fail");
+    expect(result.message).toContain(".aside, .ghost");
+    // Only the .aside copy is counted: half the hidden text, not all of it.
+    const single = await run(
+      `<main><p>${VISIBLE}</p></main><div class="aside">${BULK}</div>`,
+      SHEET_LINK,
+      sheet(".aside { display: none }"),
+    );
+    expect(single.found).toMatch(/^\d+ est\. tokens/);
+    expect(result.found?.match(/^(\d+) est\. tokens/)?.[1]).toBe(
+      single.found?.match(/^(\d+) est\. tokens/)?.[1],
+    );
+  });
+
+  // True positives that must survive.
+  it("lets an earlier !important beat a later plain declaration", async () => {
+    const result = await run(
+      `<main><p>${VISIBLE}</p></main><div class="ghost">${BULK}</div>`,
+      SHEET_LINK,
+      sheet(".ghost { display: none !important } .ghost { display: block }"),
+    );
+    expect(result.status).toBe("fail");
+  });
+
+  it("still counts a collapsed panel that a different selector opens", async () => {
+    const result = await run(
+      `<main><p>${VISIBLE}</p></main><div class="faq-answer">${BULK}</div>`,
+      SHEET_LINK,
+      sheet(
+        ".faq-answer { display: none } .faq-answer.open { display: block }",
+      ),
+    );
+    expect(result.status).toBe("fail");
+  });
+
+  it("does not let a media-query override cancel a base display:none", async () => {
+    const result = await run(
+      `<main><p>${VISIBLE}</p></main><div class="ghost">${BULK}</div>`,
+      SHEET_LINK,
+      sheet(
+        ".ghost { display: none } @media (min-width: 1024px) { .ghost { display: block } }",
+      ),
+    );
+    expect(result.status).toBe("fail");
+  });
+
+  it("still counts a block whose last display declaration is none", async () => {
+    const result = await run(
+      `<main><p>${VISIBLE}</p></main><div class="ghost">${BULK}</div>`,
+      SHEET_LINK,
+      sheet(".ghost { display: block; color: red; display: none }"),
+    );
+    expect(result.status).toBe("fail");
+  });
+
   // Readability already drops these, so counting them would report a cost no
   // extractor actually pays.
   it("excludes a node that already carries an inline hidden marker", async () => {

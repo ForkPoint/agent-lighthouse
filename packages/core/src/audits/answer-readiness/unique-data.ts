@@ -6,10 +6,23 @@ import { getMainContentText } from "../../parser";
 
 // Match only unit/currency/percent/magnitude-anchored figures. A bare
 // `\d+\.\d+` matched shoe sizes, raw JS floats and phone-number fragments,
-// flooding the result with noise; requiring a %, $, thousands-separator or an
-// "x" multiplier keeps genuinely citable statistics.
-const STAT_PATTERN =
-  /\d+(?:\.\d+)?%|\$[\d,]+(?:\.\d{2})?|\b\d{1,3}(?:,\d{3})+\b|\b\d+(?:\.\d+)?x\b/;
+// flooding the result with noise; requiring a %, a currency sign, a
+// thousands-separator or an "x" multiplier keeps genuinely citable statistics.
+//
+// A money amount reads both decimal conventions and the no-break spaces French
+// typography groups thousands with, so "$2,500", "£29.99", "1.200,50 €" and
+// "49,99 €" each count once. The sign may lead or trail.
+const AMOUNT = String.raw`\d+(?:[.,\u00a0\u202f]\d{3})*(?:[.,]\d{1,2})?`;
+const CURRENCY = "[$€£]";
+const STAT_PATTERN = new RegExp(
+  [
+    String.raw`\d+(?:[.,]\d+)?\s?%`,
+    `${CURRENCY}\\s?${AMOUNT}`,
+    `${AMOUNT}\\s?${CURRENCY}`,
+    String.raw`\b\d{1,3}(?:,\d{3})+\b`,
+    String.raw`\b\d+(?:\.\d+)?x\b`,
+  ].join("|"),
+);
 
 export class UniqueDataAudit extends Audit {
   static override meta: AuditMeta = {
@@ -30,6 +43,9 @@ export class UniqueDataAudit extends Audit {
       "rendered-body",
       "sample-adequate",
     ],
+    // The grade-B study measured statistics added to informational content.
+    // A storefront homepage or a product grid is outside that population.
+    applicablePageTypes: ["content"],
     defaultPriority: "medium",
     guidance: {
       impact:

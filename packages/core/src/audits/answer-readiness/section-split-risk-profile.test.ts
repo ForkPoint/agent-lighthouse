@@ -66,6 +66,19 @@ describe("SectionSplitRiskProfileAudit", () => {
     expect(result.found).toContain("THIN");
   });
 
+  // THIN is reported, but no source ties a short section to a lost answer:
+  // a section inside the window cannot be cut, so it cannot chunk badly.
+  it("passes a page whose only findings are THIN cards, reporting them", async () => {
+    const body =
+      ["Boiling", "Descaling", "Warranty"]
+        .map((h) => section(h, 300))
+        .join("") +
+      "<h3>Fast</h3><p>Boils in three minutes.</p><h2>Newsletter</h2><p>Sign up below.</p>";
+    const result = await audit.audit(page(body));
+    expect(result.status).toBe("pass");
+    expect(result.found).toContain("THIN");
+  });
+
   it("flags a table whose markdown exceeds the window as ATOMIC-SPLIT", async () => {
     const rows = Array.from(
       { length: 90 },

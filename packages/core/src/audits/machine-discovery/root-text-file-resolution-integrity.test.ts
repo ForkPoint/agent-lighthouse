@@ -120,6 +120,72 @@ describe("RootTextFileResolutionIntegrityAudit", () => {
     expect(r.details?.["discoveryProbeReliable"]).toBe(false);
   });
 
+  // A random .txt that 301s to the homepage is answered by a redirect, not by
+  // a catch-all. The fetcher follows it, so the final answer is the
+  // homepage's 200 HTML, but the .txt path itself does not serve a file.
+  const toHomepage = (url: string): FetchResult => {
+    const result = mockFetchResult(
+      "<!doctype html><html><body>Home</body></html>",
+      200,
+      "text/html",
+    );
+    result.url = url;
+    result.finalUrl = "https://example.com/";
+    result.redirectChain = [
+      { status: 301, from: url, to: "https://example.com/" },
+    ];
+    return result;
+  };
+
+  it("reads a probe redirected to another path as absent", async () => {
+    const { result } = run({ probe: (url) => toHomepage(url) });
+    const r = await result;
+    expect(r.status).toBe("pass");
+    expect(r.details?.["discoveryProbeReliable"]).toBe(true);
+    expect(r.found).toContain("redirected away");
+  });
+
+  // True positive: a 200 HTML answer at the requested path is still a
+  // catch-all, even when the fetcher reports the final URL.
+  it("still fails an HTML 200 served at the requested path", async () => {
+    const { result } = run({
+      probe: (url) => {
+        const r = mockFetchResult(
+          "<!doctype html><html><body>App</body></html>",
+          200,
+          "text/html",
+        );
+        r.url = url;
+        r.finalUrl = url;
+        return r;
+      },
+    });
+    const r = await result;
+    expect(r.status).toBe("fail");
+    expect(strings(r, "failures").join(" ")).toContain("SPA or HTML catch-all");
+  });
+
+  // A redirect that keeps the path (http to https, apex to www) is not a
+  // redirect away. Its final answer is still judged.
+  it("judges a same-path redirect on its final answer", async () => {
+    const { result } = run({
+      probe: (url) => {
+        const r = mockFetchResult(
+          "<html><body>App</body></html>",
+          200,
+          "text/html",
+        );
+        r.url = url;
+        r.finalUrl = url.replace(
+          "https://example.com",
+          "https://www.example.com",
+        );
+        return r;
+      },
+    });
+    expect((await result).status).toBe("fail");
+  });
+
   it("classifies a text body served as text/html as a wrong content type", async () => {
     const { result } = run({
       probe: (_url, index) =>

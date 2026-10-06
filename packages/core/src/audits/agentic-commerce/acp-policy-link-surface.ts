@@ -64,32 +64,8 @@ const SHELL_BODY_CHARS = 2_000;
 /** Hops allowed before the target counts as unstable. */
 const MAX_REDIRECTS = 3;
 
-/** Multi-label public suffixes common enough to matter for this comparison. */
-const MULTI_SUFFIX = new Set([
-  "co.uk",
-  "org.uk",
-  "ac.uk",
-  "gov.uk",
-  "com.au",
-  "net.au",
-  "org.au",
-  "co.nz",
-  "co.jp",
-  "co.za",
-  "com.br",
-  "com.mx",
-  "co.in",
-  "com.sg",
-  "com.tr",
-]);
-
-/** eTLD+1, using a short suffix list rather than a bundled PSL snapshot. */
-function registrable(host: string): string {
-  const parts = host.toLowerCase().split(".").filter(Boolean);
-  if (parts.length <= 2) return parts.join(".");
-  const lastTwo = parts.slice(-2).join(".");
-  return MULTI_SUFFIX.has(lastTwo) ? parts.slice(-3).join(".") : lastTwo;
-}
+/** The signature every PDF file starts with. */
+const PDF_SIGNATURE = "%PDF-";
 
 /**
  * The first same-page candidate URL for each ACP link type, in document order.
@@ -148,7 +124,6 @@ async function validate(
   type: AcpLinkType,
   url: string,
 ): Promise<Check> {
-  const site = registrable(new URL(ctx.baseUrl).hostname);
   let current: URL;
   try {
     current = new URL(url);
@@ -158,14 +133,10 @@ async function validate(
   if (current.protocol !== "https:") {
     return { type, url, ok: false, reason: "is not served over HTTPS" };
   }
-  if (registrable(current.hostname) !== site) {
-    return {
-      type,
-      url,
-      ok: false,
-      reason: `points at a different registrable domain (${registrable(current.hostname)})`,
-    };
-  }
+  // No domain rule. The ACP `Link` schema asks only for `url: string,
+  // format: uri`, and the feed spec only for a public policy URL, so a
+  // policy hosted on a sister domain or an asset CDN is a usable target.
+  // Every hop is still gated by isSafeUrl() and counted below.
 
   let hops = 0;
   let result;
@@ -203,14 +174,6 @@ async function validate(
           reason: "redirects to an unparseable location",
         };
       }
-      if (registrable(current.hostname) !== site) {
-        return {
-          type,
-          url,
-          ok: false,
-          reason: `redirects off the registrable domain (${registrable(current.hostname)})`,
-        };
-      }
       continue;
     }
     break;
@@ -219,12 +182,29 @@ async function validate(
   if (result.status !== 200) {
     return { type, url, ok: false, reason: `returned HTTP ${result.status}` };
   }
+
+  // A PDF policy is a usable link target: no cited source requires HTML.
+  // Its text is not extracted (no PDF parser is carried), so the soft-404
+  // and text-floor checks below, which read HTML, do not apply to it. The
+  // signature check keeps an error page mislabelled as a PDF from passing.
+  if (/application\/pdf/i.test(result.contentType)) {
+    if (!result.body.startsWith(PDF_SIGNATURE)) {
+      return {
+        type,
+        url,
+        ok: false,
+        reason: "is served as application/pdf but is not a PDF document",
+      };
+    }
+    return { type, url: current.toString(), ok: true };
+  }
+
   if (!/text\/html/i.test(result.contentType)) {
     return {
       type,
       url,
       ok: false,
-      reason: `is served as ${result.contentType || "an unknown type"}, not text/html`,
+      reason: `is served as ${result.contentType || "an unknown type"}, not text/html or application/pdf`,
     };
   }
 
@@ -254,7 +234,7 @@ async function validate(
 }
 
 const EXPECTED =
-  "All 8 ACP link types resolve to HTTPS pages on the merchant’s own registrable domain that return 200 within 3 redirects and carry real policy text in the initial HTML";
+  "All 8 ACP link types resolve over HTTPS, within 3 redirects, to a 200 response that is either a PDF or an HTML page carrying real policy text in the initial HTML";
 
 const SAMPLE = `{
   "links": [
@@ -272,7 +252,7 @@ export class AcpPolicyLinkSurfaceAudit extends Audit {
     title: "ACP link-surface completeness",
     failureTitle: "ACP link-surface completeness",
     description:
-      "Verifies the merchant can populate the `links` array that every ACP CheckoutSession response is required to carry, by resolving each of the 8 enum link types to a stable, HTTPS, no-JS-required, non-soft-404 URL on the merchant's own site.",
+      "Verifies the merchant can populate the `links` array that every ACP CheckoutSession response is required to carry, by resolving each of the 8 enum link types to a stable, HTTPS, no-JS-required, non-soft-404 URL, on any domain, as an HTML page or a PDF.",
     scoreDisplayMode: "ternary",
     weight: weightForGrade("A", "scored"),
     evidenceGrade: "A",
@@ -288,7 +268,7 @@ export class AcpPolicyLinkSurfaceAudit extends Audit {
     guidance: {
       impact:
         "Falsifiable claim: ACP spec 2026-04-17 makes `links` one of the 9 REQUIRED fields on every CheckoutSession response, with type enum {terms_of_use, privacy_policy, return_policy, shipping_policy, contact_us, about_us, faq, support}. Independently, the OpenAI product feed spec makes `seller_privacy_policy` and `seller_tos` HARD-REQUIRED whenever `is_eligible_checkout=true`. Therefore a merchant that cannot produce a resolvable HTTPS URL for terms_of_use and privacy_policy CANNOT set is_eligible_checkout=true and its catalogue is excluded from Instant Checkout no matter how good the feed is. Disproof condition: if a merchant with no reachable ToS URL is observed transacting via ACP Instant Checkout, the check is wrong.",
-      fix: 'Publish all 8 policy pages on your own domain over HTTPS, link them from the site footer with plain <a href> markup, and serve their text in the initial HTML rather than rendering it client-side. Keep each URL stable — one redirect is tolerable, a four-hop chain is not — and make sure a missing policy returns 404 rather than a 200 "page not found" shell. Then paste the resolved URLs straight into the `links` array of your CheckoutSession response.',
+      fix: 'Publish all 8 policy pages over HTTPS, link them from the site footer with plain <a href> markup, and serve their text in the initial HTML rather than rendering it client-side. Keep each URL stable — one redirect is tolerable, a four-hop chain is not — and make sure a missing policy returns 404 rather than a 200 "page not found" shell. Then paste the resolved URLs straight into the `links` array of your CheckoutSession response.',
       code: SAMPLE,
       effort: "easy",
       docsUrl:
@@ -366,7 +346,7 @@ export class AcpPolicyLinkSurfaceAudit extends Audit {
     }
 
     return this.pass(
-      "All 8 ACP link types resolve to stable policy pages on the merchant’s own domain.",
+      "All 8 ACP link types resolve to stable policy pages.",
       EXPECTED,
       found,
       pageUrl,

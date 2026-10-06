@@ -17,6 +17,7 @@ sources:
   - cloudflare-ai-crawler-purpose-industry
   - knownagents-cohere-training-crawler
   - knownagents-diffbot
+  - rfc-9309
 ---
 
 # ai-bot-directives (`2.9`–`2.13`)
@@ -31,12 +32,15 @@ Institute) — because only those two have an operator who publishes crawler
 documentation naming the token, which is what makes the directive readable by
 anyone.
 
-For those two, an explicit `User-agent` group with `Allow: /` passes: it keeps a
-documented consumer path open and pins the policy against a later blanket block.
-Leaving them to the catch-all `*` warns, because the policy is unstated and will
-flip the day a blanket block is added. An explicit `Disallow: /` is reported as a
-failure — a legitimate publisher decision, but one that closes a documented
-consumer path, and this check records that cost rather than hiding it.
+For those two, the check asks one question: do the rules that apply to the
+bot permit `/`? Allowed through its own group, through the catch-all `*`, or by
+no applicable group all pass. Under RFC 9309 §2.2.1 a crawler obeys the group
+that names it and falls back to `*` only when none does, so an open catch-all
+grants the same access a named group would. A `Disallow: /` that reaches either
+bot, whether its own group or a catch-all block, is reported as a failure. That
+is a legitimate publisher decision, but it closes a documented consumer path,
+and this check records that cost rather than hiding it. A site with no
+readable robots.txt is not applicable.
 
 **Bytespider**, **cohere-ai** and **Diffbot** are listed for information only and
 never change the result. Blocking them is a reasonable operational choice that
@@ -44,7 +48,7 @@ costs no AI-answer visibility.
 
 ## Claimed mechanism (falsifiable)
 
-**Falsifiable claim:** Two AI bots have operators who publish crawler documentation naming the product token: YouBot (You.com) and AI2Bot (Allen Institute). For those, a `User-agent:` group in `robots.txt` is read by the operator. It determines whether the site enters that operator's corpus or index. A `Disallow: /` for those tokens therefore closes a documented consumer path; an explicit `Allow: /` keeps it open and pins the policy against a later blanket block.
+**Falsifiable claim:** Two AI bots have operators who publish crawler documentation naming the product token: YouBot (You.com) and AI2Bot (Allen Institute). For those, a `User-agent:` group in `robots.txt` is read by the operator. It determines whether the site enters that operator's corpus or index. A `Disallow: /` that reaches those tokens therefore closes a documented consumer path. An open path needs no named group: under RFC 9309 §2.2.1 a crawler with no group of its own obeys the catch-all `*`.
 
 **Falsifiable the other way:** for the three remaining tokens (Bytespider, cohere-ai, Diffbot) no such documented reader could be located, and for Bytespider the directive is measured being ignored. Those rows are therefore reported but never scored — blocking them is a legitimate operational choice with no measurable AI-answer cost.
 
@@ -58,7 +62,7 @@ The five source dossiers graded: bytespider **C**, cohere-ai **C**, youbot **A**
 
 Note the internal consistency this restores — and note that the two cases are _not_ symmetric. The _same_ TollBit finding capped Bytespider at C — "the consumer exists but the mechanism is empirically unreliable" — while YouBot kept an A. One of the two stamps had to move. Only YouBot's needed to, and only by one step. Bytespider's C rests on **two** negatives: no vendor documentation of any kind **plus** measured non-compliance. YouBot's demotion rests on **one**: measured non-compliance _despite_ vendor documentation that is the most detailed of the five. Documented-but-unreliable is a strictly stronger evidence position than undocumented-and-unreliable, which is exactly why YouBot lands at B rather than being dragged down to Bytespider's C.
 
-That is also the disposition of YouBot inside this audit. **YouBot's own contribution is held at B, not C, and it stays in the scored set.** An unreliable mechanism is still a documented mechanism. A YouBot directive therefore continues to move the score: a block fails, and a wildcard-only allow warns. The cap is therefore a live judgement, with a re-review trigger in both directions. If a later measurement round finds YouBot honouring `robots.txt` after all, the A case reopens and this section should be re-litigated. If sustained non-compliance is confirmed instead, YouBot leaves the scored set, and the merged grade rests on AI2Bot alone (see counter-evidence below).
+That is also the disposition of YouBot inside this audit. **YouBot's own contribution is held at B, not C, and it stays in the scored set.** An unreliable mechanism is still a documented mechanism. A YouBot directive therefore continues to move the score: a block fails. The cap is therefore a live judgement, with a re-review trigger in both directions. If a later measurement round finds YouBot honouring `robots.txt` after all, the A case reopens and this section should be re-litigated. If sustained non-compliance is confirmed instead, YouBot leaves the scored set, and the merged grade rests on AI2Bot alone (see counter-evidence below).
 
 ## Per-bot evidence
 
@@ -106,11 +110,56 @@ That is also the disposition of YouBot inside this audit. **YouBot's own contrib
 
 - **The scored pair is low-volume.** Neither YouBot nor AI2Bot appears in a Cloudflare Radar top-five breakdown. The audit scores the _documentedness_ of the directive, not traffic, and its weight (0.6, grade B) is priced accordingly — it cannot dominate a category the way five weight-1.0 checks did.
 - **YouBot's compliance claim is disputed** (TollBit). If a future re-review confirms sustained non-compliance, YouBot drops out of the scored set and the merged grade falls to B on AI2Bot alone (weight unchanged) — or to C/informative if AI2Bot's evidence also degrades.
-- **"Allow" is not universally correct — but the score is not neutral about it either.** Blocking either scored bot is a defensible publisher choice, and the audit says so at medium, never high, priority. The three states mean this. An explicit `Allow: /` for YouBot and AI2Bot is the **pass**: the documented consumer path is open and pinned. A bot left to `User-agent: *` is a **warn**: the policy is unstated, and it flips the day a blanket block lands. An explicit `Disallow: /` for either bot is a **fail**: a documented compliant consumer path is closed, and the audit records that cost rather than hiding it. Stating a block deliberately is more honest than inheriting one, but it does not neutralise the fail. The fail is the recorded price of the choice, not an accusation of a mistake. The fix text is written so that following it never scores worse than doing nothing.
+- **"Allow" is not universally correct, and the score does not reward stating it.** Blocking either scored bot is a defensible publisher choice, and the audit says so at medium, never high, priority. Two states remain. A bot whose applicable rules permit `/` passes, whether the rule is its own group, the catch-all `*`, or no group at all: under RFC 9309 §2.2.1 the three grant identical access. A `Disallow: /` that reaches either bot is a **fail**: a documented compliant consumer path is closed, and the audit records that cost rather than hiding it. The fail is the recorded price of the choice, not an accusation of a mistake. The fix text is written so that following it never scores worse than doing nothing.
 - **Overlaps** with `access-crawl-control/no-blanket-block` (2.22) and `access-crawl-control/agent-governance` (2.28), both of which read the same file. All three now consume the shared RFC 9309 gatherer, so parsing behaviour (BOM, exact-match, wildcard paths) is fixed in one place.
+
+## Implementation deviations
+
+### Inherited access passes (2026-10-06)
+
+The audit warned at 0.5 when YouBot or AI2Bot was allowed through
+`User-agent: *` or by no rule at all. The stated reason was that the policy
+"flips the day a blanket block is added".
+
+No source supports that warn. Neither You.com nor the Allen Institute documents
+treating a named `Allow: /` group differently from inherited access. RFC 9309
+§2.2.1 makes a crawler obey the group that names its product token and fall
+back to `*` only when none exists, so the two states grant identical access.
+A later blanket block is a future edit, and this audit fails it when it lands.
+Scoring a risk the site has not taken is speculation the evidence policy does
+not allow.
+
+The named-group advice also had a cost. A `User-agent: YouBot` / `Allow: /`
+group replaces the catch-all for YouBot, so it drops every catch-all
+`Disallow` the site meant to apply.
+
+The rule now asks one question per scored bot: do the rules that apply to it
+permit `/`? A block that reaches either bot still fails. An unreadable
+robots.txt is not applicable, as in `access-crawl-control/meta-external-agent`:
+missing, non-200, empty, or a 200 that parses to no groups and no directives.
+A site with no robots.txt had received the same warn as a site with an open
+catch-all. Neither is penalised now.
+
+The title moved from "AI bot directives are explicit" to "Documented AI bots
+allowed by robots.txt". The failure title moved to "A documented AI bot is
+blocked in robots.txt", because a block is now the only failing state. The
+per-bot table keeps its stance labels: "allowed by default" is still an
+accurate description of a row. `guidance.code` still shows the named
+`Allow: /` snippet, and the fix text carries the caveat.
+
+Grade, tier and weight are unchanged at B, scored, 0.6.
+
+## Deferred
+
+- **A 5xx robots.txt.** RFC 9309 §2.3.1.4 tells a crawler to assume a complete
+  disallow when robots.txt is unreachable. This audit reports any non-200 as
+  not applicable and does not grade that case.
+
+```
 
 ## Review history
 
 - 2026-08-20 — code review (11-agent workflow) + evidence research (12-domain workflow, 400 sources) on the five source audits.
 - 2026-08-21 — five dossiers generated; REWORK-TODO records the consolidation requirement.
 - 2026-08-22 — consolidated into this audit (Plan 4, Task 2). Source dossiers preserved at [`docs/evidence/merged/access-crawl-control/`](../../merged/access-crawl-control/).
+```

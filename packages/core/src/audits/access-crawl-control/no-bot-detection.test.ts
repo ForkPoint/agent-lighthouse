@@ -54,6 +54,23 @@ describe("NoBotDetectionAudit", () => {
     expect(result.found).toContain("Cloudflare Turnstile");
   });
 
+  // The dossier grades a form-scoped widget D. A page the scan read was not
+  // walled, so a loader on it is not a finding.
+  it("passes a readable page that loads Turnstile for its forms", () => {
+    const prose = "Browse our collection of jackets, boots and bags. ".repeat(
+      10,
+    );
+    const pages = [
+      mockPageContext(
+        "https://example.com/",
+        `<html><head><script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit"></script></head><body><main><h1>Shop</h1><p>${prose}</p></main><form action="/newsletter"><input name="email"></form></body></html>`,
+      ),
+    ];
+    const result = audit.audit(mockCheckContext(pages));
+    expect(result.status).toBe("pass");
+    expect(result.message).toContain("Cloudflare Turnstile");
+  });
+
   it("warns when no pages were scanned", () => {
     const ctx = mockCheckContext([]);
     const result = audit.audit(ctx);

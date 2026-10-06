@@ -231,6 +231,19 @@ describe("robots.txt consumers — shared-gatherer differential", () => {
 // three that disallow it stay `fail`/0 with new text at priority `medium`. No
 // other audit's rows moved.
 
+// Regenerated a fourth time, deliberately (2026-10-06): the per-bot base class
+// `_crawler-bot-audit.ts` now scores access, not the shape of the file.
+// gptbot's rows that leave GPTBot able to fetch `/` through the catch-all, or
+// through no applicable group, move from `warn`/0.5 to `pass`/1; the four
+// fixtures with no readable robots.txt move from `warn` to `na`; the blocked
+// rows stay `fail`/0 with a `found` that names the group that applied. No
+// other audit's rows moved.
+// Regenerated deliberately (2026-10-06): ai-bot-directives stopped warning
+// when YouBot or AI2Bot is allowed through the catch-all or by no applicable
+// group. RFC 9309 §2.2.1 grants the same access either way. Those fixtures
+// move from `warn` to `pass`; the four with no readable robots.txt move from
+// `warn` to `na`; the three that block a scored bot stay `fail`. No other
+// audit's rows moved.
 const BASELINE: Record<string, Record<string, Row>> = {
   "no-blanket-block": {
     missing: {
@@ -750,47 +763,46 @@ const BASELINE: Record<string, Record<string, Row>> = {
   },
   "ai-bot-directives": {
     missing: {
-      status: "warn",
-      score: 0.5,
+      status: "na",
+      score: 0,
       message:
-        "No robots.txt found — the documented AI bots are allowed by default, but no directive names them.",
+        "No robots.txt to read, so there are no directives to evaluate for YouBot or AI2Bot.",
       found: "No robots.txt found",
       priority: "medium",
       details: "{}",
     },
     "non-200": {
-      status: "warn",
-      score: 0.5,
+      status: "na",
+      score: 0,
       message:
-        "No robots.txt found — the documented AI bots are allowed by default, but no directive names them.",
+        "No robots.txt to read, so there are no directives to evaluate for YouBot or AI2Bot.",
       found: "No robots.txt found",
       priority: "medium",
       details: "{}",
     },
     empty: {
-      status: "warn",
-      score: 0.5,
+      status: "na",
+      score: 0,
       message:
-        "No robots.txt found — the documented AI bots are allowed by default, but no directive names them.",
+        "No robots.txt to read, so there are no directives to evaluate for YouBot or AI2Bot.",
       found: "No robots.txt found",
       priority: "medium",
       details: "{}",
     },
     "html-error-page": {
-      status: "warn",
-      score: 0.5,
+      status: "na",
+      score: 0,
       message:
-        "YouBot, AI2Bot are allowed by default: robots.txt has no directive for them and no wildcard rule either.",
-      found:
-        "YouBot: allowed by default (scored — You.com publishes a crawler page and a robots.txt compliance claim (field measurement disputes it; see dossier))\nAI2Bot: allowed by default (scored — the Allen Institute publishes the user-agent so operators can filter it; feeds the open Dolma corpora)\nBytespider: allowed by default (informational — no English vendor documentation, and measured fetching disallowed URLs; enforce at the edge, not in robots.txt)\ncohere-ai: allowed by default (informational — undocumented legacy token with no verified consumer (Cohere's observed crawler is cohere-training-data-crawler))\nDiffbot: allowed by default (informational — commercial extraction vendor with no published compliance statement; blocking it costs no AI-answer visibility)",
+        "The response at /robots.txt carries no crawl rules, so there is nothing to evaluate for YouBot or AI2Bot.",
+      found: "robots.txt contains no user-agent groups and no directives",
       priority: "medium",
       details: "{}",
     },
     "wildcard-allow": {
-      status: "warn",
-      score: 0.5,
+      status: "pass",
+      score: 1,
       message:
-        "YouBot, AI2Bot are allowed only through the wildcard rule — no explicit directive.",
+        "YouBot and AI2Bot are allowed. YouBot, AI2Bot are named by no group, so under RFC 9309 §2.2.1 the catch-all group applies, and it permits /.",
       found:
         "YouBot: allowed by default (scored — You.com publishes a crawler page and a robots.txt compliance claim (field measurement disputes it; see dossier))\nAI2Bot: allowed by default (scored — the Allen Institute publishes the user-agent so operators can filter it; feeds the open Dolma corpora)\nBytespider: allowed by default (informational — no English vendor documentation, and measured fetching disallowed URLs; enforce at the edge, not in robots.txt)\ncohere-ai: allowed by default (informational — undocumented legacy token with no verified consumer (Cohere's observed crawler is cohere-training-data-crawler))\nDiffbot: allowed by default (informational — commercial extraction vendor with no published compliance statement; blocking it costs no AI-answer visibility)",
       priority: "medium",
@@ -807,10 +819,10 @@ const BASELINE: Record<string, Record<string, Row>> = {
       details: "{}",
     },
     "blanket-block-countered": {
-      status: "warn",
-      score: 0.5,
+      status: "pass",
+      score: 1,
       message:
-        "YouBot, AI2Bot are allowed only through the wildcard rule — no explicit directive.",
+        "YouBot and AI2Bot are allowed. YouBot, AI2Bot are named by no group, so under RFC 9309 §2.2.1 the catch-all group applies, and it permits /.",
       found:
         "YouBot: allowed by default (scored — You.com publishes a crawler page and a robots.txt compliance claim (field measurement disputes it; see dossier))\nAI2Bot: allowed by default (scored — the Allen Institute publishes the user-agent so operators can filter it; feeds the open Dolma corpora)\nBytespider: allowed by default (informational — no English vendor documentation, and measured fetching disallowed URLs; enforce at the edge, not in robots.txt)\ncohere-ai: allowed by default (informational — undocumented legacy token with no verified consumer (Cohere's observed crawler is cohere-training-data-crawler))\nDiffbot: allowed by default (informational — commercial extraction vendor with no published compliance statement; blocking it costs no AI-answer visibility)",
       priority: "medium",
@@ -827,100 +839,100 @@ const BASELINE: Record<string, Record<string, Row>> = {
       details: "{}",
     },
     "both-categories": {
-      status: "warn",
-      score: 0.5,
+      status: "pass",
+      score: 1,
       message:
-        "YouBot, AI2Bot are allowed only through the wildcard rule — no explicit directive.",
+        "YouBot and AI2Bot are allowed. YouBot, AI2Bot are named by no group, so under RFC 9309 §2.2.1 the catch-all group applies, and it permits /.",
       found:
         "YouBot: allowed by default (scored — You.com publishes a crawler page and a robots.txt compliance claim (field measurement disputes it; see dossier))\nAI2Bot: allowed by default (scored — the Allen Institute publishes the user-agent so operators can filter it; feeds the open Dolma corpora)\nBytespider: allowed by default (informational — no English vendor documentation, and measured fetching disallowed URLs; enforce at the edge, not in robots.txt)\ncohere-ai: allowed by default (informational — undocumented legacy token with no verified consumer (Cohere's observed crawler is cohere-training-data-crawler))\nDiffbot: allowed by default (informational — commercial extraction vendor with no published compliance statement; blocking it costs no AI-answer visibility)",
       priority: "medium",
       details: "{}",
     },
     "versioned-product-token": {
-      status: "warn",
-      score: 0.5,
+      status: "pass",
+      score: 1,
       message:
-        "YouBot, AI2Bot are allowed only through the wildcard rule — no explicit directive.",
+        "YouBot and AI2Bot are allowed. YouBot, AI2Bot are named by no group, so under RFC 9309 §2.2.1 the catch-all group applies, and it permits /.",
       found:
         "YouBot: allowed by default (scored — You.com publishes a crawler page and a robots.txt compliance claim (field measurement disputes it; see dossier))\nAI2Bot: allowed by default (scored — the Allen Institute publishes the user-agent so operators can filter it; feeds the open Dolma corpora)\nBytespider: allowed by default (informational — no English vendor documentation, and measured fetching disallowed URLs; enforce at the edge, not in robots.txt)\ncohere-ai: allowed by default (informational — undocumented legacy token with no verified consumer (Cohere's observed crawler is cohere-training-data-crawler))\nDiffbot: allowed by default (informational — commercial extraction vendor with no published compliance statement; blocking it costs no AI-answer visibility)",
       priority: "medium",
       details: "{}",
     },
     "mixed-case-tokens": {
-      status: "warn",
-      score: 0.5,
+      status: "pass",
+      score: 1,
       message:
-        "YouBot, AI2Bot are allowed by default: robots.txt has no directive for them and no wildcard rule either.",
+        "YouBot and AI2Bot are allowed. YouBot, AI2Bot are named by no group and robots.txt has no catch-all group, so nothing restricts them.",
       found:
         "YouBot: allowed by default (scored — You.com publishes a crawler page and a robots.txt compliance claim (field measurement disputes it; see dossier))\nAI2Bot: allowed by default (scored — the Allen Institute publishes the user-agent so operators can filter it; feeds the open Dolma corpora)\nBytespider: allowed by default (informational — no English vendor documentation, and measured fetching disallowed URLs; enforce at the edge, not in robots.txt)\ncohere-ai: allowed by default (informational — undocumented legacy token with no verified consumer (Cohere's observed crawler is cohere-training-data-crawler))\nDiffbot: allowed by default (informational — commercial extraction vendor with no published compliance statement; blocking it costs no AI-answer visibility)",
       priority: "medium",
       details: "{}",
     },
     "anthropic-alias-only": {
-      status: "warn",
-      score: 0.5,
+      status: "pass",
+      score: 1,
       message:
-        "YouBot, AI2Bot are allowed only through the wildcard rule — no explicit directive.",
+        "YouBot and AI2Bot are allowed. YouBot, AI2Bot are named by no group, so under RFC 9309 §2.2.1 the catch-all group applies, and it permits /.",
       found:
         "YouBot: allowed by default (scored — You.com publishes a crawler page and a robots.txt compliance claim (field measurement disputes it; see dossier))\nAI2Bot: allowed by default (scored — the Allen Institute publishes the user-agent so operators can filter it; feeds the open Dolma corpora)\nBytespider: allowed by default (informational — no English vendor documentation, and measured fetching disallowed URLs; enforce at the edge, not in robots.txt)\ncohere-ai: allowed by default (informational — undocumented legacy token with no verified consumer (Cohere's observed crawler is cohere-training-data-crawler))\nDiffbot: allowed by default (informational — commercial extraction vendor with no published compliance statement; blocking it costs no AI-answer visibility)",
       priority: "medium",
       details: "{}",
     },
     "comments-and-crlf": {
-      status: "warn",
-      score: 0.5,
+      status: "pass",
+      score: 1,
       message:
-        "YouBot, AI2Bot are allowed only through the wildcard rule — no explicit directive.",
+        "YouBot and AI2Bot are allowed. YouBot, AI2Bot are named by no group, so under RFC 9309 §2.2.1 the catch-all group applies, and it permits /.",
       found:
         "YouBot: allowed by default (scored — You.com publishes a crawler page and a robots.txt compliance claim (field measurement disputes it; see dossier))\nAI2Bot: allowed by default (scored — the Allen Institute publishes the user-agent so operators can filter it; feeds the open Dolma corpora)\nBytespider: allowed by default (informational — no English vendor documentation, and measured fetching disallowed URLs; enforce at the edge, not in robots.txt)\ncohere-ai: allowed by default (informational — undocumented legacy token with no verified consumer (Cohere's observed crawler is cohere-training-data-crawler))\nDiffbot: allowed by default (informational — commercial extraction vendor with no published compliance statement; blocking it costs no AI-answer visibility)",
       priority: "medium",
       details: "{}",
     },
     "bom-prefixed": {
-      status: "warn",
-      score: 0.5,
+      status: "pass",
+      score: 1,
       message:
-        "YouBot, AI2Bot are allowed only through the wildcard rule — no explicit directive.",
+        "YouBot and AI2Bot are allowed. YouBot, AI2Bot are named by no group, so under RFC 9309 §2.2.1 the catch-all group applies, and it permits /.",
       found:
         "YouBot: allowed by default (scored — You.com publishes a crawler page and a robots.txt compliance claim (field measurement disputes it; see dossier))\nAI2Bot: allowed by default (scored — the Allen Institute publishes the user-agent so operators can filter it; feeds the open Dolma corpora)\nBytespider: allowed by default (informational — no English vendor documentation, and measured fetching disallowed URLs; enforce at the edge, not in robots.txt)\ncohere-ai: allowed by default (informational — undocumented legacy token with no verified consumer (Cohere's observed crawler is cohere-training-data-crawler))\nDiffbot: allowed by default (informational — commercial extraction vendor with no published compliance statement; blocking it costs no AI-answer visibility)",
       priority: "medium",
       details: "{}",
     },
     "crawl-delay-reasonable": {
-      status: "warn",
-      score: 0.5,
+      status: "pass",
+      score: 1,
       message:
-        "YouBot, AI2Bot are allowed only through the wildcard rule — no explicit directive.",
+        "YouBot and AI2Bot are allowed. YouBot, AI2Bot are named by no group, so under RFC 9309 §2.2.1 the catch-all group applies, and it permits /.",
       found:
         "YouBot: allowed by default (scored — You.com publishes a crawler page and a robots.txt compliance claim (field measurement disputes it; see dossier))\nAI2Bot: allowed by default (scored — the Allen Institute publishes the user-agent so operators can filter it; feeds the open Dolma corpora)\nBytespider: allowed by default (informational — no English vendor documentation, and measured fetching disallowed URLs; enforce at the edge, not in robots.txt)\ncohere-ai: allowed by default (informational — undocumented legacy token with no verified consumer (Cohere's observed crawler is cohere-training-data-crawler))\nDiffbot: allowed by default (informational — commercial extraction vendor with no published compliance statement; blocking it costs no AI-answer visibility)",
       priority: "medium",
       details: "{}",
     },
     "crawl-delay-excessive": {
-      status: "warn",
-      score: 0.5,
+      status: "pass",
+      score: 1,
       message:
-        "YouBot, AI2Bot are allowed only through the wildcard rule — no explicit directive.",
+        "YouBot and AI2Bot are allowed. YouBot, AI2Bot are named by no group, so under RFC 9309 §2.2.1 the catch-all group applies, and it permits /.",
       found:
         "YouBot: allowed by default (scored — You.com publishes a crawler page and a robots.txt compliance claim (field measurement disputes it; see dossier))\nAI2Bot: allowed by default (scored — the Allen Institute publishes the user-agent so operators can filter it; feeds the open Dolma corpora)\nBytespider: allowed by default (informational — no English vendor documentation, and measured fetching disallowed URLs; enforce at the edge, not in robots.txt)\ncohere-ai: allowed by default (informational — undocumented legacy token with no verified consumer (Cohere's observed crawler is cohere-training-data-crawler))\nDiffbot: allowed by default (informational — commercial extraction vendor with no published compliance statement; blocking it costs no AI-answer visibility)",
       priority: "medium",
       details: "{}",
     },
     "grouped-agents": {
-      status: "warn",
-      score: 0.5,
+      status: "pass",
+      score: 1,
       message:
-        "YouBot, AI2Bot are allowed only through the wildcard rule — no explicit directive.",
+        "YouBot and AI2Bot are allowed. YouBot, AI2Bot are named by no group, so under RFC 9309 §2.2.1 the catch-all group applies, and it permits /.",
       found:
         "YouBot: allowed by default (scored — You.com publishes a crawler page and a robots.txt compliance claim (field measurement disputes it; see dossier))\nAI2Bot: allowed by default (scored — the Allen Institute publishes the user-agent so operators can filter it; feeds the open Dolma corpora)\nBytespider: allowed by default (informational — no English vendor documentation, and measured fetching disallowed URLs; enforce at the edge, not in robots.txt)\ncohere-ai: allowed by default (informational — undocumented legacy token with no verified consumer (Cohere's observed crawler is cohere-training-data-crawler))\nDiffbot: allowed by default (informational — commercial extraction vendor with no published compliance statement; blocking it costs no AI-answer visibility)",
       priority: "medium",
       details: "{}",
     },
     "sensitive-paths-disallowed": {
-      status: "warn",
-      score: 0.5,
+      status: "pass",
+      score: 1,
       message:
-        "YouBot, AI2Bot are allowed only through the wildcard rule — no explicit directive.",
+        "YouBot and AI2Bot are allowed. YouBot, AI2Bot are named by no group, so under RFC 9309 §2.2.1 the catch-all group applies, and it permits /.",
       found:
         "YouBot: allowed by default (scored — You.com publishes a crawler page and a robots.txt compliance claim (field measurement disputes it; see dossier))\nAI2Bot: allowed by default (scored — the Allen Institute publishes the user-agent so operators can filter it; feeds the open Dolma corpora)\nBytespider: allowed by default (informational — no English vendor documentation, and measured fetching disallowed URLs; enforce at the edge, not in robots.txt)\ncohere-ai: allowed by default (informational — undocumented legacy token with no verified consumer (Cohere's observed crawler is cohere-training-data-crawler))\nDiffbot: allowed by default (informational — commercial extraction vendor with no published compliance statement; blocking it costs no AI-answer visibility)",
       priority: "medium",
@@ -929,7 +941,7 @@ const BASELINE: Record<string, Record<string, Row>> = {
     "youbot-and-ai2bot-explicit": {
       status: "pass",
       score: 1,
-      message: "YouBot and AI2Bot are explicitly allowed in robots.txt.",
+      message: "YouBot and AI2Bot are allowed by their own robots.txt groups.",
       found:
         "YouBot: explicitly allowed (scored — You.com publishes a crawler page and a robots.txt compliance claim (field measurement disputes it; see dossier))\nAI2Bot: explicitly allowed (scored — the Allen Institute publishes the user-agent so operators can filter it; feeds the open Dolma corpora)\nBytespider: allowed by default (informational — no English vendor documentation, and measured fetching disallowed URLs; enforce at the edge, not in robots.txt)\ncohere-ai: allowed by default (informational — undocumented legacy token with no verified consumer (Cohere's observed crawler is cohere-training-data-crawler))\nDiffbot: allowed by default (informational — commercial extraction vendor with no published compliance statement; blocking it costs no AI-answer visibility)",
       priority: "medium",
@@ -948,47 +960,47 @@ const BASELINE: Record<string, Record<string, Row>> = {
   },
   gptbot: {
     missing: {
-      status: "warn",
-      score: 0.5,
+      status: "na",
+      score: 0,
       message:
-        "robots.txt not found — GPTBot is allowed by default but not explicitly.",
+        "No robots.txt to read, so there are no crawl rules to evaluate for GPTBot.",
       found: "No robots.txt found",
       priority: "medium",
       details: "{}",
     },
     "non-200": {
-      status: "warn",
-      score: 0.5,
+      status: "na",
+      score: 0,
       message:
-        "robots.txt not found — GPTBot is allowed by default but not explicitly.",
+        "No robots.txt to read, so there are no crawl rules to evaluate for GPTBot.",
       found: "No robots.txt found",
       priority: "medium",
       details: "{}",
     },
     empty: {
-      status: "warn",
-      score: 0.5,
+      status: "na",
+      score: 0,
       message:
-        "robots.txt not found — GPTBot is allowed by default but not explicitly.",
+        "No robots.txt to read, so there are no crawl rules to evaluate for GPTBot.",
       found: "No robots.txt found",
       priority: "medium",
       details: "{}",
     },
     "html-error-page": {
-      status: "warn",
-      score: 0.5,
+      status: "na",
+      score: 0,
       message:
-        "GPTBot is allowed by default (no specific rules), but not explicitly allowed.",
-      found: "No explicit rules for GPTBot — allowed via wildcard or default",
+        "The response at /robots.txt carries no crawl rules, so there is nothing to evaluate for GPTBot.",
+      found: "robots.txt contains no user-agent groups and no directives",
       priority: "medium",
       details: "{}",
     },
     "wildcard-allow": {
-      status: "warn",
-      score: 0.5,
+      status: "pass",
+      score: 1,
       message:
-        "GPTBot is allowed by default (no specific rules), but not explicitly allowed.",
-      found: "No explicit rules for GPTBot — allowed via wildcard or default",
+        "GPTBot is allowed. No group names it, so under RFC 9309 §2.2.1 the catch-all group applies, and it permits /.",
+      found: "Allowed through the catch-all group",
       priority: "medium",
       details: "{}",
     },
@@ -996,16 +1008,16 @@ const BASELINE: Record<string, Record<string, Row>> = {
       status: "fail",
       score: 0,
       message: "GPTBot is blocked by robots.txt.",
-      found: "GPTBot is disallowed (Disallow: /)",
+      found: "The catch-all group disallows / and no group names GPTBot",
       priority: "high",
       details: "{}",
     },
     "blanket-block-countered": {
-      status: "warn",
-      score: 0.5,
+      status: "pass",
+      score: 1,
       message:
-        "GPTBot is allowed by default (no specific rules), but not explicitly allowed.",
-      found: "No explicit rules for GPTBot — allowed via wildcard or default",
+        "GPTBot is allowed. No group names it, so under RFC 9309 §2.2.1 the catch-all group applies, and it permits /.",
+      found: "Allowed through the catch-all group",
       priority: "medium",
       details: "{}",
     },
@@ -1013,7 +1025,7 @@ const BASELINE: Record<string, Record<string, Row>> = {
       status: "fail",
       score: 0,
       message: "GPTBot is blocked by robots.txt.",
-      found: "GPTBot is disallowed (Disallow: /)",
+      found: "The catch-all group disallows / and no group names GPTBot",
       priority: "high",
       details: "{}",
     },
@@ -1021,7 +1033,7 @@ const BASELINE: Record<string, Record<string, Row>> = {
       status: "fail",
       score: 0,
       message: "GPTBot is blocked by robots.txt.",
-      found: "GPTBot is disallowed (Disallow: /)",
+      found: "Its own group (User-agent: GPTBot) disallows /",
       priority: "high",
       details: "{}",
     },
@@ -1029,7 +1041,7 @@ const BASELINE: Record<string, Record<string, Row>> = {
       status: "fail",
       score: 0,
       message: "GPTBot is blocked by robots.txt.",
-      found: "GPTBot is disallowed (Disallow: /)",
+      found: "Its own group (User-agent: GPTBot) disallows /",
       priority: "high",
       details: "{}",
     },
@@ -1037,51 +1049,51 @@ const BASELINE: Record<string, Record<string, Row>> = {
       status: "fail",
       score: 0,
       message: "GPTBot is blocked by robots.txt.",
-      found: "GPTBot is disallowed (Disallow: /)",
+      found: "Its own group (User-agent: GPTBot) disallows /",
       priority: "high",
       details: "{}",
     },
     "anthropic-alias-only": {
-      status: "warn",
-      score: 0.5,
+      status: "pass",
+      score: 1,
       message:
-        "GPTBot is allowed by default (no specific rules), but not explicitly allowed.",
-      found: "No explicit rules for GPTBot — allowed via wildcard or default",
+        "GPTBot is allowed. No group names it, so under RFC 9309 §2.2.1 the catch-all group applies, and it permits /.",
+      found: "Allowed through the catch-all group",
       priority: "medium",
       details: "{}",
     },
     "comments-and-crlf": {
-      status: "warn",
-      score: 0.5,
+      status: "pass",
+      score: 1,
       message:
-        "GPTBot is allowed by default (no specific rules), but not explicitly allowed.",
-      found: "No explicit rules for GPTBot — allowed via wildcard or default",
+        "GPTBot is allowed. No group names it, so under RFC 9309 §2.2.1 the catch-all group applies, and it permits /.",
+      found: "Allowed through the catch-all group",
       priority: "medium",
       details: "{}",
     },
     "bom-prefixed": {
-      status: "warn",
-      score: 0.5,
+      status: "pass",
+      score: 1,
       message:
-        "GPTBot is allowed by default (no specific rules), but not explicitly allowed.",
-      found: "No explicit rules for GPTBot — allowed via wildcard or default",
+        "GPTBot is allowed. No group names it, so under RFC 9309 §2.2.1 the catch-all group applies, and it permits /.",
+      found: "Allowed through the catch-all group",
       priority: "medium",
       details: "{}",
     },
     "crawl-delay-reasonable": {
-      status: "warn",
-      score: 0.5,
+      status: "pass",
+      score: 1,
       message:
-        "GPTBot is allowed by default (no specific rules), but not explicitly allowed.",
-      found: "No explicit rules for GPTBot — allowed via wildcard or default",
+        "GPTBot is allowed. No group names it, so under RFC 9309 §2.2.1 the catch-all group applies, and it permits /.",
+      found: "Allowed through the catch-all group",
       priority: "medium",
       details: "{}",
     },
     "crawl-delay-excessive": {
       status: "pass",
       score: 1,
-      message: "GPTBot is explicitly allowed in robots.txt.",
-      found: "Explicit rules found for GPTBot — access allowed",
+      message: "GPTBot is allowed by its own robots.txt group.",
+      found: "User-agent: GPTBot group permits /",
       priority: "medium",
       details: "{}",
     },
@@ -1089,34 +1101,34 @@ const BASELINE: Record<string, Record<string, Row>> = {
       status: "fail",
       score: 0,
       message: "GPTBot is blocked by robots.txt.",
-      found: "GPTBot is disallowed (Disallow: /)",
+      found: "Its own group (User-agent: GPTBot) disallows /",
       priority: "high",
       details: "{}",
     },
     "sensitive-paths-disallowed": {
-      status: "warn",
-      score: 0.5,
+      status: "pass",
+      score: 1,
       message:
-        "GPTBot is allowed by default (no specific rules), but not explicitly allowed.",
-      found: "No explicit rules for GPTBot — allowed via wildcard or default",
+        "GPTBot is allowed. No group names it, so under RFC 9309 §2.2.1 the catch-all group applies, and it permits /.",
+      found: "Allowed through the catch-all group",
       priority: "medium",
       details: "{}",
     },
     "youbot-and-ai2bot-explicit": {
-      status: "warn",
-      score: 0.5,
+      status: "pass",
+      score: 1,
       message:
-        "GPTBot is allowed by default (no specific rules), but not explicitly allowed.",
-      found: "No explicit rules for GPTBot — allowed via wildcard or default",
+        "GPTBot is allowed. No group names it, so under RFC 9309 §2.2.1 the catch-all group applies, and it permits /.",
+      found: "Allowed through the catch-all group",
       priority: "medium",
       details: "{}",
     },
     "youbot-blocked": {
-      status: "warn",
-      score: 0.5,
+      status: "pass",
+      score: 1,
       message:
-        "GPTBot is allowed by default (no specific rules), but not explicitly allowed.",
-      found: "No explicit rules for GPTBot — allowed via wildcard or default",
+        "GPTBot is allowed. No group in robots.txt applies to it, so nothing restricts it.",
+      found: "No group applies to GPTBot",
       priority: "medium",
       details: "{}",
     },

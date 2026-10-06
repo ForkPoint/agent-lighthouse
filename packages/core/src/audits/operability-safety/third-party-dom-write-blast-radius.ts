@@ -324,7 +324,7 @@ export class ThirdPartyDomWriteBlastRadiusAudit extends Audit {
     if (!s.constrained && unpinned.length > 0) {
       return {
         ...this.fail(
-          `${domains.length} third-party origin(s) can write into the DOM an agent reads, with no Content-Security-Policy that constrains what runs and ${unpinned.length} of them unpinned by \`integrity\`: ${named}${more}. Each is a separate company, and a separate supply chain, with the site's own authority over what an agent believes.`,
+          `${domains.length} third-party origin(s) can write into the DOM an agent reads, with no Content-Security-Policy that constrains what runs and ${unpinned.length} of them unpinned by \`integrity\`: ${named}${more}. Each is a separate host, and a separate supply chain, with the site's own authority over what an agent believes.`,
           EXPECTED,
           found,
           this.recommendation(),
@@ -350,7 +350,7 @@ export class ThirdPartyDomWriteBlastRadiusAudit extends Audit {
 
     return {
       ...this.warn(
-        `${domains.length} third-party origin(s) can write into the DOM an agent reads: ${named}${more}. ${s.constrained ? "The policy constrains what runs" : "Every resource is pinned by an `integrity` hash"}, so the surface is bounded — but each origin is still a company that can change what an agent believes about the site.`,
+        `${domains.length} third-party origin(s) can write into the DOM an agent reads: ${named}${more}. ${s.constrained ? "The policy constrains what runs" : "Every resource is pinned by an `integrity` hash"}, so the surface is bounded — but each origin is still a separate host that can change what an agent believes about the site.`,
         EXPECTED,
         found,
         this.recommendation(),

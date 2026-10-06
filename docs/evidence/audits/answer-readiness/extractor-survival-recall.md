@@ -107,6 +107,40 @@ this implementation's.
   Verdicts that moved: `gov-uk-vehicle-tax` scan-error → fail. Found by
   `packages/core/src/tests/real-page-corpus.test.ts`.
 
+### Class tokens, not substrings (2026-10-06)
+
+The stripper matched its blocklist as a substring of the joined class and id string. `/banner/` matched `page-content--banner-enabled`, the wrapper that holds a whole page on a large retail site, so the aggressive extractor deleted everything and every key span was reported lost. Firecrawl's `excludeNonMainTags` lists class and id selectors such as `.ad`, `.sidebar`, `.cookie` and `#share`, and a class selector names a whole token ([removeUnwantedElements.ts](https://github.com/firecrawl/firecrawl/blob/main/apps/api/src/scraper/scrapeURL/lib/removeUnwantedElements.ts), verified 2026-10-06). Each class token and the id are now tested against `/^(?:comments?|sidebar|promo|related|advert|ads?|banner|cookie|newsletter|share)$/i`. The old `ad-` prefix becomes the `ad` and `ads` tokens, as in Firecrawl's list.
+
+An element that matches is still kept when it holds more than half the page's text after the tag pass. A rule that would delete most of the page has matched the page, not a widget. Firecrawl guards the same way: it keeps an excluded element that contains a main-content marker.
+
+### Script text is not prose (2026-10-06)
+
+JSON-LD strings are key spans only when the prose carries them. The audit tested that against `$("body").text()`, which includes `<script>` contents, so a JSON-LD block in the body vouched for its own URLs. They became key spans that no extractor keeps. The prose test and the `textRatio` denominator now drop `script`, `style`, `noscript` and `template` first.
+
+On the retail page, recall moved from 0 to 0.818, and the page still fails: readability drops the tile headings. Verdicts that moved in the real-page corpus: `atlassian-com-pricing-shell` fail → na, because its only key spans were JSON-LD strings in scripts.
+
+### The article title and hidden panels (2026-10-06)
+
+Two key-span rules reported facts as lost that no reader loses.
+
+- **An h1 Readability keeps as the title.** Readability removes the first
+  heading that repeats the document title from the article body and returns
+  it as the article title. Every Readability-based pipeline delivers that
+  title. The audit read only the body text, so a page whose h1 repeats its
+  `<title>` lost its h1 to Readability. An h1 span now survives Readability
+  when the article title contains it.
+- **Spans in hidden panels.** Section openers inside a hidden command palette
+  were key spans on a small marketing site. Readability drops hidden subtrees
+  before scoring, and a reader never sees them. Spans inside a subtree the
+  markup hides (`hidden`, `aria-hidden="true"`, inline `display:none`, a
+  closed `<dialog>`, `<template>`) are no longer collected.
+
+Verdicts that moved: the bare-site fixture fail → pass, whose h1 repeats its
+title. In the real-page corpus, `theguardian-com-article` fail → pass (h1 is
+the title), `python-docs-json` fail → warn (h1 is the title),
+`otto-de-category` fail → pass (eight spans in hidden footer panels) and
+`tattly-com-shell` fail → na (its only span sat in a closed dialog).
+
 ## Deferred
 
 - **The third extractor.** `content-extraction/extraction-determinism` runs

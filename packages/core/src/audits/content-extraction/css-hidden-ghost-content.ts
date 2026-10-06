@@ -26,11 +26,12 @@ const SHINGLE_N = 5;
 const DUPLICATE_OVERLAP = 0.8;
 
 /**
- * Declarations that take a subtree out of a human's view while leaving it in
- * the byte stream every non-rendering extractor reads.
+ * Declarations other than `display` that take a subtree out of a human's
+ * view while leaving it in the byte stream every non-rendering extractor
+ * reads. `display` is resolved per selector by `hidingRules()` instead,
+ * because a later declaration can show what an earlier one hid.
  */
 const HIDING_DECLARATIONS: ReadonlyArray<{ pattern: RegExp; label: string }> = [
-  { pattern: /display\s*:\s*none/i, label: "display:none" },
   { pattern: /visibility\s*:\s*hidden/i, label: "visibility:hidden" },
   {
     pattern: /content-visibility\s*:\s*hidden/i,
@@ -41,6 +42,48 @@ const HIDING_DECLARATIONS: ReadonlyArray<{ pattern: RegExp; label: string }> = [
     label: "clip idiom",
   },
 ];
+
+interface DisplayDeclaration {
+  value: string;
+  important: boolean;
+}
+
+/**
+ * The `display` declaration a block applies: the last one wins, unless an
+ * earlier one is `!important` and the later one is not. The gatherer has
+ * already lowercased and whitespace-collapsed the block.
+ */
+function blockDisplay(declarations: string): DisplayDeclaration | undefined {
+  let winner: DisplayDeclaration | undefined;
+  for (const part of declarations.split(";")) {
+    const colon = part.indexOf(":");
+    if (colon === -1 || part.slice(0, colon).trim() !== "display") continue;
+    const raw = part.slice(colon + 1).trim();
+    const important = /!\s*important$/.test(raw);
+    const value = raw.replace(/!\s*important$/, "").trim();
+    if (!winner || important || !winner.important)
+      winner = { value, important };
+  }
+  return winner;
+}
+
+/** A selector list split on its top-level commas, so `:is(.a, .b)` stays whole. */
+function splitSelectorList(list: string): string[] {
+  const out: string[] = [];
+  let depth = 0;
+  let start = 0;
+  for (let i = 0; i < list.length; i += 1) {
+    const ch = list[i];
+    if (ch === "(" || ch === "[") depth += 1;
+    else if (ch === ")" || ch === "]") depth -= 1;
+    else if (ch === "," && depth === 0) {
+      out.push(list.slice(start, i).trim());
+      start = i + 1;
+    }
+  }
+  out.push(list.slice(start).trim());
+  return out.filter(Boolean);
+}
 
 /** Inline markers Readability already honours, so their text is not ingested. */
 const INLINE_HIDDEN = /display\s*:\s*none|visibility\s*:\s*hidden/i;
@@ -106,17 +149,57 @@ function inlineHidden(page: PageContext, el: unknown): boolean {
   return found;
 }
 
-/** Every rule that hides its matches, ignoring print-only and unattributable at-rules. */
-function hidingRules(
-  rules: CssRule[],
-): Array<{ rule: CssRule; technique: string }> {
-  const out: Array<{ rule: CssRule; technique: string }> = [];
-  for (const rule of rules) {
-    // Hiding text from a printer is not hiding it from a reader.
-    if (rule.atRule?.startsWith("media print")) continue;
+interface HidingSelector {
+  /** The selector to match, one member of the rule's selector list. */
+  selector: string;
+  /** The rule's selector list, verbatim, reported as evidence. */
+  reported: string;
+  technique: string;
+}
+
+/**
+ * Every selector a stylesheet leaves hidden, ignoring print-only rules.
+ *
+ * `display` is resolved per selector, not per rule. Within a block the last
+ * declaration wins. Across rules, a later block for the identical selector
+ * in the same at-rule context overrides an earlier one, and `!important`
+ * outranks a plain declaration. Different selectors are never ranked against
+ * each other, because there is no specificity engine: a panel opened by
+ * `.panel.open{display:block}` still counts as hidden by `.panel{display:none}`,
+ * and an override inside a media query does not cancel a base rule.
+ */
+function hidingRules(rules: CssRule[]): HidingSelector[] {
+  // Hiding text from a printer is not hiding it from a reader.
+  const live = rules.filter((rule) => !rule.atRule?.startsWith("media print"));
+
+  const display = new Map<
+    string,
+    { selector: string; reported: string; decl: DisplayDeclaration }
+  >();
+  for (const rule of live) {
+    const decl = blockDisplay(rule.declarations);
+    if (!decl) continue;
+    for (const selector of splitSelectorList(rule.selector)) {
+      const key = `${rule.atRule ?? ""}\u0000${selector}`;
+      const prior = display.get(key);
+      if (prior?.decl.important && !decl.important) continue;
+      display.set(key, { selector, reported: rule.selector, decl });
+    }
+  }
+
+  const out: HidingSelector[] = [];
+  for (const { selector, reported, decl } of display.values()) {
+    if (decl.value === "none")
+      out.push({ selector, reported, technique: "display:none" });
+  }
+  for (const rule of live) {
     for (const { pattern, label } of HIDING_DECLARATIONS) {
       if (pattern.test(rule.declarations)) {
-        out.push({ rule, technique: label });
+        out.push({
+          selector: rule.selector,
+          reported: rule.selector,
+          technique: label,
+        });
         break;
       }
     }
@@ -167,9 +250,9 @@ async function survey(ctx: CheckContext): Promise<Survey> {
       unknown,
       { selector: string; technique: string }
     >();
-    for (const { rule, technique } of hidingRules(css.rules)) {
+    for (const { selector, reported, technique } of hidingRules(css.rules)) {
       try {
-        $(rule.selector).each((_i, el) => {
+        $(selector).each((_i, el) => {
           const tag = (el as { tagName?: string }).tagName?.toLowerCase() ?? "";
           if (tag === "script" || tag === "style" || tag === "noscript") return;
           if ($el($, el).closest("body").length === 0) return;
@@ -180,7 +263,7 @@ async function survey(ctx: CheckContext): Promise<Survey> {
           // A short sr-only string is assistive text, not ghost content.
           if (technique === "clip idiom" && text.length < SR_ONLY_CHARS) return;
           if (!candidates.has(el))
-            candidates.set(el, { selector: rule.selector, technique });
+            candidates.set(el, { selector: reported, technique });
         });
       } catch {
         // A selector cheerio cannot compile matches nothing rather than

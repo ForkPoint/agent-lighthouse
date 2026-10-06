@@ -104,6 +104,34 @@ finding rather than two.
   the HTTP 200 bot-challenge contract state: pass → na. Found by
   `packages/core/src/tests/hostile-state-contract.test.ts`.
 
+### A wrapper around a control is not a control (2026-10-06)
+
+The class vocabulary and the cursor rule stand in for a listener the scanner
+cannot see. On a small marketing site they flagged two `div`s whose class
+ended in `-cta`. Each held a native `<a href>`, which was the action, and
+which the snapshot names. The wrapper had no listener of its own. The same
+arm flagged icons and labels inside links, such as a `span` styled as the
+link's text.
+
+Two rules now hold for an element whose only signal is a name or a cursor:
+
+- **It holds a control.** An element that contains `a[href]`, `button`,
+  `select`, `textarea`, `summary`, a non-hidden `input`, or any declared
+  `role` is layout around that control, and is not a ghost.
+- **It sits inside a control.** An element inside a link, a button, a
+  `summary` or a widget role is part of that control. A click on it is the
+  control's click.
+
+An inline handler (`onclick` and the rest) is the element's own action. It
+still flags the element whatever it contains or sits in.
+
+Verdicts that moved in the real-page corpus, all from wrappers and inner
+labels: `barclays-co-uk-current-accounts`, `capitalone-com-savings`,
+`irs-gov-form-1040`, `otto-de-category`, `rakuten-co-jp-home` and
+`wellsfargo-com-checking` fail → warn; `bbc-co-uk-article`, `chase-com`,
+`gov-uk-vehicle-tax`, `mdn-cache-control` and `theguardian-com-article` warn →
+pass; `discourse-meta-topic` fail → pass.
+
 ## Deferred
 
 - **Headless CDP tier.** The sketch's higher-precision tier intersects

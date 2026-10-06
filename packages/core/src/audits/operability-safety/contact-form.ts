@@ -18,6 +18,44 @@ const CONTACT_INDICATORS = [
   "support",
 ];
 
+/**
+ * Link paths and texts that name a contact page. Narrower than the form
+ * indicators: a link to `/leadership` or a "message" from the CEO is not one.
+ */
+const CONTACT_LINK_RE =
+  /contact|kontakt|support|inquiry|enquiry|get[-_ ]?in[-_ ]?touch|reach[-_ ]?out/i;
+
+/** Most unscanned contact links named in the finding. */
+const MAX_NAMED_LINKS = 3;
+
+/**
+ * Same-origin links on the sampled pages that name a contact page the scan
+ * did not fetch. Such a form was not observed, which is not proof it is
+ * absent.
+ */
+function unscannedContactLinks(ctx: CheckContext): string[] {
+  const scanned = new Set(ctx.pages.map((page) => page.url));
+  const out = new Set<string>();
+  for (const page of ctx.pages) {
+    const origin = new URL(page.url).origin;
+    page.$("a[href]").each((_i, el) => {
+      const $a = page.$(el);
+      let url: URL;
+      try {
+        url = new URL($a.attr("href") ?? "", page.url);
+      } catch {
+        return;
+      }
+      if (url.origin !== origin) return;
+      url.hash = "";
+      if (scanned.has(url.href)) return;
+      if (CONTACT_LINK_RE.test(url.pathname) || CONTACT_LINK_RE.test($a.text()))
+        out.add(url.href);
+    });
+  }
+  return [...out];
+}
+
 export class ContactFormAudit extends Audit {
   static override meta: AuditMeta = {
     id: "operability-safety/contact-form",
@@ -103,6 +141,16 @@ export class ContactFormAudit extends Audit {
           }
         }
       }
+    }
+
+    const unscanned = unscannedContactLinks(ctx);
+    if (unscanned.length > 0) {
+      const named = unscanned.slice(0, MAX_NAMED_LINKS).join(", ");
+      return this.notApplicable(
+        `No contact form on the ${ctx.pages.length} sampled page(s), but they link to ${named}, which this scan did not fetch. A form there was not observed, so its absence is not established.`,
+        "Page has a contact/inquiry form or OpenAPI has a POST contact endpoint",
+        `Unscanned contact link(s): ${named}`,
+      );
     }
 
     return this.fail(

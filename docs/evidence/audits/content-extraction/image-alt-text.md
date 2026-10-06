@@ -151,3 +151,13 @@ rests on the accessibility-tree mechanism alone, which carries it.
 - 2026-08-20 — code review (11-agent workflow) + evidence research (12-domain workflow, 400 sources).
 - 2026-08-21 — dossier generated; disposition pending final taxonomy design.
 - 2026-08-24 — contradiction sweep: pass rule narrowed from the `alt` attribute to the accessible name the grade rests on.
+
+## Deferred
+
+- Images inside a container hidden by an external stylesheet are still
+  counted. A large retail site ships an unfilled popup template, hidden by an
+  id rule in its stylesheet, holding `<img src="">` with no alt. The audit
+  reads no CSS, and the stylesheet scanner in `gatherers/css-rules.ts`
+  resolves no specificity and no media queries. Skipping on its answer would
+  also drop images a desktop-viewport agent does see. Exact resolution waits
+  for the headless tier.

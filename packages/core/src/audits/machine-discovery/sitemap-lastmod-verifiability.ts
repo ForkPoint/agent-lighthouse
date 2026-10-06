@@ -15,7 +15,7 @@ import {
   parseHtml,
   extractJsonLd,
   extractMetaTags,
-  allJsonLdNodes,
+  topLevelJsonLd,
 } from "../../parser";
 import {
   siteSitemapTree,
@@ -31,6 +31,13 @@ const SAMPLE_SIZE = 6;
 const FUTURE_SKEW_MS = 60 * 60 * 1000;
 /** One value on this share of the sample is a stamp, not a set of content dates. */
 const MODAL_SHARE = 0.9;
+/**
+ * Values this close together are one stamp. A generator that writes the
+ * clock per URL spreads one run over seconds: one retail site stamped 2451
+ * product URLs between 09:57:16 and 09:57:33, and exact-string matching saw
+ * 2451 different dates.
+ */
+const STAMP_WINDOW_MS = 60 * 60 * 1000;
 /** ...but only when that value is this recent, which is what makes it a deploy date. */
 const MODAL_RECENCY_DAYS = 3;
 /** How far a lastmod may sit from every page signal before it is unsupported. */
@@ -53,33 +60,95 @@ function parseTime(value: unknown): number | undefined {
   return Number.isNaN(parsed) ? undefined : parsed;
 }
 
-/** Every modification time the page itself publishes, in no particular order. */
+/**
+ * Types whose dates belong to someone else's contribution, not to the page.
+ *
+ * A product page carries its customers' reviews as `review: [{ "@type":
+ * "Review", datePublished }]`. Those dates say when a shopper wrote, not
+ * when the page changed, and on one retail site they turned five pages with
+ * no modification time at all into "divergent" lastmods.
+ */
+const CONTRIBUTED_TYPES = new Set([
+  "Review",
+  "CriticReview",
+  "UserReview",
+  "EmployerReview",
+  "Comment",
+  "Answer",
+  "Question",
+]);
+
+function typeNames(node: Record<string, unknown>): string[] {
+  const raw = node["@type"];
+  const list = Array.isArray(raw) ? raw : [raw];
+  return list
+    .filter((t): t is string => typeof t === "string")
+    .map((t) => t.replace(/^.*[/:#]/, ""));
+}
+
+/**
+ * The JSON-LD nodes whose dates describe the page: every top-level node and
+ * `@graph` member, and what they nest, minus nested contributions. A top-level
+ * Review is the page itself and keeps its dates.
+ */
+function pageDateNodes(jsonLd: object[]): Record<string, unknown>[] {
+  const out: Record<string, unknown>[] = [];
+  const visit = (node: unknown, nested: boolean): void => {
+    if (Array.isArray(node)) {
+      for (const item of node) visit(item, nested);
+      return;
+    }
+    if (!isObject(node)) return;
+    if (nested && typeNames(node).some((t) => CONTRIBUTED_TYPES.has(t))) return;
+    out.push(node);
+    for (const [key, value] of Object.entries(node)) {
+      if (key === "@context") continue;
+      if (value && typeof value === "object") visit(value, true);
+    }
+  };
+  for (const top of topLevelJsonLd(jsonLd)) visit(top, false);
+  return out;
+}
+
+/**
+ * The modification times a page publishes, split by what they can prove.
+ *
+ * `content` dates are written about the content: JSON-LD dates and the
+ * article meta tags. `header` is the HTTP `Last-Modified`, which a static
+ * server sets to the file's write time, so every deploy moves it while the
+ * content, and a correct lastmod, stay put. It may corroborate a lastmod, but
+ * it cannot contradict one.
+ */
+interface PageSignals {
+  content: number[];
+  header: number[];
+}
+
 function pageSignals(
   headers: Record<string, string>,
   jsonLd: object[],
   meta: Record<string, string>,
-): number[] {
-  const out: number[] = [];
-  const add = (value: unknown) => {
+): PageSignals {
+  const out: PageSignals = { content: [], header: [] };
+  const add = (into: number[], value: unknown) => {
     const time = parseTime(value);
-    if (time !== undefined) out.push(time);
+    if (time !== undefined) into.push(time);
   };
 
-  add(headers["last-modified"]);
-  for (const node of allJsonLdNodes(jsonLd)) {
-    if (!isObject(node)) continue;
-    add(node["dateModified"]);
-    add(node["datePublished"]);
+  add(out.header, headers["last-modified"]);
+  for (const node of pageDateNodes(jsonLd)) {
+    add(out.content, node["dateModified"]);
+    add(out.content, node["datePublished"]);
   }
-  for (const key of META_KEYS) add(meta[key]);
+  for (const key of META_KEYS) add(out.content, meta[key]);
   return out;
 }
 
-function signalsFromPage(page: PageContext): number[] {
+function signalsFromPage(page: PageContext): PageSignals {
   return pageSignals(page.fetchResult.headers, page.jsonLd, page.meta);
 }
 
-function signalsFromFetch(result: FetchResult): number[] {
+function signalsFromFetch(result: FetchResult): PageSignals {
   const $ = parseHtml(result.body);
   return pageSignals(result.headers, extractJsonLd($), extractMetaTags($));
 }
@@ -191,7 +260,7 @@ export class SitemapLastmodVerifiabilityAudit extends Audit {
       const key = urlKey(entry.loc);
       const scanned = key ? byKey.get(key) : undefined;
 
-      let signals: number[] = [];
+      let signals: PageSignals = { content: [], header: [] };
       if (scanned) {
         signals = signalsFromPage(scanned);
       } else {
@@ -199,15 +268,21 @@ export class SitemapLastmodVerifiabilityAudit extends Audit {
         if (result) signals = signalsFromFetch(result);
       }
 
-      if (signals.length === 0) {
+      const all = [...signals.content, ...signals.header];
+      if (all.length === 0) {
         noSignal += 1;
         continue;
       }
 
       const deltaDays =
-        Math.min(...signals.map((time) => Math.abs(stamp - time))) / DAY_MS;
+        Math.min(...all.map((time) => Math.abs(stamp - time))) / DAY_MS;
       if (deltaDays <= DIVERGENCE_DAYS) {
         corroborated += 1;
+        continue;
+      }
+      // A deploy-time header alone cannot show the lastmod is wrong.
+      if (signals.content.length === 0) {
+        noSignal += 1;
         continue;
       }
       divergent += 1;
@@ -218,16 +293,29 @@ export class SitemapLastmodVerifiabilityAudit extends Audit {
       }
     }
 
-    // The modal test only looks at URLs we could compare, so a site whose pages
-    // publish nothing is never accused of stamping builds.
-    const counts = new Map<string, number>();
-    for (const entry of sample)
-      counts.set(entry.lastmod, (counts.get(entry.lastmod) ?? 0) + 1);
-    const [modalValue, modalCount] = [...counts.entries()].sort(
-      (a, b) => b[1] - a[1],
-    )[0] ?? ["", 0];
+    // The modal test counts the whole sample, compared or not: a stamp is a
+    // property of the sitemap, and needs no page signal to be seen. It takes
+    // the largest group of values inside one STAMP_WINDOW_MS window.
+    const ordered = sample
+      .map((entry) => ({
+        lastmod: entry.lastmod,
+        time: Date.parse(entry.lastmod),
+      }))
+      .sort((a, b) => a.time - b.time);
+    let modalCount = 0;
+    let modalFirst = "";
+    let modalLast = "";
+    for (let start = 0, end = 0; end < ordered.length; end++) {
+      while (ordered[end]!.time - ordered[start]!.time > STAMP_WINDOW_MS)
+        start += 1;
+      if (end - start + 1 > modalCount) {
+        modalCount = end - start + 1;
+        modalFirst = ordered[start]!.lastmod;
+        modalLast = ordered[end]!.lastmod;
+      }
+    }
     const modalRecent =
-      (now - Date.parse(modalValue)) / DAY_MS <= MODAL_RECENCY_DAYS;
+      (now - Date.parse(modalLast)) / DAY_MS <= MODAL_RECENCY_DAYS;
     const buildStamp =
       sample.length > 1 &&
       modalCount / sample.length > MODAL_SHARE &&
@@ -243,7 +331,7 @@ export class SitemapLastmodVerifiabilityAudit extends Audit {
     }
     if (buildStamp) {
       problems.push(
-        `${modalCount} of ${sample.length} sampled URLs (${pct(modalCount, sample.length)}%) share the single lastmod ${modalValue}, within ${MODAL_RECENCY_DAYS} days of this scan — the signature of a build stamp rather than a content date`,
+        `${modalCount} of ${sample.length} sampled URLs (${pct(modalCount, sample.length)}%) share ${modalFirst === modalLast ? `the single lastmod ${modalFirst}` : `one lastmod run, ${modalFirst} to ${modalLast}`}, within ${MODAL_RECENCY_DAYS} days of this scan — the signature of a build stamp rather than a content date`,
       );
     }
     if (compared > 0 && divergent / compared > DIVERGENT_SHARE) {

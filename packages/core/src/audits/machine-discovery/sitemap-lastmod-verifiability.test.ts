@@ -36,6 +36,8 @@ interface PageSpec {
   lastModified?: string;
   /** <meta property="article:modified_time">, if the page carries one. */
   metaModified?: string;
+  /** A raw JSON-LD block, served beside any dateModified block. */
+  jsonLd?: object;
 }
 
 function html(spec: PageSpec): string {
@@ -47,10 +49,13 @@ function html(spec: PageSpec): string {
         dateModified: spec.dateModified,
       })}</script>`
     : "";
+  const raw = spec.jsonLd
+    ? `<script type="application/ld+json">${JSON.stringify(spec.jsonLd)}</script>`
+    : "";
   const meta = spec.metaModified
     ? `<meta property="article:modified_time" content="${spec.metaModified}">`
     : "";
-  return `<html><head>${jsonLd}${meta}</head><body><main><p>Copy.</p></main></body></html>`;
+  return `<html><head>${jsonLd}${raw}${meta}</head><body><main><p>Copy.</p></main></body></html>`;
 }
 
 function run(
@@ -116,6 +121,65 @@ describe("SitemapLastmodVerifiabilityAudit", () => {
     expect(result.status).toBe("na");
   });
 
+  // A product page's customer reviews carry their own datePublished. Those
+  // dates say when a shopper wrote, not when the page changed; read as page
+  // signals they turned unverifiable lastmods into "divergent" ones.
+  describe("contributed dates", () => {
+    const product = (reviewDaysAgo: number) => ({
+      "@context": "https://schema.org",
+      "@type": "Product",
+      name: "Hoodie",
+      review: [
+        {
+          "@type": "Review",
+          author: { "@type": "Person", name: "A shopper" },
+          datePublished: iso(reviewDaysAgo),
+        },
+      ],
+    });
+
+    it("does not read a nested Review date as a page signal", async () => {
+      const result = await run(
+        Array.from({ length: 5 }, (_v, i) => ({
+          loc: `https://example.com/p-${i}`,
+          lastmod: iso(5 + i * 9),
+          jsonLd: product(60 + i * 9),
+        })),
+      );
+      expect(result.status).toBe("warn");
+      expect(result.found).toContain("0 divergent, 5 unverifiable");
+    });
+
+    it("does not read a nested Review inside an @graph member either", async () => {
+      const result = await run(
+        Array.from({ length: 5 }, (_v, i) => ({
+          loc: `https://example.com/p-${i}`,
+          lastmod: iso(5 + i * 9),
+          jsonLd: {
+            "@context": "https://schema.org",
+            "@graph": [product(60 + i * 9)],
+          },
+        })),
+      );
+      expect(result.found).toContain("0 divergent, 5 unverifiable");
+    });
+
+    it("keeps the dates of a page that is itself a Review", async () => {
+      const result = await run(
+        Array.from({ length: 5 }, (_v, i) => ({
+          loc: `https://example.com/r-${i}`,
+          lastmod: iso(10 + i * 7),
+          jsonLd: {
+            "@context": "https://schema.org",
+            "@type": "Review",
+            datePublished: iso(10 + i * 7),
+          },
+        })),
+      );
+      expect(result.status).toBe("pass");
+    });
+  });
+
   it("passes when every lastmod matches the page dateModified", async () => {
     const result = await run(consistent(5));
     expect(result.status).toBe("pass");
@@ -173,6 +237,28 @@ describe("SitemapLastmodVerifiabilityAudit", () => {
     expect(result.message).toContain("build stamp");
   });
 
+  // A generator that writes the clock per URL spreads one run over seconds.
+  // Exact-string matching saw every value as distinct and missed the stamp.
+  it("fails when recent lastmods spread over seconds cover over 90% of sampled URLs", async () => {
+    const base = Date.now() - DAY;
+    const urls = Array.from({ length: 10 }, (_v, i) => ({
+      loc: `https://example.com/s-${i}`,
+      lastmod: new Date(base + i * 2_000).toISOString(),
+    }));
+    const result = await run(urls);
+    expect(result.status).toBe("fail");
+    expect(result.message).toContain("one lastmod run");
+  });
+
+  it("does not call lastmods hours apart a build stamp", async () => {
+    const urls = Array.from({ length: 10 }, (_v, i) => ({
+      loc: `https://example.com/h-${i}`,
+      lastmod: new Date(Date.now() - DAY - i * 2 * 3_600_000).toISOString(),
+    }));
+    const result = await run(urls);
+    expect(result.message).not.toContain("build stamp");
+  });
+
   it("fails when over 20% of sampled URLs diverge from every page signal by more than 7 days", async () => {
     const urls = Array.from({ length: 5 }, (_v, i) => ({
       loc: `https://example.com/x-${i}`,
@@ -182,6 +268,29 @@ describe("SitemapLastmodVerifiabilityAudit", () => {
     const result = await run(urls);
     expect(result.status).toBe("fail");
     expect(result.message).toContain("7 days");
+  });
+
+  // A static server's Last-Modified is the file's deploy time. A rebuild moves
+  // it while the content date, correctly, stays put: it cannot contradict one.
+  it("does not fail an editorial lastmod against a newer deploy-time header", async () => {
+    const urls = Array.from({ length: 5 }, (_v, i) => ({
+      loc: `https://example.com/legal-${i}`,
+      lastmod: iso(200 + i * 3),
+      lastModified: new Date(Date.now() - DAY).toUTCString(),
+    }));
+    const result = await run(urls);
+    expect(result.status).not.toBe("fail");
+    expect(result.message).toContain("cannot be verified");
+  });
+
+  it("still fails a lastmod that contradicts the page's own dateModified", async () => {
+    const urls = Array.from({ length: 5 }, (_v, i) => ({
+      loc: `https://example.com/y-${i}`,
+      lastmod: iso(1 + i * 3),
+      dateModified: iso(200 + i * 3),
+      lastModified: new Date(Date.now() - (200 + i * 3) * DAY).toUTCString(),
+    }));
+    expect((await run(urls)).status).toBe("fail");
   });
 
   // Nothing to compare against is a missing-signal problem on the page, not a

@@ -95,6 +95,26 @@ _No dedicated evidence signal was researched for this audit in the 2026-08-20 pa
   `text/html`, from the requested host. This audit's verdict on that state is
   unchanged: the wall branch above the guard reports the wall either way.
 
+### Detection reads widget markup, not body text (2026-10-06)
+
+The audit matched `recaptcha`, `hcaptcha` and `turnstile` anywhere in the
+body. A large retail site's inline config (`provider = "CloudflareTurnstile"`)
+matched as a CAPTCHA. Detection now uses the selectors the review asks for: a
+`<script src>` from the vendor's loader path, or the element the widget mounts
+on (`.g-recaptcha`, `.h-captcha`, `.cf-turnstile`). Prose, config and CSP text
+no longer match. A Turnstile, reCAPTCHA or hCaptcha widget on a form still
+warns.
+
+## Deferred
+
+- **Interactive versus invisible variants.** The counter-evidence shows that
+  reCAPTCHA v3, Turnstile's managed and invisible modes and hCaptcha's passive
+  mode do not stop an agent. The markup alone does not say which mode a widget
+  runs in: the mode is usually set in the vendor dashboard or in a script
+  call. Every detected widget still warns.
+- **Form correlation.** The finding names the page, not the form the widget
+  guards.
+
 ## Review history
 
 - 2026-08-20 — code review (11-agent workflow) + evidence research (12-domain workflow, 400 sources).

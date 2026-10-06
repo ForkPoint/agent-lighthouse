@@ -94,6 +94,28 @@ Tier per evidence policy: **scored** — grade A meets the A/B bar required for 
   away pass → na, non-HTML homepage pass → na, HTTP 200 bot challenge pass →
   na. Found by `packages/core/src/tests/hostile-state-contract.test.ts`.
 
+### `display` is resolved per selector (2026-10-06)
+
+The scanner counted a rule as hiding when `display:none` appeared anywhere in
+its block. A large retail site ships blocks like
+`.box{display:none;position:relative;display:block}`, where the later
+declaration wins and the box is visible. Counting it reported text a human
+sees as ghost content.
+
+`display` is now resolved per selector. Within a block the last declaration
+wins. A selector list is split on its top-level commas. A later rule for the
+identical selector in the same at-rule context overrides an earlier one, and
+`!important` outranks a plain declaration. This supersedes "no cascade" for
+that one case only. There is still no specificity: different selectors are
+never ranked against each other. A collapsed panel hidden by
+`.panel{display:none}` and opened by `.panel.open{display:block}` stays
+counted, as the mechanism requires. An override inside a media query does not
+cancel a base rule, so parallel desktop and mobile copies stay counted.
+
+Source order is the gatherer's order: inline `<style>` blocks first, then
+linked same-origin sheets. A linked sheet placed before an inline block in the
+document is read after it.
+
 ## Deferred
 
 - Exact style resolution through `getComputedStyle` in a headless browser stays
@@ -101,3 +123,10 @@ Tier per evidence policy: **scored** — grade A meets the A/B bar required for 
 - Contradiction risk is reported as a signal (prices, availability, dated
   claims found inside hidden text) rather than adjudicated against the visible
   copy.
+- Specificity between different selectors. `.box p{display:none}` and
+  `.box p:first-of-type{display:block}` both match the first paragraph, and
+  the scanner still counts it hidden. Ranking them needs a specificity
+  calculator, and exact resolution belongs to the headless tier above.
+- `operability-safety/invisible-instruction-scan` carries its own
+  `display:none` pattern and has the same anywhere-in-the-block reading. It
+  asks a different question (wording, not size), so it was left alone here.

@@ -207,4 +207,106 @@ describe("AgentCommerceFeedParityAudit", () => {
     const result = await run(pageHtml(product()));
     expect(result.found).toContain("agent-commerce gap");
   });
+
+  // ── JSON-LD shapes schema.org allows (feed parity read only one of each) ──
+
+  const STORE_ID = "https://example.com/#store";
+
+  /** A ProductGroup whose price lives on its variants, as storefronts emit it. */
+  function productGroup(): Record<string, unknown> {
+    const variant = (sku: string) => ({
+      "@type": "Product",
+      sku,
+      inProductGroupWithID: "ARK",
+      offers: {
+        "@type": "Offer",
+        price: 29.99,
+        priceCurrency: "USD",
+        availability: "https://schema.org/InStock",
+      },
+    });
+    const group = product();
+    group["@type"] = "ProductGroup";
+    group["productGroupID"] = "ARK";
+    group["offers"] = {
+      "@type": "AggregateOffer",
+      priceCurrency: "USD",
+      offerCount: 2,
+      availability: "https://schema.org/InStock",
+      seller: { "@type": "Organization", name: "Alpine Store" },
+      eligibleRegion: "US",
+      url: URL_0,
+    };
+    group["hasVariant"] = [variant("ARK-001-S"), variant("ARK-001-M")];
+    return group;
+  }
+
+  it("reads the first URL of an image array", async () => {
+    const node = product();
+    node["image"] = [
+      "https://example.com/img/ark-001.jpg",
+      "https://example.com/img/ark-001-back.jpg",
+    ];
+    expect((await run(pageHtml(node))).status).toBe("pass");
+  });
+
+  it("reads an ImageObject's url", async () => {
+    const node = product();
+    node["image"] = {
+      "@type": "ImageObject",
+      url: "https://example.com/img/ark-001.jpg",
+    };
+    expect((await run(pageHtml(node))).status).toBe("pass");
+  });
+
+  it("takes the price from an AggregateOffer's lowPrice", async () => {
+    const node = product();
+    const offers = node["offers"] as Record<string, unknown>;
+    offers["@type"] = "AggregateOffer";
+    delete offers["price"];
+    offers["lowPrice"] = 29.99;
+    offers["highPrice"] = 29.99;
+    expect((await run(pageHtml(node))).status).toBe("pass");
+  });
+
+  it("takes the price from a variant Offer and the group id from productGroupID", async () => {
+    const result = await run(pageHtml(productGroup()));
+    expect(result.status).toBe("pass");
+  });
+
+  it("resolves offers.seller by @id against a node the page defines", async () => {
+    const group = productGroup();
+    (group["offers"] as Record<string, unknown>)["seller"] = {
+      "@id": STORE_ID,
+    };
+    const graph = {
+      "@context": "https://schema.org",
+      "@graph": [
+        group,
+        { "@type": "OnlineStore", "@id": STORE_ID, name: "Alpine Store" },
+      ],
+    };
+    expect((await run(pageHtml(graph))).status).toBe("pass");
+  });
+
+  // True positive: a reference to a node nobody defines carries no name.
+  it("still fails an offers.seller @id that no node on the page defines", async () => {
+    const group = productGroup();
+    (group["offers"] as Record<string, unknown>)["seller"] = {
+      "@id": STORE_ID,
+    };
+    const result = await run(pageHtml(group));
+    expect(result.status).toBe("fail");
+    expect(result.message).toContain(STORE_ID);
+    expect(result.message).toContain("no node on the page defines");
+  });
+
+  // True positive: the array is read, and what it holds is still judged.
+  it("still fails an image array whose first URL is not HTTPS", async () => {
+    const node = product();
+    node["image"] = ["http://example.com/img/ark-001.jpg"];
+    const result = await run(pageHtml(node));
+    expect(result.status).toBe("fail");
+    expect(result.message).toContain("is not an absolute HTTPS URL");
+  });
 });

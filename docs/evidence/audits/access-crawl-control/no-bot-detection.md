@@ -82,6 +82,18 @@ a pause is the only way to get a verdict from a rate-limited origin.
 
 ## Implementation deviations
 
+### A loader on a readable page passes (2026-10-06)
+
+The page-script branch warned at weight 1 on any page whose HTML contained a
+challenge host, including `challenges.cloudflare.com`. The counter-evidence
+grades that sub-signal D, and the required fix says to warn only when the
+widget gates the main content. A loader is now reported only on a page that
+served no readable text, using the per-page `renderedByPage` verdict from the
+scan evidence (`pageRendersText` when it is absent). A loader on a page the
+scan read is named in a pass, because no wall was observed and the page was
+read. The `wafProtection` branch, which carries the A grade, is unchanged.
+Script-`src` scoping and a UA probe are still open items from the review above.
+
 - 2026-10-06 — the shared WAF detector no longer treats the
   `challenges.cloudflare.com` hostname as proof of an access wall. A live fetch
   of a storefront returned HTTP 200 with the storefront HTML and a

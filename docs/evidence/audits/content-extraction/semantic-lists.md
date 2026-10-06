@@ -81,6 +81,26 @@ The description promises to catch 'content formatted as styled divs instead of s
 
 **Counter-evidence:** No vendor doc and no study isolates the effect of list/table markup on LLM answer accuracy — the mechanism is well documented, but the magnitude is not measured in any source located for this dossier. ARIA is an accepted substitute. A div grid carrying role='table', role='row' and role='cell' maps to the same accessibility tree nodes. 'div soup' with correct roles is therefore not penalised by a11y-tree consumers, and an audit that only looks for literal <table> and <ul> tags will produce false positives. Conversely raw-HTML consumers (which the observation-reduction study shows strong models sometimes prefer [observation-reduction-paper]) see the div tags either way. Definition lists (dl/dt/dd) in particular have no documented agent consumer beyond generic role mapping.
 
+## Implementation deviations
+
+### Hidden regions and keycaps (2026-10-06)
+
+The mechanism is list content that collapses into prose when the page becomes
+markdown or an accessibility tree. A small marketing site was flagged for
+same-class rows inside a hidden command palette and a hidden dropdown, and for
+the `kbd` keys of one shortcut. Hidden subtrees reach neither output, and the
+keys of one shortcut are one item.
+
+- Lists and pseudo-lists inside a subtree the markup hides (`hidden`,
+  `aria-hidden="true"`, inline `display:none`, a closed `<dialog>`,
+  `<template>`) are skipped, as chrome is. They no longer count toward the
+  numerator or the denominator.
+- `kbd` children do not count toward the same-class rule.
+
+Verdicts that moved in the real-page corpus: `allbirds-com-collection`
+pass → na, whose only content lists were in hidden panels;
+`gov-uk-vehicle-tax` warn → pass, whose pseudo-list was hidden.
+
 ## Review history
 
 - 2026-08-20 — code review (11-agent workflow) + evidence research (12-domain workflow, 400 sources).

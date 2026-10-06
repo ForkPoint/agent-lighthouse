@@ -85,6 +85,25 @@ Two sketch details were tightened during implementation:
   `autocomplete="shipping tel"` are valid WHATWG values. Coverage compares the
   final token, so a section- or address-type prefix does not read as a miss.
 
+### Search and store-locator forms are out of scope (2026-10-06)
+
+The audit judges fields an agent fills from the user's profile. A site
+search or a store locator takes a keyword or a place to look up, so no
+autofill token applies to it. A large retail site was failed for its store
+locator's "City or postcode" box.
+
+- A form is skipped when it has `role="search"`, sits inside a search
+  landmark, holds an `input type="search"`, or its action path, name or id
+  reads as search, locator or stores.
+- "find" is not a skip keyword. Checkout postcode-lookup forms are often
+  named "find address", and their postcode field does owe its token.
+- A location field whose visible name offers a choice between concepts
+  ("City or postcode", "Ville ou code postal") is not counted. Two names for
+  one concept ("State or province") still are. Sign-in fields such as
+  "Email or username" are unaffected; `username` is their token.
+- A scan whose only candidate fields sit in skipped forms is not applicable.
+  `found` reports how many forms were skipped.
+
 ## Deferred
 
 - **Constraint programmability.** The sketch also asks for "validation

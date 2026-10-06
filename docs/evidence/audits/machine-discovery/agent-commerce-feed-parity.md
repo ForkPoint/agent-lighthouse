@@ -123,6 +123,24 @@ Content-page scans do not infer a mount. Origin files, origin probes, feed disco
   than one entry, or a `<select>` whose name or id reads as a variant control
   and holds more than one `<option>`.
 
+### JSON-LD shapes for image, price, seller and group (2026-10-06)
+
+The audit read one shape per field, and a large retail site's variant pages
+used the others. Each field now reads every shape schema.org allows.
+
+- **Image.** A string, an array of URLs, or an `ImageObject` with `url` or
+  `contentUrl`. The first usable entry is the primary image. An array was
+  reported as "no image".
+- **Price.** `offers.price`, then an `AggregateOffer`'s `lowPrice`, then the
+  first variant Offer's `price` under `hasVariant`. A `ProductGroup` carries a
+  range, not a price, and was reported as "price undefined".
+- **Item group.** `productGroupID` on a `ProductGroup` now counts beside
+  `inProductGroupWithID` and `isVariantOf`. It is the group identifier the
+  group node itself carries.
+- **Seller.** An `offers.seller` written as `{ "@id": … }` is resolved against
+  the nodes on the same page. A reference to a node the page never defines
+  still fails, and the message names the dangling `@id`.
+
 ## Deferred
 
 - **`is_eligible_search` / `is_eligible_checkout` are not inferred.** Both are

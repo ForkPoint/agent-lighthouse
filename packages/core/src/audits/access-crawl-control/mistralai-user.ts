@@ -10,7 +10,7 @@ export class MistralaiUserAudit extends CrawlerBotAudit {
     title: "MistralAI-User allowed",
     failureTitle: "MistralAI-User allowed",
     description:
-      "Without an explicit robots.txt rule, MistralAI-User may still crawl your site but has no signal that it is welcome. Adding an explicit allow rule improves your visibility in AI-powered search and ensures consistent crawler behavior.",
+      "Reads the robots.txt rules that apply to MistralAI-User — its own group if it has one, otherwise the catch-all — and reports whether they let it fetch the site root. A named group is not required: under RFC 9309 §2.2.1 an open catch-all grants the same access.",
     scoreDisplayMode: "ternary",
     weight: weightForGrade("A", "scored"),
     evidenceGrade: "A",
@@ -22,7 +22,7 @@ export class MistralaiUserAudit extends CrawlerBotAudit {
     guidance: {
       impact:
         "Blocking MistralAI-User prevents Mistral AI's Le Chat from browsing your site in real-time when users ask it to visit your pages. Allowing it ensures your content can be cited in Mistral-powered AI conversations.",
-      fix: "Add an explicit User-agent: MistralAI-User with Allow: / rule in your robots.txt file.",
+      fix: "If the block was not intended, remove the Disallow rule that applies to MistralAI-User. A named `User-agent: MistralAI-User` group with `Allow: /` also lifts it, but under RFC 9309 §2.2.1 a named group replaces the catch-all for that bot, so copy into it every catch-all Disallow line MistralAI-User should still obey.",
       code: "User-agent: MistralAI-User\nAllow: /",
       effort: "trivial",
       tags: ["robots-txt", "mistral", "realtime", "crawler-permissions"],

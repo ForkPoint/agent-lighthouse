@@ -95,6 +95,27 @@ part-of-speech tagger is available without a new dependency.
   shell contract state: pass → na. Found by
   `packages/core/src/tests/hostile-state-contract.test.ts`.
 
+### The label comparison is scoped to controls (2026-10-06)
+
+The sketch compares "an interactive element's aria-label" with its rendered
+text, because an agent clicks by accessible name. The code compared every
+`aria-label`, including landmarks and containers, with all their descendant
+text. A small marketing site's `nav aria-label="Main"`, a
+`role=tablist aria-label="Simulator views"` and a
+`role=dialog aria-label="Command palette"` were reported as divergent. A
+region's name describes the region. Its children's text is theirs.
+
+The overlap and opposing-verb comparisons now run only for native controls
+(`a[href]`, `button`, `summary`, `input`, `select`, `textarea`) and widget
+roles (`button`, `link`, `menuitem*`, `tab`, `option`, `checkbox`, `radio`,
+`switch`, `treeitem`). Every `aria-label` is still read for the instruction
+lexicon and the length checks.
+
+Verdicts that moved in the real-page corpus, all from landmark, list and
+container labels: `capitalone-com-savings`, `cdc-gov-flu-about`, `chase-com`,
+`kubernetes-docs-pods`, `lobsters-front-page`, `python-docs-json`,
+`react-dev-usestate` and `tattly-com-shell` warn → pass.
+
 ## Deferred
 
 - `aria-labelledby`/`aria-describedby` targets are read for lexicon hits, but a

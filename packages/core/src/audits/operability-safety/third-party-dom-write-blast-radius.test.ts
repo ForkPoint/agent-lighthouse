@@ -64,6 +64,31 @@ describe("ThirdPartyDomWriteBlastRadiusAudit", () => {
     expect(result.found).toContain("vendor.com");
   });
 
+  // A registrable domain is a separate host, not proof of a separate owner: a
+  // brand's own asset CDN on another domain is counted, and the message must
+  // not claim it belongs to another company.
+  it("names each origin a separate host, not a separate company", async () => {
+    const result = await audit.audit(
+      page(
+        '<script src="https://static.brand-assets.example/app.js"></script>',
+      ),
+    );
+    expect(result.status).toBe("fail");
+    expect(result.message).toContain("separate host");
+    expect(result.message).not.toContain("company");
+  });
+
+  it("does not call a pinned origin a company either", async () => {
+    const result = await audit.audit(
+      page(
+        '<script src="https://static.brand-assets.example/app.js" integrity="sha384-abc" crossorigin="anonymous"></script>',
+      ),
+    );
+    expect(result.status).toBe("warn");
+    expect(result.message).toContain("separate host");
+    expect(result.message).not.toContain("company");
+  });
+
   // A scheme-wide source allows every host on the internet that speaks https.
   it("fails a script-src whose only sources are unsafe-inline and a scheme", async () => {
     const result = await audit.audit(

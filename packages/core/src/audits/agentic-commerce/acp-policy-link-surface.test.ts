@@ -113,14 +113,80 @@ describe("AcpPolicyLinkSurfaceAudit", () => {
     expect(result.message).toContain("redirect");
   });
 
-  it("fails a policy link that points at a different registrable domain", async () => {
+  // The ACP Link schema asks only for `url: string, format: uri`. Nothing
+  // documents a same-domain requirement, so a sister domain is a usable target.
+  it("accepts a policy link on a different registrable domain", async () => {
     const links = ALL_LINKS.replace(
       "/terms",
-      "https://legal-cdn.example.net/terms",
+      "https://legal.example-group.net/terms",
     );
     const result = await run(`<footer>${links}</footer>`);
+    expect(result.status).toBe("pass");
+    expect(result.found).toContain(
+      "terms_of_use=https://legal.example-group.net/terms",
+    );
+  });
+
+  it("accepts a cross-domain redirect to a PDF policy", async () => {
+    const pdf = mockFetchResult(
+      "%PDF-1.7\n1 0 obj << /Type /Catalog >> endobj",
+      200,
+      "application/pdf",
+    );
+    const result = await run(`<footer>${ALL_LINKS}</footer>`, {
+      "/terms": redirect("https://cdn.example-assets.net/legal/terms.pdf"),
+      "/legal/terms.pdf": pdf,
+      "/privacy": redirect("https://cdn.example-assets.net/legal/privacy.pdf"),
+      "/legal/privacy.pdf": pdf,
+    });
+    expect(result.status).toBe("pass");
+    expect(result.found).toContain(
+      "terms_of_use=https://cdn.example-assets.net/legal/terms.pdf",
+    );
+  });
+
+  // True positives that must survive the change.
+  it("still fails a PDF content type whose body is not a PDF", async () => {
+    const result = await run(`<footer>${ALL_LINKS}</footer>`, {
+      "/terms": mockFetchResult(
+        "<html><body>Error</body></html>",
+        200,
+        "application/pdf",
+      ),
+    });
     expect(result.status).toBe("fail");
-    expect(result.message).toContain("domain");
+    expect(result.message).toContain("terms_of_use");
+    expect(result.message).toContain("PDF");
+  });
+
+  it("still fails a policy served as a type that is neither HTML nor PDF", async () => {
+    const result = await run(`<footer>${ALL_LINKS}</footer>`, {
+      "/privacy": mockFetchResult("{}", 200, "application/json"),
+    });
+    expect(result.status).toBe("fail");
+    expect(result.message).toContain("application/json");
+  });
+
+  it("still gates an off-domain policy link through the URL safety check", async () => {
+    const links = ALL_LINKS.replace("/terms", "https://192.168.1.10/terms");
+    const result = await run(`<footer>${links}</footer>`);
+    expect(result.status).toBe("fail");
+    expect(result.message).toContain("safety gate");
+  });
+
+  it("still fails an off-domain policy link that is a soft 404", async () => {
+    const links = ALL_LINKS.replace(
+      "/privacy",
+      "https://legal.example-group.net/privacy",
+    );
+    const soft = mockFetchResult(
+      "<html><head><title>Page not found</title></head><body><h1>Page not found</h1></body></html>",
+      200,
+      "text/html",
+    );
+    const result = await run(`<footer>${links}</footer>`, { "/privacy": soft });
+    expect(result.status).toBe("fail");
+    expect(result.message).toContain("soft 404");
   });
 
   // ACP link targets are opened by agents that may not execute JS.

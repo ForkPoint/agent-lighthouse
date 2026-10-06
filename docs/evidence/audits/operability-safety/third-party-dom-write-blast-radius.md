@@ -77,9 +77,8 @@ containing `https:`, `http:`, `data:`, `blob:` or `*` does not, and neither does
 `'unsafe-inline'` with no nonce or hash beside it — that policy is present in
 the response and decorative in effect.
 
-Origins are grouped by eTLD+1 using the same short suffix list
-`agentic-commerce/acp-policy-link-surface` carries, rather than a bundled Public
-Suffix List snapshot. `cdn.vendor.com` and `static.vendor.com` are one company
+Origins are grouped by eTLD+1 using a short suffix list rather than a bundled
+Public Suffix List snapshot. `cdn.vendor.com` and `static.vendor.com` are one company
 with write access, so they are one origin.
 
 Cross-origin frames are reported only when they are large enough to render text.
@@ -115,6 +114,16 @@ number is not read as the whole list.
   `scripts/lib/requires-analysis.mjs`. Found by
   `packages/core/src/tests/hostile-state-contract.test.ts`.
 
+### Origins are hosts, not owners (2026-10-06)
+
+A large retail site loads its own scripts from a brand asset CDN on a
+separate registrable domain. The census counts it, and the fail message
+called every counted origin "a separate company". The warn message said the
+same. The census measures registrable domains, and a domain is a host, not
+proof of an owner. The SRI threat model this audit rests on is about the
+host. Both messages now say "a separate host". The count, tiers and verdicts
+are unchanged.
+
 ## Deferred
 
 - **Runtime tag-manager tier.** Tags a manager injects after load are not in the
@@ -125,3 +134,10 @@ number is not read as the whole list.
   measure, which is what the finding claims.
 - **Report-only policies.** A `Content-Security-Policy-Report-Only` header
   enforces nothing, so it is not read as a constraint and not reported as one.
+- **First-party CDNs on another registrable domain.** No cheap, documented
+  signal ties two registrable domains to one owner. Related Website Sets was
+  the only declaration, and Chrome announced its retirement in October 2025.
+  Shared hosting of the site's documents, `crossorigin`, a CSP allowlist and a
+  matching name across suffixes all fail on ordinary vendor setups. A brand
+  CDN stays counted. It is a separate host and supply chain, which is what
+  the finding measures.

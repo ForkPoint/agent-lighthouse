@@ -88,6 +88,22 @@ Only the entry page is measured. The block is a template property, and
 tokenizing every page's JSON-LD to report one number is a cost with no extra
 finding in it.
 
+### References are not declarations (2026-10-06)
+
+The node count walked every JSON-LD object, including a bare
+`{"@id": "…#organization"}`. A small marketing site names one Organization as
+both `publisher` and `author` by reference, and the audit reported it as a
+node declared twice. A reference is how linked data avoids a second
+declaration, and it adds no facts. The duplicate count now skips any node
+whose only key, apart from an inherited `@context`, is `@id`. Two full copies
+of one entity still count.
+
+The warn message also named a token count of zero when only a node was
+duplicated. It now names the duplicated nodes in that case.
+
+Verdict moved in the real-page corpus: `aljazeera-com-article` warn → pass,
+whose only duplicate was two references to its Organization.
+
 ## Deferred
 
 - **Cross-page duplication.** The same `@graph` repeated on 400 pages is a

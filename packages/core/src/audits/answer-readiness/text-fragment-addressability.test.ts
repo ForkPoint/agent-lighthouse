@@ -109,4 +109,113 @@ describe("TextFragmentAddressabilityAudit", () => {
   it("reports the page the spans are on", () => {
     expect(run(SIMPLE).pageUrl).toBe("https://example.test/faq");
   });
+
+  // A heading over a tile grid introduces labels, not an answer. The grid's
+  // text crosses block boundaries by construction, not by an author's split.
+  it("does not treat a tile grid after a heading as an answer span", () => {
+    const tiles = ["Shirts", "Hoodies", "Trousers", "Shorts"]
+      .map(
+        (t) =>
+          `<div class="tile"><h3>${t}</h3><div class="cta">Shop now</div></div>`,
+      )
+      .join("");
+    const result = run(
+      `<main><h2>Shop the range</h2><div class="grid">${tiles}</div></main>`,
+    );
+    expect(result.status).toBe("na");
+  });
+
+  it("does not treat a heading that follows a heading as an answer span", () => {
+    const result = run("<main><h2>Men</h2><h2>Women</h2><h2>Kids</h2></main>");
+    expect(result.status).toBe("na");
+  });
+
+  // A repeated call to action is a button, not an ambiguous answer.
+  it("does not treat a short repeated call to action as an answer span", () => {
+    const result = run(
+      `<main><h2>What is resoling?</h2><p>${ANSWER}</p><h3>Boots</h3><div class="cta">Shop now</div><h3>Shoes</h3><div class="cta">Shop now</div></main>`,
+    );
+    expect(result.status).toBe("pass");
+    expect(result.found).toContain("1/1");
+  });
+
+  // The spec groups text by its nearest block ancestor. Inline text beside a
+  // heading inside one list item is one block, not a boundary crossing.
+  it("addresses inline answer text that shares a block with its heading", () => {
+    const result = run(
+      `<main><ul><li><h3>Persistent sessions</h3><span class="block">${ANSWER}</span></li></ul></main>`,
+    );
+    expect(result.status).toBe("pass");
+    expect(result.found).toContain("1/1");
+  });
+
+  // A hidden subtree is not rendered, so the matcher never searches it.
+  it("takes no answer span from a hidden dialog", () => {
+    const result = run(
+      `<main><div hidden role="dialog"><h2>Keyboard shortcuts</h2><div><p>Open the command palette</p><p>and search every page.</p></div></div></main>`,
+    );
+    expect(result.status).toBe("na");
+  });
+
+  it("does not let a hidden copy make a visible span ambiguous", () => {
+    const result = run(`${SIMPLE}<div hidden><p>${ANSWER}</p></div>`);
+    expect(result.status).toBe("pass");
+  });
+
+  // A declared FAQ answer behind a display:none accordion is on the page but
+  // not rendered, so a fragment cannot land on it. Say so, not "block".
+  it("reports a FAQ answer in an unrendered accordion with the hidden reason", () => {
+    const result = run(
+      `<main><h2>FAQ</h2><h3><button>Do prices change?</button></h3><section style="display: none;"><p>${ANSWER}</p></section></main>`,
+      faqJsonLd(ANSWER),
+    );
+    expect(result.status).toBe("fail");
+    expect(result.message).toContain("does not render");
+    expect(result.message).not.toContain("block boundary");
+  });
+
+  // until-found content is revealed by find-in-page and by text fragments.
+  it("addresses an answer inside a hidden=until-found accordion", () => {
+    const result = run(
+      `<main><h2>FAQ</h2><div hidden="until-found"><p>${ANSWER}</p></div></main>`,
+      faqJsonLd(ANSWER),
+    );
+    expect(result.status).toBe("pass");
+  });
+
+  // aria-hidden removes text from the accessibility tree, not from the screen.
+  it("still searches aria-hidden text, which is rendered", () => {
+    const result = run(
+      `<main><h2>What is resoling?</h2><p aria-hidden="true">${ANSWER}</p></main>`,
+    );
+    expect(result.status).toBe("pass");
+  });
+
+  // A card title and its description are two blocks, and the description is
+  // the sentence. Joining them builds text no single block holds.
+  it("does not join a card title onto its description", () => {
+    const cards = [
+      ["Session support", "Stay signed in across every sandbox you open."],
+      ["Fast search", "Find any record from a single shortcut."],
+    ]
+      .map(
+        ([t, d]) =>
+          `<div class="card"><p class="title">${t}</p><p>${d}</p></div>`,
+      )
+      .join("");
+    const result = run(
+      `<main><h2>Features</h2><div class="grid">${cards}</div></main>`,
+    );
+    expect(result.status).toBe("pass");
+  });
+
+  // True positive: a sentence split across sibling blocks inside a wrapper is
+  // still an answer, and still unaddressable.
+  it("still fails a sentence split across three sibling blocks in a wrapper", () => {
+    const result = run(
+      `<main><h2>What is resoling?</h2><div class="answer"><p>Resoling replaces the outsole</p><p>and midsole</p><p>of a welted boot.</p></div></main>`,
+    );
+    expect(result.status).toBe("fail");
+    expect(result.message).toContain("block boundary");
+  });
 });

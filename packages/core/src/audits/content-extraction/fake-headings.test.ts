@@ -71,6 +71,66 @@ describe("FakeHeadingsAudit", () => {
     expect(result.status).toBe("pass");
   });
 
+  // A bold statistic or score is an emphasised value, not a section title.
+  it("does not flag numeric values such as statistics and ratings", () => {
+    const html = `<html><body><h1>Title</h1>
+      <div class="text-3xl font-bold">25,000+</div>
+      <span class="font-bold">87%</span>
+      <p class="text-2xl font-bold">4.9 / 5</p>
+    </body></html>`;
+    const result = audit.audit(
+      mockCheckContext([mockPageContext("https://example.com/", html, 0)]),
+    );
+    expect(result.status).toBe("pass");
+  });
+
+  // Hidden subtrees are not in the outline an agent reads, fake or real.
+  it("does not flag text inside a hidden dialog", () => {
+    const html = `<html><body><h1>Title</h1>
+      <div hidden role="dialog"><span class="font-semibold">Keyboard shortcuts</span></div>
+      <dialog><div class="text-xl font-bold">Settings panel</div></dialog>
+    </body></html>`;
+    const result = audit.audit(
+      mockCheckContext([mockPageContext("https://example.com/", html, 0)]),
+    );
+    expect(result.status).toBe("pass");
+  });
+
+  // The dossier flags a heading only where one is structurally missing.
+  it("does not flag bold text inside a section that already has a heading", () => {
+    const html = `<html><body><h1>Title</h1>
+      <section><h2>Community</h2><p class="text-2xl font-bold">Rated by thousands</p><p>Body copy.</p></section>
+    </body></html>`;
+    const result = audit.audit(
+      mockCheckContext([mockPageContext("https://example.com/", html, 0)]),
+    );
+    expect(result.status).toBe("pass");
+  });
+
+  it("does not flag labels inside header, label or figcaption", () => {
+    const html = `<html><body>
+      <header><div class="font-bold">Acme</div></header>
+      <h1>Title</h1>
+      <label><span class="font-bold">Email</span><input></label>
+      <figure><img src="a.png" alt=""><figcaption class="font-bold">Chart one</figcaption></figure>
+    </body></html>`;
+    const result = audit.audit(
+      mockCheckContext([mockPageContext("https://example.com/", html, 0)]),
+    );
+    expect(result.status).toBe("pass");
+  });
+
+  it("still flags a styled title introducing a section with no heading", () => {
+    const html = `<html><body><h1>Title</h1>
+      <section><div class="text-2xl font-bold">Pricing Plans</div><p>Three plans for every team.</p></section>
+    </body></html>`;
+    const result = audit.audit(
+      mockCheckContext([mockPageContext("https://example.com/", html, 0)]),
+    );
+    expect(result.status).toBe("warn");
+    expect(result.message).toContain("Found 1 fake heading(s)");
+  });
+
   it("flags inline styles with large font-size or heavy font-weight", () => {
     const html = `<html><body>
       <h1>Real Title</h1>

@@ -6,10 +6,11 @@ import type { CheckContext, PageContext } from "../../check-context";
 import { weightForGrade } from "../../scorer";
 import {
   readabilityArticle,
-  AGGRESSIVE_DROP_RE,
+  isAggressiveDropTarget,
 } from "../../gatherers/extraction";
 import { normalizeText, sentences } from "../../gatherers/text-metrics";
 import { parseHtml, allJsonLdNodes } from "../../parser";
+import { hiddenFromReaders } from "../../dom-visibility";
 
 /** Below this share of key spans surviving, an agent reads a different page. */
 const RECALL_FLOOR = 0.9;
@@ -29,6 +30,22 @@ const SPAN_WORDS = 8;
 /** Chrome the aggressive extractors drop before anything else. */
 const AGGRESSIVE_TAGS =
   "script, style, noscript, template, nav, aside, header, footer, form, iframe";
+
+/**
+ * Share of the page's text above which a matched element is the page itself.
+ *
+ * A drop rule that would delete most of the page has matched the page's own
+ * wrapper, not a widget. Firecrawl guards the same way: an excluded element
+ * that contains its main-content markers is kept.
+ */
+const MOST_OF_PAGE = 0.5;
+
+/** The body's text without script, style, noscript or template contents. */
+function visibleText($: CheerioAPI): string {
+  const body = $("body").clone();
+  body.find("script, style, noscript, template").remove();
+  return body.text();
+}
 
 interface KeySpan {
   kind: string;
@@ -97,6 +114,9 @@ function keySpans(page: PageContext): KeySpan[] {
   const $ = page.$;
   const spans: KeySpan[] = [];
   const push = (kind: string, el: Element, text: string): void => {
+    // A hidden panel is not on the page a reader sees, and Readability drops
+    // it before scoring, so its text is not a fact an extractor lost.
+    if (hiddenFromReaders($, el)) return;
     const clean = text.replace(/\s+/g, " ").trim();
     const needle = needleOf(clean);
     // Two words is the floor for prose, where a single word matches by accident.
@@ -127,7 +147,9 @@ function keySpans(page: PageContext): KeySpan[] {
       push(selector, el, $(el).text());
   }
 
-  const bodyText = normalizeText($("body").text());
+  // Script contents are not prose: a JSON-LD URL is in `.text()` only because
+  // the block itself sits in the body.
+  const bodyText = normalizeText(visibleText($));
   for (const node of allJsonLdNodes(page.jsonLd)) {
     const walk = (value: unknown): void => {
       if (typeof value === "string") {
@@ -154,10 +176,13 @@ function keySpans(page: PageContext): KeySpan[] {
 function aggressiveText(html: string): string {
   const $ = parseHtml(html);
   $(AGGRESSIVE_TAGS).remove();
+  const total = $("body").text().replace(/\s+/g, "").length;
   $("[class], [id]").each((_i, el) => {
     const element = el as Element;
-    const names = `${element.attribs?.["class"] ?? ""} ${element.attribs?.["id"] ?? ""}`;
-    if (AGGRESSIVE_DROP_RE.test(names)) $(element).remove();
+    if (!isAggressiveDropTarget(element)) return;
+    const own = $(element).text().replace(/\s+/g, "").length;
+    if (own > total * MOST_OF_PAGE) return;
+    $(element).remove();
   });
   return $("body").text();
 }
@@ -217,21 +242,25 @@ export class ExtractorSurvivalRecallAudit extends Audit {
     const html = page.$.html() ?? "";
     const readability = readabilityArticle(html, page.url);
     const readabilityText = normalizeText(readability?.text ?? "");
+    // Readability moves an h1 that repeats the title out of the body and into
+    // the article title, which every Readability-based pipeline delivers.
+    const readabilityTitle = normalizeText(readability?.title ?? "");
     const aggressive = normalizeText(aggressiveText(html));
-    const visible = normalizeText(page.$("body").text());
+    const visible = normalizeText(visibleText(page.$));
 
     const survives = (text: string, span: KeySpan): boolean =>
       text.includes(span.needle);
-    const readabilityKept = spans.filter((span) =>
-      survives(readabilityText, span),
-    );
+    const keptByReadability = (span: KeySpan): boolean =>
+      survives(readabilityText, span) ||
+      (span.kind === "h1" && survives(readabilityTitle, span));
+    const readabilityKept = spans.filter(keptByReadability);
     const aggressiveKept = spans.filter((span) => survives(aggressive, span));
     const readabilityRecall = readabilityKept.length / spans.length;
     const aggressiveRecall = aggressiveKept.length / spans.length;
     const recall = Math.min(readabilityRecall, aggressiveRecall);
 
     const dropped = spans.filter(
-      (span) => !survives(readabilityText, span) || !survives(aggressive, span),
+      (span) => !keptByReadability(span) || !survives(aggressive, span),
     );
     const textRatio =
       visible.length === 0
@@ -247,9 +276,7 @@ export class ExtractorSurvivalRecallAudit extends Audit {
     const lines = dropped.map(
       (span) =>
         `${span.kind} "${span.text.slice(0, 80)}" lost by ${
-          survives(readabilityText, span)
-            ? "the aggressive extractor"
-            : "readability"
+          keptByReadability(span) ? "the aggressive extractor" : "readability"
         } — it lives in ${span.chain}`,
     );
     const found = `readability keeps ${readabilityKept.length}/${spans.length} key spans, the aggressive extractor keeps ${aggressiveKept.length}/${spans.length}.${ratioNote}${

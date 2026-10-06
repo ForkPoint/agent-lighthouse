@@ -14,6 +14,7 @@ signals:
     grade: A
     domain: robots-ai-crawlers
 sources:
+  - rfc-9309
   - anthropic-crawlers
   - tollbit-robots-noncompliance
 ---
@@ -24,7 +25,7 @@ sources:
 
 ## What it checks
 
-Without an explicit robots.txt rule, Claude-User may still crawl your site but has no signal that it is welcome. Adding an explicit allow rule improves your visibility in AI-powered search and ensures consistent crawler behavior.
+Reads the robots.txt rules that apply to Claude-User — its own group if it has one, otherwise the catch-all — and reports whether they let it fetch the site root. A named group is not required: under RFC 9309 §2.2.1 an open catch-all grants the same access.
 
 ## Code review findings (2026-08-20, 11-agent pass)
 
@@ -64,3 +65,45 @@ Genuinely valuable signal — Claude-User is the live fetcher behind Claude's we
 
 - 2026-08-20 — code review (11-agent workflow) + evidence research (12-domain workflow, 400 sources).
 - 2026-08-21 — dossier generated; disposition pending final taxonomy design.
+
+## Implementation deviations
+
+### Inherited access passes (2026-10-06)
+
+The audit scored the shape of the file, not the access it grants. The shared
+base class `_crawler-bot-audit.ts` passed only when a group named Claude-User. It
+warned at 0.5 when Claude-User was allowed through `User-agent: *` or by no rule
+at all.
+
+Nothing in the evidence supports that split. The grade rests on what a
+disallow does, which is a fact about the block state. RFC 9309 §2.2.1 makes a
+crawler obey the group that names its product token and fall back to `*`
+only when none does. An open catch-all therefore grants the same access a
+named group would.
+
+The rule now asks one question: do the rules that apply to Claude-User permit `/`?
+Allowed by its own group, through the catch-all, or by no applicable group
+all pass. The message names which one applied. A disallow that reaches the
+token still fails.
+
+An unreadable robots.txt is not applicable rather than a warn: missing,
+non-200, an empty body, or a 200 that parses to no groups and no directives.
+RFC 9309 §2.3.1.3 lets a crawler access everything when the file is
+unavailable, and no source here documents a cost for its absence.
+
+The old fix, add `User-agent: Claude-User` / `Allow: /`, is withdrawn as advice for
+an allowed site. A named group replaces the catch-all for that bot, so it
+drops every catch-all `Disallow` the site still meant to apply. The fail
+remedy now says so.
+
+`access-crawl-control/meta-external-agent` and
+`access-crawl-control/anthropic-ai` made the same change on 2026-08-24. The
+base class now matches them.
+
+Grade, tier and weight are unchanged.
+
+## Deferred
+
+- **A 5xx robots.txt.** RFC 9309 §2.3.1.4 tells a crawler to assume a complete
+  disallow when robots.txt is unreachable. This audit reports any non-200 as
+  not applicable and does not grade that case.

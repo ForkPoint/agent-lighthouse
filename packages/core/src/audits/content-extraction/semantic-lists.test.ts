@@ -71,6 +71,25 @@ describe("SemanticListsAudit", () => {
       expect(result.status).toBe("fail");
     });
 
+    // Hidden subtrees are not in the markdown or accessibility tree the
+    // mechanism is about, so they neither fail nor dilute the ratio.
+    it("ignores a hidden region of same-class items", () => {
+      const result = run(
+        `<main><ul><li>One</li><li>Two</li><li>Three</li></ul>
+         <div hidden role="dialog"><div class="hint">Open</div><div class="hint">Search</div><div class="hint">Close</div></div>
+         <div aria-hidden="true"><span class="chip">A</span><span class="chip">B</span><span class="chip">C</span></div></main>`,
+      );
+      expect(result.status).toBe("pass");
+    });
+
+    // Keys of one shortcut are one item, not a list of items.
+    it("does not count keycap siblings as a pseudo-list", () => {
+      const result = run(
+        `<main><ul><li>One</li><li>Two</li><li>Three</li></ul><p>Press <kbd class="key">Ctrl</kbd><kbd class="key">Shift</kbd><kbd class="key">K</kbd> to search.</p></main>`,
+      );
+      expect(result.status).toBe("pass");
+    });
+
     it("warns when semantic and pseudo lists are mixed", () => {
       const result = run(
         `<main>

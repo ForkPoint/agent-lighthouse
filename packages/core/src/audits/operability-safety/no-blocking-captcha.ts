@@ -4,13 +4,19 @@ import { weightForGrade } from "../../scorer";
 import type { CheckContext } from "../../check-context";
 import { scanReadPageText, unreadPageTextReason } from "../../scan-evidence";
 
-const CAPTCHA_PATTERNS = [
-  "recaptcha",
-  "hcaptcha",
-  "turnstile",
-  "google.com/recaptcha",
-  "hcaptcha.com",
-  "challenges.cloudflare.com/turnstile",
+/**
+ * CAPTCHA inclusions, matched on the script that loads the widget or the
+ * element it mounts on. A body substring also matched prose and inline
+ * config, such as a `provider = "CloudflareTurnstile"` setting.
+ */
+const CAPTCHA_SELECTORS: Array<{ type: string; selector: string }> = [
+  { type: "recaptcha", selector: 'script[src*="/recaptcha/"], .g-recaptcha' },
+  { type: "hcaptcha", selector: 'script[src*="hcaptcha.com"], .h-captcha' },
+  {
+    type: "turnstile",
+    selector:
+      'script[src*="challenges.cloudflare.com/turnstile"], .cf-turnstile',
+  },
 ];
 
 export class NoBlockingCaptchaAudit extends Audit {
@@ -83,10 +89,9 @@ export class NoBlockingCaptchaAudit extends Audit {
     const detectedCaptchas: Array<{ page: string; type: string }> = [];
 
     for (const page of ctx.pages) {
-      const html = page.fetchResult.body.toLowerCase();
-      for (const pattern of CAPTCHA_PATTERNS) {
-        if (html.includes(pattern)) {
-          detectedCaptchas.push({ page: page.url, type: pattern });
+      for (const { type, selector } of CAPTCHA_SELECTORS) {
+        if (page.$(selector).length > 0) {
+          detectedCaptchas.push({ page: page.url, type });
         }
       }
     }

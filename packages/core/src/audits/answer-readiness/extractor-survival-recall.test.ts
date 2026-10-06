@@ -51,6 +51,35 @@ describe("ExtractorSurvivalRecallAudit", () => {
     expect(Number(result.details?.["recall"])).toBeGreaterThanOrEqual(0.9);
   });
 
+  // Readability lifts an h1 that repeats the title out of the body and into
+  // the article title. The title is still delivered, so the h1 survived.
+  it("counts an h1 kept as Readability's article title as surviving", async () => {
+    const result = await audit.audit(
+      mockCheckContext([
+        mockPageContext(
+          "https://example.com/kettles",
+          `<html><head><title>Riveted pot | Kettle Co</title></head><body>${article().replace("<h1>Copper kettle</h1>", "<h1>Riveted pot</h1>")}</body></html>`,
+          1,
+        ),
+      ]),
+    );
+    expect(Number(result.details?.["readabilityRecall"])).toBe(1);
+  });
+
+  // A hidden panel is not on the page a reader sees, so its spans are not
+  // facts an extractor lost.
+  it("takes no key spans from a hidden dialog", async () => {
+    const result = await audit.audit(
+      page(
+        article(
+          `<div hidden role="dialog"><h2>Keyboard shortcuts</h2><p>Press the slash key to search every page. Press escape to close the panel.</p></div>`,
+        ),
+      ),
+    );
+    expect(result.status).toBe("pass");
+    expect(result.found ?? "").not.toContain("Keyboard shortcuts");
+  });
+
   it("takes its key spans from h1, section openers, captions, dt, th and JSON-LD", async () => {
     const head = `<script type="application/ld+json">${JSON.stringify({
       "@context": "https://schema.org",
@@ -138,5 +167,67 @@ describe("ExtractorSurvivalRecallAudit", () => {
         (stub) => stub.id === ExtractorSurvivalRecallAudit.meta.id,
       )?.status,
     ).toBe("na");
+  });
+
+  // A modifier class that mentions a blocklisted word is not that widget.
+  // Firecrawl's selectors (`.banner`-style) name whole class tokens.
+  it("does not drop a page wrapper whose class only contains a blocklisted word", async () => {
+    const result = await audit.audit(
+      page(
+        `<div class="page-content page-content--banner-enabled">${article()}</div>`,
+      ),
+    );
+    expect(result.status).toBe("pass");
+    expect(result.details?.["aggressiveRecall"]).toBe(1);
+  });
+
+  // A drop rule that would delete most of the page matched the page, not a widget.
+  it("never drops an element that holds most of the page's text", async () => {
+    const result = await audit.audit(
+      page(`<div class="banner">${article()}</div>`),
+    );
+    expect(result.details?.["aggressiveRecall"]).toBe(1);
+  });
+
+  // Script text is not prose: a JSON-LD URL is not a fact the page states.
+  it("does not take key spans from script contents", async () => {
+    const jsonLd = `<script type="application/ld+json">${JSON.stringify({
+      "@context": "https://schema.org",
+      "@type": "WebSite",
+      url: "https://example.com/kettles",
+      potentialAction: { target: "https://example.com/search?q={query}" },
+    })}</script>`;
+    const result = await audit.audit(page(`${article()}${jsonLd}`));
+    expect(result.status).toBe("pass");
+    expect(result.details?.["spanKinds"]).not.toContain("json-ld");
+  });
+
+  const SPECS =
+    "<h2>Specifications</h2><p>The kettle holds two litres and weighs one kilogram empty.</p>" +
+    "<h2>Warranty</h2><p>Every kettle carries a two year warranty against leaks and rust.</p>";
+
+  it("keeps a block whose class merely contains a blocklisted word", async () => {
+    const result = await audit.audit(
+      page(article(`<div class="hero hero--promotional">${SPECS}</div>`)),
+    );
+    expect(result.details?.["aggressiveRecall"]).toBe(1);
+  });
+
+  // True positive: a genuinely lossy page still fails, and names the culprit.
+  it("still fails when facts sit in a block whose class token is a blocklisted word", async () => {
+    const result = await audit.audit(
+      page(article(`<div class="promo">${SPECS}</div>`)),
+    );
+    expect(result.status).toBe("fail");
+    expect(result.details?.["aggressiveRecall"]).toBe(0.5);
+    expect(result.found).toContain("div.promo");
+  });
+
+  it("still drops a block by id", async () => {
+    const result = await audit.audit(
+      page(article(`<div id="sidebar">${SPECS}</div>`)),
+    );
+    expect(result.status).toBe("fail");
+    expect(result.details?.["aggressiveRecall"]).toBe(0.5);
   });
 });
