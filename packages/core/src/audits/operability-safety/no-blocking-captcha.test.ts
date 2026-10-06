@@ -53,6 +53,37 @@ describe("NoBlockingCaptchaAudit", () => {
     expect(result.status).toBe("warn");
     expect(result.message).toContain("turnstile");
   });
+
+  // Inline config naming the vendor is not a widget.
+  it("passes a page whose only Turnstile mention is inline config", () => {
+    const page = mockPageContext(
+      "https://example.com",
+      `<html><body>
+        <script>app.captcha.provider = "CloudflareTurnstile"; app.captcha.tokenParam = "cf-turnstile-response";</script>
+        <p>This site is protected by reCAPTCHA and hCaptcha policies.</p>
+        <form action="/contact" method="POST"><input name="email" /></form>
+      </body></html>`,
+    );
+    const result = audit.audit(mockCheckContext([page]));
+    expect(result.status).toBe("pass");
+  });
+
+  // True positive: a Turnstile widget mounted on a form, with no script tag in
+  // the served HTML (the loader comes from a bundle).
+  it("warns on a Turnstile widget mounted on a form", () => {
+    const page = mockPageContext(
+      "https://example.com",
+      `<html><body>
+        <form action="/contact" method="POST">
+          <input name="email" />
+          <div class="cf-turnstile" data-sitekey="0x0000"></div>
+        </form>
+      </body></html>`,
+    );
+    const result = audit.audit(mockCheckContext([page]));
+    expect(result.status).toBe("warn");
+    expect(result.message).toContain("turnstile");
+  });
 });
 
 describe("NoBlockingCaptchaAudit — the wall the scanner met", () => {

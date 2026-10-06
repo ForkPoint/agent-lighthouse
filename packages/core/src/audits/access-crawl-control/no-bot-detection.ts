@@ -2,7 +2,11 @@ import type { AuditMeta, AuditResult } from "../../types";
 import { Audit } from "../../audit";
 import type { CheckContext } from "../../check-context";
 import { weightForGrade } from "../../scorer";
-import { scanReadPageText, unreadPageTextReason } from "../../scan-evidence";
+import {
+  pageRendersText,
+  scanReadPageText,
+  unreadPageTextReason,
+} from "../../scan-evidence";
 
 const BOT_DETECTION_PATTERNS: Array<{
   name: string;
@@ -85,17 +89,26 @@ export class NoBotDetectionAudit extends Audit {
     }
 
     const detectedServices: Map<string, string[]> = new Map();
+    // Loaders found on pages that still served readable text. The scan read
+    // those pages, so the loader gated nothing: the dossier grades a
+    // form-scoped widget D, and only a loader on an unreadable page is reported.
+    const readableServices = new Set<string>();
+    const rendered = ctx.evidence.renderedByPage;
 
     for (const page of ctx.pages) {
       const html = page.fetchResult.body.toLowerCase();
+      const readable = rendered[page.url] ?? pageRendersText(page);
 
       for (const { name: serviceName, pattern } of BOT_DETECTION_PATTERNS) {
-        if (html.includes(pattern.toLowerCase())) {
-          if (!detectedServices.has(serviceName)) {
-            detectedServices.set(serviceName, []);
-          }
-          detectedServices.get(serviceName)!.push(page.url);
+        if (!html.includes(pattern.toLowerCase())) continue;
+        if (readable) {
+          readableServices.add(serviceName);
+          continue;
         }
+        if (!detectedServices.has(serviceName)) {
+          detectedServices.set(serviceName, []);
+        }
+        detectedServices.get(serviceName)!.push(page.url);
       }
     }
 
@@ -112,6 +125,15 @@ export class NoBotDetectionAudit extends Audit {
           "The scanned page served no readable text, so its scripts were not judged.",
           "No JavaScript-based bot challenges that would block legitimate AI agents",
           unreadPageTextReason(ctx.evidence),
+        );
+      }
+
+      if (readableServices.size > 0) {
+        const names = [...readableServices].join(", ");
+        return this.pass(
+          `${names} loads on scanned pages that still served readable text, so it guards forms rather than the content. No bot wall was observed.`,
+          "No JavaScript-based bot challenges that would block legitimate AI agents",
+          `Checked ${ctx.pages.length} page(s) — ${names} on readable pages only`,
         );
       }
 

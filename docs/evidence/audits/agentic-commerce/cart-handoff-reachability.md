@@ -73,6 +73,22 @@ Tier per evidence policy: **scored** — grade B meets the A/B bar required for 
 - **Without a platform fingerprint the audit is not applicable, not failing.** It still probes `/cart` and `/checkout`, but when neither answers it reports `notApplicable`: the paths were a guess. With a fingerprint, an unanswered cart path is a failure, because the platform's own convention says where it should be.
 - **The JS-only arm needs both halves.** A document warns only when its visible text is under 200 characters _and_ it carries no `<noscript>` content. A short page with a real fallback passes.
 
+### A challenge widget fails only when it is the document (2026-10-06)
+
+Sketch item (b) fails a cart document that references a challenge widget by
+URL substring. A large retail site served a readable cart with the Turnstile
+loader (`api.js?render=explicit`) included site-wide for its login and
+newsletter forms. The cart was readable, and the audit failed it.
+
+The claimed mechanism is a handoff that dead-ends on a challenge. The
+guidance asks a site to challenge the payment submission rather than the
+document, and a widget on a form of a readable cart does exactly that. The
+audit now fails in two cases. First, when the shared WAF detector
+(`detectWafProtection`, the logic the scan gate uses) reads the cart response as a
+challenge page. Second, when a widget is mounted on a document with under 200
+characters of visible text, the same threshold the JS-only arm uses, so the
+challenge is all there is to read. A widget on a readable cart passes.
+
 ## Deferred
 
 - **The ACP `continue_url` itself is never probed.** Reaching it needs a Cart API session, which needs credentials and a POST. The audit probes the storefront cart the same handoff lands on.

@@ -13,6 +13,7 @@ import {
   sharedUaFetch,
 } from "../../gatherers/ua-parity";
 import { parseRobots, isPathAllowed } from "../../gatherers/robots";
+import { detectWafProtection } from "../../waf-detector";
 
 /** Where each storefront keeps its cart. */
 const CANDIDATES: Record<CommercePlatform, string[]> = {
@@ -179,10 +180,27 @@ export class CartHandoffReachabilityAudit extends Audit {
         continue;
       }
 
-      const challenge = challengeIn(document.body);
-      if (challenge) {
+      // A challenge page in place of the cart is a wall. The shared detector
+      // owns what a challenge page looks like, so this reads its verdict
+      // rather than keeping a second list of markers.
+      const wall =
+        document.status >= 200 && document.status < 300
+          ? detectWafProtection(url, document, {}, 1)
+          : null;
+      if (wall?.isBlocked && !wall.isRateLimit) {
         failures.push(
-          `${path} mounts ${challenge} on the document an agent has to read`,
+          `${path} answers with ${wall.name} instead of the cart (${wall.reason}), so an agent never reaches the document`,
+        );
+        continue;
+      }
+
+      // A widget on a readable cart guards a form on it, which is where the
+      // guidance asks a site to put its challenge. Only a widget on a document
+      // with nothing else to read stands between the agent and the cart.
+      const challenge = challengeIn(document.body);
+      if (challenge && textLength(document.body) < MIN_TEXT) {
+        failures.push(
+          `${path} mounts ${challenge} on a document with no readable cart content, so the challenge is the page an agent has to read`,
         );
         continue;
       }

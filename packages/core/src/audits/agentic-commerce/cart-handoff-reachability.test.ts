@@ -35,6 +35,7 @@ interface Answer {
   status?: number;
   body?: string;
   finalUrl?: string;
+  headers?: Record<string, string>;
 }
 
 interface Store {
@@ -77,6 +78,7 @@ function run(store: Store = {}) {
     );
     result.url = o.url;
     result.finalUrl = answer.finalUrl ?? o.url;
+    Object.assign(result.headers, answer.headers ?? {});
     return result;
   };
 
@@ -127,19 +129,53 @@ describe("CartHandoffReachabilityAudit", () => {
     expect(strings(r, "failures")[0]).toContain("account wall");
   });
 
-  it("fails a checkout document carrying a bot challenge", async () => {
+  // The false positive: a readable cart with the site-wide Turnstile loader
+  // and its inline config. The widget guards forms, not the document.
+  it("passes a readable cart that loads Turnstile for its forms", async () => {
+    const { result } = run({
+      markup: SHOPIFY,
+      paths: {
+        "/cart": {
+          headers: { server: "cloudflare", "cf-ray": "abc" },
+          body: `${CART_BODY}<script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit"></script><script>app.captcha.provider = "CloudflareTurnstile"; app.captcha.tokenParam = "cf-turnstile-response";</script>`,
+        },
+      },
+    });
+    const r = await result;
+    expect(r.status).toBe("pass");
+    expect(strings(r, "failures")).toEqual([]);
+  });
+
+  // True positive: the widget is the whole document.
+  it("fails a checkout document that is only a bot challenge", async () => {
     const { result } = run({
       markup: '<link href="/wp-content/plugins/woocommerce/style.css">',
       paths: {
         "/cart": {},
         "/checkout": {
-          body: `${CART_BODY}<script src="https://challenges.cloudflare.com/turnstile/v0/api.js"></script>`,
+          body: '<html><body><form action="/verify"><div class="cf-turnstile" data-sitekey="0x0000"></div></form><script src="https://challenges.cloudflare.com/turnstile/v0/api.js"></script></body></html>',
         },
       },
     });
     const r = await result;
     expect(r.status).toBe("fail");
     expect(strings(r, "failures")[0]).toContain("Cloudflare Turnstile");
+  });
+
+  // True positive: a managed challenge page served at 200 in place of the cart.
+  it("fails a cart answered by a managed challenge page", async () => {
+    const { result } = run({
+      markup: SHOPIFY,
+      paths: {
+        "/cart": {
+          headers: { server: "cloudflare" },
+          body: '<html><head><title>Just a moment...</title></head><body><script src="/cdn-cgi/challenge-platform/h/b/orchestrate/chl_page/v1"></script></body></html>',
+        },
+      },
+    });
+    const r = await result;
+    expect(r.status).toBe("fail");
+    expect(strings(r, "failures")[0]).toContain("Managed Challenge");
   });
 
   it("fails a 403 under ChatGPT-User and names the user agent", async () => {
