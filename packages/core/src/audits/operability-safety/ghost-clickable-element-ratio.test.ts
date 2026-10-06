@@ -54,6 +54,47 @@ describe("GhostClickableElementRatioAudit", () => {
     expect(result.details?.["ghostCount"]).toBe(1);
   });
 
+  // A wrapper named for a call to action, whose action is a nested native
+  // link, is layout. The link is the control, and the snapshot carries it.
+  it("does not count a class-named wrapper around a native link", async () => {
+    const result = await audit.audit(
+      page(
+        `${semantic(3)}<div class="install-cta"><a href="/install/">Install</a></div>`,
+      ),
+    );
+    expect(result.details?.["ghostCount"]).toBe(0);
+  });
+
+  it("does not count a cursor-styled card wrapping a button", async () => {
+    const result = await audit.audit(
+      page(
+        `${semantic(3)}<div class="promo"><p>Spring sale</p><button>Shop</button></div>`,
+        ".promo { cursor: pointer }",
+      ),
+    );
+    expect(result.details?.["ghostCount"]).toBe(0);
+  });
+
+  // The icon and label inside a link are the link, not controls of their own.
+  it("does not count a click-named icon or label inside a link", async () => {
+    const result = await audit.audit(
+      page(
+        `${semantic(3)}<div class="live-cta"><a href="/live"><div class="cta-icon">▶</div><span class="cta-title">Live</span></a></div>`,
+      ),
+    );
+    expect(result.details?.["ghostCount"]).toBe(0);
+  });
+
+  // An inline handler is the wrapper's own action, whatever it contains.
+  it("still counts a wrapper with its own inline click handler", async () => {
+    const result = await audit.audit(
+      page(
+        `${semantic(3)}<div class="install-cta" onclick="install()">Install <a href="/help/">Help</a></div>`,
+      ),
+    );
+    expect(result.details?.["ghostCount"]).toBe(1);
+  });
+
   it("counts a div made clickable only by a stylesheet cursor rule", async () => {
     const result = await audit.audit(
       page(

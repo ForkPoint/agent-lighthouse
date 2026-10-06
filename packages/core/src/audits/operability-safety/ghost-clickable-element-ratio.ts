@@ -6,6 +6,8 @@
 // `aria-roles` validates the ARIA a widget already declares. Both start from a
 // declared control. This audit counts the click targets that declare nothing at
 // all, so neither of the others can see them.
+import type { CheerioAPI } from "cheerio";
+import type { Element } from "domhandler";
 import type { AuditMeta, AuditResult } from "../../types";
 import { Audit } from "../../audit";
 import { weightForGrade } from "../../scorer";
@@ -16,6 +18,7 @@ import {
   NATIVE_INTERACTIVE,
   accessibleName,
   hasClickSignal,
+  hasInlineHandler,
   isElement,
 } from "./_agent-affordances";
 
@@ -79,6 +82,35 @@ interface Survey {
   crossOrigin: number;
 }
 
+/** Native controls and declared roles an agent's snapshot exposes. */
+const CONTROL_DESCENDANT =
+  "a[href], button, input:not([type=hidden]), select, textarea, summary, [role]";
+
+/**
+ * A wrapper whose only click signal is a name or a cursor, and which holds a
+ * native control or a declared role, is layout around that control. The
+ * vocabulary stands in for a listener the scanner cannot see. Here the nested
+ * control explains the signal, and the snapshot carries it. An inline handler
+ * is the wrapper's own action, so it never counts as a wrapper.
+ */
+function wrapsControl(el: Element, $: CheerioAPI): boolean {
+  if (hasInlineHandler(el)) return false;
+  return $(el).find(CONTROL_DESCENDANT).length > 0;
+}
+
+/** Controls whose clicks an inner element's clicks reach and are announced as. */
+const CONTROL_ANCESTOR =
+  'a[href], button, summary, [role="button"], [role="link"], [role="menuitem"], [role="menuitemcheckbox"], [role="menuitemradio"], [role="tab"], [role="option"], [role="checkbox"], [role="radio"], [role="switch"], [role="treeitem"]';
+
+/**
+ * An icon or label inside a link or button is part of that control: a click
+ * on it is the control's click, and the snapshot names the control. Its own
+ * click-signal class is a styling hook, not a second control.
+ */
+function insideControl(el: Element, $: CheerioAPI): boolean {
+  return $(el).parents(CONTROL_ANCESTOR).length > 0;
+}
+
 /** The role attribute, once `presentation`/`none` are treated as no role. */
 function declaredRole(attribs: Record<string, string>): string {
   const role = (attribs["role"] ?? "").trim().toLowerCase();
@@ -139,7 +171,12 @@ async function survey(ctx: CheckContext): Promise<Survey> {
           .parents()
           .toArray()
           .some((parent) => flagged.has(parent));
-        if (!ancestorFlagged && hasClickSignal(node, $, css.rules)) {
+        if (
+          !ancestorFlagged &&
+          hasClickSignal(node, $, css.rules) &&
+          !wrapsControl(node, $) &&
+          !insideControl(node, $)
+        ) {
           reasons.push("no role");
           flagged.add(node);
         }

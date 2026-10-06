@@ -41,6 +41,12 @@ const INLINE_HANDLERS = [
   "onkeypress",
 ];
 
+/** Whether the element carries an inline handler attribute of its own. */
+export function hasInlineHandler(el: Element): boolean {
+  const attribs = el.attribs ?? {};
+  return INLINE_HANDLERS.some((handler) => Boolean(attribs[handler]));
+}
+
 /** A declaration block that sets the hand cursor, whatever else it carries. */
 const CURSOR_POINTER = /(^|;)\s*cursor\s*:\s*pointer\b/;
 
@@ -59,9 +65,7 @@ export function hasClickSignal(
 ): boolean {
   const attribs = el.attribs ?? {};
 
-  for (const handler of INLINE_HANDLERS) {
-    if (attribs[handler]) return true;
-  }
+  if (hasInlineHandler(el)) return true;
 
   const names = [
     attribs["class"] ?? "",
