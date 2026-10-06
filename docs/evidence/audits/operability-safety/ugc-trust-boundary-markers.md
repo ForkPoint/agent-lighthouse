@@ -95,6 +95,24 @@ JSON-LD `Comment`, `UserComments`, `Review`, `Question`, `Answer` and
 carries no DOM anchor at all. Otherwise the DOM region is the finding and the
 JSON-LD would double-report it.
 
+### FAQPage entries are editorial (2026-10-06)
+
+The JSON-LD fallback counted any `Question` or `Answer` node as visitor
+content. An FAQPage's `mainEntity` questions and their answers are written by
+the site. schema.org's visitor-written form is QAPage. A small marketing site
+that publishes its own FAQ as FAQPage was reported as carrying an unbounded
+visitor-written region.
+
+Questions in an FAQPage's `mainEntity`, with their `acceptedAnswer` and
+`suggestedAnswer`, are now excluded from the fallback. A `Question` or
+`Answer` anywhere else, such as under a QAPage, still counts. A real comment,
+review or forum region in the DOM is unaffected.
+
+Verdicts that moved in the real-page corpus, each a page whose only
+Question/Answer nodes sat in its FAQPage: `allbirds-com-collection`,
+`capitalone-com-savings`, `magicspoon-com-product` and `stripe-com-pricing`
+warn → na.
+
 ## Deferred
 
 - **Sanitizer behaviour on submission.** Whether the site strips markup at

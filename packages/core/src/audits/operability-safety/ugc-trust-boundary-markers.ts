@@ -42,6 +42,44 @@ const UGC_TYPES = new Set([
   "discussionforumposting",
 ]);
 
+/** The node's `@type` names, lowercased. */
+function typeNames(node: object): string[] {
+  const type = (node as { "@type"?: unknown })["@type"];
+  return (Array.isArray(type) ? type : [type])
+    .filter((name): name is string => typeof name === "string")
+    .map((name) => name.toLowerCase());
+}
+
+/** A property's value as a list of objects, whether it held one or many. */
+function objects(value: unknown): object[] {
+  const list = Array.isArray(value) ? value : [value];
+  return list.filter((v): v is object => Boolean(v) && typeof v === "object");
+}
+
+/**
+ * The Question and Answer nodes an FAQPage declares. schema.org's FAQPage is
+ * the site's own questions and answers; QAPage is the visitor-written form.
+ * So an FAQPage's entries are editorial, whatever their type.
+ */
+function faqEntries(nodes: object[]): Set<object> {
+  const out = new Set<object>();
+  for (const node of nodes) {
+    if (!typeNames(node).includes("faqpage")) continue;
+    for (const question of objects(
+      (node as Record<string, unknown>)["mainEntity"],
+    )) {
+      out.add(question);
+      const q = question as Record<string, unknown>;
+      for (const answer of [
+        ...objects(q["acceptedAnswer"]),
+        ...objects(q["suggestedAnswer"]),
+      ])
+        out.add(answer);
+    }
+  }
+  return out;
+}
+
 /** Textarea names that mark a form as a submission surface for visitor prose. */
 const UGC_FIELD_RE = /comment|review|message|feedback|testimonial/i;
 
@@ -197,7 +235,10 @@ function regionsOf(page: PageContext): Region[] {
   if (regions.length > 0) return regions;
 
   // No DOM anchor, but the page still declares visitor-written content.
-  const declared = allJsonLdNodes(page.jsonLd).filter((node) => {
+  const nodes = allJsonLdNodes(page.jsonLd);
+  const editorial = faqEntries(nodes);
+  const declared = nodes.filter((node) => {
+    if (editorial.has(node)) return false;
     const type = (node as { "@type"?: unknown })["@type"];
     const names = Array.isArray(type) ? type : [type];
     return names.some(

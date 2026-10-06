@@ -36,6 +36,42 @@ describe("UgcTrustBoundaryMarkersAudit", () => {
     expect(result.status).toBe("na");
   });
 
+  // An FAQPage's questions and answers are written by the site. Question and
+  // Answer are visitor content on a QAPage or a forum, not here.
+  it("does not treat an editorial FAQPage as visitor content", async () => {
+    const faq = `<script type="application/ld+json">${JSON.stringify({
+      "@context": "https://schema.org",
+      "@type": "FAQPage",
+      mainEntity: [
+        {
+          "@type": "Question",
+          name: "Is it free?",
+          acceptedAnswer: {
+            "@type": "Answer",
+            text: "Yes, the core plan is free.",
+          },
+        },
+      ],
+    })}</script>`;
+    const result = await audit.audit(page(`${faq}<p>Editorial copy.</p>`));
+    expect(result.status).toBe("na");
+  });
+
+  it("still treats QAPage questions and answers as visitor content", async () => {
+    const qa = `<script type="application/ld+json">${JSON.stringify({
+      "@context": "https://schema.org",
+      "@type": "QAPage",
+      mainEntity: {
+        "@type": "Question",
+        name: "Does it fit a 2015 model?",
+        answerCount: 1,
+        acceptedAnswer: { "@type": "Answer", text: "Mine fits fine." },
+      },
+    })}</script>`;
+    const result = await audit.audit(page(`${qa}<p>Thread.</p>`));
+    expect(result.status).toBe("warn");
+  });
+
   it("fails when an inline style attribute survives inside a comment body", async () => {
     const result = await audit.audit(
       page(
