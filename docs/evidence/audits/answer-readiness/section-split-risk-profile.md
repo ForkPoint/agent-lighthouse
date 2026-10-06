@@ -87,8 +87,30 @@ bands.
 A page under 512 tokens is `notApplicable`: a retriever never cuts it, so there
 is no split risk to profile.
 
+### THIN is reported, not judged (2026-10-06)
+
+Any finding turned the verdict into a warning, so one short card did. A small
+marketing site whose sections all fit the window warned on nine THIN feature
+cards and a newsletter prompt, with the message "Some of this page chunks
+badly". The claimed mechanism is a section the window cuts. A section under
+the window is never cut, and no cited source ties a short section to a lost
+answer. THIN stays in `found` and `details.findings` as information. Only
+SPLIT, ATOMIC-SPLIT and BLOB, or a score under the pass line, now warn.
+
+Verdicts that moved in the real-page corpus, each a page whose only findings
+were THIN: `barclays-co-uk-current-accounts`, `bbc-co-uk-article`,
+`cdc-gov-flu-about`, `cloudflare-com-plans`, `gov-uk-vehicle-tax`,
+`kubernetes-docs-pods`, `otto-de-category`, `stripe-com-pricing`,
+`theguardian-com-article`, `walmart-com-wall-200` and
+`wellsfargo-com-checking` warn → pass.
+
 ## Deferred
 
+- **The Evidence list.** It names two Model Context Protocol specification pages
+  (caching, streamable HTTP), which say nothing about chunking. The source the
+  mechanism cites, Azure's published 512-token default and its
+  heading-segmentation advice (S5), is not in the list. The list needs that
+  source restored, verified and stamped before the grade is reviewed.
 - **The real chunker.** Every pipeline splits slightly differently — some on
   tokens, some on sentences, some with overlap. 512 tokens with heading
   boundaries is the common denominator, and the finding survives the variation.

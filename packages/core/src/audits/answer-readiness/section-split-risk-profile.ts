@@ -189,6 +189,14 @@ export class SectionSplitRiskProfileAudit extends Audit {
       );
     }
 
+    // THIN is reported but never decides the verdict. The mechanism is a
+    // section cut by the window; a section under it is never cut, and no
+    // source ties a short section to a lost answer.
+    const cutting =
+      sections.filter((section) =>
+        section.findings.some((finding) => finding !== "THIN"),
+      ).length + (blob ? 1 : 0);
+
     const found = `${bodyTokens} body tokens across ${sections.length} section(s); ${Math.round(score * 100)}% of section tokens sit inside the ${WINDOW_TOKENS}-token window; longest section ${headingDistance} characters from its heading.${
       lines.length > 0 ? ` ${lines.join(" | ")}` : ""
     }`;
@@ -225,10 +233,10 @@ export class SectionSplitRiskProfileAudit extends Audit {
       };
     }
 
-    if (score < PASS_SCORE || lines.length > 0) {
+    if (score < PASS_SCORE || cutting > 0) {
       return {
         ...this.warn(
-          `Some of this page chunks badly: ${lines.length} section-level finding(s).`,
+          `Some of this page chunks badly: ${cutting} section-level finding(s).`,
           expected,
           found,
           "Split the flagged sections, and break any table that runs past the window.",
