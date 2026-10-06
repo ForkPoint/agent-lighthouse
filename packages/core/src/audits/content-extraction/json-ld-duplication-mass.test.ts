@@ -69,6 +69,49 @@ describe("JsonLdDuplicationMassAudit", () => {
     expect(result.found).toContain("Product");
   });
 
+  // A bare {"@id"} is a reference to one entity, the linked-data way to avoid
+  // declaring it twice. Two references are not two declarations.
+  it("does not count reference-only nodes as duplicates", async () => {
+    const result = await audit.audit(
+      page(
+        block({
+          "@context": "https://schema.org",
+          "@graph": [
+            {
+              "@type": "Organization",
+              "@id": "https://example.com/#org",
+              name: "Kettle Co",
+            },
+            {
+              "@type": "WebSite",
+              publisher: { "@id": "https://example.com/#org" },
+            },
+            {
+              "@type": "SoftwareApplication",
+              name: "Kettle timer",
+              author: { "@id": "https://example.com/#org" },
+            },
+          ],
+        }),
+      ),
+    );
+    expect(result.status).toBe("pass");
+    expect(Number(result.details?.["duplicateNodes"])).toBe(0);
+  });
+
+  it("names the duplicated node when no body text repeats", async () => {
+    const node = {
+      "@context": "https://schema.org",
+      "@type": "Organization",
+      "@id": "https://example.com/#org",
+      name: "Kettle Co",
+    };
+    const result = await audit.audit(page(`${block(node)}${block(node)}`));
+    expect(result.status).toBe("warn");
+    expect(result.message).toContain("declared twice");
+    expect(result.message).not.toMatch(/^0 tokens/);
+  });
+
   it("reports an articleBody that repeats text already in the DOM", async () => {
     const body = ARTICLE_BODY.repeat(3);
     const result = await audit.audit(

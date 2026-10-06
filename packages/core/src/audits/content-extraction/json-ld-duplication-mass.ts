@@ -63,6 +63,13 @@ function bodyStrings(node: object): Array<{ property: string; text: string }> {
   return out;
 }
 
+/** A node whose only keys, apart from an inherited `@context`, are `@id`. */
+function isReference(node: unknown): boolean {
+  if (!node || typeof node !== "object") return false;
+  const keys = Object.keys(node).filter((k) => k !== "@context");
+  return keys.length === 1 && keys[0] === "@id";
+}
+
 export class JsonLdDuplicationMassAudit extends Audit {
   static override meta: AuditMeta = {
     id: "content-extraction/json-ld-duplication-mass",
@@ -126,6 +133,9 @@ export class JsonLdDuplicationMassAudit extends Audit {
     const seen = new Map<string, number>();
     const duplicateTypes: string[] = [];
     for (const node of nodes) {
+      // A bare {"@id"} points at an entity declared elsewhere. Reusing it is
+      // how linked data avoids a second declaration, so it is never one.
+      if (isReference(node)) continue;
       const key = canonical(node);
       const count = (seen.get(key) ?? 0) + 1;
       seen.set(key, count);
@@ -179,9 +189,13 @@ export class JsonLdDuplicationMassAudit extends Audit {
       "Structured data carries facts a parser needs, not a second copy of the page text";
 
     if (duplicatedTokens > 0 || duplicateNodes > 0) {
+      const message =
+        duplicatedTokens > 0
+          ? `${duplicatedTokens} tokens of structured data repeat text the page already carries.`
+          : `${duplicateNodes} structured-data node(s) are declared twice, each copy adding tokens and no facts.`;
       return {
         ...this.warn(
-          `${duplicatedTokens} tokens of structured data repeat text the page already carries.`,
+          message,
           expected,
           found,
           "Keep prose in the DOM and JSON-LD to the facts a parser needs; merge blocks that declare the same @id.",
