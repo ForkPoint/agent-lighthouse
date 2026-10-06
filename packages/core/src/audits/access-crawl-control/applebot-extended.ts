@@ -10,7 +10,7 @@ export class ApplebotExtendedAudit extends CrawlerBotAudit {
     title: "Applebot-Extended allowed",
     failureTitle: "Applebot-Extended allowed",
     description:
-      "Without an explicit robots.txt rule, Applebot-Extended may still crawl your site but has no signal that it is welcome. Adding an explicit allow rule improves your visibility in AI-powered search and ensures consistent crawler behavior.",
+      "Applebot-Extended is a robots.txt usage-control token, not a crawler: no request carries it. This check reads the rules that apply to it — its own group if it has one, otherwise the catch-all — and reports whether they disallow the site root. A named group is not required: under RFC 9309 §2.2.1 an open catch-all grants the same permission.",
     scoreDisplayMode: "ternary",
     weight: weightForGrade("A", "scored"),
     evidenceGrade: "A",
@@ -21,8 +21,8 @@ export class ApplebotExtendedAudit extends CrawlerBotAudit {
     defaultPriority: "medium",
     guidance: {
       impact:
-        "Blocking Applebot-Extended prevents your content from being used in Apple Intelligence features, Siri AI answers, and Safari Highlights. Allowing it ensures visibility across Apple's AI ecosystem.",
-      fix: "Add an explicit User-agent: Applebot-Extended with Allow: / rule in your robots.txt file.",
+        "Disallowing Applebot-Extended opts content Applebot already crawls out of training Apple's foundation models. It does not remove the site from Siri, Spotlight or Safari search results: base Applebot governs those.",
+      fix: "If the block was not intended, remove the Disallow rule that applies to Applebot-Extended. A named `User-agent: Applebot-Extended` group with `Allow: /` also lifts it, but under RFC 9309 §2.2.1 a named group replaces the catch-all for that bot, so copy into it every catch-all Disallow line Applebot-Extended should still obey.",
       code: "User-agent: Applebot-Extended\nAllow: /",
       effort: "trivial",
       docsUrl: "https://support.apple.com/en-us/111042",
@@ -34,5 +34,6 @@ export class ApplebotExtendedAudit extends CrawlerBotAudit {
     botName: "Applebot-Extended",
     displayName: "Applebot-Extended",
     category: "training",
+    controlToken: true,
   };
 }

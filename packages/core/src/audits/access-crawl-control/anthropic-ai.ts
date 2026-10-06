@@ -79,8 +79,8 @@ export class AnthropicAudit extends CrawlerBotAudit {
    * about whether a group names the token — and under RFC 9309 §2.2.1 the
    * catch-all and named cases grant identical access.
    *
-   * The override is confined to this class. Twenty sibling bot audits inherit
-   * the base rule; changing it there would move every one of them.
+   * The base class adopted the same pass rule on 2026-10-06. This override
+   * stays for the legacy-token note and the ClaudeBot-specific failure text.
    */
   override audit(ctx: CheckContext): AuditResult {
     const robotsFile = ctx.rootFiles["/robots.txt"];

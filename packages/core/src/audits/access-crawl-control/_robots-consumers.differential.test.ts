@@ -231,6 +231,13 @@ describe("robots.txt consumers — shared-gatherer differential", () => {
 // three that disallow it stay `fail`/0 with new text at priority `medium`. No
 // other audit's rows moved.
 
+// Regenerated a fourth time, deliberately (2026-10-06): the per-bot base class
+// `_crawler-bot-audit.ts` now scores access, not the shape of the file.
+// gptbot's rows that leave GPTBot able to fetch `/` through the catch-all, or
+// through no applicable group, move from `warn`/0.5 to `pass`/1; the four
+// fixtures with no readable robots.txt move from `warn` to `na`; the blocked
+// rows stay `fail`/0 with a `found` that names the group that applied. No
+// other audit's rows moved.
 const BASELINE: Record<string, Record<string, Row>> = {
   "no-blanket-block": {
     missing: {
@@ -948,47 +955,47 @@ const BASELINE: Record<string, Record<string, Row>> = {
   },
   gptbot: {
     missing: {
-      status: "warn",
-      score: 0.5,
+      status: "na",
+      score: 0,
       message:
-        "robots.txt not found — GPTBot is allowed by default but not explicitly.",
+        "No robots.txt to read, so there are no crawl rules to evaluate for GPTBot.",
       found: "No robots.txt found",
       priority: "medium",
       details: "{}",
     },
     "non-200": {
-      status: "warn",
-      score: 0.5,
+      status: "na",
+      score: 0,
       message:
-        "robots.txt not found — GPTBot is allowed by default but not explicitly.",
+        "No robots.txt to read, so there are no crawl rules to evaluate for GPTBot.",
       found: "No robots.txt found",
       priority: "medium",
       details: "{}",
     },
     empty: {
-      status: "warn",
-      score: 0.5,
+      status: "na",
+      score: 0,
       message:
-        "robots.txt not found — GPTBot is allowed by default but not explicitly.",
+        "No robots.txt to read, so there are no crawl rules to evaluate for GPTBot.",
       found: "No robots.txt found",
       priority: "medium",
       details: "{}",
     },
     "html-error-page": {
-      status: "warn",
-      score: 0.5,
+      status: "na",
+      score: 0,
       message:
-        "GPTBot is allowed by default (no specific rules), but not explicitly allowed.",
-      found: "No explicit rules for GPTBot — allowed via wildcard or default",
+        "The response at /robots.txt carries no crawl rules, so there is nothing to evaluate for GPTBot.",
+      found: "robots.txt contains no user-agent groups and no directives",
       priority: "medium",
       details: "{}",
     },
     "wildcard-allow": {
-      status: "warn",
-      score: 0.5,
+      status: "pass",
+      score: 1,
       message:
-        "GPTBot is allowed by default (no specific rules), but not explicitly allowed.",
-      found: "No explicit rules for GPTBot — allowed via wildcard or default",
+        "GPTBot is allowed. No group names it, so under RFC 9309 §2.2.1 the catch-all group applies, and it permits /.",
+      found: "Allowed through the catch-all group",
       priority: "medium",
       details: "{}",
     },
@@ -996,16 +1003,16 @@ const BASELINE: Record<string, Record<string, Row>> = {
       status: "fail",
       score: 0,
       message: "GPTBot is blocked by robots.txt.",
-      found: "GPTBot is disallowed (Disallow: /)",
+      found: "The catch-all group disallows / and no group names GPTBot",
       priority: "high",
       details: "{}",
     },
     "blanket-block-countered": {
-      status: "warn",
-      score: 0.5,
+      status: "pass",
+      score: 1,
       message:
-        "GPTBot is allowed by default (no specific rules), but not explicitly allowed.",
-      found: "No explicit rules for GPTBot — allowed via wildcard or default",
+        "GPTBot is allowed. No group names it, so under RFC 9309 §2.2.1 the catch-all group applies, and it permits /.",
+      found: "Allowed through the catch-all group",
       priority: "medium",
       details: "{}",
     },
@@ -1013,7 +1020,7 @@ const BASELINE: Record<string, Record<string, Row>> = {
       status: "fail",
       score: 0,
       message: "GPTBot is blocked by robots.txt.",
-      found: "GPTBot is disallowed (Disallow: /)",
+      found: "The catch-all group disallows / and no group names GPTBot",
       priority: "high",
       details: "{}",
     },
@@ -1021,7 +1028,7 @@ const BASELINE: Record<string, Record<string, Row>> = {
       status: "fail",
       score: 0,
       message: "GPTBot is blocked by robots.txt.",
-      found: "GPTBot is disallowed (Disallow: /)",
+      found: "Its own group (User-agent: GPTBot) disallows /",
       priority: "high",
       details: "{}",
     },
@@ -1029,7 +1036,7 @@ const BASELINE: Record<string, Record<string, Row>> = {
       status: "fail",
       score: 0,
       message: "GPTBot is blocked by robots.txt.",
-      found: "GPTBot is disallowed (Disallow: /)",
+      found: "Its own group (User-agent: GPTBot) disallows /",
       priority: "high",
       details: "{}",
     },
@@ -1037,51 +1044,51 @@ const BASELINE: Record<string, Record<string, Row>> = {
       status: "fail",
       score: 0,
       message: "GPTBot is blocked by robots.txt.",
-      found: "GPTBot is disallowed (Disallow: /)",
+      found: "Its own group (User-agent: GPTBot) disallows /",
       priority: "high",
       details: "{}",
     },
     "anthropic-alias-only": {
-      status: "warn",
-      score: 0.5,
+      status: "pass",
+      score: 1,
       message:
-        "GPTBot is allowed by default (no specific rules), but not explicitly allowed.",
-      found: "No explicit rules for GPTBot — allowed via wildcard or default",
+        "GPTBot is allowed. No group names it, so under RFC 9309 §2.2.1 the catch-all group applies, and it permits /.",
+      found: "Allowed through the catch-all group",
       priority: "medium",
       details: "{}",
     },
     "comments-and-crlf": {
-      status: "warn",
-      score: 0.5,
+      status: "pass",
+      score: 1,
       message:
-        "GPTBot is allowed by default (no specific rules), but not explicitly allowed.",
-      found: "No explicit rules for GPTBot — allowed via wildcard or default",
+        "GPTBot is allowed. No group names it, so under RFC 9309 §2.2.1 the catch-all group applies, and it permits /.",
+      found: "Allowed through the catch-all group",
       priority: "medium",
       details: "{}",
     },
     "bom-prefixed": {
-      status: "warn",
-      score: 0.5,
+      status: "pass",
+      score: 1,
       message:
-        "GPTBot is allowed by default (no specific rules), but not explicitly allowed.",
-      found: "No explicit rules for GPTBot — allowed via wildcard or default",
+        "GPTBot is allowed. No group names it, so under RFC 9309 §2.2.1 the catch-all group applies, and it permits /.",
+      found: "Allowed through the catch-all group",
       priority: "medium",
       details: "{}",
     },
     "crawl-delay-reasonable": {
-      status: "warn",
-      score: 0.5,
+      status: "pass",
+      score: 1,
       message:
-        "GPTBot is allowed by default (no specific rules), but not explicitly allowed.",
-      found: "No explicit rules for GPTBot — allowed via wildcard or default",
+        "GPTBot is allowed. No group names it, so under RFC 9309 §2.2.1 the catch-all group applies, and it permits /.",
+      found: "Allowed through the catch-all group",
       priority: "medium",
       details: "{}",
     },
     "crawl-delay-excessive": {
       status: "pass",
       score: 1,
-      message: "GPTBot is explicitly allowed in robots.txt.",
-      found: "Explicit rules found for GPTBot — access allowed",
+      message: "GPTBot is allowed by its own robots.txt group.",
+      found: "User-agent: GPTBot group permits /",
       priority: "medium",
       details: "{}",
     },
@@ -1089,34 +1096,34 @@ const BASELINE: Record<string, Record<string, Row>> = {
       status: "fail",
       score: 0,
       message: "GPTBot is blocked by robots.txt.",
-      found: "GPTBot is disallowed (Disallow: /)",
+      found: "Its own group (User-agent: GPTBot) disallows /",
       priority: "high",
       details: "{}",
     },
     "sensitive-paths-disallowed": {
-      status: "warn",
-      score: 0.5,
+      status: "pass",
+      score: 1,
       message:
-        "GPTBot is allowed by default (no specific rules), but not explicitly allowed.",
-      found: "No explicit rules for GPTBot — allowed via wildcard or default",
+        "GPTBot is allowed. No group names it, so under RFC 9309 §2.2.1 the catch-all group applies, and it permits /.",
+      found: "Allowed through the catch-all group",
       priority: "medium",
       details: "{}",
     },
     "youbot-and-ai2bot-explicit": {
-      status: "warn",
-      score: 0.5,
+      status: "pass",
+      score: 1,
       message:
-        "GPTBot is allowed by default (no specific rules), but not explicitly allowed.",
-      found: "No explicit rules for GPTBot — allowed via wildcard or default",
+        "GPTBot is allowed. No group names it, so under RFC 9309 §2.2.1 the catch-all group applies, and it permits /.",
+      found: "Allowed through the catch-all group",
       priority: "medium",
       details: "{}",
     },
     "youbot-blocked": {
-      status: "warn",
-      score: 0.5,
+      status: "pass",
+      score: 1,
       message:
-        "GPTBot is allowed by default (no specific rules), but not explicitly allowed.",
-      found: "No explicit rules for GPTBot — allowed via wildcard or default",
+        "GPTBot is allowed. No group in robots.txt applies to it, so nothing restricts it.",
+      found: "No group applies to GPTBot",
       priority: "medium",
       details: "{}",
     },

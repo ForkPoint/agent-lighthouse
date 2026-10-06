@@ -10,7 +10,7 @@ export class PerplexitybotAudit extends CrawlerBotAudit {
     title: "PerplexityBot allowed",
     failureTitle: "PerplexityBot allowed",
     description:
-      "Without an explicit robots.txt rule, PerplexityBot may still crawl your site but has no signal that it is welcome. Adding an explicit allow rule improves your visibility in AI-powered search and ensures consistent crawler behavior.",
+      "Reads the robots.txt rules that apply to PerplexityBot — its own group if it has one, otherwise the catch-all — and reports whether they let it fetch the site root. A named group is not required: under RFC 9309 §2.2.1 an open catch-all grants the same access.",
     scoreDisplayMode: "ternary",
     weight: weightForGrade("A", "scored"),
     evidenceGrade: "A",
@@ -22,7 +22,7 @@ export class PerplexitybotAudit extends CrawlerBotAudit {
     guidance: {
       impact:
         "Blocking PerplexityBot prevents your content from appearing in Perplexity AI search results, one of the fastest-growing AI answer engines. Allowing it gives your content visibility in AI-native search.",
-      fix: "Add an explicit User-agent: PerplexityBot with Allow: / rule in your robots.txt file.",
+      fix: "If the block was not intended, remove the Disallow rule that applies to PerplexityBot. A named `User-agent: PerplexityBot` group with `Allow: /` also lifts it, but under RFC 9309 §2.2.1 a named group replaces the catch-all for that bot, so copy into it every catch-all Disallow line PerplexityBot should still obey.",
       code: "User-agent: PerplexityBot\nAllow: /",
       effort: "trivial",
       docsUrl: "https://docs.perplexity.ai/guides/bots",
