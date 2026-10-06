@@ -1,5 +1,12 @@
 # @forkpoint/agent-lighthouse-core
 
+## 5.2.0
+
+### Minor Changes
+
+- b2ddf0b: `machine-discovery/feed-entry-identity-and-canonical-integrity` no longer warns when a feed is served as `application/xml` or `text/xml`. Every feed reader parses a generic XML type, and no source names a consumer that treats it worse; `application/rss+xml` was never registered with IANA. The type is still recorded under `details.warnings`, and a non-XML type such as `text/html` still fails.
+- 8866724: Stop reporting a Cloudflare bot wall when a readable page loads Turnstile for form protection. Keep managed challenge-page detection and allow content audits to assess the fetched page.
+
 ## 5.1.1
 
 ### Patch Changes
