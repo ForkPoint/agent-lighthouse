@@ -77,9 +77,8 @@ containing `https:`, `http:`, `data:`, `blob:` or `*` does not, and neither does
 `'unsafe-inline'` with no nonce or hash beside it — that policy is present in
 the response and decorative in effect.
 
-Origins are grouped by eTLD+1 using the same short suffix list
-`agentic-commerce/acp-policy-link-surface` carries, rather than a bundled Public
-Suffix List snapshot. `cdn.vendor.com` and `static.vendor.com` are one company
+Origins are grouped by eTLD+1 using a short suffix list rather than a bundled
+Public Suffix List snapshot. `cdn.vendor.com` and `static.vendor.com` are one company
 with write access, so they are one origin.
 
 Cross-origin frames are reported only when they are large enough to render text.
