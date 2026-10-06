@@ -125,4 +125,36 @@ describe("ExtractionDeterminismAudit", () => {
       )?.status,
     ).toBe("na");
   });
+
+  // A promo strip marked up as the first <article> is not the page's article.
+  it("does not read a leading promo article as the semantic extraction", async () => {
+    const result = await audit.audit(
+      page(
+        `<article class="ticker"><p>New hoodies have just arrived. Shop now.</p></article><article><h1>Kettles</h1><p>${prose("copper")}</p></article>`,
+      ),
+    );
+    expect(result.status).toBe("pass");
+    expect(result.found).not.toContain("hoodies");
+  });
+
+  it("falls back to the body when no article holds the page's text", async () => {
+    const result = await audit.audit(
+      page(
+        `<article class="ticker"><p>New hoodies have just arrived. Shop now.</p></article><div class="copy"><h1>Kettles</h1><p>${prose("copper")}</p></div>`,
+      ),
+    );
+    expect(result.status).toBe("pass");
+  });
+
+  // True positive: an article that is a real share of the page and disagrees
+  // with the density block is still reported.
+  it("still fails when the page's one article disagrees with the largest prose block", async () => {
+    const result = await audit.audit(
+      page(
+        `<article><h1>Kettles</h1><p>${prose("copper", 10)}</p></article><div class="feature"><p>${prose("ceramic", 30)}</p></div>`,
+      ),
+    );
+    expect(result.status).toBe("fail");
+    expect(result.details?.["worstPair"]).toBe("semantic vs density");
+  });
 });
