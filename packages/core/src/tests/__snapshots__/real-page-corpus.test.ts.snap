@@ -119,7 +119,7 @@ exports[`real-page corpus > aljazeera-com-article: verdicts hold 1`] = `
   "content-extraction/header-footer": "pass",
   "content-extraction/hydration-payload-share": "warn",
   "content-extraction/image-alt-text": "pass",
-  "content-extraction/json-ld-duplication-mass": "warn",
+  "content-extraction/json-ld-duplication-mass": "pass",
   "content-extraction/language-attribute": "pass",
   "content-extraction/main-element": "pass",
   "content-extraction/markdown-alternate": "na",
