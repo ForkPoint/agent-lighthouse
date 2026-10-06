@@ -2,6 +2,7 @@ import type { AuditMeta, AuditResult } from "../../types";
 import { Audit } from "../../audit";
 import type { CheckContext, PageContext } from "../../check-context";
 import { weightForGrade } from "../../scorer";
+import { hiddenFromReaders } from "../../dom-visibility";
 
 /** Regions whose lists are chrome, not content. */
 const CHROME_REGION =
@@ -61,6 +62,9 @@ const EMPTY: PageTally = { semantic: 0, pseudo: 0, definitions: 0, steps: 0 };
 function isChrome(page: PageContext, el: unknown): boolean {
   const $el = page.$(el as never);
   if ($el.closest(CHROME_REGION).length > 0) return true;
+  // A hidden subtree is in neither the markdown nor the accessibility tree,
+  // so its lists are not content an agent reads.
+  if (hiddenFromReaders(page.$, el as never)) return true;
   if (CHROME_CLASS.test($el.attr("class") ?? "")) return true;
   if (CHROME_ITEMTYPE.test($el.attr("itemtype") ?? "")) return true;
   return $el
@@ -100,6 +104,9 @@ function countPseudoLists(page: PageContext): number {
     // Rule 1: ≥3 siblings sharing a class, each holding one item's worth of text.
     const byClass = new Map<string, number>();
     for (const child of children) {
+      // The keys of one shortcut are one item, however many there are.
+      if ((child as { tagName?: string }).tagName?.toLowerCase() === "kbd")
+        continue;
       const cls = ($(child).attr("class") ?? "").trim();
       if (!cls) continue;
       const text = $(child).text().trim();
