@@ -8975,7 +8975,7 @@ exports[`real-page corpus > wellsfargo-com-checking: verdicts hold 1`] = `
   "operability-safety/duplicate-id": "na",
   "operability-safety/first-contact-consent-gate-operability": "na",
   "operability-safety/form-actionability": "fail",
-  "operability-safety/form-autofill-token-coverage": "fail",
+  "operability-safety/form-autofill-token-coverage": "na",
   "operability-safety/form-error-messages": "na",
   "operability-safety/forms-no-js": "pass",
   "operability-safety/frame-title": "na",

@@ -189,4 +189,79 @@ describe("FormAutofillTokenCoverageAudit", () => {
     );
     expect(result.pageUrl).toBe("https://example.test/checkout");
   });
+
+  // ── query forms take a place or a keyword, not profile data ──
+
+  it("is notApplicable when the only matching field sits in a store-locator form", () => {
+    const result = run(
+      `<form action="/stores" name="storelocatorForm" method="post">
+        <input type="text" name="location" autocomplete="off"
+               placeholder="City or postcode" aria-label="City or postcode">
+        <button type="submit" aria-label="Find a store"></button>
+      </form>`,
+      "https://example.test/",
+    );
+    expect(result.status).toBe("na");
+    expect(result.found).toContain("1 search or store-locator form(s) skipped");
+  });
+
+  it("skips a role=search form built from a text input", () => {
+    const result = run(
+      `<form role="search" action="/search">
+        <input type="text" name="q" placeholder="Search by city or zip">
+      </form>`,
+      "https://example.test/",
+    );
+    expect(result.status).toBe("na");
+  });
+
+  it("skips a location field whose label offers alternatives", () => {
+    const result = run(`
+      <form action="/contact" method="post">
+        <label for="l">City or postcode</label>
+        <input id="l" name="l" type="text">
+      </form>`);
+    expect(result.status).toBe("na");
+  });
+
+  // True positive: a real checkout postcode field still owes its token.
+  it("still fails a checkout postcode field with no autocomplete", () => {
+    const result = run(`
+      <form action="/checkout/shipping" method="post">
+        <label for="z">Postcode</label>
+        <input id="z" name="postcode" type="text">
+      </form>`);
+    expect(result.status).toBe("fail");
+    expect(result.message).toContain('autocomplete="postal-code"');
+  });
+
+  // "restore" contains "store" but is not a store locator.
+  it("does not mistake a restore-password form for a store locator", () => {
+    const result = run(`
+      <form action="/account/restore-password" method="post">
+        <label for="e">Email</label>
+        <input id="e" name="e" type="text">
+      </form>`);
+    expect(result.status).toBe("fail");
+    expect(result.message).toContain('autocomplete="email"');
+  });
+
+  // Two names for one concept are not alternatives.
+  it("still infers a field labelled with two names for one concept", () => {
+    const result = run(`
+      <form>
+        <label for="s">State or province</label>
+        <input id="s" name="s" type="text">
+      </form>`);
+    expect(result.message).toContain('autocomplete="address-level1"');
+  });
+
+  // A sign-in identifier is the username token's documented case.
+  it("still expects username on an email-or-username sign-in field", () => {
+    const result = run(
+      `<form action="/login"><label for="u">Email or username</label><input id="u" name="u" type="text"></form>`,
+      "https://example.test/login",
+    );
+    expect(result.message).toContain('autocomplete="username"');
+  });
 });
