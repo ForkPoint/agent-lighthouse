@@ -51,6 +51,35 @@ describe("ExtractorSurvivalRecallAudit", () => {
     expect(Number(result.details?.["recall"])).toBeGreaterThanOrEqual(0.9);
   });
 
+  // Readability lifts an h1 that repeats the title out of the body and into
+  // the article title. The title is still delivered, so the h1 survived.
+  it("counts an h1 kept as Readability's article title as surviving", async () => {
+    const result = await audit.audit(
+      mockCheckContext([
+        mockPageContext(
+          "https://example.com/kettles",
+          `<html><head><title>Riveted pot | Kettle Co</title></head><body>${article().replace("<h1>Copper kettle</h1>", "<h1>Riveted pot</h1>")}</body></html>`,
+          1,
+        ),
+      ]),
+    );
+    expect(Number(result.details?.["readabilityRecall"])).toBe(1);
+  });
+
+  // A hidden panel is not on the page a reader sees, so its spans are not
+  // facts an extractor lost.
+  it("takes no key spans from a hidden dialog", async () => {
+    const result = await audit.audit(
+      page(
+        article(
+          `<div hidden role="dialog"><h2>Keyboard shortcuts</h2><p>Press the slash key to search every page. Press escape to close the panel.</p></div>`,
+        ),
+      ),
+    );
+    expect(result.status).toBe("pass");
+    expect(result.found ?? "").not.toContain("Keyboard shortcuts");
+  });
+
   it("takes its key spans from h1, section openers, captions, dt, th and JSON-LD", async () => {
     const head = `<script type="application/ld+json">${JSON.stringify({
       "@context": "https://schema.org",

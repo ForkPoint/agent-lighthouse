@@ -119,6 +119,28 @@ JSON-LD strings are key spans only when the prose carries them. The audit tested
 
 On the retail page, recall moved from 0 to 0.818, and the page still fails: readability drops the tile headings. Verdicts that moved in the real-page corpus: `atlassian-com-pricing-shell` fail → na, because its only key spans were JSON-LD strings in scripts.
 
+### The article title and hidden panels (2026-10-06)
+
+Two key-span rules reported facts as lost that no reader loses.
+
+- **An h1 Readability keeps as the title.** Readability removes the first
+  heading that repeats the document title from the article body and returns
+  it as the article title. Every Readability-based pipeline delivers that
+  title. The audit read only the body text, so a page whose h1 repeats its
+  `<title>` lost its h1 to Readability. An h1 span now survives Readability
+  when the article title contains it.
+- **Spans in hidden panels.** Section openers inside a hidden command palette
+  were key spans on a small marketing site. Readability drops hidden subtrees
+  before scoring, and a reader never sees them. Spans inside a subtree the
+  markup hides (`hidden`, `aria-hidden="true"`, inline `display:none`, a
+  closed `<dialog>`, `<template>`) are no longer collected.
+
+Verdicts that moved: the bare-site fixture fail → pass, whose h1 repeats its
+title. In the real-page corpus, `theguardian-com-article` fail → pass (h1 is
+the title), `python-docs-json` fail → warn (h1 is the title),
+`otto-de-category` fail → pass (eight spans in hidden footer panels) and
+`tattly-com-shell` fail → na (its only span sat in a closed dialog).
+
 ## Deferred
 
 - **The third extractor.** `content-extraction/extraction-determinism` runs

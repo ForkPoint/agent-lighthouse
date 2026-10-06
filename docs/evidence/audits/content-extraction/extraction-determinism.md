@@ -122,6 +122,12 @@ The fallback also reaches `token-ratio`, `preamble-tax`, `boilerplate-tax` and `
 
 ## Deferred
 
+- **Hidden text in the heuristic extractors.** Readability drops `hidden` and
+  `aria-hidden` subtrees; the semantic and density extractors remove only
+  chrome. A page with a large hidden panel therefore reads differently to the
+  two, and agreement falls. Removing hidden subtrees from the shared
+  extractors changes six audits, and no source documents what the products
+  they stand in for do with hidden text. It stays open until one does.
 - **A fourth extractor.** Two heuristics plus readability already separate "one
   article" from "three answers". A fourth adds cost without adding a verdict.
 - **Per-template sampling.** Extraction determinism is a property of the

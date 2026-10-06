@@ -20,7 +20,6 @@ fail 0   machine-discovery/rss-feed-content
 fail 0   operability-safety/contact-form
 fail 0   structured-data/author-schema
 fail 0.6 answer-readiness/external-citations
-fail 0.6 answer-readiness/extractor-survival-recall
 fail 0.6 answer-readiness/last-modified-schema
 fail 0.6 answer-readiness/meta-description
 fail 0.6 answer-readiness/og-type
@@ -180,6 +179,7 @@ pass 0   answer-readiness/descriptive-urls
 pass 0   answer-readiness/first-paragraph-answers
 pass 0   content-extraction/figure-figcaption
 pass 0.6 answer-readiness/content-without-clickthrough
+pass 0.6 answer-readiness/extractor-survival-recall
 pass 0.6 content-extraction/data-tables
 pass 0.6 content-extraction/extraction-determinism
 pass 0.6 content-extraction/fake-headings
