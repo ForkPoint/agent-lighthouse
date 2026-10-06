@@ -122,6 +122,15 @@ flyouts or a search panel; `stripe-com-pricing` pass → fail, whose three
 FAQPage answers are only in `display:none` accordion panels. That last move
 corrects a false pass.
 
+### Inline declaration order (2026-10-06)
+
+The shared visibility helper resolves duplicate inline `display` and
+`visibility` declarations before deciding whether text is hidden. The last
+declaration at the winning `!important` priority wins. Thus
+`display:none;display:block` keeps an answer searchable, while an earlier
+`display:none!important` still hides it from a later plain declaration.
+This does not add stylesheet specificity or block-layout computation.
+
 ## Deferred
 
 - The headless variant — re-running the matcher against the post-JS DOM to catch

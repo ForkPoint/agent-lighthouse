@@ -82,9 +82,9 @@ interface Survey {
   crossOrigin: number;
 }
 
-/** Native controls and declared roles an agent's snapshot exposes. */
+/** Native controls and interactive roles an agent can address as actions. */
 const CONTROL_DESCENDANT =
-  "a[href], button, input:not([type=hidden]), select, textarea, summary, [role]";
+  'a[href], button, input:not([type=hidden]), select, textarea, summary, [role="button"], [role="link"], [role="menuitem"], [role="menuitemcheckbox"], [role="menuitemradio"], [role="tab"], [role="option"], [role="checkbox"], [role="radio"], [role="switch"], [role="treeitem"], [role="textbox"], [role="searchbox"], [role="combobox"], [role="slider"], [role="spinbutton"]';
 
 /**
  * A wrapper whose only click signal is a name or a cursor, and which holds a
@@ -108,6 +108,7 @@ const CONTROL_ANCESTOR =
  * click-signal class is a styling hook, not a second control.
  */
 function insideControl(el: Element, $: CheerioAPI): boolean {
+  if (hasInlineHandler(el)) return false;
   return $(el).parents(CONTROL_ANCESTOR).length > 0;
 }
 

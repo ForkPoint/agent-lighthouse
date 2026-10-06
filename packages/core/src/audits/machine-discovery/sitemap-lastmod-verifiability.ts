@@ -206,7 +206,7 @@ export class SitemapLastmodVerifiabilityAudit extends Audit {
     defaultPriority: "medium",
     guidance: {
       impact:
-        'Google states it uses <lastmod> "if it\'s consistently and verifiably (for example by comparing to the last modification of the page) accurate". lastmod is therefore a conditional signal an engine silently discards on divergence — and it is the only freshness hint a pull-based AI crawler gets from a sitemap. If sampled values disagree with every available page-level signal for a material share of URLs, the freshness channel is inert and re-crawl scheduling degrades to organic rediscovery. Two specific pathologies are detectable without guessing: over 90% of URLs sharing one lastmod equal to the last deploy date — a build stamp, exactly the pattern Google\'s "copyright date is not significant" rule disqualifies — and a lastmod in the future relative to the scan, which is never valid.',
+        'Google states it uses <lastmod> "if it\'s consistently and verifiably (for example by comparing to the last modification of the page) accurate". lastmod is therefore a conditional signal an engine silently discards on divergence — and it is the only freshness hint a pull-based AI crawler gets from a sitemap. If sampled values disagree with every available page-level signal for a material share of URLs, the freshness channel is inert and re-crawl scheduling degrades to organic rediscovery. A recent cluster of lastmod values is consistent with a build stamp only when page dates also disagree. Clustered edits alone do not show a defect. A lastmod in the future relative to the scan is invalid.',
       fix: "Stamp lastmod from the content record, not from the build. Emit the timestamp of the last substantive edit to that document, and leave it alone when a deploy only rebuilds the page. Publish the same instant on the page — JSON-LD dateModified is the most widely read of the three signals — so the value is checkable; a lastmod nothing on the page supports is a lastmod the crawler drops. Never emit a future date, and use W3C Datetime (YYYY-MM-DD or a full RFC 3339 timestamp) for every value.",
       code: SAMPLE,
       effort: "moderate",
@@ -316,12 +316,17 @@ export class SitemapLastmodVerifiabilityAudit extends Audit {
     }
     const modalRecent =
       (now - Date.parse(modalLast)) / DAY_MS <= MODAL_RECENCY_DAYS;
+    const compared = sample.length - noSignal;
+    const contentDiverges =
+      compared > 0 && divergent / compared > DIVERGENT_SHARE;
+    // Nearby edits can be real, including a batch publication. The shape
+    // alone is not evidence of a bad lastmod: require page-date disagreement.
     const buildStamp =
       sample.length > 1 &&
       modalCount / sample.length > MODAL_SHARE &&
-      modalRecent;
+      modalRecent &&
+      contentDiverges;
 
-    const compared = sample.length - noSignal;
     const problems: string[] = [];
 
     if (future.length > 0) {
@@ -331,10 +336,10 @@ export class SitemapLastmodVerifiabilityAudit extends Audit {
     }
     if (buildStamp) {
       problems.push(
-        `${modalCount} of ${sample.length} sampled URLs (${pct(modalCount, sample.length)}%) share ${modalFirst === modalLast ? `the single lastmod ${modalFirst}` : `one lastmod run, ${modalFirst} to ${modalLast}`}, within ${MODAL_RECENCY_DAYS} days of this scan — the signature of a build stamp rather than a content date`,
+        `${modalCount} of ${sample.length} sampled URLs (${pct(modalCount, sample.length)}%) share ${modalFirst === modalLast ? `the single lastmod ${modalFirst}` : `one lastmod run, ${modalFirst} to ${modalLast}`}, within ${MODAL_RECENCY_DAYS} days of this scan; disagreement with the page dates makes this consistent with a build stamp`,
       );
     }
-    if (compared > 0 && divergent / compared > DIVERGENT_SHARE) {
+    if (contentDiverges) {
       problems.push(
         `${divergent} of ${compared} comparable URLs (${pct(divergent, compared)}%) carry a lastmod more than ${DIVERGENCE_DAYS} days from every signal the page publishes: ${worst.join("; ")}`,
       );

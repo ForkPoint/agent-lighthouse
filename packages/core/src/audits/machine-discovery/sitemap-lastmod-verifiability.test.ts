@@ -223,9 +223,7 @@ describe("SitemapLastmodVerifiabilityAudit", () => {
     expect(result.status).toBe("warn");
   });
 
-  // One value on nearly every URL, stamped at deploy time, is a build date
-  // rather than a content date.
-  it("fails when one recent lastmod value covers over 90% of sampled URLs", async () => {
+  it("passes a shared recent lastmod when every page corroborates it", async () => {
     const stamp = iso(1);
     const urls = Array.from({ length: 10 }, (_v, i) => ({
       loc: `https://example.com/d-${i}`,
@@ -233,21 +231,50 @@ describe("SitemapLastmodVerifiabilityAudit", () => {
       dateModified: stamp,
     }));
     const result = await run(urls);
-    expect(result.status).toBe("fail");
-    expect(result.message).toContain("build stamp");
+    expect(result.status).toBe("pass");
+    expect(result.message).not.toContain("build stamp");
   });
 
   // A generator that writes the clock per URL spreads one run over seconds.
   // Exact-string matching saw every value as distinct and missed the stamp.
-  it("fails when recent lastmods spread over seconds cover over 90% of sampled URLs", async () => {
+  it("fails a recent lastmod run that contradicts the content dates", async () => {
     const base = Date.now() - DAY;
     const urls = Array.from({ length: 10 }, (_v, i) => ({
       loc: `https://example.com/s-${i}`,
       lastmod: new Date(base + i * 2_000).toISOString(),
+      dateModified: iso(100 + i),
     }));
     const result = await run(urls);
     expect(result.status).toBe("fail");
     expect(result.message).toContain("one lastmod run");
+  });
+
+  it("passes distinct recent edits within a single hour", async () => {
+    const base = Date.now() - DAY;
+    const result = await run(
+      Array.from({ length: 6 }, (_, i) => {
+        const stamp = new Date(base + i * 5 * 60_000).toISOString();
+        return {
+          loc: `https://example.com/edit-${i}`,
+          lastmod: stamp,
+          dateModified: stamp,
+        };
+      }),
+    );
+    expect(result.status).toBe("pass");
+    expect(result.found).toContain("6 corroborated, 0 divergent");
+  });
+
+  it("does not infer a bad build stamp without page dates", async () => {
+    const stamp = iso(1);
+    const result = await run(
+      Array.from({ length: 6 }, (_, i) => ({
+        loc: `https://example.com/unknown-${i}`,
+        lastmod: stamp,
+      })),
+    );
+    expect(result.status).toBe("warn");
+    expect(result.message).not.toContain("build stamp");
   });
 
   it("does not call lastmods hours apart a build stamp", async () => {

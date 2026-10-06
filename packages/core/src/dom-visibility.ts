@@ -1,8 +1,30 @@
 import type { CheerioAPI } from "cheerio";
 import type { AnyNode } from "domhandler";
 
-/** Inline declarations that take a subtree out of rendering. */
-const INLINE_HIDDEN = /(^|;)\s*(display\s*:\s*none|visibility\s*:\s*hidden)/i;
+/** Resolve duplicate inline declarations before deciding whether they hide. */
+function inlineHidden(style: string): boolean {
+  const values = new Map<string, { value: string; important: boolean }>();
+  for (const part of style.replace(/\/\*[\s\S]*?\*\//g, "").split(";")) {
+    const colon = part.indexOf(":");
+    const property = part.slice(0, colon).trim().toLowerCase();
+    if (colon === -1 || (property !== "display" && property !== "visibility"))
+      continue;
+    const raw = part
+      .slice(colon + 1)
+      .trim()
+      .toLowerCase();
+    const important = /!\s*important$/.test(raw);
+    const value = raw.replace(/!\s*important$/, "").trim();
+    if (!value) continue;
+    const prior = values.get(property);
+    if (!prior?.important || important)
+      values.set(property, { value, important });
+  }
+  return (
+    values.get("display")?.value === "none" ||
+    values.get("visibility")?.value === "hidden"
+  );
+}
 
 type Marker = ($n: ReturnType<CheerioAPI>, tag: string) => boolean | undefined;
 
@@ -28,7 +50,7 @@ function unrenderedMarker($n: ReturnType<CheerioAPI>, tag: string): boolean {
   // reveal it.
   if (hidden !== undefined && hidden.trim().toLowerCase() !== "until-found")
     return true;
-  return INLINE_HIDDEN.test($n.attr("style") ?? "");
+  return inlineHidden($n.attr("style") ?? "");
 }
 
 /**

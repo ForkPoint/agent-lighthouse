@@ -25,6 +25,36 @@ function page(body: string, css = ""): CheckContext {
 const semantic = (n: number) =>
   Array.from({ length: n }, (_v, i) => `<button>Action ${i}</button>`).join("");
 
+it.each(["presentation", "none", "img", "status"])(
+  "does not treat a nested %s role as a control",
+  async (role) => {
+    const result = await new GhostClickableElementRatioAudit().audit(
+      page(
+        `${semantic(3)}<div class="btn-primary"><span role="${role}" aria-label="Buy icon">Buy now</span></div>`,
+      ),
+    );
+    expect(result.details?.["ghostCount"]).toBe(1);
+  },
+);
+
+it("keeps an inner element's independent inline action", async () => {
+  const result = await new GhostClickableElementRatioAudit().audit(
+    page(
+      '<button>Open cart <span onclick="event.stopPropagation();removeItem()">Remove item</span></button>',
+    ),
+  );
+  expect(result.details?.["ghostCount"]).toBe(1);
+});
+
+it("still exempts a wrapper around an ARIA button", async () => {
+  const result = await new GhostClickableElementRatioAudit().audit(
+    page(
+      '<div class="btn-primary"><span role="button" tabindex="0">Buy now</span></div>',
+    ),
+  );
+  expect(result.details?.["ghostCount"]).toBe(0);
+});
+
 describe("GhostClickableElementRatioAudit", () => {
   const audit = new GhostClickableElementRatioAudit();
 

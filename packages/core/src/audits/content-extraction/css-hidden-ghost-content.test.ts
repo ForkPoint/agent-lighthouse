@@ -57,6 +57,21 @@ function run(body: string, head = "", sheets: Record<string, string> = {}) {
 const SHEET_LINK = '<link rel="stylesheet" href="/s.css">';
 const sheet = (css: string) => ({ "https://example.test/s.css": css });
 
+it.each([
+  ["none", "block", "fail"],
+  ["block", "none", "pass"],
+])(
+  "resolves a later inline display:%s over a linked display:%s",
+  async (inline, linked, status) => {
+    const result = await run(
+      `<main>${VISIBLE}</main><div class="ghost">${BULK}</div>`,
+      `${SHEET_LINK}<style>.ghost { display: ${inline} }</style>`,
+      sheet(`.ghost { display: ${linked} }`),
+    );
+    expect(result.status).toBe(status);
+  },
+);
+
 describe("CssHiddenGhostContentAudit", () => {
   const audit = new CssHiddenGhostContentAudit();
 

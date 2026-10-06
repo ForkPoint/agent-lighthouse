@@ -139,7 +139,7 @@ export class DiscoveryIndexCoverageAudit extends Audit {
 
     // The missing sitemap is sitemap-exists' (1.7) finding. Charging for it here
     // too levied two penalties for one missing file.
-    if (indexKeys.size === 0) {
+    if (indexKeys.size === 0 && !incomplete) {
       return this.warn(
         "No sitemap URLs or llms.txt links to compare the scanned pages against.",
         expected,

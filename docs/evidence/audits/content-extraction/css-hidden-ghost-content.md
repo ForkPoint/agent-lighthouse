@@ -112,9 +112,10 @@ never ranked against each other. A collapsed panel hidden by
 counted, as the mechanism requires. An override inside a media query does not
 cancel a base rule, so parallel desktop and mobile copies stay counted.
 
-Source order is the gatherer's order: inline `<style>` blocks first, then
-linked same-origin sheets. A linked sheet placed before an inline block in the
-document is read after it.
+Source order follows the document: inline `<style>` blocks and linked
+same-origin sheets keep their relative positions. A later inline block can
+override an earlier linked sheet, and the reverse order works the same way.
+The five-sheet cap and the URL safety checks remain in force.
 
 ## Deferred
 

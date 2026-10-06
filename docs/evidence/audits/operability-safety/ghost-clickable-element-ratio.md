@@ -116,8 +116,10 @@ link's text.
 Two rules now hold for an element whose only signal is a name or a cursor:
 
 - **It holds a control.** An element that contains `a[href]`, `button`,
-  `select`, `textarea`, `summary`, a non-hidden `input`, or any declared
-  `role` is layout around that control, and is not a ghost.
+  `select`, `textarea`, `summary`, a non-hidden `input`, or an interactive
+  widget role is layout around that control, and is not a ghost. Decorative
+  and structural roles such as `presentation`, `none`, `img` and `status`
+  do not supply an action.
 - **It sits inside a control.** An element inside a link, a button, a
   `summary` or a widget role is part of that control. A click on it is the
   control's click.

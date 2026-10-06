@@ -63,6 +63,44 @@ function fetcher(pages: Record<string, ReturnType<typeof xml>>) {
 }
 
 describe("collectSitemapEntries", () => {
+  it.each([
+    mockFetchResult("", 503),
+    mockFetchResult("not a sitemap", 200),
+    index(["https://a.test/deep.xml"]),
+  ])(
+    "marks unread children incomplete while keeping readable entries",
+    async (unread) => {
+      const f = fetcher({
+        "https://a.test/sitemap.xml": index([
+          "https://a.test/good.xml",
+          "https://a.test/unread.xml",
+        ]),
+        "https://a.test/good.xml": urlset([["https://a.test/product"]]),
+        "https://a.test/unread.xml": unread,
+      });
+      const tree = await collectSitemapEntries(f.fetch, [
+        "https://a.test/sitemap.xml",
+      ]);
+      expect(tree.scopeIncomplete).toBe(true);
+      expect(tree.entries).toEqual([{ loc: "https://a.test/product" }]);
+      expect(f.seen).not.toContain("https://a.test/deep.xml");
+    },
+  );
+
+  it("does not mark a repeated readable child as incomplete", async () => {
+    const f = fetcher({
+      "https://a.test/sitemap.xml": index([
+        "https://a.test/good.xml",
+        "https://a.test/good.xml",
+      ]),
+      "https://a.test/good.xml": urlset([["https://a.test/product"]]),
+    });
+    const tree = await collectSitemapEntries(f.fetch, [
+      "https://a.test/sitemap.xml",
+    ]);
+    expect(tree.scopeIncomplete).toBeUndefined();
+    expect(tree.entries).toEqual([{ loc: "https://a.test/product" }]);
+  });
   it("reads loc and lastmod out of a flat urlset", async () => {
     const f = fetcher({
       "https://a.test/sitemap.xml": urlset([

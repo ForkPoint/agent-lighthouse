@@ -9,6 +9,22 @@ function check(html: string): boolean {
   return hiddenFromReaders($, el);
 }
 
+it.each([
+  ["display:none;display:block", false],
+  ["display:block;display:none", true],
+  ["display:none!important;display:block", true],
+  ["display:none!important;display:block!important", false],
+  ["DISPLAY: NONE; DISPLAY: block ! IMPORTANT", false],
+  ["visibility:hidden;visibility:visible", false],
+  ["visibility:hidden!important;visibility:visible", true],
+  ["visibility:visible!important;visibility:hidden", false],
+])("resolves inline declaration precedence: %s", (style, hidden) => {
+  const $ = cheerio.load(`<p id="t" style="${style}">Answer text.</p>`);
+  const el = $("#t").get(0)!;
+  expect(notRendered($, el)).toBe(hidden);
+  expect(hiddenFromReaders($, el)).toBe(hidden);
+});
+
 describe("hiddenFromReaders", () => {
   it("is false for ordinary visible content", () => {
     expect(check('<main><p id="t">Hi</p></main>')).toBe(false);

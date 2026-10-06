@@ -30,6 +30,14 @@ function faqJsonLd(answer: string) {
 
 const SIMPLE = `<main><h2>What is resoling?</h2><p>${ANSWER}</p></main>`;
 
+it("addresses a FAQ answer restored by the last inline declaration", () => {
+  const result = run(
+    `<h2>Resoling</h2><p style="display:none;display:block">${ANSWER}</p>`,
+    faqJsonLd(ANSWER),
+  );
+  expect(result.status).toBe("pass");
+});
+
 describe("TextFragmentAddressabilityAudit", () => {
   const audit = new TextFragmentAddressabilityAudit();
 
