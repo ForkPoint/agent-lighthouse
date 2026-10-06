@@ -3,7 +3,7 @@
 exports[`real-page corpus > aljazeera-com-article: verdicts hold 1`] = `
 {
   "access-crawl-control/agent-governance": "na",
-  "access-crawl-control/ai-bot-directives": "warn",
+  "access-crawl-control/ai-bot-directives": "na",
   "access-crawl-control/ai-content-declaration": "na",
   "access-crawl-control/ai-crawler-edge-parity": "na",
   "access-crawl-control/ai-usage-signal-coherence-across-channels": "warn",
@@ -223,7 +223,7 @@ exports[`real-page corpus > aljazeera-com-article: verdicts hold 1`] = `
 exports[`real-page corpus > allbirds-com-collection: verdicts hold 1`] = `
 {
   "access-crawl-control/agent-governance": "na",
-  "access-crawl-control/ai-bot-directives": "warn",
+  "access-crawl-control/ai-bot-directives": "na",
   "access-crawl-control/ai-content-declaration": "na",
   "access-crawl-control/ai-crawler-edge-parity": "na",
   "access-crawl-control/ai-usage-signal-coherence-across-channels": "warn",
@@ -443,7 +443,7 @@ exports[`real-page corpus > allbirds-com-collection: verdicts hold 1`] = `
 exports[`real-page corpus > atlassian-com-pricing-shell: verdicts hold 1`] = `
 {
   "access-crawl-control/agent-governance": "na",
-  "access-crawl-control/ai-bot-directives": "warn",
+  "access-crawl-control/ai-bot-directives": "na",
   "access-crawl-control/ai-content-declaration": "na",
   "access-crawl-control/ai-crawler-edge-parity": "na",
   "access-crawl-control/ai-usage-signal-coherence-across-channels": "warn",
@@ -663,7 +663,7 @@ exports[`real-page corpus > atlassian-com-pricing-shell: verdicts hold 1`] = `
 exports[`real-page corpus > barclays-co-uk-current-accounts: verdicts hold 1`] = `
 {
   "access-crawl-control/agent-governance": "na",
-  "access-crawl-control/ai-bot-directives": "warn",
+  "access-crawl-control/ai-bot-directives": "na",
   "access-crawl-control/ai-content-declaration": "na",
   "access-crawl-control/ai-crawler-edge-parity": "na",
   "access-crawl-control/ai-usage-signal-coherence-across-channels": "warn",
@@ -883,7 +883,7 @@ exports[`real-page corpus > barclays-co-uk-current-accounts: verdicts hold 1`] =
 exports[`real-page corpus > bbc-co-uk-article: verdicts hold 1`] = `
 {
   "access-crawl-control/agent-governance": "na",
-  "access-crawl-control/ai-bot-directives": "warn",
+  "access-crawl-control/ai-bot-directives": "na",
   "access-crawl-control/ai-content-declaration": "na",
   "access-crawl-control/ai-crawler-edge-parity": "na",
   "access-crawl-control/ai-usage-signal-coherence-across-channels": "warn",
@@ -1103,7 +1103,7 @@ exports[`real-page corpus > bbc-co-uk-article: verdicts hold 1`] = `
 exports[`real-page corpus > canada-ca-income-tax: verdicts hold 1`] = `
 {
   "access-crawl-control/agent-governance": "na",
-  "access-crawl-control/ai-bot-directives": "warn",
+  "access-crawl-control/ai-bot-directives": "na",
   "access-crawl-control/ai-content-declaration": "na",
   "access-crawl-control/ai-crawler-edge-parity": "na",
   "access-crawl-control/ai-usage-signal-coherence-across-channels": "warn",
@@ -1323,7 +1323,7 @@ exports[`real-page corpus > canada-ca-income-tax: verdicts hold 1`] = `
 exports[`real-page corpus > capitalone-com-savings: verdicts hold 1`] = `
 {
   "access-crawl-control/agent-governance": "na",
-  "access-crawl-control/ai-bot-directives": "warn",
+  "access-crawl-control/ai-bot-directives": "na",
   "access-crawl-control/ai-content-declaration": "na",
   "access-crawl-control/ai-crawler-edge-parity": "na",
   "access-crawl-control/ai-usage-signal-coherence-across-channels": "warn",
@@ -1543,7 +1543,7 @@ exports[`real-page corpus > capitalone-com-savings: verdicts hold 1`] = `
 exports[`real-page corpus > cdc-gov-flu-about: verdicts hold 1`] = `
 {
   "access-crawl-control/agent-governance": "na",
-  "access-crawl-control/ai-bot-directives": "warn",
+  "access-crawl-control/ai-bot-directives": "na",
   "access-crawl-control/ai-content-declaration": "na",
   "access-crawl-control/ai-crawler-edge-parity": "na",
   "access-crawl-control/ai-usage-signal-coherence-across-channels": "warn",
@@ -1763,7 +1763,7 @@ exports[`real-page corpus > cdc-gov-flu-about: verdicts hold 1`] = `
 exports[`real-page corpus > chase-com: verdicts hold 1`] = `
 {
   "access-crawl-control/agent-governance": "na",
-  "access-crawl-control/ai-bot-directives": "warn",
+  "access-crawl-control/ai-bot-directives": "na",
   "access-crawl-control/ai-content-declaration": "na",
   "access-crawl-control/ai-crawler-edge-parity": "na",
   "access-crawl-control/ai-usage-signal-coherence-across-channels": "warn",
@@ -1983,7 +1983,7 @@ exports[`real-page corpus > chase-com: verdicts hold 1`] = `
 exports[`real-page corpus > cloudflare-com-plans: verdicts hold 1`] = `
 {
   "access-crawl-control/agent-governance": "na",
-  "access-crawl-control/ai-bot-directives": "warn",
+  "access-crawl-control/ai-bot-directives": "na",
   "access-crawl-control/ai-content-declaration": "na",
   "access-crawl-control/ai-crawler-edge-parity": "na",
   "access-crawl-control/ai-usage-signal-coherence-across-channels": "warn",
@@ -2203,7 +2203,7 @@ exports[`real-page corpus > cloudflare-com-plans: verdicts hold 1`] = `
 exports[`real-page corpus > discourse-meta-topic: verdicts hold 1`] = `
 {
   "access-crawl-control/agent-governance": "na",
-  "access-crawl-control/ai-bot-directives": "warn",
+  "access-crawl-control/ai-bot-directives": "na",
   "access-crawl-control/ai-content-declaration": "na",
   "access-crawl-control/ai-crawler-edge-parity": "na",
   "access-crawl-control/ai-usage-signal-coherence-across-channels": "warn",
@@ -2423,7 +2423,7 @@ exports[`real-page corpus > discourse-meta-topic: verdicts hold 1`] = `
 exports[`real-page corpus > ebay-com-category-wall: verdicts hold 1`] = `
 {
   "access-crawl-control/agent-governance": "na",
-  "access-crawl-control/ai-bot-directives": "warn",
+  "access-crawl-control/ai-bot-directives": "na",
   "access-crawl-control/ai-content-declaration": "na",
   "access-crawl-control/ai-crawler-edge-parity": "na",
   "access-crawl-control/ai-usage-signal-coherence-across-channels": "warn",
@@ -2643,7 +2643,7 @@ exports[`real-page corpus > ebay-com-category-wall: verdicts hold 1`] = `
 exports[`real-page corpus > gov-uk-vehicle-tax: verdicts hold 1`] = `
 {
   "access-crawl-control/agent-governance": "na",
-  "access-crawl-control/ai-bot-directives": "warn",
+  "access-crawl-control/ai-bot-directives": "na",
   "access-crawl-control/ai-content-declaration": "na",
   "access-crawl-control/ai-crawler-edge-parity": "na",
   "access-crawl-control/ai-usage-signal-coherence-across-channels": "warn",
@@ -2863,7 +2863,7 @@ exports[`real-page corpus > gov-uk-vehicle-tax: verdicts hold 1`] = `
 exports[`real-page corpus > gymshark-com-shell: verdicts hold 1`] = `
 {
   "access-crawl-control/agent-governance": "na",
-  "access-crawl-control/ai-bot-directives": "warn",
+  "access-crawl-control/ai-bot-directives": "na",
   "access-crawl-control/ai-content-declaration": "na",
   "access-crawl-control/ai-crawler-edge-parity": "na",
   "access-crawl-control/ai-usage-signal-coherence-across-channels": "warn",
@@ -3083,7 +3083,7 @@ exports[`real-page corpus > gymshark-com-shell: verdicts hold 1`] = `
 exports[`real-page corpus > hackernews-thread: verdicts hold 1`] = `
 {
   "access-crawl-control/agent-governance": "na",
-  "access-crawl-control/ai-bot-directives": "warn",
+  "access-crawl-control/ai-bot-directives": "na",
   "access-crawl-control/ai-content-declaration": "na",
   "access-crawl-control/ai-crawler-edge-parity": "na",
   "access-crawl-control/ai-usage-signal-coherence-across-channels": "warn",
@@ -3303,7 +3303,7 @@ exports[`real-page corpus > hackernews-thread: verdicts hold 1`] = `
 exports[`real-page corpus > hiutdenim-co-uk: verdicts hold 1`] = `
 {
   "access-crawl-control/agent-governance": "na",
-  "access-crawl-control/ai-bot-directives": "warn",
+  "access-crawl-control/ai-bot-directives": "na",
   "access-crawl-control/ai-content-declaration": "na",
   "access-crawl-control/ai-crawler-edge-parity": "na",
   "access-crawl-control/ai-usage-signal-coherence-across-channels": "warn",
@@ -3523,7 +3523,7 @@ exports[`real-page corpus > hiutdenim-co-uk: verdicts hold 1`] = `
 exports[`real-page corpus > irs-gov-form-1040: verdicts hold 1`] = `
 {
   "access-crawl-control/agent-governance": "na",
-  "access-crawl-control/ai-bot-directives": "warn",
+  "access-crawl-control/ai-bot-directives": "na",
   "access-crawl-control/ai-content-declaration": "na",
   "access-crawl-control/ai-crawler-edge-parity": "na",
   "access-crawl-control/ai-usage-signal-coherence-across-channels": "warn",
@@ -3743,7 +3743,7 @@ exports[`real-page corpus > irs-gov-form-1040: verdicts hold 1`] = `
 exports[`real-page corpus > kubernetes-docs-pods: verdicts hold 1`] = `
 {
   "access-crawl-control/agent-governance": "na",
-  "access-crawl-control/ai-bot-directives": "warn",
+  "access-crawl-control/ai-bot-directives": "na",
   "access-crawl-control/ai-content-declaration": "na",
   "access-crawl-control/ai-crawler-edge-parity": "na",
   "access-crawl-control/ai-usage-signal-coherence-across-channels": "warn",
@@ -3963,7 +3963,7 @@ exports[`real-page corpus > kubernetes-docs-pods: verdicts hold 1`] = `
 exports[`real-page corpus > lobsters-front-page: verdicts hold 1`] = `
 {
   "access-crawl-control/agent-governance": "na",
-  "access-crawl-control/ai-bot-directives": "warn",
+  "access-crawl-control/ai-bot-directives": "na",
   "access-crawl-control/ai-content-declaration": "warn",
   "access-crawl-control/ai-crawler-edge-parity": "na",
   "access-crawl-control/ai-usage-signal-coherence-across-channels": "pass",
@@ -4183,7 +4183,7 @@ exports[`real-page corpus > lobsters-front-page: verdicts hold 1`] = `
 exports[`real-page corpus > lobsters-login-threshold: verdicts hold 1`] = `
 {
   "access-crawl-control/agent-governance": "na",
-  "access-crawl-control/ai-bot-directives": "warn",
+  "access-crawl-control/ai-bot-directives": "na",
   "access-crawl-control/ai-content-declaration": "warn",
   "access-crawl-control/ai-crawler-edge-parity": "na",
   "access-crawl-control/ai-usage-signal-coherence-across-channels": "pass",
@@ -4403,7 +4403,7 @@ exports[`real-page corpus > lobsters-login-threshold: verdicts hold 1`] = `
 exports[`real-page corpus > magicspoon-com-product: verdicts hold 1`] = `
 {
   "access-crawl-control/agent-governance": "na",
-  "access-crawl-control/ai-bot-directives": "warn",
+  "access-crawl-control/ai-bot-directives": "na",
   "access-crawl-control/ai-content-declaration": "na",
   "access-crawl-control/ai-crawler-edge-parity": "na",
   "access-crawl-control/ai-usage-signal-coherence-across-channels": "warn",
@@ -4623,7 +4623,7 @@ exports[`real-page corpus > magicspoon-com-product: verdicts hold 1`] = `
 exports[`real-page corpus > mdn-cache-control: verdicts hold 1`] = `
 {
   "access-crawl-control/agent-governance": "na",
-  "access-crawl-control/ai-bot-directives": "warn",
+  "access-crawl-control/ai-bot-directives": "na",
   "access-crawl-control/ai-content-declaration": "na",
   "access-crawl-control/ai-crawler-edge-parity": "na",
   "access-crawl-control/ai-usage-signal-coherence-across-channels": "warn",
@@ -4843,7 +4843,7 @@ exports[`real-page corpus > mdn-cache-control: verdicts hold 1`] = `
 exports[`real-page corpus > myfritz-net: verdicts hold 1`] = `
 {
   "access-crawl-control/agent-governance": "na",
-  "access-crawl-control/ai-bot-directives": "warn",
+  "access-crawl-control/ai-bot-directives": "na",
   "access-crawl-control/ai-content-declaration": "na",
   "access-crawl-control/ai-crawler-edge-parity": "na",
   "access-crawl-control/ai-usage-signal-coherence-across-channels": "warn",
@@ -5063,7 +5063,7 @@ exports[`real-page corpus > myfritz-net: verdicts hold 1`] = `
 exports[`real-page corpus > nodejs-docs-fs: verdicts hold 1`] = `
 {
   "access-crawl-control/agent-governance": "na",
-  "access-crawl-control/ai-bot-directives": "warn",
+  "access-crawl-control/ai-bot-directives": "na",
   "access-crawl-control/ai-content-declaration": "na",
   "access-crawl-control/ai-crawler-edge-parity": "na",
   "access-crawl-control/ai-usage-signal-coherence-across-channels": "warn",
@@ -5283,7 +5283,7 @@ exports[`real-page corpus > nodejs-docs-fs: verdicts hold 1`] = `
 exports[`real-page corpus > npr-org-article: verdicts hold 1`] = `
 {
   "access-crawl-control/agent-governance": "na",
-  "access-crawl-control/ai-bot-directives": "warn",
+  "access-crawl-control/ai-bot-directives": "na",
   "access-crawl-control/ai-content-declaration": "na",
   "access-crawl-control/ai-crawler-edge-parity": "na",
   "access-crawl-control/ai-usage-signal-coherence-across-channels": "warn",
@@ -5503,7 +5503,7 @@ exports[`real-page corpus > npr-org-article: verdicts hold 1`] = `
 exports[`real-page corpus > otto-de-category: verdicts hold 1`] = `
 {
   "access-crawl-control/agent-governance": "na",
-  "access-crawl-control/ai-bot-directives": "warn",
+  "access-crawl-control/ai-bot-directives": "na",
   "access-crawl-control/ai-content-declaration": "na",
   "access-crawl-control/ai-crawler-edge-parity": "na",
   "access-crawl-control/ai-usage-signal-coherence-across-channels": "warn",
@@ -5723,7 +5723,7 @@ exports[`real-page corpus > otto-de-category: verdicts hold 1`] = `
 exports[`real-page corpus > python-docs-json: verdicts hold 1`] = `
 {
   "access-crawl-control/agent-governance": "na",
-  "access-crawl-control/ai-bot-directives": "warn",
+  "access-crawl-control/ai-bot-directives": "na",
   "access-crawl-control/ai-content-declaration": "na",
   "access-crawl-control/ai-crawler-edge-parity": "na",
   "access-crawl-control/ai-usage-signal-coherence-across-channels": "warn",
@@ -5943,7 +5943,7 @@ exports[`real-page corpus > python-docs-json: verdicts hold 1`] = `
 exports[`real-page corpus > quitenice-co-shell: verdicts hold 1`] = `
 {
   "access-crawl-control/agent-governance": "na",
-  "access-crawl-control/ai-bot-directives": "warn",
+  "access-crawl-control/ai-bot-directives": "na",
   "access-crawl-control/ai-content-declaration": "na",
   "access-crawl-control/ai-crawler-edge-parity": "na",
   "access-crawl-control/ai-usage-signal-coherence-across-channels": "warn",
@@ -6163,7 +6163,7 @@ exports[`real-page corpus > quitenice-co-shell: verdicts hold 1`] = `
 exports[`real-page corpus > rakuten-co-jp-home: verdicts hold 1`] = `
 {
   "access-crawl-control/agent-governance": "na",
-  "access-crawl-control/ai-bot-directives": "warn",
+  "access-crawl-control/ai-bot-directives": "na",
   "access-crawl-control/ai-content-declaration": "na",
   "access-crawl-control/ai-crawler-edge-parity": "na",
   "access-crawl-control/ai-usage-signal-coherence-across-channels": "warn",
@@ -6383,7 +6383,7 @@ exports[`real-page corpus > rakuten-co-jp-home: verdicts hold 1`] = `
 exports[`real-page corpus > react-dev-usestate: verdicts hold 1`] = `
 {
   "access-crawl-control/agent-governance": "na",
-  "access-crawl-control/ai-bot-directives": "warn",
+  "access-crawl-control/ai-bot-directives": "na",
   "access-crawl-control/ai-content-declaration": "na",
   "access-crawl-control/ai-crawler-edge-parity": "na",
   "access-crawl-control/ai-usage-signal-coherence-across-channels": "warn",
@@ -6603,7 +6603,7 @@ exports[`real-page corpus > react-dev-usestate: verdicts hold 1`] = `
 exports[`real-page corpus > reddit-r-programming-shell: verdicts hold 1`] = `
 {
   "access-crawl-control/agent-governance": "na",
-  "access-crawl-control/ai-bot-directives": "warn",
+  "access-crawl-control/ai-bot-directives": "na",
   "access-crawl-control/ai-content-declaration": "na",
   "access-crawl-control/ai-crawler-edge-parity": "na",
   "access-crawl-control/ai-usage-signal-coherence-across-channels": "warn",
@@ -6823,7 +6823,7 @@ exports[`real-page corpus > reddit-r-programming-shell: verdicts hold 1`] = `
 exports[`real-page corpus > reuters-com: verdicts hold 1`] = `
 {
   "access-crawl-control/agent-governance": "na",
-  "access-crawl-control/ai-bot-directives": "warn",
+  "access-crawl-control/ai-bot-directives": "na",
   "access-crawl-control/ai-content-declaration": "na",
   "access-crawl-control/ai-crawler-edge-parity": "na",
   "access-crawl-control/ai-usage-signal-coherence-across-channels": "warn",
@@ -7043,7 +7043,7 @@ exports[`real-page corpus > reuters-com: verdicts hold 1`] = `
 exports[`real-page corpus > stackoverflow-thread-wall: verdicts hold 1`] = `
 {
   "access-crawl-control/agent-governance": "na",
-  "access-crawl-control/ai-bot-directives": "warn",
+  "access-crawl-control/ai-bot-directives": "na",
   "access-crawl-control/ai-content-declaration": "na",
   "access-crawl-control/ai-crawler-edge-parity": "na",
   "access-crawl-control/ai-usage-signal-coherence-across-channels": "warn",
@@ -7263,7 +7263,7 @@ exports[`real-page corpus > stackoverflow-thread-wall: verdicts hold 1`] = `
 exports[`real-page corpus > stripe-com-pricing: verdicts hold 1`] = `
 {
   "access-crawl-control/agent-governance": "na",
-  "access-crawl-control/ai-bot-directives": "warn",
+  "access-crawl-control/ai-bot-directives": "na",
   "access-crawl-control/ai-content-declaration": "na",
   "access-crawl-control/ai-crawler-edge-parity": "na",
   "access-crawl-control/ai-usage-signal-coherence-across-channels": "warn",
@@ -7483,7 +7483,7 @@ exports[`real-page corpus > stripe-com-pricing: verdicts hold 1`] = `
 exports[`real-page corpus > tattly-com-shell: verdicts hold 1`] = `
 {
   "access-crawl-control/agent-governance": "na",
-  "access-crawl-control/ai-bot-directives": "warn",
+  "access-crawl-control/ai-bot-directives": "na",
   "access-crawl-control/ai-content-declaration": "na",
   "access-crawl-control/ai-crawler-edge-parity": "na",
   "access-crawl-control/ai-usage-signal-coherence-across-channels": "warn",
@@ -7703,7 +7703,7 @@ exports[`real-page corpus > tattly-com-shell: verdicts hold 1`] = `
 exports[`real-page corpus > theguardian-com-article: verdicts hold 1`] = `
 {
   "access-crawl-control/agent-governance": "na",
-  "access-crawl-control/ai-bot-directives": "warn",
+  "access-crawl-control/ai-bot-directives": "na",
   "access-crawl-control/ai-content-declaration": "na",
   "access-crawl-control/ai-crawler-edge-parity": "na",
   "access-crawl-control/ai-usage-signal-coherence-across-channels": "warn",
@@ -7923,7 +7923,7 @@ exports[`real-page corpus > theguardian-com-article: verdicts hold 1`] = `
 exports[`real-page corpus > tirerack-com-soft-block-200: verdicts hold 1`] = `
 {
   "access-crawl-control/agent-governance": "na",
-  "access-crawl-control/ai-bot-directives": "warn",
+  "access-crawl-control/ai-bot-directives": "na",
   "access-crawl-control/ai-content-declaration": "na",
   "access-crawl-control/ai-crawler-edge-parity": "na",
   "access-crawl-control/ai-usage-signal-coherence-across-channels": "warn",
@@ -8143,7 +8143,7 @@ exports[`real-page corpus > tirerack-com-soft-block-200: verdicts hold 1`] = `
 exports[`real-page corpus > velasca-com: verdicts hold 1`] = `
 {
   "access-crawl-control/agent-governance": "na",
-  "access-crawl-control/ai-bot-directives": "warn",
+  "access-crawl-control/ai-bot-directives": "na",
   "access-crawl-control/ai-content-declaration": "na",
   "access-crawl-control/ai-crawler-edge-parity": "na",
   "access-crawl-control/ai-usage-signal-coherence-across-channels": "warn",
@@ -8363,7 +8363,7 @@ exports[`real-page corpus > velasca-com: verdicts hold 1`] = `
 exports[`real-page corpus > vercel-com-wall-200: verdicts hold 1`] = `
 {
   "access-crawl-control/agent-governance": "na",
-  "access-crawl-control/ai-bot-directives": "warn",
+  "access-crawl-control/ai-bot-directives": "na",
   "access-crawl-control/ai-content-declaration": "na",
   "access-crawl-control/ai-crawler-edge-parity": "na",
   "access-crawl-control/ai-usage-signal-coherence-across-channels": "warn",
@@ -8583,7 +8583,7 @@ exports[`real-page corpus > vercel-com-wall-200: verdicts hold 1`] = `
 exports[`real-page corpus > walmart-com-wall-200: verdicts hold 1`] = `
 {
   "access-crawl-control/agent-governance": "na",
-  "access-crawl-control/ai-bot-directives": "warn",
+  "access-crawl-control/ai-bot-directives": "na",
   "access-crawl-control/ai-content-declaration": "na",
   "access-crawl-control/ai-crawler-edge-parity": "na",
   "access-crawl-control/ai-usage-signal-coherence-across-channels": "warn",
@@ -8803,7 +8803,7 @@ exports[`real-page corpus > walmart-com-wall-200: verdicts hold 1`] = `
 exports[`real-page corpus > wellsfargo-com-checking: verdicts hold 1`] = `
 {
   "access-crawl-control/agent-governance": "na",
-  "access-crawl-control/ai-bot-directives": "warn",
+  "access-crawl-control/ai-bot-directives": "na",
   "access-crawl-control/ai-content-declaration": "na",
   "access-crawl-control/ai-crawler-edge-parity": "na",
   "access-crawl-control/ai-usage-signal-coherence-across-channels": "warn",

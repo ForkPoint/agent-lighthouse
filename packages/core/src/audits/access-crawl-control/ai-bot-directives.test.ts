@@ -32,30 +32,48 @@ describe("AiBotDirectivesAudit — scoring (documented-active bots only)", () =>
     expect(result.score).toBe(1);
   });
 
-  it("warns when documented-active bots are only allowed by default", () => {
+  // RFC 9309 §2.2.1: a bot with no group of its own obeys the catch-all, so
+  // an open catch-all grants the same access a named group would.
+  it("passes when documented-active bots are allowed through the catch-all group", () => {
     const result = audit.audit(robots("User-agent: *\nAllow: /"));
-    expect(result.status).toBe("warn");
+    expect(result.status).toBe("pass");
+    expect(result.score).toBe(1);
+    expect(result.message).toContain("catch-all group applies");
   });
 
-  it("warns when robots.txt is missing", () => {
+  it("is not applicable when robots.txt is missing", () => {
     const result = audit.audit(mockCheckContext([], {}));
-    expect(result.status).toBe("warn");
+    expect(result.status).toBe("na");
     expect(result.found).toContain("No robots.txt found");
   });
 
-  it("warns when robots.txt returns non-200", () => {
+  it("is not applicable when robots.txt returns non-200", () => {
     const result = audit.audit(
       mockCheckContext([], { "/robots.txt": mockFetchResult("", 404) }),
     );
-    expect(result.status).toBe("warn");
+    expect(result.status).toBe("na");
     expect(result.found).toContain("No robots.txt found");
   });
 
-  it("warns when only one documented-active bot is explicitly allowed", () => {
+  it("is not applicable when /robots.txt serves an HTML error page", () => {
+    const result = audit.audit(robots("<html><body>Not found</body></html>"));
+    expect(result.status).toBe("na");
+  });
+
+  it("passes when one documented-active bot is named and the other inherits the catch-all", () => {
     const result = audit.audit(
       robots("User-agent: YouBot\nAllow: /\n\nUser-agent: *\nAllow: /"),
     );
-    expect(result.status).toBe("warn");
+    expect(result.status).toBe("pass");
+    expect(result.message).toContain("AI2Bot is named by no group");
+  });
+
+  it("still fails when its own group blocks YouBot under an open catch-all", () => {
+    const result = audit.audit(
+      robots("User-agent: YouBot\nDisallow: /\n\nUser-agent: *\nAllow: /"),
+    );
+    expect(result.status).toBe("fail");
+    expect(result.message).toContain("YouBot");
   });
 
   it("fails when a documented-active bot is blocked", () => {
@@ -169,28 +187,25 @@ describe("AiBotDirectivesAudit — informational per-bot table", () => {
 describe("AiBotDirectivesAudit — message accuracy", () => {
   const audit = new AiBotDirectivesAudit();
 
-  it("does not claim wildcard-only access when robots.txt has no wildcard group", () => {
+  it("does not claim catch-all access when robots.txt has no catch-all group", () => {
     const result = audit.audit(robots("User-agent: Googlebot\nAllow: /\n"));
-    expect(result.status).toBe("warn");
-    expect(result.message).not.toContain(
-      "allowed only through the wildcard rule",
-    );
-    expect(result.message).toContain("no directive");
+    expect(result.status).toBe("pass");
+    expect(result.message).not.toContain("catch-all group applies");
+    expect(result.message).toContain("no catch-all group");
   });
 
-  it("still names the wildcard rule when there is one", () => {
+  it("names the catch-all group when it is the rule that applies", () => {
     const result = audit.audit(robots("User-agent: *\nAllow: /\n"));
-    expect(result.status).toBe("warn");
-    expect(result.message).toContain("wildcard rule");
+    expect(result.status).toBe("pass");
+    expect(result.message).toContain("RFC 9309");
   });
 
-  it("does not headline a warn as a blocked bot", () => {
+  it("does not headline an allowed site as needing attention", () => {
     const check = audit.toCheckResult(
       audit.audit(robots("User-agent: *\nAllow: /\n")),
     );
-    expect(check.title).not.toBe(
-      "A documented AI bot is blocked in robots.txt",
-    );
+    expect(check.title).toBe(AiBotDirectivesAudit.meta.title);
+    expect(check.title).not.toContain("explicit");
   });
 
   it("keeps the blocked-bot headline informative on the fail path", () => {
@@ -198,5 +213,8 @@ describe("AiBotDirectivesAudit — message accuracy", () => {
     expect(result.status).toBe("fail");
     expect(result.priority).toBe("medium");
     expect(result.message).toContain("blocked by robots.txt");
+    expect(audit.toCheckResult(result).title).toBe(
+      "A documented AI bot is blocked in robots.txt",
+    );
   });
 });
