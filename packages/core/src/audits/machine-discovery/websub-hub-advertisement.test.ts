@@ -35,6 +35,10 @@ interface Site {
   linkHeader?: string;
   /** Status the hub HEAD answers. */
   hubStatus?: number;
+  /** A whole feed document, replacing the default Atom feed. */
+  feedXml?: string;
+  /** Extra markup inside the default feed's first entry. */
+  entryLinks?: string;
 }
 
 const FEED_URL = "https://example.com/feed.xml";
@@ -43,9 +47,13 @@ function run(site: Site) {
   const audit = new WebsubHubAdvertisementAudit();
   const html =
     '<html><head><link rel="alternate" type="application/atom+xml" href="/feed.xml"></head><body><p>Home.</p></body></html>';
-  const feed = `<?xml version="1.0"?><feed xmlns="http://www.w3.org/2005/Atom"><title>Blog</title>${
-    site.documentLinks ?? ""
-  }<entry><id>https://example.com/a</id><title>A</title><updated>2026-08-20T10:00:00Z</updated><link href="https://example.com/a"/><summary>S.</summary></entry></feed>`;
+  const feed =
+    site.feedXml ??
+    `<?xml version="1.0"?><feed xmlns="http://www.w3.org/2005/Atom"><title>Blog</title>${
+      site.documentLinks ?? ""
+    }<entry><id>https://example.com/a</id><title>A</title><updated>2026-08-20T10:00:00Z</updated><link href="https://example.com/a"/>${
+      site.entryLinks ?? ""
+    }<summary>S.</summary></entry></feed>`;
 
   const ctx = mockCheckContext([mockPageContext("https://example.com/", html)]);
   const requests: FetchOptions[] = [];
@@ -84,6 +92,53 @@ describe("WebsubHubAdvertisementAudit", () => {
     expect(r.status).toBe("pass");
     expect(r.details?.["feedsWithHub"]).toBe(1);
     expect(r.details?.["feedsWithValidSelf"]).toBe(1);
+  });
+
+  /** An RSS 2.0 feed whose channel carries `links`, with `ns` declared. */
+  const rss = (ns: string, links: string) =>
+    `<?xml version="1.0"?><rss version="2.0" ${ns}><channel><title>Blog</title><link>https://example.com/</link>${links}<item><title>A</title><link>https://example.com/a</link><guid>https://example.com/a</guid></item></channel></rss>`;
+
+  // RSS carries its WebSub links as namespace-qualified Atom elements.
+  it("reads atom:link self and hub links inside an RSS channel", async () => {
+    const { result } = run({
+      feedXml: rss(
+        'xmlns:atom="http://www.w3.org/2005/Atom"',
+        '<atom:link href="https://example.com/feed.xml" rel="self" type="application/rss+xml"/><atom:link rel="hub" href="https://hub.example.net/"/>',
+      ),
+    });
+    const r = await result;
+    expect(r.status).toBe("pass");
+    expect(r.details?.["feedsWithValidSelf"]).toBe(1);
+  });
+
+  it("reads a link under any prefix bound to the Atom namespace", async () => {
+    const { result } = run({
+      feedXml: rss(
+        'xmlns:a10="http://www.w3.org/2005/Atom"',
+        '<a10:link href="https://example.com/feed.xml" rel="self"/><a10:link rel="hub" href="https://hub.example.net/"/>',
+      ),
+    });
+    expect((await result).status).toBe("pass");
+  });
+
+  it("ignores a link element under a prefix bound to another namespace", async () => {
+    const { result } = run({
+      feedXml: rss(
+        'xmlns:x="https://example.org/not-atom"',
+        '<x:link href="https://example.com/feed.xml" rel="self"/>',
+      ),
+    });
+    const r = await result;
+    expect(strings(r, "observations").join(" ")).toContain("no rel=self");
+  });
+
+  // An entry's own self link names the entry, not the feed.
+  it("does not count an entry-level self link as a second feed self link", async () => {
+    const { result } = run({
+      documentLinks: SELF_AND_HUB,
+      entryLinks: '<link rel="self" href="https://example.com/a.xml"/>',
+    });
+    expect((await result).status).toBe("pass");
   });
 
   // The spec gives the response headers discovery precedence over the document.

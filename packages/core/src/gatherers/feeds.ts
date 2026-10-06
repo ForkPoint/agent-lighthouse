@@ -1,5 +1,6 @@
 import { cacheOwner } from "./cache-owner";
 import * as cheerio from "cheerio";
+import type { AnyNode } from "domhandler";
 import type { FetchOptions, FetchResult } from "../fetcher";
 import { isSafeUrl } from "../fetcher";
 import { linksWithRel } from "./structured-fields";
@@ -280,6 +281,50 @@ function parseJsonFeed(url: string, result: FetchResult): FeedEntry[] {
   }
 }
 
+const ATOM_NS = "http://www.w3.org/2005/Atom";
+
+/**
+ * Whether an element is an Atom `link`: unprefixed, as in an Atom feed's
+ * default namespace, or under any prefix bound to the Atom namespace, as RSS
+ * 2.0 carries it (`<atom:link>`). A prefix bound elsewhere is another
+ * vocabulary's element.
+ */
+function isAtomLink(el: AnyNode): boolean {
+  const name = (el as { tagName?: string }).tagName ?? "";
+  const colon = name.indexOf(":");
+  if (colon === -1) return name.toLowerCase() === "link";
+  if (name.slice(colon + 1).toLowerCase() !== "link") return false;
+  const attr = `xmlns:${name.slice(0, colon)}`;
+  for (
+    let node: AnyNode | null = el;
+    node;
+    node = node.parent as AnyNode | null
+  ) {
+    const ns = (node as { attribs?: Record<string, string> }).attribs?.[attr];
+    if (ns !== undefined) return ns === ATOM_NS;
+  }
+  return false;
+}
+
+/**
+ * The hrefs of the feed-level links carrying `rel`: direct children of the
+ * Atom `feed` or of the RSS `channel`. An entry's own links name the entry,
+ * not the feed, so they are not read.
+ */
+function feedLinks($: cheerio.CheerioAPI, rel: string): string[] {
+  return $("feed, channel")
+    .first()
+    .children()
+    .toArray()
+    .filter(
+      (el) =>
+        isAtomLink(el) &&
+        ($(el).attr("rel") ?? "").toLowerCase().split(/\s+/).includes(rel),
+    )
+    .map((el) => $(el).attr("href") ?? "")
+    .filter((href) => href !== "");
+}
+
 /** Parse an RSS, Atom or RDF document into the shape every audit reads. */
 export function parseFeed(url: string, result: FetchResult): FeedDocument {
   const body = result.body ?? "";
@@ -324,17 +369,11 @@ export function parseFeed(url: string, result: FetchResult): FeedDocument {
   // Header links win: WebSub gives the response headers discovery precedence,
   // and the document is read only when the headers carried nothing.
   if (base.selfLinksRaw.length === 0) {
-    base.selfLinksRaw = $('link[rel="self"]')
-      .toArray()
-      .map((el) => $(el).attr("href") ?? "")
-      .filter((href) => href !== "");
+    base.selfLinksRaw = feedLinks($, "self");
     base.selfLink = resolve(base.selfLinksRaw[0] ?? "", url);
   }
   if (base.hubLinksRaw.length === 0) {
-    base.hubLinksRaw = $('link[rel="hub"]')
-      .toArray()
-      .map((el) => $(el).attr("href") ?? "")
-      .filter((href) => href !== "");
+    base.hubLinksRaw = feedLinks($, "hub");
     base.hubLinks = base.hubLinksRaw
       .map((href) => resolve(href, url))
       .filter((href) => href !== "");

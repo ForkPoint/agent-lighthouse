@@ -87,6 +87,21 @@ on this audit. The RFC 4287 entry belongs to
 `machine-discovery/feed-entry-identity-and-canonical-integrity` and the
 schema.org DataFeed entry to neither; nothing here rests on them.
 
+### `atom:link` in RSS is read (2026-10-06)
+
+Step 2 of the sketch names `<atom:link rel="self">`, but the gatherer selected
+`link[rel="self"]`. In an XML parse an RSS channel's element is literally
+`atom:link`, so that selector never matched it. A small marketing site whose
+RSS feed carries a correct `atom:link rel="self"` was reported as having no
+self link. The selector also searched the whole document, so an Atom entry's
+own `rel="self"` would have counted as a second feed self link.
+
+Feed links are now read only from the direct children of the Atom `feed` or
+the RSS `channel`. A link counts when it is unprefixed, or its prefix is bound
+to the Atom namespace (`http://www.w3.org/2005/Atom`) under any name. A
+`link` under a prefix bound to another namespace is not read. `rel` is matched
+as a space-separated token list. Response-header precedence is unchanged.
+
 ## Deferred
 
 - **Completing a subscription.** Verification needs a callback URL the scanner
