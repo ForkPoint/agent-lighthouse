@@ -80,6 +80,35 @@ describe("detectWafProtection", () => {
       ).toBeNull();
     });
 
+    it.each([
+      '<script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit"></script>',
+      '<link rel="preconnect" href="https://challenges.cloudflare.com">',
+      '<script src="/cdn-cgi/challenge-platform/h/g/scripts/jsd/example/main.js"></script>',
+    ])(
+      "does not flag a readable storefront with Turnstile markup: %s",
+      (markup) => {
+        expect(
+          onHomepage({
+            headers: { server: "cloudflare", "cf-ray": "abc" },
+            body: `<html><head><title>Quiksilver</title>${markup}</head><body><main><h1>Surf clothing</h1><p>Browse our collection.</p></main><form action="/newsletter"><input name="email"></form></body></html>`,
+          }),
+        ).toBeNull();
+      },
+    );
+
+    it("detects a managed challenge script on a 200 without a challenge header", () => {
+      expect(
+        onHomepage({
+          headers: { server: "cloudflare" },
+          body: '<script src="/cdn-cgi/challenge-platform/h/b/orchestrate/chl_page/v1"></script>',
+        }),
+      ).toMatchObject({
+        isBlocked: true,
+        provider: "cloudflare",
+        statusCode: 200,
+      });
+    });
+
     it("names the status code in the reason for a 403", () => {
       expect(
         onHomepage({ headers: { "cf-ray": "abc" }, status: 403 })?.reason,

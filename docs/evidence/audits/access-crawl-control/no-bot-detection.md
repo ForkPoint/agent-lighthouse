@@ -82,6 +82,16 @@ a pause is the only way to get a verdict from a rate-limited origin.
 
 ## Implementation deviations
 
+- 2026-10-06 — the shared WAF detector no longer treats the
+  `challenges.cloudflare.com` hostname as proof of an access wall. A live fetch
+  of `https://quiksilver.fr` returned HTTP 200 with the storefront HTML and a
+  Turnstile loader configured for login, registration and newsletter forms.
+  The detector still recognises challenge headers, refusal responses and
+  managed challenge-page loaders. The page-script warning remains separate;
+  this correction removes the false wall and restores content audit evidence.
+  Regression tests cover Turnstile script/preconnect markup, JavaScript
+  Detections, a managed challenge loader and the scan evidence path.
+
 - 2026-08-28 — the audit declines when the scan holds no response it can
   attribute to this site. It read the scripts on the scanned pages, and
   `ctx.pages`/`ctx.rootFiles` carry whatever answered 200 — on a parked domain
