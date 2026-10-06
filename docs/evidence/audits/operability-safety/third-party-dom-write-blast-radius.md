@@ -114,6 +114,16 @@ number is not read as the whole list.
   `scripts/lib/requires-analysis.mjs`. Found by
   `packages/core/src/tests/hostile-state-contract.test.ts`.
 
+### Origins are hosts, not owners (2026-10-06)
+
+A large retail site loads its own scripts from a brand asset CDN on a
+separate registrable domain. The census counts it, and the fail message
+called every counted origin "a separate company". The warn message said the
+same. The census measures registrable domains, and a domain is a host, not
+proof of an owner. The SRI threat model this audit rests on is about the
+host. Both messages now say "a separate host". The count, tiers and verdicts
+are unchanged.
+
 ## Deferred
 
 - **Runtime tag-manager tier.** Tags a manager injects after load are not in the
@@ -124,3 +134,10 @@ number is not read as the whole list.
   measure, which is what the finding claims.
 - **Report-only policies.** A `Content-Security-Policy-Report-Only` header
   enforces nothing, so it is not read as a constraint and not reported as one.
+- **First-party CDNs on another registrable domain.** No cheap, documented
+  signal ties two registrable domains to one owner. Related Website Sets was
+  the only declaration, and Chrome announced its retirement in October 2025.
+  Shared hosting of the site's documents, `crossorigin`, a CSP allowlist and a
+  matching name across suffixes all fail on ordinary vendor setups. A brand
+  CDN stays counted. It is a separate host and supply chain, which is what
+  the finding measures.
