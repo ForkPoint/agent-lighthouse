@@ -13,7 +13,7 @@
 import type { AuditMeta, AuditResult } from "../../types";
 import { Audit } from "../../audit";
 import { weightForGrade } from "../../scorer";
-import type { Cheerio } from "cheerio";
+import type { Cheerio, CheerioAPI } from "cheerio";
 import type { Element } from "domhandler";
 import type { CheckContext, PageContext } from "../../check-context";
 
@@ -105,6 +105,25 @@ const REQUIRED_TYPE: Record<string, string> = {
 const SIGNUP_URL = /sign-?up|register|create-account|join/i;
 const LOGIN_URL = /log-?in|sign-?in|auth/i;
 
+/**
+ * Form names, ids and action paths that mark a site search or a store
+ * locator. "stores?" is word-bounded so "/account/restore" is not a locator.
+ * "find" is left out on purpose: checkout postcode-lookup forms are often
+ * named "find address", and their postcode field does owe its token.
+ */
+const QUERY_FORM = /search|locator|(?:^|[^a-z])stores?(?:[^a-z]|$)/i;
+
+/** Tokens that name a place; a choice between them is a location query. */
+const LOCATION_TOKENS = new Set([
+  "postal-code",
+  "address-level1",
+  "address-level2",
+  "country-name",
+]);
+
+/** "City or postcode", "Ville ou code postal": a choice, not one concept. */
+const ALTERNATIVES = /\s(?:or|ou)\s/;
+
 interface FieldFinding {
   pageUrl: string;
   expected: string;
@@ -113,6 +132,8 @@ interface FieldFinding {
 
 interface Survey {
   formsSeen: number;
+  /** Search and store-locator forms, skipped: they take a query, not profile data. */
+  queryForms: number;
   autofillable: number;
   covered: number;
   fieldFindings: FieldFinding[];
@@ -145,6 +166,13 @@ function cssEscape(value: string): string {
   return value.replace(/["\\]/g, "\\$&");
 }
 
+/** The first concept whose keyword appears in the text. */
+function conceptOf(text: string): string | undefined {
+  return CONCEPTS.find((concept) =>
+    concept.keywords.some((k) => text.includes(k)),
+  )?.token;
+}
+
 /** Which autofill token this field should declare, if any. */
 function inferToken(
   text: string,
@@ -160,10 +188,62 @@ function inferToken(
   }
   if (type === "email") return "email";
   if (type === "tel") return "tel";
-  for (const concept of CONCEPTS) {
-    if (concept.keywords.some((k) => text.includes(k))) return concept.token;
+  return conceptOf(text);
+}
+
+/**
+ * A site search or a store locator. Its field takes a keyword or a place to
+ * look up, not a value from the user's profile, so no autofill token applies.
+ */
+function isQueryForm(
+  $: CheerioAPI,
+  $form: Cheerio<Element>,
+  pageUrl: string,
+): boolean {
+  if (($form.attr("role") ?? "").toLowerCase() === "search") return true;
+  if ($form.closest('[role="search"], search').length > 0) return true;
+  const hasSearchInput = $form
+    .find("input")
+    .toArray()
+    .some((el) => ($(el).attr("type") ?? "").toLowerCase() === "search");
+  if (hasSearchInput) return true;
+  let path = "";
+  const action = $form.attr("action");
+  if (action) {
+    try {
+      path = new URL(action, pageUrl).pathname;
+    } catch {
+      path = "";
+    }
   }
-  return undefined;
+  return QUERY_FORM.test(
+    `${path} ${$form.attr("name") ?? ""} ${$form.attr("id") ?? ""}`,
+  );
+}
+
+/**
+ * Whether a visible name offers a choice between different concepts. "City
+ * or postcode" does; "State or province" names one concept twice and does
+ * not. A side with no known keyword counts as its own concept.
+ */
+function offersAlternatives($el: Cheerio<Element>, labelText: string): boolean {
+  return [
+    $el.attr("aria-label") ?? "",
+    $el.attr("placeholder") ?? "",
+    labelText,
+  ]
+    .map((name) => name.toLowerCase())
+    .some((name) => {
+      const parts = name
+        .split(ALTERNATIVES)
+        .map((part) => part.trim())
+        .filter(Boolean);
+      if (parts.length < 2) return false;
+      const concepts = new Set(
+        parts.map((part) => conceptOf(part) ?? `?${part}`),
+      );
+      return concepts.size > 1;
+    });
 }
 
 /** The bare token of an autocomplete value, minus any section/billing prefix. */
@@ -190,6 +270,7 @@ function resolves(value: string | undefined, ids: Set<string>): boolean {
 function survey(ctx: CheckContext): Survey {
   const result: Survey = {
     formsSeen: 0,
+    queryForms: 0,
     autofillable: 0,
     covered: 0,
     fieldFindings: [],
@@ -204,58 +285,74 @@ function survey(ctx: CheckContext): Survey {
     result.formsSeen += forms.length;
     const ids = collectIds(page);
 
-    forms.find("input, select, textarea").each((_, el) => {
-      const $el = $(el);
-      const tag = (el as { tagName?: string }).tagName?.toLowerCase() ?? "";
-      const type =
-        tag === "input" ? ($el.attr("type") ?? "text").toLowerCase() : tag;
-      if (tag === "input" && NON_DATA_TYPES.has(type)) return;
-
-      // A `for`-linked <label> and a wrapping <label> are both names; take both.
-      const id = $el.attr("id");
-      const labelText =
-        (id ? $(`label[for="${cssEscape(id)}"]`).text() : "") +
-        " " +
-        $el.closest("label").text();
-      const expected = inferToken(conceptText($el, labelText), type, page.url);
-
-      // Required-ness and error wiring are assessed on every data control, not
-      // only the ones carrying an autofill concept.
-      const reallyRequired =
-        $el.attr("required") !== undefined ||
-        ($el.attr("aria-required") ?? "").toLowerCase() === "true";
-      if (labelText.includes("*") && !reallyRequired) result.asteriskOnly += 1;
-
-      const described =
-        resolves($el.attr("aria-errormessage"), ids) ||
-        resolves($el.attr("aria-describedby"), ids);
-      const errorSibling = $el
-        .parent()
-        .find('[class*="error"], [class*="invalid"], [role="alert"]')
-        .first();
-      if (errorSibling.length > 0 && !described) result.unwiredErrors += 1;
-
-      if (!expected) return;
-      result.autofillable += 1;
-
-      const declared = bareToken($el.attr("autocomplete"));
-      const hasIdentifier = Boolean($el.attr("name") || $el.attr("id"));
-      const typeNeeded = REQUIRED_TYPE[expected];
-      const typeOk = !typeNeeded || type === typeNeeded;
-
-      if (declared === expected && hasIdentifier && typeOk) {
-        result.covered += 1;
+    forms.each((_, form) => {
+      const $form = $(form);
+      if (isQueryForm($, $form, page.url)) {
+        result.queryForms += 1;
         return;
       }
-      const reason: FieldFinding["reason"] = !declared
-        ? "no-token"
-        : declared !== expected
-          ? "wrong-token"
-          : !hasIdentifier
-            ? "no-identifier"
-            : "wrong-type";
-      result.fieldFindings.push({ pageUrl: page.url, expected, reason });
-      result.firstUncoveredPage ??= page.url;
+
+      $form.find("input, select, textarea").each((_, el) => {
+        const $el = $(el);
+        const tag = (el as { tagName?: string }).tagName?.toLowerCase() ?? "";
+        const type =
+          tag === "input" ? ($el.attr("type") ?? "text").toLowerCase() : tag;
+        if (tag === "input" && NON_DATA_TYPES.has(type)) return;
+
+        // A `for`-linked <label> and a wrapping <label> are both names; take both.
+        const id = $el.attr("id");
+        const labelText =
+          (id ? $(`label[for="${cssEscape(id)}"]`).text() : "") +
+          " " +
+          $el.closest("label").text();
+        const expected = inferToken(
+          conceptText($el, labelText),
+          type,
+          page.url,
+        );
+
+        // Required-ness and error wiring are assessed on every data control, not
+        // only the ones carrying an autofill concept.
+        const reallyRequired =
+          $el.attr("required") !== undefined ||
+          ($el.attr("aria-required") ?? "").toLowerCase() === "true";
+        if (labelText.includes("*") && !reallyRequired)
+          result.asteriskOnly += 1;
+
+        const described =
+          resolves($el.attr("aria-errormessage"), ids) ||
+          resolves($el.attr("aria-describedby"), ids);
+        const errorSibling = $el
+          .parent()
+          .find('[class*="error"], [class*="invalid"], [role="alert"]')
+          .first();
+        if (errorSibling.length > 0 && !described) result.unwiredErrors += 1;
+
+        if (!expected) return;
+        // "City or postcode" is a location query: no one token is right.
+        if (LOCATION_TOKENS.has(expected) && offersAlternatives($el, labelText))
+          return;
+        result.autofillable += 1;
+
+        const declared = bareToken($el.attr("autocomplete"));
+        const hasIdentifier = Boolean($el.attr("name") || $el.attr("id"));
+        const typeNeeded = REQUIRED_TYPE[expected];
+        const typeOk = !typeNeeded || type === typeNeeded;
+
+        if (declared === expected && hasIdentifier && typeOk) {
+          result.covered += 1;
+          return;
+        }
+        const reason: FieldFinding["reason"] = !declared
+          ? "no-token"
+          : declared !== expected
+            ? "wrong-token"
+            : !hasIdentifier
+              ? "no-identifier"
+              : "wrong-type";
+        result.fieldFindings.push({ pageUrl: page.url, expected, reason });
+        result.firstUncoveredPage ??= page.url;
+      });
     });
   }
 
@@ -348,10 +445,14 @@ export class FormAutofillTokenCoverageAudit extends Audit {
       );
     }
     if (s.autofillable === 0 && s.asteriskOnly === 0 && s.unwiredErrors === 0) {
+      const skipped =
+        s.queryForms > 0
+          ? `; ${s.queryForms} search or store-locator form(s) skipped`
+          : "";
       return this.notApplicable(
         "No field on the scanned forms maps to a standard autofill concept.",
         EXPECTED,
-        `${s.formsSeen} form(s), no autofillable field`,
+        `${s.formsSeen} form(s), no autofillable field${skipped}`,
       );
     }
 
