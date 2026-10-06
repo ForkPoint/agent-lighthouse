@@ -32,13 +32,14 @@ sources:
 
 Every scanned page must appear in at least one _discovery index_: the sitemap (including the sub-sitemaps a `<sitemapindex>` points at) or the llms.txt link list. A page in neither is reachable only through the link graph, which the non-JS-executing AI crawlers may not traverse.
 
-| State                                        | Result                    |
-| :------------------------------------------- | :------------------------ |
-| every page found in an index                 | `pass`                    |
-| >50% of pages found in no index              | `fail`, priority `medium` |
-| ≤50% of pages found in no index              | `warn`, priority `low`    |
-| no sitemap URLs and no llms.txt links at all | `warn`, priority `medium` |
-| no pages scanned                             | `na`                      |
+| State                                                        | Result                    |
+| :----------------------------------------------------------- | :------------------------ |
+| every page found in an index                                 | `pass`                    |
+| >50% of pages found in no index                              | `fail`, priority `medium` |
+| ≤50% of pages found in no index                              | `warn`, priority `low`    |
+| no sitemap URLs and no llms.txt links at all                 | `warn`, priority `medium` |
+| a page is missing, but the sitemap walk stopped at its limit | `na`                      |
+| no pages scanned                                             | `na`                      |
 
 Both sides of the comparison go through one key — host without `www.`, lower-cased decoded path, no trailing slash, no scheme, query or fragment — and a page also matches on its declared `<link rel="canonical">`.
 
@@ -115,3 +116,14 @@ Both source reviews' required fixes shipped with the fold:
 The shared sitemap gatherer uses the scanned homepage directory as the site root when it is a detected or declared subpath homepage. It reads declarations from the origin's robots.txt, then tries the conventional sitemap names under that directory before the origin fallbacks. Shared sitemap files contribute only absolute URLs on the same origin and under that directory. Filtering precedes the entry cap and sampling. Relative or malformed loc values associated with this site remain available to content audits. A sibling-only sitemap does not prove that this site has a sitemap. The child-fetch cap remains in force even when all children cover siblings.
 
 Content-page scans do not infer a mount. Origin files, origin probes, feed discovery, explicit page overrides, and redirect handling keep their existing scope. This change limits sitemap-derived evidence; it does not make every scan request subpath-only.
+
+### Partial sitemap reads decline the verdict (2026-10-06)
+
+The shared sitemap walk keeps at most 500 entries and reads at most 10 child sitemaps. When it stops early, a page missing from the entries it kept may still be listed in the part it skipped. The audit now returns `na` for that case instead of `fail` or `warn`. A page found in the partial read still passes, and a page missing from a complete read still fails.
+
+The trigger was a large retail site. Its index lists a 2455-URL product sitemap before a one-URL sitemap that holds the homepage. The product file filled the cap, and the audit failed the homepage as unindexed.
+
+## Deferred
+
+- The fetcher cuts a sitemap body at 5 MB and does not flag the cut. A `<loc>` lost to that cut is still read as absent. The walk needs a body-truncation flag before this audit can decline that case too.
+- After the entry cap is reached, the walk still downloads the remaining child sitemaps and discards their entries.

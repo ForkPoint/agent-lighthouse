@@ -89,8 +89,13 @@ export class DiscoveryIndexCoverageAudit extends Audit {
     },
   };
 
-  /** Every URL any discovery index lists, as comparison keys. */
-  private async indexKeys(ctx: CheckContext): Promise<Set<string>> {
+  /**
+   * Every URL any discovery index lists, as comparison keys, and whether the
+   * sitemap walk stopped before it read the whole tree.
+   */
+  private async indexKeys(
+    ctx: CheckContext,
+  ): Promise<{ keys: Set<string>; incomplete: boolean }> {
     const keys = new Set<string>();
     const add = (url: string, base?: string) => {
       const key = coverageKey(url, base);
@@ -99,13 +104,14 @@ export class DiscoveryIndexCoverageAudit extends Audit {
 
     const sitemapTree = await siteSitemapTree(ctx);
     for (const entry of sitemapTree.entries) add(entry.loc);
+    const incomplete = sitemapTree.truncated || !!sitemapTree.scopeIncomplete;
 
     const llmsResult = ctx.rootFiles["/llms.txt"];
     if (llmsResult && isOk(llmsResult)) {
       for (const link of llmsTxtLinks(llmsResult.body)) add(link, ctx.baseUrl);
     }
 
-    return keys;
+    return { keys, incomplete };
   }
 
   /** A page's own keys: its URL plus its declared canonical, if any. */
@@ -129,7 +135,7 @@ export class DiscoveryIndexCoverageAudit extends Audit {
       );
     }
 
-    const indexKeys = await this.indexKeys(ctx);
+    const { keys: indexKeys, incomplete } = await this.indexKeys(ctx);
 
     // The missing sitemap is sitemap-exists' (1.7) finding. Charging for it here
     // too levied two penalties for one missing file.
@@ -150,9 +156,23 @@ export class DiscoveryIndexCoverageAudit extends Audit {
     const uncovered = ctx.pages
       .filter((page) => !this.pageKeys(page).some((key) => indexKeys.has(key)))
       .map((page) => page.url);
+    const listed = `${uncovered.slice(0, 5).join(", ")}${uncovered.length > 5 ? ` (+${uncovered.length - 5} more)` : ""}`;
+
+    // The walk caps entries and child sitemaps. A page missing from the part
+    // it read may sit in the part it skipped: a large retailer whose product
+    // sitemap fills the cap before the one-URL homepage sitemap was failed
+    // for an unindexed homepage it lists. Absence from a partial read proves
+    // nothing, so the verdict is declined rather than guessed.
+    if (uncovered.length > 0 && incomplete) {
+      return this.notApplicable(
+        `${uncovered.length}/${ctx.pages.length} scanned page(s) were not found in the part of the sitemap this scan read. The scan read only part of the sitemap — it hit its read limit or could not read a child sitemap — so the rest may list them.`,
+        expected,
+        `Not found in the partial sitemap read: ${listed}`,
+      );
+    }
 
     if (uncovered.length > 0) {
-      const shown = `Not indexed: ${uncovered.slice(0, 5).join(", ")}${uncovered.length > 5 ? ` (+${uncovered.length - 5} more)` : ""}`;
+      const shown = `Not indexed: ${listed}`;
       const message = `${uncovered.length}/${ctx.pages.length} scanned page(s) are in no discovery index.`;
 
       if (uncovered.length / ctx.pages.length > 0.5) {
