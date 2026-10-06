@@ -10,6 +10,7 @@ import {
 } from "../../gatherers/extraction";
 import { normalizeText, sentences } from "../../gatherers/text-metrics";
 import { parseHtml, allJsonLdNodes } from "../../parser";
+import { hiddenFromReaders } from "../../dom-visibility";
 
 /** Below this share of key spans surviving, an agent reads a different page. */
 const RECALL_FLOOR = 0.9;
@@ -113,6 +114,9 @@ function keySpans(page: PageContext): KeySpan[] {
   const $ = page.$;
   const spans: KeySpan[] = [];
   const push = (kind: string, el: Element, text: string): void => {
+    // A hidden panel is not on the page a reader sees, and Readability drops
+    // it before scoring, so its text is not a fact an extractor lost.
+    if (hiddenFromReaders($, el)) return;
     const clean = text.replace(/\s+/g, " ").trim();
     const needle = needleOf(clean);
     // Two words is the floor for prose, where a single word matches by accident.
@@ -238,21 +242,25 @@ export class ExtractorSurvivalRecallAudit extends Audit {
     const html = page.$.html() ?? "";
     const readability = readabilityArticle(html, page.url);
     const readabilityText = normalizeText(readability?.text ?? "");
+    // Readability moves an h1 that repeats the title out of the body and into
+    // the article title, which every Readability-based pipeline delivers.
+    const readabilityTitle = normalizeText(readability?.title ?? "");
     const aggressive = normalizeText(aggressiveText(html));
     const visible = normalizeText(visibleText(page.$));
 
     const survives = (text: string, span: KeySpan): boolean =>
       text.includes(span.needle);
-    const readabilityKept = spans.filter((span) =>
-      survives(readabilityText, span),
-    );
+    const keptByReadability = (span: KeySpan): boolean =>
+      survives(readabilityText, span) ||
+      (span.kind === "h1" && survives(readabilityTitle, span));
+    const readabilityKept = spans.filter(keptByReadability);
     const aggressiveKept = spans.filter((span) => survives(aggressive, span));
     const readabilityRecall = readabilityKept.length / spans.length;
     const aggressiveRecall = aggressiveKept.length / spans.length;
     const recall = Math.min(readabilityRecall, aggressiveRecall);
 
     const dropped = spans.filter(
-      (span) => !survives(readabilityText, span) || !survives(aggressive, span),
+      (span) => !keptByReadability(span) || !survives(aggressive, span),
     );
     const textRatio =
       visible.length === 0
@@ -268,9 +276,7 @@ export class ExtractorSurvivalRecallAudit extends Audit {
     const lines = dropped.map(
       (span) =>
         `${span.kind} "${span.text.slice(0, 80)}" lost by ${
-          survives(readabilityText, span)
-            ? "the aggressive extractor"
-            : "readability"
+          keptByReadability(span) ? "the aggressive extractor" : "readability"
         } — it lives in ${span.chain}`,
     );
     const found = `readability keeps ${readabilityKept.length}/${spans.length} key spans, the aggressive extractor keeps ${aggressiveKept.length}/${spans.length}.${ratioNote}${
