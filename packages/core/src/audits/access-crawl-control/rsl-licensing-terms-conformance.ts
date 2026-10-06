@@ -32,6 +32,19 @@ const CONVENTIONAL_PATHS = ["/license.xml", "/rsl.xml"];
 /** Documents fetched. A site with more licence pointers than this has a different problem. */
 const MAX_CANDIDATES = 3;
 
+/**
+ * Whether a probed body is an RSL document at all.
+ *
+ * Only the conventional-path probe uses this. A guessed path that redirects
+ * to the homepage, or answers a soft 404 with HTML, carries no licence, and
+ * grading that page against the RSL schema reports a defect in a document the
+ * site never published. An advertised candidate skips this check: the site
+ * said a licence is there, so a body that is not one is a finding.
+ */
+function carriesRsl(body: string): boolean {
+  return cheerio.load(body, { xmlMode: true })("rsl").length > 0;
+}
+
 interface Candidate {
   url: string;
   /** How it was found, named the way the finding quotes it. */
@@ -167,6 +180,9 @@ export class RslLicensingTermsConformanceAudit extends Audit {
         const result = await probeRsl(ctx, url, { followRedirects: true });
         if (!result || result.status !== 200 || result.body.trim() === "")
           continue;
+        // A guess is evidence only of what it found. A redirect to the
+        // homepage or an HTML soft 404 is no licence, so it is absent.
+        if (!carriesRsl(result.body)) continue;
         candidates.push({
           url,
           channel: `probe of ${path}`,

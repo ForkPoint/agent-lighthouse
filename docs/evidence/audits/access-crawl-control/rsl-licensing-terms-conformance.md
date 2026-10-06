@@ -82,6 +82,21 @@ The 402 cross-check the sketch's step 6 describes lives in
 402 responses are: that audit requires a `<payment type="crawl">` when a 402 is
 observed, rather than this one guessing whether any 402 exists.
 
+### A guessed path must return an RSL document (2026-10-06)
+
+The conventional-path probe keeps a candidate only when its body has an
+`<rsl>` element. A large retail site redirected `/license.xml` and `/rsl.xml`
+to its homepage. The fetcher followed the redirect, and the audit graded the
+homepage HTML as a licence: four conformance errors about a document the site
+never published. A guess that lands on HTML is now absent, and the audit
+returns not applicable.
+
+The test is the body, not the redirect. A conventional path that redirects to
+a real RSL document still counts and still warns as not discoverable. The
+content type is not the test either: an RSL document served as `text/xml` is
+still reported. Advertised candidates are not filtered, so a `License:` line
+that points at HTML still fails.
+
 ## Deferred
 
 - **`max-age` and `<legal>`.** Both are spec elements this audit does not
