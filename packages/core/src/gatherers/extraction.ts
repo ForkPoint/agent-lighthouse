@@ -30,9 +30,26 @@ export interface Extracted {
 const CHROME_SELECTORS =
   "script, style, noscript, template, nav, aside, header, footer, form, iframe";
 
-/** Class and id names the aggressive extractors drop wholesale. */
-export const AGGRESSIVE_DROP_RE =
-  /comment|sidebar|promo|related|advert|ad-|banner|cookie|newsletter|share/i;
+/**
+ * Class tokens and ids the aggressive extractors drop wholesale.
+ *
+ * Matched against whole tokens, the way Firecrawl's `excludeNonMainTags`
+ * selectors (`.ad`, `.sidebar`, `.cookie`, `#share`) match: a CSS class
+ * selector names a token, not a substring. A substring match dropped
+ * `page-content--banner-enabled`, the wrapper around a whole page.
+ */
+export const AGGRESSIVE_DROP_TOKEN_RE =
+  /^(?:comments?|sidebar|promo|related|advert|ads?|banner|cookie|newsletter|share)$/i;
+
+/** Whether an element's class tokens or id name it as chrome to drop. */
+export function isAggressiveDropTarget(el: Element): boolean {
+  const tokens = (el.attribs?.["class"] ?? "").split(/\s+/);
+  const id = el.attribs?.["id"];
+  if (id) tokens.push(id);
+  return tokens.some(
+    (token) => token !== "" && AGGRESSIVE_DROP_TOKEN_RE.test(token),
+  );
+}
 
 /** Readability's own floor: below this it reports the page as not readerable. */
 export const READABILITY_CHAR_THRESHOLD = 500;
