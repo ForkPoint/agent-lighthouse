@@ -80,3 +80,15 @@ Wraps axe `button-name` + `link-name`. Directly agent-relevant — an unnamed co
 
 - 2026-08-20 — code review (11-agent workflow) + evidence research (12-domain workflow, 400 sources).
 - 2026-08-21 — dossier generated; disposition pending final taxonomy design.
+
+## Deferred
+
+- Controls inside a container hidden by an external stylesheet are still
+  checked. A large retail site ships an unfilled popup template, hidden by an
+  id rule in its stylesheet, whose empty links fail `link-name`. The engine
+  honours computed `display:none`, but the runner strips stylesheets before
+  building the document, for event-loop cost. The stylesheet scanner in
+  `gatherers/css-rules.ts` resolves no specificity and no media queries, so
+  skipping on its answer would also skip a desktop menu that is hidden at the
+  base and shown at desktop width, which an agent does see. Exact resolution
+  waits for the headless tier.
