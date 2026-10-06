@@ -183,6 +183,21 @@ pnpm build && pnpm test && pnpm typecheck && pnpm lint && pnpm check:dossiers &&
 `pnpm build` has to run first. Watch for stale build artifacts: an untracked `.js` or `.d.ts` under
 `packages/*/src/` shadows its source in vitest and turns a red suite green.
 
-Add a changeset for anything a user would notice. Removing an audit, changing
-what one reports, or moving a tier is a `major` — a scan's output changes even
-when the audit carried weight 0.
+Add a changeset for anything a user would notice. The bump follows what a
+consumer of the output can rely on, not whether a verdict moved:
+
+- **`major`** — the contract changes. An audit id is removed or renamed, a
+  tier or grade moves (and with it the weight), the result or report schema
+  changes, or a CLI flag, MCP tool or public export is removed or changes
+  meaning. Scripts, baselines and dashboards that read the output can break.
+  This holds even when the audit carried weight 0.
+- **`minor`** — the contract grows. A new audit, a new informative or
+  experimental check, a new `details` key, a new flag or output format.
+- **`patch`** — the contract holds and the code is corrected. A verdict that
+  disagreed with its own dossier is brought into line, a false finding is
+  removed, a message is reworded. The id, tier, grade, weight and schema stay
+  the same; some sites' scores move because they were wrong before.
+
+A verdict correction is a `patch` only when the dossier already supports the
+new behaviour. If the fix needs a new source or a changed grade, the dossier
+changes first and the bump follows the rule above.

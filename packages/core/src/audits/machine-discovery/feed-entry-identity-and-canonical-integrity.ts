@@ -30,7 +30,11 @@ const EXPECTED_TYPE: Record<string, RegExp> = {
   json: /^application\/(feed\+json|json)/i,
 };
 
-/** A generic XML type: not wrong enough to fail, not the registered type either. */
+/**
+ * A generic XML type. Every feed reader parses it, and no source names a
+ * consumer that treats it worse, so it is recorded but never costs score.
+ * `application/rss+xml` was never registered with IANA; only Atom's type was.
+ */
 const GENERIC_XML = /^(application|text)\/xml/i;
 
 /** Does `text` carry a `<content>` that points elsewhere or holds non-text data? */
@@ -95,7 +99,7 @@ export class FeedEntryIdentityAndCanonicalIntegrityAudit extends Audit {
       if (expected && !expected.test(type)) {
         if (GENERIC_XML.test(type)) {
           warnings.push(
-            `${where}: served as "${type}" rather than the registered ${feed.declaredType} media type`,
+            `${where}: served as "${type}", a generic XML type; the ${feed.declaredType}-specific type is optional`,
           );
         } else {
           failures.push(
@@ -234,7 +238,7 @@ export class FeedEntryIdentityAndCanonicalIntegrityAudit extends Audit {
     const displayValue = `${entriesChecked} entries, ${failures.length} problem(s)`;
     const expected =
       "Every entry carries the id and timestamp its format requires, no id repeats, and item links are absolute HTTPS URLs equal to the page’s canonical";
-    const found = `${feeds.length} feed(s), ${entriesChecked} entries checked, ${canonicalChecks.length} item URL(s) compared against their canonical; ${failures.length} failure(s), ${warnings.length} warning(s).`;
+    const found = `${feeds.length} feed(s), ${entriesChecked} entries checked, ${canonicalChecks.length} item URL(s) compared against their canonical; ${failures.length} failure(s), ${warnings.length} media-type note(s).`;
     const details = {
       feeds: feeds.map((feed) => feed.url),
       entriesChecked,
@@ -250,19 +254,6 @@ export class FeedEntryIdentityAndCanonicalIntegrityAudit extends Audit {
           expected,
           found,
           "Give every entry a stable, unique id, and link items at their canonical URL with no redirect and no tracking parameters.",
-        ),
-        displayValue,
-        details,
-      };
-    }
-
-    if (warnings.length > 0) {
-      return {
-        ...this.warn(
-          `Entry identity is sound, but ${warnings.length} delivery problem(s) remain.`,
-          expected,
-          found,
-          "Serve the feed as its registered media type.",
         ),
         displayValue,
         details,
