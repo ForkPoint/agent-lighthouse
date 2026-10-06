@@ -9,6 +9,7 @@ import {
 import { mockPageContext, mockFetchResult } from "./__tests__/test-utils";
 import type { FetchResult } from "./fetcher";
 import type { PageContext } from "./check-context";
+import { detectWafProtection } from "./waf-detector";
 
 /** A homepage fetch result, overridable field by field. */
 function homepage(overrides: Partial<FetchResult> = {}): FetchResult {
@@ -411,6 +412,31 @@ describe("allEvidenceMet", () => {
 });
 
 describe("scanReadTheSite", () => {
+  it("keeps a readable storefront with form Turnstile available to audits", () => {
+    const page = mockPageContext(
+      "https://www.shop.test/",
+      '<html><head><script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit"></script></head>' +
+        `<body><main>${"Browse clothing and accessories in our shop. ".repeat(20)}</main>` +
+        '<form action="/newsletter"><input name="email"></form></body></html>',
+    );
+    const response = homepage({
+      ...page.fetchResult,
+      url: "https://shop.test/",
+      finalUrl: page.url,
+      headers: { server: "cloudflare", "cf-ray": "abc" },
+    });
+    const evidence = build({
+      requestedUrl: response.url,
+      homepageResult: response,
+      pages: [page],
+      wafProtection: detectWafProtection(response.url, response, {}, 1),
+    });
+
+    expect(evidence.met["unblocked-fetches"]).toBe(true);
+    expect(evidence.met["rendered-body"]).toBe(true);
+    expect(scanReadTheSite(evidence)).toBe(true);
+  });
+
   // The guard 36 audits consult. It used to read `origin-reachable` alone,
   // which a bot wall satisfies whenever the wall answers 200.
   it("is false when the origin answered but the scan was refused", () => {

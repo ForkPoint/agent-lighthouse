@@ -81,7 +81,9 @@ export function detectWafProtection(
         (body.includes("just a moment...") ||
           body.includes("checking your browser") ||
           body.includes("cf-challenge") ||
-          body.includes("challenges.cloudflare.com")))
+          // Turnstile's shared host also serves form widgets on readable pages.
+          // Only the managed challenge-page loader is evidence of a page wall.
+          body.includes("/orchestrate/chl_page/")))
     ) {
       return {
         isBlocked: true,
