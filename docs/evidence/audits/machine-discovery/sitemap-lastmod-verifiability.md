@@ -107,6 +107,24 @@ The trigger was a large retail site. Its product pages publish no modification t
 
 The claim is "one identical lastmod equal to the last deploy date". The audit compared lastmod strings exactly. A generator that writes the clock per URL spreads one run over seconds, and exact matching saw every value as different. One large retail site stamped 2451 product URLs between 09:57:16 and 09:57:33 on one day. The audit now counts the largest group of sampled values inside a one-hour window. The 90% share and the 3-day recency rules are unchanged. Values hours apart still count as separate dates.
 
+### `Last-Modified` corroborates but cannot contradict (2026-10-06)
+
+Step 5 of the sketch takes the minimum delta against any page signal, the
+HTTP `Last-Modified` header included. On a static host the header is the
+file's write time, so every deploy moves it. A small marketing site stamps its
+legal pages' `lastmod` from their editorial dates and publishes no
+`dateModified`. Its server sent the deploy day as `Last-Modified`, and the
+audit failed the correct editorial dates as divergent. The audit's own fix
+text tells sites to do exactly what that site did: stamp lastmod from the
+content record and leave it alone on a rebuild.
+
+The header still corroborates: a `lastmod` within seven days of it counts as
+verified. A URL whose only signal is the header, and which disagrees with it,
+now counts as unverifiable rather than divergent. A URL with a JSON-LD date or
+an article meta date is judged as before, against every signal it has.
+
+No corpus or bare-site verdict moved: the corpus fixtures carry no sitemap.
+
 ## Deferred
 
 - **Only the first level of a `<sitemapindex>` is walked**, per the shared
@@ -115,8 +133,8 @@ The claim is "one identical lastmod equal to the last deploy date". The audit co
 - **The 7-day divergence window is fixed.** A daily-publishing news site and a
   documentation set that changes quarterly are held to the same window; making
   it adaptive needs a publication-cadence estimate this audit does not build.
-- **`Last-Modified` is taken at face value.** Many origins send the response
-  time rather than the document time, which makes the header agree with almost
-  any recent `lastmod`. The audit reports how many URLs were corroborated so
+- **`Last-Modified` corroboration is taken at face value.** Many origins send
+  the response time rather than the document time, which makes the header agree
+  with almost any recent `lastmod`. The audit reports how many URLs were corroborated so
   the reader can weigh that, but it cannot tell a real document date from a
   synthesised one.
