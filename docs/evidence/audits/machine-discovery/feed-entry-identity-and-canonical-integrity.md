@@ -51,6 +51,7 @@ Tier per evidence policy: **scored** — grade B meets the A/B bar required for 
 ## Review history
 
 - 2026-08-20 — proposed by the novel-checks research pass (10-agent evidence workflow); sources URL-verified at research time.
+- 2026-10-06 — a generic XML media type stopped returning `warn`; no source documents a consumer penalty, and `application/rss+xml` is unregistered.
 
 ## Implementation deviations
 
@@ -71,10 +72,14 @@ link already explains the tracking parameters, so the finding names both and the
 tracking arm fires on its own only when the page declares no canonical at all
 to disagree with.
 
-**A generic `application/xml` or `text/xml` warns rather than fails.** The
-registered type is `application/atom+xml` or `application/rss+xml`, but a
-generic XML type still parses everywhere; a type that is not XML at all — most
-often `text/html` from a misconfigured catch-all — fails.
+**A generic `application/xml` or `text/xml` is noted, not scored.** Atom's
+`application/atom+xml` is registered by RFC 4287. `application/rss+xml` was
+never registered with IANA; it is a convention. A generic XML type parses in
+every feed reader, and no source names a consumer that treats it worse. The
+audit records it under `details.warnings` and still passes. A type that is not
+XML at all — most often `text/html` from a misconfigured catch-all — fails.
+Until 2026-10-06 the generic type returned `warn`, which cost half the audit's
+weight with no consumer source behind it.
 
 **The newest-five selection uses only timezone-carrying dates.**
 `parseFeedDate` returns `undefined` for a timestamp with no offset rather than

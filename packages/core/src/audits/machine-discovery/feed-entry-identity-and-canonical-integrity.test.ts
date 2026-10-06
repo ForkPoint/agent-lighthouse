@@ -261,17 +261,21 @@ describe("FeedEntryIdentityAndCanonicalIntegrityAudit", () => {
     expect(strings(r, "failures").join(" ")).toContain("not absolute HTTPS");
   });
 
-  // A generic XML type parses, so it is a delivery defect rather than a broken feed.
-  it("warns when the feed is served as text/xml but passes its identity checks", async () => {
-    const { result } = run({
-      feed: CLEAN_ATOM,
-      feedType: "text/xml",
-      items: CLEAN_ITEMS,
-    });
-    const r = await result;
-    expect(r.status).toBe("warn");
-    expect(strings(r, "warnings").join(" ")).toContain("text/xml");
-  });
+  // A generic XML type parses everywhere and no source names a consumer that
+  // treats it worse, so it is noted in details but never costs score.
+  it.each(["text/xml", "application/xml"])(
+    "passes a feed served as %s and notes the generic type",
+    async (feedType) => {
+      const { result } = run({
+        feed: CLEAN_ATOM,
+        feedType,
+        items: CLEAN_ITEMS,
+      });
+      const r = await result;
+      expect(r.status).toBe("pass");
+      expect(strings(r, "warnings").join(" ")).toContain(feedType);
+    },
+  );
 
   it("fails a feed served as text/html", async () => {
     const { result } = run({
