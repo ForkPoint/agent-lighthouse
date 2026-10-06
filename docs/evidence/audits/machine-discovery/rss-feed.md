@@ -109,6 +109,19 @@ Not addressed by this fold (they belong to 1.11's own "fix required" backlog, no
   fail → na, HTTP 200 bot challenge pass → na. Found by
   `packages/core/src/tests/hostile-state-contract.test.ts`.
 
+### No feed and no link is not applicable (2026-10-06)
+
+The audit failed every site without a feed. The grade decision says the
+audit "informs rather than penalises", and the test gaps list a site with no
+blog as "should be N/A, currently FAIL". It now returns `notApplicable` when
+no feed answers and no page carries an autodiscovery `<link>`. A site whose
+`<link>` advertises a feed that does not answer still fails, as the merge
+decision above requires. The message names the advertised URL.
+
+The narrower page-type gate the required fix suggests ("no article/blog-type
+pages") is not used. Advertising is the site's own statement that a feed
+exists, and the scan observes it directly.
+
 ## Review history
 
 - 2026-08-20 — code review (11-agent workflow) + evidence research (12-domain workflow, 400 sources) on both source audits.

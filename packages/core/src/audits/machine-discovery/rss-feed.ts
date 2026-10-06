@@ -38,9 +38,20 @@ export class RssFeedAudit extends Audit {
         : "no autodiscovery <link> in <head>";
 
     const feed = feeds[0];
+    // Absent artifact, absent verdict. The dossier grades a feed B with an
+    // explicit non-consumer beside its one consumer, so the audit informs
+    // rather than penalises: a site that neither publishes nor advertises a
+    // feed is not judged. An advertised feed that does not answer is broken.
+    if (!feed && autodiscoveryUrls.length === 0) {
+      return this.notApplicable(
+        "No RSS or Atom feed is published or advertised: no autodiscovery <link> in <head>, and nothing at the common paths (/rss.xml, /feed.xml, /atom.xml). A feed is optional, so its absence is not scored.",
+        "At least one feed returns HTTP 200 with valid XML",
+        `No feed found; ${linkNote}`,
+      );
+    }
     if (!feed) {
       return this.fail(
-        "No RSS or Atom feed found via head links or common paths (/rss.xml, /feed.xml, /atom.xml).",
+        `An autodiscovery <link> advertises a feed at ${autodiscoveryUrls[0]}, but neither it nor the common paths (/rss.xml, /feed.xml, /atom.xml) return a feed.`,
         "At least one feed returns HTTP 200 with valid XML",
         `No feed found; ${linkNote}`,
         {
