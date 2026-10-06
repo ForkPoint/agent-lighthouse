@@ -128,6 +128,82 @@ describe("RslLicensingTermsConformanceAudit", () => {
     expect(strings(result, "notes")[0]).toContain("no crawler is obliged");
   });
 
+  // A guessed path that redirects to the homepage carries no licence. The
+  // fetcher follows the redirect, so the body is the storefront's HTML.
+  const homepageVia = (finalUrl: string): FetchResult => {
+    const result = mockFetchResult(
+      "<!doctype html><html><head><title>Shop</title></head><body><h1>New arrivals</h1></body></html>",
+      200,
+      "text/html",
+    );
+    result.finalUrl = finalUrl;
+    result.redirectChain = [
+      { status: 301, from: "https://example.com/license.xml", to: finalUrl },
+    ];
+    return result;
+  };
+
+  it("is notApplicable when the conventional paths redirect to the homepage", async () => {
+    const { ctx } = site({
+      robots: "User-agent: *\nAllow: /\n",
+      files: {
+        "https://example.com/license.xml": homepageVia("https://example.com/"),
+        "https://example.com/rsl.xml": homepageVia("https://example.com/"),
+      },
+    });
+    const result = await audit.audit(ctx);
+    expect(result.status).toBe("na");
+    expect(result.details?.["conformanceErrors"]).toBeUndefined();
+  });
+
+  it("is notApplicable when a conventional path answers 200 with HTML", async () => {
+    const { ctx } = site({
+      robots: "User-agent: *\nAllow: /\n",
+      files: {
+        "https://example.com/rsl.xml": mockFetchResult(
+          "<html><body><p>Page not found</p></body></html>",
+          200,
+          "text/html",
+        ),
+      },
+    });
+    expect((await audit.audit(ctx)).status).toBe("na");
+  });
+
+  // True positive: a guessed path that redirects to a real RSL document is
+  // still found, and still reported as not discoverable.
+  it("still reports an RSL document a conventional path redirects to", async () => {
+    const moved = rslFile();
+    moved.finalUrl = "https://example.com/legal/rsl.xml";
+    const { ctx } = site({
+      robots: "User-agent: *\nAllow: /\n",
+      files: { "https://example.com/license.xml": moved },
+    });
+    const result = await audit.audit(ctx);
+    expect(result.status).toBe("warn");
+    expect(strings(result, "notes")[0]).toContain("no crawler is obliged");
+  });
+
+  // True positive: an advertised licence is never filtered by the probe rule.
+  // A robots.txt License: line that points at HTML still fails.
+  it("still fails an advertised licence that is not an RSL document", async () => {
+    const { ctx } = site({
+      robots: "License: https://example.com/a.xml\n",
+      files: {
+        "https://example.com/a.xml": mockFetchResult(
+          "<html><body>Terms</body></html>",
+          200,
+          "text/html",
+        ),
+      },
+    });
+    const result = await audit.audit(ctx);
+    expect(result.status).toBe("fail");
+    const errors = strings(result, "conformanceErrors").join(" ");
+    expect(errors).toContain("root element is not <rsl>");
+    expect(errors).toContain("application/rsl+xml");
+  });
+
   it("fails a wrong namespace", async () => {
     const { ctx } = site({
       robots: "License: https://example.com/a.xml\n",
