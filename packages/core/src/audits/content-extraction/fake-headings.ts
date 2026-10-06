@@ -5,6 +5,7 @@ import { Audit } from "../../audit";
 import type { CheckContext } from "../../check-context";
 import { weightForGrade } from "../../scorer";
 import { scanReadPageText, unreadPageTextReason } from "../../scan-evidence";
+import { hiddenFromReaders } from "../../dom-visibility";
 
 /**
  * Classes that commonly impersonate a heading in utility-CSS markup
@@ -30,8 +31,21 @@ const MAX_HEADING_TEXT_LENGTH = 120;
 const BLOCK_CHILDREN =
   "div, p, section, article, aside, ul, ol, dl, table, figure, blockquote, pre, form";
 
-/** Chrome/navigation zones where large bold text is not document structure. */
-const EXCLUDED_ANCESTORS = "nav, footer, button, a";
+/**
+ * Chrome, navigation and labelling zones where large bold text is not
+ * document structure. The dossier's required fix names this list.
+ */
+const EXCLUDED_ANCESTORS =
+  'nav, footer, header, aside, button, a, label, figcaption, summary, dialog, [role="dialog"], [role="navigation"], [role="banner"]';
+
+/**
+ * Text made only of figures and punctuation: a statistic, a rating, a price.
+ * It is an emphasised value, not a section title.
+ */
+const NUMERIC_ONLY = /^[\d\s.,:;%+/×x*~≈<>$€£¥–—-]+$/i;
+
+/** Sectioning elements whose own heading already titles the bold text inside. */
+const SECTIONING = "section, article";
 
 interface FakeHeading {
   tag: string;
@@ -46,6 +60,7 @@ function looksLikeHeading(el: AnyNode, $: CheerioAPI): FakeHeading | null {
 
   const text = $el.text().replace(/\s+/g, " ").trim();
   if (text.length === 0 || text.length > MAX_HEADING_TEXT_LENGTH) return null;
+  if (NUMERIC_ONLY.test(text)) return null;
 
   // A real heading nested inside means this is a wrapper, not an impersonator.
   if ($el.find("h1, h2, h3, h4, h5, h6").length > 0) return null;
@@ -55,6 +70,15 @@ function looksLikeHeading(el: AnyNode, $: CheerioAPI): FakeHeading | null {
 
   // Navigation chrome and links are not document structure.
   if ($el.parents(EXCLUDED_ANCESTORS).length > 0) return null;
+
+  // Hidden subtrees are not in the outline an agent reads.
+  if (hiddenFromReaders($, el)) return null;
+
+  // A heading is missing only where the enclosing section has none. Bold text
+  // in a section that already has its heading is emphasis inside it.
+  const section = $el.closest(SECTIONING);
+  if (section.length > 0 && section.find("h1, h2, h3, h4, h5, h6").length > 0)
+    return null;
 
   const className = $el.attr("class") ?? "";
   const style = $el.attr("style") ?? "";

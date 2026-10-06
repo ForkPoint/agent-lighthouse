@@ -102,6 +102,30 @@ Best idea in the category, wrecked by the detection regex. FAKE_HEADING_CLASS = 
   shell contract state: pass → na. Found by
   `packages/core/src/tests/hostile-state-contract.test.ts`.
 
+- 2026-10-06 — three parts of the required fix above now ship. A small
+  marketing site failed on seven hits, and none was a missing heading: bold
+  statistics (`25,000+`, `4.9 / 5`, `87%`), brand labels in interface chrome,
+  and a label inside a hidden dialog.
+  - Text made only of figures and punctuation is a value, not a title, and is
+    skipped.
+  - The excluded ancestors grow to the list the fix names: `header`, `aside`,
+    `label`, `figcaption`, `summary`, `dialog`, `[role=dialog]`,
+    `[role=navigation]` and `[role=banner]`, beside `nav`, `footer`, `button`
+    and `a`.
+  - Subtrees the markup hides (`hidden`, `aria-hidden="true"`, inline
+    `display:none`, a closed `<dialog>`, `<template>`) are skipped, through the
+    shared `hiddenFromReaders()` helper.
+  - Bold text inside a `section` or `article` that already has a real heading
+    is emphasis within that section. The fix flags only "where a heading is
+    structurally missing", so it is skipped.
+    Five real-page corpus verdicts moved, every one away from a false hit:
+    prices on a plans page (fail → warn; one "Custom" price label remains),
+    syntax-highlighted code tokens (fail → pass), menu headlines in a retail
+    header (fail → pass), template placeholders (warn → pass), and inline
+    `<strong>` emphasis in documentation prose (fail → pass).
+    Still open from the required fix: whole-token class matching, the extra
+    class vocabulary, and a per-page threshold.
+
 ## Review history
 
 - 2026-08-20 — code review (11-agent workflow) + evidence research (12-domain workflow, 400 sources).
