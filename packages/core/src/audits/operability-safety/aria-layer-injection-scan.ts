@@ -303,6 +303,9 @@ function survey(ctx: CheckContext): Survey {
       const label = ($e.attr("aria-label") ?? "").replace(/\s+/g, " ").trim();
       record("aria-label", label);
       if (!label || hits(label)) return;
+      // Only a control is clicked by its name. A landmark or container names
+      // its region, and its descendants' text is theirs, not its label.
+      if (!$e.is(INTERACTIVE)) return;
       const visible = $e.text().replace(/\s+/g, " ").trim();
       if (!visible) return;
       const finding: Finding = {
@@ -322,6 +325,13 @@ function survey(ctx: CheckContext): Survey {
 
   return result;
 }
+
+/**
+ * Elements an agent addresses and clicks by accessible name: native controls
+ * and widget roles. The sketch scopes the label comparison to these.
+ */
+const INTERACTIVE =
+  'a[href], button, summary, input, select, textarea, [role="button"], [role="link"], [role="menuitem"], [role="menuitemcheckbox"], [role="menuitemradio"], [role="tab"], [role="option"], [role="checkbox"], [role="radio"], [role="switch"], [role="treeitem"]';
 
 const EXPECTED =
   "Every accessible name, description and non-visual attribute is a short description that agrees with its element, and carries no instruction addressed to an AI";
