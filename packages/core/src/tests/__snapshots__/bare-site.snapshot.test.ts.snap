@@ -95,6 +95,7 @@ na   0.6 answer-readiness/site-wide-passage-uniqueness-ratio
 na   0.6 answer-readiness/table-markdown-round-trip-loss
 na   0.6 content-extraction/aside-element
 na   0.6 content-extraction/boilerplate-tax
+na   0.6 content-extraction/section-headings
 na   0.6 content-extraction/semantic-lists
 na   0.6 content-extraction/svg-bloat
 na   0.6 machine-discovery/conditional-request-support
@@ -209,7 +210,6 @@ warn 0   structured-data/faqpage-schema
 warn 0   structured-data/howto-schema
 warn 0.6 access-crawl-control/no-blanket-block
 warn 0.6 agentic-commerce/offer-truth-consistency
-warn 0.6 content-extraction/section-headings
 warn 0.6 content-extraction/sequential-headings
 warn 0.6 machine-discovery/discovery-index-coverage
 warn 1   access-crawl-control/canonical
