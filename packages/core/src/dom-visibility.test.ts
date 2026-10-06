@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import * as cheerio from "cheerio";
-import { hiddenFromReaders } from "./dom-visibility";
+import { hiddenFromReaders, notRendered } from "./dom-visibility";
 
 function check(html: string): boolean {
   const $ = cheerio.load(html);
@@ -42,5 +42,29 @@ describe("hiddenFromReaders", () => {
 
   it("is false for aria-hidden=false", () => {
     expect(check('<div aria-hidden="false"><p id="t">x</p></div>')).toBe(false);
+  });
+
+  it("hides a collapsed until-found region from readers", () => {
+    expect(check('<div hidden="until-found"><p id="t">x</p></div>')).toBe(true);
+  });
+});
+
+describe("notRendered", () => {
+  function rendered(html: string): boolean {
+    const $ = cheerio.load(html);
+    return notRendered($, $("#t").get(0)!);
+  }
+
+  it.each([
+    ['<div hidden><p id="t">x</p></div>', true],
+    ['<div style="display:none"><p id="t">x</p></div>', true],
+    ['<dialog><p id="t">x</p></dialog>', true],
+    // aria-hidden removes text from the accessibility tree, not from the screen.
+    ['<div aria-hidden="true"><p id="t">x</p></div>', false],
+    // until-found stays searchable by find-in-page and text fragments.
+    ['<div hidden="until-found"><p id="t">x</p></div>', false],
+    ['<main><p id="t">x</p></main>', false],
+  ])("%s -> %s", (html, expected) => {
+    expect(rendered(html)).toBe(expected);
   });
 });

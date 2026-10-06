@@ -4,12 +4,13 @@
 // Simulates the text-fragment matching algorithm over the parsed DOM: can a
 // citing surface build a `#:~:text=` link that lands on this page's answer
 // sentence, or does the link silently degrade to page-top?
-import type { Element } from "domhandler";
+import type { AnyNode, Element } from "domhandler";
 import type { AuditMeta, AuditResult } from "../../types";
 import { Audit } from "../../audit";
 import { weightForGrade } from "../../scorer";
 import type { CheckContext, PageContext } from "../../check-context";
 import { allJsonLdNodes } from "../../parser";
+import { notRendered } from "../../dom-visibility";
 
 /** Elements the spec's block-boundary rule treats as block-level. */
 const BLOCK_SELECTOR =
@@ -42,19 +43,53 @@ function encodeTerm(text: string): string {
   return encodeURIComponent(text).replace(/-/g, "%2D").replace(/,/g, "%2C");
 }
 
-interface LeafBlock {
+interface BlockRun {
   text: string;
+  /** False for text inside a subtree the markup keeps from rendering. */
+  rendered: boolean;
 }
 
-/** Every block element that contains no other block element, in document order. */
-function leafBlocks(page: PageContext): LeafBlock[] {
+/** Elements whose text is never rendered, so never searched. */
+const UNRENDERED = new Set(["script", "style", "noscript", "template", "head"]);
+
+/**
+ * The text runs the matcher searches, in document order. The spec assigns
+ * each text node its nearest block ancestor and searches the run of text
+ * nodes that share one, breaking at every block-level element. So a block
+ * that holds a heading and bare text beside it yields two runs, the heading's
+ * and the bare text's, and a leaf block yields one. Text in a subtree the
+ * markup keeps from rendering is kept apart and marked, because the matcher
+ * searches only rendered text.
+ */
+function blockRuns(page: PageContext): BlockRun[] {
   const $ = page.$;
-  const out: LeafBlock[] = [];
-  $(BLOCK_SELECTOR).each((_i, el) => {
-    if ($(el).find(BLOCK_SELECTOR).length > 0) return;
-    const text = normalize($(el).text());
-    if (text) out.push({ text });
-  });
+  const out: BlockRun[] = [];
+  let run = "";
+  let runRendered = true;
+  const flush = () => {
+    const text = normalize(run);
+    if (text) out.push({ text, rendered: runRendered });
+    run = "";
+  };
+  const walk = (node: AnyNode, rendered: boolean) => {
+    if (node.type === "text") {
+      if (rendered !== runRendered) {
+        flush();
+        runRendered = rendered;
+      }
+      run += (node as { data?: string }).data ?? "";
+      return;
+    }
+    const tag = (node as { tagName?: string }).tagName?.toLowerCase();
+    if (!tag || UNRENDERED.has(tag)) return;
+    const own = rendered && !notRendered($, node);
+    const block = $(node).is(BLOCK_SELECTOR);
+    if (block) flush();
+    for (const child of (node as Element).children ?? []) walk(child, own);
+    if (block) flush();
+  };
+  $("body").each((_i, body) => walk(body, true));
+  flush();
   return out;
 }
 
@@ -64,6 +99,8 @@ const MIN_ANSWER_WORDS = 3;
 const MAX_SENTENCE_BLOCKS = 3;
 /** Terminal punctuation that ends a sentence: followed by a space or the end. */
 const SENTENCE_END = /[.!?](?=\s|$)/;
+/** A block that opens with a capital starts a sentence rather than continuing one. */
+const OPENS_SENTENCE = /^\p{Lu}/u;
 
 /**
  * The answer span a heading introduces, or `undefined` when it introduces none.
@@ -84,9 +121,11 @@ function answerAfter(page: PageContext, heading: Element): string | undefined {
   const $ = page.$;
   const next = $(heading).next();
   if (next.length === 0 || next.is("h1,h2,h3,h4,h5,h6")) return undefined;
+  if (notRendered($, next.get(0)!)) return undefined;
 
   const leaves = (next.find(BLOCK_SELECTOR).toArray() as Element[])
     .filter((el) => $(el).find(BLOCK_SELECTOR).length === 0)
+    .filter((el) => !notRendered($, el))
     .map((el) => normalize($(el).text()))
     .filter(Boolean);
 
@@ -96,7 +135,11 @@ function answerAfter(page: PageContext, heading: Element): string | undefined {
   } else {
     let joined = "";
     for (const text of leaves.slice(0, MAX_SENTENCE_BLOCKS)) {
-      joined = joined ? `${joined} ${text}` : text;
+      // An unfinished block followed by one that opens a sentence was a
+      // label, such as a card title over its description. The sentence
+      // starts at the new block.
+      joined =
+        joined && !OPENS_SENTENCE.test(text) ? `${joined} ${text}` : text;
       const end = SENTENCE_END.exec(joined);
       if (end) {
         span = joined.slice(0, end.index + 1);
@@ -127,6 +170,7 @@ function candidates(page: PageContext): Candidate[] {
   };
 
   $("h2, h3").each((_i, heading) => {
+    if (notRendered($, heading)) return;
     const span = answerAfter(page, heading as Element);
     if (span === undefined) return;
     add(
@@ -135,6 +179,7 @@ function candidates(page: PageContext): Candidate[] {
     );
   });
   $("dd").each((_i, el) => {
+    if (notRendered($, el)) return;
     add(
       "definition list answer",
       $(el)
@@ -175,14 +220,29 @@ interface Verdict {
 function assess(
   page: PageContext,
   candidate: Candidate,
-  blocks: LeafBlock[],
+  blocks: BlockRun[],
 ): Verdict {
   const hazards = HAZARDS.filter(({ pattern }) =>
     pattern.test(candidate.text),
   ).map((h) => h.label);
-  const containing = blocks.filter((block) =>
-    block.text.includes(candidate.text),
+  const containing = blocks.filter(
+    (block) => block.rendered && block.text.includes(candidate.text),
   );
+
+  if (
+    containing.length === 0 &&
+    blocks.some(
+      (block) => !block.rendered && block.text.includes(candidate.text),
+    )
+  ) {
+    return {
+      candidate,
+      addressable: false,
+      reason:
+        "the span sits in a subtree the page does not render (hidden, display:none or a closed dialog), and the matcher searches only rendered text; hidden=until-found or <details> keeps it reachable",
+      hazards,
+    };
+  }
 
   if (containing.length === 0) {
     return {
@@ -197,6 +257,7 @@ function assess(
   // Every occurrence anywhere in the document, not only in distinct blocks.
   let occurrences = 0;
   for (const block of blocks) {
+    if (!block.rendered) continue;
     let from = 0;
     for (;;) {
       const at = block.text.indexOf(candidate.text, from);
@@ -330,7 +391,7 @@ export class TextFragmentAddressabilityAudit extends Audit {
       );
     }
 
-    const blocks = leafBlocks(page);
+    const blocks = blockRuns(page);
     const verdicts = spans.map((span) => assess(page, span, blocks));
     const addressable = verdicts.filter((v) => v.addressable);
     const broken = verdicts.filter((v) => !v.addressable);

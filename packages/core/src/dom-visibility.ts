@@ -4,32 +4,63 @@ import type { AnyNode } from "domhandler";
 /** Inline declarations that take a subtree out of rendering. */
 const INLINE_HIDDEN = /(^|;)\s*(display\s*:\s*none|visibility\s*:\s*hidden)/i;
 
-/**
- * Whether the served markup itself keeps an element out of what a reader
- * gets: the element or an ancestor carries `hidden`, `aria-hidden="true"`, an
- * inline `display:none` / `visibility:hidden`, is a `<template>`, or is a
- * `<dialog>` that is not `open`. Browsers do not render these subtrees, the
- * accessibility tree omits them, and Readability drops all but the closed
- * dialog before it scores a node.
- *
- * Stylesheet rules are not consulted: there is no cascade here. `inert` is
- * not a hiding marker either: inert content still renders, find-in-page and
- * text fragments still reach it, and Readability keeps it.
- */
-export function hiddenFromReaders($: CheerioAPI, el: AnyNode): boolean {
+type Marker = ($n: ReturnType<CheerioAPI>, tag: string) => boolean | undefined;
+
+function anyAncestor($: CheerioAPI, el: AnyNode, hides: Marker): boolean {
   let node: AnyNode | null = el;
   while (node) {
     const tag = (node as { tagName?: string }).tagName?.toLowerCase();
-    if (tag) {
-      const $n = $(node);
-      if (tag === "template") return true;
-      if (tag === "dialog" && $n.attr("open") === undefined) return true;
-      if ($n.attr("hidden") !== undefined) return true;
-      if (($n.attr("aria-hidden") ?? "").trim().toLowerCase() === "true")
-        return true;
-      if (INLINE_HIDDEN.test($n.attr("style") ?? "")) return true;
-    }
+    if (tag && hides($(node), tag)) return true;
     node = node.parent as AnyNode | null;
   }
   return false;
+}
+
+/** The markers the browser itself honours when it decides what to render. */
+function unrenderedMarker($n: ReturnType<CheerioAPI>, tag: string): boolean {
+  if (tag === "template") return true;
+  if (tag === "dialog" && $n.attr("open") === undefined) return true;
+  // Read the raw attribute: cheerio's attr() reports a boolean attribute by
+  // its name, which loses the until-found keyword.
+  const hidden = ($n.get(0) as { attribs?: Record<string, string> } | undefined)
+    ?.attribs?.["hidden"];
+  // `hidden="until-found"` stays searchable: find-in-page and text fragments
+  // reveal it.
+  if (hidden !== undefined && hidden.trim().toLowerCase() !== "until-found")
+    return true;
+  return INLINE_HIDDEN.test($n.attr("style") ?? "");
+}
+
+/**
+ * Whether the served markup keeps an element from being rendered: the element
+ * or an ancestor carries `hidden` (other than `until-found`), an inline
+ * `display:none` / `visibility:hidden`, is a `<template>`, or is a `<dialog>`
+ * that is not `open`. This is what find-in-page and the text-fragment matcher
+ * can search. `aria-hidden` content is still rendered, so it does not count.
+ *
+ * Stylesheet rules are not consulted: there is no cascade here.
+ */
+export function notRendered($: CheerioAPI, el: AnyNode): boolean {
+  return anyAncestor($, el, unrenderedMarker);
+}
+
+/**
+ * Whether the served markup keeps an element out of what a reader gets: it is
+ * not rendered (above), it is `hidden="until-found"` and still collapsed, or
+ * it sits under `aria-hidden="true"`. The accessibility tree omits these
+ * subtrees, and Readability drops all but the closed dialog before it scores
+ * a node.
+ *
+ * `inert` is not a hiding marker: inert content still renders, find-in-page
+ * still reaches it, and Readability keeps it.
+ */
+export function hiddenFromReaders($: CheerioAPI, el: AnyNode): boolean {
+  return anyAncestor(
+    $,
+    el,
+    ($n, tag) =>
+      $n.attr("hidden") !== undefined ||
+      ($n.attr("aria-hidden") ?? "").trim().toLowerCase() === "true" ||
+      unrenderedMarker($n, tag),
+  );
 }
