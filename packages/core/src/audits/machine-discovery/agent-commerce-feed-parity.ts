@@ -104,13 +104,94 @@ function first(value: unknown): Record<string, unknown> | undefined {
   return isObject(value) ? value : undefined;
 }
 
+/**
+ * A text value out of any shape schema.org allows for it: a string, a number,
+ * an object with a `name`, or an array of those (the first usable entry wins).
+ */
 function text(value: unknown): string | undefined {
   if (typeof value === "string" && value.trim()) return value.trim();
   if (typeof value === "number") return String(value);
-  const node = first(value);
-  if (node && typeof node["name"] === "string" && node["name"].trim())
-    return node["name"].trim();
+  if (Array.isArray(value)) {
+    for (const item of value) {
+      const found = text(item);
+      if (found) return found;
+    }
+    return undefined;
+  }
+  if (
+    isObject(value) &&
+    typeof value["name"] === "string" &&
+    value["name"].trim()
+  )
+    return value["name"].trim();
   return undefined;
+}
+
+/**
+ * The primary image URL: a string, an ImageObject's `url` or `contentUrl`, or
+ * the first usable entry of an array of either. An ImageObject's `name` is a
+ * caption, never the URL, so `text()` cannot be used here.
+ */
+function imageUrl(value: unknown): string | undefined {
+  if (typeof value === "string") return value.trim() || undefined;
+  if (Array.isArray(value)) {
+    for (const item of value) {
+      const found = imageUrl(item);
+      if (found) return found;
+    }
+    return undefined;
+  }
+  if (isObject(value))
+    return imageUrl(value["url"]) ?? imageUrl(value["contentUrl"]);
+  return undefined;
+}
+
+/** A JSON-LD price as a number: a number, or a plain decimal string. */
+function decimal(raw: unknown): number | undefined {
+  if (typeof raw === "number") return raw;
+  if (typeof raw === "string" && /^\d+(\.\d+)?$/.test(raw.trim()))
+    return Number(raw);
+  return undefined;
+}
+
+/**
+ * The price a feed row would carry. An AggregateOffer states a range
+ * (`lowPrice`/`highPrice`) and no `price`, and a ProductGroup keeps the price
+ * itself on each variant's Offer, so the read falls back in that order.
+ */
+function offerPrice(
+  product: Record<string, unknown>,
+  offer: Record<string, unknown>,
+): unknown {
+  if (offer["price"] !== undefined) return offer["price"];
+  if (offer["lowPrice"] !== undefined) return offer["lowPrice"];
+  const variants = product["hasVariant"];
+  if (!Array.isArray(variants)) return undefined;
+  for (const variant of variants) {
+    if (!isObject(variant)) continue;
+    const variantOffer = first(variant["offers"] ?? variant["offer"]);
+    if (variantOffer?.["price"] !== undefined) return variantOffer["price"];
+  }
+  return undefined;
+}
+
+/**
+ * Every node on the page that defines an `@id`, keyed by it. A bare
+ * `{ "@id": … }` is a reference, not a definition, so it never shadows the
+ * node it points at.
+ */
+function idIndex(jsonLd: object[]): Map<string, Record<string, unknown>> {
+  const out = new Map<string, Record<string, unknown>>();
+  for (const node of flattenJsonLd(jsonLd)) {
+    if (!isObject(node)) continue;
+    const id = node["@id"];
+    if (typeof id !== "string" || out.has(id)) continue;
+    const defines = Object.keys(node).some(
+      (key) => key !== "@id" && key !== "@context",
+    );
+    if (defines) out.set(id, node);
+  }
+  return out;
 }
 
 function unescapeHtml(value: string): string {
@@ -220,6 +301,8 @@ interface Candidate {
   url: string;
   $: CheerioAPI;
   product: Record<string, unknown>;
+  /** Nodes on the page by `@id`, for resolving references such as offers.seller. */
+  ids: Map<string, Record<string, unknown>>;
 }
 
 interface Assessment {
@@ -308,7 +391,7 @@ export class AgentCommerceFeedParityAudit extends Audit {
       const assessment = this.assess(candidate);
 
       // The media type is the authority; the extension is only a hint.
-      const image = text(candidate.product["image"]);
+      const image = imageUrl(candidate.product["image"]);
       if (
         image &&
         /^https:\/\//i.test(image) &&
@@ -396,23 +479,24 @@ export class AgentCommerceFeedParityAudit extends Audit {
     for (const entry of sampleEntries(tree.entries, MAX_SAMPLE)) {
       const page = scanned.get(entry.loc);
       if (page) {
-        const product = productNode(
-          page.structuredData ?? page.jsonLd,
-          page.meta,
-        );
-        if (product) out.push({ url: page.url, $: page.$, product });
+        const blocks = page.structuredData ?? page.jsonLd;
+        const product = productNode(blocks, page.meta);
+        if (product)
+          out.push({ url: page.url, $: page.$, product, ids: idIndex(blocks) });
         continue;
       }
       const result = await fetchSampledPage(ctx, entry.loc);
       if (!result) continue;
       const $ = parseHtml(result.body);
-      const product = productNode(extractJsonLd($), extractMetaTags($));
-      if (product) out.push({ url: entry.loc, $, product });
+      const blocks = extractJsonLd($);
+      const product = productNode(blocks, extractMetaTags($));
+      if (product)
+        out.push({ url: entry.loc, $, product, ids: idIndex(blocks) });
     }
     return out;
   }
 
-  private assess({ url, $, product }: Candidate): Assessment {
+  private assess({ url, $, product, ids }: Candidate): Assessment {
     const defects: string[] = [];
     const risks: string[] = [];
     const fields = new Map<Field, boolean>();
@@ -472,7 +556,7 @@ export class AgentCommerceFeedParityAudit extends Audit {
     );
 
     // ── image ───────────────────────────────────────────────────
-    const image = text(product["image"]);
+    const image = imageUrl(product["image"]);
     mark(
       "image",
       Boolean(image) && /^https:\/\//i.test(image!),
@@ -488,18 +572,14 @@ export class AgentCommerceFeedParityAudit extends Audit {
       mark("price", false);
       mark("availability", false);
     } else {
-      const rawPrice = offer["price"];
-      const price =
-        typeof rawPrice === "number"
-          ? rawPrice
-          : typeof rawPrice === "string" &&
-              /^\d+(\.\d+)?$/.test(rawPrice.trim())
-            ? Number(rawPrice)
-            : undefined;
+      const rawPrice = offerPrice(product, offer);
+      const price = decimal(rawPrice);
       mark(
         "price",
         price !== undefined && price > 0,
-        `price ${JSON.stringify(rawPrice)} is not a positive decimal`,
+        rawPrice === undefined
+          ? "the Offer carries no price, no lowPrice and no variant Offer price"
+          : `price ${JSON.stringify(rawPrice)} is not a positive decimal`,
       );
 
       const currency = text(offer["priceCurrency"])?.toUpperCase() ?? "";
@@ -526,11 +606,22 @@ export class AgentCommerceFeedParityAudit extends Audit {
             : `availability "${availability}" maps to no feed enum value`,
       );
 
-      const seller = text(first(offer["seller"])?.["name"] ?? offer["seller"]);
+      // A seller written as `{ "@id": … }` names the store elsewhere in the
+      // graph. Resolve it; a reference to a node the page never defines is
+      // still no seller_name, and the message says which reference dangles.
+      const sellerRef = first(offer["seller"]);
+      const rawSellerId = sellerRef?.["@id"];
+      const sellerId =
+        typeof rawSellerId === "string" ? rawSellerId : undefined;
+      const sellerNode =
+        sellerId && !text(sellerRef!["name"]) ? ids.get(sellerId) : sellerRef;
+      const seller = text(sellerNode?.["name"] ?? offer["seller"]);
       mark(
         "seller",
         Boolean(seller),
-        "no offers.seller.name to send as seller_name",
+        sellerId && !sellerNode
+          ? `offers.seller points at @id ${sellerId}, which no node on the page defines, so there is no seller_name to send`
+          : "no offers.seller.name to send as seller_name",
       );
 
       const country = countrySignal(product, offer);
@@ -587,11 +678,13 @@ export class AgentCommerceFeedParityAudit extends Audit {
     // ── variants ────────────────────────────────────────────────
     if (hasSiblingVariants($, product)) {
       const group =
-        text(product["inProductGroupWithID"]) ?? text(product["isVariantOf"]);
+        text(product["inProductGroupWithID"]) ??
+        text(product["productGroupID"]) ??
+        text(product["isVariantOf"]);
       mark(
         "item_group_id",
         Boolean(group),
-        "the page exposes sibling variants but carries neither inProductGroupWithID nor isVariantOf, so the feed has no item_group_id",
+        "the page exposes sibling variants but carries none of inProductGroupWithID, productGroupID or isVariantOf, so the feed has no item_group_id",
       );
     }
 
