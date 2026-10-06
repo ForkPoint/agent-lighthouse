@@ -97,6 +97,16 @@ Content-page scans do not infer a mount. Origin files, origin probes, feed disco
 - **One hour of clock skew is tolerated** before a value counts as
   future-dated, so a server a few minutes ahead of the scanner is not reported.
 
+### Page signals exclude contributed dates (2026-10-06)
+
+The sketch says to parse all JSON-LD blocks for `dateModified` and `datePublished`. The audit reads those dates only from nodes that describe the page: top-level nodes, `@graph` members and what they nest. It skips a nested `Review`, `Comment`, `Answer` or `Question`. Those dates record when someone else wrote, not when the page changed. A top-level `Review` is the page itself and keeps its dates.
+
+The trigger was a large retail site. Its product pages publish no modification time, but each one nests customer reviews. The review dates were read as page signals, and five pages with no page date were reported as divergent. They are now unverifiable.
+
+### A build stamp is one run, not one string (2026-10-06)
+
+The claim is "one identical lastmod equal to the last deploy date". The audit compared lastmod strings exactly. A generator that writes the clock per URL spreads one run over seconds, and exact matching saw every value as different. One large retail site stamped 2451 product URLs between 09:57:16 and 09:57:33 on one day. The audit now counts the largest group of sampled values inside a one-hour window. The 90% share and the 3-day recency rules are unchanged. Values hours apart still count as separate dates.
+
 ## Deferred
 
 - **Only the first level of a `<sitemapindex>` is walked**, per the shared
