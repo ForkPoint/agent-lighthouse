@@ -53,6 +53,27 @@ There is thin published support for 'statistics make content more citable in gen
 
 - 2026-08-26 — the shared text helper this audit reads, `getMainContentText`, changed its selection. Among several `<main>` elements it now returns the one holding the most text rather than the first, it ignores a `<main>` inside a `<template>`, and it falls back to the whole `<body>` only when no `<main>` holds any text. Measured cause (scan evidence gate design, section 2.4): storefronts ship empty or fragmented `<main>` wrappers, and the first one is often a stub. Two consequences for this audit. A page whose real content sits in a later `<main>` is now measured on that content. A page whose every `<main>` is empty is now measured on its body text, page chrome included, where it previously measured as empty.
 
+### Scoped to content pages; euro, pound and comma-decimal amounts (2026-10-06)
+
+Required fix #6 lands. The audit declares `applicablePageTypes: ["content"]`,
+so the runner hands it content pages only and returns not applicable when the
+scan holds none. A large retail site's homepage was failed for carrying no
+statistics.
+
+Required fix #2 lands. A currency figure now reads `$`, `€` and `£`, leading
+or trailing, with comma or dot decimals and comma, dot or no-break-space
+thousands groups. `49,99 €`, `1.200,50 €` and `£29.99` each count once. A
+percentage may use a comma decimal and a space before the sign (`12,5 %`). A
+bare comma decimal with no unit still counts as nothing.
+
+## Deferred
+
+- **Prices still count as figures (fix #1).** A content page that lists
+  prices can pass on them. The content-page scope removes the product-grid
+  path; the in-sentence test is not built.
+- **Per-page threshold (fix #3), rename (fix #4) and chrome exclusion
+  (fix #5)** are unchanged.
+
 ## Evidence
 
 _No dedicated evidence signal was researched for this audit in the 2026-08-20 pass. Its tier assignment falls to the taxonomy design; unproven mechanisms default to informative per the [evidence policy](../../policy.md)._
