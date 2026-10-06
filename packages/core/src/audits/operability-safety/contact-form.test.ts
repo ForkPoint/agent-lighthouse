@@ -67,6 +67,27 @@ describe("ContactFormAudit", () => {
     expect(result.message).toContain("No contact");
   });
 
+  // The scan samples a few pages. A form on a linked page it never fetched
+  // was not observed, which is not the same as absent.
+  it("is notApplicable when a sampled page links to an unscanned contact page", () => {
+    const page = mockPageContext(
+      "https://example.com",
+      `<html><body><header><a href="/support/">Support</a><a href="https://other.example.org/contact">Partner</a></header><p>Home.</p></body></html>`,
+    );
+    const result = audit.audit(mockCheckContext([page]));
+    expect(result.status).toBe("na");
+    expect(result.message).toContain("https://example.com/support/");
+    expect(result.message).not.toContain("other.example.org");
+  });
+
+  it("still fails when no sampled page links to a contact page", () => {
+    const page = mockPageContext(
+      "https://example.com",
+      `<html><body><a href="/leadership">Leadership</a><a href="https://other.example.org/contact">Partner</a></body></html>`,
+    );
+    expect(audit.audit(mockCheckContext([page])).status).toBe("fail");
+  });
+
   it("fails when openapi.json contains invalid JSON and no forms match", () => {
     const page = mockPageContext(
       "https://example.com",

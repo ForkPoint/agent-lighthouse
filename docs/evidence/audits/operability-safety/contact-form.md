@@ -73,6 +73,26 @@ Real user-facing signal — 'contact this company for a quote' is a genuine agen
 - 2026-08-20 — code review (11-agent workflow) + evidence research (12-domain workflow, 400 sources).
 - 2026-08-21 — dossier generated; disposition pending final taxonomy design.
 
+## Implementation deviations
+
+### Not observed is not absent (2026-10-06)
+
+The review above names the false negative: only the sampled pages are
+scanned, so a form at `/support/` fails the site. A small marketing site
+linked "Contact" from its header to a support page with a working form. The
+scan held only the homepage and reported "No contact/lead form".
+
+When no sampled page carries a contact form and no OpenAPI path matches, the
+audit now reads the sampled pages' same-origin links. A link whose path or
+text names a contact page (`contact`, `kontakt`, `support`, `inquiry`,
+`enquiry`, `get in touch`, `reach out`) and that the scan did not fetch makes
+the verdict `notApplicable`. The finding names up to three such links. A
+form there was not observed, so its absence is not established. A site with
+no form and no such link still fails.
+
+Verdicts that moved in the real-page corpus: 18 single-page fixtures fail →
+na, every one a page linking to a contact or support page outside the sample.
+
 ## Deferred
 
 - **Unescaped `id` in `extractForms`.** The shared form parser builds a
@@ -88,3 +108,8 @@ Real user-facing signal — 'contact this company for a quote' is a genuine agen
   fix is to reuse one at the parser call site. Found by the real-page corpus
   snapshot, which caught the same shape throwing for real in
   `answer-readiness/extractor-survival-recall`.
+- Following the unscanned contact link within a bounded fetch budget, so the
+  form there is observed rather than inferred.
+- A genuine absence still fails at high priority, though no documented
+  consumer backs the grade-C claim. Moving it to `notApplicable` or `warn` is
+  a separate decision.
