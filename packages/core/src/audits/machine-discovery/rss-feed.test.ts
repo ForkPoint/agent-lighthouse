@@ -26,12 +26,27 @@ describe("RssFeedAudit", () => {
     expect(result.message).toContain("RSS/Atom feed found");
   });
 
-  it("fails when no feed is found", async () => {
+  // A feed is optional. A site that neither publishes nor advertises one has
+  // done nothing wrong (dossier test gap: "should be N/A, currently FAIL").
+  it("is notApplicable when no feed is published or advertised", async () => {
     // No pages, no root feed files; ctx.fetch defaults to 404 for the /atom.xml probe.
     const ctx = mockCheckContext([]);
     const result = await audit.audit(ctx);
+    expect(result.status).toBe("na");
+    expect(result.message).toContain("No RSS or Atom feed");
+  });
+
+  // True positive: an advertised feed that does not answer is broken.
+  it("fails when an autodiscovery link advertises a feed that is not served", async () => {
+    const html =
+      '<html><head><link rel="alternate" type="application/rss+xml" href="/feed.xml" /></head><body></body></html>';
+    const ctx = mockCheckContext([
+      mockPageContext("https://example.com/", html),
+    ]);
+    const result = await audit.audit(ctx);
     expect(result.status).toBe("fail");
-    expect(result.message).toContain("No RSS or Atom feed found");
+    expect(result.message).toContain("https://example.com/feed.xml");
+    expect(result.found).toContain("autodiscovery <link> present");
   });
 
   it("passes when a page <head> alternate link points to a relative RSS feed URL", async () => {
@@ -329,7 +344,7 @@ describe("RssFeedAudit", () => {
     it("reports the missing link when no feed is found at all", async () => {
       const ctx = mockCheckContext([withHead("")]);
       const result = await audit.audit(ctx);
-      expect(result.status).toBe("fail");
+      expect(result.status).toBe("na");
       expect(result.found).toContain("no autodiscovery <link>");
     });
   });
