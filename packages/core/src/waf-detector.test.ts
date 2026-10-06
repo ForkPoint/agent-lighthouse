@@ -90,7 +90,7 @@ describe("detectWafProtection", () => {
         expect(
           onHomepage({
             headers: { server: "cloudflare", "cf-ray": "abc" },
-            body: `<html><head><title>Quiksilver</title>${markup}</head><body><main><h1>Surf clothing</h1><p>Browse our collection.</p></main><form action="/newsletter"><input name="email"></form></body></html>`,
+            body: `<html><head><title>Example shop</title>${markup}</head><body><main><h1>Clothing</h1><p>Browse our collection.</p></main><form action="/newsletter"><input name="email"></form></body></html>`,
           }),
         ).toBeNull();
       },

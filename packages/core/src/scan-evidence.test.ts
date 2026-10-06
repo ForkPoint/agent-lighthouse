@@ -414,14 +414,14 @@ describe("allEvidenceMet", () => {
 describe("scanReadTheSite", () => {
   it("keeps a readable storefront with form Turnstile available to audits", () => {
     const page = mockPageContext(
-      "https://www.quiksilver.fr/",
+      "https://www.shop.test/",
       '<html><head><script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit"></script></head>' +
-        `<body><main>${"Surf clothing and snowboard collections. ".repeat(20)}</main>` +
+        `<body><main>${"Browse clothing and accessories in our shop. ".repeat(20)}</main>` +
         '<form action="/newsletter"><input name="email"></form></body></html>',
     );
     const response = homepage({
       ...page.fetchResult,
-      url: "https://quiksilver.fr/",
+      url: "https://shop.test/",
       finalUrl: page.url,
       headers: { server: "cloudflare", "cf-ray": "abc" },
     });

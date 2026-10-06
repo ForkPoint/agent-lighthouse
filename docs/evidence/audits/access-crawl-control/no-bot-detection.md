@@ -84,7 +84,7 @@ a pause is the only way to get a verdict from a rate-limited origin.
 
 - 2026-10-06 — the shared WAF detector no longer treats the
   `challenges.cloudflare.com` hostname as proof of an access wall. A live fetch
-  of `https://quiksilver.fr` returned HTTP 200 with the storefront HTML and a
+  of a storefront returned HTTP 200 with the storefront HTML and a
   Turnstile loader configured for login, registration and newsletter forms.
   The detector still recognises challenge headers, refusal responses and
   managed challenge-page loaders. The page-script warning remains separate;
