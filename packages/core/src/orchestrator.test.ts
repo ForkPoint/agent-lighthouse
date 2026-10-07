@@ -639,6 +639,28 @@ describe("runScan — conditions name the target", () => {
 });
 
 describe("runScan — non-root scan URL", () => {
+  it.each(["product", "category", "content"] as const)(
+    "scores a readable %s target without a scanned homepage",
+    async (pageType) => {
+      const url = `https://example.com/${pageType}/item`;
+      set(
+        url,
+        `<html><head><link rel="canonical" href="${url}"></head><body><main><h1>Item</h1><p>${"Readable item details. ".repeat(60)}</p></main></body></html>`,
+      );
+
+      const report = await runScan(url, { pageType });
+      expect(report.pagesScanned).toEqual([{ url, pageType }]);
+      expect(report.scanValidity?.judgeable).toBe(true);
+      expect(typeof report.overallScore).toBe("number");
+      expect(report.scanValidity?.unscoredReason).toBeUndefined();
+      const canonical = report.categories
+        .flatMap((c) => c.checks)
+        .find((c) => c.id === "access-crawl-control/canonical");
+      expect(canonical?.status).toBe("pass");
+      expect(canonical?.tags ?? []).not.toContain("skipped:no-evidence");
+    },
+  );
+
   it("scans a non-root target URL as the page unit", async () => {
     const url = "https://example.com/shop";
     set(

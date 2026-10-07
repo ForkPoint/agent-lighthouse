@@ -54,6 +54,95 @@ function report(categories: CategoryResult[]): ScanReport {
 }
 
 describe("generateMarkdownSummary", () => {
+  it.each([
+    [0, "🔴"],
+    [49, "🔴"],
+    [50, "🟡"],
+    [69, "🟡"],
+    [70, "🔵"],
+    [89, "🔵"],
+    [90, "🟢"],
+    [100, "🟢"],
+  ])("renders the assessed score %i with %s", (score, emoji) => {
+    const md = generateMarkdownSummary(
+      report([
+        cat({
+          id: "agent-interfaces",
+          name: "Agent Interfaces",
+          score: score as number,
+          assessedMass: 1,
+          checks: [check()],
+        }),
+      ]),
+    );
+    expect(md).toContain(
+      `| **Agent Interfaces** | **${score} / 100** | ${emoji} 1✓ 0! 0✗ |`,
+    );
+  });
+
+  it.each([1, 2])(
+    "explains %i audits skipped for missing evidence",
+    (count) => {
+      const md = generateMarkdownSummary({
+        ...report([
+          cat({
+            id: "agent-interfaces",
+            checks: Array.from({ length: count }, (_, i) =>
+              check({
+                id: `skipped-${i}`,
+                status: "na",
+                tags: ["skipped:no-evidence"],
+              }),
+            ),
+          }),
+        ]),
+        scanValidity: {
+          judgeable: false,
+          evidence: {
+            "origin-reachable": false,
+            "unblocked-fetches": true,
+            "rendered-body": false,
+            "sample-adequate": false,
+          },
+          reasons: { "origin-reachable": "The homepage answered HTTP 403." },
+        },
+      });
+      expect(md).toContain(
+        `**${count} audit${count === 1 ? "" : "s"} not assessed:**`,
+      );
+      expect(md).toContain(
+        "this scan did not obtain the evidence they need. The homepage answered HTTP 403.",
+      );
+    },
+  );
+
+  it("explains missing evidence in older reports without reason text", () => {
+    const md = generateMarkdownSummary(
+      report([
+        cat({
+          id: "agent-interfaces",
+          checks: [check({ status: "na", tags: ["skipped:no-evidence"] })],
+        }),
+      ]),
+    );
+    expect(md).toContain(
+      "**1 audit not assessed:** this scan did not obtain the evidence they need.\n",
+    );
+    expect(md).not.toContain("undefined");
+  });
+
+  it("uses the default explanation for an unscored legacy report", () => {
+    const md = generateMarkdownSummary({
+      ...report([]),
+      overallScore: null,
+      scoreTier: null,
+    });
+    expect(md).toContain(
+      "_Not scored_ — this scan obtained too little evidence to judge the site.",
+    );
+    expect(md).not.toContain("null/100");
+  });
+
   it("adds the project mark and keeps a readable plain-text identity", () => {
     const input = report([]);
     const before = structuredClone(input);

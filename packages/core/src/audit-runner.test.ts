@@ -745,6 +745,68 @@ describe("audit tracing", () => {
 // ---------------------------------------------------------------------------
 
 describe("planAudits — evidence gate", () => {
+  it.each(["product", "category", "content"] as const)(
+    "runs universal audits on a readable %s page without a homepage",
+    async (pageType) => {
+      const page = mockPageContext(
+        `https://example.com/${pageType}/item`,
+        `<html><body><main>${"Readable page text. ".repeat(60)}</main></body></html>`,
+      );
+      page.pageType = pageType;
+      page.pageTypeSource = "declared";
+      const ctx: CheckContext = {
+        ...ctxWith([pageType]),
+        pages: [page],
+        evidence: buildScanEvidence({
+          requestedUrl: page.url,
+          homepageResult: page.fetchResult,
+          pages: [page],
+          rootFiles: {},
+          wafProtection: null,
+        }),
+      };
+      const run = vi.fn((_ctx: CheckContext) => result("pass", 1));
+      const universal = makeReg(
+        meta({
+          id: "universal",
+          category: "cat1",
+          requires: ["rendered-body", "sample-adequate"],
+        }),
+        run,
+      );
+      const config: ScanConfig = {
+        categories: [{ id: "cat1", name: "Cat 1", weight: 1 }],
+        audits: {
+          cat1: [
+            universal,
+            makeReg(
+              meta({
+                id: "homepage-only",
+                category: "cat1",
+                pageTypes: ["homepage"],
+                requires: ["sample-adequate"],
+              }),
+              () => result("pass", 1),
+            ),
+          ],
+        },
+      };
+
+      const plan = planAudits(ctx, config);
+      expect(plan.runnable.map((r) => r.reg.meta.id)).toEqual(["universal"]);
+      expect(plan.skipped).toHaveLength(1);
+      expect(plan.skipped[0].id).toBe("homepage-only");
+      expect(plan.skipped[0].tags).toContain("skipped:page-type");
+
+      const output = await runAudits(ctx, config);
+      expect(run).toHaveBeenCalledOnce();
+      expect(run.mock.calls[0]?.[0]?.pages).toEqual([page]);
+      expect(
+        output.categories[0].checks.find((c) => c.id === "universal")?.status,
+      ).toBe("pass");
+    },
+  );
+
   /** A scan that reached the origin but read nothing from any page. */
   function shellContext(): CheckContext {
     const evidence = buildScanEvidence({

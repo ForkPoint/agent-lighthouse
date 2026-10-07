@@ -1,6 +1,56 @@
 import { describe, it, expect } from "vitest";
 import * as cheerio from "cheerio";
-import { hiddenFromReaders, notRendered } from "./dom-visibility";
+import {
+  declaredValue,
+  hiddenFromReaders,
+  notRendered,
+  styleHidesFromReaders,
+} from "./dom-visibility";
+
+describe("declaredValue", () => {
+  it.each([
+    ["color:red", undefined],
+    ["display; color:red", undefined],
+    ["--display:none", undefined],
+    ["display:none; /* display:block */", { value: "none", important: false }],
+    [
+      "display: /* comment */ none ! important",
+      { value: "none", important: true },
+    ],
+    [
+      "display:none!important;display:invalid!important",
+      { value: "none", important: true },
+    ],
+    ["display:none;display:initial", { value: "initial", important: false }],
+    [
+      "display:none;display:inline flow-root",
+      { value: "inline flow-root", important: false },
+    ],
+  ])("resolves %s", (style, expected) => {
+    expect(declaredValue(style, "display")).toEqual(expected);
+  });
+
+  it.each(["inherit", "initial", "unset", "revert", "revert-layer"])(
+    "accepts CSS-wide %s after a hidden declaration",
+    (keyword) => {
+      expect(
+        declaredValue(`visibility:hidden;visibility:${keyword}`, "visibility"),
+      ).toEqual({ value: keyword, important: false });
+    },
+  );
+});
+
+describe("reader style markers", () => {
+  it.each([
+    ["color:red", false],
+    ["display:none", true],
+    ["visibility:hidden", true],
+    ["visibility:collapse", false],
+    ["display:none;display:block;visibility:hidden", true],
+  ])("%s -> %s", (style, expected) => {
+    expect(styleHidesFromReaders(style)).toBe(expected);
+  });
+});
 
 function check(html: string): boolean {
   const $ = cheerio.load(html);
@@ -84,11 +134,26 @@ describe("notRendered", () => {
     ['<div hidden><p id="t">x</p></div>', true],
     ['<div style="display:none"><p id="t">x</p></div>', true],
     ['<dialog><p id="t">x</p></dialog>', true],
+    ['<template><p id="t">x</p></template>', true],
     // aria-hidden removes text from the accessibility tree, not from the screen.
     ['<div aria-hidden="true"><p id="t">x</p></div>', false],
     // until-found stays searchable by find-in-page and text fragments.
     ['<div hidden="until-found"><p id="t">x</p></div>', false],
     ['<main><p id="t">x</p></main>', false],
+    [
+      '<div style="visibility:hidden"><p id="t" style="visibility:unset">x</p></div>',
+      true,
+    ],
+    [
+      '<div style="visibility:hidden"><p id="t" style="visibility:initial">x</p></div>',
+      false,
+    ],
+    [
+      '<div style="visibility:visible"><p id="t" style="visibility:hidden">x</p></div>',
+      true,
+    ],
+    ['<div hidden=" UNTIL-FOUND "><p id="t">x</p></div>', false],
+    ['<dialog open><p id="t">x</p></dialog>', false],
     ['<div style="visibility:collapse"><p id="t">x</p></div>', true],
     // visibility inherits, and a descendant may set it back.
     [

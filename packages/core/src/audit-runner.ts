@@ -2,7 +2,6 @@ import type {
   CheckResult,
   CategoryResult,
   EvidenceKey,
-  PageType,
   AuditMeta,
   ScoreDisplayMode,
 } from "./types";
@@ -136,7 +135,7 @@ export interface PlanOptions {
  * `sample-adequate` is the one key that resolves per audit rather than per
  * scan: an audit is fed by pages of the types it declares, so it is unmet when
  * none of those types produced readable text. An audit that declares no page
- * types is fed by the homepage.
+ * types receives all scanned pages, so any readable page can feed it.
  */
 /**
  * Runner scope decision function.
@@ -192,12 +191,14 @@ function unmetRequirements(ctx: CheckContext, meta: AuditMeta): EvidenceKey[] {
     ? meta.pageTypes
     : meta.applicablePageTypes?.length
       ? meta.applicablePageTypes
-      : (["homepage"] as PageType[]);
+      : undefined;
 
   for (const key of required) {
     if (key === "sample-adequate") {
-      if (!wanted.some((type) => evidence.usablePageTypes.has(type)))
-        unmet.push(key);
+      const adequate = wanted
+        ? wanted.some((type) => evidence.usablePageTypes.has(type))
+        : evidence.usablePageTypes.size > 0;
+      if (!adequate) unmet.push(key);
       continue;
     }
     if (!evidence.met[key]) unmet.push(key);
@@ -218,8 +219,10 @@ function gateExplanation(
       ? meta.pageTypes.join("/")
       : meta.applicablePageTypes?.length
         ? meta.applicablePageTypes.join("/")
-        : "homepage";
-    return `Not assessed: no scanned ${wanted} page served readable text.`;
+        : undefined;
+    return wanted
+      ? `Not assessed: no scanned ${wanted} page served readable text.`
+      : "Not assessed: no scanned page of any type served readable text.";
   }
 
   const why = reasons.length > 0 ? ` ${reasons.join(" ")}` : "";
