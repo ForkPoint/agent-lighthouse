@@ -205,7 +205,7 @@ export class DirectDefinitionsAudit extends Audit {
       "rendered-body",
       "sample-adequate",
     ],
-    applicablePageTypes: ["content"],
+    applicablePageTypes: ["content", "unknown", "article"],
     // Never a defect, so never above the actionable items.
     defaultPriority: "low",
     guidance: {

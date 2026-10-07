@@ -22,6 +22,8 @@ sources:
 
 ## What it checks
 
+The v7 runner selects article-purpose pages for this check. A general or legacy `content` declaration does not establish article purpose. Detection can use Open Graph article metadata or primary article prose without author, date, or Article schema fields. Schema-only evidence remains a hint. Detected matches remain informative; a precise `article` declaration uses the existing audit tier.
+
 Google Assistant uses the speakable property to pick which sentences of a news article it reads aloud on Assistant-enabled devices. Without it, the assistant has to guess, and often vocalizes navigation or boilerplate instead of your headline and summary. Mark the headline and summary with cssSelector on your Article or WebPage node.
 
 _(The pre-rewrite description named Alexa and Siri as consumers. That claim was fabricated and is quoted, with its refutation, in the rewrite section below.)_
@@ -139,3 +141,11 @@ grade.
 - 2026-08-21 — adversarial redemption research; user accepted verdict (disposition above).
 - 2026-08-22 — required rework executed (Plan 4, Task 12): page-type gate to news/article publishers, Alexa/Siri claim deleted, single-string `cssSelector` and `xpath` accepted, host type enforced, coverage judged per page, `binary` → `ternary`. Grade A, tier `scored`, weight 1.0 unchanged. `TODO(redeem)` marker removed from the source file.
 - 2026-08-24 — re-graded A → B, weight 1.0 → 0.6. The Google Assistant consumer is live and documented, but Google labels the feature beta and scopes it to U.S. English news publishers. Not retired.
+
+## Implementation deviations (v7 P3, 2026-10-07)
+
+The page-purpose gate now excludes general pages. Body-level aggregation and narrower specialist populations remain under review in the v7 applicability ledger. This change preserves the evidence grade, tier, weight, and audit ID.
+
+## Deferred (v7 P3)
+
+See `docs/architecture/v7-audit-applicability-ledger.md` for the remaining audit-specific guards, population limits, and aggregation work. P4 will address selected-page evidence and mixed provenance.

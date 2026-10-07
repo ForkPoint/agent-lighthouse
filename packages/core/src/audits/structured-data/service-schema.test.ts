@@ -172,6 +172,8 @@ describe("ServiceSchemaAudit", () => {
       expect(ServiceSchemaAudit.meta.applicablePageTypes).toEqual([
         "homepage",
         "content",
+        "unknown",
+        "article",
       ]);
       expect(ServiceSchemaAudit.meta.applicablePageTypes).not.toContain(
         "product",

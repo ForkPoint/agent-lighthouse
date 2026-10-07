@@ -22,7 +22,7 @@ export class CodeLanguageAudit extends Audit {
       "rendered-body",
       "sample-adequate",
     ],
-    applicablePageTypes: ["content"],
+    applicablePageTypes: ["content", "unknown", "article"],
     defaultPriority: "low",
     guidance: {
       impact:

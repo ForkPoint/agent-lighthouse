@@ -1,7 +1,8 @@
 import * as cheerio from "cheerio";
 import type { CheerioAPI } from "cheerio";
 import type { AnyNode, Element } from "domhandler";
-import type { PageType } from "./types";
+import type { PageType, PageClassification } from "./types";
+import { hiddenFromReaders } from "./dom-visibility";
 
 export function parseHtml(html: string): CheerioAPI {
   return cheerio.load(html);
@@ -605,39 +606,99 @@ export function extractStylesheetUrls($: CheerioAPI): string[] {
 // ── Page Type Detection ───────────────────────────────────────
 
 /**
- * Detect whether a page is a Homepage, Category Page, Product Details Page,
- * or Content Page based on URL patterns, JSON-LD schemas, meta tags, and
- * HTML signals typical of ecommerce websites.
+ * Legacy return shape. The final argument remains accepted for callers, but
+ * scan order no longer determines the purpose of the same page.
  */
 export function detectPageType(
   url: string,
   $: CheerioAPI,
   jsonLd: object[],
   meta: Record<string, string>,
-  isFirstPage: boolean,
+  _isFirstPage: boolean,
 ): PageType {
+  return classifyPage(url, $, jsonLd, meta).type;
+}
+
+/** Resolve a precise operator declaration without interpreting legacy content as article. */
+export function declaredPageClassification(type: PageType): PageClassification {
+  return {
+    type: type === "content" ? "unknown" : type,
+    source: "declared",
+    confidence: type === "content" || type === "unknown" ? "unknown" : "strong",
+    signals: [`declared:${type}`],
+  };
+}
+
+/** Purpose evidence, separate from the audit's own feature or artifact guards. */
+export function classifyPage(
+  url: string,
+  $: CheerioAPI,
+  structuredData: object[],
+  meta: Record<string, string>,
+): PageClassification {
   const pathname = new URL(url).pathname.toLowerCase();
+  const result = (
+    type: PageType,
+    confidence: PageClassification["confidence"],
+    signals: string[],
+  ): PageClassification => ({
+    type,
+    source: "detected",
+    confidence,
+    signals: [...new Set(signals)].sort(),
+  });
+  if (pathname === "/") return result("homepage", "strong", ["root-path"]);
+  if (isSubpathHome(url, $))
+    return result("homepage", "strong", ["mounted-home-links"]);
 
-  // ── 1. Homepage ─────────────────────────────────────────────
-  if (isFirstPage && (pathname === "/" || pathname === "")) {
-    return "homepage";
-  }
-  if (isFirstPage && isSubpathHome(url, $)) {
-    return "homepage";
-  }
+  const product = productSignals(pathname, $, structuredData, meta);
+  const category = categorySignals(pathname, $, structuredData);
+  const article: string[] = [];
+  if ((meta["og:type"] ?? "").trim().toLowerCase() === "article")
+    article.push("article-open-graph");
+  // An article card has no primary heading and must not classify its container.
+  // No author, date, Article schema or article URL is required by this path.
+  const articles = $("main article, body > article").filter(
+    (_, el) =>
+      $(el).parents("article").length === 0 && !hiddenFromReaders($, el),
+  );
+  const paragraphs = articles
+    .find("p")
+    .filter(
+      (_, el) => !hiddenFromReaders($, el) && $(el).text().trim().length > 0,
+    );
+  if (
+    articles.length === 1 &&
+    articles.find("h1").filter((_, el) => !hiddenFromReaders($, el)).length ===
+      1 &&
+    paragraphs.length >= 2 &&
+    paragraphs.text().trim().length >= 200
+  )
+    article.push("primary-article-prose");
+  if (hasJsonLdType(structuredData, ["Article", "NewsArticle", "BlogPosting"]))
+    article.push("article-schema-hint");
 
-  // ── 2. Product Details Page (check before category) ─────────
-  if (isProductPage(pathname, $, jsonLd, meta)) {
-    return "product";
-  }
-
-  // ── 3. Category / Listing Page ──────────────────────────────
-  if (isCategoryPage(pathname, $, jsonLd)) {
-    return "category";
-  }
-
-  // ── 4. Fallback: Content Page ───────────────────────────────
-  return "content";
+  const strongProduct = product.some(
+    (s) => s === "product-open-graph" || s === "purchase-controls",
+  );
+  const strongArticle = article.some((s) => s !== "article-schema-hint");
+  if (strongProduct && strongArticle)
+    return result("unknown", "unknown", [
+      ...product,
+      ...category,
+      ...article,
+      "conflicting-purpose",
+    ]);
+  if (strongArticle) return result("article", "strong", article);
+  if (strongProduct && !category.includes("product-grid"))
+    return result("product", "strong", product);
+  // A grid is listing evidence even when each card has price/buy controls.
+  if (category.includes("product-grid"))
+    return result("category", "hint", category);
+  if (product.length > 0) return result("product", "hint", product);
+  if (category.length > 0) return result("category", "hint", category);
+  if (article.length > 0) return result("article", "hint", article);
+  return result("unknown", "unknown", []);
 }
 
 /** A same-origin path with a trailing `index.html` folded into its directory. */
@@ -725,15 +786,16 @@ function isSubpathHome(url: string, $: CheerioAPI): boolean {
   return internal.size >= 3 && [...internal].every((p) => p.startsWith(base));
 }
 
-function isProductPage(
+function productSignals(
   pathname: string,
   $: CheerioAPI,
   jsonLd: object[],
   meta: Record<string, string>,
-): boolean {
+): string[] {
+  const signals: string[] = [];
   // JSON-LD Product schema
   if (hasJsonLdType(jsonLd, ["Product", "IndividualProduct", "ProductModel"])) {
-    return true;
+    signals.push("product-schema-hint");
   }
 
   // og:type = product or product.item
@@ -743,7 +805,7 @@ function isProductPage(
     ogType === "product.item" ||
     ogType === "og:product"
   ) {
-    return true;
+    signals.push("product-open-graph");
   }
 
   // URL patterns common in ecommerce product pages
@@ -753,7 +815,7 @@ function isProductPage(
     ) ||
     /\/(product|item|sku)-[a-z0-9-]+/i.test(pathname)
   ) {
-    return true;
+    signals.push("product-url-hint");
   }
 
   // HTML signals: add-to-cart button/form, price elements
@@ -767,17 +829,18 @@ function isProductPage(
     ).length > 0;
 
   if (hasAddToCart && hasPrice) {
-    return true;
+    signals.push("purchase-controls");
   }
 
-  return false;
+  return signals;
 }
 
-function isCategoryPage(
+function categorySignals(
   pathname: string,
   $: CheerioAPI,
   jsonLd: object[],
-): boolean {
+): string[] {
+  const signals: string[] = [];
   // JSON-LD CollectionPage or ItemList schema
   if (
     hasJsonLdType(jsonLd, [
@@ -787,7 +850,7 @@ function isCategoryPage(
       "ProductCollection",
     ])
   ) {
-    return true;
+    signals.push("listing-schema-hint");
   }
 
   // URL patterns common in ecommerce category/listing pages
@@ -797,7 +860,7 @@ function isCategoryPage(
     ) ||
     /^\/(men|women|kids|sale|new-arrivals|best-sellers)(\/|$)/i.test(pathname)
   ) {
-    return true;
+    signals.push("listing-url-hint");
   }
 
   // HTML signals: product grid/list with multiple product cards
@@ -805,7 +868,7 @@ function isCategoryPage(
     '[class*="product-card"], [class*="product-item"], [class*="product-tile"], [data-product-id], [class*="product-grid"] > *, [class*="product-list"] > *',
   );
   if (productCards.length >= 3) {
-    return true;
+    signals.push("product-grid");
   }
 
   // Pagination + multiple items suggests a listing
@@ -818,37 +881,30 @@ function isCategoryPage(
       .length > 0;
 
   if (hasPagination && hasFilterOrSort) {
-    return true;
+    signals.push("pagination-filter-hint");
   }
 
-  return false;
+  return signals;
 }
 
 function hasJsonLdType(jsonLd: object[], types: string[]): boolean {
-  for (const block of jsonLd) {
-    const b = block as Record<string, unknown>;
-
-    // Check top-level @type
-    const blockType = b["@type"];
-    if (typeof blockType === "string" && types.includes(blockType)) return true;
-    if (Array.isArray(blockType) && blockType.some((t) => types.includes(t)))
+  // Only top-level entities and @graph members describe purpose. Do not visit
+  // nested related entities, and do not mutate the parsed evidence.
+  const matches = (node: unknown): boolean => {
+    if (Array.isArray(node)) return node.some(matches);
+    if (!node || typeof node !== "object") return false;
+    const obj = node as Record<string, unknown>;
+    const declared = obj["@type"];
+    const names = Array.isArray(declared) ? declared : [declared];
+    if (
+      names.some(
+        (name) =>
+          typeof name === "string" &&
+          types.includes(name.replace(/^https?:\/\/schema\.org\//, "")),
+      )
+    )
       return true;
-
-    // Check inside @graph
-    if (Array.isArray(b["@graph"])) {
-      for (const item of b["@graph"]) {
-        if (item && typeof item === "object") {
-          const itemType = (item as Record<string, unknown>)["@type"];
-          if (typeof itemType === "string" && types.includes(itemType))
-            return true;
-          if (
-            Array.isArray(itemType) &&
-            itemType.some((t: unknown) => types.includes(t as string))
-          )
-            return true;
-        }
-      }
-    }
-  }
-  return false;
+    return Array.isArray(obj["@graph"]) && obj["@graph"].some(matches);
+  };
+  return jsonLd.some(matches);
 }

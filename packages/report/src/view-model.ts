@@ -1,3 +1,4 @@
+import { buildPageScope, type PageScopeView } from "./page-scope";
 import type {
   CategoryResult,
   CheckRecommendation,
@@ -114,7 +115,8 @@ export interface ReportView {
   topPasses: CheckResult[];
   recommendations: CheckRecommendation[];
   coverage: CoverageView;
-  pagesScanned: Array<{ url: string; pageType: string }>;
+  pagesScanned: ScanReport["pagesScanned"];
+  pageScope?: PageScopeView;
   durationMs: number;
   wafProtection?: import("@forkpoint/agent-lighthouse-core").WafProtection;
   conditions?: ScanConditions;
@@ -315,6 +317,7 @@ export function buildReportView(
     recommendations,
     coverage,
     pagesScanned: report.pagesScanned ?? [],
+    pageScope: buildPageScope(report, allChecks),
     durationMs: report.durationMs ?? 0,
     wafProtection: report.wafProtection,
     conditions: report.conditions,

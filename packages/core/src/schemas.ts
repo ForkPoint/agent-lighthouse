@@ -124,7 +124,14 @@ export const AuditMetaSchema = z.object({
   requires: z.array(EvidenceKeySchema).optional(),
 });
 
-export const CheckResultSchema = z.object({
+export const AuditCoverageSchema = z.object({
+  provenance: z.enum(["all", "declared", "detected"]),
+  selectedUrls: z.array(z.string().max(2048)),
+  inputUrls: z.array(z.string().max(2048)),
+  unreadUrls: z.array(z.string().max(2048)),
+});
+
+const CheckAssessmentSchema = z.object({
   // v2 ids are `category/slug` paths, which outgrew the old 20-char cap.
   id: z.string().max(64),
   category: z.string().max(100),
@@ -156,6 +163,7 @@ export const CheckResultSchema = z.object({
       // the catchall does not make — that it parses as a URL, and that it fits
       // the same 2048 budget as docsUrl.
       evidenceUrl: z.string().max(2048).url().optional(),
+      effort: FixEffortSchema.optional(),
     })
     // Same rule as AuditResultSchema: structured evidence survives, nested
     // payloads do not.
@@ -174,6 +182,18 @@ export const CheckResultSchema = z.object({
   // evidence strength without reaching back into the registry.
   evidenceGrade: EvidenceGradeSchema.optional(),
   tier: AuditTierSchema.optional(),
+  weight: z.number().nonnegative().optional(),
+  coverage: AuditCoverageSchema.optional(),
+});
+
+export const CheckResultSchema = CheckAssessmentSchema.extend({
+  advisoryResults: z
+    .array(
+      CheckAssessmentSchema.extend({
+        scoreDisplayMode: z.literal("informative"),
+      }),
+    )
+    .optional(),
 });
 
 export const PageTypeSchema = z.enum([
@@ -181,13 +201,53 @@ export const PageTypeSchema = z.enum([
   "category",
   "product",
   "content",
+  "article",
+  "unknown",
 ]);
+
+export const PageClassificationSchema = z.object({
+  type: PageTypeSchema,
+  source: z.enum(["declared", "detected"]),
+  confidence: z.enum(["strong", "hint", "unknown"]),
+  signals: z.array(z.string()),
+});
+
+/** Old saved pages keep their recorded type without invented classification. */
+export const ScannedPageSchema = z.object({
+  url: z.string(),
+  pageType: PageTypeSchema,
+  classification: PageClassificationSchema.optional(),
+});
+
+export const PageAttemptSchema = z.object({
+  url: z.string(),
+  pageType: PageTypeSchema,
+  source: z.enum(["declared", "detected"]),
+  outcome: z.enum(["read", "unread"]),
+  status: z.number().int().nonnegative(),
+});
+
+/** Shared manual page declarations for SDK, CLI config and MCP. */
+export const PageScopeOptionsSchema = z.object({
+  pageType: PageTypeSchema.optional(),
+  pages: z
+    .array(
+      z.object({
+        url: z.string().url(),
+        pageType: PageTypeSchema,
+      }),
+    )
+    .nullable()
+    .optional(),
+});
 
 export const ScanConditionsSchema = z.object({
   url: z.string().url().max(2048),
   pageType: z.object({
     type: PageTypeSchema,
     source: z.enum(["declared", "detected"]),
+    confidence: z.enum(["strong", "hint", "unknown"]).optional(),
+    signals: z.array(z.string()).optional(),
   }),
   origin: z.object({
     origin: z.string().max(2048),

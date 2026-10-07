@@ -40,6 +40,8 @@ sources:
 
 ## What it checks
 
+The v7 runner includes `article` and `unknown` alongside legacy `content` in this check's existing page population. This preserves coverage when the old catch-all classification becomes unknown. The audit body still owns its existing feature and artifact guards. This scope change does not establish a new consumer path.
+
 AI agents use Service schema to understand what you offer and who provides it. Without it, agents must infer your offerings from unstructured text, which leads to inaccurate or incomplete descriptions in AI-generated recommendations.
 
 A `Service` or `ProfessionalService` node must carry `name` and `provider`. Product shapes are **not** this audit's business any more — see the split below.
@@ -133,3 +135,11 @@ The schema search itself stays site-wide (`allSchemas(ctx)`): a site may declare
 
 - **A Service nested under an Organization's `makesOffer`** — where the provider is implicit — is still warned for a missing `provider`. Recorded in the false-positive list above; resolving implicit providers is a parser-level change, not part of this split.
 - **The Service half has no Service-specific graded evidence.** The graded record below is a Product/Offer record. A dedicated Service-schema consumer path has never been researched, so the A rests on a mechanism that now lives mostly in 3.22. This is the item to revisit if the Service half is ever re-graded.
+
+## Implementation deviations (v7 P3, 2026-10-07)
+
+The added labels preserve the old general-content population while classification changes. This is not the final feature-gate migration. The evidence grade, tier, weight, and audit ID stay unchanged.
+
+## Deferred (v7 P3)
+
+See `docs/architecture/v7-audit-applicability-ledger.md` for the remaining audit-specific guards, population limits, and aggregation work. P4 will address selected-page evidence and mixed provenance.

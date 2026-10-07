@@ -134,7 +134,7 @@ export class SpeakableSchemaAudit extends Audit {
     // feature, so a scan with no content page never runs this audit at all.
     // The runtime guard below repeats the precondition for the pages that
     // were scanned, so an Article-carrying homepage is still assessed.
-    applicablePageTypes: ["content"],
+    applicablePageTypes: ["article"],
     defaultPriority: "low",
     guidance: {
       impact:

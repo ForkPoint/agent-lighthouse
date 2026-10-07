@@ -82,6 +82,8 @@ export {
   getRenderedText,
   getWordCount,
   detectPageType,
+  classifyPage,
+  declaredPageClassification,
 } from "./parser";
 export {
   calculateCategoryScore,

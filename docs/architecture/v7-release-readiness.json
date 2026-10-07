@@ -1,0 +1,188 @@
+{
+  "formatVersion": 1,
+  "stage": "P6",
+  "status": "local-validation-complete",
+  "releaseTarget": "7.0.0",
+  "published": false,
+  "branch": "feat/v7-unified-audit-applicability",
+  "head": "73fd3ef7829545e1e56c319d3ba588482a55b3f0",
+  "sourceFingerprints": {
+    "candidate": {
+      "sha256": "e5875f83c8e47a57dbf528408e37973fe9a49fe7f47aab2255679cabd473f1cd",
+      "fileCount": 316
+    },
+    "baseline": {
+      "sha256": "f1bcb3002e0d5c6065e4a126e0ca2d1cccad8d82ecf0b914a32f1359f26644bd",
+      "fileCount": 314
+    }
+  },
+  "fingerprintMethod": "SHA-256 of sorted relative paths, NUL, file bytes, NUL: four published package src/**/*.ts excluding tests and __tests__ directories and *.test.ts; their package.json files; pnpm-lock.yaml.",
+  "corpus": {
+    "artifact": "docs/architecture/v7-corpus-comparison.json",
+    "sha256": "5b6248f84dbc3f6644dcffb04802790d7dd574a11dd4257db71423a6e3ca1cbf",
+    "summary": {
+      "fixtures": 41,
+      "scenarios": 89,
+      "auditsPerScenario": 215,
+      "comparedPerEngine": 19135,
+      "changedRecords": 6948,
+      "verdictChanges": 3577,
+      "unchangedRecords": 12187,
+      "transitionCounts": {
+        "na->pass": 1543,
+        "na->na": 3371,
+        "na->fail": 1032,
+        "na->warn": 582,
+        "fail->na": 314,
+        "pass->na": 86,
+        "warn->na": 20
+      },
+      "errors": 0,
+      "unknown": 0
+    },
+    "reviewNegativeControl": "An injected pass-to-fail transition was refused with exit 1 and unknown=1."
+  },
+  "gates": [
+    {
+      "command": "pnpm build",
+      "exitCode": 0
+    },
+    {
+      "command": "pnpm test",
+      "exitCode": 0
+    },
+    {
+      "command": "pnpm typecheck",
+      "exitCode": 0
+    },
+    {
+      "command": "pnpm lint",
+      "exitCode": 0
+    },
+    {
+      "command": "pnpm check:dossiers",
+      "exitCode": 0
+    },
+    {
+      "command": "pnpm check:requires",
+      "exitCode": 0
+    },
+    {
+      "command": "pnpm check:audit-map",
+      "exitCode": 0
+    }
+  ],
+  "tests": {
+    "passed": 5937,
+    "skipped": 219,
+    "filesPassed": 350,
+    "filesSkipped": 1,
+    "networkEnabled": true
+  },
+  "live": {
+    "command": "pnpm test:live --domains=example.com,developer.mozilla.org,allbirds.com --concurrency=2 --out=/tmp/al-v7-p6-live.json",
+    "startedAt": "2026-10-07T13:38:56.529Z",
+    "completedAt": "2026-10-07T13:40:30.291Z",
+    "scanned": 3,
+    "skipped": 0,
+    "violations": 0,
+    "outcomes": [
+      {
+        "domain": "allbirds.com",
+        "category": "storefront",
+        "statusCounts": {
+          "pass": 81,
+          "fail": 47,
+          "na": 72,
+          "warn": 12
+        },
+        "violations": [],
+        "durationMs": 92760,
+        "evidence": {
+          "origin-reachable": true,
+          "unblocked-fetches": true,
+          "rendered-body": true,
+          "sample-adequate": true
+        }
+      },
+      {
+        "domain": "developer.mozilla.org",
+        "category": "docs",
+        "statusCounts": {
+          "pass": 74,
+          "fail": 27,
+          "na": 101,
+          "warn": 10
+        },
+        "violations": [],
+        "durationMs": 23112,
+        "evidence": {
+          "origin-reachable": true,
+          "unblocked-fetches": true,
+          "rendered-body": true,
+          "sample-adequate": true
+        }
+      },
+      {
+        "domain": "example.com",
+        "category": "custom",
+        "statusCounts": {
+          "na": 196,
+          "pass": 8,
+          "warn": 2,
+          "fail": 6
+        },
+        "violations": [],
+        "durationMs": 494,
+        "evidence": {
+          "origin-reachable": true,
+          "unblocked-fetches": true,
+          "rendered-body": false,
+          "sample-adequate": false
+        },
+        "unscoredReason": "The scan could not feed 55% of the registry's evidence mass, so what remains is not a reading of this site."
+      }
+    ],
+    "limit": "Report invariants validate internal consistency, not the correctness of every live finding. Dated site scores are not included here."
+  },
+  "consumers": {
+    "isolatedDistributions": "ESM and CommonJS declarations and runtime exports pass without workspace sources.",
+    "mcpStdio": "Built server initialized, advertised article/unknown and pages, and refused an invalid author declaration.",
+    "cli": "Built CLI refused --page-type=author before scanning.",
+    "legacyReaders": "Existing pre-v7 reports preserve absent coverage; package smoke test also preserves a legacy content page."
+  },
+  "releasePlan": [
+    {
+      "name": "@forkpoint/agent-lighthouse-core",
+      "type": "major",
+      "newVersion": "7.0.0"
+    },
+    {
+      "name": "@forkpoint/agent-lighthouse",
+      "type": "major",
+      "newVersion": "7.0.0"
+    },
+    {
+      "name": "@forkpoint/agent-lighthouse-report",
+      "type": "major",
+      "newVersion": "7.0.0"
+    },
+    {
+      "name": "@forkpoint/agent-lighthouse-mcp",
+      "type": "major",
+      "newVersion": "7.0.0"
+    },
+    {
+      "name": "@forkpoint/agent-lighthouse-website",
+      "type": "patch",
+      "newVersion": "0.0.14"
+    }
+  ],
+  "limits": [
+    "Local candidate, not a CI or publication receipt.",
+    "Package manifests remain 6.0.0 until workflow-owned versioning.",
+    "Corpus replay is a runner-level comparison with missing secondary resources, not a crawl or a public site score.",
+    "No new product code changes in P6; tests, validation scripts and release records only.",
+    "Existing ledger deferrals remain outside this migration."
+  ]
+}

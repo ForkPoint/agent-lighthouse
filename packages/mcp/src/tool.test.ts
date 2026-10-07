@@ -11,6 +11,7 @@ import {
   MAX_OPPORTUNITIES,
   buildAuditSummary,
   targetUrl,
+  pageOptions,
 } from "./tool";
 
 /**
@@ -212,5 +213,40 @@ describe("buildAuditSummary", () => {
     const parsed = JSON.parse(text);
     expect(parsed.url).toBe("https://shop.test/");
     expect(Array.isArray(parsed.categories)).toBe(true);
+  });
+});
+
+describe("v7 tool declarations", () => {
+  it("advertises the same purpose enum for target and extra pages", () => {
+    expect(AUDIT_TOOL.inputSchema.properties.pageType.enum).toEqual(
+      AUDIT_TOOL.inputSchema.properties.pages.items.properties.pageType.enum,
+    );
+    expect(AUDIT_TOOL.inputSchema.properties.pageType.enum).toContain(
+      "article",
+    );
+    expect(AUDIT_TOOL.inputSchema.properties.pageType.enum).not.toContain(
+      "author",
+    );
+  });
+  it("keeps omission and legacy content explicit", () => {
+    expect(pageOptions({ url: "https://x.test" })).toEqual({});
+    expect(pageOptions({ pageType: "content" })).toEqual({
+      pageType: "content",
+    });
+    expect(() => pageOptions({ pageType: "author" })).toThrow();
+  });
+  it("passes recorded page evidence to the summary, without adding it to legacy reports", () => {
+    const r = report();
+    expect(summarise(r)).not.toHaveProperty("pageScope");
+    r.pageAttempts = [
+      {
+        url: r.url,
+        pageType: "unknown",
+        source: "detected",
+        outcome: "unread",
+        status: 503,
+      },
+    ];
+    expect(summarise(r).pageScope?.attempts).toEqual(r.pageAttempts);
   });
 });

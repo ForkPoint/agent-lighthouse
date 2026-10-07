@@ -39,7 +39,13 @@ export class BreadcrumbSchemaAudit extends Audit {
       "rendered-body",
       "sample-adequate",
     ],
-    applicablePageTypes: ["category", "product", "content"],
+    applicablePageTypes: [
+      "category",
+      "product",
+      "content",
+      "unknown",
+      "article",
+    ],
     defaultPriority: "medium",
     guidance: {
       impact:

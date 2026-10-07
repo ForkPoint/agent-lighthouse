@@ -213,22 +213,26 @@ This resolves two unrelated-looking problems the same way.
 
 ### 5.1 Page type
 
-`detectPageType` is four ordered rules whose last branch has no test:
+The v7 P3 classifier returns purpose evidence as `{ type, source, confidence,
+signals }`. Its general fallback is `unknown`. `article` is a distinct purpose.
+A root or mounted homepage keeps the same identity regardless of crawl order.
+Open Graph article metadata or primary article prose can establish article purpose
+without requiring the author, dates, or Article schema that an audit will inspect.
+URL-only and schema-only matches remain hints. Conflicting strong product/article
+signals produce unknown purpose. Signal strength does not grant scoring authority.
 
-```
-   isFirstPage && path === '/'   ──► homepage     positive claim
-   isProductPage(...)            ──► product      positive claim
-   isCategoryPage(...)           ──► category     positive claim
-   ────────────────────────────────────────────
-   (nothing matched)             ──► content      ✗ NOT A CLAIM
-                                                    "we could not tell"
-```
+The public `detectPageType` wrapper still returns a type and accepts its historical
+final argument. That argument no longer changes the result. The CLI and SDK accept
+`article` and `unknown`. Legacy `content` declarations normalize to `unknown` and
+never enable article obligations. Stored reports with `content` and no classification
+fields remain readable; no missing evidence is inferred for them.
 
-On `/shop/sourdough` the product branch runs first and no product rule matches —
-the URL pattern wants `shop/{a}/{b}/{c}` and this path has one segment — so the
-category regex claims it. Product detection by markup is a CSS class-name match.
-And `content` means _"we could not classify this"_ — a label fourteen audits once
-gated on, so a contact page and a privacy policy were judged for missing bylines.
+The runner canonicalizes `applicablePageTypes` on a metadata copy. It accepts the
+legacy `pageTypes` alias. If both aliases occur, their sets must match, including
+empty sets, or planning throws a configuration error. An absent or empty set means
+universal scope. Twelve article obligations now name `article`. Ten other checks
+retain general-page coverage across `content`, `unknown`, and `article` while their
+feature-specific guards await the ledger's follow-up work.
 
 Under consent, result mode is one pure function:
 
@@ -238,66 +242,65 @@ scan target is `declared` from `--page-type`, each URL named in
 `ScanOptions.pages` is `declared` from its override, and everything the crawl
 found is `detected`.
 
-One pure function then decides an audit's whole participation — the pages it may
-read **and** the mode its result is reported in — because deciding those apart is
-what would let a guess reach a score:
+The runner selects a primary population and, when needed, an advisory population.
+It sorts each input set by URL. A universal audit uses all matching readable input
+under its existing evidence requirements. A typed audit uses declared matches for
+its primary result. Detected matches run as informative even when declared matches
+exist. A detected-only scan has one informative primary result.
 
-```ts
-// meta — the page types under which this audit is scored
-const meta = { pageTypes: ["product"] satisfies PageType[] };
+Each population gets a fresh audit instance, its own page set, and page evidence
+restricted to that set. Readable text on an excluded page cannot satisfy
+`rendered-body` or `sample-adequate`. Audits that need body text receive only readable
+pages. Header-only checks and origin/artifact checks keep their existing exemptions.
+The global unread-site guard still precedes execution. The `allEvidenceMet()`
+diagnostic/test helper still bypasses measurement; scoping does not turn its global
+flags into invented per-URL measurements.
 
-interface AuditScope {
-  pages: readonly PageContext[]; // immutable, per audit
-  mode: ScoreDisplayMode;
-}
+There is exactly one top-level `CheckResult` per registration. Mixed scans preserve
+the detected population under `advisoryResults`, always with informative display
+mode. Category counts and evidence mass use the primary result once. A failed or
+unread primary population is never promoted to a scored result by a readable
+advisory population. Errors and budget skips remain visible in the population where
+they occurred; they do not erase a completed result for another population.
 
-function scopeForAudit(meta: AuditMeta, ctx: CheckContext): AuditScope {
-  if (!meta.pageTypes?.length) {
-    return { pages: ctx.pages, mode: meta.scoreDisplayMode };
-  }
+Each executed or gated population has `coverage`:
 
-  const declared = ctx.pages.filter(
-    (p) =>
-      p.pageTypeSource === "declared" && meta.pageTypes.includes(p.pageType),
-  );
-  if (declared.length > 0) {
-    return { pages: declared, mode: meta.scoreDisplayMode };
-  }
+- `provenance`: `all`, `declared`, or `detected`.
+- `selectedUrls`: the population considered, including known failed attempts.
+- `inputUrls`: the URLs supplied to the audit body; empty for a gated or not-started
+  population. This does not assert that a custom audit inspected every input.
+- `unreadUrls`: selected pages without measured readable text, plus failed fetches.
+  Header-only audits may still inspect a page listed here.
 
-  const detected = ctx.pages.filter((p) => meta.pageTypes.includes(p.pageType));
-  return { pages: detected, mode: "informative" };
-}
-```
+`ScanReport.pageAttempts` preserves each requested page's URL, purpose provenance,
+HTTP status, and whether parsing produced a page context. A failed undeclared page
+has unknown purpose and remains in common coverage; it cannot be assigned to a
+specialist population without evidence. Older reports may omit both new fields.
 
-A page selected because of a detected page type never enters a scored page set.
-An audit that declares no `pageTypes` is universal and gets every page.
+An `AuditPlan` still has `runnable` and `skipped` arrays. Each runnable entry now also
+carries its planned populations. Registry metadata and caller context stay unchanged.
+Every registration emits one progress event and one trace, including skipped audits.
+Traces carry primary coverage and advisory results. Shared origin and URL fetch
+caches retain the original scan owner; page-derived feed discovery reads the actual
+scoped input each time. No whole-page-set cache requires a new key in this slice.
 
-The runner applies both halves when it creates `CheckResult`. `AuditPlan` stays
-`{ reg, categoryId }`, and static audit meta is never changed. Two concurrent
-scans therefore cannot leak consent state into each other.
+CLI config, SDK, and MCP accept the same `pageType` and `pages` declarations,
+validated by `PageScopeOptionsSchema` before fetching. The CLI flag overrides its
+config target declaration. A top-level target declaration overrides a matching
+`pages` entry. Invalid types and malformed override URLs fail explicitly.
 
-Audits do not read `pageType` themselves. A typed audit that needs a narrower
-cut of the pages it was handed goes through `gatherers/pages.ts`, which already
-owns that boundary. The per-audit view also keeps `allPages` as a read-only,
-gatherer-only view of the full sample. A source gate rejects direct audit reads
-of `allPages`. This lets a gatherer add a page because it carries objective
-artifact evidence, such as Article markup, without letting the page's detected
-type authorize that addition.
+The report view keeps `pageScope` separate from score and audit counts. HTML and
+Markdown expose expandable population details, including primary NA results and
+nested advisory errors. The terminal prints classifications and extra findings;
+`--debug-audit` shows each population's URL sets. MCP returns the structured view.
+The browser JSON inspector shows a bounded text preview without parsing uploaded
+markup. Hydration preserves classification and fetch attempts when recorded and
+never invents missing coverage for older rows. The public schemas accept old
+pages without classification and new pages with explicit evidence.
 
-```
-   al scan URL --page-type product     al scan URL
-            │                                │
-            ▼                                ▼
-      ┌──────────┐                     ┌──────────┐
-      │ CONSENT  │                     │ NO       │
-      │          │                     │ CONSENT  │
-      ├──────────┤                     ├──────────┤
-      │ scored   │                     │informative│
-      │ shown    │                     │ shown     │
-      └──────────┘                     └──────────┘
-
-   Both report every finding. Only the score differs.
-```
+Detection confidence remains diagnostic; this stage does not grant new scoring
+permission to heuristic page classification. Section 5.2's network safety rules
+remain unchanged.
 
 ### Stable audit mass, conditional participation
 

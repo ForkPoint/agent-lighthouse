@@ -1,5 +1,10 @@
 import type { CheerioAPI } from "cheerio";
-import type { CheckResult, PageType } from "./types";
+import type {
+  CheckResult,
+  PageType,
+  PageClassification,
+  PageAttempt,
+} from "./types";
 import type { FetchOptions, FetchResult } from "./fetcher";
 import type { A11yPageResult } from "./audits/operability-safety/runner";
 
@@ -7,6 +12,7 @@ export interface PageContext {
   url: string;
   pageType: PageType;
   pageTypeSource?: "declared" | "detected";
+  classification?: PageClassification;
   fetchResult: FetchResult;
   $: CheerioAPI;
   /** Parsed JSON-LD blocks only (used by JSON-LD-specific audits). */
@@ -36,6 +42,8 @@ export interface PageContext {
 export interface CheckContext {
   rootFiles: Record<string, FetchResult>;
   pages: PageContext[];
+  /** Includes failed fetches omitted from parsed pages. */
+  pageAttempts?: PageAttempt[];
   domain: string;
   baseUrl: string;
   /** Mounted homepage root for sitemap discovery and samples; origin files stay at baseUrl. */

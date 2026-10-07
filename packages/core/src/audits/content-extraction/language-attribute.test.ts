@@ -37,9 +37,66 @@ describe("LanguageAttributeAudit", () => {
     expect(result.message).toContain("No lang attribute");
   });
 
-  it("fails when there are no pages", () => {
+  it("declines when there are no pages", () => {
     const result = audit.audit(mockCheckContext([]));
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe("na");
+  });
+
+  it("passes pages with different declared languages", () => {
+    const pages = [
+      mockPageContext(
+        "https://example.com/en",
+        '<html lang="en"><body>English</body></html>',
+      ),
+      mockPageContext(
+        "https://example.com/bg",
+        '<html lang="bg"><body>Български</body></html>',
+      ),
+    ];
+    const forward = audit.audit(mockCheckContext(pages));
+    expect(forward.status).toBe("pass");
+    expect(forward.found).toContain("2/2");
+    expect(audit.audit(mockCheckContext([...pages].reverse()))).toEqual(
+      forward,
+    );
+  });
+
+  it("reports all missing or blank declarations in any page order", () => {
+    const good = mockPageContext(
+      "https://example.com/z",
+      '<html lang="en"><body>Good</body></html>',
+    );
+    const missing = mockPageContext(
+      "https://example.com/a",
+      "<html><body>No declaration</body></html>",
+    );
+    const blank = mockPageContext(
+      "https://example.com/b",
+      '<html lang="  "><body>Blank declaration</body></html>',
+    );
+    const orders = [
+      [good, missing, blank],
+      [blank, good, missing],
+      [missing, blank, good],
+    ];
+    const results = orders.map((pages) => {
+      const original = [...pages];
+      const result = audit.audit(mockCheckContext(pages));
+      expect(pages).toEqual(original);
+      return result;
+    });
+    expect(results.map((result) => result.status)).toEqual([
+      "fail",
+      "fail",
+      "fail",
+    ]);
+    expect(results[1]).toEqual(results[0]);
+    expect(results[2]).toEqual(results[0]);
+    expect(results[0]!.found).toContain("1/3");
+    expect(results[0]!.found).toContain(missing.url);
+    expect(results[0]!.found).toContain(blank.url);
+    expect(results[0]!.found).not.toContain(good.url);
+    expect(results[0]!.pageUrl).toBe(missing.url);
   });
 
   // The scan may hold a readable page that is not this site's — a broker's

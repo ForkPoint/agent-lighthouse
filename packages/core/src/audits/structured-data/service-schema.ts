@@ -114,7 +114,7 @@ export class ServiceSchemaAudit extends Audit {
     // it skipped every service site (no product page in the scan) and ran only
     // on stores, which do not emit Service markup. The runtime guard below
     // carries the real precondition.
-    applicablePageTypes: ["homepage", "content"],
+    applicablePageTypes: ["homepage", "content", "unknown", "article"],
     defaultPriority: "medium",
     guidance: {
       impact:

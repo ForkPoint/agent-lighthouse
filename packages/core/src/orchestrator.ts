@@ -1,3 +1,4 @@
+import { PageScopeOptionsSchema } from "./schemas";
 import type { Dispatcher } from "undici";
 import type {
   CheckStatus,
@@ -30,7 +31,8 @@ import {
   extractRdfa,
   extractMetaTags,
   extractHeadLinks,
-  detectPageType,
+  classifyPage,
+  declaredPageClassification,
 } from "./parser";
 import type { CheckContext, PageContext } from "./check-context";
 import { defaultConfig, filterConfig } from "./audit-config";
@@ -212,6 +214,7 @@ export async function runScan(
   url: string,
   options?: ScanOptions,
 ): Promise<ScanReport> {
+  PageScopeOptionsSchema.parse(options ?? {});
   const limitMs = options?.timeoutMs ?? SCAN_TIMEOUT_MS;
   // A negative or NaN budget would silently mean "no budget" and then fail
   // the report schema, which wants `limitMs` non-negative. Refuse it here.
@@ -459,16 +462,15 @@ async function scanWithinBudget(
       const forcedType =
         (isFirstPage && options?.pageType ? options.pageType : undefined) ??
         overrideTypeByKey.get(p.url.replace(/\/$/, ""));
-      const pageTypeSource: "declared" | "detected" = forcedType
-        ? "declared"
-        : "detected";
+      const classification = forcedType
+        ? declaredPageClassification(forcedType)
+        : classifyPage(p.url, $, structuredData, meta);
       tracker.unitDone(p.url);
       return {
         url: p.url,
-        pageType:
-          forcedType ??
-          detectPageType(p.url, $, structuredData, meta, isFirstPage),
-        pageTypeSource,
+        pageType: classification.type,
+        pageTypeSource: classification.source,
+        classification,
         fetchResult: p.result,
         $,
         jsonLd,
@@ -521,7 +523,30 @@ async function scanWithinBudget(
     wafProtection: wafProtection ?? null,
   });
 
+  const pageAttempts = allPageResults
+    .map((result, index) => {
+      const pageUrl = allPageUrls[index]!;
+      const parsed = pages.find((p) => p.url === pageUrl);
+      const forcedType =
+        (index === 0 ? options?.pageType : undefined) ??
+        overrideTypeByKey.get(pageUrl.replace(/\/$/, ""));
+      const classification =
+        parsed?.classification ??
+        (forcedType
+          ? declaredPageClassification(forcedType)
+          : { type: "unknown" as const, source: "detected" as const });
+      return {
+        url: pageUrl,
+        pageType: classification.type,
+        source: classification.source,
+        outcome: parsed ? ("read" as const) : ("unread" as const),
+        status: result.status,
+      };
+    })
+    .sort((a, b) => a.url.localeCompare(b.url));
+
   const ctx: CheckContext = {
+    pageAttempts,
     rootFiles,
     pages,
     domain,
@@ -554,7 +579,10 @@ async function scanWithinBudget(
   const auditPlan = planAudits(ctx, config, {
     enforceEvidence: options?.enforceEvidenceGate ?? true,
   });
-  tracker.phaseStart("audits", auditPlan.runnable.length);
+  tracker.phaseStart(
+    "audits",
+    auditPlan.runnable.length + auditPlan.skipped.length,
+  );
 
   const {
     checks: allChecks,
@@ -733,17 +761,16 @@ async function scanWithinBudget(
   // the override. The conditions block names the target, so its page type
   // must come from the target's own entry or from the explicit fallback.
   const primaryPage = pages.find((p) => p.url === displayUrl);
-  const pageTypeCondition = primaryPage
-    ? {
-        type: primaryPage.pageType,
-        source: primaryPage.pageTypeSource ?? ("detected" as const),
-      }
-    : {
-        type: (declaredOverrideType ?? "homepage") as PageType,
-        source: declaredOverrideType
-          ? ("declared" as const)
-          : ("detected" as const),
-      };
+  const pageTypeCondition =
+    primaryPage?.classification ??
+    (declaredOverrideType
+      ? declaredPageClassification(declaredOverrideType)
+      : {
+          type: "unknown" as const,
+          source: "detected" as const,
+          confidence: "unknown" as const,
+          signals: ["page-unread"],
+        });
 
   const originCondition = {
     origin: baseUrl,
@@ -799,7 +826,12 @@ async function scanWithinBudget(
     topPasses,
     topFails,
     recommendations,
-    pagesScanned: pages.map((p) => ({ url: p.url, pageType: p.pageType })),
+    pageAttempts,
+    pagesScanned: pages.map((p) => ({
+      url: p.url,
+      pageType: p.pageType,
+      classification: p.classification,
+    })),
     scannedAt: new Date().toISOString(),
     durationMs,
     readinessScore,

@@ -124,8 +124,35 @@ When missing scan evidence causes audits to be gated out, dropping those audits 
 To prevent this distortion, the scorer monitors **gated mass share** (`gatedMassShare` in `packages/core/src/scorer.ts`):
 
 - `GATED_MASS_UNSCORED_THRESHOLD = 0.35` (35% of total registry evidence mass).
-- If the share of evidence mass gated out by missing evidence exceeds 35%, the scan is declared **unscorable**: `overallScore` is set to `null` (with tier label `unscorable`) rather than an artificial numerical score.
+- If the share of evidence mass gated out by missing evidence exceeds 35%, the scan is declared **unscorable**: `overallScore` is set to `null` (with `scoreTier: null`) rather than an artificial numerical score.
 - Legitimate domain absence (such as page-type skips on a site with no blog or storefront) does not count toward the threshold; only mass withheld by the evidence gate is counted.
+
+## Page scope in 7.0.0
+
+Common checks use all eligible pages. Type-specific checks use the pages whose purpose matches their documented population. General pages (`unknown`, including legacy `content`) do not inherit article obligations. The type `article` requires independent purpose evidence or an explicit declaration.
+
+When a scan contains both declared and detected matches, one top-level audit result covers the declared pages. Its `advisoryResults` retain detected-page findings with `scoreDisplayMode: "informative"`. Only the primary result may enter the weighted average. Do not flatten these populations into scored checks, duplicate the audit's weight, or infer a second audit from a nested result. Detected-only type-specific checks remain informative even when detection confidence is strong.
+
+`coverage` belongs to each result population:
+
+- `provenance` names `all`, `declared`, or `detected`.
+- `selectedUrls` lists the selected page sample, including failed fetches.
+- `inputUrls` lists the page contexts supplied to the audit. It does not prove that the audit inspected every field or produced a verdict. Origin checks may also use origin evidence.
+- `unreadUrls` lists selected pages without measured readable text and failed fetches. A header check can still use such a page.
+
+`pageAttempts` records fetch status and whether parsing produced a page context. `pagesScanned[].classification` records purpose, source, confidence, and signals. Read the two together: a parsed page can still lack readable text. Missing fields in saved pre-v7 reports mean **not recorded**, never zero coverage or an inferred pass.
+
+The HTML and Markdown scope panels and MCP `pageScope` expose these fields without changing score or audit counts. The terminal prints scope and extra advisory findings; its debugger prints URL sets. The website JSON inspector provides a bounded text preview.
+
+### Migration from 6.x
+
+- Replace article-specific `content` declarations with `article`. Keep general pages as `unknown` or legacy `content`.
+- Keep top-level audit ids as the counting and scoring unit. Read nested advisory results separately.
+- Accept optional coverage/classification/attempt fields when loading saved reports. Never fill missing fields from current detection rules.
+- Invalid manual types and malformed override URLs now fail at the input boundary on all clients. Correct the input before retrying.
+- Compare scores only with matching versions, page samples, and declarations. Changed applicability can change the score without a site edit.
+
+The release workflow applies package versions. These are the v7 branch semantics, not a claim that 7.0.0 has been published.
 
 ## Score tiers
 

@@ -35,7 +35,7 @@ describe("SpeakableSchemaAudit", () => {
   describe("meta", () => {
     it("is gated to news/article page types", () => {
       expect(SpeakableSchemaAudit.meta.applicablePageTypes).toEqual([
-        "content",
+        "article",
       ]);
     });
 

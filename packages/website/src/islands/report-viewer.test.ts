@@ -168,3 +168,92 @@ describe("scoreClass", () => {
     expect(scoreClass(49)).not.toBe(scoreClass(50));
   });
 });
+
+describe("v7 scope preview", () => {
+  it("keeps mixed advisory failures and unread URLs without counting another audit", () => {
+    const report = {
+      overallScore: 100,
+      pagesScanned: [
+        {
+          url: "https://x.test/story",
+          classification: {
+            type: "article",
+            source: "detected",
+            confidence: "hint",
+            signals: ["URL hint"],
+          },
+        },
+      ],
+      pageAttempts: [
+        {
+          url: "https://x.test/missing",
+          pageType: "article",
+          source: "declared",
+          outcome: "unread",
+          status: 503,
+        },
+      ],
+      categories: [
+        {
+          name: "Articles",
+          score: 100,
+          checks: [
+            {
+              id: "author",
+              status: "pass",
+              coverage: {
+                provenance: "declared",
+                selectedUrls: ["https://x.test/missing"],
+                inputUrls: [],
+                unreadUrls: ["https://x.test/missing"],
+              },
+              advisoryResults: [
+                {
+                  status: "fail",
+                  explanation: "Missing author",
+                  coverage: {
+                    provenance: "detected",
+                    selectedUrls: ["https://x.test/story"],
+                    inputUrls: ["https://x.test/story"],
+                    unreadUrls: [],
+                  },
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    };
+    const view = summarize(report);
+    expect(view.categories[0]?.checks).toBe(1);
+    for (const text of [
+      "Advisory — not scored",
+      "Missing author",
+      "Unread URLs",
+      "https://x.test/missing",
+      "hint",
+      "URL hint",
+      "503",
+    ])
+      expect(view.pageScopeText).toContain(text);
+  });
+  it("does not invent scope for old files and tolerates malformed optional fields", () => {
+    expect(summarize({ overallScore: 100 }).pageScopeText).toBeUndefined();
+    expect(() =>
+      summarize({
+        overallScore: null,
+        pageAttempts: [null, 2],
+        categories: [
+          {
+            checks: [
+              {
+                coverage: { inputUrls: {}, selectedUrls: null },
+                advisoryResults: [null, 2],
+              },
+            ],
+          },
+        ],
+      }),
+    ).not.toThrow();
+  });
+});

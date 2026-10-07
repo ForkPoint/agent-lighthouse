@@ -22,7 +22,7 @@ export class TimeElementAudit extends Audit {
       "rendered-body",
       "sample-adequate",
     ],
-    applicablePageTypes: ["content"],
+    applicablePageTypes: ["content", "unknown", "article"],
     defaultPriority: "medium",
     guidance: {
       impact:

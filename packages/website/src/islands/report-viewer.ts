@@ -48,6 +48,8 @@ export interface ReportSummary {
   pages: number;
   durationMs: number;
   categories: CategorySummary[];
+  /** Recorded v7 scope only; omitted for older reports. */
+  pageScopeText?: string;
 }
 
 /** Thrown when a file parses but is not an Agent Lighthouse report. */
@@ -107,6 +109,76 @@ function count(value: unknown): number {
   return Array.isArray(value) ? value.length : 0;
 }
 
+/** Read optional scope data without trusting uploaded field types or making verdicts. */
+function pageScopeText(record: Record<string, unknown>): string | undefined {
+  const lines: string[] = [];
+  const list = (value: unknown, max = 300): unknown[] =>
+    Array.isArray(value) ? value.slice(0, max) : [];
+  const text = (value: unknown) => asText(value) ?? "not recorded";
+  for (const raw of list(record["pagesScanned"])) {
+    const page = asRecord(raw);
+    const c = asRecord(page?.["classification"]);
+    if (page && c)
+      lines.push(
+        `${text(page["url"])}: ${text(c["type"])} (${text(c["source"])}, ${text(c["confidence"])})`,
+        `Signals: ${list(c["signals"], 20).map(text).join("; ")}`,
+      );
+  }
+  for (const raw of list(record["pageAttempts"])) {
+    const a = asRecord(raw);
+    if (a)
+      lines.push(
+        `Fetch: ${text(a["url"])} — ${text(a["outcome"])}, HTTP ${asNumber(a["status"]) ?? "not recorded"}; ${text(a["pageType"])} (${text(a["source"])})`,
+      );
+  }
+  let auditCount = 0;
+  for (const category of list(record["categories"], MAX_CATEGORIES)) {
+    for (const raw of list(asRecord(category)?.["checks"])) {
+      if (++auditCount > 300) break;
+      const check = asRecord(raw);
+      if (!check) continue;
+      const assessments = [check, ...list(check["advisoryResults"], 10)];
+      for (const [index, rawAssessment] of assessments.entries()) {
+        const a = asRecord(rawAssessment);
+        if (!a) continue;
+        const coverage = asRecord(a["coverage"]);
+        if (!coverage && index === 0) continue;
+        const advisory =
+          index > 0 ||
+          a["scoreDisplayMode"] === "informative" ||
+          a["tier"] === "informative" ||
+          a["tier"] === "experimental";
+        lines.push(
+          `\n[${text(check["id"])}] ${text(a["status"])} — ${advisory ? "Advisory — not scored" : a["status"] === "na" ? "Not assessed" : "Primary result"}`,
+        );
+        if (a["explanation"]) lines.push(text(a["explanation"]));
+        if (a["displayValue"]) lines.push(text(a["displayValue"]));
+        if (coverage) {
+          lines.push(`Scope: ${text(coverage["provenance"])}`);
+          for (const [key, label] of [
+            ["selectedUrls", "Selected URLs"],
+            ["inputUrls", "Input URLs"],
+            ["unreadUrls", "Unread URLs"],
+          ]) {
+            const urls = coverage[key!];
+            lines.push(
+              `${label}: ${Array.isArray(urls) ? (urls.length ? list(urls, 100).map(text).join(", ") : "none") : "not recorded"}`,
+            );
+          }
+        } else lines.push("Coverage not recorded.");
+      }
+    }
+  }
+  if (!lines.length) return undefined;
+  return [
+    "Page scope",
+    "Detected page types are uncertain. Type-specific findings on detected pages are advisory.",
+    "Input URLs identify pages supplied to an audit. Origin evidence may also support it. Each audit counts toward the score at most once.",
+    "This preview shows up to 300 audits and pages, 100 URLs per set, and 300 characters per text field. The JSON retains the full record.",
+    ...lines,
+  ].join("\n");
+}
+
 /**
  * Reduce a parsed report to what the viewer shows.
  *
@@ -164,7 +236,9 @@ export function summarize(report: unknown): ReportSummary {
     count(record["pages"]);
   const duration = asNumber(record["durationMs"]) ?? 0;
 
+  const scope = pageScopeText(record);
   return {
+    ...(scope ? { pageScopeText: scope } : {}),
     url:
       asText(record["url"]) ??
       asText(record["targetUrl"]) ??
@@ -307,6 +381,19 @@ function header(summary: ReportSummary): HTMLElement {
 export function renderSummary(summary: ReportSummary): DocumentFragment {
   const fragment = document.createDocumentFragment();
   fragment.append(header(summary));
+  if (summary.pageScopeText) {
+    const details = document.createElement("details");
+    details.className = "rounded-xl border border-border-subtle bg-surface p-4";
+    const label = document.createElement("summary");
+    label.className = "cursor-pointer font-semibold text-ink";
+    label.textContent = "Page scope and coverage";
+    const content = document.createElement("pre");
+    content.className =
+      "mt-3 whitespace-pre-wrap break-words text-xs text-body";
+    content.textContent = summary.pageScopeText;
+    details.append(label, content);
+    fragment.append(details);
+  }
 
   if (summary.categories.length === 0) {
     fragment.append(

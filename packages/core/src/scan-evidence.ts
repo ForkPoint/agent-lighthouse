@@ -49,6 +49,8 @@ const ALL_PAGE_TYPES: readonly PageType[] = [
   "category",
   "product",
   "content",
+  "article",
+  "unknown",
 ];
 
 /** Content types that parse into a DOM a content audit can read. */
@@ -348,5 +350,49 @@ export function allEvidenceMet(): ScanEvidence {
     renderedByPage: {},
     usablePageTypes: new Set<PageType>(ALL_PAGE_TYPES),
     judgeable: true,
+  };
+}
+
+/** Resolve body evidence for this exact page, never another page of its type. */
+export function hasPageText(
+  evidence: ScanEvidence,
+  page: PageContext,
+): boolean {
+  if (Object.keys(evidence.renderedByPage).length > 0) {
+    return evidence.renderedByPage[page.url] === true;
+  }
+  // allEvidenceMet() and legacy diagnostic contexts supply global evidence only.
+  // Production buildScanEvidence always records every parsed page by URL.
+  return (
+    evidence.met["rendered-body"] && evidence.usablePageTypes.has(page.pageType)
+  );
+}
+
+/** Preserve origin evidence while restricting page evidence to the supplied input. */
+export function evidenceForPages(
+  evidence: ScanEvidence,
+  pages: PageContext[],
+): ScanEvidence {
+  const readable = pages.filter((page) => hasPageText(evidence, page));
+  const met = {
+    ...evidence.met,
+    "rendered-body": readable.length > 0,
+    "sample-adequate": readable.length > 0,
+  };
+  const reasons = { ...evidence.reasons };
+  for (const key of ["rendered-body", "sample-adequate"] as const) {
+    if (met[key]) delete reasons[key];
+    else reasons[key] = "No selected page served readable text.";
+  }
+  return {
+    ...evidence,
+    met,
+    reasons,
+    renderedByPage: Object.fromEntries(
+      pages
+        .filter((p) => Object.hasOwn(evidence.renderedByPage, p.url))
+        .map((p) => [p.url, evidence.renderedByPage[p.url]]),
+    ),
+    usablePageTypes: new Set(readable.map((p) => p.pageType)),
   };
 }

@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest";
 import { HydrationPayloadShareAudit } from "./hydration-payload-share";
 import { mockPageContext, mockCheckContext } from "../../__tests__/test-utils";
 import { expectNotApplicableOnEmpty } from "../../tests/na-contract";
+import { AuditResultSchema } from "../../schemas";
 
 /** Enough visible prose that a small payload stays a small share of the page. */
 const PROSE =
@@ -54,6 +55,47 @@ describe("HydrationPayloadShareAudit", () => {
     expect(result.status).toBe("fail");
     expect(result.message).toContain("self.__next_f");
     expect(result.found).toContain("1 state payload");
+  });
+
+  // Keep aggregate share below its threshold to isolate the single-payload limit.
+  const paddedPage = (url: string, script: string) =>
+    mockPageContext(
+      url,
+      `<html><body><main>${PROSE}</main>${script}<!--${" ".repeat(500_000)}--></body></html>`,
+    );
+
+  it.each(["next-data", "flight"])(
+    "does not merge %s payloads from different pages",
+    (kind) => {
+      const script =
+        kind === "next-data"
+          ? `<script id="__NEXT_DATA__" type="application/json">${JSON.stringify({ filler: "x".repeat(70_000) })}</script>`
+          : `<script>self.__next_f.push([1,"${"y".repeat(70_000)}"])</script>`;
+      const a = paddedPage("https://example.test/a", script);
+      const b = paddedPage("https://example.test/b", script);
+      expect(audit.audit(mockCheckContext([a])).status).toBe("pass");
+      expect(audit.audit(mockCheckContext([b])).status).toBe("pass");
+      const result = audit.audit(mockCheckContext([a, b]));
+      expect(result.status).toBe("pass");
+      expect(result.found).toContain("2 state payload(s)");
+      expect(result.pageUrl).toBe(a.url);
+      expect(audit.audit(mockCheckContext([b, a]))).toEqual(result);
+      expect(AuditResultSchema.safeParse(result).success).toBe(true);
+    },
+  );
+
+  it("attributes the single-payload failure to its own page", () => {
+    const script = (size: number) =>
+      `<script id="__NEXT_DATA__" type="application/json">${JSON.stringify({ filler: "x".repeat(size) })}</script>`;
+    const small = paddedPage("https://example.test/a-small", script(2_000));
+    const large = paddedPage("https://example.test/z-large", script(140_000));
+    const result = audit.audit(mockCheckContext([small, large]));
+    expect(result.status).toBe("fail");
+    expect(result.message).toContain("single-payload ceiling");
+    expect(result.found).toContain("2 state payload(s)");
+    expect(result.pageUrl).toBe(large.url);
+    expect(audit.audit(mockCheckContext([large, small]))).toEqual(result);
+    expect(AuditResultSchema.safeParse(result).success).toBe(true);
   });
 
   it("detects window.__NUXT__ and window.__APOLLO_STATE__ separately", () => {

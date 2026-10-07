@@ -81,7 +81,7 @@ export class NamedAuthorAudit extends Audit {
       "rendered-body",
       "sample-adequate",
     ],
-    applicablePageTypes: ["content"],
+    applicablePageTypes: ["article"],
     defaultPriority: "high",
     guidance: {
       impact:

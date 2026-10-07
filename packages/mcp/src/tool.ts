@@ -1,3 +1,7 @@
+import {
+  PageScopeOptionsSchema,
+  PageTypeSchema,
+} from "@forkpoint/agent-lighthouse-core";
 import type { ScanReport } from "@forkpoint/agent-lighthouse-core";
 import type { buildReportView } from "@forkpoint/agent-lighthouse-report";
 
@@ -22,6 +26,25 @@ export const AUDIT_TOOL = {
         description:
           "The target website or storefront URL to audit (e.g. https://example.com)",
       },
+      pageType: {
+        type: "string",
+        enum: PageTypeSchema.options,
+        description:
+          "Explicit target page purpose. Use article only for editorial articles; content is a legacy alias for unknown. Omit to detect (type-specific findings remain advisory).",
+      },
+      pages: {
+        type: ["array", "null"],
+        description:
+          "Explicit URL and purpose declarations, within the six-page scan budget. Target pageType takes precedence for the target URL.",
+        items: {
+          type: "object",
+          properties: {
+            url: { type: "string", format: "uri" },
+            pageType: { type: "string", enum: PageTypeSchema.options },
+          },
+          required: ["url", "pageType"],
+        },
+      },
     },
     required: ["url"],
   },
@@ -38,6 +61,7 @@ export interface AuditSummary {
   /** Present when the score was suppressed: what the scan is missing. */
   unscoredReason?: string;
   durationSeconds: string;
+  pageScope?: ReportView["pageScope"];
   vitals: ReportView["vitals"];
   categories: Array<{
     name: string;
@@ -77,6 +101,7 @@ export function buildAuditSummary(
     scoreTier: view.scoreTier,
     ...(view.unscoredReason ? { unscoredReason: view.unscoredReason } : {}),
     durationSeconds: (view.durationMs / 1000).toFixed(1),
+    ...(view.pageScope ? { pageScope: view.pageScope } : {}),
     vitals: view.vitals,
     categories: view.groups.flatMap((g) =>
       g.categories.map((c) => ({
@@ -114,4 +139,9 @@ export function targetUrl(args: Record<string, unknown> | undefined): string {
     throw new Error("Missing target URL");
   }
   return raw.trim();
+}
+
+/** Use the same validator as the SDK and CLI config. */
+export function pageOptions(args: Record<string, unknown> | undefined) {
+  return PageScopeOptionsSchema.parse(args ?? {});
 }

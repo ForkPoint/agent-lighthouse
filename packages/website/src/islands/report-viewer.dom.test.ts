@@ -221,3 +221,28 @@ describe("mountReportViewer", () => {
     expect(() => mountReportViewer()).not.toThrow();
   });
 });
+
+it("renders uploaded scope text as text, never markup", async () => {
+  const { summarize, renderSummary } = await import("./report-viewer.js");
+  const summary = summarize({
+    overallScore: 100,
+    pageAttempts: [
+      {
+        url: '<img src=x onerror="alert(1)">',
+        outcome: "unread",
+        status: 503,
+        pageType: "unknown",
+        source: "detected",
+      },
+    ],
+  });
+  const root = document.createElement("div");
+  root.append(renderSummary(summary));
+  expect(root.querySelector("img")).toBeNull();
+  expect(root.querySelector("pre")?.textContent).toContain(
+    '<img src=x onerror="alert(1)">',
+  );
+  expect(root.querySelector("summary")?.textContent).toBe(
+    "Page scope and coverage",
+  );
+});

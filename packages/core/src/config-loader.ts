@@ -1,3 +1,4 @@
+import type { PageType, PageOverride } from "./types";
 import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import type { PresetName } from "./presets";
@@ -5,6 +6,10 @@ import type { PresetName } from "./presets";
 export interface AgentLighthouseConfig {
   /** Target URL (if not supplied via CLI) */
   url?: string;
+  /** Explicit target declaration; legacy content means general/unknown. */
+  pageType?: PageType;
+  /** Exact page declarations, within the scan page budget. */
+  pages?: PageOverride[] | null;
   /** Audit preset profile */
   preset?: PresetName;
   /** Categories to execute (default: all) */

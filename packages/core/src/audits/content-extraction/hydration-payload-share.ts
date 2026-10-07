@@ -153,18 +153,26 @@ function collect(page: PageContext, into: Map<string, Payload>): void {
 }
 
 function survey(ctx: CheckContext): Survey {
-  const byName = new Map<string, Payload>();
+  const payloads: Payload[] = [];
   let documentChars = 0;
   const mainShingles = new Set<string>();
 
   for (const page of ctx.pages) {
     documentChars += page.fetchResult.body?.length ?? 0;
+    // A named stream may span script blocks, but never separate page responses.
+    const byName = new Map<string, Payload>();
     collect(page, byName);
+    payloads.push(...byName.values());
     for (const shingle of shingles(getMainContentText(page.$)))
       mainShingles.add(shingle);
   }
 
-  const payloads = [...byName.values()].sort((a, b) => b.bytes - a.bytes);
+  payloads.sort((a, b) => {
+    if (a.bytes !== b.bytes) return b.bytes - a.bytes;
+    const aKey = `${a.pageUrl}\n${a.name}`;
+    const bKey = `${b.pageUrl}\n${b.name}`;
+    return aKey < bKey ? -1 : aKey > bKey ? 1 : 0;
+  });
   const stateShingles = shingles(
     payloads.map((p) => unescapedStrings(p.source)).join(" "),
   );

@@ -18,12 +18,7 @@ function matchesAnyType(
   });
 }
 
-/**
- * A page is article content if it was classified as a content page OR it
- * directly carries Article/BlogPosting/NewsArticle schema. The previous
- * `/blog/` (singular) URL gate missed Shopify's `/blogs/news` and `/pages/blog`
- * routes, producing false "no blog content" verdicts on real stores.
- */
+/** The runner has already selected pages with article-purpose evidence. */
 function isArticlePage(_page: PageContext): boolean {
   return true;
 }
@@ -51,7 +46,7 @@ export class ArticleSchemaAudit extends Audit {
       "rendered-body",
       "sample-adequate",
     ],
-    applicablePageTypes: ["content"],
+    applicablePageTypes: ["article"],
     defaultPriority: "high",
     guidance: {
       impact:

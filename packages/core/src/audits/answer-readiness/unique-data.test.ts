@@ -44,7 +44,11 @@ describe("UniqueDataAudit", () => {
 
   // Dossier required fix #6: the grade-B study measured content pages.
   it("is scoped to content pages", () => {
-    expect(UniqueDataAudit.meta.applicablePageTypes).toEqual(["content"]);
+    expect(UniqueDataAudit.meta.applicablePageTypes).toEqual([
+      "content",
+      "unknown",
+      "article",
+    ]);
 
     const home = mockPageContext(
       "https://example.com/",

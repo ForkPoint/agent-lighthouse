@@ -141,7 +141,7 @@ describe("runAudits", () => {
     // 5 audits execute (s1 never runs); t1's throw is logged once.
     expect(out.checks).toHaveLength(6);
     expect(errorSpy).toHaveBeenCalledTimes(1);
-    expect(events.filter((e) => e.type === "unit:done")).toHaveLength(4);
+    expect(events.filter((e) => e.type === "unit:done")).toHaveLength(5);
     const fails = events.filter((e) => e.type === "unit:fail");
     expect(fails).toHaveLength(1);
     expect(fails[0]).toMatchObject({ label: "t1 T", error: "boom" });
@@ -1118,8 +1118,13 @@ describe("planAudits — evidence gate", () => {
     });
     const ctx = {
       pages: [
-        { pageType: "homepage", pageTypeSource: "declared" },
-        { pageType: "product", pageTypeSource: "declared" },
+        { ...pages[0], pageType: "homepage", pageTypeSource: "declared" },
+        {
+          ...pages[0],
+          url: "https://example.com/product",
+          pageType: "product",
+          pageTypeSource: "declared",
+        },
       ],
       rootFiles: {},
       domain: "example.com",

@@ -2,7 +2,6 @@ import type {
   CategoryResult,
   CheckRecommendation,
   CheckResult,
-  PageType,
   ReadinessVitals,
   ScanReport,
   ScoreTier,
@@ -28,7 +27,8 @@ export interface PersistedScanRow {
   categoryScores: Record<string, number> | null;
   checkResults: CheckResult[] | null;
   recommendations: CheckRecommendation[] | null;
-  pagesData: Array<{ url: string; pageType: PageType }> | null;
+  pagesData: ScanReport["pagesScanned"] | null;
+  pageAttempts?: ScanReport["pageAttempts"] | null;
   durationMs: number | null;
   readinessScore: number | null;
   readinessVitals: ReadinessVitals | null;
@@ -118,6 +118,7 @@ export function hydrateReport(row: PersistedScanRow): ScanReport {
     recommendations,
     pagesScanned: row.pagesData ?? [],
     pagesData: row.pagesData ?? [],
+    ...(row.pageAttempts ? { pageAttempts: row.pageAttempts } : {}),
     scannedAt:
       (row.completedAt instanceof Date
         ? row.completedAt.toISOString()

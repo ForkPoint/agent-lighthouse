@@ -233,7 +233,6 @@ describe("runScan — page overrides", () => {
 
     const overrides: PageOverride[] = [
       { url: "https://example.com/products/special", pageType: "product" },
-      { url: "not a url", pageType: "content" }, // invalid → skipped
       { url: "https://example.com/", pageType: "content" }, // homepage collision → skipped
       { url: "https://example.com/products/special/", pageType: "content" }, // dup key → skipped
     ];
@@ -639,7 +638,7 @@ describe("runScan — conditions name the target", () => {
 });
 
 describe("runScan — non-root scan URL", () => {
-  it.each(["product", "category", "content"] as const)(
+  it.each(["product", "category", "article", "unknown", "content"] as const)(
     "scores a readable %s target without a scanned homepage",
     async (pageType) => {
       const url = `https://example.com/${pageType}/item`;
@@ -649,7 +648,21 @@ describe("runScan — non-root scan URL", () => {
       );
 
       const report = await runScan(url, { pageType });
-      expect(report.pagesScanned).toEqual([{ url, pageType }]);
+      expect(report.pagesScanned).toEqual([
+        {
+          url,
+          pageType: pageType === "content" ? "unknown" : pageType,
+          classification: {
+            type: pageType === "content" ? "unknown" : pageType,
+            source: "declared",
+            confidence:
+              pageType === "content" || pageType === "unknown"
+                ? "unknown"
+                : "strong",
+            signals: [`declared:${pageType}`],
+          },
+        },
+      ]);
       expect(report.scanValidity?.judgeable).toBe(true);
       expect(typeof report.overallScore).toBe("number");
       expect(report.scanValidity?.unscoredReason).toBeUndefined();
@@ -1417,4 +1430,152 @@ it("does not reuse one mount's sitemap scope for a sibling with cached origin ev
       vi.mocked(runAudits).mock.calls.at(-1)?.[0].originEvidence?.cached,
     ).toBe(name === "two");
   }
+});
+
+describe("runScan — v7 article scope", () => {
+  const articleIds = [
+    "content-extraction/article-element",
+    "structured-data/article-schema",
+    "structured-data/author-schema",
+    "structured-data/speakable-schema",
+    "answer-readiness/meta-author",
+    "answer-readiness/named-author",
+    "answer-readiness/author-page",
+    "answer-readiness/author-same-as",
+    "answer-readiness/publication-date",
+    "answer-readiness/last-modified-schema",
+    "answer-readiness/dates-on-content",
+    "answer-readiness/first-paragraph-answers",
+  ];
+  const html = `<html lang="en"><body><main><h1>Guide</h1><p>${"Useful guide text. ".repeat(60)}</p></main></body></html>`;
+  it.each([undefined, "content", "unknown"] as const)(
+    "keeps general pages outside article obligations for %s",
+    async (pageType) => {
+      const url = "https://example.com/privacy";
+      set(url, html);
+      const report = await runScan(url, {
+        pageType,
+        includeExperimental: true,
+      });
+      const checks = report.categories.flatMap((c) => c.checks);
+      const articleChecks = checks.filter((c) => articleIds.includes(c.id));
+      expect(articleChecks).toHaveLength(12);
+      for (const check of articleChecks) {
+        expect(check.status, check.id).toBe("na");
+        expect(check.tags, check.id).toContain("skipped:page-type");
+      }
+      expect(
+        checks.find((c) => c.id === "content-extraction/language-attribute")
+          ?.status,
+      ).toBe("pass");
+      expect(report.pagesScanned[0].classification?.type).toBe("unknown");
+    },
+  );
+  it.each([false, true])(
+    "keeps missing-schema findings visible; explicit article = %s",
+    async (declared) => {
+      const url = "https://example.com/story";
+      set(
+        url,
+        html.replace(
+          '<html lang="en">',
+          '<html lang="en"><head><meta property="og:type" content="article"></head>',
+        ),
+      );
+      const report = await runScan(
+        url,
+        declared ? { pageType: "article" } : {},
+      );
+      const check = report.categories
+        .flatMap((c) => c.checks)
+        .find((c) => c.id === "structured-data/article-schema");
+      expect(check?.status).toBe("fail");
+      expect(check?.scoreDisplayMode).toBe(
+        declared ? "ternary" : "informative",
+      );
+      expect(check?.tags ?? []).not.toContain("skipped:no-evidence");
+      expect(report.conditions?.pageType).toEqual({
+        type: "article",
+        source: declared ? "declared" : "detected",
+        confidence: "strong",
+        signals: [declared ? "declared:article" : "article-open-graph"],
+      });
+      expect(report.pagesScanned[0].classification).toEqual(
+        report.conditions?.pageType,
+      );
+    },
+  );
+  it("does not invent homepage purpose for an unread target", async () => {
+    const report = await runScan("https://example.com/unread");
+    expect(report.conditions?.pageType).toEqual({
+      type: "unknown",
+      source: "detected",
+      confidence: "unknown",
+      signals: ["page-unread"],
+    });
+  });
+});
+
+describe("runScan — selected page evidence and mixed scope", () => {
+  const text = "Readable article text with useful detail. ".repeat(60);
+  const article = `<html><head><meta property="og:type" content="article"></head><body><main><h1>Story</h1><p>${text}</p></main></body></html>`;
+
+  it("reports a failed declared fetch beside the detected article finding", async () => {
+    const url = "https://example.com/story";
+    set(url, article);
+    const report = await runScan(url, {
+      pages: [{ url: "https://example.com/missing", pageType: "article" }],
+    });
+    const check = report.categories
+      .flatMap((c) => c.checks)
+      .find((c) => c.id === "structured-data/article-schema")!;
+    expect(check.status).toBe("na");
+    expect(check.tags).toContain("skipped:no-evidence");
+    expect(check.advisoryResults?.[0]).toMatchObject({
+      status: "fail",
+      scoreDisplayMode: "informative",
+    });
+    expect(check.coverage?.unreadUrls).toEqual(["https://example.com/missing"]);
+    expect(report.pageAttempts).toContainEqual({
+      url: "https://example.com/missing",
+      pageType: "article",
+      source: "declared",
+      outcome: "unread",
+      status: 404,
+    });
+    expect(report.pagesScanned.map((p) => p.url)).toEqual([url]);
+  });
+
+  it("keeps one result, progress event and trace per registered audit", async () => {
+    const url = "https://example.com/story";
+    const declared = "https://example.com/declared";
+    set(url, article);
+    set(declared, article);
+    const traces: import("./audit-trace").AuditTrace[] = [];
+    const events: import("./progress").ScanEvent[] = [];
+    const report = await runScan(url, {
+      pages: [{ url: declared, pageType: "article" }],
+      onAuditTrace: (t) => traces.push(t),
+      onEvent: (e) => events.push(e),
+      includeExperimental: true,
+    });
+    const checks = report.categories.flatMap((c) => c.checks);
+    expect(traces).toHaveLength(checks.length);
+    expect(new Set(traces.map((t) => t.id)).size).toBe(checks.length);
+    expect(checks).toHaveLength(215);
+    const check = checks.find(
+      (c) => c.id === "structured-data/article-schema",
+    )!;
+    expect(check.coverage?.inputUrls).toEqual([declared]);
+    expect(check.advisoryResults?.[0].coverage?.inputUrls).toEqual([url]);
+    const auditTrace = traces.find((t) => t.id === check.id)!;
+    expect(auditTrace.advisoryResults?.[0].status).toBe("fail");
+    // Tracker completion counts both executed and skipped registrations.
+    const done = events.filter(
+      (e) =>
+        (e.type === "unit:done" || e.type === "unit:fail") &&
+        e.phase === "audits",
+    );
+    expect(done).toHaveLength(checks.length);
+  });
 });

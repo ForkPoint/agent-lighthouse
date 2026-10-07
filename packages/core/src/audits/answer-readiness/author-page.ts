@@ -64,7 +64,7 @@ export class AuthorPageAudit extends Audit {
       "rendered-body",
       "sample-adequate",
     ],
-    applicablePageTypes: ["content"],
+    applicablePageTypes: ["article"],
     defaultPriority: "medium",
     guidance: {
       impact:

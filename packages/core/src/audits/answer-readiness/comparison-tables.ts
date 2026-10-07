@@ -22,7 +22,13 @@ export class ComparisonTablesAudit extends Audit {
       "rendered-body",
       "sample-adequate",
     ],
-    applicablePageTypes: ["category", "product", "content"],
+    applicablePageTypes: [
+      "category",
+      "product",
+      "content",
+      "unknown",
+      "article",
+    ],
     defaultPriority: "low",
     guidance: {
       impact:

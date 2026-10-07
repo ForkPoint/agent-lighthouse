@@ -5,7 +5,7 @@ export default defineConfig({
   test: {
     globals: true,
     environment: "node",
-    include: ["packages/**/*.{test,spec}.ts"],
+    include: ["packages/**/*.{test,spec}.ts", "scripts/**/*.test.ts"],
     // The live-site verification suite holds worker slots for minutes while it
     // fetches real sites. On a two-core CI runner that starves the mock-only
     // suites, and orchestrator/corpus tests that finish in under a second

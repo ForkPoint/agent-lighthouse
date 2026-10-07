@@ -2,6 +2,7 @@ import type { AuditMeta, AuditResult } from "../../types";
 import { Audit } from "../../audit";
 import type { CheckContext } from "../../check-context";
 import { weightForGrade } from "../../scorer";
+import { judgePages } from "../../gatherers/pages";
 
 export class LanguageAttributeAudit extends Audit {
   static override meta: AuditMeta = {
@@ -10,7 +11,7 @@ export class LanguageAttributeAudit extends Audit {
     title: "Language attribute",
     failureTitle: "Language attribute",
     description:
-      "AI agents use the lang attribute to select the correct language model and tokenizer when processing your content. Without it, agents may misinterpret content language, leading to poor translations or incorrect answers in multilingual AI systems.",
+      "Checks that every scanned page declares its language with a non-empty lang attribute on <html>. Screen readers use the declared language to select pronunciation rules. This check measures presence, not language-tag validity or agreement with the page text.",
     scoreDisplayMode: "binary",
     weight: weightForGrade("A", "scored"),
     evidenceGrade: "A",
@@ -21,7 +22,7 @@ export class LanguageAttributeAudit extends Audit {
     defaultPriority: "high",
     guidance: {
       impact:
-        "AI agents use the lang attribute to select the correct language model and tokenizer when processing your content. Without it, agents may misinterpret content language, leading to poor translations or incorrect answers in multilingual AI systems.",
+        "Screen readers use the declared page language to select pronunciation rules. A missing declaration leaves the page's language unspecified for these consumers.",
       fix: 'Add a lang attribute to the <html> element with the appropriate BCP 47 language code (e.g., "en", "fr", "de", "ja").',
       code: '<html lang="en">',
       effort: "trivial",
@@ -32,30 +33,48 @@ export class LanguageAttributeAudit extends Audit {
   };
 
   audit(ctx: CheckContext): AuditResult {
-    const page = ctx.pages[0];
-    const $ = page?.$;
-    const lang = $?.("html").attr("lang") ?? "";
-
-    if (lang.trim().length > 0) {
-      return this.pass(
-        `<html lang="${lang}"> is set.`,
-        '<html lang="..."> with a non-empty language code',
-        lang,
-        page.url,
+    const expected = 'A non-empty <html lang="..."> on every scanned page';
+    const { judged, failures } = judgePages(ctx.pages, (page) => ({
+      ok: (page.$("html").attr("lang") ?? "").trim().length > 0,
+    }));
+    if (judged.length === 0) {
+      return this.notApplicable(
+        "No pages available to check for a language declaration.",
+        expected,
+        "No pages scanned",
       );
     }
 
-    return this.fail(
-      "No lang attribute on <html> element.",
-      '<html lang="..."> with a non-empty language code',
-      "Not found",
-      {
-        priority: "high",
-        description:
-          "AI agents use the lang attribute to select the correct language model and tokenizer when processing your content. Without it, agents may misinterpret content language, leading to poor translations or incorrect answers in multilingual AI systems.",
-        code: '<html lang="en">',
-      },
-      page?.url,
+    const coverage = `${judged.length - failures.length}/${judged.length} pages with a non-empty lang attribute`;
+    if (failures.length === 0) {
+      const onlyPage = judged.length === 1 ? judged[0]!.page : undefined;
+      return this.validate(
+        this.pass(
+          onlyPage
+            ? `<html lang="${onlyPage.$("html").attr("lang")}"> is set.`
+            : "Every scanned page declares a non-empty lang attribute.",
+          expected,
+          coverage,
+          onlyPage?.url,
+        ),
+      );
+    }
+
+    const missingUrls = failures.map(({ page }) => page.url).sort();
+    return this.validate(
+      this.fail(
+        judged.length === 1
+          ? "No lang attribute with a non-empty value on <html> element."
+          : `${failures.length}/${judged.length} scanned pages lack a non-empty lang attribute.`,
+        expected,
+        `${coverage}. Missing or blank declarations: ${missingUrls.join(", ")}`,
+        {
+          priority: "high",
+          description: LanguageAttributeAudit.meta.guidance!.impact,
+          code: '<html lang="en">',
+        },
+        missingUrls[0],
+      ),
     );
   }
 }

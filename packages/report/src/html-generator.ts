@@ -1,3 +1,5 @@
+import { isInformative } from "@forkpoint/agent-lighthouse-core";
+import { formatPageScope, formatAuditScope } from "./page-scope";
 import type { ScanReport } from "@forkpoint/agent-lighthouse-core";
 import { buildReportView } from "./view-model";
 import { PROJECT_URL, REPORT_ICON, REPORT_ICON_URL } from "./brand";
@@ -105,7 +107,7 @@ export function generateHtmlReport(report: ScanReport): string {
                             <span>${escapeHtml(c.title)}</span>
                             <span class="text-[10px] uppercase tracking-wider font-mono text-slate-400">[${escapeHtml(c.id)}]</span>
                             ${c.deprecated ? '<span class="text-[10px] uppercase tracking-wider font-bold px-1.5 py-0.5 rounded bg-slate-200 dark:bg-slate-700 text-slate-500 dark:text-slate-400">Deprecated</span>' : ""}
-                            ${c.tier && c.tier !== "scored" ? `<span class="text-[10px] uppercase tracking-wider font-bold px-1.5 py-0.5 rounded bg-sky-100 dark:bg-sky-950 text-sky-700 dark:text-sky-300" title="${c.tier === "experimental" ? "Experimental check — excluded from scoring while it is validated." : "Advisory check — reported, never scored."}">${c.tier === "experimental" ? "Experimental" : "Advisory"} — not scored</span>` : ""}
+                            ${isInformative(c) || (c.tier && c.tier !== "scored") ? `<span class="text-[10px] uppercase tracking-wider font-bold px-1.5 py-0.5 rounded bg-sky-100 dark:bg-sky-950 text-sky-700 dark:text-sky-300" title="${c.tier === "experimental" ? "Experimental check — excluded from scoring while it is validated." : "Advisory check — reported, never scored."}">${c.tier === "experimental" ? "Experimental" : "Advisory"} — not scored</span>` : ""}
                           </div>
                           ${c.displayValue ? `<div class="text-xs font-mono text-slate-500 dark:text-slate-400 mt-0.5 whitespace-pre-line">${escapeHtml(c.displayValue)}</div>` : ""}
                         </div>
@@ -374,6 +376,19 @@ export function generateHtmlReport(report: ScanReport): string {
       </div>
     </div>
     `
+        : ""
+    }
+
+    ${
+      view.pageScope
+        ? `<section aria-label="Page scope" class="mb-8 p-6 rounded-2xl border border-slate-700 bg-slate-900 text-slate-200">
+      <h2 class="text-lg font-bold mb-3">Page scope and coverage</h2>
+      <pre class="text-xs whitespace-pre-wrap break-words">${escapeHtml(formatPageScope(view.pageScope))}</pre>
+      <p class="text-xs my-3">Input URLs are pages supplied to the audit. A result applies to this sample, not every page on the site. Origin evidence may also support the result. Each audit counts toward the score at most once.</p>
+      <details class="mt-4"><summary class="cursor-pointer font-semibold">Audit populations (${view.pageScope.audits.length})</summary>
+      ${view.pageScope.audits.map((a) => `<details class="mt-3 border-t border-slate-700 pt-3"><summary class="cursor-pointer text-sm">${escapeHtml(a.title)} <span class="text-xs text-slate-400">[${escapeHtml(a.id)}] · ${escapeHtml(a.assessments.map((r) => `${r.advisory ? "advisory " : ""}${r.status}`).join(" / "))}</span></summary><pre class="mt-3 text-xs whitespace-pre-wrap break-words">${escapeHtml(formatAuditScope(a))}</pre></details>`).join("")}
+      </details>
+    </section>`
         : ""
     }
 

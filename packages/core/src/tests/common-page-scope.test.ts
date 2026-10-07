@@ -7,8 +7,15 @@ import { buildScanEvidence } from "../scan-evidence";
 import { mockCheckContext, mockPageContext } from "../__tests__/test-utils";
 import { MainElementAudit } from "../audits/content-extraction/main-element";
 import { SingleH1Audit } from "../audits/content-extraction/single-h1";
+import { HeaderFooterAudit } from "../audits/content-extraction/header-footer";
+import { LanguageAttributeAudit } from "../audits/content-extraction/language-attribute";
 
-const audits = [MainElementAudit, SingleH1Audit];
+const audits = [
+  MainElementAudit,
+  SingleH1Audit,
+  HeaderFooterAudit,
+  LanguageAttributeAudit,
+];
 const config: ScanConfig = {
   categories: [
     {
@@ -25,20 +32,57 @@ const config: ScanConfig = {
   },
 };
 
-const pageTypes: PageType[] = ["homepage", "product", "category", "content"];
+const pageTypes: PageType[] = [
+  "homepage",
+  "product",
+  "category",
+  "content",
+  "article",
+  "unknown",
+];
 const text =
   "This page contains readable information about the shop and its products. ".repeat(
     40,
   );
 
-describe("common page scope — initial two-audit pilot", () => {
+describe("common page scope", () => {
+  it.each([
+    { declaration: 'lang="en"', status: "pass" },
+    { declaration: "", status: "fail" },
+  ])(
+    "judges language on an empty-body page: $status",
+    async ({ declaration, status }) => {
+      const page = mockPageContext(
+        "https://example.com/app",
+        `<html ${declaration}><body><div id="app"></div></body></html>`,
+      );
+      const ctx = mockCheckContext([page]);
+      ctx.evidence = buildScanEvidence({
+        requestedUrl: page.url,
+        homepageResult: page.fetchResult,
+        pages: [page],
+        rootFiles: {},
+        wafProtection: null,
+      });
+      expect(ctx.evidence.renderedByPage[page.url]).toBe(false);
+      const output = await runAudits(ctx, config);
+      const check = output.categories[0]!.checks.find(
+        (entry) => entry.id === LanguageAttributeAudit.meta.id,
+      )!;
+      expect(check.status).toBe(status);
+      expect(check.weight).toBe(LanguageAttributeAudit.meta.weight);
+      expect(check.scoreDisplayMode).toBe("binary");
+      expect(check.pageUrl).toBe(page.url);
+    },
+  );
+
   it.each(audits)(
     "bounds large failure samples for $name without a schema error",
     (AuditClass) => {
       const pages = Array.from({ length: 150 }, (_, index) =>
         mockPageContext(
           `https://example.com/${String(index).padStart(3, "0")}/${"path".repeat(30)}`,
-          "<p>No main or heading</p>",
+          "<p>No landmarks or heading</p>",
         ),
       );
       const instance = new AuditClass();
@@ -57,7 +101,7 @@ describe("common page scope — initial two-audit pilot", () => {
       async (pageType) => {
         const good = mockPageContext(
           "https://example.com/good",
-          `<html><body><main><h1>Title</h1><p>${text}</p></main></body></html>`,
+          `<html lang="en"><body><header>Header</header><main><h1>Title</h1><p>${text}</p></main><footer>Footer</footer></body></html>`,
         );
         const bad = mockPageContext(
           "https://example.com/bad",
@@ -91,7 +135,7 @@ describe("common page scope — initial two-audit pilot", () => {
               (entry) => entry.id === AuditClass.meta.id,
             )!;
             expect(check.status).toBe(
-              AuditClass === MainElementAudit ? "warn" : "fail",
+              AuditClass.meta.scoreDisplayMode === "binary" ? "fail" : "warn",
             );
             expect(check.scoreDisplayMode).toBe(
               AuditClass.meta.scoreDisplayMode,

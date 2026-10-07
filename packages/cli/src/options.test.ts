@@ -499,11 +499,14 @@ describe("openCommand", () => {
 });
 
 describe("--page-type", () => {
-  it("passes a known page type through", () => {
-    const o = parseCliOptions(["--page-type=product"], "https://example.com");
-    expect(o.pageType).toBe("product");
-    expect(o.invalidPageType).toBeUndefined();
-  });
+  it.each(["product", "article", "unknown", "content"])(
+    "passes %s through",
+    (type) => {
+      const o = parseCliOptions([`--page-type=${type}`], "https://example.com");
+      expect(o.pageType).toBe(type);
+      expect(o.invalidPageType).toBeUndefined();
+    },
+  );
 
   it("accepts the space-separated form", () => {
     const o = parseCliOptions(
@@ -524,6 +527,8 @@ describe("--page-type", () => {
       "homepage",
       "category",
       "product",
+      "article",
+      "unknown",
       "content",
     ]);
   });
@@ -598,5 +603,59 @@ describe("--timeout from the config file", () => {
     });
     expect(o.timeoutSeconds).toBe(30);
     expect(o.invalidTimeout).toBeUndefined();
+  });
+});
+
+describe("v7 manual page declarations", () => {
+  it("reads config declarations and lets the flag override the target only", () => {
+    const config = {
+      pageType: "product" as const,
+      pages: [
+        { url: "https://example.com/guide", pageType: "article" as const },
+      ],
+    };
+    const before = structuredClone(config);
+    expect(parseCliOptions([], "https://example.com", config)).toMatchObject(
+      config,
+    );
+    expect(
+      parseCliOptions(["--page-type=unknown"], "https://example.com", config),
+    ).toMatchObject({ pageType: "unknown", pages: config.pages });
+    expect(config).toEqual(before);
+  });
+  it.each([
+    { args: ["--page-type"] },
+    { args: ["--page-type="] },
+    { args: ["--page-type", "--silent"] },
+  ])(
+    "rejects missing declaration $args instead of detecting silently",
+    ({ args }) => {
+      expect(
+        parseCliOptions(args, "https://example.com", { pageType: "article" })
+          .invalidPageType,
+      ).toBe("");
+    },
+  );
+  it.each([
+    { pages: [{ url: "broken", pageType: "article" }] },
+    { pageType: "author" },
+    { pages: [{ url: "https://example.com", pageType: "typo" }] },
+  ])("rejects invalid config %j", (config) => {
+    expect(
+      parseCliOptions([], "https://example.com", config as never)
+        .invalidPageScope,
+    ).toBeDefined();
+  });
+  it("includes mixed-population failures in debug fails", () => {
+    const checks = [
+      {
+        id: "mixed",
+        title: "Mixed",
+        status: "pass",
+        advisoryResults: [{ status: "fail" }],
+      },
+      { id: "pass", title: "Pass", status: "pass" },
+    ];
+    expect(selectDebugChecks(checks, "fails")).toEqual([checks[0]]);
   });
 });

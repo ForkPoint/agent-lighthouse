@@ -1,6 +1,9 @@
 import { describe, it, expect } from "vitest";
 import { defaultConfig } from "../../audit-config";
-import { planAudits } from "../../audit-runner";
+import { planAudits, runAudits } from "../../audit-runner";
+import { AuditResultSchema } from "../../schemas";
+import { buildScanEvidence } from "../../scan-evidence";
+import type { PageType } from "../../types";
 import { NoNofollowAudit } from "./no-nofollow";
 import {
   attributableFixture,
@@ -46,10 +49,10 @@ describe("NoNofollowAudit", () => {
     expect(result.message).toContain("have nofollow directives");
   });
 
-  it("fails when no pages were scanned", () => {
+  it("declines when no pages were scanned", () => {
     const ctx = mockCheckContext([]);
     const result = audit.audit(ctx);
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe("na");
     expect(result.message).toContain("No pages scanned");
   });
 
@@ -106,4 +109,95 @@ describe("NoNofollowAudit", () => {
     const result = await new NoNofollowAudit().audit(shellSiteContext());
     expect(result.status).not.toBe("na");
   });
+});
+
+describe("no-nofollow page scope", () => {
+  const audit = new NoNofollowAudit();
+  const blocked = '<meta name="robots" content="nofollow">';
+
+  it.each([false, true])(
+    "keeps findings stable on reorder (clean page: %s)",
+    (includeClean) => {
+      const pages = [
+        mockPageContext("https://example.com/z", blocked),
+        mockPageContext("https://example.com/a", blocked),
+        ...(includeClean
+          ? [mockPageContext("https://example.com/clean", "<p>Clean</p>")]
+          : []),
+      ];
+      const result = audit.audit(mockCheckContext(pages));
+      expect(result.status).toBe(includeClean ? "warn" : "fail");
+      expect(result.pageUrl).toBe("https://example.com/a");
+      expect(result.found).toContain("https://example.com/a");
+      expect(result.found).toContain("https://example.com/z");
+      expect(audit.audit(mockCheckContext([...pages].reverse()))).toEqual(
+        result,
+      );
+      expect(AuditResultSchema.safeParse(result).success).toBe(true);
+    },
+  );
+
+  it("bounds long URL evidence on partial coverage", () => {
+    const pages = [
+      mockPageContext("https://example.com/clean", "<p>Clean</p>"),
+      ...Array.from({ length: 6 }, (_, index) =>
+        mockPageContext(
+          `https://example.com/${index}/${"x".repeat(1800)}`,
+          blocked,
+        ),
+      ),
+    ];
+    const result = audit.audit(mockCheckContext(pages));
+    expect(result.status).toBe("warn");
+    expect(result.found).toContain("(truncated)");
+    expect(AuditResultSchema.safeParse(result).success).toBe(true);
+    expect(audit.toCheckResult(result).status).toBe("warn");
+  });
+
+  for (const source of ["declared", "detected"] as const) {
+    it.each<PageType>(["homepage", "product", "category", "content"])(
+      `reads headers on empty-body %s pages with ${source} provenance`,
+      async (pageType) => {
+        const page = mockPageContext(
+          "https://example.com/page",
+          "<html><body></body></html>",
+        );
+        page.pageType = pageType;
+        page.pageTypeSource = source;
+        page.fetchResult.headers["x-robots-tag"] = "nofollow";
+        const ctx = mockCheckContext([page]);
+        ctx.evidence = buildScanEvidence({
+          requestedUrl: page.url,
+          homepageResult: page.fetchResult,
+          pages: [page],
+          rootFiles: {},
+          wafProtection: null,
+        });
+        expect(ctx.evidence.renderedByPage[page.url]).toBe(false);
+        const output = await runAudits(ctx, {
+          categories: [
+            {
+              id: "access-crawl-control",
+              name: "Access",
+              weight: NoNofollowAudit.meta.weight,
+            },
+          ],
+          audits: {
+            "access-crawl-control": [
+              {
+                meta: NoNofollowAudit.meta,
+                create: () => new NoNofollowAudit(),
+              },
+            ],
+          },
+        });
+        const check = output.categories[0]!.checks[0]!;
+        expect(check.status).toBe("fail");
+        expect(check.weight).toBe(NoNofollowAudit.meta.weight);
+        expect(check.pageUrl).toBe(page.url);
+        expect(check.details?.found).toContain(page.url);
+        expect(check.tags).not.toContain("scan-error");
+      },
+    );
+  }
 });

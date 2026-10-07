@@ -3,13 +3,25 @@ export type { WafProtection };
 
 // ── Page Types ────────────────────────────────────────────────
 
-export type PageType = "homepage" | "category" | "product" | "content";
+/** `content` is a legacy general-content declaration, never an article claim. */
+export type PageType =
+  "homepage" | "category" | "product" | "article" | "unknown" | "content";
+
+export interface PageClassification {
+  type: PageType;
+  source: "declared" | "detected";
+  /** Signal strength is diagnostic; detected types remain informative. */
+  confidence: "strong" | "hint" | "unknown";
+  signals: string[];
+}
 
 export const PAGE_TYPE_LABELS: Record<PageType, string> = {
   homepage: "Homepage",
   category: "Category Page",
   product: "Product Details Page",
-  content: "Content Page",
+  article: "Article",
+  unknown: "General / unknown purpose",
+  content: "General content (legacy)",
 };
 
 /**
@@ -90,6 +102,7 @@ export interface AuditMeta {
   description: string;
   scoreDisplayMode: ScoreDisplayMode;
   weight: number;
+  /** Legacy alias; conflicting aliases are rejected at the runner boundary. */
   pageTypes?: PageType[];
   applicablePageTypes?: PageType[];
   defaultPriority: CheckPriority;
@@ -165,6 +178,22 @@ export interface CheckRecommendation {
   docsUrl?: string;
 }
 
+/** URLs considered and passed to one audit execution. Missing text is not absence. */
+export interface AuditCoverage {
+  provenance: "all" | "declared" | "detected";
+  selectedUrls: string[];
+  inputUrls: string[];
+  unreadUrls: string[];
+}
+
+export interface PageAttempt {
+  url: string;
+  pageType: PageType;
+  source: "declared" | "detected";
+  outcome: "read" | "unread";
+  status: number;
+}
+
 export interface CheckResult {
   id: string;
   category: string;
@@ -191,6 +220,10 @@ export interface CheckResult {
     [key: string]: unknown;
   };
   tags?: string[];
+  /** Per-execution input coverage, absent in older reports. */
+  coverage?: AuditCoverage;
+  /** Other matching pages, always advisory; never counted as another audit weight. */
+  advisoryResults?: Array<Omit<CheckResult, "advisoryResults">>;
   /** Present when the audit is sunset: shown as a notice, excluded from scores. */
   deprecated?: DeprecationNotice;
   /** Evidence grade copied from AuditMeta.evidenceGrade. */
@@ -252,8 +285,13 @@ export interface ScanReport {
   categoryScores?: Record<string, number>;
   checkResults?: CheckResult[];
   recommendations: CheckRecommendation[];
-  pagesScanned: Array<{ url: string; pageType: PageType }>;
-  pagesData?: Array<{ url: string; pageType: PageType }>;
+  pagesScanned: Array<{
+    url: string;
+    pageType: PageType;
+    classification?: PageClassification;
+  }>;
+  pageAttempts?: PageAttempt[];
+  pagesData?: ScanReport["pagesScanned"];
   scannedAt: string;
   createdAt?: string;
   durationMs: number;
@@ -277,6 +315,8 @@ export interface ScanConditions {
   pageType: {
     type: PageType;
     source: "declared" | "detected";
+    confidence?: PageClassification["confidence"];
+    signals?: string[];
   };
   origin: {
     origin: string;

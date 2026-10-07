@@ -161,7 +161,8 @@ describe("Phase 6: The score states its conditions", () => {
     });
 
     expect(report.conditions).toBeDefined();
-    expect(report.conditions?.pageType.type).toBe("content");
+    expect(report.conditions?.pageType.type).toBe("unknown");
+    expect(report.conditions?.pageType.signals).toEqual(["declared:content"]);
     expect(report.conditions?.pageType.source).toBe("declared");
   });
 

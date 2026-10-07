@@ -1,6 +1,8 @@
 import {
   CATEGORY_IDS,
   PAGE_TYPE_LABELS,
+  PageScopeOptionsSchema,
+  type PageOverride,
   type PresetName,
   type PageType,
 } from "@forkpoint/agent-lighthouse-core";
@@ -31,6 +33,8 @@ export const DEFAULT_TRACE_FILE = "agent-lighthouse-trace.ndjson";
 /** The subset of a config file that the flags override. */
 export interface FileConfig {
   url?: string;
+  pageType?: PageType;
+  pages?: PageOverride[] | null;
   preset?: string;
   minScore?: number;
   outputDir?: string;
@@ -58,6 +62,8 @@ export interface CliOptions {
   pageType: PageType | undefined;
   /** A `--page-type` value that names no page type; `main` refuses it. */
   invalidPageType: string | undefined;
+  pages?: PageOverride[] | null;
+  invalidPageScope?: string;
   /** Where to write the per-audit NDJSON trace, if `--trace` was given. */
   tracePath: string | undefined;
   /** Scan budget in seconds from `--timeout` or the config file; unset means the default. */
@@ -145,7 +151,17 @@ export function parseCliOptions(
 ): CliOptions {
   const categories = splitList(getArgValue(args, "", "--categories"));
   const minScoreArg = getArgValue(args, "", "--min-score");
-  const pageTypeArg = getArgValue(args, "", "--page-type");
+  const pageTypeFlag = getArgValue(args, "", "--page-type");
+  const hasPageTypeFlag = args.some(
+    (arg) => arg === "--page-type" || arg.startsWith("--page-type="),
+  );
+  const pageTypeArg = hasPageTypeFlag
+    ? (pageTypeFlag ?? "")
+    : fileConfig.pageType;
+  const scope = PageScopeOptionsSchema.safeParse({
+    pageType: pageTypeArg,
+    pages: fileConfig.pages,
+  });
   const timeoutArg = getArgValue(args, "", "--timeout");
   // Number("") is 0, and 0 means "no budget", so a bare --timeout must not
   // read as "run without a budget"; it is refused like any other bad value.
@@ -187,7 +203,13 @@ export function parseCliOptions(
     debugAudit: getArgValue(args, "", "--debug-audit"),
     pageType: pageTypeArg && isPageType(pageTypeArg) ? pageTypeArg : undefined,
     invalidPageType:
-      pageTypeArg && !isPageType(pageTypeArg) ? pageTypeArg : undefined,
+      pageTypeArg !== undefined && !isPageType(pageTypeArg)
+        ? String(pageTypeArg)
+        : undefined,
+    ...(scope.success && scope.data.pages !== undefined
+      ? { pages: scope.data.pages }
+      : {}),
+    ...(!scope.success ? { invalidPageScope: scope.error.message } : {}),
     // A bare `--trace` with no path is still a request to trace, so it gets
     // the default file rather than being read as "no trace".
     tracePath: args.includes("--trace")
@@ -318,6 +340,7 @@ export interface DebuggableCheck {
   id: string;
   title: string;
   status: string;
+  advisoryResults?: Array<{ status: string }>;
 }
 
 /**
@@ -332,7 +355,14 @@ export function selectDebugChecks<T extends DebuggableCheck>(
   debugAudit: string,
 ): T[] {
   if (debugAudit === "fails") {
-    return checks.filter((c) => c.status === "fail" || c.status === "warn");
+    return checks.filter(
+      (c) =>
+        c.status === "fail" ||
+        c.status === "warn" ||
+        c.advisoryResults?.some(
+          (a) => a.status === "fail" || a.status === "warn",
+        ),
+    );
   }
   const needle = debugAudit.toLowerCase();
   return checks.filter(

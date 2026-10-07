@@ -25,6 +25,21 @@ categories: `access-crawl-control`, `agent-interfaces`, `agentic-commerce`,
 `operability-safety`, `structured-data`. An audit's id is `category/slug`,
 capped at 64 characters by `packages/core/src/schemas.ts`.
 
+## Central audit index
+
+Start with `docs/evidence/audit-map.json` for audit discovery. Its `readingGuide`
+explains each field. Select `audits[]` by exact ID or feature tag instead of loading
+all dossiers. The index includes purpose, feature tags, current page-type scope,
+evidence requirements, scoring metadata, source/test/dossier paths, and historical
+review notes. `docs/evidence/audit-map.md` has field definitions and `jq` examples.
+
+Runtime fields come from audit metadata. Review notes come from the dated v7 P2
+ledger; proposals and acceptance criteria do not prove implementation or test
+coverage. Read the source and dossier before changing behavior. Use the execution
+plan for completed work. Regenerate with `pnpm build:audit-map`; CI runs
+`pnpm check:audit-map` to reject stale output. Do not hand-edit generated active
+records.
+
 ## Commands
 
 ```bash

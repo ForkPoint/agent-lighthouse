@@ -45,7 +45,7 @@ export class UniqueDataAudit extends Audit {
     ],
     // The grade-B study measured statistics added to informational content.
     // A storefront homepage or a product grid is outside that population.
-    applicablePageTypes: ["content"],
+    applicablePageTypes: ["content", "unknown", "article"],
     defaultPriority: "medium",
     guidance: {
       impact:

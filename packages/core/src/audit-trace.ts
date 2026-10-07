@@ -41,6 +41,8 @@ export interface AuditTrace {
   pageUrl?: string;
   /** The structured evidence behind the verdict, as the report carries it. */
   details?: CheckResult["details"];
+  coverage?: CheckResult["coverage"];
+  advisoryResults?: CheckResult["advisoryResults"];
 }
 
 /** Which outcome a finished check represents. */
@@ -72,6 +74,10 @@ export function traceFromCheck(
     ...(check.explanation ? { explanation: check.explanation } : {}),
     ...(check.pageUrl ? { pageUrl: check.pageUrl } : {}),
     ...(check.details ? { details: check.details } : {}),
+    ...(check.coverage ? { coverage: check.coverage } : {}),
+    ...(check.advisoryResults
+      ? { advisoryResults: check.advisoryResults }
+      : {}),
   };
 }
 
