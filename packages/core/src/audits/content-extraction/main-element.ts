@@ -2,6 +2,7 @@ import type { AuditMeta, AuditResult } from "../../types";
 import { Audit } from "../../audit";
 import type { CheckContext } from "../../check-context";
 import { weightForGrade } from "../../scorer";
+import { judgePages } from "../../gatherers/pages";
 
 export class MainElementAudit extends Audit {
   static override meta: AuditMeta = {
@@ -35,41 +36,51 @@ export class MainElementAudit extends Audit {
   };
 
   audit(ctx: CheckContext): AuditResult {
-    let pagesWithMain = 0;
-
-    for (const page of ctx.pages) {
-      if (page.$("main").length > 0) pagesWithMain++;
+    const expected = "<main> element present on all scanned pages";
+    const { judged, failures } = judgePages(ctx.pages, (page) => ({
+      ok: page.$("main").length > 0,
+    }));
+    if (judged.length === 0) {
+      return this.notApplicable(
+        "No pages available to check for a <main> element.",
+        expected,
+        "No pages scanned",
+      );
     }
 
-    const allPass = pagesWithMain === ctx.pages.length;
-    const homepagePass = ctx.pages[0] && ctx.pages[0].$("main").length > 0;
-
-    if (allPass) {
+    const pagesWithMain = judged.length - failures.length;
+    const coverage = `${pagesWithMain}/${judged.length} pages with <main>`;
+    if (failures.length === 0) {
       return this.pass(
-        "All pages have a <main> element.",
-        "<main> element present on all pages",
-        `${pagesWithMain}/${ctx.pages.length} pages with <main>`,
+        "All scanned pages have a <main> element.",
+        expected,
+        coverage,
       );
     }
 
-    if (homepagePass) {
-      return this.warn(
-        `${pagesWithMain}/${ctx.pages.length} page(s) have a <main> element.`,
-        "<main> element present on all pages",
-        `${pagesWithMain}/${ctx.pages.length} pages with <main>`,
+    // Stable evidence and representative URL, independent of the sample order.
+    const missingUrls = failures.map(({ page }) => page.url).sort();
+    const found = `${coverage}. Missing <main>: ${missingUrls.join(", ")}`;
+    const message = `${pagesWithMain}/${judged.length} scanned page(s) have a <main> element.`;
+    if (pagesWithMain > 0) {
+      return this.validate(
+        this.warn(message, expected, found, undefined, missingUrls[0]),
       );
     }
 
-    return this.fail(
-      `${pagesWithMain}/${ctx.pages.length} page(s) have a <main> element.`,
-      "<main> element present on all pages",
-      `${pagesWithMain}/${ctx.pages.length} pages with <main>`,
-      {
-        priority: "high",
-        description:
-          "AI scrapers use <main> to identify primary content and discard nav/footer chrome, reducing hallucination risk from boilerplate text. Without <main>, agents must guess which content is primary versus navigational, often ingesting menus and footers into their context window.",
-        code: "<main>\n  <!-- Primary page content here -->\n</main>",
-      },
+    return this.validate(
+      this.fail(
+        message,
+        expected,
+        found,
+        {
+          priority: "high",
+          description:
+            "AI scrapers use <main> to identify primary content and discard nav/footer chrome, reducing hallucination risk from boilerplate text. Without <main>, agents must guess which content is primary versus navigational, often ingesting menus and footers into their context window.",
+          code: "<main>\n  <!-- Primary page content here -->\n</main>",
+        },
+        missingUrls[0],
+      ),
     );
   }
 }

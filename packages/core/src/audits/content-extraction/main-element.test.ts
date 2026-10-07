@@ -46,6 +46,45 @@ describe("MainElementAudit", () => {
     expect(result.found).toContain("0/1");
   });
 
+  it("declines an empty page sample", () => {
+    const result = audit.audit(mockCheckContext([]));
+    expect(result.status).toBe("na");
+    expect(result.found).toBe("No pages scanned");
+  });
+
+  it("warns on partial coverage regardless of page order and names every missing page", () => {
+    const good = mockPageContext(
+      "https://example.com/good",
+      "<main>Content</main>",
+    );
+    const missingA = mockPageContext("https://example.com/a", "<p>No main</p>");
+    const missingB = mockPageContext("https://example.com/b", "<p>No main</p>");
+    const orders = [
+      [good, missingB, missingA],
+      [missingA, good, missingB],
+      [missingB, missingA, good],
+    ];
+    const results = orders.map((pages) => {
+      const before = [...pages];
+      const result = audit.audit(mockCheckContext(pages));
+      expect(pages).toEqual(before);
+      return result;
+    });
+    expect(results.map((result) => result.status)).toEqual([
+      "warn",
+      "warn",
+      "warn",
+    ]);
+    for (const result of results) {
+      expect(result.found).toContain("1/3");
+      expect(result.found).toContain(missingA.url);
+      expect(result.found).toContain(missingB.url);
+      expect(result.pageUrl).toBe(missingA.url);
+    }
+    expect(results[1]).toEqual(results[0]);
+    expect(results[2]).toEqual(results[0]);
+  });
+
   // The scan may hold a readable page that is not this site's — a broker's
   // parking page, a foreign interstitial. Attribution is the gate's decision,
   // and the runner has to honour it rather than run this audit anyway.

@@ -19,7 +19,7 @@ describe("SingleH1Audit", () => {
     );
     const result = audit.audit(mockCheckContext([page]));
     expect(result.status).toBe("pass");
-    expect(result.found).toContain("1 <h1>");
+    expect(result.found).toContain("1/1 pages with exactly one <h1>");
   });
 
   it("fails when the homepage has multiple <h1> elements", () => {
@@ -42,10 +42,39 @@ describe("SingleH1Audit", () => {
     expect(result.message).toContain("0 <h1>");
   });
 
-  it("fails when there are no pages to evaluate", () => {
+  it("declines when there are no pages to evaluate", () => {
     const result = audit.audit(mockCheckContext([]));
-    expect(result.status).toBe("fail");
+    expect(result.status).toBe("na");
     expect(result.message).toContain("No pages available");
+  });
+
+  it("judges all pages in either order and reports each affected URL", () => {
+    const good = mockPageContext("https://example.com/good", "<h1>Title</h1>");
+    const missing = mockPageContext("https://example.com/a", "<p>No h1</p>");
+    const multiple = mockPageContext(
+      "https://example.com/b",
+      "<h1>One</h1><h1>Two</h1>",
+    );
+    const orders = [
+      [good, multiple, missing],
+      [missing, good, multiple],
+      [multiple, missing, good],
+    ];
+    const results = orders.map((pages) => {
+      const before = [...pages];
+      const result = audit.audit(mockCheckContext(pages));
+      expect(pages).toEqual(before);
+      expect(result.status).toBe("fail");
+      expect(result.found).toContain("1/3 pages with exactly one <h1>");
+      expect(result.found).toContain(`${missing.url}: 0 <h1>`);
+      expect(result.found).toContain(`${multiple.url}: 2 <h1>`);
+      expect(result.pageUrl).toBe(missing.url);
+      expect(result.message).not.toMatch(/homepage/i);
+      expect(result.expected).not.toMatch(/homepage/i);
+      return result;
+    });
+    expect(results[1]).toEqual(results[0]);
+    expect(results[2]).toEqual(results[0]);
   });
 
   // The scan may hold a readable page that is not this site's — a broker's
