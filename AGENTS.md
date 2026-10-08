@@ -99,6 +99,21 @@ community convention nothing documents consuming; **D** is speculative.
 
 ## Writing an audit
 
+- **All page types by default; restrict only a proven population.** Omit
+  `applicablePageTypes` for common checks. Use a short inclusion list only when
+  the dossier establishes a purpose-specific obligation, such as article authors
+  or product offers. Never enumerate most or all page types to express a common
+  check or to exclude one type. A feature such as code blocks, dates, definitions,
+  services, or breadcrumbs can occur on several page types: select its relevant
+  pages from observed evidence inside the audit or its shared gatherer instead.
+  Return `notApplicable` when that feature or obligation is absent. Record any
+  genuine exception beside the selection and in the dossier. Do not invent an
+  exclusion metadata field; the runner does not support one. See
+  `docs/architecture/audits.md#511-default-scope-and-page-type-restrictions` for
+  the rule, current broad-list inventory, and migration checks. Removing a list
+  changes execution and can change scoring; review the dossier and test the
+  affected populations before doing it.
+
 - **Absence is usually `notApplicable`, not `fail`.** A site that never adopted
   an optional convention has done nothing wrong. Fail only what a source says
   costs the site something. `packages/core/src/tests/na-contract.ts` has the

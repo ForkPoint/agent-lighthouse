@@ -54,6 +54,12 @@ The format version describes this file, not the package release version.
 | `review` | P2 baseline scope/absence notes, proposed changes, and acceptance criteria. Historical, not current execution proof. |
 | `legacyIds` | Links to preserved migration history. |
 
+Authoring rule: omit `applicablePageTypes` for common checks. Restrict a check only
+when its dossier supports a purpose-specific population. Broad lists are not a
+substitute for feature evidence. The index records current behavior, including
+migration lists; it does not approve that behavior. See the
+[scope rule and inspected lists](../architecture/audits.md#511-default-scope-and-page-type-restrictions).
+
 Missing reviews appear as `null` and in `summary.auditsWithoutReview`.
 A test file link does not establish test coverage. A review's acceptance criteria
 do not mean those tests exist or pass. The execution record names completed work.

@@ -234,6 +234,81 @@ universal scope. Twelve article obligations now name `article`. Ten other checks
 retain general-page coverage across `content`, `unknown`, and `article` while their
 feature-specific guards await the ledger's follow-up work.
 
+### 5.1.1 Default scope and page-type restrictions
+
+**An audit applies to every page type unless its documented obligation requires
+one specific population.** Most checks should omit `applicablePageTypes`.
+The absence of a type gate does not remove evidence requirements, artifact
+preconditions, readable-body guards, or the audit's own page selection.
+
+Use a short inclusion list for a purpose-specific obligation. Article authors
+and product offers are examples. The dossier must explain why that obligation
+belongs to the selected population. List length alone is not proof: even a
+single-type restriction needs evidence.
+
+Do not list most or all page types to express universal scope. Do not construct
+an inclusion list as the complement of an excluded type. Such lists silently
+exclude future page types and tie a common check to classification. An absent
+field includes future types without a registry edit. Empty lists currently have
+the same runtime meaning; new audits should omit the field for clarity.
+
+A feature check should select pages by the feature it measures. Code blocks,
+dates, definitions, supplementary content, service intent, and site hierarchy
+can occur on more than one page type. Keep that precondition beside the read in
+the audit or shared gatherer. Select only relevant pages for its numerator and
+denominator. Return `notApplicable` when no applicable feature or obligation is
+present. A check about missing required markup must establish intent independently
+of that markup; otherwise the missing markup would make its own check disappear.
+
+A genuine exception needs a documented reason and a local evidence condition.
+The current metadata supports inclusion lists only; there is no
+`excludedPageTypes` field. Adding one would require a separate contract change.
+Do not add an exclusion API merely to replace a broad inclusion list.
+
+Changing from typed scope to common scope is a behavior change, not a formatting
+cleanup. Typed scope separates declared and detected populations; detected
+results are informative. Common scope uses the audit's normal display mode.
+Removing a list can therefore admit new inputs and change scoring even when the
+audit body is unchanged. Review the dossier, population selection, absence
+verdict, and aggregation before changing metadata. Follow the repository's
+changeset rules for the final contract change.
+
+Before a scope change, verify these cases:
+
+- The relevant feature occurs on each current page type, including `unknown`.
+- No relevant feature occurs; the audit returns `notApplicable`.
+- Required markup is missing despite independently established intent.
+- A mixed sample contains relevant, irrelevant, and unread pages; only relevant
+  readable inputs decide the content verdict and its denominator.
+- Declared and detected inputs produce the intended result mode and score.
+
+### 5.1.2 Inspection of current inclusion lists
+
+Inspection date: 2026-10-07. The registry has 215 audits: 179 have no page-type
+gate and 36 have an inclusion list. The 36 consist of 12 article-only, 8
+product-only, 3 homepage-only, 1 category-only, 2 homepage/product, and 10 broad
+migration lists. This is a metadata inventory, not approval of every restriction.
+
+P3 retained the following 10 broad lists to preserve the old general-content
+population. Their dossiers record the migration as a deviation. They are
+follow-up review targets, not the recommended pattern for new audits.
+
+| Audit                                 | Current inclusion list                       | Evidence condition to review before changing scope                                                                                 |
+| ------------------------------------- | -------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| `answer-readiness/comparison-tables`  | category, product, content, unknown, article | Establish comparison intent independently of table markup. The current body counts tables without an intent guard.                 |
+| `structured-data/breadcrumb-schema`   | category, product, content, unknown, article | Review the existing URL-depth selection against the documented hierarchy obligation. Do not use the list only to exclude homepage. |
+| `answer-readiness/direct-definitions` | content, unknown, article                    | The body already selects definitional intent. Confirm its source-backed population and aggregation across other types.             |
+| `answer-readiness/external-citations` | content, unknown, article                    | Establish the claims or content for which citations are justified. The current body counts external links without an intent guard. |
+| `answer-readiness/unique-data`        | content, unknown, article                    | Establish when original data is an applicable obligation. Do not require numbers on every page.                                    |
+| `content-extraction/aside-element`    | content, unknown, article                    | The body already selects supplementary blocks. Confirm that selection and its denominator across other types.                      |
+| `content-extraction/code-language`    | content, unknown, article                    | Select present code blocks. Review the current warning on absent blocks against the absence rule.                                  |
+| `content-extraction/time-element`     | content, unknown, article                    | Detect date-bearing content independently of `<time>` markup. The current body fails when no `<time>` exists.                      |
+| `structured-data/howto-schema`        | content, unknown, article                    | Review the existing sequential-heading intent test and its absent-feature warning.                                                 |
+| `structured-data/service-schema`      | homepage, content, unknown, article          | The body already tests service intent. Confirm selection and aggregation across other types before removing the list.              |
+
+This inspection changes documentation only. It does not remove lists, add
+exclusions, change verdicts, or complete the deferred feature-gate migration.
+
 Under consent, result mode is one pure function:
 
 Provenance travels with each page, not with the scan: every `PageContext` keeps
