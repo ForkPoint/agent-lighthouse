@@ -16,13 +16,13 @@
 
 import * as fs from "node:fs";
 import * as path from "node:path";
-import { defaultConfig } from "../packages/core/src/audit-config";
+import { defaultConfig } from "#core/audit-config";
 import {
   auditIndexFields,
   parseAuditReviews,
   REVIEW_PATH,
 } from "./audit-index";
-import { AuditTier, EvidenceGrade } from "../packages/core/src/types";
+import { AuditTier, EvidenceGrade } from "#core/types";
 
 const REPO_ROOT = path.resolve(__dirname, "..");
 const AUDIT_MAP_JSON_PATH = path.resolve(

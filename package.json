@@ -2,6 +2,9 @@
   "name": "agent-lighthouse-monorepo",
   "version": "0.0.0",
   "private": true,
+  "imports": {
+    "#core/*": "./packages/core/src/*.ts"
+  },
   "description": "Lighthouse-style audits for AI agents, LLM crawlers, MCP clients, and the agentic web",
   "author": "ForkPoint",
   "license": "Apache-2.0",

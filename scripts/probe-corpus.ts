@@ -1,15 +1,15 @@
 import * as fs from "node:fs";
 import * as path from "node:path";
-import { createFetcher, boundedDispatcher } from "../packages/core/src/fetcher";
-import { normalize } from "../packages/core/src/tests/site-list";
+import { createFetcher, boundedDispatcher } from "#core/fetcher";
+import { normalize } from "#core/tests/site-list";
 import {
   parseRobots,
   groupsForBot,
   isBlanketBlocked,
-} from "../packages/core/src/gatherers/robots";
-import { SCANNER_USER_AGENT } from "../packages/core/src/constants";
-import { AI_CRAWLER_UAS } from "../packages/core/src/gatherers/ua-parity";
-import { EvidenceKey } from "../packages/core/src/types";
+} from "#core/gatherers/robots";
+import { SCANNER_USER_AGENT } from "#core/constants";
+import { AI_CRAWLER_UAS } from "#core/gatherers/ua-parity";
+import { EvidenceKey } from "#core/types";
 
 /**
  * Fetch each candidate once and say whether it can join the corpus.

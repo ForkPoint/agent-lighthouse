@@ -208,6 +208,9 @@ Write for a reader, not for a researcher:
   `tsconfig.base.json`) points TypeScript at `src/`, `types` points package
   users at `dist/*.d.ts`, and the bundle inlines it. Do not use the shorter
   `#/` form: published declarations would then need TypeScript 6.0 or newer.
+  Scripts under `scripts/` use the same `#core/<path>`, mapped by the root
+  `package.json`. oxlint's `no-restricted-imports` rejects a climbing `../`
+  import inside core and a `packages/core/src` path inside scripts.
 - Name enum values through their constant, never as a string: `CheckStatus.Pass`,
   `PageType.Product`, `EvidenceKey.RenderedBody`. Each public string union in
   core is a const object plus a type of the same name, and its Zod schema reads

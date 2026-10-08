@@ -1,6 +1,6 @@
 import * as fs from "node:fs";
 import * as path from "node:path";
-import { runScan, type ScanReport } from "../packages/core/src";
+import { runScan, type ScanReport } from "#core/index";
 import { StoreStatus } from "./lib/scan-outcomes";
 
 const BENCHMARK_STORES_PATH = path.resolve(

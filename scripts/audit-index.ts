@@ -1,7 +1,7 @@
 /** Fields for the central audit index. Runtime facts and historical review stay separate. */
-import type { AuditMeta } from "../packages/core/src/types";
-import { auditPageTypes } from "../packages/core/src/audit-applicability";
-import { AuditTier } from "../packages/core/src/types";
+import type { AuditMeta } from "#core/types";
+import { auditPageTypes } from "#core/audit-applicability";
+import { AuditTier } from "#core/types";
 
 export const REVIEW_PATH = "docs/architecture/v7-audit-applicability-ledger.md";
 

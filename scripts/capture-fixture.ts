@@ -2,12 +2,9 @@ import * as fs from "node:fs";
 import * as path from "node:path";
 import { createHash } from "node:crypto";
 import { gzipSync } from "node:zlib";
-import { createFetcher } from "../packages/core/src/fetcher";
-import {
-  classifyCapture,
-  FixtureKind,
-} from "../packages/core/src/tests/fixture-io";
-import type { FixtureProvenance } from "../packages/core/src/tests/fixture-io";
+import { createFetcher } from "#core/fetcher";
+import { classifyCapture, FixtureKind } from "#core/tests/fixture-io";
+import type { FixtureProvenance } from "#core/tests/fixture-io";
 
 /**
  * Freeze one real page as a test fixture.

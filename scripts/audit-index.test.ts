@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
-import { defaultConfig } from "../packages/core/src/audit-config";
+import { defaultConfig } from "#core/audit-config";
 
 const root = resolve(__dirname, "..");
 const index = JSON.parse(
@@ -75,8 +75,8 @@ describe("central audit index", () => {
 });
 
 import { auditIndexFields, parseAuditReviews } from "./audit-index";
-import { ArticleSchemaAudit } from "../packages/core/src/audits/structured-data/article-schema";
-import { AuditTier, PageType } from "../packages/core/src/types";
+import { ArticleSchemaAudit } from "#core/audits/structured-data/article-schema";
+import { AuditTier, PageType } from "#core/types";
 
 const reviewText = `# Review\n\n### example/check\n\n- **Scope / read:** Reads a\n  visible feature.\n- **Current aggregation / absence:** Absent is NA.\n- **Disposition:** Keep the feature guard.\n- **Tests:** Check missing input.\n`;
 

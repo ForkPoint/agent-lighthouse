@@ -7,8 +7,8 @@
  * audit that had no evidence make a blocked site score better?
  */
 import * as fs from "node:fs";
-import { CATEGORY_MASS } from "../../packages/core/src/index";
-import { CheckStatus } from "../../packages/core/src/types";
+import { CATEGORY_MASS } from "#core/index";
+import { CheckStatus } from "#core/types";
 
 interface Trace {
   id: string;

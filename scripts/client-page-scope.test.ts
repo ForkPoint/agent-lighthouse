@@ -1,14 +1,14 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { FetchResult, ScanReport } from "@forkpoint/agent-lighthouse-core";
 import { runScan, defaultOriginCache } from "@forkpoint/agent-lighthouse-core";
-import { PageType } from "../packages/core/src/types";
+import { PageType } from "#core/types";
 
 const h = vi.hoisted(() => ({
   map: new Map<string, FetchResult>(),
   calls: [] as string[],
 }));
-vi.mock("../packages/core/src/fetcher", async (original) => ({
-  ...(await original<typeof import("../packages/core/src/fetcher.js")>()),
+vi.mock("#core/fetcher", async (original) => ({
+  ...(await original<typeof import("#core/fetcher")>()),
   isSafeUrl: async () => true,
   createFetcher: () => ({
     fetch: async ({ url }: { url: string }) => {
@@ -29,7 +29,7 @@ vi.mock("../packages/core/src/fetcher", async (original) => ({
     },
   }),
 }));
-vi.mock("../packages/core/src/audits/operability-safety/runner", () => ({
+vi.mock("#core/audits/operability-safety/runner", () => ({
   runA11yForHtml: async () => ({}),
   A11Y_RULES: [],
 }));

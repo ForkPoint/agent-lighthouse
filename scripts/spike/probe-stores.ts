@@ -11,7 +11,7 @@ import {
   parseHtml,
   getWordCount,
   getMainContentText,
-} from "../../packages/core/src/index";
+} from "#core/index";
 
 const stores: string[] = JSON.parse(
   fs.readFileSync(`${__dirname}/stores-ok.json`, "utf8"),

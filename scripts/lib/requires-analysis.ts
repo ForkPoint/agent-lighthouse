@@ -11,8 +11,8 @@ import {
   auditSourceFiles,
   declaredIds,
   readsPagesDirectly,
-} from "../../packages/core/src/tests/audit-sources";
-import { EvidenceKey } from "../../packages/core/src/types";
+} from "#core/tests/audit-sources";
+import { EvidenceKey } from "#core/types";
 
 export { auditSourceFiles, declaredIds, readsPagesDirectly };
 

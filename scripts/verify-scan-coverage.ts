@@ -6,8 +6,8 @@ import {
   TAG_SCAN_ERROR,
   TAG_SKIPPED_NO_EVIDENCE,
   TAG_SKIPPED_PAGE_TYPE,
-} from "../packages/core/src";
-import type { ScanReport, CheckResult } from "../packages/core/src";
+} from "#core/index";
+import type { ScanReport, CheckResult } from "#core/index";
 import { StoreStatus } from "./lib/scan-outcomes";
 
 /**

@@ -7,11 +7,8 @@ import {
   type SeedFile,
   type Seeds,
   type SiteEntry,
-} from "../packages/core/src/tests/site-list";
-import {
-  excludedDomains,
-  type CorpusStatus,
-} from "../packages/core/src/tests/corpus-status";
+} from "#core/tests/site-list";
+import { excludedDomains, type CorpusStatus } from "#core/tests/corpus-status";
 
 /**
  * Build the site list from two public ranked sources.

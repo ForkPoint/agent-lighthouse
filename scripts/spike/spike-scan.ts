@@ -9,10 +9,10 @@
  * That count is the number the evidence-gate design is or is not warranted by.
  */
 import * as fs from "node:fs";
-import { runScan } from "../../packages/core/src/index";
-import type { AuditTrace } from "../../packages/core/src/index";
-import { CheckStatus } from "../../packages/core/src/types";
-import { AuditOutcome } from "../../packages/core/src/audit-trace";
+import { runScan } from "#core/index";
+import type { AuditTrace } from "#core/index";
+import { CheckStatus } from "#core/types";
+import { AuditOutcome } from "#core/audit-trace";
 
 const READS_PAGES = new Set(
   fs

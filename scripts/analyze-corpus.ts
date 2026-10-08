@@ -28,7 +28,7 @@ import {
   type CheckContext,
   type PageContext,
   type FetchResult,
-} from "../packages/core/src";
+} from "#core/index";
 
 import {
   parseHtml,
@@ -38,15 +38,15 @@ import {
   extractMetaTags,
   extractHeadLinks,
   detectPageType,
-} from "../packages/core/src/parser";
+} from "#core/parser";
 
 import {
   listFixtures,
   readFixture,
   type FixtureProvenance,
   FixtureKind,
-} from "../packages/core/src/tests/fixture-io";
-import { CheckStatus, PageTypeSource } from "../packages/core/src/types";
+} from "#core/tests/fixture-io";
+import { CheckStatus, PageTypeSource } from "#core/types";
 
 function fixtureFetchResult(
   html: string,
