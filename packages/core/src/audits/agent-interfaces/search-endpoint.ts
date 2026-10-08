@@ -1,14 +1,14 @@
-import type { AuditMeta, AuditResult } from "../../types";
-import { Audit } from "../../audit";
-import { weightForGrade } from "../../scorer";
-import type { CheckContext, PageContext } from "../../check-context";
-import { flattenJsonLd } from "../../parser";
+import type { AuditMeta, AuditResult } from "#core/types";
+import { Audit } from "#core/audit";
+import { weightForGrade } from "#core/scorer";
+import type { CheckContext, PageContext } from "#core/check-context";
+import { flattenJsonLd } from "#core/parser";
 import {
   openApiOperations,
   readOpenApiSpec,
   probeOpenApiServer,
   type OpenApiSpec,
-} from "../../gatherers/openapi";
+} from "#core/gatherers/openapi";
 import {
   AuditTier,
   CheckPriority,
@@ -17,7 +17,7 @@ import {
   FixEffort,
   ScoreDisplayMode,
   HttpMethod,
-} from "../../types";
+} from "#core/types";
 
 function tryParseJson(body: string): unknown {
   try {

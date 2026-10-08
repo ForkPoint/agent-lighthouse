@@ -1,14 +1,14 @@
 import { describe, it, expect, vi } from "vitest";
 import { McpEndpointAudit } from "./mcp-endpoint";
-import { mockCheckContext, mockFetchResult } from "../../__tests__/test-utils";
-import type { FetchOptions, FetchResult } from "../../fetcher";
-import { CheckStatus } from "../../types";
+import { mockCheckContext, mockFetchResult } from "#core/__tests__/test-utils";
+import type { FetchOptions, FetchResult } from "#core/fetcher";
+import { CheckStatus } from "#core/types";
 
 // isSafeUrl performs a real DNS lookup before the audit POSTs to the declared
 // endpoint. Stub it with an offline stand-in that still blocks loopback and
 // private ranges, so the refusal test below proves the gate rather than the mock.
-vi.mock("../../fetcher", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("../../fetcher")>();
+vi.mock("#core/fetcher", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("#core/fetcher")>();
   return {
     ...actual,
     isSafeUrl: async (url: string) => {

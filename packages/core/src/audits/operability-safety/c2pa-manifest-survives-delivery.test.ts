@@ -4,15 +4,15 @@ import {
   mockPageContext,
   mockCheckContext,
   mockFetchResult,
-} from "../../__tests__/test-utils";
-import { expectNotApplicableOnEmpty } from "../../tests/na-contract";
-import { MAX_RESPONSE_BODY_BYTES } from "../../constants";
-import type { FetchOptions, FetchResult } from "../../fetcher";
-import type { AuditResult } from "../../types";
-import { AuditTier, CheckStatus, EvidenceGrade } from "../../types";
+} from "#core/__tests__/test-utils";
+import { expectNotApplicableOnEmpty } from "#core/tests/na-contract";
+import { MAX_RESPONSE_BODY_BYTES } from "#core/constants";
+import type { FetchOptions, FetchResult } from "#core/fetcher";
+import type { AuditResult } from "#core/types";
+import { AuditTier, CheckStatus, EvidenceGrade } from "#core/types";
 
-vi.mock("../../fetcher", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("../../fetcher")>();
+vi.mock("#core/fetcher", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("#core/fetcher")>();
   return {
     ...actual,
     isSafeUrl: async (url: string) => url.startsWith("https://example.com"),

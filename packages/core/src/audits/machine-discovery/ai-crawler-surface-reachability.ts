@@ -6,10 +6,10 @@
 // list are subject to per-crawler rules. That gap is the whole audit: a site can
 // advertise a discovery surface the same file forbids, and a bot-blocking plugin
 // that adds `Disallow: /*.xml$` to a named AI group produces exactly that.
-import type { AuditMeta, AuditResult } from "../../types";
-import { Audit } from "../../audit";
-import { weightForGrade } from "../../scorer";
-import type { CheckContext } from "../../check-context";
+import type { AuditMeta, AuditResult } from "#core/types";
+import { Audit } from "#core/audit";
+import { weightForGrade } from "#core/scorer";
+import type { CheckContext } from "#core/check-context";
 import {
   parseRobotsFile,
   groupsForBot,
@@ -19,8 +19,8 @@ import {
   decidingRule,
   type RobotsGroup,
   RobotsRuleType,
-} from "../../gatherers/robots";
-import { siteSitemapTree, sampleEntries } from "../../gatherers/sitemap";
+} from "#core/gatherers/robots";
+import { siteSitemapTree, sampleEntries } from "#core/gatherers/sitemap";
 import {
   AuditTier,
   CheckPriority,
@@ -28,7 +28,7 @@ import {
   EvidenceKey,
   FixEffort,
   ScoreDisplayMode,
-} from "../../types";
+} from "#core/types";
 
 /**
  * The crawler panel, in the spelling each operator documents.

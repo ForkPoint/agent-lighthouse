@@ -1,11 +1,11 @@
 import type { CheerioAPI } from "cheerio";
 import type { Element } from "domhandler";
-import type { AuditMeta, AuditResult } from "../../types";
-import { Audit } from "../../audit";
-import type { CheckContext, PageContext } from "../../check-context";
-import { weightForGrade } from "../../scorer";
+import type { AuditMeta, AuditResult } from "#core/types";
+import { Audit } from "#core/audit";
+import type { CheckContext, PageContext } from "#core/check-context";
+import { weightForGrade } from "#core/scorer";
 import { INSTRUCTION_LEXICON } from "./invisible-instruction-scan";
-import { allJsonLdNodes } from "../../parser";
+import { allJsonLdNodes } from "#core/parser";
 import {
   AuditTier,
   CheckPriority,
@@ -13,7 +13,7 @@ import {
   EvidenceKey,
   FixEffort,
   ScoreDisplayMode,
-} from "../../types";
+} from "#core/types";
 
 /**
  * DOM anchors for visitor-contributed regions.

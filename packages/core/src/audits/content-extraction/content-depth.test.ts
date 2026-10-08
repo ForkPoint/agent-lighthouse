@@ -1,14 +1,14 @@
 import { describe, it, expect } from "vitest";
-import { defaultConfig } from "../../audit-config";
-import { planAudits } from "../../audit-runner";
+import { defaultConfig } from "#core/audit-config";
+import { planAudits } from "#core/audit-runner";
 import { ContentDepthAudit } from "./content-depth";
 import {
   attributableFixture,
   mockCheckContext,
   mockPageContext,
   unreachedSiteContext,
-} from "../../__tests__/test-utils";
-import { CheckStatus } from "../../types";
+} from "#core/__tests__/test-utils";
+import { CheckStatus } from "#core/types";
 
 const manyWords = Array.from({ length: 350 }, (_, i) => `word${i}`).join(" ");
 

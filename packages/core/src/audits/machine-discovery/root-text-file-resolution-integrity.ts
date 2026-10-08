@@ -1,11 +1,11 @@
 import { randomBytes } from "node:crypto";
-import type { AuditMeta, AuditResult } from "../../types";
-import { Audit } from "../../audit";
-import type { CheckContext } from "../../check-context";
-import type { FetchResult } from "../../fetcher";
-import { weightForGrade } from "../../scorer";
-import { isSafeUrl } from "../../url-utils";
-import { sharedProbeUrl } from "../../gatherers/discovery";
+import type { AuditMeta, AuditResult } from "#core/types";
+import { Audit } from "#core/audit";
+import type { CheckContext } from "#core/check-context";
+import type { FetchResult } from "#core/fetcher";
+import { weightForGrade } from "#core/scorer";
+import { isSafeUrl } from "#core/url-utils";
+import { sharedProbeUrl } from "#core/gatherers/discovery";
 import {
   AuditTier,
   CheckPriority,
@@ -13,7 +13,7 @@ import {
   EvidenceKey,
   FixEffort,
   ScoreDisplayMode,
-} from "../../types";
+} from "#core/types";
 
 /** Statuses that prove the origin resolves a missing root .txt as missing. */
 const ABSENT = new Set([404, 410]);

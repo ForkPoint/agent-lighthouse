@@ -10,12 +10,12 @@
 // `form-error-messages` covers error wiring on constrained fields; the two
 // side findings here are narrower (asterisk-only required-ness, and an error
 // element sitting next to a field that points at nothing).
-import type { AuditMeta, AuditResult } from "../../types";
-import { Audit } from "../../audit";
-import { weightForGrade } from "../../scorer";
+import type { AuditMeta, AuditResult } from "#core/types";
+import { Audit } from "#core/audit";
+import { weightForGrade } from "#core/scorer";
 import type { Cheerio, CheerioAPI } from "cheerio";
 import type { Element } from "domhandler";
-import type { CheckContext, PageContext } from "../../check-context";
+import type { CheckContext, PageContext } from "#core/check-context";
 import {
   AuditTier,
   CheckPriority,
@@ -23,7 +23,7 @@ import {
   EvidenceKey,
   FixEffort,
   ScoreDisplayMode,
-} from "../../types";
+} from "#core/types";
 
 /** Controls that hold no user identity data, so carry no autofill concept. */
 const NON_DATA_TYPES = new Set([

@@ -1,9 +1,9 @@
 import { describe, it, expect } from "vitest";
 import { BoilerplateTaxAudit } from "./boilerplate-tax";
-import { mockCheckContext, mockPageContext } from "../../__tests__/test-utils";
-import { expectNotApplicableOnEmpty } from "../../tests/na-contract";
-import type { CheckContext } from "../../check-context";
-import { AuditTier, CheckStatus, EvidenceGrade } from "../../types";
+import { mockCheckContext, mockPageContext } from "#core/__tests__/test-utils";
+import { expectNotApplicableOnEmpty } from "#core/tests/na-contract";
+import type { CheckContext } from "#core/check-context";
+import { AuditTier, CheckStatus, EvidenceGrade } from "#core/types";
 
 /** Distinct prose, seeded so two pages never share a five-word window. */
 const body = (seed: string, n = 60) =>

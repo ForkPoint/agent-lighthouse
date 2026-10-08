@@ -1,12 +1,12 @@
 import { describe, it, expect, vi } from "vitest";
 import { LlmsTxtLinksValidAudit } from "./llms-txt-links-valid";
-import { mockCheckContext, mockFetchResult } from "../../__tests__/test-utils";
-import { CheckStatus } from "../../types";
+import { mockCheckContext, mockFetchResult } from "#core/__tests__/test-utils";
+import { CheckStatus } from "#core/types";
 
 // isSafeUrl performs a real DNS lookup; stub it so link resolution is
 // deterministic and offline-safe. ctx.fetch is stubbed per-test below.
-vi.mock("../../fetcher", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("../../fetcher")>();
+vi.mock("#core/fetcher", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("#core/fetcher")>();
   return { ...actual, isSafeUrl: async () => true };
 });
 

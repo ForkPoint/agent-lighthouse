@@ -7,13 +7,13 @@
 // imported from there rather than copied, so the two cannot drift apart.
 // `accessible-names` asks whether an element has a name at all; `label` asks
 // whether a field has one. Neither reads what the name says.
-import type { AuditMeta, AuditResult } from "../../types";
-import { Audit } from "../../audit";
-import { weightForGrade } from "../../scorer";
-import type { CheckContext } from "../../check-context";
+import type { AuditMeta, AuditResult } from "#core/types";
+import { Audit } from "#core/audit";
+import { weightForGrade } from "#core/scorer";
+import type { CheckContext } from "#core/check-context";
 import { INSTRUCTION_LEXICON } from "./invisible-instruction-scan";
 import { idSelector } from "./_agent-affordances";
-import { scanReadPageText, unreadPageTextReason } from "../../scan-evidence";
+import { scanReadPageText, unreadPageTextReason } from "#core/scan-evidence";
 import {
   AuditTier,
   CheckPriority,
@@ -21,7 +21,7 @@ import {
   EvidenceKey,
   FixEffort,
   ScoreDisplayMode,
-} from "../../types";
+} from "#core/types";
 
 /** Long values are the canonical smuggling slot, since long alt is already an anti-pattern. */
 const LONG_VALUE_CHARS = 250;

@@ -19,10 +19,10 @@
 // Scope note (non-double-counting): `tdm-reservation` and `tdm-policy` are
 // read by `access-crawl-control/tdm-rep`, which owns the TDM-Rep protocol
 // end to end. This audit ignores them.
-import type { AuditMeta, AuditResult } from "../../types";
-import { Audit } from "../../audit";
-import type { CheckContext, PageContext } from "../../check-context";
-import { weightForGrade } from "../../scorer";
+import type { AuditMeta, AuditResult } from "#core/types";
+import { Audit } from "#core/audit";
+import type { CheckContext, PageContext } from "#core/check-context";
+import { weightForGrade } from "#core/scorer";
 import {
   AuditTier,
   CheckPriority,
@@ -30,7 +30,7 @@ import {
   EvidenceKey,
   FixEffort,
   ScoreDisplayMode,
-} from "../../types";
+} from "#core/types";
 
 /**
  * The AIPREF attachment header. draft-ietf-aipref-attach defines exactly two

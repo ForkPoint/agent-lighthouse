@@ -6,14 +6,14 @@ import { AiBotDirectivesAudit } from "./ai-bot-directives";
 import { GptbotAudit } from "./gptbot";
 import { AnthropicAudit } from "./anthropic-ai";
 import { SensitivePathsAudit } from "./sensitive-paths";
-import type { Audit } from "../../audit";
-import type { AuditResult } from "../../types";
+import type { Audit } from "#core/audit";
+import type { AuditResult } from "#core/types";
 import {
   mockCheckContext,
   mockFetchResult,
   mockPageContext,
-} from "../../__tests__/test-utils";
-import { CheckPriority, CheckStatus } from "../../types";
+} from "#core/__tests__/test-utils";
+import { CheckPriority, CheckStatus } from "#core/types";
 
 /**
  * Differential harness for every audit that reads `/robots.txt`.

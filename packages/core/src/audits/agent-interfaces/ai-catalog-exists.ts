@@ -1,7 +1,7 @@
-import type { AuditMeta, AuditResult } from "../../types";
-import { Audit } from "../../audit";
-import { weightForGrade } from "../../scorer";
-import type { CheckContext, PageContext } from "../../check-context";
+import type { AuditMeta, AuditResult } from "#core/types";
+import { Audit } from "#core/audit";
+import { weightForGrade } from "#core/scorer";
+import type { CheckContext, PageContext } from "#core/check-context";
 import { AI_CATALOG_PATH, describeFailure, readAiCatalog } from "./_ard";
 import {
   AuditTier,
@@ -10,7 +10,7 @@ import {
   EvidenceKey,
   FixEffort,
   ScoreDisplayMode,
-} from "../../types";
+} from "#core/types";
 
 /** `<link ...; rel="ai-catalog">` in an HTTP Link header (RFC 8288). */
 const LINK_HEADER_RE = /<([^>]+)>\s*;[^,]*?\brel\s*=\s*"?([^",;]+)"?/gi;

@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
-import { defaultConfig } from "../../audit-config";
-import { planAudits } from "../../audit-runner";
+import { defaultConfig } from "#core/audit-config";
+import { planAudits } from "#core/audit-runner";
 import { NoBotDetectionAudit } from "./no-bot-detection";
 import {
   attributableFixture,
@@ -9,9 +9,9 @@ import {
   mockPageContext,
   unreachedSiteContext,
   walledSiteContext,
-} from "../../__tests__/test-utils";
-import { CheckStatus } from "../../types";
-import { WafProvider } from "../../waf-detector";
+} from "#core/__tests__/test-utils";
+import { CheckStatus } from "#core/types";
+import { WafProvider } from "#core/waf-detector";
 
 describe("NoBotDetectionAudit", () => {
   const audit = new NoBotDetectionAudit();

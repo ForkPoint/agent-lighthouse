@@ -1,7 +1,7 @@
 import type { Cheerio, CheerioAPI } from "cheerio";
 import type { Element } from "domhandler";
-import { allJsonLdNodes } from "../parser";
-import type { PageContext } from "../check-context";
+import { allJsonLdNodes } from "#core/parser";
+import type { PageContext } from "#core/check-context";
 
 /**
  * The commerce reading the agentic-commerce audits share.

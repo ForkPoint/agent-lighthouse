@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { SemanticListsAudit } from "./semantic-lists";
-import { mockCheckContext, mockPageContext } from "../../__tests__/test-utils";
-import { CheckStatus } from "../../types";
+import { mockCheckContext, mockPageContext } from "#core/__tests__/test-utils";
+import { CheckStatus } from "#core/types";
 
 const page = (body: string, url = "https://example.com/guide") =>
   mockPageContext(url, `<html><body>${body}</body></html>`, 1);

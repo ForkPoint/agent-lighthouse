@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { unreachableContext, bareSiteContext } from "./fixtures";
-import { scanReadTheSite } from "../scan-evidence";
-import { EvidenceKey, PageType } from "../types";
+import { scanReadTheSite } from "#core/scan-evidence";
+import { EvidenceKey, PageType } from "#core/types";
 
 describe("unreachableContext", () => {
   it("is not judgeable, and says why", () => {

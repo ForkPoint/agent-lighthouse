@@ -7,10 +7,10 @@
 // and neither has any notion of the native element the widget replaced. This
 // audit measures that substitution, and only then asks whether the replacement
 // carries a usable APG contract.
-import type { AuditMeta, AuditResult } from "../../types";
-import { Audit } from "../../audit";
-import { weightForGrade } from "../../scorer";
-import type { CheckContext, PageContext } from "../../check-context";
+import type { AuditMeta, AuditResult } from "#core/types";
+import { Audit } from "#core/audit";
+import { weightForGrade } from "#core/scorer";
+import type { CheckContext, PageContext } from "#core/check-context";
 import { idSelector } from "./_agent-affordances";
 import {
   AuditTier,
@@ -19,7 +19,7 @@ import {
   EvidenceKey,
   FixEffort,
   ScoreDisplayMode,
-} from "../../types";
+} from "#core/types";
 
 /**
  * Controls a mainstream agent toolkit drives in one call — `selectOption`,

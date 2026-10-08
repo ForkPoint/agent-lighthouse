@@ -1,9 +1,9 @@
-import type { AuditMeta, AuditResult } from "../../types";
-import { Audit } from "../../audit";
-import type { CheckContext } from "../../check-context";
-import { weightForGrade } from "../../scorer";
+import type { AuditMeta, AuditResult } from "#core/types";
+import { Audit } from "#core/audit";
+import type { CheckContext } from "#core/check-context";
+import { weightForGrade } from "#core/scorer";
 
-import { sharedProbeUrl } from "../../gatherers/discovery";
+import { sharedProbeUrl } from "#core/gatherers/discovery";
 import {
   AuditTier,
   CheckPriority,
@@ -12,7 +12,7 @@ import {
   FixEffort,
   ScoreDisplayMode,
   HttpMethod,
-} from "../../types";
+} from "#core/types";
 
 export class CorsAiFilesAudit extends Audit {
   static override meta: AuditMeta = {

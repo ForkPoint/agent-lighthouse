@@ -6,12 +6,12 @@
 // stream, and fails on its size. This audit is the mirror case: markup that is
 // hidden from the machine until a pointer arrives, and it fails on the
 // destinations lost, not on the bytes.
-import type { AuditMeta, AuditResult } from "../../types";
-import { Audit } from "../../audit";
-import { weightForGrade } from "../../scorer";
-import type { CheckContext } from "../../check-context";
-import { collectPageCss, type CssRule } from "../../gatherers/css-rules";
-import { escapeAttrValue } from "../../parser";
+import type { AuditMeta, AuditResult } from "#core/types";
+import { Audit } from "#core/audit";
+import { weightForGrade } from "#core/scorer";
+import type { CheckContext } from "#core/check-context";
+import { collectPageCss, type CssRule } from "#core/gatherers/css-rules";
+import { escapeAttrValue } from "#core/parser";
 import {
   AuditTier,
   CheckPriority,
@@ -19,7 +19,7 @@ import {
   EvidenceKey,
   FixEffort,
   ScoreDisplayMode,
-} from "../../types";
+} from "#core/types";
 
 /** Declarations that bring a hidden element back into view. */
 const REVEALING = [

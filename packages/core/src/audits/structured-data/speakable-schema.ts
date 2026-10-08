@@ -18,11 +18,11 @@
 // speakable successor statement, this audit loses its consumer entirely and
 // must be re-graded (candidate: informative) or sunset.
 
-import type { AuditMeta, AuditResult } from "../../types";
-import { Audit } from "../../audit";
-import type { CheckContext, PageContext } from "../../check-context";
-import { weightForGrade } from "../../scorer";
-import { flattenJsonLd } from "../../parser";
+import type { AuditMeta, AuditResult } from "#core/types";
+import { Audit } from "#core/audit";
+import type { CheckContext, PageContext } from "#core/check-context";
+import { weightForGrade } from "#core/scorer";
+import { flattenJsonLd } from "#core/parser";
 import {
   AuditTier,
   CheckPriority,
@@ -31,7 +31,7 @@ import {
   FixEffort,
   PageType,
   ScoreDisplayMode,
-} from "../../types";
+} from "#core/types";
 
 /** Every `@type` token on a node, as a flat list of strings. */
 function typeNames(schema: Record<string, unknown>): string[] {

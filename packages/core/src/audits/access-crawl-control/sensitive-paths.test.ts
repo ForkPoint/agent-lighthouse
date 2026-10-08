@@ -4,8 +4,8 @@ import {
   mockCheckContext,
   mockFetchResult,
   mockPageContext,
-} from "../../__tests__/test-utils";
-import { CheckPriority, CheckStatus } from "../../types";
+} from "#core/__tests__/test-utils";
+import { CheckPriority, CheckStatus } from "#core/types";
 
 /** Homepage carrying the given anchors, so the crawl "observes" those paths. */
 function pageLinking(...hrefs: string[]) {

@@ -1,14 +1,14 @@
 import { describe, it, expect } from "vitest";
-import { defaultConfig } from "../audit-config";
-import { AuditResultSchema } from "../schemas";
+import { defaultConfig } from "#core/audit-config";
+import { AuditResultSchema } from "#core/schemas";
 import {
   mockCheckContext,
   mockFetchResult,
   mockPageContext,
-} from "../__tests__/test-utils";
+} from "#core/__tests__/test-utils";
 import { auditSources } from "./audit-sources";
-import type { CheckContext } from "../check-context";
-import { CheckStatus } from "../types";
+import type { CheckContext } from "#core/check-context";
+import { CheckStatus } from "#core/types";
 
 /**
  * Absent artifact, absent verdict.

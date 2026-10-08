@@ -1,8 +1,8 @@
-import type { AuditMeta, AuditResult } from "../../types";
-import { Audit } from "../../audit";
-import { weightForGrade } from "../../scorer";
-import type { CheckContext } from "../../check-context";
-import { getMainContentText } from "../../parser";
+import type { AuditMeta, AuditResult } from "#core/types";
+import { Audit } from "#core/audit";
+import { weightForGrade } from "#core/scorer";
+import type { CheckContext } from "#core/check-context";
+import { getMainContentText } from "#core/parser";
 import {
   AuditTier,
   CheckPriority,
@@ -11,7 +11,7 @@ import {
   FixEffort,
   PageType,
   ScoreDisplayMode,
-} from "../../types";
+} from "#core/types";
 
 // Match only unit/currency/percent/magnitude-anchored figures. A bare
 // `\d+\.\d+` matched shoe sizes, raw JS floats and phone-number fragments,

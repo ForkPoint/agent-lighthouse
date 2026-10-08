@@ -6,13 +6,13 @@
 // a listing holds can be reached at all by URL, which is a different question:
 // a listing whose items only appear after a scroll is fully covered by a
 // sitemap and still unreachable from the listing itself.
-import type { AuditMeta, AuditResult } from "../../types";
-import { Audit } from "../../audit";
-import { weightForGrade } from "../../scorer";
-import type { CheckContext, PageContext } from "../../check-context";
-import { pagesOfType } from "../../gatherers/pages";
-import { fetchSampledPage } from "../../gatherers/sampled-pages";
-import { allJsonLdNodes, parseHtml } from "../../parser";
+import type { AuditMeta, AuditResult } from "#core/types";
+import { Audit } from "#core/audit";
+import { weightForGrade } from "#core/scorer";
+import type { CheckContext, PageContext } from "#core/check-context";
+import { pagesOfType } from "#core/gatherers/pages";
+import { fetchSampledPage } from "#core/gatherers/sampled-pages";
+import { allJsonLdNodes, parseHtml } from "#core/parser";
 import {
   AuditTier,
   CheckPriority,
@@ -21,7 +21,7 @@ import {
   FixEffort,
   PageType,
   ScoreDisplayMode,
-} from "../../types";
+} from "#core/types";
 
 /** Selectors that identify a repeated item in a listing. */
 const ITEM_SELECTOR =

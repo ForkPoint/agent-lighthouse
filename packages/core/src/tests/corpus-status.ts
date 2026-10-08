@@ -1,4 +1,4 @@
-import { EvidenceKey } from "../types";
+import { EvidenceKey } from "#core/types";
 /**
  * What each corpus domain did the last time a runner saw it.
  *

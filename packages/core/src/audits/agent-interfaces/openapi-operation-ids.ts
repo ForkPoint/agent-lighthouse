@@ -1,14 +1,14 @@
-import type { AuditMeta, AuditResult } from "../../types";
-import { Audit } from "../../audit";
-import { weightForGrade } from "../../scorer";
-import type { CheckContext } from "../../check-context";
+import type { AuditMeta, AuditResult } from "#core/types";
+import { Audit } from "#core/audit";
+import { weightForGrade } from "#core/scorer";
+import type { CheckContext } from "#core/check-context";
 import {
   defectCount,
   defectNote,
   NO_OPENAPI_SPEC,
   readOpenApiPaths,
   readOpenApiSpec,
-} from "../../gatherers/openapi";
+} from "#core/gatherers/openapi";
 import {
   AuditTier,
   CheckPriority,
@@ -16,7 +16,7 @@ import {
   EvidenceKey,
   FixEffort,
   ScoreDisplayMode,
-} from "../../types";
+} from "#core/types";
 
 /**
  * The naming rule folded in from v1 5.23 (webmcp-tool-naming) on 2026-08-22.

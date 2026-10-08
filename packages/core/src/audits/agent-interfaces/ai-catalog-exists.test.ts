@@ -4,9 +4,9 @@ import {
   mockCheckContext,
   mockPageContext,
   mockFetchResult,
-} from "../../__tests__/test-utils";
-import type { PageContext } from "../../check-context";
-import { CheckStatus } from "../../types";
+} from "#core/__tests__/test-utils";
+import type { PageContext } from "#core/check-context";
+import { CheckStatus } from "#core/types";
 
 /** An ARD §4.1 manifest, shaped like the spec's own conformance example. */
 function ard(over: Record<string, unknown> = {}): string {

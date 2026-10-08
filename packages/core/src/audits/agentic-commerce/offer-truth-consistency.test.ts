@@ -4,10 +4,10 @@ import {
   duplicateConflicts,
   renderedCurrencies,
 } from "./offer-truth-consistency";
-import { mockCheckContext, mockPageContext } from "../../__tests__/test-utils";
-import { expectNotApplicableOnEmpty } from "../../tests/na-contract";
-import type { AuditResult } from "../../types";
-import { CheckStatus } from "../../types";
+import { mockCheckContext, mockPageContext } from "#core/__tests__/test-utils";
+import { expectNotApplicableOnEmpty } from "#core/tests/na-contract";
+import type { AuditResult } from "#core/types";
+import { CheckStatus } from "#core/types";
 
 const strings = (result: AuditResult, key: string): string[] =>
   (result.details?.[key] ?? []) as string[];

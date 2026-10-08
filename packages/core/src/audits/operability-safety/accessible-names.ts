@@ -9,7 +9,7 @@
  * covered by these rules).
  */
 import { base, defineA11yAudit, graded } from "./_shared";
-import { CheckPriority, EvidenceGrade, FixEffort } from "../../types";
+import { CheckPriority, EvidenceGrade, FixEffort } from "#core/types";
 
 export const AccessibleNamesAudit = defineA11yAudit({
   rules: ["button-name", "link-name"],

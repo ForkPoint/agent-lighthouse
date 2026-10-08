@@ -13,10 +13,10 @@
 // (the `aria-valid-attr-value` rule), and `label` covers accessible naming.
 // This audit measures *coverage* — whether the fields that carry a validation
 // constraint are wired to a description at all — which neither of those asks.
-import type { AuditMeta, AuditResult } from "../../types";
-import { Audit } from "../../audit";
-import { weightForGrade } from "../../scorer";
-import type { CheckContext, PageContext } from "../../check-context";
+import type { AuditMeta, AuditResult } from "#core/types";
+import { Audit } from "#core/audit";
+import { weightForGrade } from "#core/scorer";
+import type { CheckContext, PageContext } from "#core/check-context";
 import {
   AuditTier,
   CheckPriority,
@@ -24,7 +24,7 @@ import {
   EvidenceKey,
   FixEffort,
   ScoreDisplayMode,
-} from "../../types";
+} from "#core/types";
 
 /** Controls that are never user-entered data, so never carry a message. */
 const NON_DATA_TYPES = new Set([

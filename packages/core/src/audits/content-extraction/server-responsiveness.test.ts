@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
-import { defaultConfig } from "../../audit-config";
-import { planAudits } from "../../audit-runner";
+import { defaultConfig } from "#core/audit-config";
+import { planAudits } from "#core/audit-runner";
 import { ServerResponsivenessAudit } from "./server-responsiveness";
 import {
   attributableFixture,
@@ -9,9 +9,9 @@ import {
   shellSiteContext,
   unreachedSiteContext,
   walledSiteContext,
-} from "../../__tests__/test-utils";
-import type { PageContext } from "../../check-context";
-import { CheckPriority, CheckStatus } from "../../types";
+} from "#core/__tests__/test-utils";
+import type { PageContext } from "#core/check-context";
+import { CheckPriority, CheckStatus } from "#core/types";
 
 /** A page whose fetch recorded `ttfb` milliseconds to first byte. */
 function timedPage(ttfb: number, path = "/"): PageContext {

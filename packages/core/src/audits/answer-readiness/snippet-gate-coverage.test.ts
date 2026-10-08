@@ -1,15 +1,15 @@
 import { describe, it, expect } from "vitest";
-import { defaultConfig } from "../../audit-config";
-import { planAudits } from "../../audit-runner";
+import { defaultConfig } from "#core/audit-config";
+import { planAudits } from "#core/audit-runner";
 import { SnippetGateCoverageAudit } from "./snippet-gate-coverage";
 import {
   attributableFixture,
   mockCheckContext,
   mockPageContext,
   unreachedSiteContext,
-} from "../../__tests__/test-utils";
-import { expectNotApplicableOnEmpty } from "../../tests/na-contract";
-import { CheckStatus } from "../../types";
+} from "#core/__tests__/test-utils";
+import { expectNotApplicableOnEmpty } from "#core/tests/na-contract";
+import { CheckStatus } from "#core/types";
 
 /** Filler prose so a small data-nosnippet subtree stays under the 20% floor. */
 const FILLER =

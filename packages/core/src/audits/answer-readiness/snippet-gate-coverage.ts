@@ -5,11 +5,11 @@
 // meta tags and X-Robots-Tag response headers — and measures them against the
 // page's own answer content. Repeated X-Robots-Tag field lines reach this audit
 // combined with ", " per RFC 9110 §5.3; see packages/core/src/fetcher.ts.
-import type { AuditMeta, AuditResult } from "../../types";
-import { Audit } from "../../audit";
-import { weightForGrade } from "../../scorer";
-import type { CheckContext, PageContext } from "../../check-context";
-import { allJsonLdNodes } from "../../parser";
+import type { AuditMeta, AuditResult } from "#core/types";
+import { Audit } from "#core/audit";
+import { weightForGrade } from "#core/scorer";
+import type { CheckContext, PageContext } from "#core/check-context";
+import { allJsonLdNodes } from "#core/parser";
 import {
   AuditTier,
   CheckPriority,
@@ -17,7 +17,7 @@ import {
   EvidenceKey,
   FixEffort,
   ScoreDisplayMode,
-} from "../../types";
+} from "#core/types";
 
 /** Above this share of main-content characters, suppression is structural. */
 const COVERAGE_FLOOR = 0.2;

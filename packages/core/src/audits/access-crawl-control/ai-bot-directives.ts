@@ -1,9 +1,9 @@
-import type { AuditMeta, AuditResult } from "../../types";
-import { Audit } from "../../audit";
-import type { CheckContext } from "../../check-context";
-import { parseRobotsFile, type RobotsGroup } from "../../gatherers/robots";
+import type { AuditMeta, AuditResult } from "#core/types";
+import { Audit } from "#core/audit";
+import type { CheckContext } from "#core/check-context";
+import { parseRobotsFile, type RobotsGroup } from "#core/gatherers/robots";
 import { isAllowed } from "./_robots-txt-helpers";
-import { weightForGrade } from "../../scorer";
+import { weightForGrade } from "#core/scorer";
 import {
   AuditTier,
   CheckPriority,
@@ -11,7 +11,7 @@ import {
   EvidenceKey,
   FixEffort,
   ScoreDisplayMode,
-} from "../../types";
+} from "#core/types";
 
 /**
  * One robots.txt read, five AI bot tokens, one score.

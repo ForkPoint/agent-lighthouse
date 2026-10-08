@@ -1,10 +1,10 @@
 import { cacheOwner } from "./cache-owner";
 import * as cheerio from "cheerio";
 import type { AnyNode } from "domhandler";
-import type { FetchOptions, FetchResult } from "../fetcher";
-import { isSafeUrl } from "../fetcher";
+import type { FetchOptions, FetchResult } from "#core/fetcher";
+import { isSafeUrl } from "#core/fetcher";
 import { linksWithRel } from "./structured-fields";
-import { HttpMethod } from "../types";
+import { HttpMethod } from "#core/types";
 
 /**
  * Feed discovery and parsing, once per scan.

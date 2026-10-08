@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
-import { generateScanSummary } from "../summary";
-import type { ScanReport } from "../types";
-import { CheckPriority, ScoreTier } from "../types";
+import { generateScanSummary } from "#core/summary";
+import type { ScanReport } from "#core/types";
+import { CheckPriority, ScoreTier } from "#core/types";
 
 describe("generateScanSummary", () => {
   it("should generate a summary for an agent-ready site with no issues", () => {

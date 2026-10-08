@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { ScanConditionsSchema } from "../schemas";
+import { ScanConditionsSchema } from "#core/schemas";
 import {
   classifyPage,
   declaredPageClassification,
@@ -7,11 +7,15 @@ import {
   extractJsonLd,
   extractMetaTags,
   parseHtml,
-} from "../parser";
-import { planAudits, scopeAudit } from "../audit-runner";
-import { ArticleSchemaAudit } from "../audits/structured-data/article-schema";
-import { mockCheckContext, mockPageContext } from "../__tests__/test-utils";
-import { ClassificationConfidence, PageType, PageTypeSource } from "../types";
+} from "#core/parser";
+import { planAudits, scopeAudit } from "#core/audit-runner";
+import { ArticleSchemaAudit } from "#core/audits/structured-data/article-schema";
+import { mockCheckContext, mockPageContext } from "#core/__tests__/test-utils";
+import {
+  ClassificationConfidence,
+  PageType,
+  PageTypeSource,
+} from "#core/types";
 
 const prose =
   "This guide explains how to maintain a reusable widget and check each part before use. ".repeat(

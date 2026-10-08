@@ -1,7 +1,7 @@
-import type { AuditMeta } from "../../types";
+import type { AuditMeta } from "#core/types";
 import type { CrawlerBot } from "./_robots-txt-helpers";
 import { CrawlerBotAudit } from "./_crawler-bot-audit";
-import { weightForGrade } from "../../scorer";
+import { weightForGrade } from "#core/scorer";
 import {
   AuditTier,
   CheckPriority,
@@ -9,7 +9,7 @@ import {
   EvidenceKey,
   FixEffort,
   ScoreDisplayMode,
-} from "../../types";
+} from "#core/types";
 import { CrawlerPurpose } from "./_robots-txt-helpers";
 
 export class AmazonbotAudit extends CrawlerBotAudit {

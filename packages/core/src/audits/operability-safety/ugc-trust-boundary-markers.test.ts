@@ -1,15 +1,15 @@
 import { describe, it, expect, vi } from "vitest";
 import { UgcTrustBoundaryMarkersAudit } from "./ugc-trust-boundary-markers";
-import { mockCheckContext, mockPageContext } from "../../__tests__/test-utils";
-import { expectNotApplicableOnEmpty } from "../../tests/na-contract";
-import type { CheckContext } from "../../check-context";
+import { mockCheckContext, mockPageContext } from "#core/__tests__/test-utils";
+import { expectNotApplicableOnEmpty } from "#core/tests/na-contract";
+import type { CheckContext } from "#core/check-context";
 import {
   AuditTier,
   CheckPriority,
   CheckStatus,
   EvidenceGrade,
   ScoreDisplayMode,
-} from "../../types";
+} from "#core/types";
 
 /** One content page carrying `body`. Index 1 keeps it off the homepage path. */
 function page(body: string): CheckContext {

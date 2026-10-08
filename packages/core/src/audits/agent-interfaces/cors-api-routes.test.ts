@@ -1,8 +1,8 @@
 import { describe, it, expect, vi } from "vitest";
 import { CorsApiRoutesAudit } from "./cors-api-routes";
-import { mockCheckContext, mockFetchResult } from "../../__tests__/test-utils";
-import { expectNotApplicableOnEmpty } from "../../tests/na-contract";
-import type { FetchOptions, FetchResult } from "../../fetcher";
+import { mockCheckContext, mockFetchResult } from "#core/__tests__/test-utils";
+import { expectNotApplicableOnEmpty } from "#core/tests/na-contract";
+import type { FetchOptions, FetchResult } from "#core/fetcher";
 import {
   AuditTier,
   CheckPriority,
@@ -10,14 +10,14 @@ import {
   EvidenceGrade,
   ScoreDisplayMode,
   HttpMethod,
-} from "../../types";
+} from "#core/types";
 
 // isSafeUrl performs a real DNS lookup before the audit probes a `servers[].url`
 // it read out of a site-controlled document. Stub it with an offline stand-in
 // that still blocks loopback and private ranges, so the refusal test proves the
 // gate rather than the mock.
-vi.mock("../../fetcher", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("../../fetcher")>();
+vi.mock("#core/fetcher", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("#core/fetcher")>();
   return {
     ...actual,
     isSafeUrl: async (url: string) => {

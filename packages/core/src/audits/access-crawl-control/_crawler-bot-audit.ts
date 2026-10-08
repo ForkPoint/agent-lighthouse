@@ -1,13 +1,13 @@
-import type { AuditResult } from "../../types";
-import { Audit } from "../../audit";
-import type { CheckContext } from "../../check-context";
+import type { AuditResult } from "#core/types";
+import { Audit } from "#core/audit";
+import type { CheckContext } from "#core/check-context";
 import type { CrawlerBot } from "./_robots-txt-helpers";
 import {
   parseRobotsFile,
   hasNamedGroup,
   isPathAllowed,
-} from "../../gatherers/robots";
-import { CheckPriority } from "../../types";
+} from "#core/gatherers/robots";
+import { CheckPriority } from "#core/types";
 
 /**
  * Base audit class for the per-bot robots.txt permission checks.

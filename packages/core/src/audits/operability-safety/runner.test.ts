@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { runA11yForHtml, stripStyles } from "./runner";
-import { CheckStatus } from "../../types";
+import { CheckStatus } from "#core/types";
 
 // The runner builds a fresh jsdom per call and runs the vendored a11y rules
 // against it, fully isolated, re-runnable, and concurrency-safe.

@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { CoreOpenGraphAudit } from "./core-open-graph";
-import { mockCheckContext, mockPageContext } from "../../__tests__/test-utils";
-import { CheckPriority, CheckStatus } from "../../types";
+import { mockCheckContext, mockPageContext } from "#core/__tests__/test-utils";
+import { CheckPriority, CheckStatus } from "#core/types";
 
 const doc = (head: string) =>
   `<html lang="en"><head>${head}</head><body></body></html>`;

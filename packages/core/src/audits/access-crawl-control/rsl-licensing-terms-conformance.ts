@@ -1,13 +1,13 @@
 import * as cheerio from "cheerio";
-import type { AuditMeta, AuditResult } from "../../types";
-import { Audit } from "../../audit";
-import type { CheckContext } from "../../check-context";
-import { weightForGrade } from "../../scorer";
-import { isSafeUrl } from "../../url-utils";
-import { probeRsl } from "../../gatherers/rsl";
-import { directiveLines } from "../../gatherers/robots";
-import { linksWithRel } from "../../gatherers/structured-fields";
-import { isIso4217 } from "../../gatherers/currency";
+import type { AuditMeta, AuditResult } from "#core/types";
+import { Audit } from "#core/audit";
+import type { CheckContext } from "#core/check-context";
+import { weightForGrade } from "#core/scorer";
+import { isSafeUrl } from "#core/url-utils";
+import { probeRsl } from "#core/gatherers/rsl";
+import { directiveLines } from "#core/gatherers/robots";
+import { linksWithRel } from "#core/gatherers/structured-fields";
+import { isIso4217 } from "#core/gatherers/currency";
 import {
   AuditTier,
   CheckPriority,
@@ -15,7 +15,7 @@ import {
   EvidenceKey,
   FixEffort,
   ScoreDisplayMode,
-} from "../../types";
+} from "#core/types";
 
 /** The namespace the RSL 1.0 specification defines. */
 const RSL_NAMESPACE = "https://rslstandard.org/rsl";

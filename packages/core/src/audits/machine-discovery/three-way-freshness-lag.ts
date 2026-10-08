@@ -1,20 +1,20 @@
-import type { AuditMeta, AuditResult } from "../../types";
-import { Audit } from "../../audit";
-import type { CheckContext, PageContext } from "../../check-context";
-import { weightForGrade } from "../../scorer";
+import type { AuditMeta, AuditResult } from "#core/types";
+import { Audit } from "#core/audit";
+import type { CheckContext, PageContext } from "#core/check-context";
+import { weightForGrade } from "#core/scorer";
 
-import { allJsonLdNodes } from "../../parser";
+import { allJsonLdNodes } from "#core/parser";
 import {
   siteSitemapTree,
   isW3CDateTime,
   sampleEntries,
-} from "../../gatherers/sitemap";
+} from "#core/gatherers/sitemap";
 import {
   sharedFeeds,
   parseFeedDate,
   sharedCanonicalCheck,
   type FeedDocument,
-} from "../../gatherers/feeds";
+} from "#core/gatherers/feeds";
 import {
   AuditTier,
   CheckPriority,
@@ -22,7 +22,7 @@ import {
   EvidenceKey,
   FixEffort,
   ScoreDisplayMode,
-} from "../../types";
+} from "#core/types";
 
 /** How far a surface may trail the page before it is a lag rather than a delay. */
 const LAG_DAYS = 7;

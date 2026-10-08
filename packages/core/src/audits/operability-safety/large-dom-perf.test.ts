@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { runA11yForHtml } from "./runner";
-import { CheckStatus } from "../../types";
+import { CheckStatus } from "#core/types";
 
 /**
  * Regression guard for issue #11 — scans froze at 40% "Analyzing pages" and

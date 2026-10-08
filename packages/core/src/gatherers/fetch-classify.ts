@@ -1,4 +1,4 @@
-import type { FetchResult } from "../fetcher";
+import type { FetchResult } from "#core/fetcher";
 
 export const FetchClass = {
   Ok: "ok",

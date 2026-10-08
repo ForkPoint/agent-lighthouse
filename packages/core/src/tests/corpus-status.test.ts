@@ -9,7 +9,7 @@ import {
   type RunnerOutcome,
   CorpusState,
 } from "./corpus-status";
-import { EvidenceKey } from "../types";
+import { EvidenceKey } from "#core/types";
 
 const scored: RunnerOutcome = {
   domain: "ok.test",

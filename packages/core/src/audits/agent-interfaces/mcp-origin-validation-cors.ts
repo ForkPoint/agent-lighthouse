@@ -1,9 +1,9 @@
 import { randomBytes } from "node:crypto";
-import type { AuditMeta, AuditResult } from "../../types";
-import { Audit } from "../../audit";
-import { weightForGrade } from "../../scorer";
-import type { CheckContext } from "../../check-context";
-import { isSafeUrl } from "../../url-utils";
+import type { AuditMeta, AuditResult } from "#core/types";
+import { Audit } from "#core/audit";
+import { weightForGrade } from "#core/scorer";
+import type { CheckContext } from "#core/check-context";
+import { isSafeUrl } from "#core/url-utils";
 import {
   discoverMcpEndpoint,
   discoverProbe,
@@ -12,7 +12,7 @@ import {
   sharedProbe,
   discoverParams,
   MCP_PROTOCOL_VERSION,
-} from "../../gatherers/mcp";
+} from "#core/gatherers/mcp";
 import {
   AuditTier,
   CheckPriority,
@@ -21,7 +21,7 @@ import {
   FixEffort,
   ScoreDisplayMode,
   HttpMethod,
-} from "../../types";
+} from "#core/types";
 
 /** A domain that cannot belong to anyone: `.example` is reserved by RFC 2606. */
 function throwawayOrigin(): string {

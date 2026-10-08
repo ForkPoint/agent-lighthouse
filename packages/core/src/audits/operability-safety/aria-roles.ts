@@ -5,7 +5,7 @@
  * ./_shared.ts.
  */
 import { base, defineA11yAudit, graded } from "./_shared";
-import { CheckPriority, EvidenceGrade, FixEffort } from "../../types";
+import { CheckPriority, EvidenceGrade, FixEffort } from "#core/types";
 
 export const AriaRolesAudit = defineA11yAudit({
   rules: ["aria-roles", "aria-deprecated-role", "aria-allowed-role"],

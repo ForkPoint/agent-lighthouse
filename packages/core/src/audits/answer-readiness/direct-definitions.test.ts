@@ -1,13 +1,13 @@
 import { describe, it, expect } from "vitest";
 import { DirectDefinitionsAudit } from "./direct-definitions";
-import { mockCheckContext, mockPageContext } from "../../__tests__/test-utils";
-import { expectNotApplicableOnEmpty } from "../../tests/na-contract";
+import { mockCheckContext, mockPageContext } from "#core/__tests__/test-utils";
+import { expectNotApplicableOnEmpty } from "#core/tests/na-contract";
 import {
   AuditTier,
   CheckStatus,
   EvidenceGrade,
   ScoreDisplayMode,
-} from "../../types";
+} from "#core/types";
 
 const page = (
   body: string,

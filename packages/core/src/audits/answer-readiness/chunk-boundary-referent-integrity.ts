@@ -1,14 +1,14 @@
 import type { Element } from "domhandler";
-import type { AuditMeta, AuditResult } from "../../types";
-import { Audit } from "../../audit";
-import type { CheckContext, PageContext } from "../../check-context";
-import { weightForGrade } from "../../scorer";
+import type { AuditMeta, AuditResult } from "#core/types";
+import { Audit } from "#core/audit";
+import type { CheckContext, PageContext } from "#core/check-context";
+import { weightForGrade } from "#core/scorer";
 import {
   sentences,
   wordCount,
   normalizeText,
-} from "../../gatherers/text-metrics";
-import { allJsonLdNodes } from "../../parser";
+} from "#core/gatherers/text-metrics";
+import { allJsonLdNodes } from "#core/parser";
 import {
   AuditTier,
   CheckPriority,
@@ -16,7 +16,7 @@ import {
   EvidenceKey,
   FixEffort,
   ScoreDisplayMode,
-} from "../../types";
+} from "#core/types";
 
 /** Openers that point at something outside the chunk they start. */
 const ANAPHORA =

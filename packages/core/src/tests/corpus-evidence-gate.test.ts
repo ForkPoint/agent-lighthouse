@@ -7,10 +7,10 @@ vi.mock("node:dns/promises", () => ({
   },
 }));
 
-import { defaultConfig } from "../audit-config";
-import { planAudits } from "../audit-runner";
-import { buildScanEvidence } from "../scan-evidence";
-import { detectWafProtection } from "../waf-detector";
+import { defaultConfig } from "#core/audit-config";
+import { planAudits } from "#core/audit-runner";
+import { buildScanEvidence } from "#core/scan-evidence";
+import { detectWafProtection } from "#core/waf-detector";
 import {
   parseHtml,
   extractJsonLd,
@@ -19,16 +19,16 @@ import {
   extractMetaTags,
   extractHeadLinks,
   detectPageType,
-} from "../parser";
+} from "#core/parser";
 import {
   listFixtures,
   readFixture,
   type FixtureProvenance,
 } from "./fixture-io";
-import type { CheckContext, PageContext } from "../check-context";
-import type { FetchResult } from "../fetcher";
-import { mockFetchResult } from "../__tests__/test-utils";
-import { CheckStatus, EvidenceKey, PageTypeSource } from "../types";
+import type { CheckContext, PageContext } from "#core/check-context";
+import type { FetchResult } from "#core/fetcher";
+import { mockFetchResult } from "#core/__tests__/test-utils";
+import { CheckStatus, EvidenceKey, PageTypeSource } from "#core/types";
 
 /**
  * Proves that the evidence gate (`buildScanEvidence` + `planAudits`) correctly

@@ -1,12 +1,12 @@
 import { readFileSync, readdirSync, existsSync } from "node:fs";
 import { gunzipSync } from "node:zlib";
 import { resolve } from "node:path";
-import type { FetchResult } from "../fetcher";
-import type { PageContext } from "../check-context";
-import { parseHtml } from "../parser";
-import { pageRendersText } from "../scan-evidence";
-import { detectWafProtection } from "../waf-detector";
-import { PageType } from "../types";
+import type { FetchResult } from "#core/fetcher";
+import type { PageContext } from "#core/check-context";
+import { parseHtml } from "#core/parser";
+import { pageRendersText } from "#core/scan-evidence";
+import { detectWafProtection } from "#core/waf-detector";
+import { PageType } from "#core/types";
 
 /**
  * What a captured response turned out to be.

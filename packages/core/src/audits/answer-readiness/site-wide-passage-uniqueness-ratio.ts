@@ -1,14 +1,14 @@
-import type { AuditMeta, AuditResult } from "../../types";
-import { Audit } from "../../audit";
-import type { CheckContext, PageContext } from "../../check-context";
-import { weightForGrade } from "../../scorer";
-import { readabilityArticle, semanticText } from "../../gatherers/extraction";
+import type { AuditMeta, AuditResult } from "#core/types";
+import { Audit } from "#core/audit";
+import type { CheckContext, PageContext } from "#core/check-context";
+import { weightForGrade } from "#core/scorer";
+import { readabilityArticle, semanticText } from "#core/gatherers/extraction";
 import {
   normalizeText,
   sentences,
   shingles,
   jaccard,
-} from "../../gatherers/text-metrics";
+} from "#core/gatherers/text-metrics";
 import {
   AuditTier,
   CheckPriority,
@@ -16,7 +16,7 @@ import {
   EvidenceKey,
   FixEffort,
   ScoreDisplayMode,
-} from "../../types";
+} from "#core/types";
 
 /** Below this, both document frequency and clustering are arithmetic on too few pages. */
 const MIN_PAGES = 3;

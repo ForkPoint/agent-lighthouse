@@ -1,21 +1,21 @@
 import { describe, it, expect } from "vitest";
-import { defaultConfig } from "../../audit-config";
-import { planAudits } from "../../audit-runner";
+import { defaultConfig } from "#core/audit-config";
+import { planAudits } from "#core/audit-runner";
 import { ExtractorSurvivalRecallAudit } from "./extractor-survival-recall";
 import {
   attributableFixture,
   mockCheckContext,
   mockPageContext,
   unreachedSiteContext,
-} from "../../__tests__/test-utils";
-import { expectNotApplicableOnEmpty } from "../../tests/na-contract";
-import type { CheckContext } from "../../check-context";
+} from "#core/__tests__/test-utils";
+import { expectNotApplicableOnEmpty } from "#core/tests/na-contract";
+import type { CheckContext } from "#core/check-context";
 import {
   AuditTier,
   CheckPriority,
   CheckStatus,
   EvidenceGrade,
-} from "../../types";
+} from "#core/types";
 
 const PROSE =
   "The copper kettle reaches a rolling boil in about three minutes on a gas hob. " +

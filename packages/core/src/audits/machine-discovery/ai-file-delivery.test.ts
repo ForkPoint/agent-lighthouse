@@ -1,8 +1,8 @@
 import { describe, it, expect } from "vitest";
 import { AiFileDeliveryAudit } from "./ai-file-delivery";
-import { mockCheckContext, mockFetchResult } from "../../__tests__/test-utils";
-import type { FetchResult } from "../../fetcher";
-import { CheckStatus } from "../../types";
+import { mockCheckContext, mockFetchResult } from "#core/__tests__/test-utils";
+import type { FetchResult } from "#core/fetcher";
+import { CheckStatus } from "#core/types";
 
 /** A 200 response with the given content type and extra headers. */
 const file = (

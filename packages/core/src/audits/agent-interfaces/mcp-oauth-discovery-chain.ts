@@ -6,18 +6,18 @@
 // It stops before any token request, so it needs nothing but public documents —
 // and every gate it checks is one a conforming client applies before it will
 // even show the user a consent prompt.
-import type { AuditMeta, AuditResult } from "../../types";
-import { Audit } from "../../audit";
-import { weightForGrade } from "../../scorer";
-import type { CheckContext } from "../../check-context";
-import { isSafeUrl } from "../../url-utils";
+import type { AuditMeta, AuditResult } from "#core/types";
+import { Audit } from "#core/audit";
+import { weightForGrade } from "#core/scorer";
+import type { CheckContext } from "#core/check-context";
+import { isSafeUrl } from "#core/url-utils";
 import {
   discoverMcpEndpoint,
   discoverProbe,
   mcpFetch,
   tryParseJson,
   isObject,
-} from "../../gatherers/mcp";
+} from "#core/gatherers/mcp";
 import {
   AuditTier,
   CheckPriority,
@@ -26,7 +26,7 @@ import {
   FixEffort,
   ScoreDisplayMode,
   HttpMethod,
-} from "../../types";
+} from "#core/types";
 
 /** How many authorization servers are probed. */
 const MAX_AS = 2;

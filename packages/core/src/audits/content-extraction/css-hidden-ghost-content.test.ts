@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from "vitest";
-import { defaultConfig } from "../../audit-config";
-import { planAudits } from "../../audit-runner";
+import { defaultConfig } from "#core/audit-config";
+import { planAudits } from "#core/audit-runner";
 import { CssHiddenGhostContentAudit } from "./css-hidden-ghost-content";
 import {
   attributableFixture,
@@ -8,16 +8,16 @@ import {
   mockFetchResult,
   mockPageContext,
   unreachedSiteContext,
-} from "../../__tests__/test-utils";
-import { expectNotApplicableOnEmpty } from "../../tests/na-contract";
-import type { FetchOptions } from "../../fetcher";
-import { CheckStatus } from "../../types";
+} from "#core/__tests__/test-utils";
+import { expectNotApplicableOnEmpty } from "#core/tests/na-contract";
+import type { FetchOptions } from "#core/fetcher";
+import { CheckStatus } from "#core/types";
 
 // isSafeUrl performs a real DNS lookup before a linked stylesheet is fetched.
 // Stub it with an offline stand-in that still blocks loopback and private
 // ranges.
-vi.mock("../../fetcher", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("../../fetcher")>();
+vi.mock("#core/fetcher", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("#core/fetcher")>();
   return {
     ...actual,
     isSafeUrl: async (url: string) => {

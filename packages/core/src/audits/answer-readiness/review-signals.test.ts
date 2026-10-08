@@ -1,12 +1,12 @@
 import { describe, it, expect } from "vitest";
 import { ReviewSignalsAudit } from "./review-signals";
-import { mockCheckContext, mockPageContext } from "../../__tests__/test-utils";
+import { mockCheckContext, mockPageContext } from "#core/__tests__/test-utils";
 import {
   AuditTier,
   CheckStatus,
   EvidenceGrade,
   ScoreDisplayMode,
-} from "../../types";
+} from "#core/types";
 
 describe("ReviewSignalsAudit", () => {
   const audit = new ReviewSignalsAudit();

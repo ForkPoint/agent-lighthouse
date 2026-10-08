@@ -9,16 +9,16 @@ import {
   sitemapSiteRoot,
 } from "./sitemap";
 
-import { mockFetchResult } from "../__tests__/test-utils";
-import type { FetchOptions, FetchResult } from "../fetcher";
-import { PageType } from "../types";
+import { mockFetchResult } from "#core/__tests__/test-utils";
+import type { FetchOptions, FetchResult } from "#core/fetcher";
+import { PageType } from "#core/types";
 
 // isSafeUrl performs a real DNS lookup before the gatherer follows a URL it
 // read out of a site-controlled sitemap. Stub it with an offline stand-in that
 // still blocks loopback and private ranges, so the refusal tests prove the gate
 // rather than the mock.
-vi.mock("../fetcher", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("../fetcher")>();
+vi.mock("#core/fetcher", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("#core/fetcher")>();
   return {
     ...actual,
     isSafeUrl: async (url: string) => {

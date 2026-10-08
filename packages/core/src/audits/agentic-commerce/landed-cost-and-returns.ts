@@ -4,11 +4,11 @@
 // Agents rank competing offers on landed cost and delivery date. Both are
 // numbers, so both have to exist as numbers rather than as prose on a
 // /shipping page.
-import type { AuditMeta, AuditResult } from "../../types";
-import { Audit } from "../../audit";
-import { weightForGrade } from "../../scorer";
-import type { CheckContext, PageContext } from "../../check-context";
-import { flattenJsonLd } from "../../parser";
+import type { AuditMeta, AuditResult } from "#core/types";
+import { Audit } from "#core/audit";
+import { weightForGrade } from "#core/scorer";
+import type { CheckContext, PageContext } from "#core/check-context";
+import { flattenJsonLd } from "#core/parser";
 import {
   AuditTier,
   CheckPriority,
@@ -17,7 +17,7 @@ import {
   FixEffort,
   PageType,
   ScoreDisplayMode,
-} from "../../types";
+} from "#core/types";
 
 /** The three values schema.org allows for returnPolicyCategory. */
 const RETURN_CATEGORIES = new Set([

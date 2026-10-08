@@ -1,12 +1,12 @@
-import type { AuditMeta, AuditResult } from "../../types";
-import { Audit } from "../../audit";
-import { weightForGrade } from "../../scorer";
-import type { CheckContext, PageContext } from "../../check-context";
-import { allJsonLdNodes } from "../../parser";
+import type { AuditMeta, AuditResult } from "#core/types";
+import { Audit } from "#core/audit";
+import { weightForGrade } from "#core/scorer";
+import type { CheckContext, PageContext } from "#core/check-context";
+import { allJsonLdNodes } from "#core/parser";
 import {
   platformFingerprint,
   CommercePlatform,
-} from "../../gatherers/commerce";
+} from "#core/gatherers/commerce";
 import {
   AuditTier,
   CheckPriority,
@@ -15,7 +15,7 @@ import {
   FixEffort,
   PageType,
   ScoreDisplayMode,
-} from "../../types";
+} from "#core/types";
 
 /** Select elements whose name says they choose between variants. */
 const VARIANT_NAME = /(size|colour|color|variant|option|style|width|length)/i;

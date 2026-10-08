@@ -6,7 +6,7 @@ import {
   isAnthropicAllowed,
   checkSensitivePaths,
 } from "./_robots-txt-helpers";
-import { RobotsRuleType } from "../../gatherers/robots";
+import { RobotsRuleType } from "#core/gatherers/robots";
 
 describe("parseRobotsTxt", () => {
   it("parses user-agent groups with allow/disallow rules", () => {

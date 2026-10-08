@@ -17,17 +17,17 @@
  *   - else any rule PASSES                               → pass
  *   - else every rule was INAPPLICABLE / unseen          → na (nothing to assess)
  */
-import type { AuditMeta, AuditResult } from "../../types";
-import { Audit } from "../../audit";
-import type { CheckContext } from "../../check-context";
-import { weightForGrade } from "../../scorer";
+import type { AuditMeta, AuditResult } from "#core/types";
+import { Audit } from "#core/audit";
+import type { CheckContext } from "#core/check-context";
+import { weightForGrade } from "#core/scorer";
 import type { A11yStatus } from "./runner";
 import {
   AuditTier,
   EvidenceGrade,
   EvidenceKey,
   ScoreDisplayMode,
-} from "../../types";
+} from "#core/types";
 import { RuleStatus } from "./engine/rules";
 
 export interface A11yAuditSpec {

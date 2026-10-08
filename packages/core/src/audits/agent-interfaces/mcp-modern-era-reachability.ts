@@ -4,11 +4,11 @@
 // Revision 2026-07-28 abolished the initialize handshake. One unauthenticated
 // POST of server/discover therefore answers the only question that matters
 // first: can a client built on the current revision use this server at all.
-import type { AuditMeta, AuditResult } from "../../types";
-import { Audit } from "../../audit";
-import { weightForGrade } from "../../scorer";
-import type { CheckContext } from "../../check-context";
-import type { FetchResult } from "../../fetcher";
+import type { AuditMeta, AuditResult } from "#core/types";
+import { Audit } from "#core/audit";
+import { weightForGrade } from "#core/scorer";
+import type { CheckContext } from "#core/check-context";
+import type { FetchResult } from "#core/fetcher";
 import {
   discoverMcpEndpoint,
   discoverProbe,
@@ -18,7 +18,7 @@ import {
   sharedProbe,
   isObject,
   MCP_PROTOCOL_VERSION,
-} from "../../gatherers/mcp";
+} from "#core/gatherers/mcp";
 import {
   AuditTier,
   CheckPriority,
@@ -27,7 +27,7 @@ import {
   FixEffort,
   ScoreDisplayMode,
   HttpMethod,
-} from "../../types";
+} from "#core/types";
 
 /** The audit that owns the challenge this one can only report. */
 const OAUTH_AUDIT = "agent-interfaces/mcp-oauth-discovery-chain";

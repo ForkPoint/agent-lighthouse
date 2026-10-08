@@ -1,9 +1,9 @@
 import { describe, it, expect } from "vitest";
-import { defaultConfig } from "../audit-config";
-import { AuditResultSchema } from "../schemas";
-import { mockCheckContext, mockPageContext } from "../__tests__/test-utils";
-import type { CheckContext } from "../check-context";
-import type { AuditResult } from "../types";
+import { defaultConfig } from "#core/audit-config";
+import { AuditResultSchema } from "#core/schemas";
+import { mockCheckContext, mockPageContext } from "#core/__tests__/test-utils";
+import type { CheckContext } from "#core/check-context";
+import type { AuditResult } from "#core/types";
 
 /**
  * Every audit must return a result `AuditResultSchema` accepts, on a page

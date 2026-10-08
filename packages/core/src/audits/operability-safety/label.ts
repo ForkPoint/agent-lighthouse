@@ -7,7 +7,7 @@
  * Replaces the former hand-rolled FormLabelsAudit.
  */
 import { base, defineA11yAudit, graded } from "./_shared";
-import { CheckPriority, EvidenceGrade, FixEffort } from "../../types";
+import { CheckPriority, EvidenceGrade, FixEffort } from "#core/types";
 
 export const LabelAudit = defineA11yAudit({
   rules: ["label", "select-name"],

@@ -1,16 +1,16 @@
 import { describe, it, expect } from "vitest";
-import { defaultConfig } from "../../audit-config";
-import { planAudits } from "../../audit-runner";
+import { defaultConfig } from "#core/audit-config";
+import { planAudits } from "#core/audit-runner";
 import { ServerRenderedAudit } from "./server-rendered";
 import {
   attributableFixture,
   mockCheckContext,
   mockPageContext,
   unreachedSiteContext,
-} from "../../__tests__/test-utils";
-import { AuditResultSchema } from "../../schemas";
-import type { PageContext } from "../../check-context";
-import { CheckPriority, CheckStatus } from "../../types";
+} from "#core/__tests__/test-utils";
+import { AuditResultSchema } from "#core/schemas";
+import type { PageContext } from "#core/check-context";
+import { CheckPriority, CheckStatus } from "#core/types";
 
 /** A page whose served body carries `words` readable words. */
 function wordyPage(url: string, words: number): PageContext {

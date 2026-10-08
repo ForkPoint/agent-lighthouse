@@ -5,11 +5,11 @@
 // turns a metadata typo into an invisibility bug: the server logs a successful
 // tools/list and the model never sees the tool. Every rule checked here is
 // static — one list fetch, no calls.
-import type { AuditMeta, AuditResult } from "../../types";
-import { Audit } from "../../audit";
-import { weightForGrade } from "../../scorer";
-import type { CheckContext } from "../../check-context";
-import { discoverMcpEndpoint, listTools, isObject } from "../../gatherers/mcp";
+import type { AuditMeta, AuditResult } from "#core/types";
+import { Audit } from "#core/audit";
+import { weightForGrade } from "#core/scorer";
+import type { CheckContext } from "#core/check-context";
+import { discoverMcpEndpoint, listTools, isObject } from "#core/gatherers/mcp";
 import {
   AuditTier,
   CheckPriority,
@@ -17,7 +17,7 @@ import {
   EvidenceKey,
   FixEffort,
   ScoreDisplayMode,
-} from "../../types";
+} from "#core/types";
 
 /** How many `nextCursor` pages are followed. */
 const MAX_PAGES = 4;

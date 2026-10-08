@@ -4,8 +4,8 @@ import {
   mockCheckContext,
   mockPageContext,
   mockFetchResult,
-} from "../../__tests__/test-utils";
-import { CheckStatus } from "../../types";
+} from "#core/__tests__/test-utils";
+import { CheckStatus } from "#core/types";
 
 const pageWithHead = (head: string) =>
   mockPageContext(

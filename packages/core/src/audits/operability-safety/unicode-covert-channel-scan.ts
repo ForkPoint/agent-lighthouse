@@ -6,11 +6,11 @@
 // addressed to a model. This audit looks at text nothing hides — it is in plain
 // sight and still unreadable, because the codepoints themselves render as
 // nothing. A page can fail one and pass the other.
-import type { AuditMeta, AuditResult } from "../../types";
-import { Audit } from "../../audit";
-import { weightForGrade } from "../../scorer";
-import type { CheckContext, PageContext } from "../../check-context";
-import { scanReadPageText, unreadPageTextReason } from "../../scan-evidence";
+import type { AuditMeta, AuditResult } from "#core/types";
+import { Audit } from "#core/audit";
+import { weightForGrade } from "#core/scorer";
+import type { CheckContext, PageContext } from "#core/check-context";
+import { scanReadPageText, unreadPageTextReason } from "#core/scan-evidence";
 import {
   AuditTier,
   CheckPriority,
@@ -18,7 +18,7 @@ import {
   EvidenceKey,
   FixEffort,
   ScoreDisplayMode,
-} from "../../types";
+} from "#core/types";
 
 /** Attributes whose value reaches a model as ordinary text. */
 const SCANNED_ATTRIBUTES = [

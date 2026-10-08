@@ -1,14 +1,14 @@
-import type { AuditMeta, AuditResult } from "../../types";
-import { Audit } from "../../audit";
-import type { CheckContext } from "../../check-context";
-import { weightForGrade } from "../../scorer";
-import { parseRobotsFile } from "../../gatherers/robots";
-import { siteSitemapTree } from "../../gatherers/sitemap";
-import { sharedFeeds } from "../../gatherers/feeds";
+import type { AuditMeta, AuditResult } from "#core/types";
+import { Audit } from "#core/audit";
+import type { CheckContext } from "#core/check-context";
+import { weightForGrade } from "#core/scorer";
+import { parseRobotsFile } from "#core/gatherers/robots";
+import { siteSitemapTree } from "#core/gatherers/sitemap";
+import { sharedFeeds } from "#core/gatherers/feeds";
 import {
   sharedRevalidation,
   type RevalidationResult,
-} from "../../gatherers/conditional";
+} from "#core/gatherers/conditional";
 import {
   AuditTier,
   CheckPriority,
@@ -16,7 +16,7 @@ import {
   EvidenceKey,
   FixEffort,
   ScoreDisplayMode,
-} from "../../types";
+} from "#core/types";
 
 /** Child sitemaps probed. The sketch's cap, kept because each costs four requests. */
 const MAX_CHILD_SITEMAPS = 3;

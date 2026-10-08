@@ -5,13 +5,13 @@ import {
   extractHeadLinks,
   extractMicrodata,
   extractRdfa,
-} from "../parser";
-import { buildScanEvidence } from "../scan-evidence";
-import { detectWafProtection, WafProvider } from "../waf-detector";
-import type { CheckContext, PageContext } from "../check-context";
-import type { FetchResult } from "../fetcher";
-import type { WafProtection } from "../waf-detector";
-import { EvidenceKey, PageType, PageTypeSource } from "../types";
+} from "#core/parser";
+import { buildScanEvidence } from "#core/scan-evidence";
+import { detectWafProtection, WafProvider } from "#core/waf-detector";
+import type { CheckContext, PageContext } from "#core/check-context";
+import type { FetchResult } from "#core/fetcher";
+import type { WafProtection } from "#core/waf-detector";
+import { EvidenceKey, PageType, PageTypeSource } from "#core/types";
 
 /**
  * Scan states in which an audit has the least to go on and the most freedom to

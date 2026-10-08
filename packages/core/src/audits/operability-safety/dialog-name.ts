@@ -7,7 +7,7 @@
  * Replaces the former hand-rolled ModalDialogAudit.
  */
 import { base, defineA11yAudit, graded } from "./_shared";
-import { CheckPriority, EvidenceGrade, FixEffort } from "../../types";
+import { CheckPriority, EvidenceGrade, FixEffort } from "#core/types";
 
 export const DialogNameAudit = defineA11yAudit({
   rules: ["aria-dialog-name"],

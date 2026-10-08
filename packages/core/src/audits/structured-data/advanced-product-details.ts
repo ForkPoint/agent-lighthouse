@@ -3,11 +3,11 @@
 // where the wider Product type list already lives. 3.8's `description`
 // requirement and its "offers/provider counts as a brand" fallback are
 // deliberately not ported — see the dossier's "Ported from 3.8" section.
-import type { AuditMeta, AuditResult } from "../../types";
-import { Audit } from "../../audit";
-import type { CheckContext } from "../../check-context";
-import { weightForGrade } from "../../scorer";
-import { flattenJsonLd } from "../../parser";
+import type { AuditMeta, AuditResult } from "#core/types";
+import { Audit } from "#core/audit";
+import type { CheckContext } from "#core/check-context";
+import { weightForGrade } from "#core/scorer";
+import { flattenJsonLd } from "#core/parser";
 import {
   AuditTier,
   CheckPriority,
@@ -16,7 +16,7 @@ import {
   FixEffort,
   PageType,
   ScoreDisplayMode,
-} from "../../types";
+} from "#core/types";
 
 function matchesAnyType(
   schema: Record<string, unknown>,

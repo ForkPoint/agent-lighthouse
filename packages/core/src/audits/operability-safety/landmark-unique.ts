@@ -13,7 +13,7 @@
  * across every landmark type, and resolves aria-labelledby.
  */
 import { base, defineA11yAudit, graded } from "./_shared";
-import { CheckPriority, EvidenceGrade, FixEffort } from "../../types";
+import { CheckPriority, EvidenceGrade, FixEffort } from "#core/types";
 
 export const LandmarkUniqueAudit = defineA11yAudit({
   rules: ["landmark-unique"],

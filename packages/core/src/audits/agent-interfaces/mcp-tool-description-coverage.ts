@@ -1,14 +1,14 @@
-import type { AuditMeta, AuditResult } from "../../types";
-import { Audit } from "../../audit";
-import { weightForGrade } from "../../scorer";
-import type { CheckContext } from "../../check-context";
+import type { AuditMeta, AuditResult } from "#core/types";
+import { Audit } from "#core/audit";
+import { weightForGrade } from "#core/scorer";
+import type { CheckContext } from "#core/check-context";
 import {
   discoverMcpEndpoint,
   discoverProbe,
   listTools,
   parseRpcResponse,
   isObject,
-} from "../../gatherers/mcp";
+} from "#core/gatherers/mcp";
 import {
   AuditTier,
   CheckPriority,
@@ -16,7 +16,7 @@ import {
   EvidenceKey,
   FixEffort,
   ScoreDisplayMode,
-} from "../../types";
+} from "#core/types";
 
 /** How many `nextCursor` pages are followed. Same budget as contract validity. */
 const MAX_PAGES = 4;

@@ -3,13 +3,13 @@
 //
 // `resolvePolicyLinks` is exported so other audits can reuse the resolved
 // terms_of_use / privacy_policy targets rather than re-deriving them.
-import type { AuditMeta, AuditResult } from "../../types";
-import { Audit } from "../../audit";
-import { weightForGrade } from "../../scorer";
-import type { CheckContext } from "../../check-context";
-import { isSafeUrl } from "../../url-utils";
-import { probeSecurityUrl } from "../../gatherers/security";
-import { parseHtml } from "../../parser";
+import type { AuditMeta, AuditResult } from "#core/types";
+import { Audit } from "#core/audit";
+import { weightForGrade } from "#core/scorer";
+import type { CheckContext } from "#core/check-context";
+import { isSafeUrl } from "#core/url-utils";
+import { probeSecurityUrl } from "#core/gatherers/security";
+import { parseHtml } from "#core/parser";
 import {
   AuditTier,
   CheckPriority,
@@ -17,7 +17,7 @@ import {
   EvidenceKey,
   FixEffort,
   ScoreDisplayMode,
-} from "../../types";
+} from "#core/types";
 
 /** The ACP CheckoutSession `links` enum, in spec order. */
 export const ACP_LINK_TYPES = [

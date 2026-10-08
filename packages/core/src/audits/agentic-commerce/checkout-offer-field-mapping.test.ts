@@ -1,8 +1,8 @@
 import { describe, it, expect } from "vitest";
 import { CheckoutOfferFieldMappingAudit } from "./checkout-offer-field-mapping";
-import { mockPageContext, mockCheckContext } from "../../__tests__/test-utils";
-import { expectNotApplicableOnEmpty } from "../../tests/na-contract";
-import { CheckStatus } from "../../types";
+import { mockPageContext, mockCheckContext } from "#core/__tests__/test-utils";
+import { expectNotApplicableOnEmpty } from "#core/tests/na-contract";
+import { CheckStatus } from "#core/types";
 
 const ld = (obj: unknown) =>
   `<script type="application/ld+json">${JSON.stringify(obj)}</script>`;

@@ -33,7 +33,7 @@ import { getElementSpec, getAriaRolesByType } from "./stdhelpers";
 import { sanitize, accessibleTextVirtual } from "./text";
 import { isDataTable, toArray } from "./table";
 import { checks, setDocument, CheckBuilder, type CheckDef } from "./checks";
-import { CheckStatus } from "../../../types";
+import { CheckStatus } from "#core/types";
 
 // Wire role-based matchers into the core `matches()` used by getElementSpec.
 registerMatchers({

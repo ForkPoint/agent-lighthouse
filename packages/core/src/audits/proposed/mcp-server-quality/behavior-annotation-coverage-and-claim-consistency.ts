@@ -1,7 +1,7 @@
-import type { AuditMeta, AuditResult } from "../../../types";
-import { Audit } from "../../../audit";
-import type { CheckContext } from "../../../check-context";
-import { CheckPriority, FixEffort, ScoreDisplayMode } from "../../../types";
+import type { AuditMeta, AuditResult } from "#core/types";
+import { Audit } from "#core/audit";
+import type { CheckContext } from "#core/check-context";
+import { CheckPriority, FixEffort, ScoreDisplayMode } from "#core/types";
 
 // TODO: implement proposed audit "Behavior Annotation Coverage and Claim Consistency".
 // Status: stub — not registered in any category index; returns notApplicable until implemented.

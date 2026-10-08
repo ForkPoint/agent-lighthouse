@@ -1,14 +1,14 @@
 import { describe, it, expect } from "vitest";
-import { defaultConfig } from "../../audit-config";
-import { planAudits } from "../../audit-runner";
+import { defaultConfig } from "#core/audit-config";
+import { planAudits } from "#core/audit-runner";
 import { LlmsFullTxtAudit } from "./llms-full-txt";
 import {
   attributableFixture,
   mockCheckContext,
   mockFetchResult,
   unreachedSiteContext,
-} from "../../__tests__/test-utils";
-import { CheckStatus } from "../../types";
+} from "#core/__tests__/test-utils";
+import { CheckStatus } from "#core/types";
 
 describe("LlmsFullTxtAudit", () => {
   const audit = new LlmsFullTxtAudit();

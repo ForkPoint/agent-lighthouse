@@ -1,8 +1,8 @@
-import type { AuditMeta, AuditResult } from "../../types";
-import { Audit } from "../../audit";
-import type { CheckContext } from "../../check-context";
-import { flattenJsonLd } from "../../parser";
-import { weightForGrade } from "../../scorer";
+import type { AuditMeta, AuditResult } from "#core/types";
+import { Audit } from "#core/audit";
+import type { CheckContext } from "#core/check-context";
+import { flattenJsonLd } from "#core/parser";
+import { weightForGrade } from "#core/scorer";
 import {
   AuditTier,
   CheckPriority,
@@ -11,7 +11,7 @@ import {
   FixEffort,
   PageType,
   ScoreDisplayMode,
-} from "../../types";
+} from "#core/types";
 
 function matchesAnyType(
   schema: Record<string, unknown>,

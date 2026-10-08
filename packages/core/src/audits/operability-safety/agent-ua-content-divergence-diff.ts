@@ -1,15 +1,15 @@
-import type { AuditMeta, AuditResult } from "../../types";
-import { Audit } from "../../audit";
-import type { CheckContext } from "../../check-context";
-import { weightForGrade } from "../../scorer";
+import type { AuditMeta, AuditResult } from "#core/types";
+import { Audit } from "#core/audit";
+import type { CheckContext } from "#core/check-context";
+import { weightForGrade } from "#core/scorer";
 import {
   AI_CRAWLER_UAS,
   sharedUaProbes,
   sharedControlProbe,
   type UaProbe,
-} from "../../gatherers/ua-parity";
+} from "#core/gatherers/ua-parity";
 import { INSTRUCTION_LEXICON } from "./invisible-instruction-scan";
-import { parseHtml, extractJsonLd, getMainContentText } from "../../parser";
+import { parseHtml, extractJsonLd, getMainContentText } from "#core/parser";
 import {
   AuditTier,
   CheckPriority,
@@ -17,7 +17,7 @@ import {
   EvidenceKey,
   FixEffort,
   ScoreDisplayMode,
-} from "../../types";
+} from "#core/types";
 
 /**
  * Word-set overlap below which two variants are no longer the same page.

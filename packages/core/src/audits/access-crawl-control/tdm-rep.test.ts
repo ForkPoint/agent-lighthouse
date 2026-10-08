@@ -1,21 +1,21 @@
 import { describe, it, expect } from "vitest";
-import { defaultConfig } from "../../audit-config";
-import { planAudits } from "../../audit-runner";
+import { defaultConfig } from "#core/audit-config";
+import { planAudits } from "#core/audit-runner";
 import { TdmRepAudit } from "./tdm-rep";
 import {
   challengedSiteContext,
   mockPageContext,
   mockCheckContext,
   mockFetchResult,
-} from "../../__tests__/test-utils";
-import { expectNotApplicableOnEmpty } from "../../tests/na-contract";
-import type { PageContext } from "../../check-context";
+} from "#core/__tests__/test-utils";
+import { expectNotApplicableOnEmpty } from "#core/tests/na-contract";
+import type { PageContext } from "#core/check-context";
 import {
   AuditTier,
   CheckStatus,
   EvidenceGrade,
   ScoreDisplayMode,
-} from "../../types";
+} from "#core/types";
 
 const page = (head = "", url = "https://example.com/"): PageContext =>
   mockPageContext(

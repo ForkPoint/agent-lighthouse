@@ -4,9 +4,9 @@ import {
   mockCheckContext,
   mockPageContext,
   mockFetchResult,
-} from "../../__tests__/test-utils";
-import type { PageContext } from "../../check-context";
-import { CheckStatus } from "../../types";
+} from "#core/__tests__/test-utils";
+import type { PageContext } from "#core/check-context";
+import { CheckStatus } from "#core/types";
 
 const ld = (obj: unknown) =>
   `<script type="application/ld+json">${JSON.stringify(obj)}</script>`;

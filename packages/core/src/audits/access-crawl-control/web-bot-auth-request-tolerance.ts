@@ -5,12 +5,12 @@ import {
   randomBytes,
   sign,
 } from "node:crypto";
-import type { AuditMeta, AuditResult } from "../../types";
-import { Audit } from "../../audit";
-import type { CheckContext } from "../../check-context";
-import { weightForGrade } from "../../scorer";
-import { isSafeUrl } from "../../url-utils";
-import { probeSecurityUrl } from "../../gatherers/security";
+import type { AuditMeta, AuditResult } from "#core/types";
+import { Audit } from "#core/audit";
+import type { CheckContext } from "#core/check-context";
+import { weightForGrade } from "#core/scorer";
+import { isSafeUrl } from "#core/url-utils";
+import { probeSecurityUrl } from "#core/gatherers/security";
 import {
   AuditTier,
   CheckPriority,
@@ -18,7 +18,7 @@ import {
   EvidenceKey,
   FixEffort,
   ScoreDisplayMode,
-} from "../../types";
+} from "#core/types";
 
 /** The derived components the Web Bot Auth profile signs. */
 const COVERED = ["@authority", "@method", "@path"] as const;

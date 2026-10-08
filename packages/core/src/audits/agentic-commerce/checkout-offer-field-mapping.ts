@@ -4,12 +4,12 @@
 // Feed validation is row-by-row: an individual product fails silently while the
 // upload as a whole succeeds. This audit runs the same assertions against the
 // PDP so the rejection is visible before the feed is built.
-import type { AuditMeta, AuditResult } from "../../types";
-import { Audit } from "../../audit";
-import { weightForGrade } from "../../scorer";
-import type { CheckContext, PageContext } from "../../check-context";
-import { flattenJsonLd } from "../../parser";
-import { extractProductFieldVerification } from "../../product-fields";
+import type { AuditMeta, AuditResult } from "#core/types";
+import { Audit } from "#core/audit";
+import { weightForGrade } from "#core/scorer";
+import type { CheckContext, PageContext } from "#core/check-context";
+import { flattenJsonLd } from "#core/parser";
+import { extractProductFieldVerification } from "#core/product-fields";
 import {
   AuditTier,
   CheckPriority,
@@ -19,7 +19,7 @@ import {
   FixEffort,
   PageType,
   ScoreDisplayMode,
-} from "../../types";
+} from "#core/types";
 
 /** Character caps the feed spec rejects rows on. */
 const CAPS = {

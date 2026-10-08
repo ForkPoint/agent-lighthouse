@@ -1,14 +1,14 @@
 import { describe, it, expect } from "vitest";
 import { ChunkBoundaryReferentIntegrityAudit } from "./chunk-boundary-referent-integrity";
-import { mockCheckContext, mockPageContext } from "../../__tests__/test-utils";
-import { expectNotApplicableOnEmpty } from "../../tests/na-contract";
-import type { CheckContext } from "../../check-context";
+import { mockCheckContext, mockPageContext } from "#core/__tests__/test-utils";
+import { expectNotApplicableOnEmpty } from "#core/tests/na-contract";
+import type { CheckContext } from "#core/check-context";
 import {
   AuditTier,
   CheckPriority,
   CheckStatus,
   EvidenceGrade,
-} from "../../types";
+} from "#core/types";
 
 /** Forty-plus words that never name the product, so entity presence is the variable. */
 const FILLER =

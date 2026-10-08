@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { ApplebotExtendedAudit } from "./applebot-extended";
-import { mockCheckContext, mockFetchResult } from "../../__tests__/test-utils";
-import { CheckStatus } from "../../types";
+import { mockCheckContext, mockFetchResult } from "#core/__tests__/test-utils";
+import { CheckStatus } from "#core/types";
 
 const robots = (body: string) =>
   mockCheckContext([], { "/robots.txt": mockFetchResult(body, 200) });

@@ -22,10 +22,10 @@
 // a named crawler documents honouring either protocol, this audit's grade needs
 // re-examining — and the `Content-Usage` half of that work is already read by
 // access-crawl-control/ai-content-declaration.
-import type { AuditMeta, AuditResult } from "../../types";
-import { Audit } from "../../audit";
-import type { CheckContext } from "../../check-context";
-import { weightForGrade } from "../../scorer";
+import type { AuditMeta, AuditResult } from "#core/types";
+import { Audit } from "#core/audit";
+import type { CheckContext } from "#core/check-context";
+import { weightForGrade } from "#core/scorer";
 import {
   AuditTier,
   CheckPriority,
@@ -33,7 +33,7 @@ import {
   EvidenceKey,
   FixEffort,
   ScoreDisplayMode,
-} from "../../types";
+} from "#core/types";
 
 const TDMREP_PATH = "/.well-known/tdmrep.json";
 const RESERVATION_HEADER = "tdm-reservation";

@@ -12,7 +12,7 @@
  * the jsdom window, so there is no heavyweight runtime to load per page.
  */
 import { JSDOM } from "jsdom";
-import { logger } from "../../logger";
+import { logger } from "#core/logger";
 import { runRules } from "./engine/rules";
 import { RuleStatus } from "./engine/rules";
 

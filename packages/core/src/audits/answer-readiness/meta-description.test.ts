@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { MetaDescriptionAudit } from "./meta-description";
-import { mockCheckContext, mockPageContext } from "../../__tests__/test-utils";
-import { CheckPriority, CheckStatus } from "../../types";
+import { mockCheckContext, mockPageContext } from "#core/__tests__/test-utils";
+import { CheckPriority, CheckStatus } from "#core/types";
 
 const doc = (head: string, body = "") =>
   `<html lang="en"><head>${head}</head><body>${body}</body></html>`;

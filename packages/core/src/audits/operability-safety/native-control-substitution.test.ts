@@ -1,8 +1,8 @@
 import { describe, it, expect } from "vitest";
 import { NativeControlSubstitutionAudit } from "./native-control-substitution";
-import { mockPageContext, mockCheckContext } from "../../__tests__/test-utils";
-import { expectNotApplicableOnEmpty } from "../../tests/na-contract";
-import { CheckStatus } from "../../types";
+import { mockPageContext, mockCheckContext } from "#core/__tests__/test-utils";
+import { expectNotApplicableOnEmpty } from "#core/tests/na-contract";
+import { CheckStatus } from "#core/types";
 
 const page = (body: string) => `<html><body>${body}</body></html>`;
 

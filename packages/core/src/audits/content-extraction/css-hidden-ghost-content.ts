@@ -6,17 +6,17 @@
 // instruction addressed to a model. This audit asks what it costs — tokens and
 // duplicated context — and fails on size, not on wording. A page can fail one
 // and pass the other.
-import type { AuditMeta, AuditResult } from "../../types";
-import { Audit } from "../../audit";
-import { weightForGrade } from "../../scorer";
-import type { CheckContext, PageContext } from "../../check-context";
-import { collectPageCss, type CssRule } from "../../gatherers/css-rules";
+import type { AuditMeta, AuditResult } from "#core/types";
+import { Audit } from "#core/audit";
+import { weightForGrade } from "#core/scorer";
+import type { CheckContext, PageContext } from "#core/check-context";
+import { collectPageCss, type CssRule } from "#core/gatherers/css-rules";
 import {
   declaredValue,
   styleHidesFromReaders,
   type Declaration,
   HidingProperty,
-} from "../../dom-visibility";
+} from "#core/dom-visibility";
 import {
   AuditTier,
   CheckPriority,
@@ -24,7 +24,7 @@ import {
   EvidenceKey,
   FixEffort,
   ScoreDisplayMode,
-} from "../../types";
+} from "#core/types";
 
 /** The repo-wide rough token estimator; no tokenizer dependency is carried. */
 const CHARS_PER_TOKEN = 4;

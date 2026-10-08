@@ -1,8 +1,8 @@
 import { describe, it, expect } from "vitest";
 import { OpenApiOperationIdsAudit } from "./openapi-operation-ids";
-import { mockCheckContext, mockFetchResult } from "../../__tests__/test-utils";
-import { expectNotApplicableOnEmpty } from "../../tests/na-contract";
-import { CheckStatus } from "../../types";
+import { mockCheckContext, mockFetchResult } from "#core/__tests__/test-utils";
+import { expectNotApplicableOnEmpty } from "#core/tests/na-contract";
+import { CheckStatus } from "#core/types";
 
 describe("OpenApiOperationIdsAudit", () => {
   const audit = new OpenApiOperationIdsAudit();

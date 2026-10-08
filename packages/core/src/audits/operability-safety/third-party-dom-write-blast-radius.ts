@@ -6,11 +6,11 @@
 // sweep of 2026-08-24 narrowed it to security.txt on grade-D evidence. The
 // question here was never the header's well-formedness: it is how many separate
 // companies can write text into the DOM an agent reads.
-import type { AuditMeta, AuditResult } from "../../types";
-import { Audit } from "../../audit";
-import { weightForGrade } from "../../scorer";
-import type { CheckContext, PageContext } from "../../check-context";
-import { scanReadPageText, unreadPageTextReason } from "../../scan-evidence";
+import type { AuditMeta, AuditResult } from "#core/types";
+import { Audit } from "#core/audit";
+import { weightForGrade } from "#core/scorer";
+import type { CheckContext, PageContext } from "#core/check-context";
+import { scanReadPageText, unreadPageTextReason } from "#core/scan-evidence";
 import {
   AuditTier,
   CheckPriority,
@@ -18,7 +18,7 @@ import {
   EvidenceKey,
   FixEffort,
   ScoreDisplayMode,
-} from "../../types";
+} from "#core/types";
 
 /** Two-label public suffixes common enough to matter, in place of a bundled PSL. */
 const MULTI_SUFFIX = new Set([

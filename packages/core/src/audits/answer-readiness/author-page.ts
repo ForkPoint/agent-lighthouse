@@ -1,8 +1,8 @@
-import type { AuditMeta, AuditResult } from "../../types";
-import { Audit } from "../../audit";
-import { weightForGrade } from "../../scorer";
-import type { CheckContext } from "../../check-context";
-import { probeAuthorUrl } from "../../gatherers/author";
+import type { AuditMeta, AuditResult } from "#core/types";
+import { Audit } from "#core/audit";
+import { weightForGrade } from "#core/scorer";
+import type { CheckContext } from "#core/check-context";
+import { probeAuthorUrl } from "#core/gatherers/author";
 import {
   AuditTier,
   CheckPriority,
@@ -11,7 +11,7 @@ import {
   FixEffort,
   PageType,
   ScoreDisplayMode,
-} from "../../types";
+} from "#core/types";
 
 /**
  * Walk all JSON-LD blocks (including @graph arrays) and return every

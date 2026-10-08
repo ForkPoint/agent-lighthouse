@@ -1,8 +1,8 @@
 import { describe, it, expect } from "vitest";
 import { AriaHiddenBodyAudit } from "./aria-hidden-body";
-import { mockCheckContext, mockPageContext } from "../../__tests__/test-utils";
+import { mockCheckContext, mockPageContext } from "#core/__tests__/test-utils";
 import { pageWithA11y, runA11yAudit } from "./_test-utils";
-import { AuditTier, CheckStatus, EvidenceGrade } from "../../types";
+import { AuditTier, CheckStatus, EvidenceGrade } from "#core/types";
 import { RuleStatus } from "./engine/rules";
 
 describe("AriaHiddenBodyAudit", () => {

@@ -1,6 +1,6 @@
 import { cacheOwner } from "./cache-owner";
-import type { FetchOptions, FetchResult } from "../fetcher";
-import { isSafeUrl } from "../fetcher";
+import type { FetchOptions, FetchResult } from "#core/fetcher";
+import { isSafeUrl } from "#core/fetcher";
 
 /** The slice of CheckContext this gatherer needs, kept structural to avoid a cycle. */
 interface FetchingContext {

@@ -10,11 +10,11 @@
 // changes state, which is true whether or not the path is disallowed — and the
 // disallow is only a partial mitigation, since a user-initiated fetch is
 // documented as not necessarily bound by robots.txt.
-import type { AuditMeta, AuditResult } from "../../types";
-import { Audit } from "../../audit";
-import { weightForGrade } from "../../scorer";
-import type { CheckContext, PageContext } from "../../check-context";
-import { scanReadPageText, unreadPageTextReason } from "../../scan-evidence";
+import type { AuditMeta, AuditResult } from "#core/types";
+import { Audit } from "#core/audit";
+import { weightForGrade } from "#core/scorer";
+import type { CheckContext, PageContext } from "#core/check-context";
+import { scanReadPageText, unreadPageTextReason } from "#core/scan-evidence";
 import {
   AuditTier,
   CheckPriority,
@@ -22,7 +22,7 @@ import {
   EvidenceKey,
   FixEffort,
   ScoreDisplayMode,
-} from "../../types";
+} from "#core/types";
 
 /** URL shapes that change state on the server when they are merely fetched. */
 const STATE_VERBS: ReadonlyArray<{ pattern: RegExp; label: string }> = [

@@ -1,16 +1,16 @@
 import type { Element } from "domhandler";
 import type { CheerioAPI } from "cheerio";
-import type { AuditMeta, AuditResult } from "../../types";
-import { Audit } from "../../audit";
-import type { CheckContext, PageContext } from "../../check-context";
-import { weightForGrade } from "../../scorer";
+import type { AuditMeta, AuditResult } from "#core/types";
+import { Audit } from "#core/audit";
+import type { CheckContext, PageContext } from "#core/check-context";
+import { weightForGrade } from "#core/scorer";
 import {
   readabilityArticle,
   isAggressiveDropTarget,
-} from "../../gatherers/extraction";
-import { normalizeText, sentences } from "../../gatherers/text-metrics";
-import { parseHtml, allJsonLdNodes } from "../../parser";
-import { hiddenFromReaders } from "../../dom-visibility";
+} from "#core/gatherers/extraction";
+import { normalizeText, sentences } from "#core/gatherers/text-metrics";
+import { parseHtml, allJsonLdNodes } from "#core/parser";
+import { hiddenFromReaders } from "#core/dom-visibility";
 import {
   AuditTier,
   CheckPriority,
@@ -18,7 +18,7 @@ import {
   EvidenceKey,
   FixEffort,
   ScoreDisplayMode,
-} from "../../types";
+} from "#core/types";
 
 /** Below this share of key spans surviving, an agent reads a different page. */
 const RECALL_FLOOR = 0.9;

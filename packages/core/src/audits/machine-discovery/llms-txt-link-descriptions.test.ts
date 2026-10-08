@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { LlmsTxtLinkDescriptionsAudit } from "./llms-txt-link-descriptions";
-import { mockCheckContext, mockFetchResult } from "../../__tests__/test-utils";
-import { CheckStatus } from "../../types";
+import { mockCheckContext, mockFetchResult } from "#core/__tests__/test-utils";
+import { CheckStatus } from "#core/types";
 
 describe("LlmsTxtLinkDescriptionsAudit", () => {
   const audit = new LlmsTxtLinkDescriptionsAudit();

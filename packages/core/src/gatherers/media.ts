@@ -1,9 +1,9 @@
 import { cacheOwner } from "./cache-owner";
-import type { FetchOptions, FetchResult } from "../fetcher";
-import { isSafeUrl } from "../fetcher";
-import { allJsonLdNodes } from "../parser";
-import type { PageContext } from "../check-context";
-import { HttpMethod } from "../types";
+import type { FetchOptions, FetchResult } from "#core/fetcher";
+import { isSafeUrl } from "#core/fetcher";
+import { allJsonLdNodes } from "#core/parser";
+import type { PageContext } from "#core/check-context";
+import { HttpMethod } from "#core/types";
 
 /**
  * Image bytes and the provenance metadata inside them, once per scan.

@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
-import { evidenceUrl } from "../audit";
-import { defaultConfig } from "../index";
-import { CheckStatus } from "../types";
+import { evidenceUrl } from "#core/audit";
+import { defaultConfig } from "#core/index";
+import { CheckStatus } from "#core/types";
 
 describe("evidenceUrl", () => {
   it("derives the published page from the audit id", () => {

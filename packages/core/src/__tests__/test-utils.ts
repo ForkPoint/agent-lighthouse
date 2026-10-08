@@ -4,13 +4,13 @@ import {
   extractMetaTags,
   extractHeadLinks,
   detectPageType,
-} from "../parser";
-import type { CheckContext, PageContext } from "../check-context";
-import type { FetchResult } from "../fetcher";
-import { allEvidenceMet, buildScanEvidence } from "../scan-evidence";
-import { SHELL_HTML } from "../tests/hostile-states";
-import { EvidenceKey, PageTypeSource } from "../types";
-import { WafProvider } from "../waf-detector";
+} from "#core/parser";
+import type { CheckContext, PageContext } from "#core/check-context";
+import type { FetchResult } from "#core/fetcher";
+import { allEvidenceMet, buildScanEvidence } from "#core/scan-evidence";
+import { SHELL_HTML } from "#core/tests/hostile-states";
+import { EvidenceKey, PageTypeSource } from "#core/types";
+import { WafProvider } from "#core/waf-detector";
 
 export function mockPageContext(
   url: string,

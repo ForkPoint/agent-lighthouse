@@ -6,11 +6,11 @@
 // audit asks a different question of it — does the hidden text read like an
 // instruction addressed to an AI — and fails only on that. A page can fail one
 // and pass the other.
-import type { AuditMeta, AuditResult } from "../../types";
-import { Audit } from "../../audit";
-import { weightForGrade } from "../../scorer";
-import type { CheckContext, PageContext } from "../../check-context";
-import { collectPageCss, type CssRule } from "../../gatherers/css-rules";
+import type { AuditMeta, AuditResult } from "#core/types";
+import { Audit } from "#core/audit";
+import { weightForGrade } from "#core/scorer";
+import type { CheckContext, PageContext } from "#core/check-context";
+import { collectPageCss, type CssRule } from "#core/gatherers/css-rules";
 import {
   AuditTier,
   CheckPriority,
@@ -18,7 +18,7 @@ import {
   EvidenceKey,
   FixEffort,
   ScoreDisplayMode,
-} from "../../types";
+} from "#core/types";
 
 /**
  * Phrases that mark text as an instruction addressed to a model rather than

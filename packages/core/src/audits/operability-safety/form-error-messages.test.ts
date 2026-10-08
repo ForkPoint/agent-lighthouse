@@ -1,8 +1,8 @@
 import { describe, it, expect } from "vitest";
 import { FormErrorMessagesAudit } from "./form-error-messages";
-import { mockCheckContext, mockPageContext } from "../../__tests__/test-utils";
-import { expectNotApplicableOnEmpty } from "../../tests/na-contract";
-import { AuditTier, CheckStatus, EvidenceGrade } from "../../types";
+import { mockCheckContext, mockPageContext } from "#core/__tests__/test-utils";
+import { expectNotApplicableOnEmpty } from "#core/tests/na-contract";
+import { AuditTier, CheckStatus, EvidenceGrade } from "#core/types";
 
 const page = (html: string, url = "https://example.com/signup") =>
   mockPageContext(url, `<html lang="en"><body>${html}</body></html>`);

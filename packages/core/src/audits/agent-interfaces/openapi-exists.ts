@@ -1,10 +1,10 @@
-import type { AuditMeta, AuditResult } from "../../types";
-import { Audit } from "../../audit";
-import { weightForGrade } from "../../scorer";
-import type { CheckContext, PageContext } from "../../check-context";
-import type { FetchResult } from "../../fetcher";
-import { probeOpenApiServer } from "../../gatherers/openapi";
-import { isSafeUrl } from "../../url-utils";
+import type { AuditMeta, AuditResult } from "#core/types";
+import { Audit } from "#core/audit";
+import { weightForGrade } from "#core/scorer";
+import type { CheckContext, PageContext } from "#core/check-context";
+import type { FetchResult } from "#core/fetcher";
+import { probeOpenApiServer } from "#core/gatherers/openapi";
+import { isSafeUrl } from "#core/url-utils";
 import {
   AuditTier,
   CheckPriority,
@@ -13,7 +13,7 @@ import {
   FixEffort,
   ScoreDisplayMode,
   HttpMethod,
-} from "../../types";
+} from "#core/types";
 
 function tryParseJson(body: string): unknown {
   try {

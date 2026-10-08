@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeAll } from "vitest";
-import { createFetcher } from "../fetcher";
+import { createFetcher } from "#core/fetcher";
 import {
   parseHtml,
   extractJsonLd,
@@ -7,13 +7,13 @@ import {
   extractHeadLinks,
   detectPageType,
   getWordCount,
-} from "../parser";
-import { runAudits } from "../audit-runner";
-import { defaultConfig } from "../audit-config";
-import type { CheckContext, PageContext } from "../check-context";
-import type { FetchResult } from "../fetcher";
-import { allEvidenceMet } from "../scan-evidence";
-import { CheckStatus } from "../types";
+} from "#core/parser";
+import { runAudits } from "#core/audit-runner";
+import { defaultConfig } from "#core/audit-config";
+import type { CheckContext, PageContext } from "#core/check-context";
+import type { FetchResult } from "#core/fetcher";
+import { allEvidenceMet } from "#core/scan-evidence";
+import { CheckStatus } from "#core/types";
 
 // Helper to build a real CheckContext from a URL
 async function buildRealContext(url: string): Promise<CheckContext> {

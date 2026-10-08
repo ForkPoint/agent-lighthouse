@@ -1,14 +1,14 @@
 import * as cheerio from "cheerio";
-import type { AuditMeta, AuditResult } from "../../types";
-import { Audit } from "../../audit";
-import type { CheckContext, PageContext } from "../../check-context";
-import { weightForGrade } from "../../scorer";
+import type { AuditMeta, AuditResult } from "#core/types";
+import { Audit } from "#core/audit";
+import type { CheckContext, PageContext } from "#core/check-context";
+import { weightForGrade } from "#core/scorer";
 import {
   parseRobots,
   directiveLines,
   isBlanketBlocked,
-} from "../../gatherers/robots";
-import { parseDictionary } from "../../gatherers/structured-fields";
+} from "#core/gatherers/robots";
+import { parseDictionary } from "#core/gatherers/structured-fields";
 import { TRAINING_CRAWLERS } from "./_robots-txt-helpers";
 import {
   AuditTier,
@@ -17,7 +17,7 @@ import {
   EvidenceKey,
   FixEffort,
   ScoreDisplayMode,
-} from "../../types";
+} from "#core/types";
 
 /**
  * The three AIPREF categories every other channel is normalized into.

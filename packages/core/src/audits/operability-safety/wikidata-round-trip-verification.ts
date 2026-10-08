@@ -1,11 +1,11 @@
-import type { AuditMeta, AuditResult } from "../../types";
-import { Audit } from "../../audit";
-import type { CheckContext } from "../../check-context";
-import { weightForGrade } from "../../scorer";
-import { isSafeUrl } from "../../url-utils";
-import { probeSecurityUrl } from "../../gatherers/security";
-import { allJsonLdNodes } from "../../parser";
-import { registrableOf, registrableDomain } from "../../gatherers/domains";
+import type { AuditMeta, AuditResult } from "#core/types";
+import { Audit } from "#core/audit";
+import type { CheckContext } from "#core/check-context";
+import { weightForGrade } from "#core/scorer";
+import { isSafeUrl } from "#core/url-utils";
+import { probeSecurityUrl } from "#core/gatherers/security";
+import { allJsonLdNodes } from "#core/parser";
+import { registrableOf, registrableDomain } from "#core/gatherers/domains";
 import {
   AuditTier,
   CheckPriority,
@@ -13,7 +13,7 @@ import {
   EvidenceKey,
   FixEffort,
   ScoreDisplayMode,
-} from "../../types";
+} from "#core/types";
 
 /** Q-ids resolved per scan. Each is a request to Wikidata. */
 const MAX_ENTITIES = 2;

@@ -1,20 +1,20 @@
 import { describe, it, expect } from "vitest";
 import { SecurityHeaderHygieneAudit } from "./security-header-hygiene";
-import { weightForGrade } from "../../scorer";
+import { weightForGrade } from "#core/scorer";
 import {
   mockCheckContext,
   mockPageContext,
   mockFetchResult,
-} from "../../__tests__/test-utils";
-import type { CheckContext, PageContext } from "../../check-context";
-import type { FetchResult } from "../../fetcher";
+} from "#core/__tests__/test-utils";
+import type { CheckContext, PageContext } from "#core/check-context";
+import type { FetchResult } from "#core/fetcher";
 import {
   AuditTier,
   CheckPriority,
   CheckStatus,
   EvidenceGrade,
   ScoreDisplayMode,
-} from "../../types";
+} from "#core/types";
 
 /** A homepage with the given response headers (lower-cased keys, as the fetcher stores them). */
 function pageWith(

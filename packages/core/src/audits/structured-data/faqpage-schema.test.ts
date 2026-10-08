@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { FaqPageSchemaAudit } from "./faqpage-schema";
-import { mockPageContext, mockCheckContext } from "../../__tests__/test-utils";
-import { CheckStatus } from "../../types";
+import { mockPageContext, mockCheckContext } from "#core/__tests__/test-utils";
+import { CheckStatus } from "#core/types";
 
 const ld = (obj: unknown) =>
   `<script type="application/ld+json">${JSON.stringify(obj)}</script>`;

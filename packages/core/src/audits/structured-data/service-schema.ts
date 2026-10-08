@@ -3,11 +3,11 @@
 // what is left here is the Service half, narrowed to Service/ProfessionalService.
 // Evidence dossier: docs/evidence/audits/structured-data/service-schema.md
 
-import type { AuditMeta, AuditResult } from "../../types";
-import { Audit } from "../../audit";
-import type { CheckContext, PageContext } from "../../check-context";
-import { weightForGrade } from "../../scorer";
-import { flattenJsonLd } from "../../parser";
+import type { AuditMeta, AuditResult } from "#core/types";
+import { Audit } from "#core/audit";
+import type { CheckContext, PageContext } from "#core/check-context";
+import { weightForGrade } from "#core/scorer";
+import { flattenJsonLd } from "#core/parser";
 import {
   AuditTier,
   CheckPriority,
@@ -16,7 +16,7 @@ import {
   FixEffort,
   PageType,
   ScoreDisplayMode,
-} from "../../types";
+} from "#core/types";
 
 /** The two in-scope service shapes. Product types belong to 3.22 now. */
 const SERVICE_TYPES = ["Service", "ProfessionalService"];

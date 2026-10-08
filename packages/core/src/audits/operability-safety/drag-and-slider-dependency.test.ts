@@ -1,14 +1,14 @@
 import { describe, it, expect } from "vitest";
 import { DragAndSliderDependencyAudit } from "./drag-and-slider-dependency";
-import { mockCheckContext, mockPageContext } from "../../__tests__/test-utils";
-import { expectNotApplicableOnEmpty } from "../../tests/na-contract";
-import type { CheckContext } from "../../check-context";
+import { mockCheckContext, mockPageContext } from "#core/__tests__/test-utils";
+import { expectNotApplicableOnEmpty } from "#core/tests/na-contract";
+import type { CheckContext } from "#core/check-context";
 import {
   AuditTier,
   CheckStatus,
   EvidenceGrade,
   ScoreDisplayMode,
-} from "../../types";
+} from "#core/types";
 
 /** A page at `url` carrying `body`. */
 function page(body: string, url = "https://example.com/"): CheckContext {

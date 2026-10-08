@@ -1,8 +1,8 @@
 import { describe, it, expect } from "vitest";
 import { TabindexAudit } from "./tabindex";
-import { mockCheckContext } from "../../__tests__/test-utils";
+import { mockCheckContext } from "#core/__tests__/test-utils";
 import { pageWithA11y, runA11yAudit } from "./_test-utils";
-import { AuditTier, CheckStatus, EvidenceGrade } from "../../types";
+import { AuditTier, CheckStatus, EvidenceGrade } from "#core/types";
 import { RuleStatus } from "./engine/rules";
 
 describe("TabindexAudit", () => {

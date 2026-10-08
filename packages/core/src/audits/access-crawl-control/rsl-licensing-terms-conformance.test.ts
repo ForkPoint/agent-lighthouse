@@ -4,19 +4,19 @@ import {
   mockCheckContext,
   mockPageContext,
   mockFetchResult,
-} from "../../__tests__/test-utils";
-import { expectNotApplicableOnEmpty } from "../../tests/na-contract";
-import type { CheckContext } from "../../check-context";
-import type { FetchResult } from "../../fetcher";
-import type { AuditResult } from "../../types";
-import { AuditTier, CheckStatus, EvidenceGrade } from "../../types";
+} from "#core/__tests__/test-utils";
+import { expectNotApplicableOnEmpty } from "#core/tests/na-contract";
+import type { CheckContext } from "#core/check-context";
+import type { FetchResult } from "#core/fetcher";
+import type { AuditResult } from "#core/types";
+import { AuditTier, CheckStatus, EvidenceGrade } from "#core/types";
 
 /** A string-array detail, defaulted so the assertion reads the value not the optionality. */
 const strings = (result: AuditResult, key: string): string[] =>
   (result.details?.[key] ?? []) as string[];
 
-vi.mock("../../fetcher", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("../../fetcher")>();
+vi.mock("#core/fetcher", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("#core/fetcher")>();
   return {
     ...actual,
     isSafeUrl: async (url: string) => {

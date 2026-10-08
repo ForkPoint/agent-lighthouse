@@ -19,10 +19,10 @@
 // RE-CHECK TRIGGER: if this project ever gains a headless-browser gatherer,
 // this audit should read `navigator.modelContext.getTools()` after load instead
 // of pattern-matching source text, and the `warn`/`na` branches below collapse.
-import type { AuditMeta, AuditResult } from "../../types";
-import { Audit } from "../../audit";
-import { weightForGrade } from "../../scorer";
-import type { CheckContext } from "../../check-context";
+import type { AuditMeta, AuditResult } from "#core/types";
+import { Audit } from "#core/audit";
+import { weightForGrade } from "#core/scorer";
+import type { CheckContext } from "#core/check-context";
 import {
   AuditTier,
   CheckPriority,
@@ -30,7 +30,7 @@ import {
   EvidenceKey,
   FixEffort,
   ScoreDisplayMode,
-} from "../../types";
+} from "#core/types";
 
 /** The runtime API surface. Nothing else in the platform carries this name. */
 const API_RE = /navigator\s*\.\s*modelContext/;

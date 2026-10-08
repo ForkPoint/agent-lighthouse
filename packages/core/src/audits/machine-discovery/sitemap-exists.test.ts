@@ -1,7 +1,7 @@
 import { describe, it, expect, vi } from "vitest";
 import { SitemapExistsAudit } from "./sitemap-exists";
-import { mockCheckContext, mockFetchResult } from "../../__tests__/test-utils";
-import { CheckStatus } from "../../types";
+import { mockCheckContext, mockFetchResult } from "#core/__tests__/test-utils";
+import { CheckStatus } from "#core/types";
 
 describe("SitemapExistsAudit", () => {
   const audit = new SitemapExistsAudit();
@@ -66,8 +66,8 @@ describe("SitemapExistsAudit", () => {
   });
 });
 
-vi.mock("../../fetcher", async (original) => ({
-  ...(await original<typeof import("../../fetcher")>()),
+vi.mock("#core/fetcher", async (original) => ({
+  ...(await original<typeof import("#core/fetcher")>()),
   isSafeUrl: async () => true,
 }));
 

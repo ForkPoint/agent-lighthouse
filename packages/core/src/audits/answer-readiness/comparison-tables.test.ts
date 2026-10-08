@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { ComparisonTablesAudit } from "./comparison-tables";
-import { mockCheckContext, mockPageContext } from "../../__tests__/test-utils";
-import { CheckStatus } from "../../types";
+import { mockCheckContext, mockPageContext } from "#core/__tests__/test-utils";
+import { CheckStatus } from "#core/types";
 
 describe("ComparisonTablesAudit", () => {
   const audit = new ComparisonTablesAudit();

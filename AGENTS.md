@@ -201,6 +201,13 @@ Write for a reader, not for a researcher:
 - oxlint is the only linter. There is no ESLint config and none should appear.
   Use `// oxlint-disable-*` if a suppression is genuinely needed.
 - Prettier for formatting: `pnpm format`.
+- Inside `packages/core/src`, import another core module as `#core/<path>`
+  (`import { CheckStatus } from "#core/types"`), not with a climbing `../`
+  path. Same-folder imports stay `./x`. The alias is a Node subpath import in
+  `packages/core/package.json`: the `agent-lighthouse-source` condition (set in
+  `tsconfig.base.json`) points TypeScript at `src/`, `types` points package
+  users at `dist/*.d.ts`, and the bundle inlines it. Do not use the shorter
+  `#/` form: published declarations would then need TypeScript 6.0 or newer.
 - Name enum values through their constant, never as a string: `CheckStatus.Pass`,
   `PageType.Product`, `EvidenceKey.RenderedBody`. Each public string union in
   core is a const object plus a type of the same name, and its Zod schema reads

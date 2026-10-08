@@ -1,10 +1,10 @@
-import type { AuditMeta, AuditResult } from "../../types";
-import { Audit } from "../../audit";
-import type { CheckContext } from "../../check-context";
-import { weightForGrade } from "../../scorer";
-import { isSafeUrl } from "../../url-utils";
-import { extractMarkdownLinks } from "../../parser";
-import { sharedProbeUrl } from "../../gatherers/discovery";
+import type { AuditMeta, AuditResult } from "#core/types";
+import { Audit } from "#core/audit";
+import type { CheckContext } from "#core/check-context";
+import { weightForGrade } from "#core/scorer";
+import { isSafeUrl } from "#core/url-utils";
+import { extractMarkdownLinks } from "#core/parser";
+import { sharedProbeUrl } from "#core/gatherers/discovery";
 import {
   AuditTier,
   CheckPriority,
@@ -12,7 +12,7 @@ import {
   EvidenceKey,
   FixEffort,
   ScoreDisplayMode,
-} from "../../types";
+} from "#core/types";
 function isOk(res: { status: number }): boolean {
   return res.status >= 200 && res.status < 300;
 }

@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { JSDOM } from "jsdom";
 import { runRules, SUPPORTED_RULE_IDS } from "./rules";
-import { CheckStatus } from "../../../types";
+import { CheckStatus } from "#core/types";
 import { RuleStatus } from "./rules";
 
 /**

@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
-import { defaultConfig } from "../../audit-config";
-import { planAudits } from "../../audit-runner";
+import { defaultConfig } from "#core/audit-config";
+import { planAudits } from "#core/audit-runner";
 import { UnicodeCovertChannelScanAudit } from "./unicode-covert-channel-scan";
 import {
   attributableFixture,
@@ -9,16 +9,16 @@ import {
   mockFetchResult,
   mockPageContext,
   unreachedSiteContext,
-} from "../../__tests__/test-utils";
-import { expectNotApplicableOnEmpty } from "../../tests/na-contract";
-import type { CheckContext } from "../../check-context";
+} from "#core/__tests__/test-utils";
+import { expectNotApplicableOnEmpty } from "#core/tests/na-contract";
+import type { CheckContext } from "#core/check-context";
 import {
   AuditTier,
   CheckPriority,
   CheckStatus,
   EvidenceGrade,
   ScoreDisplayMode,
-} from "../../types";
+} from "#core/types";
 
 /** The same sentence, written in the Unicode Tags block: invisible everywhere. */
 const tagged = (text: string) =>

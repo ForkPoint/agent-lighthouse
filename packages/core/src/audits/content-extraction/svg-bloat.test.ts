@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { SvgBloatAudit } from "./svg-bloat";
-import { mockPageContext, mockCheckContext } from "../../__tests__/test-utils";
-import { CheckStatus } from "../../types";
+import { mockPageContext, mockCheckContext } from "#core/__tests__/test-utils";
+import { CheckStatus } from "#core/types";
 
 const pathData = (bytes: number) =>
   `<path d="${"M0 0L1 1".repeat(Math.ceil(bytes / 8))}"/>`;

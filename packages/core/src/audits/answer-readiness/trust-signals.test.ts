@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { TrustSignalsAudit } from "./trust-signals";
-import { mockCheckContext, mockPageContext } from "../../__tests__/test-utils";
+import { mockCheckContext, mockPageContext } from "#core/__tests__/test-utils";
 import {
   AuditTier,
   CheckPriority,
@@ -8,7 +8,7 @@ import {
   EvidenceGrade,
   PageType,
   ScoreDisplayMode,
-} from "../../types";
+} from "#core/types";
 
 function homepage(body: string, htmlAttrs = "") {
   return mockPageContext(

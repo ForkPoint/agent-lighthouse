@@ -2,15 +2,15 @@
 // The parsing/matching logic lives there now; this file keeps the v1 export
 // names and signatures so the crawler-permission audits compile unchanged.
 
-import type { RobotsGroup, RobotsRule } from "../../gatherers/robots";
-import { isPathAllowed, matchesUserAgent } from "../../gatherers/robots";
+import type { RobotsGroup, RobotsRule } from "#core/gatherers/robots";
+import { isPathAllowed, matchesUserAgent } from "#core/gatherers/robots";
 
 // ── Types ─────────────────────────────────────────────────────
 
 export type {
   RobotsRule as RobotsTxtRule,
   RobotsGroup as RobotsTxtGroup,
-} from "../../gatherers/robots";
+} from "#core/gatherers/robots";
 
 // ── Re-exported gatherer primitives ───────────────────────────
 
@@ -19,7 +19,7 @@ export {
   matchesUserAgent,
   groupsForBot,
   isPathAllowed,
-} from "../../gatherers/robots";
+} from "#core/gatherers/robots";
 
 // ── v1-compatible helpers ─────────────────────────────────────
 

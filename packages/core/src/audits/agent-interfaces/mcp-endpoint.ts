@@ -1,8 +1,8 @@
-import type { AuditMeta, AuditResult } from "../../types";
-import { Audit } from "../../audit";
-import { weightForGrade } from "../../scorer";
-import type { CheckContext } from "../../check-context";
-import { isSafeUrl } from "../../url-utils";
+import type { AuditMeta, AuditResult } from "#core/types";
+import { Audit } from "#core/audit";
+import { weightForGrade } from "#core/scorer";
+import type { CheckContext } from "#core/check-context";
+import { isSafeUrl } from "#core/url-utils";
 import {
   discoverMcpEndpoint,
   parseRpcResponse,
@@ -10,7 +10,7 @@ import {
   mcpFetch,
   isObject,
   MCP_PROTOCOL_VERSION as PROTOCOL_VERSION,
-} from "../../gatherers/mcp";
+} from "#core/gatherers/mcp";
 import {
   AuditTier,
   CheckPriority,
@@ -19,7 +19,7 @@ import {
   FixEffort,
   ScoreDisplayMode,
   HttpMethod,
-} from "../../types";
+} from "#core/types";
 
 const CAPABILITY_KEYS = ["tools", "resources", "prompts"];
 

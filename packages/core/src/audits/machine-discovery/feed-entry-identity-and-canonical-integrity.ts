@@ -1,16 +1,16 @@
-import type { AuditMeta, AuditResult } from "../../types";
-import { Audit } from "../../audit";
-import type { CheckContext } from "../../check-context";
-import { weightForGrade } from "../../scorer";
+import type { AuditMeta, AuditResult } from "#core/types";
+import { Audit } from "#core/audit";
+import type { CheckContext } from "#core/check-context";
+import { weightForGrade } from "#core/scorer";
 
-import { parseHtml } from "../../parser";
+import { parseHtml } from "#core/parser";
 import {
   sharedFeeds,
   sharedCanonicalCheck,
   type FeedDocument,
   type FeedEntry,
   FeedFormat,
-} from "../../gatherers/feeds";
+} from "#core/gatherers/feeds";
 import {
   AuditTier,
   CheckPriority,
@@ -18,7 +18,7 @@ import {
   EvidenceKey,
   FixEffort,
   ScoreDisplayMode,
-} from "../../types";
+} from "#core/types";
 
 /** Entries whose identity is checked. The newest twenty is what a consumer reads. */
 const MAX_ENTRIES = 20;

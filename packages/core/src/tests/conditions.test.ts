@@ -1,8 +1,8 @@
 import { describe, it, expect } from "vitest";
-import { runScan } from "../orchestrator";
-import { ScanConditionsSchema } from "../schemas";
-import { defaultConfig } from "../audit-config";
-import { AuditTier, PageType, PageTypeSource } from "../types";
+import { runScan } from "#core/orchestrator";
+import { ScanConditionsSchema } from "#core/schemas";
+import { defaultConfig } from "#core/audit-config";
+import { AuditTier, PageType, PageTypeSource } from "#core/types";
 
 describe("Phase 6: The score states its conditions", () => {
   it("populates valid conditions adhering to ScanConditionsSchema", async () => {

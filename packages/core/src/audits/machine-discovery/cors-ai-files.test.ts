@@ -1,8 +1,8 @@
 import { describe, it, expect } from "vitest";
 import { CorsAiFilesAudit } from "./cors-ai-files";
-import { mockCheckContext, mockFetchResult } from "../../__tests__/test-utils";
-import type { FetchResult } from "../../fetcher";
-import { CheckStatus } from "../../types";
+import { mockCheckContext, mockFetchResult } from "#core/__tests__/test-utils";
+import type { FetchResult } from "#core/fetcher";
+import { CheckStatus } from "#core/types";
 
 describe("CorsAiFilesAudit", () => {
   const audit = new CorsAiFilesAudit();

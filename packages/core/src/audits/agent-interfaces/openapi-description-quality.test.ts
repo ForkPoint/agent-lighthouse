@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { OpenApiDescriptionQualityAudit } from "./openapi-description-quality";
-import { mockCheckContext, mockFetchResult } from "../../__tests__/test-utils";
-import { CheckPriority, CheckStatus } from "../../types";
+import { mockCheckContext, mockFetchResult } from "#core/__tests__/test-utils";
+import { CheckPriority, CheckStatus } from "#core/types";
 
 const LONG_OP_DESC =
   "Searches the product catalog by keyword and returns matches.";

@@ -1,10 +1,10 @@
-import type { AuditMeta, AuditResult } from "../../types";
-import { Audit } from "../../audit";
-import type { CheckContext, PageContext } from "../../check-context";
-import { weightForGrade } from "../../scorer";
-import { isSafeUrl } from "../../url-utils";
-import { probeSecurityUrl } from "../../gatherers/security";
-import { allJsonLdNodes } from "../../parser";
+import type { AuditMeta, AuditResult } from "#core/types";
+import { Audit } from "#core/audit";
+import type { CheckContext, PageContext } from "#core/check-context";
+import { weightForGrade } from "#core/scorer";
+import { isSafeUrl } from "#core/url-utils";
+import { probeSecurityUrl } from "#core/gatherers/security";
+import { allJsonLdNodes } from "#core/parser";
 import {
   AuditTier,
   CheckPriority,
@@ -12,7 +12,7 @@ import {
   EvidenceKey,
   FixEffort,
   ScoreDisplayMode,
-} from "../../types";
+} from "#core/types";
 
 /** The shape an LEI has before any registry is asked about it. */
 const LEI_SHAPE = /^[A-Z0-9]{18}[0-9]{2}$/;

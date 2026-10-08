@@ -1,8 +1,8 @@
 import { describe, it, expect } from "vitest";
 import { UniqueDataAudit } from "./unique-data";
-import { mockCheckContext, mockPageContext } from "../../__tests__/test-utils";
-import { scopeAudit } from "../../audit-runner";
-import { CheckStatus, PageType } from "../../types";
+import { mockCheckContext, mockPageContext } from "#core/__tests__/test-utils";
+import { scopeAudit } from "#core/audit-runner";
+import { CheckStatus, PageType } from "#core/types";
 
 describe("UniqueDataAudit", () => {
   const audit = new UniqueDataAudit();

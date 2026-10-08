@@ -1,8 +1,8 @@
-import type { AuditMeta, AuditResult } from "../../types";
-import { Audit } from "../../audit";
-import { weightForGrade } from "../../scorer";
-import type { CheckContext } from "../../check-context";
-import { probeAuthorUrl } from "../../gatherers/author";
+import type { AuditMeta, AuditResult } from "#core/types";
+import { Audit } from "#core/audit";
+import { weightForGrade } from "#core/scorer";
+import type { CheckContext } from "#core/check-context";
+import { probeAuthorUrl } from "#core/gatherers/author";
 import {
   AuditTier,
   CheckPriority,
@@ -10,7 +10,7 @@ import {
   EvidenceKey,
   FixEffort,
   ScoreDisplayMode,
-} from "../../types";
+} from "#core/types";
 
 const CREDENTIAL_KEYWORDS = [
   "team",
@@ -66,7 +66,7 @@ export class AboutCredentialsAudit extends Audit {
       "/our-story",
     ];
 
-    let aboutResult: import("../../fetcher").FetchResult | undefined =
+    let aboutResult: import("#core/fetcher").FetchResult | undefined =
       undefined;
 
     // Check root files first

@@ -8,21 +8,21 @@
  *   npx vitest run libs/scanner/src/__tests__/scan-labs.test.ts
  */
 import { describe, it, expect, beforeAll } from "vitest";
-import { runAudits } from "../audit-runner";
-import { defaultConfig } from "../audit-config";
-import { createFetcher } from "../fetcher";
+import { runAudits } from "#core/audit-runner";
+import { defaultConfig } from "#core/audit-config";
+import { createFetcher } from "#core/fetcher";
 import {
   parseHtml,
   extractJsonLd,
   extractMetaTags,
   extractHeadLinks,
   detectPageType,
-} from "../parser";
-import type { CheckContext, PageContext } from "../check-context";
-import type { CheckResult } from "../types";
-import type { FetchResult } from "../fetcher";
-import { allEvidenceMet } from "../scan-evidence";
-import { CheckStatus } from "../types";
+} from "#core/parser";
+import type { CheckContext, PageContext } from "#core/check-context";
+import type { CheckResult } from "#core/types";
+import type { FetchResult } from "#core/fetcher";
+import { allEvidenceMet } from "#core/scan-evidence";
+import { CheckStatus } from "#core/types";
 
 const IS_LABS_ENABLED = Boolean(
   process.env.NEXT_PUBLIC_LABS_URL || process.env.LABS_PORT,

@@ -1,9 +1,9 @@
 import { cacheOwner } from "./cache-owner";
 import * as cheerio from "cheerio";
-import type { FetchOptions, FetchResult } from "../fetcher";
-import { isSafeUrl } from "../fetcher";
+import type { FetchOptions, FetchResult } from "#core/fetcher";
+import { isSafeUrl } from "#core/fetcher";
 import { parseRobotsFile } from "./robots";
-import { PageType } from "../types";
+import { PageType } from "#core/types";
 
 /** A homepage directory provides a sitemap scope; a content page does not. */
 export function sitemapSiteRoot(

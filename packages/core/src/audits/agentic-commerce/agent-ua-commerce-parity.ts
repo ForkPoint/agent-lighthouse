@@ -5,20 +5,20 @@
 // ranges. The one that matters for commerce is ChatGPT-User: the shopper's own
 // agent, fetching the PDP at the moment of the question. A WAF that answers it
 // with a challenge is invisible to any audit that only reads robots.txt.
-import type { AuditMeta, AuditResult } from "../../types";
-import { Audit } from "../../audit";
-import { weightForGrade } from "../../scorer";
-import type { CheckContext } from "../../check-context";
+import type { AuditMeta, AuditResult } from "#core/types";
+import { Audit } from "#core/audit";
+import { weightForGrade } from "#core/scorer";
+import type { CheckContext } from "#core/check-context";
 import {
   parseRobots,
   isPathAllowed,
   hasNamedGroup,
-} from "../../gatherers/robots";
+} from "#core/gatherers/robots";
 import {
   AI_CRAWLER_UAS,
   sharedUaProbes,
   type UaProbe,
-} from "../../gatherers/ua-parity";
+} from "#core/gatherers/ua-parity";
 import { resolvePolicyLinks } from "./acp-policy-link-surface";
 import {
   AuditTier,
@@ -27,7 +27,7 @@ import {
   EvidenceKey,
   FixEffort,
   ScoreDisplayMode,
-} from "../../types";
+} from "#core/types";
 
 /** The two OpenAI agents a purchase depends on. */
 const TOKENS = ["chatgpt-user", "oai-searchbot"];

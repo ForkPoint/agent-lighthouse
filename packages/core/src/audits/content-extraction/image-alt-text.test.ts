@@ -1,12 +1,12 @@
 import { describe, it, expect } from "vitest";
 import { ImageAltTextAudit } from "./image-alt-text";
-import { mockCheckContext, mockPageContext } from "../../__tests__/test-utils";
+import { mockCheckContext, mockPageContext } from "#core/__tests__/test-utils";
 import {
   AuditTier,
   CheckStatus,
   EvidenceGrade,
   ScoreDisplayMode,
-} from "../../types";
+} from "#core/types";
 
 describe("ImageAltTextAudit", () => {
   const audit = new ImageAltTextAudit();

@@ -1,9 +1,9 @@
-import type { AuditMeta, AuditResult } from "../../types";
-import { Audit } from "../../audit";
-import type { CheckContext } from "../../check-context";
-import { weightForGrade } from "../../scorer";
-import { countTokens } from "../../gatherers/tokens";
-import { readabilityArticle, semanticText } from "../../gatherers/extraction";
+import type { AuditMeta, AuditResult } from "#core/types";
+import { Audit } from "#core/audit";
+import type { CheckContext } from "#core/check-context";
+import { weightForGrade } from "#core/scorer";
+import { countTokens } from "#core/gatherers/tokens";
+import { readabilityArticle, semanticText } from "#core/gatherers/extraction";
 import {
   AuditTier,
   CheckPriority,
@@ -11,7 +11,7 @@ import {
   EvidenceKey,
   FixEffort,
   ScoreDisplayMode,
-} from "../../types";
+} from "#core/types";
 
 /**
  * Where the delivered tokens went.

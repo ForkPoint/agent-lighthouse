@@ -1,9 +1,9 @@
-import type { AuditMeta, AuditResult } from "../../types";
-import { Audit } from "../../audit";
-import { weightForGrade } from "../../scorer";
-import type { CheckContext } from "../../check-context";
-import { getMainContentText, getWordCount } from "../../parser";
-import { scanReadPageText, unreadPageTextReason } from "../../scan-evidence";
+import type { AuditMeta, AuditResult } from "#core/types";
+import { Audit } from "#core/audit";
+import { weightForGrade } from "#core/scorer";
+import type { CheckContext } from "#core/check-context";
+import { getMainContentText, getWordCount } from "#core/parser";
+import { scanReadPageText, unreadPageTextReason } from "#core/scan-evidence";
 import {
   AuditTier,
   CheckPriority,
@@ -11,7 +11,7 @@ import {
   EvidenceKey,
   FixEffort,
   ScoreDisplayMode,
-} from "../../types";
+} from "#core/types";
 
 const TEASER_PATTERNS = [
   /click\s+(here\s+)?to\s+read\s+more/i,

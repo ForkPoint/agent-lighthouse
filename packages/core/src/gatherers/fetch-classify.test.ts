@@ -6,7 +6,7 @@ import {
   normalizeNewlines,
   ExpectedKind,
 } from "./fetch-classify";
-import type { FetchResult } from "../fetcher";
+import type { FetchResult } from "#core/fetcher";
 
 const fr = (over: Partial<FetchResult>): FetchResult => ({
   url: "https://x.test/robots.txt",

@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
-import { defaultConfig } from "../../audit-config";
-import { planAudits } from "../../audit-runner";
+import { defaultConfig } from "#core/audit-config";
+import { planAudits } from "#core/audit-runner";
 import { RobotsAiGroupShadowingAudit } from "./robots-ai-group-shadowing";
 import {
   attributableFixture,
@@ -9,10 +9,10 @@ import {
   mockPageContext,
   shellSiteContext,
   unreachedSiteContext,
-} from "../../__tests__/test-utils";
-import type { FetchResult } from "../../fetcher";
-import { expectNotApplicableOnEmpty } from "../../tests/na-contract";
-import { CheckStatus } from "../../types";
+} from "#core/__tests__/test-utils";
+import type { FetchResult } from "#core/fetcher";
+import { expectNotApplicableOnEmpty } from "#core/tests/na-contract";
+import { CheckStatus } from "#core/types";
 
 function run(
   robots: string | undefined,

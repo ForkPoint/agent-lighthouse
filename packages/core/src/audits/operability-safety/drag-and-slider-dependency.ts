@@ -6,10 +6,10 @@
 // audit asks the opposite question — whether a control an agent cannot drive at
 // all, native or not, has a discrete alternative beside it. A native
 // `<input type="range">` passes the other audit and fails this one.
-import type { AuditMeta, AuditResult } from "../../types";
-import { Audit } from "../../audit";
-import { weightForGrade } from "../../scorer";
-import type { CheckContext, PageContext } from "../../check-context";
+import type { AuditMeta, AuditResult } from "#core/types";
+import { Audit } from "#core/audit";
+import { weightForGrade } from "#core/scorer";
+import type { CheckContext, PageContext } from "#core/check-context";
 import { accessibleName, isElement } from "./_agent-affordances";
 import {
   AuditTier,
@@ -18,7 +18,7 @@ import {
   EvidenceKey,
   FixEffort,
   ScoreDisplayMode,
-} from "../../types";
+} from "#core/types";
 
 /**
  * Paths where a gesture-only control costs a task rather than a nicety.

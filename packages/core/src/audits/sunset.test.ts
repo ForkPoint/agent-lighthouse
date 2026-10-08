@@ -1,11 +1,11 @@
 import { describe, it, expect } from "vitest";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
-import { defaultConfig } from "../audit-config";
-import { AuditMetaSchema } from "../schemas";
-import { weightForGrade } from "../scorer";
-import { NEW_IN_V2, MIGRATED_COUNT } from "../tests/new-in-v2";
-import { AuditTier, ScoreDisplayMode } from "../types";
+import { defaultConfig } from "#core/audit-config";
+import { AuditMetaSchema } from "#core/schemas";
+import { weightForGrade } from "#core/scorer";
+import { NEW_IN_V2, MIGRATED_COUNT } from "#core/tests/new-in-v2";
+import { AuditTier, ScoreDisplayMode } from "#core/types";
 
 // The 26 v1 audits removed in this major release: the first 18 in the v1.0.0
 // sunset wave, plus the 8 added by the 2026-08-21 grading pass. Rationale and

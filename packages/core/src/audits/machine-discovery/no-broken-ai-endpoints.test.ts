@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { NoBrokenAiEndpointsAudit } from "./no-broken-ai-endpoints";
-import { mockCheckContext, mockFetchResult } from "../../__tests__/test-utils";
-import { CheckStatus } from "../../types";
+import { mockCheckContext, mockFetchResult } from "#core/__tests__/test-utils";
+import { CheckStatus } from "#core/types";
 
 // NOTE: The audit calls isSafeUrl() (which runs dns.lookup) before fetching.
 // We use literal public IP hosts so dns.lookup resolves locally without a

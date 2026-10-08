@@ -1,12 +1,12 @@
 import { describe, it, expect } from "vitest";
 import { McpDiscoveryAudit } from "./mcp-discovery";
-import { mockCheckContext, mockFetchResult } from "../../__tests__/test-utils";
+import { mockCheckContext, mockFetchResult } from "#core/__tests__/test-utils";
 import {
   AuditTier,
   CheckStatus,
   EvidenceGrade,
   ScoreDisplayMode,
-} from "../../types";
+} from "#core/types";
 
 describe("McpDiscoveryAudit", () => {
   const audit = new McpDiscoveryAudit();

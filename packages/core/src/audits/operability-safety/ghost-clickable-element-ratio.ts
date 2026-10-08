@@ -8,12 +8,12 @@
 // all, so neither of the others can see them.
 import type { CheerioAPI } from "cheerio";
 import type { Element } from "domhandler";
-import type { AuditMeta, AuditResult } from "../../types";
-import { Audit } from "../../audit";
-import { weightForGrade } from "../../scorer";
-import type { CheckContext } from "../../check-context";
-import { collectPageCss } from "../../gatherers/css-rules";
-import { detailLines } from "../../detail-lines";
+import type { AuditMeta, AuditResult } from "#core/types";
+import { Audit } from "#core/audit";
+import { weightForGrade } from "#core/scorer";
+import type { CheckContext } from "#core/check-context";
+import { collectPageCss } from "#core/gatherers/css-rules";
+import { detailLines } from "#core/detail-lines";
 import {
   NATIVE_INTERACTIVE,
   accessibleName,
@@ -30,7 +30,7 @@ import {
   EvidenceKey,
   FixEffort,
   ScoreDisplayMode,
-} from "../../types";
+} from "#core/types";
 
 /** Below this share of addressable click targets the page fails. */
 const RATIO_FLOOR = 0.9;

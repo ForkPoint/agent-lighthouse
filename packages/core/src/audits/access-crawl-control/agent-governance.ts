@@ -1,6 +1,6 @@
-import type { AuditMeta, AuditResult } from "../../types";
-import { Audit } from "../../audit";
-import type { CheckContext } from "../../check-context";
+import type { AuditMeta, AuditResult } from "#core/types";
+import { Audit } from "#core/audit";
+import type { CheckContext } from "#core/check-context";
 import type { CrawlerBot, RobotsTxtGroup } from "./_robots-txt-helpers";
 import {
   parseRobotsTxt,
@@ -8,7 +8,7 @@ import {
   TRAINING_CRAWLERS,
   REALTIME_CRAWLERS,
 } from "./_robots-txt-helpers";
-import { weightForGrade } from "../../scorer";
+import { weightForGrade } from "#core/scorer";
 import {
   AuditTier,
   CheckPriority,
@@ -16,7 +16,7 @@ import {
   EvidenceKey,
   FixEffort,
   ScoreDisplayMode,
-} from "../../types";
+} from "#core/types";
 
 /**
  * Returns the bots from the given list that have at least one explicit

@@ -1,14 +1,14 @@
 import { describe, it, expect } from "vitest";
-import { defaultConfig } from "../../audit-config";
-import { planAudits } from "../../audit-runner";
+import { defaultConfig } from "#core/audit-config";
+import { planAudits } from "#core/audit-runner";
 import { UniqueMetaAudit } from "./unique-meta";
 import {
   attributableFixture,
   mockCheckContext,
   mockPageContext,
   unreachedSiteContext,
-} from "../../__tests__/test-utils";
-import { CheckStatus } from "../../types";
+} from "#core/__tests__/test-utils";
+import { CheckStatus } from "#core/types";
 
 const doc = (title: string, desc: string) =>
   `<html lang="en"><head><title>${title}</title><meta name="description" content="${desc}"></head><body></body></html>`;

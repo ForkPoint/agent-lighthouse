@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
-import { defaultConfig } from "../../audit-config";
-import { planAudits } from "../../audit-runner";
+import { defaultConfig } from "#core/audit-config";
+import { planAudits } from "#core/audit-runner";
 import { FigureFigcaptionAudit } from "./figure-figcaption";
 import {
   attributableFixture,
@@ -8,8 +8,8 @@ import {
   shellSiteContext,
   mockPageContext,
   unreachedSiteContext,
-} from "../../__tests__/test-utils";
-import { CheckStatus } from "../../types";
+} from "#core/__tests__/test-utils";
+import { CheckStatus } from "#core/types";
 
 describe("FigureFigcaptionAudit", () => {
   const audit = new FigureFigcaptionAudit();

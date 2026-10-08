@@ -1,9 +1,9 @@
 import { describe, it, expect } from "vitest";
 import { TableMarkdownRoundTripLossAudit } from "./table-markdown-round-trip-loss";
-import { mockCheckContext, mockPageContext } from "../../__tests__/test-utils";
-import { expectNotApplicableOnEmpty } from "../../tests/na-contract";
-import type { CheckContext } from "../../check-context";
-import { AuditTier, CheckStatus, EvidenceGrade } from "../../types";
+import { mockCheckContext, mockPageContext } from "#core/__tests__/test-utils";
+import { expectNotApplicableOnEmpty } from "#core/tests/na-contract";
+import type { CheckContext } from "#core/check-context";
+import { AuditTier, CheckStatus, EvidenceGrade } from "#core/types";
 
 /** A page whose main content is `markup`. */
 function page(markup: string): CheckContext {

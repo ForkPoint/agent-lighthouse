@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { AgentGovernanceAudit } from "./agent-governance";
-import { mockCheckContext, mockFetchResult } from "../../__tests__/test-utils";
-import { CheckStatus } from "../../types";
+import { mockCheckContext, mockFetchResult } from "#core/__tests__/test-utils";
+import { CheckStatus } from "#core/types";
 
 describe("AgentGovernanceAudit", () => {
   const audit = new AgentGovernanceAudit();

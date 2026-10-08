@@ -1,8 +1,8 @@
 import { describe, it, expect } from "vitest";
 import { TextFragmentAddressabilityAudit } from "./text-fragment-addressability";
-import { mockPageContext, mockCheckContext } from "../../__tests__/test-utils";
-import { expectNotApplicableOnEmpty } from "../../tests/na-contract";
-import { CheckStatus } from "../../types";
+import { mockPageContext, mockCheckContext } from "#core/__tests__/test-utils";
+import { expectNotApplicableOnEmpty } from "#core/tests/na-contract";
+import { CheckStatus } from "#core/types";
 
 const ANSWER =
   "Resoling replaces the outsole and midsole of a welted boot while keeping the upper.";

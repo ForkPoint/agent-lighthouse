@@ -1,13 +1,13 @@
 import { describe, it, expect } from "vitest";
 import { SpeakableSchemaAudit } from "./speakable-schema";
-import { mockPageContext, mockCheckContext } from "../../__tests__/test-utils";
+import { mockPageContext, mockCheckContext } from "#core/__tests__/test-utils";
 import {
   AuditTier,
   CheckStatus,
   EvidenceGrade,
   PageType,
   ScoreDisplayMode,
-} from "../../types";
+} from "#core/types";
 
 const ld = (obj: unknown) =>
   `<script type="application/ld+json">${JSON.stringify(obj)}</script>`;

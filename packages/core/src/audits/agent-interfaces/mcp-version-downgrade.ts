@@ -5,11 +5,11 @@
 // server accepts is the error it gets for guessing wrong. A server that fails
 // vaguely strands clients that are one revision ahead of it, even though both
 // sides support a common revision.
-import type { AuditMeta, AuditResult } from "../../types";
-import { Audit } from "../../audit";
-import { weightForGrade } from "../../scorer";
-import type { CheckContext } from "../../check-context";
-import type { FetchResult } from "../../fetcher";
+import type { AuditMeta, AuditResult } from "#core/types";
+import { Audit } from "#core/audit";
+import { weightForGrade } from "#core/scorer";
+import type { CheckContext } from "#core/check-context";
+import type { FetchResult } from "#core/fetcher";
 import {
   discoverMcpEndpoint,
   discoverProbe,
@@ -17,7 +17,7 @@ import {
   postRpcRaw,
   isObject,
   MCP_PROTOCOL_VERSION,
-} from "../../gatherers/mcp";
+} from "#core/gatherers/mcp";
 import {
   AuditTier,
   CheckPriority,
@@ -25,7 +25,7 @@ import {
   EvidenceKey,
   FixEffort,
   ScoreDisplayMode,
-} from "../../types";
+} from "#core/types";
 
 /** A revision no server can support, so the rejection path is unambiguous. */
 const IMPOSSIBLE = "1900-01-01";

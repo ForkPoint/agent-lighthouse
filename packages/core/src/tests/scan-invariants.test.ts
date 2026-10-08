@@ -1,14 +1,14 @@
 import { describe, it, expect } from "vitest";
 import { invariantViolations, READS_RENDERED_BODY } from "./scan-invariants";
-import { TAG_SCAN_ERROR, TAG_SKIPPED_NO_EVIDENCE } from "../constants";
-import type { CheckResult, ScanReport, ScanValidity } from "../types";
+import { TAG_SCAN_ERROR, TAG_SKIPPED_NO_EVIDENCE } from "#core/constants";
+import type { CheckResult, ScanReport, ScanValidity } from "#core/types";
 import {
   CheckPriority,
   CheckStatus,
   EvidenceKey,
   ScoreDisplayMode,
   ScoreTier,
-} from "../types";
+} from "#core/types";
 
 /**
  * The rules the nightly corpus job asserts, exercised on synthetic reports.

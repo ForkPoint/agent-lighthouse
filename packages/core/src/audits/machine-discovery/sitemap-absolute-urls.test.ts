@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { SitemapAbsoluteUrlsAudit } from "./sitemap-absolute-urls";
-import { mockCheckContext, mockFetchResult } from "../../__tests__/test-utils";
-import { CheckStatus } from "../../types";
+import { mockCheckContext, mockFetchResult } from "#core/__tests__/test-utils";
+import { CheckStatus } from "#core/types";
 
 const sitemap = (locs: string[]) =>
   `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">${locs

@@ -1,10 +1,10 @@
-import type { AuditMeta, AuditResult } from "../../types";
-import { Audit } from "../../audit";
-import type { CheckContext } from "../../check-context";
-import { isSafeUrl } from "../../url-utils";
-import { probeRsl } from "../../gatherers/rsl";
-import { parseRobots, isPathAllowed } from "../../gatherers/robots";
-import { detailLines } from "../../detail-lines";
+import type { AuditMeta, AuditResult } from "#core/types";
+import { Audit } from "#core/audit";
+import type { CheckContext } from "#core/check-context";
+import { isSafeUrl } from "#core/url-utils";
+import { probeRsl } from "#core/gatherers/rsl";
+import { parseRobots, isPathAllowed } from "#core/gatherers/robots";
+import { detailLines } from "#core/detail-lines";
 import {
   AuditTier,
   CheckPriority,
@@ -12,7 +12,7 @@ import {
   EvidenceKey,
   FixEffort,
   ScoreDisplayMode,
-} from "../../types";
+} from "#core/types";
 
 /** Where a trust.txt may live, in the order the spec added them. */
 const TRUST_TXT_PATHS = ["/trust.txt", "/.well-known/trust.txt"];

@@ -1,8 +1,8 @@
 import { describe, it, expect } from "vitest";
-import { defaultConfig } from "../../audit-config";
-import { planAudits, runAudits } from "../../audit-runner";
-import { AuditResultSchema } from "../../schemas";
-import { buildScanEvidence } from "../../scan-evidence";
+import { defaultConfig } from "#core/audit-config";
+import { planAudits, runAudits } from "#core/audit-runner";
+import { AuditResultSchema } from "#core/schemas";
+import { buildScanEvidence } from "#core/scan-evidence";
 import { NoNofollowAudit } from "./no-nofollow";
 import {
   attributableFixture,
@@ -10,8 +10,8 @@ import {
   mockPageContext,
   shellSiteContext,
   unreachedSiteContext,
-} from "../../__tests__/test-utils";
-import { CheckStatus, PageType } from "../../types";
+} from "#core/__tests__/test-utils";
+import { CheckStatus, PageType } from "#core/types";
 
 describe("NoNofollowAudit", () => {
   const audit = new NoNofollowAudit();

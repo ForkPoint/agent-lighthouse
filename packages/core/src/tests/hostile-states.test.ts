@@ -7,8 +7,8 @@ import {
   ROOT_PATHS,
   SHELL_STATE,
 } from "./hostile-states";
-import { EVIDENCE_KEYS } from "../scan-evidence";
-import { EvidenceKey } from "../types";
+import { EVIDENCE_KEYS } from "#core/scan-evidence";
+import { EvidenceKey } from "#core/types";
 
 describe("hostile scan states", () => {
   it("offers seven states, six of which hold no evidence about the site", () => {

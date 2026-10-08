@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { OgImageAltAudit } from "./og-image-alt";
-import { mockCheckContext, mockPageContext } from "../../__tests__/test-utils";
-import { CheckStatus } from "../../types";
+import { mockCheckContext, mockPageContext } from "#core/__tests__/test-utils";
+import { CheckStatus } from "#core/types";
 
 const doc = (head: string) =>
   `<html lang="en"><head>${head}</head><body></body></html>`;

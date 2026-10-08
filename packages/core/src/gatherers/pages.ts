@@ -1,5 +1,5 @@
-import type { CheckContext, PageContext } from "../check-context";
-import type { PageType } from "../types";
+import type { CheckContext, PageContext } from "#core/check-context";
+import type { PageType } from "#core/types";
 
 export function pagesOfType(
   ctx: CheckContext,

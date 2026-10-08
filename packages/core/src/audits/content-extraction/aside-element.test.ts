@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { AsideElementAudit } from "./aside-element";
-import { mockCheckContext, mockPageContext } from "../../__tests__/test-utils";
-import { CheckStatus } from "../../types";
+import { mockCheckContext, mockPageContext } from "#core/__tests__/test-utils";
+import { CheckStatus } from "#core/types";
 
 /** A content page (index > 0 so it is never typed as the homepage). */
 function contentPage(body: string, slug = "post") {

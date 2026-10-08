@@ -1,17 +1,17 @@
 import { describe, it, expect } from "vitest";
-import { defaultConfig } from "../../audit-config";
-import { planAudits } from "../../audit-runner";
+import { defaultConfig } from "#core/audit-config";
+import { planAudits } from "#core/audit-runner";
 import { AiprefContentUsageDeclarationValidityAudit } from "./aipref-content-usage-declaration-validity";
 import {
   challengedSiteContext,
   mockCheckContext,
   mockPageContext,
   mockFetchResult,
-} from "../../__tests__/test-utils";
-import type { FetchResult } from "../../fetcher";
-import { expectNotApplicableOnEmpty } from "../../tests/na-contract";
-import type { CheckContext } from "../../check-context";
-import { AuditTier, CheckStatus, EvidenceGrade } from "../../types";
+} from "#core/__tests__/test-utils";
+import type { FetchResult } from "#core/fetcher";
+import { expectNotApplicableOnEmpty } from "#core/tests/na-contract";
+import type { CheckContext } from "#core/check-context";
+import { AuditTier, CheckStatus, EvidenceGrade } from "#core/types";
 
 function site(
   robots?: string,

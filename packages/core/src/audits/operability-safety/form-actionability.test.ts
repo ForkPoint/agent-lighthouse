@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { FormActionabilityAudit } from "./form-actionability";
-import { mockPageContext, mockCheckContext } from "../../__tests__/test-utils";
-import { CheckStatus } from "../../types";
+import { mockPageContext, mockCheckContext } from "#core/__tests__/test-utils";
+import { CheckStatus } from "#core/types";
 
 const page = (html: string) =>
   mockCheckContext([mockPageContext("https://example.com/contact", html, 0)]);

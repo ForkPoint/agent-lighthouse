@@ -1,7 +1,7 @@
 import { cacheOwner } from "./cache-owner";
-import type { FetchOptions, FetchResult } from "../fetcher";
-import { isSafeUrl } from "../fetcher";
-import { parseHtml, getMainContentText } from "../parser";
+import type { FetchOptions, FetchResult } from "#core/fetcher";
+import { isSafeUrl } from "#core/fetcher";
+import { parseHtml, getMainContentText } from "#core/parser";
 
 /**
  * The AI crawlers whose published User-Agent strings can actually be sent.

@@ -5,10 +5,10 @@
 // helper flattens rules across different bots' groups, which is right for
 // governance reporting and wrong here. This audit needs strict per-token group
 // isolation, so it uses the gatherer's groupsForBot / isPathAllowed directly.
-import type { AuditMeta, AuditResult } from "../../types";
-import { Audit } from "../../audit";
-import { weightForGrade } from "../../scorer";
-import type { CheckContext } from "../../check-context";
+import type { AuditMeta, AuditResult } from "#core/types";
+import { Audit } from "#core/audit";
+import { weightForGrade } from "#core/scorer";
+import type { CheckContext } from "#core/check-context";
 import {
   parseRobots,
   groupsForBot,
@@ -16,7 +16,7 @@ import {
   isPathAllowed,
   type RobotsGroup,
   RobotsRuleType,
-} from "../../gatherers/robots";
+} from "#core/gatherers/robots";
 import {
   AuditTier,
   CheckPriority,
@@ -24,7 +24,7 @@ import {
   EvidenceKey,
   FixEffort,
   ScoreDisplayMode,
-} from "../../types";
+} from "#core/types";
 
 /** AI product tokens whose named group, if present, voids the wildcard. */
 const AI_TOKENS: readonly string[] = [

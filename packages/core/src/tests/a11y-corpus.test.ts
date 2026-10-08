@@ -3,16 +3,16 @@ import { readFixture } from "./fixture-io";
 import {
   runA11yForHtml,
   type A11yPageResult,
-} from "../audits/operability-safety/runner";
+} from "#core/audits/operability-safety/runner";
 import {
   A11Y_RULES,
   OPERABILITY_SAFETY_AUDITS,
-} from "../audits/operability-safety";
-import { parseHtml } from "../parser";
-import { mockCheckContext } from "../__tests__/test-utils";
-import type { PageContext } from "../check-context";
-import { AuditResultSchema } from "../schemas";
-import { CheckStatus, PageType, PageTypeSource } from "../types";
+} from "#core/audits/operability-safety/index";
+import { parseHtml } from "#core/parser";
+import { mockCheckContext } from "#core/__tests__/test-utils";
+import type { PageContext } from "#core/check-context";
+import { AuditResultSchema } from "#core/schemas";
+import { CheckStatus, PageType, PageTypeSource } from "#core/types";
 
 /**
  * Exercise the 17 accessibility-tree audits over representative real-page DOMs.

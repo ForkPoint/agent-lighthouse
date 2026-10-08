@@ -1,19 +1,19 @@
-import type { AuditMeta, AuditResult } from "../../types";
-import { Audit } from "../../audit";
-import { weightForGrade } from "../../scorer";
-import type { CheckContext } from "../../check-context";
-import type { FetchResult } from "../../fetcher";
+import type { AuditMeta, AuditResult } from "#core/types";
+import { Audit } from "#core/audit";
+import { weightForGrade } from "#core/scorer";
+import type { CheckContext } from "#core/check-context";
+import type { FetchResult } from "#core/fetcher";
 import {
   platformFingerprint,
   type CommercePlatform,
-} from "../../gatherers/commerce";
+} from "#core/gatherers/commerce";
 import {
   AI_CRAWLER_UAS,
   BASELINE_UA,
   sharedUaFetch,
-} from "../../gatherers/ua-parity";
-import { parseRobots, isPathAllowed } from "../../gatherers/robots";
-import { detectWafProtection } from "../../waf-detector";
+} from "#core/gatherers/ua-parity";
+import { parseRobots, isPathAllowed } from "#core/gatherers/robots";
+import { detectWafProtection } from "#core/waf-detector";
 import {
   AuditTier,
   CheckPriority,
@@ -21,7 +21,7 @@ import {
   EvidenceKey,
   FixEffort,
   ScoreDisplayMode,
-} from "../../types";
+} from "#core/types";
 
 /** Where each storefront keeps its cart. */
 const CANDIDATES: Record<CommercePlatform, string[]> = {

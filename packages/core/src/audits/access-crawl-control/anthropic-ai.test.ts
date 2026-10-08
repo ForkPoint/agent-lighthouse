@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { AnthropicAudit } from "./anthropic-ai";
-import { mockCheckContext, mockFetchResult } from "../../__tests__/test-utils";
-import { CheckPriority, CheckStatus } from "../../types";
+import { mockCheckContext, mockFetchResult } from "#core/__tests__/test-utils";
+import { CheckPriority, CheckStatus } from "#core/types";
 
 const ctxFor = (robots?: string, status = 200) =>
   mockCheckContext(

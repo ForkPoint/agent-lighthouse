@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { WebmcpDeclarativeFormsAudit } from "./webmcp-declarative-forms";
-import { mockCheckContext, mockPageContext } from "../../__tests__/test-utils";
-import { CheckPriority, CheckStatus } from "../../types";
+import { mockCheckContext, mockPageContext } from "#core/__tests__/test-utils";
+import { CheckPriority, CheckStatus } from "#core/types";
 
 const page = (body: string, url = "https://example.com/", index = 0) =>
   mockPageContext(url, `<html><body>${body}</body></html>`, index);

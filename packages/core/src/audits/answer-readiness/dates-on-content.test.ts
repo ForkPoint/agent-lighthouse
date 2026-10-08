@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { DatesOnContentAudit } from "./dates-on-content";
-import { mockCheckContext, mockPageContext } from "../../__tests__/test-utils";
-import { CheckPriority, CheckStatus } from "../../types";
+import { mockCheckContext, mockPageContext } from "#core/__tests__/test-utils";
+import { CheckPriority, CheckStatus } from "#core/types";
 
 describe("DatesOnContentAudit", () => {
   const audit = new DatesOnContentAudit();

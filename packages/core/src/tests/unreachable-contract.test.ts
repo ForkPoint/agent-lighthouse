@@ -1,8 +1,8 @@
 import { describe, it, expect } from "vitest";
-import { planAudits } from "../audit-runner";
-import { defaultConfig } from "../audit-config";
+import { planAudits } from "#core/audit-runner";
+import { defaultConfig } from "#core/audit-config";
 import { unreachableContext } from "./fixtures";
-import { CheckStatus } from "../types";
+import { CheckStatus } from "#core/types";
 
 /**
  * The one absolute rule in the registry: a scan that could not read the site

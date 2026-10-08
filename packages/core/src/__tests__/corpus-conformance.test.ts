@@ -7,13 +7,13 @@ import {
   flattenJsonLd,
   extractMetaTags,
   extractHeadLinks,
-} from "../parser";
-import { runAudits } from "../audit-runner";
-import { defaultConfig } from "../audit-config";
-import type { CheckContext, PageContext } from "../check-context";
-import type { FetchResult } from "../fetcher";
-import { allEvidenceMet } from "../scan-evidence";
-import { CheckStatus, PageType, PageTypeSource } from "../types";
+} from "#core/parser";
+import { runAudits } from "#core/audit-runner";
+import { defaultConfig } from "#core/audit-config";
+import type { CheckContext, PageContext } from "#core/check-context";
+import type { FetchResult } from "#core/fetcher";
+import { allEvidenceMet } from "#core/scan-evidence";
+import { CheckStatus, PageType, PageTypeSource } from "#core/types";
 
 function loadFixture(filename: string): string {
   return readFileSync(

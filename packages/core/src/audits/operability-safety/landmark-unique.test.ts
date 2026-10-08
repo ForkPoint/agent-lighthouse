@@ -1,9 +1,9 @@
 import { describe, it, expect } from "vitest";
 import { LandmarkUniqueAudit } from "./landmark-unique";
-import { mockCheckContext } from "../../__tests__/test-utils";
+import { mockCheckContext } from "#core/__tests__/test-utils";
 import { pageWithA11y, runA11yAudit } from "./_test-utils";
 import { runA11yForHtml } from "./runner";
-import { AuditTier, CheckStatus, EvidenceGrade } from "../../types";
+import { AuditTier, CheckStatus, EvidenceGrade } from "#core/types";
 import { RuleStatus } from "./engine/rules";
 
 const doc = (body: string) =>

@@ -1,12 +1,12 @@
-import type { AuditMeta, AuditResult } from "../../types";
-import { Audit } from "../../audit";
-import type { CheckContext, PageContext } from "../../check-context";
-import type { FetchResult } from "../../fetcher";
-import { isSafeUrl } from "../../url-utils";
-import { probeAuthorUrl } from "../../gatherers/author";
-import { weightForGrade } from "../../scorer";
-import { countTokens } from "../../gatherers/tokens";
-import { shingles, jaccard } from "../../gatherers/text-metrics";
+import type { AuditMeta, AuditResult } from "#core/types";
+import { Audit } from "#core/audit";
+import type { CheckContext, PageContext } from "#core/check-context";
+import type { FetchResult } from "#core/fetcher";
+import { isSafeUrl } from "#core/url-utils";
+import { probeAuthorUrl } from "#core/gatherers/author";
+import { weightForGrade } from "#core/scorer";
+import { countTokens } from "#core/gatherers/tokens";
+import { shingles, jaccard } from "#core/gatherers/text-metrics";
 import {
   AuditTier,
   CheckPriority,
@@ -14,7 +14,7 @@ import {
   EvidenceKey,
   FixEffort,
   ScoreDisplayMode,
-} from "../../types";
+} from "#core/types";
 
 /** Read-only GETs this audit may spend looking for an alternate. */
 const MAX_PROBES = 3;

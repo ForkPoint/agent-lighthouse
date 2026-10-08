@@ -1,15 +1,15 @@
-import type { AuditMeta, AuditResult } from "../../types";
-import { Audit } from "../../audit";
-import type { CheckContext } from "../../check-context";
-import { weightForGrade } from "../../scorer";
-import { MAX_RESPONSE_BODY_BYTES } from "../../constants";
+import type { AuditMeta, AuditResult } from "#core/types";
+import { Audit } from "#core/audit";
+import type { CheckContext } from "#core/check-context";
+import { weightForGrade } from "#core/scorer";
+import { MAX_RESPONSE_BODY_BYTES } from "#core/constants";
 import {
   imageCandidates,
   fetchImage,
   findC2paManifest,
   originOfVariant,
   MAX_IMAGES,
-} from "../../gatherers/media";
+} from "#core/gatherers/media";
 import {
   AuditTier,
   CheckPriority,
@@ -17,7 +17,7 @@ import {
   EvidenceKey,
   FixEffort,
   ScoreDisplayMode,
-} from "../../types";
+} from "#core/types";
 
 /** Images sampled per page, before the per-scan cap applies. */
 const PER_PAGE = 3;

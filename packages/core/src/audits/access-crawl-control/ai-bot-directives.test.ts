@@ -1,14 +1,14 @@
 import { describe, it, expect } from "vitest";
 import { AiBotDirectivesAudit } from "./ai-bot-directives";
-import { weightForGrade } from "../../scorer";
-import { mockCheckContext, mockFetchResult } from "../../__tests__/test-utils";
+import { weightForGrade } from "#core/scorer";
+import { mockCheckContext, mockFetchResult } from "#core/__tests__/test-utils";
 import {
   AuditTier,
   CheckPriority,
   CheckStatus,
   EvidenceGrade,
   ScoreDisplayMode,
-} from "../../types";
+} from "#core/types";
 
 const robots = (body: string) =>
   mockCheckContext([], { "/robots.txt": mockFetchResult(body, 200) });

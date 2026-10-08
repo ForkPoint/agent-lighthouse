@@ -1,9 +1,9 @@
-import type { AuditMeta, AuditResult } from "../../types";
-import { Audit } from "../../audit";
-import { weightForGrade } from "../../scorer";
-import type { CheckContext } from "../../check-context";
-import { extractForms } from "../../parser";
-import { openApiOperations, readOpenApiSpec } from "../../gatherers/openapi";
+import type { AuditMeta, AuditResult } from "#core/types";
+import { Audit } from "#core/audit";
+import { weightForGrade } from "#core/scorer";
+import type { CheckContext } from "#core/check-context";
+import { extractForms } from "#core/parser";
+import { openApiOperations, readOpenApiSpec } from "#core/gatherers/openapi";
 import {
   AuditTier,
   CheckPriority,
@@ -11,7 +11,7 @@ import {
   EvidenceKey,
   FixEffort,
   ScoreDisplayMode,
-} from "../../types";
+} from "#core/types";
 
 const CONTACT_INDICATORS = [
   "contact",

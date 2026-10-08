@@ -1,10 +1,10 @@
-import type { AuditMeta, AuditResult } from "../../types";
-import { Audit } from "../../audit";
-import type { CheckContext, PageContext } from "../../check-context";
-import { weightForGrade } from "../../scorer";
-import { countTokens } from "../../gatherers/tokens";
-import { readabilityArticle, semanticText } from "../../gatherers/extraction";
-import { shingles } from "../../gatherers/text-metrics";
+import type { AuditMeta, AuditResult } from "#core/types";
+import { Audit } from "#core/audit";
+import type { CheckContext, PageContext } from "#core/check-context";
+import { weightForGrade } from "#core/scorer";
+import { countTokens } from "#core/gatherers/tokens";
+import { readabilityArticle, semanticText } from "#core/gatherers/extraction";
+import { shingles } from "#core/gatherers/text-metrics";
 import {
   AuditTier,
   CheckPriority,
@@ -12,7 +12,7 @@ import {
   EvidenceKey,
   FixEffort,
   ScoreDisplayMode,
-} from "../../types";
+} from "#core/types";
 
 /** Below this, document frequency is arithmetic on too few documents. */
 const MIN_PAGES = 3;

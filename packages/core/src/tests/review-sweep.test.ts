@@ -9,7 +9,7 @@ import {
   // where TypeScript reports the missing declaration for the .mjs script.
   // @ts-expect-error - testing the .mjs script exports
 } from "../../../../scripts/sweep-audit-reviews.mjs";
-import { EvidenceGrade } from "../types";
+import { EvidenceGrade } from "#core/types";
 
 describe("Phase 6: Audit Review Sweep (Law 10: Warrant Expires)", () => {
   it("sweeps the live audit dossiers directory and returns structured metrics", () => {

@@ -1,13 +1,13 @@
 import { describe, it, expect, vi } from "vitest";
-import { Audit } from "../audit";
-import { runAudits, scopeAudit } from "../audit-runner";
-import { gatedMassShare } from "../scorer";
-import { buildScanEvidence } from "../scan-evidence";
-import { mockCheckContext, mockPageContext } from "../__tests__/test-utils";
-import type { AuditMeta } from "../types";
-import type { CheckContext, PageContext } from "../check-context";
-import type { ScanConfig } from "../audit-config";
-import { CheckResultSchema } from "../schemas";
+import { Audit } from "#core/audit";
+import { runAudits, scopeAudit } from "#core/audit-runner";
+import { gatedMassShare } from "#core/scorer";
+import { buildScanEvidence } from "#core/scan-evidence";
+import { mockCheckContext, mockPageContext } from "#core/__tests__/test-utils";
+import type { AuditMeta } from "#core/types";
+import type { CheckContext, PageContext } from "#core/check-context";
+import type { ScanConfig } from "#core/audit-config";
+import { CheckResultSchema } from "#core/schemas";
 
 const page = (name: string, source: PageTypeSource, readable = true) => {
   const p = mockPageContext(
@@ -137,8 +137,8 @@ describe("selected page evidence", () => {
   });
 });
 
-import { sharedFeed, discoverFeedHeadUrls } from "../gatherers/feeds";
-import { OpenApiServersAudit } from "../audits/agent-interfaces/openapi-servers";
+import { sharedFeed, discoverFeedHeadUrls } from "#core/gatherers/feeds";
+import { OpenApiServersAudit } from "#core/audits/agent-interfaces/openapi-servers";
 import {
   AttemptOutcome,
   AuditTier,
@@ -150,9 +150,9 @@ import {
   PageType,
   PageTypeSource,
   ScoreDisplayMode,
-} from "../types";
-vi.mock("../fetcher", async (load) => ({
-  ...(await load<typeof import("../fetcher")>()),
+} from "#core/types";
+vi.mock("#core/fetcher", async (load) => ({
+  ...(await load<typeof import("#core/fetcher")>()),
   isSafeUrl: async () => true,
 }));
 

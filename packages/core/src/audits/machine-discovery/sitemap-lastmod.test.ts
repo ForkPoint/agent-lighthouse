@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { SitemapLastmodAudit } from "./sitemap-lastmod";
-import { mockCheckContext, mockFetchResult } from "../../__tests__/test-utils";
-import { CheckStatus } from "../../types";
+import { mockCheckContext, mockFetchResult } from "#core/__tests__/test-utils";
+import { CheckStatus } from "#core/types";
 
 /** Build a sitemap; each entry is a [loc, hasLastmod] tuple. */
 const sitemap = (entries: Array<[string, boolean]>) =>

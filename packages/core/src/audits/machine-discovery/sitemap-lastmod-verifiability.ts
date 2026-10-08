@@ -5,24 +5,24 @@
 // is present. This asks whether it is true: Google uses lastmod only "if it's
 // consistently and verifiably ... accurate", so a value no page-level evidence
 // supports is a value the crawler discards.
-import type { AuditMeta, AuditResult } from "../../types";
-import { Audit } from "../../audit";
-import { weightForGrade } from "../../scorer";
-import type { CheckContext, PageContext } from "../../check-context";
-import type { FetchResult } from "../../fetcher";
-import { fetchSampledPage } from "../../gatherers/sampled-pages";
+import type { AuditMeta, AuditResult } from "#core/types";
+import { Audit } from "#core/audit";
+import { weightForGrade } from "#core/scorer";
+import type { CheckContext, PageContext } from "#core/check-context";
+import type { FetchResult } from "#core/fetcher";
+import { fetchSampledPage } from "#core/gatherers/sampled-pages";
 import {
   parseHtml,
   extractJsonLd,
   extractMetaTags,
   topLevelJsonLd,
-} from "../../parser";
+} from "#core/parser";
 import {
   siteSitemapTree,
   sampleEntries,
   isW3CDateTime,
   type SitemapEntry,
-} from "../../gatherers/sitemap";
+} from "#core/gatherers/sitemap";
 import {
   AuditTier,
   CheckPriority,
@@ -30,7 +30,7 @@ import {
   EvidenceKey,
   FixEffort,
   ScoreDisplayMode,
-} from "../../types";
+} from "#core/types";
 
 const DAY_MS = 86_400_000;
 /** How many URLs to cross-validate. Each one that was not already scanned costs a request. */

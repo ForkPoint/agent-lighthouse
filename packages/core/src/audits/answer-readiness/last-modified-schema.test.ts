@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { LastModifiedSchemaAudit } from "./last-modified-schema";
-import { mockCheckContext, mockPageContext } from "../../__tests__/test-utils";
-import { CheckStatus } from "../../types";
+import { mockCheckContext, mockPageContext } from "#core/__tests__/test-utils";
+import { CheckStatus } from "#core/types";
 
 describe("LastModifiedSchemaAudit", () => {
   const audit = new LastModifiedSchemaAudit();

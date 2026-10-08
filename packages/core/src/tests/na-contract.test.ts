@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { expectNotApplicableOnEmpty } from "./na-contract";
-import { CheckStatus } from "../types";
+import { CheckStatus } from "#core/types";
 
 describe("expectNotApplicableOnEmpty", () => {
   it("rejects an audit that verdicts on a scan that read nothing", async () => {

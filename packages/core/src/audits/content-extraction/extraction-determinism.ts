@@ -1,15 +1,15 @@
-import type { AuditMeta, AuditResult } from "../../types";
-import { Audit } from "../../audit";
-import type { CheckContext } from "../../check-context";
-import { weightForGrade } from "../../scorer";
+import type { AuditMeta, AuditResult } from "#core/types";
+import { Audit } from "#core/audit";
+import type { CheckContext } from "#core/check-context";
+import { weightForGrade } from "#core/scorer";
 import {
   readabilityArticle,
   semanticText,
   densityText,
   READABILITY_CHAR_THRESHOLD,
   type Extracted,
-} from "../../gatherers/extraction";
-import { shingles, jaccard } from "../../gatherers/text-metrics";
+} from "#core/gatherers/extraction";
+import { shingles, jaccard } from "#core/gatherers/text-metrics";
 import type { CheerioAPI } from "cheerio";
 import {
   AuditTier,
@@ -18,7 +18,7 @@ import {
   EvidenceKey,
   FixEffort,
   ScoreDisplayMode,
-} from "../../types";
+} from "#core/types";
 
 /** Below this much visible text there is no article for anyone to extract. */
 const MIN_VISIBLE_CHARS = 200;

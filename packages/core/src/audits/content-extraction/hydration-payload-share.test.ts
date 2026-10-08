@@ -1,9 +1,9 @@
 import { describe, it, expect } from "vitest";
 import { HydrationPayloadShareAudit } from "./hydration-payload-share";
-import { mockPageContext, mockCheckContext } from "../../__tests__/test-utils";
-import { expectNotApplicableOnEmpty } from "../../tests/na-contract";
-import { AuditResultSchema } from "../../schemas";
-import { CheckStatus } from "../../types";
+import { mockPageContext, mockCheckContext } from "#core/__tests__/test-utils";
+import { expectNotApplicableOnEmpty } from "#core/tests/na-contract";
+import { AuditResultSchema } from "#core/schemas";
+import { CheckStatus } from "#core/types";
 
 /** Enough visible prose that a small payload stays a small share of the page. */
 const PROSE =

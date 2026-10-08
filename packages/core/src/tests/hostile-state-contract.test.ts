@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
-import { defaultConfig } from "../audit-config";
-import { planAudits } from "../audit-runner";
-import { AuditResultSchema } from "../schemas";
+import { defaultConfig } from "#core/audit-config";
+import { planAudits } from "#core/audit-runner";
+import { AuditResultSchema } from "#core/schemas";
 import { NOTHING_OBTAINED, SHELL_STATE } from "./hostile-states";
 import {
   auditSources,
@@ -9,8 +9,8 @@ import {
   SHELL_STANCE,
   ShellStance,
 } from "./audit-sources";
-import type { AuditResult } from "../types";
-import { CheckStatus, EvidenceKey } from "../types";
+import type { AuditResult } from "#core/types";
+import { CheckStatus, EvidenceKey } from "#core/types";
 
 /**
  * A scan that obtained nothing holds no evidence about the site, so the runner

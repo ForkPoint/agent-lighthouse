@@ -1,15 +1,15 @@
 import { describe, it, expect } from "vitest";
 import { JsonLdDuplicationMassAudit } from "./json-ld-duplication-mass";
-import { mockCheckContext, mockPageContext } from "../../__tests__/test-utils";
-import { expectNotApplicableOnEmpty } from "../../tests/na-contract";
-import type { CheckContext } from "../../check-context";
+import { mockCheckContext, mockPageContext } from "#core/__tests__/test-utils";
+import { expectNotApplicableOnEmpty } from "#core/tests/na-contract";
+import type { CheckContext } from "#core/check-context";
 import {
   AuditTier,
   CheckPriority,
   CheckStatus,
   EvidenceGrade,
   ScoreDisplayMode,
-} from "../../types";
+} from "#core/types";
 
 const ARTICLE_BODY =
   "The copper kettle reaches a rolling boil in about three minutes on a gas hob, and holds its heat for a further hour once the lid is closed. Descaling it takes equal parts water and white vinegar left overnight, then two rinses. ";

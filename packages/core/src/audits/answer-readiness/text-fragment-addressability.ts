@@ -5,12 +5,12 @@
 // citing surface build a `#:~:text=` link that lands on this page's answer
 // sentence, or does the link silently degrade to page-top?
 import type { AnyNode, Element } from "domhandler";
-import type { AuditMeta, AuditResult } from "../../types";
-import { Audit } from "../../audit";
-import { weightForGrade } from "../../scorer";
-import type { CheckContext, PageContext } from "../../check-context";
-import { allJsonLdNodes } from "../../parser";
-import { notRendered } from "../../dom-visibility";
+import type { AuditMeta, AuditResult } from "#core/types";
+import { Audit } from "#core/audit";
+import { weightForGrade } from "#core/scorer";
+import type { CheckContext, PageContext } from "#core/check-context";
+import { allJsonLdNodes } from "#core/parser";
+import { notRendered } from "#core/dom-visibility";
 import {
   AuditTier,
   CheckPriority,
@@ -18,7 +18,7 @@ import {
   EvidenceKey,
   FixEffort,
   ScoreDisplayMode,
-} from "../../types";
+} from "#core/types";
 
 /** Elements the spec's block-boundary rule treats as block-level. */
 const BLOCK_SELECTOR =

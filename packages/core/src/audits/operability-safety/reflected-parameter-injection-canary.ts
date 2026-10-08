@@ -1,11 +1,11 @@
-import type { AuditMeta, AuditResult } from "../../types";
-import { Audit } from "../../audit";
-import type { CheckContext } from "../../check-context";
-import type { FetchResult } from "../../fetcher";
+import type { AuditMeta, AuditResult } from "#core/types";
+import { Audit } from "#core/audit";
+import type { CheckContext } from "#core/check-context";
+import type { FetchResult } from "#core/fetcher";
 
-import { probeSecurityUrl } from "../../gatherers/security";
-import { parseHtml, extractJsonLd, allJsonLdNodes } from "../../parser";
-import { weightForGrade } from "../../scorer";
+import { probeSecurityUrl } from "#core/gatherers/security";
+import { parseHtml, extractJsonLd, allJsonLdNodes } from "#core/parser";
+import { weightForGrade } from "#core/scorer";
 import {
   AuditTier,
   CheckPriority,
@@ -14,7 +14,7 @@ import {
   FixEffort,
   ScoreDisplayMode,
   HttpMethod,
-} from "../../types";
+} from "#core/types";
 
 /**
  * The probe budget, as a hard cap rather than an average.

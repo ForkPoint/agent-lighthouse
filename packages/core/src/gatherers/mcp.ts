@@ -1,8 +1,8 @@
 import { cacheOwner } from "./cache-owner";
-import type { CheckContext } from "../check-context";
-import type { FetchResult } from "../fetcher";
-import { isSafeUrl } from "../fetcher";
-import { HttpMethod } from "../types";
+import type { CheckContext } from "#core/check-context";
+import type { FetchResult } from "#core/fetcher";
+import { isSafeUrl } from "#core/fetcher";
+import { HttpMethod } from "#core/types";
 
 /**
  * MCP's current specification revision. Pinning an older one makes servers that

@@ -5,10 +5,10 @@
 // documented consumer behaviour, so this audit reports an action cost and never
 // moves the score. Grade C in the `scored` tier is unregistrable — see
 // `sunset.test.ts`, which ties a non-scored tier to weight 0.
-import type { AuditMeta, AuditResult } from "../../types";
-import { Audit } from "../../audit";
-import { weightForGrade } from "../../scorer";
-import type { CheckContext, PageContext } from "../../check-context";
+import type { AuditMeta, AuditResult } from "#core/types";
+import { Audit } from "#core/audit";
+import { weightForGrade } from "#core/scorer";
+import type { CheckContext, PageContext } from "#core/check-context";
 import { accessibleName, isElement } from "./_agent-affordances";
 import {
   AuditTier,
@@ -17,7 +17,7 @@ import {
   EvidenceKey,
   FixEffort,
   ScoreDisplayMode,
-} from "../../types";
+} from "#core/types";
 
 /** Consent platforms, by the marker they leave in the served HTML. */
 const PLATFORMS: ReadonlyArray<{ name: string; pattern: RegExp }> = [

@@ -1,8 +1,8 @@
-import type { AuditMeta, AuditResult } from "../../types";
-import { Audit } from "../../audit";
-import type { CheckContext } from "../../check-context";
-import { weightForGrade } from "../../scorer";
-import { discoverFeedHeadUrls, sharedFeeds } from "../../gatherers/feeds";
+import type { AuditMeta, AuditResult } from "#core/types";
+import { Audit } from "#core/audit";
+import type { CheckContext } from "#core/check-context";
+import { weightForGrade } from "#core/scorer";
+import { discoverFeedHeadUrls, sharedFeeds } from "#core/gatherers/feeds";
 import {
   AuditTier,
   CheckPriority,
@@ -10,7 +10,7 @@ import {
   EvidenceKey,
   FixEffort,
   ScoreDisplayMode,
-} from "../../types";
+} from "#core/types";
 
 export class RssFeedAudit extends Audit {
   static override meta: AuditMeta = {

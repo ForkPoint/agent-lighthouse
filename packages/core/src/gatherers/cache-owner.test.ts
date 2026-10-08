@@ -1,9 +1,9 @@
 import { describe, it, expect, vi } from "vitest";
 import { cacheOwner } from "./cache-owner";
 import { fetchSampledPage } from "./sampled-pages";
-import type { FetchResult } from "../fetcher";
+import type { FetchResult } from "#core/fetcher";
 
-vi.mock("../fetcher", () => ({ isSafeUrl: async () => true }));
+vi.mock("#core/fetcher", () => ({ isSafeUrl: async () => true }));
 
 const ok: FetchResult = {
   url: "https://example.com/p",

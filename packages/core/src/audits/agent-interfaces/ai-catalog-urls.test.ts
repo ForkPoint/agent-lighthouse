@@ -1,14 +1,14 @@
 import { describe, it, expect, vi } from "vitest";
 import { AiCatalogUrlsAudit } from "./ai-catalog-urls";
-import { mockCheckContext, mockFetchResult } from "../../__tests__/test-utils";
-import type { FetchResult } from "../../fetcher";
-import { CheckStatus } from "../../types";
+import { mockCheckContext, mockFetchResult } from "#core/__tests__/test-utils";
+import type { FetchResult } from "#core/fetcher";
+import { CheckStatus } from "#core/types";
 
 // isSafeUrl does a real DNS lookup before the audit probes a site-controlled
 // URL. Stub it with an offline stand-in that still refuses loopback, private
 // ranges and non-HTTP schemes, so the refusal test proves the gate not the mock.
-vi.mock("../../fetcher", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("../../fetcher")>();
+vi.mock("#core/fetcher", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("#core/fetcher")>();
   return {
     ...actual,
     isSafeUrl: async (url: string) => {

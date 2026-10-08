@@ -1,10 +1,10 @@
-import type { AuditMeta, AuditResult } from "../../types";
-import { Audit } from "../../audit";
-import type { CheckContext } from "../../check-context";
-import { weightForGrade } from "../../scorer";
-import { countTokens } from "../../gatherers/tokens";
-import { shingles } from "../../gatherers/text-metrics";
-import { allJsonLdNodes } from "../../parser";
+import type { AuditMeta, AuditResult } from "#core/types";
+import { Audit } from "#core/audit";
+import type { CheckContext } from "#core/check-context";
+import { weightForGrade } from "#core/scorer";
+import { countTokens } from "#core/gatherers/tokens";
+import { shingles } from "#core/gatherers/text-metrics";
+import { allJsonLdNodes } from "#core/parser";
 import {
   AuditTier,
   CheckPriority,
@@ -12,7 +12,7 @@ import {
   EvidenceKey,
   FixEffort,
   ScoreDisplayMode,
-} from "../../types";
+} from "#core/types";
 
 /** Strings shorter than this are labels, not bodies of text. */
 const BODY_STRING_CHARS = 500;

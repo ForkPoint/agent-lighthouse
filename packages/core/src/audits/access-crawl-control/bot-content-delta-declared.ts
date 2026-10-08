@@ -6,18 +6,18 @@
 // from the practice of cloaking". Undeclared UA-conditional serving is cloaking,
 // and it also means answer engines cite the stub instead of the article.
 import * as cheerio from "cheerio";
-import type { AuditMeta, AuditResult } from "../../types";
-import { Audit } from "../../audit";
-import { weightForGrade } from "../../scorer";
-import type { CheckContext } from "../../check-context";
-import { parseHtml, extractJsonLd, flattenJsonLd } from "../../parser";
-import { siteSitemapTree, sampleEntries } from "../../gatherers/sitemap";
+import type { AuditMeta, AuditResult } from "#core/types";
+import { Audit } from "#core/audit";
+import { weightForGrade } from "#core/scorer";
+import type { CheckContext } from "#core/check-context";
+import { parseHtml, extractJsonLd, flattenJsonLd } from "#core/parser";
+import { siteSitemapTree, sampleEntries } from "#core/gatherers/sitemap";
 import {
   AI_CRAWLER_UAS,
   sharedUaProbes,
   type UaProbe,
   BlockClass,
-} from "../../gatherers/ua-parity";
+} from "#core/gatherers/ua-parity";
 import {
   AuditTier,
   CheckPriority,
@@ -25,7 +25,7 @@ import {
   EvidenceKey,
   FixEffort,
   ScoreDisplayMode,
-} from "../../types";
+} from "#core/types";
 
 /** How many content URLs to compare. */
 const MAX_URLS = 3;

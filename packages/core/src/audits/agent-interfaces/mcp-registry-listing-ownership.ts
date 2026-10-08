@@ -1,15 +1,15 @@
-import type { AuditMeta, AuditResult } from "../../types";
-import { Audit } from "../../audit";
-import { weightForGrade } from "../../scorer";
-import type { CheckContext } from "../../check-context";
-import { isSafeUrl } from "../../url-utils";
-import { registrableDomain } from "../../gatherers/domains";
+import type { AuditMeta, AuditResult } from "#core/types";
+import { Audit } from "#core/audit";
+import { weightForGrade } from "#core/scorer";
+import type { CheckContext } from "#core/check-context";
+import { isSafeUrl } from "#core/url-utils";
+import { registrableDomain } from "#core/gatherers/domains";
 import {
   discoverMcpEndpoint,
   mcpFetch,
   isObject,
   tryParseJson,
-} from "../../gatherers/mcp";
+} from "#core/gatherers/mcp";
 import {
   AuditTier,
   CheckPriority,
@@ -18,7 +18,7 @@ import {
   FixEffort,
   ScoreDisplayMode,
   HttpMethod,
-} from "../../types";
+} from "#core/types";
 
 /** The public registry clients resolve "the MCP server for this domain" against. */
 const REGISTRY = "https://registry.modelcontextprotocol.io/v0.1/servers";

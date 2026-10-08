@@ -7,22 +7,22 @@
 // a separate agent-commerce gap for the fields Google's rich-result validator
 // never asks for. Both dossiers state the split.
 import type { CheerioAPI } from "cheerio";
-import type { AuditMeta, AuditResult } from "../../types";
-import { Audit } from "../../audit";
-import { weightForGrade } from "../../scorer";
-import type { CheckContext, PageContext } from "../../check-context";
+import type { AuditMeta, AuditResult } from "#core/types";
+import { Audit } from "#core/audit";
+import { weightForGrade } from "#core/scorer";
+import type { CheckContext, PageContext } from "#core/check-context";
 
-import { fetchImageHead } from "../../gatherers/media";
-import { fetchSampledPage } from "../../gatherers/sampled-pages";
+import { fetchImageHead } from "#core/gatherers/media";
+import { fetchSampledPage } from "#core/gatherers/sampled-pages";
 import {
   parseHtml,
   extractJsonLd,
   extractMetaTags,
   flattenJsonLd,
-} from "../../parser";
-import { siteSitemapTree, sampleEntries } from "../../gatherers/sitemap";
-import { gtinCheckDigit } from "../agentic-commerce/checkout-offer-field-mapping";
-import { ISO_4217 } from "../../gatherers/currency";
+} from "#core/parser";
+import { siteSitemapTree, sampleEntries } from "#core/gatherers/sitemap";
+import { gtinCheckDigit } from "#core/audits/agentic-commerce/checkout-offer-field-mapping";
+import { ISO_4217 } from "#core/gatherers/currency";
 import {
   AuditTier,
   CheckPriority,
@@ -30,7 +30,7 @@ import {
   EvidenceKey,
   FixEffort,
   ScoreDisplayMode,
-} from "../../types";
+} from "#core/types";
 
 /** How many sitemap URLs to open looking for product pages. */
 const MAX_SAMPLE = 6;

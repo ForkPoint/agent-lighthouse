@@ -18,13 +18,13 @@
 // class is browser-sandboxed agent code — an OpenAI Apps SDK widget in an
 // isolated iframe under a strict CSP — which is small today, growing, and the
 // only thing this audit now claims.
-import type { AuditMeta, AuditResult } from "../../types";
-import { Audit } from "../../audit";
-import { weightForGrade } from "../../scorer";
-import type { CheckContext } from "../../check-context";
-import type { FetchResult } from "../../fetcher";
-import { isSafeUrl } from "../../url-utils";
-import { probeOpenApiServer } from "../../gatherers/openapi";
+import type { AuditMeta, AuditResult } from "#core/types";
+import { Audit } from "#core/audit";
+import { weightForGrade } from "#core/scorer";
+import type { CheckContext } from "#core/check-context";
+import type { FetchResult } from "#core/fetcher";
+import { isSafeUrl } from "#core/url-utils";
+import { probeOpenApiServer } from "#core/gatherers/openapi";
 import {
   AuditTier,
   CheckPriority,
@@ -32,7 +32,7 @@ import {
   EvidenceKey,
   FixEffort,
   ScoreDisplayMode,
-} from "../../types";
+} from "#core/types";
 
 /** How many endpoints to probe. Two is enough to tell a policy from an accident. */
 const MAX_TARGETS = 2;

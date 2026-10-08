@@ -1,11 +1,11 @@
 import type { CheerioAPI } from "cheerio";
 import type { AnyNode } from "domhandler";
-import type { AuditMeta, AuditResult } from "../../types";
-import { Audit } from "../../audit";
-import type { CheckContext } from "../../check-context";
-import { weightForGrade } from "../../scorer";
-import { scanReadPageText, unreadPageTextReason } from "../../scan-evidence";
-import { hiddenFromReaders } from "../../dom-visibility";
+import type { AuditMeta, AuditResult } from "#core/types";
+import { Audit } from "#core/audit";
+import type { CheckContext } from "#core/check-context";
+import { weightForGrade } from "#core/scorer";
+import { scanReadPageText, unreadPageTextReason } from "#core/scan-evidence";
+import { hiddenFromReaders } from "#core/dom-visibility";
 import {
   AuditTier,
   CheckPriority,
@@ -13,7 +13,7 @@ import {
   EvidenceKey,
   FixEffort,
   ScoreDisplayMode,
-} from "../../types";
+} from "#core/types";
 
 /**
  * Classes that commonly impersonate a heading in utility-CSS markup

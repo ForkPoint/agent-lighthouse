@@ -9,10 +9,10 @@
 // meant to reward — a well-written prose glossary FAILED while a spec sheet
 // with a bold label passed.
 // Evidence dossier: docs/evidence/audits/answer-readiness/direct-definitions.md
-import type { AuditMeta, AuditResult } from "../../types";
-import { Audit } from "../../audit";
-import { weightForGrade } from "../../scorer";
-import type { CheckContext, PageContext } from "../../check-context";
+import type { AuditMeta, AuditResult } from "#core/types";
+import { Audit } from "#core/audit";
+import { weightForGrade } from "#core/scorer";
+import type { CheckContext, PageContext } from "#core/check-context";
 import {
   AuditTier,
   CheckPriority,
@@ -21,7 +21,7 @@ import {
   FixEffort,
   PageType,
   ScoreDisplayMode,
-} from "../../types";
+} from "#core/types";
 
 /**
  * Per-language lexical patterns.

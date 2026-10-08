@@ -1,9 +1,9 @@
 import { describe, it, expect } from "vitest";
 import { pagesOfType, judgePages } from "./pages";
-import { parseHtml } from "../parser";
-import type { CheckContext, PageContext } from "../check-context";
-import { allEvidenceMet } from "../scan-evidence";
-import { PageType } from "../types";
+import { parseHtml } from "#core/parser";
+import type { CheckContext, PageContext } from "#core/check-context";
+import { allEvidenceMet } from "#core/scan-evidence";
+import { PageType } from "#core/types";
 
 const page = (url: string, pageType: PageType, title: string): PageContext => ({
   url,

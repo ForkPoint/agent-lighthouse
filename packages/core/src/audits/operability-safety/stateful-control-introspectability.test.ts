@@ -1,15 +1,15 @@
 import { describe, it, expect } from "vitest";
 import { StatefulControlIntrospectabilityAudit } from "./stateful-control-introspectability";
-import { mockCheckContext, mockPageContext } from "../../__tests__/test-utils";
-import { expectNotApplicableOnEmpty } from "../../tests/na-contract";
-import type { CheckContext } from "../../check-context";
-import { AuditResultSchema } from "../../schemas";
+import { mockCheckContext, mockPageContext } from "#core/__tests__/test-utils";
+import { expectNotApplicableOnEmpty } from "#core/tests/na-contract";
+import type { CheckContext } from "#core/check-context";
+import { AuditResultSchema } from "#core/schemas";
 import {
   AuditTier,
   CheckStatus,
   EvidenceGrade,
   ScoreDisplayMode,
-} from "../../types";
+} from "#core/types";
 
 /** A homepage carrying `body`. */
 function page(body: string): CheckContext {

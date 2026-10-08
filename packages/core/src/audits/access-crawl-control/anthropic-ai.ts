@@ -1,5 +1,5 @@
-import type { AuditMeta, AuditResult } from "../../types";
-import type { CheckContext } from "../../check-context";
+import type { AuditMeta, AuditResult } from "#core/types";
+import type { CheckContext } from "#core/check-context";
 import type { CrawlerBot } from "./_robots-txt-helpers";
 import { CrawlerBotAudit } from "./_crawler-bot-audit";
 import {
@@ -7,8 +7,8 @@ import {
   hasNamedGroup,
   isPathAllowed,
   matchesUserAgent,
-} from "../../gatherers/robots";
-import { weightForGrade } from "../../scorer";
+} from "#core/gatherers/robots";
+import { weightForGrade } from "#core/scorer";
 import {
   AuditTier,
   CheckPriority,
@@ -16,7 +16,7 @@ import {
   EvidenceKey,
   FixEffort,
   ScoreDisplayMode,
-} from "../../types";
+} from "#core/types";
 import { CrawlerPurpose } from "./_robots-txt-helpers";
 
 /** The token this audit scores, spelled as Anthropic documents it. */

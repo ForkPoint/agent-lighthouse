@@ -1,19 +1,19 @@
 import { describe, expect, it } from "vitest";
-import { runAudits } from "../audit-runner";
-import type { ScanConfig } from "../audit-config";
+import { runAudits } from "#core/audit-runner";
+import type { ScanConfig } from "#core/audit-config";
 import {
   PAGE_TYPES,
   type PageType,
   CheckStatus,
   ScoreDisplayMode,
-} from "../types";
-import { AuditResultSchema } from "../schemas";
-import { buildScanEvidence } from "../scan-evidence";
-import { mockCheckContext, mockPageContext } from "../__tests__/test-utils";
-import { MainElementAudit } from "../audits/content-extraction/main-element";
-import { SingleH1Audit } from "../audits/content-extraction/single-h1";
-import { HeaderFooterAudit } from "../audits/content-extraction/header-footer";
-import { LanguageAttributeAudit } from "../audits/content-extraction/language-attribute";
+} from "#core/types";
+import { AuditResultSchema } from "#core/schemas";
+import { buildScanEvidence } from "#core/scan-evidence";
+import { mockCheckContext, mockPageContext } from "#core/__tests__/test-utils";
+import { MainElementAudit } from "#core/audits/content-extraction/main-element";
+import { SingleH1Audit } from "#core/audits/content-extraction/single-h1";
+import { HeaderFooterAudit } from "#core/audits/content-extraction/header-footer";
+import { LanguageAttributeAudit } from "#core/audits/content-extraction/language-attribute";
 
 const audits = [
   MainElementAudit,

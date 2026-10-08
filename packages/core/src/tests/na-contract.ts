@@ -1,7 +1,7 @@
-import type { CheckContext } from "../check-context";
-import type { AuditResult } from "../types";
+import type { CheckContext } from "#core/check-context";
+import type { AuditResult } from "#core/types";
 import { unreachableContext } from "./fixtures";
-import { CheckStatus } from "../types";
+import { CheckStatus } from "#core/types";
 
 /**
  * Contract test: on a site the scan could not read, an audit must decline.

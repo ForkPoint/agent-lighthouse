@@ -5,11 +5,11 @@
 // ratio of a page. This audit isolates one named component of that ratio —
 // serialized framework state — because it is the component with a targeted fix
 // and a vendor-published size ceiling.
-import type { AuditMeta, AuditResult } from "../../types";
-import { Audit } from "../../audit";
-import { weightForGrade } from "../../scorer";
-import type { CheckContext, PageContext } from "../../check-context";
-import { getMainContentText } from "../../parser";
+import type { AuditMeta, AuditResult } from "#core/types";
+import { Audit } from "#core/audit";
+import { weightForGrade } from "#core/scorer";
+import type { CheckContext, PageContext } from "#core/check-context";
+import { getMainContentText } from "#core/parser";
 import {
   AuditTier,
   CheckPriority,
@@ -17,7 +17,7 @@ import {
   EvidenceKey,
   FixEffort,
   ScoreDisplayMode,
-} from "../../types";
+} from "#core/types";
 
 /** The repo-wide rough token estimator; no tokenizer dependency is carried. */
 const CHARS_PER_TOKEN = 4;

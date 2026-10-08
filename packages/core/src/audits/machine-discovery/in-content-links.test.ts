@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { InContentLinksAudit } from "./in-content-links";
-import { mockCheckContext, mockPageContext } from "../../__tests__/test-utils";
-import { CheckStatus } from "../../types";
+import { mockCheckContext, mockPageContext } from "#core/__tests__/test-utils";
+import { CheckStatus } from "#core/types";
 
 /** A page whose only internal links live in the global nav and footer. */
 const CHROME_ONLY = `<html><body>

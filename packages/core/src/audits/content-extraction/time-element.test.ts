@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { TimeElementAudit } from "./time-element";
-import { mockCheckContext, mockPageContext } from "../../__tests__/test-utils";
-import { CheckStatus } from "../../types";
+import { mockCheckContext, mockPageContext } from "#core/__tests__/test-utils";
+import { CheckStatus } from "#core/types";
 
 describe("TimeElementAudit", () => {
   const audit = new TimeElementAudit();

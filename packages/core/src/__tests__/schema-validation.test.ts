@@ -1,10 +1,10 @@
 import { describe, it, expect } from "vitest";
-import { defaultConfig } from "../audit-config";
+import { defaultConfig } from "#core/audit-config";
 import {
   AuditMetaSchema,
   AuditResultSchema,
   CheckResultSchema,
-} from "../schemas";
+} from "#core/schemas";
 import {
   mockCheckContext,
   mockPageContext,
@@ -15,7 +15,7 @@ import {
   CheckPriority,
   EvidenceGrade,
   ScoreDisplayMode,
-} from "../types";
+} from "#core/types";
 
 describe("AuditMetaSchema.weight", () => {
   const meta = {

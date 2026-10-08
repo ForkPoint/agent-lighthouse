@@ -1,14 +1,14 @@
 import { describe, it, expect } from "vitest";
-import { defaultConfig } from "../../audit-config";
-import { planAudits } from "../../audit-runner";
+import { defaultConfig } from "#core/audit-config";
+import { planAudits } from "#core/audit-runner";
 import { TokenRatioAudit } from "./token-ratio";
 import {
   attributableFixture,
   mockCheckContext,
   mockPageContext,
   unreachedSiteContext,
-} from "../../__tests__/test-utils";
-import { CheckPriority, CheckStatus } from "../../types";
+} from "#core/__tests__/test-utils";
+import { CheckPriority, CheckStatus } from "#core/types";
 
 describe("TokenRatioAudit", () => {
   const audit = new TokenRatioAudit();

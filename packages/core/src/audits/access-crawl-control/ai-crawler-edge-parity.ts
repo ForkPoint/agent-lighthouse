@@ -6,18 +6,18 @@
 // on its own. A site can publish "Allow: /" for PerplexityBot and still answer
 // every request carrying that UA with a challenge. The operator reads only the
 // first of those two, which is why this failure is invisible from the inside.
-import type { AuditMeta, AuditResult } from "../../types";
-import { Audit } from "../../audit";
-import { weightForGrade } from "../../scorer";
-import type { CheckContext } from "../../check-context";
-import { parseRobots, isPathAllowed } from "../../gatherers/robots";
-import { siteSitemapTree, sampleEntries } from "../../gatherers/sitemap";
+import type { AuditMeta, AuditResult } from "#core/types";
+import { Audit } from "#core/audit";
+import { weightForGrade } from "#core/scorer";
+import type { CheckContext } from "#core/check-context";
+import { parseRobots, isPathAllowed } from "#core/gatherers/robots";
+import { siteSitemapTree, sampleEntries } from "#core/gatherers/sitemap";
 import {
   AI_CRAWLER_UAS,
   sharedUaProbes,
   type UaProbe,
   BlockClass,
-} from "../../gatherers/ua-parity";
+} from "#core/gatherers/ua-parity";
 import {
   AuditTier,
   CheckPriority,
@@ -25,7 +25,7 @@ import {
   EvidenceKey,
   FixEffort,
   ScoreDisplayMode,
-} from "../../types";
+} from "#core/types";
 
 /** How many sitemap URLs join the probe set, beyond `/` and `/llms.txt`. */
 const MAX_SITEMAP_PROBES = 2;

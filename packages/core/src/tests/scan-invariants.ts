@@ -1,9 +1,9 @@
-import { defaultConfig } from "../audit-config";
-import { TAG_SCAN_ERROR } from "../constants";
-import { CheckResultSchema } from "../schemas";
-import { gatedMassShare, GATED_MASS_UNSCORED_THRESHOLD } from "../scorer";
-import type { CheckResult, ScanReport } from "../types";
-import { CheckStatus, EvidenceKey } from "../types";
+import { defaultConfig } from "#core/audit-config";
+import { TAG_SCAN_ERROR } from "#core/constants";
+import { CheckResultSchema } from "#core/schemas";
+import { gatedMassShare, GATED_MASS_UNSCORED_THRESHOLD } from "#core/scorer";
+import type { CheckResult, ScanReport } from "#core/types";
+import { CheckStatus, EvidenceKey } from "#core/types";
 
 /**
  * Everything a scan report must be true about itself, whatever site it describes.

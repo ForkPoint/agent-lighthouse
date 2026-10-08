@@ -5,10 +5,10 @@
 // move between turns, the provider-side prefix cache misses and the whole tool
 // block is re-billed at uncached rates, every turn. Three identical requests
 // make that visible.
-import type { AuditMeta, AuditResult } from "../../types";
-import { Audit } from "../../audit";
-import { weightForGrade } from "../../scorer";
-import type { CheckContext } from "../../check-context";
+import type { AuditMeta, AuditResult } from "#core/types";
+import { Audit } from "#core/audit";
+import { weightForGrade } from "#core/scorer";
+import type { CheckContext } from "#core/check-context";
 import {
   discoverMcpEndpoint,
   discoverProbe,
@@ -17,7 +17,7 @@ import {
   discoverParams,
   isObject,
   MCP_PROTOCOL_VERSION,
-} from "../../gatherers/mcp";
+} from "#core/gatherers/mcp";
 import {
   AuditTier,
   CheckPriority,
@@ -25,7 +25,7 @@ import {
   EvidenceKey,
   FixEffort,
   ScoreDisplayMode,
-} from "../../types";
+} from "#core/types";
 
 /** How many identical tools/list calls the audit compares. */
 const CALLS = 3;

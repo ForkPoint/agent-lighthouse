@@ -1,14 +1,14 @@
 import { describe, it, expect } from "vitest";
 import { HoverOnlyContentAndNavigationAudit } from "./hover-only-content-and-navigation";
-import { mockCheckContext, mockPageContext } from "../../__tests__/test-utils";
-import { expectNotApplicableOnEmpty } from "../../tests/na-contract";
-import type { CheckContext } from "../../check-context";
+import { mockCheckContext, mockPageContext } from "#core/__tests__/test-utils";
+import { expectNotApplicableOnEmpty } from "#core/tests/na-contract";
+import type { CheckContext } from "#core/check-context";
 import {
   AuditTier,
   CheckStatus,
   EvidenceGrade,
   ScoreDisplayMode,
-} from "../../types";
+} from "#core/types";
 
 /** A homepage carrying `body`, with an optional inline stylesheet. */
 function page(body: string, css = ""): CheckContext {
