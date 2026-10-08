@@ -1,6 +1,6 @@
 {
   "name": "agent-lighthouse",
-  "version": "6.0.0",
+  "version": "6.0.1",
   "description": "Use Agent Lighthouse reports and source-code review to assess and improve website agentic readiness.",
   "author": {
     "name": "ForkPoint",

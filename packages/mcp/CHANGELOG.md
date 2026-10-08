@@ -1,5 +1,13 @@
 # @forkpoint/agent-lighthouse-mcp
 
+## 6.0.1
+
+### Patch Changes
+
+- Updated dependencies [dbbac43]
+  - @forkpoint/agent-lighthouse-core@6.0.1
+  - @forkpoint/agent-lighthouse-report@6.0.1
+
 ## 6.0.0
 
 ### Patch Changes
